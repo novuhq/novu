@@ -5,7 +5,7 @@ import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
 import { FeatureFlagsService } from '../feature-flags';
 import { DeferReasonEnum, EventBridgeSchedulerService } from '../scheduler';
-import { SqsService } from '../sqs';
+import { SqsPartialSendError, SqsService } from '../sqs';
 import { SQS_MAX_DELAY_SECONDS } from '../sqs/types';
 import { QueueBaseService } from './queue-base.service';
 
@@ -239,6 +239,100 @@ describe('QueueBaseService long-delay routing', () => {
       expect(scheduler.createDelayedFire).not.toHaveBeenCalled();
       expect(bullMq.add).toHaveBeenCalledTimes(1);
       expect(sqs.send).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('partial SQS sends', () => {
+    function shortJob(id: string) {
+      return longDelayJob({
+        name: id,
+        data: { _id: id, _organizationId: ORGANIZATION_ID },
+        options: { delay: SHORT_DELAY_MS, jobId: id },
+      });
+    }
+
+    /** Message ids are assigned by `addJobsToSQS` as `${groupId}-${index}`. */
+    function unsentMessage(index: number) {
+      return { id: `${ORGANIZATION_ID}-${index}`, body: '{}', groupId: ORGANIZATION_ID };
+    }
+
+    it('should re-queue only the undelivered jobs in COMPLETE mode', async () => {
+      const { service, bullMq, sqs } = buildHarness();
+      sqs.sendBulk.mockRejectedValueOnce(
+        new SqsPartialSendError([unsentMessage(2)], 2, new Error('BatchRequestTooLong'))
+      );
+
+      await service.addBulk([shortJob('a'), shortJob('b'), shortJob('c')] as never);
+
+      expect(bullMq.addBulk).not.toHaveBeenCalled();
+      expect(bullMq.add).toHaveBeenCalledTimes(1);
+      expect(bullMq.add.mock.calls[0][1]).toMatchObject({ _id: 'c' });
+    });
+
+    it('should re-queue only the undelivered jobs in LIVE mode', async () => {
+      const { service, bullMq, sqs } = buildHarness({ backendMode: QueueBackendMode.LIVE });
+      sqs.sendBulk.mockRejectedValueOnce(
+        new SqsPartialSendError([unsentMessage(0), unsentMessage(2)], 1, new Error('BatchRequestTooLong'))
+      );
+
+      await service.addBulk([shortJob('a'), shortJob('b'), shortJob('c')] as never);
+
+      expect(bullMq.addBulk).toHaveBeenCalledTimes(1);
+      expect(bullMq.addBulk.mock.calls[0][0].map((job: { data: { _id: string } }) => job.data._id)).toEqual(['a', 'c']);
+    });
+
+    it('should re-queue every job when the failure does not identify the undelivered ones', async () => {
+      const { service, bullMq, sqs } = buildHarness();
+      sqs.sendBulk.mockRejectedValueOnce(new Error('AWS.SimpleQueueService.NonExistentQueue'));
+
+      await service.addBulk([shortJob('a'), shortJob('b'), shortJob('c')] as never);
+
+      expect(bullMq.addBulk).toHaveBeenCalledTimes(1);
+      expect(bullMq.addBulk.mock.calls[0][0]).toHaveLength(3);
+    });
+
+    it('should not re-queue already-scheduled jobs when the SQS leg fails without naming messages', async () => {
+      const { service, bullMq, sqs, scheduler } = buildHarness();
+      scheduler.createDelayedFire.mockResolvedValueOnce(undefined);
+      // A plain error: the single-message path, or an S3 offload failure.
+      sqs.send.mockRejectedValueOnce(new Error('ThrottlingException'));
+
+      await service.addBulk([
+        longDelayJob({ name: 'long-a', data: { _id: 'long-a', _organizationId: ORGANIZATION_ID } }),
+        shortJob('short-b'),
+      ] as never);
+
+      expect(scheduler.createDelayedFire).toHaveBeenCalledTimes(1);
+      // `long-a` was accepted by EventBridge; replaying it would double-fire it.
+      expect(bullMq.addBulk).not.toHaveBeenCalled();
+      expect(bullMq.add).toHaveBeenCalledTimes(1);
+      expect(bullMq.add.mock.calls[0][1]).toMatchObject({ _id: 'short-b' });
+    });
+
+    it('should not touch BullMQ when every message was delivered', async () => {
+      const { service, bullMq } = buildHarness();
+
+      await service.addBulk([shortJob('a'), shortJob('b'), shortJob('c')] as never);
+
+      expect(bullMq.add).not.toHaveBeenCalled();
+      expect(bullMq.addBulk).not.toHaveBeenCalled();
+    });
+
+    it('should re-queue only the jobs the scheduler rejected, plus the ones never attempted', async () => {
+      const { service, bullMq, scheduler } = buildHarness();
+      scheduler.createDelayedFire.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('Throttling'));
+
+      await service.addBulk([
+        longDelayJob({ name: 'long-a', data: { _id: 'long-a', _organizationId: ORGANIZATION_ID } }),
+        longDelayJob({ name: 'long-b', data: { _id: 'long-b', _organizationId: ORGANIZATION_ID } }),
+        shortJob('short-c'),
+      ] as never);
+
+      expect(bullMq.addBulk).toHaveBeenCalledTimes(1);
+      expect(bullMq.addBulk.mock.calls[0][0].map((job: { data: { _id: string } }) => job.data._id)).toEqual([
+        'long-b',
+        'short-c',
+      ]);
     });
   });
 });

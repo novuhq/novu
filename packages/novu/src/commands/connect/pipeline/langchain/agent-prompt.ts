@@ -40,7 +40,7 @@ export const LANGCHAIN_AGENT_PROMPT = [
   '});',
   '```',
   '',
-  '3. Provider — reuse the LangChain chat model the project already uses. Only if none exists, add a LangChain provider package (an @langchain/* package such as @langchain/openai) and install `langchain` + `@langchain/core`. Read API keys from existing env vars — never hardcode secrets. Prefer returning the declarative { model, system, tools } config; only invoke a graph yourself and return its { messages } if you need full control.',
+  '3. Provider — reuse the LangChain chat model the project already uses. Only if none exists, add a LangChain provider package (an @langchain/* package such as @langchain/openai) and install `langchain` + `@langchain/core`. Read API keys from existing env vars — never hardcode secrets. Prefer returning the declarative { model, system, tools } config (Novu hydrates inbound attachment URLs on that path); only invoke a graph yourself and return its { messages } if you need full control. If you invoke yourself, wrap toLangChainMessages(ctx.history) in hydrateUnreachableAttachmentUrls from @novu/framework/langchain before invoke.',
   '',
   '4. Next.js — model strings use a dynamic import() that Turbopack rejects unless LangChain packages are external. Ensure next.config includes:',
   '',

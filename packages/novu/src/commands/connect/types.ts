@@ -144,6 +144,8 @@ export interface ConnectCommandOptions {
   runtime?: AgentConnectMode;
   /** Use an existing agent-runtime integration instead of creating one. */
   agentIntegrationId?: string;
+  /** Use an existing agent by identifier, skipping the agent picker. */
+  agentIdentifier?: string;
   /** Anthropic API key for `--runtime claude` non-interactive runs. */
   anthropicApiKey?: string;
   /** AWS Claude API key for `--runtime claude-aws` non-interactive runs. */

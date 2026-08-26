@@ -1,5 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type { AgentHashFields } from '../agent-chat/types';
+import { validateHistoryPageResponse } from '../agent-chat/validate-envelope';
 import { HttpClient } from './http-client';
 
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/agent-chat/conversations';
@@ -19,8 +20,11 @@ export class AgentChatPlanLimitError extends Error {
 export type AgentChatSendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
+  metadata?: Record<string, unknown>;
   /** Existing conversation id. Omit this field to create a new conversation. */
   conversationId?: string;
+  /** Client-minted idempotency key (`msg_*`). Retries must reuse the same value. */
+  messageId?: string;
 };
 
 export type AgentChatSendMessageResponse = {
@@ -46,6 +50,8 @@ export type AgentChatRespondToActionArgs = AgentHashFields & {
   conversationId: string;
   /** Server-minted approve/deny action id echoed from the pending approval part. */
   actionId: string;
+  /** Client-minted idempotency key (`idem_*`). Retries must reuse the same value. */
+  idempotencyKey?: string;
 };
 
 export type AgentChatSendActionArgs = AgentHashFields & {
@@ -57,6 +63,8 @@ export type AgentChatSendActionArgs = AgentHashFields & {
   sourceMessageId: string;
   /** `value` of the clicked Card button, if set. */
   value?: string;
+  /** Client-minted idempotency key (`idem_*`). Retries must reuse the same value. */
+  idempotencyKey?: string;
 };
 
 export type AgentChatRespondToActionResponse = {
@@ -75,7 +83,9 @@ export class AgentChatService {
       agentId: args.agentId,
       text: args.text,
       ...(args.conversationId ? { conversationIdentifier: args.conversationId } : {}),
+      ...(args.messageId ? { messageId: args.messageId } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
+      ...(args.metadata ? { metadata: args.metadata } : {}),
     });
   }
 
@@ -84,6 +94,7 @@ export class AgentChatService {
       agentId: args.agentId,
       conversationIdentifier: args.conversationId,
       actionId: args.actionId,
+      ...(args.idempotencyKey ? { idempotencyKey: args.idempotencyKey } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }
@@ -95,12 +106,13 @@ export class AgentChatService {
       actionId: args.actionId,
       sourceMessageId: args.sourceMessageId,
       ...(args.value !== undefined ? { value: args.value } : {}),
+      ...(args.idempotencyKey ? { idempotencyKey: args.idempotencyKey } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }
 
   async #postAccept<T extends AgentChatSendMessageResponse | AgentChatRespondToActionResponse>(
-    body: Record<string, string>
+    body: Record<string, unknown>
   ): Promise<T> {
     try {
       return await this.#httpClient.post<T>(AGENT_CHAT_CONVERSATIONS_ROUTE, body);
@@ -141,8 +153,18 @@ export class AgentChatService {
     const query = params.toString();
     const suffix = query ? `?${query}` : '';
 
-    return this.#httpClient.get(
+    const raw = await this.#httpClient.get<unknown>(
       `${AGENT_CHAT_CONVERSATIONS_ROUTE}/${encodeURIComponent(args.conversationId)}/events${suffix}`
     );
+
+    const validated = validateHistoryPageResponse(raw);
+    if (!validated.ok) {
+      throw new Error(validated.error.message);
+    }
+
+    return {
+      events: validated.events,
+      olderCursor: validated.olderCursor,
+    };
   }
 }

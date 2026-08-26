@@ -14,6 +14,7 @@ import type {
   ConversationActivityContext,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
+  PersistCustomParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -41,6 +42,7 @@ export type {
   MetadataOp,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
+  PersistCustomParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -369,6 +371,15 @@ export class AgentConversationService {
     return this.ledger.isWorkflowOriginHydrated(environmentId, conversationId, platformMessageId);
   }
 
+  async setNotificationId(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    notificationId: string
+  ): Promise<void> {
+    await this.conversationRepository.setNotificationId(environmentId, organizationId, conversationId, notificationId);
+  }
+
   async listForView(params: {
     view: ActivityView;
     environmentId: string;
@@ -412,6 +423,10 @@ export class AgentConversationService {
     return this.ledger.persistMcpConnectionResult(params);
   }
 
+  async persistCustom(params: PersistCustomParams): Promise<ConversationActivityEntity> {
+    return this.ledger.persistCustom(params);
+  }
+
   async persistTriggerSignal(params: PersistTriggerSignalParams): Promise<void> {
     return this.ledger.persistTriggerSignal(params);
   }
@@ -450,6 +465,13 @@ export class AgentConversationService {
     return this.ledger.findAgentMessageByIdentifier(environmentId, conversationId, identifier);
   }
 
+  async findActivityByIdentifier(
+    environmentId: string,
+    identifier: string
+  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformThreadId'> | null> {
+    return this.ledger.findActivityByIdentifier(environmentId, identifier);
+  }
+
   async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
@@ -462,6 +484,12 @@ export class AgentConversationService {
     params: ConversationActivityContext & { content: string; payload: Record<string, unknown> }
   ): Promise<void> {
     return this.ledger.persistToolUseSignal(params);
+  }
+
+  async persistInboundActionAccept(
+    params: ConversationActivityContext & { identifier: string; actionId: string }
+  ): Promise<void> {
+    return this.ledger.persistInboundActionAccept(params);
   }
 
   async enrichToolUseSignal(params: {

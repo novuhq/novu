@@ -200,6 +200,7 @@ program
     'Override the Connect browser-auth URL (default follows --region, e.g. dashboard.novu.co)'
   )
   .option('--region <region>', `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`, CloudRegionEnum.US)
+  .option('--staging', 'Shorthand for --region staging', false)
   .option(
     '--prompt <text>',
     'Pre-fill the agent description (alternative to positional <prompt>; positional wins when both are set)'
@@ -216,6 +217,7 @@ program
     '--agent-integration-id <id>',
     'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
   )
+  .option('--agent-identifier <identifier>', 'Use an existing agent by identifier (skips the agent picker)')
   .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
   .option(
     '--llm-auth <choice>',
@@ -277,9 +279,9 @@ program
       const channel = options.skipSlack ? 'skip' : options.channel;
       const connectMode = options.chatSdk ? 'chat-sdk' : options.brain === 'chat-sdk' ? 'chat-sdk' : options.runtime;
 
-      if (!prompt && (!connectMode || !isBridgeConnectMode(connectMode))) {
+      if (!prompt && !options.agentIdentifier?.trim() && (!connectMode || !isBridgeConnectMode(connectMode))) {
         console.error(
-          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime is a bridge mode (ai-sdk, langchain, custom-code, chat-sdk).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), --agent-identifier, or --runtime as a bridge mode (ai-sdk, langchain, custom-code, chat-sdk).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }

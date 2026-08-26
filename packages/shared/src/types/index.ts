@@ -19,6 +19,7 @@ export * from './events';
 export * from './feature-flags';
 export * from './files';
 export * from './general';
+export * from './human-interaction';
 export * from './inbound-email';
 export * from './jobs';
 export * from './layout';

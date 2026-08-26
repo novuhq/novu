@@ -1,3 +1,4 @@
+import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
 import { AgentChatService } from './agent-chat-service';
 import { HttpClient } from './http-client';
 
@@ -150,6 +151,7 @@ describe('AgentChatService', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'tool-approval:approve:approval_000001',
+      idempotencyKey: 'idem_abcdefghijkl',
     });
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
@@ -161,6 +163,7 @@ describe('AgentChatService', () => {
           agentId: 'agent_1',
           conversationIdentifier: 'conv_abcdefghijkl',
           actionId: 'tool-approval:approve:approval_000001',
+          idempotencyKey: 'idem_abcdefghijkl',
         }),
       })
     );
@@ -184,6 +187,7 @@ describe('AgentChatService', () => {
       actionId: 'topic-billing',
       sourceMessageId: 'act_card0000001',
       value: 'billing',
+      idempotencyKey: 'idem_billing0001',
     });
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
@@ -197,6 +201,7 @@ describe('AgentChatService', () => {
           actionId: 'topic-billing',
           sourceMessageId: 'act_card0000001',
           value: 'billing',
+          idempotencyKey: 'idem_billing0001',
         }),
       })
     );
@@ -229,5 +234,31 @@ describe('AgentChatService', () => {
       'https://test.novu.co/v1/agent-chat/conversations/conv_abcdefghijkl/events?before=act_page0001&limit=50',
       expect.objectContaining({ method: 'GET' })
     );
+  });
+
+  it('skips invalid envelopes in history pages', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          events: [{ version: AGENT_EVENT_PROTOCOL_VERSION, event: { type: 'run-start' } }],
+          olderCursor: null,
+        },
+      }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    const result = await service.getEvents({
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result).toEqual({ events: [], olderCursor: null });
+    expect(warnSpy).toHaveBeenCalledWith('[novu agent-chat] skipping history envelope:', 'invalid-schema');
+    warnSpy.mockRestore();
   });
 });

@@ -1,6 +1,9 @@
 import { AIMessage, type BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
-import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import type { AgentHandlerContext, AgentHistoryEntry } from '../../resources/agent/agent.types';
+import { type AgentTranscriptSource, resolveTranscriptSource } from '../../resources/agent/history-source';
+import { buildWorkflowOriginInjection } from '../../resources/agent/workflow-origin-injection';
 import { type ApprovalIndex, buildApprovalIndex, mapApprovalRequest, type ToolResultPayload } from './approval-cycles';
+import { mapUserAttachmentParts } from './attachment-parts';
 
 /**
  * Maps Novu conversation ledger entries to LangChain `BaseMessage[]`.
@@ -28,18 +31,27 @@ function distinctHumanSenders(history: AgentHistoryEntry[]): number {
 }
 
 function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): BaseMessage | undefined {
-  if (!entry.content.trim()) {
+  const isAssistant = isAssistantRole(entry.role);
+  const hasText = !!entry.content.trim();
+  const attachmentParts = isAssistant ? [] : mapUserAttachmentParts(entry);
+
+  if (!hasText && attachmentParts.length === 0) {
     return undefined;
   }
 
-  const isAssistant = isAssistantRole(entry.role);
   if (isAssistant) {
     return new AIMessage(entry.content);
   }
 
   const text = multiSender && entry.senderName ? `${entry.senderName}: ${entry.content}` : entry.content;
 
-  return new HumanMessage(text);
+  if (attachmentParts.length === 0) {
+    return new HumanMessage(text);
+  }
+
+  const content = hasText ? [...attachmentParts, { type: 'text' as const, text }] : attachmentParts;
+
+  return new HumanMessage({ content });
 }
 
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): BaseMessage[] {
@@ -59,10 +71,13 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
 }
 
 /**
- * Convert `ctx.history` into LangChain `BaseMessage[]` for `createAgent().invoke(...)`.
+ * Convert conversation context into LangChain `BaseMessage[]` for `createAgent().invoke(...)`.
  *
- * History already includes the current incoming message — do not append the handler's
- * `message` argument on top of it.
+ * Pass `ctx` to prepend `ctx.notification` as an `AIMessage`. Pass `ctx.history` to skip that
+ * injection (e.g. after `isFromWorkflow`). History already includes the current inbound message.
+ *
+ * Returning a `LangChainAgentConfig` hydrates unreachable attachment URLs for you.
+ * If you invoke the agent yourself, wrap this result in `hydrateUnreachableAttachmentUrls`.
  *
  * @param system - Optional system prompt prepended as a `SystemMessage`. Omit it when the
  *   agent already receives a prompt (e.g. via `createAgent({ prompt })`) to avoid duplication.
@@ -73,14 +88,31 @@ export function toLangChainMessages(
   history: AgentHistoryEntry[],
   system?: string,
   freshResults?: Map<string, ToolResultPayload>
+): BaseMessage[];
+export function toLangChainMessages(
+  ctx: Pick<AgentHandlerContext, 'history' | 'notification'>,
+  system?: string,
+  freshResults?: Map<string, ToolResultPayload>
+): BaseMessage[];
+export function toLangChainMessages(
+  source: AgentTranscriptSource,
+  system?: string,
+  freshResults?: Map<string, ToolResultPayload>
 ): BaseMessage[] {
+  const { history, notification } = resolveTranscriptSource(source);
   const multiSender = distinctHumanSenders(history) > 1;
   const index = buildApprovalIndex(history, freshResults);
-  const fromHistory = history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
+  const mapped = history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
+  const withOrigin = notification
+    ? [
+        new AIMessage(buildWorkflowOriginInjection(notification.workflowId, notification.body, notification.payload)),
+        ...mapped,
+      ]
+    : mapped;
 
   if (!system) {
-    return fromHistory;
+    return withOrigin;
   }
 
-  return [new SystemMessage(system), ...fromHistory];
+  return [new SystemMessage(system), ...withOrigin];
 }

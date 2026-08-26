@@ -1,6 +1,6 @@
 ---
 title: 'Email'
-description: "Use the email step in Novu Framework to send email notifications with dynamic subject lines, HTML bodies, attachments, and React Email templates."
+description: "Use the email step in Novu Framework to send email notifications with dynamic subject lines, HTML bodies, and React Email templates."
 ---
 
 The `email` step allows you to send email notifications to your users. This step supports HTML content and can be used with React Email for building beautiful email templates.
@@ -18,13 +18,38 @@ await step.email('welcome-email', async () => {
 
 ## Email Step Output
 
-| Property    | Type         | Required | Description                                         |
-| ----------- | ------------ | -------- | --------------------------------------------------- |
-| subject     | string       | Yes      | The subject line of the email                       |
-| body        | string       | Yes      | The content of the email. Can be plain text or HTML |
-| attachments | Attachment[] | No       | Array of files to attach to the email               |
-| from        | string       | No       | Override the default from address                   |
-| replyTo     | string       | No       | Set a reply-to address for the email                |
+The object your resolver returns must match the schema below. Any other property is rejected by the Framework's output validation.
+
+| Property            | Type                            | Required | Description                                                                                       |
+| ------------------- | ------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| subject             | string                          | Yes      | The subject line of the email.                                                                    |
+| body                | string                          | Yes      | The content of the email. Can be plain text or HTML.                                              |
+| from                | `{ email: string, name?: string }` | No    | Override the default sender address and display name for this send.                               |
+| replyTo             | string                          | No       | Set a Reply-To address for the email.                                                             |
+| preheader           | string                          | No       | Preview text shown next to the subject in most inbox clients.                                     |
+| useProviderDefaults | boolean                         | No       | When `true`, Novu uses the sender values configured on the email provider instead of the workflow. |
+
+## Sending attachments
+
+Attachments are **not** part of the `email` step output schema. Returning an `attachments` array from your step resolver has no effect and is rejected by the Framework's output validation.
+
+Pass attachments in the workflow **trigger payload** instead, then reference them by name in your email body if needed. Each attachment object needs `file` (Buffer or raw base64 without the `data:<mime>;base64,` prefix), `name`, and `mime`. See [Sending attachments](/platform/integrations/email#sending-attachments) on the Email integrations page for the full field reference, size limits, and language examples.
+
+```ts
+await novu.trigger({
+  workflowId: 'welcome-email',
+  to: { subscriberId: 'subscriber_id' },
+  payload: {
+    attachments: [
+      {
+        file: fileBuffer, // Buffer or raw base64 string
+        name: 'report.pdf',
+        mime: 'application/pdf',
+      },
+    ],
+  },
+});
+```
 
 ## Email Step Result
 

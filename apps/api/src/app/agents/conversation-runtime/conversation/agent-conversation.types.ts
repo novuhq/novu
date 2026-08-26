@@ -84,14 +84,16 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
 export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
   platformMessageId: string;
   platformThreadId: string;
-  messageContent: string;
   signalData: Record<string, unknown>;
+  subscriberFirstName?: string;
 }
 
 export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
   approvalId: string;
   approved: boolean;
   toolName?: string;
+  /** Client `idem_*` when the click came from Agent Chat. Reused as the activity identifier. */
+  identifier?: string;
   actorType:
     | ConversationActivitySenderTypeEnum.SUBSCRIBER
     | ConversationActivitySenderTypeEnum.PLATFORM_USER
@@ -121,4 +123,10 @@ export interface PersistMcpConnectionResultParams extends ConversationActivityCo
   mcpId: string;
   status: 'connected' | 'failed';
   message?: string;
+}
+
+export interface PersistCustomParams extends ConversationActivityContext {
+  identifier: string;
+  name: string;
+  data: unknown;
 }

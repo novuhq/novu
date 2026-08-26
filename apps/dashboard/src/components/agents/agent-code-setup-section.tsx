@@ -44,16 +44,21 @@ function resolveConnectRuntime(connectorId: ConnectorId | undefined): ConnectRun
 function buildConnectScaffoldParts({
   secretKey,
   apiUrl,
+  connectDashboardUrl,
   runtime,
 }: {
   secretKey: string;
   apiUrl: string;
+  connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
 }): string[] {
   return [
     `${getNovuConnectInvocation(apiUrl)} --runtime ${runtime}`,
     `--secret-key ${secretKey}`,
-    ...getNovuConnectTargetFlags(apiUrl),
+    ...getNovuConnectTargetFlags({
+      apiUrl,
+      connectDashboardUrl,
+    }),
     '--channel skip',
   ];
 }
@@ -61,29 +66,33 @@ function buildConnectScaffoldParts({
 function buildConnectScaffoldCommand({
   secretKey,
   apiUrl,
+  connectDashboardUrl,
   runtime,
   masked,
 }: {
   secretKey: string;
   apiUrl: string;
+  connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
   masked: boolean;
 }): string {
   const key = masked ? maskSecretKey(secretKey) : secretKey;
 
-  return buildConnectScaffoldParts({ secretKey: key, apiUrl, runtime }).join(' \\\n  ');
+  return buildConnectScaffoldParts({ secretKey: key, apiUrl, connectDashboardUrl, runtime }).join(' \\\n  ');
 }
 
 function buildConnectScaffoldCopyCommand({
   secretKey,
   apiUrl,
+  connectDashboardUrl,
   runtime,
 }: {
   secretKey: string;
   apiUrl: string;
+  connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
 }): string {
-  return buildConnectScaffoldParts({ secretKey, apiUrl, runtime }).join(' ');
+  return buildConnectScaffoldParts({ secretKey, apiUrl, connectDashboardUrl, runtime }).join(' ');
 }
 
 function getProviderSlackMessage(agentName: string): string {
@@ -361,6 +370,7 @@ export function AgentCodeSetupSection({
   const connectRuntime = resolveConnectRuntime(connectorId);
 
   const currentApiUrl = apiHostnameManager.getHostname();
+  const connectDashboardUrl = window.location.origin;
 
   const bridgeConnected = useBridgeConnectionPolling(agent, onBridgeConnected);
 
@@ -402,12 +412,14 @@ export function AgentCodeSetupSection({
               displayCommand={buildConnectScaffoldCommand({
                 secretKey,
                 apiUrl: currentApiUrl,
+                connectDashboardUrl,
                 runtime: connectRuntime,
                 masked: true,
               })}
               copyCommand={buildConnectScaffoldCopyCommand({
                 secretKey,
                 apiUrl: currentApiUrl,
+                connectDashboardUrl,
                 runtime: connectRuntime,
               })}
             />

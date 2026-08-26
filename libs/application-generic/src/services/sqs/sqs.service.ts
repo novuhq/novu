@@ -3,10 +3,94 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Producer } from 'sqs-producer';
 
+import { SqsPartialSendError } from './sqs-partial-send.error';
 import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
-import { ISqsMessage } from './types';
+import { ISqsMessage, SQS_BATCH_BYTE_BUDGET, SQS_MAX_BATCH_ENTRIES } from './types';
 
 const LOG_CONTEXT = 'SqsService';
+
+/**
+ * Approximate wire size of one batch entry. AWS totals the batched messages
+ * against the 1 MiB limit; `Id` and `MessageGroupId` ride along with the body,
+ * so all three are counted. The remaining slack lives in
+ * {@link SQS_BATCH_BYTE_BUDGET}.
+ */
+function entrySizeBytes(message: ISqsMessage): number {
+  return (
+    Buffer.byteLength(message.body, 'utf8') +
+    Buffer.byteLength(message.id, 'utf8') +
+    Buffer.byteLength(message.groupId ?? '', 'utf8')
+  );
+}
+
+/**
+ * Split messages into groups that respect both the per-batch entry count and
+ * the byte budget, so each group becomes exactly one `SendMessageBatch`.
+ *
+ * A message larger than the budget on its own still gets a group to itself
+ * rather than throwing: AWS accepts up to 1 MiB for a single message, and
+ * payload offload is a no-op when no bucket is configured, so rejecting it
+ * here would break deployments that work today.
+ */
+export function packMessagesIntoBatches(messages: ISqsMessage[]): ISqsMessage[][] {
+  const groups: ISqsMessage[][] = [];
+  let current: ISqsMessage[] = [];
+  let currentBytes = 0;
+
+  for (const message of messages) {
+    const size = entrySizeBytes(message);
+    const exceedsCount = current.length >= SQS_MAX_BATCH_ENTRIES;
+    const exceedsBytes = currentBytes + size > SQS_BATCH_BYTE_BUDGET;
+
+    if (current.length > 0 && (exceedsCount || exceedsBytes)) {
+      groups.push(current);
+      current = [];
+      currentBytes = 0;
+    }
+
+    current.push(message);
+    currentBytes += size;
+  }
+
+  if (current.length > 0) {
+    groups.push(current);
+  }
+
+  return groups;
+}
+
+/**
+ * `sqs-producer` throws `FailedMessagesError` when the batch call succeeded but
+ * individual entries were rejected. The class is not exported from the package
+ * root, so match on its shape.
+ */
+function getFailedEntryIds(error: unknown): string[] | undefined {
+  const failed = (error as { failedMessages?: unknown })?.failedMessages;
+
+  /*
+   * An empty array must not count as "these entries failed" - it would mark the
+   * whole group as sent and silently drop it. Requiring entries also rejects
+   * `SqsPartialSendError`, whose own list holds messages rather than id strings.
+   */
+  return Array.isArray(failed) && failed.length > 0 && failed.every((id) => typeof id === 'string')
+    ? (failed as string[])
+    : undefined;
+}
+
+/**
+ * Messages left undelivered once the group at `failedIndex` failed: everything
+ * in later groups was never attempted, and from the failing group either the
+ * entries SQS named or - when the call itself threw - all of them.
+ */
+function collectUnsentMessages(groups: ISqsMessage[][], failedIndex: number, error: unknown): ISqsMessage[] {
+  const failedEntryIds = getFailedEntryIds(error);
+  const failedGroup = groups[failedIndex];
+  const unsentFromFailedGroup = failedEntryIds
+    ? failedGroup.filter((message) => failedEntryIds.includes(message.id))
+    : failedGroup;
+
+  return [...unsentFromFailedGroup, ...groups.slice(failedIndex + 1).flat()];
+}
 
 @Injectable()
 export class SqsService {
@@ -78,6 +162,9 @@ export class SqsService {
         const producer = Producer.create({
           queueUrl,
           sqs: this.client,
+          // Pinned so the one-API-call-per-group guarantee sendBulk relies on
+          // cannot drift with the library default.
+          batchSize: SQS_MAX_BATCH_ENTRIES,
         });
         this.producers.set(topic, producer);
       }
@@ -138,8 +225,15 @@ export class SqsService {
 
   /**
    * Send multiple messages to SQS in bulk.
-   * The sqs-producer will automatically batch them in groups of 10.
    * Large payloads are individually offloaded to S3 before sending.
+   *
+   * Messages are grouped by both entry count and byte size before being handed
+   * to `sqs-producer`, which only slices by count and would otherwise build
+   * batches that breach the 1 MiB aggregate limit. Each group is sent on its
+   * own call so that a failure is attributable to specific messages.
+   *
+   * @throws {SqsPartialSendError} when some messages were delivered and others
+   * were not, so the caller can re-queue only the unsent ones.
    */
   public async sendBulk(topic: JobTopicNameEnum, messages: ISqsMessage[]): Promise<void> {
     const producer = this.getProducer(topic);
@@ -155,9 +249,38 @@ export class SqsService {
       })
     );
 
-    await producer.send(offloadedMessages);
+    const groups = packMessagesIntoBatches(offloadedMessages);
 
-    Logger.debug({ message: 'Sent bulk messages to SQS', topic, count: messages.length }, LOG_CONTEXT);
+    let sentCount = 0;
+
+    for (const [index, group] of groups.entries()) {
+      try {
+        // eslint-disable-next-line no-await-in-loop -- sequential keeps the sent/unsent split exact
+        await producer.send(group);
+        sentCount += group.length;
+      } catch (error) {
+        const unsent = collectUnsentMessages(groups, index, error);
+
+        Logger.error(
+          {
+            topic,
+            error: error instanceof Error ? error.message : String(error),
+            totalCount: offloadedMessages.length,
+            sentCount: offloadedMessages.length - unsent.length,
+            unsentCount: unsent.length,
+          },
+          'SQS bulk send failed partway',
+          LOG_CONTEXT
+        );
+
+        throw new SqsPartialSendError(unsent, offloadedMessages.length - unsent.length, error);
+      }
+    }
+
+    Logger.debug(
+      { message: 'Sent bulk messages to SQS', topic, count: sentCount, batches: groups.length },
+      LOG_CONTEXT
+    );
   }
 
   private async maybeOffloadBody(body: string, topic: JobTopicNameEnum, id: string, groupId: string): Promise<string> {

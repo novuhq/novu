@@ -10,16 +10,27 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
+import { type ContentPart, type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
+import {
+  AgentAttachmentStorage,
+  type StoredAttachment,
+} from '../conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
+import { WorkflowOriginService } from '../conversation-runtime/ingress/workflow-origin.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
-import { buildLiveSessionMessages } from './build-live-session-messages';
+import { buildLiveSessionMessages, buildOriginAssistantMessage } from './build-live-session-messages';
+import {
+  applyUserContentToLatestUserTurn,
+  buildUserMessageContent,
+  preserveMediaThroughThalamusPacking,
+} from './build-user-message-content';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
@@ -30,7 +41,8 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
-  workflowOriginContent?: string;
+  storedAttachments?: StoredAttachment[];
+  workflowOrigin?: WorkflowOriginSnapshot | null;
   platformThreadId?: string;
   platformMessageId?: string;
 }
@@ -74,6 +86,8 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
     private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
+    private readonly attachmentStorage: AgentAttachmentStorage,
+    private readonly workflowOriginService: WorkflowOriginService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -115,7 +129,29 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberMongoId: context.subscriber?._id,
     });
 
-    const messages = sessionId ? buildLiveSessionMessages(context) : await this.buildMessagesWithHistory(context);
+    const userContent = await buildUserMessageContent({
+      userMessageText: context.userMessageText,
+      attachments: context.storedAttachments,
+      getBytes: (storageKey) =>
+        this.attachmentStorage.getBytes(storageKey, {
+          organizationId: context.config.organizationId,
+          environmentId: context.config.environmentId,
+          conversationId: String(context.conversation._id),
+        }),
+      logger: this.logger,
+    });
+
+    const messages = preserveMediaThroughThalamusPacking(
+      sessionId
+        ? buildLiveSessionMessages(
+            {
+              userMessageText: context.userMessageText,
+              workflowOrigin: context.workflowOrigin?.source === 'hydrated' ? context.workflowOrigin : null,
+            },
+            userContent
+          )
+        : await this.buildMessagesWithHistory(context, userContent)
+    );
 
     const sendResult = await provider.send({
       messages,
@@ -175,13 +211,24 @@ export class ManagedAgentService implements OnModuleInit {
       return null;
     }
 
+    const platformThreadId = params.conversation.channels?.[0]?.platformThreadId ?? '';
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId: params.agent._id,
+      config: params.config,
+      conversation: params.conversation,
+      platformThreadId,
+      subscriberId: params.subscriber.subscriberId,
+      resolution: null,
+    });
+
     return this.dispatch(
       {
         config: params.config,
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
-        platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
+        workflowOrigin,
+        platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
       },
       params.agent
@@ -402,7 +449,10 @@ export class ManagedAgentService implements OnModuleInit {
     await provider.dispatchQueued(params.sessionId, params.runId, params.turnId, params.request);
   }
 
-  private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
+  private async buildMessagesWithHistory(
+    context: ManagedAgentContext,
+    userContent: string | ContentPart[]
+  ): Promise<Message[]> {
     const page = await this.conversationService.listForView({
       view: 'llm_transcript',
       environmentId: context.config.environmentId,
@@ -422,7 +472,16 @@ export class ManagedAgentService implements OnModuleInit {
 
     // New Anthropic session (no externalSessionId) — collapse so Thalamus does not
     // re-run every historical USER turn as a live event on reopen after resolve.
-    return collapseHistoryForNewSession(messages, context.userMessageText);
+    const collapsed = applyUserContentToLatestUserTurn(
+      collapseHistoryForNewSession(messages, context.userMessageText),
+      userContent
+    );
+
+    if (!context.workflowOrigin) {
+      return collapsed;
+    }
+
+    return [buildOriginAssistantMessage(context.workflowOrigin), ...collapsed];
   }
 
   private async resolveVaultIdsForTurn(

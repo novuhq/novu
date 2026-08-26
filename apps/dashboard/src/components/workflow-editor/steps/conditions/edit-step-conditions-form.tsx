@@ -14,7 +14,11 @@ import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { z } from 'zod';
 
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
-import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
+import {
+  isRelativeDateOperator,
+  isUnaryJsonLogicOperator,
+  isValuelessOperator,
+} from '@/components/conditions-editor/field-type-operators';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -44,6 +48,12 @@ function isContainsAnyOperator(operator: string): boolean {
 }
 
 const customRuleProcessor = (rule: RuleType, options: any) => {
+  if (isUnaryJsonLogicOperator(rule.operator)) {
+    return {
+      [rule.operator]: [{ var: rule.field }],
+    };
+  }
+
   if (isRelativeDateOperator(rule.operator)) {
     try {
       const parsedValue = JSON.parse(rule.value as string);
@@ -134,7 +144,7 @@ const getRuleSchema = (
               path: ['value'],
             });
           }
-        } else if (operator !== 'null' && operator !== 'notNull') {
+        } else if (!isValuelessOperator(operator)) {
           const trimmedValue = value?.trim();
 
           if (!trimmedValue || trimmedValue.length === 0) {

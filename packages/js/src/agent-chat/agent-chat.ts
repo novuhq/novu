@@ -6,30 +6,55 @@ import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
-import { type AgentMessage, derivePendingActions } from './agent-message.types';
+import { AgentConversationRuntime } from './agent-conversation-runtime';
+import { type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
+import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
+import { createActionIdempotencyKeyForScope, createMessageIdempotencyKey } from './idempotency';
+import { runtimeCacheKey } from './runtime-cache-key';
 import type {
+  AgentChatChange,
+  AgentChatMessagesUpdated,
+  AgentChatPagination,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
   RespondToActionArgs,
   RespondToActionResult,
+  RetryMessageArgs,
+  RetryMessageResult,
   SendActionArgs,
   SendActionResult,
   SendMessageArgs,
   SendMessageResult,
 } from './types';
+import { parseAgentEventEnvelope } from './validate-envelope';
+
+function conversationErrorToNovuError(error: AgentConversationError): NovuError {
+  return new NovuError(error.message, new Error(error.code ?? error.message));
+}
+
+function entryPagination(entry: ConversationEntry): AgentChatPagination {
+  return {
+    status: entry.paginationStatus,
+    hasMore: entry.olderCursor != null,
+  };
+}
+
+/** Safety cap on reconnect catch-up HTTP pages when a sequence checkpoint exists. Exceeding this sets a public error. */
+const CATCH_UP_PAGE_LIMIT = 20;
 
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
   #store: AgentChatStore;
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
+  #runtimes = new Map<string, AgentConversationRuntime>();
   /**
-   * Non-null while a reconnect catch-up is in flight: live envelopes are buffered here
-   * and applied after the HTTP page is absorbed. Serialized via `#catchUpChain`.
+   * Per-conversation live envelope buffers while reconnect catch-up is in flight.
+   * Map key means catch-up is in flight; only those conversations buffer live envelopes.
    */
-  #catchUpBuffer: AgentEventEnvelope[] | null = null;
+  #catchUpBuffers = new Map<string, AgentEventEnvelope[]>();
   #catchUpChain: Promise<void> = Promise.resolve();
 
   constructor({
@@ -47,19 +72,7 @@ export class AgentChat extends BaseModule {
     this.#agentChatService = agentChatService;
     this.#socket = socket;
     this.#store = new AgentChatStore((entry, change) => {
-      this._emitter.emit('agent_chat.messages.updated', {
-        data: {
-          agentId: entry.agentId,
-          conversationId: entry.conversationId,
-          key: entry.key,
-          messages: entry.messages,
-          isRunning: entry.isRunning,
-          typing: entry.typing,
-          status: entry.status,
-          hasMore: entry.olderCursor != null,
-          change,
-        },
-      });
+      this.#emitMessagesUpdated(entry, change);
     });
     this._emitter.on('agent_chat.agent_event', ({ result }) => {
       this.#handleAgentEvent(result);
@@ -93,8 +106,60 @@ export class AgentChat extends BaseModule {
   }
 
   clearCache(): void {
+    for (const runtime of [...this.#runtimes.values()]) {
+      runtime.dispose();
+    }
+
     this.#store.clear();
-    this.#catchUpBuffer = null;
+    this.#catchUpBuffers.clear();
+    this.#runtimes.clear();
+  }
+
+  /**
+   * Return a stable conversation runtime for one agent thread.
+   * Resume sessions (`conversationId` set) are reused across calls with the same identity.
+   */
+  conversation(args: ConversationArgs): ConversationResult<AgentConversationRuntime> {
+    const cacheKey = args.conversationId ? runtimeCacheKey(args.agentId, args.conversationId) : undefined;
+    if (cacheKey) {
+      const existing = this.#runtimes.get(cacheKey);
+      if (existing) {
+        return { ok: true, data: existing };
+      }
+    }
+
+    const runtime = new AgentConversationRuntime(this, args);
+    if (cacheKey) {
+      this.#runtimes.set(cacheKey, runtime);
+    }
+
+    return { ok: true, data: runtime };
+  }
+
+  /** @internal */
+  onMessagesUpdated(listener: (data: AgentChatMessagesUpdated) => void): () => void {
+    return this._emitter.on('agent_chat.messages.updated', ({ data }) => {
+      listener(data);
+    });
+  }
+
+  /** @internal */
+  registerRuntime(cacheKey: string, runtime: AgentConversationRuntime): void {
+    const existing = this.#runtimes.get(cacheKey);
+    if (existing && existing !== runtime) {
+      existing.dispose();
+    }
+
+    this.#runtimes.set(cacheKey, runtime);
+  }
+
+  /** @internal */
+  unregisterRuntime(runtime: AgentConversationRuntime): void {
+    for (const [key, value] of this.#runtimes.entries()) {
+      if (value === runtime) {
+        this.#runtimes.delete(key);
+      }
+    }
   }
 
   getConversation({ agentId, conversationId, key }: { agentId: string; conversationId?: string; key?: string }):
@@ -106,6 +171,10 @@ export class AgentChat extends BaseModule {
         typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
         hasMore: boolean;
+        pagination: AgentChatPagination;
+        isRecovering: boolean;
+        error?: NovuError;
+        catchUpError?: NovuError;
       }
     | undefined {
     const entry = key
@@ -126,6 +195,10 @@ export class AgentChat extends BaseModule {
       typing: entry.typing,
       status: entry.status,
       hasMore: entry.olderCursor != null,
+      pagination: entryPagination(entry),
+      isRecovering: entry.isRecovering,
+      error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
+      catchUpError: entry.catchUpError,
     };
   }
 
@@ -155,10 +228,14 @@ export class AgentChat extends BaseModule {
           };
         }
 
+        const scope = `respond:${conversationId}:${args.actionId}:${args.decision}`;
+        const idempotencyKey = createActionIdempotencyKeyForScope(scope);
+
         return this.#agentChatService.respondToAction({
           agentId: args.agentId,
           conversationId,
           actionId,
+          idempotencyKey,
           agentHash: args.agentHash,
         });
       }
@@ -180,12 +257,16 @@ export class AgentChat extends BaseModule {
           return { error: new NovuError('sourceMessageId is required', new Error('missing source message id')) };
         }
 
+        const scope = `send:${conversationId}:${actionId}:${sourceMessageId}:${args.value ?? ''}`;
+        const idempotencyKey = createActionIdempotencyKeyForScope(scope);
+
         return this.#agentChatService.sendAction({
           agentId: args.agentId,
           conversationId,
           actionId,
           sourceMessageId,
           value: args.value,
+          idempotencyKey,
           agentHash: args.agentHash,
         });
       }
@@ -244,67 +325,197 @@ export class AgentChat extends BaseModule {
         };
       }
 
-      try {
-        const page = await this.#agentChatService.getEvents({
-          conversationId: entry.conversationId,
-          before: entry.olderCursor,
-        });
-        const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
+      return this.#store.withFetchMoreClaim(entry, async () => {
+        const epochAtStart = entry.paginationEpoch;
 
-        return {
-          data: {
-            messages: next.messages,
-            hasMore: next.olderCursor != null,
-          },
-        };
-      } catch (error) {
-        return { error: new NovuError('Failed to load older agent chat messages', error) };
-      }
+        try {
+          const page = await this.#agentChatService.getEvents({
+            conversationId: entry.conversationId!,
+            before: entry.olderCursor!,
+          });
+
+          if (epochAtStart !== entry.paginationEpoch) {
+            return {
+              data: {
+                messages: entry.messages,
+                hasMore: entry.olderCursor != null,
+              },
+            };
+          }
+
+          const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
+
+          return {
+            data: {
+              messages: next.messages,
+              hasMore: next.olderCursor != null,
+            },
+          };
+        } catch (error) {
+          return { error: new NovuError('Failed to load older agent chat messages', error) };
+        }
+      });
     });
   }
 
+  /**
+   * Send a user message. Overlapping send while a run is active is rejected.
+   * Cancel-previous is NV-8643.
+   */
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult, NovuError | AgentChatPlanLimitError> {
     return this.callWithSession<SendMessageResult, NovuError | AgentChatPlanLimitError>(async () => {
       const key = args.key ?? args.conversationId ?? createLocalConversationKey();
       const entry = this.#resolveSendEntry(args, key);
-      const optimisticId = this.#store.appendSending(entry, args.text);
 
-      return this.#store.withCreateClaim(entry, args.conversationId, async (conversationId) => {
-        try {
-          const data = await this.#agentChatService.sendMessage({
-            agentId: args.agentId,
-            text: args.text,
-            conversationId,
-            agentHash: args.agentHash,
-          });
+      const blocked = this.#maybeBlockSendDuringRun(entry);
+      if (blocked) {
+        return blocked;
+      }
 
-          this.#store.markSent(entry, {
-            optimisticMessageId: optimisticId,
-            serverMessageId: data.messageId,
-            conversationId: data.identifier,
-          });
+      const idempotencyKey = createMessageIdempotencyKey();
+      const optimisticId = this.#store.appendSending(entry, args.text, idempotencyKey);
 
-          // Live WS can arrive before the HTTP ack claims conversationId; those
-          // envelopes are dropped by #applyLiveEnvelope. Catch up immediately.
-          this.#requestCatchUp();
-
-          return {
-            data: {
-              conversationId: data.identifier,
-              messageId: data.messageId,
-            },
-          };
-        } catch (error) {
-          this.#store.markFailed(entry, optimisticId);
-
-          if (error instanceof AgentChatPlanLimitError) {
-            return { error };
-          }
-
-          return { error: new NovuError('Failed to send agent chat message', error) };
-        }
+      return this.#deliverOutboundMessage(entry, {
+        agentId: args.agentId,
+        text: args.text,
+        conversationId: args.conversationId,
+        agentHash: args.agentHash,
+        metadata: args.metadata,
+        optimisticId,
+        idempotencyKey,
       });
     });
+  }
+
+  /**
+   * Resubmit a failed outbound message using its original idempotency identity.
+   * Does not append a new optimistic bubble or mint a new key.
+   */
+  async retryMessage(args: RetryMessageArgs): Result<RetryMessageResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<RetryMessageResult, NovuError | AgentChatPlanLimitError>(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      if (!entry) {
+        return {
+          error: new NovuError('Cannot retry message without a conversation holder', new Error('missing entry')),
+        };
+      }
+
+      const message = this.#store.findMessage(entry, args.messageId);
+      if (!message?.idempotencyKey) {
+        return {
+          error: new NovuError('Message is not retryable', new Error('missing idempotency key')),
+        };
+      }
+
+      if (message.status === 'sent') {
+        const conversationId = entry.conversationId ?? args.conversationId;
+        if (!conversationId) {
+          return {
+            error: new NovuError('Message is not retryable', new Error('missing conversation id')),
+          };
+        }
+
+        return {
+          data: {
+            conversationId,
+            messageId: message.id,
+          },
+        };
+      }
+
+      if (message.status !== 'failed') {
+        return {
+          error: new NovuError('Message is not retryable', new Error(`status ${message.status}`)),
+        };
+      }
+
+      const blocked = this.#maybeBlockSendDuringRun(entry);
+      if (blocked) {
+        return blocked;
+      }
+
+      const text = message.parts.find((part) => part.type === 'text')?.text;
+      if (!text) {
+        return {
+          error: new NovuError('Message is not retryable', new Error('missing text part')),
+        };
+      }
+
+      if (!this.#store.markRetrying(entry, args.messageId)) {
+        return {
+          error: new NovuError('Message is not retryable', new Error('mark retry failed')),
+        };
+      }
+
+      return this.#deliverOutboundMessage(entry, {
+        agentId: args.agentId,
+        text,
+        conversationId: entry.conversationId ?? args.conversationId,
+        agentHash: args.agentHash,
+        optimisticId: args.messageId,
+        idempotencyKey: message.idempotencyKey,
+      });
+    });
+  }
+
+  async #deliverOutboundMessage(
+    entry: ConversationEntry,
+    args: {
+      agentId: string;
+      text: string;
+      conversationId?: string;
+      agentHash?: string;
+      metadata?: SendMessageArgs['metadata'];
+      optimisticId: string;
+      idempotencyKey: string;
+    }
+  ): Result<SendMessageResult, NovuError | AgentChatPlanLimitError> {
+    return this.#store.withCreateClaim(entry, args.conversationId, async (conversationId) => {
+      try {
+        const data = await this.#agentChatService.sendMessage({
+          agentId: args.agentId,
+          text: args.text,
+          conversationId,
+          messageId: args.idempotencyKey,
+          agentHash: args.agentHash,
+          metadata: args.metadata,
+        });
+
+        this.#store.markSent(entry, {
+          optimisticMessageId: args.optimisticId,
+          serverMessageId: data.messageId,
+          conversationId: data.identifier,
+          idempotencyKey: args.idempotencyKey,
+        });
+
+        this.#requestCatchUp();
+
+        return {
+          data: {
+            conversationId: data.identifier,
+            messageId: data.messageId,
+          },
+        };
+      } catch (error) {
+        this.#store.markFailed(entry, args.optimisticId);
+
+        if (error instanceof AgentChatPlanLimitError) {
+          return { error };
+        }
+
+        return { error: new NovuError('Failed to send agent chat message', error) };
+      }
+    });
+  }
+
+  #maybeBlockSendDuringRun(entry: ConversationEntry): { error: NovuError } | undefined {
+    if (!entry.isRunning) {
+      return undefined;
+    }
+
+    return {
+      error: new NovuError('Cannot send while the agent is running', new Error('send rejected during active run')),
+    };
   }
 
   /**
@@ -411,15 +622,25 @@ export class AgentChat extends BaseModule {
   /**
    * Live WS path: apply envelopes into open conversations only.
    * Unknown conversations are dropped — mount/resume creates the entry.
-   * During reconnect catch-up, all live envelopes are buffered until HTTP finishes.
+   * During reconnect catch-up for a conversation, only that conversation's envelopes buffer.
    */
-  #handleAgentEvent(envelope: AgentEventEnvelope): void {
-    if (!envelope.conversationIdentifier) {
+  #handleAgentEvent(raw: unknown): void {
+    const parsed = parseAgentEventEnvelope(raw);
+    if (!parsed.ok) {
+      console.warn('[novu agent-chat] skipping live envelope:', parsed.reason);
+
       return;
     }
 
-    if (this.#catchUpBuffer) {
-      this.#catchUpBuffer.push(envelope);
+    const envelope = parsed.envelope;
+    const conversationId = envelope.conversationIdentifier;
+    if (!conversationId) {
+      return;
+    }
+
+    if (this.#catchUpBuffers.has(conversationId)) {
+      const buffer = this.#catchUpBuffers.get(conversationId);
+      buffer?.push(envelope);
 
       return;
     }
@@ -465,41 +686,62 @@ export class AgentChat extends BaseModule {
       byConversationId.set(entry.conversationId, holders);
     }
 
-    this.#catchUpBuffer = [];
+    await Promise.all(
+      [...byConversationId.entries()].map(([conversationId, holders]) =>
+        this.#catchUpConversation(conversationId, holders)
+      )
+    );
+  }
 
-    try {
-      await Promise.all(
-        [...byConversationId.entries()].map(([conversationId, holders]) =>
-          this.#catchUpConversation(conversationId, holders)
-        )
-      );
-    } finally {
-      const buffered = this.#catchUpBuffer ?? [];
-      this.#catchUpBuffer = null;
-
-      for (const envelope of buffered) {
-        this.#applyLiveEnvelope(envelope);
-      }
-    }
+  #emitMessagesUpdated(entry: ConversationEntry, change: AgentChatChange): void {
+    this._emitter.emit('agent_chat.messages.updated', {
+      data: {
+        agentId: entry.agentId,
+        conversationId: entry.conversationId,
+        key: entry.key,
+        messages: entry.messages,
+        isRunning: entry.isRunning,
+        typing: entry.typing,
+        status: entry.status,
+        hasMore: entry.olderCursor != null,
+        pagination: entryPagination(entry),
+        error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
+        isRecovering: entry.isRecovering,
+        ...(entry.catchUpError ? { catchUpError: entry.catchUpError } : {}),
+        change,
+      },
+    });
   }
 
   async #catchUpConversation(conversationId: string, holders: ConversationEntry[]): Promise<void> {
+    const activeHolders = holders
+      .map((holder) => this.#store.get(holder.key))
+      .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
+
+    if (activeHolders.length === 0) {
+      return;
+    }
+
+    this.#catchUpBuffers.set(conversationId, []);
+    for (const entry of activeHolders) {
+      this.#store.setRecoveryState(entry, { isRecovering: true });
+    }
+
+    let discardBufferedEnvelopes = false;
+
     try {
-      const activeHolders = holders
-        .map((holder) => this.#store.get(holder.key))
-        .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
-
-      if (activeHolders.length === 0) {
-        return;
-      }
-
       // Page toward older events until we reach already-known sequence territory.
       // One newest page is not enough when the offline gap exceeds the server page size.
       const knownThrough = Math.min(...activeHolders.map((entry) => entry.lastSequence));
       const missed: AgentEventEnvelope[] = [];
       let before: string | undefined;
+      let completed = false;
 
-      for (let pageIndex = 0; pageIndex < 20; pageIndex += 1) {
+      for (let pageIndex = 0; ; pageIndex += 1) {
+        if (knownThrough > 0 && pageIndex >= CATCH_UP_PAGE_LIMIT) {
+          break;
+        }
+
         const page = await this.#agentChatService.getEvents({
           conversationId,
           ...(before ? { before } : {}),
@@ -508,11 +750,31 @@ export class AgentChat extends BaseModule {
         missed.push(...envelopes);
 
         const oldestInPage = envelopes[0]?.sequence;
-        if (page.olderCursor == null || oldestInPage == null || oldestInPage <= knownThrough) {
+        if (page.olderCursor == null || oldestInPage == null) {
+          completed = true;
+          break;
+        }
+
+        if (knownThrough > 0 && oldestInPage <= knownThrough) {
+          completed = true;
           break;
         }
 
         before = page.olderCursor;
+      }
+
+      if (!completed) {
+        // On catch-up failure the conversation stays stale and errored rather than showing messages across a known gap.
+        discardBufferedEnvelopes = true;
+        const catchUpError = new NovuError(
+          'Agent chat reconnect catch-up exceeded the safety page limit; conversation history may be incomplete',
+          new Error('catch_up_limit_exceeded')
+        );
+        for (const entry of activeHolders) {
+          this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
+        }
+
+        return;
       }
 
       // Apply oldest→newest so message order stays chronological across pages.
@@ -524,12 +786,39 @@ export class AgentChat extends BaseModule {
           continue;
         }
 
+        this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError: undefined });
         for (const envelope of missed) {
           this.#store.applyLiveEnvelope(entry, envelope);
         }
       }
-    } catch {
-      // Best-effort catch-up; buffered live envelopes still flush in the outer finally.
+    } catch (error) {
+      const catchUpError = new NovuError('Failed to recover agent chat conversation after reconnect', error);
+      for (const holder of activeHolders) {
+        const entry = this.#store.get(holder.key);
+        if (!entry || entry.conversationId !== conversationId) {
+          continue;
+        }
+
+        this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
+      }
+    } finally {
+      const buffered = this.#catchUpBuffers.get(conversationId) ?? [];
+      this.#catchUpBuffers.delete(conversationId);
+
+      for (const holder of activeHolders) {
+        const entry = this.#store.get(holder.key);
+        if (!entry || entry.conversationId !== conversationId) {
+          continue;
+        }
+
+        this.#store.setRecoveryState(entry, { isRecovering: false, catchUpError: entry.catchUpError });
+      }
+
+      if (!discardBufferedEnvelopes) {
+        for (const envelope of buffered) {
+          this.#applyLiveEnvelope(envelope);
+        }
+      }
     }
   }
 }

@@ -270,6 +270,8 @@ function performPinnedRequest(params: PinnedRequestParams): Promise<SafeOutbound
       res.on('error', reject);
     });
 
+    stripTracePropagationHeaders(req);
+
     req.on('timeout', () => {
       const timeoutError: NodeJS.ErrnoException = new Error(
         `Request to ${parsed.hostname} timed out after ${timeoutMs}ms.`
@@ -351,10 +353,29 @@ const SENSITIVE_HEADER_PATTERNS = [
   /-hmac/i,
 ];
 
+const TRACE_PROPAGATION_HEADER_PATTERNS = [
+  /^traceparent$/i,
+  /^tracestate$/i,
+  /^baggage$/i,
+  /^b3$/i,
+  /^x-b3-/i,
+  /^newrelic$/i,
+  /^x-newrelic-/i,
+  /^sentry-trace$/i,
+];
+
 function stripSensitiveHeaders(headers: Record<string, string | undefined>): void {
   for (const key of Object.keys(headers)) {
     if (SENSITIVE_HEADER_PATTERNS.some((re) => re.test(key))) {
       delete headers[key];
+    }
+  }
+}
+
+function stripTracePropagationHeaders(request: http.ClientRequest): void {
+  for (const header of request.getHeaderNames()) {
+    if (TRACE_PROPAGATION_HEADER_PATTERNS.some((re) => re.test(header))) {
+      request.removeHeader(header);
     }
   }
 }

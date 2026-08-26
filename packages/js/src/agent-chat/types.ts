@@ -1,4 +1,5 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { NovuError } from '../utils/errors';
 import type {
   AgentConversationStatus,
   AgentConversationTyping,
@@ -33,6 +34,7 @@ export type AgentHashFields = {
 export type SendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
+  metadata?: Record<string, unknown>;
   /**
    * Existing conversation to append to.
    * Omit this field to create a new conversation. The client does not reuse a prior chat.
@@ -50,6 +52,15 @@ export type SendMessageResult = {
   conversationId: string;
   messageId: string;
 };
+
+export type RetryMessageArgs = AgentHashFields & {
+  agentId: string;
+  messageId: string;
+  conversationId?: string;
+  key?: string;
+};
+
+export type RetryMessageResult = SendMessageResult;
 
 export type LoadConversationArgs = {
   agentId: string;
@@ -70,6 +81,13 @@ export type FetchMoreArgs = {
 
 export type FetchMoreResult = {
   messages: AgentMessage[];
+  hasMore: boolean;
+};
+
+export type AgentChatPaginationStatus = 'idle' | 'loading' | 'error';
+
+export type AgentChatPagination = {
+  status: AgentChatPaginationStatus;
   hasMore: boolean;
 };
 
@@ -128,5 +146,11 @@ export type AgentChatMessagesUpdated = {
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;
+  pagination: AgentChatPagination;
+  error?: NovuError;
+  /** True while reconnect catch-up is in flight for this conversation. */
+  isRecovering: boolean;
+  /** Set when catch-up hits the safety page limit or HTTP ultimately fails. */
+  catchUpError?: NovuError;
   change: AgentChatChange;
 };

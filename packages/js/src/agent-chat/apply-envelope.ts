@@ -35,13 +35,14 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
 
   switch (event.type) {
     case 'run-start':
-      return { ...state, isRunning: true };
+      return { ...state, isRunning: true, error: undefined };
 
     case 'run-finish':
       return finalizeOpenStreamingParts({
         ...state,
         isRunning: false,
         activeAssistantMessageId: undefined,
+        error: undefined,
       });
 
     case 'run-error':
@@ -224,8 +225,14 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'channel.reaction':
     case 'connection.error':
     case 'signal':
-    case 'custom':
+    case 'provider-event':
       return state;
+
+    case 'custom':
+      return withActiveAssistantMessage(state, envelope, (message) => ({
+        ...message,
+        parts: [...message.parts, { type: 'data', name: event.name, data: event.data }],
+      }));
 
     default:
       return state;
@@ -628,7 +635,8 @@ function finalizeOpenStreamingParts(state: AgentConversationState): AgentConvers
 
 export function appendUserMessage(
   state: AgentConversationState,
-  message: Pick<AgentMessage, 'id' | 'parts' | 'createdAt' | 'status'> & Partial<Pick<AgentMessage, 'role'>>
+  message: Pick<AgentMessage, 'id' | 'parts' | 'createdAt' | 'status'> &
+    Partial<Pick<AgentMessage, 'role' | 'idempotencyKey'>>
 ): AgentConversationState {
   const role: AgentMessageRole = message.role ?? 'user';
 
@@ -642,6 +650,7 @@ export function appendUserMessage(
         parts: message.parts,
         createdAt: message.createdAt,
         status: message.status,
+        ...(message.idempotencyKey ? { idempotencyKey: message.idempotencyKey } : {}),
       },
     ],
   };

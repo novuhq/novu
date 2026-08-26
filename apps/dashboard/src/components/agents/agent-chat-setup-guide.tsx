@@ -43,6 +43,7 @@ export function AgentChatSetupGuide({
   const stepsColumn = (
     <AgentChatSetupSteps
       prompt={prompt}
+      agentIdentifier={agent.identifier}
       stepOffset={stepOffset}
       firstIncompleteStep={firstIncompleteStep}
       onOpenChat={() => openPreview(agent.identifier)}

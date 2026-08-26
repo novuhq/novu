@@ -4,6 +4,11 @@ export { APPLICATION_IDENTIFIER_PLACEHOLDER, SUBSCRIBER_ID_PLACEHOLDER } from '.
 
 export const CONNECT_EMBED_DOCS_INDEX = 'https://docs.novu.co/llms.txt';
 
+export const CONNECT_EMBED_TEMPLATE_URL =
+  'https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/agent-chat/ts';
+
+export const CONNECT_EMBED_TEMPLATE_LOCAL_PATH = 'packages/novu/src/commands/connect/templates/agent-chat/ts';
+
 export type ConnectEmbedRuntime =
   | 'ai-sdk'
   | 'langchain'
@@ -285,22 +290,29 @@ function renderAgentChatSection(input: { subscriberId: string }): string {
 
 Follow these docs (fetch as \`.md\`). **Skip** dashboard channel-setup steps.
 
-- https://docs.novu.co/agents/channels/agent-chat/quickstart.md — main UI guide
+- https://docs.novu.co/agents/channels/agent-chat/quickstart.md — hook + parts API
 - https://docs.novu.co/platform/sdks/react/hooks/use-agent-chat.md — hook reference
 
-Reference implementation (behavior only — do not copy UI or dashboard imports):
+Must render (capabilities only — match this app's routing, components, and styling):
 
-- GitHub: https://github.com/novuhq/novu/tree/next/apps/dashboard/src/components/agents/agent-chat-panel
-- If the Novu monorepo is checked out locally, read \`apps/dashboard/src/components/agents/agent-chat-panel/\`
-- Study: \`NovuProvider\` (\`apiUrl\` + \`socketUrl\`), \`useAgentChat\`, \`message.parts\`, \`sendAction\`, \`respondToAction\`, composer disable while \`isRunning\` / \`isLoading\`
-- Adapt patterns to this project's framework and styling; do not import dashboard components or design tokens
+- Empty state + 2–3 starter prompts
+- \`message.parts\`: text (markdown + streaming cursor), tool rows, cards (\`sendAction\`)
+- Approvals + MCP authorize **in the thread** via \`respondToAction\` / authorize URL — not a footer stack
+- Thinking indicator from \`typing\` / \`isRunning\` ("Thinking…"); hide it while a pending approval or MCP connect is on screen
+- Composer disabled while \`isRunning\` / \`isLoading\`
+- Error banner
+- Optional: load older messages with \`pagination.hasMore\` / \`pagination.fetchMore\`
+
+If you need a working example of those capabilities:
+
+- GitHub: ${CONNECT_EMBED_TEMPLATE_URL}
+- Local checkout: \`${CONNECT_EMBED_TEMPLATE_LOCAL_PATH}/\`
 
 Hard rules (partly in docs, rest connect-specific):
 
 - Install \`@novu/react\`; no \`<AgentChat />\` component exists.
 - Wire env vars from the Context section; do not hardcode identifiers in source.
-- Render \`message.parts\`, a composer (disable while \`isRunning\` / \`isLoading\`), and tool approvals via \`respondToAction\`.
-- **Match this app's routing and styling** — do not paste the connect scaffold template wholesale.
+- **Match this app's design system** — do not paste scaffold CSS, dashboard components, or dashboard tokens.
 - If HMAC is enabled: follow the quickstart "Going to production" section for \`subscriberHash\` / \`agentHash\`.
 - Smoke-test subscriber id when the app has no auth yet: \`${input.subscriberId}\``;
 }
