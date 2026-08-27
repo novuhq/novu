@@ -28,6 +28,9 @@ function formatHumanResponse(response: {
  * `ctx.*` helpers. Answers (in-thread or from `POST /v1/human/interactions`)
  * arrive on the next `onMessage` / `onAction` with `ctx.humanResponse` set.
  * Kickoff phrases: approve / ask / choose / tell.
+ *
+ * Managed agents use the same verbs via the `novu_human` platform tool plus the
+ * `novu-human` skill (`ctx.*` is framework-only).
  */
 export const humanHitlAgent = agent('human-hitl', {
   onMessage: async (message, ctx) => {

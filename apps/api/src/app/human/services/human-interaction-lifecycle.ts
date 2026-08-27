@@ -3,6 +3,7 @@ import { type PinoLogger, shortId } from '@novu/application-generic';
 import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import {
   HUMAN_INTERACTION_DEFAULT_TTL_SECONDS,
+  HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS,
   HUMAN_INTERACTION_MAX_TTL_SECONDS,
   HumanInteractionKindEnum,
   HumanInteractionStatusEnum,
@@ -48,8 +49,18 @@ export function resolveHumanTtlSeconds(ttlSeconds?: number): number {
 }
 
 export function assertHumanChooseOptions(kind: HumanInteractionKindEnum, options?: string[]): void {
-  if (kind === HumanInteractionKindEnum.CHOOSE && (!options || options.length < 2)) {
+  if (kind !== HumanInteractionKindEnum.CHOOSE) {
+    return;
+  }
+
+  if (!options || options.length < 2) {
     throw new BadRequestException('`choose` interactions require at least two options.');
+  }
+
+  if (options.length > HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS) {
+    throw new BadRequestException(
+      `\`choose\` interactions support at most ${HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS} options.`
+    );
   }
 }
 
