@@ -79,11 +79,7 @@ describe('EnsureNovuHumanSkill', () => {
       uploadSkill: sinon.stub().resolves({ skillId: 'skill_hitl', version: 'v1' }),
     };
 
-    const skills = await service.mergeForCreate(
-      provider as any,
-      ['bash'],
-      [{ type: 'anthropic', skillId: 'xlsx' }]
-    );
+    const skills = await service.mergeForCreate(provider as any, ['bash'], [{ type: 'anthropic', skillId: 'xlsx' }]);
 
     expect(skills).to.deep.equal([
       { type: 'anthropic', skillId: 'xlsx' },

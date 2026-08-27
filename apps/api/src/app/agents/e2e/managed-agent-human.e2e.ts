@@ -2,6 +2,7 @@ import {
   ConversationActivityRepository,
   ConversationActivityTypeEnum,
   ConversationRepository,
+  type HumanInteractionEntity,
   HumanInteractionRepository,
 } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, HumanInteractionStatusEnum, IntegrationKindEnum } from '@novu/shared';
@@ -11,8 +12,8 @@ import sinon from 'sinon';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { buildHumanApproveActionId } from '../human-relay/human-action-id';
 import { HumanConversationInboundInterceptor } from '../human-relay/human-conversation-inbound.interceptor';
-import { ManagedAgentProviderFactory } from '../managed-runtime/managed-agent-provider-factory.service';
 import { ManagedAgentService } from '../managed-runtime/managed-agent.service';
+import { ManagedAgentProviderFactory } from '../managed-runtime/managed-agent-provider-factory.service';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
@@ -235,7 +236,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       requestId: `novu_human:${sessionId}:${toolUseId}`,
     });
 
-    return { conversation, platformThreadId, toolUseId, sessionId, interaction };
+    return { conversation, platformThreadId, toolUseId, sessionId, interaction: requireInteraction(interaction) };
   }
 
   it('creates a HumanInteraction for approve and does not post an MCP approval card', async () => {
@@ -246,16 +247,15 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       prompt: 'Delete these rows?',
     });
 
-    expect(interaction, 'HumanInteraction should be created').to.exist;
-    expect(interaction?.kind).to.equal('approve');
-    expect(interaction?.status).to.equal(HumanInteractionStatusEnum.PENDING);
-    expect(interaction?.prompt).to.equal('Delete these rows?');
+    expect(interaction.kind).to.equal('approve');
+    expect(interaction.status).to.equal(HumanInteractionStatusEnum.PENDING);
+    expect(interaction.prompt).to.equal('Delete these rows?');
     expect(sendToolResult.called).to.equal(false);
 
     const activities = await activityRepository.findByConversation(session.environment._id, conversation._id);
-    expect(activities.some((activity) => activity.type === ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST)).to.equal(
-      false
-    );
+    expect(
+      activities.some((activity) => activity.type === ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST)
+    ).to.equal(false);
   });
 
   it('resumes the parked session with the verdict when the human clicks approve', async () => {
@@ -266,7 +266,6 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       prompt: 'Deploy v2?',
     });
 
-    expect(interaction).to.exist;
     sendToolResult.resetHistory();
 
     const interceptor = testServer.getService(HumanConversationInboundInterceptor);
@@ -287,7 +286,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       event: AgentEventEnum.ON_ACTION,
       thread: { id: platformThreadId, post: async () => ({ id: 'reply' }) },
       platformThreadId,
-      action: { id: buildHumanApproveActionId(interaction!.identifier) },
+      action: { id: buildHumanApproveActionId(interaction.identifier) },
     } as any);
 
     expect(consumed).to.equal(true);
@@ -306,10 +305,9 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       prompt: 'Ship it?',
     });
 
-    expect(interaction).to.exist;
     sendToolResult.resetHistory();
 
-    const res = await session.testAgent.post(`/v1/human/interactions/${interaction!.identifier}/cancel`);
+    const res = await session.testAgent.post(`/v1/human/interactions/${interaction.identifier}/cancel`);
     expect(res.status).to.equal(200);
     expect(res.body.data.status).to.equal(HumanInteractionStatusEnum.CANCELED);
     expect(sendToolResult.calledOnce).to.equal(true);
@@ -329,14 +327,13 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       prompt: 'Which environment?',
     });
 
-    expect(interaction).to.exist;
     await humanInteractionRepository.update(
-      { _id: interaction!._id, _environmentId: session.environment._id },
+      { _id: interaction._id, _environmentId: session.environment._id },
       { $set: { expiresAt: new Date(Date.now() - 1000).toISOString() } }
     );
     sendToolResult.resetHistory();
 
-    const res = await session.testAgent.get(`/v1/human/interactions/${interaction!.identifier}`);
+    const res = await session.testAgent.get(`/v1/human/interactions/${interaction.identifier}`);
     expect(res.status).to.equal(200);
     expect(res.body.data.status).to.equal(HumanInteractionStatusEnum.EXPIRED);
     expect(sendToolResult.calledOnce).to.equal(true);
@@ -356,8 +353,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       prompt: 'Deploy finished.',
     });
 
-    expect(interaction).to.exist;
-    expect(interaction?.status).to.equal(HumanInteractionStatusEnum.DELIVERED);
+    expect(interaction.status).to.equal(HumanInteractionStatusEnum.DELIVERED);
     expect(sendToolResult.calledOnce).to.equal(true);
     expect(JSON.parse(sendToolResult.firstCall.args[0].content)).to.include({
       ok: true,
@@ -388,4 +384,13 @@ function restoreEnv(key: string, previous: string | undefined) {
   } else {
     process.env[key] = previous;
   }
+}
+
+function requireInteraction(interaction: HumanInteractionEntity | null): HumanInteractionEntity {
+  expect(interaction, 'HumanInteraction should be created').to.exist;
+  if (!interaction) {
+    throw new Error('expected HumanInteraction');
+  }
+
+  return interaction;
 }

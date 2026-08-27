@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { IAgentRuntimeProvider } from '@novu/application-generic';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  type AgentSkillDto,
-  NOVU_HUMAN_SKILL_DISPLAY_TITLE,
-  NOVU_HUMAN_SKILL_MD,
-} from '@novu/shared';
+import { type AgentSkillDto, NOVU_HUMAN_SKILL_DISPLAY_TITLE, NOVU_HUMAN_SKILL_MD } from '@novu/shared';
 
 const SKILL_REQUIRED_TOOL = 'read';
 

@@ -91,9 +91,7 @@ export function buildManagedHumanToolResult(interaction: HumanInteractionEntity)
   const approved = status === HumanInteractionStatusEnum.APPROVED;
   const expired = status === HumanInteractionStatusEnum.EXPIRED;
   const rejected =
-    status === HumanInteractionStatusEnum.DENIED ||
-    status === HumanInteractionStatusEnum.CANCELED ||
-    expired;
+    status === HumanInteractionStatusEnum.DENIED || status === HumanInteractionStatusEnum.CANCELED || expired;
 
   return {
     ok: !rejected,
@@ -112,7 +110,5 @@ export function buildManagedHumanToolResult(interaction: HumanInteractionEntity)
 }
 
 function toAgentPlatform(platform: string): AgentPlatformEnum | null {
-  return (Object.values(AgentPlatformEnum) as string[]).includes(platform)
-    ? (platform as AgentPlatformEnum)
-    : null;
+  return (Object.values(AgentPlatformEnum) as string[]).includes(platform) ? (platform as AgentPlatformEnum) : null;
 }
