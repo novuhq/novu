@@ -16,10 +16,6 @@ export function resolveAgentChatConnectRuntime(
     return connectorId;
   }
 
-  if (agent.runtime === 'self-hosted') {
-    return 'ai-sdk';
-  }
-
   return undefined;
 }
 
