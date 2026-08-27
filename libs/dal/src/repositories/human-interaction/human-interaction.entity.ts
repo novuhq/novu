@@ -79,7 +79,6 @@ export interface HumanInteractionDelivery {
 export function primaryHumanInteractionDelivery(
   interaction: Pick<HumanInteractionEntity, 'deliveries'>
 ): HumanInteractionDelivery | undefined {
-
   return interaction.deliveries?.[0];
 }
 

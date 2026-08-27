@@ -111,7 +111,6 @@ export class HumanInteractionSettlementService {
   }
 
   private deliveryEditTargets(interaction: HumanInteractionEntity): HumanInteractionDelivery[] {
-
     return interaction.deliveries ?? [];
   }
 }

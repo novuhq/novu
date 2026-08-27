@@ -36,12 +36,10 @@ export interface HumanInteractionCollapseUpdate {
 
 function resolveSubscriberIds(doc: LegacyHumanInteractionDocument): string[] {
   if (Array.isArray(doc.subscriberIds) && doc.subscriberIds.length > 0) {
-
     return doc.subscriberIds;
   }
 
   if (doc.subscriberId) {
-
     return [doc.subscriberId];
   }
 
@@ -91,7 +89,6 @@ export function buildHumanInteractionCollapseUpdate(
   }
 
   if (Object.keys($set).length === 0 && Object.keys($unset).length === 0) {
-
     return null;
   }
 
@@ -107,7 +104,6 @@ export function selectLegacyHumanInteractionIndexNames(
   return indexes
     .filter((index) => {
       if (index.key.subscriberId !== undefined) {
-
         return true;
       }
 
@@ -152,7 +148,6 @@ export async function collapseHumanInteractionMirroredFields(collection: Collaps
 
   async function flush(): Promise<void> {
     if (batch.length === 0) {
-
       return;
     }
 

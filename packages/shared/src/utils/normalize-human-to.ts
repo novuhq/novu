@@ -46,7 +46,6 @@ export function normalizeHumanTo(to: string | string[]): string[] {
 }
 
 export function humanInteractionRecipientIds(interaction: { subscriberIds?: string[] }): string[] {
-
   return interaction.subscriberIds ?? [];
 }
 
