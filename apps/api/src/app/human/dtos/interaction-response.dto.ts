@@ -5,6 +5,7 @@ import {
   HumanInteractionOption,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
+  humanInteractionRecipientIds,
 } from '@novu/shared';
 
 export class InteractionResponseDto {
@@ -26,8 +27,11 @@ export class InteractionResponseDto {
   @ApiPropertyOptional({ description: 'Attribution label of the calling agent.' })
   from?: string;
 
-  @ApiProperty({ description: 'subscriberId of the addressed human.' })
-  to: string;
+  @ApiProperty({
+    description: 'Novu subscriberIds allowed to settle this interaction. First valid answer wins.',
+    type: [String],
+  })
+  to: string[];
 
   @ApiProperty()
   integrationIdentifier: string;
@@ -38,6 +42,13 @@ export class InteractionResponseDto {
   @ApiPropertyOptional({ description: 'Present once the interaction reached a terminal, answered state.' })
   response?: HumanInteractionResponse;
 
+  @ApiPropertyOptional({
+    description:
+      'Recipients that did not receive a DM. Present only on create when fan-out was partial; the interaction is still live for everyone who did.',
+    type: [String],
+  })
+  failedTo?: string[];
+
   @ApiProperty()
   expiresAt: string;
 
@@ -45,7 +56,10 @@ export class InteractionResponseDto {
   createdAt: string;
 }
 
-export function toInteractionResponse(entity: HumanInteractionEntity): InteractionResponseDto {
+export function toInteractionResponse(
+  entity: HumanInteractionEntity,
+  failedSubscriberIds?: string[]
+): InteractionResponseDto {
   return {
     id: entity.identifier,
     kind: entity.kind,
@@ -53,10 +67,11 @@ export function toInteractionResponse(entity: HumanInteractionEntity): Interacti
     prompt: entity.prompt,
     options: entity.options,
     from: entity.fromLabel,
-    to: entity.subscriberId,
+    to: humanInteractionRecipientIds(entity),
     integrationIdentifier: entity.integrationIdentifier,
     platform: entity.platform,
     response: entity.response,
+    ...(failedSubscriberIds && failedSubscriberIds.length > 0 ? { failedTo: failedSubscriberIds } : {}),
     expiresAt: entity.expiresAt,
     createdAt: entity.createdAt,
   };

@@ -1,13 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentEntity, AgentRepository, HumanInteractionRepository } from '@novu/dal';
+import { normalizeHumanTo } from '@novu/shared';
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
   assertHumanChooseOptions,
   assertHumanPendingCap,
   buildPendingHumanInteraction,
-  deliverHumanInteractionOrRollback,
+  deliverToTargets,
+  type HumanDeliveryTarget,
 } from '../../services/human-interaction-lifecycle';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { CreateInteractionCommand } from './create-interaction.command';
@@ -28,22 +30,37 @@ export class CreateInteraction {
     assertHumanChooseOptions(command.kind, command.options);
 
     const agent = await this.resolveAgent(command);
+    const subscriberIds = normalizeHumanTo(command.to);
+    const primarySubscriberId = subscriberIds[0];
+    if (!primarySubscriberId) {
+      throw new BadRequestException('`to` must include at least one subscriberId');
+    }
 
     await assertHumanPendingCap(this.humanInteractionRepository, {
       environmentId: command.environmentId,
-      subscriberId: command.to,
+      subscriberIds,
       kind: command.kind,
-      errorMessage: (pendingCount, cap) =>
-        `Human "${command.to}" already has ${pendingCount} pending interactions (cap ${cap}). Wait for answers or cancel stale ones with \`human list\`.`,
+      errorMessage: (pendingCount, cap, subscriberId) =>
+        `Human "${subscriberId}" already has ${pendingCount} pending interactions (cap ${cap}). Wait for answers or cancel stale ones with \`human list\`.`,
     });
 
-    const target = await this.deliveryService.resolveChannel({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      agentId: agent._id,
-      subscriberId: command.to,
-      via: command.via,
-    });
+    const resolved = await Promise.all(
+      subscriberIds.map(async (subscriberId) => ({
+        subscriberId,
+        target: await this.deliveryService.resolveChannel({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentId: agent._id,
+          subscriberId,
+          via: command.via,
+        }),
+      }))
+    );
+
+    const [primaryTarget] = resolved;
+    if (!primaryTarget) {
+      throw new BadRequestException('`to` must include at least one subscriberId');
+    }
 
     const interaction = await this.humanInteractionRepository.create(
       buildPendingHumanInteraction({
@@ -51,30 +68,29 @@ export class CreateInteraction {
         prompt: command.prompt,
         options: command.options,
         from: command.from,
-        subscriberId: command.to,
+        subscriberId: primarySubscriberId,
+        subscriberIds,
         agentId: agent._id,
-        integrationIdentifier: target.integrationIdentifier,
-        platform: target.platform,
+        integrationIdentifier: primaryTarget.target.integrationIdentifier,
+        platform: primaryTarget.target.platform,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         ttlSeconds: command.ttlSeconds,
       })
     );
 
-    const delivered = await deliverHumanInteractionOrRollback(
-      this.humanInteractionRepository,
-      this.logger,
-      interaction,
-      () => this.deliveryService.deliver(interaction, target),
-      {
-        logMessage: 'Human interaction delivery failed',
-        logContext: { platform: interaction.platform },
-        failMessage: (err) =>
-          `Failed to deliver to ${interaction.platform}: ${err instanceof Error ? err.message : 'unknown error'}`,
-      }
-    );
+    const targets: HumanDeliveryTarget[] = resolved.map(({ subscriberId, target }) => ({
+      subscriberId,
+      integrationIdentifier: target.integrationIdentifier,
+      platform: target.platform,
+      deliver: () => this.deliveryService.deliver(interaction, target),
+    }));
 
-    return toInteractionResponse(delivered);
+    const delivered = await deliverToTargets(this.humanInteractionRepository, this.logger, interaction, targets, {
+      logMessage: 'Human interaction delivery failed for one recipient',
+    });
+
+    return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds);
   }
 
   private async resolveAgent(command: CreateInteractionCommand): Promise<AgentEntity> {

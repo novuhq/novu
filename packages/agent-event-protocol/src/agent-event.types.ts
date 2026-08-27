@@ -48,6 +48,7 @@ export type AgentSignal =
       options?: string[];
       from?: string;
       ttlSeconds?: number;
+      to?: string | string[];
     };
 
 export type AgentEvent =

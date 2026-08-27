@@ -11,8 +11,22 @@ vi.mock('../output', async (importOriginal) => {
   };
 });
 
-const { parseDuration } = await import('./interact');
+const { parseDuration, parseHumanToOption } = await import('./interact');
 const { exitCodeFor, EXIT_DENIED, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
+
+describe('parseHumanToOption', () => {
+  it('splits comma-separated humans and dedupes', () => {
+    expect(parseHumanToOption('alice')).toEqual(['alice']);
+    expect(parseHumanToOption(' alice , bob , alice ')).toEqual(['alice', 'bob']);
+  });
+
+  it('rejects empty or oversized lists', () => {
+    expect(() => parseHumanToOption('  ,  ')).toThrow('at least one subscriberId');
+    expect(() => parseHumanToOption(Array.from({ length: 51 }, (_, index) => `s${index}`).join(','))).toThrow(
+      'at most 50'
+    );
+  });
+});
 
 describe('parseDuration', () => {
   it('parses plain seconds and suffixed durations', () => {
@@ -35,7 +49,7 @@ describe('exit code contract', () => {
     id: 'hi_x',
     kind: 'approve' as const,
     prompt: 'p',
-    to: 's',
+    to: ['s'],
     integrationIdentifier: 'i',
     platform: 'telegram',
     expiresAt: '',

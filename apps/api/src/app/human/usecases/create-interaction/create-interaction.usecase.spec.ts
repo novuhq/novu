@@ -81,8 +81,11 @@ describe('CreateInteraction', () => {
       kind: HumanInteractionKindEnum.APPROVE,
       prompt: 'Deploy?',
     });
+    expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['sub-1']);
     expect(deliveryService.deliver.calledOnce).to.equal(true);
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
     expect(result.id).to.equal('hi_1');
+    expect(result.to).to.deep.equal(['sub-1']);
   });
 
   it('defaults to the human-relay agent when agentIdentifier is omitted', async () => {
@@ -174,5 +177,69 @@ describe('CreateInteraction', () => {
       expect(err).to.be.instanceOf(BadGatewayException);
     }
     expect(humanInteractionRepository.delete.calledOnce).to.equal(true);
+  });
+
+  it('fans out DMs when `to` lists multiple subscribers', async () => {
+    const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel
+      .onFirstCall()
+      .resolves({ integrationIdentifier: 'telegram-main', platform: 'telegram', platformUserId: '777' });
+    deliveryService.resolveChannel
+      .onSecondCall()
+      .resolves({ integrationIdentifier: 'telegram-main', platform: 'telegram', platformUserId: '888' });
+    deliveryService.deliver.onFirstCall().resolves({ platformMessageId: 'msg-1', platformThreadId: 'thread-1' });
+    deliveryService.deliver.onSecondCall().resolves({ platformMessageId: 'msg-2', platformThreadId: 'thread-2' });
+    humanInteractionRepository.create.resolves({ ...created, subscriberIds: ['sub-1', 'sub-2'] });
+
+    const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
+
+    expect(deliveryService.resolveChannel.calledTwice).to.equal(true);
+    expect(deliveryService.deliver.calledTwice).to.equal(true);
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(2);
+    expect(result.to).to.deep.equal(['sub-1', 'sub-2']);
+  });
+
+  it('fails before create when a listed recipient has no linked channel', async () => {
+    const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.onFirstCall().resolves({
+      integrationIdentifier: 'telegram-main',
+      platform: 'telegram',
+      platformUserId: '777',
+    });
+    deliveryService.resolveChannel
+      .onSecondCall()
+      .rejects(new NotFoundException('Human "sub-2" has no linked channel. Run `human invite sub-2`.'));
+
+    try {
+      await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.include('human invite');
+    }
+    expect(humanInteractionRepository.create.called).to.equal(false);
+  });
+
+  it('keeps the row, stamps successful deliveries, and returns failedTo when some fan-out sends fail', async () => {
+    const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.resolves({
+      integrationIdentifier: 'telegram-main',
+      platform: 'telegram',
+      platformUserId: '777',
+    });
+    deliveryService.deliver.onFirstCall().resolves({ platformMessageId: 'msg-1', platformThreadId: 'thread-1' });
+    deliveryService.deliver.onSecondCall().rejects(new Error('down'));
+    humanInteractionRepository.create.resolves({ ...created, subscriberIds: ['sub-1', 'sub-2'] });
+
+    const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
+
+    expect(humanInteractionRepository.delete.called).to.equal(false);
+    expect(humanInteractionRepository.stampDelivery.calledOnce).to.equal(true);
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
+    expect(result.failedTo).to.deep.equal(['sub-2']);
+    expect(result.id).to.equal('hi_1');
   });
 });

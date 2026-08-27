@@ -39,8 +39,11 @@ export class HumanInteractionEntity {
    */
   requestId?: string;
 
-  /** External subscriberId of the human being addressed. */
+  /** External subscriberId of the primary human (first listed recipient). */
   subscriberId: string;
+
+  /** All Novu subscriberIds allowed to settle. First valid answer wins. */
+  subscriberIds?: string[];
 
   /** Agent that owns delivery and the inbound webhook. */
   _agentId: string;
@@ -56,6 +59,13 @@ export class HumanInteractionEntity {
   /** Platform message id of the delivered card — exact reply-to matching. */
   platformMessageId?: string;
 
+  /**
+   * Per-recipient delivery refs. In-thread cards write a single element;
+   * public/CLI fan-out writes one per DM. Top-level `platformMessageId` is
+   * denormalized from `deliveries[0]` for legacy indexes.
+   */
+  deliveries?: HumanInteractionDelivery[];
+
   /** Conversation the delivery/reply is threaded on, once one exists. */
   _conversationId?: string;
 
@@ -70,6 +80,14 @@ export class HumanInteractionEntity {
   createdAt: string;
 
   updatedAt: string;
+}
+
+export interface HumanInteractionDelivery {
+  subscriberId: string;
+  integrationIdentifier: string;
+  platform: string;
+  platformMessageId: string;
+  platformThreadId: string;
 }
 
 export type HumanInteractionDBModel = ChangePropsValueType<

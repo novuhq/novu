@@ -15,6 +15,7 @@ export * from './in-app-redirect-url';
 export * from './issues';
 export * from './locales';
 export * from './managed-integration-credentials';
+export * from './normalize-human-to';
 export * from './normalizeEmail';
 export * from './novu-connect-cli';
 export { safeJsonStringify } from './safe-json-stringify';

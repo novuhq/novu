@@ -2,8 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { HumanInteractionKindEnum, HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { HumanInteractionDBModel, HumanInteractionEntity } from './human-interaction.entity';
+import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
+
+function subscriberScope(subscriberId: string) {
+  return { $or: [{ subscriberId }, { subscriberIds: subscriberId }] };
+}
 
 @Injectable()
 export class HumanInteractionRepository extends BaseRepositoryV2<
@@ -22,7 +26,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   async countPendingForSubscriber(environmentId: string, subscriberId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,
-      subscriberId,
+      ...subscriberScope(subscriberId),
       status: HumanInteractionStatusEnum.PENDING,
     });
   }
@@ -35,7 +39,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     return this.find(
       {
         _environmentId: environmentId,
-        subscriberId,
+        ...subscriberScope(subscriberId),
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.PENDING,
       },
@@ -83,8 +87,11 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     return this.findOne(
       {
         _environmentId: environmentId,
-        platformMessageId: { $in: platformMessageIds },
         status: HumanInteractionStatusEnum.PENDING,
+        $or: [
+          { platformMessageId: { $in: platformMessageIds } },
+          { 'deliveries.platformMessageId': { $in: platformMessageIds } },
+        ],
       },
       '*'
     );
@@ -93,14 +100,22 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   async stampDelivery(
     environmentId: string,
     id: string,
-    delivery: { platformMessageId?: string; platformThreadId?: string; _conversationId?: string }
+    delivery: {
+      platformMessageId?: string;
+      platformThreadId?: string;
+      _conversationId?: string;
+      deliveries?: HumanInteractionDelivery[];
+    }
   ): Promise<void> {
-    const $set: Record<string, string> = {};
+    const $set: Record<string, unknown> = {};
     if (delivery.platformMessageId) $set.platformMessageId = delivery.platformMessageId;
     if (delivery.platformThreadId) $set.platformThreadId = delivery.platformThreadId;
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
+    if (delivery.deliveries) $set.deliveries = delivery.deliveries;
 
-    if (Object.keys($set).length === 0) return;
+    if (Object.keys($set).length === 0) {
+      return;
+    }
 
     await this.update({ _id: id, _environmentId: environmentId }, { $set });
   }
@@ -170,7 +185,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       {
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
-        ...(params.subscriberId ? { subscriberId: params.subscriberId } : {}),
+        ...(params.subscriberId ? subscriberScope(params.subscriberId) : {}),
         ...(params.status ? { status: params.status } : {}),
         ...(params.before ? { _id: { $lt: params.before } } : {}),
       },
