@@ -114,7 +114,7 @@ export type UseAgentChatResult = {
 
 const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
   key: 'ssr',
-  status: 'ready',
+  status: 'loading',
   run: { isRunning: false },
   conversationStatus: 'active',
   pagination: { hasMore: false, status: 'idle' },
@@ -251,7 +251,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const propsRef = useDataRef(props);
   const [loadState, setLoadState] = useState<AgentChatLoadState>(() => ({
     novu,
-    status: novu.isAgentChatLoaded ? 'ready' : 'loading',
+    status: 'loading',
   }));
 
   useEffect(() => {
@@ -478,7 +478,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     pendingActions: [...snapshot.pendingActions],
     conversationId: snapshot.conversationId,
     error: agentChatLoadError ?? (snapshot.error as UseAgentChatResult['error']),
-    isLoading: isAgentChatLoading || (agentChatReady && snapshot.status === 'loading'),
+    isLoading: !agentChatLoadError && (isAgentChatLoading || snapshot.status === 'loading'),
     isRunning: snapshot.run.isRunning,
     typing: snapshot.run.typing,
     status: snapshot.conversationStatus,
