@@ -61,19 +61,20 @@ describe('CreateConversationInteraction', () => {
     expect(humanInteractionRepository.create.firstCall.args[0]).to.include({
       kind: HumanInteractionKindEnum.APPROVE,
       requestId: 'hr_1',
-      subscriberId: 'sub-1',
       _agentId: 'agent1',
       _conversationId: 'conv1',
     });
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['sub-1']);
+    expect(humanInteractionRepository.create.firstCall.args[0]).to.not.have.property('subscriberId');
+    expect(humanInteractionRepository.create.firstCall.args[0]).to.not.have.property('platform');
     expect(outboundGateway.deliver.calledOnce).to.equal(true);
     expect(humanInteractionRepository.stampDelivery.calledOnce).to.equal(true);
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2]).to.deep.include({
-      platformMessageId: 'msg-1',
       _conversationId: 'conv1',
     });
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2]).to.not.have.property('platformMessageId');
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
-    expect(result.platformMessageId).to.equal('msg-1');
+    expect(result.deliveries?.[0]?.platformMessageId).to.equal('msg-1');
     expect(result._conversationId).to.equal('conv1');
   });
 
@@ -141,7 +142,6 @@ describe('CreateConversationInteraction', () => {
 
     await usecase.execute({ ...command, to: ['alice', 'bob'] } as any);
 
-    expect(humanInteractionRepository.create.firstCall.args[0].subscriberId).to.equal('alice');
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['alice', 'bob']);
     expect(outboundGateway.deliver.calledOnce).to.equal(true);
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.equal(undefined);

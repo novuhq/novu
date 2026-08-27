@@ -28,11 +28,8 @@ describe('normalizeHumanTo', () => {
 });
 
 describe('humanInteractionRecipientIds', () => {
-  it('prefers subscriberIds and falls back to subscriberId for legacy rows', () => {
-    expect(humanInteractionRecipientIds({ subscriberId: 'alice', subscriberIds: ['alice', 'bob'] })).toEqual([
-      'alice',
-      'bob',
-    ]);
-    expect(humanInteractionRecipientIds({ subscriberId: 'alice' })).toEqual(['alice']);
+  it('returns subscriberIds and an empty list when they are missing', () => {
+    expect(humanInteractionRecipientIds({ subscriberIds: ['alice', 'bob'] })).toEqual(['alice', 'bob']);
+    expect(humanInteractionRecipientIds({})).toEqual([]);
   });
 });

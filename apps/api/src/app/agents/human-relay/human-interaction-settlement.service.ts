@@ -110,27 +110,8 @@ export class HumanInteractionSettlementService {
     }
   }
 
-  /**
-   * Prefer persisted `deliveries`. Fall back to the denormalized top-level
-   * message ids for rows created before every path wrote `deliveries[]`.
-   */
   private deliveryEditTargets(interaction: HumanInteractionEntity): HumanInteractionDelivery[] {
-    if (interaction.deliveries && interaction.deliveries.length > 0) {
-      return interaction.deliveries;
-    }
 
-    if (!interaction.platformMessageId || !interaction.platformThreadId) {
-      return [];
-    }
-
-    return [
-      {
-        subscriberId: interaction.subscriberId,
-        integrationIdentifier: interaction.integrationIdentifier,
-        platform: interaction.platform,
-        platformMessageId: interaction.platformMessageId,
-        platformThreadId: interaction.platformThreadId,
-      },
-    ];
+    return interaction.deliveries ?? [];
   }
 }

@@ -200,7 +200,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(sentPayload).to.not.include('Powered by');
 
       const row = await humanInteractionRepository.findByIdentifier(session.environment._id, interaction.id);
-      expect(row!.platformMessageId).to.be.a('string');
+      expect(row!.deliveries?.[0]?.platformMessageId).to.be.a('string');
 
       await clickAction(`human:${interaction.id}:approve`);
 
@@ -382,7 +382,9 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const firstRow = await humanInteractionRepository.findByIdentifier(session.environment._id, first.id);
       // The stored id is the adapter's `chatId:messageId` composite; the webhook's
       // reply_to_message carries only the bare Telegram message id.
-      const bareMessageId = Number(firstRow!.platformMessageId!.split(':').pop());
+      const platformMessageId = firstRow!.deliveries?.[0]?.platformMessageId;
+      expect(platformMessageId).to.be.a('string');
+      const bareMessageId = Number(platformMessageId!.split(':').pop());
 
       await sendMessageToRelay('answer to the first', {
         reply_to_message: { message_id: bareMessageId },
