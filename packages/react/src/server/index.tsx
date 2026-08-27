@@ -81,7 +81,7 @@ export function useWebChat(_: UseWebChatProps): UseWebChatResult {
   return {
     messages: [],
     pendingActions: [],
-    isLoading: false,
+    isLoading: true,
     isRunning: false,
     typing: undefined,
     status: 'active',

@@ -114,7 +114,7 @@ export type UseWebChatResult = {
 
 const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
   key: 'ssr',
-  status: 'ready',
+  status: 'loading',
   run: { isRunning: false },
   conversationStatus: 'active',
   pagination: { hasMore: false, status: 'idle' },
@@ -251,7 +251,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
   const propsRef = useDataRef(props);
   const [loadState, setLoadState] = useState<WebChatLoadState>(() => ({
     novu,
-    status: novu.isWebChatLoaded ? 'ready' : 'loading',
+    status: 'loading',
   }));
 
   useEffect(() => {
@@ -478,7 +478,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     pendingActions: [...snapshot.pendingActions],
     conversationId: snapshot.conversationId,
     error: webChatLoadError ?? (snapshot.error as UseWebChatResult['error']),
-    isLoading: isWebChatLoading || (webChatReady && snapshot.status === 'loading'),
+    isLoading: !webChatLoadError && (isWebChatLoading || snapshot.status === 'loading'),
     isRunning: snapshot.run.isRunning,
     typing: snapshot.run.typing,
     status: snapshot.conversationStatus,
