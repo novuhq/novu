@@ -20,6 +20,8 @@ describe('provider HTTP timeout', () => {
     ['not a number', 'abc'],
     ['zero', '0'],
     ['negative', '-1'],
+    ['a fraction', '1.5'],
+    ['above the Node timer limit', '2147483648'],
     ['empty', ''],
     ['unset', undefined],
   ])('falls back to the default when the override is %s', (_label, value) => {

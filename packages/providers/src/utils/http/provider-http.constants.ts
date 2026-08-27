@@ -15,6 +15,13 @@ export const DEFAULT_PROVIDER_HTTP_TIMEOUT_MS = 120_000;
 export const PROVIDER_HTTP_TIMEOUT_MS_ENV_VAR = 'NOVU_PROVIDER_HTTP_TIMEOUT_MS';
 
 /**
+ * `AbortSignal.timeout` accepts up to 2^32-1, but Node's timer is a signed 32-bit
+ * integer. Values above this overflow to 1ms, which would fail every fetch provider
+ * immediately rather than hang.
+ */
+const MAX_PROVIDER_HTTP_TIMEOUT_MS = 2_147_483_647;
+
+/**
  * Exported for testing; production code should read {@link PROVIDER_HTTP_TIMEOUT_MS},
  * which is resolved once at module load and therefore cannot be reconfigured at runtime.
  */
@@ -27,7 +34,7 @@ export const resolveProviderHttpTimeoutMs = (env: Record<string, string | undefi
 
   const parsed = Number(raw);
 
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  if (!Number.isInteger(parsed) || parsed <= 0 || parsed > MAX_PROVIDER_HTTP_TIMEOUT_MS) {
     return DEFAULT_PROVIDER_HTTP_TIMEOUT_MS;
   }
 
