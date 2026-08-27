@@ -3,6 +3,7 @@ import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { providerFetch } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
@@ -30,17 +31,21 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
       content: options.content,
     });
 
-    const response = await fetch(`${this.BASE_URL}/transactionalSMS/sms`, {
-      method: 'POST',
-      headers: {
-        'api-key': this.config.apiKey,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...sms.headers,
-      },
-      agent: new ProxyAgent(),
-      body: JSON.stringify(sms.body),
-    } as RequestInit);
+    const response = await providerFetch(
+      `${this.BASE_URL}/transactionalSMS/sms`,
+      {
+        method: 'POST',
+        headers: {
+          'api-key': this.config.apiKey,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...sms.headers,
+        },
+        agent: new ProxyAgent(),
+        body: JSON.stringify(sms.body),
+      } as RequestInit,
+      { providerId: this.id, channel: this.channelType }
+    );
 
     const body: { messageId: string } = await response.json();
 

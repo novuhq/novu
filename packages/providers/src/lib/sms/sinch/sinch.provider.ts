@@ -1,14 +1,15 @@
 import { assertAllowedSinchSmsRegion, SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SinchSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sinch;
   protected casing = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
   private readonly region: ReturnType<typeof assertAllowedSinchSmsRegion>;
 
   constructor(
@@ -35,7 +36,7 @@ export class SinchSmsProvider extends BaseProvider implements ISmsProvider {
       body: options.content,
     }).body;
 
-    const response = await axios.post(url, payload, {
+    const response = await this.httpClient.post(url, payload, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.config.apiToken}`,

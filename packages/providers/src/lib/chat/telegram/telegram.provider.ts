@@ -9,8 +9,9 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import Axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 import { cardToTelegramHtml } from './card-render.utils';
 import { ISendMessageRes } from './types/telegram.types';
@@ -26,7 +27,9 @@ export class TelegramChatProvider extends BaseProvider implements IChatProvider 
   constructor(private config: { botToken: string }) {
     super();
     this.baseUrl = `https://api.telegram.org/bot${this.config.botToken}`;
-    this.axiosInstance = Axios.create({
+    this.axiosInstance = createProviderHttpClient({
+      providerId: this.id,
+      channel: this.channelType,
       headers: {
         'Content-Type': 'application/json',
       },

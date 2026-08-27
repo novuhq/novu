@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SmsCentralSmsProvider extends BaseProvider implements ISmsProvider {
@@ -9,6 +9,7 @@ export class SmsCentralSmsProvider extends BaseProvider implements ISmsProvider 
   id = SmsProviderIdEnum.SmsCentral;
   protected casing = CasingEnum.CONSTANT_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
 
   constructor(
     private config: {
@@ -35,7 +36,7 @@ export class SmsCentralSmsProvider extends BaseProvider implements ISmsProvider 
     }).body;
 
     const url = this.config.baseUrl || this.DEFAULT_BASE_URL;
-    await axios.create().post(url, data);
+    await this.httpClient.post(url, data);
 
     return {
       id: options.id,

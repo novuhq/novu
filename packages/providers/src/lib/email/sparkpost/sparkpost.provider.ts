@@ -10,6 +10,7 @@ import {
 import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 import { ISparkPostErrorResponse, SparkPostError } from './sparkpost.error';
 
@@ -70,7 +71,10 @@ export class SparkPostEmailProvider extends BaseProvider implements IEmailProvid
     });
 
     try {
-      const sent = await axios.create().post<ISparkPostResponse>('/transmissions', data.body, {
+      const sent = await createProviderHttpClient({
+        providerId: this.id,
+        channel: this.channelType,
+      }).post<ISparkPostResponse>('/transmissions', data.body, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: this.config.apiKey,

@@ -7,8 +7,9 @@ import {
 } from '@novu/shared/utils/ssrf-url-validation';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
@@ -43,7 +44,9 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
     }
 
     if (!this.config?.authenticateByToken) {
-      this.axiosInstance = axios.create({
+      this.axiosInstance = createProviderHttpClient({
+        providerId: this.id,
+        channel: this.channelType,
         baseURL: config.baseUrl,
         headers: this.headers,
       });
@@ -71,7 +74,10 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
     });
 
     if (this.config?.authenticateByToken) {
-      const tokenAxiosInstance = await axios.request({
+      const tokenAxiosInstance = await createProviderHttpClient({
+        providerId: this.id,
+        channel: this.channelType,
+      }).request({
         method: 'POST',
         baseURL: this.config.domain,
         headers: this.headers,
@@ -79,7 +85,9 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
 
       const token = tokenAxiosInstance.data.data[this.config.authenticationTokenKey!];
 
-      this.axiosInstance = axios.create({
+      this.axiosInstance = createProviderHttpClient({
+        providerId: this.id,
+        channel: this.channelType,
         baseURL: this.config.baseUrl,
         headers: {
           [this.config.authenticationTokenKey!]: token,

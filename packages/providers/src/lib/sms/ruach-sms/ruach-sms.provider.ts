@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class RuachSmsProvider extends BaseProvider implements ISmsProvider {
@@ -9,6 +9,7 @@ export class RuachSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.PASCAL_CASE;
   private readonly BASE_URL = 'https://app.notify.ng/api/v2/SendSMS';
+  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
 
   constructor(
     private config: {
@@ -34,7 +35,7 @@ export class RuachSmsProvider extends BaseProvider implements ISmsProvider {
       Is_Flash: false,
     });
 
-    const { data } = await axios.post(this.BASE_URL, payload.body, {
+    const { data } = await this.httpClient.post(this.BASE_URL, payload.body, {
       headers: {
         'Content-Type': 'application/json',
         ...payload.headers,

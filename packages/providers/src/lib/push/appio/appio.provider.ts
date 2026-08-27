@@ -1,13 +1,13 @@
 import { PushProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 
 export class AppioPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.AppIO;
   channelType = ChannelTypeEnum.PUSH as const;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
-  private axiosInstance = axios.create();
+  private axiosInstance = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
 
   constructor(private config: { AppIOBaseUrl?: string }) {
     super();

@@ -6,8 +6,9 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import Axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 import { ILineSentMessagesResponse } from './line.types';
 
@@ -22,7 +23,9 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
 
   constructor(private config: { channelAccessToken: string }) {
     super();
-    this.axiosClient = Axios.create({
+    this.axiosClient = createProviderHttpClient({
+      providerId: this.id,
+      channel: this.channelType,
       baseURL: 'https://api.line.me/v2/bot/message',
       headers: {
         Authorization: `Bearer ${this.config.channelAccessToken}`,

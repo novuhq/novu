@@ -1,8 +1,9 @@
 import { PushProviderIdEnum } from '@novu/shared';
 
 import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class OneSignalPushProvider extends BaseProvider implements IPushProvider {
@@ -24,7 +25,9 @@ export class OneSignalPushProvider extends BaseProvider implements IPushProvider
     super();
     this.apiVersion = config.apiVersion;
 
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
+      providerId: this.id,
+      channel: this.channelType,
       baseURL: config.apiVersion === 'externalId' ? this.BASE_URL_USER_MODEL : this.BASE_URL_PLAYER_MODEL,
     });
   }

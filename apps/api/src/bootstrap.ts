@@ -10,6 +10,7 @@ import {
   Logger,
   PinoLogger,
   RequestLogRepository,
+  registerProviderHttpObserver,
 } from '@novu/application-generic';
 
 import bodyParser from 'body-parser';
@@ -89,6 +90,8 @@ export async function bootstrap(
 
   app.useLogger(app.get(Logger));
   app.flushLogs();
+
+  registerProviderHttpObserver(app);
 
   const server = app.getHttpServer();
   logger.trace(`Server timeout: ${server.timeout}`);

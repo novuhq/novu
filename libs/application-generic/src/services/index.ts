@@ -33,6 +33,7 @@ export {
 export * from './metrics';
 export { MsTeamsTokenService } from './ms-teams-token.service';
 export { NotificationPayloadService } from './notification-payload.service';
+export * from './provider-http-observability';
 export * from './query-parser';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';

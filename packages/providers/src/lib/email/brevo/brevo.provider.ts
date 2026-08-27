@@ -10,8 +10,9 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
@@ -29,7 +30,9 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
     }
   ) {
     super();
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
+      providerId: this.id,
+      channel: this.channelType,
       baseURL: this.BASE_URL,
     });
   }

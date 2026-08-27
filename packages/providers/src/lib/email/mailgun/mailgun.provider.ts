@@ -9,13 +9,13 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import axios from 'axios';
 import { createHmac } from 'crypto';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 enum WebhooksIds {
@@ -181,7 +181,10 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
         const baseUrl = this.config.baseUrl || 'https://api.mailgun.net';
         const authHeader = `Basic ${Buffer.from(`api:${this.config.apiKey}`).toString('base64')}`;
 
-        const response = await axios.get(`${baseUrl}/v5/accounts/http_signing_key`, {
+        const response = await createProviderHttpClient({
+          providerId: this.id,
+          channel: this.channelType,
+        }).get(`${baseUrl}/v5/accounts/http_signing_key`, {
           headers: {
             Authorization: authHeader,
           },

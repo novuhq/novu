@@ -42,3 +42,13 @@ await provider.sendMessage({
 ```
 
 For all supported providers, visit the [Novu Providers package](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib).
+
+## HTTP timeouts
+
+Providers that call their API over HTTP directly go through the shared clients in `src/utils/http`: `createProviderHttpClient` for axios and `providerFetch` for fetch. Both cap a single request at `PROVIDER_HTTP_TIMEOUT_MS` (120 seconds), so an unresponsive provider API fails within a bounded time instead of hanging.
+
+Set `NOVU_PROVIDER_HTTP_TIMEOUT_MS` to override the default. It is read once at module load.
+
+Providers backed by a vendor SDK (Twilio, SendGrid, Firebase, nodemailer, and others) use that SDK's own timeout instead.
+
+If you are adding a provider, use these clients rather than importing `axios` or calling `fetch` directly — a bare axios instance has no timeout at all. `setProviderHttpObserver` lets an embedding application receive `{ providerId, channel, durationMs, timedOut }` for every call.

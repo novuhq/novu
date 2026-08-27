@@ -2,7 +2,12 @@ import './instrument';
 
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
+import {
+  BullMqService,
+  getErrorInterceptor,
+  Logger as PinoLogger,
+  registerProviderHttpObserver,
+} from '@novu/application-generic';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
@@ -21,6 +26,8 @@ export async function bootstrap(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
+
+  registerProviderHttpObserver(app);
 
   await prepareAppInfra(app);
 

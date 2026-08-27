@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export interface ISmsmodeApiResponse {
@@ -58,6 +58,7 @@ export class SmsmodeSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly BASE_URL = 'https://rest.smsmode.com/sms/v1';
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
+  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
 
   constructor(
     private config: {
@@ -82,7 +83,7 @@ export class SmsmodeSmsProvider extends BaseProvider implements ISmsProvider {
       },
     });
 
-    const response = await axios.create().post<ISmsmodeApiResponse>(`${this.BASE_URL}/messages`, sms.body, {
+    const response = await this.httpClient.post<ISmsmodeApiResponse>(`${this.BASE_URL}/messages`, sms.body, {
       headers: {
         'X-Api-Key': this.config.apiKey,
         'Content-Type': 'application/json',

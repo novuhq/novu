@@ -1,7 +1,8 @@
 import { PushProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafePusherBeamsBaseUrl } from '../../../utils/safe-pusher-beams-url';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -21,7 +22,9 @@ export class PusherBeamsPushProvider extends BaseProvider implements IPushProvid
     super();
     const baseURL = resolveSafePusherBeamsBaseUrl(this.config.instanceId);
 
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
+      providerId: this.id,
+      channel: this.channelType,
       baseURL,
       headers: {
         'Content-Type': 'application/json',

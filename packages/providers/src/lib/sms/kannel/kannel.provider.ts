@@ -1,7 +1,8 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
@@ -22,7 +23,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.apiBaseUrl = `http://${config.host}:${config.port}/cgi-bin`;
-    this.axiosInstance = axios.create();
+    this.axiosInstance = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
   }
 
   async sendMessage(

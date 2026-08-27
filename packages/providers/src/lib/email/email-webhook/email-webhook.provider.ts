@@ -15,11 +15,14 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient, PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 const PROTECTED_HEADER_NAMES = new Set(['content-type', 'x-novu-signature']);
+
+/** Mirrors the default in `safeOutboundJsonRequest`, which takes no timeout of its own here. */
+const SSRF_REQUEST_TIMEOUT_MS = 30_000;
 
 /**
  * How the `hmacSecretKey` value is turned into signing bytes:
@@ -40,6 +43,7 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = EmailProviderIdEnum.EmailWebhook;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
 
   constructor(
     private config: {
@@ -93,23 +97,63 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
     };
   }
 
-  private async sendWithAxios(bodyData: string, requestHeaders: Record<string, string>): Promise<void> {
-    let sent = false;
+  /**
+   * Runs `attempt` up to `retryCount` times, bounded by a single wall-clock budget of
+   * {@link PROVIDER_HTTP_TIMEOUT_MS} covering every request and every delay between them.
+   *
+   * Without the budget, the configured `retryCount` and `retryDelay` multiply the
+   * per-request timeout: three attempts at 120s with two 30s delays would hold a worker
+   * slot for over seven minutes on a single step. `retryCount` and `retryDelay` are
+   * therefore an upper bound rather than a guarantee — the loop stops early once the
+   * budget is spent.
+   *
+   * `attempt` receives the milliseconds left, so it can cap its own request accordingly.
+   */
+  private async sendWithinBudget(attempt: (remainingMs: number) => Promise<void>): Promise<void> {
+    const deadline = Date.now() + PROVIDER_HTTP_TIMEOUT_MS;
+    const remaining = () => deadline - Date.now();
+    const lastAttemptIndex = this.config.retryCount - 1;
 
-    for (let retries = 0; !sent && retries < this.config.retryCount; retries += 1) {
+    for (let index = 0; index < this.config.retryCount; index += 1) {
+      const remainingMs = remaining();
+
+      if (remainingMs <= 0) {
+        break;
+      }
+
       try {
-        await axios.create().post(this.config.webhookUrl, bodyData, {
-          headers: requestHeaders,
-        });
-        sent = true;
-      } catch {
-        await setTimeout(this.config.retryDelay);
+        await attempt(remainingMs);
+
+        return;
+      } catch (error) {
+        if (error instanceof EmailWebhookUrlBlockedError || error instanceof SsrfBlockedError) {
+          throw error;
+        }
+
+        if (index === lastAttemptIndex) {
+          break;
+        }
+
+        const delayMs = Math.min(this.config.retryDelay, remaining());
+
+        if (delayMs <= 0) {
+          break;
+        }
+
+        await setTimeout(delayMs);
       }
     }
 
-    if (!sent) {
-      throw new Error('webhook send failed !');
-    }
+    throw new Error('webhook send failed !');
+  }
+
+  private async sendWithAxios(bodyData: string, requestHeaders: Record<string, string>): Promise<void> {
+    await this.sendWithinBudget(async (remainingMs) => {
+      await this.httpClient.post(this.config.webhookUrl, bodyData, {
+        headers: requestHeaders,
+        timeout: remainingMs,
+      });
+    });
   }
 
   private async sendWithSsrfProtection(bodyData: string, requestHeaders: Record<string, string>): Promise<void> {
@@ -130,38 +174,24 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
       throw err;
     }
 
-    let sent = false;
-
-    for (let retries = 0; !sent && retries < this.config.retryCount; retries += 1) {
-      try {
-        const response = await safeOutboundJsonRequest({
-          url: webhookUrl,
-          method: 'POST',
-          headers: requestHeaders,
-          body: bodyData,
-        }).catch((err: unknown) => {
-          if (err instanceof SsrfBlockedError) {
-            throw new EmailWebhookUrlBlockedError(`Email webhook URL blocked: ${err.message}`);
-          }
-          throw err;
-        });
-
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          throw new Error(`webhook send failed with status ${response.statusCode}`);
+    await this.sendWithinBudget(async (remainingMs) => {
+      const response = await safeOutboundJsonRequest({
+        url: webhookUrl,
+        method: 'POST',
+        headers: requestHeaders,
+        body: bodyData,
+        timeoutMs: Math.min(SSRF_REQUEST_TIMEOUT_MS, remainingMs),
+      }).catch((err: unknown) => {
+        if (err instanceof SsrfBlockedError) {
+          throw new EmailWebhookUrlBlockedError(`Email webhook URL blocked: ${err.message}`);
         }
+        throw err;
+      });
 
-        sent = true;
-      } catch (error) {
-        if (error instanceof EmailWebhookUrlBlockedError || error instanceof SsrfBlockedError) {
-          throw error;
-        }
-        await setTimeout(this.config.retryDelay);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw new Error(`webhook send failed with status ${response.statusCode}`);
       }
-    }
-
-    if (!sent) {
-      throw new Error('webhook send failed !');
-    }
+    });
   }
 
   createBody(options: WithPassthrough<Record<string, unknown>>): string {

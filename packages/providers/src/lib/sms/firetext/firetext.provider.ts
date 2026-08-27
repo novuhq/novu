@@ -1,6 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { providerFetch } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
@@ -52,7 +53,7 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
     const url = new URL(this.BASE_URL);
     url.search = urlSearchParams.toString();
 
-    const response = await fetch(url.toString());
+    const response = await providerFetch(url.toString(), {}, { providerId: this.id, channel: this.channelType });
     const body = await response.text();
     const [code, message] = this.parseResponse(body);
 

@@ -1,7 +1,8 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export interface ISendSmsData {
@@ -43,7 +44,9 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
-    this.Instance = axios.create({
+    this.Instance = createProviderHttpClient({
+      providerId: this.id,
+      channel: this.channelType,
       baseURL: 'https://send.com.ly',
       headers: {
         Accept: 'application/json',

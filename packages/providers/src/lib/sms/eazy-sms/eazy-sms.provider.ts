@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class EazySmsProvider extends BaseProvider implements ISmsProvider {
@@ -10,6 +10,8 @@ export class EazySmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.CAMEL_CASE;
   public readonly DEFAULT_BASE_URL = 'https://api.eazy.im/v3';
   public readonly EAZY_SMS_CHANNEL = '@sms.eazy.im';
+  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+
   constructor(
     private config: {
       apiKey: string;
@@ -30,19 +32,17 @@ export class EazySmsProvider extends BaseProvider implements ISmsProvider {
       },
     });
 
-    const response = await axios
-      .create()
-      .post(
-        `${this.DEFAULT_BASE_URL}/channels/${this.config.channelId}/messages/${options.to}${this.EAZY_SMS_CHANNEL}`,
-        payload.body,
-        {
-          headers: {
-            Authorization: `Bearer ${this.config.apiKey}`,
-            'Content-Type': 'application/json',
-            ...payload.headers,
-          },
-        }
-      );
+    const response = await this.httpClient.post(
+      `${this.DEFAULT_BASE_URL}/channels/${this.config.channelId}/messages/${options.to}${this.EAZY_SMS_CHANNEL}`,
+      payload.body,
+      {
+        headers: {
+          Authorization: `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json',
+          ...payload.headers,
+        },
+      }
+    );
 
     return {
       id: response.data.id,
