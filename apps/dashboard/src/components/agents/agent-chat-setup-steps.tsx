@@ -1,3 +1,4 @@
+import type { NovuConnectBridgeRuntime } from '@novu/shared';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import {
   AGENT_CHAT_DOCS_URL,
@@ -18,6 +19,8 @@ type AgentChatSetupStepsProps = {
   /** Omit to show all steps as completed (connected recap). */
   firstIncompleteStep?: number;
   onOpenChat?: () => void;
+  /** Self-hosted connector already chosen in the dashboard. Pins `--runtime` on the TUI command. */
+  runtime?: NovuConnectBridgeRuntime;
 };
 
 export function AgentChatSetupSteps({
@@ -26,12 +29,14 @@ export function AgentChatSetupSteps({
   stepOffset = 1,
   firstIncompleteStep,
   onOpenChat,
+  runtime,
 }: AgentChatSetupStepsProps) {
   const base = stepOffset;
   const tuiCommandOptions = {
     apiUrl: apiHostnameManager.getHostname(),
     agentIdentifier,
     connectDashboardUrl: window.location.origin,
+    runtime,
   };
   const tuiDisplayCommand = buildAgentChatTuiCommandForDisplay(tuiCommandOptions);
   const tuiCopyCommand = buildAgentChatTuiCommand(tuiCommandOptions);
@@ -68,8 +73,19 @@ export function AgentChatSetupSteps({
         title="Add Web Chat to your app"
         description={
           <>
-            Paste the prompt into your coding agent. It runs <span className="font-code">npx novu connect --ci</span>{' '}
-            and asks you questions. Or copy the command and run the TUI yourself.{' '}
+            {runtime ? (
+              <>
+                Paste the prompt into your coding agent. It runs one{' '}
+                <span className="font-code">npx novu connect --ci</span> with the runtime and channel you already chose.
+                Or copy the command and run it yourself.{' '}
+              </>
+            ) : (
+              <>
+                Paste the prompt into your coding agent. It runs{' '}
+                <span className="font-code">npx novu connect --ci</span> and asks you questions. Or copy the command and
+                run the TUI yourself.{' '}
+              </>
+            )}
             <ExternalLink href={AGENT_CHAT_DOCS_URL} className="inline-flex">
               Read docs
             </ExternalLink>
