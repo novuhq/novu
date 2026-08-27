@@ -1,4 +1,4 @@
-import type { AgentAnalyticsSource, AgentRuntime } from '@novu/shared';
+import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource, type AgentRuntime } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -46,6 +46,6 @@ export class CreateAgentCommand extends EnvironmentWithUserCommand {
 
   /** Attribution for funnel analytics and product behaviour (e.g. CLI onboarding replies). */
   @IsOptional()
-  @IsIn(['cli', 'dashboard_onboarding', 'dashboard', 'api'])
+  @IsIn(AGENT_ANALYTICS_SOURCES)
   analyticsSource?: AgentAnalyticsSource;
 }
