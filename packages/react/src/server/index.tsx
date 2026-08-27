@@ -81,7 +81,9 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
   return {
     messages: [],
     pendingActions: [],
-    isLoading: false,
+    // Next SSR of Client Components resolves this file (Node `import`), then
+    // hydrates with the browser bundle where the first paint is still loading.
+    isLoading: true,
     isRunning: false,
     typing: undefined,
     status: 'active',
