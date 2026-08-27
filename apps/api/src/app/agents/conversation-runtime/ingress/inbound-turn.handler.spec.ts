@@ -1,6 +1,12 @@
-import { AgentSubscriberAccessEnum, buildDashboardAgentChatSubscriberId } from '@novu/shared';
+import {
+  AgentSubscriberAccessEnum,
+  buildDashboardAgentChatSubscriberId,
+  HumanInteractionKindEnum,
+  HumanInteractionStatusEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -184,9 +190,21 @@ describe('AgentInboundHandler', () => {
       inboundAck as any,
       logger as any
     );
+    const humanRelayRuntime = {
+      dispatch: sinon.stub().resolves(undefined),
+    };
     const runtimeResolver = {
-      resolve: (agent: { runtime?: string; managedRuntime?: unknown } | null) =>
-        agent?.runtime === 'managed' && agent.managedRuntime ? managedRuntime : bridgeRuntime,
+      resolve: (agent: { runtime?: string; managedRuntime?: unknown } | null) => {
+        if (agent?.runtime === 'human_relay') {
+          return humanRelayRuntime;
+        }
+
+        if (agent?.runtime === 'managed' && agent.managedRuntime) {
+          return managedRuntime;
+        }
+
+        return bridgeRuntime;
+      },
     };
     const analyticsService = {
       track: sinon.stub(),
@@ -236,6 +254,11 @@ describe('AgentInboundHandler', () => {
       resolveForTurn: sinon.stub().resolves(null),
       hydrate: sinon.stub().resolves(null),
     };
+    const humanInteractionInbound = {
+      tryHandleAction: sinon.stub().resolves({ outcome: 'ignored' }),
+      tryHandleMessage: sinon.stub().resolves({ outcome: 'ignored' }),
+    };
+    const humanConversationInbound = new HumanConversationInboundInterceptor(humanInteractionInbound as any);
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -257,13 +280,16 @@ describe('AgentInboundHandler', () => {
       inboundAck as any,
       connectionContextResolver as any,
       replyApprovalInterceptor as any,
-      workflowOriginService as any
+      workflowOriginService as any,
+      humanConversationInbound
     );
 
     return {
       handler,
       logger,
       replyApprovalInterceptor,
+      humanInteractionInbound,
+      humanRelayRuntime,
       attachmentStorage,
       bridgeExecutor,
       conversationService,
@@ -431,6 +457,99 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistInboundMessage.firstCall.args[0].platformThreadId).to.equal(expectedThreadId);
       expect(conversationService.setFirstPlatformMessageId.firstCall.args[3]).to.equal(expectedThreadId);
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
+    });
+
+    it('should dispatch ON_MESSAGE with humanResponse when a conversation HITL ask settles', async () => {
+      const settled = {
+        identifier: 'hi_1',
+        requestId: 'hr_1',
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.ANSWERED,
+        response: { text: 'staging' },
+      };
+      const { handler, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.tryHandleMessage.resolves({ outcome: 'settled', settled });
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE);
+      expect(bridgeExecutor.execute.firstCall.args[0].message).to.not.equal(null);
+      expect(bridgeExecutor.execute.firstCall.args[0].humanResponse).to.deep.include({
+        requestId: 'hr_1',
+        interactionId: 'hi_1',
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.ANSWERED,
+        expired: false,
+        text: 'staging',
+      });
+    });
+
+    it('should dispatch ON_MESSAGE with humanResponse.expired when a conversation HITL ask timed out', async () => {
+      const settled = {
+        identifier: 'hi_1',
+        requestId: 'hr_1',
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.EXPIRED,
+      };
+      const { handler, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.tryHandleMessage.resolves({ outcome: 'settled', settled });
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE);
+      expect(bridgeExecutor.execute.firstCall.args[0].humanResponse).to.deep.include({
+        requestId: 'hr_1',
+        interactionId: 'hi_1',
+        expired: true,
+        status: HumanInteractionStatusEnum.EXPIRED,
+      });
+    });
+
+    it('should not dispatch ON_MESSAGE when conversation HITL consumes the turn', async () => {
+      const { handler, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.tryHandleMessage.resolves({ outcome: 'consumed' });
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('should skip conversation HITL inbound for human_relay agents', async () => {
+      const { handler, humanInteractionInbound, humanRelayRuntime, bridgeExecutor } = makeHandler({
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' }),
+      });
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(humanInteractionInbound.tryHandleMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
     });
 
     it('should post no-bridge Slack DM auto-replies with the message-rooted platform thread id', async () => {
@@ -1700,6 +1819,72 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_ACTION);
       expect(bridgeExecutor.execute.firstCall.args[0].action).to.deep.equal(action);
+    });
+
+    it('should dispatch ON_ACTION with humanResponse when a conversation HITL action settles', async () => {
+      const settled = {
+        identifier: 'hi_1',
+        requestId: 'hr_1',
+        kind: HumanInteractionKindEnum.APPROVE,
+        status: HumanInteractionStatusEnum.APPROVED,
+        response: { optionId: 'approve' },
+      };
+      const action = { id: 'human:hi_1:approve', value: undefined };
+      const { handler, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.tryHandleAction.resolves({ outcome: 'settled', settled });
+
+      await handler.handleAction('agent1', config as any, makeActionThread() as any, action as any, 'user1');
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_ACTION);
+      expect(bridgeExecutor.execute.firstCall.args[0].action).to.deep.equal(action);
+      expect(bridgeExecutor.execute.firstCall.args[0].humanResponse).to.deep.include({
+        requestId: 'hr_1',
+        interactionId: 'hi_1',
+        kind: HumanInteractionKindEnum.APPROVE,
+        status: HumanInteractionStatusEnum.APPROVED,
+        expired: false,
+      });
+    });
+
+    it('should dispatch ON_ACTION with humanResponse.expired when a conversation HITL action timed out', async () => {
+      const settled = {
+        identifier: 'hi_1',
+        requestId: 'hr_1',
+        kind: HumanInteractionKindEnum.APPROVE,
+        status: HumanInteractionStatusEnum.EXPIRED,
+      };
+      const action = { id: 'human:hi_1:approve', value: undefined };
+      const { handler, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.tryHandleAction.resolves({ outcome: 'settled', settled });
+
+      await handler.handleAction('agent1', config as any, makeActionThread() as any, action as any, 'user1');
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_ACTION);
+      expect(bridgeExecutor.execute.firstCall.args[0].action).to.deep.equal(action);
+      expect(bridgeExecutor.execute.firstCall.args[0].humanResponse).to.deep.include({
+        expired: true,
+        status: HumanInteractionStatusEnum.EXPIRED,
+      });
+    });
+
+    it('should skip conversation HITL inbound for human_relay actions', async () => {
+      const { handler, humanInteractionInbound, humanRelayRuntime, bridgeExecutor } = makeHandler({
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' }),
+      });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'human:hi_1:approve', value: undefined } as any,
+        'user1'
+      );
+
+      expect(humanInteractionInbound.tryHandleAction.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
     });
 
     it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {

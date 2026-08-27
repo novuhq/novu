@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 import type { AgentResponse } from '@/api/agents';
 import { AgentChatSetupSteps } from '@/components/agents/agent-chat-setup-steps';
+import type { ConnectorId } from '@/components/agents/connectors/connector-options';
 import { useAgentChatPreview } from '@/hooks/use-agent-chat-preview';
-import { useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
+import { resolveAgentChatConnectRuntime, useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
 import { ListeningStatus, ProviderSetupStepperRail, SetupStepperRail } from './setup-guide-primitives';
 
 export type AgentChatSetupGuideProps = {
@@ -14,6 +15,8 @@ export type AgentChatSetupGuideProps = {
   onStepsCompleted?: () => void;
   /** Integrations tab: same content without Overview chrome */
   embedded?: boolean;
+  /** Self-hosted connector picked at agent creation. */
+  connectorId?: ConnectorId;
 };
 
 /**
@@ -28,8 +31,10 @@ export function AgentChatSetupGuide({
   stepOffset = 1,
   onStepsCompleted,
   embedded = false,
+  connectorId,
 }: AgentChatSetupGuideProps) {
-  const prompt = useAgentChatPrompt(agent);
+  const prompt = useAgentChatPrompt(agent, connectorId);
+  const runtime = resolveAgentChatConnectRuntime(agent, connectorId);
   const { openPreview } = useAgentChatPreview();
   const [isConnected, setIsConnected] = useState(false);
 
@@ -47,6 +52,7 @@ export function AgentChatSetupGuide({
       stepOffset={stepOffset}
       firstIncompleteStep={firstIncompleteStep}
       onOpenChat={() => openPreview(agent.identifier)}
+      runtime={runtime}
     />
   );
 

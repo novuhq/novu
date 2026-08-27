@@ -1,5 +1,5 @@
 import type { AgentEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
-import type { AgentAction, AgentContextPayload } from '@novu/framework';
+import type { AgentAction, AgentContextPayload, AgentHumanResponse } from '@novu/framework';
 import type { Message, Thread } from 'chat';
 import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { AgentEventEnum } from '../../shared/enums/agent-event.enum';
@@ -34,4 +34,5 @@ export interface ConversationTurn {
   action?: AgentAction;
   reaction?: BridgeReaction;
   workflowOrigin?: WorkflowOriginSnapshot | null;
+  humanResponse?: AgentHumanResponse | null;
 }

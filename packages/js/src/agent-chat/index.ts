@@ -33,7 +33,6 @@ export type {
   AgentToolPart,
   AgentToolPartState,
 } from './agent-message.types';
-export { derivePendingActions } from './agent-message.types';
 export type {
   AgentConversationPaginationSnapshot,
   AgentConversationPublicationMeta,
@@ -47,6 +46,7 @@ export type {
   ConversationResult,
   SendMessageInput,
 } from './conversation-runtime.types';
+export { derivePendingActions } from './derive-pending-actions';
 export type {
   AgentChatChange,
   AgentChatMessagesUpdated,

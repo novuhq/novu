@@ -1,21 +1,12 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { AgentChatPlanLimitError, type AgentChatPlanLimitReason } from '../agent-chat/agent-chat-plan-limit-error';
 import type { AgentHashFields } from '../agent-chat/types';
 import { validateHistoryPageResponse } from '../agent-chat/validate-envelope';
 import { HttpClient } from './http-client';
 
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/agent-chat/conversations';
 
-export type AgentChatPlanLimitReason = 'agents' | 'channels' | 'conversations';
-
-export class AgentChatPlanLimitError extends Error {
-  readonly reason: AgentChatPlanLimitReason;
-
-  constructor(reason: AgentChatPlanLimitReason, message: string) {
-    super(message);
-    this.name = 'AgentChatPlanLimitError';
-    this.reason = reason;
-  }
-}
+export { AgentChatPlanLimitError, type AgentChatPlanLimitReason };
 
 export type AgentChatSendMessageArgs = AgentHashFields & {
   agentId: string;

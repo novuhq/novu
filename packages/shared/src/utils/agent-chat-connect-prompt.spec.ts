@@ -59,6 +59,28 @@ describe('agent-chat-connect-prompt', () => {
     expect(prompt).toContain('--region staging');
   });
 
+  it('pins runtime and agent on the TUI command for a dashboard-created bridge agent', () => {
+    expect(
+      buildAgentChatTuiCommand({
+        apiUrl: NOVU_STAGING_API_URL,
+        agentIdentifier: 'staging-investigator',
+        runtime: 'ai-sdk',
+      })
+    ).toBe(
+      'npx novu@rc connect --runtime ai-sdk --channel agent-chat --region staging --agent-identifier staging-investigator'
+    );
+  });
+
+  it('tells the coding agent not to re-pick runtime or channel when runtime is known', () => {
+    const prompt = buildAgentChatPrompt('Fred', 'fred', NOVU_STAGING_API_URL, { runtime: 'ai-sdk' });
+
+    expect(prompt).toContain('--runtime ai-sdk');
+    expect(prompt).toContain('--channel agent-chat');
+    expect(prompt).toContain('--agent-identifier fred');
+    expect(prompt).toContain('Do not ask me to pick runtime, channel, or agent');
+    expect(prompt).not.toContain('Connect a Novu agent to Agent Chat for this project');
+  });
+
   it('keeps the production copy prompt on US Cloud', () => {
     const prompt = buildOnboardingAgentPrompt('https://api.novu.co');
 

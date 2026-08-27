@@ -12,6 +12,7 @@ export type {
   AgentConversationPaginationSnapshot,
   AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
+  AgentConversationRuntime,
   AgentConversationRuntimeActions,
   AgentConversationSessionStatus,
   AgentConversationSnapshot,
@@ -56,9 +57,8 @@ export type {
   SendMessageInput,
   SendMessageResult,
 } from './agent-chat';
-export { AgentConversationRuntime, derivePendingActions } from './agent-chat';
-export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
-export { AgentChatPlanLimitError } from './api/agent-chat-service';
+export { AgentChatPlanLimitError, type AgentChatPlanLimitReason } from './agent-chat/agent-chat-plan-limit-error';
+export { derivePendingActions } from './agent-chat/derive-pending-actions';
 export type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
@@ -77,6 +77,11 @@ export type {
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { NOTIFICATION_COUNT_SYNC_EVENTS } from './notifications/count-sync-events';
 export { Novu } from './novu';
+
+/** Loads Agent Chat on a {@link Novu} instance. Prefer this named export for explicit agent bootstrap. */
+export function loadAgentChat(novu: import('./novu').Novu): Promise<import('./agent-chat').AgentChat> {
+  return novu.loadAgentChat();
+}
 export type {
   PreferenceFilter,
   WorkflowFilter,

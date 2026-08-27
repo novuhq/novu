@@ -51,7 +51,9 @@ export class CreateInteractionRequestDto {
   @IsEnum(HumanChannelViaEnum)
   via?: HumanChannelViaEnum;
 
-  @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
+  @ApiPropertyOptional({
+    description: 'Identifier of the agent that sends the DM. Defaults to `human-relay`.',
+  })
   @IsOptional()
   @IsString()
   agentIdentifier?: string;

@@ -31,6 +31,8 @@ describe('HandleAgentReply - active-conversation counting', () => {
       assertOutboundWithinLimit: sinon.stub().resolves(undefined),
       registerEngagement: sinon.stub().resolves(false),
     };
+    const createConversationInteraction = { execute: sinon.stub().resolves(undefined) };
+    const featureFlagsService = { getFlag: sinon.stub().resolves(false) };
 
     const usecase = new HandleAgentReply(
       agentRepository as any,
@@ -43,7 +45,9 @@ describe('HandleAgentReply - active-conversation counting', () => {
       analyticsService as any,
       outboundGateway as any,
       inboundAck as any,
-      conversationActivation as any
+      conversationActivation as any,
+      createConversationInteraction as any,
+      featureFlagsService as any
     );
 
     const baseCommand = {
@@ -55,7 +59,15 @@ describe('HandleAgentReply - active-conversation counting', () => {
       integrationIdentifier: 'wa-main',
     };
 
-    return { usecase, baseCommand, outboundGateway, conversationActivation };
+    return {
+      usecase,
+      baseCommand,
+      outboundGateway,
+      conversationActivation,
+      conversation,
+      createConversationInteraction,
+      featureFlagsService,
+    };
   }
 
   it('counts an active conversation for a normal agent reply', async () => {
@@ -112,5 +124,38 @@ describe('HandleAgentReply - active-conversation counting', () => {
     expect(outboundGateway.deleteInConversation.callCount).to.equal(2);
     expect(outboundGateway.deleteInConversation.getCall(0).args[3]).to.equal('msg-abc');
     expect(outboundGateway.deleteInConversation.getCall(1).args[3]).to.equal('msg-def');
+  });
+
+  it('skips human signals when IS_AGENT_HUMAN_HITL_ENABLED is off', async () => {
+    const { usecase, baseCommand, createConversationInteraction, featureFlagsService } = setup();
+    featureFlagsService.getFlag.resolves(false);
+
+    await usecase.execute({
+      ...baseCommand,
+      signals: [{ type: 'human', kind: 'approve', prompt: 'Deploy?', requestId: 'hr_1' }],
+    } as any);
+
+    expect(createConversationInteraction.execute.called).to.equal(false);
+  });
+
+  it('creates a conversation interaction for each human signal when the flag is on', async () => {
+    const { usecase, baseCommand, conversation, createConversationInteraction, featureFlagsService } = setup();
+    featureFlagsService.getFlag.resolves(true);
+    (conversation as { participants: Array<{ type: string; id: string }> }).participants = [
+      { type: 'subscriber', id: 'sub-1' },
+    ];
+
+    await usecase.execute({
+      ...baseCommand,
+      signals: [
+        { type: 'human', kind: 'approve', prompt: 'Deploy?', requestId: 'hr_1' },
+        { type: 'human', kind: 'ask', prompt: 'Which env?', requestId: 'hr_2' },
+      ],
+    } as any);
+
+    expect(createConversationInteraction.execute.calledTwice).to.equal(true);
+    expect(createConversationInteraction.execute.firstCall.args[0].kind).to.equal('approve');
+    expect(createConversationInteraction.execute.firstCall.args[0].requestId).to.equal('hr_1');
+    expect(createConversationInteraction.execute.secondCall.args[0].kind).to.equal('ask');
   });
 });
