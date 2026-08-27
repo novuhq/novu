@@ -301,7 +301,6 @@ export class AgentsController {
   }
 
   @Delete('/:identifier')
-  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
   @SdkMethodName('delete')
