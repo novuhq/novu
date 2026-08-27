@@ -1,6 +1,6 @@
 ---
 title: '@novu/js'
-description: "Complete API reference for the @novu/js browser SDK, covering the Novu client, notification streams, preferences, counts, Agent Chat, and session management."
+description: "Complete API reference for the @novu/js browser SDK, covering the Novu client, notification streams, preferences, counts, Web Chat, and session management."
 ---
 
 
@@ -750,35 +750,35 @@ subscription.preferences.map((preference) => {
 await subscription.delete();
 ```
 
-## Agent Chat
+## Web Chat
 
-Two-way in-app chat with an agent. Call `loadAgentChat(novu)` before `novu.agentChat.conversation()`. React apps use [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat), which loads Agent Chat automatically.
+Two-way in-app chat with an agent. Call `loadWebChat(novu)` before `novu.webChat.conversation()`. React apps use [`useWebChat`](/platform/sdks/react/hooks/use-web-chat), which loads Web Chat automatically.
 
-See [Quickstart](/agents/channels/agent-chat/quickstart).
+See [Quickstart](/agents/channels/web-chat/quickstart).
 
 ### conversation()
 
 `conversation()` returns a runtime for one conversation. If you pass `conversationId`, later calls with the same `agentId` and `conversationId` reuse that runtime. If you omit `conversationId`, each call creates a new runtime and a new socket. Keep the returned object. When the chat unmounts, call `dispose()`.
 
-Do not call `novu.agentChat.subscribe()` from UI code. The runtime owns the socket.
+Do not call `novu.webChat.subscribe()` from UI code. The runtime owns the socket.
 
 | Argument | Type | Description |
 | --- | --- | --- |
 | `agentId` | `string` | Public agent identifier from the dashboard. |
 | `conversationId` | `string` | Resume this conversation. Omit this argument to start a new chat. |
-| `agentHash` | `string` | HMAC of `agentId`. Required when Agent Chat HMAC is on. |
+| `agentHash` | `string` | HMAC of `agentId`. Required when Web Chat HMAC is on. |
 
 ```typescript
-import { Novu, loadAgentChat } from '@novu/js';
+import { Novu, loadWebChat } from '@novu/js';
 
 const novu = new Novu({
   applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
   subscriberId: 'YOUR_SUBSCRIBER_ID',
 });
 
-await loadAgentChat(novu);
+await loadWebChat(novu);
 
-const result = novu.agentChat.conversation({
+const result = novu.webChat.conversation({
   agentId: 'YOUR_AGENT_IDENTIFIER',
 });
 
@@ -829,7 +829,7 @@ conversation.dispose();
 | `isRecovering` / `catchUpError` | Reconnect catch-up. The runtime reconnects on its own. |
 | `error` | Last load, send, retry, or action error. |
 
-See [Chat UI](/agents/channels/agent-chat/chat-ui).
+See [Chat UI](/agents/channels/web-chat/chat-ui).
 
 ## Types
 

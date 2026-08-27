@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-description: "Feature support matrix for Novu Connect on Slack, Microsoft Teams, WhatsApp, Telegram, email, and Agent Chat."
+description: "Feature support matrix for Novu Connect on Slack, Microsoft Teams, WhatsApp, Telegram, email, and Web Chat."
 sidebarTitle: Overview
 ---
 
@@ -8,7 +8,7 @@ Novu normalizes inbound events and outbound replies, but each provider exposes a
 
 ## Supported capabilities
 
-| Capability | Slack | Teams | WhatsApp | Telegram | Email | Agent Chat |
+| Capability | Slack | Teams | WhatsApp | Telegram | Email | Web Chat |
 | --- | --- | --- | --- | --- | --- | --- |
 | Full context history | Yes | Yes | Yes | Yes | Yes | Yes |
 | Threaded replies | Yes | Yes | Yes | Yes | Yes | Yes |
@@ -26,7 +26,7 @@ Novu normalizes inbound events and outbound replies, but each provider exposes a
 | Message queueing | Yes | Yes | Yes | Yes | Yes | Yes |
 | Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet | Yes (file parts) |
 
-Word-by-word streaming is not supported on Slack, Teams, WhatsApp, Telegram, or email. Agent Chat updates text parts over the live socket while the turn runs.
+Word-by-word streaming is not supported on Slack, Teams, WhatsApp, Telegram, or email. Web Chat updates text parts over the live socket while the turn runs.
 
 ## Channel pages
 
@@ -46,7 +46,7 @@ Word-by-word streaming is not supported on Slack, Teams, WhatsApp, Telegram, or 
   <Card title="Email" icon="mail" href="/agents/channels/email">
     Threaded HTML, action-link approvals.
   </Card>
-  <Card title="Agent Chat" icon="message-circle" href="/agents/channels/agent-chat">
+  <Card title="Web Chat" icon="message-circle" href="/agents/channels/web-chat">
     In-app headless hook, typing, tool approval.
   </Card>
 </Columns>

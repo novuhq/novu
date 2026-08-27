@@ -96,11 +96,11 @@ export class PlanLimitGateService {
   }
 
   /**
-   * Sync gate for agent chat accept (`POST /agent-chat/conversations`) before minting
+   * Sync gate for web chat accept (`POST /web-chat/conversations`) before minting
    * `conv_*`. Returns block payload for HTTP 402; `null` when the turn may proceed.
    * Keyless orgs skip; entitlement errors fail open (same as runtime gate).
    */
-  async checkAgentChatAcceptLimits(
+  async checkWebChatAcceptLimits(
     agentId: string,
     config: ResolvedAgentConfig,
     params: { isNewThread: boolean; conversationId?: string }
@@ -128,7 +128,7 @@ export class PlanLimitGateService {
 
       return block ? { reason: block, message: PLAN_LIMIT_BLOCK_MESSAGES[block] } : null;
     } catch (err) {
-      this.logger.warn(err, `[agent:${agentId}] Agent chat accept limit check failed, failing open`);
+      this.logger.warn(err, `[agent:${agentId}] Web chat accept limit check failed, failing open`);
 
       return null;
     }
@@ -200,9 +200,9 @@ export class PlanLimitGateService {
     return true;
   }
 
-  /** Agent chat returns HTTP 402 on accept; skip in-thread upgrade cards at runtime. */
+  /** Web chat returns HTTP 402 on accept; skip in-thread upgrade cards at runtime. */
   private shouldPostUpgradeCard(config: ResolvedAgentConfig): boolean {
-    return config.platform !== AgentPlatformEnum.AGENT_CHAT;
+    return config.platform !== AgentPlatformEnum.WEB_CHAT;
   }
 
   private async resolveAgentChannelBlockReason(
@@ -280,7 +280,7 @@ export class PlanLimitGateService {
       // Pre-conversation gates (agents/channels, brand-new thread at conversations
       // limit) have nothing to attach history to — ephemeral platform delivery only.
       // When an existing conversation is blocked from a new activation, persist so
-      // the upgrade card appears in durable agent-chat history.
+      // the upgrade card appears in durable web-chat history.
       await this.outboundGateway.replyOnThreadWithCard(
         thread,
         card,

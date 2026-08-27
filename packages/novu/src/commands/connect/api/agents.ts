@@ -157,16 +157,16 @@ export async function addAgentEmailIntegration(
 }
 
 /**
- * `POST /v1/agents/:id/integrations` with `providerId: 'novu-agent-chat'`
- * auto-provisions the Agent Chat integration and links it to the agent.
+ * `POST /v1/agents/:id/integrations` with `providerId: 'novu-web-chat'`
+ * auto-provisions the Web Chat integration and links it to the agent.
  */
-export async function addAgentChatIntegration(
+export async function addWebChatIntegration(
   client: ConnectApiClient,
   agentIdentifier: string
 ): Promise<AgentIntegrationLink> {
   const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
     `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
-    { providerId: 'novu-agent-chat' }
+    { providerId: 'novu-web-chat' }
   );
   const body = res.data;
 
