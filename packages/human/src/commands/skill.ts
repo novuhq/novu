@@ -33,12 +33,12 @@ export function installSkillCommand(options: { host?: string[]; cwd?: string; js
       return;
     }
 
-    process.stdout.write(`${pc.green('✔')} Installed the human-cli skill:\n`);
+    process.stdout.write(`${pc.green('✔')} Installed Novu HITL skills (human-cli, novu-human):\n`);
     for (const entry of installed) {
       process.stdout.write(`  ${pc.dim(entry.destination)}\n`);
     }
     process.stdout.write(
-      `\nYour coding agent (Claude Code, Cursor, etc.) now knows when to reach for ${pc.bold('human ask/approve/choose/tell')}.\n`
+      `\nYour coding agent now knows when to use ${pc.bold('ctx.ask/approve/choose/tell')}, ${pc.bold('novu_human')}, or ${pc.bold('human ask/approve/choose/tell')}.\n`
     );
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
