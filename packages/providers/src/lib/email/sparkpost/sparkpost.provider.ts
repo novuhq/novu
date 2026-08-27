@@ -71,10 +71,7 @@ export class SparkPostEmailProvider extends BaseProvider implements IEmailProvid
     });
 
     try {
-      const sent = await createProviderHttpClient({
-        providerId: this.id,
-        channel: this.channelType,
-      }).post<ISparkPostResponse>('/transmissions', data.body, {
+      const sent = await createProviderHttpClient().post<ISparkPostResponse>('/transmissions', data.body, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: this.config.apiKey,

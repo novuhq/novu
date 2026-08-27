@@ -29,8 +29,6 @@ export class SendblueChatProvider extends BaseProvider implements IChatProvider 
   ) {
     super();
     this.axiosClient = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       headers: {
         'sb-api-key-id': this.config.apiKey,
         'sb-api-secret-key': this.config.secretKey,

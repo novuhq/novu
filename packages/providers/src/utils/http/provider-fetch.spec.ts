@@ -1,13 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { providerFetch } from './provider-fetch';
-import { type ProviderHttpCallEvent, setProviderHttpObserver } from './provider-http.observer';
 
 const URL_UNDER_TEST = 'https://provider.example.com/send';
 
 describe('providerFetch', () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    setProviderHttpObserver(undefined);
   });
 
   test('attaches an abort signal even when no init is supplied', async () => {
@@ -87,35 +85,6 @@ describe('providerFetch', () => {
     const response = await providerFetch(URL_UNDER_TEST);
 
     expect(response.status).toBe(500);
-  });
-
-  test('reports call timings to the observer', async () => {
-    global.fetch = vi.fn().mockResolvedValue(new Response('{}'));
-
-    const events: ProviderHttpCallEvent[] = [];
-    setProviderHttpObserver((event) => events.push(event));
-
-    await providerFetch(URL_UNDER_TEST, {}, { providerId: 'acme', channel: 'sms' });
-
-    expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ providerId: 'acme', channel: 'sms', timedOut: false });
-  });
-
-  test('flags a timed out call to the observer', async () => {
-    global.fetch = vi.fn(
-      (_input, init: RequestInit = {}) =>
-        new Promise((_resolve, reject) => {
-          init.signal?.addEventListener('abort', () => reject((init.signal as AbortSignal).reason), { once: true });
-        })
-    ) as typeof fetch;
-
-    const events: ProviderHttpCallEvent[] = [];
-    setProviderHttpObserver((event) => events.push(event));
-
-    await expect(providerFetch(URL_UNDER_TEST, {}, { providerId: 'acme', timeoutMs: 20 })).rejects.toThrow();
-
-    expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ providerId: 'acme', timedOut: true });
   });
 
   test('never sends a request twice', async () => {

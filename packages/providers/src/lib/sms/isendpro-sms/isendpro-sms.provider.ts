@@ -21,7 +21,7 @@ export class ISendProSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.CAMEL_CASE;
 
   public readonly DEFAULT_BASE_URL = 'https://apirest.isendpro.com/cgi-bin';
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

@@ -31,8 +31,6 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
   ) {
     super();
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: this.BASE_URL,
     });
   }

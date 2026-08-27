@@ -43,8 +43,6 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
     const normalizedBaseUrl = this.normalizeBaseUrl(config.baseUrl);
 
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: normalizedBaseUrl,
       headers: {
         'Content-Type': 'application/json',

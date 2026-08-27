@@ -22,8 +22,6 @@ export class MaqsamSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: 'https://api.maqsam.com/v2/sms',
       auth: {
         username: config.accessKeyId,

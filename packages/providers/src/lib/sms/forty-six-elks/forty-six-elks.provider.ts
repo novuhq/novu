@@ -24,7 +24,7 @@ export class FortySixElksSmsProvider extends BaseProvider implements ISmsProvide
   id = SmsProviderIdEnum.FortySixElks;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.SNAKE_CASE;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

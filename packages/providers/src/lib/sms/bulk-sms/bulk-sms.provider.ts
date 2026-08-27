@@ -9,7 +9,7 @@ export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly DEFAULT_BASE_URL = 'https://api.bulksms.com/v1/messages';
   protected casing = CasingEnum.CAMEL_CASE;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

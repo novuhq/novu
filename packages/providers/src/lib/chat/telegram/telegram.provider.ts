@@ -28,8 +28,6 @@ export class TelegramChatProvider extends BaseProvider implements IChatProvider 
     super();
     this.baseUrl = `https://api.telegram.org/bot${this.config.botToken}`;
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       headers: {
         'Content-Type': 'application/json',
       },

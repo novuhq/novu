@@ -43,7 +43,7 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = EmailProviderIdEnum.EmailWebhook;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

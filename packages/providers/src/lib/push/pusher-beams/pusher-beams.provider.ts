@@ -23,8 +23,6 @@ export class PusherBeamsPushProvider extends BaseProvider implements IPushProvid
     const baseURL = resolveSafePusherBeamsBaseUrl(this.config.instanceId);
 
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL,
       headers: {
         'Content-Type': 'application/json',

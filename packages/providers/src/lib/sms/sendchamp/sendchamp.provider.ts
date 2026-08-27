@@ -20,8 +20,6 @@ export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: this.BASE_URL,
       headers: {
         'Content-Type': 'application/json',

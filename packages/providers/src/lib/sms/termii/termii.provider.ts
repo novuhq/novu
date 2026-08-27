@@ -57,10 +57,7 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
       body: JSON.stringify(params.body),
     } as RequestInit;
 
-    const response = await providerFetch(TermiiSmsProvider.BASE_URL, opts, {
-      providerId: this.id,
-      channel: this.channelType,
-    });
+    const response = await providerFetch(TermiiSmsProvider.BASE_URL, opts);
     const body = (await response.json()) as SmsJsonResponse;
 
     return {

@@ -26,8 +26,6 @@ export class OneSignalPushProvider extends BaseProvider implements IPushProvider
     this.apiVersion = config.apiVersion;
 
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: config.apiVersion === 'externalId' ? this.BASE_URL_USER_MODEL : this.BASE_URL_PLAYER_MODEL,
     });
   }

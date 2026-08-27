@@ -7,7 +7,7 @@ export class AppioPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.AppIO;
   channelType = ChannelTypeEnum.PUSH as const;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
-  private axiosInstance = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private axiosInstance = createProviderHttpClient();
 
   constructor(private config: { AppIOBaseUrl?: string }) {
     super();

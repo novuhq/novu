@@ -31,21 +31,17 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
       content: options.content,
     });
 
-    const response = await providerFetch(
-      `${this.BASE_URL}/transactionalSMS/sms`,
-      {
-        method: 'POST',
-        headers: {
-          'api-key': this.config.apiKey,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          ...sms.headers,
-        },
-        agent: new ProxyAgent(),
-        body: JSON.stringify(sms.body),
-      } as RequestInit,
-      { providerId: this.id, channel: this.channelType }
-    );
+    const response = await providerFetch(`${this.BASE_URL}/transactionalSMS/sms`, {
+      method: 'POST',
+      headers: {
+        'api-key': this.config.apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...sms.headers,
+      },
+      agent: new ProxyAgent(),
+      body: JSON.stringify(sms.body),
+    } as RequestInit);
 
     const body: { messageId: string } = await response.json();
 

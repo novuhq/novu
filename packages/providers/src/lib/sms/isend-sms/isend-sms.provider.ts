@@ -45,8 +45,6 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.Instance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: 'https://send.com.ly',
       headers: {
         Accept: 'application/json',

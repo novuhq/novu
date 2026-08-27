@@ -45,8 +45,6 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
 
     if (!this.config?.authenticateByToken) {
       this.axiosInstance = createProviderHttpClient({
-        providerId: this.id,
-        channel: this.channelType,
         baseURL: config.baseUrl,
         headers: this.headers,
       });
@@ -74,10 +72,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
     });
 
     if (this.config?.authenticateByToken) {
-      const tokenAxiosInstance = await createProviderHttpClient({
-        providerId: this.id,
-        channel: this.channelType,
-      }).request({
+      const tokenAxiosInstance = await createProviderHttpClient().request({
         method: 'POST',
         baseURL: this.config.domain,
         headers: this.headers,
@@ -86,8 +81,6 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       const token = tokenAxiosInstance.data.data[this.config.authenticationTokenKey!];
 
       this.axiosInstance = createProviderHttpClient({
-        providerId: this.id,
-        channel: this.channelType,
         baseURL: this.config.baseUrl,
         headers: {
           [this.config.authenticationTokenKey!]: token,

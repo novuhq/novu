@@ -23,7 +23,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.apiBaseUrl = `http://${config.host}:${config.port}/cgi-bin`;
-    this.axiosInstance = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+    this.axiosInstance = createProviderHttpClient();
   }
 
   async sendMessage(

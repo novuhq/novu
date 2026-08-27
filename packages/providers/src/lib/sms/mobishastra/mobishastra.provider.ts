@@ -23,8 +23,6 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: config.baseUrl,
       headers: {
         'Content-Type': 'application/json',

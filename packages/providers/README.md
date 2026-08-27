@@ -51,4 +51,4 @@ Set `NOVU_PROVIDER_HTTP_TIMEOUT_MS` to override the default. It is read once at 
 
 Providers backed by a vendor SDK (Twilio, SendGrid, Firebase, nodemailer, and others) use that SDK's own timeout instead.
 
-If you are adding a provider, use these clients rather than importing `axios` or calling `fetch` directly — a bare axios instance has no timeout at all. `setProviderHttpObserver` lets an embedding application receive `{ providerId, channel, durationMs, timedOut }` for every call.
+If you are adding a provider, use these clients rather than importing `axios` or calling `fetch` directly — a bare axios instance has no timeout at all.

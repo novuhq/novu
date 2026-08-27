@@ -9,7 +9,7 @@ export class RuachSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.PASCAL_CASE;
   private readonly BASE_URL = 'https://app.notify.ng/api/v2/SendSMS';
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

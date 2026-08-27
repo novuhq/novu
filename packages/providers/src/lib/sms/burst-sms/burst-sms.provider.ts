@@ -20,8 +20,6 @@ export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       auth: {
         username: config.apiKey,
         password: config.secretKey,

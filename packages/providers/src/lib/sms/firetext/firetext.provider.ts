@@ -53,7 +53,7 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
     const url = new URL(this.BASE_URL);
     url.search = urlSearchParams.toString();
 
-    const response = await providerFetch(url.toString(), {}, { providerId: this.id, channel: this.channelType });
+    const response = await providerFetch(url.toString());
     const body = await response.text();
     const [code, message] = this.parseResponse(body);
 

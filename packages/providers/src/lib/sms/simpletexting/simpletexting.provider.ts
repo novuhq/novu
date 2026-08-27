@@ -9,7 +9,7 @@ export class SimpletextingSmsProvider extends BaseProvider implements ISmsProvid
   id = SmsProviderIdEnum.Simpletexting;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

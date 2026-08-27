@@ -53,8 +53,6 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
     super();
 
     this.axiosInstance = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: IMediaSmsProvider.BASE_URL,
       headers: {
         'Content-Type': 'application/json',

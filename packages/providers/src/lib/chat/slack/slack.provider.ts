@@ -30,7 +30,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   public id = ChatProviderIdEnum.Slack;
   private slackAPI = 'https://slack.com/api';
-  private axiosInstance = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private axiosInstance = createProviderHttpClient();
 
   /**
    * Rich Chat: serialize a `CardElement` to Slack Block Kit + mrkdwn fallback text.

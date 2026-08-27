@@ -181,10 +181,7 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
         const baseUrl = this.config.baseUrl || 'https://api.mailgun.net';
         const authHeader = `Basic ${Buffer.from(`api:${this.config.apiKey}`).toString('base64')}`;
 
-        const response = await createProviderHttpClient({
-          providerId: this.id,
-          channel: this.channelType,
-        }).get(`${baseUrl}/v5/accounts/http_signing_key`, {
+        const response = await createProviderHttpClient().get(`${baseUrl}/v5/accounts/http_signing_key`, {
           headers: {
             Authorization: authHeader,
           },

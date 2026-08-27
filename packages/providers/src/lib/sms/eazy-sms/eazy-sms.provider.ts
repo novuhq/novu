@@ -10,7 +10,7 @@ export class EazySmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.CAMEL_CASE;
   public readonly DEFAULT_BASE_URL = 'https://api.eazy.im/v3';
   public readonly EAZY_SMS_CHANNEL = '@sms.eazy.im';
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

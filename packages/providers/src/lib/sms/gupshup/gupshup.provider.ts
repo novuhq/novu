@@ -9,7 +9,7 @@ export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public static BASE_URL = 'https://enterprise.smsgupshup.com/GatewayAPI/rest';
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

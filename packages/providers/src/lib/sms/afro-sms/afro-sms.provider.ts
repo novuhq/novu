@@ -11,7 +11,7 @@ export class AfroSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.SNAKE_CASE;
   private readonly BASE_URL = 'https://api.afromessage.com';
   private readonly ENDPOINT = '/api/send';
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

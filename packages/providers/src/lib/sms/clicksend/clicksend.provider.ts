@@ -8,7 +8,7 @@ export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Clicksend;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.SNAKE_CASE;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

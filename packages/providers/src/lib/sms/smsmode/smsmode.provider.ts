@@ -58,7 +58,7 @@ export class SmsmodeSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly BASE_URL = 'https://rest.smsmode.com/sms/v1';
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

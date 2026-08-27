@@ -32,8 +32,6 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
   ) {
     super();
     this.axiosClient = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       headers: {
         Authorization: `Bearer ${this.config.accessToken}`,
         'Content-Type': 'application/json',

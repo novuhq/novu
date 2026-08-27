@@ -24,8 +24,6 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
   constructor(private config: { channelAccessToken: string }) {
     super();
     this.axiosClient = createProviderHttpClient({
-      providerId: this.id,
-      channel: this.channelType,
       baseURL: 'https://api.line.me/v2/bot/message',
       headers: {
         Authorization: `Bearer ${this.config.channelAccessToken}`,

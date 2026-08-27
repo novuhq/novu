@@ -9,7 +9,7 @@ export class SmsCentralSmsProvider extends BaseProvider implements ISmsProvider 
   id = SmsProviderIdEnum.SmsCentral;
   protected casing = CasingEnum.CONSTANT_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {

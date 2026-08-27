@@ -9,7 +9,7 @@ export class SinchSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sinch;
   protected casing = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  private readonly httpClient = createProviderHttpClient({ providerId: this.id, channel: this.channelType });
+  private readonly httpClient = createProviderHttpClient();
   private readonly region: ReturnType<typeof assertAllowedSinchSmsRegion>;
 
   constructor(

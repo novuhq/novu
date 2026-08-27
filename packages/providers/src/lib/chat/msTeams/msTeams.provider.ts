@@ -37,10 +37,7 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.MsTeams;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
-  private axiosInstance: AxiosInstance = createProviderHttpClient({
-    providerId: this.id,
-    channel: this.channelType,
-  });
+  private axiosInstance: AxiosInstance = createProviderHttpClient();
 
   private static readonly BOT_FRAMEWORK_SERVICE_URL = 'https://smba.trafficmanager.net';
 
