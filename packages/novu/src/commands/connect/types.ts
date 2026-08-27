@@ -197,11 +197,13 @@ export interface ConnectCommandOptions {
   noScaffold?: boolean;
   /**
    * LLM provider for ai-sdk / langchain fresh scaffolds only.
-   * openai | anthropic | codex-subscription | claude-subscription | skip
+   * openai | anthropic | orcarouter | codex-subscription | claude-subscription | skip
    */
   llmAuth?: LlmAuthCliChoice;
   /** OpenAI API key for --llm-auth openai non-interactive scaffold runs. */
   openaiApiKey?: string;
+  /** OrcaRouter API key for --llm-auth orcarouter non-interactive scaffold runs. */
+  orcarouterApiKey?: string;
   /** Agent Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted). */
   agentChatSetup?: AgentChatSetupMode;
 }

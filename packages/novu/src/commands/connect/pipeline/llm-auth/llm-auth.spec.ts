@@ -22,6 +22,18 @@ describe('llm-auth registry', () => {
     expect(resolveLlmAuthEnvVars({ kind: 'skip' })).toEqual({});
   });
 
+  it('resolves OrcaRouter packages per runtime', () => {
+    expect(resolveLlmAuthPackages('ai-sdk', { kind: 'orcarouter-api-key', apiKey: 'or-test' })).toEqual([
+      '@ai-sdk/openai',
+    ]);
+    expect(resolveLlmAuthPackages('langchain', { kind: 'orcarouter-api-key', apiKey: 'or-test' })).toEqual([
+      '@langchain/openai',
+    ]);
+    expect(resolveLlmAuthEnvVars({ kind: 'orcarouter-api-key', apiKey: 'or-test' })).toEqual({
+      ORCAROUTER_API_KEY: 'or-test',
+    });
+  });
+
   it('pins subscription providers to zod v4-compatible releases', () => {
     expect(resolveLlmAuthPackageDependencies('ai-sdk', { kind: 'codex-subscription' })).toEqual({
       'ai-sdk-provider-codex-cli': '2.1.1',
@@ -88,6 +100,15 @@ describe('llm-auth picker options', () => {
     expect(langChainKinds).not.toContain('claude-subscription');
   });
 
+  it('includes OrcaRouter for both runtimes', () => {
+    const aiSdkKinds = getLlmAuthPickerOptions('ai-sdk').map((opt) => opt.kind);
+    const langChainKinds = getLlmAuthPickerOptions('langchain').map((opt) => opt.kind);
+
+    expect(aiSdkKinds).toContain('orcarouter-api-key');
+    expect(langChainKinds).toContain('orcarouter-api-key');
+    expect(describeLlmAuthChoice({ kind: 'orcarouter-api-key', apiKey: 'or-test' })).toContain('OrcaRouter');
+  });
+
   it('describes scaffold wiring choices for confirm screens', () => {
     expect(describeLlmAuthChoice({ kind: 'claude-subscription' })).toContain('Claude Code');
     expect(describeLlmAuthChoice({ kind: 'skip' })).toContain('echo');
@@ -135,6 +156,35 @@ describe('generateSupportAgentSource', () => {
     expect(source).toContain("toolCall.name === 'searchNovuDocs'");
     expect(source).toContain('export const myAgent');
     expect(source).not.toContain('ChatAnthropic');
+  });
+
+  it('generates wired AI SDK OrcaRouter handler with a custom base URL', () => {
+    const source = generateSupportAgentSource({
+      runtime: 'ai-sdk',
+      agentIdentifier: 'support-agent',
+      llmAuth: { kind: 'orcarouter-api-key', apiKey: 'or-test' },
+    });
+
+    expect(source).toContain("import { createOpenAI } from '@ai-sdk/openai'");
+    expect(source).toContain("baseURL: 'https://api.orcarouter.ai/v1'");
+    expect(source).toContain('process.env.ORCAROUTER_API_KEY');
+    expect(source).toContain("('openai/gpt-4o-mini')");
+    expect(source).toContain('tools: { searchNovuDocs }');
+    expect(source).toContain('needsApproval: true');
+  });
+
+  it('generates wired LangChain OrcaRouter handler with a custom base URL', () => {
+    const source = generateSupportAgentSource({
+      runtime: 'langchain',
+      agentIdentifier: 'support-agent',
+      llmAuth: { kind: 'orcarouter-api-key', apiKey: 'or-test' },
+    });
+
+    expect(source).toContain("import { ChatOpenAI } from '@langchain/openai'");
+    expect(source).toContain("model: 'openai/gpt-4o-mini'");
+    expect(source).toContain("baseURL: 'https://api.orcarouter.ai/v1'");
+    expect(source).toContain('process.env.ORCAROUTER_API_KEY');
+    expect(source).toContain('tools: [searchNovuDocs]');
   });
 
   it('generates wired LangChain Codex subscription handler with tools', () => {

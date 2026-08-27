@@ -115,6 +115,12 @@ function buildOnMessageBody(input: GenerateSupportAgentInput): string {
   if (runtime === 'ai-sdk') {
     if (llmAuth.kind === 'openai-api-key') return buildAiSdkHandler(input, "openai('gpt-4o-mini')");
     if (llmAuth.kind === 'anthropic-api-key') return buildAiSdkHandler(input, "anthropic('claude-haiku-4-5')");
+    if (llmAuth.kind === 'orcarouter-api-key') {
+      return buildAiSdkHandler(
+        input,
+        "createOpenAI({ baseURL: 'https://api.orcarouter.ai/v1', apiKey: process.env.ORCAROUTER_API_KEY })('openai/gpt-4o-mini')"
+      );
+    }
     if (llmAuth.kind === 'codex-subscription') return buildAiSdkHandler(input, "codexCli('gpt-5.4-mini')");
     if (llmAuth.kind === 'claude-subscription') return buildAiSdkHandler(input, "claudeCode('haiku')");
   }
@@ -122,6 +128,11 @@ function buildOnMessageBody(input: GenerateSupportAgentInput): string {
   if (runtime === 'langchain') {
     if (llmAuth.kind === 'openai-api-key') return buildLangChainHandler("'openai:gpt-4o-mini'");
     if (llmAuth.kind === 'anthropic-api-key') return buildLangChainHandler("'anthropic:claude-haiku-4-5'");
+    if (llmAuth.kind === 'orcarouter-api-key') {
+      return buildLangChainHandler(
+        "new ChatOpenAI({ model: 'openai/gpt-4o-mini', apiKey: process.env.ORCAROUTER_API_KEY, configuration: { baseURL: 'https://api.orcarouter.ai/v1' } })"
+      );
+    }
     if (llmAuth.kind === 'codex-subscription') {
       return buildLangChainHandler("new ChatCodexOAuth({ model: 'gpt-5.4-mini' })");
     }
@@ -149,6 +160,11 @@ ${toolImports}`;
 import { openai } from '@ai-sdk/openai';`;
   }
 
+  if (kind === 'orcarouter-api-key') {
+    return `${base}
+import { createOpenAI } from '@ai-sdk/openai';`;
+  }
+
   if (kind === 'anthropic-api-key') {
     return `${base}
 import { anthropic } from '@ai-sdk/anthropic';`;
@@ -173,6 +189,11 @@ import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/langchain';
 import { tool } from '@langchain/core/tools';
 import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`;
+
+  if (kind === 'orcarouter-api-key') {
+    return `${base}
+import { ChatOpenAI } from '@langchain/openai';`;
+  }
 
   if (kind === 'codex-subscription') {
     return `${base}

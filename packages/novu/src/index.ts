@@ -220,9 +220,10 @@ program
   .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
   .option(
     '--llm-auth <choice>',
-    'LLM provider for ai-sdk/langchain scaffold (openai | anthropic | codex-subscription | claude-subscription | skip)'
+    'LLM provider for ai-sdk/langchain scaffold (openai | anthropic | orcarouter | codex-subscription | claude-subscription | skip)'
   )
   .option('--openai-api-key <key>', 'OpenAI API key for --llm-auth openai non-interactive scaffold runs')
+  .option('--orcarouter-api-key <key>', 'OrcaRouter API key for --llm-auth orcarouter non-interactive scaffold runs')
   .option('--aws-claude-api-key <key>', 'AWS Claude API key for --runtime claude-aws non-interactive runs')
   .option('--aws-claude-region <region>', 'AWS Claude commercial region for --runtime claude-aws')
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
@@ -319,6 +320,7 @@ program
     const LLM_AUTH_CHOICES: readonly LlmAuthCliChoice[] = [
       'openai',
       'anthropic',
+      'orcarouter',
       'codex-subscription',
       'claude-subscription',
       'skip',

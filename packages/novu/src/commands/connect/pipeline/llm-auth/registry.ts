@@ -26,6 +26,15 @@ const REGISTRY: Record<Exclude<LlmAuthKind, 'skip'>, LlmAuthRegistryEntry> = {
       langchain: [{ name: '@langchain/anthropic', version: '^1.0.0' }],
     },
   },
+  // OrcaRouter is an OpenAI-compatible gateway, so scaffolds reuse the OpenAI
+  // provider packages but point them at the OrcaRouter base URL and API key.
+  'orcarouter-api-key': {
+    envKey: 'ORCAROUTER_API_KEY',
+    packages: {
+      'ai-sdk': [{ name: '@ai-sdk/openai', version: 'latest' }],
+      langchain: [{ name: '@langchain/openai', version: '^1.0.0' }],
+    },
+  },
   'codex-subscription': {
     packages: {
       'ai-sdk': [
@@ -78,6 +87,10 @@ export function resolveLlmAuthEnvVars(llmAuth: LlmAuthChoice): Record<string, st
 
   if (llmAuth.kind === 'anthropic-api-key') {
     return { ANTHROPIC_API_KEY: llmAuth.apiKey };
+  }
+
+  if (llmAuth.kind === 'orcarouter-api-key') {
+    return { ORCAROUTER_API_KEY: llmAuth.apiKey };
   }
 
   return {};
