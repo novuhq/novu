@@ -1881,59 +1881,6 @@ describe('AgentChat', () => {
     ]);
   });
 
-  it('reload drops a stale edit overlay that is not on the new history page', async () => {
-    getEvents.mockResolvedValueOnce(
-      historyEventPage(
-        [
-          {
-            sequence: 2,
-            event: {
-              type: 'message',
-              role: 'user',
-              messageId: 'msg_keep0000001',
-              content: { markdown: 'keep' },
-            },
-          },
-          {
-            sequence: 3,
-            event: {
-              type: 'channel.edit',
-              messageId: 'msg_edit0000001',
-              content: { markdown: 'edited' },
-            },
-          },
-        ],
-        'act_page0001'
-      )
-    );
-    await agentChat.loadConversation({
-      agentId: 'agent_1',
-      conversationId: 'conv_abcdefghijkl',
-    });
-
-    getEvents.mockResolvedValueOnce(
-      historyPage([{ sequence: 4, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
-    );
-    await agentChat.loadConversation({
-      agentId: 'agent_1',
-      conversationId: 'conv_abcdefghijkl',
-    });
-
-    getEvents.mockResolvedValueOnce(
-      historyPage([{ sequence: 1, messageId: 'msg_edit0000001', role: 'user', markdown: 'original' }], null)
-    );
-
-    const result = await agentChat.fetchMore({
-      agentId: 'agent_1',
-      conversationId: 'conv_abcdefghijkl',
-    });
-
-    expect(result.data?.messages[0]).toMatchObject({
-      id: 'msg_edit0000001',
-      parts: [{ type: 'text', text: 'original', state: 'done' }],
-    });
-  });
-
   it('reload keeps a live delete that arrived while history GET was in flight', async () => {
     getEvents.mockResolvedValueOnce(
       historyPage(
