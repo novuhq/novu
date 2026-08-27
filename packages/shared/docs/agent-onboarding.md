@@ -24,7 +24,8 @@ Do **not** ask Step 0 when the user only wants to connect a **channel** in the c
 
 **Mandatory routing rules:**
 
-- **Agent Chat / web chat named explicitly** → use `--channel agent-chat` and skip the channel picker. Use the custom code bridge only when the user also asks for AI SDK, LangChain, or handler wiring; otherwise use the managed path. On an Agent Chat-only request, do not pass `--runtime` or `--agent-chat-setup`. This rule takes precedence over generic "add an agent to my app" wording.
+- **Flags already in the user prompt** (`--runtime`, `--channel`, `--agent-identifier`) → copy those flags onto the connect command. Do **not** ask Step 0, B1, or B2 for values the prompt already locked. A dashboard-created bridge agent that names `--runtime ai-sdk|langchain|custom-code` is the custom-code path even when Agent Chat is also named.
+- **Agent Chat / web chat named explicitly** → use `--channel agent-chat` and skip the channel picker. Use the custom code bridge only when the user also asks for AI SDK, LangChain, or handler wiring, or already passes `--runtime`; otherwise use the managed path. On an Agent Chat-only request (no runtime / handler signal), do not pass `--runtime` or `--agent-chat-setup`. This rule takes precedence over generic "add an agent to my app" wording.
 - **MS Teams + no dashboard-login signal** → dashboard redirect. Do **not** run `npx novu connect`. Never pass `--channel teams` with `--keyless`.
 - **"Add an agent to my app"** (or equivalent) → **custom code bridge**. Never use the managed path.
 - **"Connect a Novu agent to \<channel\> for this project"** (or similar channel-only wording) → **managed**. **Never** bridge. *"For this project"* means the current workspace directory, not "wire my handler."
@@ -371,10 +372,13 @@ Same channel picker and rules as [Step M1](#step-m1--choose-channel-and-collect-
 - **Never pass `--keyless`** on the bridge path.
 - **Do not** infer or confirm a managed-agent description (skip [Step M2](#step-m2--infer-the-agents-purpose-then-confirm) entirely).
 - **Runtime** is chosen in Step B2, not here.
+- If the user prompt already includes `--channel <value>`, use that value and skip this picker.
 
 ## Step B2 — Pick bridge runtime
 
 **Goal:** lock `--runtime ai-sdk` or `--runtime langchain` before running connect.
+
+If the user prompt already includes `--runtime ai-sdk`, `--runtime langchain`, or `--runtime custom-code`, use that value and skip this step.
 
 Use the **Read** tool on `package.json` and inspect `dependencies` / `devDependencies` in the file content. **Never** use Bash (`grep`, `cat`, `jq`, or shell pipelines) to read package.json.
 
@@ -404,7 +408,8 @@ If you must ask, call `AskQuestion` / `AskUserQuestion`:
 npx novu@latest connect \
   --ci \
   --runtime <ai-sdk|langchain> \
-  --channel <slack|email|telegram|whatsapp|teams|agent-chat|skip>
+  --channel <slack|email|telegram|whatsapp|teams|agent-chat|skip> \
+  --agent-identifier <id>   # when the dashboard already created the agent
 ```
 
 **Canonical example (dashboard OAuth, AI SDK, slack, existing project):**

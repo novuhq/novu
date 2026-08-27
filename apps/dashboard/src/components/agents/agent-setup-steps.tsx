@@ -370,10 +370,12 @@ export function AgentSetupSteps({
   // start at 1 here instead of continuing from 3.
   const isOnboarding = Boolean(connectSummary);
   const brainStepsBefore = isOnboarding ? BRAIN_STEPS : 0;
-  const handlerStepsAfter = isManagedRuntime ? 0 : HANDLER_STEPS;
 
   const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
   const selectedProviderId = selectedIntegration?.providerId ?? legacyDefaultFromAgent?.providerId;
+  // Agent Chat's first prompt already scaffolds the handler with `--runtime` + `--channel agent-chat`.
+  const skipHandlerSection = isManagedRuntime || selectedProviderId === ChatProviderIdEnum.NovuAgentChat;
+  const handlerStepsAfter = skipHandlerSection ? 0 : HANDLER_STEPS;
   const isEmailChannelSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent;
   const effectiveIntegrationId = validatedSelectedId ?? selectedIntegrationId ?? legacyDefaultFromAgent?.integrationId;
 
@@ -845,6 +847,7 @@ export function AgentSetupSteps({
                       stepOffset={providerGuideStepOffset}
                       embedded={false}
                       isOnboarding={isOnboarding}
+                      connectorId={connectSummary?.connectorId}
                       onStepsCompleted={handleProviderStepsCompleted}
                       onWelcomeSent={
                         guideProviderId !== EmailProviderIdEnum.NovuAgent
@@ -865,6 +868,7 @@ export function AgentSetupSteps({
                 stepOffset={providerGuideStepOffset}
                 embedded={false}
                 isOnboarding={isOnboarding}
+                connectorId={connectSummary?.connectorId}
                 onStepsCompleted={handleProviderStepsCompleted}
                 onWelcomeSent={
                   isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
@@ -878,7 +882,7 @@ export function AgentSetupSteps({
         ) : null}
       </AnimatePresence>
 
-      {channelReadyForBridge && !isManagedRuntime && (
+      {channelReadyForBridge && !skipHandlerSection && (
         <div className="pl-8">
           <AgentCodeSetupSection
             agent={agent}
