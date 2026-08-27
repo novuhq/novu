@@ -49,8 +49,8 @@ function viaForProviderId(providerId: string): HumanChannelViaEnum | null {
  * (same model as the agents email channel — no endpoint row).
  *
  * Callers pass a channel preference (`via`) — never a concrete integration id.
- * The concrete integration is chosen from the relay agent's linked integrations
- * that the human can actually receive on.
+ * The concrete integration is chosen from the sending agent's linked
+ * integrations that the human can actually receive on.
  */
 @Injectable()
 export class HumanDeliveryService {
@@ -81,7 +81,7 @@ export class HumanDeliveryService {
 
     if (links.length === 0) {
       throw new NotFoundException(
-        `Relay agent has no linked channels. Run \`human setup\` to connect telegram, slack, or email.`
+        `Agent has no linked channels. Connect telegram, slack, or email to this agent, or run \`human setup\`.`
       );
     }
 
@@ -97,7 +97,7 @@ export class HumanDeliveryService {
 
     if (params.via && candidates.length === 0) {
       throw new NotFoundException(
-        `No ${params.via} channel is linked to the relay. Run \`human setup ${params.via}\` first.`
+        `No ${params.via} channel is linked to this agent. Connect ${params.via} or run \`human setup ${params.via}\`.`
       );
     }
 

@@ -138,13 +138,16 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   async function sendMessageToRelay(text: string, raw: Record<string, unknown> = {}) {
     const inboundHandler = testServer.getService(AgentInboundHandler);
     const config = await resolveConfig();
+    const message = makeMessage(text, raw);
     await inboundHandler.handle(
       relayAgentId,
       config,
       makeTelegramThread() as any,
-      makeMessage(text, raw) as any,
+      message as any,
       AgentEventEnum.ON_MESSAGE
     );
+
+    return message;
   }
 
   describe('setup', () => {
@@ -344,14 +347,14 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const first = (await createInteraction({ kind: 'ask', prompt: 'First question?' })).body.data;
       const second = (await createInteraction({ kind: 'ask', prompt: 'Second question?' })).body.data;
 
-      await sendMessageToRelay('ambiguous answer');
+      const message = await sendMessageToRelay('ambiguous answer');
 
       let firstStatus = (await session.testAgent.get(`/v1/human/interactions/${first.id}`)).body.data.status;
       let secondStatus = (await session.testAgent.get(`/v1/human/interactions/${second.id}`)).body.data.status;
       expect(firstStatus).to.equal(HumanInteractionStatusEnum.PENDING);
       expect(secondStatus).to.equal(HumanInteractionStatusEnum.PENDING);
 
-      await clickAction(`human:pick:${second.id}`);
+      await clickAction(`human:pick:${second.id}:${message.id}`);
 
       firstStatus = (await session.testAgent.get(`/v1/human/interactions/${first.id}`)).body.data.status;
       secondStatus = (await session.testAgent.get(`/v1/human/interactions/${second.id}`)).body.data.status;

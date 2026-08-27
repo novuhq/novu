@@ -41,6 +41,12 @@ export type ConversationEntry = AgentConversationState & {
   reportedActionIds: Set<string>;
   /** Terminal MCP results retained while history pages load independently. */
   mcpConnectionResults: Map<string, McpConnectionResult>;
+  /**
+   * Latest `channel.edit` / `channel.delete` per message id.
+   * History pages fold in isolation, so a mutation on a newer page must still
+   * apply when `fetchMore` prepends the original `MESSAGE`.
+   */
+  messageMutations: Map<string, AgentEventEnvelope>;
   /** True while reconnect catch-up is in flight for this holder. */
   isRecovering: boolean;
   /** Set when catch-up hits the safety page limit or HTTP fails. Cleared on success. */
@@ -149,6 +155,37 @@ export class AgentChatStore {
     }));
   }
 
+  #recordMessageMutations(entry: ConversationEntry, envelopes: AgentEventEnvelope[]): void {
+    for (const envelope of envelopes) {
+      const { event } = envelope;
+      if (event.type !== 'channel.edit' && event.type !== 'channel.delete') {
+        continue;
+      }
+
+      const existing = entry.messageMutations.get(event.messageId);
+      if (existing && existing.sequence > envelope.sequence) {
+        continue;
+      }
+
+      entry.messageMutations.set(event.messageId, envelope);
+    }
+  }
+
+  #applyMessageMutations(entry: ConversationEntry, messages: AgentMessage[]): AgentMessage[] {
+    if (entry.messageMutations.size === 0) {
+      return messages;
+    }
+
+    return applyEnvelopes(
+      { ...createInitialAgentConversationState(), messages },
+      [...entry.messageMutations.values()]
+    ).messages;
+  }
+
+  #overlayMessages(entry: ConversationEntry, messages: AgentMessage[]): AgentMessage[] {
+    return this.#applyMcpConnectionResults(entry, this.#applyMessageMutations(entry, messages));
+  }
+
   clear(): void {
     this.#byKey.clear();
   }
@@ -211,6 +248,7 @@ export class AgentChatStore {
       olderCursor: null,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
+      messageMutations: new Map(),
       isRecovering: false,
       paginationStatus: 'idle',
       paginationEpoch: 0,
@@ -310,13 +348,14 @@ export class AgentChatStore {
   ): ConversationEntry {
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, envelopes);
+    this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
     const localOnly = previous.filter((message) => !serverIds.has(message.id));
 
     applyState(entry, {
       ...folded,
-      messages: this.#applyMcpConnectionResults(entry, [...folded.messages, ...localOnly]),
+      messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
@@ -382,9 +421,10 @@ export class AgentChatStore {
     olderCursor: string | null
   ): ConversationEntry {
     this.#recordMcpConnectionResults(entry, envelopes);
+    this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const existingIds = new Set(entry.messages.map((message) => message.id));
-    const olderMessages = this.#applyMcpConnectionResults(
+    const olderMessages = this.#overlayMessages(
       entry,
       folded.messages.filter((message) => !existingIds.has(message.id))
     );
@@ -422,6 +462,7 @@ export class AgentChatStore {
 
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, [envelope]);
+    this.#recordMessageMutations(entry, [envelope]);
     const next = applyEnvelope(entry, envelope);
     applyState(entry, {
       ...next,

@@ -12,12 +12,12 @@ import type {
   AgentPendingAction,
   AgentToolApprovalDecision,
   LoadConversationResult,
-  NovuError,
   RespondToActionResult,
   SendActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { NovuError } from '@novu/js';
+import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
@@ -73,7 +73,7 @@ export type UseAgentChatResult = {
   pendingActions: AgentPendingAction[];
   conversationId?: string;
   error?: NovuError | AgentChatPlanLimitError;
-  /** True until the first history fetch completes. False when there is no `conversationId` prop. */
+  /** True while Agent Chat loads and, for an existing conversation, until the first history fetch completes. */
   isLoading: boolean;
   isRunning: boolean;
   typing?: AgentConversationRunSnapshot['typing'];
@@ -114,7 +114,7 @@ export type UseAgentChatResult = {
 
 const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
   key: 'ssr',
-  status: 'ready',
+  status: 'loading',
   run: { isRunning: false },
   conversationStatus: 'active',
   pagination: { hasMore: false, status: 'idle' },
@@ -196,6 +196,7 @@ function handlePublicationCallbacks(args: {
 
 type OwnedRuntimeEntry = {
   key: string;
+  novu: ReturnType<typeof useNovu>;
   runtime: AgentConversationRuntime;
 };
 
@@ -212,7 +213,7 @@ function resolveOwnedRuntime(args: {
   const key = getCreateFlowKey(args.agentId, args.agentHash);
   const current = args.ownedRuntimeRef.current;
 
-  if (current?.key === key) {
+  if (current?.novu === args.novu && current.key === key) {
     return current.runtime;
   }
 
@@ -224,13 +225,67 @@ function resolveOwnedRuntime(args: {
     return null;
   }
 
-  args.ownedRuntimeRef.current = { key, runtime: result.data };
+  args.ownedRuntimeRef.current = { key, novu: args.novu, runtime: result.data };
   return result.data;
+}
+
+type AgentChatLoadState =
+  | { novu: ReturnType<typeof useNovu>; status: 'loading' }
+  | { novu: ReturnType<typeof useNovu>; status: 'ready' }
+  | { novu: ReturnType<typeof useNovu>; status: 'error'; error: NovuError };
+
+function toNovuError(error: unknown): NovuError {
+  if (error instanceof NovuError) {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return new NovuError('Failed to load Agent Chat', error);
+  }
+
+  return new NovuError('Failed to load Agent Chat', new Error(String(error)));
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const novu = useNovu();
   const propsRef = useDataRef(props);
+  const [loadState, setLoadState] = useState<AgentChatLoadState>(() => ({
+    novu,
+    status: 'loading',
+  }));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!novu.isAgentChatLoaded) {
+      setLoadState({ novu, status: 'loading' });
+    }
+
+    void novu
+      .loadAgentChat()
+      .then(() => {
+        if (!cancelled) {
+          setLoadState({ novu, status: 'ready' });
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+
+        const novuError = toNovuError(error);
+        propsRef.current.onError?.(novuError);
+        setLoadState({ novu, status: 'error', error: novuError });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [novu, propsRef]);
+
+  const agentChatReady = loadState.novu === novu && loadState.status === 'ready';
+  const agentChatLoadError = loadState.novu === novu && loadState.status === 'error' ? loadState.error : undefined;
+  const isAgentChatLoading = loadState.novu !== novu || loadState.status === 'loading';
 
   const sharedRuntime = 'conversation' in props ? props.conversation : undefined;
   const agentId = sharedRuntime?.agentId ?? props.agentId!;
@@ -239,7 +294,19 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
   const ownedRuntimeRef = useRef<OwnedRuntimeEntry | null>(null);
 
+  useEffect(() => {
+    const current = ownedRuntimeRef.current;
+    if (current && current.novu !== novu) {
+      current.runtime.dispose();
+      ownedRuntimeRef.current = null;
+    }
+  }, [novu]);
+
   const cachedRuntime = useMemo(() => {
+    if (!agentChatReady) {
+      return null;
+    }
+
     if (sharedRuntime) {
       return sharedRuntime;
     }
@@ -255,7 +322,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     });
 
     return result.ok ? result.data : null;
-  }, [sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
+  }, [agentChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
 
   if (sharedRuntime || conversationIdProp) {
     ownedRuntimeRef.current?.runtime.dispose();
@@ -263,7 +330,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   }
 
   const ownedRuntime =
-    sharedRuntime || conversationIdProp ? null : resolveOwnedRuntime({ novu, agentId, agentHash, ownedRuntimeRef });
+    !agentChatReady || sharedRuntime || conversationIdProp
+      ? null
+      : resolveOwnedRuntime({ novu, agentId, agentHash, ownedRuntimeRef });
 
   const runtime = sharedRuntime ?? cachedRuntime ?? ownedRuntime;
 
@@ -328,7 +397,15 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const callRuntime = useCallback(
     async <T>(action: (target: AgentConversationRuntime) => Promise<RuntimeActionResult<T>>) => {
       if (!runtime) {
-        return { error: undefined };
+        const error =
+          agentChatLoadError ??
+          new NovuError(
+            isAgentChatLoading ? 'Agent Chat is still loading' : 'Agent Chat runtime is unavailable',
+            new Error('Agent Chat runtime is not ready')
+          );
+        propsRef.current.onError?.(error);
+
+        return { error };
       }
 
       const response = await action(runtime);
@@ -338,7 +415,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [runtime, propsRef]
+    [runtime, agentChatLoadError, isAgentChatLoading, propsRef]
   );
 
   const refetch = useCallback(async () => {
@@ -400,8 +477,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     messages: [...snapshot.messages],
     pendingActions: [...snapshot.pendingActions],
     conversationId: snapshot.conversationId,
-    error: snapshot.error as UseAgentChatResult['error'],
-    isLoading: snapshot.status === 'loading',
+    error: agentChatLoadError ?? (snapshot.error as UseAgentChatResult['error']),
+    isLoading: !agentChatLoadError && (isAgentChatLoading || snapshot.status === 'loading'),
     isRunning: snapshot.run.isRunning,
     typing: snapshot.run.typing,
     status: snapshot.conversationStatus,

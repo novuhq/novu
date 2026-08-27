@@ -103,6 +103,7 @@ async function scaffoldThenReconcile(
         agentIdentifier: input.agent.identifier,
         silent: false,
         llmAuth,
+        region: input.options.region,
       }),
   });
 

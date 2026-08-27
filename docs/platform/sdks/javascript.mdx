@@ -752,7 +752,7 @@ await subscription.delete();
 
 ## Agent Chat
 
-Two-way in-app chat with an agent. The public API is `novu.agentChat.conversation()`. React apps use [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat), which binds this runtime for you.
+Two-way in-app chat with an agent. Call `loadAgentChat(novu)` before `novu.agentChat.conversation()`. React apps use [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat), which loads Agent Chat automatically.
 
 See [Quickstart](/agents/channels/agent-chat/quickstart).
 
@@ -769,12 +769,14 @@ Do not call `novu.agentChat.subscribe()` from UI code. The runtime owns the sock
 | `agentHash` | `string` | HMAC of `agentId`. Required when Agent Chat HMAC is on. |
 
 ```typescript
-import { Novu } from '@novu/js';
+import { Novu, loadAgentChat } from '@novu/js';
 
 const novu = new Novu({
   applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
   subscriberId: 'YOUR_SUBSCRIBER_ID',
 });
+
+await loadAgentChat(novu);
 
 const result = novu.agentChat.conversation({
   agentId: 'YOUR_AGENT_IDENTIFIER',

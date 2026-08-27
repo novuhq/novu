@@ -9,6 +9,7 @@ export type {
   AgentReplyPayload,
   DeleteMessagePayload,
   EditPayload,
+  HumanSignal,
   MetadataSignal,
   ReplyContent,
   SentMessageInfo,

@@ -46,11 +46,13 @@ function buildConnectScaffoldParts({
   apiUrl,
   connectDashboardUrl,
   runtime,
+  agentIdentifier,
 }: {
   secretKey: string;
   apiUrl: string;
   connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
+  agentIdentifier: string;
 }): string[] {
   return [
     `${getNovuConnectInvocation(apiUrl)} --runtime ${runtime}`,
@@ -60,6 +62,7 @@ function buildConnectScaffoldParts({
       connectDashboardUrl,
     }),
     '--channel skip',
+    `--agent-identifier ${agentIdentifier}`,
   ];
 }
 
@@ -68,17 +71,25 @@ function buildConnectScaffoldCommand({
   apiUrl,
   connectDashboardUrl,
   runtime,
+  agentIdentifier,
   masked,
 }: {
   secretKey: string;
   apiUrl: string;
   connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
+  agentIdentifier: string;
   masked: boolean;
 }): string {
   const key = masked ? maskSecretKey(secretKey) : secretKey;
 
-  return buildConnectScaffoldParts({ secretKey: key, apiUrl, connectDashboardUrl, runtime }).join(' \\\n  ');
+  return buildConnectScaffoldParts({
+    secretKey: key,
+    apiUrl,
+    connectDashboardUrl,
+    runtime,
+    agentIdentifier,
+  }).join(' \\\n  ');
 }
 
 function buildConnectScaffoldCopyCommand({
@@ -86,13 +97,15 @@ function buildConnectScaffoldCopyCommand({
   apiUrl,
   connectDashboardUrl,
   runtime,
+  agentIdentifier,
 }: {
   secretKey: string;
   apiUrl: string;
   connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
+  agentIdentifier: string;
 }): string {
-  return buildConnectScaffoldParts({ secretKey, apiUrl, connectDashboardUrl, runtime }).join(' ');
+  return buildConnectScaffoldParts({ secretKey, apiUrl, connectDashboardUrl, runtime, agentIdentifier }).join(' ');
 }
 
 function getProviderSlackMessage(agentName: string): string {
@@ -403,7 +416,7 @@ export function AgentCodeSetupSection({
             </Tooltip>
           </span>
         }
-        description="Run this in an empty directory to scaffold a Next.js bridge app. When prompted, select the agent you created above. `--channel skip` skips channel setup because you already connected a provider in the dashboard."
+        description="Run this in an empty directory to scaffold a Next.js bridge app. `--runtime` and `--agent-identifier` are already set from the dashboard. `--channel skip` skips channel setup because you already connected a provider here."
         rightContent={
           apiKeysQuery.isLoading || !secretKey ? (
             <Skeleton className="h-[80px] w-full rounded-lg" />
@@ -414,6 +427,7 @@ export function AgentCodeSetupSection({
                 apiUrl: currentApiUrl,
                 connectDashboardUrl,
                 runtime: connectRuntime,
+                agentIdentifier: agent.identifier,
                 masked: true,
               })}
               copyCommand={buildConnectScaffoldCopyCommand({
@@ -421,6 +435,7 @@ export function AgentCodeSetupSection({
                 apiUrl: currentApiUrl,
                 connectDashboardUrl,
                 runtime: connectRuntime,
+                agentIdentifier: agent.identifier,
               })}
             />
           )

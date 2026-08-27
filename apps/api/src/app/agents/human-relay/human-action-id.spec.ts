@@ -32,8 +32,13 @@ describe('human action id grammar', () => {
     });
   });
 
-  it('round-trips disambiguation picks', () => {
-    expect(parseHumanActionId(buildHumanDisambiguationActionId('hi_abc123'))).to.deep.equal({
+  it('round-trips disambiguation picks bound to an answer id', () => {
+    expect(parseHumanActionId(buildHumanDisambiguationActionId('hi_abc123', 'msg_1'))).to.deep.equal({
+      type: 'disambiguation-pick',
+      identifier: 'hi_abc123',
+      answerId: 'msg_1',
+    });
+    expect(parseHumanActionId('human:pick:hi_abc123')).to.deep.equal({
       type: 'disambiguation-pick',
       identifier: 'hi_abc123',
     });
