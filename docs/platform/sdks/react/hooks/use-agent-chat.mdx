@@ -20,7 +20,7 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `agentId` | `string` | Public agent identifier from the dashboard. Required unless you pass `conversation`. |
 | `conversationId` | `string` | Resume this conversation and load history on mount. Omit this prop to start a new chat. The first `sendMessage` creates the conversation. See [Resume a conversation](/agents/channels/agent-chat/chat-ui#resume-a-conversation). |
 | `agentHash` | `string` | HMAC-SHA256 of `agentId` with the environment secret. Required when Security HMAC is on for the Agent Chat integration. |
-| `conversation` | `AgentConversationRuntime` | Share an existing runtime across hook instances. Do not pass `agentId`, `conversationId`, or `agentHash` with this prop. Get the runtime from `novu.agentChat.conversation()`. |
+| `conversation` | `AgentConversationRuntime` | Share an existing runtime across hook instances. Do not pass `agentId`, `conversationId`, or `agentHash` with this prop. Get the runtime from `loadAgentChat(novu)` then `novu.agentChat.conversation()`. |
 | `onSuccess` | `(data: LoadConversationResult) => void` | Fires after a history fetch succeeds. |
 | `onError` | `(error: NovuError \| AgentChatPlanLimitError) => void` | Fires when a load, send, retry, or action response fails. Also fires when reconnect catch-up fails. |
 | `onMessage` | `(message: AgentMessage) => void` | Fires once per new message id. History pages are silent. The first event of a turn can create an empty assistant message before text arrives. A send that never reaches the server does not fire. The message status becomes `failed` instead. |
@@ -35,7 +35,7 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `pendingActions` | `AgentPendingAction[]` | Tool approvals and MCP connect items that are still pending. Derived from `messages`. |
 | `conversationId` | `string \| undefined` | Server conversation id after create or resume. Undefined until the first successful send on a new chat. |
 | `error` | `NovuError \| AgentChatPlanLimitError \| undefined` | Last error from load, send, retry, `respondToAction`, `sendAction`, or a failed agent run. |
-| `isLoading` | `boolean` | True until the first history fetch completes. False when there is no `conversationId` prop. |
+| `isLoading` | `boolean` | True while the Agent Chat module loads. For an existing conversation, it stays true until the first history fetch completes. |
 | `isRunning` | `boolean` | True while the agent turn is in progress. Same as `run.isRunning`. |
 | `typing` | `AgentConversationTyping \| undefined` | Ephemeral typing indicator. Same as `run.typing`. Absent when the agent is not typing. |
 | `run` | `{ isRunning: boolean; typing?: AgentConversationTyping }` | Current agent-run snapshot. |
@@ -118,4 +118,4 @@ See [Reconnect](/agents/channels/agent-chat/chat-ui#reconnect).
 
 ## JavaScript SDK
 
-The same runtime lives on `novu.agentChat.conversation()` in [`@novu/js`](/platform/sdks/javascript#agent-chat). The React hook binds that runtime for you. Do not call `novu.agentChat.subscribe()` from React UI code.
+The same runtime lives on `novu.agentChat.conversation()` in [`@novu/js`](/platform/sdks/javascript#agent-chat). Call `loadAgentChat(novu)` first in JavaScript. The React hook loads Agent Chat for you. Do not call `novu.agentChat.subscribe()` from React UI code.

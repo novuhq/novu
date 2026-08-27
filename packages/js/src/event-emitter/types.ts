@@ -1,5 +1,4 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import type { AgentChatMessagesUpdated } from '../agent-chat/types';
 import type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
@@ -48,6 +47,7 @@ import type {
 } from '../subscriptions/types';
 import type { TagsFilter } from '../types';
 import { Session, WebSocketEvent } from '../types';
+import type { AgentChatMessagesUpdated } from './agent-chat-events';
 
 type NovuPendingEvent<A, D = undefined> = {
   args: A;
