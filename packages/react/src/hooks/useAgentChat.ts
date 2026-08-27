@@ -251,9 +251,6 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const propsRef = useDataRef(props);
   const [loadState, setLoadState] = useState<AgentChatLoadState>(() => ({
     novu,
-    // Always start loading. Node SSR can see `isAgentChatLoaded` as true (eager
-    // import) while the browser first paint is still false — that mismatch
-    // hydrates an empty thread against a "Loading conversation" row.
     status: 'loading',
   }));
 
