@@ -92,7 +92,8 @@
   },
   "scripts": {
     "build:watch": "tsup --watch",
-    "build": "tsup && pnpm run check-exports",
+    "build": "tsup && node scripts/bundle-graph.mjs && pnpm run check-exports",
+    "test:bundle-graph": "node ./scripts/bundle-graph.mjs",
     "check-exports": "attw --pack .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
