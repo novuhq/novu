@@ -105,6 +105,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       platformThreadId?: string;
       _conversationId?: string;
       deliveries?: HumanInteractionDelivery[];
+      subscriberId?: string;
+      subscriberIds?: string[];
     }
   ): Promise<void> {
     const $set: Record<string, unknown> = {};
@@ -112,6 +114,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     if (delivery.platformThreadId) $set.platformThreadId = delivery.platformThreadId;
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
     if (delivery.deliveries) $set.deliveries = delivery.deliveries;
+    if (delivery.subscriberId) $set.subscriberId = delivery.subscriberId;
+    if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 
     if (Object.keys($set).length === 0) {
       return;

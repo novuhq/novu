@@ -115,6 +115,11 @@ export async function assertHumanPendingCap(
  * Deliver to every target, stamp `deliveries[]` (and denormalized top-level
  * ids from the first success), and roll the row back only when nobody received
  * the card. Partial fan-out failures stay on the row; the caller surfaces them.
+ * Recipients whose DM failed are dropped from the settlement allow-list so they
+ * cannot settle, appear in `human list`, or consume pending quota.
+ *
+ * In-thread `ctx.*` posts one card and uses `to` only as an allow-list — that
+ * path has no failed recipients, so the listed ids are left intact.
  *
  * Sends stay serial to avoid bursting a single chat provider.
  */
@@ -175,11 +180,20 @@ export async function deliverToTargets(
     );
   }
 
+  const recipientPatch =
+    failedSubscriberIds.length > 0
+      ? {
+          subscriberId: first.subscriberId,
+          subscriberIds: deliveries.map((delivery) => delivery.subscriberId),
+        }
+      : {};
+
   await repository.stampDelivery(interaction._environmentId, interaction._id, {
     platformMessageId: first.platformMessageId,
     platformThreadId: first.platformThreadId,
     ...(conversationId ? { _conversationId: conversationId } : {}),
     deliveries,
+    ...recipientPatch,
   });
 
   const delivered: HumanInteractionEntity = {
@@ -188,6 +202,7 @@ export async function deliverToTargets(
     platformThreadId: first.platformThreadId,
     deliveries,
     ...(conversationId ? { _conversationId: conversationId } : {}),
+    ...recipientPatch,
   };
 
   if (interaction.kind === HumanInteractionKindEnum.TELL) {

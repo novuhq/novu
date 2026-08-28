@@ -239,7 +239,34 @@ describe('CreateInteraction', () => {
     expect(humanInteractionRepository.delete.called).to.equal(false);
     expect(humanInteractionRepository.stampDelivery.calledOnce).to.equal(true);
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-1']);
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberId).to.equal('sub-1');
+    expect(result.to).to.deep.equal(['sub-1']);
     expect(result.failedTo).to.deep.equal(['sub-2']);
     expect(result.id).to.equal('hi_1');
+  });
+
+  it('moves the primary subscriber to the first successful delivery when the original primary fails', async () => {
+    const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.resolves({
+      integrationIdentifier: 'telegram-main',
+      platform: 'telegram',
+      platformUserId: '777',
+    });
+    deliveryService.deliver.onFirstCall().rejects(new Error('down'));
+    deliveryService.deliver.onSecondCall().resolves({ platformMessageId: 'msg-2', platformThreadId: 'thread-2' });
+    humanInteractionRepository.create.resolves({
+      ...created,
+      subscriberId: 'sub-1',
+      subscriberIds: ['sub-1', 'sub-2'],
+    });
+
+    const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
+
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberId).to.equal('sub-2');
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-2']);
+    expect(result.to).to.deep.equal(['sub-2']);
+    expect(result.failedTo).to.deep.equal(['sub-1']);
   });
 });

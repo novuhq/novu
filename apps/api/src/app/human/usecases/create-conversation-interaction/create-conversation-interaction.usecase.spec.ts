@@ -144,6 +144,7 @@ describe('CreateConversationInteraction', () => {
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberId).to.equal('alice');
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['alice', 'bob']);
     expect(outboundGateway.deliver.calledOnce).to.equal(true);
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.equal(undefined);
   });
 
   it('allows explicit `to` when the conversation has no subscriber participant', async () => {
