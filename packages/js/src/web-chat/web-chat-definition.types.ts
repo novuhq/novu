@@ -1,7 +1,7 @@
 import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import type { AgentToolPart } from './agent-message.types';
 
-/** Per-tool input/output shapes for compile-time narrowing on `AgentToolPart`. */
+/** Input and output shapes used to narrow `AgentToolPart` at compile time. */
 export type AgentToolDefinition = {
   input?: unknown;
   output?: unknown;
@@ -10,7 +10,7 @@ export type AgentToolDefinition = {
 export type WebChatToolsDefinition = Record<string, AgentToolDefinition>;
 
 /**
- * Optional integrator-defined tool catalog for narrowing `AgentToolPart` by `toolName`.
+ * Optional tool catalog. Use it to narrow `AgentToolPart` by `toolName`.
  *
  * @example
  * type MyChat = WebChatDefinition<{

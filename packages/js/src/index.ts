@@ -1,22 +1,31 @@
 export type * from 'json-logic-js';
 export type {
+  ChannelConnectionResponse,
+  ChannelEndpointResponse,
+  CreateChannelConnectionArgs,
+  CreateChannelEndpointArgs,
+  DeleteChannelConnectionArgs,
+  DeleteChannelEndpointArgs,
+  GenerateChatOAuthUrlArgs,
+  GetChannelConnectionArgs,
+  GetChannelEndpointArgs,
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse,
+  ListChannelConnectionsArgs,
+  ListChannelEndpointsArgs,
+} from './channel-connections';
+export type { EventHandler, Events, SocketEventNames } from './event-emitter';
+export { NOTIFICATION_COUNT_SYNC_EVENTS } from './notifications/count-sync-events';
+export { Novu } from './novu';
+export type {
   AgentApprovalPart,
   AgentApprovalPartState,
   AgentCardPart,
-  WebChatChange,
-  WebChatDefinition,
-  WebChatPagination,
-  WebChatPaginationStatus,
-  WebChatToolsDefinition,
-  AgentConversationError,
-  AgentConversationPaginationSnapshot,
   AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationRuntime,
-  AgentConversationRuntimeActions,
   AgentConversationSessionStatus,
   AgentConversationSnapshot,
-  AgentConversationState,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentDataPart,
@@ -42,43 +51,34 @@ export type {
   AgentToolPartFor,
   AgentToolPartState,
   ConversationArgs,
-  ConversationErr,
-  ConversationOk,
-  ConversationResult,
-  FetchMoreArgs,
   FetchMoreResult,
-  LoadConversationArgs,
   LoadConversationResult,
-  RespondToActionArgs,
   RespondToActionResult,
-  SendActionArgs,
+  RetryMessageResult,
   SendActionResult,
-  SendMessageArgs,
   SendMessageInput,
   SendMessageResult,
+  WebChat,
+  WebChatDefinition,
+  WebChatPagination,
+  WebChatPaginationStatus,
+  WebChatToolsDefinition,
 } from './web-chat';
 export { WebChatPlanLimitError, type WebChatPlanLimitReason } from './web-chat/web-chat-plan-limit-error';
-export { derivePendingActions } from './web-chat/derive-pending-actions';
-export type {
-  ChannelConnectionResponse,
-  ChannelEndpointResponse,
-  CreateChannelConnectionArgs,
-  CreateChannelEndpointArgs,
-  DeleteChannelConnectionArgs,
-  DeleteChannelEndpointArgs,
-  GenerateChatOAuthUrlArgs,
-  GetChannelConnectionArgs,
-  GetChannelEndpointArgs,
-  LinkChannelEndpointArgs,
-  LinkChannelEndpointResponse,
-  ListChannelConnectionsArgs,
-  ListChannelEndpointsArgs,
-} from './channel-connections';
-export type { EventHandler, Events, SocketEventNames } from './event-emitter';
-export { NOTIFICATION_COUNT_SYNC_EVENTS } from './notifications/count-sync-events';
-export { Novu } from './novu';
 
-/** Loads Web Chat on a {@link Novu} instance. Prefer this named export for explicit agent bootstrap. */
+/**
+ * Load Web Chat on a {@link Novu} instance. Safe to call more than one time.
+ * Apps that never call this method do not download the Web Chat bundle.
+ *
+ * @example
+ * ```ts
+ * import { Novu, loadWebChat } from '@novu/js';
+ *
+ * const novu = new Novu({ applicationIdentifier, subscriberId });
+ * await loadWebChat(novu);
+ * const conversation = novu.webChat.conversation({ agentId: 'YOUR_AGENT_IDENTIFIER' });
+ * ```
+ */
 export function loadWebChat(novu: import('./novu').Novu): Promise<import('./web-chat').WebChat> {
   return novu.loadWebChat();
 }

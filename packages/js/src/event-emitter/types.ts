@@ -47,7 +47,6 @@ import type {
 } from '../subscriptions/types';
 import type { TagsFilter } from '../types';
 import { Session, WebSocketEvent } from '../types';
-import type { WebChatMessagesUpdated } from './web-chat-events';
 
 type NovuPendingEvent<A, D = undefined> = {
   args: A;
@@ -187,10 +186,6 @@ type SocketEvents = {
   [key in WebChatAgentEvent]: { result: AgentEventEnvelope };
 };
 
-type WebChatEvents = {
-  'web_chat.messages.updated': { data: WebChatMessagesUpdated };
-};
-
 /**
  * Events that are emitted by Novu Event Emitter.
  *
@@ -234,7 +229,6 @@ export type Events = SessionInitializeEvents &
   ChannelEndpointLinkEvents &
   SocketConnectEvents &
   SocketEvents &
-  WebChatEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &
   NotificationSeenEvents &

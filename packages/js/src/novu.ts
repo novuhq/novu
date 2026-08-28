@@ -1,4 +1,3 @@
-import type { WebChat } from './web-chat';
 import { HttpClient, InboxService } from './api';
 import { ChannelConnections } from './channel-connections';
 import { ChannelEndpoints } from './channel-endpoints';
@@ -11,10 +10,11 @@ import { Subscriptions } from './subscriptions';
 import type { Context, NovuOptions, Subscriber } from './types';
 import { buildContextKey } from './utils/build-context-key';
 import { buildSubscriber } from './utils/build-subscriber';
+import type { WebChat } from './web-chat';
 import { createSocket } from './ws';
 import type { BaseSocketInterface } from './ws/base-socket';
 
-export class Novu implements Pick<NovuEventEmitter, 'on'> {
+export class Novu {
   #emitter: NovuEventEmitter;
   #session: Session;
   #httpClient: HttpClient;
@@ -62,14 +62,14 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   }
 
   /**
-   * True after {@link Novu.loadWebChat} has resolved on this instance.
+   * True after `loadWebChat` has resolved on this instance.
    */
   public get isWebChatLoaded(): boolean {
     return this.#webChat !== undefined;
   }
 
   /**
-   * Web Chat runtime. Call {@link Novu.loadWebChat} before first use.
+   * Web Chat client. Call `loadWebChat` before first use.
    * @throws When Web Chat has not been loaded yet.
    */
   public get webChat(): WebChat {
@@ -81,8 +81,8 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   }
 
   /**
-   * Loads the Web Chat module. Idempotent — safe to call multiple times.
-   * Inbox-only apps that never call this method do not download the agent graph.
+   * Load the Web Chat module. Safe to call more than one time.
+   * Apps that never call this method do not download the Web Chat bundle.
    */
   public loadWebChat(): Promise<WebChat> {
     if (this.#webChat) {

@@ -22,7 +22,7 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `agentHash` | `string` | HMAC-SHA256 of `agentId` with the environment secret. Required when Security HMAC is on for the Web Chat integration. |
 | `conversation` | `AgentConversationRuntime` | Share an existing runtime across hook instances. Do not pass `agentId`, `conversationId`, or `agentHash` with this prop. Get the runtime from `loadWebChat(novu)` then `novu.webChat.conversation()`. |
 | `onSuccess` | `(data: LoadConversationResult) => void` | Fires after a history fetch succeeds. |
-| `onError` | `(error: NovuError \| WebChatPlanLimitError) => void` | Fires when a load, send, retry, or action response fails. Also fires when reconnect catch-up fails. |
+| `onError` | `(error: NovuError \| WebChatPlanLimitError) => void` | Fires when a load, send, retry, or action response fails. Also fires when reconnect recovery fails. |
 | `onMessage` | `(message: AgentMessage) => void` | Fires once per new message id. History pages are silent. The first event of a turn can create an empty assistant message before text arrives. A send that never reaches the server does not fire. The message status becomes `failed` instead. |
 | `onActionRequested` | `(action: AgentPendingAction) => void` | Fires once per pending action, including actions still pending on mount. Paging backwards is silent. |
 | `onEvent` | `(envelope: AgentEventEnvelope) => void` | Raw live envelopes for this conversation. Duplicate envelopes that the store drops do not fire. |
@@ -39,13 +39,12 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `isRunning` | `boolean` | True while the agent turn is in progress. Same as `run.isRunning`. |
 | `typing` | `AgentConversationTyping \| undefined` | Ephemeral typing indicator. Same as `run.typing`. Absent when the agent is not typing. |
 | `run` | `{ isRunning: boolean; typing?: AgentConversationTyping }` | Current agent-run snapshot. |
-| `status` | `'active' \| 'resolved'` | Conversation lifecycle. Same value as `conversationStatus`. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. See [State](/agents/channels/web-chat/chat-ui#state). |
-| `conversationStatus` | `'active' \| 'resolved'` | Alias for `status`. |
+| `conversationStatus` | `'active' \| 'resolved'` | Conversation lifecycle. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. See [State](/agents/channels/web-chat/chat-ui#state). |
 | `pagination` | `{ status, hasMore, fetchMore }` | Older history pages. Not a top-level `hasMore` or `fetchMore`. See [Pagination](#pagination). |
-| `isRecovering` | `boolean` | True while reconnect catch-up is in flight for this conversation. |
-| `catchUpError` | `NovuError \| undefined` | Set when reconnect catch-up fails. Separate from send and fetch `error`. |
+| `isRecovering` | `boolean` | True while reconnect recovery is in progress. |
+| `catchUpError` | `NovuError \| undefined` | Set when reconnect recovery fails. Separate from send and fetch `error`. |
 | `refetch` | `() => Promise<void>` | Reload the newest history page. No-op when there is no conversation id. |
-| `sendMessage` | `(text: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Send a user message. Creates a conversation when `conversationId` is omitted. |
+| `sendMessage` | `(input: SendMessageInput) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. |
 | `retryMessage` | `(messageId: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. Does not create a second message. See [Retry a failed send](/agents/channels/web-chat/chat-ui#retry-a-failed-send). |
 | `respondToAction` | `(args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{ data?: RespondToActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. Typical decisions: `'approved'` or `'denied'`. |
 | `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. See [Cards](/agents/channels/web-chat/chat-ui#cards). |
@@ -68,8 +67,8 @@ The hook reconnects and catches up on its own. Use these fields for a banner.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `isRecovering` | `boolean` | True while catch-up is in flight. |
-| `catchUpError` | `NovuError \| undefined` | Set when catch-up fails. `status` does not become an error state. |
+| `isRecovering` | `boolean` | True while recovery is in progress. |
+| `catchUpError` | `NovuError \| undefined` | Set when recovery fails. `conversationStatus` does not become an error state. |
 
 See [Reconnect](/agents/channels/web-chat/chat-ui#reconnect).
 

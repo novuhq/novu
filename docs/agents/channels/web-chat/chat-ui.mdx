@@ -20,7 +20,7 @@ Use these fields to drive the UI. See [`useWebChat`](/platform/sdks/react/hooks/
 | --- | --- |
 | `isLoading` | First history fetch. False when there is no `conversationId`. Show a spinner. |
 | `isRunning` | Agent turn in progress. Disable the composer. `typing` is optional status text. |
-| `status` | Conversation is `active` or `resolved`. Do not use it to disable the composer. |
+| `conversationStatus` | Conversation is `active` or `resolved`. Do not use it to disable the composer. |
 | `error` | Last load, send, retry, action, or run error. Show the message. |
 | `message.status` | `sending`, `sent`, or `failed`. If `failed`, call `retryMessage`. See [Retry](#retry-a-failed-send). |
 
@@ -332,4 +332,4 @@ const { isRecovering, catchUpError } = useWebChat({
 {catchUpError ? <p>{catchUpError.message}</p> : null}
 ```
 
-`catchUpError` is separate from send and fetch `error`. `status` does not become an error state when catch-up fails.
+`catchUpError` is separate from send and fetch `error`. `conversationStatus` does not become an error state when recovery fails.

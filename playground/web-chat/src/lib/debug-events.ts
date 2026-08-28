@@ -26,7 +26,6 @@ export function createDebugEvent(event: Omit<DebugEvent, 'id' | 'ts'> & { ts?: n
 export const SDK_DEBUG_EVENTS = [
   'session.initialize.pending',
   'session.initialize.resolved',
-  'web_chat.messages.updated',
   'socket.connect.pending',
   'socket.connect.resolved',
 ] as const;
