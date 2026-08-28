@@ -48,17 +48,13 @@ export class CreateConversationInteraction {
         prompt: command.prompt,
         options: command.options,
         from: command.from,
-        subscriberId: primarySubscriberId,
         subscriberIds,
         agentId: command.conversation._agentId,
-        integrationIdentifier: command.integrationIdentifier,
-        platform: command.channel.platform,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         ttlSeconds: command.ttlSeconds,
         requestId: command.requestId,
         conversationId: command.conversation._id,
-        platformThreadId: command.channel.platformThreadId,
       })
     );
 

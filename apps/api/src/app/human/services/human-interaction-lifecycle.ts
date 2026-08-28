@@ -15,17 +15,13 @@ export interface PendingHumanInteractionInput {
   prompt: string;
   options?: string[];
   from?: string;
-  subscriberId: string;
   subscriberIds: string[];
   agentId: string;
-  integrationIdentifier: string;
-  platform: string;
   environmentId: string;
   organizationId: string;
   ttlSeconds?: number;
   requestId?: string;
   conversationId?: string;
-  platformThreadId?: string;
 }
 
 export interface HumanDeliveryRefs {
@@ -70,12 +66,8 @@ export function buildPendingHumanInteraction(input: PendingHumanInteractionInput
       ? { options: input.options.map((label, index) => ({ id: `opt_${index + 1}`, label })) }
       : {}),
     ...(input.from ? { fromLabel: input.from } : {}),
-    subscriberId: input.subscriberId,
     subscriberIds: input.subscriberIds,
     _agentId: input.agentId,
-    integrationIdentifier: input.integrationIdentifier,
-    platform: input.platform,
-    ...(input.platformThreadId ? { platformThreadId: input.platformThreadId } : {}),
     ...(input.conversationId ? { _conversationId: input.conversationId } : {}),
     expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
     _environmentId: input.environmentId,
@@ -167,8 +159,7 @@ export async function deliverToTargets(
     }
   }
 
-  const [first] = deliveries;
-  if (!first) {
+  if (deliveries.length === 0) {
     await repository
       .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
       .catch(() => undefined);
@@ -183,23 +174,18 @@ export async function deliverToTargets(
   const recipientPatch =
     failedSubscriberIds.length > 0
       ? {
-          subscriberId: first.subscriberId,
           subscriberIds: deliveries.map((delivery) => delivery.subscriberId),
         }
       : {};
 
   await repository.stampDelivery(interaction._environmentId, interaction._id, {
-    platformMessageId: first.platformMessageId,
-    platformThreadId: first.platformThreadId,
-    ...(conversationId ? { _conversationId: conversationId } : {}),
     deliveries,
+    ...(conversationId ? { _conversationId: conversationId } : {}),
     ...recipientPatch,
   });
 
   const delivered: HumanInteractionEntity = {
     ...interaction,
-    platformMessageId: first.platformMessageId,
-    platformThreadId: first.platformThreadId,
     deliveries,
     ...(conversationId ? { _conversationId: conversationId } : {}),
     ...recipientPatch,
@@ -209,7 +195,9 @@ export async function deliverToTargets(
     const settled = await repository.markDeliveredIfPending(interaction._environmentId, interaction._id);
 
     return {
-      interaction: settled ?? { ...delivered, status: HumanInteractionStatusEnum.DELIVERED },
+      interaction: settled
+        ? { ...settled, deliveries }
+        : { ...delivered, status: HumanInteractionStatusEnum.DELIVERED },
       failedSubscriberIds,
     };
   }

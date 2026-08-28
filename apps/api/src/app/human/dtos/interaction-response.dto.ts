@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { HumanInteractionEntity } from '@novu/dal';
+import { type HumanInteractionEntity, primaryHumanInteractionDelivery } from '@novu/dal';
 import {
   HumanInteractionKindEnum,
   HumanInteractionOption,
@@ -60,6 +60,8 @@ export function toInteractionResponse(
   entity: HumanInteractionEntity,
   failedSubscriberIds?: string[]
 ): InteractionResponseDto {
+  const primary = primaryHumanInteractionDelivery(entity);
+
   return {
     id: entity.identifier,
     kind: entity.kind,
@@ -68,8 +70,8 @@ export function toInteractionResponse(
     options: entity.options,
     from: entity.fromLabel,
     to: humanInteractionRecipientIds(entity),
-    integrationIdentifier: entity.integrationIdentifier,
-    platform: entity.platform,
+    integrationIdentifier: primary?.integrationIdentifier ?? '',
+    platform: primary?.platform ?? '',
     response: entity.response,
     ...(failedSubscriberIds && failedSubscriberIds.length > 0 ? { failedTo: failedSubscriberIds } : {}),
     expiresAt: entity.expiresAt,

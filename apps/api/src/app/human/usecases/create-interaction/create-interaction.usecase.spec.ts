@@ -11,9 +11,7 @@ describe('CreateInteraction', () => {
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.PENDING,
       prompt: 'Deploy?',
-      subscriberId: 'sub-1',
-      integrationIdentifier: 'telegram-main',
-      platform: 'telegram',
+      subscriberIds: ['sub-1'],
       expiresAt: '2026-01-01T00:00:00.000Z',
       createdAt: '2026-01-01T00:00:00.000Z',
       _environmentId: 'env1',
@@ -77,15 +75,19 @@ describe('CreateInteraction', () => {
     });
     expect(humanInteractionRepository.create.firstCall.args[0]).to.include({
       _agentId: 'agent-hitl',
-      subscriberId: 'sub-1',
       kind: HumanInteractionKindEnum.APPROVE,
       prompt: 'Deploy?',
     });
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['sub-1']);
+    expect(humanInteractionRepository.create.firstCall.args[0]).to.not.have.property('subscriberId');
+    expect(humanInteractionRepository.create.firstCall.args[0]).to.not.have.property('platform');
     expect(deliveryService.deliver.calledOnce).to.equal(true);
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
+    expect(humanInteractionRepository.stampDelivery.firstCall.args[2]).to.not.have.property('platformMessageId');
     expect(result.id).to.equal('hi_1');
     expect(result.to).to.deep.equal(['sub-1']);
+    expect(result.platform).to.equal('telegram');
+    expect(result.integrationIdentifier).to.equal('telegram-main');
   });
 
   it('defaults to the human-relay agent when agentIdentifier is omitted', async () => {

@@ -34,7 +34,7 @@ describe('HumanInteractionInboundService', () => {
       kind: HumanInteractionKindEnum.ASK,
       status: HumanInteractionStatusEnum.PENDING,
       prompt: 'First?',
-      subscriberId: 'sub-1',
+      subscriberIds: ['sub-1'],
       _environmentId: 'env1',
     };
     const humanInteractionRepository = {
@@ -90,7 +90,7 @@ describe('HumanInteractionInboundService', () => {
       requestId: 'hr_1',
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.PENDING,
-      subscriberId: 'sub-1',
+      subscriberIds: ['sub-1'],
       _environmentId: 'env1',
     };
     humanInteractionRepository.findByIdentifier.resolves(pending);
@@ -119,7 +119,7 @@ describe('HumanInteractionInboundService', () => {
       identifier: 'hi_1',
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.PENDING,
-      subscriberId: 'sub-1',
+      subscriberIds: ['sub-1'],
       _environmentId: 'env1',
     });
 
@@ -143,7 +143,7 @@ describe('HumanInteractionInboundService', () => {
       requestId: 'hr_1',
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.EXPIRED,
-      subscriberId: 'sub-1',
+      subscriberIds: ['sub-1'],
       _environmentId: 'env1',
     };
     humanInteractionRepository.findByIdentifier.resolves(expired);
@@ -291,7 +291,6 @@ describe('HumanInteractionInboundService', () => {
       identifier: 'hi_1',
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.PENDING,
-      subscriberId: 'sub-1',
       subscriberIds: ['sub-1', 'sub-2'],
       _environmentId: 'env1',
     });
@@ -319,7 +318,6 @@ describe('HumanInteractionInboundService', () => {
       identifier: 'hi_1',
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.PENDING,
-      subscriberId: 'sub-1',
       subscriberIds: ['sub-1', 'sub-2'],
       _environmentId: 'env1',
     });
@@ -348,7 +346,6 @@ describe('HumanInteractionInboundService', () => {
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.PENDING,
         prompt: 'Env?',
-        subscriberId: 'sub-1',
         subscriberIds: ['sub-1', 'sub-2'],
         _environmentId: 'env1',
       },
@@ -375,7 +372,6 @@ describe('HumanInteractionInboundService', () => {
       identifier: 'hi_1',
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.PENDING,
-      subscriberId: 'sub-1',
       subscriberIds: ['sub-1', 'sub-2'],
       _environmentId: 'env1',
     };
@@ -399,30 +395,6 @@ describe('HumanInteractionInboundService', () => {
     expect(settlement.settle.calledOnce).to.equal(true);
     expect(result.outcome).to.equal('consumed');
     expect(outboundGateway.replyOnThread.called).to.equal(true);
-  });
-
-  it('still settles legacy rows that only have subscriberId', async () => {
-    const { service, humanInteractionRepository, settlement } = setup();
-    humanInteractionRepository.findByIdentifier.resolves({
-      _id: 'hi1',
-      identifier: 'hi_1',
-      kind: HumanInteractionKindEnum.APPROVE,
-      status: HumanInteractionStatusEnum.PENDING,
-      subscriberId: 'sub-1',
-      _environmentId: 'env1',
-    });
-
-    const result = await service.tryHandleAction(
-      makeTurn({
-        event: AgentEventEnum.ON_ACTION,
-        action: { id: 'human:hi_1:approve' },
-        message: null,
-      }) as any,
-      'conversation'
-    );
-
-    expect(settlement.settle.calledOnce).to.equal(true);
-    expect(result.outcome).to.equal('settled');
   });
 });
 

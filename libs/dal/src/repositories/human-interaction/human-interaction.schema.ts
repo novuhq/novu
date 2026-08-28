@@ -53,31 +53,13 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
     requestId: {
       type: Schema.Types.String,
     },
-    subscriberId: {
-      type: Schema.Types.String,
-      required: true,
-    },
     subscriberIds: {
       type: [Schema.Types.String],
-      default: undefined,
+      required: true,
     },
     _agentId: {
       type: Schema.Types.ObjectId,
       required: true,
-    },
-    integrationIdentifier: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    platform: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    platformThreadId: {
-      type: Schema.Types.String,
-    },
-    platformMessageId: {
-      type: Schema.Types.String,
     },
     deliveries: {
       type: [humanInteractionDeliverySchema],
@@ -120,10 +102,8 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
 
 humanInteractionSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
 // Pending-cap counts + "most recent pending ask" bare-reply correlation.
-humanInteractionSchema.index({ _environmentId: 1, subscriberId: 1, status: 1, createdAt: -1 });
 humanInteractionSchema.index({ _environmentId: 1, subscriberIds: 1, status: 1, createdAt: -1 });
 // Exact reply-to correlation by delivered card message id.
-humanInteractionSchema.index({ _environmentId: 1, platformMessageId: 1 });
 humanInteractionSchema.index({ _environmentId: 1, 'deliveries.platformMessageId': 1 });
 // Conversation-scoped pending-ask correlation for framework HITL.
 humanInteractionSchema.index({ _environmentId: 1, _conversationId: 1, status: 1, kind: 1, createdAt: -1 });

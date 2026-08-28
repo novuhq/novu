@@ -5,10 +5,6 @@ import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
-function subscriberScope(subscriberId: string) {
-  return { $or: [{ subscriberId }, { subscriberIds: subscriberId }] };
-}
-
 @Injectable()
 export class HumanInteractionRepository extends BaseRepositoryV2<
   HumanInteractionDBModel,
@@ -26,7 +22,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   async countPendingForSubscriber(environmentId: string, subscriberId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,
-      ...subscriberScope(subscriberId),
+      subscriberIds: subscriberId,
       status: HumanInteractionStatusEnum.PENDING,
     });
   }
@@ -39,7 +35,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     return this.find(
       {
         _environmentId: environmentId,
-        ...subscriberScope(subscriberId),
+        subscriberIds: subscriberId,
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.PENDING,
       },
@@ -88,10 +84,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       {
         _environmentId: environmentId,
         status: HumanInteractionStatusEnum.PENDING,
-        $or: [
-          { platformMessageId: { $in: platformMessageIds } },
-          { 'deliveries.platformMessageId': { $in: platformMessageIds } },
-        ],
+        'deliveries.platformMessageId': { $in: platformMessageIds },
       },
       '*'
     );
@@ -101,25 +94,14 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     environmentId: string,
     id: string,
     delivery: {
-      platformMessageId?: string;
-      platformThreadId?: string;
+      deliveries: HumanInteractionDelivery[];
       _conversationId?: string;
-      deliveries?: HumanInteractionDelivery[];
-      subscriberId?: string;
       subscriberIds?: string[];
     }
   ): Promise<void> {
-    const $set: Record<string, unknown> = {};
-    if (delivery.platformMessageId) $set.platformMessageId = delivery.platformMessageId;
-    if (delivery.platformThreadId) $set.platformThreadId = delivery.platformThreadId;
+    const $set: Record<string, unknown> = { deliveries: delivery.deliveries };
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
-    if (delivery.deliveries) $set.deliveries = delivery.deliveries;
-    if (delivery.subscriberId) $set.subscriberId = delivery.subscriberId;
     if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
-
-    if (Object.keys($set).length === 0) {
-      return;
-    }
 
     await this.update({ _id: id, _environmentId: environmentId }, { $set });
   }
@@ -189,7 +171,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       {
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
-        ...(params.subscriberId ? subscriberScope(params.subscriberId) : {}),
+        ...(params.subscriberId ? { subscriberIds: params.subscriberId } : {}),
         ...(params.status ? { status: params.status } : {}),
         ...(params.before ? { _id: { $lt: params.before } } : {}),
       },

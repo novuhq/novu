@@ -45,15 +45,8 @@ export function normalizeHumanTo(to: string | string[]): string[] {
   throw new Error('`to` must include at least one subscriberId');
 }
 
-export function humanInteractionRecipientIds(interaction: {
-  subscriberId: string;
-  subscriberIds?: string[];
-}): string[] {
-  if (interaction.subscriberIds && interaction.subscriberIds.length > 0) {
-    return interaction.subscriberIds;
-  }
-
-  return [interaction.subscriberId];
+export function humanInteractionRecipientIds(interaction: { subscriberIds?: string[] }): string[] {
+  return interaction.subscriberIds ?? [];
 }
 
 function countUniqueHumanTo(to: string | string[]): number {

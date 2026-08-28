@@ -31,8 +31,7 @@ export class CreateInteraction {
 
     const agent = await this.resolveAgent(command);
     const subscriberIds = normalizeHumanTo(command.to);
-    const primarySubscriberId = subscriberIds[0];
-    if (!primarySubscriberId) {
+    if (subscriberIds.length === 0) {
       throw new BadRequestException('`to` must include at least one subscriberId');
     }
 
@@ -57,22 +56,14 @@ export class CreateInteraction {
       }))
     );
 
-    const [primaryTarget] = resolved;
-    if (!primaryTarget) {
-      throw new BadRequestException('`to` must include at least one subscriberId');
-    }
-
     const interaction = await this.humanInteractionRepository.create(
       buildPendingHumanInteraction({
         kind: command.kind,
         prompt: command.prompt,
         options: command.options,
         from: command.from,
-        subscriberId: primarySubscriberId,
         subscriberIds,
         agentId: agent._id,
-        integrationIdentifier: primaryTarget.target.integrationIdentifier,
-        platform: primaryTarget.target.platform,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         ttlSeconds: command.ttlSeconds,
