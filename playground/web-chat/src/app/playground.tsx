@@ -54,7 +54,7 @@ function PlaygroundApp() {
               isRunning={chat.isRunning}
               runOrigin={chat.runOrigin}
               lastRunTransition={chat.lastRunTransition}
-              status={chat.status}
+              conversationStatus={chat.conversationStatus}
               socketStatus={socketStatus}
               pendingApprovalCount={chat.pendingApprovalCount}
               conversations={conversations.items}

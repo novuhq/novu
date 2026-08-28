@@ -1,5 +1,6 @@
 import type { AgentMessage, AgentPendingAction } from './agent-message.types';
 
+/** Pending tool-approval and MCP-connect actions in `messages`. */
 export function derivePendingActions(messages: AgentMessage[]): AgentPendingAction[] {
   const pending: AgentPendingAction[] = [];
 

@@ -118,7 +118,7 @@ describe('Novu.loadWebChat', () => {
     const webChat = await novu.loadWebChat();
 
     expect(notifications.data?.notifications).toEqual([]);
-    expect(webChat.conversation({ agentId: 'agent_1' }).ok).toBe(true);
+    expect(webChat.conversation({ agentId: 'agent_1' })).toBeDefined();
     expect(novu.notifications).toBeDefined();
     expect(novu.socket).toBeDefined();
   });

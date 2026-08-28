@@ -67,7 +67,7 @@ type SessionSidebarProps = {
   isRunning: boolean;
   runOrigin: RunOrigin;
   lastRunTransition?: RunTransition;
-  status: AgentConversationStatus;
+  conversationStatus: AgentConversationStatus;
   socketStatus: SocketStatus;
   pendingApprovalCount: number;
   conversations: ConversationSummary[];
@@ -90,7 +90,7 @@ export function SessionSidebar({
   isRunning,
   runOrigin,
   lastRunTransition,
-  status,
+  conversationStatus,
   socketStatus,
   pendingApprovalCount,
   conversations,
@@ -190,7 +190,7 @@ export function SessionSidebar({
               <dl className="session-stats">
                 <div className="session-stat">
                   <dt>Status</dt>
-                  <dd>{status}</dd>
+                  <dd>{conversationStatus}</dd>
                 </div>
                 <div className="session-stat">
                   <dt>Approvals</dt>

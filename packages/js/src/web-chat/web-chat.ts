@@ -1,20 +1,16 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { WebChatPlanLimitError, WebChatService, InboxService } from '../api';
+import { InboxService, WebChatPlanLimitError, WebChatService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
-import { WebChatStore, type ConversationEntry, createLocalConversationKey } from './web-chat-store';
 import { AgentConversationRuntime } from './agent-conversation-runtime';
 import { type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
-import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
+import type { ConversationArgs } from './conversation-runtime.types';
 import { createActionIdempotencyKeyForScope, createMessageIdempotencyKey } from './idempotency';
 import { runtimeCacheKey } from './runtime-cache-key';
 import type {
-  WebChatChange,
-  WebChatMessagesUpdated,
-  WebChatPagination,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -27,8 +23,12 @@ import type {
   SendActionResult,
   SendMessageArgs,
   SendMessageResult,
+  WebChatChange,
+  WebChatMessagesUpdated,
+  WebChatPagination,
 } from './types';
 import { parseAgentEventEnvelope } from './validate-envelope';
+import { type ConversationEntry, createLocalConversationKey, WebChatStore } from './web-chat-store';
 
 function conversationErrorToNovuError(error: AgentConversationError): NovuError {
   return new NovuError(error.message, new Error(error.code ?? error.message));
@@ -41,9 +41,13 @@ function entryPagination(entry: ConversationEntry): WebChatPagination {
   };
 }
 
-/** Safety cap on reconnect catch-up HTTP pages when a sequence checkpoint exists. Exceeding this sets a public error. */
+/** Max HTTP pages for reconnect recovery when a sequence checkpoint exists. */
 const CATCH_UP_PAGE_LIMIT = 20;
 
+/**
+ * Headless Web Chat client. Load it with `await novu.loadWebChat()` or `loadWebChat(novu)`,
+ * then call {@link WebChat.conversation} for each thread.
+ */
 export class WebChat extends BaseModule {
   #webChatService: WebChatService;
   #store: WebChatStore;
@@ -86,10 +90,7 @@ export class WebChat extends BaseModule {
     });
   }
 
-  /**
-   * Keep the socket connected while at least one consumer wants live events.
-   * Call from hook mount / vanilla open. Pair with `unsubscribe`.
-   */
+  /** @internal Keep the live socket connected while at least one consumer is active. */
   subscribe(): void {
     this.#liveSubscriberCount += 1;
     if (this.#liveSubscriberCount === 1) {
@@ -97,6 +98,7 @@ export class WebChat extends BaseModule {
     }
   }
 
+  /** @internal */
   unsubscribe(): void {
     if (this.#liveSubscriberCount === 0) {
       return;
@@ -105,6 +107,7 @@ export class WebChat extends BaseModule {
     this.#liveSubscriberCount -= 1;
   }
 
+  /** Drop all local conversation state and runtimes. */
   clearCache(): void {
     for (const runtime of [...this.#runtimes.values()]) {
       runtime.dispose();
@@ -116,15 +119,16 @@ export class WebChat extends BaseModule {
   }
 
   /**
-   * Return a stable conversation runtime for one agent thread.
-   * Resume sessions (`conversationId` set) are reused across calls with the same identity.
+   * Return a runtime for one conversation.
+   * Calls with the same `agentId` and `conversationId` reuse the same runtime.
+   * Omit `conversationId` to start a new chat. Call {@link AgentConversationRuntime.dispose} when the chat unmounts.
    */
-  conversation(args: ConversationArgs): ConversationResult<AgentConversationRuntime> {
+  conversation(args: ConversationArgs): AgentConversationRuntime {
     const cacheKey = args.conversationId ? runtimeCacheKey(args.agentId, args.conversationId) : undefined;
     if (cacheKey) {
       const existing = this.#runtimes.get(cacheKey);
       if (existing) {
-        return { ok: true, data: existing };
+        return existing;
       }
     }
 
@@ -133,7 +137,7 @@ export class WebChat extends BaseModule {
       this.#runtimes.set(cacheKey, runtime);
     }
 
-    return { ok: true, data: runtime };
+    return runtime;
   }
 
   /** @internal */
@@ -162,6 +166,7 @@ export class WebChat extends BaseModule {
     }
   }
 
+  /** @internal */
   getConversation({ agentId, conversationId, key }: { agentId: string; conversationId?: string; key?: string }):
     | {
         conversationId?: string;
@@ -202,6 +207,7 @@ export class WebChat extends BaseModule {
     };
   }
 
+  /** @internal Prefer {@link AgentConversationRuntime.respondToAction}. */
   async respondToAction(args: RespondToActionArgs): Result<RespondToActionResult, NovuError | WebChatPlanLimitError> {
     return this.#withConversationAction(
       args,
@@ -242,6 +248,7 @@ export class WebChat extends BaseModule {
     );
   }
 
+  /** @internal Prefer {@link AgentConversationRuntime.sendAction}. */
   async sendAction(args: SendActionArgs): Result<SendActionResult, NovuError | WebChatPlanLimitError> {
     return this.#withConversationAction(
       args,
@@ -273,10 +280,7 @@ export class WebChat extends BaseModule {
     );
   }
 
-  /**
-   * Load the newest history page into the local holder.
-   * The holder key is the public conversation id.
-   */
+  /** @internal Prefer {@link AgentConversationRuntime.load}. */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
     return this.callWithSession(async () => {
       try {
@@ -304,6 +308,7 @@ export class WebChat extends BaseModule {
     });
   }
 
+  /** @internal Prefer {@link AgentConversationRuntime.fetchMore}. */
   async fetchMore(args: FetchMoreArgs): Result<FetchMoreResult> {
     return this.callWithSession(async () => {
       const entry = this.#resolveFetchEntry(args);
@@ -359,8 +364,8 @@ export class WebChat extends BaseModule {
   }
 
   /**
-   * Send a user message. Overlapping send while a run is active is rejected.
-   * Cancel-previous is NV-8643.
+   * @internal Prefer {@link AgentConversationRuntime.sendMessage}.
+   * Rejected while an agent turn is in progress.
    */
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult, NovuError | WebChatPlanLimitError> {
     return this.callWithSession<SendMessageResult, NovuError | WebChatPlanLimitError>(async () => {
@@ -388,15 +393,15 @@ export class WebChat extends BaseModule {
   }
 
   /**
-   * Resubmit a failed outbound message using its original idempotency identity.
-   * Does not append a new optimistic bubble or mint a new key.
+   * @internal Prefer {@link AgentConversationRuntime.retryMessage}.
+   * Resends a failed message with the original idempotency key. Does not create a second message.
    */
   async retryMessage(args: RetryMessageArgs): Result<RetryMessageResult, NovuError | WebChatPlanLimitError> {
     return this.callWithSession<RetryMessageResult, NovuError | WebChatPlanLimitError>(async () => {
       const entry = this.#resolveFetchEntry(args);
       if (!entry) {
         return {
-          error: new NovuError('Cannot retry message without a conversation holder', new Error('missing entry')),
+          error: new NovuError('Cannot retry message without a conversation', new Error('missing entry')),
         };
       }
 
@@ -518,10 +523,7 @@ export class WebChat extends BaseModule {
     };
   }
 
-  /**
-   * Shared session + conversation + plan-limit wrapper for `respondToAction` and `sendAction`.
-   * The two public methods stay separate: they take different ids and extra fields.
-   */
+  /** Shared session and plan-limit wrapper for `respondToAction` and `sendAction`. */
   async #withConversationAction(
     args: { agentId: string; conversationId?: string; key?: string },
     missingConversationMessage: string,
@@ -573,10 +575,7 @@ export class WebChat extends BaseModule {
     return undefined;
   }
 
-  /**
-   * Find the holder for a send.
-   * Reject a key when the holder belongs to another agent or another claimed conversation.
-   */
+  /** Resolve the local session for a send. Reject a key that belongs to another agent or conversation. */
   #resolveSendEntry(args: SendMessageArgs, key: string): ConversationEntry {
     const byKey = this.#store.get(key);
     if (byKey && this.#isUsableSendEntry(byKey, args)) {
@@ -594,7 +593,7 @@ export class WebChat extends BaseModule {
       );
     }
 
-    // If the key is stale, do not call getOrCreate with that key. That returns the wrong holder.
+    // If the key is stale, do not call getOrCreate with that key. That returns the wrong session.
     const createKey = byKey ? createLocalConversationKey() : key;
 
     return this.#store.getOrCreate({
@@ -620,9 +619,8 @@ export class WebChat extends BaseModule {
   }
 
   /**
-   * Live WS path: apply envelopes into open conversations only.
-   * Unknown conversations are dropped — mount/resume creates the entry.
-   * During reconnect catch-up for a conversation, only that conversation's envelopes buffer.
+   * Apply live envelopes to open conversations only.
+   * Unknown conversations are dropped. During reconnect recovery, only that conversation buffers.
    */
   #handleAgentEvent(raw: unknown): void {
     const parsed = parseAgentEventEnvelope(raw);

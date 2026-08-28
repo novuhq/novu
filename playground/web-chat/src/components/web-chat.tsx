@@ -32,7 +32,7 @@ import { ChatPanel } from './chat-panel';
 export type WebChatSession = {
   conversationId?: string;
   isRunning: boolean;
-  status: AgentConversationStatus;
+  conversationStatus: AgentConversationStatus;
   pendingApprovalCount: number;
   runOrigin: RunOrigin;
   lastRunTransition?: RunTransition;
@@ -70,7 +70,7 @@ export function WebChat({ conversationId, onAssistantMessage, sidebar }: WebChat
     conversationId: activeConversationId,
     error,
     isRunning,
-    status,
+    conversationStatus,
     isLoading,
     pagination,
     typing,
@@ -99,7 +99,7 @@ export function WebChat({ conversationId, onAssistantMessage, sidebar }: WebChat
   const session: WebChatSession = {
     conversationId: activeConversationId,
     isRunning,
-    status,
+    conversationStatus,
     pendingApprovalCount: pendingActions.filter((action) => action.type === 'tool-approval').length,
     runOrigin: runOrigin(isRunning, lastTransition),
     lastRunTransition: lastTransition,

@@ -1,7 +1,7 @@
 import { WebChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
-import { WebChat } from './web-chat';
 import type { AgentConversationSnapshot } from './conversation-runtime.types';
+import { WebChat } from './web-chat';
 
 describe('AgentConversationRuntime', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
@@ -31,40 +31,22 @@ describe('AgentConversationRuntime', () => {
   });
 
   afterEach(() => {
-    for (const result of [
-      webChat.conversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' }),
-      webChat.conversation({ agentId: 'agent_1' }),
-    ]) {
-      if (result.ok) {
-        result.data.dispose();
-      }
-    }
+    webChat.conversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' }).dispose();
+    webChat.conversation({ agentId: 'agent_1' }).dispose();
   });
 
   it('reuses a runtime keyed by agent and conversation id', () => {
     const first = webChat.conversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     const second = webChat.conversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
-    expect(first.ok).toBe(true);
-    expect(second.ok).toBe(true);
-    if (!first.ok || !second.ok) {
-      return;
-    }
-
-    expect(first.data).toBe(second.data);
-    first.data.dispose();
+    expect(first).toBe(second);
+    first.dispose();
   });
 
   it('returns the same frozen snapshot reference until the next publication', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
-    const created = webChat.conversation({ agentId: 'agent_1' });
-    expect(created.ok).toBe(true);
-    if (!created.ok) {
-      return;
-    }
-
-    const runtime = created.data;
+    const runtime = webChat.conversation({ agentId: 'agent_1' });
     const before = runtime.getSnapshot();
 
     await runtime.sendMessage('hello');
@@ -104,12 +86,7 @@ describe('AgentConversationRuntime', () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
     getEvents.mockResolvedValue({ events: [], olderCursor: null });
 
-    const created = webChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
-
-    const runtime = created.data;
+    const runtime = webChat.conversation({ agentId: 'agent_1' });
     const seen: AgentConversationSnapshot[] = [];
 
     const unsubscribe = runtime.subscribe((snapshot) => {
@@ -141,12 +118,8 @@ describe('AgentConversationRuntime', () => {
   it('separates run, conversationStatus, pagination, and session status in the snapshot', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
 
-    const created = webChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
-
-    await created.data.sendMessage('hello');
+    const runtime = webChat.conversation({ agentId: 'agent_1' });
+    await runtime.sendMessage('hello');
 
     emitter.emit('web_chat.agent_event', {
       result: {
@@ -176,7 +149,7 @@ describe('AgentConversationRuntime', () => {
       },
     });
 
-    const snapshot = created.data.getSnapshot();
+    const snapshot = runtime.getSnapshot();
     expect(snapshot.status).toBe('ready');
     expect(snapshot.run.isRunning).toBe(true);
     expect(snapshot.run.typing?.status).toBe('Thinking…');
@@ -184,59 +157,43 @@ describe('AgentConversationRuntime', () => {
     expect(snapshot.pagination.hasMore).toBe(false);
     expect(snapshot.pagination.status).toBe('idle');
 
-    created.data.dispose();
+    runtime.dispose();
   });
 
   it('replaces a stale resume runtime when the create-flow runtime registers', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
     const createFlow = webChat.conversation({ agentId: 'agent_1' });
-    if (!createFlow.ok) {
-      return;
-    }
-
     const staleResume = webChat.conversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(staleResume.ok).toBe(true);
-    if (!staleResume.ok) {
-      return;
-    }
 
-    expect(staleResume.data).not.toBe(createFlow.data);
+    expect(staleResume).not.toBe(createFlow);
 
-    await createFlow.data.sendMessage('hello');
+    await createFlow.sendMessage('hello');
 
     const resumed = webChat.conversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(resumed.ok).toBe(true);
-    if (!resumed.ok) {
-      return;
-    }
 
-    expect(resumed.data).toBe(createFlow.data);
-    expect(resumed.data).not.toBe(staleResume.data);
-    expect(resumed.data.getSnapshot().messages[0]).toMatchObject({
+    expect(resumed).toBe(createFlow);
+    expect(resumed).not.toBe(staleResume);
+    expect(resumed.getSnapshot().messages[0]).toMatchObject({
       role: 'user',
       parts: [{ type: 'text', text: 'hello' }],
     });
 
-    createFlow.data.dispose();
+    createFlow.dispose();
   });
 
   it('clearCache disposes runtimes so a later resume gets a fresh instance', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
     const created = webChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
-
-    await created.data.sendMessage('hello');
-    const disposedRuntime = created.data;
+    await created.sendMessage('hello');
+    const disposedRuntime = created;
 
     webChat.clearCache();
 
@@ -244,14 +201,10 @@ describe('AgentConversationRuntime', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(resumed.ok).toBe(true);
-    if (!resumed.ok) {
-      return;
-    }
 
-    expect(resumed.data).not.toBe(disposedRuntime);
+    expect(resumed).not.toBe(disposedRuntime);
 
-    resumed.data.dispose();
+    resumed.dispose();
   });
 
   it('does not register a disposed runtime after an in-flight send completes', async () => {
@@ -264,15 +217,11 @@ describe('AgentConversationRuntime', () => {
     );
 
     const created = webChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
-
-    const sendPromise = created.data.sendMessage('hello');
+    const sendPromise = created.sendMessage('hello');
     await Promise.resolve();
     expect(sendMessage).toHaveBeenCalledTimes(1);
 
-    created.data.dispose();
+    created.dispose();
 
     resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
     await sendPromise;
@@ -281,28 +230,20 @@ describe('AgentConversationRuntime', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(resumed.ok).toBe(true);
-    if (!resumed.ok) {
-      return;
-    }
 
-    expect(resumed.data).not.toBe(created.data);
+    expect(resumed).not.toBe(created);
 
-    resumed.data.dispose();
+    resumed.dispose();
   });
 
   it('isolates snapshot messages from store mutations', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
     const created = webChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
+    await created.sendMessage('hello');
 
-    await created.data.sendMessage('hello');
-
-    const snapshot = created.data.getSnapshot();
-    const storeBefore = webChat.getConversation({ agentId: 'agent_1', key: created.data.key });
+    const snapshot = created.getSnapshot();
+    const storeBefore = webChat.getConversation({ agentId: 'agent_1', key: created.key });
 
     expect(snapshot.messages[0]?.parts[0]).toMatchObject({ type: 'text', text: 'hello' });
     expect(Object.isFrozen(snapshot.messages[0])).toBe(true);
@@ -317,6 +258,6 @@ describe('AgentConversationRuntime', () => {
 
     expect(storeBefore?.messages[0]?.parts[0]).toMatchObject({ type: 'text', text: 'hello' });
 
-    created.data.dispose();
+    created.dispose();
   });
 });

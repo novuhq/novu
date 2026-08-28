@@ -23,8 +23,8 @@ export type {
 };
 
 /**
- * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
- * integration has Security HMAC enabled.
+ * HMAC-SHA256 of `agentId` with the environment secret.
+ * Required when Security HMAC is on for the Web Chat integration.
  */
 export type AgentHashFields = {
   agentHash?: string;
@@ -36,17 +36,15 @@ export type SendMessageArgs = AgentHashFields & {
   metadata?: Record<string, unknown>;
   /**
    * Existing conversation to append to.
-   * Omit this field to create a new conversation. The client does not reuse a prior chat.
+   * Omit this field to create a new conversation.
    * After create, pass the returned `conversationId` on later sends.
    */
   conversationId?: string;
-  /**
-   * Immutable holder key for the local store and emit subscription.
-   * Defaults to `conversationId` on resume, or a minted `local_*` key on create.
-   */
+  /** @internal Session key for the local cache. */
   key?: string;
 };
 
+/** Result of a successful send or retry. */
 export type SendMessageResult = {
   conversationId: string;
   messageId: string;
@@ -56,6 +54,7 @@ export type RetryMessageArgs = AgentHashFields & {
   agentId: string;
   messageId: string;
   conversationId?: string;
+  /** @internal Session key for the local cache. */
   key?: string;
 };
 
@@ -66,6 +65,7 @@ export type LoadConversationArgs = {
   conversationId: string;
 };
 
+/** Newest history page for a resumed conversation. */
 export type LoadConversationResult = {
   conversationId: string;
   messages: AgentMessage[];
@@ -75,9 +75,11 @@ export type LoadConversationResult = {
 export type FetchMoreArgs = {
   agentId: string;
   conversationId?: string;
+  /** @internal Session key for the local cache. */
   key?: string;
 };
 
+/** Next older history page. */
 export type FetchMoreResult = {
   messages: AgentMessage[];
   hasMore: boolean;
@@ -96,9 +98,11 @@ export type RespondToActionArgs = AgentHashFields & {
   actionId: string;
   decision: AgentToolApprovalDecision;
   conversationId?: string;
+  /** @internal Session key for the local cache. */
   key?: string;
 };
 
+/** Result of a tool-approval decision. */
 export type RespondToActionResult = {
   conversationId: string;
 };
@@ -107,14 +111,16 @@ export type SendActionArgs = AgentHashFields & {
   agentId: string;
   /** `id` of the clicked Card button. */
   actionId: string;
-  /** Platform message id of the message that carries the Card. */
+  /** `id` of the message that carries the Card. */
   sourceMessageId: string;
   /** `value` of the clicked Card button, if set. */
   value?: string;
   conversationId?: string;
+  /** @internal Session key for the local cache. */
   key?: string;
 };
 
+/** Result of a Card button click. */
 export type SendActionResult = {
   conversationId: string;
 };
