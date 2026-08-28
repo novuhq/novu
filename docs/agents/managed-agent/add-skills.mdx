@@ -58,9 +58,9 @@ To remove a skill, go to the **Skills** section and delete it from the list. The
 
 Managed agents can pause and ask a human using the `novu_human` platform tool — `ask`, `approve`, `choose`, or `tell`. That is the same set of verbs custom-code agents use with `ctx.ask`, `ctx.approve`, `ctx.choose`, and `ctx.tell`.
 
-Novu attaches a **Novu HITL** skill when the agent can already load skills: the **Read** built-in is enabled, or at least one other skill is attached. The skill tells the model when to escalate (risky or irreversible actions, real multi-way choices) and when to just reply in the thread.
+Novu attaches a **Novu HITL** skill on every managed agent that supports skills. The skill tells the model when to escalate (risky or irreversible actions, real multi-way choices) and when to just reply in the thread.
 
-If Read is off and the agent has no other skills, the `novu_human` tool is still attached. The skill is skipped. Novu does not turn Read on just for HITL.
+Anthropic can only load skills when the **Read** built-in is enabled. Attaching this skill therefore turns Read on if it was off. If skill upload fails, the `novu_human` tool is still attached and the agent continues without the skill.
 
 `novu_human` is not MCP tool approval. When an MCP or provider tool is already parked on an Approve/Deny card, the model should not call `novu_human` to re-gate that same call.
 

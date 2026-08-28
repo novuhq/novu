@@ -3,8 +3,6 @@ import type { IAgentRuntimeProvider } from '@novu/application-generic';
 import { PinoLogger } from '@novu/application-generic';
 import { type AgentSkillDto, NOVU_HUMAN_SKILL_DISPLAY_TITLE, NOVU_HUMAN_SKILL_MD } from '@novu/shared';
 
-const SKILL_REQUIRED_TOOL = 'read';
-
 @Injectable()
 export class EnsureNovuHumanSkill {
   constructor(private readonly logger: PinoLogger) {
@@ -12,16 +10,15 @@ export class EnsureNovuHumanSkill {
   }
 
   /**
-   * Upload the Novu HITL skill and merge it into the create payload when the
-   * agent can load skills (Read already selected, or other skills attached).
-   * Fail-open — never block provision.
+   * Upload the Novu HITL skill and merge it into the create payload.
+   * Anthropic requires a usable Read builtin to load skill bundles — createAgent
+   * force-enables Read when any skill is present. Fail-open: never block provision.
    */
   async mergeForCreate(
     provider: IAgentRuntimeProvider,
-    tools?: string[],
     skills?: AgentSkillDto[]
   ): Promise<AgentSkillDto[] | undefined> {
-    if (!this.shouldAttach(tools, skills) || !provider.capabilities.skills) {
+    if (!provider.capabilities.skills) {
       return skills;
     }
 
@@ -30,16 +27,12 @@ export class EnsureNovuHumanSkill {
       return skills;
     }
 
-    if (skills?.some((skill) => skill.skillId === uploaded.skillId)) {
-      return skills;
-    }
-
-    return [...(skills ?? []), uploaded];
+    return this.mergeSkills(skills, uploaded);
   }
 
   /**
-   * After a platform-definition refresh, attach the HITL skill when Read is
-   * already enabled or other skills exist. Does not force-enable Read.
+   * After a platform-definition refresh, attach (or re-pin) the HITL skill.
+   * `updateConfig({ skills })` force-enables Read when the skill set is non-empty.
    */
   async reconcile(provider: IAgentRuntimeProvider, externalAgentId: string): Promise<void> {
     if (!provider.capabilities.skills) {
@@ -47,30 +40,32 @@ export class EnsureNovuHumanSkill {
     }
 
     const config = await provider.getConfig(externalAgentId);
-    const toolTypes = config.tools.filter((tool) => tool.type === 'builtin').map((tool) => tool.externalId);
-    if (!this.shouldAttach(toolTypes, config.skills)) {
-      return;
-    }
-
     const uploaded = await this.upload(provider);
     if (!uploaded) {
       return;
     }
 
-    if (config.skills.some((skill) => skill.skillId === uploaded.skillId)) {
+    const next = this.mergeSkills(config.skills, uploaded);
+    if (next === config.skills) {
       return;
     }
 
-    await provider.updateConfig(externalAgentId, {
-      skills: [...config.skills, uploaded],
-    });
+    await provider.updateConfig(externalAgentId, { skills: next });
   }
 
-  private shouldAttach(tools?: string[], skills?: AgentSkillDto[]): boolean {
-    const hasSkills = (skills?.length ?? 0) > 0;
-    const hasRead = (tools ?? []).includes(SKILL_REQUIRED_TOOL);
+  private mergeSkills(skills: AgentSkillDto[] | undefined, uploaded: AgentSkillDto): AgentSkillDto[] {
+    const current = skills ?? [];
+    const index = current.findIndex((skill) => skill.skillId === uploaded.skillId);
 
-    return hasSkills || hasRead;
+    if (index === -1) {
+      return [...current, uploaded];
+    }
+
+    if (current[index].version === uploaded.version) {
+      return skills ?? current;
+    }
+
+    return current.map((skill, skillIndex) => (skillIndex === index ? { ...skill, version: uploaded.version } : skill));
   }
 
   private async upload(provider: IAgentRuntimeProvider): Promise<AgentSkillDto | null> {

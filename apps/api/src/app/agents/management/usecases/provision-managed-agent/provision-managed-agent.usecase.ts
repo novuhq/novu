@@ -158,7 +158,7 @@ export class ProvisionManagedAgent {
       const resolvedMcpServers = agentDefinitionMcpIds?.length
         ? resolveMcpServersById(agentDefinitionMcpIds)
         : undefined;
-      const skills = await this.ensureNovuHumanSkill.mergeForCreate(runtimeProvider, command.tools, command.skills);
+      const skills = await this.ensureNovuHumanSkill.mergeForCreate(runtimeProvider, command.skills);
       const response = await runtimeProvider.createAgent({
         name: command.name ?? '',
         model: command.model,

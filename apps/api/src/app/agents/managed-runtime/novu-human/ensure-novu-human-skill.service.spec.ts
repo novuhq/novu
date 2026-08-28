@@ -10,27 +10,27 @@ describe('EnsureNovuHumanSkill', () => {
     return { service, logger };
   }
 
-  it('skips upload when Read is off and no other skills are attached', async () => {
+  it('uploads and attaches when the agent has no Read tool and no other skills', async () => {
     const { service } = setup();
     const provider = {
       capabilities: { skills: true },
       uploadSkill: sinon.stub().resolves({ skillId: 'skill_hitl', version: 'v1' }),
     };
 
-    const skills = await service.mergeForCreate(provider as any, ['bash'], undefined);
+    const skills = await service.mergeForCreate(provider as any, undefined);
 
-    expect(skills).to.equal(undefined);
-    expect(provider.uploadSkill.called).to.equal(false);
+    expect(provider.uploadSkill.calledOnce).to.equal(true);
+    expect(skills).to.deep.equal([{ type: 'custom', skillId: 'skill_hitl', version: 'v1' }]);
   });
 
-  it('uploads and merges when Read is enabled', async () => {
+  it('uploads and attaches onto an empty skills list', async () => {
     const { service } = setup();
     const provider = {
       capabilities: { skills: true },
       uploadSkill: sinon.stub().resolves({ skillId: 'skill_hitl', version: 'v1' }),
     };
 
-    const skills = await service.mergeForCreate(provider as any, ['read'], []);
+    const skills = await service.mergeForCreate(provider as any, []);
 
     expect(provider.uploadSkill.calledOnce).to.equal(true);
     expect(skills).to.deep.equal([{ type: 'custom', skillId: 'skill_hitl', version: 'v1' }]);
@@ -57,7 +57,7 @@ describe('EnsureNovuHumanSkill', () => {
     ]);
   });
 
-  it('does not force-enable Read when reconcile finds neither Read nor skills', async () => {
+  it('attaches on reconcile when Read is off and no other skills exist', async () => {
     const { service } = setup();
     const provider = {
       capabilities: { skills: true },
@@ -68,18 +68,56 @@ describe('EnsureNovuHumanSkill', () => {
 
     await service.reconcile(provider as any, 'agent_1');
 
-    expect(provider.uploadSkill.called).to.equal(false);
+    expect(provider.uploadSkill.calledOnce).to.equal(true);
+    expect(provider.updateConfig.calledOnce).to.equal(true);
+    expect(provider.updateConfig.firstCall.args[1].skills).to.deep.equal([
+      { type: 'custom', skillId: 'skill_hitl', version: 'v1' },
+    ]);
+  });
+
+  it('re-pins the skill version when the same skill id already exists', async () => {
+    const { service } = setup();
+    const provider = {
+      capabilities: { skills: true },
+      uploadSkill: sinon.stub().resolves({ skillId: 'skill_hitl', version: 'v2' }),
+      getConfig: sinon.stub().resolves({
+        tools: [{ type: 'builtin', externalId: 'read' }],
+        skills: [{ type: 'custom', skillId: 'skill_hitl', version: 'v1' }],
+      }),
+      updateConfig: sinon.stub().resolves({}),
+    };
+
+    await service.reconcile(provider as any, 'agent_1');
+
+    expect(provider.updateConfig.calledOnce).to.equal(true);
+    expect(provider.updateConfig.firstCall.args[1].skills).to.deep.equal([
+      { type: 'custom', skillId: 'skill_hitl', version: 'v2' },
+    ]);
+  });
+
+  it('skips updateConfig when the skill is already pinned to the uploaded version', async () => {
+    const { service } = setup();
+    const existing = [{ type: 'custom' as const, skillId: 'skill_hitl', version: 'v1' }];
+    const provider = {
+      capabilities: { skills: true },
+      uploadSkill: sinon.stub().resolves({ skillId: 'skill_hitl', version: 'v1' }),
+      getConfig: sinon.stub().resolves({ tools: [], skills: existing }),
+      updateConfig: sinon.stub().resolves({}),
+    };
+
+    await service.reconcile(provider as any, 'agent_1');
+
     expect(provider.updateConfig.called).to.equal(false);
   });
 
-  it('merges when other skills exist even if Read is off', async () => {
+  it('merges next to existing skills', async () => {
     const { service } = setup();
     const provider = {
       capabilities: { skills: true },
       uploadSkill: sinon.stub().resolves({ skillId: 'skill_hitl', version: 'v1' }),
     };
 
-    const skills = await service.mergeForCreate(provider as any, ['bash'], [{ type: 'anthropic', skillId: 'xlsx' }]);
+    const skills = await service.mergeForCreate(provider as any, [{ type: 'anthropic', skillId: 'xlsx' }]);
 
     expect(skills).to.deep.equal([
       { type: 'anthropic', skillId: 'xlsx' },
@@ -95,7 +133,7 @@ describe('EnsureNovuHumanSkill', () => {
       uploadSkill: sinon.stub().rejects(new Error('upstream 500')),
     };
 
-    const skills = await service.mergeForCreate(provider as any, ['read'], existing);
+    const skills = await service.mergeForCreate(provider as any, existing);
 
     expect(skills).to.equal(existing);
   });

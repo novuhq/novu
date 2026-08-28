@@ -362,19 +362,12 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
     });
   });
 
-  it('uploads and attaches the Novu HITL skill when Read is enabled at provision', async () => {
-    await createManagedAgent({ tools: ['read'] });
+  it('uploads and attaches the Novu HITL skill at provision even without Read', async () => {
+    await createManagedAgent({ tools: ['bash'] });
 
     expect(mockProvider.uploadSkill.calledOnce).to.equal(true);
     const createArg = mockProvider.createAgent.firstCall.args[0];
     expect(createArg.skills).to.deep.equal([{ type: 'custom', skillId: 'skill_novu_hitl_e2e', version: 'v1' }]);
-  });
-
-  it('keeps the tool-only path when Read is off and no other skills are attached', async () => {
-    await createManagedAgent({ tools: ['bash'] });
-
-    expect(mockProvider.uploadSkill.called).to.equal(false);
-    expect(mockProvider.createAgent.firstCall.args[0].skills ?? []).to.deep.equal([]);
   });
 });
 
