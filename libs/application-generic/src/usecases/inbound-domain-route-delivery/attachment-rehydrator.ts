@@ -5,6 +5,7 @@ import { NonExistingFileError } from '../../services/storage/non-existing-file.e
 import { StorageService } from '../../services/storage/storage.service';
 
 const LOG_CONTEXT = 'AttachmentRehydrator';
+const WEBHOOK_ATTACHMENT_URL_TTL_SECONDS = 6 * 60 * 60;
 
 @Injectable()
 export class AttachmentRehydrator {
@@ -34,6 +35,33 @@ export class AttachmentRehydrator {
     const results = await Promise.all(attachments.map((attachment) => this.rehydrateSingle(attachment)));
 
     return results;
+  }
+
+  async createSignedUrls(attachments: IInboundParseAttachment[] | undefined): Promise<InboundEmailAttachment[]> {
+    if (!attachments || attachments.length === 0) {
+      return [];
+    }
+
+    return await Promise.all(
+      attachments.map(async (attachment) => {
+        if (!attachment.storagePath) {
+          return await this.rehydrateSingle(attachment);
+        }
+
+        const url = await this.storageService.getReadSignedUrl(
+          attachment.storagePath,
+          WEBHOOK_ATTACHMENT_URL_TTL_SECONDS
+        );
+
+        return {
+          filename: attachment.filename,
+          contentType: attachment.contentType,
+          size: attachment.size,
+          url,
+          storagePath: attachment.storagePath,
+        };
+      })
+    );
   }
 
   private async rehydrateSingle(attachment: IInboundParseAttachment): Promise<InboundEmailAttachment> {

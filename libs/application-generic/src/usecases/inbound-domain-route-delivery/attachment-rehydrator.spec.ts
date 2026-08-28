@@ -92,6 +92,51 @@ describe('AttachmentRehydrator', () => {
     sinon.assert.calledOnceWithExactly(storageService.getFile, attachment.storagePath);
   });
 
+  it('creates a fresh six-hour signed URL without downloading S3 content', async () => {
+    storageService.getReadSignedUrl.resolves('https://s3.example.com/fresh-six-hour-url');
+
+    const attachment = makeAttachment();
+    const result = await rehydrator.createSignedUrls([attachment]);
+
+    expect(result).to.deep.equal([
+      {
+        filename: attachment.filename,
+        contentType: attachment.contentType,
+        size: attachment.size,
+        url: 'https://s3.example.com/fresh-six-hour-url',
+        storagePath: attachment.storagePath,
+      },
+    ]);
+    sinon.assert.calledOnceWithExactly(storageService.getReadSignedUrl, attachment.storagePath, 21_600);
+    sinon.assert.notCalled(storageService.getFile);
+  });
+
+  it('keeps inline attachment content when signed URLs are unavailable', async () => {
+    const inlineAttachment = {
+      filename: 'inline.pdf',
+      contentType: 'application/pdf',
+      size: 4,
+      content: { type: 'Buffer' as const, data: [37, 80, 68, 70] },
+    };
+
+    const result = await rehydrator.createSignedUrls([inlineAttachment]);
+
+    expect(result[0].content).to.deep.equal(inlineAttachment.content);
+    sinon.assert.notCalled(storageService.getReadSignedUrl);
+    sinon.assert.notCalled(storageService.getFile);
+  });
+
+  it('propagates signing failures so the webhook job can retry', async () => {
+    storageService.getReadSignedUrl.rejects(new Error('signing unavailable'));
+
+    try {
+      await rehydrator.createSignedUrls([makeAttachment()]);
+      expect.fail('Expected signed URL creation to fail');
+    } catch (error) {
+      expect((error as Error).message).to.equal('signing unavailable');
+    }
+  });
+
   it('sets content to null when the file does not exist in S3 (NonExistingFileError)', async () => {
     storageService.getFile.rejects(new NonExistingFileError());
 
