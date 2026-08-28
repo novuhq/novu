@@ -42,7 +42,7 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
   [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
   [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
-  [ChatProviderIdEnum.NovuAgentChat]: '~ 30 seconds',
+  [ChatProviderIdEnum.NovuWebChat]: '~ 30 seconds',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
   linear: '~ 2 minutes',
@@ -54,7 +54,7 @@ function getProviderCardDisplayName(providerId: string, displayName: string): st
     return AGENT_IMESSAGE_LABEL;
   }
 
-  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
     return 'Web chat';
   }
 
@@ -489,7 +489,7 @@ export function ProviderCards({
 
     return [...built].sort((left, right) => {
       const rank = (providerId: string) => {
-        if (providerId === ChatProviderIdEnum.NovuAgentChat) return 0;
+        if (providerId === ChatProviderIdEnum.NovuWebChat) return 0;
         if (providerId === ChatProviderIdEnum.Slack) return 1;
         if (providerId === EmailProviderIdEnum.NovuAgent) return 2;
         if (providerId === ChatProviderIdEnum.WhatsAppBusiness) return 3;

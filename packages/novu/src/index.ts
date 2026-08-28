@@ -253,8 +253,8 @@ program
     'Recipient phone (E.164) for the Sendblue test message. CI-only escape hatch — omit to enter interactively'
   )
   .option(
-    '--agent-chat-setup <mode>',
-    'Agent Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted)'
+    '--web-chat-setup <mode>',
+    'Web Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted)'
   )
   .option(
     '--ci',
@@ -287,7 +287,7 @@ program
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|whatsapp|sendblue|agent-chat|skip> (or teams without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|whatsapp|sendblue|web-chat|skip> (or teams without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
@@ -327,13 +327,13 @@ program
       console.error(`Invalid --llm-auth value: "${options.llmAuth}". Expected one of: ${LLM_AUTH_CHOICES.join(', ')}.`);
       process.exit(1);
     }
-    const AGENT_CHAT_SETUP_CHOICES = ['scaffold', 'embed', 'skip'] as const;
+    const WEB_CHAT_SETUP_CHOICES = ['scaffold', 'embed', 'skip'] as const;
     if (
-      options.agentChatSetup &&
-      !AGENT_CHAT_SETUP_CHOICES.includes(options.agentChatSetup as 'scaffold' | 'embed' | 'skip')
+      options.webChatSetup &&
+      !WEB_CHAT_SETUP_CHOICES.includes(options.webChatSetup as 'scaffold' | 'embed' | 'skip')
     ) {
       console.error(
-        `Invalid --agent-chat-setup value: "${options.agentChatSetup}". Expected one of: ${AGENT_CHAT_SETUP_CHOICES.join(', ')}.`
+        `Invalid --web-chat-setup value: "${options.webChatSetup}". Expected one of: ${WEB_CHAT_SETUP_CHOICES.join(', ')}.`
       );
       process.exit(1);
     }
@@ -346,7 +346,7 @@ program
         channel: options.channel as ChannelChoice | undefined,
         runtime: options.runtime as AgentConnectMode | undefined,
         chatSdk: options.chatSdk,
-        agentChatSetup: options.agentChatSetup as import('./commands/connect/types').AgentChatSetupMode | undefined,
+        webChatSetup: options.webChatSetup as import('./commands/connect/types').WebChatSetupMode | undefined,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {

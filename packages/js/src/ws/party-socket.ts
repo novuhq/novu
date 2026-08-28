@@ -4,7 +4,7 @@ import { WebSocket } from 'partysocket';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
-  AgentChatAgentEvent,
+  WebChatAgentEvent,
   NotificationReceivedEvent,
   NotificationUnreadEvent,
   NotificationUnseenEvent,
@@ -34,7 +34,7 @@ const HIBERNATION_PING_PAYLOAD = 'ping';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
 const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
-const AGENT_CHAT_AGENT_EVENT: AgentChatAgentEvent = 'agent_chat.agent_event';
+const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
 
 const mapToNotification = ({
   _id,
@@ -192,7 +192,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     try {
       const data = JSON.parse(event.data);
       if (data.event === WebSocketEvent.AGENT_EVENT) {
-        this.#emitter.emit(AGENT_CHAT_AGENT_EVENT, {
+        this.#emitter.emit(WEB_CHAT_AGENT_EVENT, {
           result: data.data as AgentEventEnvelope,
         });
       }
@@ -318,7 +318,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       eventName === NOTIFICATION_RECEIVED ||
       eventName === UNSEEN_COUNT_CHANGED ||
       eventName === UNREAD_COUNT_CHANGED ||
-      eventName === AGENT_CHAT_AGENT_EVENT
+      eventName === WEB_CHAT_AGENT_EVENT
     );
   }
 

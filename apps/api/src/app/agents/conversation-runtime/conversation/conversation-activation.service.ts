@@ -294,7 +294,7 @@ export class ConversationActivationService {
           ? ACTIVATION_WINDOW_MS.MONTH_30
           : ACTIVATION_WINDOW_MS.WEEK;
       case AgentPlatformEnum.EMAIL:
-      case AgentPlatformEnum.AGENT_CHAT:
+      case AgentPlatformEnum.WEB_CHAT:
         return ACTIVATION_WINDOW_MS.MONTH_30;
       default:
         return this.unhandledPlatformWindow(platform);

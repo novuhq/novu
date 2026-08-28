@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { type AgentChatRawMessage, isValidActionIdempotencyKey } from '@novu/chat-adapter-agent-chat';
+import { type WebChatRawMessage, isValidActionIdempotencyKey } from '@novu/chat-adapter-web-chat';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -13,7 +13,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { ENDPOINT_TYPES, isDashboardAgentChatSubscriberId } from '@novu/shared';
+import { ENDPOINT_TYPES, isDashboardWebChatSubscriberId } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -398,12 +398,12 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const subscriberId = getResolvedSubscriberId(resolution);
-    const isDashboardTester = isDashboardAgentChatSubscriberId(subscriberId);
+    const isDashboardTester = isDashboardWebChatSubscriberId(subscriberId);
 
     // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
     // `BotAuthorSkippedError` above). This — not the raw webhook POST — is what
     // marks the agent–integration link connected and completes onboarding.
-    // The dashboard Agent Chat tester uses a reserved subscriber the install
+    // The dashboard Web Chat tester uses a reserved subscriber the install
     // prompt never copies, so those turns must not stamp Connected.
     if (!isDashboardTester) {
       await this.markIntegrationConnectedOnFirstMessage(agentId, config);
@@ -456,11 +456,11 @@ export class AgentInboundHandler implements OnModuleInit {
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
-      identifier: this.agentChatConversationIdentifier(config.platform, platformThreadId),
+      identifier: this.webChatConversationIdentifier(config.platform, platformThreadId),
       notificationId: workflowOriginResolution?.notificationId,
       contextKeys:
-        config.platform === AgentPlatformEnum.AGENT_CHAT
-          ? ((message.raw as AgentChatRawMessage | undefined)?.contextKeys ?? [])
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? ((message.raw as WebChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 
@@ -656,14 +656,14 @@ export class AgentInboundHandler implements OnModuleInit {
 
   /**
    * Public conversation identifier is bare `conv_*`; chat-sdk thread ids are
-   * `agent_chat:conv_*` so the registry can resolve the adapter by prefix.
+   * `web_chat:conv_*` so the registry can resolve the adapter by prefix.
    */
-  private agentChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
-    if (platform !== AgentPlatformEnum.AGENT_CHAT) {
+  private webChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
+    if (platform !== AgentPlatformEnum.WEB_CHAT) {
       return undefined;
     }
 
-    return platformThreadId.startsWith('agent_chat:') ? platformThreadId.slice('agent_chat:'.length) : platformThreadId;
+    return platformThreadId.startsWith('web_chat:') ? platformThreadId.slice('web_chat:'.length) : platformThreadId;
   }
 
   private async storeInboundAttachments(
@@ -735,7 +735,7 @@ export class AgentInboundHandler implements OnModuleInit {
       richContent,
       hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
-      identifier: config.platform === AgentPlatformEnum.AGENT_CHAT ? message.id : undefined,
+      identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
@@ -1207,8 +1207,8 @@ export class AgentInboundHandler implements OnModuleInit {
       workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
       notificationId: workflowOriginResolution?.notificationId,
       contextKeys:
-        config.platform === AgentPlatformEnum.AGENT_CHAT
-          ? ((rawEvent as AgentChatRawMessage | undefined)?.contextKeys ?? [])
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? ((rawEvent as WebChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 

@@ -1,4 +1,4 @@
-import type { AgentChat } from './agent-chat';
+import type { WebChat } from './web-chat';
 import { HttpClient, InboxService } from './api';
 import { ChannelConnections } from './channel-connections';
 import { ChannelEndpoints } from './channel-endpoints';
@@ -19,8 +19,8 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #session: Session;
   #httpClient: HttpClient;
   #inboxService: InboxService;
-  #agentChat?: AgentChat;
-  #agentChatLoad?: Promise<AgentChat>;
+  #webChat?: WebChat;
+  #webChatLoad?: Promise<WebChat>;
   #options: NovuOptions;
 
   public readonly notifications: Notifications;
@@ -62,55 +62,55 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   }
 
   /**
-   * True after {@link Novu.loadAgentChat} has resolved on this instance.
+   * True after {@link Novu.loadWebChat} has resolved on this instance.
    */
-  public get isAgentChatLoaded(): boolean {
-    return this.#agentChat !== undefined;
+  public get isWebChatLoaded(): boolean {
+    return this.#webChat !== undefined;
   }
 
   /**
-   * Agent Chat runtime. Call {@link Novu.loadAgentChat} before first use.
-   * @throws When Agent Chat has not been loaded yet.
+   * Web Chat runtime. Call {@link Novu.loadWebChat} before first use.
+   * @throws When Web Chat has not been loaded yet.
    */
-  public get agentChat(): AgentChat {
-    if (!this.#agentChat) {
-      throw new Error('Agent Chat is not loaded. Call await novu.loadAgentChat() before accessing novu.agentChat.');
+  public get webChat(): WebChat {
+    if (!this.#webChat) {
+      throw new Error('Web Chat is not loaded. Call await novu.loadWebChat() before accessing novu.webChat.');
     }
 
-    return this.#agentChat;
+    return this.#webChat;
   }
 
   /**
-   * Loads the Agent Chat module. Idempotent — safe to call multiple times.
+   * Loads the Web Chat module. Idempotent — safe to call multiple times.
    * Inbox-only apps that never call this method do not download the agent graph.
    */
-  public loadAgentChat(): Promise<AgentChat> {
-    if (this.#agentChat) {
-      return Promise.resolve(this.#agentChat);
+  public loadWebChat(): Promise<WebChat> {
+    if (this.#webChat) {
+      return Promise.resolve(this.#webChat);
     }
 
-    if (this.#agentChatLoad) {
-      return this.#agentChatLoad;
+    if (this.#webChatLoad) {
+      return this.#webChatLoad;
     }
 
-    this.#agentChatLoad = (async () => {
+    this.#webChatLoad = (async () => {
       try {
-        const { createBoundAgentChat } = await import('./agent-chat/bind-agent-chat');
-        this.#agentChat = createBoundAgentChat({
+        const { createBoundWebChat } = await import('./web-chat/bind-web-chat');
+        this.#webChat = createBoundWebChat({
           inboxService: this.#inboxService,
           emitter: this.#emitter,
           httpClient: this.#httpClient,
           socket: this.socket,
         });
 
-        return this.#agentChat;
+        return this.#webChat;
       } catch (error) {
-        this.#agentChatLoad = undefined;
+        this.#webChatLoad = undefined;
         throw error;
       }
     })();
 
-    return this.#agentChatLoad;
+    return this.#webChatLoad;
   }
 
   constructor(options: NovuOptions) {
@@ -191,7 +191,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.preferences.cache.clearAll();
     this.preferences.scheduleCache.clearAll();
     this.subscriptions.cache.clearAll();
-    this.#agentChat?.clearCache();
+    this.#webChat?.clearCache();
   }
 
   /**

@@ -331,7 +331,7 @@
                     "pages": [
                       "platform/sdks/react/hooks/novu-provider",
                       "platform/sdks/react/hooks/subscription",
-                      "platform/sdks/react/hooks/use-agent-chat",
+                      "platform/sdks/react/hooks/use-web-chat",
                       "platform/sdks/react/hooks/use-counts",
                       "platform/sdks/react/hooks/use-notifications",
                       "platform/sdks/react/hooks/use-novu",
@@ -468,9 +468,9 @@
               "agents/channels/telegram",
               "agents/channels/email",
               {
-                "group": "Agent Chat",
-                "root": "agents/channels/agent-chat",
-                "pages": ["agents/channels/agent-chat/quickstart", "agents/channels/agent-chat/chat-ui"]
+                "group": "Web Chat",
+                "root": "agents/channels/web-chat",
+                "pages": ["agents/channels/web-chat/quickstart", "agents/channels/web-chat/chat-ui"]
               }
             ],
             "icon": "messages-square"
@@ -1722,33 +1722,33 @@
       "permanent": true
     },
     {
-      "source": "/platform/integrations/chat/agent-chat",
-      "destination": "/agents/channels/agent-chat",
+      "source": "/platform/integrations/chat/web-chat",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
-      "source": "/agents/agent-chat",
-      "destination": "/agents/channels/agent-chat",
+      "source": "/agents/web-chat",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
-      "source": "/agents/agent-chat/quickstart",
-      "destination": "/agents/channels/agent-chat/quickstart",
+      "source": "/agents/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat/quickstart",
       "permanent": true
     },
     {
-      "source": "/agents/channels/agent-chat/rendering",
-      "destination": "/agents/channels/agent-chat/chat-ui",
+      "source": "/agents/channels/web-chat/rendering",
+      "destination": "/agents/channels/web-chat/chat-ui",
       "permanent": true
     },
     {
-      "source": "/agents/channels/agent-chat/production",
-      "destination": "/agents/channels/agent-chat",
+      "source": "/agents/channels/web-chat/production",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
-      "source": "/agents/channels/agent-chat/messages",
-      "destination": "/agents/channels/agent-chat/chat-ui",
+      "source": "/agents/channels/web-chat/messages",
+      "destination": "/agents/channels/web-chat/chat-ui",
       "permanent": true
     },
     {

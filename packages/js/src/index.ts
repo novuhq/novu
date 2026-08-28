@@ -3,11 +3,11 @@ export type {
   AgentApprovalPart,
   AgentApprovalPartState,
   AgentCardPart,
-  AgentChatChange,
-  AgentChatDefinition,
-  AgentChatPagination,
-  AgentChatPaginationStatus,
-  AgentChatToolsDefinition,
+  WebChatChange,
+  WebChatDefinition,
+  WebChatPagination,
+  WebChatPaginationStatus,
+  WebChatToolsDefinition,
   AgentConversationError,
   AgentConversationPaginationSnapshot,
   AgentConversationPublicationMeta,
@@ -56,9 +56,9 @@ export type {
   SendMessageArgs,
   SendMessageInput,
   SendMessageResult,
-} from './agent-chat';
-export { AgentChatPlanLimitError, type AgentChatPlanLimitReason } from './agent-chat/agent-chat-plan-limit-error';
-export { derivePendingActions } from './agent-chat/derive-pending-actions';
+} from './web-chat';
+export { WebChatPlanLimitError, type WebChatPlanLimitReason } from './web-chat/web-chat-plan-limit-error';
+export { derivePendingActions } from './web-chat/derive-pending-actions';
 export type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
@@ -78,9 +78,9 @@ export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { NOTIFICATION_COUNT_SYNC_EVENTS } from './notifications/count-sync-events';
 export { Novu } from './novu';
 
-/** Loads Agent Chat on a {@link Novu} instance. Prefer this named export for explicit agent bootstrap. */
-export function loadAgentChat(novu: import('./novu').Novu): Promise<import('./agent-chat').AgentChat> {
-  return novu.loadAgentChat();
+/** Loads Web Chat on a {@link Novu} instance. Prefer this named export for explicit agent bootstrap. */
+export function loadWebChat(novu: import('./novu').Novu): Promise<import('./web-chat').WebChat> {
+  return novu.loadWebChat();
 }
 export type {
   PreferenceFilter,

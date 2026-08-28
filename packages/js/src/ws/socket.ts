@@ -3,7 +3,7 @@ import io, { Socket as SocketIO } from 'socket.io-client';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
-  AgentChatAgentEvent,
+  WebChatAgentEvent,
   NotificationReceivedEvent,
   NotificationUnreadEvent,
   NotificationUnseenEvent,
@@ -29,7 +29,7 @@ const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
 const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
-const AGENT_CHAT_AGENT_EVENT: AgentChatAgentEvent = 'agent_chat.agent_event';
+const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
 
 const mapToNotification = ({
   _id,
@@ -161,7 +161,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
   };
 
   #agentEvent = (envelope: AgentEventEnvelope) => {
-    this.#emitter.emit(AGENT_CHAT_AGENT_EVENT, {
+    this.#emitter.emit(WEB_CHAT_AGENT_EVENT, {
       result: envelope,
     });
   };
@@ -223,7 +223,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
       eventName === NOTIFICATION_RECEIVED ||
       eventName === UNSEEN_COUNT_CHANGED ||
       eventName === UNREAD_COUNT_CHANGED ||
-      eventName === AGENT_CHAT_AGENT_EVENT
+      eventName === WEB_CHAT_AGENT_EVENT
     );
   }
 

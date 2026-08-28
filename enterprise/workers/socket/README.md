@@ -48,7 +48,7 @@ SOCKET_WORKER_URL=http://127.0.0.1:8787
 
 Keep `NOVU_ENTERPRISE=true` and the same `INTERNAL_SERVICES_API_KEY` as `.dev.vars` `INTERNAL_API_KEY`. Locally, Cloudflare sockets are the realtime path.
 
-Playground (`playground/agent-chat`):
+Playground (`playground/web-chat`):
 
 ```env
 NEXT_PUBLIC_NOVU_SOCKET_URL=http://127.0.0.1:8787
