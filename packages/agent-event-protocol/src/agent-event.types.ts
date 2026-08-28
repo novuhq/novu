@@ -39,7 +39,16 @@ export type AgentSignal =
   | { type: 'metadata'; action: 'set'; key: string; value: unknown }
   | { type: 'metadata'; action: 'delete'; key: string }
   | { type: 'metadata'; action: 'clear' }
-  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> };
+  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> }
+  | {
+      type: 'human';
+      kind: 'ask' | 'approve' | 'choose' | 'tell';
+      prompt: string;
+      requestId: string;
+      options?: string[];
+      from?: string;
+      ttlSeconds?: number;
+    };
 
 export type AgentEvent =
   // Lifecycle
@@ -133,7 +142,9 @@ export type AgentEvent =
       reason: 'authentication' | 'connection';
       message: string;
     }
-  // Escape hatch
+  // LLM provider passthrough (live only — not history/transcript)
+  | { type: 'provider-event'; provider: string; event: string; data: unknown }
+  // App custom data escape hatch
   | { type: 'custom'; name: string; data: unknown };
 
 export interface AgentEventEnvelope {

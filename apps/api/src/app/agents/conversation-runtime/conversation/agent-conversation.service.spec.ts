@@ -1,9 +1,4 @@
-import {
-  ConversationActivityTypeEnum,
-  ConversationParticipantTypeEnum,
-  ConversationRepository,
-  ConversationStatusEnum,
-} from '@novu/dal';
+import { ConversationParticipantTypeEnum, ConversationRepository, ConversationStatusEnum } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import {
@@ -43,15 +38,19 @@ describe('AgentConversationService', () => {
 
   function makeLedger(overrides: Partial<Record<keyof ConversationActivityLedger, sinon.SinonStub>> = {}) {
     return {
-      persistAgentMessage: overrides.persistAgentMessage ?? sinon.stub().resolves({ activity: {}, created: true }),
-      persistWorkflowOriginHydration: overrides.persistWorkflowOriginHydration ?? sinon.stub().resolves(undefined),
-      isWorkflowOriginHydrated: overrides.isWorkflowOriginHydrated ?? sinon.stub().resolves(false),
-      persistMcpConnectionRequest: overrides.persistMcpConnectionRequest ?? sinon.stub().resolves({}),
-      persistMcpConnectionResult: overrides.persistMcpConnectionResult ?? sinon.stub().resolves({}),
-      persistToolResult: overrides.persistToolResult ?? sinon.stub().resolves(undefined),
-      persistInboundMessage: overrides.persistInboundMessage ?? sinon.stub().resolves({}),
-      listForView: overrides.listForView ?? sinon.stub().resolves({ data: [], hasMore: false }),
-      mint: overrides.mint ?? sinon.stub().resolves(1),
+      persistAgentMessage: sinon.stub().resolves({ activity: {}, created: true }),
+      persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
+      isWorkflowOriginHydrated: sinon.stub().resolves(false),
+      persistMcpConnectionRequest: sinon.stub().resolves({}),
+      persistMcpConnectionResult: sinon.stub().resolves({}),
+      persistToolResult: sinon.stub().resolves(undefined),
+      persistInboundMessage: sinon.stub().resolves({}),
+      persistResolveSignal: sinon.stub().resolves(undefined),
+      persistTriggerSignal: sinon.stub().resolves(undefined),
+      persistRunLifecycle: sinon.stub().resolves(null),
+      listForView: sinon.stub().resolves({ data: [], hasMore: false }),
+      mint: sinon.stub().resolves(1),
+      ...overrides,
     } as unknown as ConversationActivityLedger;
   }
 

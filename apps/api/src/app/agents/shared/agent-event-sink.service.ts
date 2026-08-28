@@ -4,6 +4,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, type ConversationChannel, ConversationRepository } from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
+import { AgentChatLiveActivityPublisher } from '../agent-chat/agent-chat-live-activity.publisher';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
@@ -73,6 +74,7 @@ export class AgentEventSink {
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
+    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -125,6 +127,14 @@ export class AgentEventSink {
 
       case 'channel.typing':
         return this.handleChannelTyping(event, baseFields, context, envelope.runId);
+
+      case 'provider-event':
+        await this.handleProviderEvent(envelope, context);
+
+        return 'accepted';
+
+      case 'custom':
+        return this.handleCustom(event, context, envelope);
 
       case 'signal':
         return this.handleSignal(event, baseFields, context, envelope.runId);
@@ -191,7 +201,6 @@ export class AgentEventSink {
       case 'message-delta':
       case 'tool-use-delta':
       case 'source':
-      case 'custom':
       case 'tool-approval-response':
       case 'mcp-connection-request':
       case 'mcp-connection-result':
@@ -453,6 +462,74 @@ export class AgentEventSink {
       'channel.typing',
       runId
     );
+  }
+
+  private async handleProviderEvent(envelope: AgentEventEnvelope, context: AgentEventContext): Promise<void> {
+    if (!context.platform || !usesProtocolEventApprovals(context.platform)) {
+      return;
+    }
+
+    if (envelope.event.type !== 'provider-event') {
+      return;
+    }
+
+    const conversation = await this.conversationService.getConversation(
+      context.conversationId,
+      context.environmentId,
+      context.organizationId
+    );
+
+    if (!conversation) {
+      return;
+    }
+
+    await this.agentChatLiveActivityPublisher.emitEphemeralEvent({
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      conversation,
+      event: envelope.event,
+      runId: envelope.runId,
+      turnId: envelope.turnId,
+    });
+  }
+
+  private async handleCustom(
+    event: Extract<AgentEvent, { type: 'custom' }>,
+    context: AgentEventContext,
+    envelope: AgentEventEnvelope
+  ): Promise<IngestOutcome> {
+    if (!isPersistableCustomEvent(event)) {
+      this.logger.warn(
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
+        'Skipping custom agent event: empty name or data over 64KiB'
+      );
+
+      return 'accepted';
+    }
+
+    const channel = context.channel;
+    if (!channel) {
+      this.logger.warn(
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
+        'Skipping custom agent event persist: missing channel on AgentEventContext'
+      );
+
+      return 'accepted';
+    }
+
+    await this.conversationService.persistCustom({
+      conversationId: context.conversationId,
+      channel,
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      identifier: `custom:${envelope.runId}:${envelope.sequence}`,
+      name: event.name,
+      data: event.data,
+    });
+
+    return 'accepted';
   }
 
   private async handleSignal(
@@ -923,4 +1000,20 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+const CUSTOM_AGENT_EVENT_DATA_MAX_BYTES = 65536;
+
+function isPersistableCustomEvent(event: { name: unknown; data: unknown }): boolean {
+  if (typeof event.name !== 'string' || event.name.length === 0) {
+    return false;
+  }
+
+  try {
+    const serialized = JSON.stringify(event.data ?? null);
+
+    return typeof serialized === 'string' && Buffer.byteLength(serialized, 'utf8') <= CUSTOM_AGENT_EVENT_DATA_MAX_BYTES;
+  } catch {
+    return false;
+  }
 }

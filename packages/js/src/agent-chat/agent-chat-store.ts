@@ -7,6 +7,7 @@ import {
   derivePendingActions,
 } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
+import { mintClientId } from './idempotency';
 import type { AgentChatChange, AgentChatChangeSource, AgentChatPaginationStatus, FetchMoreResult } from './types';
 
 type McpConnectionResult = {
@@ -40,6 +41,12 @@ export type ConversationEntry = AgentConversationState & {
   reportedActionIds: Set<string>;
   /** Terminal MCP results retained while history pages load independently. */
   mcpConnectionResults: Map<string, McpConnectionResult>;
+  /**
+   * Latest `channel.edit` / `channel.delete` per message id.
+   * History pages fold in isolation, so a mutation on a newer page must still
+   * apply when `fetchMore` prepends the original `MESSAGE`.
+   */
+  messageMutations: Map<string, AgentEventEnvelope>;
   /** True while reconnect catch-up is in flight for this holder. */
   isRecovering: boolean;
   /** Set when catch-up hits the safety page limit or HTTP fails. Cleared on success. */
@@ -53,21 +60,6 @@ export type ConversationEntry = AgentConversationState & {
   /** Coalesces overlapping `fetchMore` calls on this holder. */
   pendingFetchMore?: Promise<{ data?: FetchMoreResult; error?: NovuError }>;
 };
-
-function mintClientId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
-  }
-
-  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-    const bytes = new Uint8Array(6);
-    crypto.getRandomValues(bytes);
-
-    return `${prefix}_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
-  }
-
-  return `${prefix}_${Date.now().toString(36)}`;
-}
 
 export function createLocalConversationKey(): string {
   return mintClientId('local');
@@ -163,6 +155,37 @@ export class AgentChatStore {
     }));
   }
 
+  #recordMessageMutations(entry: ConversationEntry, envelopes: AgentEventEnvelope[]): void {
+    for (const envelope of envelopes) {
+      const { event } = envelope;
+      if (event.type !== 'channel.edit' && event.type !== 'channel.delete') {
+        continue;
+      }
+
+      const existing = entry.messageMutations.get(event.messageId);
+      if (existing && existing.sequence > envelope.sequence) {
+        continue;
+      }
+
+      entry.messageMutations.set(event.messageId, envelope);
+    }
+  }
+
+  #applyMessageMutations(entry: ConversationEntry, messages: AgentMessage[]): AgentMessage[] {
+    if (entry.messageMutations.size === 0) {
+      return messages;
+    }
+
+    return applyEnvelopes(
+      { ...createInitialAgentConversationState(), messages },
+      [...entry.messageMutations.values()]
+    ).messages;
+  }
+
+  #overlayMessages(entry: ConversationEntry, messages: AgentMessage[]): AgentMessage[] {
+    return this.#applyMcpConnectionResults(entry, this.#applyMessageMutations(entry, messages));
+  }
+
   clear(): void {
     this.#byKey.clear();
   }
@@ -225,6 +248,7 @@ export class AgentChatStore {
       olderCursor: null,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
+      messageMutations: new Map(),
       isRecovering: false,
       paginationStatus: 'idle',
       paginationEpoch: 0,
@@ -239,7 +263,7 @@ export class AgentChatStore {
    * The optimistic message is not reported as added: `markSent` reports it once under
    * the server id, and `markFailed` never reports it.
    */
-  appendSending(entry: ConversationEntry, text: string): string {
+  appendSending(entry: ConversationEntry, text: string, idempotencyKey: string): string {
     const messageId = createOptimisticMessageId();
     this.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError: undefined });
     applyState(entry, {
@@ -247,6 +271,7 @@ export class AgentChatStore {
         id: messageId,
         createdAt: new Date().toISOString(),
         status: 'sending',
+        idempotencyKey,
         parts: [{ type: 'text', text, state: 'done' }],
       }),
       error: undefined,
@@ -256,18 +281,41 @@ export class AgentChatStore {
     return messageId;
   }
 
+  findMessage(entry: ConversationEntry, messageId: string): AgentMessage | undefined {
+    return entry.messages.find((message) => message.id === messageId);
+  }
+
+  markRetrying(entry: ConversationEntry, messageId: string): boolean {
+    const target = entry.messages.find((message) => message.id === messageId);
+    if (!target || target.status !== 'failed' || !target.idempotencyKey) {
+      return false;
+    }
+
+    entry.messages = entry.messages.map((message) =>
+      message.id === messageId ? { ...message, status: 'sending' as const } : message
+    );
+    this.#publish(entry, { kind: 'local' }, []);
+
+    return true;
+  }
+
   /**
    * Mark an optimistic message as `sent` and set the server message id.
    * Also records the public conversation id. Does not change `entry.key`.
    */
   markSent(
     entry: ConversationEntry,
-    args: { optimisticMessageId: string; serverMessageId: string; conversationId: string }
+    args: { optimisticMessageId: string; serverMessageId: string; conversationId: string; idempotencyKey?: string }
   ): ConversationEntry {
     const previous = entry.messages;
     entry.messages = entry.messages.map((message) =>
       message.id === args.optimisticMessageId
-        ? { ...message, id: args.serverMessageId, status: 'sent' as const }
+        ? {
+            ...message,
+            id: args.serverMessageId,
+            status: 'sent' as const,
+            idempotencyKey: args.idempotencyKey ?? message.idempotencyKey,
+          }
         : message
     );
 
@@ -300,13 +348,14 @@ export class AgentChatStore {
   ): ConversationEntry {
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, envelopes);
+    this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
     const localOnly = previous.filter((message) => !serverIds.has(message.id));
 
     applyState(entry, {
       ...folded,
-      messages: this.#applyMcpConnectionResults(entry, [...folded.messages, ...localOnly]),
+      messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
@@ -372,9 +421,10 @@ export class AgentChatStore {
     olderCursor: string | null
   ): ConversationEntry {
     this.#recordMcpConnectionResults(entry, envelopes);
+    this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const existingIds = new Set(entry.messages.map((message) => message.id));
-    const olderMessages = this.#applyMcpConnectionResults(
+    const olderMessages = this.#overlayMessages(
       entry,
       folded.messages.filter((message) => !existingIds.has(message.id))
     );
@@ -412,6 +462,7 @@ export class AgentChatStore {
 
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, [envelope]);
+    this.#recordMessageMutations(entry, [envelope]);
     const next = applyEnvelope(entry, envelope);
     applyState(entry, {
       ...next,

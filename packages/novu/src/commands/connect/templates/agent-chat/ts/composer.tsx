@@ -59,21 +59,16 @@ export function Composer({ isLoading, isRunning, onSend }: ComposerProps) {
           autoComplete="off"
           aria-label="Message your agent"
         />
-        <button
-          type="submit"
-          className="composer-send"
-          disabled={disabled || !draft.trim()}
-          aria-label={isRunning ? 'Agent is responding' : 'Send message'}
-        >
-          {isRunning ? <span className="spinner" aria-hidden /> : <SendIcon />}
-        </button>
-      </div>
-      <div className="composer-hints">
-        <kbd>Enter</kbd>
-        <span>to send</span>
-        <span aria-hidden>·</span>
-        <kbd>Shift + Enter</kbd>
-        <span>for a new line</span>
+        <div className="composer-toolbar">
+          <button
+            type="submit"
+            className="composer-send"
+            disabled={disabled || !draft.trim()}
+            aria-label={isRunning ? 'Agent is responding' : 'Send message'}
+          >
+            {isRunning ? <span className="spinner" aria-hidden /> : <SendIcon />}
+          </button>
+        </div>
       </div>
     </form>
   );

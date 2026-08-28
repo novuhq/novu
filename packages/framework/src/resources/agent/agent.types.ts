@@ -12,6 +12,43 @@ export enum AgentEventEnum {
   ON_REACTION = 'onReaction',
 }
 
+export type HumanInteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
+
+export type HumanAskApproveOptions = {
+  /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
+  from?: string;
+  /** Time until the request expires, in seconds (max 72h; default 24h). */
+  ttlSeconds?: number;
+};
+
+export type HumanChooseOptions = HumanAskApproveOptions;
+
+export type HumanTellOptions = {
+  /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
+  from?: string;
+};
+
+/**
+ * Outcome of a `ctx.ask` / `ctx.approve` / `ctx.choose` request, attached to
+ * the later `onMessage` (ask) or `onAction` (approve / choose) turn.
+ */
+export type AgentHumanResponse = {
+  /** Client-minted id returned by `ctx.ask` / `ctx.approve` / `ctx.choose`. */
+  requestId: string;
+  /** Public interaction identifier (`hi_...`). */
+  interactionId: string;
+  kind: HumanInteractionKind;
+  /** Terminal status: `answered` | `approved` | `denied` | `expired` | `canceled` | `delivered`. */
+  status: string;
+  /** True when the TTL elapsed before a valid answer. Do not treat `text` / `optionId` as a verdict. */
+  expired: boolean;
+  /** Freeform reply text for `ask`. */
+  text?: string;
+  /** `approve`: `'approve'` | `'deny'`; `choose`: the picked option id. */
+  optionId?: string;
+  respondedBy?: string;
+};
+
 // ---------------------------------------------------------------------------
 // User-facing types (visible on ctx properties)
 // ---------------------------------------------------------------------------
@@ -90,6 +127,18 @@ export interface AgentSubscriber {
   locale?: string;
   /** Arbitrary custom data attached to the subscriber in Novu. */
   data?: Record<string, unknown>;
+}
+
+/** Workflow-origin notification for this turn. */
+export interface AgentNotification<TPayload extends Record<string, unknown> = Record<string, unknown>> {
+  id: string;
+  /** User-facing workflow slug — same string as `ctx.trigger(workflowId)`. */
+  workflowId: string;
+  messageId: string;
+  platformMessageId: string;
+  sentAt: string;
+  body: string;
+  payload: TPayload;
 }
 
 /**
@@ -370,6 +419,17 @@ export interface AgentHandlerContext {
    */
   readonly context: AgentContextPayload | null;
   /**
+   * The Novu notification this turn is replying to (workflow origin), or `null` when the
+   * conversation was not opened from a workflow send.
+   */
+  readonly notification: AgentNotification | null;
+  /**
+   * Settled `ctx.ask` / `ctx.approve` / `ctx.choose` payload when this
+   * `onMessage` or `onAction` turn answered (or expired) a human interaction.
+   * `null` on ordinary chat and button clicks.
+   */
+  readonly humanResponse: AgentHumanResponse | null;
+  /**
    * Full conversation history as an ordered array of entries.
    * Map to your LLM's message format before making a model call:
    * `ctx.history.map(h => ({ role: h.role, content: h.content }))`
@@ -445,6 +505,45 @@ export interface AgentHandlerContext {
    *   ctx.trigger('team-alert', { to: { type: 'Topic', topicKey: 'support-team' } });
    */
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
+  /**
+   * Ask the conversation subscriber a freeform question. Queued and flushed
+   * with the next `ctx.reply()`, or automatically when the handler completes.
+   * The answer arrives later on `onMessage` with `ctx.humanResponse` set.
+   *
+   * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
+   *
+   * @example
+   *   ctx.ask('What environment should we deploy to?');
+   */
+  ask(question: string, opts?: HumanAskApproveOptions): string;
+  /**
+   * Ask the conversation subscriber to approve or deny an action.
+   * The verdict arrives later on `onAction` with `ctx.humanResponse` set.
+   *
+   * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
+   *
+   * @example
+   *   ctx.approve('Deploy v2.4.1 to production?');
+   */
+  approve(action: string, opts?: HumanAskApproveOptions): string;
+  /**
+   * Ask the conversation subscriber to pick one of several options (2–10).
+   * The pick arrives later on `onAction` with `ctx.humanResponse` set.
+   *
+   * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
+   *
+   * @example
+   *   ctx.choose('Which region?', ['us-east', 'eu-west', 'ap-south']);
+   */
+  choose(question: string, options: string[], opts?: HumanChooseOptions): string;
+  /**
+   * Send a one-way notification to the conversation subscriber. Nothing to wait
+   * on — `tell` never sets `ctx.humanResponse`.
+   *
+   * @example
+   *   ctx.tell('Deploy finished. v2.4.1 is live.');
+   */
+  tell(message: string, opts?: HumanTellOptions): string;
   /**
    * Add an emoji reaction to any platform message.
    * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
@@ -630,6 +729,18 @@ export interface AgentBridgeRequest {
    * older API versions that don't send it remain compatible; absent → `ctx.context` is `null`.
    */
   context?: AgentContextPayload | null;
+  /**
+   * The Novu notification this turn is replying to, when the conversation was opened (or
+   * re-attached) from a workflow send. Optional on the wire for backward compatibility;
+   * absent → `ctx.notification` is `null`.
+   */
+  notification?: AgentNotification | null;
+  /**
+   * Settled human-interaction payload when this `onMessage` / `onAction` turn
+   * answered or expired a `ctx.ask` / `ctx.approve` / `ctx.choose`. Optional on
+   * the wire for backward compatibility; absent → `ctx.humanResponse` is `null`.
+   */
+  humanResponse?: AgentHumanResponse | null;
   history: AgentHistoryEntry[];
   platform: string;
   platformContext: AgentPlatformContext;
@@ -656,7 +767,21 @@ export type TriggerSignal = {
   payload?: Record<string, unknown>;
 };
 
-export type Signal = MetadataSignal | TriggerSignal;
+/**
+ * Queued by `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` — instructs
+ * Novu to create a human interaction in the current conversation thread.
+ */
+export type HumanSignal = {
+  type: 'human';
+  kind: HumanInteractionKind;
+  prompt: string;
+  requestId: string;
+  options?: string[];
+  from?: string;
+  ttlSeconds?: number;
+};
+
+export type Signal = MetadataSignal | TriggerSignal | HumanSignal;
 
 /** The outcome of a tool call, reported back so it's saved in the conversation history. */
 export type ToolResult = {

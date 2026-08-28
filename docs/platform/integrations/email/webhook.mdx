@@ -16,6 +16,7 @@ Use this when you want Novu workflows and templates, but delivery goes through a
 4. Enter your:
    - **Webhook URL** (HTTPS endpoint that accepts `POST` JSON)
    - **Secret Hmac Key** (used to sign each request)
+   - **Secret Hmac Key Encoding** (optional) — how Novu interprets your Secret Hmac Key when signing requests. Defaults to **Text**. Choose **Base-64** or **HEX** if your verification side stores the key as binary material (for example, an AWS KMS imported key).
    - **From email address**
    - **Sender name**
 5. Confirm **Active Integration** is on. New integrations start active by default.
@@ -31,6 +32,22 @@ For each email, Novu sends a `POST` request to your webhook URL with:
 Verify the signature before processing the payload. Reject requests that do not match.
 
 The JSON body includes the rendered email fields Novu already prepared for the subscriber (to, from, subject, html/text content, and related metadata).
+
+### Secret Hmac Key encoding
+
+By default, Novu interprets your **Secret Hmac Key** as plain **Text** (UTF-8 bytes) when computing the HMAC. If the system that verifies the signature holds the key as binary material — for example an AWS KMS imported key — set **Secret Hmac Key Encoding** to match how the key is stored so both sides sign with the same bytes:
+
+| Encoding | How the key is interpreted |
+| --- | --- |
+| `Text` (default) | The key value is used as raw UTF-8 text. Existing integrations keep signing exactly as before. |
+| `Base-64` | The key value is Base-64 decoded to raw bytes before signing. |
+| `HEX` | The key value is hexadecimal decoded to raw bytes before signing. |
+
+The encoding only changes how the stored key is decoded into signing bytes; the resulting `X-Novu-Signature` is still a hex-encoded HMAC-SHA256 of the raw request body.
+
+<Note>
+  Leave this set to `Text` unless your verification side requires binary key material. Changing the encoding on an existing integration changes the signatures Novu produces.
+</Note>
 
 <Note>
   Email Webhook is marked beta in Novu. Treat it as a custom delivery bridge and monitor your endpoint health.

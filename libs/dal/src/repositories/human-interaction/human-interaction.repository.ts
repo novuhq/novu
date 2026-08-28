@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  HumanInteractionKindEnum,
-  HumanInteractionResponse,
-  HumanInteractionStatusEnum,
-} from '@novu/shared';
+import { HumanInteractionKindEnum, HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionEntity } from './human-interaction.entity';
@@ -40,6 +36,27 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       {
         _environmentId: environmentId,
         subscriberId,
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.PENDING,
+      },
+      '*',
+      { sort: { createdAt: -1 }, limit }
+    );
+  }
+
+  /**
+   * Pending `ask` interactions in a conversation, newest first — conversation-
+   * scoped bare-message correlation for framework `ctx.ask`.
+   */
+  async findPendingAsksByConversation(
+    environmentId: string,
+    conversationId: string,
+    limit = 10
+  ): Promise<HumanInteractionEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.PENDING,
       },

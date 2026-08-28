@@ -63,6 +63,7 @@ export enum FeatureFlagsKeysEnum {
   IS_TRACE_LOGS_ENABLED = 'IS_TRACE_LOGS_ENABLED',
   IS_TRACE_LOGS_READ_ENABLED = 'IS_TRACE_LOGS_READ_ENABLED',
   IS_INBOUND_WEBHOOKS_ENABLED = 'IS_INBOUND_WEBHOOKS_ENABLED',
+  IS_INBOUND_WEBHOOK_ATTACHMENT_URLS_ENABLED = 'IS_INBOUND_WEBHOOK_ATTACHMENT_URLS_ENABLED',
   IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED = 'IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED',
   IS_STEP_RUN_LOGS_READ_ENABLED = 'IS_STEP_RUN_LOGS_READ_ENABLED',
   IS_STEP_RUN_LOGS_WRITE_ENABLED = 'IS_STEP_RUN_LOGS_WRITE_ENABLED',
@@ -107,6 +108,12 @@ export enum FeatureFlagsKeysEnum {
   IS_DEMO_MANAGED_CLAUDE_ENABLED = 'IS_DEMO_MANAGED_CLAUDE_ENABLED',
   /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
   IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
+  /**
+   * Enable framework `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` human
+   * interactions delivered into the agent conversation. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_AGENT_HUMAN_HITL_ENABLED` when self-hosted.
+   */
+  IS_AGENT_HUMAN_HITL_ENABLED = 'IS_AGENT_HUMAN_HITL_ENABLED',
   /**
    * Enable the agent-chat channel (subscriber `/v1/agent-chat/*`, useAgentChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
@@ -237,6 +244,13 @@ export enum FeatureFlagsKeysEnum {
   MAX_SUBSCRIBER_DEVICE_TOKENS_NUMBER = 'MAX_SUBSCRIBER_DEVICE_TOKENS_NUMBER',
   MAX_ENVIRONMENT_VARIABLES_LIMIT_NUMBER = 'MAX_ENVIRONMENT_VARIABLES_LIMIT_NUMBER',
   MAX_STEP_RESOLVERS_NUMBER = 'MAX_STEP_RESOLVERS_NUMBER',
+  /**
+   * Max conditions (or nested groups) allowed in a single step-conditions group.
+   * Default is 10 when the flag is unset, invalid, or below 1. Create the number
+   * in LaunchDarkly for cloud, or set `VITE_MAX_STEP_CONDITIONS_PER_GROUP_NUMBER`
+   * when self-hosted.
+   */
+  MAX_STEP_CONDITIONS_PER_GROUP_NUMBER = 'MAX_STEP_CONDITIONS_PER_GROUP_NUMBER',
   MAX_DOMAINS_LIMIT_NUMBER = 'MAX_DOMAINS_LIMIT_NUMBER',
   MAX_AGENTS_LIMIT_NUMBER = 'MAX_AGENTS_LIMIT_NUMBER',
   MAX_CUSTOM_EMAIL_DOMAINS_NUMBER = 'MAX_CUSTOM_EMAIL_DOMAINS_NUMBER',

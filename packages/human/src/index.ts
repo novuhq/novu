@@ -106,7 +106,9 @@ program
   .description('Show or set the default delivery channel preference')
   .action(channelsCommand);
 
-const skill = program.command('skill').description('Teach coding agents (Claude Code, Cursor, ...) how to use this CLI');
+const skill = program
+  .command('skill')
+  .description('Teach coding agents (Claude Code, Cursor, ...) how to use this CLI');
 
 skill
   .command('install')

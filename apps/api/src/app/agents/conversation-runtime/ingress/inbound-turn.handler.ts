@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import type { AgentChatRawMessage } from '@novu/chat-adapter-agent-chat';
+import { type AgentChatRawMessage, isValidActionIdempotencyKey } from '@novu/chat-adapter-agent-chat';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -24,6 +24,7 @@ import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-tel
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -272,7 +273,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly inboundAck: InboundAckService,
     private readonly connectionContextResolver: InboundConnectionContextResolver,
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
-    private readonly workflowOriginService: WorkflowOriginService
+    private readonly workflowOriginService: WorkflowOriginService,
+    private readonly humanConversationInbound: HumanConversationInboundInterceptor
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -429,7 +431,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const workflowOrigin = await this.workflowOriginService.resolve({
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
       platformThreadId,
@@ -455,22 +457,21 @@ export class AgentInboundHandler implements OnModuleInit {
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
       identifier: this.agentChatConversationIdentifier(config.platform, platformThreadId),
-      notificationId: workflowOrigin?.notificationId,
+      notificationId: workflowOriginResolution?.notificationId,
       contextKeys:
         config.platform === AgentPlatformEnum.AGENT_CHAT
           ? ((message.raw as AgentChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 
-    const workflowOriginContent = workflowOrigin
-      ? await this.workflowOriginService.hydrate({
-          agentId,
-          config,
-          conversation,
-          platformThreadId,
-          origin: workflowOrigin.origin,
-        })
-      : null;
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      resolution: workflowOriginResolution,
+    });
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
@@ -545,7 +546,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-      workflowOriginContent: workflowOriginContent ?? undefined,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
@@ -555,6 +556,10 @@ export class AgentInboundHandler implements OnModuleInit {
       event === AgentEventEnum.ON_MESSAGE &&
       (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
     ) {
+      return;
+    }
+
+    if (event === AgentEventEnum.ON_MESSAGE && (await this.humanConversationInbound.tryHandleMessage(turn))) {
       return;
     }
 
@@ -670,13 +675,22 @@ export class AgentInboundHandler implements OnModuleInit {
       return undefined;
     }
 
-    return this.attachmentStorage.storeInbound(message.attachments, {
+    const stored = await this.attachmentStorage.storeInbound(message.attachments, {
       organizationId: config.organizationId,
       environmentId: config.environmentId,
       conversationId: String(conversation._id),
       platformMessageId: message.id ?? `unknown-${Date.now()}`,
       platform: config.platform,
     });
+
+    if (!stored.length) {
+      this.logger.warn(
+        { platform: config.platform, messageId: message.id, inboundCount: message.attachments.length },
+        'Inbound attachments were present but none could be stored'
+      );
+    }
+
+    return stored;
   }
 
   /** Persist the inbound activity, emit analytics, and capture the first platform message id. */
@@ -1085,6 +1099,25 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId
     );
     const runtime = this.runtimeResolver.resolve(agent);
+
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
+      agentId,
+      config,
+      platformThreadId: threadId,
+      subscriberId,
+      message: event.message ?? null,
+      existingConversation: conversation,
+      isDirectMessage: event.thread?.isDM,
+    });
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId: threadId,
+      subscriberId,
+      resolution: workflowOriginResolution,
+    });
+
     const turn: ConversationTurn = {
       agentId,
       agent: agent ?? { _id: agentId },
@@ -1099,6 +1132,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
       platformThreadId: threadId,
       reaction: reactionPayload,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval can be
@@ -1148,7 +1182,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId
     );
 
-    const workflowOrigin = await this.workflowOriginService.resolve({
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
       platformThreadId,
@@ -1171,22 +1205,21 @@ export class AgentInboundHandler implements OnModuleInit {
       firstMessageText: `[action:${action.id}]`,
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
-      notificationId: workflowOrigin?.notificationId,
+      notificationId: workflowOriginResolution?.notificationId,
       contextKeys:
         config.platform === AgentPlatformEnum.AGENT_CHAT
           ? ((rawEvent as AgentChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 
-    const workflowOriginContent = workflowOrigin
-      ? await this.workflowOriginService.hydrate({
-          agentId,
-          config,
-          conversation,
-          platformThreadId,
-          origin: workflowOrigin.origin,
-        })
-      : null;
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      resolution: workflowOriginResolution,
+    });
 
     trackAgentInboundAction(this.analyticsService, {
       organizationId: config.organizationId,
@@ -1220,7 +1253,9 @@ export class AgentInboundHandler implements OnModuleInit {
       participantType === ConversationParticipantTypeEnum.SUBSCRIBER
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER
         : ConversationActivitySenderTypeEnum.PLATFORM_USER;
-    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
+    const identifier = this.readActionIdempotencyKey(rawEvent);
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId, identifier);
+    await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
@@ -1245,8 +1280,12 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       action,
-      workflowOriginContent: workflowOriginContent ?? undefined,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
+
+    if (await this.humanConversationInbound.tryHandleAction(turn)) {
+      return;
+    }
 
     await runtime.dispatch(turn);
   }
@@ -1275,12 +1314,58 @@ export class AgentInboundHandler implements OnModuleInit {
     return null;
   }
 
+  private readActionIdempotencyKey(rawEvent: unknown): string | undefined {
+    if (!rawEvent || typeof rawEvent !== 'object' || Array.isArray(rawEvent)) {
+      return undefined;
+    }
+
+    const key = (rawEvent as { idempotencyKey?: unknown }).idempotencyKey;
+    if (typeof key !== 'string') {
+      return undefined;
+    }
+
+    const trimmed = key.trim();
+
+    return isValidActionIdempotencyKey(trimmed) ? trimmed : undefined;
+  }
+
+  private async recordNonApprovalActionAccept(
+    conversation: ConversationEntity,
+    config: ResolvedAgentConfig,
+    action: AgentAction,
+    identifier?: string
+  ): Promise<void> {
+    if (!identifier || this.parseApprovalVerdict(action.id)) {
+      return;
+    }
+
+    try {
+      await this.conversationService.persistInboundActionAccept({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        identifier,
+        actionId: action.id,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to persist inbound action accept`);
+      captureAgentWarning(err, {
+        component: 'inbound-turn-handler',
+        operation: 'persist-inbound-action-accept',
+        agentIdentifier: config.agentIdentifier,
+      });
+    }
+  }
+
   private async recordApprovalVerdict(
     conversation: ConversationEntity,
     config: ResolvedAgentConfig,
     action: AgentAction,
     actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER | ConversationActivitySenderTypeEnum.PLATFORM_USER,
-    actorId: string
+    actorId: string,
+    identifier?: string
   ): Promise<void> {
     const verdict = this.parseApprovalVerdict(action.id);
     if (!verdict) {
@@ -1299,6 +1384,7 @@ export class AgentInboundHandler implements OnModuleInit {
         actorId,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
+        ...(identifier ? { identifier } : {}),
       });
     } catch (err) {
       // A failed transcript write must never drop the click — the runtime still

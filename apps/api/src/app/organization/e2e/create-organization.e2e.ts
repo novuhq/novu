@@ -203,6 +203,5 @@ describe('Create Organization - /organizations (POST) #novu-v0-os', async () => 
       expect(novuEmailIntegrations.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
       process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID = oldNovuSmsIntegrationAccountSid;
     });
-
   });
 });

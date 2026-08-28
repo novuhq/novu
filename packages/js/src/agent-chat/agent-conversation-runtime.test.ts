@@ -182,6 +182,7 @@ describe('AgentConversationRuntime', () => {
     expect(snapshot.run.typing?.status).toBe('Thinking…');
     expect(snapshot.conversationStatus).toBe('active');
     expect(snapshot.pagination.hasMore).toBe(false);
+    expect(snapshot.pagination.status).toBe('idle');
 
     created.data.dispose();
   });

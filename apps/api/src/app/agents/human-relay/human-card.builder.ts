@@ -1,13 +1,13 @@
 import type { HumanInteractionEntity } from '@novu/dal';
-import { HumanInteractionKindEnum, HumanInteractionStatusEnum, type HumanInteractionOption } from '@novu/shared';
+import { HumanInteractionKindEnum, type HumanInteractionOption, HumanInteractionStatusEnum } from '@novu/shared';
 import type { ActionsElement, ButtonElement, CardElement, TextElement } from 'chat';
+import type { ReplyContentDto } from '../shared/dtos/agent-reply-payload.dto';
 import {
   buildHumanApproveActionId,
   buildHumanDenyActionId,
   buildHumanDisambiguationActionId,
   buildHumanOptionActionId,
 } from './human-action-id';
-import type { ReplyContentDto } from '../shared/dtos/agent-reply-payload.dto';
 
 const LISTED_OPTION_LABEL_MAX = 200;
 
@@ -43,9 +43,7 @@ function bodyText(content: string): TextElement {
 
 /** "**A.** <label>\n**B.** <label>\n..." — the full option text, always in the message. */
 function buildOptionsListText(labels: string[]): TextElement {
-  const lines = labels.map(
-    (label, index) => `**${optionLetter(index)}.** ${truncate(label, LISTED_OPTION_LABEL_MAX)}`
-  );
+  const lines = labels.map((label, index) => `**${optionLetter(index)}.** ${truncate(label, LISTED_OPTION_LABEL_MAX)}`);
 
   return bodyText(lines.join('\n'));
 }
@@ -172,7 +170,7 @@ function resolveStatusLine(interaction: HumanInteractionEntity): string {
  * "Which question does this answer?" card shown when a bare reply arrives
  * while several asks are pending. Same letter-button convention as `choose`.
  */
-export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[]): CardElement {
+export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[], answerId: string): CardElement {
   return {
     type: 'card',
     title: 'Which question does this answer?',
@@ -182,7 +180,7 @@ export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[]): 
       {
         type: 'actions',
         children: pendingAsks.map((ask, index) =>
-          button(buildHumanDisambiguationActionId(ask.identifier), optionLetter(index), 'default')
+          button(buildHumanDisambiguationActionId(ask.identifier, answerId), optionLetter(index), 'default')
         ),
       } satisfies ActionsElement,
     ],

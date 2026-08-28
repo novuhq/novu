@@ -14,6 +14,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -48,6 +49,7 @@ export class HumanInteractionsController {
 
   @Post('/interactions')
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createInteraction(
     @UserSession() user: UserSessionData,
@@ -72,6 +74,7 @@ export class HumanInteractionsController {
 
   @Get('/interactions')
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listInteractions(
     @UserSession() user: UserSessionData,
@@ -92,6 +95,7 @@ export class HumanInteractionsController {
 
   @Get('/interactions/:identifier')
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   getInteraction(
     @UserSession() user: UserSessionData,
@@ -110,6 +114,7 @@ export class HumanInteractionsController {
   @Post('/interactions/:identifier/cancel')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   cancelInteraction(
     @UserSession() user: UserSessionData,
@@ -128,6 +133,7 @@ export class HumanInteractionsController {
   @Post('/setup')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   setup(
     @UserSession() user: UserSessionData,

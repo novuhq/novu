@@ -1,6 +1,6 @@
 {
   "name": "@novu/human",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "The human API for agents — ask, approve, choose, tell. Agents reach a human on Telegram/Slack and block until the human answers.",
   "main": "dist/src/index.js",
   "publishConfig": {
@@ -37,7 +37,6 @@
     "human": "./dist/src/index.js"
   },
   "dependencies": {
-    "@novu/human": "link:",
     "axios": "^1.6.8",
     "commander": "^9.4.0",
     "picocolors": "1.1.1",

@@ -61,19 +61,12 @@ export function AgentChatDrawer({
               <SheetDescription>Preview this agent in web chat before adding it to your app.</SheetDescription>
             </VisuallyHidden>
           </div>
-          <CompactButton
-            size="lg"
-            variant="ghost"
-            icon={RiArrowRightUpLine}
-            aria-label="Open docs"
-            onClick={() => window.open(AGENT_CHAT_DOCS_URL, '_blank', 'noopener,noreferrer')}
-          />
           <SheetClose asChild>
             <CompactButton size="lg" variant="ghost" icon={RiCloseLine} aria-label="Close" />
           </SheetClose>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col px-4 pt-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pt-4">
           {showAddToAppCallouts ? (
             <div className="bg-bg-weak flex min-h-9 shrink-0 flex-wrap items-center gap-2 rounded-lg py-1.5 pr-1.5 pl-2">
               <span className="bg-text-sub h-[22px] w-1 shrink-0 rounded-full" aria-hidden />

@@ -96,6 +96,12 @@ export type AgentCardPart = {
   card: Record<string, unknown>;
 };
 
+export type AgentDataPart = {
+  type: 'data';
+  name: string;
+  data: unknown;
+};
+
 export type AgentMessagePart =
   | AgentTextPart
   | AgentThinkingPart
@@ -104,7 +110,8 @@ export type AgentMessagePart =
   | AgentMcpConnectionPart
   | AgentSourcePart
   | AgentFilePart
-  | AgentCardPart;
+  | AgentCardPart
+  | AgentDataPart;
 
 export type AgentMessage = {
   id: string;
@@ -112,6 +119,11 @@ export type AgentMessage = {
   parts: AgentMessagePart[];
   createdAt: string;
   status: AgentMessageStatus;
+  /**
+   * Stable client-minted idempotency key for outbound user messages.
+   * Persisted from optimistic append through server reconciliation (`msg_*`).
+   */
+  idempotencyKey?: string;
 };
 
 export type AgentConversationStatus = 'active' | 'resolved';
@@ -150,28 +162,4 @@ export function createInitialAgentConversationState(): AgentConversationState {
   };
 }
 
-export function derivePendingActions(messages: AgentMessage[]): AgentPendingAction[] {
-  const pending: AgentPendingAction[] = [];
-
-  for (const message of messages) {
-    for (const part of message.parts) {
-      if (part.type === 'approval' && part.state === 'pending') {
-        const { state: _state, ...action } = part;
-        pending.push({
-          ...action,
-          type: 'tool-approval',
-          id: part.approvalId,
-        });
-      }
-      if (part.type === 'mcp-connection' && part.state === 'pending') {
-        const { state: _state, message: _message, ...action } = part;
-        pending.push({
-          ...action,
-          id: part.actionId,
-        });
-      }
-    }
-  }
-
-  return pending;
-}
+export { derivePendingActions } from './derive-pending-actions';

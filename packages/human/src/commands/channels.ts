@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { loadConfig, saveConfig, NOT_SET_UP_MESSAGE } from '../config';
+import { loadConfig, NOT_SET_UP_MESSAGE, saveConfig } from '../config';
 import { fail } from '../output';
 
 const SUPPORTED = ['telegram', 'slack', 'email'] as const;

@@ -4,6 +4,7 @@ import { NovuEventEmitter } from '../event-emitter';
 import { NovuError } from '../utils/errors';
 import { AgentChat } from './agent-chat';
 import { derivePendingActions } from './agent-message.types';
+import { createActionIdempotencyKeyForScope } from './idempotency';
 import type { AgentChatChange } from './types';
 
 describe('AgentChat', () => {
@@ -138,6 +139,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       text: 'one',
       conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
     });
 
     resolveFirst({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' });
@@ -153,6 +155,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       text: 'two',
       conversationId: 'conv_abcdefghijkl',
+      messageId: expect.stringMatching(/^msg_/),
     });
   });
 
@@ -168,11 +171,13 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       text: 'one',
       conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
     });
     expect(sendMessage).toHaveBeenNthCalledWith(2, {
       agentId: 'agent_1',
       text: 'two',
       conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
     });
 
     expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.conversationId).toBe('conv_aaaaaaaaaaaa');
@@ -261,6 +266,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       text: 'three',
       conversationId: 'conv_abcdefghijkl',
+      messageId: expect.stringMatching(/^msg_/),
     });
 
     resolveThird({ identifier: 'conv_abcdefghijkl', messageId: 'msg_cccccccccccc' });
@@ -305,6 +311,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       text: 'two',
       conversationId: 'conv_bbbbbbbbbbbb',
+      messageId: expect.stringMatching(/^msg_/),
     });
 
     const previous = agentChat.getConversation({ agentId: 'agent_1', key: 'local_stale' });
@@ -540,6 +547,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       text: 'fresh chat',
       conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
     });
 
     const created = agentChat.getConversation({ agentId: 'agent_1', key: 'local_new' });
@@ -836,22 +844,37 @@ describe('AgentChat', () => {
     olderCursor: string | null = null,
     conversationId = 'conv_abcdefghijkl'
   ) {
-    return {
-      events: events.map((event) => ({
-        version: AGENT_EVENT_PROTOCOL_VERSION,
-        conversationId: 'internal',
-        conversationIdentifier: conversationId,
-        agentId: 'agent_1',
-        runId: 'history',
-        turnId: 't1',
+    return historyEventPage(
+      events.map((event) => ({
         sequence: event.sequence,
-        timestamp: '2026-08-07T12:00:00.000Z',
         event: {
           type: 'message' as const,
           role: event.role,
           messageId: event.messageId,
           content: { markdown: event.markdown },
         },
+      })),
+      olderCursor,
+      conversationId
+    );
+  }
+
+  function historyEventPage(
+    events: Array<{ sequence: number; event: Record<string, unknown> }>,
+    olderCursor: string | null = null,
+    conversationId = 'conv_abcdefghijkl'
+  ) {
+    return {
+      events: events.map((item) => ({
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: conversationId,
+        agentId: 'agent_1',
+        runId: 'history',
+        turnId: 't1',
+        sequence: item.sequence,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: item.event,
       })),
       olderCursor,
     };
@@ -966,6 +989,75 @@ describe('AgentChat', () => {
     await waitForMessageIds(['msg_user0000001', 'msg_asst_missed1']);
 
     expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('catch-up completes with zero lastSequence when history spans multiple pages', async () => {
+    await openClaimedConversation();
+
+    getEvents
+      .mockResolvedValueOnce(
+        historyPage(
+          [
+            { sequence: 11, messageId: 'msg_asst_page2', role: 'assistant', markdown: 'newer page' },
+            { sequence: 12, messageId: 'msg_asst_page2b', role: 'assistant', markdown: 'newer page b' },
+          ],
+          'cursor_older'
+        )
+      )
+      .mockResolvedValueOnce(
+        historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+      );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_page2', 'msg_asst_page2b']);
+
+    expect(getEvents).toHaveBeenCalledTimes(2);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.catchUpError).toBeUndefined();
+  });
+
+  it('catch-up completes with zero lastSequence when history exceeds the checkpoint page cap', async () => {
+    await openClaimedConversation();
+
+    getEvents.mockImplementation(({ before }: { before?: string }) => {
+      if (before == null) {
+        return Promise.resolve(
+          historyPage(
+            [{ sequence: 21, messageId: 'msg_asst_page21', role: 'assistant', markdown: 'newest page' }],
+            'cursor_page20'
+          )
+        );
+      }
+
+      const pageNumber = Number.parseInt(before.replace('cursor_page', ''), 10);
+      if (pageNumber <= 1) {
+        return Promise.resolve(
+          historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+        );
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [
+            {
+              sequence: pageNumber,
+              messageId: `msg_asst_page${pageNumber.toString().padStart(2, '0')}`,
+              role: 'assistant',
+              markdown: `page ${pageNumber}`,
+            },
+          ],
+          `cursor_page${pageNumber - 1}`
+        )
+      );
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(21);
+
+    const conversation = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(conversation?.catchUpError).toBeUndefined();
+    expect(conversation?.messages.map((message) => message.id)).toEqual(
+      expect.arrayContaining(['msg_user0000001', 'msg_asst_page21'])
+    );
   });
 
   it('catch-up after send claims a conversation that received live events early', async () => {
@@ -1639,6 +1731,205 @@ describe('AgentChat', () => {
     expect(agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.hasMore).toBe(true);
   });
 
+  it('fetchMore does not resurrect a message deleted on a newer page', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyEventPage(
+        [
+          {
+            sequence: 2,
+            event: {
+              type: 'message',
+              role: 'user',
+              messageId: 'msg_keep0000001',
+              content: { markdown: 'keep' },
+            },
+          },
+          { sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } },
+        ],
+        'act_page0001'
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
+    expect(
+      agentChat
+        .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
+        ?.messages.map((message) => message.id)
+    ).toEqual(['msg_keep0000001']);
+  });
+
+  it('fetchMore applies an edit from a newer page onto the older message', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyEventPage(
+        [
+          {
+            sequence: 2,
+            event: {
+              type: 'message',
+              role: 'user',
+              messageId: 'msg_keep0000001',
+              content: { markdown: 'keep' },
+            },
+          },
+          {
+            sequence: 3,
+            event: {
+              type: 'channel.edit',
+              messageId: 'msg_edit0000001',
+              content: { markdown: 'edited' },
+            },
+          },
+        ],
+        'act_page0001'
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_edit0000001', role: 'user', markdown: 'original' }], null)
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_edit0000001', 'msg_keep0000001']);
+    expect(result.data?.messages[0]).toMatchObject({
+      id: 'msg_edit0000001',
+      parts: [{ type: 'text', text: 'edited', state: 'done' }],
+    });
+  });
+
+  it('fetchMore does not resurrect a message deleted live while it was off-screen', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
+    );
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
+  });
+
+  it('live source after an edit keeps the source part', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_asst0000001', role: 'assistant', markdown: 'original' }], null)
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'channel.edit', messageId: 'msg_asst0000001', content: { markdown: 'edited' } },
+      })
+    );
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 3,
+        event: {
+          type: 'source',
+          messageId: 'msg_asst0000001',
+          sourceType: 'url',
+          url: 'https://example.com',
+          title: 'Example',
+        },
+      })
+    );
+
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.messages[0]?.parts
+    ).toMatchObject([
+      { type: 'text', text: 'edited', state: 'done' },
+      { type: 'source', sourceType: 'url', url: 'https://example.com', title: 'Example' },
+    ]);
+  });
+
+  it('reload keeps a live delete that arrived while history GET was in flight', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage(
+        [
+          { sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' },
+          { sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' },
+        ],
+        null
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    const reload = agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    await waitForGetEventsCalls(2);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
+    );
+
+    resolveEvents(
+      historyPage(
+        [
+          { sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' },
+          { sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' },
+        ],
+        null
+      )
+    );
+
+    const result = await reload;
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
+  });
+
   it('fetchMore no-ops when olderCursor is null and does not call getEvents', async () => {
     getEvents.mockResolvedValue(
       historyPage([{ sequence: 1, messageId: 'msg_only0000001', role: 'user', markdown: 'only page' }], null)
@@ -1825,6 +2116,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'tool-approval:approve:approval_000001',
+      idempotencyKey: expect.stringMatching(/^idem_/),
     });
 
     const snapshot = agentChat.getConversation({
@@ -1869,6 +2161,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'mcp-approval:approve-server:approval_000001:deleteOrder:GitHub',
+      idempotencyKey: expect.stringMatching(/^idem_/),
     });
   });
 
@@ -1985,6 +2278,7 @@ describe('AgentChat', () => {
       actionId: 'topic-billing',
       sourceMessageId: 'act_card0000001',
       value: 'billing',
+      idempotencyKey: expect.stringMatching(/^idem_/),
     });
   });
 
@@ -2061,6 +2355,78 @@ describe('AgentChat', () => {
 
     const change = changes[0];
     expect(change?.kind === 'live' && change.envelope.sequence).toBe(2);
+  });
+
+  it('rebuilds custom data parts from history without reporting a live envelope', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'assistant',
+            messageId: 'msg_asst0000001',
+            content: { markdown: 'Working' },
+          },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't2',
+          sequence: 2,
+          timestamp: '2026-08-06T12:00:01.000Z',
+          event: {
+            type: 'custom',
+            name: 'order-progress',
+            data: { pct: 70 },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    const changes = recordChanges('conv_abcdefghijkl');
+    const result = await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(changes.some((change) => change.kind === 'live')).toBe(false);
+    expect(result.data?.messages[0]?.parts).toEqual([
+      { type: 'text', text: 'Working', state: 'done' },
+      { type: 'data', name: 'order-progress', data: { pct: 70 } },
+    ]);
+  });
+
+  it('reports a live custom envelope so onEvent can fire', async () => {
+    await openClaimedConversation();
+    const changes = recordChanges('local_session1');
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'custom', name: 'order-progress', data: { pct: 70 } },
+      })
+    );
+
+    const change = changes[0];
+    expect(change?.kind).toBe('live');
+    expect(change?.kind === 'live' && change.envelope.event).toEqual({
+      type: 'custom',
+      name: 'order-progress',
+      data: { pct: 70 },
+    });
   });
 
   it('does not report an envelope the sequence gate drops', async () => {
@@ -2421,5 +2787,183 @@ describe('AgentChat', () => {
     expect(
       agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
     ).toBe('idle');
+  });
+
+  describe('idempotency and concurrency', () => {
+    it('retryMessage resubmits with the original idempotency key', async () => {
+      sendMessage.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
+        identifier: 'conv_abcdefghijkl',
+        messageId: 'msg_retry000001',
+      });
+
+      const failed = await agentChat.sendMessage({ agentId: 'agent_1', text: 'retry me', key: 'local_retry' });
+      expect(failed.error).toBeDefined();
+
+      const optimisticId = agentChat.getConversation({ agentId: 'agent_1', key: 'local_retry' })?.messages[0]?.id;
+      const idempotencyKey = agentChat.getConversation({ agentId: 'agent_1', key: 'local_retry' })?.messages[0]
+        ?.idempotencyKey;
+      expect(optimisticId).toBeDefined();
+      expect(idempotencyKey).toMatch(/^msg_/);
+
+      sendMessage.mockClear();
+      const retried = await agentChat.retryMessage({
+        agentId: 'agent_1',
+        key: 'local_retry',
+        messageId: optimisticId!,
+      });
+
+      expect(retried.data).toEqual({
+        conversationId: 'conv_abcdefghijkl',
+        messageId: 'msg_retry000001',
+      });
+      expect(sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: 'retry me',
+          messageId: idempotencyKey,
+        })
+      );
+      expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_retry' })?.messages).toHaveLength(1);
+    });
+
+    it('retryMessage returns the existing ack when the message is already sent', async () => {
+      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_already0001' });
+
+      await agentChat.sendMessage({ agentId: 'agent_1', text: 'done', key: 'local_sent' });
+
+      const messageId = agentChat.getConversation({ agentId: 'agent_1', key: 'local_sent' })?.messages[0]?.id;
+      expect(messageId).toBe('msg_already0001');
+      sendMessage.mockClear();
+
+      const retried = await agentChat.retryMessage({
+        agentId: 'agent_1',
+        key: 'local_sent',
+        conversationId: 'conv_abcdefghijkl',
+        messageId: messageId!,
+      });
+
+      expect(retried.error).toBeUndefined();
+
+      expect(retried.data).toEqual({
+        conversationId: 'conv_abcdefghijkl',
+        messageId: 'msg_already0001',
+      });
+      expect(sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('rejects sendMessage while isRunning with default reject policy', async () => {
+      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+      await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_run' });
+
+      emitter.emit('agent_chat.agent_event', {
+        result: {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' },
+        },
+      });
+
+      sendMessage.mockClear();
+      const blocked = await agentChat.sendMessage({
+        agentId: 'agent_1',
+        text: 'during run',
+        key: 'local_run',
+        conversationId: 'conv_abcdefghijkl',
+      });
+
+      expect(blocked.error).toMatchObject({ message: 'Cannot send while the agent is running' });
+      expect(sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('scopes action idempotency keys by conversation', () => {
+      const first = createActionIdempotencyKeyForScope('respond:conv_aaaaaaaaaaaa:approval_000001:approved');
+      const second = createActionIdempotencyKeyForScope('respond:conv_bbbbbbbbbbbb:approval_000001:approved');
+
+      expect(first).toMatch(/^idem_/);
+      expect(first).not.toBe(second);
+    });
+
+    it('sends a stable idempotency key for the same action scope', async () => {
+      getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+      respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+      await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+      await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(respondToAction).toHaveBeenCalledTimes(2);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toMatch(/^idem_/);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toBe(respondToAction.mock.calls[1]?.[0].idempotencyKey);
+    });
+
+    it('uses different action keys for the same approval in two conversations', async () => {
+      getEvents
+        .mockResolvedValueOnce(approvalHistoryPage('approval_000001'))
+        .mockResolvedValueOnce(approvalHistoryPage('approval_000001'));
+      respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+      await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_aaaaaaaaaaaa' });
+      await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_bbbbbbbbbbbb' });
+
+      await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_aaaaaaaaaaaa',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_bbbbbbbbbbbb',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).not.toBe(
+        respondToAction.mock.calls[1]?.[0].idempotencyKey
+      );
+    });
+
+    it('retries respondToAction after the first request fails', async () => {
+      getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+      respondToAction.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+        identifier: 'conv_abcdefghijkl',
+      });
+
+      await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+      const failed = await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      const retried = await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(failed.error).toBeDefined();
+      expect(retried.error).toBeUndefined();
+      expect(respondToAction).toHaveBeenCalledTimes(2);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toBe(respondToAction.mock.calls[1]?.[0].idempotencyKey);
+    });
   });
 });

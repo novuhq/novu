@@ -18,9 +18,9 @@ import { ListInteractions } from './usecases/list-interactions/list-interactions
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
 /**
- * The human-in-the-loop interaction API behind the `@novu/human` CLI. State
- * (interactions) lives here; delivery and inbound resolution ride the agents
- * conversation-runtime through the hidden `human_relay` system agent.
+ * The human-in-the-loop interaction API. State lives here.
+ * `POST /v1/human/interactions` DMs the named agent (default `human-relay`).
+ * Framework `ctx.*` helpers create in-thread cards via `CreateConversationInteraction`.
  */
 @Module({
   imports: [SharedModule, AuthModule, AgentsModule],

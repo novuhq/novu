@@ -1,21 +1,12 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { AgentChatPlanLimitError, type AgentChatPlanLimitReason } from '../agent-chat/agent-chat-plan-limit-error';
 import type { AgentHashFields } from '../agent-chat/types';
 import { validateHistoryPageResponse } from '../agent-chat/validate-envelope';
 import { HttpClient } from './http-client';
 
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/agent-chat/conversations';
 
-export type AgentChatPlanLimitReason = 'agents' | 'channels' | 'conversations';
-
-export class AgentChatPlanLimitError extends Error {
-  readonly reason: AgentChatPlanLimitReason;
-
-  constructor(reason: AgentChatPlanLimitReason, message: string) {
-    super(message);
-    this.name = 'AgentChatPlanLimitError';
-    this.reason = reason;
-  }
-}
+export { AgentChatPlanLimitError, type AgentChatPlanLimitReason };
 
 export type AgentChatSendMessageArgs = AgentHashFields & {
   agentId: string;
@@ -23,6 +14,8 @@ export type AgentChatSendMessageArgs = AgentHashFields & {
   metadata?: Record<string, unknown>;
   /** Existing conversation id. Omit this field to create a new conversation. */
   conversationId?: string;
+  /** Client-minted idempotency key (`msg_*`). Retries must reuse the same value. */
+  messageId?: string;
 };
 
 export type AgentChatSendMessageResponse = {
@@ -48,6 +41,8 @@ export type AgentChatRespondToActionArgs = AgentHashFields & {
   conversationId: string;
   /** Server-minted approve/deny action id echoed from the pending approval part. */
   actionId: string;
+  /** Client-minted idempotency key (`idem_*`). Retries must reuse the same value. */
+  idempotencyKey?: string;
 };
 
 export type AgentChatSendActionArgs = AgentHashFields & {
@@ -59,6 +54,8 @@ export type AgentChatSendActionArgs = AgentHashFields & {
   sourceMessageId: string;
   /** `value` of the clicked Card button, if set. */
   value?: string;
+  /** Client-minted idempotency key (`idem_*`). Retries must reuse the same value. */
+  idempotencyKey?: string;
 };
 
 export type AgentChatRespondToActionResponse = {
@@ -77,6 +74,7 @@ export class AgentChatService {
       agentId: args.agentId,
       text: args.text,
       ...(args.conversationId ? { conversationIdentifier: args.conversationId } : {}),
+      ...(args.messageId ? { messageId: args.messageId } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
       ...(args.metadata ? { metadata: args.metadata } : {}),
     });
@@ -87,6 +85,7 @@ export class AgentChatService {
       agentId: args.agentId,
       conversationIdentifier: args.conversationId,
       actionId: args.actionId,
+      ...(args.idempotencyKey ? { idempotencyKey: args.idempotencyKey } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }
@@ -98,6 +97,7 @@ export class AgentChatService {
       actionId: args.actionId,
       sourceMessageId: args.sourceMessageId,
       ...(args.value !== undefined ? { value: args.value } : {}),
+      ...(args.idempotencyKey ? { idempotencyKey: args.idempotencyKey } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }

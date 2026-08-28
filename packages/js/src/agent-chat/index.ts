@@ -14,6 +14,7 @@ export type {
   AgentConversationState,
   AgentConversationStatus,
   AgentConversationTyping,
+  AgentDataPart,
   AgentFilePart,
   AgentMcpConnectionAction,
   AgentMcpConnectionPart,
@@ -32,9 +33,9 @@ export type {
   AgentToolPart,
   AgentToolPartState,
 } from './agent-message.types';
-export { derivePendingActions } from './agent-message.types';
 export type {
   AgentConversationPaginationSnapshot,
+  AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationRuntimeActions,
   AgentConversationSessionStatus,
@@ -45,6 +46,7 @@ export type {
   ConversationResult,
   SendMessageInput,
 } from './conversation-runtime.types';
+export { derivePendingActions } from './derive-pending-actions';
 export type {
   AgentChatChange,
   AgentChatMessagesUpdated,
@@ -58,6 +60,8 @@ export type {
   LoadConversationResult,
   RespondToActionArgs,
   RespondToActionResult,
+  RetryMessageArgs,
+  RetryMessageResult,
   SendActionArgs,
   SendActionResult,
   SendMessageArgs,

@@ -1,37 +1,153 @@
 'use client';
 
-import type { AgentPendingAction, UseAgentChatResult } from '@novu/react';
+import type { AgentMessage, UseAgentChatResult } from '@novu/react';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { ArrowUpRightIcon, PlugIcon, ShieldIcon } from './icons';
+import { ArrowUpRightIcon, ChevronIcon, PlugIcon, TerminalIcon } from './icons';
 import { safeExternalUrl } from './message-utils';
 
 type RespondToAction = UseAgentChatResult['respondToAction'];
 type Decision = Parameters<RespondToAction>[0]['decision'];
+type ApprovalPart = Extract<AgentMessage['parts'][number], { type: 'approval' }>;
+type McpConnectionPart = Extract<AgentMessage['parts'][number], { type: 'mcp-connection' }>;
 
-type PendingActionCardProps = {
-  action: AgentPendingAction;
-  disabled: boolean;
-  onRespond: RespondToAction;
-};
-
-export function PendingActionCard({ action, disabled, onRespond }: PendingActionCardProps) {
-  if (action.type === 'mcp-connection') {
-    return <McpConnectionCard action={action} />;
+function prettyJson(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
   }
-
-  return <ToolApprovalCard action={action} disabled={disabled} onRespond={onRespond} />;
 }
 
-function McpConnectionCard({ action }: { action: Extract<AgentPendingAction, { type: 'mcp-connection' }> }) {
-  const authorizeUrl = safeExternalUrl(action.authorizeUrlWithAutoApprove || action.authorizeUrl);
+function PayloadPeek({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="payload-peek">
+      <span className="payload-peek-label">{label}</span>
+      <pre className="payload-peek-value">{value}</pre>
+    </div>
+  );
+}
+
+function ExpandableRow({
+  id,
+  className,
+  summary,
+  children,
+}: {
+  id?: string;
+  className?: string;
+  summary: ReactNode;
+  children?: ReactNode;
+}) {
+  if (!children) {
+    return (
+      <span id={id} className={className}>
+        {summary}
+      </span>
+    );
+  }
 
   return (
-    <section className="pending-action">
-      <span className="pending-action-icon" aria-hidden>
+    <details id={id} className={`expandable-row${className ? ` ${className}` : ''}`}>
+      <summary>{summary}</summary>
+      <div className="expandable-body">{children}</div>
+    </details>
+  );
+}
+
+function ToolApprovalActions({
+  disabled,
+  busy,
+  onRespond,
+  trustToolActionId,
+  trustServerActionId,
+  source,
+}: {
+  disabled: boolean;
+  busy?: Decision;
+  onRespond: (decision: Decision) => void;
+  trustToolActionId?: string;
+  trustServerActionId?: string;
+  source?: ApprovalPart['source'];
+}) {
+  const trustServerLabel = trustServerActionId && source?.type === 'mcp' ? source.serverName : undefined;
+  const hasTrustActions = Boolean(trustToolActionId) || Boolean(trustServerLabel);
+
+  return (
+    <div className={`decision-card-actions${hasTrustActions ? ' decision-card-actions-split' : ''}`}>
+      {hasTrustActions ? (
+        <div className="decision-card-trust">
+          {trustToolActionId ? (
+            <button
+              type="button"
+              className="button button-secondary"
+              disabled={disabled || Boolean(busy)}
+              onClick={() => onRespond('trust-tool')}
+            >
+              {busy === 'trust-tool' ? <span className="spinner" aria-hidden /> : null}
+              Always allow for this tool
+            </button>
+          ) : null}
+          {trustServerLabel ? (
+            <button
+              type="button"
+              className="button button-secondary"
+              disabled={disabled || Boolean(busy)}
+              onClick={() => onRespond('trust-server')}
+            >
+              {busy === 'trust-server' ? <span className="spinner" aria-hidden /> : null}
+              Always allow {trustServerLabel}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="decision-card-primary-actions">
+        <button
+          type="button"
+          className="button button-secondary"
+          disabled={disabled || Boolean(busy)}
+          onClick={() => onRespond('denied')}
+        >
+          {busy === 'denied' ? <span className="spinner" aria-hidden /> : null}
+          Deny
+        </button>
+        <button
+          type="button"
+          className="button button-primary"
+          disabled={disabled || Boolean(busy)}
+          onClick={() => onRespond('approved')}
+        >
+          {busy === 'approved' ? <span className="spinner" aria-hidden /> : null}
+          Approve once
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function McpConnectionCard({ part }: { part: McpConnectionPart }) {
+  const authorizeUrl = safeExternalUrl(part.authorizeUrlWithAutoApprove || part.authorizeUrl);
+
+  if (part.state !== 'pending') {
+    const connected = part.state === 'connected';
+
+    return (
+      <span className="part-status">
+        <ChevronIcon size={14} className="part-status-chevron" />
+        <span>{part.displayName}</span>
+        <span aria-hidden>·</span>
+        <span data-tone={connected ? 'ok' : 'danger'}>{connected ? 'Connected' : part.message || 'Failed'}</span>
+      </span>
+    );
+  }
+
+  return (
+    <section className="decision-card decision-card-mcp">
+      <span className="decision-card-mcp-icon" aria-hidden>
         <PlugIcon />
       </span>
-      <div className="pending-action-copy">
-        <h2>Connect {action.displayName}</h2>
+      <div className="decision-card-copy">
+        <h2>Connect {part.displayName}?</h2>
         <p>The agent needs authorization to continue.</p>
       </div>
       <a
@@ -51,17 +167,37 @@ function McpConnectionCard({ action }: { action: Extract<AgentPendingAction, { t
   );
 }
 
-function ToolApprovalCard({
-  action,
+export function ToolApprovalCard({
+  part,
   disabled,
   onRespond,
 }: {
-  action: Extract<AgentPendingAction, { type: 'tool-approval' }>;
+  part: ApprovalPart;
   disabled: boolean;
   onRespond: RespondToAction;
 }) {
   const [busy, setBusy] = useState<Decision>();
   const [failure, setFailure] = useState<string>();
+  const inputPreview = part.input && Object.keys(part.input).length > 0 ? prettyJson(part.input) : undefined;
+
+  if (part.state !== 'pending') {
+    const approved = part.state === 'approved';
+
+    return (
+      <ExpandableRow
+        summary={
+          <span className="part-status">
+            <ChevronIcon size={14} className="expandable-chevron" />
+            <code>{part.toolName}</code>
+            <span aria-hidden>·</span>
+            <span data-tone={approved ? 'ok' : 'danger'}>{approved ? 'Approved' : 'Denied'}</span>
+          </span>
+        }
+      >
+        {inputPreview ? <PayloadPeek label="Input" value={inputPreview} /> : null}
+      </ExpandableRow>
+    );
+  }
 
   async function respond(decision: Decision) {
     if (disabled || busy) return;
@@ -70,7 +206,7 @@ function ToolApprovalCard({
     setFailure(undefined);
 
     try {
-      const result = await onRespond({ actionId: action.id, decision });
+      const result = await onRespond({ actionId: part.approvalId, decision });
       if (result.error) setFailure(result.error.message);
     } finally {
       setBusy(undefined);
@@ -78,69 +214,38 @@ function ToolApprovalCard({
   }
 
   return (
-    <section className="pending-action pending-action-approval">
-      <span className="pending-action-icon pending-action-icon-warning" aria-hidden>
-        <ShieldIcon />
-      </span>
-
-      <div className="pending-action-copy">
-        <h2>
-          Run <code>{action.toolName}</code>?
-        </h2>
+    <section className="decision-card decision-card-approval">
+      <div className="decision-card-header">
+        <div className="decision-card-title-row">
+          <TerminalIcon size={20} />
+          <h2>Run {part.toolName}?</h2>
+        </div>
         <p>The agent is waiting for your approval.</p>
-        {Object.keys(action.input ?? {}).length > 0 ? (
-          <details>
-            <summary>Review arguments</summary>
-            <pre>{JSON.stringify(action.input, null, 2)}</pre>
-          </details>
-        ) : null}
         {failure ? (
-          <p className="pending-action-error" role="alert">
+          <p className="decision-card-error" role="alert">
             {failure}
           </p>
         ) : null}
       </div>
 
-      <div className="pending-action-buttons">
-        <button
-          type="button"
-          className="button button-secondary"
-          disabled={disabled || Boolean(busy)}
-          onClick={() => void respond('denied')}
-        >
-          {busy === 'denied' ? <span className="spinner" aria-hidden /> : null}
-          Deny
-        </button>
-        <button
-          type="button"
-          className="button button-primary"
-          disabled={disabled || Boolean(busy)}
-          onClick={() => void respond('approved')}
-        >
-          {busy === 'approved' ? <span className="spinner" aria-hidden /> : null}
-          Approve once
-        </button>
-        {action.trustToolActionId ? (
-          <button
-            type="button"
-            className="button button-secondary"
-            disabled={disabled || Boolean(busy)}
-            onClick={() => void respond('trust-tool')}
-          >
-            Always allow this tool
-          </button>
-        ) : null}
-        {action.trustServerActionId && action.source?.type === 'mcp' ? (
-          <button
-            type="button"
-            className="button button-secondary"
-            disabled={disabled || Boolean(busy)}
-            onClick={() => void respond('trust-server')}
-          >
-            Always allow {action.source.serverName}
-          </button>
-        ) : null}
-      </div>
+      {inputPreview ? (
+        <details className="decision-card-args">
+          <summary>
+            <ChevronIcon size={14} className="expandable-chevron" />
+            Arguments
+          </summary>
+          <PayloadPeek label="Input" value={inputPreview} />
+        </details>
+      ) : null}
+
+      <ToolApprovalActions
+        disabled={disabled}
+        busy={busy}
+        onRespond={(decision) => void respond(decision)}
+        trustToolActionId={part.trustToolActionId}
+        trustServerActionId={part.trustServerActionId}
+        source={part.source}
+      />
     </section>
   );
 }

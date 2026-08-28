@@ -2,13 +2,13 @@
 
 import type { AgentMessage, UseAgentChatResult } from '@novu/react';
 import { useCallback, useEffect, useRef } from 'react';
-import { ChatIcon } from './icons';
+import { ChevronIcon } from './icons';
 import { MessageRow } from './message-bubble';
 
 /** Matches `AgentConversationTyping` from `@novu/react` / the event protocol. */
 type TypingState = { status?: string };
 
-const STARTER_PROMPTS = ['Hello', 'What can you do?', 'List my MCP tools'] as const;
+const STARTER_PROMPTS = ['Hello', 'What can you do?', 'What tools do you have available?'] as const;
 
 type ChatThreadProps = {
   messages: AgentMessage[];
@@ -17,34 +17,23 @@ type ChatThreadProps = {
   isLoading: boolean;
   /** Live `channel.typing` from `useAgentChat`. Absent when the agent is idle. */
   typing?: TypingState;
+  hasPendingActions: boolean;
   hasMore: boolean;
   isFetching: boolean;
   onFetchMore: () => Promise<unknown>;
   onCardAction: UseAgentChatResult['sendAction'];
+  onRespond: UseAgentChatResult['respondToAction'];
   cardActionsDisabled: boolean;
   onSend: UseAgentChatResult['sendMessage'];
 };
 
 function AgentStatusRow({ status }: { status?: string }) {
-  // Server statuses often arrive with their own trailing ellipsis or dots.
-  const label = status?.trim().replace(/[.\u2026]+$/, '');
+  const label = status?.trim().replace(/[.\u2026]+$/, '') || 'Thinking';
 
   return (
-    <output className="typing-row" aria-label={label || 'Agent is typing'}>
-      <span className="agent-avatar" aria-hidden>
-        <ChatIcon size={14} />
-      </span>
-      <span className="typing-bubble">
-        {label ? (
-          <span className="typing-label">{label}…</span>
-        ) : (
-          <span className="typing-dots" aria-hidden>
-            <span />
-            <span />
-            <span />
-          </span>
-        )}
-      </span>
+    <output className="typing-row" aria-label={label}>
+      <ChevronIcon size={14} />
+      <span className="typing-label">{label}…</span>
     </output>
   );
 }
@@ -54,15 +43,18 @@ export function ChatThread({
   isRunning,
   isLoading,
   typing,
+  hasPendingActions,
   hasMore,
   isFetching,
   onFetchMore,
   onCardAction,
+  onRespond,
   cardActionsDisabled,
   onSend,
 }: ChatThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages[messages.length - 1];
+  const showTypingRow = (Boolean(typing) || isRunning || isLoading) && !hasPendingActions;
 
   // Keyed on the tail, not the count: an older page prepends and must not scroll.
   useEffect(() => {
@@ -99,11 +91,7 @@ export function ChatThread({
 
         {messages.length === 0 && !isRunning && !isLoading ? (
           <div className="thread-empty">
-            <div className="thread-empty-glyph">
-              <ChatIcon />
-            </div>
-            <h1>Your agent is ready</h1>
-            <p>Send a message to see how it replies.</p>
+            <p>Hello, I&apos;m your agent. How can I help you today?</p>
             <div className="starter-prompts">
               {STARTER_PROMPTS.map((prompt) => (
                 <button type="button" key={prompt} onClick={() => void onSend(prompt)}>
@@ -113,17 +101,17 @@ export function ChatThread({
             </div>
           </div>
         ) : (
-          messages.map((message, index) => (
+          messages.map((message) => (
             <MessageRow
               key={message.id}
               message={message}
-              showAvatar={message.role !== 'user' && messages[index - 1]?.role !== message.role}
               onCardAction={onCardAction}
+              onRespond={onRespond}
               cardActionsDisabled={cardActionsDisabled}
             />
           ))
         )}
-        {typing || isRunning || isLoading ? (
+        {showTypingRow ? (
           <AgentStatusRow status={typing?.status || (isLoading ? 'Loading conversation' : undefined)} />
         ) : null}
       </div>

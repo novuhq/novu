@@ -10,9 +10,8 @@ import { OrganizationId } from '../organization';
 
 /**
  * A single agent-initiated human interaction (ask / approve / choose / tell)
- * delivered as a one-off message on a chat channel via the `human_relay`
- * agent. The row is the source of truth the `@novu/human` CLI long-polls
- * while it blocks waiting for the human.
+ * delivered as a one-off DM or an in-thread card. The row is the source of
+ * truth the `@novu/human` CLI long-polls and `ctx.humanResponse` correlates on.
  */
 export class HumanInteractionEntity {
   _id: string;
@@ -33,10 +32,17 @@ export class HumanInteractionEntity {
   /** `--from` attribution rendered in the card ("deploy-bot needs approval"). */
   fromLabel?: string;
 
+  /**
+   * Client-minted id from `ctx.ask` / `ctx.approve` / `ctx.choose` so the
+   * later `onMessage` / `onAction` turn can correlate the answer via
+   * `ctx.humanResponse.requestId`.
+   */
+  requestId?: string;
+
   /** External subscriberId of the human being addressed. */
   subscriberId: string;
 
-  /** The hidden `human_relay` agent that owns delivery + webhooks. */
+  /** Agent that owns delivery and the inbound webhook. */
   _agentId: string;
 
   integrationIdentifier: string;

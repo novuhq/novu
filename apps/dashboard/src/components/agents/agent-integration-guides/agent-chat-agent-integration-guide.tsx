@@ -14,7 +14,7 @@ import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SetupStepperRail } from '@/components/agents/setup-guide-primitives';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentChatPreview } from '@/hooks/use-agent-chat-preview';
-import { useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
+import { resolveAgentChatConnectRuntime, useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { SectionLinkButton } from './agent-connected-details-shell';
@@ -106,6 +106,7 @@ function AgentChatConnectedRecap({
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const prompt = useAgentChatPrompt(agent);
+  const runtime = resolveAgentChatConnectRuntime(agent);
   const { openPreview } = useAgentChatPreview();
 
   const isConnected = isAgentIntegrationConnected(integrationLink);
@@ -168,7 +169,12 @@ function AgentChatConnectedRecap({
 
       <SetupGuideCard label="Setup steps" persistKey={persistKey} defaultExpanded={false}>
         <SetupStepperRail className="gap-8 py-6 pb-3 pr-3 md:pr-6">
-          <AgentChatSetupSteps prompt={prompt} agentIdentifier={agent.identifier} onOpenChat={handleOpenChat} />
+          <AgentChatSetupSteps
+            prompt={prompt}
+            agentIdentifier={agent.identifier}
+            onOpenChat={handleOpenChat}
+            runtime={runtime}
+          />
         </SetupStepperRail>
       </SetupGuideCard>
     </div>

@@ -89,6 +89,26 @@ export function CheckIcon({ size = 12, className }: IconProps) {
   );
 }
 
+export function TerminalIcon({ size = 20, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M4 17V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" />
+      <path d="m8 12 2.5 2.5L16 9" />
+    </svg>
+  );
+}
+
 export function ShieldIcon({ size = 15, className }: IconProps) {
   return (
     <svg

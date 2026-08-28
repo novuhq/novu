@@ -39,6 +39,9 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
     fromLabel: {
       type: Schema.Types.String,
     },
+    requestId: {
+      type: Schema.Types.String,
+    },
     subscriberId: {
       type: Schema.Types.String,
       required: true,
@@ -100,6 +103,8 @@ humanInteractionSchema.index({ _environmentId: 1, identifier: 1 }, { unique: tru
 humanInteractionSchema.index({ _environmentId: 1, subscriberId: 1, status: 1, createdAt: -1 });
 // Exact reply-to correlation by delivered card message id.
 humanInteractionSchema.index({ _environmentId: 1, platformMessageId: 1 });
+// Conversation-scoped pending-ask correlation for framework HITL.
+humanInteractionSchema.index({ _environmentId: 1, _conversationId: 1, status: 1, kind: 1, createdAt: -1 });
 // Expiry sweeps (lazy today, proactive later).
 humanInteractionSchema.index({ status: 1, expiresAt: 1 });
 

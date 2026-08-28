@@ -752,63 +752,84 @@ await subscription.delete();
 
 ## Agent Chat
 
-Two-way in-app chat with an agent. Use `novu.agentChat` from `@novu/js`, or the [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat) hook in React.
+Two-way in-app chat with an agent. Call `loadAgentChat(novu)` before `novu.agentChat.conversation()`. React apps use [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat), which loads Agent Chat automatically.
 
-Product guide: [Build the Agent Chat UI](/agents/channels/agent-chat/quickstart).
+See [Quickstart](/agents/channels/agent-chat/quickstart).
 
-Call `novu.agentChat.subscribe()` while the chat is open so the socket stays connected. Call `unsubscribe()` when the chat unmounts.
+### conversation()
 
-### sendMessage
+`conversation()` returns a runtime for one conversation. If you pass `conversationId`, later calls with the same `agentId` and `conversationId` reuse that runtime. If you omit `conversationId`, each call creates a new runtime and a new socket. Keep the returned object. When the chat unmounts, call `dispose()`.
 
-Creates a conversation when `conversationId` is omitted. Later sends must pass the returned id.
+Do not call `novu.agentChat.subscribe()` from UI code. The runtime owns the socket.
 
-| Property | Type | Description |
+| Argument | Type | Description |
 | --- | --- | --- |
-| `agentId` | `string` | Public agent identifier. |
-| `text` | `string` | User message. |
-| `conversationId` | `string` | Existing conversation to append to. |
+| `agentId` | `string` | Public agent identifier from the dashboard. |
+| `conversationId` | `string` | Resume this conversation. Omit this argument to start a new chat. |
 | `agentHash` | `string` | HMAC of `agentId`. Required when Agent Chat HMAC is on. |
 
 ```typescript
-novu.agentChat.subscribe();
+import { Novu, loadAgentChat } from '@novu/js';
 
-const { data, error } = await novu.agentChat.sendMessage({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-  text: 'Hello',
+const novu = new Novu({
+  applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
+  subscriberId: 'YOUR_SUBSCRIBER_ID',
 });
 
-// data.conversationId, data.messageId
-```
+await loadAgentChat(novu);
 
-### loadConversation
-
-Loads the newest history page into the local store.
-
-```typescript
-const { data, error } = await novu.agentChat.loadConversation({
+const result = novu.agentChat.conversation({
   agentId: 'YOUR_AGENT_IDENTIFIER',
-  conversationId: 'conv_YOUR_CONVERSATION_ID',
 });
+
+if (!result.ok) {
+  throw result.error;
+}
+
+const conversation = result.data;
+
+const stop = conversation.subscribe((snapshot) => {
+  snapshot.messages;
+  snapshot.run.isRunning;
+  snapshot.conversationId;
+});
+
+const { data, error } = await conversation.sendMessage('Hello');
+// data.conversationId — store this to resume later
+
+stop();
+conversation.dispose();
 ```
 
-### fetchMore
+### Runtime methods
 
-Loads an older history page when `hasMore` is true.
+| Method | Description |
+| --- | --- |
+| `getSnapshot()` | Current immutable snapshot. |
+| `subscribe(listener)` | Call `listener` on every snapshot. Returns a stop function. |
+| `sendMessage(text)` | Send a user message. Creates a conversation when `conversationId` is omitted. |
+| `retryMessage(messageId)` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. |
+| `respondToAction({ actionId, decision })` | Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. |
+| `sendAction({ actionId, sourceMessageId, value })` | Click a Card button. Do not use this for tool approval. |
+| `fetchMore()` | Load the next older history page. |
+| `load()` | Reload the newest history page. Runs on resume when `conversationId` is set. |
+| `dispose()` | Stop listeners and release the socket. |
 
-### respondToAction
+### Snapshot fields
 
-Approves or denies a pending tool. Pass the pending action id, not a client-invented id.
+| Field | Description |
+| --- | --- |
+| `messages` | Conversation timeline. |
+| `pendingActions` | Tool approvals and MCP connect items that are still pending. |
+| `conversationId` | Server id after create or resume. |
+| `run.isRunning` / `run.typing` | Agent-turn snapshot. |
+| `conversationStatus` | `'active'` or `'resolved'`. This is not a loading flag. |
+| `status` | History load: `'ready'`, `'loading'`, or `'fetching'`. |
+| `pagination.hasMore` / `pagination.status` | Older history pages. Call `fetchMore()`. |
+| `isRecovering` / `catchUpError` | Reconnect catch-up. The runtime reconnects on its own. |
+| `error` | Last load, send, retry, or action error. |
 
-```typescript
-await novu.agentChat.respondToAction({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-  conversationId: 'conv_YOUR_CONVERSATION_ID',
-  actionId: 'YOUR_PENDING_ACTION_ID',
-  decision: 'approved',
-});
-```
-
-Live updates emit `agent_chat.messages.updated` on the Novu event emitter.
+See [Chat UI](/agents/channels/agent-chat/chat-ui).
 
 ## Types
 

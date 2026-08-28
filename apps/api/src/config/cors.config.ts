@@ -46,7 +46,11 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 
 function enableWildcard(req: Request): boolean {
   return (
-    (isDevelopmentEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url)) &&
+    (isDevelopmentEnvironment() ||
+      isWidgetRoute(req.url) ||
+      isInboxRoute(req.url) ||
+      isBlueprintRoute(req.url) ||
+      isAgentChatRoute(req.url)) &&
     !isBetterAuthRoute(req.url)
   );
 }
@@ -66,6 +70,10 @@ function isInboxRoute(url: string): boolean {
 
 function isBlueprintRoute(url: string): boolean {
   return url.startsWith('/v1/blueprints');
+}
+
+function isAgentChatRoute(url: string): boolean {
+  return url.startsWith('/v1/agent-chat');
 }
 
 function isDevelopmentEnvironment(): boolean {

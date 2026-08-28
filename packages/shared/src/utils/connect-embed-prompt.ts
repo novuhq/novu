@@ -4,6 +4,11 @@ export { APPLICATION_IDENTIFIER_PLACEHOLDER, SUBSCRIBER_ID_PLACEHOLDER } from '.
 
 export const CONNECT_EMBED_DOCS_INDEX = 'https://docs.novu.co/llms.txt';
 
+export const CONNECT_EMBED_TEMPLATE_URL =
+  'https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/agent-chat/ts';
+
+export const CONNECT_EMBED_TEMPLATE_LOCAL_PATH = 'packages/novu/src/commands/connect/templates/agent-chat/ts';
+
 export type ConnectEmbedRuntime =
   | 'ai-sdk'
   | 'langchain'
@@ -233,7 +238,7 @@ Follow these docs (fetch as \`.md\`). **Skip** dashboard "create agent / connect
 Hard rules (also in docs):
 
 - Use **\`${agentId}\`** as the agent identifier everywhere.
-- Use \`toModelMessages(ctx.history)\`; do not call \`ctx.reply()\` when returning \`generateText()\`.
+- Use \`toModelMessages(ctx)\`; do not call \`ctx.reply()\` when returning \`generateText()\`.
 - Reuse the project's existing AI SDK provider; never hardcode API keys.`;
 }
 
@@ -285,37 +290,56 @@ function renderAgentChatSection(input: { subscriberId: string }): string {
 
 Follow these docs (fetch as \`.md\`). **Skip** dashboard channel-setup steps.
 
-- https://docs.novu.co/agents/channels/agent-chat/quickstart.md — main UI guide
+- https://docs.novu.co/agents/channels/agent-chat/quickstart.md — hook + parts API
 - https://docs.novu.co/platform/sdks/react/hooks/use-agent-chat.md — hook reference
 
-Reference implementation (behavior only — do not copy UI or dashboard imports):
+Must render (capabilities only — match this app's routing, components, and styling):
 
-- GitHub: https://github.com/novuhq/novu/tree/next/apps/dashboard/src/components/agents/agent-chat-panel
-- If the Novu monorepo is checked out locally, read \`apps/dashboard/src/components/agents/agent-chat-panel/\`
-- Study: \`NovuProvider\` (\`apiUrl\` + \`socketUrl\`), \`useAgentChat\`, \`message.parts\`, \`sendAction\`, \`respondToAction\`, composer disable while \`isRunning\` / \`isLoading\`
-- Adapt patterns to this project's framework and styling; do not import dashboard components or design tokens
+- Empty state + 2–3 starter prompts
+- \`message.parts\`: text (markdown + streaming cursor), tool rows, cards (\`sendAction\`)
+- Approvals + MCP authorize **in the thread** via \`respondToAction\` / authorize URL — not a footer stack
+- Thinking indicator from \`typing\` / \`isRunning\` ("Thinking…"); hide it while a pending approval or MCP connect is on screen
+- Composer disabled while \`isRunning\` / \`isLoading\`
+- Error banner
+- Optional: load older messages with \`pagination.hasMore\` / \`pagination.fetchMore\`
+
+If you need a working example of those capabilities:
+
+- GitHub: ${CONNECT_EMBED_TEMPLATE_URL}
+- Novu monorepo only: \`${CONNECT_EMBED_TEMPLATE_LOCAL_PATH}/\`
 
 Hard rules (partly in docs, rest connect-specific):
 
 - Install \`@novu/react\`; no \`<AgentChat />\` component exists.
 - Wire env vars from the Context section; do not hardcode identifiers in source.
-- Render \`message.parts\`, a composer (disable while \`isRunning\` / \`isLoading\`), and tool approvals via \`respondToAction\`.
-- **Match this app's routing and styling** — do not paste the connect scaffold template wholesale.
+- Pass \`socketUrl\` from env as-is — do not rewrite \`127.0.0.1\` to \`localhost\` or swap in \`socket.novu.co\`.
+- Do not gate the first send behind a second click or a "connected" wait the SDK does not expose.
+- **Match this app's design system** — do not paste scaffold CSS, dashboard components, or dashboard tokens.
 - If HMAC is enabled: follow the quickstart "Going to production" section for \`subscriberHash\` / \`agentHash\`.
-- Smoke-test subscriber id when the app has no auth yet: \`${input.subscriberId}\``;
+- When the app has no auth yet, use subscriber id \`${input.subscriberId}\` — do not send a test message to prove it.`;
 }
 
 function renderVerifySection(includeHandler: boolean): string {
-  const bridgeLine = includeHandler
-    ? '- Confirm `/api/novu` (or your Chat SDK webhook route) responds without errors.'
-    : '';
+  const lines = [
+    '## Verify',
+    '',
+    'Do **not** open a browser, send a chat message, or inspect WebSocket traffic.',
+    '',
+    '- Skim the files you added for missing imports or hardcoded ids. Do not start `dev` or run a full-project typecheck.',
+    '- `NovuProvider` and `useAgentChat` read the Context env vars — do not hardcode identifiers.',
+    '- If `NEXT_PUBLIC_NOVU_SOCKET_URL` is set, pass it through as-is.',
+  ];
 
-  return `## Verify
+  if (includeHandler) {
+    lines.push('- The Part 1 route/handler files exist. Do not curl them.');
+  }
 
-- Run \`npm run dev:novu\` (or this project's equivalent).
-${bridgeLine}
-- Open Agent Chat in the app; send **one** message — reply must appear on the **first** message.
-- In DevTools → Network → WS: socket must hit your environment (e.g. \`127.0.0.1:8787\` locally), not \`socket.novu.co\` when testing against local API.`;
+  lines.push(
+    '',
+    "Then tell the user: run `npm run dev:novu` (or this project's equivalent) and send a message in Agent Chat."
+  );
+
+  return lines.join('\n');
 }
 
 function renderDocsSection(): string {

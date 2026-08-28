@@ -59,6 +59,19 @@ export type AgentChatCheckAcceptLimitsParams = {
   conversationId?: string;
 };
 
+export type AgentChatClaimInboundParams = {
+  session: AgentChatSession;
+  /** Client `msg_*` or `idem_*`. */
+  key: string;
+  conversationId: string;
+};
+
+export type AgentChatInboundClaimResult =
+  | { outcome: 'acquired'; conversationId: string; claimToken: string }
+  | { outcome: 'duplicate'; conversationId: string; messageId?: string }
+  | { outcome: 'in_progress'; conversationId: string }
+  | { outcome: 'unavailable' };
+
 export type AgentChatAdapterConfig = {
   userName?: string;
   verifySession: (request: Request) => Promise<AgentChatSession | null>;
@@ -72,6 +85,15 @@ export type AgentChatAdapterConfig = {
    * When blocked, the adapter returns HTTP 402 with `{ reason, message }`.
    */
   checkAcceptLimits?: (params: AgentChatCheckAcceptLimitsParams) => Promise<AgentChatAcceptLimitBlock | null>;
+  /**
+   * Atomic accept gate. `key` is `msg_*` or `idem_*`.
+   * `duplicate` acks without dispatch. `in_progress` / `unavailable` do not dispatch.
+   */
+  claimInbound?: (params: AgentChatClaimInboundParams) => Promise<AgentChatInboundClaimResult>;
+  /** Drop this request's in-flight lock after dispatch fails. Compare-and-delete. */
+  releaseInbound?: (params: AgentChatClaimInboundParams & { claimToken: string }) => Promise<void>;
+  /** Cache successful accept and release the in-flight lock (24h replay window). */
+  completeInbound?: (params: AgentChatClaimInboundParams & { claimToken: string; messageId?: string }) => Promise<void>;
   deliverMessage: (params: AgentChatDeliverMessageParams) => Promise<AgentChatDeliverMessageResult>;
   editMessage: (params: AgentChatEditMessageParams) => Promise<AgentChatDeliverMessageResult>;
   deleteMessage: (params: AgentChatDeleteMessageParams) => Promise<void>;
@@ -113,7 +135,9 @@ export type AgentChatRequestBody = {
   conversationIdentifier?: string;
   /**
    * Reserved: client idempotency key (`msg_<shortId>`).
-   * Still ignored — minting a server message id avoids ghost acks on retries.
+   * When valid, used as the platform message id for idempotent accepts/retries.
    */
   messageId?: string;
+  /** Client idempotency key for action accepts (`idem_<shortId>`). */
+  idempotencyKey?: string;
 };

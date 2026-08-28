@@ -151,7 +151,7 @@ Non-interactive (agent / CI) contract:
   Defaults (do not pass unless needed):
     - Dashboard OAuth: omit --secret-key and --keyless (creates the agent in the user's Development environment)
     - Demo runtime: omit --runtime (shared Claude runtime in keyless mode; authenticated environments need a demo integration)
-    - US region: omit --region (use --region eu for EU Novu Cloud)
+    - US region: omit --region (use --region eu for EU Novu Cloud, or --staging / --region staging)
 
   Not supported headlessly with --keyless:
     - teams → do not pass --channel teams with --keyless; omit --keyless to authenticate via the dashboard (teams finishes in the dashboard)
