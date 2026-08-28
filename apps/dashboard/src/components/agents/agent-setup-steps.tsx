@@ -62,8 +62,8 @@ function resolveProviderGuideReservedSteps(providerId: string | undefined): numb
     return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
   }
 
-  // Agent Chat: preview in dashboard + embed from the customer app.
-  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
+  // Web Chat: preview in dashboard + embed from the customer app.
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
     return 2;
   }
 
@@ -373,8 +373,8 @@ export function AgentSetupSteps({
 
   const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
   const selectedProviderId = selectedIntegration?.providerId ?? legacyDefaultFromAgent?.providerId;
-  // Agent Chat's first prompt already scaffolds the handler with `--runtime` + `--channel agent-chat`.
-  const skipHandlerSection = isManagedRuntime || selectedProviderId === ChatProviderIdEnum.NovuAgentChat;
+  // Web Chat's first prompt already scaffolds the handler with `--runtime` + `--channel web-chat`.
+  const skipHandlerSection = isManagedRuntime || selectedProviderId === ChatProviderIdEnum.NovuWebChat;
   const handlerStepsAfter = skipHandlerSection ? 0 : HANDLER_STEPS;
   const isEmailChannelSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent;
   const effectiveIntegrationId = validatedSelectedId ?? selectedIntegrationId ?? legacyDefaultFromAgent?.integrationId;
@@ -464,10 +464,10 @@ export function AgentSetupSteps({
   // behind the same generic Continue step the details page uses for non-whats-next providers
   // (`ConnectionSuccessFooter` with `hasUserRolloutPhase={false}`) instead of auto-advancing the
   // moment they connect, so the guide stays visible with every step checked off.
-  // Agent Chat has no user-rollout phase; hold managed onboarding behind Continue until the
-  // user embeds useAgentChat and sends a first message (Connected = first inbound, like Slack).
+  // Web Chat has no user-rollout phase; hold managed onboarding behind Continue until the
+  // user embeds useWebChat and sends a first message (Connected = first inbound, like Slack).
   const genericContinueGateProviders = useMemo(
-    () => new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.NovuAgentChat]),
+    () => new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.NovuWebChat]),
     []
   );
   const useGenericContinueGate =

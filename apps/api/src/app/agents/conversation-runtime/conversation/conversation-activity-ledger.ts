@@ -11,7 +11,7 @@ import {
   ConversationRepository,
   isDuplicateKeyError,
 } from '@novu/dal';
-import { AgentChatLiveActivityPublisher } from '../../agent-chat/agent-chat-live-activity.publisher';
+import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
@@ -65,8 +65,8 @@ export class ConversationActivityLedger {
   constructor(
     private readonly activityRepository: ConversationActivityRepository,
     private readonly eventSequenceService: ConversationEventSequenceService,
-    @Inject(forwardRef(() => AgentChatLiveActivityPublisher))
-    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
+    @Inject(forwardRef(() => WebChatLiveActivityPublisher))
+    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
     private readonly conversationRepository: ConversationRepository,
     private readonly logger: PinoLogger
   ) {
@@ -741,7 +741,7 @@ export class ConversationActivityLedger {
     params: ConversationActivityContext,
     activity: ConversationActivityEntity
   ): Promise<void> {
-    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
+    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
       channel: params.channel,
       conversationId: params.conversationId,
       environmentId: params.environmentId,

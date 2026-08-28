@@ -50,7 +50,7 @@ function enableWildcard(req: Request): boolean {
       isWidgetRoute(req.url) ||
       isInboxRoute(req.url) ||
       isBlueprintRoute(req.url) ||
-      isAgentChatRoute(req.url)) &&
+      isWebChatRoute(req.url)) &&
     !isBetterAuthRoute(req.url)
   );
 }
@@ -72,8 +72,8 @@ function isBlueprintRoute(url: string): boolean {
   return url.startsWith('/v1/blueprints');
 }
 
-function isAgentChatRoute(url: string): boolean {
-  return url.startsWith('/v1/agent-chat');
+function isWebChatRoute(url: string): boolean {
+  return url.startsWith('/v1/web-chat');
 }
 
 function isDevelopmentEnvironment(): boolean {

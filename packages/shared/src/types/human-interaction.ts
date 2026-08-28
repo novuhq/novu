@@ -50,8 +50,13 @@ export type HumanInteractionResponse = {
   optionId?: string;
   /** Display name of whoever responded (firstName, else platform username, else subscriberId). */
   respondedBy?: string;
+  /** Stable Novu subscriberId of whoever settled the interaction. */
+  respondedBySubscriberId?: string;
   respondedAt: string;
 };
+
+/** Hard cap on `to` recipient lists for `ctx.*` and `POST /v1/human/interactions`. */
+export const HUMAN_INTERACTION_MAX_RECIPIENTS = 50;
 
 /**
  * Delivery channel preference on create. The API resolves the concrete

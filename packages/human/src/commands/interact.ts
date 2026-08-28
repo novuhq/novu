@@ -39,12 +39,35 @@ export function clientFromConfig(apiUrl?: string): {
   return { client, config };
 }
 
+/** Matches Novu `HUMAN_INTERACTION_MAX_RECIPIENTS`. The CLI cannot import `@novu/shared`. */
+const MAX_HUMAN_TO = 50;
+
+export function parseHumanToOption(raw: string): string[] {
+  const ids = [
+    ...new Set(
+      raw
+        .split(',')
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0)
+    ),
+  ];
+  if (ids.length === 0) {
+    fail('`--to` must include at least one subscriberId');
+  }
+
+  if (ids.length > MAX_HUMAN_TO) {
+    fail(`\`--to\` supports at most ${MAX_HUMAN_TO} subscriberIds`);
+  }
+
+  return ids;
+}
+
 /** Shared engine behind ask / approve / choose / tell. */
 export async function runInteraction(kind: InteractionKind, prompt: string, options: InteractOptions): Promise<never> {
   try {
     const { client, config } = clientFromConfig(options.apiUrl);
 
-    const to = options.to ?? config.subscriberId;
+    const to = options.to ? parseHumanToOption(options.to) : config.subscriberId;
 
     if (!to) {
       fail(NOT_SET_UP_MESSAGE);
@@ -66,6 +89,10 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     };
 
     const created = await createInteraction(client, input);
+
+    if (created.failedTo?.length) {
+      process.stderr.write(`warning: delivered to some recipients but failed for: ${created.failedTo.join(', ')}\n`);
+    }
 
     if (kind === 'tell' || options.async) {
       process.exit(emitResult(created, Boolean(options.json)));
