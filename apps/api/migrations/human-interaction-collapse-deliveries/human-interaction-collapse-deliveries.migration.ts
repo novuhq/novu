@@ -1,6 +1,6 @@
 import '../../src/config';
 
-import { HumanInteraction } from '@novu/dal';
+import { DalService, HumanInteraction } from '@novu/dal';
 
 const BATCH_SIZE = 500;
 
@@ -191,24 +191,27 @@ export async function collapseHumanInteractionMirroredFields(collection: Collaps
 export async function run() {
   console.log('Start migration - collapse HumanInteraction mirrored fields onto deliveries');
 
-  const { NestFactory } = await import('@nestjs/core');
-  const { AppModule } = await import('../../src/app.module');
-  const app = await NestFactory.create(AppModule, {
-    logger: false,
-  });
+  if (!process.env.MONGO_URL) {
+    throw new Error('MONGO_URL is not set');
+  }
 
-  const result = await collapseHumanInteractionMirroredFields(
-    HumanInteraction.collection as unknown as CollapseCollection
-  );
+  const dalService = new DalService();
+  await dalService.connect(process.env.MONGO_URL);
 
-  console.log(
-    `Backfilled HumanInteraction rows: scanned ${result.scanned} modified ${result.modified}; dropped indexes: ${
-      result.droppedIndexes.join(', ') || 'none'
-    }`
-  );
-  console.log('End migration.');
+  try {
+    const result = await collapseHumanInteractionMirroredFields(
+      HumanInteraction.collection as unknown as CollapseCollection
+    );
 
-  await app.close();
+    console.log(
+      `Backfilled HumanInteraction rows: scanned ${result.scanned} modified ${result.modified}; dropped indexes: ${
+        result.droppedIndexes.join(', ') || 'none'
+      }`
+    );
+    console.log('End migration.');
+  } finally {
+    await dalService.disconnect();
+  }
 }
 
 if (require.main === module) {
