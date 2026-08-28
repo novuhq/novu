@@ -1,40 +1,41 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { NovuError } from '../utils/errors';
 import type {
   AgentConversationStatus,
   AgentConversationTyping,
   AgentMessage,
   AgentPendingAction,
 } from '../web-chat/agent-message.types';
-import type { NovuError } from '../utils/errors';
 
 export type WebChatPaginationStatus = 'idle' | 'loading' | 'error';
 
+/** Older-history page state. */
 export type WebChatPagination = {
   status: WebChatPaginationStatus;
   hasMore: boolean;
 };
 
-/** What caused a fold. A live fold carries the envelope that caused it. Internal to the store seam. */
+/** Why the snapshot changed. A live update includes the envelope that caused it. */
 export type WebChatChangeSource =
   | { kind: 'live'; envelope: AgentEventEnvelope }
   | { kind: 'history' }
   | { kind: 'local' };
 
 /**
- * What one fold added to a holder, next to the folded snapshot.
- * A `history` fold replays stored events, so it is catch-up and not new activity.
+ * What one update added, next to the snapshot.
+ * A `history` update replays stored events, so it is not new activity.
  */
 export type WebChatChange = WebChatChangeSource & {
-  /** Messages this fold added. A fold that only changes existing messages adds none. */
+  /** Messages this update added. An update that only changes existing messages adds none. */
   addedMessages: AgentMessage[];
-  /** Actions that became pending in this fold. One action is reported one time. */
+  /** Actions that became pending in this update. Each action is reported one time. */
   newActions: AgentPendingAction[];
 };
 
 export type WebChatMessagesUpdated = {
   agentId: string;
   conversationId?: string;
-  /** Immutable holder key. Stable for the life of the local conversation entry. */
+  /** Stable session key for this local conversation. */
   key: string;
   messages: AgentMessage[];
   isRunning: boolean;
@@ -43,9 +44,9 @@ export type WebChatMessagesUpdated = {
   hasMore: boolean;
   pagination: WebChatPagination;
   error?: NovuError;
-  /** True while reconnect catch-up is in flight for this conversation. */
+  /** True while reconnect recovery is in progress. */
   isRecovering: boolean;
-  /** Set when catch-up hits the safety page limit or HTTP ultimately fails. */
+  /** Set when reconnect recovery fails. */
   catchUpError?: NovuError;
   change: WebChatChange;
 };

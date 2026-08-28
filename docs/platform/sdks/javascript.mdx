@@ -778,15 +778,9 @@ const novu = new Novu({
 
 await loadWebChat(novu);
 
-const result = novu.webChat.conversation({
+const conversation = novu.webChat.conversation({
   agentId: 'YOUR_AGENT_IDENTIFIER',
 });
-
-if (!result.ok) {
-  throw result.error;
-}
-
-const conversation = result.data;
 
 const stop = conversation.subscribe((snapshot) => {
   snapshot.messages;
@@ -807,7 +801,7 @@ conversation.dispose();
 | --- | --- |
 | `getSnapshot()` | Current immutable snapshot. |
 | `subscribe(listener)` | Call `listener` on every snapshot. Returns a stop function. |
-| `sendMessage(text)` | Send a user message. Creates a conversation when `conversationId` is omitted. |
+| `sendMessage(input)` | Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. |
 | `retryMessage(messageId)` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. |
 | `respondToAction({ actionId, decision })` | Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. |
 | `sendAction({ actionId, sourceMessageId, value })` | Click a Card button. Do not use this for tool approval. |
@@ -826,7 +820,7 @@ conversation.dispose();
 | `conversationStatus` | `'active'` or `'resolved'`. This is not a loading flag. |
 | `status` | History load: `'ready'`, `'loading'`, or `'fetching'`. |
 | `pagination.hasMore` / `pagination.status` | Older history pages. Call `fetchMore()`. |
-| `isRecovering` / `catchUpError` | Reconnect catch-up. The runtime reconnects on its own. |
+| `isRecovering` / `catchUpError` | Reconnect recovery. The runtime reconnects on its own. |
 | `error` | Last load, send, retry, or action error. |
 
 See [Chat UI](/agents/channels/web-chat/chat-ui).

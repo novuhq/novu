@@ -1749,7 +1749,7 @@ describe('WebChat', () => {
         'act_page0001'
       )
     );
-    await agentChat.loadConversation({
+    await webChat.loadConversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
@@ -1758,14 +1758,14 @@ describe('WebChat', () => {
       historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
     );
 
-    const result = await agentChat.fetchMore({
+    const result = await webChat.fetchMore({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
 
     expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
     expect(
-      agentChat
+      webChat
         .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
         ?.messages.map((message) => message.id)
     ).toEqual(['msg_keep0000001']);
@@ -1796,7 +1796,7 @@ describe('WebChat', () => {
         'act_page0001'
       )
     );
-    await agentChat.loadConversation({
+    await webChat.loadConversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
@@ -1805,7 +1805,7 @@ describe('WebChat', () => {
       historyPage([{ sequence: 1, messageId: 'msg_edit0000001', role: 'user', markdown: 'original' }], null)
     );
 
-    const result = await agentChat.fetchMore({
+    const result = await webChat.fetchMore({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
@@ -1821,13 +1821,13 @@ describe('WebChat', () => {
     getEvents.mockResolvedValueOnce(
       historyPage([{ sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
     );
-    await agentChat.loadConversation({
+    await webChat.loadConversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
 
     emitter.emit(
-      'agent_chat.agent_event',
+      'web_chat.agent_event',
       liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
     );
 
@@ -1835,7 +1835,7 @@ describe('WebChat', () => {
       historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
     );
 
-    const result = await agentChat.fetchMore({
+    const result = await webChat.fetchMore({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
@@ -1847,20 +1847,20 @@ describe('WebChat', () => {
     getEvents.mockResolvedValueOnce(
       historyPage([{ sequence: 1, messageId: 'msg_asst0000001', role: 'assistant', markdown: 'original' }], null)
     );
-    await agentChat.loadConversation({
+    await webChat.loadConversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
 
     emitter.emit(
-      'agent_chat.agent_event',
+      'web_chat.agent_event',
       liveEnvelope({
         sequence: 2,
         event: { type: 'channel.edit', messageId: 'msg_asst0000001', content: { markdown: 'edited' } },
       })
     );
     emitter.emit(
-      'agent_chat.agent_event',
+      'web_chat.agent_event',
       liveEnvelope({
         sequence: 3,
         event: {
@@ -1874,7 +1874,7 @@ describe('WebChat', () => {
     );
 
     expect(
-      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.messages[0]?.parts
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.messages[0]?.parts
     ).toMatchObject([
       { type: 'text', text: 'edited', state: 'done' },
       { type: 'source', sourceType: 'url', url: 'https://example.com', title: 'Example' },
@@ -1891,7 +1891,7 @@ describe('WebChat', () => {
         null
       )
     );
-    await agentChat.loadConversation({
+    await webChat.loadConversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
@@ -1904,14 +1904,14 @@ describe('WebChat', () => {
         })
     );
 
-    const reload = agentChat.loadConversation({
+    const reload = webChat.loadConversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
     await waitForGetEventsCalls(2);
 
     emitter.emit(
-      'agent_chat.agent_event',
+      'web_chat.agent_event',
       liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
     );
 

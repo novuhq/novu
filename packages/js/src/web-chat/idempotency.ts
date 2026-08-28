@@ -13,7 +13,7 @@ export function mintClientId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36).slice(-12)}`;
 }
 
-/** Client-minted message idempotency key (`msg_*`). Sent as `messageId` on accept. */
+/** Client-generated message idempotency key (`msg_*`). Sent as `messageId` on accept. */
 export function createMessageIdempotencyKey(): string {
   return mintClientId('msg');
 }

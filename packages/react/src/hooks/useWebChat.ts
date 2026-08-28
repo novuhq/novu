@@ -1,6 +1,4 @@
 import type {
-  WebChatPagination,
-  WebChatPlanLimitError,
   AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationRuntime,
@@ -14,7 +12,10 @@ import type {
   LoadConversationResult,
   RespondToActionResult,
   SendActionResult,
+  SendMessageInput,
   SendMessageResult,
+  WebChatPagination,
+  WebChatPlanLimitError,
 } from '@novu/js';
 import { NovuError } from '@novu/js';
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
@@ -25,27 +26,26 @@ type UseWebChatCallbacks = {
   onSuccess?: (data: LoadConversationResult) => void;
   onError?: (error: NovuError | WebChatPlanLimitError) => void;
   /**
-   * Fires once per message, when the message id first appears on the conversation.
-   * History pages are silent: only new activity fires.
-   * An agent message can still be empty at this point, because the first envelope of a
-   * turn creates the message before any text is folded into it.
-   * A send that never reaches the server does not fire: the message flips to `failed` instead.
+   * Fires once when a message id first appears. History pages do not fire.
+   * The first event of a turn can create an empty assistant message before text arrives.
+   * A send that never reaches the server does not fire. The message status becomes `failed` instead.
    */
   onMessage?: (message: AgentMessage) => void;
   /**
-   * Fires once per pending action, including actions still pending on mount, so a
-   * resumed conversation reports what it is blocked on. Paging backwards is silent.
+   * Fires once per pending action, including actions still pending on mount.
+   * Paging backwards does not fire.
    */
   onActionRequested?: (action: AgentPendingAction) => void;
   /**
-   * Raw envelopes for this conversation, before the derived callbacks for the same fold.
-   * A duplicate envelope that the store drops does not fire. Neither does an envelope that
-   * arrives before a newly created conversation claims its id.
-   * The store folds the envelope before this callback runs, so `messages` here is one render old.
+   * Live event envelopes for this conversation.
+   * Duplicates that the client drops do not fire.
+   * Envelopes that arrive before the conversation id exists do not fire.
+   * The message list in this render does not include this envelope yet.
    */
   onEvent?: (envelope: AgentEventEnvelope) => void;
 };
 
+/** Arguments for {@link useWebChat}. Pass `agentId`, or pass `conversation`. Do not mix the two. */
 export type UseWebChatProps = UseWebChatCallbacks &
   AgentHashFields &
   (
@@ -54,7 +54,6 @@ export type UseWebChatProps = UseWebChatCallbacks &
         /**
          * Resume this conversation. The hook loads history on mount.
          * Omit this prop to start a new chat. The first send creates a conversation.
-         * Later sends pass the returned id. Remount or clear this prop to start another chat.
          */
         conversationId?: string;
         conversation?: never;
@@ -68,51 +67,62 @@ export type UseWebChatProps = UseWebChatCallbacks &
       }
   );
 
+/** State and actions returned by {@link useWebChat}. */
 export type UseWebChatResult = {
+  /** Conversation timeline. */
   messages: AgentMessage[];
+  /** Tool approvals and MCP connect items that are still pending. */
   pendingActions: AgentPendingAction[];
+  /** Server conversation id after create or resume. */
   conversationId?: string;
+  /** Last error from load, send, retry, or action. */
   error?: NovuError | WebChatPlanLimitError;
   /** True while Web Chat loads and, for an existing conversation, until the first history fetch completes. */
   isLoading: boolean;
+  /** True while the agent turn is in progress. Same as `run.isRunning`. */
   isRunning: boolean;
+  /** Typing indicator. Same as `run.typing`. Absent when the agent is not typing. */
   typing?: AgentConversationRunSnapshot['typing'];
-  /** Conversation lifecycle status (`active`, etc.). */
-  status: AgentConversationStatus;
-  /** Explicit alias for `status`. */
+  /** `'active'` or `'resolved'`. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. */
   conversationStatus: AgentConversationStatus;
-  /** Current agent run snapshot. */
+  /** Current agent-run snapshot. */
   run: AgentConversationRunSnapshot;
+  /** Older-history control. Not a top-level `hasMore` or `fetchMore`. */
   pagination: WebChatPagination & {
     fetchMore: () => Promise<{
       data?: { messages: AgentMessage[]; hasMore: boolean };
       error?: NovuError;
     }>;
   };
-  /** True while reconnect catch-up is in flight for this conversation. */
+  /** True while reconnect recovery is in progress. */
   isRecovering: boolean;
-  /** Set when reconnect catch-up fails. Separate from send/fetch `error`. */
+  /** Set when reconnect recovery fails. Separate from send and fetch `error`. */
   catchUpError?: NovuError;
+  /** Reload the newest history page. No-op when there is no conversation id. */
   refetch: () => Promise<void>;
-  sendMessage: (text: string) => Promise<{
+  /** Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. */
+  sendMessage: (input: SendMessageInput) => Promise<{
     data?: SendMessageResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
+  /** Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. */
   respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
+  /** Click a Card button. Do not use this for tool approval. */
   sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
     data?: SendActionResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
+  /** Resend a message whose `status` is `failed`. Reuses the original idempotency key. */
   retryMessage: (messageId: string) => Promise<{
     data?: SendMessageResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
 };
 
-const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
+const EMPTY_SERVER_SNAPSHOT = {
   key: 'ssr',
   status: 'loading',
   run: { isRunning: false },
@@ -121,7 +131,7 @@ const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
   messages: [],
   pendingActions: [],
   isRecovering: false,
-};
+} as AgentConversationSnapshot;
 
 type RuntimeActionResult<T> = {
   data?: T;
@@ -219,14 +229,9 @@ function resolveOwnedRuntime(args: {
 
   current?.runtime.dispose();
 
-  const result = args.novu.webChat.conversation({ agentId: args.agentId, agentHash: args.agentHash });
-  if (!result.ok) {
-    args.ownedRuntimeRef.current = null;
-    return null;
-  }
-
-  args.ownedRuntimeRef.current = { key, novu: args.novu, runtime: result.data };
-  return result.data;
+  const runtime = args.novu.webChat.conversation({ agentId: args.agentId, agentHash: args.agentHash });
+  args.ownedRuntimeRef.current = { key, novu: args.novu, runtime };
+  return runtime;
 }
 
 type WebChatLoadState =
@@ -246,6 +251,16 @@ function toNovuError(error: unknown): NovuError {
   return new NovuError('Failed to load Web Chat', new Error(String(error)));
 }
 
+/**
+ * Headless Web Chat client. Use it inside `NovuProvider`.
+ *
+ * @example
+ * ```tsx
+ * const { messages, sendMessage, isRunning, isLoading, error } = useWebChat({
+ *   agentId: 'YOUR_AGENT_IDENTIFIER',
+ * });
+ * ```
+ */
 export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
   const novu = useNovu();
   const propsRef = useDataRef(props);
@@ -315,13 +330,11 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       return null;
     }
 
-    const result = novu.webChat.conversation({
+    return novu.webChat.conversation({
       agentId,
       conversationId: conversationIdProp,
       agentHash,
     });
-
-    return result.ok ? result.data : null;
   }, [webChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
 
   if (sharedRuntime || conversationIdProp) {
@@ -457,7 +470,10 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     [snapshot.pagination.status, snapshot.pagination.hasMore, fetchMore]
   );
 
-  const sendMessage = useCallback((text: string) => callRuntime((target) => target.sendMessage(text)), [callRuntime]);
+  const sendMessage = useCallback(
+    (input: SendMessageInput) => callRuntime((target) => target.sendMessage(input)),
+    [callRuntime]
+  );
   const respondToAction = useCallback(
     (args: { actionId: string; decision: AgentToolApprovalDecision }) =>
       callRuntime((target) => target.respondToAction(args)),
@@ -481,7 +497,6 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     isLoading: !webChatLoadError && (isWebChatLoading || snapshot.status === 'loading'),
     isRunning: snapshot.run.isRunning,
     typing: snapshot.run.typing,
-    status: snapshot.conversationStatus,
     conversationStatus: snapshot.conversationStatus,
     run: snapshot.run,
     pagination: paginationWithFetch,

@@ -1,99 +1,61 @@
 import type { WebChatPlanLimitError } from '../api';
 import type { NovuError } from '../utils/errors';
 import type {
-  AgentConversationError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentMessage,
   AgentPendingAction,
-  AgentToolApprovalDecision,
 } from './agent-message.types';
-import type {
-  WebChatChange,
-  WebChatPaginationStatus,
-  FetchMoreResult,
-  LoadConversationResult,
-  RespondToActionResult,
-  RetryMessageResult,
-  SendActionResult,
-  SendMessageResult,
-} from './types';
+import type { WebChatChange, WebChatPagination } from './types';
 
-/** Session lifecycle for history loads on this runtime. */
+/** History load state for this runtime: idle (`ready`), first page (`loading`), or older pages (`fetching`). */
 export type AgentConversationSessionStatus = 'ready' | 'loading' | 'fetching';
 
+/** Whether the agent turn is in progress, plus an optional typing indicator. */
 export type AgentConversationRunSnapshot = {
   isRunning: boolean;
   typing?: AgentConversationTyping;
 };
 
-export type AgentConversationPaginationSnapshot = {
-  hasMore: boolean;
-  status: WebChatPaginationStatus;
-};
-
-/** Extra context for one snapshot publication. Omitted on the initial subscribe replay. */
+/** Extra context for one snapshot update. Omitted on the first `subscribe` call. */
 export type AgentConversationPublicationMeta = {
   change?: WebChatChange;
-  /** Resume history finished loading for this runtime. */
+  /** True after resume history finishes loading. */
   historyLoaded?: boolean;
 };
 
 /**
- * Immutable published view of one agent conversation thread.
- * `getSnapshot()` returns the same object reference until the next publication.
+ * Immutable view of one conversation. `getSnapshot()` returns the same object
+ * until the next update.
  */
 export type AgentConversationSnapshot = {
-  /** Holder key for this runtime session. Stable for the life of the runtime. */
+  /** @internal Stable session key for this runtime. */
   key: string;
+  /** Server conversation id after create or resume. */
   conversationId?: string;
-  /** History load / pagination state for this runtime. */
+  /** History load state. Not the conversation lifecycle. See {@link AgentConversationSnapshot.conversationStatus}. */
   status: AgentConversationSessionStatus;
   run: AgentConversationRunSnapshot;
+  /** `'active'` or `'resolved'`. The agent sets `resolved` with `ctx.resolve()`. */
   conversationStatus: AgentConversationStatus;
-  pagination: AgentConversationPaginationSnapshot;
+  pagination: WebChatPagination;
   messages: readonly AgentMessage[];
   pendingActions: readonly AgentPendingAction[];
-  error?: NovuError | WebChatPlanLimitError | AgentConversationError;
-  /** True while reconnect catch-up is in flight for this conversation. */
+  error?: NovuError | WebChatPlanLimitError;
+  /** True while reconnect recovery is in progress. */
   isRecovering: boolean;
-  /** Set when reconnect catch-up fails. Separate from send/fetch `error`. */
+  /** Set when reconnect recovery fails. Separate from send and fetch `error`. */
   catchUpError?: NovuError;
 };
 
-export type ConversationOk<T> = { ok: true; data: T };
-export type ConversationErr = { ok: false; error: NovuError };
-export type ConversationResult<T> = ConversationOk<T> | ConversationErr;
-
 export type ConversationArgs = {
+  /** Public agent identifier from the dashboard. */
   agentId: string;
+  /** Resume this conversation. Omit to start a new chat. */
   conversationId?: string;
+  /** HMAC-SHA256 of `agentId`. Required when Security HMAC is on for the Web Chat integration. */
   agentHash?: string;
 };
 
+/** Plain text, or text plus optional metadata for the agent. */
 export type SendMessageInput = string | { text: string; metadata?: Record<string, unknown> };
-
-export type AgentConversationRuntimeActions = {
-  getSnapshot(): AgentConversationSnapshot;
-  getServerSnapshot(): AgentConversationSnapshot;
-  subscribe(
-    listener: (snapshot: AgentConversationSnapshot, meta?: AgentConversationPublicationMeta) => void
-  ): () => void;
-  dispose(): void;
-  load(): Promise<{ data?: LoadConversationResult; error?: NovuError }>;
-  fetchMore(): Promise<{ data?: FetchMoreResult; error?: NovuError }>;
-  sendMessage(
-    input: SendMessageInput
-  ): Promise<{ data?: SendMessageResult; error?: NovuError | WebChatPlanLimitError }>;
-  respondToAction(args: {
-    actionId: string;
-    decision: AgentToolApprovalDecision;
-  }): Promise<{ data?: RespondToActionResult; error?: NovuError | WebChatPlanLimitError }>;
-  sendAction(args: {
-    actionId: string;
-    sourceMessageId: string;
-    value?: string;
-  }): Promise<{ data?: SendActionResult; error?: NovuError | WebChatPlanLimitError }>;
-  retryMessage(messageId: string): Promise<{ data?: RetryMessageResult; error?: NovuError | WebChatPlanLimitError }>;
-  cancelRun(): ConversationResult<void>;
-};

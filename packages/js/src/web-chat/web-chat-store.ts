@@ -16,26 +16,25 @@ type McpConnectionResult = {
 };
 
 /**
- * Stable local identity for one conversation holder.
+ * Stable local identity for one conversation session.
  * The object reference does not change. Timeline fields are overwritten in place.
- * This store is an in-memory UI cache. It is not a synchronized server timeline.
  */
 export type ConversationEntry = AgentConversationState & {
   agentId: string;
   /** Public conversation id after create, or when the session resumes. */
   conversationId?: string;
   /**
-   * Map key for this holder. The key does not change for the life of the holder.
-   * Create sessions use `local_*`. Resume sessions use the `conv_*` id.
+   * Map key for this session. The key does not change.
+   * New chats use `local_*`. Resume uses the `conv_*` id.
    */
   key: string;
   /**
    * Cursor toward older history (`before` on the next page). Null when unknown,
-   * exhausted, or on a create-only holder before any history load.
+   * exhausted, or before any history load.
    */
   olderCursor: string | null;
   /**
-   * Actions already reported as new. Add-only: an action id is never raised twice,
+   * Actions already reported as new. An action id is never raised twice,
    * so a resolved action must not fall out and be reported again.
    */
   reportedActionIds: Set<string>;
@@ -43,21 +42,21 @@ export type ConversationEntry = AgentConversationState & {
   mcpConnectionResults: Map<string, McpConnectionResult>;
   /**
    * Latest `channel.edit` / `channel.delete` per message id.
-   * History pages fold in isolation, so a mutation on a newer page must still
-   * apply when `fetchMore` prepends the original `MESSAGE`.
+   * History pages apply in isolation, so a mutation on a newer page must still
+   * apply when `fetchMore` prepends the original message.
    */
   messageMutations: Map<string, AgentEventEnvelope>;
-  /** True while reconnect catch-up is in flight for this holder. */
+  /** True while reconnect recovery is in progress. */
   isRecovering: boolean;
-  /** Set when catch-up hits the safety page limit or HTTP fails. Cleared on success. */
+  /** Set when reconnect recovery hits the page limit or HTTP fails. Cleared on success. */
   catchUpError?: NovuError;
-  /** One create at a time on this holder until a conversation id exists. */
+  /** One create at a time on this session until a conversation id exists. */
   pendingCreate?: Promise<void>;
   /** History pagination state for `fetchMore`. */
   paginationStatus: WebChatPaginationStatus;
   /** Invalidates in-flight `fetchMore` status updates after history reload. */
   paginationEpoch: number;
-  /** Coalesces overlapping `fetchMore` calls on this holder. */
+  /** Coalesces overlapping `fetchMore` calls on this session. */
   pendingFetchMore?: Promise<{ data?: FetchMoreResult; error?: NovuError }>;
 };
 
@@ -88,9 +87,8 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
 }
 
 /**
- * In-memory store for web-chat conversations.
- * `WebChat` updates this store around HTTP calls. The hook listens on `onUpdate`.
- * The map key is the immutable holder `key`.
+ * In-memory cache for Web Chat conversations.
+ * `WebChat` writes here around HTTP calls. The map key is the session `key`.
  */
 export class WebChatStore {
   #byKey = new Map<string, ConversationEntry>();
@@ -101,9 +99,8 @@ export class WebChatStore {
   }
 
   /**
-   * Notify listeners with the folded snapshot and what the fold added.
-   * Only this store can tell the three sources apart, so it reports them instead of
-   * leaving each consumer to guess from the snapshot alone.
+   * Notify listeners with the snapshot and what this update added.
+   * Only this store can tell live, history, and local updates apart.
    */
   #publish(entry: ConversationEntry, source: WebChatChangeSource, addedMessages: AgentMessage[]): void {
     const newActions = derivePendingActions(entry.messages).filter((action) => !entry.reportedActionIds.has(action.id));
@@ -116,8 +113,7 @@ export class WebChatStore {
 
   /**
    * Mark a backfilled page's actions as already reported.
-   * An older page can carry a request whose response is on a page already folded, which
-   * leaves it looking pending. Paging backwards is never new activity.
+   * Paging backwards is never new activity.
    */
   #suppressActions(entry: ConversationEntry, messages: AgentMessage[]): void {
     for (const action of derivePendingActions(messages)) {
@@ -194,7 +190,7 @@ export class WebChatStore {
     return this.#byKey.get(key);
   }
 
-  /** Find a holder that already claimed this conversation id. */
+  /** Find a session that already claimed this conversation id. */
   getByConversationId(agentId: string, conversationId: string): ConversationEntry | undefined {
     for (const entry of this.#byKey.values()) {
       if (entry.agentId === agentId && entry.conversationId === conversationId) {
@@ -205,7 +201,7 @@ export class WebChatStore {
     return undefined;
   }
 
-  /** All holders that already claimed this conversation id (create + resume can both exist). */
+  /** All sessions that already claimed this conversation id (create and resume can both exist). */
   findByConversationId(agentId: string, conversationId: string): ConversationEntry[] {
     const matches: ConversationEntry[] = [];
     for (const entry of this.#byKey.values()) {
@@ -217,7 +213,7 @@ export class WebChatStore {
     return matches;
   }
 
-  /** Holders that already have a public conversation id (eligible for reconnect catch-up). */
+  /** Sessions that already have a public conversation id (eligible for reconnect recovery). */
   listClaimed(): Array<ConversationEntry & { conversationId: string }> {
     const claimed: Array<ConversationEntry & { conversationId: string }> = [];
     for (const entry of this.#byKey.values()) {
@@ -230,8 +226,8 @@ export class WebChatStore {
   }
 
   /**
-   * Return the entry for `key`, or create an empty holder.
-   * This method does not reuse a holder that only shares `conversationId`.
+   * Return the entry for `key`, or create an empty session.
+   * This method does not reuse a session that only shares `conversationId`.
    * Resume (`key === conversationId`) stays separate from an in-flight `local_*` create.
    */
   getOrCreate(args: { agentId: string; key: string; conversationId?: string }): ConversationEntry {
@@ -338,8 +334,8 @@ export class WebChatStore {
   }
 
   /**
-   * Merge a history page into this holder.
-   * Server message ids win. Local-only messages stay on the holder.
+   * Merge a history page into this session.
+   * Server message ids win. Local-only messages stay on the session.
    */
   absorbHistoryPage(
     entry: ConversationEntry,
@@ -368,10 +364,8 @@ export class WebChatStore {
   }
 
   /**
-   * Run one history page fetch for this holder.
+   * Run one history page fetch for this session.
    * Overlapping calls reuse the same in-flight promise.
-   * Message-id filtering in `prependOlderPage` prevents duplicate-message corruption when
-   * overlapping pagination wastes network or cursor work.
    */
   withFetchMoreClaim(
     entry: ConversationEntry,
@@ -412,7 +406,7 @@ export class WebChatStore {
   }
 
   /**
-   * Fold an older history page into this holder without resetting live timeline fields.
+   * Apply an older history page without resetting live timeline fields.
    * Preserves `lastSequence` so the live sequence gate stays valid after pagination.
    */
   prependOlderPage(
@@ -438,10 +432,7 @@ export class WebChatStore {
     return entry;
   }
 
-  /**
-   * Apply one live envelope onto this holder and notify listeners.
-   * Drops envelopes at or behind `lastSequence` so catch-up HTTP + buffered WS overlap is safe.
-   */
+  /** Update reconnect recovery flags and notify listeners. */
   setRecoveryState(
     entry: ConversationEntry,
     state: { isRecovering: boolean; catchUpError?: NovuError | undefined }
@@ -455,6 +446,10 @@ export class WebChatStore {
     return entry;
   }
 
+  /**
+   * Apply one live envelope and notify listeners.
+   * Drops envelopes at or behind `lastSequence` so recovery HTTP and buffered socket overlap is safe.
+   */
   applyLiveEnvelope(entry: ConversationEntry, envelope: AgentEventEnvelope): ConversationEntry {
     if (envelope.sequence <= entry.lastSequence) {
       return entry;
@@ -474,12 +469,9 @@ export class WebChatStore {
   }
 
   /**
-   * Run an HTTP post for this entry.
-   * If the holder has no conversation id, only one create runs at a time.
-   * Waiters read `entry.conversationId` again after the prior create finishes.
+   * Run an HTTP post for this session.
+   * If there is no conversation id, only one create runs at a time.
    * If a create succeeds, later waiters reuse that id.
-   * If a create fails, the next attempt still waits in line.
-   * If the conversation id is already known, the post runs with no gate.
    */
   withCreateClaim<T>(
     entry: ConversationEntry,

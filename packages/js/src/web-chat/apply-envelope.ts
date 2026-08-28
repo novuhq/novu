@@ -1,6 +1,5 @@
 /**
- * Folds `AgentEventEnvelope` streams into a parts-based `AgentMessage[]` timeline.
- * Runs on clients only (live WS + durable history); the server append-only stores envelopes.
+ * Apply agent event envelopes to a parts-based message timeline.
  */
 import type { AgentEventEnvelope, AgentFileRef, AgentMessageContent } from '@novu/agent-event-protocol';
 import type {
@@ -595,13 +594,7 @@ function editMessage(
   return { ...state, messages: nextMessages };
 }
 
-/**
- * Clears ephemeral typing. Call sites are intentional and small:
- * - `channel.typing` state `off`
- * - assistant `message-start` / durable assistant `message` (content replaced waiting)
- * - `tool-approval-request` (human input replaced waiting)
- * Do not clear on `run-finish` / `run-error` here — that lifecycle stays separate.
- */
+/** Remove the typing indicator. Do not call on `run-finish` or `run-error`. */
 function clearTyping(state: AgentConversationState): AgentConversationState {
   if (state.typing === undefined) {
     return state;

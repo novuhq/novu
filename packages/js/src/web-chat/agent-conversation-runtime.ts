@@ -1,20 +1,19 @@
 import type { WebChatPlanLimitError } from '../api';
 import { NovuError } from '../utils/errors';
-import type { WebChat } from './web-chat';
-import { createLocalConversationKey } from './web-chat-store';
 import type { AgentToolApprovalDecision } from './agent-message.types';
 import { derivePendingActions } from './agent-message.types';
 import type {
-  AgentConversationPaginationSnapshot,
   AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationSessionStatus,
   AgentConversationSnapshot,
   ConversationArgs,
-  ConversationResult,
   SendMessageInput,
 } from './conversation-runtime.types';
 import { runtimeCacheKey } from './runtime-cache-key';
+import type { WebChatPagination } from './types';
+import type { WebChat } from './web-chat';
+import { createLocalConversationKey } from './web-chat-store';
 
 const EMPTY_RUN: AgentConversationRunSnapshot = Object.freeze({ isRunning: false });
 
@@ -82,16 +81,17 @@ function normalizeSendMessageInput(input: SendMessageInput): { text: string; met
   return { text: input.text, metadata: input.metadata };
 }
 
-function storePagination(hasMore: boolean, status: AgentConversationPaginationSnapshot['status'] = 'idle') {
+function storePagination(hasMore: boolean, status: WebChatPagination['status'] = 'idle') {
   return { hasMore, status };
 }
 
 /**
- * Framework-independent conversation runtime for one agent thread.
- * Owns identity, immutable snapshots, and bound actions.
+ * One conversation thread. Get this from {@link WebChat.conversation}. Do not construct it yourself.
+ * Call {@link AgentConversationRuntime.dispose} when the chat unmounts.
  */
 export class AgentConversationRuntime {
   readonly agentId: string;
+  /** @internal */
   readonly key: string;
 
   #webChat: WebChat;
@@ -146,14 +146,20 @@ export class AgentConversationRuntime {
     }
   }
 
+  /** Current immutable snapshot. */
   getSnapshot(): AgentConversationSnapshot {
     return this.#snapshot;
   }
 
+  /** Empty snapshot for SSR hydration. Stable across the server render. */
   getServerSnapshot(): AgentConversationSnapshot {
     return SERVER_SNAPSHOT;
   }
 
+  /**
+   * Call `listener` on every snapshot, including the current one.
+   * Returns a function that stops listening.
+   */
   subscribe(
     listener: (snapshot: AgentConversationSnapshot, meta?: AgentConversationPublicationMeta) => void
   ): () => void {
@@ -165,6 +171,7 @@ export class AgentConversationRuntime {
     };
   }
 
+  /** Stop listeners and release the socket. */
   dispose(): void {
     if (this.#disposed) {
       return;
@@ -178,6 +185,7 @@ export class AgentConversationRuntime {
     this.#listeners.clear();
   }
 
+  /** Reload the newest history page. Runs on resume when `conversationId` is set. */
   async load(): Promise<{
     data?: { conversationId: string; messages: AgentConversationSnapshot['messages']; hasMore: boolean };
     error?: NovuError;
@@ -232,6 +240,7 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  /** Load the next older history page. Overlapping calls do not run. */
   async fetchMore(): Promise<{
     data?: { messages: AgentConversationSnapshot['messages']; hasMore: boolean };
     error?: NovuError;
@@ -274,6 +283,7 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  /** Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. */
   async sendMessage(
     input: SendMessageInput
   ): Promise<{ data?: { conversationId: string; messageId: string }; error?: NovuError | WebChatPlanLimitError }> {
@@ -302,6 +312,7 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  /** Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. */
   async respondToAction(args: {
     actionId: string;
     decision: AgentToolApprovalDecision;
@@ -322,6 +333,7 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  /** Click a Card button. Do not use this for tool approval. */
   async sendAction(args: {
     actionId: string;
     sourceMessageId: string;
@@ -344,6 +356,7 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  /** Resend a message whose `status` is `failed`. Reuses the original idempotency key. */
   async retryMessage(
     messageId: string
   ): Promise<{ data?: { conversationId: string; messageId: string }; error?: NovuError | WebChatPlanLimitError }> {
@@ -360,13 +373,6 @@ export class AgentConversationRuntime {
     }
 
     return response;
-  }
-
-  cancelRun(): ConversationResult<void> {
-    return {
-      ok: false,
-      error: new NovuError('Run cancellation is not supported yet', new Error('cancelRun is not implemented')),
-    };
   }
 
   /** @internal */
@@ -417,7 +423,7 @@ export class AgentConversationRuntime {
       isRunning: boolean;
       typing?: AgentConversationRunSnapshot['typing'];
       status: AgentConversationSnapshot['conversationStatus'];
-      pagination: AgentConversationPaginationSnapshot;
+      pagination: WebChatPagination;
       isRecovering: boolean;
       catchUpError?: NovuError;
       conversationId?: string;
