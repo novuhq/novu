@@ -12,7 +12,9 @@ import {
   Max,
   MaxLength,
   Min,
+  Validate,
 } from 'class-validator';
+import { IsValidHumanTo } from '../validators/is-valid-human-to';
 
 export class CreateInteractionRequestDto {
   @ApiProperty({ enum: HumanInteractionKindEnum, description: 'Interaction verb.' })
@@ -37,10 +39,16 @@ export class CreateInteractionRequestDto {
   @MaxLength(75, { each: true })
   options?: string[];
 
-  @ApiProperty({ description: 'subscriberId of the human to reach.' })
-  @IsString()
-  @IsNotEmpty()
-  to: string;
+  @ApiProperty({
+    description:
+      'subscriberId of the human to reach, or an array of subscriberIds. Any listed subscriber may settle (first valid answer wins).',
+    oneOf: [
+      { type: 'string', example: 'alice' },
+      { type: 'array', items: { type: 'string' }, example: ['alice', 'bob'] },
+    ],
+  })
+  @Validate(IsValidHumanTo)
+  to: string | string[];
 
   @ApiPropertyOptional({
     enum: HumanChannelViaEnum,

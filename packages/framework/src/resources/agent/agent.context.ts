@@ -39,6 +39,7 @@ import type {
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
 import { AgentEventOutbox } from './agent-event-outbox';
+import { normalizeHumanTo } from './human-to';
 import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
@@ -777,6 +778,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
     options?: string[]
   ): string {
     const requestId = mint('hr');
+    const to = opts?.to !== undefined ? normalizeHumanTo(opts.to) : undefined;
     this._signals.push({
       type: 'human',
       kind,
@@ -785,6 +787,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
       ...(options ? { options } : {}),
       ...(opts?.from ? { from: opts.from } : {}),
       ...(opts && 'ttlSeconds' in opts && opts.ttlSeconds !== undefined ? { ttlSeconds: opts.ttlSeconds } : {}),
+      ...(to !== undefined ? { to } : {}),
     });
 
     return requestId;

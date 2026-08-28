@@ -257,3 +257,18 @@ export async function hasChannelEndpoint(
 
   return Array.isArray(body) && body.length > 0;
 }
+
+/** Best-effort; GET /v2/subscribers is not always available (e.g. keyless). */
+export async function getSubscriberEmail(client: HumanApiClient, subscriberId: string): Promise<string | undefined> {
+  try {
+    const res = await client.axios.get<{ data?: { email?: string } } | { email?: string }>(
+      `/v2/subscribers/${encodeURIComponent(subscriberId)}`
+    );
+    const body = unwrap(res.data);
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+
+    return email || undefined;
+  } catch {
+    return undefined;
+  }
+}
