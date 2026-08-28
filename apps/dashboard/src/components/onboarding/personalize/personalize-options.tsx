@@ -24,7 +24,7 @@ export const AGENT_CHANNEL_VALUES = [
   ChatProviderIdEnum.Sendblue,
   ChatProviderIdEnum.Telegram,
   ChatProviderIdEnum.Discord,
-  ChatProviderIdEnum.NovuAgentChat,
+  ChatProviderIdEnum.NovuWebChat,
 ] as const;
 
 export type AgentChannel = (typeof AGENT_CHANNEL_VALUES)[number];
@@ -109,9 +109,9 @@ export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
     accent: '#5865f2',
   },
   {
-    value: ChatProviderIdEnum.NovuAgentChat,
-    label: 'Agent Chat',
-    icon: providerIcon(ChatProviderIdEnum.NovuAgentChat),
+    value: ChatProviderIdEnum.NovuWebChat,
+    label: 'Web Chat',
+    icon: providerIcon(ChatProviderIdEnum.NovuWebChat),
     accent: '#DC224E',
   },
 ];

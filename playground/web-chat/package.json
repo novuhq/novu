@@ -1,0 +1,24 @@
+{
+  "name": "web-chat",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4012",
+    "build": "next build",
+    "start": "next start -p 4012"
+  },
+  "dependencies": {
+    "@novu/react": "workspace:*",
+    "next": "^16.2.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "5.6.2"
+  }
+}

@@ -116,7 +116,7 @@ export class HandleNovuTools {
     const mcp = MCP_SERVERS.find((s) => s.id === command.mcpId);
     const mcpName = mcp?.name ?? command.mcpId;
 
-    if (command.platform === AgentPlatformEnum.AGENT_CHAT) {
+    if (command.platform === AgentPlatformEnum.WEB_CHAT) {
       const conversation = await this.agentConversationService.getConversation(
         command.conversationId,
         command.environmentId,

@@ -12,7 +12,7 @@ import {
   listAgentIntegrations,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { AgentChatDrawer } from '@/components/agents/agent-chat-panel';
+import { WebChatDrawer } from '@/components/agents/web-chat-panel';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
@@ -20,7 +20,7 @@ import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import {
-  getAgentChatIntegrationLink,
+  getWebChatIntegrationLink,
   hasAgentInboundConnection,
 } from '@/components/agents/is-agent-integration-connected';
 import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
@@ -41,13 +41,13 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useAgentChatPreview } from '@/hooks/use-agent-chat-preview';
+import { useWebChatPreview } from '@/hooks/use-web-chat-preview';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QueryKeys } from '@/utils/query-keys';
 import {
-  AGENT_CHAT_PREVIEW_PARAM,
+  WEB_CHAT_PREVIEW_PARAM,
   AGENT_DETAILS_CHAT_TAB,
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
@@ -106,7 +106,7 @@ export function AgentDetailsPage() {
   const [setupModalDismissed, setSetupModalDismissed] = useState(false);
   const track = useTelemetry();
   const lastAgentDetailsTelemetryKey = useRef<string | null>(null);
-  const { isOpen: isChatPreviewOpen, setPreviewOpen } = useAgentChatPreview();
+  const { isOpen: isChatPreviewOpen, setPreviewOpen } = useWebChatPreview();
 
   const agentsListPath = buildRoute(agentRoutes.list, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -164,13 +164,13 @@ export function AgentDetailsPage() {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
-  const agentChatLink = useMemo(
-    () => getAgentChatIntegrationLink(agentIntegrationsQuery.data?.data),
+  const webChatLink = useMemo(
+    () => getWebChatIntegrationLink(agentIntegrationsQuery.data?.data),
     [agentIntegrationsQuery.data?.data]
   );
-  const agentChatIntegrationIdentifier = agentChatLink?.integration.identifier;
-  const hasAgentChat = Boolean(agentChatIntegrationIdentifier);
-  const showAddToAppCallouts = agentChatLink != null && !hasAgentInboundConnection(agentChatLink.connectedAt);
+  const webChatIntegrationIdentifier = webChatLink?.integration.identifier;
+  const hasWebChat = Boolean(webChatIntegrationIdentifier);
+  const showAddToAppCallouts = webChatLink != null && !hasAgentInboundConnection(webChatLink.connectedAt);
 
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
@@ -221,7 +221,7 @@ export function AgentDetailsPage() {
 
   if (agentTabParam === AGENT_DETAILS_CHAT_TAB && currentEnvironment?.slug) {
     const params = new URLSearchParams(location.search);
-    params.set(AGENT_CHAT_PREVIEW_PARAM, '1');
+    params.set(WEB_CHAT_PREVIEW_PARAM, '1');
     const query = params.toString();
 
     return (
@@ -381,18 +381,18 @@ export function AgentDetailsPage() {
               </TabsContent>
             </Tabs>
 
-            {hasAgentChat ? (
-              <AgentChatDrawer
+            {hasWebChat ? (
+              <WebChatDrawer
                 open={isChatPreviewOpen}
                 onOpenChange={setPreviewOpen}
                 agent={agent}
                 showAddToAppCallouts={showAddToAppCallouts}
                 addToAppHref={
-                  currentEnvironment?.slug && agentChatIntegrationIdentifier
+                  currentEnvironment?.slug && webChatIntegrationIdentifier
                     ? buildRoute(agentRoutes.integrationDetail, {
                         environmentSlug: currentEnvironment.slug,
                         agentIdentifier: encodeURIComponent(agent.identifier),
-                        integrationIdentifier: encodeURIComponent(agentChatIntegrationIdentifier),
+                        integrationIdentifier: encodeURIComponent(webChatIntegrationIdentifier),
                       })
                     : undefined
                 }

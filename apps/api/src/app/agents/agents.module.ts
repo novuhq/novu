@@ -34,15 +34,15 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
-import { AgentChatController } from './agent-chat/agent-chat.controller';
-import { AgentChatAcceptIdempotencyService } from './agent-chat/agent-chat-accept-idempotency.service';
-import { AgentChatEventFactory } from './agent-chat/agent-chat-event.factory';
-import { AgentChatLiveActivityPublisher } from './agent-chat/agent-chat-live-activity.publisher';
-import { AgentChatPlatformDeliveryService } from './agent-chat/agent-chat-platform-delivery.service';
-import { AgentChatPublicationService } from './agent-chat/agent-chat-publication.service';
-import { AgentChatResumeAuthorizationService } from './agent-chat/agent-chat-resume-authorization.service';
-import { AgentChatSessionVerifier } from './agent-chat/agent-chat-session.verifier';
-import { NovuAgentChatProvisioningService } from './channels/agent-chat/find-or-create-novu-agent-chat/find-or-create-novu-agent-chat.service';
+import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatAcceptIdempotencyService } from './web-chat/web-chat-accept-idempotency.service';
+import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
+import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
+import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
+import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
+import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
+import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
+import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
@@ -99,7 +99,7 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
-import { AgentChatEnabledGuard } from './shared/agent-chat-enabled.guard';
+import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { AgentConversationEnabledGuard } from './shared/agent-conversation-enabled.guard';
 import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
@@ -130,7 +130,7 @@ import { USE_CASES } from './usecases';
     AgentEventsIngestController,
     AgentEmailActionsController,
     AgentsMcpOAuthController,
-    AgentChatController,
+    WebChatController,
   ],
   providers: [
     ...USE_CASES,
@@ -188,14 +188,14 @@ import { USE_CASES } from './usecases';
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
-    NovuAgentChatProvisioningService,
-    AgentChatPublicationService,
-    AgentChatSessionVerifier,
-    AgentChatAcceptIdempotencyService,
-    AgentChatResumeAuthorizationService,
-    AgentChatEventFactory,
-    AgentChatPlatformDeliveryService,
-    AgentChatLiveActivityPublisher,
+    NovuWebChatProvisioningService,
+    WebChatPublicationService,
+    WebChatSessionVerifier,
+    WebChatAcceptIdempotencyService,
+    WebChatResumeAuthorizationService,
+    WebChatEventFactory,
+    WebChatPlatformDeliveryService,
+    WebChatLiveActivityPublisher,
     OutboundDeliveryInfo,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
@@ -214,7 +214,7 @@ import { USE_CASES } from './usecases';
     AgentEntitlementsService,
     PlanLimitGateService,
     AgentConversationEnabledGuard,
-    AgentChatEnabledGuard,
+    WebChatEnabledGuard,
   ],
   exports: [
     ...USE_CASES,

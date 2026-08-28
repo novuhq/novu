@@ -92,7 +92,7 @@ export interface PersistToolApprovalDecisionParams extends ConversationActivityC
   approvalId: string;
   approved: boolean;
   toolName?: string;
-  /** Client `idem_*` when the click came from Agent Chat. Reused as the activity identifier. */
+  /** Client `idem_*` when the click came from Web Chat. Reused as the activity identifier. */
   identifier?: string;
   actorType:
     | ConversationActivitySenderTypeEnum.SUBSCRIBER

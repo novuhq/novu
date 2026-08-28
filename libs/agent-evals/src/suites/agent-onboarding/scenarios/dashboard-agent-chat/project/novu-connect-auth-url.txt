@@ -1,1 +1,0 @@
-https://dashboard.novu.test/oauth/device/agent-chat-abc

@@ -1,6 +1,6 @@
 import {
   AgentSubscriberAccessEnum,
-  buildDashboardAgentChatSubscriberId,
+  buildDashboardWebChatSubscriberId,
   HumanInteractionKindEnum,
   HumanInteractionStatusEnum,
 } from '@novu/shared';
@@ -1586,8 +1586,8 @@ describe('AgentInboundHandler', () => {
       expect(agentIntegrationRepository.updateOne.called).to.equal(false);
     });
 
-    it('does not mark connectedAt when the dashboard Agent Chat tester identity sends a message', async () => {
-      const dashboardSubscriberId = buildDashboardAgentChatSubscriberId('user-123');
+    it('does not mark connectedAt when the dashboard Web Chat tester identity sends a message', async () => {
+      const dashboardSubscriberId = buildDashboardWebChatSubscriberId('user-123');
       const { handler, agentIntegrationRepository } = makeHandler({
         ...makeResolvedSubscriberOverrides(dashboardSubscriberId),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
