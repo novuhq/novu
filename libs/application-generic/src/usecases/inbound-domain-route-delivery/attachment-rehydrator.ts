@@ -58,7 +58,7 @@ export class AttachmentRehydrator {
           contentType: attachment.contentType,
           size: attachment.size,
           url,
-          storagePath: attachment.storagePath,
+          expiresAt: new Date(Date.now() + WEBHOOK_ATTACHMENT_URL_TTL_SECONDS * 1000).toISOString(),
         };
       })
     );
@@ -82,7 +82,6 @@ export class AttachmentRehydrator {
         contentType: attachment.contentType,
         size: attachment.size,
         url: attachment.url,
-        storagePath: attachment.storagePath,
         content: attachment.content ?? null,
         contentBytes: attachment.size,
       };
@@ -102,7 +101,6 @@ export class AttachmentRehydrator {
         contentType: attachment.contentType,
         size: attachment.size,
         url: attachment.url,
-        storagePath: attachment.storagePath,
         content: {
           type: 'Buffer',
           data: Array.from(fileBuffer),
@@ -129,7 +127,6 @@ export class AttachmentRehydrator {
         contentType: attachment.contentType,
         size: attachment.size,
         url: attachment.url,
-        storagePath: attachment.storagePath,
         content: null,
         contentBytes: attachment.size,
       };
