@@ -179,12 +179,7 @@ export class InboundDomainRouteDelivery {
     const attachments = shouldUseSignedUrls
       ? await this.attachmentRehydrator.createSignedUrls(params.mail.attachments)
       : await this.attachmentRehydrator.rehydrate(params.mail.attachments);
-    const payload = this.buildDomainRouteWebhookPayload(
-      params.domain,
-      params.route,
-      params.mail,
-      attachments
-    );
+    const payload = this.buildDomainRouteWebhookPayload(params.domain, params.route, params.mail, attachments);
     const result = await this.sendWebhookMessage.execute({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
