@@ -1,0 +1,1 @@
+export class DigestAccumulator { private queue: Array<{ id: string; tenant: string; ts: number }> = []; push(id: string, tenant: string) { this.queue.push({ id, tenant, ts: Date.now() }); } getPending(tenant: string) { return this.queue.filter(i => i.tenant === tenant); } }
