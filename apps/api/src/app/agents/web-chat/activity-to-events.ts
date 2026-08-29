@@ -3,6 +3,7 @@ import {
   type AgentEvent,
   type AgentEventEnvelope,
   type AgentFileRef,
+  type AgentMessageContent,
   isDeltaEvent,
 } from '@novu/agent-event-protocol';
 import {
@@ -14,7 +15,18 @@ import {
   mapRunLifecycleActivityToEvent,
   runIdFromLifecycleIdentifier,
 } from '../conversation-runtime/conversation/run-lifecycle-activity';
-import { mintApprovalActionIds } from '../shared/tool-approval/mint-approval-action-ids';
+import { DIRECT_TOOL_APPROVAL_ACTION_PREFIX, MCP_TOOL_APPROVAL_ACTION_PREFIX } from '../shared/tool-approval/action-id';
+import { mintApprovalActionIds, mintManagedApprovalActionIds } from '../shared/tool-approval/mint-approval-action-ids';
+
+type McpConnectionActivityData = {
+  actionId?: string;
+  mcpId?: string;
+  displayName?: string;
+  authorizeUrl?: string;
+  authorizeUrlWithAutoApprove?: string;
+  status?: 'connected' | 'failed';
+  message?: string;
+};
 
 function filesFromRichContent(richContent?: Record<string, unknown>) {
   const files = richContent?.files;
@@ -23,6 +35,52 @@ function filesFromRichContent(richContent?: Record<string, unknown>) {
   }
 
   return files as AgentFileRef[];
+}
+
+function isCardTree(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'card';
+}
+
+function isManagedToolApprovalRequest(toolData: ConversationActivityEntity['toolData']): boolean {
+  const approveActionId = toolData?.approveActionId;
+  if (!approveActionId) {
+    return false;
+  }
+
+  return (
+    approveActionId.startsWith(`${MCP_TOOL_APPROVAL_ACTION_PREFIX}:`) ||
+    approveActionId.startsWith(`${DIRECT_TOOL_APPROVAL_ACTION_PREFIX}:`)
+  );
+}
+
+function mintTrustActionIdsFromStoredToolData(toolData: NonNullable<ConversationActivityEntity['toolData']>) {
+  if (!isManagedToolApprovalRequest(toolData) || !toolData.toolCallId || !toolData.toolName) {
+    return {};
+  }
+
+  const managed = mintManagedApprovalActionIds({
+    toolUseId: toolData.toolCallId,
+    toolName: toolData.toolName,
+    mcpServerName: toolData.mcpServerName,
+  });
+
+  return {
+    trustToolActionId: managed.trustToolActionId,
+    ...(managed.trustServerActionId ? { trustServerActionId: managed.trustServerActionId } : {}),
+  };
+}
+
+/** Prefer the stored Card tree. Fall back to markdown when no Card is present. */
+export function messageContentFromStored(params: {
+  content?: string;
+  richContent?: Record<string, unknown>;
+}): AgentMessageContent {
+  const card = params.richContent?.card;
+  if (isCardTree(card)) {
+    return { card };
+  }
+
+  return { markdown: params.content ?? '' };
 }
 
 const MESSAGE_ROLE_BY_SENDER = {
@@ -43,7 +101,7 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         role,
         // Browser-visible id is platformMessageId (aligned with live WS envelopes).
         messageId: activity.platformMessageId ?? activity.identifier,
-        content: { markdown: activity.content },
+        content: messageContentFromStored({ content: activity.content, richContent: activity.richContent }),
         files: filesFromRichContent(activity.richContent),
       };
     }
@@ -56,17 +114,23 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
 
       const actionIds =
         toolData.approveActionId && toolData.denyActionId
-          ? { approveActionId: toolData.approveActionId, denyActionId: toolData.denyActionId }
+          ? {
+              approveActionId: toolData.approveActionId,
+              denyActionId: toolData.denyActionId,
+            }
           : mintApprovalActionIds({ approvalId: toolData.approvalId });
 
       return {
         type: 'tool-approval-request',
+        messageId: activity.identifier,
         approvalId: toolData.approvalId,
         toolUseId: toolData.toolCallId,
         toolName: toolData.toolName,
         input: toolData.input,
         approveActionId: actionIds.approveActionId,
         denyActionId: actionIds.denyActionId,
+        ...mintTrustActionIdsFromStoredToolData(toolData),
+        source: toolData.mcpServerName ? { type: 'mcp', serverName: toolData.mcpServerName } : undefined,
       };
     }
 
@@ -96,11 +160,42 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
       };
     }
 
+    case ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST: {
+      const data = activity.richContent?.mcpConnection as McpConnectionActivityData | undefined;
+      if (!data?.actionId || !data.mcpId || !data.displayName || !data.authorizeUrl) {
+        return null;
+      }
+
+      return {
+        type: 'mcp-connection-request',
+        actionId: data.actionId,
+        mcpId: data.mcpId,
+        displayName: data.displayName,
+        authorizeUrl: data.authorizeUrl,
+        authorizeUrlWithAutoApprove: data.authorizeUrlWithAutoApprove,
+      };
+    }
+
+    case ConversationActivityTypeEnum.MCP_CONNECTION_RESULT: {
+      const data = activity.richContent?.mcpConnection as McpConnectionActivityData | undefined;
+      if (!data?.actionId || !data.mcpId || !data.status) {
+        return null;
+      }
+
+      return {
+        type: 'mcp-connection-result',
+        actionId: data.actionId,
+        mcpId: data.mcpId,
+        status: data.status,
+        message: data.message,
+      };
+    }
+
     case ConversationActivityTypeEnum.EDIT:
       return {
         type: 'channel.edit',
         messageId: activity.platformMessageId ?? activity.identifier,
-        content: { markdown: activity.content },
+        content: messageContentFromStored({ content: activity.content, richContent: activity.richContent }),
       };
 
     case ConversationActivityTypeEnum.DELETE:
@@ -114,8 +209,28 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
     case ConversationActivityTypeEnum.RUN_ERROR:
       return mapRunLifecycleActivityToEvent(activity);
 
-    default:
+    case ConversationActivityTypeEnum.SIGNAL:
       return null;
+
+    case ConversationActivityTypeEnum.CUSTOM: {
+      const custom = activity.richContent?.custom as { name?: unknown; data?: unknown } | undefined;
+      if (typeof custom?.name !== 'string' || custom.name.length === 0) {
+        return null;
+      }
+
+      return {
+        type: 'custom',
+        name: custom.name,
+        data: custom.data,
+      };
+    }
+
+    default: {
+      const _exhaustive: never = activity.type;
+      void _exhaustive;
+
+      return null;
+    }
   }
 }
 
@@ -125,6 +240,12 @@ export interface EventMapContext {
   agentIdentifier: string;
 }
 
+function runIdFromCustomIdentifier(identifier: string): string | undefined {
+  const match = /^custom:(.+):(\d+)$/.exec(identifier);
+
+  return match?.[1];
+}
+
 function buildEnvelope(
   activity: ConversationActivityEntity,
   event: AgentEvent,
@@ -132,13 +253,14 @@ function buildEnvelope(
   context: EventMapContext
 ): AgentEventEnvelope {
   const lifecycleRunId = runIdFromLifecycleIdentifier(activity.identifier);
+  const customRunId = runIdFromCustomIdentifier(activity.identifier);
 
   return {
     version: AGENT_EVENT_PROTOCOL_VERSION,
     conversationId: context.conversationId,
     conversationIdentifier: context.conversationIdentifier,
     agentId: context.agentIdentifier,
-    runId: lifecycleRunId ?? 'history',
+    runId: lifecycleRunId ?? customRunId ?? 'history',
     turnId: activity.identifier,
     sequence,
     timestamp: activity.createdAt,

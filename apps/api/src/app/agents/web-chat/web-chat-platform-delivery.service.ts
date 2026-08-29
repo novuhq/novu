@@ -2,21 +2,19 @@ import { Injectable } from '@nestjs/common';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger, shortId, WebSocketsQueueService } from '@novu/application-generic';
 import {
-  conversationIdFromThreadId,
-  extractCardPlainText,
   type WebChatDeleteMessageParams,
   type WebChatDeliverMessageParams,
   type WebChatDeliverMessageResult,
   type WebChatEditMessageParams,
   type WebChatStartTypingParams,
-} from '@novu/chat-adapter-web';
+  conversationIdFromThreadId,
+} from '@novu/chat-adapter-web-chat';
 import { type ConversationEntity, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
-import type { CardElement } from 'chat';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
-import { ConversationEventSequenceService } from '../conversation-runtime/conversation/conversation-event-sequence.service';
 import { OutboundDeliveryInfo } from '../conversation-runtime/egress/outbound-delivery-info.service';
+import { messageContentFromStored } from './activity-to-events';
 import { WebChatEventFactory } from './web-chat-event.factory';
 
 export type WebChatPlatformDeliveryContext = {
@@ -25,7 +23,7 @@ export type WebChatPlatformDeliveryContext = {
 };
 
 /**
- * Nest-owned platform callbacks for `@novu/chat-adapter-web`. Web has no
+ * Nest-owned platform callbacks for `@novu/chat-adapter-web-chat`. Web chat has no
  * external platform, so this layer *is* the platform: it resolves the
  * conversation from the thread id, emits the live WS envelope, and reports
  * `{ messageId, sequence }` upward through {@link OutboundDeliveryInfo}.
@@ -36,7 +34,6 @@ export type WebChatPlatformDeliveryContext = {
 export class WebChatPlatformDeliveryService {
   constructor(
     private readonly conversationService: AgentConversationService,
-    private readonly eventSequenceService: ConversationEventSequenceService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly webSocketsQueueService: WebSocketsQueueService,
     private readonly eventFactory: WebChatEventFactory,
@@ -61,13 +58,12 @@ export class WebChatPlatformDeliveryService {
       this.deliveryInfo.report({ messageId: platformMessageId, sequence });
 
       if (conversation && sequence !== undefined) {
-        const markdown = this.markdownForLiveEnvelope(content, richContent);
         const envelope = this.eventFactory.createMessageEnvelope({
           conversationId: conversation._id,
           conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId,
-          content: { markdown },
+          content: messageContentFromStored({ content, richContent }),
           sequence,
         });
         await this.emitBestEffort(context, conversation, envelope);
@@ -89,13 +85,12 @@ export class WebChatPlatformDeliveryService {
       this.deliveryInfo.report({ sequence });
 
       if (conversation && sequence !== undefined) {
-        const markdown = this.markdownForLiveEnvelope(content, richContent);
         const envelope = this.eventFactory.createEditEnvelope({
           conversationId: conversation._id,
           conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
-          content: { markdown },
+          content: messageContentFromStored({ content, richContent }),
           sequence,
         });
         await this.emitBestEffort(context, conversation, envelope);
@@ -208,25 +203,11 @@ export class WebChatPlatformDeliveryService {
       return undefined;
     }
 
-    return this.eventSequenceService.mint({
+    return this.conversationService.mintEventSequence({
       environmentId: context.config.environmentId,
       organizationId: context.config.organizationId,
       conversationId: conversation._id,
     });
-  }
-
-  private markdownForLiveEnvelope(content: string, richContent?: Record<string, unknown>): string {
-    const trimmed = content?.trim() ?? '';
-    if (trimmed && trimmed !== '[Card]') {
-      return trimmed;
-    }
-
-    const card = richContent?.card;
-    if (card && typeof card === 'object') {
-      return extractCardPlainText(card as CardElement);
-    }
-
-    return trimmed || '[Card]';
   }
 
   private async emitBestEffort(

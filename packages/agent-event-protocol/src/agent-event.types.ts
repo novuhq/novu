@@ -29,13 +29,27 @@ export interface AgentApprovalRequest {
    */
   approveActionId?: string;
   denyActionId?: string;
+  /** Server-minted always-allow-this-tool action id. Echo via respondToAction / card click. */
+  trustToolActionId?: string;
+  /** Server-minted always-allow-MCP-server action id (MCP tools only). */
+  trustServerActionId?: string;
 }
 
 export type AgentSignal =
   | { type: 'metadata'; action: 'set'; key: string; value: unknown }
   | { type: 'metadata'; action: 'delete'; key: string }
   | { type: 'metadata'; action: 'clear' }
-  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> };
+  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> }
+  | {
+      type: 'human';
+      kind: 'ask' | 'approve' | 'choose' | 'tell';
+      prompt: string;
+      requestId: string;
+      options?: string[];
+      from?: string;
+      ttlSeconds?: number;
+      to?: string | string[];
+    };
 
 export type AgentEvent =
   // Lifecycle
@@ -86,6 +100,8 @@ export type AgentEvent =
   | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
   | ({
       type: 'tool-approval-request';
+      /** Stable assistant message id used to preserve the approval's timeline position during history replay. */
+      messageId?: string;
       /** When true, no companion message carries the approval UI. The consumer should render its default approval card. */
       deliverCard?: boolean;
     } & AgentApprovalRequest)
@@ -95,6 +111,21 @@ export type AgentEvent =
       decision: 'approved' | 'denied';
       reason?: string;
       automatic?: boolean;
+    }
+  | {
+      type: 'mcp-connection-request';
+      actionId: string;
+      mcpId: string;
+      displayName: string;
+      authorizeUrl: string;
+      authorizeUrlWithAutoApprove?: string;
+    }
+  | {
+      type: 'mcp-connection-result';
+      actionId: string;
+      mcpId: string;
+      status: 'connected' | 'failed';
+      message?: string;
     }
   // Conversation ops
   | { type: 'resolve'; summary?: string }
@@ -112,7 +143,9 @@ export type AgentEvent =
       reason: 'authentication' | 'connection';
       message: string;
     }
-  // Escape hatch
+  // LLM provider passthrough (live only — not history/transcript)
+  | { type: 'provider-event'; provider: string; event: string; data: unknown }
+  // App custom data escape hatch
   | { type: 'custom'; name: string; data: unknown };
 
 export interface AgentEventEnvelope {

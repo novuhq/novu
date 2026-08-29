@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { type ClientSession, FilterQuery } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -229,27 +229,31 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     sequence?: number;
     environmentId: string;
     organizationId: string;
+    session?: ClientSession | null;
   }): Promise<ConversationActivityEntity> {
     const type = params.type ?? ConversationActivityTypeEnum.MESSAGE;
 
-    return this.create({
-      identifier: params.identifier,
-      _conversationId: params.conversationId,
-      type,
-      platform: params.platform,
-      _integrationId: params.integrationId,
-      platformThreadId: params.platformThreadId,
-      senderType: ConversationActivitySenderTypeEnum.AGENT,
-      senderId: params.agentId,
-      content: params.content,
-      richContent: params.richContent,
-      toolData: params.toolData,
-      senderName: params.senderName,
-      ...(params.platformMessageId !== undefined ? { platformMessageId: params.platformMessageId } : {}),
-      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-    });
+    return this.create(
+      {
+        identifier: params.identifier,
+        _conversationId: params.conversationId,
+        type,
+        platform: params.platform,
+        _integrationId: params.integrationId,
+        platformThreadId: params.platformThreadId,
+        senderType: ConversationActivitySenderTypeEnum.AGENT,
+        senderId: params.agentId,
+        content: params.content,
+        richContent: params.richContent,
+        toolData: params.toolData,
+        senderName: params.senderName,
+        ...(params.platformMessageId !== undefined ? { platformMessageId: params.platformMessageId } : {}),
+        ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      params.session ? { session: params.session } : {}
+    );
   }
 
   async createSignalActivity(params: {

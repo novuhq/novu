@@ -58,9 +58,16 @@ const PROVIDER_GUIDE_RESERVED_STEPS = 3;
 const IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS = 4;
 
 function resolveProviderGuideReservedSteps(providerId: string | undefined): number {
-  return providerId === ChatProviderIdEnum.Sendblue
-    ? IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS
-    : PROVIDER_GUIDE_RESERVED_STEPS;
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
+  }
+
+  // Web Chat: preview in dashboard + embed from the customer app.
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
+    return 2;
+  }
+
+  return PROVIDER_GUIDE_RESERVED_STEPS;
 }
 // Self-hosted agents add three handler steps (scaffold + run + send) below the provider guide.
 const HANDLER_STEPS = 3;
@@ -363,10 +370,12 @@ export function AgentSetupSteps({
   // start at 1 here instead of continuing from 3.
   const isOnboarding = Boolean(connectSummary);
   const brainStepsBefore = isOnboarding ? BRAIN_STEPS : 0;
-  const handlerStepsAfter = isManagedRuntime ? 0 : HANDLER_STEPS;
 
   const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
   const selectedProviderId = selectedIntegration?.providerId ?? legacyDefaultFromAgent?.providerId;
+  // Web Chat's first prompt already scaffolds the handler with `--runtime` + `--channel web-chat`.
+  const skipHandlerSection = isManagedRuntime || selectedProviderId === ChatProviderIdEnum.NovuWebChat;
+  const handlerStepsAfter = skipHandlerSection ? 0 : HANDLER_STEPS;
   const isEmailChannelSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent;
   const effectiveIntegrationId = validatedSelectedId ?? selectedIntegrationId ?? legacyDefaultFromAgent?.integrationId;
 
@@ -455,7 +464,12 @@ export function AgentSetupSteps({
   // behind the same generic Continue step the details page uses for non-whats-next providers
   // (`ConnectionSuccessFooter` with `hasUserRolloutPhase={false}`) instead of auto-advancing the
   // moment they connect, so the guide stays visible with every step checked off.
-  const genericContinueGateProviders = useMemo(() => new Set<string>([ChatProviderIdEnum.Sendblue]), []);
+  // Web Chat has no user-rollout phase; hold managed onboarding behind Continue until the
+  // user embeds useWebChat and sends a first message (Connected = first inbound, like Slack).
+  const genericContinueGateProviders = useMemo(
+    () => new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.NovuWebChat]),
+    []
+  );
   const useGenericContinueGate =
     isManagedRuntime && Boolean(guideProviderId && genericContinueGateProviders.has(guideProviderId));
 
@@ -791,8 +805,8 @@ export function AgentSetupSteps({
             <SetupStep
               index={channelStepIndex}
               status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
-              title="Choose where your agent can talk"
-              description="Connect a channel so users can message the agent and receive replies."
+              title="Setup where your agent can talk"
+              description="Choose where users can message your agent and receive replies."
               fullWidthContent={
                 <ProviderCards
                   agentIdentifier={agent.identifier}
@@ -833,6 +847,7 @@ export function AgentSetupSteps({
                       stepOffset={providerGuideStepOffset}
                       embedded={false}
                       isOnboarding={isOnboarding}
+                      connectorId={connectSummary?.connectorId}
                       onStepsCompleted={handleProviderStepsCompleted}
                       onWelcomeSent={
                         guideProviderId !== EmailProviderIdEnum.NovuAgent
@@ -853,6 +868,7 @@ export function AgentSetupSteps({
                 stepOffset={providerGuideStepOffset}
                 embedded={false}
                 isOnboarding={isOnboarding}
+                connectorId={connectSummary?.connectorId}
                 onStepsCompleted={handleProviderStepsCompleted}
                 onWelcomeSent={
                   isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
@@ -866,7 +882,7 @@ export function AgentSetupSteps({
         ) : null}
       </AnimatePresence>
 
-      {channelReadyForBridge && !isManagedRuntime && (
+      {channelReadyForBridge && !skipHandlerSection && (
         <div className="pl-8">
           <AgentCodeSetupSection
             agent={agent}

@@ -3,9 +3,12 @@ import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
 import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
+  WebChatConnectOutcome,
+  WebChatSetupMode,
   AgentConnectMode,
   AgentSummary,
   AiSdkConnectOutcome,
+  BridgeProjectKind,
   BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
@@ -88,7 +91,12 @@ export interface ConnectUI {
   promptForAgentName(defaultName: string): Promise<string>;
   confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
   pickLlmAuthKind(opts: { connectMode: BridgeAdapterVariant }): Promise<LlmAuthKind>;
-  confirmScaffold(opts: { projectDir: string; appName: string; variant?: BridgeScaffoldVariant }): Promise<boolean>;
+  confirmScaffold(opts: {
+    projectDir: string;
+    appName: string;
+    variant?: BridgeScaffoldVariant;
+    llmAuthLabel?: string;
+  }): Promise<boolean>;
   scaffoldingBridge(opts: { variant: BridgeScaffoldVariant }): void;
   bridgeScaffolded(opts: {
     variant: BridgeScaffoldVariant;
@@ -272,6 +280,12 @@ export interface ConnectUI {
   slackConnected(): void;
   slackSkipped(): void;
 
+  // Web Chat path
+  addingWebChatIntegration(): void;
+  awaitWebChatHandoff(opts: { dashboardUrl: string; embedPrompt: string; embedPromptFile?: string }): Promise<void>;
+  pickWebChatSetup(opts: { projectKind: BridgeProjectKind }): Promise<WebChatSetupMode>;
+  scaffoldingWebChat(): void;
+
   // Welcome message
   sendingWelcome(): void;
 
@@ -290,6 +304,8 @@ export interface ConnectUI {
     aiSdkOutcome?: AiSdkConnectOutcome;
     langChainOutcome?: LangChainConnectOutcome;
     customCodeOutcome?: CustomCodeConnectOutcome;
+    webChatOutcome?: WebChatConnectOutcome;
+    webChatHandoff?: { dashboardUrl: string; embedPrompt?: string; embedPromptFile?: string };
   }): void;
   failure(message: string): void;
 

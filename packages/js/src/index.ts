@@ -1,25 +1,5 @@
 export type * from 'json-logic-js';
 export type {
-  AgentApprovalPart,
-  AgentChatChange,
-  AgentConversationStatus,
-  AgentConversationTyping,
-  AgentEventEnvelope,
-  AgentHashFields,
-  AgentMessage,
-  FetchMoreArgs,
-  FetchMoreResult,
-  LoadConversationArgs,
-  LoadConversationResult,
-  RespondToApprovalArgs,
-  RespondToApprovalResult,
-  SendMessageArgs,
-  SendMessageResult,
-} from './agent-chat';
-export { derivePendingApprovals } from './agent-chat';
-export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
-export { AgentChatPlanLimitError } from './api/agent-chat-service';
-export type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
   CreateChannelConnectionArgs,
@@ -37,6 +17,71 @@ export type {
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { NOTIFICATION_COUNT_SYNC_EVENTS } from './notifications/count-sync-events';
 export { Novu } from './novu';
+export type {
+  AgentApprovalPart,
+  AgentApprovalPartState,
+  AgentCardPart,
+  AgentConversationPublicationMeta,
+  AgentConversationRunSnapshot,
+  AgentConversationRuntime,
+  AgentConversationSessionStatus,
+  AgentConversationSnapshot,
+  AgentConversationStatus,
+  AgentConversationTyping,
+  AgentDataPart,
+  AgentEventEnvelope,
+  AgentFilePart,
+  AgentHashFields,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
+  AgentMcpConnectionPartState,
+  AgentMessage,
+  AgentMessagePart,
+  AgentMessageRole,
+  AgentMessageStatus,
+  AgentPendingAction,
+  AgentSourcePart,
+  AgentTextPart,
+  AgentTextPartState,
+  AgentThinkingPart,
+  AgentToolApprovalAction,
+  AgentToolApprovalDecision,
+  AgentToolDefinition,
+  AgentToolPart,
+  AgentToolPartFor,
+  AgentToolPartState,
+  ConversationArgs,
+  FetchMoreResult,
+  LoadConversationResult,
+  RespondToActionResult,
+  RetryMessageResult,
+  SendActionResult,
+  SendMessageInput,
+  SendMessageResult,
+  WebChat,
+  WebChatDefinition,
+  WebChatPagination,
+  WebChatPaginationStatus,
+  WebChatToolsDefinition,
+} from './web-chat';
+export { WebChatPlanLimitError, type WebChatPlanLimitReason } from './web-chat/web-chat-plan-limit-error';
+
+/**
+ * Load Web Chat on a {@link Novu} instance. Safe to call more than one time.
+ * Apps that never call this method do not download the Web Chat bundle.
+ *
+ * @example
+ * ```ts
+ * import { Novu, loadWebChat } from '@novu/js';
+ *
+ * const novu = new Novu({ applicationIdentifier, subscriberId });
+ * await loadWebChat(novu);
+ * const conversation = novu.webChat.conversation({ agentId: 'YOUR_AGENT_IDENTIFIER' });
+ * ```
+ */
+export function loadWebChat(novu: import('./novu').Novu): Promise<import('./web-chat').WebChat> {
+  return novu.loadWebChat();
+}
 export type {
   PreferenceFilter,
   WorkflowFilter,

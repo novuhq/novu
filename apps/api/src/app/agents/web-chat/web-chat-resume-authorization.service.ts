@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { WebChatSession } from '@novu/chat-adapter-web';
+import type { WebChatSession } from '@novu/chat-adapter-web-chat';
 import { ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { withWebChatContextFilter } from './web-chat-context-query.util';

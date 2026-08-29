@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CONNECT_HELP_TEXT } from '../help-text';
 import {
+  logWebChatDashboardUrlHandoffEvent,
+  logWebChatEmbedPromptFileHandoffEvent,
   logAuthUrlFileHandoffEvent,
   logEmailHandoffEvents,
   logSlackHandoffEvents,
@@ -142,5 +145,25 @@ describe('handoff-events', () => {
     logWhatsAppWaMeQrPngHandoffEvent({ waMeQrPngPath: '/tmp/novu-connect-qr-def456.png' });
 
     expect(log).toHaveBeenCalledWith('NOVU_CONNECT_WHATSAPP_WA_ME_QR_PNG=/tmp/novu-connect-qr-def456.png');
+  });
+
+  it('logs and documents the Web Chat handoff sentinel lines', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logWebChatDashboardUrlHandoffEvent({ dashboardUrl: 'https://dashboard.novu.test/agents/support/chat' });
+    logWebChatEmbedPromptFileHandoffEvent({
+      embedPromptFile: '/tmp/novu-connect-web-chat-embed-prompt-abc123.txt',
+    });
+
+    expect(log).toHaveBeenNthCalledWith(
+      1,
+      'NOVU_CONNECT_WEB_CHAT_DASHBOARD_URL=https://dashboard.novu.test/agents/support/chat'
+    );
+    expect(log).toHaveBeenNthCalledWith(
+      2,
+      'NOVU_CONNECT_WEB_CHAT_EMBED_PROMPT_FILE=/tmp/novu-connect-web-chat-embed-prompt-abc123.txt'
+    );
+    expect(CONNECT_HELP_TEXT).toContain('NOVU_CONNECT_WEB_CHAT_DASHBOARD_URL=<url>');
+    expect(CONNECT_HELP_TEXT).toContain('NOVU_CONNECT_WEB_CHAT_EMBED_PROMPT_FILE=<absolute path>');
   });
 });

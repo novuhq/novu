@@ -197,7 +197,7 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
       : undefined;
 
   const icon =
-    signalType === 'trigger' ? (
+    signalType === 'trigger' || signalType === 'workflow_origin' ? (
       <RiRouteFill className="text-text-soft size-3.5 shrink-0" />
     ) : (
       <RiRobot2Line className="text-text-soft size-3.5 shrink-0" />

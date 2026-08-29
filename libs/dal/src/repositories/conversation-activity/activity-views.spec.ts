@@ -31,7 +31,27 @@ describe('activity-views', () => {
       'signal.other',
       'tool_approval_request',
       'tool_approval_decision',
+      'mcp_connection_request',
+      'mcp_connection_result',
+      'custom',
     ]);
+  });
+
+  it('shows custom app data to clients and operators, not the model transcript or handoff', () => {
+    expect(getKindsForView('client_events')).to.include('custom');
+    expect(getKindsForView('operator_timeline')).to.include('custom');
+    expect(getKindsForView('llm_transcript')).to.not.include('custom');
+    expect(getKindsForView('agent_handoff')).to.not.include('custom');
+    expect(getKindsForView('approval_activities')).to.not.include('custom');
+    expect(compileActivityViewMatch('client_events').$or).to.deep.include({
+      type: ConversationActivityTypeEnum.CUSTOM,
+    });
+    expect(compileActivityViewMatch('operator_timeline').$or).to.deep.include({
+      type: ConversationActivityTypeEnum.CUSTOM,
+    });
+    expect(compileActivityViewMatch('llm_transcript').$or).to.not.deep.include({
+      type: ConversationActivityTypeEnum.CUSTOM,
+    });
   });
 
   it('keeps human messages in approval_activities so the approval requester can be resolved', () => {

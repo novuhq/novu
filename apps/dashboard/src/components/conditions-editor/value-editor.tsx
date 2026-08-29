@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
 import { shouldUseRelativeDateEditor } from '@/components/conditions-editor/field-type-editors';
+import { isValuelessOperator } from '@/components/conditions-editor/field-type-operators';
 import { HelpIcon } from '@/components/conditions-editor/help-icon';
 import { InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
@@ -51,7 +52,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
   const stringValue = typeof value === 'string' ? value : `${value}`;
   const stringValueAsArray = valueAsArray.map((v) => (typeof v === 'string' ? v : `${v}`));
 
-  if (operator === 'null' || operator === 'notNull') {
+  if (isValuelessOperator(operator)) {
     return null;
   }
 

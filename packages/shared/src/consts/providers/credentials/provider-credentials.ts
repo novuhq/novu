@@ -1019,6 +1019,20 @@ export const emailWebhookConfig: IConfigCredential[] = [
     description: 'the secret used to sign webhooks calls',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.HmacSecretKeyEncoding,
+    displayName: 'Secret Hmac Key Encoding',
+    type: 'dropdown',
+    description:
+      'how the Secret Hmac Key is interpreted when signing webhook calls — Base-64/HEX for binary keys (e.g. AWS KMS)',
+    required: false,
+    value: 'text',
+    dropdown: [
+      { name: 'Text', value: 'text' },
+      { name: 'Base-64', value: 'base64' },
+      { name: 'HEX', value: 'hex' },
+    ],
+  },
   ...mailConfigBase,
 ];
 
@@ -1051,7 +1065,7 @@ export const novuInAppConfig: IConfigCredential[] = [
   },
 ];
 
-/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for web chat. */
+/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for Web Chat. */
 export const novuWebChatConfig: IConfigCredential[] = novuInAppConfig;
 
 export const sendchampConfig: IConfigCredential[] = [

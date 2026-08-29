@@ -21,14 +21,47 @@ export class WebChatPublicationService {
     private readonly environmentRepository: EnvironmentRepository
   ) {}
 
+  /**
+   * Resolve the Web Chat publication for a specific agent.
+   * Must not pick an arbitrary env-wide `novu-web-chat` integration — orgs
+   * can have one per agent; only the link for *this* agent counts.
+   */
   async resolvePublishedAgent(
     agentIdentifier: string,
     environmentId: string,
     organizationId: string,
     agentHash?: string
   ): Promise<PublishedWebChatAgent> {
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: agentIdentifier,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      ['_id', 'identifier', 'active']
+    );
+
+    if (!agent || agent.active === false) {
+      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
+    }
+
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _agentId: agent._id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      ['_integrationId']
+    );
+
+    if (links.length === 0) {
+      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
+    }
+
+    const linkedIntegrationIds = links.map((link) => link._integrationId);
     const integration = await this.integrationRepository.findOne(
       {
+        _id: { $in: linkedIntegrationIds } as unknown as string,
         _environmentId: environmentId,
         _organizationId: organizationId,
         providerId: ChatProviderIdEnum.NovuWebChat,
@@ -55,33 +88,6 @@ export class WebChatPublicationService {
         subscriberId: agentIdentifier,
         subscriberHash: agentHash,
       });
-    }
-
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: agentIdentifier,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['_id', 'identifier', 'active']
-    );
-
-    if (!agent || agent.active === false) {
-      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
-    }
-
-    const link = await this.agentIntegrationRepository.findOne(
-      {
-        _agentId: agent._id,
-        _integrationId: integration._id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['_id']
-    );
-
-    if (!link) {
-      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
     }
 
     return {

@@ -1,5 +1,4 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import type { AgentChatMessagesUpdated } from '../agent-chat/types';
 import type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
@@ -176,7 +175,7 @@ type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, u
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
 export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
 export type NotificationUnreadEvent = `notifications.${WebSocketEvent.UNREAD}`;
-export type AgentChatAgentEvent = 'agent_chat.agent_event';
+export type WebChatAgentEvent = 'web_chat.agent_event';
 type SocketEvents = {
   [key in NotificationReceivedEvent]: { result: Notification };
 } & {
@@ -184,11 +183,7 @@ type SocketEvents = {
 } & {
   [key in NotificationUnreadEvent]: { result: { total: number; severity: Record<string, number> } };
 } & {
-  [key in AgentChatAgentEvent]: { result: AgentEventEnvelope };
-};
-
-type AgentChatEvents = {
-  'agent_chat.messages.updated': { data: AgentChatMessagesUpdated };
+  [key in WebChatAgentEvent]: { result: AgentEventEnvelope };
 };
 
 /**
@@ -234,7 +229,6 @@ export type Events = SessionInitializeEvents &
   ChannelEndpointLinkEvents &
   SocketConnectEvents &
   SocketEvents &
-  AgentChatEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &
   NotificationSeenEvents &

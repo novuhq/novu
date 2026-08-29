@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import {
+  AGENT_EVENT_PROTOCOL_VERSION,
+  type AgentEvent,
+  type AgentEventEnvelope,
+  type AgentMessageContent,
+} from '@novu/agent-event-protocol';
 import { shortId } from '@novu/application-generic';
 
 type WebChatFactoryBaseInput = {
@@ -14,12 +19,12 @@ type WebChatFactoryBaseInput = {
 
 export type WebChatFactoryMessageInput = WebChatFactoryBaseInput & {
   platformMessageId: string;
-  content: { markdown: string };
+  content: AgentMessageContent;
 };
 
 export type WebChatFactoryEditInput = WebChatFactoryBaseInput & {
   platformMessageId: string;
-  content: { markdown: string };
+  content: AgentMessageContent;
 };
 
 export type WebChatFactoryDeleteInput = WebChatFactoryBaseInput & {
@@ -68,6 +73,13 @@ export class WebChatEventFactory {
       state: input.state,
       ...(input.status !== undefined ? { status: input.status } : {}),
     });
+  }
+
+  /** Live-only envelopes (typing, provider-event) with a minted conversation sequence. */
+  createEphemeralEnvelope(
+    input: WebChatFactoryBaseInput & { event: AgentEvent; runId?: string; turnId?: string }
+  ): AgentEventEnvelope {
+    return this.build(input, input.event);
   }
 
   private build(input: WebChatFactoryBaseInput, event: AgentEvent): AgentEventEnvelope {

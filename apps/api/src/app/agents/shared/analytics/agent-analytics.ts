@@ -169,6 +169,7 @@ export function trackAgentReplyProcessed(
     actions: string[];
     triggerSignalCount: number;
     metadataSignalCount: number;
+    humanSignalCount?: number;
     reactionCount: number;
   }
 ): void {
@@ -181,6 +182,7 @@ export function trackAgentReplyProcessed(
     actions: params.actions,
     triggerSignalCount: params.triggerSignalCount,
     metadataSignalCount: params.metadataSignalCount,
+    humanSignalCount: params.humanSignalCount ?? 0,
     reactionCount: params.reactionCount,
   });
 }

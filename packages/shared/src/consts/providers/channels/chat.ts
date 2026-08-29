@@ -156,7 +156,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Novu Web Chat',
     channel: ChannelTypeEnum.CHAT,
     credentials: novuWebChatConfig,
-    docReference: `https://docs.novu.co/platform/integrations/chat/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+    docReference: `https://docs.novu.co/agents/channels/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu-web-chat.svg', dark: 'novu-web-chat.svg' },
   },
 ];

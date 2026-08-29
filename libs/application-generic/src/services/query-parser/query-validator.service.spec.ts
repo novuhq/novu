@@ -80,6 +80,69 @@ describe('QueryValidatorService', () => {
       });
     });
 
+    describe('existing skip rules', () => {
+      it('should still accept stored equals and is-null comparison rules', () => {
+        const equalsRule: RulesLogic<AdditionalOperation> = {
+          '==': [{ var: 'payload.foo' }, 'high'],
+        };
+        const isNullRule: RulesLogic<AdditionalOperation> = {
+          '==': [{ var: 'payload.foo' }, null],
+        };
+
+        expect(queryValidatorService.validateQueryRules(equalsRule)).to.be.empty;
+        expect(queryValidatorService.validateQueryRules(isNullRule)).to.be.empty;
+      });
+
+      it('should still reject equals with an empty comparison value', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          '==': [{ var: 'payload.foo' }, ''],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.MISSING_VALUE);
+      });
+    });
+
+    describe('unary string operators', () => {
+      for (const operator of ['isEmpty', 'isNonEmpty']) {
+        it(`should validate a valid ${operator} operation`, () => {
+          const rule: RulesLogic<AdditionalOperation> = {
+            [operator]: [{ var: 'payload.foo' }],
+          };
+
+          const issues = queryValidatorService.validateQueryRules(rule);
+
+          expect(issues).to.be.empty;
+        });
+
+        it(`should reject an invalid ${operator} operation structure`, () => {
+          const rule: RulesLogic<AdditionalOperation> = {
+            [operator]: [{ var: 'payload.foo' }, 'unexpected'],
+          };
+
+          const issues = queryValidatorService.validateQueryRules(rule);
+
+          expect(issues).to.have.lengthOf(1);
+          expect(issues[0].message).to.include(`Invalid operation structure for operator "${operator}"`);
+          expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_STRUCTURE);
+        });
+
+        it(`should reject an invalid field reference for ${operator}`, () => {
+          const rule: RulesLogic<AdditionalOperation> = {
+            [operator]: [{ var: '' }],
+          };
+
+          const issues = queryValidatorService.validateQueryRules(rule);
+
+          expect(issues).to.have.lengthOf(1);
+          expect(issues[0].message).to.include('Value is not valid');
+          expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+        });
+      }
+    });
+
     describe('in operation', () => {
       it('should detect invalid array in operation', () => {
         const rule: any = {

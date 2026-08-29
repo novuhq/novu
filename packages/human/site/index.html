@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>human.md — the human API for agents</title>
+<meta name="description" content="human.md gives AI agents a one-line way to reach a real person on Telegram or Slack, and block until they answer. npm install -g @novu/human.">
+<link rel="canonical" href="https://human.md/">
+</head>
+<body>
+<p><a href="/sapien.html">Human? Visit human.md/sapien.html for the human-readable version.</a></p>
+
+<pre>
+================================================================================
+  human.md — the human API for agents
+================================================================================
+
+Agents are connected to everything except the humans they work for.
+`human` gives any agent a one-line way to reach a real person on Telegram
+(Slack coming next) and block until they answer.
+
+INSTALL
+-------
+  npm install -g @novu/human
+
+SETUP (once, by the human)
+---------------------------
+  npx @novu/human setup                # interactive channel picker
+  npx @novu/human setup telegram
+  npx @novu/human setup slack
+
+USAGE (forever after, by any agent on the machine)
+----------------------------------------------------
+  human ask "Which environment should I deploy to?"
+  human approve "Delete 342 stale records from prod?"
+  human choose "Pick a release strategy" --option canary --option blue-green
+  human tell "Nightly build finished — 0 failures."
+
+HOW IT WORKS
+------------
+  - `setup` provisions a keyless Novu environment (no account needed), a
+    hidden relay agent, and links a channel — Telegram via QR, Slack via
+    app install. Run it again with another channel to add more. Linked
+    channels live on the server; `human channels --default slack` sets
+    the local preference when you don't pass `--via`.
+  - Agents stay channel-blind: routing is the human's preference.
+    `--via telegram|slack|email` exists as a rare per-call override.
+  - Each command delivers a one-off message (with action buttons where
+    relevant) and BLOCKS until the human answers, the --ttl expires, or
+    --timeout elapses.
+  - Answers flow back through button clicks or plain replies; the CLI
+    resolves and your agent continues.
+
+EXIT CODES (stable contract for agents)
+----------------------------------------
+  0    answered / approved / chosen / delivered
+  10   denied
+  11   timed out waiting — still pending, resume with `human wait <id>`
+  12   expired or canceled
+  1    error
+
+FLAGS
+-----
+  --from <name>         attribution shown to the human ("Requested by deploy-bot")
+  --ttl <duration>       how long the request stays answerable (default 24h, max 72h)
+  --timeout <duration>   max time this invocation blocks; on timeout it prints
+                          the id so `human wait <id>` can resume
+  --async                don't block; print the interaction id immediately
+  --json                 full interaction object for programmatic parsing
+  --to <humanId>         address a linked human, or comma-separated humans
+                          (link others first with `human invite`)
+  --via <platform>       deliver on a specific linked channel instead of default
+
+INVITE (link another human)
+---------------------------
+  human invite alice --via slack
+  human invite bob --via telegram --async
+  human invite carol --via email --email carol@acme.com
+
+  Prints a connect URL for that person (same OAuth / Telegram deep-link
+  as setup). Does not change your local subscriberId. After they connect,
+  address them with --to.
+
+AUTH
+----
+  `setup` stores credentials in ~/.novu/human.json. Alternatively set
+  NOVU_SECRET_KEY (and optionally NOVU_API_URL) for an existing Novu
+  environment.
+
+LINKS
+-----
+  npm     https://www.npmjs.com/package/@novu/human
+  source  https://github.com/novuhq/novu/tree/main/packages/human
+  human   https://human.md/sapien.html
+
+================================================================================
+  MIT License — built by Novu (https://novu.co)
+================================================================================
+</pre>
+</body>
+</html>

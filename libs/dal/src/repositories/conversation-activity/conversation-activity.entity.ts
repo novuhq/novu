@@ -20,12 +20,18 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
   /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
+  /** An MCP OAuth connection is required before the agent can continue. */
+  MCP_CONNECTION_REQUEST = 'mcp_connection_request',
+  /** Outcome of a previously requested MCP OAuth connection. */
+  MCP_CONNECTION_RESULT = 'mcp_connection_result',
   /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
   RUN_START = 'run_start',
   /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
   RUN_FINISH = 'run_finish',
   /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
   RUN_ERROR = 'run_error',
+  /** App-emitted UI data (`richContent.custom` holds `{ name, data }`). Client events + operator timeline. */
+  CUSTOM = 'custom',
 }
 
 /** Storage types for protocol run lifecycle rows — visibility is governed by activity views. */
@@ -65,6 +71,8 @@ export interface ConversationActivityToolData {
   approveActionId?: string;
   /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
   denyActionId?: string;
+  /** MCP server name when the gated tool is from an MCP server (request). */
+  mcpServerName?: string;
 }
 
 export class ConversationActivityEntity {

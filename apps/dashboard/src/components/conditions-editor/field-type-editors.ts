@@ -1,9 +1,9 @@
 import type { ValueEditorType } from 'react-querybuilder';
 import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
-import { isRelativeDateOperator } from './field-type-operators';
+import { isRelativeDateOperator, isValuelessOperator } from './field-type-operators';
 
 export function getValueEditorTypeForField(fieldName: string, operator: string): ValueEditorType {
-  if (operator === 'null' || operator === 'notNull') {
+  if (isValuelessOperator(operator)) {
     return null;
   }
 

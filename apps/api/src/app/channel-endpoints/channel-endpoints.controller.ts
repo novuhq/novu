@@ -26,6 +26,7 @@ import {
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
@@ -131,6 +132,10 @@ export class ChannelEndpointsController {
   })
   @ApiResponse(ListChannelEndpointsResponseDto, 200)
   @ExternalApiAccessible()
+  // Keyless: the `human` CLI setup polls this list to detect the Telegram
+  // /start link landing; the keyless strategy already scopes results to the
+  // caller's own keyless environment.
+  @KeylessAccessible()
   @SdkMethodName('list')
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listChannelEndpoints(

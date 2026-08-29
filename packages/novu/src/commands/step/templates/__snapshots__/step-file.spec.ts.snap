@@ -369,3 +369,54 @@ export default step.sms(
 );
 "
 `;
+
+exports[`generateToolStepFile > should match snapshot with zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+
+export default step.tool(
+  'page-oncall',
+  async (controls) => ({
+    body: controls.body,
+  }),
+  {
+    controlSchema: z.object({
+      body: z.string().default('An incident requires attention.'),
+    }),
+    // providers: {
+    //   'tool-webhook': async ({ outputs }) => ({
+    //     alert_type: 'incident',
+    //     title: outputs.body,
+    //   }),
+    // },
+  }
+);
+"
+`;
+
+exports[`generateToolStepFile > should match snapshot without zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.tool(
+  'page-oncall',
+  async (controls) => ({
+    body: controls.body,
+  }),
+  {
+    controlSchema: {
+      type: 'object',
+      properties: {
+        body: { type: 'string', default: 'An incident requires attention.' },
+      },
+      additionalProperties: false,
+    } as const,
+    // providers: {
+    //   'tool-webhook': async ({ outputs }) => ({
+    //     alert_type: 'incident',
+    //     title: outputs.body,
+    //   }),
+    // },
+  }
+);
+"
+`;

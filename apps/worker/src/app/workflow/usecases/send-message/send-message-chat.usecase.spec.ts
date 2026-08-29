@@ -9,7 +9,7 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageChat } from './send-message-chat.usecase';
+import { hasChatContentOverride, SendMessageChat } from './send-message-chat.usecase';
 import { SendMessageStatus } from './send-message-type.usecase';
 
 describe('SendMessageChat - phone-based channel de-duplication', () => {
@@ -226,8 +226,14 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     return usecase;
   }
 
-  function buildCommand(options: { providerOverrides?: Record<string, unknown>; overrides?: TriggerOverrides } = {}) {
-    const { providerOverrides, overrides = {} } = options;
+  function buildCommand(
+    options: {
+      providerOverrides?: Record<string, unknown>;
+      overrides?: TriggerOverrides;
+      card?: Record<string, unknown>;
+    } = {}
+  ) {
+    const { providerOverrides, overrides = {}, card } = options;
 
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
@@ -248,7 +254,10 @@ describe('SendMessageChat - Slack provider content overrides', () => {
         subscriber: { subscriberId: 'sub_1', locale: 'en', channels: [] },
       } as never,
       bridgeData: {
-        outputs: { body: 'compiled step body' },
+        outputs: {
+          body: 'compiled step body',
+          ...(card ? { card } : {}),
+        },
         ...(providerOverrides && { providers: { [ChatProviderIdEnum.Slack]: providerOverrides } }),
       } as never,
       step: {
@@ -314,6 +323,97 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     expect(post.firstCall.args[1].text).to.equal('compiled step body');
   });
+
+  function stubSlackHandlerWithCardResolve(nativePayload: Record<string, unknown>) {
+    const handler = new ChatFactory().getHandler(slackIntegration as never);
+    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
+    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+
+    const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
+    provider.axiosInstance = { post };
+
+    const resolveCardContent = sinon.stub(handler as never, 'resolveCardContent').resolves({
+      content: 'card fallback text',
+      nativePayload,
+      validation: [],
+    });
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns(handler);
+
+    return { post, resolveCardContent };
+  }
+
+  const demoCard = {
+    type: 'card',
+    children: [{ type: 'text', content: 'default card body', style: 'plain' }],
+  };
+
+  it('does not send default card Block Kit when a Slack text content override is set (NV-8548)', async () => {
+    const cardBlocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'default card block' } }];
+    const { post, resolveCardContent } = stubSlackHandlerWithCardResolve({ blocks: cardBlocks });
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        providerOverrides: { text: 'override text from providerOverrides' },
+        card: demoCard,
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(resolveCardContent);
+    sinon.assert.calledOnce(post);
+
+    const body = post.firstCall.args[1];
+    expect(body.text).to.equal('override text from providerOverrides');
+    expect(body.blocks).to.equal(undefined);
+  });
+
+  it('still resolves the compiled card into Block Kit when there is no content override', async () => {
+    const cardBlocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'default card block' } }];
+    const { post, resolveCardContent } = stubSlackHandlerWithCardResolve({ blocks: cardBlocks });
+
+    const result = await buildUsecase().execute(buildCommand({ card: demoCard }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(resolveCardContent);
+    expect(post.firstCall.args[1].text).to.equal('card fallback text');
+    expect(post.firstCall.args[1].blocks).to.deep.equal(cardBlocks);
+  });
+
+  it('still resolves the compiled card when overrides are routing/metadata-only', async () => {
+    const cardBlocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'default card block' } }];
+    const { post, resolveCardContent } = stubSlackHandlerWithCardResolve({ blocks: cardBlocks });
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        providerOverrides: {
+          webhookUrl: 'https://hooks.example/override',
+          'slack-endpoint': { endpoint: { channelId: 'C_OVERRIDE' } },
+        },
+        card: demoCard,
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(resolveCardContent);
+    expect(post.firstCall.args[1].blocks).to.deep.equal(cardBlocks);
+  });
+});
+
+describe('hasChatContentOverride', () => {
+  it('treats primary content and native rich payloads as content overrides', () => {
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { text: 'hi' })).to.equal(true);
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { blocks: [] })).to.equal(true);
+    expect(hasChatContentOverride(ChatProviderIdEnum.MsTeams, { attachments: [] })).to.equal(true);
+  });
+
+  it('ignores routing and metadata-only keys', () => {
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { webhookUrl: 'https://example.com' })).to.equal(false);
+    expect(
+      hasChatContentOverride(ChatProviderIdEnum.Slack, {
+        'slack-endpoint': { endpoint: { channelId: 'C123' } },
+      })
+    ).to.equal(false);
+  });
 });
 
 describe('SendMessageChat - agent assigned path', () => {
@@ -336,17 +436,28 @@ describe('SendMessageChat - agent assigned path', () => {
     sinon.restore();
   });
 
-  function buildAgentUsecase(options: {
-    channelData?: unknown[];
-    linked?: boolean;
-    chatHandlerSend?: sinon.SinonStub;
-    updateMessage?: sinon.SinonStub;
-    jobAgentId?: string | null;
-    workflowAgentIdentifier?: string;
-  } = {}) {
+  function buildAgentUsecase(
+    options: {
+      channelData?: unknown[];
+      linked?: boolean;
+      linkedRefs?: Array<{ identifier: string; providerId: string }>;
+      integration?: {
+        _id: string;
+        identifier: string;
+        providerId: ChatProviderIdEnum;
+        channel: ChannelTypeEnum;
+        credentials: Record<string, unknown>;
+      };
+      chatHandlerSend?: sinon.SinonStub;
+      updateMessage?: sinon.SinonStub;
+      jobAgentId?: string | null;
+      workflowAgentIdentifier?: string;
+    } = {}
+  ) {
     const {
       channelData = [slackUserData],
       linked = true,
+      integration = slackIntegration,
       chatHandlerSend = sinon.stub().resolves({
         id: 'D123:1777837477.371619',
         date: new Date().toISOString(),
@@ -355,6 +466,9 @@ describe('SendMessageChat - agent assigned path', () => {
       jobAgentId,
       workflowAgentIdentifier,
     } = options;
+    const linkedRefs =
+      options.linkedRefs ??
+      (linked ? [{ identifier: integration.identifier, providerId: integration.providerId }] : []);
 
     sinon.stub(ChatFactory.prototype, 'getHandler').returns({
       send: chatHandlerSend,
@@ -365,7 +479,7 @@ describe('SendMessageChat - agent assigned path', () => {
       findOne: sinon.stub().resolves(workflowAgentIdentifier ? { _id: 'agent_from_workflow' } : null),
     };
     const agentIntegrationRepository = {
-      listLinkedIntegrationIdentifiers: sinon.stub().resolves(linked ? ['slack-main'] : []),
+      listLinkedIntegrationRefs: sinon.stub().resolves(linkedRefs),
     };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
@@ -375,7 +489,7 @@ describe('SendMessageChat - agent assigned path', () => {
       update: updateMessage,
     };
     const selectIntegration = {
-      execute: sinon.stub().resolves(slackIntegration),
+      execute: sinon.stub().resolves(integration),
     };
     const featureFlagsService = {
       getFlag: sinon.stub().resolves(false),
@@ -398,8 +512,8 @@ describe('SendMessageChat - agent assigned path', () => {
       {
         execute: sinon.stub().resolves([
           {
-            integrationIdentifier: 'slack-main',
-            providerId: ChatProviderIdEnum.Slack,
+            integrationIdentifier: integration.identifier,
+            providerId: integration.providerId,
             channelData,
           },
         ]),
@@ -452,9 +566,7 @@ describe('SendMessageChat - agent assigned path', () => {
           content: 'agent hello',
         },
       } as never,
-      workflow: workflowAgentIdentifier
-        ? ({ agent: { identifier: workflowAgentIdentifier } } as never)
-        : undefined,
+      workflow: workflowAgentIdentifier ? ({ agent: { identifier: workflowAgentIdentifier } } as never) : undefined,
       job: {
         _id: 'job_1',
         _environmentId: 'env_1',
@@ -618,6 +730,48 @@ describe('SendMessageChat - agent assigned path', () => {
     });
   });
 
+  it('routes agent-assigned MS Teams user endpoints without the chat-channels fallback', async () => {
+    const teamsActivityId = 'activity-abc123';
+    const chatHandlerSend = sinon.stub().resolves({ id: teamsActivityId, date: new Date().toISOString() });
+    const { usecase, updateMessage, createExecutionDetails } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      chatHandlerSend,
+      integration: {
+        _id: 'integration_teams',
+        identifier: 'msteams-main',
+        providerId: ChatProviderIdEnum.MsTeams,
+        channel: ChannelTypeEnum.CHAT,
+        credentials: {},
+      },
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.MS_TEAMS_USER,
+          identifier: 'ep_teams_user',
+          token: 'bot-framework-token',
+          endpoint: { userId: '29:user1' },
+          subscriberTenantId: 'tenant-1',
+          clientId: 'client-1',
+        },
+      ],
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[1]).to.deep.equal({
+      $set: {
+        identifier: teamsActivityId,
+        _agentId: 'agent_1',
+      },
+    });
+    const fallbackWarning = createExecutionDetails.execute
+      .getCalls()
+      .find((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK);
+    expect(fallbackWarning).to.equal(undefined);
+  });
+
   it('resolves workflow.agent when job._agentId is unset and stamps with that agent', async () => {
     const { usecase, chatHandlerSend, updateMessage } = buildAgentUsecase({
       workflowAgentIdentifier: 'support-agent',
@@ -629,5 +783,253 @@ describe('SendMessageChat - agent assigned path', () => {
     sinon.assert.calledOnce(chatHandlerSend);
     sinon.assert.calledOnce(updateMessage);
     expect(updateMessage.firstCall.args[1].$set._agentId).to.equal('agent_from_workflow');
+  });
+
+  it('stamps _agentId on legacy WhatsApp phone sends when an agent is assigned', async () => {
+    const chatHandlerSend = sinon.stub().resolves({
+      id: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+      date: new Date().toISOString(),
+    });
+    const updateMessage = sinon.stub().resolves(undefined);
+    const whatsappIntegration = {
+      _id: 'integration_wa',
+      identifier: 'whatsapp-main',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'token', phoneNumberIdentification: '123' },
+    };
+
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({
+      send: chatHandlerSend,
+      resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
+    } as never);
+
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+      updateMessageStatus: sinon.stub().resolves(undefined),
+      update: updateMessage,
+    };
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return whatsappIntegration;
+        }
+
+        return null;
+      }),
+    };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      {
+        listLinkedIntegrationRefs: sinon
+          .stub()
+          .resolves([{ identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
+      } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    const command = buildAgentCommand({ jobAgentId: 'agent_1' });
+    (command.compileContext.subscriber as { phone?: string; channels?: unknown[] }).phone = '+15551234567';
+    (command.compileContext.subscriber as { channels?: unknown[] }).channels = [];
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[1]).to.deep.equal({
+      $set: {
+        identifier: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+        _agentId: 'agent_1',
+      },
+    });
+  });
+
+  it('gates to the agent-linked phone provider and drops other phone channels from fan-out', async () => {
+    const chatHandlerSend = sinon.stub().resolves({
+      id: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+      date: new Date().toISOString(),
+    });
+    const whatsappIntegration = {
+      _id: 'integration_wa',
+      identifier: 'whatsapp-main',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'token', phoneNumberIdentification: '123' },
+    };
+
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({
+      send: chatHandlerSend,
+      resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
+    } as never);
+
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+      updateMessageStatus: sinon.stub().resolves(undefined),
+      update: sinon.stub().resolves(undefined),
+    };
+    // Both WhatsApp and Sendblue have active integrations selectable for this subscriber's phone.
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return whatsappIntegration;
+        }
+        if (command.providerId === ChatProviderIdEnum.Sendblue) {
+          return { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue };
+        }
+
+        return null;
+      }),
+    };
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      {
+        listLinkedIntegrationRefs: sinon
+          .stub()
+          .resolves([{ identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
+      } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    const command = buildAgentCommand({ jobAgentId: 'agent_1' });
+    (command.compileContext.subscriber as { phone?: string; channels?: unknown[] }).phone = '+15551234567';
+    (command.compileContext.subscriber as { channels?: unknown[] }).channels = [];
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    // Only the agent-linked WhatsApp send fires — Sendblue is gated out, so no fan-out.
+    sinon.assert.calledOnce(chatHandlerSend);
+    const usedFallback = createExecutionDetails.execute
+      .getCalls()
+      .some((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK);
+    expect(usedFallback).to.equal(false);
+    expect(messageRepository.create.firstCall.args[0].providerId).to.equal(ChatProviderIdEnum.WhatsAppBusiness);
+  });
+
+  it('dispatches agent-assigned legacy WhatsApp via the linked integration, not another active WhatsApp of the same provider', async () => {
+    const chatHandlerSend = sinon.stub().resolves({
+      id: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+      date: new Date().toISOString(),
+    });
+    const linkedIntegration = {
+      _id: 'integration_wa_linked',
+      identifier: 'whatsapp-linked',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'linked-token', phoneNumberIdentification: '111' },
+    };
+    const otherActiveIntegration = {
+      _id: 'integration_wa_other',
+      identifier: 'whatsapp-other',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'other-token', phoneNumberIdentification: '222' },
+    };
+
+    let capturedIntegration: { identifier?: string; _id?: string } | undefined;
+    sinon.stub(ChatFactory.prototype, 'getHandler').callsFake((integration) => {
+      capturedIntegration = integration as { identifier?: string; _id?: string };
+
+      return {
+        send: chatHandlerSend,
+        resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
+      } as never;
+    });
+
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+      updateMessageStatus: sinon.stub().resolves(undefined),
+      update: sinon.stub().resolves(undefined),
+    };
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string; identifier?: string }) => {
+        if (command.identifier === 'whatsapp-linked') {
+          return linkedIntegration;
+        }
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return otherActiveIntegration;
+        }
+
+        return null;
+      }),
+    };
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      {
+        listLinkedIntegrationRefs: sinon
+          .stub()
+          .resolves([{ identifier: 'whatsapp-linked', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
+      } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    const command = buildAgentCommand({ jobAgentId: 'agent_1' });
+    (command.compileContext.subscriber as { phone?: string; channels?: unknown[] }).phone = '+15551234567';
+    (command.compileContext.subscriber as { channels?: unknown[] }).channels = [];
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.calledWithMatch(selectIntegration.execute, { identifier: 'whatsapp-linked' });
+    expect(capturedIntegration?.identifier).to.equal('whatsapp-linked');
+    expect(capturedIntegration?._id).to.equal('integration_wa_linked');
+  });
+
+  it('persists templateIdentifier so workflow-origin hydration can name the workflow', async () => {
+    const { usecase, messageRepository } = buildAgentUsecase({ jobAgentId: 'agent_1' });
+
+    await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(messageRepository.create.firstCall.args[0].templateIdentifier).to.equal('wf-identifier');
   });
 });

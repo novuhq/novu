@@ -15,13 +15,15 @@ const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    // Raised for headless agentChat on Novu (NV-8445). Split to ./agent-chat later if needed.
-    limitInBytes: 224_000,
+    // Raised for agent conversation runtime (NV-8640), protocol validation (NV-8644),
+    // web-chat idempotency/retry (NV-8642), publication meta (NV-8641),
+    // and lazy Web Chat load (NV-8698).
+    limitInBytes: 242_000,
   },
   {
     name: 'UMD gzip',
     filePath: umdGzipPath,
-    limitInBytes: 62_000,
+    limitInBytes: 66_000,
   },
 ];
 

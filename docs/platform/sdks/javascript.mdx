@@ -1,6 +1,6 @@
 ---
 title: '@novu/js'
-description: "Complete API reference for the @novu/js browser SDK, covering the Novu client, notification streams, preferences, counts, and session management."
+description: "Complete API reference for the @novu/js browser SDK, covering the Novu client, notification streams, preferences, counts, Web Chat, and session management."
 ---
 
 
@@ -749,6 +749,81 @@ subscription.preferences.map((preference) => {
 ```
 await subscription.delete();
 ```
+
+## Web Chat
+
+Two-way in-app chat with an agent. Call `loadWebChat(novu)` before `novu.webChat.conversation()`. React apps use [`useWebChat`](/platform/sdks/react/hooks/use-web-chat), which loads Web Chat automatically.
+
+See [Quickstart](/agents/channels/web-chat/quickstart).
+
+### conversation()
+
+`conversation()` returns a runtime for one conversation. If you pass `conversationId`, later calls with the same `agentId` and `conversationId` reuse that runtime. If you omit `conversationId`, each call creates a new runtime and a new socket. Keep the returned object. When the chat unmounts, call `dispose()`.
+
+Do not call `novu.webChat.subscribe()` from UI code. The runtime owns the socket.
+
+| Argument | Type | Description |
+| --- | --- | --- |
+| `agentId` | `string` | Public agent identifier from the dashboard. |
+| `conversationId` | `string` | Resume this conversation. Omit this argument to start a new chat. |
+| `agentHash` | `string` | HMAC of `agentId`. Required when Web Chat HMAC is on. |
+
+```typescript
+import { Novu, loadWebChat } from '@novu/js';
+
+const novu = new Novu({
+  applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
+  subscriberId: 'YOUR_SUBSCRIBER_ID',
+});
+
+await loadWebChat(novu);
+
+const conversation = novu.webChat.conversation({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+const stop = conversation.subscribe((snapshot) => {
+  snapshot.messages;
+  snapshot.run.isRunning;
+  snapshot.conversationId;
+});
+
+const { data, error } = await conversation.sendMessage('Hello');
+// data.conversationId — store this to resume later
+
+stop();
+conversation.dispose();
+```
+
+### Runtime methods
+
+| Method | Description |
+| --- | --- |
+| `getSnapshot()` | Current immutable snapshot. |
+| `subscribe(listener)` | Call `listener` on every snapshot. Returns a stop function. |
+| `sendMessage(input)` | Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. |
+| `retryMessage(messageId)` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. |
+| `respondToAction({ actionId, decision })` | Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. |
+| `sendAction({ actionId, sourceMessageId, value })` | Click a Card button. Do not use this for tool approval. |
+| `fetchMore()` | Load the next older history page. |
+| `load()` | Reload the newest history page. Runs on resume when `conversationId` is set. |
+| `dispose()` | Stop listeners and release the socket. |
+
+### Snapshot fields
+
+| Field | Description |
+| --- | --- |
+| `messages` | Conversation timeline. |
+| `pendingActions` | Tool approvals and MCP connect items that are still pending. |
+| `conversationId` | Server id after create or resume. |
+| `run.isRunning` / `run.typing` | Agent-turn snapshot. |
+| `conversationStatus` | `'active'` or `'resolved'`. This is not a loading flag. |
+| `status` | History load: `'ready'`, `'loading'`, or `'fetching'`. |
+| `pagination.hasMore` / `pagination.status` | Older history pages. Call `fetchMore()`. |
+| `isRecovering` / `catchUpError` | Reconnect recovery. The runtime reconnects on its own. |
+| `error` | Last load, send, retry, or action error. |
+
+See [Chat UI](/agents/channels/web-chat/chat-ui).
 
 ## Types
 

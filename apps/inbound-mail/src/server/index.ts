@@ -7,7 +7,7 @@ import events from 'events';
 import extend from 'extend';
 import { convert } from 'html-to-text';
 import _ from 'lodash';
-import { MailParser } from 'mailparser';
+import { simpleParser } from 'mailparser';
 import path from 'path';
 import shell from 'shelljs';
 import { SMTPServer } from 'smtp-server';
@@ -18,6 +18,7 @@ import { uploadAttachmentsToS3 } from './attachment-uploader';
 import { collectClientIpSources } from './client-ip-sources';
 import { InboundMailService } from './inbound-mail.service';
 import logger from './logger';
+import { normalizeParsedMail } from './mail-normalizer';
 
 const nr = require('newrelic');
 
@@ -443,43 +444,27 @@ class Mailin extends events.EventEmitter {
     }
 
     function parseEmail(connection) {
-      return nr.startSegment(
-        'inbound-mail/parse-email',
-        true,
-        () =>
-          new Promise((resolve) => {
-            logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Parsing email.`);
+      return nr.startSegment('inbound-mail/parse-email', true, async () => {
+        logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Parsing email.`);
 
-            /* Prepare the mail parser. */
-            const mailParser = new MailParser();
+        const parsed = await simpleParser(fs.createReadStream(connection.mailPath));
+        const mail = normalizeParsedMail(parsed);
 
-            mailParser.on('end', (mail) => {
-              /*
-               * logger.verbose(util.inspect(mail, {
-               * depth: 5
-               * }));
-               */
+        /*
+         * Make sure that both text and html versions of the
+         * body are available.
+         */
+        if (!mail.text && !mail.html) {
+          mail.text = '';
+          mail.html = '<div></div>';
+        } else if (!mail.html) {
+          mail.html = _this._convertTextToHtml(mail.text);
+        } else if (!mail.text) {
+          mail.text = _this._convertHtmlToText(mail.html);
+        }
 
-              /*
-               * Make sure that both text and html versions of the
-               * body are available.
-               */
-              if (!mail.text && !mail.html) {
-                mail.text = '';
-                mail.html = '<div></div>';
-              } else if (!mail.html) {
-                mail.html = _this._convertTextToHtml(mail.text);
-              } else if (!mail.text) {
-                mail.text = _this._convertHtmlToText(mail.html);
-              }
-
-              return resolve(mail);
-            });
-
-            /* Stream the written email to the parser. */
-            fs.createReadStream(connection.mailPath).pipe(mailParser);
-          })
-      );
+        return mail;
+      });
     }
 
     function detectLanguage(connection, text) {
@@ -596,22 +581,15 @@ class Mailin extends events.EventEmitter {
 
       /*
        * Preserve threading headers so downstream consumers can correlate
-       * replies back to the original outbound message.
-       * mailparser@0.6.x stores both fields as string[] — normalise them to
-       * the shapes expected by IInboundParseDataDto / InboundEmailParseCommand
-       * so class-validator's @IsString() / @IsOptional() passes correctly.
+       * replies back to the original outbound message. normalizeParsedMail
+       * already guarantees bracketless ids with the shapes below; map absent
+       * values to null so class-validator's @IsString() / @IsOptional() on
+       * IInboundParseDataDto / InboundEmailParseCommand passes correctly.
        * inReplyTo  → string | null  (RFC 5322 allows only one message-id)
        * references → string[] | null
        */
-      parsedEmail.inReplyTo = Array.isArray(parsedEmail.inReplyTo)
-        ? (parsedEmail.inReplyTo[0] ?? null)
-        : (parsedEmail.inReplyTo ?? null);
-
-      parsedEmail.references = Array.isArray(parsedEmail.references)
-        ? parsedEmail.references.length > 0
-          ? parsedEmail.references
-          : null
-        : (parsedEmail.references ?? null);
+      parsedEmail.inReplyTo = parsedEmail.inReplyTo ?? null;
+      parsedEmail.references = parsedEmail.references ?? null;
 
       _this.emit('message', connection, parsedEmail, rawEmail);
 
@@ -984,6 +962,7 @@ function getAddressTo(finalizedMessage) {
 
   return toAddressObject.address ?? toAddressObject;
 }
+
 interface ISmtpOptions {
   banner: string;
   logger: boolean;

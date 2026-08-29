@@ -9,6 +9,7 @@ import { BullMqService } from '../bull-mq';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
+import { EventBridgeSchedulerService } from '../scheduler';
 import { SqsService } from '../sqs';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import { ReadinessService } from './readiness.service';
@@ -41,6 +42,12 @@ const mockLogger = {
   error: jest.fn(),
 } as unknown as PinoLogger;
 
+const mockSchedulerService = {
+  isConfigured: jest.fn(() => false),
+  createDelayedFire: jest.fn(),
+  deleteSchedule: jest.fn(),
+} as unknown as EventBridgeSchedulerService;
+
 describe('Readiness Service', () => {
   beforeAll(async () => {
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
@@ -51,7 +58,8 @@ describe('Readiness Service', () => {
       mockSqsService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
-      mockLogger
+      mockLogger,
+      mockSchedulerService
     );
     workflowQueueService = new WorkflowQueueService(
       new WorkflowInMemoryProviderService(),

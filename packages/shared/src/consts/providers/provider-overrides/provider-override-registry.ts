@@ -162,7 +162,7 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
     primaryContentKey: TELEGRAM_PRIMARY_CONTENT_KEY,
   },
   [ChatProviderIdEnum.Sendblue]: escapeHatch('content'),
-  // Agent web chat has no stable override schema yet — free-form passthrough keyed like Discord.
+  // Web Chat has no stable override schema yet — free-form passthrough keyed like Discord.
   [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 

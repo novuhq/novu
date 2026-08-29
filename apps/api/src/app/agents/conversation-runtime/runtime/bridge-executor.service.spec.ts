@@ -33,18 +33,18 @@ describe('BridgeExecutorService', () => {
   ) {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
-    const activityLedger = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
+    const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
     const featureFlagsService = makeFeatureFlagsService(overrides.isEventProtocolEnabled);
 
     const service = new BridgeExecutorService(
       {} as any,
       logger as any,
       attachmentStorage as any,
-      activityLedger as any,
+      conversationService as any,
       featureFlagsService as unknown as FeatureFlagsService
     );
 
-    return { service, logger, attachmentStorage, activityLedger, featureFlagsService };
+    return { service, logger, attachmentStorage, conversationService, featureFlagsService };
   }
 
   function makeExecutionParams() {
@@ -184,6 +184,46 @@ describe('BridgeExecutorService', () => {
 
       expect(payload).to.not.have.property('eventsUrl');
       expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
+    });
+
+    it('should map workflowOrigin onto notification for the bridge wire', async () => {
+      const { service } = makeService();
+      const workflowOrigin = {
+        data: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-shipped',
+          messageId: 'msg-1',
+          platformMessageId: 'wamid.abc',
+          sentAt: '2026-01-01T00:00:00.000Z',
+          body: 'Your order ORD-1 shipped',
+          payload: { orderId: 'ORD-1' },
+          jobId: 'job-1',
+        },
+        source: 'existing' as const,
+      };
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        workflowOrigin,
+      });
+
+      expect(payload.notification).to.deep.equal({
+        id: 'notif-1',
+        workflowId: 'order-shipped',
+        messageId: 'msg-1',
+        platformMessageId: 'wamid.abc',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        body: 'Your order ORD-1 shipped',
+        payload: { orderId: 'ORD-1' },
+      });
+    });
+
+    it('should send notification null when no workflow origin is present', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload(makeExecutionParams());
+
+      expect(payload.notification).to.equal(null);
     });
   });
 
