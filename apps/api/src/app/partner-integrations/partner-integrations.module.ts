@@ -7,8 +7,15 @@ import { SharedModule } from '../shared/shared.module';
 import { PartnerIntegrationsController } from './partner-integrations.controller';
 import { USE_CASES } from './usecases';
 
+const VERCEL_API_TIMEOUT_MS = 10_000;
+
 @Module({
-  imports: [SharedModule, HttpModule, EnvironmentsModuleV1, BridgeModule],
+  imports: [
+    SharedModule,
+    HttpModule.register({ timeout: VERCEL_API_TIMEOUT_MS }),
+    EnvironmentsModuleV1,
+    BridgeModule,
+  ],
   providers: [...USE_CASES, CommunityUserRepository, CommunityOrganizationRepository],
   controllers: [PartnerIntegrationsController],
 })
