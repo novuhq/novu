@@ -26,7 +26,13 @@ const REPOSITORIES = [
 
 const SERVICES = [MachineInfoService, UserInfoService];
 
-const MODULES = [ScheduleModule.forRoot(), SharedModule, HttpModule];
+const TELEMETRY_TIMEOUT_MS = 10_000;
+
+const MODULES = [
+  ScheduleModule.forRoot(),
+  SharedModule,
+  HttpModule.register({ timeout: TELEMETRY_TIMEOUT_MS }),
+];
 
 @Module({
   imports: [...MODULES],
