@@ -13,14 +13,30 @@ export function defaultOutputEscape(output: unknown): string {
   if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
     return stringifyDataStructureWithSingleQuotes(output);
   }
-  // For strings, escape special JSON characters: backslashes, double quotes, and newlines
+  // For strings, escape special JSON characters: backslash, double quote, and
+  // every control character (U+0000–U+001F). JSON requires all control
+  // characters to be escaped, so only handling \n, \r and \t left a value
+  // containing e.g. a backspace, form feed or NUL producing invalid JSON.
   else if (typeof output === 'string') {
     return output
       .replace(/\\/g, '\\\\')
       .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t');
+      .replace(/[\u0000-\u001f]/g, (char) => {
+        switch (char) {
+          case '\n':
+            return '\\n';
+          case '\r':
+            return '\\r';
+          case '\t':
+            return '\\t';
+          case '\b':
+            return '\\b';
+          case '\f':
+            return '\\f';
+          default:
+            return `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`;
+        }
+      });
   } else {
     return output === undefined || output === null ? '' : String(output as unknown);
   }

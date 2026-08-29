@@ -385,6 +385,19 @@ describe('defaultOutputEscape', () => {
     expect(result).toBe('line1\\nline2');
   });
 
+  it('should escape all control characters so the output is valid JSON', () => {
+    const cc = String.fromCharCode;
+    // Only \n, \r and \t were escaped before, leaving other control characters
+    // (backspace, form feed, NUL, ...) to produce invalid JSON.
+    expect(defaultOutputEscape(`a${cc(8)}b`)).toBe('a\\bb'); // backspace
+    expect(defaultOutputEscape(`a${cc(12)}b`)).toBe('a\\fb'); // form feed
+    expect(defaultOutputEscape(`a${cc(0)}b`)).toBe('a\\u0000b'); // NUL
+    expect(defaultOutputEscape(`a${cc(31)}b`)).toBe('a\\u001fb'); // unit separator
+
+    const escaped = defaultOutputEscape(`hi${cc(1)}there`);
+    expect(() => JSON.parse(`"${escaped}"`)).not.toThrow();
+  });
+
   it('should convert primitives to strings', () => {
     expect(defaultOutputEscape(123)).toBe('123');
     expect(defaultOutputEscape(true)).toBe('true');
