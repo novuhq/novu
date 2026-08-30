@@ -15,7 +15,7 @@ export interface ReportedDeliveryInfo {
 
 /**
  * Per-call result channel between the channel-agnostic {@link OutboundGateway}
- * and in-process delivery callbacks (currently only agent chat). The gateway
+ * and in-process delivery callbacks (currently only web chat). The gateway
  * `collect`s around one adapter invocation; a delivery callback running inside
  * it may `report` facts the gateway needs for durable persist. Channels whose
  * delivery happens on an external platform never report — `info` stays empty.

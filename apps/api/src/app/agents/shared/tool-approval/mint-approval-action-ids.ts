@@ -54,7 +54,7 @@ export function managedApprovalGrammar(mcpServerName: string | undefined): Appro
 
 /**
  * Mint all four managed approval action ids (approve once, deny, always-allow tool, always-allow server).
- * Same ids Slack/Teams cards put on buttons — Agent Chat protocol reuses them.
+ * Same ids Slack/Teams cards put on buttons — Web Chat protocol reuses them.
  */
 export function mintManagedApprovalActionIds(tool: ToolApprovalPersistTarget): MintedManagedApprovalActionIds {
   const base = mintApprovalActionIds({

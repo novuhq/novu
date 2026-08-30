@@ -11,16 +11,16 @@ const externalNovu = ['@novu/js', '@novu/js/ui', '@novu/js/internal'];
 
 const fixtures = {
   'inbox-only': {
-    mustNotContain: ['solid-js', 'useAgentChat', 'loadAgentChat'],
+    mustNotContain: ['solid-js', 'useWebChat', 'loadWebChat'],
     mustContain: ['NovuUI', 'Inbox'],
   },
-  'agent-only': {
+  'web-only': {
     mustNotContain: ['solid-js', 'NovuUI', 'DefaultInbox'],
-    mustContain: ['useAgentChat', 'loadAgentChat'],
+    mustContain: ['useWebChat', 'loadWebChat'],
   },
   combined: {
     mustNotContain: [],
-    mustContain: ['NovuUI', 'Inbox', 'useAgentChat', 'loadAgentChat'],
+    mustContain: ['NovuUI', 'Inbox', 'useWebChat', 'loadWebChat'],
   },
 };
 
@@ -69,8 +69,8 @@ async function main() {
     assertBundle(`"${name}" (react graph)`, reactGraphCode, rules);
   }
 
-  const agentIntegrationCode = await bundleFixture('agent-only', false);
-  assertBundle('"agent-only" (integration)', agentIntegrationCode, fixtures['agent-only']);
+  const agentIntegrationCode = await bundleFixture('web-only', false);
+  assertBundle('"web-only" (integration)', agentIntegrationCode, fixtures['web-only']);
 }
 
 main().catch((error) => {

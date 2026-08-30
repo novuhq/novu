@@ -21,10 +21,10 @@ import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { LlmAuthPicker } from './llm-auth-picker';
 import {
-  AgentChatHandoffContent,
-  AgentChatInkSuccessContent,
-  AgentChatSetupPickContent,
-} from './phase-content/agent-chat-phases';
+  WebChatHandoffContent,
+  WebChatInkSuccessContent,
+  WebChatSetupPickContent,
+} from './phase-content/web-chat-phases';
 import { EmailReadyContent, EmailWaitingContent } from './phase-content/email';
 import {
   SendblueCredentialContent,
@@ -270,19 +270,19 @@ export function PhaseContent({
     case 'adding-slack':
       return <Text color="cyan">Linking Slack to your agent…</Text>;
 
-    case 'adding-agent-chat':
-      return <Text color="cyan">Linking Agent Chat to your agent…</Text>;
+    case 'adding-web-chat':
+      return <Text color="cyan">Linking Web Chat to your agent…</Text>;
 
-    case 'agent-chat-handoff':
-      return <AgentChatHandoffContent dashboardUrl={phase.dashboardUrl} onContinue={phase.resolve} />;
+    case 'web-chat-handoff':
+      return <WebChatHandoffContent dashboardUrl={phase.dashboardUrl} onContinue={phase.resolve} />;
 
-    case 'pick-agent-chat-setup':
-      return <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />;
+    case 'pick-web-chat-setup':
+      return <WebChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />;
 
-    case 'scaffolding-agent-chat':
+    case 'scaffolding-web-chat':
       return (
         <Box flexDirection="column" gap={1} alignItems="center">
-          <Text color="cyan">Scaffolding your Agent Chat example app…</Text>
+          <Text color="cyan">Scaffolding your Web Chat example app…</Text>
           <Text dimColor>Installing dependencies — this may take a minute.</Text>
         </Box>
       );
@@ -590,7 +590,7 @@ function SuccessView({
     chatSdkOutcome,
     aiSdkOutcome,
     langChainOutcome,
-    agentChatOutcome,
+    webChatOutcome,
     embedPrompt,
     embedPromptFile,
     resolveDismiss,
@@ -611,19 +611,19 @@ function SuccessView({
     aiSdkOutcome,
     langChainOutcome,
     customCodeOutcome,
-    agentChatOutcome,
-    agentChatHandoff: phase.agentChatHandoff,
+    webChatOutcome,
+    webChatHandoff: phase.webChatHandoff,
   };
 
-  const agentChatInk = AgentChatInkSuccessContent({
+  const webChatInk = WebChatInkSuccessContent({
     result: successResult,
     embedPrompt,
     embedPromptFile,
     onDismiss: resolveDismiss,
   });
 
-  if (agentChatInk) {
-    return agentChatInk;
+  if (webChatInk) {
+    return webChatInk;
   }
 
   const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
@@ -646,7 +646,7 @@ function SuccessView({
     if (connectedChannel === 'email') return 'Email';
     if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
     if (connectedChannel === 'whatsapp') return 'WhatsApp';
-    if (connectedChannel === 'agent-chat') return 'Agent Chat';
+    if (connectedChannel === 'web-chat') return 'Web Chat';
 
     return null;
   })();

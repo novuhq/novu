@@ -1,0 +1,7 @@
+# Web Chat embed prompt
+
+The CLI already wrote the Novu environment values.
+
+Add a minimal Web Chat UI with `@novu/react` (`NovuProvider` and `useWebChat`). After the UI change, the first line of your final user-facing message must be:
+
+✓ Web Chat connected

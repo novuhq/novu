@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 
 export const AGENT_EMAIL_PROVIDER_LABEL = 'Email';
-export const AGENT_CHAT_PROVIDER_LABEL = 'Agent Chat';
+export const WEB_CHAT_PROVIDER_LABEL = 'Web Chat';
 
 function isAgentEmailProvider(providerId: string): boolean {
   return providerId === EmailProviderIdEnum.NovuAgent;
@@ -12,8 +12,8 @@ export function getAgentChannelDisplayName(providerId: string, displayName: stri
     return AGENT_EMAIL_PROVIDER_LABEL;
   }
 
-  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
-    return AGENT_CHAT_PROVIDER_LABEL;
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
+    return WEB_CHAT_PROVIDER_LABEL;
   }
 
   return displayName;

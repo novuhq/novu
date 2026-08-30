@@ -12,13 +12,13 @@ const fixtures = {
     mustNotContain: ['isAgentEventEnvelope', 'parseAgentEventEnvelope', 'AgentConversationRuntime', 'applyEnvelope'],
     mustContain: ['Notifications', 'createSocket'],
   },
-  'agent-only': {
+  'web-only': {
     mustNotContain: [],
-    mustContain: ['AgentChat', 'isAgentEventEnvelope'],
+    mustContain: ['WebChat', 'isAgentEventEnvelope'],
   },
   combined: {
     mustNotContain: [],
-    mustContain: ['Notifications', 'AgentChat', 'createSocket'],
+    mustContain: ['Notifications', 'WebChat', 'createSocket'],
   },
 };
 

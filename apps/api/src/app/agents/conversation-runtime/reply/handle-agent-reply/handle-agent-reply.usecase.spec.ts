@@ -148,7 +148,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
     await usecase.execute({
       ...baseCommand,
       signals: [
-        { type: 'human', kind: 'approve', prompt: 'Deploy?', requestId: 'hr_1' },
+        { type: 'human', kind: 'approve', prompt: 'Deploy?', requestId: 'hr_1', to: ['alice', 'bob'] },
         { type: 'human', kind: 'ask', prompt: 'Which env?', requestId: 'hr_2' },
       ],
     } as any);
@@ -156,6 +156,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
     expect(createConversationInteraction.execute.calledTwice).to.equal(true);
     expect(createConversationInteraction.execute.firstCall.args[0].kind).to.equal('approve');
     expect(createConversationInteraction.execute.firstCall.args[0].requestId).to.equal('hr_1');
+    expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['alice', 'bob']);
     expect(createConversationInteraction.execute.secondCall.args[0].kind).to.equal('ask');
   });
 });

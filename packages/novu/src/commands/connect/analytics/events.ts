@@ -37,7 +37,7 @@ export const CONNECT_EVENTS = {
   TELEGRAM_CONNECTED: 'Connect Telegram Connected',
   EMAIL_CONNECTED: 'Connect Email Connected',
   SENDBLUE_CONNECTED: 'Connect Sendblue Connected',
-  AGENT_CHAT_LINKED: 'Connect Agent Chat Linked',
+  WEB_CHAT_LINKED: 'Connect Web Chat Linked',
   WELCOME_SENT: 'Connect Welcome Sent',
   COMPLETED: 'Connect Completed',
   ERROR: 'Connect Error',

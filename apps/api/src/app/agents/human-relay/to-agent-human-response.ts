@@ -12,5 +12,6 @@ export function toAgentHumanResponse(interaction: HumanInteractionEntity): Agent
     text: interaction.response?.text,
     optionId: interaction.response?.optionId,
     respondedBy: interaction.response?.respondedBy,
+    respondedBySubscriberId: interaction.response?.respondedBySubscriberId,
   };
 }
