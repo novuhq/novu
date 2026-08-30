@@ -13,6 +13,7 @@ const base: HumanCliConfig = {
 afterEach(() => {
   delete process.env.NOVU_HUMAN_CONFIG;
   delete process.env.NOVU_SECRET_KEY;
+  delete process.env.HUMAN_VIA;
 });
 
 describe('config migration', () => {
@@ -70,6 +71,26 @@ describe('resolveVia', () => {
   it('omits via when nothing is preferred so the API can pick', () => {
     expect(resolveVia({ ...base, subscriberId: 'human_abc' })).toBeUndefined();
   });
+
+  it('falls back to HUMAN_VIA over the config default, case-insensitively', () => {
+    process.env.HUMAN_VIA = 'Telegram';
+    expect(resolveVia(config)).toBe('telegram');
+  });
+
+  it('lets a --via flag beat HUMAN_VIA', () => {
+    process.env.HUMAN_VIA = 'telegram';
+    expect(resolveVia(config, 'email')).toBe('email');
+  });
+
+  it('rejects an unsupported HUMAN_VIA value', () => {
+    process.env.HUMAN_VIA = 'carrier-pigeon';
+    expect(() => resolveVia(config)).toThrow(/Invalid HUMAN_VIA/);
+  });
+
+  it('ignores an empty HUMAN_VIA', () => {
+    process.env.HUMAN_VIA = '  ';
+    expect(resolveVia(config)).toBe('slack');
+  });
 });
 
 describe('resolveConfig', () => {
@@ -91,6 +112,17 @@ describe('resolveConfig', () => {
       auth: { mode: 'apiKey', secretKey: 'api_key_private' },
       subscriberId: 'human_abc',
       defaultChannel: 'telegram',
+    });
+  });
+
+  it('works with no config file at all when NOVU_SECRET_KEY is set', () => {
+    process.env.NOVU_HUMAN_CONFIG = join(mkdtempSync(join(tmpdir(), 'human-config-')), 'missing.json');
+    process.env.NOVU_SECRET_KEY = 'api_key_private';
+
+    expect(resolveConfig()).toEqual({
+      apiUrl: 'https://api.novu.co',
+      relayAgentIdentifier: 'human-relay',
+      auth: { mode: 'apiKey', secretKey: 'api_key_private' },
     });
   });
 });
