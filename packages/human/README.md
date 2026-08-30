@@ -49,9 +49,21 @@ human invite carol --via email --email carol@acme.com
 - `--to <humanId>` — address a human who is already linked (`human invite` first), or comma-separated humans (`alice,bob`, max 50) so any listed person can settle.
 - `--via <platform>` — deliver on a specific linked channel instead of the default.
 
-## Auth
+## Auth & headless use
 
 `setup` stores credentials in `~/.novu/human.json`. Alternatively set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment.
+
+In containers, sandboxes, and CI — anywhere no config file exists — the CLI is fully operational from environment variables alone:
+
+```bash
+docker run -e NOVU_SECRET_KEY=... -e HUMAN_TO=alice -e HUMAN_VIA=slack agent \
+  npx @novu/human approve "Deploy to prod?"
+```
+
+- `HUMAN_TO` — default recipient subscriberId(s), comma-separated like `--to` (max 50).
+- `HUMAN_VIA` — default channel (`telegram`, `slack`, or `email`), like `--via`.
+
+Precedence is always **CLI flags > environment variables > `~/.novu/human.json`**, and env values are never written back to the config file.
 
 ## Teaching your coding agent to use it
 
