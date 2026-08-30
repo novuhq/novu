@@ -2,133 +2,152 @@
   <img alt="Novu Logo" src=".github/assets/novu-logo.svg" width="100%"/>
 </a>
 
-<br/>
-<br/>
 <p align="center">
-  <a href="https://www.producthunt.com/products/novu" target="_blank" rel="noopener noreferrer"
->
-    <img src="https://img.shields.io/badge/Product%20Hunt-Golden%20Kitty%20Award%202023-yellow" alt="Product Hunt">
-  </a>
-  <a href="https://news.ycombinator.com/item?id=38419513" target="_blank" rel="noopener noreferrer"
-><img src="https://img.shields.io/badge/Hacker%20News-%231-%23FF6600" alt="Hacker News"></a>
-  <a href="https://www.npmjs.com/package/@novu/react" target="_blank" rel="noopener noreferrer"
->
-    <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
-  </a>
-  <a href="https://www.npmjs.com/package/@novu/js" target="_blank" rel="noopener noreferrer"
->
-    <img src="https://img.shields.io/npm/dm/@novu/js" alt="npm downloads">
-  </a>
+  <a href="https://github.com/novuhq/novu/stargazers" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/github/stars/novuhq/novu?style=flat&logo=github&color=1a1523" alt="GitHub stars"></a>
+  <a href="https://www.producthunt.com/products/novu" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Product%20Hunt-Golden%20Kitty%20Award%202023-yellow" alt="Product Hunt"></a>
+  <a href="https://news.ycombinator.com/item?id=38419513" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Hacker%20News-%231-%23FF6600" alt="Hacker News"></a>
+  <a href="https://www.npmjs.com/package/@novu/react" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/v/@novu/react" alt="NPM"></a>
+  <a href="https://www.npmjs.com/package/@novu/js" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/dm/@novu/js" alt="npm downloads"></a>
+  <a href="https://github.com/novuhq/novu/blob/next/LICENSE" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/license-MIT%20(open%20core)-blue" alt="License"></a>
 </p>
 
 <h1 align="center">
- The open-source communication infrastructure for agents and products
+  The communication layer between software and people
 </h1>
 
 <div align="center">
-  One API and one unified conversation model to connect your <strong>products</strong> and your <strong>agents</strong> to every channel your users live on — Inbox, Email, SMS, Push, Chat, Slack, Microsoft Teams, Telegram, and more.
+  Notifications for your product. Conversations for your AI agents. One API, one conversation model, every channel your users already use: Inbox, Email, SMS, Push, Slack, Microsoft Teams, WhatsApp, Telegram, and more.
 </div>
 
 <p align="center">
   <br />
-  <a href="https://go.novu.co/github?utm_source=github&utm_medium=readme&utm_campaign=learn-more-link" rel="dofollow"><strong>Learn More »</strong></a>
-  <br />
-
-<br/>
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+" target="_blank" rel="noopener noreferrer"
->Report a bug</a>
+  <a href="https://docs.novu.co" target="_blank" rel="noopener noreferrer">Docs</a>
   ·
-  <a href="https://docs.novu.co" target="_blank" rel="noopener noreferrer"
->Docs</a>
+  <a href="https://go.novu.co/github?utm_campaign=readme_website" target="_blank" rel="noopener noreferrer">Website</a>
   ·
-  <a href="https://go.novu.co/github?utm_campaign=readme_website" target="_blank" rel="noopener noreferrer"
->Website</a>
+  <a href="https://discord.novu.co" target="_blank" rel="noopener noreferrer">Discord</a>
   ·
-  <a href="https://discord.novu.co" target="_blank" rel="noopener noreferrer"
->Join our Discord</a>
+  <a href="https://go.novu.co/changelog" target="_blank" rel="noopener noreferrer">Changelog</a>
   ·
-  <a href="https://go.novu.co/changelog" target="_blank" rel="noopener noreferrer"
->Changelog</a>
+  <a href="https://go.novu.co/roadmap" target="_blank" rel="noopener noreferrer">Roadmap</a>
   ·
-  <a href="https://go.novu.co/roadmap" target="_blank" rel="noopener noreferrer"
->Roadmap</a>
+  <a href="https://twitter.com/novuhq" target="_blank" rel="noopener noreferrer">X</a>
   ·
-  <a href="https://twitter.com/novuhq" target="_blank" rel="noopener noreferrer"
->X</a>
-  ·
-  <a href="https://go.novu.co/contact?utm_source=github&utm_medium=readme&utm_campaign=contact-us-link" target="_blank" rel="noopener noreferrer"
->Contact us</a>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+" target="_blank" rel="noopener noreferrer">Report a bug</a>
+</p>
 
-Software is becoming more conversational, and user expectations are rising with it. People no longer want static, irrelevant notifications they glance at and forget, they want to engage, ask questions, and go deeper. Instead of a one-way report dropped in their inbox, they expect a thread they can explore: follow up on a metric, drill into an anomaly, or continue a conversation right where they left off. That shift, from broadcast to meaningful dialog is what Novu's communication infrastructure is built for.
+## ⚡ Connect your agent to your users in about two minutes
 
-## ⭐️ Why Novu?
- 
-Every product and every agent eventually needs to talk to people, across the channels those people already use. Novu is the open-source layer that handles that communication for you, so you don't rebuild Inbox feeds, provider integrations, and channel webhooks from scratch every time.
- 
-There are two ways to build with Novu, and they share the same foundation: a single API and a unified conversation model.
- 
-- **Communication infrastructure for products** — Send notifications across Inbox/In-App, Email, SMS, Push, and Chat through one API, with workflows, digests, and an embeddable `<Inbox />` component.
-- **Agent Communication Infrastructure (ACI)** — Connect any agent you've already built to any communication channel: Slack, Microsoft Teams, Telegram, WhatsApp, email through one conversation model.
+Already working in Claude Code, Cursor, or any coding agent? Paste this and your agent does the rest: it connects the agent you already have to the channel you pick, and hands you a claim link. No account, no API key.
 
-## 🚀 Getting Started
-
-[Create a free account](https://go.novu.co/dashboard?utm_source=github&utm_medium=readme&utm_campaign=create-free-account-link) and follow the instructions on the dashboard.
-
-## 📚 Table of contents
- 
-- [Why Novu?](#️-why-novu)
-- [Communication infrastructure for products](#-communication-infrastructure-for-products)
-- [Agent Communication Infrastructure (ACI)](#-agent-communication-infrastructure-aci)
-- [Getting Started](#-getting-started)
-- [Embeddable Inbox and Preferences](#embeddable-inbox-component)
-- [Providers](#providers)
-
-## 📬 Communication infrastructure for products
- 
-The notification platform that turns complex multi-channel delivery into a single component. Built for developers, designed for growth, powered by open source.
- 
-Novu provides a unified API to send notifications through multiple channels — **Inbox/In-App, Push, Email, SMS, and Chat**. Create custom workflows, define per-channel conditions, and let Novu deliver each notification in the most effective way, without stitching together a provider for every channel yourself.
- 
-- One API for all messaging providers
-- Embeddable, real-time `<Inbox />` component
-- Notification workflow engine with branching and conditions
-- Digest engine to batch multiple notifications into a single message
-- No-code email editor
-- Embeddable preferences component so users control their own notifications
-
-## 🤖 Agent Communication Infrastructure (ACI)
- 
-> **You build the agent. Novu gives it a voice.**
- 
-ACI is a complete suite for companies already building agents that need to talk to users on real communication channels. It connects your agent to any channel and abstracts away the quirks of each platform behind a single, unified conversation model.
- 
-Novu handles the plumbing in both directions: it receives inbound messages from each channel, normalizes them into one consistent shape, routes them to your agent, and sends your agent's responses back out, so you integrate once instead of building and maintaining a webhook handler per platform.
- 
-- **Unified conversation model** — one consistent model across every channel, instead of per-platform message formats and webhook quirks
-- **Bidirectional messaging** — receive user messages and send agent replies through the same layer
-- **Channel integrations** — Slack, Microsoft Teams, Telegram, WhatsApp, Email, and an In-App Inbox for agents
-- **Bring your own agent** — works with whatever you've built, whether that's Claude Managed Agents, AI SDK, LangGraph, or a custom stack; Novu doesn't constrain your agent logic
-- **Best practices built in** — conversation threading, reactions, channel-aware formatting, actions and a single integration surface
-Novu connects the agent to the world, it is not the agent itself.
-
-### Want to see ACI in action?
-We have built [Novu Connect](https://novu.co/connect) to showcase the power of ACI, build on integrate an existing Claude Managed Agent as a teammate in Slack, Telegram, or Email in less than 2 minutes. 
-
-Try it now:
 ```
+Connect this project's AI agent to customer channels (Slack, Microsoft Teams, WhatsApp, Telegram, Email, or iMessage) with Novu Connect.
+
+Follow https://novu.co/agents.md end to end. Default to the non-interactive CLI (`npx novu@latest connect … --ci`).
+
+Inspect the repo first. Ask me which channel to connect if it is not clear. Detect the framework/runtime from the project, or ask once. Then run one connect command per agents.md (bridge vs managed, keyless vs dashboard OAuth).
+
+Prefer the secure setup links the CLI prints. Do not invent setup steps or ask for secrets in chat unless agents.md says that channel requires it (e.g. iMessage/Sendblue).
+```
+
+Prefer to run it yourself?
+
+```bash
 npx novu@latest connect
 ```
 
-## Embeddable Inbox component
+Either way your agent is live, talking with a real user on their own channel in about two minutes. The first replies run keyless on a shared Claude demo runtime, then one link lets you claim the setup and keep it.
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=readme&utm_campaign=react-starter-link), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
+<!-- The connect flow: npx novu connect, from the CLI through channel setup. Source: 08-assets/github-readme/novu-connect-demo.gif -->
+<div align="center">
+  <img alt="npx novu connect: connect your existing agent to your users' channels, from the CLI to a live channel" src=".github/assets/novu-connect-demo.gif" width="80%"/>
+</div>
+
+## ⭐ Why Novu?
+
+> MCP connects agents to tools. A2A connects agents to each other. ACI, Agent Communication Infrastructure, connects agents to people. Novu is the ACI layer, built on the open-source notification infrastructure 40,000 developers already trust.
+
+Every product and every agent eventually needs to talk with people on the channels those people already use. Each channel has its own webhook format, identity model, and threading quirks. Novu standardizes that layer once, so you never rebuild inbox feeds, provider integrations, and channel webhooks from scratch again.
+
+There are two ways to communicate with Novu, on one shared foundation:
+
+- **For your product:** send notifications across Inbox/In-App, Email, SMS, Push, and Chat through one API, with workflows, digests, and an embeddable `<Inbox />` component.
+- **For your agents:** connect any agent you already built to Slack, Microsoft Teams, WhatsApp, Telegram, and Email through one conversation model, in both directions.
+
+## 🔁 One platform. Two ways to communicate.
+
+Notifications and conversations are not two products. They are one loop, and Novu runs the whole thing:
+
+<!-- Pixel Point "cycle" animation, delivered 2026-07-28. Masters: 08-assets/github-readme/cycle-dark.mp4 + cycle-light.mp4 (Slack files F0BKTAAD6BZ / F0BL8M49UPL). Convert to GIF per conversion note, commit both variants. -->
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/cycle-dark.gif">
+    <img alt="The Novu loop: an event triggers a notification, the user engages, and an agent resolves it in a two-way conversation" src=".github/assets/cycle-light.gif" width="90%"/>
+  </picture>
+</div>
+
+1. **Event.** Something happens in your application that needs user attention. A payment fails.
+2. **Notify.** Your app notifies the user through push, email, or the in-app Inbox.
+3. **Engage.** The user opens the notification and starts a conversation with your agent in their preferred channel.
+4. **Resolve.** The agent resolves the issue in a two-way conversation, on WhatsApp, Slack, SMS, and more.
+
+The notification is the front door. The conversation is what happens after the user walks in. Same rails, same identity, same observability, so the handoff from a notification to a live agent conversation is one platform doing its job, not two systems duct-taped together.
+
+## 🤖 For AI agents: the ACI layer
+
+ACI, Agent Communication Infrastructure, is the layer that lets AI agents hold a real, two-way conversation with the people they work for, across the channels those people already use.
+
+You build the agent. Novu gives it a voice. Novu receives inbound messages from each channel, normalizes them into one consistent shape, routes them to your agent, and delivers your agent's replies back out. It keeps one conversation thread per user no matter which channel they are on, and handles identity resolution, OAuth and credentials, threading, and channel-aware formatting (Slack blocks, WhatsApp buttons, HTML email). Connect a new channel and your agent code does not change.
+
+**We never run your brain. That's the whole point.** The intelligence is always yours: your own code, or a model platform you bring, like Claude. Novu is the delivery layer. Bring agents built with Claude Managed Agents, LangGraph, CrewAI, the OpenAI Agents SDK, or your own stack.
+
+<!-- Pixel Point "agents" architecture animation, REVISED version with signals flowing both ways, delivered 2026-07-28 19:17. Masters: 08-assets/github-readme/agents-dark.mp4 + agents-light.mp4 (Slack files F0BM57T9DH6 / F0BLAT4HU8J). Convert to GIF per conversion note, commit both variants. -->
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/agents-dark.gif">
+    <img alt="Your agent on one side, your users' channels on the other, Novu as the bridge in between. Your brain stays yours." src=".github/assets/agents-light.gif" width="90%"/>
+  </picture>
+</div>
+
+Three ways in, same channels and observability the whole way up. You only ever change the part that holds your logic:
+
+| | **Connect** | **Managed Agent** | **Custom Code Agent** |
+|---|---|---|---|
+| Best for | A working agent, now | Claude's reasoning, your tools | Your own logic and models |
+| Who runs the brain | Novu + a template | Claude (your key) | You |
+| Code | None | None | Yes |
+| Tools | Curated | Any MCP server | Any MCP + your own |
+| Time to live | ~2 min | ~10 min | ~1 hr+ |
+
+Start with the quick start above, or read the [ACI docs](https://docs.novu.co/agents/get-started/what-is-aci?utm_source=github&utm_medium=readme&utm_campaign=aci-docs-link).
+
+## 📬 For products: notification infrastructure
+
+The notification platform that turns multi-channel delivery into a single component. Create workflows, define per-channel conditions, and let Novu deliver each notification the right way, without stitching together a provider per channel.
+
+- One API for all messaging providers
+- Embeddable, real-time `<Inbox />` component for React, with headless APIs for everything else
+- Workflow engine with branching, conditions, and delays, visual or code-first in TypeScript
+- Digest engine that batches many notifications into one message
+- No-code email editor
+- Embeddable preferences component so users control their own notifications
+
+Add a full notification center to your app with one component:
+
+```tsx
+import { Inbox } from '@novu/react';
+
+<Inbox
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriberId="YOUR_SUBSCRIBER_ID"
+/>
+```
 
 <div align="center">
-<img width="4800" height="2700" alt="Novu's Embeddable Inbox components" src="https://github.com/user-attachments/assets/00224c75-7ed0-4e19-b6fd-2a0bdced6258" />
-
-Read more about how to add a [notification center Inbox](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=readme&utm_campaign=read-more-react-link) to your app.
-
+  <img alt="Novu's embeddable Inbox components" src="https://github.com/user-attachments/assets/00224c75-7ed0-4e19-b6fd-2a0bdced6258" width="90%"/>
 </div>
+
+[Create a free account](https://go.novu.co/dashboard?utm_source=github&utm_medium=readme&utm_campaign=create-free-account-link) and follow the [Inbox quick start](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=readme&utm_campaign=react-starter-link).
 
 ## Providers
 
@@ -255,36 +274,32 @@ Expand a channel below to browse supported providers.
 
 </details>
 
-## 📋 Read Our Code Of Conduct
+## 🏠 Self-hosting
 
-Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you agree to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
+Novu is open source and genuinely self-hostable. Run the full platform on your own infrastructure with [Docker](https://docs.novu.co/community/self-hosting-novu/overview?utm_source=github&utm_medium=readme&utm_campaign=self-host-link), or [run it locally](https://docs.novu.co/community/run-in-local-machine?utm_source=github&utm_medium=readme&utm_campaign=novu-locally-link) to contribute. Same API, your servers, your data.
 
-## 💻 Need Help?
-
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
-
-## 🔗 Links
-
-- [Home page](https://novu.co?utm_source=github&utm_medium=readme&utm_campaign=main-link)
-- [Contribution guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu locally](https://docs.novu.co/community/run-in-local-machine?utm_source=github&utm_medium=readme&utm_campaign=novu-locally-link)
+Need SOC 2 Type II, HIPAA, ISO 27001, or GDPR answers, data residency (US and EU regions), or a self-hosted plan for your company? [Talk to us](https://go.novu.co/contact?utm_source=github&utm_medium=readme&utm_campaign=contact-us-link).
 
 ## 🛡️ License
 
-Novu is a commercial open source company, which means some parts of this open source repository require a commercial license. The concept is called "Open Core," where the core technology is fully open source, licensed under MIT license, and the enterprise code is covered under a commercial license ("/enterprise" Enterprise Edition). Enterprise features are built by the core engineering team of Novu which is hired in full-time.
+Novu is a commercial open source company. The core is MIT licensed and fully open source; enterprise features are covered by a commercial license (open core). The enterprise-licensed folders are:
 
-The following modules and folders are licensed under the enterprise license:
+- `enterprise` at the root of the project and all its subfolders and modules
+- `apps/web/src/ee` and all its subfolders and modules
+- `apps/dashboard/src/ee` and all its subfolders and modules
 
-- `enterprise` folder at the root of the project and all of their subfolders and modules
-- `apps/web/src/ee` folder and all of their subfolders and modules
-- `apps/dashboard/src/ee` folder and all of their subfolders and modules
+## 💬 Community
+
+- Stuck or curious? Join our [Discord](https://discord.novu.co) and ask anything.
+- Want to contribute? Read the [contribution guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md) and our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md), then pick an issue.
+- If Novu is useful to you, [star the repo](https://github.com/novuhq/novu/stargazers). It genuinely helps more developers find it.
 
 ## 💪 Thanks to all of our contributors
 
-Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
+Four years of open-source notification infrastructure, built with this community. Thanks for spending your time helping Novu grow.
 
 <a href="https://novu.co/contributors?utm_source=github" target="_blank" rel="noopener noreferrer">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>
 
-The beatiful header animation was contributed by [LottieFiles](https://lottiefiles.com/) ❤️
+The beautiful header animation was contributed by [LottieFiles](https://lottiefiles.com/) ❤️
