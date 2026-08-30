@@ -392,6 +392,56 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(humanSignals[3]).toMatchObject({ type: 'human', kind: 'tell', prompt: 'Deploy finished.' });
   });
 
+  it('should pass ctx.ask/approve `to` onto the human signal', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.ask('What environment?', { to: 'alice' });
+        ctx.approve('Deploy v2?', { to: ['alice', 'bob', 'alice'] });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
+
+    expect(humanSignals[0]).toMatchObject({ kind: 'ask', to: ['alice'] });
+    expect(humanSignals[1]).toMatchObject({ kind: 'approve', to: ['alice', 'bob'] });
+  });
+
+  it('should reject empty or oversized human `to` lists', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+
+    expect(() => ctx.ask('Env?', { to: '  ' })).toThrow('at least one subscriberId');
+    expect(() => ctx.approve('Deploy?', { to: [] })).toThrow('at least one subscriberId');
+
+    const tooMany = Array.from({ length: 51 }, (_, index) => `s${index}`);
+    expect(() => ctx.approve('Deploy?', { to: tooMany })).toThrow('at most 50');
+  });
+
   it('should reject ctx.choose with fewer than two options', async () => {
     const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
 

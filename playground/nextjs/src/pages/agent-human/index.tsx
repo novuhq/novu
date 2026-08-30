@@ -73,7 +73,7 @@ type CreatedInteraction = {
   kind: string;
   status: string;
   platform: string;
-  to: string;
+  to: string[];
 };
 
 type Status = { type: 'success'; interaction: CreatedInteraction } | { type: 'error'; message: string } | null;
@@ -83,6 +83,24 @@ function parseOptions(raw: string): string[] {
     .split(/[\n,]/)
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
+/** CLI-style `--to alice,bob`: unique subscriberIds. */
+function parseSubscriberTo(raw: string): string[] | null {
+  const ids = [
+    ...new Set(
+      raw
+        .split(',')
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0)
+    ),
+  ];
+
+  return ids.length > 0 ? ids : null;
+}
+
+function formatSubscriberTo(to: string[]): string {
+  return to.join(', ');
 }
 
 function extractError(data: Record<string, unknown>): string {
@@ -144,10 +162,17 @@ export default function AgentHumanPage() {
     setStatus(null);
 
     try {
+      const subscriberTo = parseSubscriberTo(to);
+      if (!subscriberTo) {
+        setStatus({ type: 'error', message: 'to must include at least one subscriberId' });
+
+        return;
+      }
+
       const payload: Record<string, unknown> = {
         kind,
         prompt,
-        to,
+        to: subscriberTo,
         agentIdentifier: AGENT_IDENTIFIER,
         from,
         ttlSeconds,
@@ -179,7 +204,7 @@ export default function AgentHumanPage() {
             kind: String(data.kind ?? kind),
             status: String(data.status ?? ''),
             platform: String(data.platform ?? ''),
-            to: String(data.to ?? to),
+            to: Array.isArray(data.to) ? data.to.map(String) : String(data.to ?? to),
           },
         });
       }
@@ -281,9 +306,12 @@ export default function AgentHumanPage() {
             value={to}
             onChange={(event) => setTo(event.target.value)}
             required
-            placeholder="NEXT_PUBLIC_NOVU_SUBSCRIBER_ID"
+            placeholder="alice, bob"
             className={inputClass}
           />
+          <p className="text-xs text-muted-foreground">
+            One subscriberId, or comma-separated list. Any listed subscriber may settle (first valid answer wins).
+          </p>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -348,6 +376,9 @@ export default function AgentHumanPage() {
           <p>
             <span className="font-medium">Status:</span> {status.interaction.status} · {status.interaction.kind} on{' '}
             {status.interaction.platform}
+          </p>
+          <p>
+            <span className="font-medium">To:</span> {formatSubscriberTo(status.interaction.to)}
           </p>
           <p className="text-green-700">
             Answer the card in the {AGENT_IDENTIFIER} thread. The agent will continue with{' '}

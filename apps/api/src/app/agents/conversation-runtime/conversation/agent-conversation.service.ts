@@ -74,7 +74,7 @@ export interface CreateOrGetConversationParams {
    * installs. Absent for single-workspace platforms.
    */
   workspaceId?: string;
-  /** Pre-minted durable identifier; for `agent_chat`, equals `platformThreadId`. */
+  /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
   identifier?: string;
   /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
   notificationId?: string;

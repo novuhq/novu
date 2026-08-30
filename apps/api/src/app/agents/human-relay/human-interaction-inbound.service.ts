@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger, shortId } from '@novu/application-generic';
 import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
-import { HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
+import { HumanInteractionResponse, HumanInteractionStatusEnum, humanInteractionRecipientIds } from '@novu/shared';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
@@ -72,13 +72,14 @@ export class HumanInteractionInboundService {
     }
 
     const respondedBy = this.resolveResponder(turn);
+    const respondedBySubscriberId = turn.subscriber?.subscriberId;
     let settled: HumanInteractionEntity | null = null;
 
     if (parsed.type === 'approve' || parsed.type === 'deny') {
       settled = await this.settlement.settle(
         current,
         parsed.type === 'approve' ? HumanInteractionStatusEnum.APPROVED : HumanInteractionStatusEnum.DENIED,
-        this.buildResponse({ type: 'option', optionId: parsed.type, respondedBy })
+        this.buildResponse({ type: 'option', optionId: parsed.type, respondedBy, respondedBySubscriberId })
       );
     } else if (parsed.type === 'option') {
       const known = current.options?.some((option) => option.id === parsed.optionId);
@@ -94,7 +95,7 @@ export class HumanInteractionInboundService {
       settled = await this.settlement.settle(
         current,
         HumanInteractionStatusEnum.ANSWERED,
-        this.buildResponse({ type: 'option', optionId: parsed.optionId, respondedBy })
+        this.buildResponse({ type: 'option', optionId: parsed.optionId, respondedBy, respondedBySubscriberId })
       );
     }
 
@@ -133,7 +134,7 @@ export class HumanInteractionInboundService {
       return { outcome: 'ignored' };
     }
 
-    const addressedAsks = pendingAsks.filter((ask) => ask.subscriberId === turn.subscriber?.subscriberId);
+    const addressedAsks = pendingAsks.filter((ask) => this.isAddressedHuman(turn, ask));
 
     if (addressedAsks.length === 0) {
       if (mode === 'relay') {
@@ -268,7 +269,12 @@ export class HumanInteractionInboundService {
     const settled = await this.settlement.settle(
       current,
       HumanInteractionStatusEnum.ANSWERED,
-      this.buildResponse({ type: 'text', text, respondedBy: this.resolveResponder(turn) })
+      this.buildResponse({
+        type: 'text',
+        text,
+        respondedBy: this.resolveResponder(turn),
+        respondedBySubscriberId: turn.subscriber?.subscriberId,
+      })
     );
 
     if (settled && mode === 'relay') {
@@ -298,8 +304,11 @@ export class HumanInteractionInboundService {
 
   private isAddressedHuman(turn: ConversationTurn, interaction: HumanInteractionEntity): boolean {
     const responder = turn.subscriber?.subscriberId;
+    if (!responder) {
+      return false;
+    }
 
-    return Boolean(responder) && responder === interaction.subscriberId;
+    return humanInteractionRecipientIds(interaction).includes(responder);
   }
 
   private async rejectForeignResponder(turn: ConversationTurn, interaction: HumanInteractionEntity): Promise<void> {
@@ -307,7 +316,7 @@ export class HumanInteractionInboundService {
       {
         interactionIdentifier: interaction.identifier,
         environmentId: turn.config.environmentId,
-        addressedTo: interaction.subscriberId,
+        addressedTo: humanInteractionRecipientIds(interaction),
         responder: turn.subscriber?.subscriberId,
         responderResolution: turn.subscriberResolution?.outcome,
       },

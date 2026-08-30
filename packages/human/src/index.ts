@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { version } from '../package.json';
 import { channelsCommand } from './commands/channels';
 import { runInteraction } from './commands/interact';
+import { inviteCommand } from './commands/invite';
 import { cancelCommand, listCommand } from './commands/list';
 import { setupCommand } from './commands/setup';
 import { installSkillCommand } from './commands/skill';
@@ -20,7 +21,10 @@ program
 
 function withCommonOptions(command: Command): Command {
   return command
-    .option('--to <humanId>', 'address a specific human (defaults to the human from `human setup`)')
+    .option(
+      '--to <humanId>',
+      'address a linked human, or comma-separated humans (max 50; first valid answer wins; link others with `human invite`)'
+    )
     .option('--via <platform>', 'deliver on a specific linked channel (telegram, slack, email) instead of the default')
     .option('--from <name>', 'attribution label shown to the human (e.g. "deploy-bot")')
     .option('--ttl <duration>', 'time until the request expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
@@ -98,6 +102,19 @@ program
   .option('--no-skill', 'skip the coding-agent skill install')
   .description('Connect yourself as the human — links a channel (run again to add more)')
   .action(setupCommand);
+
+program
+  .command('invite')
+  .argument('<humanId>', 'subscriberId of the human to link (does not change your local identity)')
+  .option(
+    '--via <platform>',
+    'channel to link them on (telegram, slack, email). Required when several channels are linked.'
+  )
+  .option('--email <address>', 'their email address (required for --via email when not a TTY)')
+  .option('--async', 'print the connect URL and exit instead of waiting for them to finish')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('Link another human to a channel (sends them a Slack/Telegram connect URL)')
+  .action(inviteCommand);
 
 program
   .command('channels')

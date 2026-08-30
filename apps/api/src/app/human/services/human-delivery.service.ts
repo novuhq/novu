@@ -113,14 +113,14 @@ export class HumanDeliveryService {
     if (deliverable.length === 0) {
       if (params.via === HumanChannelViaEnum.EMAIL) {
         throw new NotFoundException(
-          `Human "${params.subscriberId}" has no email address on file. Run \`human setup email\` to add one.`
+          `Human "${params.subscriberId}" has no email address on file. Run \`human invite ${params.subscriberId} --via email\`.`
         );
       }
 
       throw new NotFoundException(
         params.via
-          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human setup ${params.via}\`.`
-          : `Human "${params.subscriberId}" has no linked channel. Run \`human setup\` to connect one.`
+          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human invite ${params.subscriberId} --via ${params.via}\`.`
+          : `Human "${params.subscriberId}" has no linked channel. Run \`human invite ${params.subscriberId}\`.`
       );
     }
 
@@ -142,7 +142,7 @@ export class HumanDeliveryService {
   ): Promise<{ platformMessageId: string; platformThreadId: string }> {
     const sent = await this.outboundGateway.sendDirectMessage(
       interaction._agentId,
-      interaction.integrationIdentifier,
+      target.integrationIdentifier,
       target.platformUserId,
       buildPendingContent(interaction)
     );

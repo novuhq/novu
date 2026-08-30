@@ -12,7 +12,7 @@ export const chatProviderSchemas = {
   mattermost: genericProviderSchemas,
   msteams: genericProviderSchemas,
   'novu-slack': genericProviderSchemas,
-  'novu-agent-chat': genericProviderSchemas,
+  'novu-web-chat': genericProviderSchemas,
   'rocket-chat': genericProviderSchemas,
   ryver: genericProviderSchemas,
   sendblue: genericProviderSchemas,

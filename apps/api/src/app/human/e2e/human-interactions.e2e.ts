@@ -4,6 +4,7 @@ import {
   ChannelEndpointRepository,
   HumanInteractionRepository,
   IntegrationRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanInteractionStatusEnum } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
@@ -20,6 +21,7 @@ const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
 const humanInteractionRepository = new HumanInteractionRepository();
+const subscriberRepository = new SubscriberRepository();
 
 const TELEGRAM_CHAT_ID = '777001';
 
@@ -182,6 +184,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const interaction = createRes.body.data;
       expect(interaction.status).to.equal(HumanInteractionStatusEnum.PENDING);
       expect(interaction.id).to.match(/^hi_/);
+      expect(interaction.to).to.deep.equal([subscriberId]);
 
       const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
       expect(sends.length).to.be.greaterThan(0);
@@ -197,7 +200,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(sentPayload).to.not.include('Powered by');
 
       const row = await humanInteractionRepository.findByIdentifier(session.environment._id, interaction.id);
-      expect(row!.platformMessageId).to.be.a('string');
+      expect(row?.deliveries?.[0]?.platformMessageId).to.be.a('string');
 
       await clickAction(`human:${interaction.id}:approve`);
 
@@ -211,6 +214,55 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(editedText).to.include('Approved');
       // The subtitle and status line must be visually separated, not crammed together.
       expect(editedText).to.match(/\n\s*\n/);
+    });
+
+    it('lets a listed secondary subscriber settle, and still ignores bystanders', async () => {
+      const bobSubscriberId = `${subscriberId}-bob`;
+      const bobChatId = '777003';
+      await subscriberRepository.create({
+        subscriberId: bobSubscriberId,
+        firstName: 'Bob',
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+      await channelEndpointRepository.create({
+        identifier: `ce-human-e2e-bob-${Date.now()}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        integrationIdentifier,
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        subscriberId: bobSubscriberId,
+        contextKeys: [],
+        type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+        endpoint: { chatId: bobChatId },
+      });
+
+      const createRes = await createInteraction({
+        kind: 'approve',
+        prompt: 'Ship the hotfix?',
+        to: [subscriberId, bobSubscriberId],
+      });
+      expect(createRes.status).to.equal(201, JSON.stringify(createRes.body));
+      expect(createRes.body.data.to).to.deep.equal([subscriberId, bobSubscriberId]);
+
+      const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
+      expect(sends.length).to.be.greaterThan(1);
+
+      const interaction = createRes.body.data;
+      await clickAction(`human:${interaction.id}:approve`, '777002');
+
+      const pendingRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
+      expect(pendingRes.body.data.status).to.equal(HumanInteractionStatusEnum.PENDING);
+
+      await clickAction(`human:${interaction.id}:approve`, bobChatId);
+
+      const settledRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
+      expect(settledRes.body.data.status).to.equal(HumanInteractionStatusEnum.APPROVED);
+      expect(settledRes.body.data.response.respondedBySubscriberId).to.equal(bobSubscriberId);
+
+      const edits = telegramApiStub.calls.filter((call) => call.method === 'editMessageText');
+      expect(edits.length).to.be.greaterThan(1);
     });
 
     it('ignores clicks from anyone other than the addressed human', async () => {
@@ -330,7 +382,9 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const firstRow = await humanInteractionRepository.findByIdentifier(session.environment._id, first.id);
       // The stored id is the adapter's `chatId:messageId` composite; the webhook's
       // reply_to_message carries only the bare Telegram message id.
-      const bareMessageId = Number(firstRow!.platformMessageId!.split(':').pop());
+      const platformMessageId = firstRow?.deliveries?.[0]?.platformMessageId;
+      expect(platformMessageId).to.be.a('string');
+      const bareMessageId = Number(platformMessageId?.split(':').pop());
 
       await sendMessageToRelay('answer to the first', {
         reply_to_message: { message_id: bareMessageId },
@@ -455,8 +509,6 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
         .send({ subscriberId, email: 'Human@Example.com' });
       expect(withEmail.status).to.equal(200);
 
-      const { SubscriberRepository } = await import('@novu/dal');
-      const subscriberRepository = new SubscriberRepository();
       let subscriber = await subscriberRepository.findOne({
         _environmentId: session.environment._id,
         subscriberId,

@@ -14,12 +14,18 @@ human ask "Which environment should I deploy to?"
 human approve "Delete 342 stale records from prod?"
 human choose "Pick a release strategy" --option canary --option blue-green
 human tell "Nightly build finished — 0 failures."
+
+# Link another human (they open the URL; does not change your local identity):
+human invite alice --via slack
+human invite bob --via telegram --async
+human invite carol --via email --email carol@acme.com
 ```
 
 ## How it works
 
-- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links a channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more. Linked channels live on the server; `human channels --default slack` sets a local preference for where interactions land when you don't pass `--via`.
-- Agents stay channel-blind: routing is the human's preference. `--via telegram|slack|email` exists as a rare per-call override.
+- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links **your** channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more. Linked channels live on the server; `human channels --default slack` sets a local preference for where interactions land when you don't pass `--via`.
+- `invite` links a **different** subscriber the same way Slack/Telegram connect does (OAuth or a deep link → channel endpoint). Send them the URL; your `~/.novu/human.json` subscriberId stays yours. Then `--to alice` can reach them.
+- Agents stay channel-blind: routing is the human's preference. `--via telegram|slack|email` on ask/approve is a rare per-call **delivery** override, not how you onboard someone.
 - Each command delivers a one-off message (with action buttons where relevant) and **blocks** until the human answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI resolves and your agent continues.
 
@@ -40,7 +46,7 @@ human tell "Nightly build finished — 0 failures."
 - `--timeout 10m` — max time this invocation blocks; on timeout it prints the id so `human wait <id>` can resume.
 - `--async` — don't block; print the interaction id immediately.
 - `--json` — full interaction object for programmatic parsing.
-- `--to <humanId>` — address a different human than the default from setup.
+- `--to <humanId>` — address a human who is already linked (`human invite` first), or comma-separated humans (`alice,bob`, max 50) so any listed person can settle.
 - `--via <platform>` — deliver on a specific linked channel instead of the default.
 
 ## Auth

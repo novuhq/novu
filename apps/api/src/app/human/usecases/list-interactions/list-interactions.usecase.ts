@@ -26,6 +26,6 @@ export class ListInteractions {
     // Lazy expiry: reading the list settles anything overdue (and disables its card).
     const current = await Promise.all(interactions.map((interaction) => this.settlement.expireIfOverdue(interaction)));
 
-    return { data: current.map(toInteractionResponse) };
+    return { data: current.map((entity) => toInteractionResponse(entity)) };
   }
 }

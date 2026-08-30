@@ -65,8 +65,8 @@ export {
   TelegramConnectButton,
 } from './components';
 export type {
-  UseAgentChatProps,
-  UseAgentChatResult,
+  UseWebChatProps,
+  UseWebChatResult,
   UseChannelConnectionProps,
   UseChannelConnectionResult,
   UseChannelConnectionsProps,
@@ -87,7 +87,7 @@ export type {
   UseTelegramSubscriberLinkResult,
 } from './hooks';
 export {
-  useAgentChat,
+  useWebChat,
   useChannelConnection,
   useChannelConnections,
   useChannelEndpoint,

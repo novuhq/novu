@@ -1,7 +1,8 @@
 import { ConversationChannel, ConversationEntity } from '@novu/dal';
 import { HumanInteractionKindEnum } from '@novu/shared';
-import { IsArray, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Validate } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { IsValidHumanTo } from '../../validators/is-valid-human-to';
 
 export class CreateConversationInteractionCommand extends EnvironmentWithUserCommand {
   @IsNotEmpty()
@@ -40,4 +41,8 @@ export class CreateConversationInteractionCommand extends EnvironmentWithUserCom
   @IsOptional()
   @IsInt()
   ttlSeconds?: number;
+
+  @IsOptional()
+  @Validate(IsValidHumanTo)
+  to?: string | string[];
 }

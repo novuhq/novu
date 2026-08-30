@@ -56,6 +56,19 @@ reachable (chat, PR description, logs) rather than silently giving up or
 looping. Never attempt to configure it on the human's behalf — you don't have
 their Telegram/Slack/email credentials, and setup is interactive by design.
 
+To reach a *different* person than the one who ran setup, they need a linked
+channel too:
+
+```bash
+human invite alice --via slack
+human invite bob --via telegram --async
+human invite carol --via email --email carol@acme.com
+```
+
+Send them the printed URL (Slack authorize or Telegram Start). `--async`
+prints the URL and returns immediately. This does **not** change
+`~/.novu/human.json`. After they connect, address them with `--to alice`.
+
 ## The four commands
 
 ```bash
@@ -118,11 +131,14 @@ other useful work to do while you wait.
 - `--from "deploy-bot"` — label shown to the human so they know which agent
   is asking. Set this whenever you have a stable identity (skip it for
   one-off ad hoc runs).
-- `--to <humanId>` / `--via <telegram|slack|email>` — only needed for
-  multi-human or multi-channel setups; the default human and channel from
-  `human setup` are almost always right. Don't guess a channel — if you
-  need a specific one, pass `--via`; the API errors if that channel is not
-  linked yet (`human setup <channel>`).
+- `--to <humanId>` / `--via <telegram|slack|email>` — `--to` addresses humans
+  who are already linked. Link someone else first with
+  `human invite alice --via slack` (prints a connect URL for them; does not
+  change your local identity). `--to alice,bob` lets any listed human settle
+  (first valid answer wins, max 50). `--via` on ask/approve is only a delivery
+  override when that person has several channels; don't guess — if you need
+  a specific one, pass `--via`. If they have no endpoint yet, the API tells
+  you to run `human invite <id> --via <channel>`.
 - `--ttl 2h` — how long the request stays answerable before it expires
   (default 24h, max 72h). Shorten this for anything time-sensitive so a
   stale approval can't be actioned days later.
