@@ -1,5 +1,6 @@
 import { Novu } from '@novu/api';
 import {
+  ChannelConnectionRepository,
   ChannelEndpointRepository,
   MessageEntity,
   MessageRepository,
@@ -24,6 +25,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
   let topicSubscribersRepository: TopicSubscribersRepository;
   let preferencesRepository: PreferencesRepository;
   let channelEndpointRepository: ChannelEndpointRepository;
+  let channelConnectionRepository: ChannelConnectionRepository;
   let subscriberId: string;
   let environmentId: string;
   let organizationId: string;
@@ -39,6 +41,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
     topicSubscribersRepository = new TopicSubscribersRepository();
     preferencesRepository = new PreferencesRepository();
     channelEndpointRepository = new ChannelEndpointRepository();
+    channelConnectionRepository = new ChannelConnectionRepository();
 
     subscriberId = `test-subscriber-${randomBytes(4).toString('hex')}`;
     environmentId = session.environment._id;
@@ -119,6 +122,37 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
     });
     expect(endpointsBeforeDeletion.length).to.equal(1);
 
+    await channelConnectionRepository.create({
+      identifier: `chconn-${randomBytes(4).toString('hex')}`,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      integrationIdentifier: 'slack-test',
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId,
+      contextKeys: [],
+      workspace: { id: 'T123' },
+      auth: { accessToken: 'xoxb-test-token' },
+    });
+
+    await channelConnectionRepository.create({
+      identifier: `chconn-shared-${randomBytes(4).toString('hex')}`,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      integrationIdentifier: 'slack-shared',
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      contextKeys: [],
+      workspace: { id: 'T-SHARED' },
+      auth: { accessToken: 'xoxb-shared-token' },
+    });
+
+    const connectionsBeforeDeletion = await channelConnectionRepository.find({
+      _environmentId: environmentId,
+      subscriberId,
+    });
+    expect(connectionsBeforeDeletion.length).to.equal(1);
+
     await novuClient.subscribers.delete(subscriberId);
 
     const subscriberAfterDeletion = await subscriberRepository.findOne({
@@ -145,5 +179,17 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
       subscriberId,
     });
     expect(endpointsAfterDeletion.length).to.equal(0);
+
+    const connectionsAfterDeletion = await channelConnectionRepository.find({
+      _environmentId: environmentId,
+      subscriberId,
+    });
+    expect(connectionsAfterDeletion.length).to.equal(0);
+
+    const sharedConnectionsAfterDeletion = await channelConnectionRepository.find({
+      _environmentId: environmentId,
+      integrationIdentifier: 'slack-shared',
+    });
+    expect(sharedConnectionsAfterDeletion.length).to.equal(1);
   });
 });

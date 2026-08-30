@@ -15,6 +15,7 @@ import {
   UpsertPreferences,
 } from '@novu/application-generic';
 import {
+  ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
   ContextRepository,
@@ -76,6 +77,7 @@ const DAL_MODELS = [
   MessageRepository,
   ContextRepository,
   ChannelEndpointRepository,
+  ChannelConnectionRepository,
 ];
 
 @Module({
