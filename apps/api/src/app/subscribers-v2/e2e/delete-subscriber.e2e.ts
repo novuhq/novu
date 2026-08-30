@@ -1,5 +1,6 @@
 import { Novu } from '@novu/api';
 import {
+  ChannelEndpointRepository,
   MessageEntity,
   MessageRepository,
   PreferencesRepository,
@@ -8,7 +9,7 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -22,6 +23,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
   let topicRepository: TopicRepository;
   let topicSubscribersRepository: TopicSubscribersRepository;
   let preferencesRepository: PreferencesRepository;
+  let channelEndpointRepository: ChannelEndpointRepository;
   let subscriberId: string;
   let environmentId: string;
   let organizationId: string;
@@ -36,6 +38,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
     topicRepository = new TopicRepository();
     topicSubscribersRepository = new TopicSubscribersRepository();
     preferencesRepository = new PreferencesRepository();
+    channelEndpointRepository = new ChannelEndpointRepository();
 
     subscriberId = `test-subscriber-${randomBytes(4).toString('hex')}`;
     environmentId = session.environment._id;
@@ -97,6 +100,25 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
     });
     expect(messagesBeforeDeletion.length).to.equal(3);
 
+    await channelEndpointRepository.create({
+      identifier: `chendp-${randomBytes(4).toString('hex')}`,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      integrationIdentifier: 'slack-test',
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId,
+      contextKeys: [],
+      type: ENDPOINT_TYPES.SLACK_CHANNEL,
+      endpoint: { channelId: 'C123456789' },
+    });
+
+    const endpointsBeforeDeletion = await channelEndpointRepository.find({
+      _environmentId: environmentId,
+      subscriberId,
+    });
+    expect(endpointsBeforeDeletion.length).to.equal(1);
+
     await novuClient.subscribers.delete(subscriberId);
 
     const subscriberAfterDeletion = await subscriberRepository.findOne({
@@ -117,5 +139,11 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
       externalSubscriberId: subscriberId,
     });
     expect(topicSubscriptionsAfterDeletion.length).to.equal(0);
+
+    const endpointsAfterDeletion = await channelEndpointRepository.find({
+      _environmentId: environmentId,
+      subscriberId,
+    });
+    expect(endpointsAfterDeletion.length).to.equal(0);
   });
 });

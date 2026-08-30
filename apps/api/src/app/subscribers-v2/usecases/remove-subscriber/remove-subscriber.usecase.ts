@@ -5,7 +5,13 @@ import {
   buildSubscriberKey,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { MessageRepository, PreferencesRepository, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
+import {
+  ChannelEndpointRepository,
+  MessageRepository,
+  PreferencesRepository,
+  SubscriberRepository,
+  TopicSubscribersRepository,
+} from '@novu/dal';
 
 import { RemoveSubscriberCommand } from './remove-subscriber.command';
 
@@ -16,7 +22,8 @@ export class RemoveSubscriber {
     private subscriberRepository: SubscriberRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private preferenceRepository: PreferencesRepository,
-    private messageRepository: MessageRepository
+    private messageRepository: MessageRepository,
+    private channelEndpointRepository: ChannelEndpointRepository
   ) {}
 
   async execute({ environmentId: _environmentId, subscriberId }: RemoveSubscriberCommand) {
@@ -70,6 +77,11 @@ export class RemoveSubscriber {
 
       await this.messageRepository.delete({
         _subscriberId: { $in: subscriberInternalIds },
+        _environmentId,
+      });
+
+      await this.channelEndpointRepository.delete({
+        subscriberId,
         _environmentId,
       });
     });
