@@ -115,6 +115,36 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
     expect(found?.primary).to.equal(true);
   });
 
+  it('clears JsonLogic conditions when set as primary', async () => {
+    await integrationRepository.deleteMany({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const integration = await integrationRepository.create({
+      name: 'Email with jsonlogic conditions',
+      identifier: 'identifier-logic-1',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+      rules: {
+        '==': [{ var: 'tenant.identifier' }, 'acme'],
+      },
+    });
+
+    await session.testAgent.post(`/v1/integrations/${integration._id}/set-primary`).send({});
+
+    const found = await integrationRepository.findOne({
+      _id: integration._id,
+      _organizationId: session.organization._id,
+    });
+
+    expect(found?.rules).to.equal(null);
+    expect(found?.primary).to.equal(true);
+  });
+
   it('push channel does not support primary flag, then for integration it should throw bad request exception', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,

@@ -123,6 +123,41 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(body.data.conditions[0].children[0].operator).to.equal('EQUAL');
   });
 
+  it('should create integration with JsonLogic conditions', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'tenant.identifier' }, 'acme'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.data.rules).to.deep.equal(payload.rules);
+    expect(body.data.primary).to.equal(false);
+  });
+
+  it('should reject JsonLogic conditions on a disallowed field', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-invalid',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'payload.foo' }, 'bar'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+  });
+
   it('should return error with malformed conditions', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,

@@ -2,7 +2,16 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CredentialsDto, StepFilterDto } from '@novu/application-generic';
 import { IUpdateIntegrationBodyDto } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsMongoId, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsMongoId,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 
 export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   @ApiPropertyOptional({ type: String })
@@ -43,11 +52,29 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
 
   @ApiPropertyOptional({
     type: [StepFilterDto],
+    deprecated: true,
+    description:
+      'Legacy StepFilter conditions for the integration. If both `rules` and `conditions` are present, send-time selection evaluates `rules` and ignores `conditions`. Use `rules` instead.',
   })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
   conditions?: StepFilterDto[];
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    description:
+      'JSONLogic rules used to select this integration at send time. Supports tenant, context, and subscriber fields. When both `rules` and `conditions` are set, `rules` take precedence and `conditions` are ignored.',
+    example: {
+      '==': [{ var: 'tenant.identifier' }, 'acme'],
+    },
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsObject()
+  rules?: Record<string, unknown> | null;
 
   @ApiPropertyOptional({
     type: Object,

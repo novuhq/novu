@@ -107,8 +107,21 @@ export class IntegrationResponseDto {
 
   @ApiPropertyOptional({
     description:
-      'An array of conditions associated with the integration that may influence its behavior or processing logic.',
+      'Legacy StepFilter conditions associated with the integration. If both `rules` and `conditions` are present, send-time selection evaluates `rules` and ignores `conditions`. Use `rules` instead.',
     type: [StepFilterDto],
+    deprecated: true,
   })
   conditions?: StepFilterDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'JSONLogic rules used to select this integration at send time. Supports tenant, context, and subscriber fields. When both `rules` and `conditions` are set, `rules` take precedence and `conditions` are ignored. See https://jsonlogic.com/ for the rule format.',
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: {
+      '==': [{ var: 'tenant.identifier' }, 'acme'],
+    },
+  })
+  rules?: object | null;
 }
