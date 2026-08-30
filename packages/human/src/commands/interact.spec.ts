@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../output', async (importOriginal) => {
   const original = await importOriginal<typeof import('../output')>();
@@ -11,8 +11,10 @@ vi.mock('../output', async (importOriginal) => {
   };
 });
 
-const { parseDuration, parseHumanToOption } = await import('./interact');
+const { parseDuration, parseHumanToOption, resolveTo } = await import('./interact');
 const { exitCodeFor, EXIT_DENIED, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
+
+type HumanCliConfig = import('../config').HumanCliConfig;
 
 describe('parseHumanToOption', () => {
   it('splits comma-separated humans and dedupes', () => {
@@ -25,6 +27,46 @@ describe('parseHumanToOption', () => {
     expect(() => parseHumanToOption(Array.from({ length: 51 }, (_, index) => `s${index}`).join(','))).toThrow(
       'at most 50'
     );
+  });
+});
+
+describe('resolveTo', () => {
+  const config: HumanCliConfig = {
+    apiUrl: 'https://api.novu.co',
+    auth: { mode: 'apiKey', secretKey: 'api_key_private' },
+    relayAgentIdentifier: 'human-relay',
+    subscriberId: 'dave',
+  };
+
+  afterEach(() => {
+    delete process.env.HUMAN_TO;
+  });
+
+  it('works env-only, with no subscriberId in the config', () => {
+    process.env.HUMAN_TO = 'alice';
+    expect(resolveTo({ ...config, subscriberId: undefined })).toEqual(['alice']);
+  });
+
+  it('splits, trims, and dedupes a comma list from the env', () => {
+    process.env.HUMAN_TO = ' alice , bob , alice ';
+    expect(resolveTo(config)).toEqual(['alice', 'bob']);
+  });
+
+  it('applies the recipient cap to the env list and names the source', () => {
+    process.env.HUMAN_TO = Array.from({ length: 51 }, (_, index) => `s${index}`).join(',');
+    expect(() => resolveTo(config)).toThrow('HUMAN_TO supports at most 50');
+  });
+
+  it('lets a --to flag beat HUMAN_TO, and env beat the config file', () => {
+    process.env.HUMAN_TO = 'alice';
+    expect(resolveTo(config, 'carol')).toEqual(['carol']);
+    expect(resolveTo(config)).toEqual(['alice']);
+  });
+
+  it('falls through to the config subscriberId when the env is unset or blank', () => {
+    expect(resolveTo(config)).toBe('dave');
+    process.env.HUMAN_TO = '  ';
+    expect(resolveTo(config)).toBe('dave');
   });
 });
 
