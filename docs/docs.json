@@ -1722,7 +1722,17 @@
       "permanent": true
     },
     {
+      "source": "/platform/integrations/chat/agent-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
       "source": "/platform/integrations/chat/web-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat",
       "destination": "/agents/channels/web-chat",
       "permanent": true
     },
@@ -1732,8 +1742,33 @@
       "permanent": true
     },
     {
+      "source": "/agents/agent-chat/quickstart",
+      "destination": "/agents/channels/web-chat/quickstart",
+      "permanent": true
+    },
+    {
       "source": "/agents/web-chat/quickstart",
       "destination": "/agents/channels/web-chat/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/quickstart",
+      "destination": "/agents/channels/web-chat/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/chat-ui",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/rendering",
+      "destination": "/agents/channels/web-chat/chat-ui",
       "permanent": true
     },
     {
@@ -1742,13 +1777,28 @@
       "permanent": true
     },
     {
+      "source": "/agents/channels/agent-chat/production",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
       "source": "/agents/channels/web-chat/production",
       "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
+      "source": "/agents/channels/agent-chat/messages",
+      "destination": "/agents/channels/web-chat/chat-ui",
+      "permanent": true
+    },
+    {
       "source": "/agents/channels/web-chat/messages",
       "destination": "/agents/channels/web-chat/chat-ui",
+      "permanent": true
+    },
+    {
+      "source": "/platform/sdks/react/hooks/use-agent-chat",
+      "destination": "/platform/sdks/react/hooks/use-web-chat",
       "permanent": true
     },
     {
