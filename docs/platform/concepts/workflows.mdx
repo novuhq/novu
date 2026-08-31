@@ -90,16 +90,6 @@ Workflow identifiers must be unique within one environment and are typically low
   When naming a workflow, choose a clear, descriptive name that reflects its purpose. This name helps teams distinguish between multiple workflows and maintain clarity as your notification system grows. 
 </Note>
 
-## Workflow origin
-
-Workflow and step objects returned by the API include an `origin` field that identifies where the resource was authored. Novu uses this field to decide which bridge endpoint to call when previewing and executing the workflow.
-
-| **Origin**      | **What it means**                                                                                                    |
-|-----------------|----------------------------------------------------------------------------------------------------------------------|
-| `novu-cloud`    | Created and managed in the current dashboard workflow editor. Runs on Novu's shared bridge endpoint.                  |
-| `novu-cloud-v1` | Created with the legacy v1 dashboard editor or v1 workflows API, before the current workflow builder.                 |
-| `external`      | Defined in code with the [Novu Framework](/framework). Runs against your own hosted bridge endpoint.                  |
-
 ## Workflow status
 
 Workflows can exist in one of three states:
