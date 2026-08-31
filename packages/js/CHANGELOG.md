@@ -1,3 +1,31 @@
+## v3.19.1 (2026-08-31)
+
+### 🚀 Features
+
+- **js,react:** lazy-load Agent Chat so Inbox bundles stay isolated fixes NV-8698 ([#12466](https://github.com/novuhq/novu/pull/12466))
+- **api-service,js:** persist and deliver custom agent data end-to-end fixes NV-8646 ([#12444](https://github.com/novuhq/novu/pull/12444))
+- **react,js:** rebuild useAgentChat on conversation runtime fixes NV-8641 ([#12438](https://github.com/novuhq/novu/pull/12438))
+- **js:** improve agent-chat public types and runtime validation fixes NV-8644 ([#12420](https://github.com/novuhq/novu/pull/12420))
+- **js:** add agent conversation runtime with immutable snapshots fixes NV-8640 ([#12415](https://github.com/novuhq/novu/pull/12415))
+- **api-service,js:** expose Agent Chat tool trust actions fixes NV-8594 ([#12365](https://github.com/novuhq/novu/pull/12365))
+- **api-service,js:** deliver Agent Chat card parts and sendAction for button clicks fixes NV-8600 ([#12353](https://github.com/novuhq/novu/pull/12353))
+- **dashboard:** add in-dashboard Agent Chat tester for onboarding fixes NV-8590 ([#12338](https://github.com/novuhq/novu/pull/12338))
+- **api-service,js:** emit MCP connection events for agent chat fixes NV-8578 ([#12321](https://github.com/novuhq/novu/pull/12321))
+- **api-service,js,react:** optional agentHash HMAC gate for web chat fixes NV-8442 ([#12303](https://github.com/novuhq/novu/pull/12303))
+- **js,react,api:** wire typing indicator through agent chat fixes NV-8569 ([#12297](https://github.com/novuhq/novu/pull/12297))
+- **js,react:** add agent-chat hook callbacks via a store change descriptor fixes NV-8445 ([#12293](https://github.com/novuhq/novu/pull/12293))
+- **js,react,api:** wire agent-chat live WS, status, fetchMore, approvals fixes NV-8445 ([#12292](https://github.com/novuhq/novu/pull/12292))
+
+### 🩹 Fixes
+
+- **js,react:** correct agent-chat pagination state and run-error exposure fixes NV-8638 ([#12414](https://github.com/novuhq/novu/pull/12414))
+- **agent-chat:** await ingress processing and fix Agent Chat runtime bugs fixes NV-8593 ([#12392](https://github.com/novuhq/novu/pull/12392))
+- **api-service,js:** sync 402 on web chat accept when plan limits block fixes NV-8575 ([#12307](https://github.com/novuhq/novu/pull/12307))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.19.0 (2026-08-07)
 
 ### 🚀 Features
