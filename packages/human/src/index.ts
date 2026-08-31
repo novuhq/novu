@@ -19,13 +19,27 @@ program
   )
   .version(version);
 
+program.addHelpText(
+  'after',
+  '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
+    '  NOVU_SECRET_KEY    Novu API secret key (replaces `human setup` auth)\n' +
+    '  HUMAN_TO           default recipient subscriberId(s), comma-separated (as --to)\n' +
+    '  HUMAN_VIA          default channel: telegram, slack, or email (as --via)\n' +
+    '  NOVU_API_URL       Novu API URL override\n' +
+    '  NOVU_HUMAN_CONFIG  config file path override\n' +
+    'Precedence: CLI flags > environment variables > ~/.novu/human.json\n'
+);
+
 function withCommonOptions(command: Command): Command {
   return command
     .option(
       '--to <humanId>',
-      'address a linked human, or comma-separated humans (max 50; first valid answer wins; link others with `human invite`)'
+      'address a linked human, or comma-separated humans (max 50; first valid answer wins; link others with `human invite`) (env: HUMAN_TO)'
     )
-    .option('--via <platform>', 'deliver on a specific linked channel (telegram, slack, email) instead of the default')
+    .option(
+      '--via <platform>',
+      'deliver on a specific linked channel (telegram, slack, email) instead of the default (env: HUMAN_VIA)'
+    )
     .option('--from <name>', 'attribution label shown to the human (e.g. "deploy-bot")')
     .option('--ttl <duration>', 'time until the request expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
     .option('--timeout <duration>', 'max time to block waiting (default: block until answered/expired)')

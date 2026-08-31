@@ -6,7 +6,7 @@ import {
   type Interaction,
   type InteractionKind,
 } from '../api/human';
-import { NOT_SET_UP_MESSAGE, resolveConfig, resolveVia } from '../config';
+import { type HumanCliConfig, NOT_SET_UP_MESSAGE, resolveConfig, resolveVia } from '../config';
 import { EXIT_TIMEOUT, emitResult, fail } from '../output';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
@@ -42,7 +42,7 @@ export function clientFromConfig(apiUrl?: string): {
 /** Matches Novu `HUMAN_INTERACTION_MAX_RECIPIENTS`. The CLI cannot import `@novu/shared`. */
 const MAX_HUMAN_TO = 50;
 
-export function parseHumanToOption(raw: string): string[] {
+export function parseHumanToOption(raw: string, label = '`--to`'): string[] {
   const ids = [
     ...new Set(
       raw
@@ -52,14 +52,28 @@ export function parseHumanToOption(raw: string): string[] {
     ),
   ];
   if (ids.length === 0) {
-    fail('`--to` must include at least one subscriberId');
+    fail(`${label} must include at least one subscriberId`);
   }
 
   if (ids.length > MAX_HUMAN_TO) {
-    fail(`\`--to\` supports at most ${MAX_HUMAN_TO} subscriberIds`);
+    fail(`${label} supports at most ${MAX_HUMAN_TO} subscriberIds`);
   }
 
   return ids;
+}
+
+/** Recipient precedence: `--to` flag > HUMAN_TO env > config file subscriberId. */
+export function resolveTo(config: HumanCliConfig, toFlag?: string): string | string[] | undefined {
+  if (toFlag) {
+    return parseHumanToOption(toFlag);
+  }
+
+  const envTo = process.env.HUMAN_TO?.trim();
+  if (envTo) {
+    return parseHumanToOption(envTo, 'HUMAN_TO');
+  }
+
+  return config.subscriberId;
 }
 
 /** Shared engine behind ask / approve / choose / tell. */
@@ -67,14 +81,14 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
   try {
     const { client, config } = clientFromConfig(options.apiUrl);
 
-    const to = options.to ? parseHumanToOption(options.to) : config.subscriberId;
+    const to = resolveTo(config, options.to);
 
     if (!to) {
       fail(NOT_SET_UP_MESSAGE);
     }
 
-    // `--via` or the saved defaultChannel preference; omit via and the API
-    // picks when only one channel is linked.
+    // `--via`, HUMAN_VIA, or the saved defaultChannel preference; omit
+    // via and the API picks when only one channel is linked.
     const via = resolveVia(config, options.via);
 
     const input: CreateInteractionInput = {
