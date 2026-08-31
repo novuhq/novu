@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HumanInteractionKindEnum, HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { HumanInteractionDBModel, HumanInteractionEntity } from './human-interaction.entity';
+import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   async countPendingForSubscriber(environmentId: string, subscriberId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,
-      subscriberId,
+      subscriberIds: subscriberId,
       status: HumanInteractionStatusEnum.PENDING,
     });
   }
@@ -35,7 +35,28 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     return this.find(
       {
         _environmentId: environmentId,
-        subscriberId,
+        subscriberIds: subscriberId,
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.PENDING,
+      },
+      '*',
+      { sort: { createdAt: -1 }, limit }
+    );
+  }
+
+  /**
+   * Pending `ask` interactions in a conversation, newest first — conversation-
+   * scoped bare-message correlation for framework `ctx.ask`.
+   */
+  async findPendingAsksByConversation(
+    environmentId: string,
+    conversationId: string,
+    limit = 10
+  ): Promise<HumanInteractionEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.PENDING,
       },
@@ -62,8 +83,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     return this.findOne(
       {
         _environmentId: environmentId,
-        platformMessageId: { $in: platformMessageIds },
         status: HumanInteractionStatusEnum.PENDING,
+        'deliveries.platformMessageId': { $in: platformMessageIds },
       },
       '*'
     );
@@ -72,14 +93,15 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   async stampDelivery(
     environmentId: string,
     id: string,
-    delivery: { platformMessageId?: string; platformThreadId?: string; _conversationId?: string }
+    delivery: {
+      deliveries: HumanInteractionDelivery[];
+      _conversationId?: string;
+      subscriberIds?: string[];
+    }
   ): Promise<void> {
-    const $set: Record<string, string> = {};
-    if (delivery.platformMessageId) $set.platformMessageId = delivery.platformMessageId;
-    if (delivery.platformThreadId) $set.platformThreadId = delivery.platformThreadId;
+    const $set: Record<string, unknown> = { deliveries: delivery.deliveries };
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
-
-    if (Object.keys($set).length === 0) return;
+    if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 
     await this.update({ _id: id, _environmentId: environmentId }, { $set });
   }
@@ -149,7 +171,7 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       {
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
-        ...(params.subscriberId ? { subscriberId: params.subscriberId } : {}),
+        ...(params.subscriberId ? { subscriberIds: params.subscriberId } : {}),
         ...(params.status ? { status: params.status } : {}),
         ...(params.before ? { _id: { $lt: params.before } } : {}),
       },

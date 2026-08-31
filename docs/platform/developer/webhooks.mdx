@@ -22,11 +22,11 @@ To start listening to messages, you must register your endpoint in the Novu dash
 1. Go to the **[Webhooks](https://dashboard.novu.co/webhooks)** page in the Novu dashboard.
 2. Select the **Endpoints** tab.
 3. Click **Add Endpoint**.
-4. Select a webhook integration from the list. Choose **Webhook** to receive events over HTTP, or select a [connector](/platform/developer/webhooks/connectors) to deliver events directly to a data warehouse or AWS messaging service.
+4. Select a webhook integration from the list. Choose **Webhook** to receive events over HTTP, **Polling Endpoint** or **FIFO Endpoint** for alternative HTTP delivery, or select a [connector](/platform/developer/webhooks/connectors) to deliver events directly to a warehouse, object store, queue, or analytics tool.
   ![Webhook integrations list](/images/developer-tools/webhook-integrations.png)
 5. Configure the endpoint:
    - For **Webhook** endpoints, enter the HTTPS URL where you want to receive the payload. You can use tools like [Webhook.site](https://webhook.site/) or [RequestBin](https://requestbin.com/) to generate a temporary URL for testing.
-   - For connector endpoints (such as ClickHouse, Snowflake, Redshift, SQS, or SNS), enter the connector-specific configuration, table schema (for warehouse connectors), and transformation code. See the [webhook connectors](/platform/developer/webhooks/connectors) guide for details.
+   - For connector endpoints (such as BigQuery, S3, SQS, or Segment), enter the connector-specific configuration, table schema (for warehouse connectors), and transformation code. See the [webhook connectors](/platform/developer/webhooks/connectors) guide for details.
 6. In the **Description** field, enter a description to identify this webhook.
 7. Next, select the specific event types you want this endpoint to subscribe to.
   ![Add webhook](/images/developer-tools/add-webhook.png)

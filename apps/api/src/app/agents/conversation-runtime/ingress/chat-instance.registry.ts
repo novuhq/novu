@@ -4,18 +4,18 @@ import type { TelegramAdapter } from '@chat-adapter/telegram';
 import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { NovuAgentChatAdapter } from '@novu/chat-adapter-agent-chat';
+import type { NovuWebChatAdapter } from '@novu/chat-adapter-web-chat';
 import { stripAgentReplyToken } from '@novu/shared';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
-import { AgentChatAcceptIdempotencyService } from '../../agent-chat/agent-chat-accept-idempotency.service';
+import { WebChatAcceptIdempotencyService } from '../../web-chat/web-chat-accept-idempotency.service';
 import {
-  type AgentChatPlatformDeliveryContext,
-  AgentChatPlatformDeliveryService,
-} from '../../agent-chat/agent-chat-platform-delivery.service';
-import { AgentChatResumeAuthorizationService } from '../../agent-chat/agent-chat-resume-authorization.service';
-import { AgentChatSessionVerifier } from '../../agent-chat/agent-chat-session.verifier';
+  type WebChatPlatformDeliveryContext,
+  WebChatPlatformDeliveryService,
+} from '../../web-chat/web-chat-platform-delivery.service';
+import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
+import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
@@ -46,7 +46,7 @@ export type PlatformAdapters = {
   teams: TeamsAdapter;
   telegram: TelegramAdapter;
   whatsapp: WhatsAppAdapter;
-  agent_chat: NovuAgentChatAdapter;
+  web_chat: NovuWebChatAdapter;
   email: Adapter;
   sendblue: Adapter;
   /**
@@ -140,10 +140,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly emailActionTokenService: AgentEmailActionTokenService,
     private readonly agentActionTokenService: AgentActionTokenService,
     private readonly agentEmailSender: AgentEmailSender,
-    private readonly agentChatSessionVerifier: AgentChatSessionVerifier,
-    private readonly agentChatPlatformDelivery: AgentChatPlatformDeliveryService,
-    private readonly agentChatResumeAuthorization: AgentChatResumeAuthorizationService,
-    private readonly agentChatAcceptIdempotency: AgentChatAcceptIdempotencyService,
+    private readonly webChatSessionVerifier: WebChatSessionVerifier,
+    private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
+    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
+    private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
     @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: PlanLimitGateService
   ) {
@@ -536,9 +536,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           }),
         };
       }
-      case AgentPlatformEnum.AGENT_CHAT: {
-        const { createAgentChatAdapter } = await esmImport('@novu/chat-adapter-agent-chat');
-        const deliveryContext: AgentChatPlatformDeliveryContext = {
+      case AgentPlatformEnum.WEB_CHAT: {
+        const { createWebChatAdapter } = await esmImport('@novu/chat-adapter-web-chat');
+        const deliveryContext: WebChatPlatformDeliveryContext = {
           agentId,
           get config() {
             return cached.config;
@@ -546,29 +546,29 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         };
 
         return {
-          agent_chat: createAgentChatAdapter({
+          web_chat: createWebChatAdapter({
             userName: config.agentName,
-            verifySession: (request) => this.agentChatSessionVerifier.verifySession(request),
+            verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
             authorizeResume: ({ conversationId, session }) =>
-              this.agentChatResumeAuthorization.canResume({ conversationId, session, agentId }),
+              this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
             checkAcceptLimits: ({ isNewThread, conversationId }) =>
-              this.planLimitGate.checkAgentChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
+              this.planLimitGate.checkWebChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
             claimInbound: ({ session, key, conversationId }) =>
-              this.agentChatAcceptIdempotency.claimInbound(session.environmentId, key, conversationId),
+              this.webChatAcceptIdempotency.claimInbound(session.environmentId, key, conversationId),
             releaseInbound: ({ session, key, conversationId, claimToken }) =>
-              this.agentChatAcceptIdempotency.releaseInbound(session.environmentId, key, conversationId, claimToken),
+              this.webChatAcceptIdempotency.releaseInbound(session.environmentId, key, conversationId, claimToken),
             completeInbound: ({ session, key, conversationId, claimToken, messageId }) =>
-              this.agentChatAcceptIdempotency.completeInbound(
+              this.webChatAcceptIdempotency.completeInbound(
                 session.environmentId,
                 key,
                 conversationId,
                 claimToken,
                 messageId
               ),
-            deliverMessage: this.agentChatPlatformDelivery.createDeliverMessage(deliveryContext),
-            editMessage: this.agentChatPlatformDelivery.createEditMessage(deliveryContext),
-            deleteMessage: this.agentChatPlatformDelivery.createDeleteMessage(deliveryContext),
-            startTyping: this.agentChatPlatformDelivery.createStartTyping(deliveryContext),
+            deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
+            editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
+            deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
+            startTyping: this.webChatPlatformDelivery.createStartTyping(deliveryContext),
           }),
         };
       }
@@ -592,7 +592,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.rethrowAgentChatInboundError(cached, err, {
+        this.rethrowWebChatInboundError(cached, err, {
           agentId,
           operation: 'on-new-mention',
           logMessage: `[agent:${agentId}] Error handling new mention`,
@@ -605,7 +605,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.rethrowAgentChatInboundError(cached, err, {
+        this.rethrowWebChatInboundError(cached, err, {
           agentId,
           operation: 'on-subscribed-message',
           logMessage: `[agent:${agentId}] Error handling subscribed message`,
@@ -659,7 +659,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           event.raw
         );
       } catch (err) {
-        this.rethrowAgentChatInboundError(cached, err, {
+        this.rethrowWebChatInboundError(cached, err, {
           agentId,
           operation: 'on-action',
           logMessage: `[agent:${agentId}] Error handling action ${event.actionId}`,
@@ -692,10 +692,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
   /**
    * Slack/Telegram keep swallowing inbound errors so their webhooks stay 200.
-   * Agent chat must rethrow so the adapter releases the accept lock instead of
+   * Web chat must rethrow so the adapter releases the accept lock instead of
    * writing a 24h success cache for a failed turn.
    */
-  private rethrowAgentChatInboundError(
+  private rethrowWebChatInboundError(
     cached: CachedChat,
     err: unknown,
     args: { agentId: string; operation: string; logMessage: string; extra?: Record<string, unknown> }
@@ -708,7 +708,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       extra: args.extra,
     });
 
-    if (cached.config.platform === AgentPlatformEnum.AGENT_CHAT) {
+    if (cached.config.platform === AgentPlatformEnum.WEB_CHAT) {
       throw err;
     }
   }

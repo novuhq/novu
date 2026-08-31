@@ -11,6 +11,7 @@ export async function scaffoldLangChainProject(input: {
   agentIdentifier: string;
   silent?: boolean;
   llmAuth: LlmAuthChoice;
+  region?: string;
 }): Promise<ScaffoldBridgeProjectResult> {
   return scaffoldBridgeProject({
     parentDir: input.parentDir,
@@ -22,5 +23,6 @@ export async function scaffoldLangChainProject(input: {
     agentIdentifier: input.agentIdentifier,
     silent: input.silent,
     llmAuth: input.llmAuth,
+    region: input.region,
   });
 }

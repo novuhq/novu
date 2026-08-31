@@ -16,6 +16,7 @@ import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
 enum WebhooksIds {
@@ -66,13 +67,19 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
     }
   ) {
     super();
+    const baseUrl = resolveSafeProviderUrl(config.baseUrl || 'https://api.mailgun.net', {
+      allowedHostnames: ['api.mailgun.net', 'api.eu.mailgun.net'],
+      blockedPrefix: 'Mailgun base URL blocked',
+      requireHttps: true,
+    });
     const mailgun = new Mailgun(formData);
 
     this.mailgunClient = mailgun.client({
       username: config.username,
       key: config.apiKey,
-      url: config.baseUrl || 'https://api.mailgun.net',
+      url: baseUrl,
     });
+    this.config.baseUrl = baseUrl;
   }
 
   async sendMessage(

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Client } from '../../client';
 import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
+import { AgentContextImpl } from './agent.context';
 import { AgentDeliveryError, AgentError } from './agent.errors';
 import { agent } from './agent.resource';
 import { PendingApproval } from './agent.types';
@@ -332,6 +333,218 @@ describe('agent dispatch via NovuRequestHandler', () => {
       workflowId: 'post-resolve-workflow',
       payload: { reason: 'done' },
     });
+  });
+
+  it('should batch ctx.ask / approve / choose / tell as human signals', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.ask('What environment?', { from: 'deploy-bot', ttlSeconds: 120 });
+        ctx.approve('Deploy v2?');
+        ctx.choose('Which region?', ['us-east', 'eu-west']);
+        ctx.tell('Deploy finished.');
+        await ctx.reply('Queued human interactions');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
+
+    expect(humanSignals).toHaveLength(4);
+    expect(humanSignals[0]).toMatchObject({
+      type: 'human',
+      kind: 'ask',
+      prompt: 'What environment?',
+      from: 'deploy-bot',
+      ttlSeconds: 120,
+    });
+    expect(humanSignals[0].requestId).toMatch(/^hr_/);
+    expect(humanSignals[1]).toMatchObject({ type: 'human', kind: 'approve', prompt: 'Deploy v2?' });
+    expect(humanSignals[2]).toMatchObject({
+      type: 'human',
+      kind: 'choose',
+      prompt: 'Which region?',
+      options: ['us-east', 'eu-west'],
+    });
+    expect(humanSignals[3]).toMatchObject({ type: 'human', kind: 'tell', prompt: 'Deploy finished.' });
+  });
+
+  it('should pass ctx.ask/approve `to` onto the human signal', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.ask('What environment?', { to: 'alice' });
+        ctx.approve('Deploy v2?', { to: ['alice', 'bob', 'alice'] });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
+
+    expect(humanSignals[0]).toMatchObject({ kind: 'ask', to: ['alice'] });
+    expect(humanSignals[1]).toMatchObject({ kind: 'approve', to: ['alice', 'bob'] });
+  });
+
+  it('should reject empty or oversized human `to` lists', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+
+    expect(() => ctx.ask('Env?', { to: '  ' })).toThrow('at least one subscriberId');
+    expect(() => ctx.approve('Deploy?', { to: [] })).toThrow('at least one subscriberId');
+
+    const tooMany = Array.from({ length: 51 }, (_, index) => `s${index}`);
+    expect(() => ctx.approve('Deploy?', { to: tooMany })).toThrow('at most 50');
+  });
+
+  it('should reject ctx.choose with fewer than two options', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+
+    expect(() => ctx.choose('Which region?', ['only-one'])).toThrow('between 2 and 10 options');
+    expect(() => ctx.choose('Which region?', ['us-east', '  '])).toThrow('non-empty strings');
+  });
+
+  it('should expose ctx.humanResponse on onAction when the HITL approve settles', async () => {
+    const onActionSpy = vi.fn(async (_action, ctx) =>
+      ctx.humanResponse?.expired ? 'Expired' : 'Approved — shipping it.'
+    );
+    const humanResponse = {
+      requestId: 'hr_1',
+      interactionId: 'hi_1',
+      kind: 'approve' as const,
+      status: 'approved',
+      expired: false,
+      optionId: 'approve',
+    };
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onAction: onActionSpy,
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onAction',
+          message: null,
+          action: { id: 'human:hi_1:approve' },
+          humanResponse,
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(onActionSpy).toHaveBeenCalledTimes(1));
+
+    expect(onActionSpy.mock.calls[0][1].event).toBe('onAction');
+    expect(onActionSpy.mock.calls[0][1].humanResponse).toEqual(humanResponse);
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    expect(replyBody.reply.markdown).toBe('Approved — shipping it.');
+  });
+
+  it('should expose ctx.humanResponse.expired on onMessage when the HITL ask timed out', async () => {
+    const onMessageSpy = vi.fn(async (_message, ctx) =>
+      ctx.humanResponse?.expired ? 'That ask expired.' : 'Unexpected'
+    );
+    const humanResponse = {
+      requestId: 'hr_1',
+      interactionId: 'hi_1',
+      kind: 'ask' as const,
+      status: 'expired',
+      expired: true,
+    };
+    const testBot = agent('test-bot', {
+      onMessage: onMessageSpy,
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({ event: 'onMessage', humanResponse });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(onMessageSpy).toHaveBeenCalledTimes(1));
+
+    expect(onMessageSpy.mock.calls[0][1].humanResponse).toEqual(humanResponse);
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    expect(replyBody.reply.markdown).toBe('That ask expired.');
   });
 
   it('should provide read-only context properties from bridge payload', async () => {

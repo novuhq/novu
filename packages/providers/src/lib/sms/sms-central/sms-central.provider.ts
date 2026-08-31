@@ -1,7 +1,9 @@
-import { SmsProviderIdEnum } from '@novu/shared';
+import { isOutboundSsrfProtectionEnabled, SmsProviderIdEnum } from '@novu/shared';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SmsCentralSmsProvider extends BaseProvider implements ISmsProvider {
@@ -34,8 +36,19 @@ export class SmsCentralSmsProvider extends BaseProvider implements ISmsProvider 
       MESSAGE_TEXT: options.content,
     }).body;
 
-    const url = this.config.baseUrl || this.DEFAULT_BASE_URL;
-    await axios.create().post(url, data);
+    const url = resolveSafeProviderUrl(this.config.baseUrl || this.DEFAULT_BASE_URL, {
+      blockedPrefix: 'SMS Central base URL blocked',
+    });
+
+    if (isOutboundSsrfProtectionEnabled()) {
+      const response = await safeOutboundJsonRequest({ url, method: 'POST', body: data });
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw new Error(`SMS Central request failed with status ${response.statusCode}`);
+      }
+    } else {
+      await axios.create().post(url, data);
+    }
 
     return {
       id: options.id,

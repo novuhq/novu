@@ -66,8 +66,19 @@ FLAGS
                           the id so `human wait <id>` can resume
   --async                don't block; print the interaction id immediately
   --json                 full interaction object for programmatic parsing
-  --to <humanId>         address a different human than the default from setup
+  --to <humanId>         address a linked human, or comma-separated humans
+                          (link others first with `human invite`)
   --via <platform>       deliver on a specific linked channel instead of default
+
+INVITE (link another human)
+---------------------------
+  human invite alice --via slack
+  human invite bob --via telegram --async
+  human invite carol --via email --email carol@acme.com
+
+  Prints a connect URL for that person (same OAuth / Telegram deep-link
+  as setup). Does not change your local subscriberId. After they connect,
+  address them with --to.
 
 AUTH
 ----

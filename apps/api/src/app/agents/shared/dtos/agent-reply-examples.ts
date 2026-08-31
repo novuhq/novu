@@ -122,6 +122,23 @@ export const AGENT_REPLY_BODY_EXAMPLES = {
       signals: [{ type: 'metadata', action: 'set', key: 'crm:ticketId', value: 'TCK-1001' }],
     },
   },
+  humanApprove: {
+    summary: 'Ask the conversation subscriber to approve',
+    description:
+      'Create an approve/deny card in the current conversation thread. The verdict arrives later on `onAction` with `ctx.humanResponse`.',
+    value: {
+      conversationId: '64f5a1c2e8b7a3d9f0c1b2a3',
+      integrationIdentifier: 'slack-support',
+      signals: [
+        {
+          type: 'human',
+          kind: 'approve',
+          prompt: 'Deploy v2.4.1 to production?',
+          requestId: 'hr_7c2e1a3b-4d5f-6789-abcd-ef0123456789',
+        },
+      ],
+    },
+  },
   triggerWorkflow: {
     summary: 'Trigger a Novu workflow',
     description:

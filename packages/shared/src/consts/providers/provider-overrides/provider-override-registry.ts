@@ -164,8 +164,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Sendblue]: escapeHatch('content'),
   // Photon's provider reads `text` as its body override key (see photon-imessage.schema.ts).
   [ChatProviderIdEnum.PhotonImessage]: escapeHatch('text'),
-  // Agent chat has no stable override schema yet — free-form passthrough keyed like Discord.
-  [ChatProviderIdEnum.NovuAgentChat]: escapeHatch('content'),
+  // Web Chat has no stable override schema yet — free-form passthrough keyed like Discord.
+  [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 export const PROVIDER_OVERRIDE_CONFIGS = {

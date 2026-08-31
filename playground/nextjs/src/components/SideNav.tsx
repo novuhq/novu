@@ -10,6 +10,7 @@ type LinkType = {
 
 const LINKS: LinkType[] = [
   { href: '/agent-toolkit', label: 'Refund Agent (HITL)', category: 'AI' },
+  { href: '/agent-human', label: 'Framework HITL (ctx.ask)', category: 'AI' },
   { href: '/', label: 'Default Inbox', category: 'Components' },
   { href: '/keyless', label: 'Keyless Inbox', category: 'Components' },
   { href: '/render-bell', label: 'Render Bell', category: 'Components' },

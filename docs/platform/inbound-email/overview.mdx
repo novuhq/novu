@@ -81,6 +81,28 @@ Enable webhooks in the dashboard under **Webhooks**, create an endpoint, and sub
 
 The event payload includes normalized mail fields (from, to, subject, text, html, headers, attachments, threading headers) plus your domain and route metadata. See [Event types - Email events](/platform/developer/webhooks/event-types#email-events) for the full schema.
 
+### Attachments
+
+Each item in `object.mail.attachments` is metadata plus a time-limited download URL. Fetch the file with an HTTP `GET` to `url` before `expiresAt`. After that timestamp the link stops working, so copy the bytes into your own storage if you need them later.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `filename` | `string` | Original file name from the message |
+| `contentType` | `string` | MIME type, for example `application/pdf` |
+| `size` | `number` | File size in bytes |
+| `url` | `string` | Time-limited download URL. Issue an HTTP `GET` to this value |
+| `expiresAt` | `string` | ISO-8601 time when `url` stops being valid (six hours after delivery) |
+
+```typescript
+for (const attachment of payload.object.mail.attachments ?? []) {
+  const response = await fetch(attachment.url);
+  const bytes = await response.arrayBuffer();
+  // Persist `bytes` in your storage. Do not keep `attachment.url` as a long-term file location.
+}
+```
+
+See the `email.received` example on [Event types](/platform/developer/webhooks/event-types#email-events) for the full payload shape.
+
 <Warning>
   Do not confuse **Inbound Email** with [Email Activity Tracking](/platform/integrations/email/activity-tracking). Activity tracking receives **delivery and engagement events** (delivered, opened, clicked) from your outbound email provider. Inbound Email receives **messages users send to you**.
 </Warning>

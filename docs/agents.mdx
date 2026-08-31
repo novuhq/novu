@@ -4,7 +4,7 @@ description: "Connect AI agents to Slack, Teams, WhatsApp, Telegram, and email. 
 sidebarTitle: Overview
 ---
 
-Novu Connect is based on the [Agent Communication Infrastructure (ACI)](/agents/get-started/what-is-aci). It ingests channel webhooks, normalizes events, maintains conversation state, and delivers replies so you can run one agent across Slack, Microsoft Teams, WhatsApp, Telegram, email, and in-app [Agent Chat](/agents/channels/agent-chat) without rebuilding each integration.
+Novu Connect is based on the [Agent Communication Infrastructure (ACI)](/agents/get-started/what-is-aci). It ingests channel webhooks, normalizes events, maintains conversation state, and delivers replies so you can run one agent across Slack, Microsoft Teams, WhatsApp, Telegram, email, and in-app [Web Chat](/agents/channels/web-chat) without rebuilding each integration.
 
 ACI separates two layers:
 
@@ -16,7 +16,7 @@ ACI separates two layers:
 
 ### Inbound conversations
 
-Users message the agent on a connected channel (DM, @mention, email, or in-app Agent Chat). Novu loads the conversation history and forwards it to your agent brain with the current turn. Replies go back to the same thread.
+Users message the agent on a connected channel (DM, @mention, email, or in-app Web Chat). Novu loads the conversation history and forwards it to your agent brain with the current turn. Replies go back to the same thread.
 
 ### Tool approval
 
@@ -70,7 +70,7 @@ Choose how the agent brain runs:
   <Card title="Email" icon="mail" href="/agents/channels/email">
     Threaded HTML, action-link approvals.
   </Card>
-  <Card title="Agent Chat" icon="message-circle" href="/agents/channels/agent-chat">
+  <Card title="Web Chat" icon="message-circle" href="/agents/channels/web-chat">
     In-app headless hook, typing, tool approval.
   </Card>
 </Columns>
@@ -107,7 +107,7 @@ Platform differences are listed in [Channels overview](/agents/channels/overview
   <Card href="/agents/conversations" title="Conversation observability" icon="messages-square">
     Inspect live conversations in the dashboard.
   </Card>
-  <Card href="/agents/channels/agent-chat/quickstart" title="Build the Agent Chat UI" icon="message-circle">
-    Headless `useAgentChat` in your product UI.
+  <Card href="/agents/channels/web-chat/quickstart" title="Build the Web Chat UI" icon="message-circle">
+    Headless `useWebChat` in your product UI.
   </Card>
 </Columns>

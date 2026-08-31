@@ -1,0 +1,2969 @@
+import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
+import { WebChatPlanLimitError, WebChatService } from '../api';
+import { NovuEventEmitter } from '../event-emitter';
+import { NovuError } from '../utils/errors';
+import { WebChat } from './web-chat';
+import { derivePendingActions } from './agent-message.types';
+import { createActionIdempotencyKeyForScope } from './idempotency';
+import type { WebChatChange } from './types';
+
+describe('WebChat', () => {
+  const inboxServiceInstance = { isSessionInitialized: true } as any;
+  let emitter: NovuEventEmitter;
+  let sendMessage: jest.Mock;
+  let respondToAction: jest.Mock;
+  let sendAction: jest.Mock;
+  let getEvents: jest.Mock;
+  let connect: jest.Mock;
+  let webChat: WebChat;
+
+  beforeEach(() => {
+    emitter = new NovuEventEmitter();
+    sendMessage = jest.fn();
+    respondToAction = jest.fn();
+    sendAction = jest.fn();
+    getEvents = jest.fn();
+    connect = jest.fn().mockResolvedValue({ data: undefined });
+    const webChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as WebChatService;
+    webChat = new WebChat({
+      inboxServiceInstance,
+      eventEmitterInstance: emitter,
+      webChatService,
+      socket: { connect },
+    });
+  });
+
+  it('appends an optimistic user message then marks it sent with server messageId', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    const updates: Array<{
+      key: string;
+      conversationId?: string;
+      messages: Array<{ id: string; status: string; role: string }>;
+    }> = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      updates.push({
+        key: data.key,
+        conversationId: data.conversationId,
+        messages: data.messages.map((m) => ({ id: m.id, status: m.status, role: m.role })),
+      });
+    });
+
+    const result = await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(result).toEqual({
+      data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' },
+    });
+    expect(updates[1]?.key).toBe('local_session1');
+    expect(updates[1]?.conversationId).toBeUndefined();
+    expect(updates[1]?.messages[0]?.status).toBe('sending');
+    expect(updates[1]?.messages[0]?.id).toMatch(/^opt_/);
+    expect(updates[2]?.key).toBe('local_session1');
+    expect(updates[2]?.conversationId).toBe('conv_abcdefghijkl');
+    expect(updates[2]?.messages).toEqual([{ id: 'msg_abcdefghijkl', status: 'sent', role: 'user' }]);
+
+    const snapshot = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.key).toBe('local_session1');
+    expect(snapshot?.messages[0]).toMatchObject({
+      id: 'msg_abcdefghijkl',
+      role: 'user',
+      status: 'sent',
+      parts: [{ type: 'text', text: 'hello', state: 'done' }],
+    });
+  });
+
+  it('keeps the session key stable so a create listener sees sending → sent', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    const statuses: string[] = [];
+
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key !== 'local_session1') {
+        return;
+      }
+
+      statuses.push(data.messages[0]?.status ?? '');
+    });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(statuses).toEqual(['', 'sending', 'sent']);
+  });
+
+  it('marks the optimistic message failed when the request errors', async () => {
+    sendMessage.mockRejectedValue(new Error('network'));
+
+    const result = await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(result.error).toBeDefined();
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages[0]?.status).toBe('failed');
+  });
+
+  it('returns WebChatPlanLimitError when accept is blocked by plan limits', async () => {
+    sendMessage.mockRejectedValue(new WebChatPlanLimitError('agents', 'Upgrade your plan to activate this agent.'));
+
+    const result = await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(result.error).toBeInstanceOf(WebChatPlanLimitError);
+    expect(result.error).toMatchObject({
+      reason: 'agents',
+      message: 'Upgrade your plan to activate this agent.',
+    });
+  });
+
+  it('serializes overlapping creates on the same session key until conversationId is claimed', async () => {
+    let resolveFirst!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          })
+      )
+      .mockImplementationOnce(async (args) => {
+        expect(args.conversationId).toBe('conv_abcdefghijkl');
+
+        return { identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' };
+      });
+
+    const first = webChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+    const second = webChat.sendMessage({ agentId: 'agent_1', text: 'two', key: 'local_session1' });
+
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(2);
+
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(sendMessage).toHaveBeenNthCalledWith(1, {
+      agentId: 'agent_1',
+      text: 'one',
+      conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
+    });
+
+    resolveFirst({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' });
+
+    await expect(first).resolves.toEqual({
+      data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' },
+    });
+    await expect(second).resolves.toEqual({
+      data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' },
+    });
+
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_abcdefghijkl',
+      messageId: expect.stringMatching(/^msg_/),
+    });
+  });
+
+  it('omitting conversationId on two different session keys creates two conversations', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_a' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'two', key: 'local_b' });
+
+    expect(sendMessage).toHaveBeenNthCalledWith(1, {
+      agentId: 'agent_1',
+      text: 'one',
+      conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
+    });
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
+    });
+
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.conversationId).toBe('conv_aaaaaaaaaaaa');
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_b' })?.conversationId).toBe('conv_bbbbbbbbbbbb');
+  });
+
+  it('does not serialize appends after the conversation id is known', async () => {
+    let resolveSecond!: (value: { identifier: string; messageId: string }) => void;
+    let resolveThird!: (value: { identifier: string; messageId: string }) => void;
+
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecond = resolve;
+          })
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveThird = resolve;
+          })
+      );
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+
+    const second = webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'two',
+      key: 'local_session1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    const third = webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'three',
+      key: 'local_session1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    await Promise.resolve();
+
+    expect(sendMessage).toHaveBeenCalledTimes(3);
+
+    resolveSecond({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+    resolveThird({ identifier: 'conv_abcdefghijkl', messageId: 'msg_cccccccccccc' });
+    await expect(second).resolves.toMatchObject({ data: { messageId: 'msg_bbbbbbbbbbbb' } });
+    await expect(third).resolves.toMatchObject({ data: { messageId: 'msg_cccccccccccc' } });
+  });
+
+  it('serializes create retries after a failed create so waiters do not double-mint', async () => {
+    let resolveSecond!: (value: { identifier: string; messageId: string }) => void;
+    let resolveThird!: (value: { identifier: string; messageId: string }) => void;
+
+    sendMessage
+      .mockRejectedValueOnce(new Error('network'))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecond = resolve;
+          })
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveThird = resolve;
+          })
+      );
+
+    const failed = webChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+    const second = webChat.sendMessage({ agentId: 'agent_1', text: 'two', key: 'local_session1' });
+    const third = webChat.sendMessage({ agentId: 'agent_1', text: 'three', key: 'local_session1' });
+
+    await expect(failed).resolves.toMatchObject({ error: expect.anything() });
+
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+
+    resolveSecond({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+    await expect(second).resolves.toEqual({
+      data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' },
+    });
+
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledTimes(3);
+    expect(sendMessage).toHaveBeenNthCalledWith(3, {
+      agentId: 'agent_1',
+      text: 'three',
+      conversationId: 'conv_abcdefghijkl',
+      messageId: expect.stringMatching(/^msg_/),
+    });
+
+    resolveThird({ identifier: 'conv_abcdefghijkl', messageId: 'msg_cccccccccccc' });
+    await expect(third).resolves.toMatchObject({ data: { messageId: 'msg_cccccccccccc' } });
+  });
+
+  it('appends by conversationId alone after create (JS caller without local key)', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+    await webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const snapshot = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.messages).toHaveLength(2);
+    expect(snapshot?.key).toBe('local_session1');
+  });
+
+  it('rejects a stale key that points at a different claimed conversation', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_stale' });
+
+    await webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'two',
+      key: 'local_stale',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_bbbbbbbbbbbb',
+      messageId: expect.stringMatching(/^msg_/),
+    });
+
+    const previous = webChat.getConversation({ agentId: 'agent_1', key: 'local_stale' });
+    expect(previous?.messages).toHaveLength(1);
+    expect(previous?.conversationId).toBe('conv_aaaaaaaaaaaa');
+
+    const next = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+    expect(next?.messages).toHaveLength(1);
+    expect(next?.key).toBe('conv_bbbbbbbbbbbb');
+  });
+
+  it('resume-by-id after create receives sending → sent on the resume key', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+
+    const resumeStatuses: string[] = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key !== 'conv_abcdefghijkl') {
+        return;
+      }
+
+      resumeStatuses.push(data.messages.map((m) => m.status).join(','));
+    });
+
+    getEvents.mockResolvedValue({ events: [], olderCursor: null });
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    await webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'two',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(resumeStatuses.some((s) => s.includes('sending'))).toBe(true);
+    expect(resumeStatuses.some((s) => s.includes('sent'))).toBe(true);
+  });
+
+  it('clearCache drops retained conversation state', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    webChat.clearCache();
+
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })).toBeUndefined();
+    expect(
+      webChat.getConversation({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+      })
+    ).toBeUndefined();
+  });
+
+  it('loadConversation folds history into the store including user turns', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'user',
+            messageId: 'msg_user0000001',
+            content: { markdown: 'prior question' },
+          },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't2',
+          sequence: 2,
+          timestamp: '2026-08-06T12:00:01.000Z',
+          event: {
+            type: 'message',
+            role: 'assistant',
+            messageId: 'msg_asst0000001',
+            content: { markdown: 'prior answer' },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    const result = await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages).toHaveLength(2);
+    expect(result.data?.messages[0]).toMatchObject({
+      id: 'msg_user0000001',
+      role: 'user',
+      parts: [{ type: 'text', text: 'prior question', state: 'done' }],
+    });
+
+    const snapshot = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.key).toBe('conv_abcdefghijkl');
+    expect(snapshot?.messages).toEqual(result.data?.messages);
+  });
+
+  it('loadConversation merges history with local-only messages by messageId', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
+    await webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'ack locally',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'user',
+            messageId: 'msg_server00001',
+            content: { markdown: 'from server' },
+          },
+        },
+      ],
+      olderCursor: 'act_older',
+    });
+
+    const result = await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_server00001', 'msg_local000001']);
+  });
+
+  it('loadConversation dedupes when history already contains the ack’d messageId', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_shared00001' });
+    await webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'same turn',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'user',
+            messageId: 'msg_shared00001',
+            content: { markdown: 'same turn' },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    const result = await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages).toHaveLength(1);
+    expect(result.data?.messages[0]?.id).toBe('msg_shared00001');
+  });
+
+  it('loadConversation uses a resume holder separate from an in-flight create session', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_bbbbbbbbbbbb',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'user',
+            messageId: 'msg_hist0000001',
+            content: { markdown: 'old thread' },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+
+    sendMessage.mockResolvedValue({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_new00000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'fresh chat', key: 'local_new' });
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      text: 'fresh chat',
+      conversationId: undefined,
+      messageId: expect.stringMatching(/^msg_/),
+    });
+
+    const created = webChat.getConversation({ agentId: 'agent_1', key: 'local_new' });
+    const resumed = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+
+    expect(created?.conversationId).toBe('conv_aaaaaaaaaaaa');
+    expect(created?.messages[0]).toMatchObject({
+      id: 'msg_new00000001',
+      parts: [{ type: 'text', text: 'fresh chat', state: 'done' }],
+    });
+    expect(resumed?.key).toBe('conv_bbbbbbbbbbbb');
+    expect(resumed?.messages[0]?.id).toBe('msg_hist0000001');
+  });
+
+  it('tracks isRunning and status on messages.updated and getConversation after live run lifecycle', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: Array<{ isRunning: boolean; status: string }> = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        updates.push({ isRunning: data.isRunning, status: data.status });
+      }
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: { type: 'run-start' },
+      },
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 2,
+        timestamp: '2026-08-07T12:00:01.000Z',
+        event: { type: 'run-finish', outcome: 'completed' },
+      },
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 3,
+        timestamp: '2026-08-07T12:00:02.000Z',
+        event: { type: 'resolve' },
+      },
+    });
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.isRunning).toBe(false);
+    expect(snapshot?.status).toBe('resolved');
+    expect(updates.some((update) => update.isRunning === true && update.status === 'active')).toBe(true);
+    expect(updates.at(-1)).toEqual({ isRunning: false, status: 'resolved' });
+  });
+
+  it('tracks typing on messages.updated and getConversation after channel.typing', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: Array<{ typing?: { status?: string } }> = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        updates.push({ typing: data.typing });
+      }
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: { type: 'channel.typing', state: 'on', status: 'Searching the docs…' },
+      },
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 2,
+        timestamp: '2026-08-07T12:00:01.000Z',
+        event: { type: 'channel.typing', state: 'off' },
+      },
+    });
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.typing).toBeUndefined();
+    expect(updates.some((update) => update.typing?.status === 'Searching the docs…')).toBe(true);
+    expect(updates.at(-1)).toEqual({ typing: undefined });
+  });
+
+  it('folds a live web_chat.agent_event into the matching conversation holder', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: string[][] = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        updates.push(data.messages.map((message) => message.id));
+      }
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: {
+          type: 'message',
+          role: 'assistant',
+          messageId: 'msg_asst0000001',
+          content: { markdown: 'live reply' },
+        },
+      },
+    });
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages).toHaveLength(2);
+    expect(snapshot?.messages[1]).toMatchObject({
+      id: 'msg_asst0000001',
+      role: 'assistant',
+      parts: [{ type: 'text', text: 'live reply', state: 'done' }],
+    });
+    expect(updates.at(-1)).toEqual(['msg_user0000001', 'msg_asst0000001']);
+  });
+
+  it('accepts live deltas after history that ends mid-stream', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 2,
+          timestamp: '2026-08-07T12:00:01.000Z',
+          event: { type: 'message-start', messageId: 'msg_asst0000001' },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 3,
+        timestamp: '2026-08-07T12:00:02.000Z',
+        event: { type: 'message-delta', messageId: 'msg_asst0000001', delta: 'Hello' },
+      },
+    });
+
+    const snapshot = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.error).toBeUndefined();
+    expect(snapshot?.messages.some((message) => message.id === 'msg_asst0000001')).toBe(true);
+  });
+
+  it('ignores live envelopes for conversations that are not open', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_otherother1',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: {
+          type: 'message',
+          role: 'assistant',
+          messageId: 'msg_asst0000001',
+          content: { markdown: 'other chat' },
+        },
+      },
+    });
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages).toHaveLength(1);
+    expect(snapshot?.messages[0]?.id).toBe('msg_user0000001');
+  });
+
+  it('ignores live envelopes without conversationIdentifier', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: {
+          type: 'message',
+          role: 'assistant',
+          messageId: 'msg_asst0000001',
+          content: { markdown: 'no public id' },
+        },
+      },
+    });
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages).toHaveLength(1);
+  });
+
+  it('connects the socket on the first subscribe and refcounts later calls', () => {
+    webChat.subscribe();
+    webChat.subscribe();
+
+    expect(connect).toHaveBeenCalledTimes(1);
+
+    webChat.unsubscribe();
+    webChat.unsubscribe();
+    webChat.unsubscribe();
+
+    webChat.subscribe();
+    expect(connect).toHaveBeenCalledTimes(2);
+  });
+
+  function historyPage(
+    events: Array<{
+      sequence: number;
+      messageId: string;
+      role: 'user' | 'assistant';
+      markdown: string;
+    }>,
+    olderCursor: string | null = null,
+    conversationId = 'conv_abcdefghijkl'
+  ) {
+    return historyEventPage(
+      events.map((event) => ({
+        sequence: event.sequence,
+        event: {
+          type: 'message' as const,
+          role: event.role,
+          messageId: event.messageId,
+          content: { markdown: event.markdown },
+        },
+      })),
+      olderCursor,
+      conversationId
+    );
+  }
+
+  function historyEventPage(
+    events: Array<{ sequence: number; event: Record<string, unknown> }>,
+    olderCursor: string | null = null,
+    conversationId = 'conv_abcdefghijkl'
+  ) {
+    return {
+      events: events.map((item) => ({
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: conversationId,
+        agentId: 'agent_1',
+        runId: 'history',
+        turnId: 't1',
+        sequence: item.sequence,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: item.event,
+      })),
+      olderCursor,
+    };
+  }
+
+  function liveAssistantEnvelope(args: {
+    sequence: number;
+    messageId: string;
+    markdown: string;
+    conversationId?: string;
+    role?: 'user' | 'assistant';
+  }) {
+    return {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: args.conversationId ?? 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 't1',
+        sequence: args.sequence,
+        timestamp: '2026-08-07T12:00:03.000Z',
+        event: {
+          type: 'message' as const,
+          role: args.role ?? ('assistant' as const),
+          messageId: args.messageId,
+          content: { markdown: args.markdown },
+        },
+      },
+    };
+  }
+
+  function liveEnvelope(args: { sequence: number; event: Record<string, unknown> }) {
+    return {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 't1',
+        sequence: args.sequence,
+        timestamp: '2026-08-07T12:00:03.000Z',
+        event: args.event,
+      },
+    } as any;
+  }
+
+  function liveUserEnvelope(args: { sequence: number; messageId: string }) {
+    return liveEnvelope({
+      sequence: args.sequence,
+      event: { type: 'message', role: 'user', messageId: args.messageId, content: { markdown: 'second' } },
+    });
+  }
+
+  async function waitForMessageIds(expected: string[], key = 'local_session1'): Promise<void> {
+    const current = webChat.getConversation({ agentId: 'agent_1', key });
+    if (current && current.messages.map((message) => message.id).join() === expected.join()) {
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`timed out waiting for ${expected.join(',')}`)), 1000);
+      const unsubscribe = emitter.on('web_chat.messages.updated', ({ data }) => {
+        if (data.key !== key) {
+          return;
+        }
+
+        if (data.messages.map((message) => message.id).join() === expected.join()) {
+          clearTimeout(timeout);
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
+  async function waitForGetEventsCalls(count: number): Promise<void> {
+    if (getEvents.mock.calls.length >= count) {
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`timed out waiting for getEvents × ${count}`)), 1000);
+      const timer = setInterval(() => {
+        if (getEvents.mock.calls.length >= count) {
+          clearTimeout(timeout);
+          clearInterval(timer);
+          resolve();
+        }
+      }, 0);
+    });
+  }
+
+  async function openClaimedConversation(): Promise<void> {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    webChat.subscribe();
+  }
+
+  it('on reconnect catch-up pulls newest events into open conversations', async () => {
+    await openClaimedConversation();
+
+    getEvents.mockResolvedValue(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_missed1', role: 'assistant', markdown: 'missed while offline' },
+      ])
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_missed1']);
+
+    expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('catch-up completes with zero lastSequence when history spans multiple pages', async () => {
+    await openClaimedConversation();
+
+    getEvents
+      .mockResolvedValueOnce(
+        historyPage(
+          [
+            { sequence: 11, messageId: 'msg_asst_page2', role: 'assistant', markdown: 'newer page' },
+            { sequence: 12, messageId: 'msg_asst_page2b', role: 'assistant', markdown: 'newer page b' },
+          ],
+          'cursor_older'
+        )
+      )
+      .mockResolvedValueOnce(
+        historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+      );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_page2', 'msg_asst_page2b']);
+
+    expect(getEvents).toHaveBeenCalledTimes(2);
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.catchUpError).toBeUndefined();
+  });
+
+  it('catch-up completes with zero lastSequence when history exceeds the checkpoint page cap', async () => {
+    await openClaimedConversation();
+
+    getEvents.mockImplementation(({ before }: { before?: string }) => {
+      if (before == null) {
+        return Promise.resolve(
+          historyPage(
+            [{ sequence: 21, messageId: 'msg_asst_page21', role: 'assistant', markdown: 'newest page' }],
+            'cursor_page20'
+          )
+        );
+      }
+
+      const pageNumber = Number.parseInt(before.replace('cursor_page', ''), 10);
+      if (pageNumber <= 1) {
+        return Promise.resolve(
+          historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+        );
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [
+            {
+              sequence: pageNumber,
+              messageId: `msg_asst_page${pageNumber.toString().padStart(2, '0')}`,
+              role: 'assistant',
+              markdown: `page ${pageNumber}`,
+            },
+          ],
+          `cursor_page${pageNumber - 1}`
+        )
+      );
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(21);
+
+    const conversation = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(conversation?.catchUpError).toBeUndefined();
+    expect(conversation?.messages.map((message) => message.id)).toEqual(
+      expect.arrayContaining(['msg_user0000001', 'msg_asst_page21'])
+    );
+  });
+
+  it('catch-up after send claims a conversation that received live events early', async () => {
+    webChat.subscribe();
+
+    let sendStarted = false;
+    let resolveSend!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage.mockImplementationOnce(() => {
+      sendStarted = true;
+
+      return new Promise((resolve) => {
+        resolveSend = resolve;
+      });
+    });
+
+    getEvents.mockResolvedValue(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_early001', role: 'assistant', markdown: 'beat the ack' },
+      ])
+    );
+
+    const sent = webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    await new Promise<void>((resolve) => {
+      const tick = () => {
+        if (sendStarted) {
+          resolve();
+
+          return;
+        }
+
+        setTimeout(tick, 0);
+      };
+
+      tick();
+    });
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_early001',
+        markdown: 'beat the ack',
+      })
+    );
+
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await sent;
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_early001']);
+    expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('buffers live envelopes during catch-up and applies them after', async () => {
+    await openClaimedConversation();
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 3,
+        messageId: 'msg_asst_live001',
+        markdown: 'arrived during catch-up',
+      })
+    );
+
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    resolveEvents(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_http001', role: 'assistant', markdown: 'from http catch-up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_http001', 'msg_asst_live001']);
+  });
+
+  it('does not duplicate envelopes already present in the catch-up page', async () => {
+    await openClaimedConversation();
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_overlap1',
+        markdown: 'same as http page',
+      })
+    );
+
+    resolveEvents(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_overlap1', role: 'assistant', markdown: 'same as http page' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_overlap1']);
+
+    const assistant = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages[1];
+    expect(assistant?.parts).toEqual([{ type: 'text', text: 'same as http page', state: 'done' }]);
+  });
+
+  it('flushes buffered live envelopes and sets error when catch-up HTTP fails', async () => {
+    await openClaimedConversation();
+
+    let rejectEvents!: (error: Error) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectEvents = reject;
+        })
+    );
+
+    const catchUpFailureUpdates: Array<{ isRecovering: boolean; catchUpError?: unknown }> = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.catchUpError) {
+        catchUpFailureUpdates.push({ isRecovering: data.isRecovering, catchUpError: data.catchUpError });
+      }
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_flush001',
+        markdown: 'kept after http failure',
+      })
+    );
+
+    rejectEvents(new Error('getEvents failed'));
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_flush001']);
+    expect(catchUpFailureUpdates.length).toBeGreaterThanOrEqual(1);
+    const failedUpdate = catchUpFailureUpdates.find((update) => update.isRecovering === false);
+    expect(failedUpdate).toEqual({
+      isRecovering: false,
+      catchUpError: expect.objectContaining({
+        message: 'Failed to recover web chat conversation after reconnect',
+      }),
+    });
+    expect(failedUpdate?.catchUpError).toBeDefined();
+    expect((failedUpdate as { error?: unknown }).error).toBeUndefined();
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.catchUpError).toMatchObject({
+      message: 'Failed to recover web chat conversation after reconnect',
+    });
+  });
+
+  it('drops malformed web_chat.agent_event envelopes without folding them', async () => {
+    await openClaimedConversation();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    emitter.emit('web_chat.agent_event', { result: { invalid: true } as any });
+
+    expect(warn).toHaveBeenCalledWith('[novu web-chat] skipping live envelope:', 'invalid-schema');
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    warn.mockRestore();
+  });
+
+  it('does not buffer live envelopes for conversations that are not catching up', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_user_a00001' })
+      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_user_b00001' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello A', key: 'local_a' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello B', key: 'local_b' });
+    webChat.subscribe();
+
+    let resolveSlowCatchUp!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation((args: { conversationId: string }) => {
+      if (args.conversationId === 'conv_aaaaaaaaaaaa') {
+        return new Promise((resolve) => {
+          resolveSlowCatchUp = resolve;
+        });
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [{ sequence: 1, messageId: 'msg_user_b00001', role: 'user', markdown: 'hello B' }],
+          null,
+          args.conversationId
+        )
+      );
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        conversationId: 'conv_bbbbbbbbbbbb',
+        sequence: 2,
+        messageId: 'msg_asst_b_live01',
+        markdown: 'live on B during A catch-up',
+      })
+    );
+
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', key: 'local_b' })?.messages.map((message) => message.id)
+    ).toEqual(['msg_user_b00001', 'msg_asst_b_live01']);
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.messages).toHaveLength(1);
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        conversationId: 'conv_aaaaaaaaaaaa',
+        sequence: 2,
+        messageId: 'msg_asst_a_buf01',
+        markdown: 'buffered on A during catch-up',
+      })
+    );
+
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.messages).toHaveLength(1);
+
+    resolveSlowCatchUp(
+      historyPage(
+        [{ sequence: 1, messageId: 'msg_user_a00001', role: 'user', markdown: 'hello A' }],
+        null,
+        'conv_aaaaaaaaaaaa'
+      )
+    );
+
+    await waitForMessageIds(['msg_user_a00001', 'msg_asst_a_buf01'], 'local_a');
+  });
+
+  it('sets catchUpError when reconnect catch-up exceeds the safety page limit', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    webChat.subscribe();
+    getEvents.mockReset();
+
+    let page = 0;
+    let resolveFirstPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(() => {
+      page += 1;
+      if (page === 1) {
+        return new Promise((resolve) => {
+          resolveFirstPage = resolve;
+        });
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [
+            {
+              sequence: 100 + page,
+              messageId: `msg_asst_page${page.toString().padStart(2, '0')}`,
+              role: 'assistant',
+              markdown: `page ${page}`,
+            },
+          ],
+          `act_page${page.toString().padStart(2, '0')}`
+        )
+      );
+    });
+
+    const catchUpErrors: unknown[] = [];
+    const catchUpErrorPromise = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for catchUpError')), 2000);
+      emitter.on('web_chat.messages.updated', ({ data }) => {
+        if (data.catchUpError && data.isRecovering === false) {
+          clearTimeout(timeout);
+          catchUpErrors.push(data.catchUpError);
+          resolve();
+        }
+      });
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 200,
+        messageId: 'msg_asst_buffered',
+        markdown: 'discarded on limit exceeded',
+      })
+    );
+
+    resolveFirstPage(
+      historyPage(
+        [
+          {
+            sequence: 101,
+            messageId: 'msg_asst_page01',
+            role: 'assistant',
+            markdown: 'page 1',
+          },
+        ],
+        'act_page01'
+      )
+    );
+
+    await catchUpErrorPromise;
+    expect(getEvents).toHaveBeenCalledTimes(20);
+
+    expect(catchUpErrors).toHaveLength(1);
+    expect(catchUpErrors[0]).toMatchObject({
+      message: expect.stringContaining('safety page limit'),
+    });
+
+    const conversation = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(conversation?.messages).toHaveLength(1);
+    expect(conversation?.messages[0]?.id).toBe('msg_user0000001');
+    expect(conversation?.messages.some((message) => message.id === 'msg_asst_buffered')).toBe(false);
+    expect(conversation?.messages.some((message) => message.id.startsWith('msg_asst_page'))).toBe(false);
+    expect(conversation?.catchUpError).toMatchObject({
+      message: expect.stringContaining('safety page limit'),
+    });
+  });
+
+  it('emits catchUpError separately from conversation error on catch-up failure', async () => {
+    await openClaimedConversation();
+
+    let rejectEvents!: (error: Error) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectEvents = reject;
+        })
+    );
+
+    const updates: Array<{ error?: unknown; catchUpError?: unknown }> = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.catchUpError) {
+        updates.push({ error: data.error, catchUpError: data.catchUpError });
+      }
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    rejectEvents(new Error('getEvents failed'));
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for catchUpError event')), 2000);
+      emitter.on('web_chat.messages.updated', ({ data }) => {
+        if (data.catchUpError) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    expect(updates.length).toBeGreaterThanOrEqual(1);
+    expect(updates[0]?.catchUpError).toMatchObject({
+      message: 'Failed to recover web chat conversation after reconnect',
+    });
+    expect(updates[0]?.error).toBeUndefined();
+  });
+
+  it('exposes isRecovering while catch-up is in flight and clears it after success', async () => {
+    await openClaimedConversation();
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    const recoveringStarted = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for isRecovering start event')), 1000);
+      emitter.on('web_chat.messages.updated', ({ data }) => {
+        if (data.key === 'local_session1' && data.isRecovering) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+    const recoveringUpdates: boolean[] = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        recoveringUpdates.push(data.isRecovering);
+      }
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    await recoveringStarted;
+
+    resolveEvents(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_done001', role: 'assistant', markdown: 'caught up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_done001']);
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.isRecovering).toBe(false);
+    expect(recoveringUpdates.at(-1)).toBe(false);
+  });
+
+  it('emits isRecovering false after successful catch-up with an empty live buffer', async () => {
+    await openClaimedConversation();
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+
+    const recoveringUpdates: boolean[] = [];
+    const recovered = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for isRecovering false')), 2000);
+      emitter.on('web_chat.messages.updated', ({ data }) => {
+        if (data.key !== 'local_session1') {
+          return;
+        }
+
+        recoveringUpdates.push(data.isRecovering);
+        if (recoveringUpdates.includes(true) && data.isRecovering === false) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await recovered;
+    expect(recoveringUpdates.at(-1)).toBe(false);
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.isRecovering).toBe(false);
+  });
+
+  it('runs a second catch-up when reconnect arrives during an in-flight catch-up', async () => {
+    await openClaimedConversation();
+
+    const resolvers: Array<(value: ReturnType<typeof historyPage>) => void> = [];
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+
+    resolvers[0]!(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_first001', role: 'assistant', markdown: 'first catch-up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_first001']);
+    await waitForGetEventsCalls(2);
+
+    resolvers[1]!(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_first001', role: 'assistant', markdown: 'first catch-up' },
+        { sequence: 3, messageId: 'msg_asst_second01', role: 'assistant', markdown: 'second catch-up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_first001', 'msg_asst_second01']);
+  });
+
+  it('reconnect catch-up preserves previously fetched older pages and olderCursor', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], 'act_older0001')
+    );
+    await webChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    webChat.subscribe();
+    getEvents.mockClear();
+    getEvents.mockResolvedValueOnce(
+      historyPage(
+        [
+          { sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' },
+          { sequence: 4, messageId: 'msg_asst_missed1', role: 'assistant', markdown: 'missed while offline' },
+        ],
+        'act_page0001'
+      )
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const conversation = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(conversation?.messages.map((message) => message.id)).toEqual([
+      'msg_old0000001',
+      'msg_new0000001',
+      'msg_asst_missed1',
+    ]);
+    expect(conversation?.hasMore).toBe(true);
+    // Newest catch-up page already overlaps known sequence — do not walk olderCursor.
+    expect(getEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it('reconnect catch-up pages older events when the offline gap exceeds one page', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    webChat.subscribe();
+    getEvents.mockClear();
+
+    getEvents.mockImplementation((args: { conversationId: string; before?: string }) => {
+      if (!args.before) {
+        return Promise.resolve(
+          historyPage(
+            [
+              { sequence: 4, messageId: 'msg_asst_page2a', role: 'assistant', markdown: 'newest page a' },
+              { sequence: 5, messageId: 'msg_asst_page2b', role: 'assistant', markdown: 'newest page b' },
+            ],
+            'act_mid0001'
+          )
+        );
+      }
+
+      expect(args.before).toBe('act_mid0001');
+
+      return Promise.resolve(
+        historyPage(
+          [
+            { sequence: 2, messageId: 'msg_asst_page1a', role: 'assistant', markdown: 'older missed a' },
+            { sequence: 3, messageId: 'msg_asst_page1b', role: 'assistant', markdown: 'older missed b' },
+          ],
+          null
+        )
+      );
+    });
+
+    const expectedIds = ['msg_user0000001', 'msg_asst_page1a', 'msg_asst_page1b', 'msg_asst_page2a', 'msg_asst_page2b'];
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(2);
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`timed out waiting for ${expectedIds.join(',')}`)), 1000);
+      const unsubscribe = emitter.on('web_chat.messages.updated', ({ data }) => {
+        if (data.messages.map((message) => message.id).join() === expectedIds.join()) {
+          clearTimeout(timeout);
+          unsubscribe();
+          resolve();
+        }
+      });
+
+      const current = webChat.getConversation({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+      });
+      if (current?.messages.map((message) => message.id).join() === expectedIds.join()) {
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve();
+      }
+    });
+
+    expect(getEvents).toHaveBeenNthCalledWith(1, { conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenNthCalledWith(2, {
+      conversationId: 'conv_abcdefghijkl',
+      before: 'act_mid0001',
+    });
+  });
+
+  it('does not catch up when nothing is subscribed', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await Promise.resolve();
+
+    expect(getEvents).not.toHaveBeenCalled();
+  });
+
+  it('does not catch up when socket connect resolves with an error', async () => {
+    await openClaimedConversation();
+
+    emitter.emit('socket.connect.resolved', {
+      args: { socketUrl: 'http://127.0.0.1:8787' },
+      error: new Error('connect failed'),
+    });
+    await Promise.resolve();
+
+    expect(getEvents).not.toHaveBeenCalled();
+  });
+
+  it('loadConversation sets hasMore from olderCursor', async () => {
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_older0001')
+    );
+
+    const result = await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.hasMore).toBe(true);
+    expect(webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.hasMore).toBe(true);
+  });
+
+  it('fetchMore prepends older messages and advances the cursor', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], 'act_older0001')
+    );
+
+    const result = await webChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(getEvents).toHaveBeenLastCalledWith({
+      conversationId: 'conv_abcdefghijkl',
+      before: 'act_page0001',
+    });
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_old0000001', 'msg_new0000001']);
+    expect(result.data?.hasMore).toBe(true);
+    expect(webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.hasMore).toBe(true);
+  });
+
+  it('fetchMore does not resurrect a message deleted on a newer page', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyEventPage(
+        [
+          {
+            sequence: 2,
+            event: {
+              type: 'message',
+              role: 'user',
+              messageId: 'msg_keep0000001',
+              content: { markdown: 'keep' },
+            },
+          },
+          { sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } },
+        ],
+        'act_page0001'
+      )
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
+    );
+
+    const result = await webChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
+    expect(
+      webChat
+        .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
+        ?.messages.map((message) => message.id)
+    ).toEqual(['msg_keep0000001']);
+  });
+
+  it('fetchMore applies an edit from a newer page onto the older message', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyEventPage(
+        [
+          {
+            sequence: 2,
+            event: {
+              type: 'message',
+              role: 'user',
+              messageId: 'msg_keep0000001',
+              content: { markdown: 'keep' },
+            },
+          },
+          {
+            sequence: 3,
+            event: {
+              type: 'channel.edit',
+              messageId: 'msg_edit0000001',
+              content: { markdown: 'edited' },
+            },
+          },
+        ],
+        'act_page0001'
+      )
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_edit0000001', role: 'user', markdown: 'original' }], null)
+    );
+
+    const result = await webChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_edit0000001', 'msg_keep0000001']);
+    expect(result.data?.messages[0]).toMatchObject({
+      id: 'msg_edit0000001',
+      parts: [{ type: 'text', text: 'edited', state: 'done' }],
+    });
+  });
+
+  it('fetchMore does not resurrect a message deleted live while it was off-screen', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
+    );
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
+    );
+
+    const result = await webChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
+  });
+
+  it('live source after an edit keeps the source part', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_asst0000001', role: 'assistant', markdown: 'original' }], null)
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'channel.edit', messageId: 'msg_asst0000001', content: { markdown: 'edited' } },
+      })
+    );
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({
+        sequence: 3,
+        event: {
+          type: 'source',
+          messageId: 'msg_asst0000001',
+          sourceType: 'url',
+          url: 'https://example.com',
+          title: 'Example',
+        },
+      })
+    );
+
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.messages[0]?.parts
+    ).toMatchObject([
+      { type: 'text', text: 'edited', state: 'done' },
+      { type: 'source', sourceType: 'url', url: 'https://example.com', title: 'Example' },
+    ]);
+  });
+
+  it('reload keeps a live delete that arrived while history GET was in flight', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage(
+        [
+          { sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' },
+          { sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' },
+        ],
+        null
+      )
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    const reload = webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    await waitForGetEventsCalls(2);
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
+    );
+
+    resolveEvents(
+      historyPage(
+        [
+          { sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' },
+          { sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' },
+        ],
+        null
+      )
+    );
+
+    const result = await reload;
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
+  });
+
+  it('fetchMore no-ops when olderCursor is null and does not call getEvents', async () => {
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 1, messageId: 'msg_only0000001', role: 'user', markdown: 'only page' }], null)
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockClear();
+
+    const result = await webChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(getEvents).not.toHaveBeenCalled();
+    expect(result.data?.hasMore).toBe(false);
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_only0000001']);
+  });
+
+  it('fetchMore does not lower lastSequence so live envelopes still apply', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage(
+        [
+          { sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent user' },
+          { sequence: 4, messageId: 'msg_new0000002', role: 'assistant', markdown: 'recent assistant' },
+        ],
+        'act_page0001'
+      )
+    );
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 5,
+        messageId: 'msg_live0000001',
+        markdown: 'live after load',
+      })
+    );
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older user' }], null)
+    );
+
+    await webChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 6,
+        messageId: 'msg_live0000002',
+        markdown: 'live after fetchMore',
+      })
+    );
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(snapshot?.messages.map((message) => message.id)).toEqual([
+      'msg_old0000001',
+      'msg_new0000001',
+      'msg_new0000002',
+      'msg_live0000001',
+      'msg_live0000002',
+    ]);
+    expect(snapshot?.hasMore).toBe(false);
+  });
+
+  function approvalHistoryPage(approvalId: string) {
+    return {
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' as const },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 2,
+          timestamp: '2026-08-07T12:00:01.000Z',
+          event: { type: 'message-start' as const, messageId: 'msg_asst0000001' },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 3,
+          timestamp: '2026-08-07T12:00:02.000Z',
+          event: {
+            type: 'tool-approval-request' as const,
+            approvalId,
+            toolUseId: 'tu_0000001',
+            toolName: 'deleteOrder',
+            input: { orderId: '123' },
+            approveActionId: `tool-approval:approve:${approvalId}`,
+            denyActionId: `tool-approval:deny:${approvalId}`,
+          },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 4,
+          timestamp: '2026-08-07T12:00:03.000Z',
+          event: { type: 'run-finish' as const, outcome: 'paused' as const },
+        },
+      ],
+      olderCursor: null,
+    };
+  }
+
+  it('loadConversation exposes messages that derive pending approvals after fold', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const snapshot = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(derivePendingActions(snapshot?.messages ?? [])).toEqual([
+      {
+        type: 'tool-approval',
+        id: 'approval_000001',
+        approvalId: 'approval_000001',
+        toolUseId: 'tu_0000001',
+        toolName: 'deleteOrder',
+        input: { orderId: '123' },
+        approveActionId: 'tool-approval:approve:approval_000001',
+        denyActionId: 'tool-approval:deny:approval_000001',
+      },
+    ]);
+  });
+
+  it('respondToAction POSTs echoed actionId and does not flip pending state optimistically', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+    respondToAction.mockResolvedValue({
+      identifier: 'conv_abcdefghijkl',
+    });
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await webChat.respondToAction({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'approval_000001',
+      decision: 'approved',
+    });
+
+    expect(result).toEqual({
+      data: { conversationId: 'conv_abcdefghijkl' },
+    });
+    expect(respondToAction).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'tool-approval:approve:approval_000001',
+      idempotencyKey: expect.stringMatching(/^idem_/),
+    });
+
+    const snapshot = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(derivePendingActions(snapshot?.messages ?? [])[0]?.type).toBe('tool-approval');
+  });
+
+  it('respondToAction POSTs trust-server action id when decision is trust-server', async () => {
+    const page = approvalHistoryPage('approval_000001');
+    const requestEvent = page.events[2]?.event as {
+      type: 'tool-approval-request';
+      trustToolActionId?: string;
+      trustServerActionId?: string;
+      source?: { type: 'mcp'; serverName: string };
+    };
+    requestEvent.trustToolActionId = 'mcp-approval:approve-tool:approval_000001:deleteOrder:GitHub';
+    requestEvent.trustServerActionId = 'mcp-approval:approve-server:approval_000001:deleteOrder:GitHub';
+    requestEvent.source = { type: 'mcp', serverName: 'GitHub' };
+    getEvents.mockResolvedValue(page);
+    respondToAction.mockResolvedValue({
+      identifier: 'conv_abcdefghijkl',
+    });
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await webChat.respondToAction({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'approval_000001',
+      decision: 'trust-server',
+    });
+
+    expect(result).toEqual({
+      data: { conversationId: 'conv_abcdefghijkl' },
+    });
+    expect(respondToAction).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'mcp-approval:approve-server:approval_000001:deleteOrder:GitHub',
+      idempotencyKey: expect.stringMatching(/^idem_/),
+    });
+  });
+
+  it('respondToAction resolves pending state only after tool-approval-response envelope', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+    respondToAction.mockResolvedValue({
+      identifier: 'conv_abcdefghijkl',
+    });
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    await webChat.respondToAction({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'approval_000001',
+      decision: 'approved',
+    });
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 't1',
+        sequence: 5,
+        timestamp: '2026-08-07T12:00:04.000Z',
+        event: {
+          type: 'tool-approval-response',
+          approvalId: 'approval_000001',
+          decision: 'approved',
+        },
+      },
+    });
+
+    const snapshot = webChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(derivePendingActions(snapshot?.messages ?? [])).toEqual([]);
+    expect(snapshot?.messages[0]?.parts.find((part) => part.type === 'approval')).toMatchObject({
+      approvalId: 'approval_000001',
+      state: 'approved',
+    });
+  });
+
+  it('respondToAction returns error without POST when pending approval is missing', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await webChat.respondToAction({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'approval_missing',
+      decision: 'denied',
+    });
+
+    expect(result.error).toBeDefined();
+    expect(respondToAction).not.toHaveBeenCalled();
+  });
+
+  it('respondToAction returns error without POST when pending approval lacks action id', async () => {
+    const page = approvalHistoryPage('approval_000001');
+    const requestEvent = page.events[2]?.event as {
+      type: 'tool-approval-request';
+      approveActionId?: string;
+      denyActionId?: string;
+    };
+    delete requestEvent.approveActionId;
+    delete requestEvent.denyActionId;
+    getEvents.mockResolvedValue(page);
+
+    await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await webChat.respondToAction({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'approval_000001',
+      decision: 'denied',
+    });
+
+    expect(result.error).toBeDefined();
+    expect(respondToAction).not.toHaveBeenCalled();
+  });
+
+  it('sendAction POSTs actionId, value, and sourceMessageId', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    sendAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hi', key: 'local_card' });
+    const result = await webChat.sendAction({
+      agentId: 'agent_1',
+      key: 'local_card',
+      actionId: 'topic-billing',
+      sourceMessageId: 'act_card0000001',
+      value: 'billing',
+    });
+
+    expect(result).toEqual({ data: { conversationId: 'conv_abcdefghijkl' } });
+    expect(sendAction).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'topic-billing',
+      sourceMessageId: 'act_card0000001',
+      value: 'billing',
+      idempotencyKey: expect.stringMatching(/^idem_/),
+    });
+  });
+
+  it('sendAction returns error without POST when sourceMessageId is empty', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hi', key: 'local_card_empty' });
+    const result = await webChat.sendAction({
+      agentId: 'agent_1',
+      key: 'local_card_empty',
+      actionId: 'topic-billing',
+      sourceMessageId: '   ',
+    });
+
+    expect(result.error).toBeDefined();
+    expect(sendAction).not.toHaveBeenCalled();
+  });
+
+  function recordChanges(key: string) {
+    const changes: WebChatChange[] = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key === key) {
+        changes.push(data.change);
+      }
+    });
+
+    return changes;
+  }
+
+  it('reports a live fold as new activity while a history page is in flight', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const changes = recordChanges('conv_abcdefghijkl');
+    const older = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({ sequence: 4, messageId: 'msg_live0000001', markdown: 'live during fetchMore' })
+    );
+
+    expect(changes).toHaveLength(2);
+    expect(changes[0]?.kind).toBe('local');
+    expect(changes[1]?.kind).toBe('live');
+    expect(changes[1]?.addedMessages.map((message) => message.id)).toEqual(['msg_live0000001']);
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await older;
+
+    const historyChange = changes.find((change) => change.kind === 'history');
+    expect(historyChange?.addedMessages.map((message) => message.id)).toEqual(['msg_old0000001']);
+  });
+
+  it('carries the envelope that caused a live fold', async () => {
+    await openClaimedConversation();
+    const changes = recordChanges('local_session1');
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({ sequence: 2, messageId: 'msg_asst0000001', markdown: 'live reply' })
+    );
+
+    const change = changes[0];
+    expect(change?.kind === 'live' && change.envelope.sequence).toBe(2);
+  });
+
+  it('rebuilds custom data parts from history without reporting a live envelope', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'assistant',
+            messageId: 'msg_asst0000001',
+            content: { markdown: 'Working' },
+          },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't2',
+          sequence: 2,
+          timestamp: '2026-08-06T12:00:01.000Z',
+          event: {
+            type: 'custom',
+            name: 'order-progress',
+            data: { pct: 70 },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    const changes = recordChanges('conv_abcdefghijkl');
+    const result = await webChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(changes.some((change) => change.kind === 'live')).toBe(false);
+    expect(result.data?.messages[0]?.parts).toEqual([
+      { type: 'text', text: 'Working', state: 'done' },
+      { type: 'data', name: 'order-progress', data: { pct: 70 } },
+    ]);
+  });
+
+  it('reports a live custom envelope so onEvent can fire', async () => {
+    await openClaimedConversation();
+    const changes = recordChanges('local_session1');
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'custom', name: 'order-progress', data: { pct: 70 } },
+      })
+    );
+
+    const change = changes[0];
+    expect(change?.kind).toBe('live');
+    expect(change?.kind === 'live' && change.envelope.event).toEqual({
+      type: 'custom',
+      name: 'order-progress',
+      data: { pct: 70 },
+    });
+  });
+
+  it('does not report an envelope the sequence gate drops', async () => {
+    await openClaimedConversation();
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({ sequence: 2, messageId: 'msg_asst0000001', markdown: 'live reply' })
+    );
+
+    const changes = recordChanges('local_session1');
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({ sequence: 2, messageId: 'msg_asst0000001', markdown: 'duplicate' })
+    );
+
+    expect(changes).toHaveLength(0);
+  });
+
+  it('reports a sent message once under the server id and never the optimistic id', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    const changes = recordChanges('local_session1');
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(changes.map((change) => change.kind)).toEqual(['local', 'local', 'local']);
+    expect(changes.map((change) => change.addedMessages.map((message) => message.id))).toEqual([
+      [],
+      [],
+      ['msg_abcdefghijkl'],
+    ]);
+  });
+
+  it('does not report a sent message twice when the live echo folds before the ack', async () => {
+    await openClaimedConversation();
+
+    let resolveSend!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+
+    const changes = recordChanges('local_session1');
+    const sent = webChat.sendMessage({ agentId: 'agent_1', text: 'second', key: 'local_session1' });
+
+    emitter.emit('web_chat.agent_event', liveUserEnvelope({ sequence: 2, messageId: 'msg_user0000002' }));
+    resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000002' });
+    await sent;
+
+    const reported = changes.flatMap((change) => change.addedMessages.map((message) => message.id));
+    expect(reported.filter((id) => id === 'msg_user0000002')).toHaveLength(1);
+  });
+
+  it('reports no added message when a send fails', async () => {
+    sendMessage.mockRejectedValue(new Error('network'));
+    const changes = recordChanges('local_session1');
+
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(changes.map((change) => change.kind)).toEqual(['local', 'local', 'local']);
+    expect(changes.map((change) => change.addedMessages)).toEqual([[], [], []]);
+  });
+
+  it('reports a pending approval from history once across reloads', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+    const changes = recordChanges('conv_abcdefghijkl');
+
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(changes[0]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
+    expect(changes[1]?.newActions).toEqual([]);
+  });
+
+  it('reports a live approval on the fold that raises it, adding no message', async () => {
+    await openClaimedConversation();
+    const changes = recordChanges('local_session1');
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({ sequence: 2, event: { type: 'message-start', messageId: 'msg_asst0000001' } })
+    );
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({
+        sequence: 3,
+        event: {
+          type: 'tool-approval-request',
+          approvalId: 'approval_000001',
+          toolUseId: 'tu_0000001',
+          toolName: 'deleteOrder',
+          input: { orderId: '123' },
+          approveActionId: 'tool-approval:approve:approval_000001',
+          denyActionId: 'tool-approval:deny:approval_000001',
+        },
+      })
+    );
+
+    expect(changes[0]?.newActions).toEqual([]);
+    expect(changes[1]?.kind).toBe('live');
+    expect(changes[1]?.addedMessages).toEqual([]);
+    expect(changes[1]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
+  });
+
+  it('stays silent for an approval discovered by paging backwards', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 9, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockResolvedValueOnce(approvalHistoryPage('approval_000001'));
+    const changes = recordChanges('conv_abcdefghijkl');
+    await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(derivePendingActions(snapshot?.messages ?? []).map((action) => action.id)).toEqual(['approval_000001']);
+    const historyChange = changes.find((change) => change.kind === 'history');
+    expect(historyChange?.newActions).toEqual([]);
+  });
+
+  it('updates pagination.status during fetchMore success and failure', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockRejectedValueOnce(new Error('network'));
+    const failed = await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(failed.error).toBeDefined();
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('error');
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const older = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await older;
+
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+  });
+
+  it('deduplicates concurrent fetchMore calls into one in-flight request', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const first = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    const second = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(getEvents).toHaveBeenCalledTimes(2);
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    expect(firstResult.data?.messages.map((message) => message.id)).toEqual(['msg_old0000001', 'msg_new0000001']);
+    expect(secondResult).toEqual(firstResult);
+    expect(getEvents).toHaveBeenCalledTimes(2);
+  });
+
+  it('exposes a terminal run-error on getConversation and messages.updated', async () => {
+    await openClaimedConversation();
+
+    const errors: Array<{ message: string } | undefined> = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        errors.push(data.error ? { message: data.error.message } : undefined);
+      }
+    });
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'run-start' },
+      })
+    );
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({
+        sequence: 3,
+        event: { type: 'run-error', message: 'agent handler failed', code: 'handler_failed' },
+      })
+    );
+
+    const snapshot = webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.error).toMatchObject({ message: 'agent handler failed' });
+    expect(errors.at(-1)).toEqual({ message: 'agent handler failed' });
+
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_retry000001' });
+    await webChat.sendMessage({ agentId: 'agent_1', text: 'retry', key: 'local_session1' });
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.error).toBeUndefined();
+  });
+
+  it('does not let a stale fetchMore failure overwrite pagination status after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let rejectOlderPage!: (error: Error) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectOlderPage = reject;
+        })
+    );
+
+    const older = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(3);
+
+    rejectOlderPage(new Error('network'));
+    const staleResult = await older;
+    expect(staleResult.error).toBeUndefined();
+    expect(staleResult.data?.messages.map((message) => message.id)).toEqual(['msg_new0000001']);
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+
+    let resolveFreshPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFreshPage = resolve;
+        })
+    );
+
+    const fresh = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+
+    resolveFreshPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await fresh;
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+  });
+
+  it('does not prepend a stale fetchMore page after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const older = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_stale000001', role: 'user', markdown: 'stale' }], null)
+    );
+    await older;
+
+    expect(
+      webChat
+        .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
+        ?.messages.map((message) => message.id)
+    ).toEqual(['msg_new0000001']);
+  });
+
+  it('does not let a stale fetchMore finalizer clear a fresh pagination claim after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveStalePage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStalePage = resolve;
+        })
+    );
+
+    const stale = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveFreshPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFreshPage = resolve;
+        })
+    );
+
+    const fresh = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveStalePage(
+      historyPage([{ sequence: 1, messageId: 'msg_stale000001', role: 'user', markdown: 'stale' }], null)
+    );
+    await stale;
+
+    const deduped = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveFreshPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await Promise.all([fresh, deduped]);
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+  });
+
+  describe('idempotency and concurrency', () => {
+    it('retryMessage resubmits with the original idempotency key', async () => {
+      sendMessage.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
+        identifier: 'conv_abcdefghijkl',
+        messageId: 'msg_retry000001',
+      });
+
+      const failed = await webChat.sendMessage({ agentId: 'agent_1', text: 'retry me', key: 'local_retry' });
+      expect(failed.error).toBeDefined();
+
+      const optimisticId = webChat.getConversation({ agentId: 'agent_1', key: 'local_retry' })?.messages[0]?.id;
+      const idempotencyKey = webChat.getConversation({ agentId: 'agent_1', key: 'local_retry' })?.messages[0]
+        ?.idempotencyKey;
+      expect(optimisticId).toBeDefined();
+      expect(idempotencyKey).toMatch(/^msg_/);
+
+      sendMessage.mockClear();
+      const retried = await webChat.retryMessage({
+        agentId: 'agent_1',
+        key: 'local_retry',
+        messageId: optimisticId!,
+      });
+
+      expect(retried.data).toEqual({
+        conversationId: 'conv_abcdefghijkl',
+        messageId: 'msg_retry000001',
+      });
+      expect(sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: 'retry me',
+          messageId: idempotencyKey,
+        })
+      );
+      expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_retry' })?.messages).toHaveLength(1);
+    });
+
+    it('retryMessage returns the existing ack when the message is already sent', async () => {
+      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_already0001' });
+
+      await webChat.sendMessage({ agentId: 'agent_1', text: 'done', key: 'local_sent' });
+
+      const messageId = webChat.getConversation({ agentId: 'agent_1', key: 'local_sent' })?.messages[0]?.id;
+      expect(messageId).toBe('msg_already0001');
+      sendMessage.mockClear();
+
+      const retried = await webChat.retryMessage({
+        agentId: 'agent_1',
+        key: 'local_sent',
+        conversationId: 'conv_abcdefghijkl',
+        messageId: messageId!,
+      });
+
+      expect(retried.error).toBeUndefined();
+
+      expect(retried.data).toEqual({
+        conversationId: 'conv_abcdefghijkl',
+        messageId: 'msg_already0001',
+      });
+      expect(sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('rejects sendMessage while isRunning with default reject policy', async () => {
+      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+      await webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_run' });
+
+      emitter.emit('web_chat.agent_event', {
+        result: {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' },
+        },
+      });
+
+      sendMessage.mockClear();
+      const blocked = await webChat.sendMessage({
+        agentId: 'agent_1',
+        text: 'during run',
+        key: 'local_run',
+        conversationId: 'conv_abcdefghijkl',
+      });
+
+      expect(blocked.error).toMatchObject({ message: 'Cannot send while the agent is running' });
+      expect(sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('scopes action idempotency keys by conversation', () => {
+      const first = createActionIdempotencyKeyForScope('respond:conv_aaaaaaaaaaaa:approval_000001:approved');
+      const second = createActionIdempotencyKeyForScope('respond:conv_bbbbbbbbbbbb:approval_000001:approved');
+
+      expect(first).toMatch(/^idem_/);
+      expect(first).not.toBe(second);
+    });
+
+    it('sends a stable idempotency key for the same action scope', async () => {
+      getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+      respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+      await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+      await webChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      await webChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(respondToAction).toHaveBeenCalledTimes(2);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toMatch(/^idem_/);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toBe(respondToAction.mock.calls[1]?.[0].idempotencyKey);
+    });
+
+    it('uses different action keys for the same approval in two conversations', async () => {
+      getEvents
+        .mockResolvedValueOnce(approvalHistoryPage('approval_000001'))
+        .mockResolvedValueOnce(approvalHistoryPage('approval_000001'));
+      respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+      await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_aaaaaaaaaaaa' });
+      await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_bbbbbbbbbbbb' });
+
+      await webChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_aaaaaaaaaaaa',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      await webChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_bbbbbbbbbbbb',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).not.toBe(
+        respondToAction.mock.calls[1]?.[0].idempotencyKey
+      );
+    });
+
+    it('retries respondToAction after the first request fails', async () => {
+      getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+      respondToAction.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+        identifier: 'conv_abcdefghijkl',
+      });
+
+      await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+      const failed = await webChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      const retried = await webChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(failed.error).toBeDefined();
+      expect(retried.error).toBeUndefined();
+      expect(respondToAction).toHaveBeenCalledTimes(2);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toBe(respondToAction.mock.calls[1]?.[0].idempotencyKey);
+    });
+  });
+});

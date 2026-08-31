@@ -49,8 +49,8 @@ function viaForProviderId(providerId: string): HumanChannelViaEnum | null {
  * (same model as the agents email channel — no endpoint row).
  *
  * Callers pass a channel preference (`via`) — never a concrete integration id.
- * The concrete integration is chosen from the relay agent's linked integrations
- * that the human can actually receive on.
+ * The concrete integration is chosen from the sending agent's linked
+ * integrations that the human can actually receive on.
  */
 @Injectable()
 export class HumanDeliveryService {
@@ -81,7 +81,7 @@ export class HumanDeliveryService {
 
     if (links.length === 0) {
       throw new NotFoundException(
-        `Relay agent has no linked channels. Run \`human setup\` to connect telegram, slack, or email.`
+        `Agent has no linked channels. Connect telegram, slack, or email to this agent, or run \`human setup\`.`
       );
     }
 
@@ -97,7 +97,7 @@ export class HumanDeliveryService {
 
     if (params.via && candidates.length === 0) {
       throw new NotFoundException(
-        `No ${params.via} channel is linked to the relay. Run \`human setup ${params.via}\` first.`
+        `No ${params.via} channel is linked to this agent. Connect ${params.via} or run \`human setup ${params.via}\`.`
       );
     }
 
@@ -113,14 +113,14 @@ export class HumanDeliveryService {
     if (deliverable.length === 0) {
       if (params.via === HumanChannelViaEnum.EMAIL) {
         throw new NotFoundException(
-          `Human "${params.subscriberId}" has no email address on file. Run \`human setup email\` to add one.`
+          `Human "${params.subscriberId}" has no email address on file. Run \`human invite ${params.subscriberId} --via email\`.`
         );
       }
 
       throw new NotFoundException(
         params.via
-          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human setup ${params.via}\`.`
-          : `Human "${params.subscriberId}" has no linked channel. Run \`human setup\` to connect one.`
+          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human invite ${params.subscriberId} --via ${params.via}\`.`
+          : `Human "${params.subscriberId}" has no linked channel. Run \`human invite ${params.subscriberId}\`.`
       );
     }
 
@@ -142,7 +142,7 @@ export class HumanDeliveryService {
   ): Promise<{ platformMessageId: string; platformThreadId: string }> {
     const sent = await this.outboundGateway.sendDirectMessage(
       interaction._agentId,
-      interaction.integrationIdentifier,
+      target.integrationIdentifier,
       target.platformUserId,
       buildPendingContent(interaction)
     );

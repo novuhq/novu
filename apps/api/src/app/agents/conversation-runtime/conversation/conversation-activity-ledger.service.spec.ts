@@ -8,7 +8,7 @@ describe('ConversationActivityLedger', () => {
   const lifecycleParams = {
     conversationId: 'conv-1',
     channel: {
-      platform: 'agent_chat',
+      platform: 'web_chat',
       _integrationId: 'int-1',
       platformThreadId: 'thread-1',
     },
@@ -332,7 +332,7 @@ describe('ConversationActivityLedger', () => {
   });
 
   describe('MCP connection activities', () => {
-    it('persists request and result activities and publishes both to agent chat', async () => {
+    it('persists request and result activities and publishes both to web chat', async () => {
       const activityRepository = makeActivityRepository();
       activityRepository.createAgentActivity.callsFake(async (params: Record<string, unknown>) => ({
         _id: `activity-${activityRepository.createAgentActivity.callCount}`,
@@ -344,7 +344,7 @@ describe('ConversationActivityLedger', () => {
       const context = {
         ...basePersistParams(),
         channel: {
-          platform: 'agent_chat',
+          platform: 'web_chat',
           _integrationId: 'integration-a',
           platformThreadId: 'thread-1',
         },
@@ -410,7 +410,7 @@ describe('ConversationActivityLedger', () => {
       const context = {
         conversationId: 'conv-1',
         channel: {
-          platform: 'agent_chat',
+          platform: 'web_chat',
           _integrationId: 'integration-a',
           platformThreadId: 'thread-1',
         },

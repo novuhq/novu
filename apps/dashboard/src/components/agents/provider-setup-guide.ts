@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
-import { AgentChatSetupGuide } from './agent-chat-setup-guide';
+import { WebChatSetupGuide } from './web-chat-setup-guide';
 import { EmailSetupGuide } from './email-setup-guide';
 import { PhotonSetupGuide } from './photon-setup-guide';
 import { SendblueSetupGuide } from './sendblue-setup-guide';
@@ -22,8 +22,8 @@ export function resolveProviderSetupGuide(providerId: string) {
       return SendblueSetupGuide;
     case ChatProviderIdEnum.PhotonImessage:
       return PhotonSetupGuide;
-    case ChatProviderIdEnum.NovuAgentChat:
-      return AgentChatSetupGuide;
+    case ChatProviderIdEnum.NovuWebChat:
+      return WebChatSetupGuide;
     case EmailProviderIdEnum.NovuAgent:
       return EmailSetupGuide;
     default:

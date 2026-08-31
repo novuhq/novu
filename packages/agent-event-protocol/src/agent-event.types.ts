@@ -39,7 +39,17 @@ export type AgentSignal =
   | { type: 'metadata'; action: 'set'; key: string; value: unknown }
   | { type: 'metadata'; action: 'delete'; key: string }
   | { type: 'metadata'; action: 'clear' }
-  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> };
+  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> }
+  | {
+      type: 'human';
+      kind: 'ask' | 'approve' | 'choose' | 'tell';
+      prompt: string;
+      requestId: string;
+      options?: string[];
+      from?: string;
+      ttlSeconds?: number;
+      to?: string | string[];
+    };
 
 export type AgentEvent =
   // Lifecycle

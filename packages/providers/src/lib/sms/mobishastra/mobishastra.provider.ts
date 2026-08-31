@@ -1,7 +1,9 @@
-import { SmsProviderIdEnum } from '@novu/shared';
+import { isOutboundSsrfProtectionEnabled, SmsProviderIdEnum } from '@novu/shared';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MobishastraProvider extends BaseProvider implements ISmsProvider {
@@ -40,13 +42,34 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
       user: this.config.username,
       pwd: this.config.password,
     });
-    const response = await this.axiosInstance.request({
-      method: 'POST',
-      data: JSON.stringify([transformedData.body]),
-      headers: transformedData.headers,
-    });
+    const requestBody = JSON.stringify([transformedData.body]);
+    let responseData: Record<string, string> | undefined;
 
-    const responseData = response.data?.[0];
+    if (isOutboundSsrfProtectionEnabled()) {
+      const url = resolveSafeProviderUrl(this.config.baseUrl, {
+        blockedPrefix: 'Mobishastra base URL blocked',
+      });
+      const response = await safeOutboundJsonRequest<Record<string, string>[]>({
+        url,
+        method: 'POST',
+        body: requestBody,
+        headers: transformedData.headers,
+      });
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw new Error(`Mobishastra request failed with status ${response.statusCode}`);
+      }
+
+      responseData = response.body?.[0];
+    } else {
+      const response = await this.axiosInstance.request({
+        method: 'POST',
+        data: requestBody,
+        headers: transformedData.headers,
+      });
+      responseData = response.data?.[0];
+    }
+
     const messageId = responseData?.msg_id?.trim();
 
     if (!messageId) {

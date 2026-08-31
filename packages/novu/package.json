@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.20.1",
+  "version": "2.21.0",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {
@@ -52,6 +52,7 @@
     "novu": "./dist/src/index.js"
   },
   "devDependencies": {
+    "@novu/shared": "workspace:*",
     "@types/configstore": "^5.0.1",
     "@types/cross-spawn": "6.0.0",
     "@types/diff": "7.0.2",
@@ -76,7 +77,6 @@
     "@inkjs/ui": "2.0.0",
     "@novu/framework": "workspace:*",
     "@novu/ntfr-client": "^0.0.5",
-    "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "async-sema": "3.0.1",
     "axios": "^1.18.1",

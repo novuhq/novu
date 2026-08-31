@@ -15,7 +15,7 @@ export const CONVERSATIONAL_PROVIDERS: ConversationalProvider[] = [
   { providerId: ChatProviderIdEnum.PhotonImessage, displayName: 'Photon (iMessage)' },
   { providerId: ChatProviderIdEnum.WhatsAppBusiness, displayName: 'WhatsApp Business' },
   { providerId: ChatProviderIdEnum.MsTeams, displayName: 'MS Teams' },
-  { providerId: ChatProviderIdEnum.NovuAgentChat, displayName: 'Agent Chat' },
+  { providerId: ChatProviderIdEnum.NovuWebChat, displayName: 'Web Chat' },
   { providerId: ChatProviderIdEnum.Discord, displayName: 'Discord', comingSoon: true },
   { providerId: 'google-chat', displayName: 'Google Chat', comingSoon: true },
   { providerId: 'linear', displayName: 'Linear', comingSoon: true },

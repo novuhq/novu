@@ -1,11 +1,9 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import type { TriggerRecipientsPayload } from '@novu/shared';
 import type { CardElement } from 'chat';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsIn,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -15,127 +13,30 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import {
+  type AgentSignalDto,
+  HumanSignalDto,
+  MetadataClearSignalDto,
+  MetadataDeleteSignalDto,
+  MetadataSetSignalDto,
+  TriggerSignalDto,
+  toAgentSignalDtos,
+} from './agent-signal.dto';
 
 export type { FileRef } from '@novu/framework';
+export {
+  type AgentSignalDto,
+  HumanSignalDto,
+  IsValidTriggerRecipient,
+  isValidMetadataSignalKey,
+  MetadataClearSignalDto,
+  MetadataDeleteSignalDto,
+  MetadataSetSignalDto,
+  TriggerSignalDto,
+} from './agent-signal.dto';
 
-const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
-const METADATA_ACTIONS = ['set', 'delete', 'clear'] as const;
 const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
 const MAX_FILES_PER_MESSAGE = 15;
-
-/**
- * Allowed characters for a metadata signal key.
- *
- * Metadata is merged into `conversation.metadata` (a plain object) and re-hydrated by
- * every downstream consumer, so we forbid anything that could produce a prototype
- * pollution gadget (`__proto__`, `constructor`, `prototype`) or break key handling
- * for storage/serialization (dots, brackets, control chars). The shape mirrors
- * SLUG_IDENTIFIER_REGEX with an additional `:` for namespacing (e.g. `crm:ticketId`).
- *
- * User-facing keys must start with an alphanumeric. The framework's own reserved
- * `__novu:` namespace (see {@link RESERVED_METADATA_NAMESPACE}) is exempt from the
- * leading-alphanumeric rule — its suffix is still validated by this same regex, so
- * prototype-pollution / storage-breaking chars stay rejected.
- */
-const METADATA_SIGNAL_KEY_REGEX = /^[a-zA-Z0-9]+(?:[-_:][a-zA-Z0-9]+)*$/;
-const FORBIDDEN_METADATA_SIGNAL_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const MAX_METADATA_SIGNAL_KEY_LENGTH = 128;
-
-/**
- * Reserved prefix for framework-internal bookkeeping keys (e.g. the auth-card
- * tracking metadata written by the framework auth gate). These start with `__`,
- * which the user-facing key regex disallows, so they're validated by namespace
- * prefix + suffix rather than as a whole key.
- */
-const RESERVED_METADATA_NAMESPACE = '__novu:';
-
-export function isValidMetadataSignalKey(key: unknown): key is string {
-  if (typeof key !== 'string' || key.length === 0 || key.length > MAX_METADATA_SIGNAL_KEY_LENGTH) {
-    return false;
-  }
-
-  if (FORBIDDEN_METADATA_SIGNAL_KEYS.has(key)) return false;
-
-  if (key.startsWith(RESERVED_METADATA_NAMESPACE)) {
-    return METADATA_SIGNAL_KEY_REGEX.test(key.slice(RESERVED_METADATA_NAMESPACE.length));
-  }
-
-  return METADATA_SIGNAL_KEY_REGEX.test(key);
-}
-
-@ValidatorConstraint({ name: 'isValidTriggerRecipient', async: false })
-export class IsValidTriggerRecipient implements ValidatorConstraintInterface {
-  validate(value: unknown): boolean {
-    if (value === undefined || value === null) return true;
-
-    if (typeof value === 'string') return value.length > 0;
-
-    if (Array.isArray(value)) {
-      return value.length > 0 && value.every((item) => this.isRecipientItem(item));
-    }
-
-    return this.isSubscriberObject(value);
-  }
-
-  private isRecipientItem(item: unknown): boolean {
-    if (typeof item === 'string') return item.length > 0;
-    if (typeof item === 'object' && item !== null) {
-      return this.isSubscriberObject(item) || this.isTopicObject(item);
-    }
-
-    return false;
-  }
-
-  private isSubscriberObject(obj: unknown): boolean {
-    if (typeof obj !== 'object' || obj === null) return false;
-    const subscriberId = (obj as { subscriberId?: unknown }).subscriberId;
-
-    return typeof subscriberId === 'string' && subscriberId.trim().length > 0;
-  }
-
-  private isTopicObject(obj: unknown): boolean {
-    if (typeof obj !== 'object' || obj === null) return false;
-    const { type, topicKey } = obj as { type?: unknown; topicKey?: unknown };
-
-    return typeof type === 'string' && type.length > 0 && typeof topicKey === 'string' && topicKey.length > 0;
-  }
-
-  defaultMessage(): string {
-    return 'to must be a subscriberId string, a subscriber object with subscriberId, a topic object, or an array of those.';
-  }
-}
-
-@ValidatorConstraint({ name: 'isValidSignal', async: false })
-export class IsValidSignal implements ValidatorConstraintInterface {
-  validate(signal: SignalDto): boolean {
-    if (!signal?.type) return false;
-
-    if (signal.type === 'metadata') {
-      const action = signal.action ?? 'set';
-      if (action === 'set') return isValidMetadataSignalKey(signal.key) && signal.value !== undefined;
-      if (action === 'delete') return isValidMetadataSignalKey(signal.key);
-      if (action === 'clear') return true;
-
-      return false;
-    }
-
-    if (signal.type === 'trigger') {
-      return typeof signal.workflowId === 'string' && signal.workflowId.length > 0;
-    }
-
-    return false;
-  }
-
-  defaultMessage(): string {
-    return (
-      'metadata signals require action (set|delete|clear): ' +
-      'set requires a key 1-128 chars of letters, digits and "-", "_", ":" separators (or a framework-reserved ' +
-      '"__novu:" namespaced key) plus a defined value; ' +
-      'delete requires a valid key; clear requires no additional fields; ' +
-      'trigger signals require workflowId.'
-    );
-  }
-}
 
 @ValidatorConstraint({ name: 'isValidReplyContent', async: false })
 export class IsValidReplyContent implements ValidatorConstraintInterface {
@@ -473,164 +374,6 @@ export class DeleteMessagePayloadDto {
   messageId: string;
 }
 
-/** OpenAPI: set a metadata key. */
-export class MetadataSetSignalDto {
-  @ApiProperty({ enum: ['metadata'] })
-  type: 'metadata';
-
-  @ApiPropertyOptional({
-    enum: ['set'],
-    description: 'Defaults to `set` when omitted.',
-    default: 'set',
-  })
-  action?: 'set';
-
-  @ApiProperty({
-    description: 'Metadata key (1–128 chars; letters, digits, and `-` `_` `:` separators).',
-    example: 'crm:ticketId',
-  })
-  key: string;
-
-  @ApiProperty({
-    description: 'JSON-serializable value to store.',
-    example: 'TCK-1001',
-  })
-  value: unknown;
-}
-
-/** OpenAPI: delete a metadata key. */
-export class MetadataDeleteSignalDto {
-  @ApiProperty({ enum: ['metadata'] })
-  type: 'metadata';
-
-  @ApiProperty({ enum: ['delete'] })
-  action: 'delete';
-
-  @ApiProperty({
-    description: 'Metadata key to remove.',
-    example: 'crm:ticketId',
-  })
-  key: string;
-}
-
-/** OpenAPI: clear all conversation metadata. */
-export class MetadataClearSignalDto {
-  @ApiProperty({ enum: ['metadata'] })
-  type: 'metadata';
-
-  @ApiProperty({ enum: ['clear'] })
-  action: 'clear';
-}
-
-/** OpenAPI: trigger a Novu workflow from the agent turn. */
-export class TriggerSignalDto {
-  @ApiProperty({ enum: ['trigger'] })
-  type: 'trigger';
-
-  @ApiProperty({
-    description: 'Workflow identifier (same string used with `events.trigger`).',
-    example: 'order-shipped',
-  })
-  workflowId: string;
-
-  @ApiPropertyOptional({
-    description:
-      'Recipient(s). Accepts a subscriberId string, subscriber object, topic object, or an array of those. When omitted, Novu falls back to the conversation subscriber.',
-    oneOf: [
-      { type: 'string', example: 'subscriber-123' },
-      {
-        type: 'object',
-        additionalProperties: true,
-        example: { subscriberId: 'subscriber-123' },
-      },
-      {
-        type: 'array',
-        items: {
-          oneOf: [{ type: 'string' }, { type: 'object', additionalProperties: true }],
-        },
-      },
-    ],
-  })
-  to?: TriggerRecipientsPayload;
-
-  @ApiPropertyOptional({
-    description: 'Arbitrary payload forwarded to the workflow.',
-    type: 'object',
-    additionalProperties: true,
-    example: { orderId: 'ORD-42' },
-  })
-  payload?: Record<string, unknown>;
-}
-
-@ApiExtraModels(MetadataSetSignalDto, MetadataDeleteSignalDto, MetadataClearSignalDto, TriggerSignalDto)
-export class SignalDto {
-  @ApiProperty({
-    enum: SIGNAL_TYPES,
-    description: '`metadata` updates conversation state; `trigger` fires a Novu workflow.',
-  })
-  @IsString()
-  @IsIn(SIGNAL_TYPES)
-  type: (typeof SIGNAL_TYPES)[number];
-
-  @ApiPropertyOptional({
-    enum: METADATA_ACTIONS,
-    description: 'Required for metadata signals other than the default `set`.',
-  })
-  @IsOptional()
-  @IsString()
-  @IsIn(METADATA_ACTIONS)
-  action?: (typeof METADATA_ACTIONS)[number];
-
-  @ApiPropertyOptional({
-    description: 'Metadata key for `set` / `delete` actions.',
-    example: 'crm:ticketId',
-  })
-  @IsOptional()
-  @IsString()
-  key?: string;
-
-  @ApiPropertyOptional({
-    description: 'Value for metadata `set` actions. JSON-serializable.',
-  })
-  @IsOptional()
-  value?: unknown;
-
-  @ApiPropertyOptional({
-    description: 'Workflow identifier for `trigger` signals.',
-    example: 'order-shipped',
-  })
-  @IsOptional()
-  @IsString()
-  workflowId?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'Trigger recipients. SubscriberId string, subscriber/topic object, or array. Falls back to the conversation subscriber when omitted.',
-    oneOf: [
-      { type: 'string', example: 'subscriber-123' },
-      { type: 'object', additionalProperties: true },
-      {
-        type: 'array',
-        items: {
-          oneOf: [{ type: 'string' }, { type: 'object', additionalProperties: true }],
-        },
-      },
-    ],
-  })
-  @IsOptional()
-  @Validate(IsValidTriggerRecipient)
-  to?: TriggerRecipientsPayload;
-
-  @ApiPropertyOptional({
-    description: 'Workflow payload for `trigger` signals.',
-    type: 'object',
-    additionalProperties: true,
-  })
-  @IsOptional()
-  @IsObject()
-  payload?: Record<string, unknown>;
-}
-
 /**
  * Reports the outcome of a tool call back to Novu so it's saved in the conversation history.
  */
@@ -685,11 +428,11 @@ export class TypingStatusDto {
   ToolApprovalRequestPayloadDto,
   EditPayloadDto,
   ResolveDto,
-  SignalDto,
   MetadataSetSignalDto,
   MetadataDeleteSignalDto,
   MetadataClearSignalDto,
   TriggerSignalDto,
+  HumanSignalDto,
   ToolResultDto,
   AddReactionPayloadDto,
   DeleteMessagePayloadDto,
@@ -761,7 +504,7 @@ export class AgentReplyPayloadDto {
 
   @ApiPropertyOptional({
     description:
-      'Side-effect signals executed during this turn: conversation metadata mutations or Novu workflow triggers.',
+      'Side-effect signals executed during this turn: conversation metadata mutations, Novu workflow triggers, or human-in-the-loop interactions.',
     type: 'array',
     items: {
       oneOf: [
@@ -769,15 +512,15 @@ export class AgentReplyPayloadDto {
         { $ref: getSchemaPath(MetadataDeleteSignalDto) },
         { $ref: getSchemaPath(MetadataClearSignalDto) },
         { $ref: getSchemaPath(TriggerSignalDto) },
+        { $ref: getSchemaPath(HumanSignalDto) },
       ],
     },
   })
   @IsOptional()
   @IsArray()
+  @Transform(({ value }) => toAgentSignalDtos(value), { toClassOnly: true })
   @ValidateNested({ each: true })
-  @Validate(IsValidSignal, { each: true })
-  @Type(() => SignalDto)
-  signals?: Array<MetadataSetSignalDto | MetadataDeleteSignalDto | MetadataClearSignalDto | TriggerSignalDto>;
+  signals?: AgentSignalDto[];
 
   @ApiPropertyOptional({
     type: [ToolResultDto],

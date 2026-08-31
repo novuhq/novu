@@ -72,11 +72,12 @@ To start listening to messages, you will need to configure your endpoints.
 
 1. Go to the [Webhooks](https://dashboard.novu.co/webhooks) page in the Novu dashboard.
 2. Click **Add Endpoint**.
-3. Enter the URL of your endpoint.
-4. Add description for this webhook endpoint.
-5. Select the event types you want to listen to.
-6. Optional: add advanced configuration for your endpoint.
-7. Click **Create**.
+3. Select an integration. Choose **Webhook** for an HTTPS URL, **Polling Endpoint** or **FIFO Endpoint** for alternative HTTP delivery, or a [connector](/platform/developer/webhooks/connectors) such as BigQuery, S3, or Segment.
+4. For a **Webhook** endpoint, enter the URL. For a connector, fill in the destination-specific settings, table schema (for warehouses), and transformation.
+5. Add a description for this webhook endpoint.
+6. Select the event types you want to listen to.
+7. Optional: add advanced configuration for your endpoint.
+8. Click **Create**.
 
 If your endpoint isn't quite ready to start receiving events, you can use a service like [Webhook.site](https://webhook.site/) or [RequestBin](https://requestbin.com/) to have a unique URL generated for you.
 

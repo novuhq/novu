@@ -1,6 +1,6 @@
 {
   "name": "@novu/api-service",
-  "version": "3.19.0",
+  "version": "3.19.1",
   "description": "description",
   "author": "",
   "private": "true",
@@ -72,7 +72,7 @@
     "@novu/chat-adapter-email": "workspace:*",
     "@novu/chat-adapter-photon-imessage": "workspace:*",
     "@novu/chat-adapter-sendblue": "workspace:*",
-    "@novu/chat-adapter-agent-chat": "workspace:*",
+    "@novu/chat-adapter-web-chat": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/maily-render": "workspace:*",

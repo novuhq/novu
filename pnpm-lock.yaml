@@ -427,9 +427,6 @@ importers:
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
-      '@novu/chat-adapter-agent-chat':
-        specifier: workspace:*
-        version: link:../../packages/chat-adapter-agent-chat
       '@novu/chat-adapter-email':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-email
@@ -439,6 +436,9 @@ importers:
       '@novu/chat-adapter-sendblue':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-sendblue
+      '@novu/chat-adapter-web-chat':
+        specifier: workspace:*
+        version: link:../../packages/chat-adapter-web-chat
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -3516,28 +3516,6 @@ importers:
         specifier: ^4.1.0
         version: 4.1.7(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
-  packages/chat-adapter-agent-chat:
-    dependencies:
-      nanoid:
-        specifier: ^3.3.17
-        version: 3.3.18
-    devDependencies:
-      chat:
-        specifier: ^4.33.0
-        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
-      rimraf:
-        specifier: ~3.0.2
-        version: 3.0.2
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
-      vitest:
-        specifier: ^4.1.0
-        version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
-      zod:
-        specifier: 3.25.20
-        version: 3.25.20
-
   packages/chat-adapter-email:
     dependencies:
       '@novu/shared':
@@ -3599,6 +3577,28 @@ importers:
       chat-adapter-sendblue:
         specifier: ^0.2.0
         version: 0.2.0(chat@4.33.0(zod@3.25.20))
+    devDependencies:
+      chat:
+        specifier: ^4.33.0
+        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+      zod:
+        specifier: 3.25.20
+        version: 3.25.20
+
+  packages/chat-adapter-web-chat:
+    dependencies:
+      nanoid:
+        specifier: ^3.3.17
+        version: 3.3.18
     devDependencies:
       chat:
         specifier: ^4.33.0
@@ -3958,9 +3958,6 @@ importers:
       '@novu/ntfr-client':
         specifier: ^0.0.5
         version: 0.0.5
-      '@novu/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@segment/analytics-node':
         specifier: ^1.1.4
         version: 1.1.4
@@ -4070,6 +4067,9 @@ importers:
         specifier: ^3.25.1
         version: 3.25.1(zod@3.25.20)
     devDependencies:
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@types/configstore':
         specifier: ^5.0.1
         version: 5.0.1
@@ -4466,40 +4466,6 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
-  playground/agent-chat:
-    dependencies:
-      '@novu/react':
-        specifier: workspace:*
-        version: link:../../packages/react
-      next:
-        specifier: ^16.2.11
-        version: 16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-      react-markdown:
-        specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.2.8)(react@18.3.1)
-      remark-gfm:
-        specifier: ^4.0.1
-        version: 4.0.1
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.15.13
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.8
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.3(@types/react@19.2.8)
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
-
   playground/nestjs:
     dependencies:
       '@nestjs/common':
@@ -4786,6 +4752,40 @@ importers:
       tailwindcss:
         specifier: ^4.0.12
         version: 4.0.12
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
+  playground/web-chat:
+    dependencies:
+      '@novu/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      next:
+        specifier: ^16.2.11
+        version: 16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.8)(react@18.3.1)
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.15.13
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.8
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.8)
       typescript:
         specifier: 5.6.2
         version: 5.6.2

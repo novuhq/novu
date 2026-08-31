@@ -160,7 +160,7 @@ describe('AgentConversationService', () => {
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
-      platform: 'agent_chat',
+      platform: 'web_chat',
       contextKeys: ['tenant:acme', 'app:billing'],
     });
 
@@ -189,7 +189,7 @@ describe('AgentConversationService', () => {
     try {
       await service.createOrGetConversation({
         ...baseCreateParams(),
-        platform: 'agent_chat',
+        platform: 'web_chat',
       });
     } catch (err) {
       threw = true;
@@ -222,7 +222,7 @@ describe('AgentConversationService', () => {
     try {
       await service.createOrGetConversation({
         ...baseCreateParams(),
-        platform: 'agent_chat',
+        platform: 'web_chat',
         contextKeys: ['tenant:globex'],
       });
     } catch (err) {

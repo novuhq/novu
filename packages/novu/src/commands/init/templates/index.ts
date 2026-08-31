@@ -1,6 +1,7 @@
+import { getNovuScaffoldSdkTag } from '@novu/shared';
 import { Sema } from 'async-sema';
 import { async as glob } from 'fast-glob';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
@@ -16,6 +17,20 @@ import { install } from '../helpers/install';
 import { resolveAgentZodDependencies } from './agent-scaffold-deps';
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
 
+/**
+ * Templates ship next to this module (<build root>/commands/init/templates).
+ * `__dirname` is that directory under the tsc module layout and ts-node dev,
+ * but `dist/src` when running from the bundled CLI entry — try both, using the
+ * always-present `github` template dir as the marker.
+ */
+function resolveTemplatesDir(): string {
+  const candidates = [__dirname, path.join(__dirname, 'commands', 'init', 'templates')];
+
+  return candidates.find((candidate) => existsSync(path.join(candidate, 'github'))) ?? __dirname;
+}
+
+const TEMPLATES_DIR = resolveTemplatesDir();
+
 function resolveCliPackageJson(): Record<string, any> | null {
   const distIndex = __dirname.lastIndexOf(`${path.sep}dist${path.sep}`);
   if (distIndex === -1) return null;
@@ -28,14 +43,8 @@ function resolveCliPackageJson(): Record<string, any> | null {
   }
 }
 
-function resolveFrameworkVersion(): string {
-  const pkg = resolveCliPackageJson();
-  if (!pkg) return 'latest';
-
-  const ver = pkg.dependencies?.['@novu/framework'];
-  if (!ver || ver.startsWith('workspace:')) return 'latest';
-
-  return ver;
+function resolveFrameworkVersion(apiUrl: string, region?: string): string {
+  return getNovuScaffoldSdkTag(apiUrl, region);
 }
 
 function resolveCliTag(): string {
@@ -52,7 +61,7 @@ function resolveCliTag(): string {
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
 export const getTemplateFile = ({ template, mode, file }: GetTemplateFileArgs): string => {
-  return path.join(__dirname, template, mode, file);
+  return path.join(TEMPLATES_DIR, template, mode, file);
 };
 
 export const SRC_DIR_NAMES = ['app', 'pages', 'styles'];
@@ -78,6 +87,7 @@ export const installTemplate = async ({
   silent,
   skipInstall,
   llmAuth,
+  region,
 }: InstallTemplateArgs) => {
   if (!silent) console.log(bold(`Using ${packageManager}.`));
 
@@ -90,7 +100,7 @@ export const installTemplate = async ({
    * Copy the template files to the target directory.
    */
   if (!silent) console.log('\nInitializing project with template:', template, '\n');
-  const templatePath = path.join(__dirname, template, mode);
+  const templatePath = path.join(TEMPLATES_DIR, template, mode);
   const copySource = ['**'];
   if (!eslint) copySource.push('!eslintrc.json');
   if (!template.includes('react')) {
@@ -285,7 +295,7 @@ export const installTemplate = async ({
   if (!isAgentTemplate && template !== TemplateTypeEnum.APP_CHAT_SDK) {
     await copy(copySource, `${root}/.github`, {
       parents: true,
-      cwd: path.join(__dirname, `./github`),
+      cwd: path.join(TEMPLATES_DIR, `./github`),
     });
   }
 
@@ -302,7 +312,7 @@ export const installTemplate = async ({
   };
 
   if (isAgentTemplate) {
-    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion(apiUrl, region);
   }
 
   if (isAiSdkTemplate || isLangChainTemplate) {
@@ -317,7 +327,7 @@ export const installTemplate = async ({
   }
 
   if (!isAgentTemplate && !isChatSdkTemplate) {
-    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion(apiUrl, region);
     baseDependencies['@novu/nextjs'] = '^2.5.0';
   }
 
