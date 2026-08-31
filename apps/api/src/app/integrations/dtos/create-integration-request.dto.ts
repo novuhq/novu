@@ -78,8 +78,7 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ApiPropertyOptional({
     type: [StepFilterDto],
     deprecated: true,
-    description:
-      'Legacy StepFilter conditions for the integration. If both `rules` and `conditions` are present, send-time selection evaluates `rules` and ignores `conditions`. Use `rules` instead.',
+    description: 'Legacy StepFilter conditions. Ignored when `rules` is also set.',
   })
   @IsArray()
   @IsOptional()
@@ -91,7 +90,7 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
     additionalProperties: true,
     nullable: true,
     description:
-      'JSONLogic rules used to select this integration at send time. Supports tenant, context, and subscriber fields. When both `rules` and `conditions` are set, `rules` take precedence and `conditions` are ignored.',
+      'JSONLogic used at send time to select this integration. Takes precedence over `conditions`.',
     example: {
       '==': [{ var: 'tenant.identifier' }, 'acme'],
     },
