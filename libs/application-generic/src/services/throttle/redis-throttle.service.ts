@@ -98,13 +98,11 @@ export class RedisThrottleService {
     subscriberId: string;
     workflowId: string;
     stepId: string;
-    throttleKey?: string;
     throttleValue?: string;
   }): string {
     const baseKey = `throttle:${params.environmentId}:${params.subscriberId}:${params.workflowId}:${params.stepId}`;
-    const throttleKeyPart =
-      params.throttleKey && params.throttleValue !== undefined ? `:${params.throttleKey}:${params.throttleValue}` : '';
-    const finalKey = `${baseKey}${throttleKeyPart}:set`;
+    const groupingPart = params.throttleValue !== undefined ? `:${params.throttleValue}` : '';
+    const finalKey = `${baseKey}${groupingPart}:set`;
 
     return finalKey;
   }
@@ -180,7 +178,6 @@ export class RedisThrottleService {
       subscriberId: params.subscriberId,
       workflowId: params.workflowId,
       stepId: params.stepId,
-      throttleKey: params.throttleKey,
       throttleValue: params.throttleValue,
     });
 

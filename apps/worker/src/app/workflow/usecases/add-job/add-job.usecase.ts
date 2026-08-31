@@ -23,7 +23,6 @@ import {
   NormalizeVariablesCommand,
   PinoLogger,
   RedisThrottleService,
-  resolveThrottleGrouping,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -894,7 +893,9 @@ export class AddJob {
       throw new Error('Step ID is required for throttle reservation');
     }
 
-    const { throttleKey: groupingKey, throttleValue } = resolveThrottleGrouping(throttleKey, job.payload);
+    // The framework compiles control values through Liquid, so `throttleKey` already holds the
+    // grouping value rather than a payload path - the same contract digest relies on.
+    const throttleValue = throttleKey ? String(throttleKey) : undefined;
 
     const throttleJobId = `${job._id}:${Date.now()}`;
 
@@ -907,7 +908,6 @@ export class AddJob {
       windowMs,
       limit: threshold as number,
       nowMs,
-      throttleKey: groupingKey,
       throttleValue,
     });
 
