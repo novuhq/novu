@@ -48,13 +48,18 @@ process/logs already surface.
 If it isn't configured on this machine yet, every command exits 1 with:
 
 ```
-No human connected yet. Ask your human to run: npx @novu/human setup
+No human connected yet. Ask your human to run: npx @novu/human setup (or set NOVU_SECRET_KEY + HUMAN_TO).
 ```
 
 Treat that message as the actual next step: surface it to whoever *is*
 reachable (chat, PR description, logs) rather than silently giving up or
 looping. Never attempt to configure it on the human's behalf — you don't have
 their Telegram/Slack/email credentials, and setup is interactive by design.
+
+In sandboxes and containers with no config file, the CLI is fully operational
+when `NOVU_SECRET_KEY` and `HUMAN_TO` are set in the environment
+(optionally `HUMAN_VIA` for the channel). `--to`/`--via` flags still
+override the env values.
 
 To reach a *different* person than the one who ran setup, they need a linked
 channel too:
