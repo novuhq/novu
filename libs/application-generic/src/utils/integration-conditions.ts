@@ -67,10 +67,13 @@ function collectDisallowedOperatorIssues(node: unknown, issues: string[]): void 
 
   const entries = Object.entries(node);
 
+  /*
+   * json-logic only recognises single-key objects as operations, so a node with any
+   * other number of keys is never a valid rule. Descending into just its values would
+   * let an operator or `var` slip past this walk without ever being checked.
+   */
   if (entries.length !== 1) {
-    for (const [, value] of entries) {
-      collectDisallowedOperatorIssues(value, issues);
-    }
+    issues.push(`Invalid rule node with ${entries.length} keys, expected a single operator`);
 
     return;
   }

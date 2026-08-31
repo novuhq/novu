@@ -48,6 +48,22 @@ describe('integration rules helpers', () => {
     expect(nestedReduceIssues.some((issue) => issue.includes('Unsupported operator "+"'))).to.equal(true);
   });
 
+  it('rejects multi-key nodes used to smuggle operators and vars past validation', () => {
+    const smuggledOperatorIssues = getIntegrationRulesIssues({
+      and: [{ log: { var: 'subscriber.email' }, dummy: 'bypass' }],
+    });
+    const smuggledVarIssues = getIntegrationRulesIssues({
+      and: [{ var: 'payload.secret', dummy: 'bypass' }],
+    });
+    const nestedUnderNegationIssues = getIntegrationRulesIssues({
+      '!': { map: [[{ var: 'subscriber.data' }], { var: '' }], dummy: 'bypass' },
+    });
+
+    expect(smuggledOperatorIssues.length).to.be.greaterThan(0);
+    expect(smuggledVarIssues.length).to.be.greaterThan(0);
+    expect(nestedUnderNegationIssues.length).to.be.greaterThan(0);
+  });
+
   it('rejects vars nested under operators QueryValidatorService does not inspect', () => {
     const issues = getIntegrationRulesIssues({
       null: [{ var: 'payload.foo' }],
