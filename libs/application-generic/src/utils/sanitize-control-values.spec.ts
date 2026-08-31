@@ -58,4 +58,40 @@ describe('dashboardSanitizeControlValues', () => {
 
     expect(sanitized).not.toHaveProperty('editorType');
   });
+
+  it('omits an empty throttle dynamicKey for a fixed throttle', () => {
+    const sanitized = dashboardSanitizeControlValues(
+      logger,
+      { type: 'fixed', amount: 1, unit: 'hours', dynamicKey: '', threshold: 1, throttleKey: '{{payload.alertKey}}' },
+      StepTypeEnum.THROTTLE
+    );
+
+    expect(sanitized).toEqual({
+      type: 'fixed',
+      amount: 1,
+      unit: 'hours',
+      threshold: 1,
+      throttleKey: '{{payload.alertKey}}',
+    });
+  });
+
+  it('keeps an empty throttle dynamicKey for a dynamic throttle so the issue still surfaces', () => {
+    const sanitized = dashboardSanitizeControlValues(
+      logger,
+      { type: 'dynamic', dynamicKey: '', threshold: 1 },
+      StepTypeEnum.THROTTLE
+    );
+
+    expect(sanitized).toEqual({ type: 'dynamic', dynamicKey: '', threshold: 1 });
+  });
+
+  it('keeps a populated throttle dynamicKey regardless of type', () => {
+    const sanitized = dashboardSanitizeControlValues(
+      logger,
+      { type: 'fixed', amount: 1, unit: 'hours', dynamicKey: 'payload.timestamp' },
+      StepTypeEnum.THROTTLE
+    );
+
+    expect(sanitized).toEqual({ type: 'fixed', amount: 1, unit: 'hours', dynamicKey: 'payload.timestamp' });
+  });
 });
