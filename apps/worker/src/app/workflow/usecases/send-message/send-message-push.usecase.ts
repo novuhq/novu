@@ -38,7 +38,6 @@ import {
   InboxCountTypeEnum,
   ProvidersIdEnum,
   PushProviderIdEnum,
-  safeJsonStringify,
   TriggerOverrides,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -50,6 +49,7 @@ import { PlatformException } from '../../../shared/utils';
 import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
+import { serializeProviderError } from './serialize-provider-error';
 
 const LOG_CONTEXT = 'SendMessagePush';
 
@@ -73,19 +73,8 @@ export function isSubscriberError(errorMessage: string): boolean {
   return SUBSCRIBER_ERROR_PATTERNS.some((pattern) => errorMessage.includes(pattern));
 }
 
-/** Safe for Axios / Node errors that may contain circular socket references. */
 export function serializePushProviderError(error: unknown): string {
-  const serialized = safeJsonStringify(error);
-
-  if (serialized !== '{}') {
-    return serialized;
-  }
-
-  if (error instanceof Error) {
-    return JSON.stringify({ message: error.message, name: error.name });
-  }
-
-  return JSON.stringify({ message: String(error ?? '') });
+  return serializeProviderError(error);
 }
 
 interface IPushProviderOverride {

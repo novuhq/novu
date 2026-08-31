@@ -31,6 +31,7 @@ import { PlatformException } from '../../../shared/utils';
 import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
+import { serializeProviderError } from './serialize-provider-error';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -400,7 +401,7 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ message: e?.response?.data || e.message, name: e.name }),
+          raw: serializeProviderError(e),
         })
       );
 

@@ -44,7 +44,6 @@ import {
   FeatureFlagsKeysEnum,
   IAttachmentOptions,
   IEmailOptions,
-  safeJsonStringify,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
@@ -54,6 +53,7 @@ import { PlatformException } from '../../../shared/utils';
 import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
+import { serializeProviderError } from './serialize-provider-error';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -718,8 +718,7 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw:
-            safeJsonStringify(error) === '{}' ? JSON.stringify({ message: error.message }) : safeJsonStringify(error),
+          raw: serializeProviderError(error),
         })
       );
 

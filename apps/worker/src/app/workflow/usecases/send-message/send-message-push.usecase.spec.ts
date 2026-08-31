@@ -32,7 +32,7 @@ describe('serializePushProviderError', () => {
     const parsed = JSON.parse(serialized) as { message?: string; self?: string };
 
     expect(parsed.message).to.equal('request failed');
-    expect(parsed.self).to.equal('[Circular]');
+    expect(parsed.self).to.be.undefined;
   });
 
   it('falls back to message and name for plain Error (JSON.stringify yields empty object)', () => {
@@ -41,5 +41,19 @@ describe('serializePushProviderError', () => {
 
     expect(parsed.message).to.equal('boom');
     expect(parsed.name).to.equal('Error');
+  });
+
+  it('does not persist an upstream response body', () => {
+    const serialized = serializePushProviderError({
+      message: 'Request failed',
+      response: {
+        status: 403,
+        data: { secret: 'internal response' },
+      },
+    });
+    const parsed = JSON.parse(serialized) as { message: string; status: number; response?: unknown };
+
+    expect(parsed).to.deep.equal({ message: 'Request failed', status: 403 });
+    expect(parsed.response).to.be.undefined;
   });
 });
