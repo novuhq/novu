@@ -469,6 +469,7 @@
               "agents/channels/email",
               {
                 "group": "Web Chat",
+                "tag": "Beta",
                 "root": "agents/channels/web-chat",
                 "pages": ["agents/channels/web-chat/quickstart", "agents/channels/web-chat/chat-ui"]
               }
