@@ -1,7 +1,7 @@
 import type { CloudRegionEnum } from '../dev/enums';
 import type { LlmAuthCliChoice } from './pipeline/llm-auth/types';
 
-export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'agent-chat' | 'skip';
+export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'web-chat' | 'skip';
 
 export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
   'slack',
@@ -10,11 +10,11 @@ export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
   'telegram',
   'teams',
   'sendblue',
-  'agent-chat',
+  'web-chat',
   'skip',
 ];
 
-export type AgentChatSetupMode = 'scaffold' | 'embed' | 'skip';
+export type WebChatSetupMode = 'scaffold' | 'embed' | 'skip';
 
 export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
@@ -65,12 +65,12 @@ export type BridgeRequirement = {
   detail: string;
 };
 
-export type AgentChatConnectOutcome = {
-  mode: AgentChatSetupMode;
+export type WebChatConnectOutcome = {
+  mode: WebChatSetupMode;
   projectDir?: string;
   scaffolded?: boolean;
   mergedIntoBridge?: boolean;
-  /** Browser path where Agent Chat is served (for example `/` or `/agent-chat`). */
+  /** Browser path where Web Chat is served (for example `/` or `/web-chat`). */
   chatPath?: string;
   /** Project-local embed prompt file (embed path). */
   embedPromptFile?: string;
@@ -80,7 +80,7 @@ export type AgentChatConnectOutcome = {
   alreadyWired?: boolean;
 };
 
-export type ConnectAgentChatHandoff = {
+export type ConnectWebChatHandoff = {
   dashboardUrl: string;
   embedPrompt: string;
   embedPromptFile?: string;
@@ -202,8 +202,8 @@ export interface ConnectCommandOptions {
   llmAuth?: LlmAuthCliChoice;
   /** OpenAI API key for --llm-auth openai non-interactive scaffold runs. */
   openaiApiKey?: string;
-  /** Agent Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted). */
-  agentChatSetup?: AgentChatSetupMode;
+  /** Web Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted). */
+  webChatSetup?: WebChatSetupMode;
 }
 
 export interface AgentSummary {

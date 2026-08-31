@@ -5,9 +5,9 @@ export { APPLICATION_IDENTIFIER_PLACEHOLDER, SUBSCRIBER_ID_PLACEHOLDER } from '.
 export const CONNECT_EMBED_DOCS_INDEX = 'https://docs.novu.co/llms.txt';
 
 export const CONNECT_EMBED_TEMPLATE_URL =
-  'https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/agent-chat/ts';
+  'https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/web-chat/ts';
 
-export const CONNECT_EMBED_TEMPLATE_LOCAL_PATH = 'packages/novu/src/commands/connect/templates/agent-chat/ts';
+export const CONNECT_EMBED_TEMPLATE_LOCAL_PATH = 'packages/novu/src/commands/connect/templates/web-chat/ts';
 
 export type ConnectEmbedRuntime =
   | 'ai-sdk'
@@ -54,11 +54,11 @@ export function formatConnectEmbedRuntimeLabel(connectMode: ConnectEmbedRuntime)
 
 export function describeConnectEmbedPromptAction(connectMode: ConnectEmbedRuntime): string {
   if (!SELF_HOSTED_RUNTIMES.has(connectMode)) {
-    return 'The prompt guides your agent to connect Agent Chat in this project.';
+    return 'The prompt guides your agent to connect Web Chat in this project.';
   }
 
   const runtime = formatConnectEmbedRuntimeLabel(connectMode);
-  return `The prompt guides your agent to wire an ${runtime} agent and connect Agent Chat in this project.`;
+  return `The prompt guides your agent to wire an ${runtime} agent and connect Web Chat in this project.`;
 }
 
 export type ConnectEmbedDocLink = {
@@ -116,8 +116,8 @@ export function resolveConnectEmbedDocLinks(input: {
   }
 
   links.push(
-    { label: 'Agent Chat UI', url: 'https://docs.novu.co/agents/channels/agent-chat/quickstart.md' },
-    { label: 'useAgentChat hook', url: 'https://docs.novu.co/platform/sdks/react/hooks/use-agent-chat.md' }
+    { label: 'Web Chat UI', url: 'https://docs.novu.co/agents/channels/web-chat/quickstart.md' },
+    { label: 'useWebChat hook', url: 'https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md' }
   );
 
   return links;
@@ -135,7 +135,7 @@ export function buildConnectEmbedPrompt(input: ConnectEmbedPromptInput): string 
     renderHeader({ agentName, agentId, appId, subscriberId, envPaths }),
     renderInspectSection(),
     ...(includeHandler ? [renderHandlerSection(input.connectMode, agentId)] : []),
-    renderAgentChatSection({ subscriberId }),
+    renderWebChatSection({ subscriberId }),
     renderVerifySection(includeHandler),
     renderDocsSection(),
   ];
@@ -143,8 +143,8 @@ export function buildConnectEmbedPrompt(input: ConnectEmbedPromptInput): string 
   return sections.filter(Boolean).join('\n\n');
 }
 
-/** @deprecated Prefer buildConnectEmbedPrompt — kept for dashboard Agent Chat banner (UI-only). */
-export function buildAgentChatEmbedPromptForAuth(input: {
+/** @deprecated Prefer buildConnectEmbedPrompt — kept for dashboard Web Chat banner (UI-only). */
+export function buildWebChatEmbedPromptForAuth(input: {
   agentName: string;
   agentIdentifier: string;
   applicationIdentifier?: string | null;
@@ -178,7 +178,7 @@ function renderHeader(input: {
       ? `- Connect may have updated: ${input.envPaths.join(', ')} — read env from there / \`process.env\`.`
       : '- Connect may have updated `.env.local` — read env from there / `process.env`.';
 
-  return `# Wire Novu Agent Chat in this project
+  return `# Wire Novu Web Chat in this project
 
 You are a coding agent working in this repository.
 
@@ -186,14 +186,14 @@ You are a coding agent working in this repository.
 
 - Do **not** run \`npx novu connect\` again.
 - Agent: ${input.agentName} — identifier **\`${input.agentId}\`** (must match \`agent('…')\` in code).
-- Agent Chat integration is already linked in the dashboard.
+- Web Chat integration is already linked in the dashboard.
 ${envLine}
 
 ### Env vars connect uses (read; do not hardcode)
 
 - \`NEXT_PUBLIC_NOVU_APP_ID\` → \`NovuProvider\` \`applicationIdentifier\` (\`${input.appId}\`)
 - \`NEXT_PUBLIC_NOVU_SUBSCRIBER_ID\` → subscriber id (smoke test only if app has no auth yet: \`${input.subscriberId}\`)
-- \`NEXT_PUBLIC_NOVU_AGENT_ID\` → \`useAgentChat({ agentId: … })\` (use \`${input.agentId}\`)
+- \`NEXT_PUBLIC_NOVU_AGENT_ID\` → \`useWebChat({ agentId: … })\` (use \`${input.agentId}\`)
 - \`NEXT_PUBLIC_NOVU_BACKEND_URL\` — **only if set**; if unset (US Cloud), omit \`apiUrl\` on \`NovuProvider\`
 - \`NEXT_PUBLIC_NOVU_SOCKET_URL\` — **only if set**; if unset (US Cloud), omit \`socketUrl\`
 - Local dev: if socket URL is present, use **\`ws://127.0.0.1:8787\`** as connect wrote — do not change to \`localhost\`
@@ -238,7 +238,7 @@ Follow these docs (fetch as \`.md\`). **Skip** dashboard "create agent / connect
 Hard rules (also in docs):
 
 - Use **\`${agentId}\`** as the agent identifier everywhere.
-- Use \`toModelMessages(ctx.history)\`; do not call \`ctx.reply()\` when returning \`generateText()\`.
+- Use \`toModelMessages(ctx)\`; do not call \`ctx.reply()\` when returning \`generateText()\`.
 - Reuse the project's existing AI SDK provider; never hardcode API keys.`;
 }
 
@@ -285,13 +285,13 @@ Hard rules:
 - Implement \`onMessage\` and \`onAction\` with your own logic; read \`NOVU_SECRET_KEY\` from env; never hardcode secrets.`;
 }
 
-function renderAgentChatSection(input: { subscriberId: string }): string {
-  return `## Part 2 — Agent Chat UI
+function renderWebChatSection(input: { subscriberId: string }): string {
+  return `## Part 2 — Web Chat UI
 
 Follow these docs (fetch as \`.md\`). **Skip** dashboard channel-setup steps.
 
-- https://docs.novu.co/agents/channels/agent-chat/quickstart.md — hook + parts API
-- https://docs.novu.co/platform/sdks/react/hooks/use-agent-chat.md — hook reference
+- https://docs.novu.co/agents/channels/web-chat/quickstart.md — hook + parts API
+- https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md — hook reference
 
 Must render (capabilities only — match this app's routing, components, and styling):
 
@@ -306,28 +306,40 @@ Must render (capabilities only — match this app's routing, components, and sty
 If you need a working example of those capabilities:
 
 - GitHub: ${CONNECT_EMBED_TEMPLATE_URL}
-- Local checkout: \`${CONNECT_EMBED_TEMPLATE_LOCAL_PATH}/\`
+- Novu monorepo only: \`${CONNECT_EMBED_TEMPLATE_LOCAL_PATH}/\`
 
 Hard rules (partly in docs, rest connect-specific):
 
-- Install \`@novu/react\`; no \`<AgentChat />\` component exists.
+- Install \`@novu/react\`; no \`<WebChat />\` component exists.
 - Wire env vars from the Context section; do not hardcode identifiers in source.
+- Pass \`socketUrl\` from env as-is — do not rewrite \`127.0.0.1\` to \`localhost\` or swap in \`socket.novu.co\`.
+- Do not gate the first send behind a second click or a "connected" wait the SDK does not expose.
 - **Match this app's design system** — do not paste scaffold CSS, dashboard components, or dashboard tokens.
 - If HMAC is enabled: follow the quickstart "Going to production" section for \`subscriberHash\` / \`agentHash\`.
-- Smoke-test subscriber id when the app has no auth yet: \`${input.subscriberId}\``;
+- When the app has no auth yet, use subscriber id \`${input.subscriberId}\` — do not send a test message to prove it.`;
 }
 
 function renderVerifySection(includeHandler: boolean): string {
-  const bridgeLine = includeHandler
-    ? '- Confirm `/api/novu` (or your Chat SDK webhook route) responds without errors.'
-    : '';
+  const lines = [
+    '## Verify',
+    '',
+    'Do **not** open a browser, send a chat message, or inspect WebSocket traffic.',
+    '',
+    '- Skim the files you added for missing imports or hardcoded ids. Do not start `dev` or run a full-project typecheck.',
+    '- `NovuProvider` and `useWebChat` read the Context env vars — do not hardcode identifiers.',
+    '- If `NEXT_PUBLIC_NOVU_SOCKET_URL` is set, pass it through as-is.',
+  ];
 
-  return `## Verify
+  if (includeHandler) {
+    lines.push('- The Part 1 route/handler files exist. Do not curl them.');
+  }
 
-- Run \`npm run dev:novu\` (or this project's equivalent).
-${bridgeLine}
-- Open Agent Chat in the app; send **one** message — reply must appear on the **first** message.
-- In DevTools → Network → WS: socket must hit your environment (e.g. \`127.0.0.1:8787\` locally), not \`socket.novu.co\` when testing against local API.`;
+  lines.push(
+    '',
+    "Then tell the user: run `npm run dev:novu` (or this project's equivalent) and send a message in Web Chat."
+  );
+
+  return lines.join('\n');
 }
 
 function renderDocsSection(): string {

@@ -1,7 +1,7 @@
 /**
  * Wire-only AgentEvent contract: envelope shapes, event union, and runtime guards.
  * Server paths validate, store, and forward envelopes — they do not fold timelines.
- * Client-side projection (`applyEnvelope` → `AgentMessage[]`) lives in `@novu/js` agent-chat.
+ * Client-side projection (`applyEnvelope` → `AgentMessage[]`) lives in `@novu/js` web-chat.
  */
 export type {
   AgentApprovalRequest,

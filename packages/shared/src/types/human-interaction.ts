@@ -1,7 +1,7 @@
 /**
  * Shared vocabulary for the human-in-the-loop interaction API
- * (`/v1/human/interactions`, the `@novu/human` CLI, and the
- * `human_relay` agent runtime).
+ * (`/v1/human/interactions`, the `@novu/human` CLI, `human_relay`,
+ * and custom code agents `ctx.*` helpers).
  */
 
 export enum HumanInteractionKindEnum {
@@ -48,10 +48,15 @@ export type HumanInteractionResponse = {
   text?: string;
   /** `approve`: 'approve' | 'deny'; `choose`: the picked option id. */
   optionId?: string;
-  /** Subscriber id (or platform user id) of whoever responded. */
+  /** Display name of whoever responded (firstName, else platform username, else subscriberId). */
   respondedBy?: string;
+  /** Stable Novu subscriberId of whoever settled the interaction. */
+  respondedBySubscriberId?: string;
   respondedAt: string;
 };
+
+/** Hard cap on `to` recipient lists for `ctx.*` and `POST /v1/human/interactions`. */
+export const HUMAN_INTERACTION_MAX_RECIPIENTS = 50;
 
 /**
  * Delivery channel preference on create. The API resolves the concrete

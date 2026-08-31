@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONNECT_HELP_TEXT } from '../help-text';
-import type { ConnectSuccessResult } from './format-agent-chat-success';
+import type { ConnectSuccessResult } from './format-web-chat-success';
 import { printConnectSuccess } from './print-connect-success';
 
 const baseResult: ConnectSuccessResult = {
@@ -12,27 +12,27 @@ const baseResult: ConnectSuccessResult = {
   dashboardUrl: 'https://dashboard.novu.test',
   connectDashboardUrl: 'https://dashboard.novu.test',
   environmentSlug: 'dev',
-  connectedChannel: 'agent-chat',
+  connectedChannel: 'web-chat',
   dashboardRedirectChannel: null,
   isKeyless: false,
   claimUrl: null,
   connectMode: 'demo',
-  agentChatHandoff: {
+  webChatHandoff: {
     dashboardUrl: 'https://dashboard.novu.test/env/dev/agents/support-agent/chat',
   },
 };
 
-describe('Agent Chat success help contract', () => {
+describe('Web Chat success help contract', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it.each([
     {
-      successLine: '✓ Agent Chat connected',
+      successLine: '✓ Web Chat connected',
       result: {
         ...baseResult,
-        agentChatOutcome: {
+        webChatOutcome: {
           mode: 'embed' as const,
           projectDir: '/tmp/existing-app',
           alreadyWired: false,
@@ -40,17 +40,17 @@ describe('Agent Chat success help contract', () => {
       },
     },
     {
-      successLine: '✓ Agent Chat app ready.',
+      successLine: '✓ Web Chat app ready.',
       result: {
         ...baseResult,
-        agentChatOutcome: {
+        webChatOutcome: {
           mode: 'scaffold' as const,
-          projectDir: '/tmp/agent-chat-app',
+          projectDir: '/tmp/web-chat-app',
         },
       },
     },
     {
-      successLine: '✓ Agent app ready with Agent Chat.',
+      successLine: '✓ Agent app ready with Web Chat.',
       result: {
         ...baseResult,
         connectMode: 'ai-sdk' as const,
@@ -59,7 +59,7 @@ describe('Agent Chat success help contract', () => {
           projectDir: '/tmp/bridge-app',
           scaffolded: true,
         },
-        agentChatOutcome: {
+        webChatOutcome: {
           mode: 'scaffold' as const,
           projectDir: '/tmp/bridge-app',
           scaffolded: true,
@@ -68,10 +68,10 @@ describe('Agent Chat success help contract', () => {
       },
     },
     {
-      successLine: '✓ Agent Chat linked — add it to your app.',
+      successLine: '✓ Web Chat linked — add it to your app.',
       result: {
         ...baseResult,
-        agentChatOutcome: {
+        webChatOutcome: {
           mode: 'skip' as const,
         },
       },

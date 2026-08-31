@@ -11,7 +11,7 @@ export interface Interaction {
   prompt: string;
   options?: Array<{ id: string; label: string }>;
   from?: string;
-  to: string;
+  to: string[];
   integrationIdentifier: string;
   platform: string;
   response?: {
@@ -19,8 +19,10 @@ export interface Interaction {
     text?: string;
     optionId?: string;
     respondedBy?: string;
+    respondedBySubscriberId?: string;
     respondedAt: string;
   };
+  failedTo?: string[];
   expiresAt: string;
   createdAt: string;
 }
@@ -29,7 +31,7 @@ export interface CreateInteractionInput {
   kind: InteractionKind;
   prompt: string;
   options?: string[];
-  to: string;
+  to: string | string[];
   via?: string;
   agentIdentifier?: string;
   from?: string;

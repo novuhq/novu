@@ -5,6 +5,17 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { ResolveChannelEndpoints } from './resolve-channel-endpoints.usecase';
 
+function stubIntegrationRepository(sandbox: sinon.SinonSandbox) {
+  return {
+    findOne: sandbox.stub(),
+    find: sandbox.stub().callsFake(async (query: { identifier?: { $in?: string[] } }) => {
+      const identifiers = query.identifier?.$in ?? [];
+
+      return identifiers.map((identifier) => ({ identifier, active: true }));
+    }),
+  };
+}
+
 const ORGANIZATION_ID = 'org_123';
 const ENVIRONMENT_ID = 'env_123';
 const SUBSCRIBER_ID = 'subscriber_123';
@@ -36,7 +47,7 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       rotatingConnectionTokenService as any
     );
@@ -121,6 +132,7 @@ describe('ResolveChannelEndpoints - Slack', () => {
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
   let channelConnectionRepository: Record<string, sinon.SinonStub>;
   let rotatingConnectionTokenService: Record<string, sinon.SinonStub>;
+  let integrationRepository: ReturnType<typeof stubIntegrationRepository>;
   let usecase: ResolveChannelEndpoints;
 
   beforeEach(() => {
@@ -137,11 +149,12 @@ describe('ResolveChannelEndpoints - Slack', () => {
     rotatingConnectionTokenService = {
       getConnectionToken: sandbox.stub(),
     };
+    integrationRepository = stubIntegrationRepository(sandbox);
 
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      integrationRepository as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       rotatingConnectionTokenService as any
     );
@@ -185,12 +198,65 @@ describe('ResolveChannelEndpoints - Slack', () => {
     expect(result[0].channelData[0]).to.deep.include({ token: '' });
     sinon.assert.notCalled(rotatingConnectionTokenService.getConnectionToken);
   });
+
+  it('does not load connections or refresh tokens for endpoints without an active integration', async () => {
+    const connection = buildSlackConnection({ accessToken: 'xoxb-stale-token', refreshToken: 'refresh-token' });
+    channelEndpointRepository.find.resolves([buildSlackEndpoint()]);
+    channelConnectionRepository.find.resolves([connection]);
+    integrationRepository.find.resolves([]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result).to.deep.equal([]);
+    expect(integrationRepository.find.firstCall.args[0]).to.deep.include({
+      _environmentId: ENVIRONMENT_ID,
+      _organizationId: ORGANIZATION_ID,
+      channel: ChannelTypeEnum.CHAT,
+      active: true,
+    });
+    expect(integrationRepository.find.firstCall.args[0].identifier).to.deep.equal({
+      $in: [SLACK_INTEGRATION_IDENTIFIER],
+    });
+    sinon.assert.notCalled(rotatingConnectionTokenService.getConnectionToken);
+    sinon.assert.notCalled(channelConnectionRepository.find);
+  });
+
+  it('refreshes only the active Slack integration when a subscriber still has a leftover deleted one', async () => {
+    const liveIdentifier = 'slack-live';
+    const liveConnectionIdentifier = 'slack-live-connection';
+    const liveConnection = buildSlackConnection({ accessToken: 'xoxb-live-token' });
+    liveConnection.identifier = liveConnectionIdentifier;
+    liveConnection.integrationIdentifier = liveIdentifier;
+
+    channelEndpointRepository.find.resolves([
+      buildSlackEndpoint(),
+      buildSlackEndpoint({
+        identifier: 'slack-live-endpoint',
+        integrationIdentifier: liveIdentifier,
+        connectionIdentifier: liveConnectionIdentifier,
+      }),
+    ]);
+    channelConnectionRepository.find.resolves([liveConnection]);
+    rotatingConnectionTokenService.getConnectionToken.resolves('xoxb-live-token');
+    integrationRepository.find.resolves([{ identifier: liveIdentifier, active: true }]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result).to.have.length(1);
+    expect(result[0].integrationIdentifier).to.equal(liveIdentifier);
+    expect(result[0].channelData[0]).to.deep.include({ token: 'xoxb-live-token' });
+    sinon.assert.calledOnceWithExactly(rotatingConnectionTokenService.getConnectionToken, liveConnection);
+    expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
+      $in: [liveConnectionIdentifier],
+    });
+  });
 });
 
 describe('ResolveChannelEndpoints - PagerDuty', () => {
   let sandbox: sinon.SinonSandbox;
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
   let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let integrationRepository: ReturnType<typeof stubIntegrationRepository>;
   let usecase: ResolveChannelEndpoints;
 
   beforeEach(() => {
@@ -204,11 +270,12 @@ describe('ResolveChannelEndpoints - PagerDuty', () => {
       find: sandbox.stub(),
       buildContextExactMatchQuery: sandbox.stub().returns({}),
     };
+    integrationRepository = stubIntegrationRepository(sandbox);
 
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      integrationRepository as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { refreshAccessToken: sandbox.stub() } as any
     );
@@ -216,6 +283,22 @@ describe('ResolveChannelEndpoints - PagerDuty', () => {
 
   afterEach(() => {
     sandbox.restore();
+  });
+
+  it('does not decrypt stored secrets for endpoints without an active integration', async () => {
+    channelEndpointRepository.find.resolves([
+      buildPagerDutyEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.PAGERDUTY_SERVICE, {
+          routingKey: 'R0UTINGK3YEXAMPLE000000000000000',
+          region: 'us',
+        }),
+      }),
+    ]);
+    integrationRepository.find.resolves([]);
+
+    const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
+
+    expect(result).to.deep.equal([]);
   });
 
   it('decrypts routingKey from endpoint.endpoint and returns channelData without a connection', async () => {
@@ -284,7 +367,7 @@ describe('ResolveChannelEndpoints - Opsgenie', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { getConnectionToken: sandbox.stub() } as any
     );
@@ -360,7 +443,7 @@ describe('ResolveChannelEndpoints - Grafana', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { refreshAccessToken: sandbox.stub() } as any
     );
@@ -458,7 +541,7 @@ describe('ResolveChannelEndpoints - Tool Webhook', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { refreshAccessToken: sandbox.stub() } as any
     );

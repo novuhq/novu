@@ -148,11 +148,11 @@ describe('buildTokenExchangeAuth', () => {
 });
 
 describe('McpOAuthCallback managed chat resume', () => {
-  it('resumes the parked agent-chat tool call when publishing the connected result fails', async () => {
+  it('resumes the parked web-chat tool call when publishing the connected result fails', async () => {
     const channel = {
-      platform: AgentPlatformEnum.AGENT_CHAT,
+      platform: AgentPlatformEnum.WEB_CHAT,
       _integrationId: 'integration-id',
-      platformThreadId: 'agent_chat:conversation-id',
+      platformThreadId: 'web_chat:conversation-id',
     };
     const subscriberRepository = {
       findOne: sinon.stub().resolves({ subscriberId: 'subscriber-external-id' }),
@@ -207,8 +207,8 @@ describe('McpOAuthCallback managed chat resume', () => {
       agentIdentifier: 'agent-identifier',
       integrationIdentifier: 'integration-identifier',
       toolUseId: 'tool-use-id',
-      platform: AgentPlatformEnum.AGENT_CHAT,
-      platformThreadId: 'agent_chat:conversation-id',
+      platform: AgentPlatformEnum.WEB_CHAT,
+      platformThreadId: 'web_chat:conversation-id',
     } as McpOAuthState;
 
     await resumeSessionAfterConnect(stateData, {} as McpConnectionEntity);
@@ -237,8 +237,8 @@ describe('McpOAuthCallback managed chat resume', () => {
         content: 'OK',
         followUpMessage:
           "example-mcp is now connected and ready. Resume the user's original request. Use the available tools directly. Do not output any preamble or mention the connection — go straight to action.",
-        platform: AgentPlatformEnum.AGENT_CHAT,
-        platformThreadId: 'agent_chat:conversation-id',
+        platform: AgentPlatformEnum.WEB_CHAT,
+        platformThreadId: 'web_chat:conversation-id',
         suppressReply: true,
       })
     ).to.equal(true);

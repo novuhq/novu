@@ -1,7 +1,0 @@
-# Agent Chat embed prompt
-
-The CLI already wrote the Novu environment values.
-
-Add a minimal Agent Chat UI with `@novu/react` (`NovuProvider` and `useAgentChat`). After the UI change, the first line of your final user-facing message must be:
-
-✓ Agent Chat connected

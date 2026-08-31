@@ -132,7 +132,6 @@ describe('Should handle the new arrived mail', () => {
       contentType: 'application/pdf',
       size: 1024,
       url: 'https://s3.example.com/inbound-mail/2024-01-01/msg-id/uuid-test.pdf?presigned=1',
-      storagePath: 'inbound-mail/2024-01-01/msg-id/uuid-test.pdf',
       content: { type: 'Buffer' as const, data: [37, 80, 68, 70] },
       contentBytes: 1024,
     };
@@ -178,7 +177,7 @@ describe('Should handle the new arrived mail', () => {
     const att = mailPayload.attachments![0];
     expect(att.url).to.equal(rehydratedAttachment.url);
     expect(att.size).to.equal(1024);
-    expect(att.storagePath).to.equal(rehydratedAttachment.storagePath);
+    expect(att).to.not.have.property('storagePath');
     expect(att.content).to.deep.equal({ type: 'Buffer', data: [37, 80, 68, 70] });
     expect(att.contentBytes).to.equal(1024);
     // No raw Buffer-shaped content.data numeric arrays sitting directly in the queue fixture
@@ -232,7 +231,7 @@ describe('Should handle the new arrived mail', () => {
     expect(att.size).to.equal(5);
     expect(att.content).to.deep.equal({ type: 'Buffer', data: [104, 101, 108, 108, 111] });
     expect(att.url).to.be.undefined;
-    expect(att.storagePath).to.be.undefined;
+    expect(att).to.not.have.property('storagePath');
   });
 
   it('should not send webhook request with missing transactionId', async () => {

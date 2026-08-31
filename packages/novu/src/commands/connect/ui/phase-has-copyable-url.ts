@@ -18,7 +18,7 @@ export function phaseHasCopyableUrl(phase: Phase): boolean {
     case 'sendblue-test-phone':
     case 'sendblue-test-waiting':
     case 'dashboard-channel-ready':
-    case 'agent-chat-handoff':
+    case 'web-chat-handoff':
       return true;
     case 'whatsapp-test':
       return Boolean(phase.waMeUrl);

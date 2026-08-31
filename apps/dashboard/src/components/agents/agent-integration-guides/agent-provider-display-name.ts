@@ -14,8 +14,8 @@ export function resolveAgentProviderDisplayName(providerId: string): string {
       return 'iMessage';
     case ChatProviderIdEnum.PhotonImessage:
       return 'iMessage';
-    case ChatProviderIdEnum.NovuAgentChat:
-      return 'Agent Chat';
+    case ChatProviderIdEnum.NovuWebChat:
+      return 'Web Chat';
     default:
       return 'channel';
   }

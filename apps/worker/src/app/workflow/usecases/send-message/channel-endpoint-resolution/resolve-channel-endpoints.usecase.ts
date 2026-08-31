@@ -82,9 +82,31 @@ export class ResolveChannelEndpoints {
       return [];
     }
 
-    const connectionMap = await this.fetchConnectionMap(command, endpoints);
+    const deliverableEndpoints = await this.keepEndpointsForActiveIntegrations(command, endpoints);
+    const connectionMap = await this.fetchConnectionMap(command, deliverableEndpoints);
 
-    return this.buildIntegrationGroups(endpoints, connectionMap);
+    return this.buildIntegrationGroups(deliverableEndpoints, connectionMap);
+  }
+
+  private async keepEndpointsForActiveIntegrations(
+    command: ResolveChannelEndpointsCommand,
+    endpoints: ChannelEndpointEntity[]
+  ): Promise<ChannelEndpointEntity[]> {
+    const identifiers = [...new Set(endpoints.map((endpoint) => endpoint.integrationIdentifier))];
+
+    const activeIntegrations = await this.integrationRepository.find(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        identifier: { $in: identifiers },
+        channel: command.channelType,
+        active: true,
+      },
+      'identifier'
+    );
+    const activeIdentifiers = new Set(activeIntegrations.map((integration) => integration.identifier));
+
+    return endpoints.filter((endpoint) => activeIdentifiers.has(endpoint.integrationIdentifier));
   }
 
   private async fetchChannelEndpoints(command: ResolveChannelEndpointsCommand): Promise<ChannelEndpointEntity[]> {

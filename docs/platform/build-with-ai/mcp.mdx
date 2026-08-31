@@ -1,12 +1,12 @@
 ---
 title: Novu MCP Server
-description: Connect Cursor, Claude, ChatGPT, and other AI tools to the Novu MCP server to manage notifications, workflows, and subscribers using natural language.
+description: Connect Cursor, Claude, ChatGPT, and other AI tools to the Novu MCP server to manage notifications, workflows, subscribers, agents, and conversations using natural language.
 ---
 
-The Novu MCP Server exposes Novu's notification infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to manage subscribers, workflows, integrations, and delivery activity from natural-language prompts.
+The Novu MCP Server exposes Novu's notification and agent infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to manage subscribers, workflows, integrations, agents, conversations, and delivery activity from natural-language prompts.
 
 <Note>
-  Novu also hosts a separate **documentation MCP server** at [docs.novu.co/mcp](https://docs.novu.co/mcp) that lets AI tools search and read this documentation site. The Novu MCP Server described on this page manages your Novu account - triggers, workflows, subscribers, and more.
+  Novu also hosts a separate **documentation MCP server** at [docs.novu.co/mcp](https://docs.novu.co/mcp) that lets AI tools search and read this documentation site. The Novu MCP Server described on this page manages your Novu account - triggers, workflows, subscribers, agents, and more.
 </Note>
 
 ## About the Novu MCP server
@@ -19,6 +19,8 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
 - Debug failed notifications and delivery issues
 - Analyze notification activity and logs
 - Create and manage workflows
+- Create and update [agents](/agents/managed-agent/overview), then connect a channel
+- List [agent conversations](/agents/conversations) and inspect activity timelines
 
 Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills). MCP gives your assistant live access to your Novu account, while skills instruct agents how to use Novu APIs and SDKs effectively. They're complementary - connect the MCP server for account operations and install skills for implementation guidance.
 
@@ -214,6 +216,16 @@ Trigger my welcome-email workflow for subscriber test-user-123 with payload cont
 Show recent failed notifications in the last 24 hours and help me debug delivery issues.
 </Prompt>
 
+### Agents and conversations
+
+<Prompt description="Create a managed agent and connect a channel" icon="bot" actions={["copy", "cursor"]}>
+Create a managed Novu agent named Support Bot with a system prompt that answers product questions briefly. After it is created, connect Slack to that agent.
+</Prompt>
+
+<Prompt description="Debug an agent conversation" icon="bot" actions={["copy", "cursor"]}>
+List my Novu agents, then show recent conversations for the support-bot agent and inspect the activity timeline of the latest thread.
+</Prompt>
+
 ## MCP tools
 
 Your AI assistant discovers these tools automatically when it connects, and calls the right one based on your prompt.
@@ -237,6 +249,13 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Workflows | `trigger_workflow` | Trigger a workflow for a subscriber |
 | Workflows | `bulk_trigger_workflow` | Trigger multiple workflows in one call |
 | Workflows | `cancel_triggered_event` | Cancel a pending triggered event |
+| Agents | `create_agent` | Create an agent |
+| Agents | `get_agents` | List agents with cursor pagination |
+| Agents | `get_agent` | Retrieve a single agent by identifier (slug) |
+| Agents | `update_agent` | Update an agent's name, status, bridge URL, or behavior |
+| Agents | `connect_agent` | Connect a channel to an existing agent |
+| Conversations | `get_conversations` | List agent conversations with optional filters |
+| Conversations | `get_conversation_activities` | Inspect a conversation timeline |
 | Notifications | `get_notification` | Get a notification with execution logs |
 | Notifications | `get_notifications` | Fetch notifications with filtering |
 | Integrations | `get_integrations` | List channel integrations |
@@ -245,7 +264,7 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Integrations | `set_primary_integration` | Set an integration as primary for its channel |
 
 <Note>
-  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments).
+  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments). Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools are available on Novu Cloud and self-hosted Enterprise, not Community Edition.
 </Note>
 
 ## Use multiple MCP servers
@@ -254,7 +273,7 @@ You can connect both the Novu MCP server and the [Novu documentation MCP server]
 
 | Server | URL | Purpose |
 | --- | --- | --- |
-| Novu MCP | `https://mcp.novu.co/` (US) / `https://eu.mcp.novu.co/` (EU) | Manage your Novu account - workflows, subscribers, triggers |
+| Novu MCP | `https://mcp.novu.co/` (US) / `https://eu.mcp.novu.co/` (EU) | Manage your Novu account - workflows, subscribers, agents, conversations, triggers |
 | Novu Docs MCP | `https://docs.novu.co/mcp` | Search and read Novu documentation |
 
 Connected MCP servers don't consume context until the AI calls a tool. Be specific in your prompts so the assistant uses the most relevant server - for example, "trigger my welcome workflow" uses the Novu MCP, while "how do I configure digest steps?" uses the Docs MCP.
@@ -276,6 +295,10 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
 
   <Accordion title="Empty results or authentication errors">
     Double-check you're on the endpoint for your region (`eu.dashboard.novu.co` → `https://eu.mcp.novu.co/`), and that any API key is sent as `Authorization: Bearer your-api-key` with no extra spaces.
+  </Accordion>
+
+  <Accordion title="Conversations return 404">
+    `get_conversations` and `get_conversation_activities` require Novu Cloud or self-hosted Enterprise with Conversations enabled. Community Edition and environments where the feature flag is off return `404`. Confirm you passed an agent **identifier** (slug) as `agentId`, not a Mongo `_id`.
   </Accordion>
 
   <Accordion title="Self-hosted Novu">
@@ -303,6 +326,12 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
   </Card>
   <Card title="Agent Toolkit" href="/platform/build-with-ai/agent-toolkit">
     Embed Novu tools inside your own AI agents with the `@novu/agent-toolkit` package.
+  </Card>
+  <Card title="Managed agents" href="/agents/managed-agent/overview">
+    How managed agents, connectors, and channel connect work in Novu.
+  </Card>
+  <Card title="Agent conversations" href="/agents/conversations">
+    How conversation lifecycle and activity look in the dashboard.
   </Card>
   <Card title="Novu Docs MCP" href="https://docs.novu.co/mcp">
     Connect AI tools to search and read this documentation site.

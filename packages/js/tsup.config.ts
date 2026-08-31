@@ -59,6 +59,9 @@ const baseModuleConfig: Options = {
   treeshake: true,
   dts: {
     resolve: ['@novu/agent-event-protocol'],
+    compilerOptions: {
+      stripInternal: true,
+    },
   },
   noExternal: ['@novu/agent-event-protocol'],
   entry: {

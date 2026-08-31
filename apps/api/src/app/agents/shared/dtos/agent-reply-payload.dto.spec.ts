@@ -1,5 +1,7 @@
 import { expect } from 'chai';
-import { IsValidReplyContent, isValidMetadataSignalKey } from './agent-reply-payload.dto';
+import { plainToInstance } from 'class-transformer';
+import { type ValidationError, validate } from 'class-validator';
+import { AgentReplyPayloadDto, IsValidReplyContent, isValidMetadataSignalKey } from './agent-reply-payload.dto';
 
 describe('isValidMetadataSignalKey', () => {
   it('accepts plain and namespaced user-facing keys', () => {
@@ -64,5 +66,89 @@ describe('IsValidReplyContent', () => {
 
   it('rejects a card missing type card', () => {
     expect(validator.validate({ card: { type: 'section', children: [] } as never })).to.equal(false);
+  });
+});
+
+describe('AgentReplyPayloadDto signals', () => {
+  async function validateSignals(signals: unknown) {
+    const dto = plainToInstance(AgentReplyPayloadDto, {
+      conversationId: '64f5a1c2e8b7a3d9f0c1b2a3',
+      integrationIdentifier: 'slack-support',
+      signals,
+    });
+
+    return validate(dto);
+  }
+
+  function constraintNames(errors: ValidationError[]): string[] {
+    const names: string[] = [];
+    const walk = (list: ValidationError[]) => {
+      for (const error of list) {
+        if (error.constraints) {
+          names.push(...Object.values(error.constraints));
+        }
+        if (error.children?.length) {
+          walk(error.children);
+        }
+      }
+    };
+
+    walk(errors);
+
+    return names;
+  }
+
+  it('accepts a mixed human and trigger array, validating each item as its own DTO', async () => {
+    const errors = await validateSignals([
+      { type: 'human', kind: 'approve', prompt: 'Deploy v2?', requestId: 'hr_1', to: ['alice', 'bob'] },
+      { type: 'trigger', workflowId: 'order-shipped', to: [{ type: 'Topic', topicKey: 'ops' }] },
+    ]);
+
+    expect(errors).to.have.length(0);
+  });
+
+  it('rejects a human signal whose to uses a workflow topic recipient', async () => {
+    const errors = await validateSignals([
+      {
+        type: 'human',
+        kind: 'ask',
+        prompt: 'Approve?',
+        requestId: 'hr_1',
+        to: { type: 'Topic', topicKey: 'ops' },
+      },
+    ]);
+
+    expect(constraintNames(errors).some((message) => message.includes('subscriberId'))).to.equal(true);
+  });
+
+  it('accepts a trigger signal whose to is a workflow topic recipient', async () => {
+    const errors = await validateSignals([
+      { type: 'trigger', workflowId: 'order-shipped', to: [{ type: 'Topic', topicKey: 'ops' }] },
+    ]);
+
+    expect(errors).to.have.length(0);
+  });
+
+  it('rejects a choose signal without options', async () => {
+    const errors = await validateSignals([
+      { type: 'human', kind: 'choose', prompt: 'Which region?', requestId: 'hr_1' },
+    ]);
+
+    expect(errors).to.not.have.length(0);
+    expect(constraintNames(errors).some((message) => /options|array/i.test(message))).to.equal(true);
+  });
+
+  it('rejects a metadata set signal missing value', async () => {
+    const errors = await validateSignals([{ type: 'metadata', key: 'ticketId' }]);
+
+    expect(errors).to.not.have.length(0);
+    expect(constraintNames(errors).some((message) => /value/i.test(message))).to.equal(true);
+  });
+
+  it('rejects an unrecognized signal type', async () => {
+    const errors = await validateSignals([{ type: 'unknown', workflowId: 'x' }]);
+
+    expect(errors).to.not.have.length(0);
+    expect(constraintNames(errors).some((message) => message.includes('metadata, trigger, or human'))).to.equal(true);
   });
 });

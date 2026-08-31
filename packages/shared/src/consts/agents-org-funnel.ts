@@ -13,7 +13,7 @@ export const AGENTS_ORG_FUNNEL_EVENTS = {
 
 export type AgentsOrgFunnelEvent = (typeof AGENTS_ORG_FUNNEL_EVENTS)[keyof typeof AGENTS_ORG_FUNNEL_EVENTS];
 
-export const AGENT_ANALYTICS_SOURCES = ['cli', 'dashboard_onboarding', 'dashboard', 'api'] as const;
+export const AGENT_ANALYTICS_SOURCES = ['cli', 'dashboard_onboarding', 'dashboard', 'api', 'mcp'] as const;
 
 export type AgentAnalyticsSource = (typeof AGENT_ANALYTICS_SOURCES)[number];
 

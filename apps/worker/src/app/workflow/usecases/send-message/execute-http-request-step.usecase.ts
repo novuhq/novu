@@ -6,6 +6,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   CreateStepConditionsPassedDetail,
+  createSchemaValidationAjv,
   DetailEnum,
   dashboardSanitizeControlValues,
   evaluateRules,
@@ -32,8 +33,6 @@ import {
   isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
 } from '@novu/shared';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
 import { ExecuteBridgeJob } from '../execute-bridge-job';
@@ -337,9 +336,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     schema: Record<string, unknown>
   ): { isValid: true; errors?: undefined } | { isValid: false; errors: { path: string; message: string }[] } {
     try {
-      const ajv = new Ajv({ strict: false });
-      addFormats(ajv);
-      const validate = ajv.compile(schema);
+      const validate = createSchemaValidationAjv({ schema }).compile(schema);
       const valid = validate(responseBody);
 
       if (valid) {

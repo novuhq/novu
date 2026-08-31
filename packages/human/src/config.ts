@@ -24,8 +24,10 @@ export interface HumanCliConfig {
 export const DEFAULT_API_URL = 'https://api.novu.co';
 export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';
 
+export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
+
 export const NOT_SET_UP_MESSAGE =
-  'No human connected yet. Ask your human to run: npx @novu/human setup (or set NOVU_SECRET_KEY).';
+  'No human connected yet. Ask your human to run: npx @novu/human setup (or set NOVU_SECRET_KEY + HUMAN_TO).';
 
 export function configPath(): string {
   return process.env.NOVU_HUMAN_CONFIG ?? join(homedir(), '.novu', 'human.json');
@@ -97,13 +99,22 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
 }
 
 /**
- * Channel preference for create: `--via` wins, otherwise the configured
- * default. When neither is set, returns undefined and the API picks the sole
- * linked channel (or errors if several are linked).
+ * Channel preference for create: `--via` wins, then HUMAN_VIA, then the
+ * configured default. When none is set, returns undefined and the API picks
+ * the sole linked channel (or errors if several are linked).
  */
 export function resolveVia(config: HumanCliConfig, via?: string): HumanChannelPlatform | undefined {
   if (via) {
     return via.toLowerCase();
+  }
+
+  const envVia = process.env.HUMAN_VIA?.trim().toLowerCase();
+  if (envVia) {
+    if (!(SUPPORTED_CHANNELS as readonly string[]).includes(envVia)) {
+      throw new Error(`Invalid HUMAN_VIA "${envVia}". Use one of: ${SUPPORTED_CHANNELS.join(', ')}.`);
+    }
+
+    return envVia;
   }
 
   return config.defaultChannel;

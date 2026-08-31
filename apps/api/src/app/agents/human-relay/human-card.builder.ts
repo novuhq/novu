@@ -170,7 +170,7 @@ function resolveStatusLine(interaction: HumanInteractionEntity): string {
  * "Which question does this answer?" card shown when a bare reply arrives
  * while several asks are pending. Same letter-button convention as `choose`.
  */
-export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[]): CardElement {
+export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[], answerId: string): CardElement {
   return {
     type: 'card',
     title: 'Which question does this answer?',
@@ -180,7 +180,7 @@ export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[]): 
       {
         type: 'actions',
         children: pendingAsks.map((ask, index) =>
-          button(buildHumanDisambiguationActionId(ask.identifier), optionLetter(index), 'default')
+          button(buildHumanDisambiguationActionId(ask.identifier, answerId), optionLetter(index), 'default')
         ),
       } satisfies ActionsElement,
     ],

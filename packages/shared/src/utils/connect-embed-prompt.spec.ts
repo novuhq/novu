@@ -17,7 +17,7 @@ describe('buildConnectEmbedPrompt', () => {
   it('points embed agents at the connect template, not dashboard chat', () => {
     expect(prompt).toContain(CONNECT_EMBED_TEMPLATE_URL);
     expect(prompt).toContain(CONNECT_EMBED_TEMPLATE_LOCAL_PATH);
-    expect(prompt).not.toContain('apps/dashboard/src/components/agents/agent-chat-panel');
+    expect(prompt).not.toContain('apps/dashboard/src/components/agents/web-chat-panel');
   });
 
   it('lists the must-render capabilities and host-app styling rule', () => {

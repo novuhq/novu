@@ -44,9 +44,9 @@ export function resolveLifecycleChannel(
     }
   }
 
-  const agentChat = channels.find((channel) => channel.platform === AgentPlatformEnum.AGENT_CHAT);
-  if (agentChat) {
-    return agentChat;
+  const webChat = channels.find((channel) => channel.platform === AgentPlatformEnum.WEB_CHAT);
+  if (webChat) {
+    return webChat;
   }
 
   const primary = channels[0];

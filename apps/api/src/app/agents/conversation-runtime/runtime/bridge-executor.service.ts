@@ -17,6 +17,7 @@ import type {
   AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
+  AgentHumanResponse,
   AgentMessage,
   AgentNotification,
   AgentPlatformContext,
@@ -151,6 +152,7 @@ export interface AgentExecutionParams {
   bridgeUrlOverride?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
+  humanResponse?: AgentHumanResponse | null;
   storedAttachments?: StoredAttachment[];
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
@@ -344,7 +346,8 @@ export class BridgeExecutorService {
   }
 
   private async buildPayload(params: AgentExecutionParams): Promise<AgentBridgeRequest> {
-    const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
+    const { event, config, conversation, subscriber, message, platformContext, action, reaction, humanResponse } =
+      params;
     const agentIdentifier = config.agentIdentifier;
 
     const history = await this.loadHistory(
@@ -373,6 +376,8 @@ export class BridgeExecutorService {
       deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {
       deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
+    } else if (humanResponse) {
+      deliveryId = `${conversation._id}:${event}:${humanResponse.interactionId}:${timestamp}`;
     } else {
       deliveryId = `${conversation._id}:${event}`;
     }
@@ -403,6 +408,7 @@ export class BridgeExecutorService {
       platformContext,
       action: action ?? null,
       reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
+      humanResponse: humanResponse ?? null,
     };
 
     if (isEventProtocolEnabled) {

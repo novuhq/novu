@@ -18,13 +18,13 @@ import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName }
 import { ConnectChannelBackError } from '../errors';
 import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
 import type {
-  AgentChatConnectOutcome,
+  WebChatConnectOutcome,
   AgentConnectMode,
   AgentSummary,
   AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ConnectAgentChatHandoff,
+  ConnectWebChatHandoff,
   ConnectCommandOptions,
   CustomCodeConnectOutcome,
   LangChainConnectOutcome,
@@ -36,15 +36,15 @@ import {
   isVanillaCustomCodeConnectMode,
 } from '../types';
 import type { ConnectUI } from '../ui/ui';
-import { offerPostConnectBridgeTunnel } from './agent-chat/offer-post-connect-bridge-tunnel';
-import { runAgentChatProjectSetup } from './agent-chat/run-agent-chat-setup';
+import { offerPostConnectBridgeTunnel } from './web-chat/offer-post-connect-bridge-tunnel';
+import { runWebChatProjectSetup } from './web-chat/run-web-chat-setup';
 import {
-  resolveAgentChatHandoffUiPolicy,
-  wrapUiForAgentChatHandoff,
-} from './agent-chat/wrap-ui-for-agent-chat-handoff';
+  resolveWebChatHandoffUiPolicy,
+  wrapUiForWebChatHandoff,
+} from './web-chat/wrap-ui-for-web-chat-handoff';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
-import { connectAgentChatForAgent } from './channels/agent-chat';
+import { connectWebChatForAgent } from './channels/web-chat';
 import { connectEmailForAgent } from './channels/email';
 import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
@@ -176,8 +176,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let aiSdkOutcome: AiSdkConnectOutcome | undefined;
     let langChainOutcome: LangChainConnectOutcome | undefined;
     let customCodeOutcome: CustomCodeConnectOutcome | undefined;
-    let agentChatOutcome: AgentChatConnectOutcome | undefined;
-    let agentChatHandoff: ConnectAgentChatHandoff | undefined;
+    let webChatOutcome: WebChatConnectOutcome | undefined;
+    let webChatHandoff: ConnectWebChatHandoff | undefined;
 
     if (isBridgeConnectMode(connectMode)) {
       const bridgeResult = await createBridgeAgentFlow(session.client, ui, options);
@@ -385,11 +385,11 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             await openDashboardChannelHandoff('teams');
             break;
           }
-          case 'agent-chat': {
-            const result = await connectAgentChatForAgent(session.client, agent, ui, options, session.auth, track);
+          case 'web-chat': {
+            const result = await connectWebChatForAgent(session.client, agent, ui, options, session.auth, track);
             connectedIntegration = result.integration;
-            agentChatHandoff = result.handoff;
-            connectedChannel = 'agent-chat';
+            webChatHandoff = result.handoff;
+            connectedChannel = 'web-chat';
             break;
           }
           default:
@@ -436,12 +436,12 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           })
         : null;
 
-    const agentChatHandoffPolicy = resolveAgentChatHandoffUiPolicy({
+    const webChatHandoffPolicy = resolveWebChatHandoffUiPolicy({
       channel,
-      agentChatHandoff: Boolean(agentChatHandoff),
-      agentChatSetup: options.agentChatSetup,
+      webChatHandoff: Boolean(webChatHandoff),
+      webChatSetup: options.webChatSetup,
     });
-    const setupUi = agentChatHandoffPolicy ? wrapUiForAgentChatHandoff(ui, agentChatHandoffPolicy) : ui;
+    const setupUi = webChatHandoffPolicy ? wrapUiForWebChatHandoff(ui, webChatHandoffPolicy) : ui;
 
     if (connectMode === 'chat-sdk') {
       chatSdkOutcome = await runChatSdkProjectSetup({
@@ -473,19 +473,19 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       });
     }
 
-    if (channel === 'agent-chat' && agentChatHandoff) {
+    if (channel === 'web-chat' && webChatHandoff) {
       const bridgeProject = resolveBridgeProject({
         chatSdkOutcome,
         aiSdkOutcome,
         langChainOutcome,
         customCodeOutcome,
       });
-      agentChatOutcome = await runAgentChatProjectSetup({
+      webChatOutcome = await runWebChatProjectSetup({
         options,
         ui,
         auth: session.auth,
         agent,
-        handoff: agentChatHandoff,
+        handoff: webChatHandoff,
         connectMode,
         bridgeOutcome: bridgeProject,
         bridgeProjectDir: bridgeProject?.projectDir,
@@ -507,8 +507,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       aiSdkOutcome,
       langChainOutcome,
       customCodeOutcome,
-      agentChatOutcome,
-      agentChatHandoff,
+      webChatOutcome,
+      webChatHandoff,
     });
 
     track(CONNECT_EVENTS.COMPLETED, {
@@ -530,8 +530,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       chatSdkOutcome,
       aiSdkOutcome,
       langChainOutcome,
-      agentChatHandoff,
-      agentChatProjectDir: agentChatOutcome?.projectDir,
+      webChatHandoff,
+      webChatProjectDir: webChatOutcome?.projectDir,
       ci: options.ci,
     });
 

@@ -1,10 +1,9 @@
 const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   whatsapp: 'whatsapp-business',
   'novu-email-agent': 'email',
-  // Conversation activity stores the platform id (`agent_chat`), not the provider id.
-  agent_chat: 'novu-agent-chat',
-  // Pre-rename provider id still present on local/dev integrations.
-  'novu-web-chat': 'novu-agent-chat',
+  // Conversation activity stores the platform id (`web_chat`), not the provider id.
+  web_chat: 'novu-web-chat',
+  'novu-web-chat': 'novu-web-chat',
   'novu-anthropic': 'novu',
   email: 'novu-email',
   teams: 'msteams',
@@ -17,7 +16,7 @@ const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   'tool-webhook': 'webhook',
   'generic-sms': 'webhook',
   'photon-imessage': 'photon',
-  // AgentPlatformEnum value stored on conversation activity, like 'agent_chat' above.
+  // AgentPlatformEnum value stored on conversation activity, like `web_chat` above.
   photon_imessage: 'photon',
 };
 

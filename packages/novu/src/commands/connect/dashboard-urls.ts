@@ -86,8 +86,8 @@ export function channelDisplayName(channel: ChannelChoice): string {
       return 'Email';
     case 'sendblue':
       return 'iMessage (Sendblue)';
-    case 'agent-chat':
-      return 'Agent Chat';
+    case 'web-chat':
+      return 'Web Chat';
     default:
       return channel;
   }

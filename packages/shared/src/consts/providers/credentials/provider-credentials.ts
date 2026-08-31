@@ -1065,8 +1065,8 @@ export const novuInAppConfig: IConfigCredential[] = [
   },
 ];
 
-/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for agent chat. */
-export const novuAgentChatConfig: IConfigCredential[] = novuInAppConfig;
+/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for Web Chat. */
+export const novuWebChatConfig: IConfigCredential[] = novuInAppConfig;
 
 export const sendchampConfig: IConfigCredential[] = [
   {

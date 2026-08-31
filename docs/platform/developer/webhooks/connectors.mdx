@@ -1,9 +1,9 @@
 ---
 title: 'Webhook connectors'
-description: "Send Novu webhook events directly to data warehouses, analytics databases, and AWS messaging services using webhook connectors for downstream processing."
+description: "Send Novu webhook events directly to data warehouses, object storage, messaging services, Segment, and OpenTelemetry collectors."
 ---
 
-In addition to standard HTTP webhook endpoints, Novu supports webhook connectors that deliver events directly to third-party services. Use them to route Novu events to data warehouses, analytics databases, and AWS messaging services without building a custom receiver.
+In addition to standard HTTP webhook endpoints, Novu supports webhook connectors that deliver events directly to third-party services. Use them to route Novu events to data warehouses, object storage, messaging queues, analytics tools, and observability collectors without building a custom receiver.
 
 Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). Connector endpoints use Svix [transformations](https://docs.svix.com/transformations) to shape each event before it is written to your destination.
 
@@ -40,11 +40,19 @@ Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). 
   </Step>
 
   <Step title="Define table schema and transformation (data warehouses)">
-    For **data warehouse connectors** (ClickHouse, Snowflake, Redshift): define the **table schema** and write a **transformation** that maps Novu webhook payloads to rows matching that schema. See [Data warehouse connectors](#data-warehouse-connectors).
+    For **data warehouse connectors** (ClickHouse, Snowflake, Redshift, BigQuery, Postgres): define the **table schema** and write a **transformation** that maps Novu webhook payloads to rows matching that schema. See [Data warehouse connectors](#data-warehouse-connectors).
+  </Step>
+
+  <Step title="Customize transformation (object storage)">
+    For **object storage connectors** (Amazon S3, Azure Blob Storage, Google Cloud Storage): review the **transformation** that controls object key and file format. See [Object storage connectors](#object-storage-connectors).
   </Step>
 
   <Step title="Customize transformation (message connectors)">
-    For **message connectors** (Amazon SQS, Amazon SNS): review and customize the **transformation** that shapes the message body sent to the queue or topic. See [Message connectors](#message-connectors).
+    For **message connectors** (Amazon SQS, Amazon SNS, Amazon EventBridge, RabbitMQ, Google Cloud PubSub): review and customize the **transformation** that shapes the message body. See [Message connectors](#message-connectors).
+  </Step>
+
+  <Step title="Configure Segment, OpenTelemetry, polling, or FIFO">
+    For **Segment**, **OpenTelemetry Collector**, **Polling Endpoint**, or **FIFO Endpoint**, follow the connector-specific sections below.
   </Step>
 
   <Step title="Select event types">
@@ -56,7 +64,7 @@ Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). 
   </Step>
 
   <Step title="Test delivery">
-    Open the endpoint, go to the **Testing** tab, and **Send Example** for each subscribed event type. Confirm delivery succeeds in **Logs**, then verify the row or message appears in your destination.
+    Open the endpoint, go to the **Testing** tab, and **Send Example** for each subscribed event type. Confirm delivery succeeds in **Logs**, then verify the row, object, or message appears in your destination.
   </Step>
 </Steps>
 
@@ -64,17 +72,27 @@ After the endpoint is created, Novu delivers matching events to your configured 
 
 ## Available connectors
 
-Novu supports the following webhook connectors:
+Novu supports the following webhook connectors. The list matches the **Add Endpoint** integrations grid in the dashboard:
 
 | Connector | Type | Description |
 | --- | --- | --- |
-| [ClickHouse](#clickhouse) | Data warehouse | Store events in a ClickHouse table. |
-| [Snowflake](#snowflake) | Data warehouse | Store events in a Snowflake table. |
-| [Amazon Redshift](#amazon-redshift) | Data warehouse | Store events in an Amazon Redshift table. |
+| [Polling Endpoint](#polling-endpoint) | HTTP | Receive events by polling an endpoint. |
+| [FIFO Endpoint](#fifo-endpoint) | HTTP | Receive events over HTTP in FIFO order. |
+| [Amazon S3](#amazon-s3) | Object storage | Store events in an Amazon S3 bucket. |
+| [Azure Blob Storage](#azure-blob-storage) | Object storage | Store events in an Azure Blob Storage container. |
+| [Google Cloud Storage](#google-cloud-storage) | Object storage | Store events in a Google Cloud Storage bucket. |
+| [Google Cloud PubSub](#google-cloud-pubsub) | Message | Send events to a Google Cloud Pub/Sub topic. |
+| [OpenTelemetry Collector](#opentelemetry-collector) | Observability | Stream events to an OpenTelemetry Collector. |
 | [Amazon SQS](#amazon-sqs) | Message | Send events to an Amazon SQS queue. |
 | [Amazon SNS](#amazon-sns) | Message | Send events to an Amazon SNS topic. |
-
-Additional warehouse connectors (such as BigQuery) may appear in the dashboard. They follow the same **table schema + transformation** pattern described below.
+| [Amazon EventBridge](#amazon-eventbridge) | Message | Send events to an AWS EventBridge event bus. |
+| [Postgres](#postgres) | Data warehouse | Insert events as rows into a Postgres table. |
+| [Google BigQuery](#google-bigquery) | Data warehouse | Store events in a Google Cloud BigQuery table. |
+| [ClickHouse](#clickhouse) | Data warehouse | Store events in a ClickHouse table. |
+| [Snowflake](#snowflake) | Data warehouse | Store events in a Snowflake table. |
+| [RabbitMQ](#rabbitmq) | Message | Send events to a RabbitMQ exchange. |
+| [Amazon Redshift](#amazon-redshift) | Data warehouse | Store events in an Amazon Redshift table. |
+| [Segment](#segment) | Analytics | Send events to Segment. |
 
 ## Transformations
 
@@ -102,7 +120,7 @@ The handler must return the `webhook` object after modifying `webhook.payload` (
 
 ## Data warehouse connectors
 
-Data warehouse connectors (ClickHouse, Snowflake, Redshift, and similar) insert one row per delivered webhook. Credentials and table location alone are not enough - you must also configure:
+Data warehouse connectors (ClickHouse, Snowflake, Redshift, BigQuery, Postgres) insert one row per delivered webhook. Credentials and table location alone are not enough - you must also configure:
 
 1. **Table schema** - Column names and types that match your destination table.
 2. **Transformation** - JavaScript that maps each webhook `eventType` and `payload` into a row compatible with that schema.
@@ -158,6 +176,7 @@ function handler(webhook) {
       break;
     // Add a case for each subscribed event type
   }
+
   return webhook;
 }
 ```
@@ -166,7 +185,7 @@ If deliveries succeed in Novu but no rows appear in your warehouse, the transfor
 
 ## Message connectors
 
-Message connectors (Amazon SQS and Amazon SNS) publish each webhook as a queue message or topic notification. Use the transformation to shape the JSON body your consumers receive.
+Message connectors (Amazon SQS, Amazon SNS, Amazon EventBridge, RabbitMQ, Google Cloud PubSub) publish each webhook as a queue message, topic notification, or bus event. Use the transformation to shape the JSON body your consumers receive.
 
 The default template typically forwards the webhook payload. Customize it if downstream workers expect a specific structure (for example, flattening nested fields or adding metadata).
 
@@ -175,13 +194,47 @@ function handler(webhook) {
   webhook.payload = {
     eventType: webhook.eventType,
     data: webhook.payload,
-    receivedAt: new Date().toISOString(),
   };
+
   return webhook;
 }
 ```
 
-After creating the endpoint, send a test event and confirm the message appears in your SQS queue or SNS topic subscription.
+After creating the endpoint, send a test event and confirm the message appears in your SQS queue, SNS topic, EventBridge bus, RabbitMQ exchange, or Pub/Sub topic.
+
+## Object storage connectors
+
+Object storage connectors (Amazon S3, Azure Blob Storage, Google Cloud Storage) write webhook batches as objects in your bucket or container. Use the transformation to control:
+
+- **Object key** - the file name prefix. A timestamp is suffixed so each batch is unique.
+- **Format** - `jsonl` (default), `json`, or `raw` (exact file contents as a string).
+
+```js
+function handler(webhook) {
+  webhook.payload = {
+    config: {
+      format: "jsonl",
+      key: "novu-events",
+    },
+    data: [
+      {
+        eventType: webhook.eventType,
+        payload: webhook.payload,
+      },
+    ],
+  };
+
+  return webhook;
+}
+```
+
+Start from the dashboard template for your storage provider. After creating the endpoint, send a test event and confirm a new object appears in the bucket or container.
+
+## Analytics connectors
+
+The [Segment](#segment) connector forwards Novu webhook events to Segment. Provide a Segment **Write Key** in the dashboard, then map each subscribed [event type](/platform/developer/webhooks/event-types) to a Segment Track (or Identify) payload in the transformation.
+
+This is outbound delivery from Novu to Segment. To send Segment events *into* Novu as workflow triggers, see the [Segment destination function guide](/guides/analytics/segment).
 
 ## ClickHouse
 
@@ -389,6 +442,398 @@ The Amazon SNS connector publishes Novu webhook events to an Amazon SNS topic. U
     Select event types, create the endpoint, and verify messages with **Send Example**.
   </Step>
 </Steps>
+
+## Google BigQuery
+
+The Google BigQuery connector stores Novu webhook events in a BigQuery table. Use it when you want notification data available in BigQuery for analytics without a custom ingestion pipeline.
+
+Without a custom transformation, each webhook is inserted using two columns: `id` and `payload`. Create the table before enabling the endpoint. If you define a table schema and transformation in Novu, the object keys in the transformed row must match your column names.
+
+```sql
+CREATE TABLE `my-gcp-project.my_dataset.events` (
+  id STRING,
+  payload STRING
+);
+```
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Project ID | Yes | The GCP project that owns the dataset. |
+| Dataset ID | Yes | The BigQuery dataset that contains the table. |
+| Table ID | Yes | The table that receives the rows. |
+| Credentials | Yes | Google Cloud service account credentials JSON, provided as a string. The service account needs permission to insert rows into the table. |
+| Table schema | Yes | Column definitions that match your BigQuery table. |
+| Transformation | Yes | JavaScript that maps webhook payloads to rows matching the table schema. |
+
+### Setup
+
+<Steps>
+  <Step title="Create a BigQuery dataset and table">
+    Create the table before enabling the endpoint. The default mapping uses `id` and `payload` columns.
+  </Step>
+
+  <Step title="Create a service account">
+    Grant insert permission on the table and download the JSON key.
+  </Step>
+
+  <Step title="Select BigQuery in Novu">
+    In the Novu dashboard, select **BigQuery** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter credentials, define the table schema, and review the transformation.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify rows with **Send Example**.
+  </Step>
+</Steps>
+
+## Postgres
+
+The Postgres connector inserts Novu webhook events as rows in a Postgres table. Use it when you want a durable operational store of notification events in your own database.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Connection settings | Yes | Host, port, database, username, and password shown in the dashboard form. |
+| Table name | Yes | The table where events are stored. |
+| Table schema | Yes | Column definitions that match your Postgres table. |
+| Transformation | Yes | JavaScript that maps webhook payloads to rows matching the table schema. |
+
+### Setup
+
+<Steps>
+  <Step title="Create a Postgres table">
+    Define columns for the webhook event fields you want to store.
+  </Step>
+
+  <Step title="Grant insert permissions">
+    Grant `INSERT` on the table to the user Novu connects with.
+  </Step>
+
+  <Step title="Select Postgres in Novu">
+    In the Novu dashboard, select **Postgres** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter credentials, define the table schema, and review the transformation.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify rows with **Send Example**.
+  </Step>
+</Steps>
+
+## Amazon EventBridge
+
+The Amazon EventBridge connector publishes Novu webhook events to an EventBridge event bus. Each webhook is sent as a separate entry. The event `source` is set by the delivery system; `detail-type` comes from the **Detail type** field; `detail` is the transformed message body.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Event bus name | Yes | The name or ARN of the event bus that receives the events. |
+| Detail type | No | Free-form string (max 128 characters) used as `detail-type`. Defaults to `application/json`. |
+| Region | Yes | The AWS region where the event bus is located. |
+| Access key ID | Yes | The AWS access key ID with permission to put events on the bus. |
+| Secret access key | Yes | The AWS secret access key for the IAM user. |
+| Transformation | Yes | JavaScript that shapes the `detail` body of each EventBridge event. |
+
+### Setup
+
+<Steps>
+  <Step title="Create an EventBridge event bus">
+    Create a bus (or use the default bus) and rules that match the source and detail type.
+  </Step>
+
+  <Step title="Create an IAM user">
+    Grant `events:PutEvents` on the bus.
+  </Step>
+
+  <Step title="Select EventBridge in Novu">
+    In the Novu dashboard, select **EventBridge** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter your connection credentials and review the transformation before saving.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify events with **Send Example**.
+  </Step>
+</Steps>
+
+## RabbitMQ
+
+The RabbitMQ connector publishes Novu webhook events to a RabbitMQ exchange using a routing key. Each webhook is published as a separate message.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| URI | Yes | The AMQP connection URI (for example, `amqp://user:password@rabbitmq.example.com:5672/my-vhost`). |
+| Routing key | Yes | The routing key each message is published with. |
+| Transformation | Yes | JavaScript that shapes the message body published to RabbitMQ. |
+
+### Setup
+
+<Steps>
+  <Step title="Create an exchange and bindings">
+    Bind a queue to the routing key you will use.
+  </Step>
+
+  <Step title="Select RabbitMQ in Novu">
+    In the Novu dashboard, select **RabbitMQ** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter the AMQP URI and routing key, then review the transformation.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify messages with **Send Example**.
+  </Step>
+</Steps>
+
+## Amazon S3
+
+The Amazon S3 connector stores Novu webhook batches as objects in an S3 bucket.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Bucket | Yes | The name of the S3 bucket. |
+| Region | Yes | The AWS region where the bucket is located. |
+| Access key ID | Yes | The AWS access key ID with permission to put objects in the bucket. |
+| Secret access key | Yes | The AWS secret access key for the IAM user. |
+| Transformation | Yes | JavaScript that sets the object key, format (`jsonl`, `json`, or `raw`), and contents. |
+
+### Setup
+
+<Steps>
+  <Step title="Create an S3 bucket">
+    Use this bucket as the destination for Novu webhook event objects.
+  </Step>
+
+  <Step title="Create an IAM user">
+    Grant `s3:PutObject` on the bucket.
+  </Step>
+
+  <Step title="Select Amazon S3 in Novu">
+    In the Novu dashboard, select **Amazon S3** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter your connection credentials and review the transformation before saving.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify objects with **Send Example**.
+  </Step>
+</Steps>
+
+## Azure Blob Storage
+
+The Azure Blob Storage connector stores Novu webhook batches as blobs in a storage container.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Container | Yes | The Azure Blob Storage container name. |
+| Account | Yes | The Azure storage account name. |
+| Access key | Yes | The storage account access key. |
+| Transformation | Yes | JavaScript that sets the blob key, format, and contents. |
+
+### Setup
+
+<Steps>
+  <Step title="Create a storage account and container">
+    Use this container as the destination for Novu webhook event blobs.
+  </Step>
+
+  <Step title="Select Azure Blob Storage in Novu">
+    In the Novu dashboard, select **Azure Blob Storage** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter your connection credentials and review the transformation before saving.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify blobs with **Send Example**.
+  </Step>
+</Steps>
+
+## Google Cloud Storage
+
+The Google Cloud Storage connector stores Novu webhook batches as objects in a GCS bucket.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Bucket | Yes | The GCS bucket name. |
+| Credentials | Yes | Google Cloud service account credentials JSON, provided as a string. The service account needs permission to write objects to the bucket. |
+| Transformation | Yes | JavaScript that sets the object key, format, and contents. |
+
+### Setup
+
+<Steps>
+  <Step title="Create a GCS bucket">
+    Create a service account with object-create permission on the bucket.
+  </Step>
+
+  <Step title="Select Google Cloud Storage in Novu">
+    In the Novu dashboard, select **Google Cloud Storage** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter credentials and review the transformation before saving.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify objects with **Send Example**.
+  </Step>
+</Steps>
+
+## Google Cloud PubSub
+
+The Google Cloud PubSub connector publishes Novu webhook events to a Pub/Sub topic.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Project ID | Yes | The GCP project that owns the topic. |
+| Topic | Yes | The Pub/Sub topic that receives events. |
+| Credentials | Yes | Google Cloud service account credentials JSON, provided as a string. The service account needs permission to publish to the topic. |
+| Transformation | Yes | JavaScript that shapes the message body published to the topic. |
+
+### Setup
+
+<Steps>
+  <Step title="Create a Pub/Sub topic">
+    Create a subscription as well if you want to inspect messages.
+  </Step>
+
+  <Step title="Create a service account">
+    Grant `pubsub.topics.publish` permission.
+  </Step>
+
+  <Step title="Select Google Cloud Pub/Sub in Novu">
+    In the Novu dashboard, select **Google Cloud Pub/Sub** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter credentials and review the transformation before saving.
+  </Step>
+
+  <Step title="Verify with Send Example">
+    Select event types, create the endpoint, and verify messages with **Send Example**.
+  </Step>
+</Steps>
+
+## Segment
+
+The Segment connector sends Novu webhook events to Segment's HTTP API using your **Write Key**. Use the transformation to format each event for [Segment Track](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#track) (or another Segment API you need).
+
+```js
+function handler(webhook) {
+  webhook.url = "https://api.segment.io/v1/track";
+  webhook.payload = {
+    userId: webhook.payload.subscriberId,
+    event: webhook.eventType,
+    properties: webhook.payload,
+  };
+
+  return webhook;
+}
+```
+
+Adjust `userId` and `properties` to match the [event types](/platform/developer/webhooks/event-types) you subscribe to. Workflow events may not include `subscriberId`.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Write key | Yes | The Segment source write key. |
+| Transformation | Yes | JavaScript that maps Novu payloads to Segment API requests. |
+
+### Setup
+
+<Steps>
+  <Step title="Create a Segment source">
+    Copy the source write key.
+  </Step>
+
+  <Step title="Select Segment in Novu">
+    In the Novu dashboard, select **Segment** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter the write key and review the transformation.
+  </Step>
+
+  <Step title="Verify in Segment">
+    Select event types, create the endpoint, and verify events in the Segment debugger.
+  </Step>
+</Steps>
+
+## OpenTelemetry Collector
+
+The OpenTelemetry Collector connector streams Novu webhook events as OpenTelemetry spans to a collector over OTLP. Use it to view notification activity in Datadog, Grafana, and other observability platforms that ingest OTLP traces.
+
+The collector URL is typically your provider's `OTEL_EXPORTER_OTLP_ENDPOINT` with `/v1/traces` appended. You can add custom headers (for example, an API key) the same way as on a standard webhook endpoint.
+
+The dashboard ships a default transformation that maps each webhook to a span. Override `startTime` and `endTime` from payload timestamps when you have them, and set `traceIdKey` if you need multiple events grouped into one trace.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| URL | Yes | The OTLP HTTP traces endpoint (for example, `https://otlp.example.com/v1/traces`). |
+| Headers | No | Custom headers required by your observability vendor. |
+| Transformation | Yes | JavaScript that maps webhooks to OpenTelemetry spans. |
+
+### Setup
+
+<Steps>
+  <Step title="Get the OTLP traces URL">
+    Copy the URL and any required headers from your observability vendor.
+  </Step>
+
+  <Step title="Select OpenTelemetry Collector in Novu">
+    In the Novu dashboard, select **OpenTelemetry Collector** when adding a webhook endpoint.
+  </Step>
+
+  <Step title="Fill in connection settings">
+    Enter the URL, optional headers, and review the transformation.
+  </Step>
+
+  <Step title="Verify spans">
+    Select event types, create the endpoint, and verify spans in your observability platform.
+  </Step>
+</Steps>
+
+## Polling Endpoint
+
+A polling endpoint lets you pull Novu webhook events on a schedule instead of exposing a public HTTP receiver. Use it for local testing, private networks, or batching events at the end of a day.
+
+After you create the endpoint, the dashboard provides a unique polling URL and API key. Poll with a stable **consumer ID** so each worker tracks its own offset. After processing a batch, commit the last message offset so the next poll continues from there.
+
+Polling endpoints can run alongside push-based webhook and connector endpoints.
+
+## FIFO Endpoint
+
+A FIFO endpoint delivers events over HTTP in strict first-in, first-out order. Regular webhook endpoints deliver independently and only guarantee order on a best-effort basis.
+
+Strict ordering limits throughput: each call waits for a successful acknowledgement of the previous batch. FIFO endpoints therefore deliver webhooks in configurable batch sizes. Use a FIFO endpoint when consumers must process events in the order they were produced (for example, sequential status transitions).
 
 ## Monitoring and troubleshooting
 

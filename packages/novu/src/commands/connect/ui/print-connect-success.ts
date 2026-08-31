@@ -5,12 +5,12 @@ import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outc
 import {
   type ConnectSuccessResult,
   describeEmbedSuccessNextStep,
-  resolveAgentChatSuccessPresentation,
-} from './format-agent-chat-success';
+  resolveWebChatSuccessPresentation,
+} from './format-web-chat-success';
 import type { ConnectUI } from './ui';
 
 export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): boolean {
-  if (result.connectedChannel === 'agent-chat') {
+  if (result.connectedChannel === 'web-chat') {
     return false;
   }
 
@@ -27,60 +27,60 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     return;
   }
 
-  const agentChatPresentation = resolveAgentChatSuccessPresentation(result);
-  if (agentChatPresentation?.kind === 'merged-scaffold') {
+  const webChatPresentation = resolveWebChatSuccessPresentation(result);
+  if (webChatPresentation?.kind === 'merged-scaffold') {
     console.log('');
-    console.log(`${chalk.green('✓')} Agent app ready with Agent Chat.`);
+    console.log(`${chalk.green('✓')} Agent app ready with Web Chat.`);
     console.log(
-      `  ${chalk.bold('Agent:')} ${agentChatPresentation.agentName} ${chalk.gray(`(${agentChatPresentation.agentIdentifier})`)}`
+      `  ${chalk.bold('Agent:')} ${webChatPresentation.agentName} ${chalk.gray(`(${webChatPresentation.agentIdentifier})`)}`
     );
-    console.log(`  ${chalk.bold('App:')} ${agentChatPresentation.appName}`);
+    console.log(`  ${chalk.bold('App:')} ${webChatPresentation.appName}`);
     console.log('');
     console.log(`  ${chalk.bold('One Next.js app serves both:')}`);
-    console.log(`    ${chalk.cyan('Agent Chat UI')}  ${chalk.underline(agentChatPresentation.chatUrl)}`);
-    console.log(`    ${chalk.cyan('Agent handler')}  ${agentChatPresentation.handlerRoute}`);
-    if (agentChatPresentation.editAgentHint) {
-      console.log(`  ${chalk.gray(agentChatPresentation.editAgentHint)}`);
+    console.log(`    ${chalk.cyan('Web Chat UI')}  ${chalk.underline(webChatPresentation.chatUrl)}`);
+    console.log(`    ${chalk.cyan('Agent handler')}  ${webChatPresentation.handlerRoute}`);
+    if (webChatPresentation.editAgentHint) {
+      console.log(`  ${chalk.gray(webChatPresentation.editAgentHint)}`);
     }
-    printDevCommandBox(agentChatPresentation.devCommand);
+    printDevCommandBox(webChatPresentation.devCommand);
 
     return;
   }
 
-  if (agentChatPresentation?.kind === 'embed') {
+  if (webChatPresentation?.kind === 'embed') {
     console.log('');
-    console.log(`${chalk.green('✓')} Agent Chat connected`);
-    if (agentChatPresentation.alreadyWired) {
-      if (agentChatPresentation.envSummary) {
-        console.log(`  ${chalk.dim(`Refreshed ${agentChatPresentation.envSummary} with your Novu keys.`)}`);
+    console.log(`${chalk.green('✓')} Web Chat connected`);
+    if (webChatPresentation.alreadyWired) {
+      if (webChatPresentation.envSummary) {
+        console.log(`  ${chalk.dim(`Refreshed ${webChatPresentation.envSummary} with your Novu keys.`)}`);
       }
-      console.log(`  ${chalk.bold('Status:')} This project is already wired for Agent Chat.`);
+      console.log(`  ${chalk.bold('Status:')} This project is already wired for Web Chat.`);
       console.log(`  ${chalk.dim('Run npm run dev:novu to start local dev.')}`);
 
       return;
     }
 
-    if (agentChatPresentation.envSummary) {
-      console.log(`  ${chalk.dim(`Updated ${agentChatPresentation.envSummary} with your Novu keys.`)}`);
+    if (webChatPresentation.envSummary) {
+      console.log(`  ${chalk.dim(`Updated ${webChatPresentation.envSummary} with your Novu keys.`)}`);
     }
     console.log(`  ${chalk.bold('Next:')} Copy the setup prompt below into your coding agent.`);
-    console.log(`  ${chalk.dim(describeEmbedSuccessNextStep(agentChatPresentation.connectMode))}`);
-    if (agentChatPresentation.embedPromptFile) {
-      console.log(`  ${chalk.dim('Prompt file:')} ${agentChatPresentation.embedPromptFile}`);
+    console.log(`  ${chalk.dim(describeEmbedSuccessNextStep(webChatPresentation.connectMode))}`);
+    if (webChatPresentation.embedPromptFile) {
+      console.log(`  ${chalk.dim('Prompt file:')} ${webChatPresentation.embedPromptFile}`);
     }
-    if (agentChatPresentation.embedPrompt) {
+    if (webChatPresentation.embedPrompt) {
       console.log('');
-      console.log(agentChatPresentation.embedPrompt);
+      console.log(webChatPresentation.embedPrompt);
     }
 
     return;
   }
 
-  if (agentChatPresentation?.kind === 'standalone-scaffold') {
+  if (webChatPresentation?.kind === 'standalone-scaffold') {
     console.log('');
-    console.log(`${chalk.green('✓')} Agent Chat app ready.`);
-    console.log(`  ${chalk.bold('Local URL:')} ${chalk.underline(agentChatPresentation.chatUrl)}`);
-    printDevCommandBox(agentChatPresentation.devCommand);
+    console.log(`${chalk.green('✓')} Web Chat app ready.`);
+    console.log(`  ${chalk.bold('Local URL:')} ${chalk.underline(webChatPresentation.chatUrl)}`);
+    printDevCommandBox(webChatPresentation.devCommand);
 
     return;
   }
@@ -98,21 +98,21 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     : null;
 
   console.log('');
-  if (result.connectedChannel === 'agent-chat') {
-    console.log(`${chalk.green('✓')} Agent Chat linked — add it to your app.`);
+  if (result.connectedChannel === 'web-chat') {
+    console.log(`${chalk.green('✓')} Web Chat linked — add it to your app.`);
   } else {
     console.log(`${chalk.green('✓')} Your agent is live.`);
   }
   console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-  if (agentChatPresentation?.kind === 'generic-linked') {
-    if (agentChatPresentation.dashboardUrl) {
-      console.log(`  ${chalk.cyan('→')} Try chat in the dashboard: ${agentChatPresentation.dashboardUrl}`);
+  if (webChatPresentation?.kind === 'generic-linked') {
+    if (webChatPresentation.dashboardUrl) {
+      console.log(`  ${chalk.cyan('→')} Try chat in the dashboard: ${webChatPresentation.dashboardUrl}`);
     }
-    if (agentChatPresentation.embedPromptFile) {
-      console.log(`  ${chalk.cyan('→')} Embed prompt saved to: ${agentChatPresentation.embedPromptFile}`);
+    if (webChatPresentation.embedPromptFile) {
+      console.log(`  ${chalk.cyan('→')} Embed prompt saved to: ${webChatPresentation.embedPromptFile}`);
     }
-    if (agentChatPresentation.projectDir) {
-      console.log(`  ${chalk.cyan('→')} Example app: ${agentChatPresentation.projectDir}`);
+    if (webChatPresentation.projectDir) {
+      console.log(`  ${chalk.cyan('→')} Example app: ${webChatPresentation.projectDir}`);
     }
   } else if (channelLabel) {
     console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
@@ -154,7 +154,7 @@ function resolveChannelLabel(connectedChannel: ConnectSuccessResult['connectedCh
   if (connectedChannel === 'email') return 'Email';
   if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
   if (connectedChannel === 'whatsapp') return 'WhatsApp';
-  if (connectedChannel === 'agent-chat') return 'Agent Chat';
+  if (connectedChannel === 'web-chat') return 'Web Chat';
 
   return null;
 }

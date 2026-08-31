@@ -24,7 +24,8 @@ Do **not** ask Step 0 when the user only wants to connect a **channel** in the c
 
 **Mandatory routing rules:**
 
-- **Agent Chat / web chat named explicitly** → use `--channel agent-chat` and skip the channel picker. Use the custom code bridge only when the user also asks for AI SDK, LangChain, or handler wiring; otherwise use the managed path. On an Agent Chat-only request, do not pass `--runtime` or `--agent-chat-setup`. This rule takes precedence over generic "add an agent to my app" wording.
+- **Flags already in the user prompt** (`--runtime`, `--channel`, `--agent-identifier`) → copy those flags onto the connect command. Do **not** ask Step 0, B1, or B2 for values the prompt already locked. A dashboard-created bridge agent that names `--runtime ai-sdk|langchain|custom-code` is the custom-code path even when Web Chat is also named.
+- **Web Chat named explicitly** → use `--channel web-chat` and skip the channel picker. Use the custom code bridge only when the user also asks for AI SDK, LangChain, or handler wiring, or already passes `--runtime`; otherwise use the managed path. On a Web Chat-only request (no runtime / handler signal), do not pass `--runtime` or `--web-chat-setup`. This rule takes precedence over generic "add an agent to my app" wording.
 - **MS Teams + no dashboard-login signal** → dashboard redirect. Do **not** run `npx novu connect`. Never pass `--channel teams` with `--keyless`.
 - **"Add an agent to my app"** (or equivalent) → **custom code bridge**. Never use the managed path.
 - **"Connect a Novu agent to \<channel\> for this project"** (or similar channel-only wording) → **managed**. **Never** bridge. *"For this project"* means the current workspace directory, not "wire my handler."
@@ -102,7 +103,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 | **Scaffold** | Bridge empty-dir path: CLI creates a Next.js AI SDK or LangChain app in `--ci` (auto-confirm). Optional `--llm-auth` wires a model provider; default is demo echo. |
 | **Reconcile** | Bridge existing-project path: CLI installs packages / env / `dev:novu` and prints requirements; you Write remaining handler code. |
 | **Requirements file** | Bridge path only: CLI prints `NOVU_CONNECT_AI_SDK_REQUIREMENTS_FILE=` or `NOVU_CONNECT_LANGCHAIN_REQUIREMENTS_FILE=` with a checklist and wiring prompt. |
-| **Agent Chat** | In-app web chat channel selected with `--channel agent-chat`. The CLI links it, then embeds the UI or scaffolds an app. |
+| **Web Chat** | In-app web chat channel selected with `--channel web-chat`. The CLI links it, then embeds the UI or scaffolds an app. |
 
 ---
 
@@ -110,7 +111,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 ### Managed agent
 
-1. **Channel** — use Agent Chat when Step 0 selected it; otherwise ask the user to choose from the existing channel picker. Keyless + MS Teams → dashboard redirect only (Steps M2–M5 skipped). Slack, Email, Telegram, iMessage (Sendblue), WhatsApp, and Agent Chat are CLI-handled in keyless. Dashboard OAuth supports all channels.
+1. **Channel** — use Web Chat when Step 0 selected it; otherwise ask the user to choose from the existing channel picker. Keyless + MS Teams → dashboard redirect only (Steps M2–M5 skipped). Slack, Email, Telegram, iMessage (Sendblue), WhatsApp, and Web Chat are CLI-handled in keyless. Dashboard OAuth supports all channels.
 2. **Purpose** — infer a 1–2 sentence agent description **for the product's end users** from the project; confirm with the user.
 3. **Run** — connect command from [Step M3](#step-m3--run-connect-managed) (`--ci`, plus `--keyless` for the default keyless mode), streamed.
 4. **Handoff** — follow the selected channel's handoff. Let the CLI poll when that channel requires it.
@@ -135,7 +136,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 **Goal:** lock the channel and gather only what that channel needs.
 
-If Step 0 selected Agent Chat, use `--channel agent-chat` and skip this picker.
+If Step 0 selected Web Chat, use `--channel web-chat` and skip this picker.
 
 **Otherwise always ask the user to choose.** Call `AskQuestion` (Cursor) or `AskUserQuestion` (Claude Code) with these **four** options exactly — the picker has a **hard max of 4 options**, which is why Telegram and iMessage share one option, WhatsApp and MS Teams share one option, and **`skip` is not an option**. In the question's prompt text, add one short sentence that they can skip channel setup (agent only, connect later) by saying so:
 
@@ -251,7 +252,7 @@ export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --keyless \
-  --channel <slack|email|telegram|sendblue|whatsapp|agent-chat|skip>
+  --channel <slack|email|telegram|sendblue|whatsapp|web-chat|skip>
 ```
 
 **Dashboard OAuth (dashboard signal — omit `--keyless`):**
@@ -261,10 +262,10 @@ export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 
 npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
-  --channel <slack|email|telegram|sendblue|whatsapp|teams|agent-chat|skip>
+  --channel <slack|email|telegram|sendblue|whatsapp|teams|web-chat|skip>
 ```
 
-Never pass `--channel teams` with `--keyless` — MS Teams requires dashboard OAuth (omit `--keyless`). WhatsApp and Agent Chat work in both modes.
+Never pass `--channel teams` with `--keyless` — MS Teams requires dashboard OAuth (omit `--keyless`). WhatsApp and Web Chat work in both modes.
 
 **Canonical example (keyless, slack):**
 
@@ -307,7 +308,7 @@ Then follow the path that matches your flags:
 - **If channel is `sendblue` (iMessage):** the credential flags were passed in Step 3, so the CLI goes straight to sending a test iMessage. **Await** `NOVU_CONNECT_SENDBLUE_IMESSAGE_URL=` and `NOVU_CONNECT_SENDBLUE_FROM_NUMBER=` on that shell id (and the optional `NOVU_CONNECT_SENDBLUE_WEBHOOK_CALLBACK_URL=` fallback — see Step 4), then **Await** until `✓ Your agent is live` or `✗`.
 - **If channel is `whatsapp` (either mode):** **Await** `NOVU_CONNECT_WHATSAPP_SIGNUP_URL=` on that shell id, deliver the signup URL, then **Await** the wa.me test-message lines and success on the same shell id. The signup poll runs up to ~15 min (longer than other channels — Meta's flow takes a while). With dashboard OAuth, first **Await** the auth URL as above.
 - **If channel is `teams` (dashboard OAuth only):** **Await** auth URL, then dashboard agent URL or success on the same shell id.
-- **If channel is `agent-chat`:** follow its entry in [Channel-specific handoffs](#channel-specific-handoffs).
+- **If channel is `web-chat`:** follow its entry in [Channel-specific handoffs](#channel-specific-handoffs).
 - **If channel is `skip` in keyless mode:** foreground Shell is allowed — the only exception to the background rule above.
 
 Conditional flags:
@@ -371,10 +372,13 @@ Same channel picker and rules as [Step M1](#step-m1--choose-channel-and-collect-
 - **Never pass `--keyless`** on the bridge path.
 - **Do not** infer or confirm a managed-agent description (skip [Step M2](#step-m2--infer-the-agents-purpose-then-confirm) entirely).
 - **Runtime** is chosen in Step B2, not here.
+- If the user prompt already includes `--channel <value>`, use that value and skip this picker.
 
 ## Step B2 — Pick bridge runtime
 
 **Goal:** lock `--runtime ai-sdk` or `--runtime langchain` before running connect.
+
+If the user prompt already includes `--runtime ai-sdk`, `--runtime langchain`, or `--runtime custom-code`, use that value and skip this step.
 
 Use the **Read** tool on `package.json` and inspect `dependencies` / `devDependencies` in the file content. **Never** use Bash (`grep`, `cat`, `jq`, or shell pipelines) to read package.json.
 
@@ -404,7 +408,8 @@ If you must ask, call `AskQuestion` / `AskUserQuestion`:
 npx novu@latest connect \
   --ci \
   --runtime <ai-sdk|langchain> \
-  --channel <slack|email|telegram|whatsapp|teams|agent-chat|skip>
+  --channel <slack|email|telegram|whatsapp|teams|web-chat|skip> \
+  --agent-identifier <id>   # when the dashboard already created the agent
 ```
 
 **Canonical example (dashboard OAuth, AI SDK, slack, existing project):**
@@ -441,7 +446,7 @@ or
 NOVU_CONNECT_LANGCHAIN_REQUIREMENTS_FILE=<absolute path>
 ```
 
-**Await** the selected channel's success line or `✗` on that shell id. Most channels print `✓ Your agent is live.` Agent Chat prints an outcome-specific success line; follow its entry in [Channel-specific handoffs](#channel-specific-handoffs). On an Agent Chat bridge, complete both the bridge requirements file and the Agent Chat setup action.
+**Await** the selected channel's success line or `✗` on that shell id. Most channels print `✓ Your agent is live.` Web Chat prints an outcome-specific success line; follow its entry in [Channel-specific handoffs](#channel-specific-handoffs). On a Web Chat bridge, complete both the bridge requirements file and the Web Chat setup action.
 
 The CLI may auto-install packages, write `.env.local`, add a `dev:novu` script, and (on empty dirs) scaffold the app. Unchecked items in the requirements file still need your help.
 
@@ -616,23 +621,23 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
 
 - **teams (dashboard OAuth only)** — CLI prints a dashboard agent URL; paste it and tell the user to finish channel setup there.
 
-- **agent-chat** — there is no inbound CLI poll. Omit `--agent-chat-setup` unless the user explicitly asks for `scaffold`, `embed`, or `skip`. After Dashboard OAuth, when required, **Await** and deliver:
+- **web-chat** — there is no inbound CLI poll. Omit `--web-chat-setup` unless the user explicitly asks for `scaffold`, `embed`, or `skip`. After Dashboard OAuth, when required, **Await** and deliver:
 
   ```text
-  NOVU_CONNECT_AGENT_CHAT_DASHBOARD_URL=<url>
+  NOVU_CONNECT_WEB_CHAT_DASHBOARD_URL=<url>
   ```
 
   Then follow the matching setup outcome:
 
   | Setup outcome | CLI output | Required action |
   |---|---|---|
-  | Existing project needs the chat UI | `NOVU_CONNECT_AGENT_CHAT_EMBED_PROMPT_FILE=<absolute path>` then `✓ Agent Chat connected` | **Read** the prompt file and follow it. Do not paste the file path. |
-  | Existing project is already wired | `✓ Agent Chat connected` without an embed prompt file | No UI changes. Run the printed `npm run dev:novu` command. |
-  | Empty managed workspace | `✓ Agent Chat app ready.` | Use the printed project directory and `npm run dev`. |
-  | Empty bridge workspace | `✓ Agent app ready with Agent Chat.` | Complete the bridge requirements file. Run the printed `npm run dev:novu` command. |
-  | Explicit `--agent-chat-setup skip` | `✓ Agent Chat linked — add it to your app.` | Report the dashboard Chat URL. Do not claim that local UI wiring is complete. |
+  | Existing project needs the chat UI | `NOVU_CONNECT_WEB_CHAT_EMBED_PROMPT_FILE=<absolute path>` then `✓ Web Chat connected` | **Read** the prompt file and follow it. Do not paste the file path. |
+  | Existing project is already wired | `✓ Web Chat connected` without an embed prompt file | No UI changes. Run the printed `npm run dev:novu` command. |
+  | Empty managed workspace | `✓ Web Chat app ready.` | Use the printed project directory and `npm run dev`. |
+  | Empty bridge workspace | `✓ Agent app ready with Web Chat.` | Complete the bridge requirements file. Run the printed `npm run dev:novu` command. |
+  | Explicit `--web-chat-setup skip` | `✓ Web Chat linked — add it to your app.` | Report the dashboard Chat URL. Do not claim that local UI wiring is complete. |
 
-  On a bridge path, always complete the bridge requirements file. The Agent Chat setup action does not replace handler wiring. The first line of the final user-facing message must be the exact outcome-specific `✓` line printed by the CLI. Do not list files, install steps, or process narration before that line. A keyless Agent Chat run does not print a claim link, so do not promise one.
+  On a bridge path, always complete the bridge requirements file. The Web Chat setup action does not replace handler wiring. The first line of the final user-facing message must be the exact outcome-specific `✓` line printed by the CLI. Do not list files, install steps, or process narration before that line. A keyless Web Chat run does not print a claim link, so do not promise one.
 
 - **skip** — nothing to hand off; the agent is created without a channel.
 
@@ -654,7 +659,7 @@ On success, the CLI exits `0`. Open the final report with the literal success li
   Claim your agent: <claim url>         # keyless only
 ```
 
-Agent Chat prints the outcome-specific success line listed in [Channel-specific handoffs](#channel-specific-handoffs).
+Web Chat prints the outcome-specific success line listed in [Channel-specific handoffs](#channel-specific-handoffs).
 
 Copy the success line verbatim rather than paraphrasing it. On failure, lead with the CLI error. After the result, give a 1–2 sentence recap of what onboarding set up. Before the channel or next-step pointer, briefly explain what the connect run built so the result is not a black box. Keep it to one or two sentences, in plain language, e.g.:
 
@@ -704,8 +709,8 @@ Run `novu@latest connect --help` for the full contract. Keep help text in sync w
 | `--openai-api-key` / `--anthropic-api-key` | API keys for `--llm-auth openai` / `anthropic` on empty-dir scaffold. |
 | `--keyless` | Temporary demo agent — **managed path only** (default for anonymous managed runs). **Never** on bridge path. |
 | `--region <us\|eu>` | Target Novu Cloud region (default: `us`). |
-| `--channel <slack\|email\|telegram\|sendblue\|whatsapp\|teams\|agent-chat\|skip>` | Channel to connect. `sendblue` is iMessage. `whatsapp` and `agent-chat` work in both modes (keyless included); `teams` requires Dashboard OAuth. |
-| `--agent-chat-setup <scaffold\|embed\|skip>` | Agent Chat setup override for `--channel agent-chat --ci`. Omit it to scaffold in an empty workspace or embed in an existing project. |
+| `--channel <slack\|email\|telegram\|sendblue\|whatsapp\|teams\|web-chat\|skip>` | Channel to connect. `sendblue` is iMessage. `whatsapp` and `web-chat` work in both modes (keyless included); `teams` requires Dashboard OAuth. |
+| `--web-chat-setup <scaffold\|embed\|skip>` | Web Chat setup override for `--channel web-chat --ci`. Omit it to scaffold in an empty workspace or embed in an existing project. |
 | `--slack-config-token` / `--telegram-bot-token` | Non-secure CI escape hatches when user opts in. |
 | `--sendblue-api-key` / `--sendblue-secret-key` | Sendblue API credentials. **Required** for `--channel sendblue` in `--ci` (no secure page). |
 | `--sendblue-from <+E.164>` | The agent's Sendblue-assigned sender number. Required for `--channel sendblue` in `--ci`. |

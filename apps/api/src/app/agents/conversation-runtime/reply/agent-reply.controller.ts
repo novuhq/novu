@@ -14,6 +14,7 @@ import {
   DeleteMessagePayloadDto,
   EditPayloadDto,
   FileRefDto,
+  HumanSignalDto,
   MarkdownReplyContentDto,
   MetadataClearSignalDto,
   MetadataDeleteSignalDto,
@@ -44,6 +45,7 @@ import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecas
   MetadataDeleteSignalDto,
   MetadataClearSignalDto,
   TriggerSignalDto,
+  HumanSignalDto,
   DeleteMessagePayloadDto,
   TypingStatusDto,
   SentMessageInfoDto

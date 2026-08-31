@@ -1,6 +1,6 @@
 ---
 title: "Emit custom events"
-description: "Send a named payload from a custom code agent handler with ctx.emit. Agent Chat renders it as a data part."
+description: "Send a named payload from a custom code agent handler with ctx.emit. Web Chat renders it as a data part."
 sidebarTitle: Emit
 ---
 
@@ -14,7 +14,7 @@ The call posts at once. It does not wait for `ctx.reply()`. If the bridge has no
 
 | Channel | What the subscriber sees |
 | --- | --- |
-| [Agent Chat](/agents/channels/agent-chat) | A `data` part on the in-flight assistant message |
+| [Web Chat](/agents/channels/web-chat) | A `data` part on the in-flight assistant message |
 | Slack, Teams, WhatsApp, Telegram, Email | Nothing in the thread. Novu stores the event on the conversation. |
 
 ## Send an event
@@ -34,13 +34,13 @@ onMessage: async (message, ctx) => {
 
 You can call `ctx.emit` more than once in one turn. Each call is a separate event.
 
-## Agent Chat
+## Web Chat
 
-Agent Chat adds each event to the assistant message as `part.type === 'data'`. The fields are `name` and `data`.
+Web Chat adds each event to the assistant message as `part.type === 'data'`. The fields are `name` and `data`.
 
 Render the parts you support. Skip the rest. The part stays on the message.
 
-Client walk: [Custom data parts](/agents/channels/agent-chat/chat-ui#custom-data-parts).
+Client walk: [Custom data parts](/agents/channels/web-chat/chat-ui#custom-data-parts).
 
 ## Related
 
@@ -51,7 +51,7 @@ Client walk: [Custom data parts](/agents/channels/agent-chat/chat-ui#custom-data
   <Card icon="signal" href="/agents/custom-code-agent/building-blocks/signals" title="Signals">
     Metadata, workflow triggers, and conversation resolution.
   </Card>
-  <Card icon="list" href="/agents/channels/agent-chat/chat-ui#custom-data-parts" title="Agent Chat data parts">
+  <Card icon="list" href="/agents/channels/web-chat/chat-ui#custom-data-parts" title="Web Chat data parts">
     Render `part.type === 'data'` in your product UI.
   </Card>
 </Columns>

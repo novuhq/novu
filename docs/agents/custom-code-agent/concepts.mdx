@@ -95,7 +95,7 @@ That object is the only interface your code needs. You do not integrate Slack, T
 
 Replies talk to the user; signals update the system around the conversation. One handler turn can reply, set metadata, trigger a workflow, and resolve.
 
-[`ctx.emit`](/agents/custom-code-agent/building-blocks/emit) sends a named payload on the turn. It is not a reply and not a signal. Agent Chat renders it as a `data` part.
+[`ctx.emit`](/agents/custom-code-agent/building-blocks/emit) sends a named payload on the turn. It is not a reply and not a signal. Web Chat renders it as a `data` part.
 
 Signals queue in memory and batch with your next `ctx.reply()` in one request. If the handler exits without calling `ctx.reply()`, pending signals still send.
 

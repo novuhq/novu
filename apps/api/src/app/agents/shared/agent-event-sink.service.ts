@@ -4,7 +4,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, type ConversationChannel, ConversationRepository } from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
-import { AgentChatLiveActivityPublisher } from '../agent-chat/agent-chat-live-activity.publisher';
+import { WebChatLiveActivityPublisher } from '../web-chat/web-chat-live-activity.publisher';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
@@ -53,7 +53,7 @@ export interface AgentEventContext {
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
-  /** Conversation channel for durable activity persist (agent-chat lifecycle, tool ledger, etc.). */
+  /** Conversation channel for durable activity persist (web-chat lifecycle, tool ledger, etc.). */
   channel?: ConversationChannel;
   sessionId?: string;
   suppressReply?: boolean;
@@ -74,7 +74,7 @@ export class AgentEventSink {
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
-    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
+    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -483,7 +483,7 @@ export class AgentEventSink {
       return;
     }
 
-    await this.agentChatLiveActivityPublisher.emitEphemeralEvent({
+    await this.webChatLiveActivityPublisher.emitEphemeralEvent({
       agentIdentifier: context.agentIdentifier,
       environmentId: context.environmentId,
       organizationId: context.organizationId,

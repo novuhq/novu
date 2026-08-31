@@ -4,6 +4,7 @@ import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   EmailWebhookPayload,
+  FeatureFlagsKeysEnum,
   InboundEmailAttachment,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -11,6 +12,7 @@ import {
 import { IFrom, IHeaders, IInboundParseAttachment, ITo } from '../../dtos/inbound-parse-job.dto';
 import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
+import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
@@ -76,6 +78,7 @@ export interface InboundDomainRouteMailInput {
   references?: string | string[];
   date: Date;
   cc?: unknown[];
+  bcc?: ITo[];
   /**
    * Sender-authentication verdicts (`'pass'` / `'failed'`) computed by the
    * inbound-mail service. Forwarded to the agent webhook so the agent runtime
@@ -111,6 +114,7 @@ export interface DomainRouteWebhookPayload {
     references?: string | string[];
     date: Date;
     cc?: unknown[];
+    bcc?: ITo[];
   };
 }
 
@@ -122,6 +126,7 @@ export class InboundDomainRouteDelivery {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly attachmentRehydrator: AttachmentRehydrator,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -156,6 +161,7 @@ export class InboundDomainRouteDelivery {
         references: mail.references,
         date: mail.date,
         cc: mail.cc,
+        bcc: mail.bcc,
       },
     };
   }
@@ -168,13 +174,15 @@ export class InboundDomainRouteDelivery {
     mail: InboundDomainRouteMailInput;
   }): Promise<{ latencyMs: number; skipped: boolean }> {
     const started = Date.now();
-    const rehydratedAttachments = await this.attachmentRehydrator.rehydrate(params.mail.attachments);
-    const payload = this.buildDomainRouteWebhookPayload(
-      params.domain,
-      params.route,
-      params.mail,
-      rehydratedAttachments
-    );
+    const shouldUseSignedUrls = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOK_ATTACHMENT_URLS_ENABLED,
+      organization: { _id: params.organizationId },
+      defaultValue: false,
+    });
+    const attachments = shouldUseSignedUrls
+      ? await this.attachmentRehydrator.createSignedUrls(params.mail.attachments)
+      : await this.attachmentRehydrator.rehydrate(params.mail.attachments);
+    const payload = this.buildDomainRouteWebhookPayload(params.domain, params.route, params.mail, attachments);
     const result = await this.sendWebhookMessage.execute({
       environmentId: params.environmentId,
       organizationId: params.organizationId,

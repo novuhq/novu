@@ -66,7 +66,7 @@ export function trackAgentIntegrationConnected(
     integrationIdentifier: string;
     providerId: string;
     channel?: string;
-    connectionSource: 'existing_integration' | 'novu_email_provisioned' | 'novu_agent_chat_provisioned';
+    connectionSource: 'existing_integration' | 'novu_email_provisioned' | 'novu_web_chat_provisioned';
   }
 ): void {
   analytics.track(`Agent Integration Connected - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
@@ -169,6 +169,7 @@ export function trackAgentReplyProcessed(
     actions: string[];
     triggerSignalCount: number;
     metadataSignalCount: number;
+    humanSignalCount?: number;
     reactionCount: number;
   }
 ): void {
@@ -181,6 +182,7 @@ export function trackAgentReplyProcessed(
     actions: params.actions,
     triggerSignalCount: params.triggerSignalCount,
     metadataSignalCount: params.metadataSignalCount,
+    humanSignalCount: params.humanSignalCount ?? 0,
     reactionCount: params.reactionCount,
   });
 }

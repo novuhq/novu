@@ -471,12 +471,12 @@ export function createLoggingUI(): ConnectUI {
     slackSkipped() {
       console.log(chalk.gray('Slack step skipped (--skip-slack).'));
     },
-    addingAgentChatIntegration() {
-      start('Linking Agent Chat to your agent…');
+    addingWebChatIntegration() {
+      start('Linking Web Chat to your agent…');
     },
-    awaitAgentChatHandoff({ dashboardUrl, embedPrompt, embedPromptFile }) {
+    awaitWebChatHandoff({ dashboardUrl, embedPrompt, embedPromptFile }) {
       stop();
-      console.log(`${chalk.cyan('→')} Try Agent Chat in the dashboard: ${chalk.underline(dashboardUrl)}`);
+      console.log(`${chalk.cyan('→')} Try Web Chat in the dashboard: ${chalk.underline(dashboardUrl)}`);
       if (embedPromptFile) {
         console.log(`${chalk.cyan('→')} Embed prompt saved to: ${chalk.bold(embedPromptFile)}`);
       } else {
@@ -486,11 +486,11 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve();
     },
-    pickAgentChatSetup({ projectKind }) {
+    pickWebChatSetup({ projectKind }) {
       return Promise.resolve(projectKind === 'empty' ? 'scaffold' : 'embed');
     },
-    scaffoldingAgentChat() {
-      start('Scaffolding your Agent Chat example app…');
+    scaffoldingWebChat() {
+      start('Scaffolding your Web Chat example app…');
     },
     sendingWelcome() {
       start('Sending a welcome message from your agent…');

@@ -1,0 +1,91 @@
+---
+title: "Web Chat"
+description: "Connect your agent to in-app Web Chat: a headless React hook, live typing, tool approval, cards, and HMAC."
+sidebarTitle: Overview
+---
+
+<Note>
+  Web Chat is in closed beta. Contact us at support@novu.co to get access.
+</Note>
+
+Web Chat is an ACI channel. The messaging surface is your product UI.
+
+The agent brain, conversation history, tool approval, and dashboard observability match other ACI channels. The React client is [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) from `@novu/react`. You render the message list and the composer. There is no prebuilt `<WebChat />` component.
+
+Web Chat supports live typing, thinking parts, tool approval, MCP connect, cards, custom data parts, and file parts. HMAC is available on the integration.
+
+Full capability matrix: [Channels overview](/agents/channels/overview).
+
+## Setup
+
+1. Create an agent and keep it **active**.
+2. In the Novu dashboard, open the agent and add **Web Chat** as a channel. Novu creates the `novu-web-chat` integration if it does not exist.
+
+Then embed the chat in your app. For React, follow [Quickstart](/agents/channels/web-chat/quickstart). For JavaScript, use [`conversation()`](/platform/sdks/javascript#web-chat).
+
+## Security
+
+HMAC is off by default. Turn HMAC on before you ship. Web Chat can require two hashes. Each hash has its own dashboard toggle.
+
+| Hash | Toggle | Input | Where the client passes it |
+| --- | --- | --- | --- |
+| `subscriberHash` | **Novu In-App** integration | `subscriberId` | `NovuProvider` |
+| `agentHash` | **Web Chat** integration | agent identifier | `useWebChat` |
+
+Both hashes use the same secret: the environment API secret from [API Keys](https://dashboard.novu.co/api-keys). Compute them on your server. Do not compute them in the browser.
+
+If only one toggle is on, pass only that hash. If both toggles are on, pass both hashes.
+
+### subscriberHash
+
+`subscriberHash` authenticates the signed-in subscriber. Without it, another person can guess a `subscriberId` and open that subscriber's session, including Web Chat.
+
+If **Security HMAC encryption** is on for **Novu In-App**, pass `subscriberHash` to `NovuProvider`. The hash is `HMAC-SHA256(secretKey, subscriberId)` as a lowercase hex string.
+
+```tsx
+<NovuProvider
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriber="YOUR_SUBSCRIBER_ID"
+  subscriberHash="YOUR_SUBSCRIBER_HASH"
+>
+  <Chat />
+</NovuProvider>
+```
+
+Generation recipes (Node.js, Python, and more): [Secure your Inbox with HMAC](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption).
+
+### agentHash
+
+`agentHash` authenticates which agent the subscriber can talk to. Without it, a client can send any public agent identifier that is linked to Web Chat.
+
+If **Security HMAC encryption** is on for **Web Chat**:
+
+1. Open [Integrations](https://dashboard.novu.co/integrations).
+2. Select the **Web Chat** integration.
+3. Enable **Security HMAC encryption**.
+4. On your server, compute `HMAC-SHA256(secretKey, agentIdentifier)` as a lowercase hex string.
+5. Pass that value as `agentHash` to `useWebChat`.
+
+```tsx
+useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  agentHash: 'YOUR_AGENT_HASH',
+});
+```
+
+## Related
+
+<Columns cols={2}>
+  <Card href="/agents/channels/web-chat/quickstart" title="Quickstart" icon="rocket">
+    Install `@novu/react` and send the first message.
+  </Card>
+  <Card href="/agents/channels/web-chat/chat-ui" title="Chat UI" icon="list">
+    Parts, retry, resume, cards, approvals, and reconnect.
+  </Card>
+  <Card href="/platform/sdks/react/hooks/use-web-chat" title="useWebChat" icon="code">
+    Hook props, return value, and callbacks.
+  </Card>
+  <Card href="/platform/sdks/javascript#web-chat" title="JavaScript SDK" icon="code">
+    Call `loadWebChat(novu)`, then `novu.webChat.conversation()` in `@novu/js`.
+  </Card>
+</Columns>

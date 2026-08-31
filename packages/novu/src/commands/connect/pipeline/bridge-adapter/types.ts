@@ -38,6 +38,7 @@ export type BridgeAdapterScaffoldInput = {
   agentIdentifier: string;
   silent?: boolean;
   llmAuth: LlmAuthChoice;
+  region?: string;
 };
 
 export type BridgeAdapterRequirementsInput = {

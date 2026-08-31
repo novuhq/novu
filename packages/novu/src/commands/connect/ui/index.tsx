@@ -564,30 +564,30 @@ function createUiController(
     slackSkipped() {
       // No interim screen — the success screen reports skipped state.
     },
-    addingAgentChatIntegration() {
-      store.phase.set({ kind: 'adding-agent-chat' });
+    addingWebChatIntegration() {
+      store.phase.set({ kind: 'adding-web-chat' });
     },
-    awaitAgentChatHandoff({ dashboardUrl, embedPromptFile }) {
+    awaitWebChatHandoff({ dashboardUrl, embedPromptFile }) {
       return new Promise<void>((resolve) => {
         store.phase.set({
-          kind: 'agent-chat-handoff',
+          kind: 'web-chat-handoff',
           dashboardUrl,
           embedPromptFile,
           resolve,
         });
       });
     },
-    pickAgentChatSetup({ projectKind }) {
+    pickWebChatSetup({ projectKind }) {
       return new Promise((resolve) => {
         store.phase.set({
-          kind: 'pick-agent-chat-setup',
+          kind: 'pick-web-chat-setup',
           projectKind,
           resolve,
         });
       });
     },
-    scaffoldingAgentChat() {
-      store.phase.set({ kind: 'scaffolding-agent-chat' });
+    scaffoldingWebChat() {
+      store.phase.set({ kind: 'scaffolding-web-chat' });
     },
     sendingWelcome() {
       store.phase.set({ kind: 'sending-welcome' });
@@ -603,11 +603,11 @@ function createUiController(
         return;
       }
 
-      const embedPrompt = result.agentChatHandoff?.embedPrompt;
-      const alreadyWired = result.agentChatOutcome?.alreadyWired === true;
+      const embedPrompt = result.webChatHandoff?.embedPrompt;
+      const alreadyWired = result.webChatOutcome?.alreadyWired === true;
       const awaitsEmbedDismiss =
-        result.connectedChannel === 'agent-chat' &&
-        result.agentChatOutcome?.mode === 'embed' &&
+        result.connectedChannel === 'web-chat' &&
+        result.webChatOutcome?.mode === 'embed' &&
         (Boolean(embedPrompt) || alreadyWired);
 
       const successPhase = {
@@ -625,11 +625,11 @@ function createUiController(
         aiSdkOutcome: result.aiSdkOutcome,
         langChainOutcome: result.langChainOutcome,
         customCodeOutcome: result.customCodeOutcome,
-        agentChatOutcome: result.agentChatOutcome,
-        agentChatHandoff: result.agentChatHandoff,
+        webChatOutcome: result.webChatOutcome,
+        webChatHandoff: result.webChatHandoff,
         embedPrompt: awaitsEmbedDismiss ? embedPrompt : undefined,
         embedPromptFile: awaitsEmbedDismiss
-          ? (result.agentChatHandoff?.embedPromptFile ?? result.agentChatOutcome?.embedPromptFile)
+          ? (result.webChatHandoff?.embedPromptFile ?? result.webChatOutcome?.embedPromptFile)
           : undefined,
         resolveDismiss: undefined as (() => void | Promise<void>) | undefined,
       };
