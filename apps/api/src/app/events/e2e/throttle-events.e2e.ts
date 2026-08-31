@@ -348,6 +348,75 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     expect(user2Messages?.length).to.equal(1);
   });
 
+  it('should throttle based on a liquid throttleKey, the shape the dashboard persists', async () => {
+    const workflowBody: CreateWorkflowDto = {
+      name: 'Test Liquid Throttle Key Workflow',
+      workflowId: 'test-liquid-throttle-key-workflow',
+      active: true,
+      source: WorkflowCreationSourceEnum.Dashboard,
+      steps: [
+        {
+          type: StepTypeEnum.THROTTLE,
+          name: 'Throttle Step',
+          controlValues: {
+            type: 'fixed',
+            amount: 1,
+            unit: 'minutes',
+            threshold: 1,
+            throttleKey: '{{payload.orderId}}',
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In-App Message',
+          controlValues: {
+            body: 'Hello order {{payload.orderId}}',
+          },
+        },
+      ],
+    };
+
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
+
+    // Three triggers for order-1 and two for order-2, all within the same window
+    await triggerEvent(workflow.workflowId, { orderId: 'order-1' });
+    await triggerEvent(workflow.workflowId, { orderId: 'order-1' });
+    await triggerEvent(workflow.workflowId, { orderId: 'order-1' });
+    await triggerEvent(workflow.workflowId, { orderId: 'order-2' });
+    await triggerEvent(workflow.workflowId, { orderId: 'order-2' });
+
+    await session.waitForJobCompletion(workflow.id);
+
+    const throttleJobs = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: workflow.id,
+      type: StepTypeEnum.THROTTLE,
+    });
+
+    expect(throttleJobs?.length).to.equal(5);
+
+    // Each order gets its own window, so one execution per order passes
+    const completedThrottleJobs = throttleJobs.filter((job) => job.status === JobStatusEnum.COMPLETED);
+    const skippedThrottleJobs = throttleJobs.filter((job) => job.status === JobStatusEnum.SKIPPED);
+
+    expect(completedThrottleJobs?.length).to.equal(2);
+    expect(skippedThrottleJobs?.length).to.equal(3);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.IN_APP,
+    });
+
+    expect(messages?.length).to.equal(2);
+
+    const firstOrderMessages = messages.filter((message) => message.payload.orderId === 'order-1');
+    const secondOrderMessages = messages.filter((message) => message.payload.orderId === 'order-2');
+
+    expect(firstOrderMessages?.length).to.equal(1);
+    expect(secondOrderMessages?.length).to.equal(1);
+  });
+
   it('should throttle with dynamic ISO timestamp', async () => {
     const futureTime = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // 2 minutes in future
 

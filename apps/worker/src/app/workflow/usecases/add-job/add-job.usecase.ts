@@ -23,6 +23,7 @@ import {
   NormalizeVariablesCommand,
   PinoLogger,
   RedisThrottleService,
+  resolveThrottleGrouping,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -893,7 +894,7 @@ export class AddJob {
       throw new Error('Step ID is required for throttle reservation');
     }
 
-    const throttleValue = throttleKey ? getNestedValue(job.payload, throttleKey as string) : 'default';
+    const { throttleKey: groupingKey, throttleValue } = resolveThrottleGrouping(throttleKey, job.payload);
 
     const throttleJobId = `${job._id}:${Date.now()}`;
 
@@ -906,8 +907,8 @@ export class AddJob {
       windowMs,
       limit: threshold as number,
       nowMs,
-      throttleKey: (throttleKey as string) || 'default',
-      throttleValue: throttleValue,
+      throttleKey: groupingKey,
+      throttleValue,
     });
 
     this.logger.debug(
