@@ -45,7 +45,9 @@ describe('Update Environment API key environment scope - PUT /environments/:envi
     const {
       body: { data: environments },
     } = await session.testAgent.get('/v1/environments');
-    const production = environments.find((environment: { name: string }) => environment.name === EnvironmentEnum.PRODUCTION);
+    const production = environments.find(
+      (environment: { name: string }) => environment.name === EnvironmentEnum.PRODUCTION
+    );
 
     expect(production?._id, 'Expected Production environment').to.exist;
     expect(production._id).to.not.equal(session.environment._id);
