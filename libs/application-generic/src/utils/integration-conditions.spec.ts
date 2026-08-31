@@ -27,4 +27,40 @@ describe('integration rules helpers', () => {
 
     expect(valid).to.deep.equal([]);
   });
+
+  it('rejects json-logic operators that skip QueryValidatorService', () => {
+    const logIssues = getIntegrationRulesIssues({
+      log: { var: 'subscriber.email' },
+    });
+    const mapIssues = getIntegrationRulesIssues({
+      map: [[{ var: 'subscriber.data' }], { var: '' }],
+    });
+    const nestedReduceIssues = getIntegrationRulesIssues({
+      and: [
+        {
+          '==': [{ var: 'tenant.identifier' }, { '+': [1, 2] }],
+        },
+      ],
+    });
+
+    expect(logIssues.some((issue) => issue.includes('Unsupported operator "log"'))).to.equal(true);
+    expect(mapIssues.some((issue) => issue.includes('Unsupported operator "map"'))).to.equal(true);
+    expect(nestedReduceIssues.some((issue) => issue.includes('Unsupported operator "+"'))).to.equal(true);
+  });
+
+  it('rejects vars nested under operators QueryValidatorService does not inspect', () => {
+    const issues = getIntegrationRulesIssues({
+      null: [{ var: 'payload.foo' }],
+    });
+
+    expect(issues.length).to.be.greaterThan(0);
+  });
+
+  it('accepts and/or groups of comparison rules', () => {
+    const valid = getIntegrationRulesIssues({
+      and: [{ '==': [{ var: 'tenant.identifier' }, 'acme'] }, { '==': [{ var: 'subscriber.locale' }, 'fr'] }],
+    });
+
+    expect(valid).to.deep.equal([]);
+  });
 });

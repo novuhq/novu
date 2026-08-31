@@ -302,6 +302,35 @@ describe('select integration', () => {
     expect(integration?.identifier).toEqual(matchingIntegration.identifier);
   });
 
+  it('should not apply unsafe json-logic operators and fall back to primary', async () => {
+    const unsafeIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'unsafe-integration',
+      identifier: 'unsafe-integration-identifier',
+      primary: false,
+      rules: {
+        log: { var: 'subscriber.email' },
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([unsafeIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          subscriber: { email: 'secret@example.com' },
+        },
+      })
+    );
+
+    expect(integration?.identifier).toEqual(testIntegration.identifier);
+  });
+
   it('should fall back to primary when JsonLogic conditions do not match', async () => {
     const matchingIntegration: IntegrationEntity = {
       ...testIntegration,

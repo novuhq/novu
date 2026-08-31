@@ -1,17 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import {
-  IntegrationEntity,
-  IntegrationQuery,
-  IntegrationRepository,
-  TenantEntity,
-  TenantRepository,
-} from '@novu/dal';
+import { IntegrationEntity, IntegrationQuery, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { evaluateRules } from '../../services/query-parser';
-import { hasIntegrationRules, hasLegacyIntegrationConditions } from '../../utils/integration-conditions';
+import {
+  getIntegrationRulesIssues,
+  hasIntegrationRules,
+  hasLegacyIntegrationConditions,
+} from '../../utils/integration-conditions';
 import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
@@ -89,6 +87,10 @@ export class SelectIntegration {
     tenant: TenantEntity | null
   ): Promise<boolean> {
     if (hasIntegrationRules(currentIntegration.rules)) {
+      if (getIntegrationRulesIssues(currentIntegration.rules).length > 0) {
+        return false;
+      }
+
       const { result } = evaluateRules(
         currentIntegration.rules as RulesLogic<AdditionalOperation>,
         {
