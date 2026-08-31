@@ -79,9 +79,10 @@ export class AppioPushProvider extends BaseProvider implements IPushProvider {
           headers,
         })
       : await this.axiosInstance.post(`${baseUrl}/messages`, messageBody, { headers });
+    const messageStatus = 'statusCode' in messageRes ? messageRes.statusCode : messageRes.status;
     const messageData = 'body' in messageRes ? messageRes.body : messageRes.data;
 
-    if (!messageRes || !messageData) {
+    if (messageStatus < 200 || messageStatus >= 300 || !messageData) {
       throw new Error('Invalid response from App IO message API');
     }
 
