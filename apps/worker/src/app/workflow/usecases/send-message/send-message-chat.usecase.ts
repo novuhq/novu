@@ -642,6 +642,7 @@ export class SendMessageChat extends SendMessageBase {
         subscriberId: command.subscriberId,
         channelType: ChannelTypeEnum.CHAT,
         contextKeys: command.contextKeys,
+        filterData: this.getIntegrationFilterData(command),
       })
     );
   }
