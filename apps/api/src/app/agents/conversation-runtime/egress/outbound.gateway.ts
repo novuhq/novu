@@ -10,7 +10,7 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
-import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { brandOutboundMarkdownReply } from '../../shared/util/novu-powered-by-watermark';
 import { splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -899,29 +899,6 @@ export class OutboundGateway {
   }
 
   /**
-   * Wraps outbound markdown replies with a muted "Powered by Novu" footnote for
-   * organizations that have not removed Novu branding (free plan). Pro and above
-   * can disable it via the existing `removeNovuBranding` org setting, resolved
-   * once per delivery by `AgentConfigResolver`.
-   *
-   * Only plain markdown replies are branded — cards/action messages are left
-   * untouched.
-   */
-  private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
-    if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
-      return content;
-    }
-
-    if (branding.removeNovuBranding) {
-      return content;
-    }
-
-    const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
-
-    return { ...content, card, markdown: undefined };
-  }
-
-  /**
    * Single payload-construction chokepoint for adapter deliveries (post, DM,
    * edit). Branding is applied here so no delivery path can miss the watermark.
    */
@@ -929,7 +906,7 @@ export class OutboundGateway {
     content: ChatSdkReplyContent,
     branding: OutboundBrandingContext
   ): AdapterPostableMessage {
-    const deliveryContent = this.applyOutboundBranding(content, branding);
+    const deliveryContent = brandOutboundMarkdownReply(content, branding);
 
     if (deliveryContent.card) {
       return {

@@ -44,6 +44,47 @@ export function buildBrandedMarkdownReply(markdown: string, agentIdentifier: str
   };
 }
 
+export function appendPoweredByWatermarkToMarkdown(
+  markdown: string,
+  agentIdentifier: string,
+  platform: string
+): string {
+  if (contentHasPoweredByWatermark(markdown)) {
+    return markdown;
+  }
+
+  return `${markdown.trimEnd()}\n\n${buildPoweredByWatermark(agentIdentifier, platform)}`;
+}
+
+type BrandableMarkdownReply = {
+  markdown?: string;
+  card?: CardElement;
+};
+
+export function brandOutboundMarkdownReply<T extends BrandableMarkdownReply>(
+  content: T,
+  branding: { removeNovuBranding: boolean; agentIdentifier: string; platform: string }
+): T {
+  if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
+    return content;
+  }
+
+  if (branding.removeNovuBranding) {
+    return content;
+  }
+
+  if (branding.platform === AgentPlatformEnum.EMAIL) {
+    return {
+      ...content,
+      markdown: appendPoweredByWatermarkToMarkdown(content.markdown, branding.agentIdentifier, branding.platform),
+    };
+  }
+
+  const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
+
+  return { ...content, card, markdown: undefined };
+}
+
 export function contentHasPoweredByWatermark(markdown: string): boolean {
   if (
     markdown.includes(ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX) ||

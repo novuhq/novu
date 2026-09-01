@@ -1,13 +1,18 @@
 import { expect } from 'chai';
+import type { CardElement } from 'chat';
 
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import {
+  appendPoweredByWatermarkToMarkdown,
+  brandOutboundMarkdownReply,
   buildBrandedMarkdownReply,
   buildPoweredByWatermark,
   contentHasPoweredByWatermark,
   NOVU_AGENT_POWERED_URL,
   NOVU_AGENT_POWERED_WATERMARK_TEXT,
 } from './novu-powered-by-watermark';
+
+type Reply = { markdown?: string; card?: CardElement };
 
 describe('novu-powered-by-watermark', () => {
   it('returns link-less text on WhatsApp', () => {
@@ -83,5 +88,74 @@ describe('novu-powered-by-watermark', () => {
     expect(contentHasPoweredByWatermark('Hello there')).to.equal(false);
     expect(contentHasPoweredByWatermark('Powered by Novu is a great product')).to.equal(false);
     expect(contentHasPoweredByWatermark('Hello\n\nPowered by Novu is great')).to.equal(false);
+  });
+
+  it('appends an attributed markdown footnote on EMAIL without wrapping in a card', () => {
+    const content: Reply = { markdown: 'Hello there' };
+    const branded = brandOutboundMarkdownReply(content, {
+      removeNovuBranding: false,
+      agentIdentifier: 'my-agent',
+      platform: AgentPlatformEnum.EMAIL,
+    });
+
+    expect(branded.card).to.equal(undefined);
+    expect(branded.markdown).to.include('Hello there');
+    expect(branded.markdown).to.include('Powered by [Novu](');
+    expect(branded.markdown).to.include(NOVU_AGENT_POWERED_URL);
+    expect(branded.markdown).to.include('utm_channel=email');
+    expect(contentHasPoweredByWatermark(branded.markdown as string)).to.equal(true);
+  });
+
+  it('does not append a second EMAIL footnote when the watermark is already present', () => {
+    const once = appendPoweredByWatermarkToMarkdown('Hello there', 'my-agent', AgentPlatformEnum.EMAIL);
+    const twice = appendPoweredByWatermarkToMarkdown(once, 'my-agent', AgentPlatformEnum.EMAIL);
+
+    expect(twice).to.equal(once);
+  });
+
+  it('still wraps Slack markdown replies in a branding card', () => {
+    const content: Reply = { markdown: 'Hello there' };
+    const branded = brandOutboundMarkdownReply(content, {
+      removeNovuBranding: false,
+      agentIdentifier: 'my-agent',
+      platform: AgentPlatformEnum.SLACK,
+    });
+
+    expect(branded.markdown).to.equal(undefined);
+    expect(branded.card).to.deep.equal(buildBrandedMarkdownReply('Hello there', 'my-agent', AgentPlatformEnum.SLACK));
+  });
+
+  it('leaves markdown unchanged when Novu branding is removed', () => {
+    const content: Reply = { markdown: 'Hello there' };
+    const branded = brandOutboundMarkdownReply(content, {
+      removeNovuBranding: true,
+      agentIdentifier: 'my-agent',
+      platform: AgentPlatformEnum.EMAIL,
+    });
+
+    expect(branded).to.equal(content);
+  });
+
+  it('leaves explicit cards unchanged', () => {
+    const content: Reply = { card: { type: 'card', children: [{ type: 'text', content: 'Approve?' }] } };
+    const branded = brandOutboundMarkdownReply(content, {
+      removeNovuBranding: false,
+      agentIdentifier: 'my-agent',
+      platform: AgentPlatformEnum.EMAIL,
+    });
+
+    expect(branded).to.equal(content);
+  });
+
+  it('leaves already-watermarked markdown unchanged', () => {
+    const markdown = appendPoweredByWatermarkToMarkdown('Hello there', 'my-agent', AgentPlatformEnum.EMAIL);
+    const content: Reply = { markdown };
+    const branded = brandOutboundMarkdownReply(content, {
+      removeNovuBranding: false,
+      agentIdentifier: 'my-agent',
+      platform: AgentPlatformEnum.EMAIL,
+    });
+
+    expect(branded).to.equal(content);
   });
 });
