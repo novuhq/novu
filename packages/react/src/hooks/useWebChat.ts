@@ -325,35 +325,21 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       return;
     }
 
-    if (conversationIdProp) {
-      ownedRuntimeRef.current?.runtime.dispose();
-      ownedRuntimeRef.current = null;
-
-      const key = getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
-      const runtime = novu.webChat.conversation({
-        agentId,
-        conversationId: conversationIdProp,
-        agentHash,
-      });
-      setManagedRuntime({ key, runtime });
-
-      return () => {
-        setManagedRuntime(null);
-      };
-    }
-
-    const key = getCreateFlowKey(agentId, agentHash);
+    const key = getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
     const current = ownedRuntimeRef.current;
 
+    let runtime: AgentConversationRuntime;
     if (current?.novu === novu && current.key === key) {
-      setManagedRuntime({ key, runtime: current.runtime });
+      runtime = current.runtime;
     } else {
       current?.runtime.dispose();
-
-      const runtime = novu.webChat.conversation({ agentId, agentHash });
+      runtime = conversationIdProp
+        ? novu.webChat.conversation({ agentId, conversationId: conversationIdProp, agentHash })
+        : novu.webChat.conversation({ agentId, agentHash });
       ownedRuntimeRef.current = { key, novu, runtime };
-      setManagedRuntime({ key, runtime });
     }
+
+    setManagedRuntime({ key, runtime });
 
     return () => {
       ownedRuntimeRef.current?.runtime.dispose();
