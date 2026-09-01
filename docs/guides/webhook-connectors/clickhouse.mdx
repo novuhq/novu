@@ -46,7 +46,7 @@ Without a transformation, Svix inserts each webhook payload directly using the C
 
 ClickHouse is different from the other warehouse connectors in one important way: it does not add any columns of its own. There is no generated `id` column and no `payload` column unless you define them. You own the full schema.
 
-Novu webhook bodies are nested, and message fields such as `subscriberId` and `channel` sit under `object` rather than at the top level. Because of that, plan on writing a transformation for this connector unless your table columns exactly match the top-level keys of the webhook body.
+Novu webhook bodies are nested, and message fields such as `subscriberId` and `channel` sit under `data.object` rather than at the top level. Because of that, plan on writing a transformation for this connector unless your table columns exactly match the top-level keys of the webhook body.
 
 
 ## Create the destination table
@@ -74,12 +74,12 @@ The transformation receives one batch and returns the rows to insert:
 <WebhookBatchInput />
 - Output: an object with a `rows` array. Each row is an object whose keys match your ClickHouse column names. Each row is inserted separately using `JSONEachRow`.
 
-Novu-oriented example that reads message fields from `event.payload.object`:
+Novu-oriented example that reads message fields from `event.payload.data.object`:
 
 ```javascript
 function handler(input) {
   const rows = input.events.map((event) => {
-    const message = event.payload.object ?? {};
+    const message = event.payload.data?.object ?? {};
 
     return {
       event_type: event.eventType,

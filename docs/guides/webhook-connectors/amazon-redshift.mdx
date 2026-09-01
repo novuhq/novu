@@ -89,7 +89,7 @@ The transformation builds one parameterized statement per batch:
 - `bindings` is row-oriented. It is an array of `{ name, value }` objects, and the statement references each one by name, for example `:payload0`. This differs from the Snowflake connector, which uses column-oriented bindings.
 - The statement runs against your database through the Redshift Data API.
 
-Novu-oriented example that matches the analytics table above and reads message fields from `event.payload.object`:
+Novu-oriented example that matches the analytics table above and reads message fields from `event.payload.data.object`:
 
 ```javascript
 function handler(input) {
@@ -97,7 +97,7 @@ function handler(input) {
   const values = [];
 
   input.events.forEach((event, index) => {
-    const message = event.payload.object ?? {};
+    const message = event.payload.data?.object ?? {};
 
     bindings.push(
       { name: `event_type${index}`, value: String(event.eventType) },

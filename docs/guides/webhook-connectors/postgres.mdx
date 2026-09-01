@@ -82,8 +82,8 @@ The return shape is defined by the template the Novu Dashboard ships with this c
 | --- | --- |
 | `id` | `crypto.randomUUID()` |
 | `event_type` | `event.eventType` |
-| `subscriber_id` | `event.payload.object?.subscriberId ?? null` |
-| `channel` | `event.payload.object?.channel ?? null` |
+| `subscriber_id` | `event.payload.data?.object?.subscriberId ?? null` |
+| `channel` | `event.payload.data?.object?.channel ?? null` |
 | `payload` | `JSON.stringify(event.payload)` |
 | `received_at` | `new Date().toISOString()` |
 
@@ -141,7 +141,7 @@ LIMIT 20;
 To read a field that you did not extract into a column, query the stored body:
 
 ```sql
-SELECT payload #>> '{object,subscriberId}' AS subscriber_id
+SELECT payload #>> '{data,object,subscriberId}' AS subscriber_id
 FROM novu_events
 ORDER BY received_at DESC
 LIMIT 20;
@@ -156,7 +156,7 @@ LIMIT 20;
 | Permission denied on insert | The user needs `USAGE` on the schema and `INSERT` on the destination table. |
 | Relation does not exist | The table must exist before the endpoint is enabled, and an unqualified name resolves through the user's `search_path`. |
 | Column or type error | Compare the transformed output in **Logs** with the table definition. A `TIMESTAMPTZ` column needs a valid timestamp, and a `NOT NULL` column cannot receive `null`. |
-| Subscriber or channel values are empty | Message fields are under `payload.object`, not at the top level of `payload`. |
+| Subscriber or channel values are empty | Message fields are under `payload.data.object`, not at the top level of `payload`. `payload.object` is the resource type string, such as `"message"`. |
 | Rows appear for some event types but not others | The transformation assumes fields that only exist on certain event types. Guard each one with a default. |
 | No rows after a successful delivery | Confirm the database, schema, and table you queried match the endpoint configuration. |
 

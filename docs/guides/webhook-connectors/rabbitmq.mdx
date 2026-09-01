@@ -59,17 +59,17 @@ function handler(input) {
 With the default transformation, a `message.sent` event is published as a single message whose body contains both the event type and the Novu payload:
 
 ```json
-{"payload":{"object":{"subscriberId":"subscriber-123","channel":"email"}},"eventType":"message.sent"}
+{"payload":{"type":"message.sent","object":"message","data":{"object":{"subscriberId":"subscriber-123","channel":"email"}}},"eventType":"message.sent"}
 ```
 
 ### Novu example
 
-Consumers usually want the event type and the message fields at the top level so they can route without walking the nested payload. Novu message fields are under `payload.object`:
+Consumers usually want the event type and the message fields at the top level so they can route without walking the nested payload. Novu message fields are under `payload.data.object`:
 
 ```js
 function handler(input) {
   const payloads = input.events.map((event) => {
-    const message = event.payload.object ?? {};
+    const message = event.payload.data?.object ?? {};
 
     return JSON.stringify({
       eventType: event.eventType,

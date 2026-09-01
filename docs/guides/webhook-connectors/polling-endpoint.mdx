@@ -51,8 +51,12 @@ The response contains messages in the order they were received. Each message has
       "id": "msg_2K2N9Qk...",
       "eventType": "message.sent",
       "payload": {
-        "object": {
-          "subscriberId": "subscriber-123"
+        "type": "message.sent",
+        "object": "message",
+        "data": {
+          "object": {
+            "subscriberId": "subscriber-123"
+          }
         }
       },
       "timestamp": "2025-01-17T00:00:00.000Z",

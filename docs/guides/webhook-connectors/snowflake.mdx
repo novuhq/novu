@@ -88,7 +88,7 @@ The transformation shapes each batch into one SQL statement:
 - `bindings` is column-oriented. It is an object keyed by binding name, and each binding has a Snowflake `type` and a `value` array holding one entry per row in the batch. All arrays must be the same length.
 - Send every value as a string. For allowed types, see [using bind variables in a statement](https://docs.snowflake.com/en/developer-guide/sql-api/submitting-requests#using-bind-variables-in-a-statement).
 
-Novu-oriented example that matches the analytics table above and reads message fields from `event.payload.object`:
+Novu-oriented example that matches the analytics table above and reads message fields from `event.payload.data.object`:
 
 ```javascript
 function handler(input) {
@@ -100,7 +100,7 @@ function handler(input) {
   };
 
   input.events.forEach((event) => {
-    const message = event.payload.object ?? {};
+    const message = event.payload.data?.object ?? {};
 
     bindings.event_type.value.push(String(event.eventType));
     bindings.subscriber_id.value.push(String(message.subscriberId ?? ""));

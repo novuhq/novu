@@ -68,8 +68,12 @@ The receiver gets one HTTP request whose raw body has this shape:
     {
       "eventType": "message.sent",
       "payload": {
-        "object": {
-          "subscriberId": "subscriber-123"
+        "type": "message.sent",
+        "object": "message",
+        "data": {
+          "object": {
+            "subscriberId": "subscriber-123"
+          }
         }
       }
     }
