@@ -19,6 +19,12 @@ export type HumanAskApproveOptions = {
   from?: string;
   /** Time until the request expires, in seconds (max 72h; default 24h). */
   ttlSeconds?: number;
+  /**
+   * Novu `subscriberId`(s) allowed to settle this request. First valid answer
+   * wins. When omitted, the conversation's first subscriber participant is used.
+   * The maximum number of subscribers is 50.
+   */
+  to?: string | string[];
 };
 
 export type HumanChooseOptions = HumanAskApproveOptions;
@@ -26,6 +32,11 @@ export type HumanChooseOptions = HumanAskApproveOptions;
 export type HumanTellOptions = {
   /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
   from?: string;
+  /**
+   * Novu `subscriberId`(s) this notice is addressed to. In-thread delivery
+   * still posts one card on the current conversation.
+   */
+  to?: string | string[];
 };
 
 /**
@@ -47,6 +58,8 @@ export type AgentHumanResponse = {
   /** `approve`: `'approve'` | `'deny'`; `choose`: the picked option id. */
   optionId?: string;
   respondedBy?: string;
+  /** Stable Novu subscriberId of whoever settled the interaction. */
+  respondedBySubscriberId?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -509,26 +522,31 @@ export interface AgentHandlerContext {
    * Ask the conversation subscriber a freeform question. Queued and flushed
    * with the next `ctx.reply()`, or automatically when the handler completes.
    * The answer arrives later on `onMessage` with `ctx.humanResponse` set.
+   * Pass `to` to let any listed subscriber settle (first valid answer wins).
    *
    * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
    *
    * @example
    *   ctx.ask('What environment should we deploy to?');
+   *   ctx.ask('Which environment?', { to: 'alice' });
    */
   ask(question: string, opts?: HumanAskApproveOptions): string;
   /**
    * Ask the conversation subscriber to approve or deny an action.
    * The verdict arrives later on `onAction` with `ctx.humanResponse` set.
+   * Pass `to` to let any listed subscriber settle (first valid answer wins).
    *
    * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
    *
    * @example
    *   ctx.approve('Deploy v2.4.1 to production?');
+   *   ctx.approve('Deploy v2.4.1?', { to: ['alice', 'bob'] });
    */
   approve(action: string, opts?: HumanAskApproveOptions): string;
   /**
    * Ask the conversation subscriber to pick one of several options (2–10).
    * The pick arrives later on `onAction` with `ctx.humanResponse` set.
+   * Pass `to` to let any listed subscriber settle (first valid answer wins).
    *
    * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
    *
@@ -779,6 +797,8 @@ export type HumanSignal = {
   options?: string[];
   from?: string;
   ttlSeconds?: number;
+  /** Novu subscriberId(s) allowed to settle. Omitted = conversation subscriber. */
+  to?: string | string[];
 };
 
 export type Signal = MetadataSignal | TriggerSignal | HumanSignal;

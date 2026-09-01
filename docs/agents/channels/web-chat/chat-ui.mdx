@@ -1,0 +1,331 @@
+---
+title: "Chat UI"
+description: "Web Chat client: state, parts, thinking, cards, approvals, custom data, retry, resume, older history, and reconnect."
+sidebarTitle: Chat UI
+---
+
+Start from [Send a message](/agents/channels/web-chat/quickstart#send-a-message). This page covers everything after the first message.
+
+`messages` is the ordered timeline. Each message has `role` (`user` or `assistant`) and `parts`.
+
+## State
+
+Use these fields to drive the UI. See [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) for types.
+
+| Field | What you do |
+| --- | --- |
+| `isLoading` | First history fetch. False when there is no `conversationId`. Show a spinner. |
+| `isRunning` | Agent turn in progress. Disable the composer. `typing` is optional status text. |
+| `conversationStatus` | Conversation is `active` or `resolved`. Do not use it to disable the composer. |
+| `error` | Last load, send, retry, action, or run error. Show the message. |
+| `message.status` | `sending`, `sent`, or `failed`. If `failed`, call `retryMessage`. See [Retry](#retry-a-failed-send). |
+
+See [Reconnect](#reconnect) (`isRecovering`, `catchUpError`). See [Older messages](#older-messages) (`pagination`).
+
+## Parts
+
+Start with `type === 'text'`. Then handle the other part types. See [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) for part types.
+
+```tsx
+const { messages } = useWebChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
+
+{messages.map((message) => (
+  <li key={message.id}>
+    {message.parts.map((part, index) =>
+      part.type === 'text' ? <span key={index}>{part.text}</span> : null
+    )}
+  </li>
+))}
+```
+
+## Thinking
+
+While the agent turn is in progress, `isRunning` is true. `typing` is present when the agent is typing. Assistant messages can include `thinking` parts before text arrives.
+
+`run` is the same snapshot: `isRunning` is `run.isRunning`, and `typing` is `run.typing`.
+
+```tsx
+const { messages, isRunning, typing } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{isRunning ? <p>{typing?.status ?? 'Working…'}</p> : null}
+
+{messages.map((message) =>
+  message.parts.map((part, index) => {
+    if (part.type === 'thinking') {
+      return <em key={index}>{part.text}</em>;
+    }
+
+    if (part.type === 'text') {
+      return <span key={index}>{part.text}</span>;
+    }
+
+    return null;
+  })
+)}
+```
+
+The first event of a turn can create an empty assistant message before any text arrives. Keep that row in the list. Then fill it as parts arrive.
+
+## Approvals
+
+`pendingActions` lists waits that block the turn. Do not mix the two action types.
+
+| `action.type` | What to do |
+| --- | --- |
+| `tool-approval` | Call `respondToAction` with `action.id` and `approved` or `denied`. |
+| `mcp-connection` | Open `action.authorizeUrl` in the browser. Do not call `respondToAction`. |
+
+### Tool approval
+
+```tsx
+const { pendingActions, respondToAction } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{pendingActions.map((action) => {
+  if (action.type !== 'tool-approval') {
+    return null;
+  }
+
+  return (
+    <button
+      key={action.id}
+      type="button"
+      onClick={() => void respondToAction({ actionId: action.id, decision: 'approved' })}
+    >
+      Approve {action.toolName}
+    </button>
+  );
+})}
+```
+
+Pass `action.id` from `pendingActions`. Do not invent approve or deny ids.
+
+### MCP connect
+
+```tsx
+const { pendingActions } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{pendingActions.map((action) => {
+  if (action.type !== 'mcp-connection') {
+    return null;
+  }
+
+  return (
+    <a key={action.id} href={action.authorizeUrl} target="_blank" rel="noreferrer">
+      Connect {action.displayName}
+    </a>
+  );
+})}
+```
+
+## Cards
+
+A Card is a structured reply. It can include a title, text, images, links, and buttons.
+
+When the agent sends a Card, the message includes a part with `type: 'card'`. The data is on `part.card`.
+
+Agents create Cards with JSX or `Card({…})`. That authoring API is shared with Slack and the other ACI channels: [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). You can also post the JSON with [Send an agent reply](/api-reference/agents/send-an-agent-reply).
+
+The SDK does not type `part.card`. `card` is `Record<string, unknown>`. Read the fields that you support. Skip child types that you do not use.
+
+Render `title` and the `children` that you support. If the subscriber clicks a button, call `sendAction`. The agent receives the click in `onAction`.
+
+```tsx
+const { messages, sendAction } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{messages.map((message) =>
+  message.parts.map((part, i) => {
+    if (part.type !== 'card') {
+      return null;
+    }
+
+    const title = typeof part.card.title === 'string' ? part.card.title : null;
+    const children = Array.isArray(part.card.children) ? part.card.children : [];
+
+    return (
+      <article key={i}>
+        {title ? <h3>{title}</h3> : null}
+        {children.map((child, j) => {
+          if (child?.type === 'text') {
+            return <p key={j}>{child.content}</p>;
+          }
+
+          if (child?.type !== 'actions') {
+            return null;
+          }
+
+          return child.children?.map((button) => (
+            <button
+              key={button.id}
+              type="button"
+              onClick={() =>
+                void sendAction({
+                  actionId: button.id,
+                  value: button.value,
+                  sourceMessageId: message.id,
+                })
+              }
+            >
+              {button.label}
+            </button>
+          ));
+        })}
+      </article>
+    );
+  })
+)}
+```
+
+Do not send the button label with `sendMessage`. That call creates a new chat message.
+Do not call `respondToAction`. That function is for tool approval only.
+
+## Data, file, source
+
+### Custom data parts
+
+The agent sends a named payload with [`ctx.emit`](/agents/custom-code-agent/building-blocks/emit). Web Chat adds it to the in-flight assistant message as `part.type === 'data'`. The fields are `name` and `data`.
+
+See [Emit custom events](/agents/custom-code-agent/building-blocks/emit) for the handler API, size limit, and other channels.
+
+```tsx
+const { messages } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{messages.map((message) =>
+  message.parts.map((part, index) => {
+    if (part.type !== 'data') {
+      return null;
+    }
+
+    return (
+      <pre key={index}>
+        {part.name}: {JSON.stringify(part.data)}
+      </pre>
+    );
+  })
+)}
+```
+
+Skip `data` parts that your UI does not handle. The part stays on the message.
+
+### File and source
+
+```tsx
+{message.parts.map((part, index) => {
+  if (part.type === 'file') {
+    return <span key={index}>{part.name ?? part.fileId}</span>;
+  }
+
+  if (part.type === 'source' && part.url) {
+    return (
+      <a key={index} href={part.url}>
+        {part.title ?? part.url}
+      </a>
+    );
+  }
+
+  return null;
+})}
+```
+
+## Retry a failed send
+
+If `message.status` is `failed`, call `retryMessage` with that message id.
+
+Retry reuses the original idempotency key. It does not create a second message with the same text.
+
+```tsx
+const { messages, retryMessage } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{messages.map((message) => (
+  <li key={message.id}>
+    {message.parts.map((part, index) =>
+      part.type === 'text' ? <span key={index}>{part.text}</span> : null
+    )}
+    {message.status === 'failed' ? (
+      <button type="button" onClick={() => void retryMessage(message.id)}>
+        Retry
+      </button>
+    ) : null}
+  </li>
+))}
+```
+
+## Resume a conversation
+
+Pass `conversationId` so the hook loads history on mount.
+
+```tsx
+function Chat({ conversationId }: { conversationId?: string }) {
+  const { sendMessage } = useWebChat({
+    agentId: 'YOUR_AGENT_IDENTIFIER',
+    conversationId,
+  });
+
+  async function onSend(text: string) {
+    const { data } = await sendMessage(text);
+    if (data?.conversationId) {
+      // persist data.conversationId and pass it back as conversationId
+    }
+  }
+}
+```
+
+Store the `conversationId` that `sendMessage` returns, or the `conversationId` field on the hook result. On the next visit, pass that id back in.
+
+The hook has no list-conversations API. You store the ids that you want to reopen.
+
+To start another chat, remount the component without `conversationId`, or clear the prop.
+
+`agentId` selects the agent. If the identifier changes, remount with the new `agentId`.
+
+Omit `conversationId` unless that conversation belongs to the new agent. A conversation id from a different agent does not resume.
+
+## Older messages
+
+If `pagination.hasMore` is true, call `pagination.fetchMore()` to load an older page.
+
+```tsx
+const { pagination } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  conversationId,
+});
+
+{pagination.hasMore ? (
+  <button
+    type="button"
+    disabled={pagination.status === 'loading'}
+    onClick={() => void pagination.fetchMore()}
+  >
+    {pagination.status === 'loading' ? 'Loading…' : 'Load older messages'}
+  </button>
+) : null}
+```
+
+Overlapping `fetchMore` calls do not run.
+
+## Reconnect
+
+The hook reconnects and applies missed events on its own. Show a banner from these fields.
+
+```tsx
+const { isRecovering, catchUpError } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  conversationId,
+});
+
+{isRecovering ? <p>Reconnecting…</p> : null}
+{catchUpError ? <p>{catchUpError.message}</p> : null}
+```
+
+`catchUpError` is separate from send and fetch `error`. `conversationStatus` does not become an error state when recovery fails.

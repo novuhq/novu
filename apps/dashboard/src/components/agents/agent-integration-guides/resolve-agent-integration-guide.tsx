@@ -8,7 +8,7 @@ import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { AgentChatAgentIntegrationGuide } from './agent-chat-agent-integration-guide';
+import { WebChatAgentIntegrationGuide } from './web-chat-agent-integration-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
@@ -121,10 +121,10 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  // Agent Chat: setup → connected transition; no What's next (embed is the user surface).
-  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
+  // Web Chat: setup → connected transition; no What's next (embed is the user surface).
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
     return (
-      <AgentChatAgentIntegrationGuide
+      <WebChatAgentIntegrationGuide
         embedded={embedded}
         onBack={onBack}
         agent={agent}

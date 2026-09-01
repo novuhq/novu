@@ -13,7 +13,7 @@ export const CONNECT_CHANNEL_PICKER_OPTIONS: readonly ConnectChannelPickerOption
   { label: channelDisplayName('email'), value: 'email' },
   { label: channelDisplayName('sendblue'), value: 'sendblue' },
   { label: channelDisplayName('whatsapp'), value: 'whatsapp' },
-  { label: channelDisplayName('agent-chat'), value: 'agent-chat' },
+  { label: channelDisplayName('web-chat'), value: 'web-chat' },
   { label: channelDisplayName('teams'), value: 'teams' },
   { label: 'Skip — set up later in dashboard', value: 'skip' },
 ];

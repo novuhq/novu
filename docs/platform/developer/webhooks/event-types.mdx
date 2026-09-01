@@ -14,38 +14,53 @@ Each event includes detailed information about the affected resource and the cha
 
 ## Email events
 
-- `email.received`: Triggered when Novu receives an inbound email that matches an [Inbound Email](/platform/inbound-email/overview) **Webhook** route on a verified domain. The payload includes normalized mail content (from, to, subject, text, html, headers, attachments, threading fields) plus domain and route metadata.
+- `email.received`: Triggered when Novu receives an inbound email that matches an [Inbound Email](/platform/inbound-email/overview) **Webhook** route on a verified domain. The payload includes normalized mail content (from, to, subject, text, html, headers, attachments, threading fields) plus domain and route metadata. Download files from each attachment's `url` before `expiresAt`. See [Attachments](/platform/inbound-email/overview#attachments).
 
 <Note>
   `email.received` is for **user mail** received on your domain. It is not the same as delivery or engagement events from your outbound email provider - see [Email Activity Tracking](/platform/integrations/email/activity-tracking) for those.
 </Note>
 
-Example payload shape:
+Every webhook body uses the same envelope. `type` is the event type, `object` is the resource type as a string, and the resource itself is under `data.object`:
 
 ```json
 {
-  "object": {
-    "domain": {
-      "id": "domain_id",
-      "name": "mail.yourcompany.com",
-      "data": {}
-    },
-    "route": {
-      "address": "support",
-      "data": { "tenantId": "acme" }
-    },
-    "mail": {
-      "from": [{ "address": "user@example.com", "name": "Jane" }],
-      "to": [{ "address": "support@mail.yourcompany.com" }],
-      "subject": "Re: Your order",
-      "text": "Thanks, that helps!",
-      "html": "<p>Thanks, that helps!</p>",
-      "messageId": "<message-id@example.com>",
-      "inReplyTo": "<original-message-id@novu.co>",
-      "references": ["<thread-root@novu.co>"],
-      "headers": {},
-      "attachments": [],
-      "date": "2026-06-30T12:00:00.000Z"
+  "id": "evt_67f8a1b2c3d4e5f6a7b8c9d0",
+  "type": "email.received",
+  "object": "email_inbound",
+  "timestamp": "2026-06-30T12:00:01.000Z",
+  "environmentId": "development",
+  "data": {
+    "object": {
+      "domain": {
+        "id": "domain_id",
+        "name": "mail.yourcompany.com",
+        "data": {}
+      },
+      "route": {
+        "address": "support",
+        "data": { "tenantId": "acme" }
+      },
+      "mail": {
+        "from": [{ "address": "user@example.com", "name": "Jane" }],
+        "to": [{ "address": "support@mail.yourcompany.com" }],
+        "subject": "Re: Your order",
+        "text": "Thanks, that helps!",
+        "html": "<p>Thanks, that helps!</p>",
+        "messageId": "<message-id@example.com>",
+        "inReplyTo": "<original-message-id@novu.co>",
+        "references": ["<thread-root@novu.co>"],
+        "headers": {},
+        "attachments": [
+          {
+            "filename": "invoice.pdf",
+            "contentType": "application/pdf",
+            "size": 24576,
+            "url": "https://files.example.com/inbound/attachments/invoice.pdf?expires=...",
+            "expiresAt": "2026-06-30T18:00:00.000Z"
+          }
+        ],
+        "date": "2026-06-30T12:00:00.000Z"
+      }
     }
   }
 }

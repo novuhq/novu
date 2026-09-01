@@ -1,8 +1,10 @@
-import { SmsProviderIdEnum } from '@novu/shared';
+import { isOutboundSsrfProtectionEnabled, SmsProviderIdEnum } from '@novu/shared';
+import { safeOutboundRequest } from '@novu/shared/utils/safe-outbound-http';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
+import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
@@ -39,9 +41,29 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
       text: options.content,
     }).body;
 
-    const result = await this.axiosInstance.get(url, {
-      params: queryParameters,
-    });
+    if (isOutboundSsrfProtectionEnabled()) {
+      const safeUrl = new URL(
+        resolveSafeProviderUrl(url, {
+          blockedPrefix: 'Kannel host blocked',
+        })
+      );
+
+      for (const [key, value] of Object.entries(queryParameters)) {
+        if (value !== undefined && value !== null) {
+          safeUrl.searchParams.set(key, String(value));
+        }
+      }
+
+      const response = await safeOutboundRequest({ url: safeUrl, method: 'GET' });
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw new Error(`Kannel request failed with status ${response.statusCode}`);
+      }
+    } else {
+      await this.axiosInstance.get(url, {
+        params: queryParameters,
+      });
+    }
 
     return {
       id: options.id,

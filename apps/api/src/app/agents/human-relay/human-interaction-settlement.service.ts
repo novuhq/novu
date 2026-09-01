@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { buildResolvedContent } from './human-card.builder';
@@ -83,29 +83,34 @@ export class HumanInteractionSettlementService {
    * the source of truth the CLI is polling.
    */
   private async editDeliveredMessage(interaction: HumanInteractionEntity): Promise<void> {
-    if (!interaction.platformMessageId || !interaction.platformThreadId) {
-      return;
-    }
+    const targets = this.deliveryEditTargets(interaction);
+    const content = buildResolvedContent(interaction);
 
-    try {
-      await this.outboundGateway.editInConversation(
-        interaction._agentId,
-        interaction.integrationIdentifier,
-        interaction.platform,
-        interaction.platformThreadId,
-        interaction.platformMessageId,
-        buildResolvedContent(interaction)
-      );
-    } catch (err) {
-      this.logger.warn(
-        {
-          err,
-          interactionIdentifier: interaction.identifier,
-          platform: interaction.platform,
-          platformMessageId: interaction.platformMessageId,
-        },
-        'Failed to edit delivered human-interaction message after settlement'
-      );
+    for (const delivery of targets) {
+      try {
+        await this.outboundGateway.editInConversation(
+          interaction._agentId,
+          delivery.integrationIdentifier,
+          delivery.platform,
+          delivery.platformThreadId,
+          delivery.platformMessageId,
+          content
+        );
+      } catch (err) {
+        this.logger.warn(
+          {
+            err,
+            interactionIdentifier: interaction.identifier,
+            platform: delivery.platform,
+            platformMessageId: delivery.platformMessageId,
+          },
+          'Failed to edit delivered human-interaction message after settlement'
+        );
+      }
     }
+  }
+
+  private deliveryEditTargets(interaction: HumanInteractionEntity): HumanInteractionDelivery[] {
+    return interaction.deliveries ?? [];
   }
 }

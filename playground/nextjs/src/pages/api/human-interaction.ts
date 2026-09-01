@@ -11,11 +11,23 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+function hasHumanTo(to: string | string[] | undefined): boolean {
+  if (typeof to === 'string') {
+    return to.trim().length > 0;
+  }
+
+  if (Array.isArray(to)) {
+    return to.some((id) => typeof id === 'string' && id.trim().length > 0);
+  }
+
+  return false;
+}
+
 type RequestBody = {
   kind?: string;
   prompt?: string;
   options?: string[];
-  to?: string;
+  to?: string | string[];
   via?: string;
   agentIdentifier?: string;
   from?: string;
@@ -54,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
 
-  if (!body.to) {
+  if (!hasHumanTo(body.to)) {
     res.status(400).json({ error: 'to (subscriberId) is required' });
 
     return;

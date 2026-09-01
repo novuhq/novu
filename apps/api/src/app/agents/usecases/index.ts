@@ -1,6 +1,6 @@
-import { GetAgentChatConversation } from '../agent-chat/usecases/get-agent-chat-conversation/get-agent-chat-conversation.usecase';
-import { ListAgentChatConversationEvents } from '../agent-chat/usecases/list-agent-chat-conversation-events/list-agent-chat-conversation-events.usecase';
-import { ListAgentChatConversations } from '../agent-chat/usecases/list-agent-chat-conversations/list-agent-chat-conversations.usecase';
+import { GetWebChatConversation } from '../web-chat/usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
+import { ListWebChatConversationEvents } from '../web-chat/usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
+import { ListWebChatConversations } from '../web-chat/usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
 import { AddAgentIntegration } from '../channels/integrations/add-agent-integration/add-agent-integration.usecase';
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
@@ -99,7 +99,7 @@ export const USE_CASES = [
   HandleNovuTools,
   HandleNovuResolve,
   IngestAgentEvents,
-  GetAgentChatConversation,
-  ListAgentChatConversations,
-  ListAgentChatConversationEvents,
+  GetWebChatConversation,
+  ListWebChatConversations,
+  ListWebChatConversationEvents,
 ];
