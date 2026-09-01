@@ -91,7 +91,7 @@ export class SendblueAdapterImpl extends VendorSendblueAdapter {
 
     const record = flattened as unknown as Record<string, unknown>;
     if (typeof record.markdown === 'string') {
-      return { markdown: markdownToPlainText(record.markdown) };
+      return { ...flattened, markdown: markdownToPlainText(record.markdown) };
     }
 
     return flattened;

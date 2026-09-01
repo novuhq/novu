@@ -70,6 +70,16 @@ describe('SendblueAdapterImpl', () => {
       expect(postMessage).toHaveBeenNthCalledWith(2, 'sendblue:t', { markdown: 'Hello world' });
     });
 
+    it('keeps attachments when converting markdown to plain text', async () => {
+      const postMessage = spyOnVendorPostMessage();
+      const adapter = new SendblueAdapterImpl(CONFIG);
+      const files = [{ name: 'photo.png', mimeType: 'image/png', data: Buffer.from('img') }];
+
+      await adapter.postMessage('sendblue:t', { markdown: 'See **this**', files } as never);
+
+      expect(postMessage).toHaveBeenCalledWith('sendblue:t', { markdown: 'See this', files });
+    });
+
     it('converts markdown tables and links before handing off to the vendor', async () => {
       const postMessage = spyOnVendorPostMessage();
       const adapter = new SendblueAdapterImpl(CONFIG);
