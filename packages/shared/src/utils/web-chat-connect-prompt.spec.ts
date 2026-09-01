@@ -4,6 +4,7 @@ import {
   buildWebChatPrompt,
   buildWebChatTuiCommand,
   buildWebChatTuiCommandForDisplay,
+  resolveWebChatConnectRuntime,
 } from './web-chat-connect-prompt';
 import { NOVU_STAGING_API_URL } from './novu-connect-cli';
 
@@ -57,6 +58,12 @@ describe('web-chat-connect-prompt', () => {
     expect(prompt).toContain('Novu staging dashboard');
     expect(prompt).toContain('npx novu@rc');
     expect(prompt).toContain('--region staging');
+  });
+
+  it('defaults missing connector to ai-sdk for self-hosted Web Chat copy', () => {
+    expect(resolveWebChatConnectRuntime('self-hosted')).toBe('ai-sdk');
+    expect(resolveWebChatConnectRuntime('self-hosted', 'langchain')).toBe('langchain');
+    expect(resolveWebChatConnectRuntime('managed')).toBeUndefined();
   });
 
   it('pins runtime and agent on the TUI command for a dashboard-created bridge agent', () => {

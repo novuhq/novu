@@ -18,6 +18,28 @@ export function isNovuConnectBridgeRuntime(value: string | null | undefined): va
   return value === 'ai-sdk' || value === 'langchain' || value === 'custom-code';
 }
 
+/** Same default as the dashboard handler scaffold copy when the connector is unknown. */
+export const DEFAULT_NOVU_CONNECT_BRIDGE_RUNTIME: NovuConnectBridgeRuntime = 'ai-sdk';
+
+/**
+ * CLI `--runtime` for Web Chat copy. Cloud agents store `managed` | `self-hosted`,
+ * not the bridge flavor, so missing connector defaults to AI SDK.
+ */
+export function resolveWebChatConnectRuntime(
+  agentRuntime: string | null | undefined,
+  connectorId?: string | null
+): NovuConnectBridgeRuntime | undefined {
+  if (agentRuntime === 'managed') {
+    return undefined;
+  }
+
+  if (isNovuConnectBridgeRuntime(connectorId)) {
+    return connectorId;
+  }
+
+  return DEFAULT_NOVU_CONNECT_BRIDGE_RUNTIME;
+}
+
 function bridgeRuntimeLabel(runtime: NovuConnectBridgeRuntime): string {
   switch (runtime) {
     case 'ai-sdk':

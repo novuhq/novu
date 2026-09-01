@@ -246,11 +246,16 @@ const inter = Inter({ subsets: ['latin'], display: 'swap' });
 export default function WebChatPage() {
   const applicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
   const subscriberId = process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '';
-  const apiUrl = process.env.NEXT_PUBLIC_NOVU_BACKEND_URL ?? 'http://localhost:3000';
+  const apiUrl = process.env.NEXT_PUBLIC_NOVU_BACKEND_URL;
   const socketUrl = process.env.NEXT_PUBLIC_NOVU_SOCKET_URL;
 
   return (
-    <NovuProvider applicationIdentifier={applicationIdentifier} subscriberId={subscriberId} apiUrl={apiUrl} socketUrl={socketUrl}>
+    <NovuProvider
+      applicationIdentifier={applicationIdentifier}
+      subscriberId={subscriberId}
+      {...(apiUrl ? { apiUrl } : {})}
+      {...(socketUrl ? { socketUrl } : {})}
+    >
       <main className={\`novu-web-chat web-chat-page \${inter.className}\`}>
         <WebChat />
       </main>

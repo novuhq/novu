@@ -1,6 +1,5 @@
 export * from './agent-form-validation';
 export * from './aws-claude-credentials-fields';
-export * from './claude-credentials-fields';
 export * from './configure-credentials-section';
 export * from './existing-agent-fields';
 export * from './managed-integration-credentials';

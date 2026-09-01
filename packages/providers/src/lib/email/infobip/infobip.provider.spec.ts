@@ -3,7 +3,7 @@ import { InfobipEmailProvider } from './infobip.provider';
 
 test('should trigger infobip library correctly - E-mail', async () => {
   const provider = new InfobipEmailProvider({
-    baseUrl: 'localhost',
+    baseUrl: 'https://test.api.infobip.com',
     apiKey: '<infobip-auth-token>',
   });
 
@@ -43,7 +43,7 @@ test('should trigger infobip library correctly - E-mail', async () => {
 
 test('should trigger infobip library correctly - E-mail with _passthrough', async () => {
   const provider = new InfobipEmailProvider({
-    baseUrl: 'localhost',
+    baseUrl: 'https://test.api.infobip.com',
     apiKey: '<infobip-auth-token>',
   });
 

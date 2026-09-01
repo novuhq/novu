@@ -1,0 +1,140 @@
+---
+title: 'Consume webhook events from a polling endpoint'
+description: 'Create a Novu polling endpoint, fetch selected webhook events by consumer ID, and commit processed offsets.'
+sidebarTitle: 'Polling Endpoint'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+
+A polling endpoint lets a worker fetch Novu webhook events without exposing a public HTTP receiver. Each consumer tracks its own progress through the endpoint.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- Permission to manage webhook endpoints in the Novu environment
+- A worker that can make authenticated HTTPS requests
+- A stable, unique consumer ID for each independent worker
+
+## Configuration
+
+The Novu Dashboard provides these values after you create the endpoint:
+
+| Value | Required | Description |
+| --- | --- | --- |
+| **Polling URL** | Yes | Endpoint-specific URL ending in `/consumer/{consumer_id}`. |
+| **API key** | Yes | Endpoint-scoped bearer token with an `sk_poll_` prefix. |
+| **Consumer ID** | Yes | Arbitrary client identifier that tracks one independent position. |
+
+API keys are scoped to the polling endpoint and can be expired or rotated. Do not share one consumer ID across concurrent clients. Shared clients can drift to different positions and receive errors.
+
+## Consumption contract
+
+Copy the polling URL from the Dashboard and replace `{consumer_id}` with a stable identifier for the worker. Treat the Dashboard URL as authoritative, including its host: the examples below use the US host, and the application and endpoint identifiers are specific to your endpoint.
+
+```bash
+curl \
+  -X GET \
+  "https://api.us.svix.com/api/v1/app/YOUR_APP_ID/polling-endpoint/YOUR_POLL_ID/consumer/worker-1" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_POLLING_API_KEY"
+```
+
+The response contains messages in the order they were received. Each message has an `offset`:
+
+```json
+{
+  "data": [
+    {
+      "id": "msg_2K2N9Qk...",
+      "eventType": "message.sent",
+      "payload": {
+        "type": "message.sent",
+        "object": "message",
+        "data": {
+          "object": {
+            "subscriberId": "subscriber-123"
+          }
+        }
+      },
+      "timestamp": "2025-01-17T00:00:00.000Z",
+      "offset": 0
+    }
+  ],
+  "done": true
+}
+```
+
+After processing a batch successfully, commit the last processed offset:
+
+```bash
+curl \
+  -X POST \
+  "https://api.us.svix.com/api/v1/app/YOUR_APP_ID/polling-endpoint/YOUR_POLL_ID/consumer/worker-1/commit" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_POLLING_API_KEY" \
+  -d '{ "offset": 0 }'
+```
+
+Until the offset is committed, the same messages can be returned again after the lease expires. Process messages idempotently and commit only after your work succeeds. Transformations do not apply to polling consumption.
+
+## Configure in the Dashboard
+
+<Steps>
+
+<WebhookConnectorAddEndpoint connectorName="Polling Endpoint" />
+
+  <Step>
+## Select event types
+
+Choose the [event types](/platform/developer/webhooks/event-types) the worker should receive. Add channels if the Dashboard offers channel filtering for your endpoint.
+  </Step>
+
+  <Step>
+## Create the endpoint
+
+Create the endpoint. Copy its polling URL and create or copy the endpoint-specific API key. Store the key as a secret.
+  </Step>
+
+  <Step>
+## Fetch with a unique consumer
+
+Choose a stable consumer ID for the worker and call the polling URL. Use a different ID for every independent client.
+  </Step>
+
+  <Step>
+## Process and commit
+
+Process the returned messages in order. Commit the last successfully processed `offset`, then poll again.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Send an example for a selected event type from **Testing**. Poll until it appears, process it, commit its offset, and confirm the next request does not return it again.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+After processing and committing the test event, poll again with the same consumer ID. The committed event should not be returned. A different consumer ID starts with its own independent position.
+
+## Troubleshooting
+
+- **The request returns unauthorized**: Confirm the bearer token belongs to this polling endpoint and has not expired or been rotated.
+- **The same messages return again**: Commit the final successfully processed offset. Replays can occur before a commit or after a lease expires.
+- **Concurrent workers receive position errors**: Assign a unique consumer ID to each worker. Do not share consumer IDs.
+- **No events are returned**: Confirm the endpoint subscribes to the event type, the event occurred after endpoint creation, and you are polling the intended Novu environment.
+- **Events are skipped after a failure**: Commit only after processing succeeds, and commit the last offset that completed successfully.
+
+Polling endpoints use their own offset recovery model.
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix polling endpoints](https://docs.svix.com/advanced-endpoints/polling-endpoints)
+- [Svix polling endpoint consumer guide](https://docs.svix.com/receiving/using-app-portal/polling-endpoints)

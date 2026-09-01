@@ -1,0 +1,152 @@
+---
+title: 'Publish webhook events to RabbitMQ'
+description: 'Configure the RabbitMQ webhook connector to publish selected Novu events as individual AMQP messages.'
+sidebarTitle: 'RabbitMQ'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The RabbitMQ connector publishes each selected Novu webhook event as a separate message using one routing key.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). This connector maps to the Svix [RabbitMQ advanced endpoint](https://docs.svix.com/advanced-endpoints/rabbitmq).
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- A RabbitMQ instance reachable over AMQP from the public internet
+- An AMQP connection URI that includes credentials and the virtual host
+- A routing key that resolves to the queue you want to consume from
+- A RabbitMQ user with configure, write, and read permissions scoped to that virtual host
+
+The connector takes a connection URI and a routing key. There is no separate exchange field, so encode the credentials and virtual host in the URI and make sure the routing key resolves through the default exchange or an existing binding.
+
+## Configuration
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **URI** | Yes | AMQP connection URI, such as `amqp://user:password@rabbitmq.example.com:5672/my-vhost`. |
+| **Routing key** | Yes | Routing key used for every published message. |
+| **Transformation** | Yes | JavaScript that returns the message bodies to publish. |
+
+## Transformation contract
+
+<WebhookBatchInput />
+
+It returns an array of strings:
+
+```ts
+{
+  payloads: string[];
+}
+```
+
+Each string in `payloads` becomes a separate RabbitMQ message. The default transformation serializes each event:
+
+```js
+function handler(input) {
+  const payloads = input.events.map((event) => JSON.stringify(event));
+
+  return {
+    payloads,
+  };
+}
+```
+
+With the default transformation, a `message.sent` event is published as a single message whose body contains both the event type and the Novu payload:
+
+```json
+{"payload":{"type":"message.sent","object":"message","data":{"object":{"subscriberId":"subscriber-123","channel":"email"}}},"eventType":"message.sent"}
+```
+
+### Novu example
+
+Consumers usually want the event type and the message fields at the top level so they can route without walking the nested payload. Novu message fields are under `payload.data.object`:
+
+```js
+function handler(input) {
+  const payloads = input.events.map((event) => {
+    const message = event.payload.data?.object ?? {};
+
+    return JSON.stringify({
+      eventType: event.eventType,
+      subscriberId: message.subscriberId ?? null,
+      channel: message.channel ?? null,
+      payload: event.payload,
+    });
+  });
+
+  return {
+    payloads,
+  };
+}
+```
+
+Guard every extracted field with a default. Preference and workflow events do not carry the same properties as message events, and one selected event type with a missing field fails the whole batch.
+
+Return fewer strings than `input.events.length` to filter events in the transformation, or a single string to combine a batch into one message. The connector publishes each returned string separately and does not guarantee ordering, so consumers should treat messages as independent.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare RabbitMQ
+
+Create the required RabbitMQ routing and credentials. Confirm the connection URI works from a network location allowed by your RabbitMQ deployment.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="RabbitMQ" />
+
+  <Step>
+## Enter connection details
+
+Enter the **URI** and **Routing key**.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the provided template. Return one serialized string in `payloads` for each RabbitMQ message you want to publish.
+  </Step>
+
+  <Step>
+## Select event types
+
+Choose the [event types](/platform/developer/webhooks/event-types) to publish. Ensure the transformation returns a valid string for every selected event.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint. In **Testing**, send an example for a subscribed event type. Confirm success in **Logs**, then consume from the bound queue and compare the message body with the transformed payload.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Read one message from the destination queue without acknowledging it:
+
+```bash
+rabbitmqadmin get queue=novu-events count=1 ackmode=reject_requeue_true
+```
+
+Compare the returned payload with the transformation output in the endpoint's **Logs**. If the queue is empty while **Logs** shows a successful delivery, the routing key did not resolve to this queue. Check the binding before you change the transformation.
+
+## Troubleshooting
+
+- **The connector cannot connect**: Check the URI scheme, host, port, credentials, and encoded virtual host. Confirm the RabbitMQ service is reachable.
+- **Authentication or authorization fails**: Confirm the URI credentials are active and allowed to publish through the configured virtual host and routing.
+- **Delivery succeeds but no queue receives a message**: Check that the routing key is bound to the intended queue.
+- **RabbitMQ receives invalid content**: Return strings in `payloads`. Use `JSON.stringify` for JSON message bodies.
+- **A selected event is absent**: Confirm the transformation creates one `payloads` entry for that event and review the endpoint event selection.
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix RabbitMQ endpoint](https://docs.svix.com/advanced-endpoints/rabbitmq)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [RabbitMQ documentation](https://www.rabbitmq.com/docs)
