@@ -302,6 +302,158 @@ describe('select integration', () => {
     expect(integration?.identifier).toEqual(matchingIntegration.identifier);
   });
 
+  it('should select an integration matching context JsonLogic conditions', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'conditioned-integration',
+      identifier: 'conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'context.tenant.id' }, 'acme'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          context: { tenant: { id: 'acme' } },
+        },
+      })
+    );
+
+    expect(integration?.identifier).toEqual(matchingIntegration.identifier);
+  });
+
+  it('should not apply deprecated tenant JsonLogic fields and fall back to primary', async () => {
+    const tenantIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'tenant-integration',
+      identifier: 'tenant-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'tenant.identifier' }, 'acme'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([tenantIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          tenant: { identifier: 'acme' },
+        },
+      })
+    );
+
+    expect(integration?.identifier).toEqual(testIntegration.identifier);
+  });
+
+  it('should not select an integration pinned by identifier when its rules do not match', async () => {
+    findOneMock.mockReturnValue({
+      ...testIntegration,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    });
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.CHAT,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        identifier: testIntegration.identifier,
+        filterData: {
+          subscriber: { locale: 'de' },
+        },
+      })
+    );
+
+    expect(integration).toBeUndefined();
+  });
+
+  it('should select an integration pinned by identifier when its rules match', async () => {
+    findOneMock.mockReturnValue({
+      ...testIntegration,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    });
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.CHAT,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        identifier: testIntegration.identifier,
+        filterData: {
+          subscriber: { locale: 'fr' },
+        },
+      })
+    );
+
+    expect(integration?.identifier).toEqual(testIntegration.identifier);
+  });
+
+  it('should ignore rules for configuration lookups', async () => {
+    findOneMock.mockReturnValue({
+      ...testIntegration,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    });
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {},
+        ignoreRules: true,
+      })
+    );
+
+    expect(integration?.identifier).toEqual(testIntegration.identifier);
+  });
+
+  it('should not fall back to an integration pinned by id when its rules do not match', async () => {
+    findOneMock.mockReturnValue({
+      ...testIntegration,
+      rules: {
+        '==': [{ var: 'context.tenant.id' }, 'acme'],
+      },
+    });
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.CHAT,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        id: '507f1f77bcf86cd799439011',
+        filterData: {
+          context: { tenant: { id: 'other' } },
+        },
+      })
+    );
+
+    expect(integration).toBeUndefined();
+  });
+
   it('should not apply unsafe json-logic operators and fall back to primary', async () => {
     const unsafeIntegration: IntegrationEntity = {
       ...testIntegration,

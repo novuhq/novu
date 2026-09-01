@@ -40,6 +40,8 @@ export enum DetailEnum {
   FAILED_STEP_RESOLVER_EXECUTION = 'Step resolver execution failed',
   STEP_RESOLVER_EXECUTION_TIMEOUT = 'Step resolver execution timeout',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
+  INTEGRATION_SKIPPED_BY_CONDITIONS = 'Integration skipped because its conditions did not match',
+  INTEGRATION_CONDITIONS_INVALID = 'Integration conditions are invalid and could not be applied',
   LAYOUT_SELECTED = 'Layout selected',
   LAYOUT_NOT_FOUND = 'Layout not found ',
   INTEGRATION_INSTANCE_SELECTED = 'Integration instance selected',

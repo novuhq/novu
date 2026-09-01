@@ -131,7 +131,7 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
       active: false,
       check: false,
       rules: {
-        '==': [{ var: 'tenant.identifier' }, 'acme'],
+        '==': [{ var: 'context.tenant.id' }, 'acme'],
       },
     };
 
@@ -150,6 +150,23 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
       check: false,
       rules: {
         '==': [{ var: 'payload.foo' }, 'bar'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+  });
+
+  it('should reject JsonLogic conditions on deprecated tenant fields', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-tenant',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'tenant.identifier' }, 'acme'],
       },
     };
 

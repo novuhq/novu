@@ -15,6 +15,20 @@ import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
 import { SelectIntegrationCommand } from './select-integration.command';
 
+export enum IntegrationSelectionSkipReasonEnum {
+  /** No integration matched the query at all — deleted, inactive, or never configured. */
+  NOT_FOUND = 'not_found',
+  /** The integration exists and is active, but its conditions evaluated to false for this send. */
+  RULES_NOT_MATCHED = 'rules_not_matched',
+  /** The integration's conditions reference unsupported fields or operators and cannot be trusted. */
+  RULES_INVALID = 'rules_invalid',
+}
+
+export type IntegrationSelectionResult = {
+  integration?: IntegrationEntity;
+  skipReason?: IntegrationSelectionSkipReasonEnum;
+};
+
 @Injectable()
 export class SelectIntegration {
   constructor(
@@ -27,12 +41,38 @@ export class SelectIntegration {
 
   @InstrumentUsecase()
   async execute(command: SelectIntegrationCommand): Promise<IntegrationEntity | undefined> {
+    const { integration } = await this.executeWithReason(command);
+
+    return integration;
+  }
+
+  /**
+   * Same selection as {@link execute}, but reports why nothing was selected so callers can tell a
+   * missing integration apart from one deliberately withheld by its conditions.
+   */
+  async executeWithReason(command: SelectIntegrationCommand): Promise<IntegrationSelectionResult> {
     const isCrossEnvironmentIntegrationEnabled = await this.isCrossEnvironmentIntegrationEnabled(command);
 
     let integration: IntegrationEntity | null = await this.getPrimaryIntegration(
       command,
       isCrossEnvironmentIntegrationEnabled
     );
+    let skipReason: IntegrationSelectionSkipReasonEnum | undefined;
+
+    /*
+     * `rules` gate delivery, so an integration reached directly — by id, identifier, or as the
+     * channel primary — is still discarded when its own rules do not match. Channels that resolve
+     * their integration from subscriber channels or endpoints (chat, push) never enter the scan
+     * below, and would otherwise deliver regardless of the conditions configured on them.
+     */
+    if (!command.ignoreRules && integration) {
+      const rulesSkipReason = this.getIntegrationRulesSkipReason(command, integration);
+
+      if (rulesSkipReason) {
+        integration = null;
+        skipReason = rulesSkipReason;
+      }
+    }
 
     if (!command.identifier) {
       const integrations = await this.integrationRepository.find(
@@ -49,6 +89,7 @@ export class SelectIntegration {
 
           if (passed) {
             integration = currentIntegration;
+            skipReason = undefined;
             break;
           }
         }
@@ -56,10 +97,10 @@ export class SelectIntegration {
     }
 
     if (!integration) {
-      return;
+      return { skipReason: skipReason ?? IntegrationSelectionSkipReasonEnum.NOT_FOUND };
     }
 
-    return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+    return { integration: GetDecryptedIntegrations.getDecryptedCredentials(integration) };
   }
 
   private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {
@@ -81,27 +122,45 @@ export class SelectIntegration {
     });
   }
 
+  /** Returns why the integration's rules withhold it, or `undefined` when it may be used. */
+  private getIntegrationRulesSkipReason(
+    command: SelectIntegrationCommand,
+    integration: IntegrationEntity
+  ): IntegrationSelectionSkipReasonEnum | undefined {
+    if (!hasIntegrationRules(integration.rules)) {
+      return undefined;
+    }
+
+    return this.evaluateIntegrationRules(command, integration.rules);
+  }
+
+  private evaluateIntegrationRules(
+    command: SelectIntegrationCommand,
+    rules: Record<string, unknown>
+  ): IntegrationSelectionSkipReasonEnum | undefined {
+    if (getIntegrationRulesIssues(rules).length > 0) {
+      return IntegrationSelectionSkipReasonEnum.RULES_INVALID;
+    }
+
+    const { result } = evaluateRules(
+      rules as RulesLogic<AdditionalOperation>,
+      {
+        subscriber: command.filterData.subscriber,
+        context: command.filterData.context,
+      },
+      true
+    );
+
+    return result ? undefined : IntegrationSelectionSkipReasonEnum.RULES_NOT_MATCHED;
+  }
+
   private async integrationMatchesConditions(
     command: SelectIntegrationCommand,
     currentIntegration: IntegrationEntity,
     tenant: TenantEntity | null
   ): Promise<boolean> {
     if (hasIntegrationRules(currentIntegration.rules)) {
-      if (getIntegrationRulesIssues(currentIntegration.rules).length > 0) {
-        return false;
-      }
-
-      const { result } = evaluateRules(
-        currentIntegration.rules as RulesLogic<AdditionalOperation>,
-        {
-          tenant: tenant ?? command.filterData.tenant,
-          subscriber: command.filterData.subscriber,
-          context: command.filterData.context,
-        },
-        true
-      );
-
-      return result;
+      return this.evaluateIntegrationRules(command, currentIntegration.rules) === undefined;
     }
 
     if (!hasLegacyIntegrationConditions(currentIntegration.conditions) || !command.userId) {

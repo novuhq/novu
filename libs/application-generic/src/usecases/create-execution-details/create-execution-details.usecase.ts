@@ -47,6 +47,8 @@ const mapDetailToEventType = {
 
   // Subscriber events
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION]: 'subscriber_integration_missing',
+  [DetailEnum.INTEGRATION_SKIPPED_BY_CONDITIONS]: 'integration_skipped_by_conditions',
+  [DetailEnum.INTEGRATION_CONDITIONS_INVALID]: 'integration_conditions_invalid',
   [DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS]: 'subscriber_missing_email_address',
   [DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER]: 'subscriber_missing_phone_number',
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL]: 'subscriber_channel_missing',

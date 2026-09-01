@@ -137,6 +137,7 @@ export class Session {
         channelType: ChannelTypeEnum.IN_APP,
         providerId: InAppProviderIdEnum.Novu,
         filterData: {},
+        ignoreRules: true,
       })
     );
 
