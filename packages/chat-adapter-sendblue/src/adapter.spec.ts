@@ -115,6 +115,19 @@ describe('SendblueAdapterImpl', () => {
       });
     });
 
+    it('keeps attachments posted alongside a card', async () => {
+      const postMessage = spyOnVendorPostMessage();
+      const adapter = new SendblueAdapterImpl(CONFIG);
+      const files = [{ name: 'receipt.pdf', mimeType: 'application/pdf', data: Buffer.from('pdf') }];
+
+      await adapter.postMessage('sendblue:t', {
+        card: { type: 'card', children: [{ type: 'text', content: 'Your order shipped' }] },
+        files,
+      } as never);
+
+      expect(postMessage).toHaveBeenCalledWith('sendblue:t', { markdown: 'Your order shipped', files });
+    });
+
     it('prefers an explicit fallbackText over rendering the card', async () => {
       const postMessage = spyOnVendorPostMessage();
       const adapter = new SendblueAdapterImpl(CONFIG);

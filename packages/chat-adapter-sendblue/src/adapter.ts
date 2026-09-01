@@ -1,4 +1,4 @@
-import type { Adapter, AdapterPostableMessage, CardElement, RawMessage } from 'chat';
+import type { Adapter, AdapterPostableMessage, CardElement, FileUpload, RawMessage } from 'chat';
 import {
   type SendblueMessagePayload,
   type SendblueThreadId,
@@ -103,7 +103,8 @@ export class SendblueAdapterImpl extends VendorSendblueAdapter {
    * its buttons already stripped by `adaptApprovalContentForReplyBasedPlatform`)
    * renders to an empty string and is silently skipped. Prefer the card's own
    * `fallbackText` when the caller provided one, otherwise flatten it via
-   * `renderCardAsText`.
+   * `renderCardAsText`. Any `files` posted alongside the card are carried over,
+   * since the vendor adapter uploads them for `{ markdown }` postables too.
    */
   private flattenCard(message: AdapterPostableMessage): AdapterPostableMessage {
     if (typeof message === 'string') {
@@ -118,7 +119,11 @@ export class SendblueAdapterImpl extends VendorSendblueAdapter {
     }
 
     const fallbackText = typeof record.fallbackText === 'string' ? record.fallbackText : undefined;
+    const files = Array.isArray(record.files) ? (record.files as FileUpload[]) : undefined;
 
-    return { markdown: fallbackText ?? renderCardAsText(card) };
+    return {
+      markdown: fallbackText ?? renderCardAsText(card),
+      ...(files?.length ? { files } : {}),
+    };
   }
 }
