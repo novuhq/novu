@@ -21,7 +21,11 @@ export function setSocketStatus(status: SocketStatus): void {
   if (status === current) return;
 
   current = status;
-  listeners.forEach((listener) => listener(status));
+  // useWebChat can connect() during render; notify after this turn so
+  // PlaygroundApp does not setState while WebChat is rendering.
+  queueMicrotask(() => {
+    listeners.forEach((listener) => listener(current));
+  });
 }
 
 export function subscribeSocketStatus(listener: Listener): () => void {

@@ -1,65 +1,44 @@
 'use client';
 
-import type { AgentConversationTyping, AgentMessage, AgentPendingAction, UseWebChatResult } from '@novu/react';
-import type { RespondToAction } from './approval-card';
-import { ApprovalDock } from './approval-dock';
-import { ChatThread } from './chat-thread';
-import { Composer } from './composer';
+import type { UseWebChatResult } from '@novu/react';
+import { Button } from '@/components/ui/button';
+import { WebChatThread } from './assistant-ui/thread';
 
 /**
- * Presentational shell. Swap this (and the components it uses) for your own UI —
- * it only consumes values from `useWebChat`.
+ * assistant-ui shell. `useWebChat` still owns messages, send, and approvals.
  */
 export type ChatPanelProps = {
-  conversationId?: string;
   error?: { message: string };
-  messages: AgentMessage[];
-  pendingActions: AgentPendingAction[];
-  isRunning: boolean;
-  typing?: AgentConversationTyping;
-  pagination: UseWebChatResult['pagination'];
-  onRespond: RespondToAction;
-  composerDisabled: boolean;
-  onSend: (text: string) => void;
+  isRecovering: boolean;
+  catchUpError?: UseWebChatResult['catchUpError'];
+  refetch: UseWebChatResult['refetch'];
 };
 
-export function ChatPanel({
-  conversationId,
-  error,
-  messages,
-  pendingActions,
-  isRunning,
-  typing,
-  pagination,
-  onRespond,
-  composerDisabled,
-  onSend,
-}: ChatPanelProps) {
+export function ChatPanel({ error, isRecovering, catchUpError, refetch }: ChatPanelProps) {
   return (
     <div className="chat-main">
-      <header className="chat-topbar">
-        <h1>{conversationId ? 'Conversation' : 'New conversation'}</h1>
-        {conversationId ? <code>{conversationId}</code> : null}
-      </header>
-
       {error ? (
         <div className="banner-error" role="alert">
           {error.message}
         </div>
       ) : null}
 
-      <ChatThread
-        messages={messages}
-        isRunning={isRunning}
-        typing={typing}
-        pagination={pagination}
-        onRespond={onRespond}
-      />
+      {isRecovering ? (
+        <div className="banner-recovery" role="status" aria-live="polite">
+          Syncing missed messages…
+        </div>
+      ) : null}
 
-      <div className="chat-foot">
-        <ApprovalDock actions={pendingActions} />
-        <Composer pending={composerDisabled} isRunning={isRunning} onSend={onSend} />
-      </div>
+      {catchUpError ? (
+        <div className="banner-catch-up" role="alert">
+          <span>{catchUpError.message}</span>
+          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+            Reload conversation
+          </Button>
+        </div>
+      ) : null}
+
+      <WebChatThread />
     </div>
   );
 }

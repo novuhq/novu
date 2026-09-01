@@ -17,15 +17,21 @@
  *   );
  *
  * Below: same pattern, plus optional callbacks and a sidebar slot for this playground.
- * Swap `ChatPanel` for your UI; keep the hook wiring.
+ * Swap `ChatPanel` (assistant-ui Thread) for your UI; keep the hook wiring.
  */
 
-import type { AgentConversationStatus, AgentMessage } from '@novu/react';
+import type { AgentConversationStatus, AgentEventEnvelope, AgentMessage } from '@novu/react';
 import { useWebChat } from '@novu/react';
-import { type ReactNode, useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { config } from '../config';
 import { useApprovalAlert } from '../lib/approval-alert';
+import { type ConversationSummary } from '../lib/conversations';
 import { type RunOrigin, type RunTransition, runOrigin, useRunActivity } from '../lib/run-activity';
+import {
+  mapConversationsToThreadData,
+  NEW_CONVERSATION_THREAD_ID,
+} from '../lib/thread-list-mapper';
+import { WebChatRuntimeProvider } from './assistant-ui/web-chat-runtime';
 import { ChatPanel } from './chat-panel';
 
 /** Live hook fields the playground sidebar displays. */
@@ -38,6 +44,13 @@ export type WebChatSession = {
   lastRunTransition?: RunTransition;
 };
 
+type WebChatThreadListProps = {
+  items: ConversationSummary[];
+  isLoading: boolean;
+  onSwitchToThread: (identifier: string) => void;
+  onSwitchToNewThread: () => void;
+};
+
 type WebChatProps = {
   /**
    * Resume an existing conversation. Omit to start a new one —
@@ -46,14 +59,38 @@ type WebChatProps = {
   conversationId?: string;
   /** Playground: refresh the recent list after an assistant reply. */
   onAssistantMessage?: () => void;
+  /** Playground: assistant-ui ThreadList backed by ExternalStoreThreadListAdapter. */
+  threadList?: WebChatThreadListProps;
   /** Playground chrome only — omit in a real app. */
   sidebar?: (session: WebChatSession) => ReactNode;
 };
 
-export function WebChat({ conversationId, onAssistantMessage, sidebar }: WebChatProps) {
+export function WebChat({
+  conversationId,
+  onAssistantMessage,
+  threadList,
+  sidebar,
+}: WebChatProps) {
   // Optional hook callbacks (background approval ping + run-lifecycle diagnostics).
   const onActionRequested = useApprovalAlert();
-  const { lastTransition, onEvent } = useRunActivity();
+  const { lastTransition, onEvent: onRunEvent } = useRunActivity();
+  const [runError, setRunError] = useState<{ message: string }>();
+
+  const onEvent = useCallback(
+    (envelope: AgentEventEnvelope) => {
+      onRunEvent(envelope);
+
+      const { type } = envelope.event;
+      // Hook `error` does not surface run failures (SDK drops run-error at publish).
+      // Track run-error here so the session banner can show agent run failures.
+      if (type === 'run-error') {
+        setRunError({ message: envelope.event.message });
+      } else if (type === 'run-finish' || type === 'run-start') {
+        setRunError(undefined);
+      }
+    },
+    [onRunEvent],
+  );
 
   const onMessage = useCallback(
     (message: AgentMessage) => {
@@ -67,12 +104,17 @@ export function WebChat({ conversationId, onAssistantMessage, sidebar }: WebChat
     pendingActions,
     sendMessage,
     respondToAction,
+    sendAction,
+    retryMessage,
     conversationId: activeConversationId,
     error,
     isRunning,
     conversationStatus,
     isLoading,
     pagination,
+    isRecovering,
+    catchUpError,
+    refetch,
     typing,
   } = useWebChat({
     agentId: config.agentId,
@@ -84,16 +126,16 @@ export function WebChat({ conversationId, onAssistantMessage, sidebar }: WebChat
 
   const [sending, setSending] = useState(false);
 
-  const onSend = useCallback(
-    async (text: string) => {
+  const sendWithBusy = useCallback(
+    async (input: Parameters<typeof sendMessage>[0]) => {
       setSending(true);
       try {
-        await sendMessage(text);
+        return await sendMessage(input);
       } finally {
         setSending(false);
       }
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const session: WebChatSession = {
@@ -105,22 +147,50 @@ export function WebChat({ conversationId, onAssistantMessage, sidebar }: WebChat
     lastRunTransition: lastTransition,
   };
 
+  // Merge hook HTTP/action errors with onEvent run-error (see comment above).
+  const sessionError = error ?? runError;
+
+  const composerBusy = sending || isRunning || isLoading;
+  const activeThreadId = activeConversationId ?? conversationId ?? NEW_CONVERSATION_THREAD_ID;
+
+  const ui = useMemo(
+    () => ({
+      sendAction,
+      retryMessage,
+      pagination,
+      typingLabel: typing?.status,
+      pendingActionCount: pendingActions.length,
+    }),
+    [sendAction, retryMessage, pagination, typing?.status, pendingActions.length],
+  );
+
+  const runtimeThreadList = useMemo(() => {
+    if (!threadList) return undefined;
+
+    return {
+      threadId: activeThreadId,
+      threads: mapConversationsToThreadData(threadList.items),
+      isLoading: threadList.isLoading,
+      onSwitchToThread: threadList.onSwitchToThread,
+      onSwitchToNewThread: threadList.onSwitchToNewThread,
+    };
+  }, [activeThreadId, threadList]);
+
   return (
-    <>
+    <WebChatRuntimeProvider
+      chat={{ messages, isRunning, isLoading, sendMessage: sendWithBusy, respondToAction }}
+      composerBusy={composerBusy}
+      threadList={runtimeThreadList}
+      ui={ui}
+    >
       {sidebar?.(session)}
 
       <ChatPanel
-        conversationId={activeConversationId}
-        error={error}
-        messages={messages}
-        pendingActions={pendingActions}
-        isRunning={isRunning}
-        typing={typing}
-        pagination={pagination}
-        onRespond={respondToAction}
-        composerDisabled={sending || isRunning || isLoading}
-        onSend={onSend}
+        error={sessionError}
+        isRecovering={isRecovering}
+        catchUpError={catchUpError}
+        refetch={refetch}
       />
-    </>
+    </WebChatRuntimeProvider>
   );
 }
