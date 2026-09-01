@@ -1,0 +1,7 @@
+The handler receives one delivery batch:
+
+- `input.events`, an array whose length is capped by the endpoint batch size
+- `input.events[].eventType`, the Novu event type, for example `message.sent`
+- `input.events[].payload`, the webhook body
+
+For message events, fields such as `subscriberId` and `channel` are under `event.payload.object`. Other event families use different payload shapes, so guard extracted fields with defaults.

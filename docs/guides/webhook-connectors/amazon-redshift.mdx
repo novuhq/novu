@@ -1,0 +1,193 @@
+---
+title: 'Load webhook events into Amazon Redshift'
+description: "Write Novu webhook events to an Amazon Redshift table with the Redshift connector, covering Serverless and provisioned clusters, the Redshift Data API, and named SQL bindings."
+sidebarTitle: Amazon Redshift
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Amazon Redshift connector inserts Novu webhook events into a Redshift table through the [Redshift Data API](https://docs.aws.amazon.com/redshift-data/latest/APIReference/Welcome.html). Both Redshift Serverless and provisioned clusters are supported. Each batch of webhooks becomes one parameterized SQL statement.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). This connector maps to the Svix [Redshift advanced endpoint](https://docs.svix.com/advanced-endpoints/redshift).
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- A Redshift Serverless workgroup, or a provisioned Redshift cluster and the database user to connect as.
+- IAM credentials, an access key ID and secret access key, allowed to call the Redshift Data API.
+- The destination table created before you enable the endpoint. The connector does not create or alter tables.
+
+Because delivery goes through the Data API rather than a direct database connection, you do not need to open a database port to Novu.
+
+## Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Region | Yes | AWS region of the workgroup or cluster. |
+| Access key ID | Yes | AWS access key ID used to authenticate. |
+| Secret access key | Yes | AWS secret access key used to authenticate. |
+| Workgroup name | For Redshift Serverless | Name of the Serverless workgroup. |
+| Cluster identifier | For provisioned clusters | Identifier of the provisioned cluster. |
+| Database user | For provisioned clusters | Database user to connect as. |
+| Database name | Only without a transformation | Database to write to. |
+| Schema name | No | Schema that contains the table. Used only without a transformation. |
+| Table name | Only without a transformation | Table that receives the rows. |
+| Transformation | No | JavaScript that returns the SQL statement and bindings to run. |
+
+Set the Serverless fields or the provisioned cluster fields, not both. When you set a transformation, the statement names the target table directly, so database, schema, and table become optional.
+
+## IAM permissions
+
+Svix does not publish the exact Data API actions this connector calls, so start from AWS's own reference for [authorizing access to the Redshift Data API](https://docs.aws.amazon.com/redshift/latest/mgmt/data-api-access.html). AWS documents that callers need `redshift-data` permissions to run statements and read their status, plus credential permissions that depend on the deployment type: `redshift-serverless:GetCredentials` for Serverless, or `redshift:GetClusterCredentials` for a provisioned cluster with a database user.
+
+Start narrow, then widen only if a delivery fails with an authorization error visible in the endpoint **Logs** tab.
+
+Grant insert access inside the database separately with Redshift [`GRANT`](https://docs.aws.amazon.com/redshift/latest/dg/r_GRANT.html):
+
+```sql
+GRANT INSERT ON TABLE novu_events TO awsuser;
+```
+
+## Default destination behavior
+
+Without a transformation, Svix inserts into the table identified by the database, schema, and table fields using two columns. It sets `created_at` to the insert time and writes the raw payload to `payload`. Note that unlike the BigQuery and Snowflake connectors, no `id` column is generated:
+
+```sql
+CREATE TABLE events (
+  created_at TIMESTAMP,
+  payload VARCHAR(65535)
+);
+```
+
+`VARCHAR(65535)` is the largest `VARCHAR` Redshift allows. If a webhook payload is larger than the column can hold, it cannot be written, and the endpoint is disabled. Keep this in mind if you subscribe to event types with large payloads.
+
+The table must exist before you enable the endpoint.
+
+
+## Create an analytics table
+
+```sql
+CREATE TABLE novu_events (
+  received_at TIMESTAMP,
+  event_type VARCHAR(256),
+  subscriber_id VARCHAR(256),
+  channel VARCHAR(64),
+  payload VARCHAR(65535)
+);
+```
+
+## Transformation contract
+
+The transformation builds one parameterized statement per batch:
+
+<WebhookBatchInput />
+- Output: an object with `statement` and `bindings`.
+- `bindings` is row-oriented. It is an array of `{ name, value }` objects, and the statement references each one by name, for example `:payload0`. This differs from the Snowflake connector, which uses column-oriented bindings.
+- The statement runs against your database through the Redshift Data API.
+
+Novu-oriented example that matches the analytics table above and reads message fields from `event.payload.object`:
+
+```javascript
+function handler(input) {
+  const bindings = [];
+  const values = [];
+
+  input.events.forEach((event, index) => {
+    const message = event.payload.object ?? {};
+
+    bindings.push(
+      { name: `event_type${index}`, value: String(event.eventType) },
+      { name: `subscriber_id${index}`, value: String(message.subscriberId ?? "") },
+      { name: `channel${index}`, value: String(message.channel ?? "") },
+      { name: `payload${index}`, value: JSON.stringify(event.payload) }
+    );
+
+    values.push(
+      `(CURRENT_TIMESTAMP, :event_type${index}, :subscriber_id${index}, :channel${index}, :payload${index})`
+    );
+  });
+
+  return {
+    bindings,
+    statement: `INSERT INTO novu_events (received_at, event_type, subscriber_id, channel, payload) VALUES ${values.join(", ")};`,
+  };
+}
+```
+
+Suffix binding names with the row index, as above. Reusing a name across rows collapses the values.
+
+## Configure in the Dashboard
+
+<Steps>
+
+<WebhookConnectorAddEndpoint connectorName="Amazon Redshift" />
+
+<Step>
+## Enter connection details
+
+Enter the region and IAM credentials. For Serverless, set the workgroup name. For a provisioned cluster, set the cluster identifier and database user. Fill in database, schema, and table if you are relying on the default insert behavior.
+</Step>
+
+<Step>
+## Configure the transformation
+
+Paste a transformation whose statement names your table and whose bindings match its columns.
+</Step>
+
+<Step>
+## Select event types
+
+Subscribe to the [event types](/platform/developer/webhooks/event-types) you want to store. Every subscribed type runs through the same statement, so confirm the bindings resolve for all of them.
+</Step>
+
+<Step>
+## Test the endpoint
+
+Click **Create**, open the endpoint, go to the **Testing** tab, and use **Send Example** for each subscribed event type. Confirm success in the **Logs** tab.
+</Step>
+
+</Steps>
+
+## Verify delivery
+
+Query through the same Data API the connector uses. Submit the statement:
+
+```bash
+aws redshift-data execute-statement \
+  --region us-east-1 \
+  --workgroup-name my-workgroup \
+  --database dev \
+  --sql "SELECT received_at, event_type, subscriber_id, channel FROM novu_events ORDER BY received_at DESC LIMIT 10"
+```
+
+Then read the result with the returned statement ID:
+
+```bash
+aws redshift-data get-statement-result --region us-east-1 --id <statement-id>
+```
+
+For a provisioned cluster, replace `--workgroup-name` with `--cluster-identifier` and `--db-user`.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Endpoint was disabled after a delivery | A payload exceeded what the `payload` column can store. `VARCHAR(65535)` is the Redshift maximum, so trim the payload in the transformation or store selected fields instead of the whole body. |
+| Authorization or access denied errors | The IAM credentials are missing Data API permissions, or the credential permission for your deployment type. Check the AWS reference linked above. |
+| Connection or resource not found | Serverless and provisioned fields are mixed. Set the workgroup name, or the cluster identifier with a database user, not both. |
+| Permission denied for relation | The database user lacks `INSERT` on the table. |
+| Statement fails to parse | Inspect the generated SQL and confirm every named binding appears in the statement. |
+| Values land in the wrong rows | Binding names are reused across rows. Suffix each name with the row index. |
+| Table not found | Database, schema, and table fields are only used without a transformation. With a transformation, the name in the statement is what matters, including the schema if the table is not on the search path. |
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix Amazon Redshift endpoint](https://docs.svix.com/advanced-endpoints/redshift)
+- [Authorizing access to the Redshift Data API](https://docs.aws.amazon.com/redshift/latest/mgmt/data-api-access.html)
+- [Amazon Redshift Data API](https://docs.aws.amazon.com/redshift-data/latest/APIReference/Welcome.html)

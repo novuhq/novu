@@ -1,0 +1,180 @@
+---
+title: 'Load webhook events into Snowflake'
+description: "Load Novu webhook events into a Snowflake table with the Snowflake connector, including key-pair authentication, the default three column schema, and column-oriented bindings."
+sidebarTitle: Snowflake
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Snowflake connector inserts Novu webhook events into a Snowflake table. Each batch of webhooks becomes a single parameterized `INSERT` statement. Use it when notification data belongs in your Snowflake warehouse alongside other analytics sources.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). This connector maps to the Svix [Snowflake advanced endpoint](https://docs.svix.com/advanced-endpoints/snowflake).
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- A Snowflake account and its account identifier in `organization-account` form, for example `ab12345-xs67890`.
+- An RSA key pair, with the public key assigned to a Snowflake user. This connector authenticates with key-pair JWT authentication, not a password. See [key-pair authentication](https://docs.snowflake.com/en/user-guide/key-pair-auth).
+- The destination table created before you enable the endpoint. The connector does not create or alter tables.
+
+## Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Account identifier | Yes | Account identifier in `organization-account` form, for example `ab12345-xs67890`. |
+| User ID | Yes | The Snowflake user the public key is assigned to. |
+| Private key | Yes | The PEM encoded private key that matches the assigned public key. |
+| Database name | Only without a transformation | Database that receives the rows. |
+| Schema name | Only without a transformation | Schema that contains the table. |
+| Table name | Only without a transformation | Table that receives the rows. |
+| Transformation | No | JavaScript that returns the SQL statement and bindings to run. |
+
+When you set a transformation, the statement names the target table directly, so database, schema, and table become optional.
+
+## Authentication and permissions
+
+Generate an RSA key pair, assign the public key to the Snowflake user, and paste the complete matching private key into the connector.
+
+Svix does not publish a required privilege list. Scope the user with Snowflake [`GRANT`](https://docs.snowflake.com/en/sql-reference/sql/grant-privilege) so it can insert into one table and nothing else:
+
+```sql
+GRANT USAGE ON DATABASE my_database TO ROLE novu_writer;
+GRANT USAGE ON SCHEMA my_database.my_schema TO ROLE novu_writer;
+GRANT INSERT ON TABLE my_database.my_schema.novu_events TO ROLE novu_writer;
+GRANT USAGE ON WAREHOUSE novu_wh TO ROLE novu_writer;
+GRANT ROLE novu_writer TO USER novu_user;
+```
+
+The connector configuration has no warehouse field. Set a default warehouse and default role on the Snowflake user with the `DEFAULT_WAREHOUSE` and `DEFAULT_ROLE` properties of [`CREATE USER`](https://docs.snowflake.com/en/sql-reference/sql/create-user) so statements have compute to run on.
+
+## Default destination behavior
+
+Without a transformation, Svix inserts into the table identified by the database, schema, and table fields using three columns. It generates a unique `id`, sets `created_at` to the insert time, and writes the raw payload to `payload`:
+
+```sql
+CREATE TABLE my_database.my_schema.my_table (
+  id TEXT,
+  created_at TIMESTAMP,
+  payload TEXT
+);
+```
+
+The table must exist before you enable the endpoint.
+
+
+## Create an analytics table
+
+```sql
+CREATE TABLE my_database.my_schema.novu_events (
+  event_type TEXT,
+  subscriber_id TEXT,
+  channel TEXT,
+  payload TEXT,
+  received_at TIMESTAMP_LTZ DEFAULT CURRENT_TIMESTAMP()
+);
+```
+
+## Transformation contract
+
+The transformation shapes each batch into one SQL statement:
+
+<WebhookBatchInput />
+- Output: an object with `statement` and `bindings`.
+- `statement` is the SQL to execute, referencing bindings by name, for example `:subscriber_id`.
+- `bindings` is column-oriented. It is an object keyed by binding name, and each binding has a Snowflake `type` and a `value` array holding one entry per row in the batch. All arrays must be the same length.
+- Send every value as a string. For allowed types, see [using bind variables in a statement](https://docs.snowflake.com/en/developer-guide/sql-api/submitting-requests#using-bind-variables-in-a-statement).
+
+Novu-oriented example that matches the analytics table above and reads message fields from `event.payload.object`:
+
+```javascript
+function handler(input) {
+  const bindings = {
+    event_type: { type: "TEXT", value: [] },
+    subscriber_id: { type: "TEXT", value: [] },
+    channel: { type: "TEXT", value: [] },
+    payload: { type: "TEXT", value: [] },
+  };
+
+  input.events.forEach((event) => {
+    const message = event.payload.object ?? {};
+
+    bindings.event_type.value.push(String(event.eventType));
+    bindings.subscriber_id.value.push(String(message.subscriberId ?? ""));
+    bindings.channel.value.push(String(message.channel ?? ""));
+    bindings.payload.value.push(JSON.stringify(event.payload));
+  });
+
+  return {
+    bindings,
+    statement:
+      "INSERT INTO MY_DATABASE.MY_SCHEMA.NOVU_EVENTS (event_type, subscriber_id, channel, payload) VALUES (:event_type, :subscriber_id, :channel, :payload);",
+  };
+}
+```
+
+Use the `FIXED` type for numeric columns, and still push the value as a string.
+
+## Configure in the Dashboard
+
+<Steps>
+
+<WebhookConnectorAddEndpoint connectorName="Snowflake" />
+
+<Step>
+## Enter connection details
+
+Enter the account identifier, user ID, and private key. Fill in database, schema, and table if you are relying on the default insert behavior.
+</Step>
+
+<Step>
+## Configure the transformation
+
+Paste a transformation whose statement names your table and whose bindings match its columns.
+</Step>
+
+<Step>
+## Select event types
+
+Subscribe to the [event types](/platform/developer/webhooks/event-types) you want to store. Every subscribed type runs through the same statement, so confirm each binding array is filled for all of them.
+</Step>
+
+<Step>
+## Test the endpoint
+
+Click **Create**, open the endpoint, go to the **Testing** tab, and use **Send Example** for each subscribed event type. Confirm success in the **Logs** tab.
+</Step>
+
+</Steps>
+
+## Verify delivery
+
+```sql
+SELECT event_type, subscriber_id, channel, received_at
+FROM my_database.my_schema.novu_events
+ORDER BY received_at DESC
+LIMIT 10;
+```
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| JWT or authentication errors | The private key does not match the public key assigned to the user, the account identifier is wrong, or the key was pasted with missing lines. Key-pair authentication is required, so a password will not work. |
+| No active warehouse errors | The user has no default warehouse, or no `USAGE` grant on it. The connector configuration has no warehouse field. |
+| Insufficient privileges | The role is missing `USAGE` on the database or schema, or `INSERT` on the table. |
+| Binding count errors | The `value` arrays have different lengths. Push one entry per event to every binding, including when a field is missing. |
+| Type or conversion errors | A value was pushed as a number or object. Send strings, and use `FIXED` for numeric columns. |
+| Table not found | Database, schema, and table fields are only used without a transformation. With a transformation, the fully qualified name in the statement is what matters. |
+| Statement runs but no rows appear | The statement targets a different database or schema than the one you are querying. Check the fully qualified name in the transformation. |
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix Snowflake endpoint](https://docs.svix.com/advanced-endpoints/snowflake)
+- [Snowflake key-pair authentication](https://docs.snowflake.com/en/user-guide/key-pair-auth)
+- [Snowflake SQL API bind variables](https://docs.snowflake.com/en/developer-guide/sql-api/submitting-requests#using-bind-variables-in-a-statement)

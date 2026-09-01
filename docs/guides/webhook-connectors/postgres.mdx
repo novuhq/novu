@@ -1,0 +1,171 @@
+---
+title: 'Insert webhook events into Postgres'
+description: 'Insert Novu webhook events into a Postgres table with the Postgres connector, including least-privilege database grants, an analytics schema, and verification from the Novu Dashboard.'
+sidebarTitle: Postgres
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Postgres connector writes Novu webhook events to a table in your Postgres database. Use it when notification events need to live in an operational database or feed a reporting pipeline that already reads from Postgres.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction), and this connector is one of its [advanced endpoint types](https://docs.svix.com/advanced-endpoints).
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- A Postgres database reachable over the public internet
+- The destination table created before you enable the endpoint. The connector does not create or alter tables.
+- A dedicated database user that can connect to the database and insert into that table
+- Network rules that allow the connection, including any cloud provider IP allowlist
+
+<Warning>
+  Do not reuse an application owner or migration account. The connector only needs to insert into one table.
+</Warning>
+
+## Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Host | Yes | Hostname of the Postgres server. |
+| Port | Yes | Port the Postgres server listens on. |
+| Database | Yes | Database that contains the destination table. |
+| Username | Yes | Database user the connector authenticates as. |
+| Password | Yes | Password for that user. |
+| Table name | Yes | Table that receives the event rows. |
+| Transformation | Yes | JavaScript that maps each webhook batch to rows for that table. |
+
+## Create the destination table
+
+This schema keeps the event type available for filtering, extracts the two fields most reports need, and preserves the complete webhook body:
+
+```sql
+CREATE TABLE novu_events (
+  id UUID PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  subscriber_id TEXT,
+  channel TEXT,
+  payload JSONB NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX novu_events_event_type_idx
+  ON novu_events (event_type);
+
+CREATE INDEX novu_events_received_at_idx
+  ON novu_events (received_at DESC);
+```
+
+`payload` holds the full body as `JSONB`, so a new field in a Novu payload does not require a migration. `received_at` is set by the transformation rather than by the payload, which makes it a reliable sort key across every event type.
+
+## Grant least-privilege access
+
+```sql
+GRANT CONNECT ON DATABASE YOUR_DATABASE TO novu_webhook_writer;
+GRANT USAGE ON SCHEMA public TO novu_webhook_writer;
+GRANT INSERT ON TABLE public.novu_events TO novu_webhook_writer;
+```
+
+Replace the database, schema, user, and table names with your own. Add `SELECT` only if your verification process or database policy requires the same user to read rows back.
+
+
+## Transformation contract
+
+<WebhookBatchInput />
+
+The return shape is defined by the template the Novu Dashboard ships with this connector. Open the template and read the JSDoc comment above its `handler` for the exact keys, because the return shape differs between connector families. Map the values below into that template rather than pasting a handler from another connector page:
+
+| Column | Value to map |
+| --- | --- |
+| `id` | `crypto.randomUUID()` |
+| `event_type` | `event.eventType` |
+| `subscriber_id` | `event.payload.object?.subscriberId ?? null` |
+| `channel` | `event.payload.object?.channel ?? null` |
+| `payload` | `JSON.stringify(event.payload)` |
+| `received_at` | `new Date().toISOString()` |
+
+Send an example event before you customize anything, read the transformed output in the endpoint's **Logs**, then change one column at a time and re-test.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the database
+
+Create the table, create the restricted user, and apply the grants above. Confirm the user can connect and insert from outside your network.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Postgres" />
+
+  <Step>
+## Enter connection details
+
+Enter the host, port, database, username, password, and table name. Add a description that identifies the database and environment.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the transformation template shown in the Dashboard and map the columns using the table above.
+  </Step>
+
+  <Step>
+## Select event types
+
+Subscribe to the [event types](/platform/developer/webhooks/event-types) your consumer needs. All subscribed types insert into the same table, so confirm the transformation produces valid rows for each one. For delivery reporting, start with `message.sent`, `message.delivered`, and `message.failed`.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Click **Create**, open the endpoint, go to the **Testing** tab, and use **Send Example** for each subscribed event type. Confirm success in the **Logs** tab.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+```sql
+SELECT
+  event_type,
+  subscriber_id,
+  channel,
+  received_at
+FROM novu_events
+ORDER BY received_at DESC
+LIMIT 20;
+```
+
+To read a field that you did not extract into a column, query the stored body:
+
+```sql
+SELECT payload #>> '{object,subscriberId}' AS subscriber_id
+FROM novu_events
+ORDER BY received_at DESC
+LIMIT 20;
+```
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Connection refused or timed out | Hostname, port, firewall rules, and any cloud provider IP allowlist. |
+| Authentication failed | The username and password, and whether that user is allowed to connect to the selected database. |
+| Permission denied on insert | The user needs `USAGE` on the schema and `INSERT` on the destination table. |
+| Relation does not exist | The table must exist before the endpoint is enabled, and an unqualified name resolves through the user's `search_path`. |
+| Column or type error | Compare the transformed output in **Logs** with the table definition. A `TIMESTAMPTZ` column needs a valid timestamp, and a `NOT NULL` column cannot receive `null`. |
+| Subscriber or channel values are empty | Message fields are under `payload.object`, not at the top level of `payload`. |
+| Rows appear for some event types but not others | The transformation assumes fields that only exist on certain event types. Guard each one with a default. |
+| No rows after a successful delivery | Confirm the database, schema, and table you queried match the endpoint configuration. |
+
+Use the **Logs** tab to inspect transformed payloads and delivery attempts.
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [PostgreSQL GRANT](https://www.postgresql.org/docs/current/sql-grant.html)
+- [PostgreSQL JSON functions and operators](https://www.postgresql.org/docs/current/functions-json.html)
