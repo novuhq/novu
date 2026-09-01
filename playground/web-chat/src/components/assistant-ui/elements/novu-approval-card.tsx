@@ -1,8 +1,7 @@
 "use client";
 
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
-import { APPROVAL_OPTIONS } from "@/lib/approval-options";
-import { ApprovalCard, type ApprovalState } from "./approval-card";
+import { ApprovalCard, type AlwaysAllowOption, type ApprovalState } from "./approval-card";
 
 function commandPreview(args: unknown, argsText: string | undefined, toolName: string): string {
   if (argsText?.trim()) return argsText.trim();
@@ -35,14 +34,33 @@ export const NovuApprovalCard: ToolCallMessagePartComponent = ({
   respondToApproval,
 }) => {
   const options = approval?.options ?? [];
-  const once = options.find((option) => option.id === APPROVAL_OPTIONS.approved.id);
-  const alwaysTool = options.find((option) => option.id === APPROVAL_OPTIONS["trust-tool"].id);
-  const alwaysServer = options.find((option) => option.id === APPROVAL_OPTIONS["trust-server"].id);
-  const deny = options.find((option) => option.id === APPROVAL_OPTIONS.denied.id);
 
   const respond = (optionId: string, approved: boolean) => {
     respondToApproval?.({ optionId, approved });
   };
+
+  let onAllowOnce: (() => void) | undefined;
+  let onDeny: (() => void) | undefined;
+  const alwaysAllowOptions: AlwaysAllowOption[] = [];
+
+  for (const option of options) {
+    switch (option.kind) {
+      case "allow-once":
+        onAllowOnce = () => respond(option.id, true);
+        break;
+      case "allow-always":
+        alwaysAllowOptions.push({
+          label: option.label ?? "Always allow",
+          onSelect: () => respond(option.id, true),
+        });
+        break;
+      case "reject-once":
+        onDeny = () => respond(option.id, false);
+        break;
+      default:
+        break;
+    }
+  }
 
   return (
     <ApprovalCard
@@ -50,34 +68,9 @@ export const NovuApprovalCard: ToolCallMessagePartComponent = ({
       command={commandPreview(args, argsText, toolName)}
       title={toolName}
       subtitle="The agent wants to run this tool"
-      onAllowOnce={
-        once
-          ? () => respond(APPROVAL_OPTIONS.approved.id, true)
-          : () => respondToApproval?.({ approved: true })
-      }
-      alwaysAllowOptions={[
-        ...(alwaysTool
-          ? [
-              {
-                label: alwaysTool.label ?? APPROVAL_OPTIONS["trust-tool"].label,
-                onSelect: () => respond(APPROVAL_OPTIONS["trust-tool"].id, true),
-              },
-            ]
-          : []),
-        ...(alwaysServer
-          ? [
-              {
-                label: alwaysServer.label ?? APPROVAL_OPTIONS["trust-server"].label,
-                onSelect: () => respond(APPROVAL_OPTIONS["trust-server"].id, true),
-              },
-            ]
-          : []),
-      ]}
-      onDeny={
-        deny
-          ? () => respond(APPROVAL_OPTIONS.denied.id, false)
-          : () => respondToApproval?.({ approved: false })
-      }
+      onAllowOnce={onAllowOnce}
+      alwaysAllowOptions={alwaysAllowOptions}
+      onDeny={onDeny}
     />
   );
 };

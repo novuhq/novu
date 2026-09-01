@@ -22,7 +22,7 @@
 
 import type { AgentConversationStatus, AgentEventEnvelope, AgentMessage } from '@novu/react';
 import { useWebChat } from '@novu/react';
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import { config } from '../config';
 import { useApprovalAlert } from '../lib/approval-alert';
 import { type ConversationSummary } from '../lib/conversations';
@@ -74,20 +74,10 @@ export function WebChat({
   // Optional hook callbacks (background approval ping + run-lifecycle diagnostics).
   const onActionRequested = useApprovalAlert();
   const { lastTransition, onEvent: onRunEvent } = useRunActivity();
-  const [runError, setRunError] = useState<{ message: string }>();
 
   const onEvent = useCallback(
     (envelope: AgentEventEnvelope) => {
       onRunEvent(envelope);
-
-      const { type } = envelope.event;
-      // Hook `error` does not surface run failures (SDK drops run-error at publish).
-      // Track run-error here so the session banner can show agent run failures.
-      if (type === 'run-error') {
-        setRunError({ message: envelope.event.message });
-      } else if (type === 'run-finish' || type === 'run-start') {
-        setRunError(undefined);
-      }
     },
     [onRunEvent],
   );
@@ -124,20 +114,6 @@ export function WebChat({
     onEvent,
   });
 
-  const [sending, setSending] = useState(false);
-
-  const sendWithBusy = useCallback(
-    async (input: Parameters<typeof sendMessage>[0]) => {
-      setSending(true);
-      try {
-        return await sendMessage(input);
-      } finally {
-        setSending(false);
-      }
-    },
-    [sendMessage],
-  );
-
   const session: WebChatSession = {
     conversationId: activeConversationId,
     isRunning,
@@ -147,10 +123,7 @@ export function WebChat({
     lastRunTransition: lastTransition,
   };
 
-  // Merge hook HTTP/action errors with onEvent run-error (see comment above).
-  const sessionError = error ?? runError;
-
-  const composerBusy = sending || isRunning || isLoading;
+  const composerBusy = messages.some((message) => message.status === 'sending') || isRunning || isLoading;
   const activeThreadId = activeConversationId ?? conversationId ?? NEW_CONVERSATION_THREAD_ID;
 
   const ui = useMemo(
@@ -178,7 +151,7 @@ export function WebChat({
 
   return (
     <WebChatRuntimeProvider
-      chat={{ messages, isRunning, isLoading, sendMessage: sendWithBusy, respondToAction }}
+      chat={{ messages, isRunning, isLoading, sendMessage, respondToAction }}
       composerBusy={composerBusy}
       threadList={runtimeThreadList}
       ui={ui}
@@ -186,7 +159,7 @@ export function WebChat({
       {sidebar?.(session)}
 
       <ChatPanel
-        error={sessionError}
+        error={error}
         isRecovering={isRecovering}
         catchUpError={catchUpError}
         refetch={refetch}

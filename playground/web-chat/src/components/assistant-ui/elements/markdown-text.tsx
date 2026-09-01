@@ -9,7 +9,6 @@ import {
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
-import ReactMarkdown from "react-markdown";
 import { type FC, memo, useMemo, useRef } from "react";
 import type { TextMessagePartProps } from "@assistant-ui/react";
 import { CheckIcon, CopyIcon } from "lucide-react";
@@ -265,13 +264,3 @@ const defaultComponents = memoizeMarkdownComponents({
   },
   CodeHeader,
 });
-
-export function MarkdownBody({ text }: { text: string }) {
-  return (
-    <div className="aui-md">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={defaultComponents}>
-        {text}
-      </ReactMarkdown>
-    </div>
-  );
-}

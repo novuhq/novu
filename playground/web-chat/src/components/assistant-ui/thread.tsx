@@ -16,8 +16,6 @@ import { useCallback } from 'react';
 import { NovuCardUI, NovuFileUI, NovuMcpUI } from './novu-parts';
 import { useWebChatUi } from './web-chat-actions';
 
-const GROUPBY_MEMO_KEY = Symbol.for('@assistant-ui/groupBy.memoKey');
-
 function approvalStandaloneGroupBy(
   part: Parameters<typeof defaultThreadPartGroupBy>[0],
   context: Parameters<typeof defaultThreadPartGroupBy>[1],
@@ -28,12 +26,6 @@ function approvalStandaloneGroupBy(
 
   return defaultThreadPartGroupBy(part, context);
 }
-
-Object.assign(approvalStandaloneGroupBy, {
-  [GROUPBY_MEMO_KEY]: `${
-    (defaultThreadPartGroupBy as unknown as { [key: symbol]: string | undefined })[GROUPBY_MEMO_KEY]
-  }:approval-standalone`,
-});
 
 const NovuToolFallback: ToolCallMessagePartComponent = (props) => {
   const pending =

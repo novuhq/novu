@@ -1,7 +1,8 @@
 'use client';
 
 import type { UseWebChatResult } from '@novu/react';
-import { Button } from '@/components/ui/button';
+import { ConnectionState } from '@/components/assistant-ui/elements/connection-state';
+import { ErrorState } from '@/components/assistant-ui/elements/error-state';
 import { WebChatThread } from './assistant-ui/thread';
 
 /**
@@ -18,24 +19,23 @@ export function ChatPanel({ error, isRecovering, catchUpError, refetch }: ChatPa
   return (
     <div className="chat-main">
       {error ? (
-        <div className="banner-error" role="alert">
-          {error.message}
-        </div>
+        <ErrorState
+          title="Something went wrong"
+          detail={error.message}
+          retrying={false}
+          onRetry={() => void refetch()}
+        />
       ) : null}
 
-      {isRecovering ? (
-        <div className="banner-recovery" role="status" aria-live="polite">
-          Syncing missed messages…
-        </div>
-      ) : null}
+      <ConnectionState phase={isRecovering ? 'reconnecting' : 'online'} />
 
       {catchUpError ? (
-        <div className="banner-catch-up" role="alert">
-          <span>{catchUpError.message}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
-            Reload conversation
-          </Button>
-        </div>
+        <ErrorState
+          title="Couldn't sync missed messages"
+          detail={catchUpError.message}
+          retrying={false}
+          onRetry={() => void refetch()}
+        />
       ) : null}
 
       <WebChatThread />

@@ -624,59 +624,6 @@ textarea.aui-composer-input:focus-visible {
   white-space: nowrap;
 }
 
-.banner-error {
-  flex-shrink: 0;
-  width: min(100% - 48px, 680px);
-  margin: 0 auto 8px;
-  padding: 9px 12px;
-  border: 1px solid var(--danger-line);
-  border-radius: var(--radius-sm);
-  background: var(--danger-soft);
-  font-size: 12px;
-  color: #a52626;
-}
-
-.banner-recovery {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  z-index: 20;
-  width: min(100% - 48px, 680px);
-  margin: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft, rgb(0 0 0 / 3%));
-  font-size: 12px;
-  color: var(--ink-muted);
-  opacity: 0;
-  transform: translateX(-50%);
-  animation: recovery-banner-reveal 120ms var(--ease-out) 250ms forwards;
-}
-
-@keyframes recovery-banner-reveal {
-  to {
-    opacity: 1;
-  }
-}
-
-.banner-catch-up {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: min(100% - 48px, 680px);
-  margin: 0 auto 8px;
-  padding: 9px 12px;
-  border: 1px solid var(--danger-line);
-  border-radius: var(--radius-sm);
-  background: var(--danger-soft);
-  font-size: 12px;
-  color: #a52626;
-}
-
 /* message parts */
 
 .part {

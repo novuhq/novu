@@ -48,10 +48,6 @@ function brandedReplyMarkdown(card: Record<string, unknown>): string | null {
   return texts.join('\n\n');
 }
 
-function jsonObject(value: Record<string, unknown> | undefined) {
-  return JSON.parse(JSON.stringify(value ?? {})) as { readonly [key: string]: never };
-}
-
 function approvalOptions(part: Extract<AgentMessage['parts'][number], { type: 'approval' }>): ToolApprovalOption[] {
   const options: ToolApprovalOption[] = [];
 
@@ -107,10 +103,10 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
     switch (part.type) {
       case 'text': {
         const text = stripPoweredBy(part.text);
-        if (!text.trim() && part.state !== 'streaming') break;
+        if (!text.trim()) break;
         content.push({
           type: 'text',
-          text: text.trim() ? text : '\u200b',
+          text,
           status: part.state === 'streaming' ? { type: 'running' } : { type: 'complete' },
         });
         break;
@@ -130,7 +126,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
           type: 'tool-call',
           toolCallId: part.toolUseId,
           toolName: part.toolName,
-          args: jsonObject(part.input),
+          argsText: JSON.stringify(part.input ?? {}),
           result: part.output,
           isError: part.state === 'output-error',
         });
@@ -141,7 +137,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
           type: 'tool-call',
           toolCallId: part.toolUseId,
           toolName: part.toolName,
-          args: jsonObject(part.input),
+          argsText: JSON.stringify(part.input ?? {}),
           approval: approvalGate(part),
         });
         break;

@@ -1,10 +1,11 @@
 'use client';
 
 import type { AgentMessage } from '@novu/react';
-import { makeAssistantDataUI } from '@assistant-ui/react';
+import { makeAssistantDataUI, TextMessagePartProvider } from '@assistant-ui/react';
 import { LoaderCircleIcon } from 'lucide-react';
 import { useState } from 'react';
-import { MarkdownBody } from '@/components/assistant-ui/elements/markdown-text';
+import { File } from '@/components/assistant-ui/elements/file';
+import { MarkdownText } from '@/components/assistant-ui/elements/markdown-text';
 import { field, pressable } from '@/components/assistant-ui/elements/surfaces';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,13 +30,14 @@ export const NovuMcpUI = makeAssistantDataUI<McpPart>({
 export const NovuFileUI = makeAssistantDataUI<FilePart>({
   name: 'novu-file',
   render: ({ data }) => (
-    <div className="border-border/60 bg-muted/30 w-full rounded-lg border px-3 py-2.5 text-sm">
-      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs font-medium">
-        <span>File</span>
-        <span className="text-foreground font-normal">{data.name ?? data.fileId}</span>
-        {data.mediaType ? <span className="font-normal">{data.mediaType}</span> : null}
-      </div>
-    </div>
+    <File
+      type="file"
+      status={{ type: 'complete' }}
+      filename={data.name}
+      data={data.fileId}
+      mimeType={data.mediaType ?? ''}
+      sourceType="id"
+    />
   ),
 });
 
@@ -80,7 +82,9 @@ function NovuCard({ data }: { data: NovuCardData }) {
             case 'text':
               return (
                 <div key={index} className="text-foreground text-sm leading-relaxed">
-                  <MarkdownBody text={child.content} />
+                  <TextMessagePartProvider text={child.content}>
+                    <MarkdownText />
+                  </TextMessagePartProvider>
                 </div>
               );
             case 'divider':

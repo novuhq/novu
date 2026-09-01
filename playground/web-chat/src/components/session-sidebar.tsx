@@ -92,16 +92,7 @@ export function SessionSidebar({
         </div>
 
         <div className="sidebar-body">
-          {conversationsError ? (
-            <div className="thread-list-status">
-              <p className="hint hint-error">{conversationsError}</p>
-              <button type="button" className="btn btn-ghost" onClick={onReloadConversations}>
-                Retry
-              </button>
-            </div>
-          ) : null}
-
-          <WebChatThreadList />
+          <WebChatThreadList error={conversationsError} onRetryError={onReloadConversations} />
         </div>
       </aside>
 
