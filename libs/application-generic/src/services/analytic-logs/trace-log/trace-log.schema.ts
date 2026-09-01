@@ -127,8 +127,6 @@ export type EventType =
   | 'step_filter_processing'
   | 'step_filter_failed'
   | 'subscriber_integration_missing'
-  | 'integration_skipped_by_conditions'
-  | 'integration_conditions_invalid'
   | 'subscriber_channel_missing'
   | 'subscriber_context_channel_missing'
   | 'subscriber_validation_failed'

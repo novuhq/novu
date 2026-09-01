@@ -7,7 +7,6 @@ import {
   DetailEnum,
   GetNovuProviderCredentials,
   Instrument,
-  type IntegrationSelectionResult,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
@@ -73,22 +72,6 @@ export function combineProviderOverrides(
   return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
 }
 
-type GetIntegrationParams = {
-  id?: string;
-  providerId?: ProvidersIdEnum;
-  identifier?: string;
-  organizationId: string;
-  environmentId: string;
-  channelType: ChannelTypeEnum;
-  userId: string;
-  recipientEmail?: string;
-  filterData: {
-    tenant?: ITenantDefine;
-    subscriber?: SendMessageChannelCommand['compileContext']['subscriber'];
-    context?: SendMessageChannelCommand['compileContext']['context'];
-  };
-};
-
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
   protected constructor(
@@ -104,24 +87,25 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @Instrument()
-  protected async getIntegration(params: GetIntegrationParams): Promise<IntegrationEntity | undefined> {
-    const { integration } = await this.getIntegrationWithReason(params);
-
-    return integration;
-  }
-
-  /**
-   * Same lookup as {@link getIntegration}, but keeps the reason nothing was selected so channels
-   * can distinguish a missing integration from one withheld by its conditions.
-   */
-  @Instrument()
-  protected async getIntegrationWithReason(params: GetIntegrationParams): Promise<IntegrationSelectionResult> {
-    const { integration, skipReason } = await this.selectIntegration.executeWithReason(
-      SelectIntegrationCommand.create(params)
-    );
+  protected async getIntegration(params: {
+    id?: string;
+    providerId?: ProvidersIdEnum;
+    identifier?: string;
+    organizationId: string;
+    environmentId: string;
+    channelType: ChannelTypeEnum;
+    userId: string;
+    recipientEmail?: string;
+    filterData: {
+      tenant?: ITenantDefine;
+      subscriber?: SendMessageChannelCommand['compileContext']['subscriber'];
+      context?: SendMessageChannelCommand['compileContext']['context'];
+    };
+  }): Promise<IntegrationEntity | undefined> {
+    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
     if (!integration) {
-      return { skipReason };
+      return;
     }
 
     if (
@@ -139,7 +123,7 @@ export abstract class SendMessageBase extends SendMessageType {
       });
     }
 
-    return { integration };
+    return integration;
   }
 
   protected getIntegrationFilterData(command: SendMessageChannelCommand) {

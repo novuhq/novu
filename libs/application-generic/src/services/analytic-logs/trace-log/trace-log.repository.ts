@@ -426,10 +426,6 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Subscriber events
     case 'subscriber_integration_missing':
       return 'Subscriber integration missing';
-    case 'integration_skipped_by_conditions':
-      return 'Integration skipped by conditions';
-    case 'integration_conditions_invalid':
-      return 'Integration conditions invalid';
     case 'subscriber_channel_missing':
       return 'Subscriber channel missing';
     case 'subscriber_context_channel_missing':

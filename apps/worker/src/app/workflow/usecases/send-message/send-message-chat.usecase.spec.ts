@@ -1,4 +1,4 @@
-import { ChatFactory, DetailEnum, IntegrationSelectionSkipReasonEnum } from '@novu/application-generic';
+import { ChatFactory, DetailEnum } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -11,20 +11,6 @@ import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { hasChatContentOverride, SendMessageChat } from './send-message-chat.usecase';
 import { SendMessageStatus } from './send-message-type.usecase';
-
-/**
- * `SendMessageChat` resolves integrations through `executeWithReason` so it can tell a missing
- * integration apart from one withheld by its conditions. The double exposes both entry points so
- * either can be asserted on.
- */
-function buildSelectIntegrationDouble(resolve: (command: never) => unknown) {
-  return {
-    execute: sinon.stub().callsFake(async (command: never) => (await resolve(command)) ?? null),
-    executeWithReason: sinon.stub().callsFake(async (command: never) => ({
-      integration: (await resolve(command)) ?? undefined,
-    })),
-  };
-}
 
 describe('SendMessageChat - phone-based channel de-duplication', () => {
   function buildUsecase(
@@ -45,9 +31,11 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
     const resolveChannelEndpoints = {
       execute: sinon.stub().resolves(channelEndpointGroups),
     };
-    const selectIntegration = buildSelectIntegrationDouble((command: { providerId: ChatProviderIdEnum }) =>
-      activePhoneProviders.includes(command.providerId) ? { providerId: command.providerId } : null
-    );
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId: ChatProviderIdEnum }) => {
+        return activePhoneProviders.includes(command.providerId) ? { providerId: command.providerId } : null;
+      }),
+    };
 
     const usecase = new SendMessageChat(
       {} as never, // subscriberRepository
@@ -154,106 +142,6 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
   });
 });
 
-describe('SendMessageChat - integrations withheld by their conditions', () => {
-  function buildUsecase(skipReason: IntegrationSelectionSkipReasonEnum) {
-    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
-    const selectIntegration = {
-      execute: sinon.stub().resolves(null),
-      executeWithReason: sinon.stub().resolves({ skipReason }),
-    };
-
-    const usecase = new SendMessageChat(
-      {} as never, // subscriberRepository
-      {} as never, // messageRepository
-      {} as never, // compileTemplate
-      selectIntegration as never,
-      {} as never, // getNovuProviderCredentials
-      {} as never, // selectVariant
-      createExecutionDetails as never,
-      {} as never, // moduleRef
-      {} as never, // sendWebhookMessage
-      {} as never, // resolveChannelEndpoints
-      {} as never, // agentRepository
-      {} as never, // agentIntegrationRepository
-      { getFlag: sinon.stub().resolves(false) } as never
-    );
-
-    return { usecase, createExecutionDetails };
-  }
-
-  const command = {
-    organizationId: 'org_1',
-    environmentId: 'env_1',
-    userId: 'user_1',
-    compileContext: { subscriber: { subscriberId: 'sub_1' } },
-    job: {
-      _id: 'job_1',
-      _environmentId: 'env_1',
-      _organizationId: 'org_1',
-      _subscriberId: '_sub_1',
-      _notificationId: 'notif_1',
-      _templateId: 'tpl_1',
-      subscriberId: 'sub_1',
-      transactionId: 'txn_1',
-      identifier: 'wf-identifier',
-      providerId: ChatProviderIdEnum.Telegram,
-      type: ChannelTypeEnum.CHAT,
-      tenant: undefined,
-    },
-  } as never;
-
-  it('skips the channel with a dedicated detail when conditions do not match', async () => {
-    const { usecase, createExecutionDetails } = buildUsecase(IntegrationSelectionSkipReasonEnum.RULES_NOT_MATCHED);
-
-    const { integration, error } = await (usecase as any).getAndValidateIntegration(
-      command,
-      ChatProviderIdEnum.Telegram,
-      undefined,
-      'roeto-support'
-    );
-
-    expect(integration).to.equal(undefined);
-    expect(error.status).to.equal(SendMessageStatus.SKIPPED);
-    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
-      detail: DetailEnum.INTEGRATION_SKIPPED_BY_CONDITIONS,
-      status: ExecutionDetailsStatusEnum.WARNING,
-    });
-  });
-
-  it('fails the channel with a dedicated detail when conditions are invalid', async () => {
-    const { usecase, createExecutionDetails } = buildUsecase(IntegrationSelectionSkipReasonEnum.RULES_INVALID);
-
-    const { error } = await (usecase as any).getAndValidateIntegration(
-      command,
-      ChatProviderIdEnum.Telegram,
-      undefined,
-      'roeto-support'
-    );
-
-    expect(error.status).to.equal(SendMessageStatus.FAILED);
-    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
-      detail: DetailEnum.INTEGRATION_CONDITIONS_INVALID,
-      status: ExecutionDetailsStatusEnum.FAILED,
-    });
-  });
-
-  it('keeps the missing-integration detail when nothing matched the query', async () => {
-    const { usecase, createExecutionDetails } = buildUsecase(IntegrationSelectionSkipReasonEnum.NOT_FOUND);
-
-    const { error } = await (usecase as any).getAndValidateIntegration(
-      command,
-      ChatProviderIdEnum.Telegram,
-      undefined,
-      'roeto-support'
-    );
-
-    expect(error.status).to.equal(SendMessageStatus.FAILED);
-    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
-      detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-    });
-  });
-});
-
 describe('SendMessageChat - Slack provider content overrides', () => {
   const slackIntegration = {
     _id: 'integration_1',
@@ -311,7 +199,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       {} as never, // subscriberRepository
       { create: sinon.stub().resolves({ _id: 'message_1' }) } as never,
       {} as never, // compileTemplate
-      buildSelectIntegrationDouble(() => slackIntegration) as never,
+      { execute: sinon.stub().resolves(slackIntegration) } as never,
       {} as never, // getNovuProviderCredentials
       { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
       { execute: sinon.stub().resolves(undefined) } as never,
@@ -600,7 +488,9 @@ describe('SendMessageChat - agent assigned path', () => {
       updateMessageStatus: sinon.stub().resolves(undefined),
       update: updateMessage,
     };
-    const selectIntegration = buildSelectIntegrationDouble(() => integration);
+    const selectIntegration = {
+      execute: sinon.stub().resolves(integration),
+    };
     const featureFlagsService = {
       getFlag: sinon.stub().resolves(false),
     };
@@ -920,9 +810,15 @@ describe('SendMessageChat - agent assigned path', () => {
       updateMessageStatus: sinon.stub().resolves(undefined),
       update: updateMessage,
     };
-    const selectIntegration = buildSelectIntegrationDouble((command: { providerId?: string }) =>
-      command.providerId === ChatProviderIdEnum.WhatsAppBusiness ? whatsappIntegration : null
-    );
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return whatsappIntegration;
+        }
+
+        return null;
+      }),
+    };
 
     const usecase = new SendMessageChat(
       {} as never,
@@ -989,16 +885,18 @@ describe('SendMessageChat - agent assigned path', () => {
       update: sinon.stub().resolves(undefined),
     };
     // Both WhatsApp and Sendblue have active integrations selectable for this subscriber's phone.
-    const selectIntegration = buildSelectIntegrationDouble((command: { providerId?: string }) => {
-      if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-        return whatsappIntegration;
-      }
-      if (command.providerId === ChatProviderIdEnum.Sendblue) {
-        return { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue };
-      }
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return whatsappIntegration;
+        }
+        if (command.providerId === ChatProviderIdEnum.Sendblue) {
+          return { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue };
+        }
 
-      return null;
-    });
+        return null;
+      }),
+    };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
 
     const usecase = new SendMessageChat(
@@ -1076,16 +974,18 @@ describe('SendMessageChat - agent assigned path', () => {
       updateMessageStatus: sinon.stub().resolves(undefined),
       update: sinon.stub().resolves(undefined),
     };
-    const selectIntegration = buildSelectIntegrationDouble((command: { providerId?: string; identifier?: string }) => {
-      if (command.identifier === 'whatsapp-linked') {
-        return linkedIntegration;
-      }
-      if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-        return otherActiveIntegration;
-      }
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string; identifier?: string }) => {
+        if (command.identifier === 'whatsapp-linked') {
+          return linkedIntegration;
+        }
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return otherActiveIntegration;
+        }
 
-      return null;
-    });
+        return null;
+      }),
+    };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
 
     const usecase = new SendMessageChat(
@@ -1120,7 +1020,7 @@ describe('SendMessageChat - agent assigned path', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledWithMatch(selectIntegration.executeWithReason, { identifier: 'whatsapp-linked' });
+    sinon.assert.calledWithMatch(selectIntegration.execute, { identifier: 'whatsapp-linked' });
     expect(capturedIntegration?.identifier).to.equal('whatsapp-linked');
     expect(capturedIntegration?._id).to.equal('integration_wa_linked');
   });

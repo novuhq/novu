@@ -4,6 +4,9 @@ import type { EnhancedField } from '@/components/conditions-editor/conditions-ed
 import type { EnhancedLiquidVariable, FieldDataType, IsAllowedVariable } from '@/utils/parseStepVariables';
 
 const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDataType }> = [
+  { name: 'tenant.identifier', dataType: 'string' },
+  { name: 'tenant.name', dataType: 'string' },
+  { name: 'tenant.data', dataType: 'object' },
   { name: 'context.tenant.id', dataType: 'string' },
   { name: 'subscriber.subscriberId', dataType: 'string' },
   { name: 'subscriber.email', dataType: 'string' },
@@ -29,7 +32,7 @@ export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRA
   })
 );
 
-const ALLOWED_PREFIXES = ['context.', 'subscriber.'] as const;
+const ALLOWED_PREFIXES = ['tenant.', 'context.', 'subscriber.'] as const;
 
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
   if (variable.name === 'subscriber.data') {

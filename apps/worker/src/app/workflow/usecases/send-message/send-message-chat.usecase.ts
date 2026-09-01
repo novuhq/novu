@@ -10,7 +10,6 @@ import {
   FeatureFlagsService,
   GetNovuProviderCredentials,
   InstrumentUsecase,
-  IntegrationSelectionSkipReasonEnum,
   messageWebhookMapper,
   SelectIntegration,
   SelectIntegrationCommand,
@@ -1026,101 +1025,46 @@ export class SendMessageChat extends SendMessageBase {
       ...(integrationIdentifier && { identifier: integrationIdentifier }),
     };
 
-    const { integration, skipReason } = await this.getIntegrationWithReason(getIntegrationParams);
+    const integration = await this.getIntegration(getIntegrationParams);
 
-    if (integration) {
-      return { integration };
-    }
+    if (!integration) {
+      const reason = integrationIdentifier
+        ? `Integration with integrationIdentifier: ${integrationIdentifier} is either deleted or not active`
+        : integrationId
+          ? `Integration with integrationId: ${integrationId} is either deleted or not active`
+          : `Integration is either deleted or not active`;
 
-    if (
-      skipReason === IntegrationSelectionSkipReasonEnum.RULES_NOT_MATCHED ||
-      skipReason === IntegrationSelectionSkipReasonEnum.RULES_INVALID
-    ) {
-      return {
-        error: await this.handleIntegrationFilteredByConditions(
-          command,
-          skipReason,
-          integrationIdentifier ?? integrationId ?? providerId
-        ),
-      };
-    }
+      Logger.warn(
+        {
+          reason,
+          providerId,
+          hasIntegrationId: Boolean(integrationId),
+          hasIntegrationIdentifier: Boolean(integrationIdentifier),
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          jobId: String(command.job?._id ?? ''),
+          hasJobTenant: Boolean(command.job.tenant),
+        },
+        `${LOG_CONTEXT} — getAndValidateIntegration: no integration from SelectIntegration`
+      );
 
-    const reason = integrationIdentifier
-      ? `Integration with integrationIdentifier: ${integrationIdentifier} is either deleted or not active`
-      : integrationId
-        ? `Integration with integrationId: ${integrationId} is either deleted or not active`
-        : `Integration is either deleted or not active`;
-
-    Logger.warn(
-      {
-        reason,
-        providerId,
-        hasIntegrationId: Boolean(integrationId),
-        hasIntegrationIdentifier: Boolean(integrationIdentifier),
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        jobId: String(command.job?._id ?? ''),
-        hasJobTenant: Boolean(command.job.tenant),
-      },
-      `${LOG_CONTEXT} — getAndValidateIntegration: no integration from SelectIntegration`
-    );
-
-    await this.createExecutionDetail(
-      command,
-      DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-      ExecutionDetailsStatusEnum.FAILED,
-      undefined,
-      reason
-    );
-
-    return {
-      error: {
-        status: SendMessageStatus.FAILED,
-        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-      },
-    };
-  }
-
-  /**
-   * A non-matching integration is a routing decision, not a delivery failure, so the channel is
-   * skipped with a warning. Invalid conditions are a misconfiguration that silently withholds
-   * delivery, so they are reported as a failure the user has to act on.
-   */
-  private async handleIntegrationFilteredByConditions(
-    command: SendMessageChannelCommand,
-    skipReason: IntegrationSelectionSkipReasonEnum.RULES_NOT_MATCHED | IntegrationSelectionSkipReasonEnum.RULES_INVALID,
-    integrationReference: string
-  ): Promise<SendMessageResult> {
-    if (skipReason === IntegrationSelectionSkipReasonEnum.RULES_INVALID) {
       await this.createExecutionDetail(
         command,
-        DetailEnum.INTEGRATION_CONDITIONS_INVALID,
+        DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
         ExecutionDetailsStatusEnum.FAILED,
         undefined,
-        `Conditions on integration ${integrationReference} reference unsupported fields or operators, so nothing was sent through it`
+        reason
       );
 
       return {
-        status: SendMessageStatus.FAILED,
-        errorMessage: DetailEnum.INTEGRATION_CONDITIONS_INVALID,
+        error: {
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        },
       };
     }
 
-    await this.createExecutionDetail(
-      command,
-      DetailEnum.INTEGRATION_SKIPPED_BY_CONDITIONS,
-      ExecutionDetailsStatusEnum.WARNING,
-      undefined,
-      `Conditions on integration ${integrationReference} did not match this subscriber`
-    );
-
-    return {
-      status: SendMessageStatus.SKIPPED,
-      deliveryLifecycleState: {
-        status: DeliveryLifecycleStatusEnum.SKIPPED,
-        detail: DeliveryLifecycleDetail.USER_MISSING_CREDENTIALS,
-      },
-    };
+    return { integration };
   }
 
   private async createExecutionDetail(

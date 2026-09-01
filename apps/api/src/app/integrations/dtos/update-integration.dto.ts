@@ -67,7 +67,7 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
     description:
       'JSONLogic used at send time to select this integration. Takes precedence over `conditions`.',
     example: {
-      '==': [{ var: 'context.tenant.id' }, 'acme'],
+      '==': [{ var: 'tenant.identifier' }, 'acme'],
     },
   })
   @IsOptional()

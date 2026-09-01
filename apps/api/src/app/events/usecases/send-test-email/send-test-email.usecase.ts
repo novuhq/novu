@@ -46,7 +46,6 @@ export class SendTestEmail {
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
         filterData: {},
-        ignoreRules: true,
       })
     );
 

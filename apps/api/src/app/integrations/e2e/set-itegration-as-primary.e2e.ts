@@ -130,7 +130,7 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       rules: {
-        '==': [{ var: 'context.tenant.id' }, 'acme'],
+        '==': [{ var: 'tenant.identifier' }, 'acme'],
       },
     });
 
