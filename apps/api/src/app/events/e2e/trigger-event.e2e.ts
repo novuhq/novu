@@ -946,6 +946,41 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(message?.providerId).to.equal(payload.providerId);
     });
 
+    it('should use JsonLogic conditions to select integration by subscriber', async () => {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        rules: {
+          '==': [{ var: 'subscriber.subscriberId' }, subscriber.subscriberId],
+        },
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      await sendTrigger(template, subscriber.subscriberId, {});
+
+      await session.waitForJobCompletion(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(
+        session.environment._id,
+        subscriber.subscriberId
+      );
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(message?.providerId).to.equal(payload.providerId);
+    });
+
     it('should use or conditions to select integration', async () => {
       const payload = {
         providerId: EmailProviderIdEnum.Mailgun,
