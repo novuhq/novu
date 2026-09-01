@@ -161,9 +161,11 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'tool-approval-response':
       return applyApprovalResponse(state, event.approvalId, event.decision);
 
-    case 'mcp-connection-request':
+    case 'mcp-connection-request': {
+      const messageId = state.activeAssistantMessageId ?? event.actionId;
+
       return clearTyping(
-        withActiveAssistantMessage(state, envelope, (message) => ({
+        withMessage(state, envelope, messageId, 'assistant', (message) => ({
           ...message,
           parts: [
             ...message.parts,
@@ -179,6 +181,7 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
           ],
         }))
       );
+    }
 
     case 'mcp-connection-result':
       return applyMcpConnectionResult(state, event.actionId, event.status, event.message);
