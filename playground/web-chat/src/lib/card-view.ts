@@ -1,4 +1,4 @@
-import type { AgentCardChild, AgentCardElement } from '@novu/js';
+import type { AgentCardChild, AgentCardElement } from '@novu/react';
 
 export type CardButtonView = { id: string; label: string; value?: string; style?: string };
 
