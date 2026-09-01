@@ -20,6 +20,8 @@ export { Novu } from './novu';
 export type {
   AgentApprovalPart,
   AgentApprovalPartState,
+  AgentCardChild,
+  AgentCardElement,
   AgentCardPart,
   AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,

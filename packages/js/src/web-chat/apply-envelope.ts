@@ -2,6 +2,7 @@
  * Apply agent event envelopes to a parts-based message timeline.
  */
 import type { AgentEventEnvelope, AgentFileRef, AgentMessageContent } from '@novu/agent-event-protocol';
+import type { AgentCardElement } from './agent-card.types';
 import type {
   AgentConversationState,
   AgentMessage,
@@ -364,7 +365,7 @@ function applyDurableMessageParts(
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }
   } else {
-    next = [...next, { type: 'card', card: content.card }];
+    next = [...next, { type: 'card', card: content.card as AgentCardElement }];
   }
 
   return appendFileParts(next, files);

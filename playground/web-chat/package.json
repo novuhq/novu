@@ -11,6 +11,7 @@
     "@assistant-ui/react": "^0.15.16",
     "@assistant-ui/react-markdown": "^0.14.12",
     "@base-ui/react": "^1.7.0",
+    "@novu/js": "workspace:*",
     "@novu/react": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

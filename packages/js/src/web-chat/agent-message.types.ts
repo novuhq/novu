@@ -1,4 +1,7 @@
 import type { AgentMessageRole, AgentToolResultContent, AgentToolSource } from '@novu/agent-event-protocol';
+import type { AgentCardElement } from './agent-card.types';
+
+export type { AgentCardChild, AgentCardElement } from './agent-card.types';
 
 export type { AgentMessageRole };
 
@@ -111,7 +114,7 @@ export type AgentFilePart = {
 /** Structured Card. Button clicks call `sendAction`. */
 export type AgentCardPart = {
   type: 'card';
-  card: Record<string, unknown>;
+  card: AgentCardElement;
 };
 
 /** Custom payload. The UI decides how to render it. */

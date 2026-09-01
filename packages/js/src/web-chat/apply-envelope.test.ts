@@ -571,7 +571,7 @@ describe('applyEnvelope', () => {
   });
 
   it('folds exclusive durable content as markdown or card, not both', () => {
-    const card = { type: 'card', title: 'Support' };
+    const card = { type: 'card' as const, title: 'Support', children: [] as const };
     const next = applyEnvelope(
       createInitialAgentConversationState(),
       envelope(1, {
