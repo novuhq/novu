@@ -5,6 +5,7 @@ import {
   SendblueAdapter as VendorSendblueAdapterRuntime,
 } from 'chat-adapter-sendblue';
 import { renderCardAsText } from './card-renderer.js';
+import { markdownToPlainText } from './markdown-to-plain-text.js';
 import type { SendblueAdapterConfig } from './types.js';
 
 // iMessage-first with SMS fallback matches Sendblue's own delivery behavior;
@@ -78,7 +79,22 @@ export class SendblueAdapterImpl extends VendorSendblueAdapter {
     threadId: string,
     message: AdapterPostableMessage
   ): Promise<RawMessage<SendblueMessagePayload>> {
-    return super.postMessage(threadId, this.flattenCard(message));
+    return super.postMessage(threadId, this.preparePostable(message));
+  }
+
+  private preparePostable(message: AdapterPostableMessage): AdapterPostableMessage {
+    const flattened = this.flattenCard(message);
+
+    if (typeof flattened === 'string') {
+      return flattened;
+    }
+
+    const record = flattened as unknown as Record<string, unknown>;
+    if (typeof record.markdown === 'string') {
+      return { markdown: markdownToPlainText(record.markdown) };
+    }
+
+    return flattened;
   }
 
   /**

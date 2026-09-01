@@ -7,6 +7,9 @@ import type { CardElement } from 'chat';
  */
 const SLACK_SECTION_TEXT_LIMIT = 3000;
 
+/** Slack `markdown_text` limit; oversize payloads are rejected rather than truncated. */
+export const SLACK_MARKDOWN_TEXT_LIMIT = 12_000;
+
 function pack(parts: string[], separator: string, limit: number, splitPart: (part: string) => string[]): string[] {
   const chunks: string[] = [];
   let current = '';
