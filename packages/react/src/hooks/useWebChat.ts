@@ -214,6 +214,23 @@ function getCreateFlowKey(agentId: string, agentHash?: string): string {
   return `${agentId}\0${agentHash ?? ''}`;
 }
 
+function getManagedRuntimeKey(
+  agentId: string,
+  agentHash: string | undefined,
+  conversationIdProp: string | undefined
+): string {
+  if (conversationIdProp) {
+    return `resume:${agentId}\0${agentHash ?? ''}\0${conversationIdProp}`;
+  }
+
+  return getCreateFlowKey(agentId, agentHash);
+}
+
+type ManagedRuntimeEntry = {
+  key: string;
+  runtime: AgentConversationRuntime;
+};
+
 type WebChatLoadState =
   | { novu: ReturnType<typeof useNovu>; status: 'loading' }
   | { novu: ReturnType<typeof useNovu>; status: 'ready' }
@@ -288,7 +305,10 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
   const agentHash = sharedRuntime ? undefined : props.agentHash;
 
   const ownedRuntimeRef = useRef<OwnedRuntimeEntry | null>(null);
-  const [managedRuntime, setManagedRuntime] = useState<AgentConversationRuntime | null>(null);
+  const [managedRuntime, setManagedRuntime] = useState<ManagedRuntimeEntry | null>(null);
+  const managedRuntimeKey = sharedRuntime
+    ? null
+    : getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
 
   useEffect(() => {
     if (sharedRuntime) {
@@ -309,12 +329,13 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       ownedRuntimeRef.current?.runtime.dispose();
       ownedRuntimeRef.current = null;
 
+      const key = getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
       const runtime = novu.webChat.conversation({
         agentId,
         conversationId: conversationIdProp,
         agentHash,
       });
-      setManagedRuntime(runtime);
+      setManagedRuntime({ key, runtime });
 
       return () => {
         setManagedRuntime(null);
@@ -325,13 +346,13 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     const current = ownedRuntimeRef.current;
 
     if (current?.novu === novu && current.key === key) {
-      setManagedRuntime(current.runtime);
+      setManagedRuntime({ key, runtime: current.runtime });
     } else {
       current?.runtime.dispose();
 
       const runtime = novu.webChat.conversation({ agentId, agentHash });
       ownedRuntimeRef.current = { key, novu, runtime };
-      setManagedRuntime(runtime);
+      setManagedRuntime({ key, runtime });
     }
 
     return () => {
@@ -341,7 +362,8 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     };
   }, [webChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
 
-  const runtime = sharedRuntime ?? managedRuntime;
+  const runtime =
+    sharedRuntime ?? (managedRuntime?.key === managedRuntimeKey ? managedRuntime.runtime : null);
 
   const loadNotifiedRef = useRef(false);
   const replayedActionsRef = useRef(false);
