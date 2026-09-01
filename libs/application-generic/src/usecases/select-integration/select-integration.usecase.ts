@@ -94,7 +94,6 @@ export class SelectIntegration {
       const { result } = evaluateRules(
         currentIntegration.rules as RulesLogic<AdditionalOperation>,
         {
-          tenant: tenant ?? command.filterData.tenant,
           subscriber: command.filterData.subscriber,
           context: command.filterData.context,
         },

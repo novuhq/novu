@@ -120,7 +120,7 @@ export class IntegrationResponseDto {
     additionalProperties: true,
     nullable: true,
     example: {
-      '==': [{ var: 'tenant.identifier' }, 'acme'],
+      '==': [{ var: 'context.tenant.id' }, 'acme'],
     },
   })
   rules?: object | null;

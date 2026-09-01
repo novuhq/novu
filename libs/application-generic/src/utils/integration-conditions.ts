@@ -7,12 +7,9 @@ import {
   UNARY_STRING_OPERATORS,
 } from '../services/query-parser';
 
-export const INTEGRATION_CONDITION_NAMESPACES = ['tenant.', 'context.', 'subscriber.'];
+export const INTEGRATION_CONDITION_NAMESPACES = ['context.', 'subscriber.'];
 
 export const INTEGRATION_CONDITION_VARIABLES = [
-  'tenant.identifier',
-  'tenant.name',
-  'tenant.data',
   'context.tenant.id',
   'subscriber.subscriberId',
   'subscriber.email',
