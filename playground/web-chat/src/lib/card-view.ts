@@ -79,9 +79,11 @@ function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
           continue;
         }
 
-        const view = linkView(actionChild.label, actionChild.url);
-        if (view) {
-          views.push(view);
+        if (actionChild.type === 'link-button') {
+          const view = linkView(actionChild.label, actionChild.url);
+          if (view) {
+            views.push(view);
+          }
         }
       }
 
@@ -91,10 +93,19 @@ function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
 
       return views;
     }
+    case 'section':
+      return child.children.flatMap((nested) => viewsFromAgentChild(nested));
+    case 'fields':
+      return child.children
+        .map((field) => `${field.label}: ${field.value}`.trim())
+        .filter(Boolean)
+        .map((content) => ({ type: 'text' as const, content }));
+    case 'table':
+      return [];
   }
 }
 
-/** Map a typed agent card to a render-safe view model (URL sanitization only). */
+/** Map a typed agent card to the playground view model. Sanitize http(s) URLs. */
 export function cardViewFromElement(card: AgentCardElement): CardView {
   return {
     title: card.title?.trim() || undefined,

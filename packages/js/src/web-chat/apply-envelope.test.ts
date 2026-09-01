@@ -553,9 +553,9 @@ describe('applyEnvelope', () => {
 
   it('folds card content into a card part', () => {
     const card = {
-      type: 'card',
+      type: 'card' as const,
       title: 'Support Agent',
-      children: [{ type: 'text', content: 'How can I help?' }],
+      children: [{ type: 'text' as const, content: 'How can I help?' }],
     };
     const next = applyEnvelope(
       createInitialAgentConversationState(),

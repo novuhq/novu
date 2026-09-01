@@ -4,6 +4,7 @@ import {
   type AgentEventEnvelope,
   type AgentFileRef,
   type AgentMessageContent,
+  type CardElement,
   isDeltaEvent,
 } from '@novu/agent-event-protocol';
 import {
@@ -37,8 +38,15 @@ function filesFromRichContent(richContent?: Record<string, unknown>) {
   return files as AgentFileRef[];
 }
 
-function isCardTree(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'card';
+/** Stored card JSON: `type: 'card'` plus a `children` array. Not a full `CardElement` tree. */
+function isCardTree(value: unknown): value is { type: 'card'; children: unknown[] } {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const card = value as { type?: unknown; children?: unknown };
+
+  return card.type === 'card' && Array.isArray(card.children);
 }
 
 function isManagedToolApprovalRequest(toolData: ConversationActivityEntity['toolData']): boolean {
@@ -77,7 +85,8 @@ export function messageContentFromStored(params: {
 }): AgentMessageContent {
   const card = params.richContent?.card;
   if (isCardTree(card)) {
-    return { card };
+    // `isCardTree` only proves `type` + `children[]`. Stored trees are trusted here.
+    return { card: card as CardElement };
   }
 
   return { markdown: params.content ?? '' };
