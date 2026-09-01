@@ -6,6 +6,7 @@ import {
   Thread,
   type ThreadComponents,
 } from '@/components/assistant-ui/elements/thread.aui';
+import { ErrorState } from '@/components/assistant-ui/elements/error-state';
 import { ToolFallback } from '@/components/assistant-ui/elements/tool-fallback.aui';
 import { ThinkingIndicator } from '@/components/assistant-ui/elements/thinking-indicator';
 import { Button } from '@/components/ui/button';
@@ -41,11 +42,27 @@ const NovuToolFallback: ToolCallMessagePartComponent = (props) => {
 };
 
 const THREAD_COMPONENTS: ThreadComponents = {
+  Banner: WebChatBanner,
   Indicator: WebChatTypingIndicator,
   UserMessage: WebChatUserMessage,
   ToolFallback: NovuToolFallback,
   groupBy: approvalStandaloneGroupBy,
 };
+
+function WebChatBanner() {
+  const { banner } = useWebChatUi();
+  if (!banner) return null;
+
+  return (
+    <ErrorState
+      title={banner.title}
+      detail={banner.detail}
+      retrying={false}
+      className="w-full max-w-none"
+      {...(banner.onRetry ? { onRetry: banner.onRetry } : null)}
+    />
+  );
+}
 
 function WebChatTypingIndicator() {
   const { typingLabel, pendingActionCount } = useWebChatUi();

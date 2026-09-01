@@ -73,6 +73,8 @@ export type ThreadComponents = {
   UserMessage?: ComponentType | undefined;
   Welcome?: ComponentType | undefined;
   Indicator?: ComponentType | undefined;
+  /** Rendered directly above the composer, inside the sticky footer. */
+  Banner?: ComponentType | undefined;
   ToolFallback?: ToolCallMessagePartComponent | undefined;
   ToolGroup?:
     | ComponentType<PropsWithChildren<{ group: ThreadGroupPart }>>
@@ -144,7 +146,7 @@ const ThreadRoot: FC<{ isEmpty: boolean; autoFocus: boolean }> = ({
   isEmpty,
   autoFocus,
 }) => {
-  const { Welcome = ThreadWelcome } = useContext(ThreadComponentsContext);
+  const { Welcome = ThreadWelcome, Banner } = useContext(ThreadComponentsContext);
 
   return (
     <ThreadPrimitive.Root
@@ -191,6 +193,7 @@ const ThreadRoot: FC<{ isEmpty: boolean; autoFocus: boolean }> = ({
           >
             <ThreadViewportBottomStateSync />
             <ThreadScrollToBottom />
+            {Banner ? <Banner /> : null}
             <Composer autoFocus={autoFocus} />
             <AuiIf condition={isNewChatView}>
               <ThreadSuggestions />

@@ -1,41 +1,24 @@
 'use client';
 
-import type { UseWebChatResult } from '@novu/react';
 import { ConnectionState } from '@/components/assistant-ui/elements/connection-state';
-import { ErrorState } from '@/components/assistant-ui/elements/error-state';
 import { WebChatThread } from './assistant-ui/thread';
 
 /**
  * assistant-ui shell. `useWebChat` still owns messages, send, and approvals.
+ * Error banners live in the thread's `Banner` slot, above the composer.
  */
 export type ChatPanelProps = {
-  error?: { message: string };
   isRecovering: boolean;
-  catchUpError?: UseWebChatResult['catchUpError'];
-  refetch: UseWebChatResult['refetch'];
 };
 
-export function ChatPanel({ error, isRecovering, catchUpError, refetch }: ChatPanelProps) {
+export function ChatPanel({ isRecovering }: ChatPanelProps) {
   return (
     <div className="chat-main">
-      {error ? (
-        <ErrorState
-          title="Something went wrong"
-          detail={error.message}
-          retrying={false}
-          onRetry={() => void refetch()}
-        />
-      ) : null}
-
-      <ConnectionState phase={isRecovering ? 'reconnecting' : 'online'} />
-
-      {catchUpError ? (
-        <ErrorState
-          title="Couldn't sync missed messages"
-          detail={catchUpError.message}
-          retrying={false}
-          onRetry={() => void refetch()}
-        />
+      {isRecovering ? (
+        // Float over the thread so a reconnect does not shift the messages.
+        <div className="absolute top-3 left-1/2 z-20 w-[calc(100%-48px)] max-w-[680px] -translate-x-1/2">
+          <ConnectionState phase="reconnecting" className="w-full max-w-none" />
+        </div>
       ) : null}
 
       <WebChatThread />

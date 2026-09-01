@@ -11,6 +11,8 @@ export type WebChatUiActions = {
   typingLabel?: string;
   pendingActionCount: number;
   composerBusy: boolean;
+  /** Failures with no inline surface of their own. Rendered above the composer. */
+  banner?: { title: string; detail: string; onRetry?: () => void };
 };
 
 const WebChatUiContext = createContext<WebChatUiActions | null>(null);

@@ -23,7 +23,7 @@ export function WebChatThreadList({ error, onRetryError }: WebChatThreadListProp
           title="Couldn't load conversations"
           detail={error}
           retrying={false}
-          onRetry={() => onRetryError?.()}
+          onRetry={onRetryError}
         />
       ) : null}
       <ThreadListItems />

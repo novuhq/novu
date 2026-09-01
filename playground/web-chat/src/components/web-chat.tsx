@@ -124,6 +124,9 @@ export function WebChat({
   };
 
   const composerBusy = messages.some((message) => message.status === 'sending') || isRunning || isLoading;
+
+  // A failed send already shows on its own bubble with a Retry, so a banner would repeat it.
+  const bannerDetail = catchUpError?.message ?? (messages.some((m) => m.status === 'failed') ? undefined : error?.message);
   const activeThreadId = activeConversationId ?? conversationId ?? NEW_CONVERSATION_THREAD_ID;
 
   const ui = useMemo(
@@ -133,8 +136,26 @@ export function WebChat({
       pagination,
       typingLabel: typing?.status,
       pendingActionCount: pendingActions.length,
+      banner: bannerDetail
+        ? {
+            title: catchUpError ? "Couldn't sync missed messages" : 'Something went wrong',
+            detail: bannerDetail,
+            // `refetch` reloads history, so Retry only means anything once a conversation exists.
+            ...(activeConversationId != null ? { onRetry: () => void refetch() } : null),
+          }
+        : undefined,
     }),
-    [sendAction, retryMessage, pagination, typing?.status, pendingActions.length],
+    [
+      sendAction,
+      retryMessage,
+      pagination,
+      typing?.status,
+      pendingActions.length,
+      bannerDetail,
+      catchUpError,
+      activeConversationId,
+      refetch,
+    ],
   );
 
   const runtimeThreadList = useMemo(() => {
@@ -158,12 +179,7 @@ export function WebChat({
     >
       {sidebar?.(session)}
 
-      <ChatPanel
-        error={error}
-        isRecovering={isRecovering}
-        catchUpError={catchUpError}
-        refetch={refetch}
-      />
+      <ChatPanel isRecovering={isRecovering} />
     </WebChatRuntimeProvider>
   );
 }
