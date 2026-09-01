@@ -40,6 +40,12 @@ function PlaygroundApp() {
           key={session.sessionKey}
           conversationId={session.conversationId}
           onAssistantMessage={reloadConversations}
+          threadList={{
+            items: conversations.items,
+            isLoading: conversations.isLoading,
+            onSwitchToThread: session.onSelectConversation,
+            onSwitchToNewThread: session.onNewChat,
+          }}
           sidebar={(chat) => (
             <SessionSidebar
               agentId={config.agentId}
@@ -47,20 +53,13 @@ function PlaygroundApp() {
               subscriberId={config.subscriberId}
               backendUrl={config.backendUrl}
               socketUrl={config.socketUrl}
-              resumeDraft={session.resumeDraft}
-              onResumeDraftChange={session.setResumeDraft}
-              onResume={session.onResume}
-              onNewChat={session.onNewChat}
               isRunning={chat.isRunning}
               runOrigin={chat.runOrigin}
               lastRunTransition={chat.lastRunTransition}
               conversationStatus={chat.conversationStatus}
               socketStatus={socketStatus}
               pendingApprovalCount={chat.pendingApprovalCount}
-              conversations={conversations.items}
-              conversationsLoading={conversations.isLoading}
               conversationsError={conversations.error}
-              onSelectConversation={session.onSelectConversation}
               onReloadConversations={reloadConversations}
             />
           )}
