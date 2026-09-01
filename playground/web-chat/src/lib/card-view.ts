@@ -107,10 +107,12 @@ function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
 
 /** Map a typed agent card to the playground view model. Sanitize http(s) URLs. */
 export function cardViewFromElement(card: AgentCardElement): CardView {
+  const children = Array.isArray(card.children) ? card.children : [];
+
   return {
     title: card.title?.trim() || undefined,
     subtitle: card.subtitle?.trim() || undefined,
     imageUrl: toSafeExternalUrl(card.imageUrl),
-    children: card.children.flatMap((child) => viewsFromAgentChild(child)),
+    children: children.flatMap((child) => viewsFromAgentChild(child)),
   };
 }
