@@ -112,7 +112,7 @@ export type AgentFilePart = {
 export type AgentCardPart = {
   type: 'card';
   card: Record<string, unknown>;
-  /** Id of the owning message. Pass this to `sendAction`. */
+  /** Id of the message that contains this card. */
   sourceMessageId: string;
 };
 

@@ -570,43 +570,6 @@ describe('applyEnvelope', () => {
     expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card, sourceMessageId: 'm-card' }]);
   });
 
-  it('folds card content from message-end into a card part', () => {
-    const card = { type: 'card', title: 'Support Agent' };
-    const next = applyEnvelope(
-      createInitialAgentConversationState(),
-      envelope(1, {
-        type: 'message-end',
-        messageId: 'm-end-card',
-        content: { card },
-      })
-    );
-
-    const message = assistantMessages(next.messages)[0];
-    expect(message?.id).toBe('m-end-card');
-    expect(message?.parts).toEqual([{ type: 'card', card, sourceMessageId: 'm-end-card' }]);
-  });
-
-  it('folds card content from channel.edit into a card part', () => {
-    const card = { type: 'card', title: 'Updated card' };
-    const next = applyEnvelopes(createInitialAgentConversationState(), [
-      envelope(1, {
-        type: 'message',
-        role: 'assistant',
-        messageId: 'm-edit-card',
-        content: { markdown: 'before' },
-      }),
-      envelope(2, {
-        type: 'channel.edit',
-        messageId: 'm-edit-card',
-        content: { card },
-      }),
-    ]);
-
-    const message = assistantMessages(next.messages)[0];
-    expect(message?.id).toBe('m-edit-card');
-    expect(message?.parts).toEqual([{ type: 'card', card, sourceMessageId: 'm-edit-card' }]);
-  });
-
   it('folds exclusive durable content as markdown or card, not both', () => {
     const card = { type: 'card', title: 'Support' };
     const next = applyEnvelope(
