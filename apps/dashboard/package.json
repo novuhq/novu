@@ -143,7 +143,7 @@
     "react-router-dom": "^7.18.2",
     "react-timezone-select": "^3.2.8",
     "recharts": "2.15.4",
-    "sanitize-html": "^2.17.5",
+    "sanitize-html": "^2.17.7",
     "shiki": "^3.21.0",
     "sonner": "^1.7.0",
     "streamdown": "^2.1.0",
