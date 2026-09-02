@@ -81,6 +81,10 @@ Enable webhooks in the dashboard under **Webhooks**, create an endpoint, and sub
 
 The event payload includes normalized mail fields (from, to, subject, text, html, headers, attachments, threading headers) plus your domain and route metadata. See [Event types - Email events](/platform/developer/webhooks/event-types#email-events) for the full schema.
 
+<Note>
+  When the matched route address is only in the SMTP envelope (a **BCC** recipient not present in the visible `To` or `Cc` headers), Novu adds it to `data.object.mail.bcc` as an array of `{ address, name }` entries and leaves `to` unchanged. The field is omitted when the matched recipient is already visible in the headers. `bcc` only ever contains the matched inbound address, never other envelope recipients.
+</Note>
+
 ### Attachments
 
 Each item in `data.object.mail.attachments` is metadata plus a time-limited download URL. Fetch the file with an HTTP `GET` to `url` before `expiresAt`. After that timestamp the link stops working, so copy the bytes into your own storage if you need them later.
