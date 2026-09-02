@@ -72,13 +72,13 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'message-end':
       return withAssistantMessage(state, envelope, event.messageId, (message) => ({
         ...message,
-        parts: finalizeMessageEndParts(message.parts, event.content, event.files),
+        parts: finalizeMessageEndParts(message.parts, event.messageId, event.content, event.files),
       }));
 
     case 'message': {
       const next = withMessage(state, envelope, event.messageId, event.role, (message) => ({
         ...message,
-        parts: applyDurableMessageParts(message.parts, event.content, event.files),
+        parts: applyDurableMessageParts(message.parts, event.content, event.messageId, event.files),
         status: 'sent',
       }));
 
@@ -351,6 +351,7 @@ function appendToStreamingTextPart(parts: AgentMessagePart[], delta: string): Ag
 function applyDurableMessageParts(
   parts: AgentMessagePart[],
   content: AgentMessageContent,
+  messageId: string,
   files?: AgentFileRef[]
 ): AgentMessagePart[] {
   let next = parts.slice();
@@ -364,7 +365,7 @@ function applyDurableMessageParts(
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }
   } else {
-    next = [...next, { type: 'card', card: content.card }];
+    next = [...next, { type: 'card', card: content.card, sourceMessageId: messageId }];
   }
 
   return appendFileParts(next, files);
@@ -372,6 +373,7 @@ function applyDurableMessageParts(
 
 function finalizeMessageEndParts(
   parts: AgentMessagePart[],
+  messageId: string,
   content?: AgentMessageContent,
   files?: AgentFileRef[]
 ): AgentMessagePart[] {
@@ -379,7 +381,7 @@ function finalizeMessageEndParts(
   const streamingIndex = findStreamingTextPartIndex(next);
 
   if (content) {
-    next = applyDurableMessageParts(next, content, files);
+    next = applyDurableMessageParts(next, content, messageId, files);
 
     return next;
   }
@@ -588,7 +590,7 @@ function editMessage(
   const edited: AgentMessage = {
     ...existing,
     createdAt: timestamp,
-    parts: applyDurableMessageParts([], content, files),
+    parts: applyDurableMessageParts([], content, messageId, files),
   };
 
   const nextMessages = state.messages.slice();
