@@ -803,7 +803,7 @@ conversation.dispose();
 | `subscribe(listener)` | Call `listener` on every snapshot. Returns a stop function. |
 | `sendMessage(input)` | Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. |
 | `retryMessage(messageId)` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. |
-| `respondToAction({ actionId, decision })` | Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. |
+| `respondToAction({ approvalId, decision })` | Resolve a pending `approval`. Pass `approvalId` from `pendingActions` or message parts. |
 | `sendAction({ actionId, sourceMessageId, value })` | Click a Card button. Do not use this for tool approval. |
 | `fetchMore()` | Load the next older history page. |
 | `load()` | Reload the newest history page. Runs on resume when `conversationId` is set. |

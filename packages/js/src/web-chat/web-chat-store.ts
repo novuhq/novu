@@ -4,8 +4,8 @@ import {
   type AgentConversationState,
   type AgentMessage,
   createInitialAgentConversationState,
-  derivePendingActions,
 } from './agent-message.types';
+import { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 import { mintClientId } from './idempotency';
 import type { WebChatChange, WebChatChangeSource, WebChatPaginationStatus, FetchMoreResult } from './types';
@@ -103,9 +103,11 @@ export class WebChatStore {
    * Only this store can tell live, history, and local updates apart.
    */
   #publish(entry: ConversationEntry, source: WebChatChangeSource, addedMessages: AgentMessage[]): void {
-    const newActions = derivePendingActions(entry.messages).filter((action) => !entry.reportedActionIds.has(action.id));
+    const newActions = derivePendingActions(entry.messages).filter(
+      (action) => !entry.reportedActionIds.has(pendingActionKey(action))
+    );
     for (const action of newActions) {
-      entry.reportedActionIds.add(action.id);
+      entry.reportedActionIds.add(pendingActionKey(action));
     }
 
     this.#onUpdate(entry, { ...source, addedMessages, newActions });
@@ -117,7 +119,7 @@ export class WebChatStore {
    */
   #suppressActions(entry: ConversationEntry, messages: AgentMessage[]): void {
     for (const action of derivePendingActions(messages)) {
-      entry.reportedActionIds.add(action.id);
+      entry.reportedActionIds.add(pendingActionKey(action));
     }
   }
 

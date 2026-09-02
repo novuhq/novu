@@ -90,7 +90,7 @@ The first event of a turn can create an empty assistant message before any text 
 
 | `action.type` | What to do |
 | --- | --- |
-| `tool-approval` | Call `respondToAction` with `action.id` and `approved` or `denied`. |
+| `approval` | Call `respondToAction` with `action.approvalId` and `approved` or `denied`. |
 | `mcp-connection` | Open `action.authorizeUrl` in the browser. Do not call `respondToAction`. |
 
 ### Tool approval
@@ -101,15 +101,15 @@ const { pendingActions, respondToAction } = useWebChat({
 });
 
 {pendingActions.map((action) => {
-  if (action.type !== 'tool-approval') {
+  if (action.type !== 'approval') {
     return null;
   }
 
   return (
     <button
-      key={action.id}
+      key={action.approvalId}
       type="button"
-      onClick={() => void respondToAction({ actionId: action.id, decision: 'approved' })}
+      onClick={() => void respondToAction({ approvalId: action.approvalId, decision: 'approved' })}
     >
       Approve {action.toolName}
     </button>
@@ -117,7 +117,7 @@ const { pendingActions, respondToAction } = useWebChat({
 })}
 ```
 
-Pass `action.id` from `pendingActions`. Do not invent approve or deny ids.
+Pass `action.approvalId` from `pendingActions`. Do not invent approve or deny ids.
 
 ### MCP connect
 
@@ -132,7 +132,7 @@ const { pendingActions } = useWebChat({
   }
 
   return (
-    <a key={action.id} href={action.authorizeUrl} target="_blank" rel="noreferrer">
+    <a key={action.actionId} href={action.authorizeUrl} target="_blank" rel="noreferrer">
       Connect {action.displayName}
     </a>
   );
