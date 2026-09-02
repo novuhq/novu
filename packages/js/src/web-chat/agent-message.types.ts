@@ -112,6 +112,8 @@ export type AgentFilePart = {
 export type AgentCardPart = {
   type: 'card';
   card: Record<string, unknown>;
+  /** Id of the owning message. Pass this to `sendAction`. */
+  sourceMessageId: string;
 };
 
 /** Custom payload. The UI decides how to render it. */

@@ -154,7 +154,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         content.push({
           type: 'data',
           name: 'novu-card',
-          data: { card: part.card, sourceMessageId: message.id },
+          data: part,
         });
         break;
       }
