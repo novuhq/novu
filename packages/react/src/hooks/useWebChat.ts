@@ -67,7 +67,11 @@ export type UseWebChatProps = UseWebChatCallbacks &
       }
   );
 
-/** State and actions returned by {@link useWebChat}. */
+/**
+ * State and actions returned by {@link useWebChat}.
+ * `sendMessage`, `respondToAction`, `sendAction`, and `retryMessage` resolve `{ data, error }` and never reject.
+ * Inspect `error` on the result, or show hook `error`.
+ */
 export type UseWebChatResult = {
   /** Conversation timeline. */
   messages: AgentMessage[];
@@ -75,7 +79,7 @@ export type UseWebChatResult = {
   pendingActions: AgentPendingAction[];
   /** Server conversation id after create or resume. */
   conversationId?: string;
-  /** Last error from load, send, retry, or action. */
+  /** Last error from load, send, retry, or action. Mutations also return `{ error }` for that call. */
   error?: NovuError | WebChatPlanLimitError;
   /** True while Web Chat loads and, for an existing conversation, until the first history fetch completes. */
   isLoading: boolean;
@@ -100,22 +104,34 @@ export type UseWebChatResult = {
   catchUpError?: NovuError;
   /** Reload the newest history page. No-op when there is no conversation id. */
   refetch: () => Promise<void>;
-  /** Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. */
+  /**
+   * Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   sendMessage: (input: SendMessageInput) => Promise<{
     data?: SendMessageResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
-  /** Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. */
+  /**
+   * Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
-  /** Click a Card button. Do not use this for tool approval. */
+  /**
+   * Click a Card button. Do not use this for tool approval.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
     data?: SendActionResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
-  /** Resend a message whose `status` is `failed`. Reuses the original idempotency key. */
+  /**
+   * Resend a message whose `status` is `failed`. Reuses the original idempotency key.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   retryMessage: (messageId: string) => Promise<{
     data?: SendMessageResult;
     error?: NovuError | WebChatPlanLimitError;
