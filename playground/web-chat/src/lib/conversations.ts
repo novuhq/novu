@@ -3,14 +3,11 @@
 import { useNovu, type WebChatConversation } from '@novu/react';
 import { useCallback, useEffect, useState } from 'react';
 
-/** Mirrors `WebChatConversation` from `@novu/js`. */
 export type ConversationSummary = WebChatConversation;
 
 const RECENT_LIMIT = 5;
 
-/**
- * Recent conversations for the sidebar. The SDK holds the session token.
- */
+/** Recent conversations for the sidebar. */
 export function useConversations() {
   const novu = useNovu();
   const [items, setItems] = useState<ConversationSummary[]>([]);

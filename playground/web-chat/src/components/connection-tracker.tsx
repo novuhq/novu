@@ -4,9 +4,7 @@ import { useNovu } from '@novu/react';
 import { useEffect } from 'react';
 import { setSocketStatus } from '../lib/socket-status';
 
-/**
- * Playground wiring: mirror SDK connect events into the socket status store.
- */
+/** Mirror SDK connect events into the socket status store. */
 export function ConnectionTracker() {
   const novu = useNovu();
 

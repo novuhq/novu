@@ -142,10 +142,7 @@ export class WebChat extends BaseModule {
     return runtime;
   }
 
-  /**
-   * List conversations for the current subscriber.
-   * Uses the session token the SDK already holds. App code does not pass a token.
-   */
+  /** List conversations for the current subscriber. */
   async listConversations(args: ListConversationsArgs = {}): Result<ListConversationsResult> {
     return this.callWithSession(async () => {
       try {

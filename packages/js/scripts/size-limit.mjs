@@ -15,9 +15,6 @@ const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    // Raised for agent conversation runtime (NV-8640), protocol validation (NV-8644),
-    // web-chat idempotency/retry (NV-8642), publication meta (NV-8641),
-    // lazy Web Chat load (NV-8698), and listConversations (NV-8746).
     limitInBytes: 242_000,
   },
   {
