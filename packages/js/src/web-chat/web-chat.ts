@@ -13,6 +13,8 @@ import { runtimeCacheKey } from './runtime-cache-key';
 import type {
   FetchMoreArgs,
   FetchMoreResult,
+  ListConversationsArgs,
+  ListConversationsResult,
   LoadConversationArgs,
   LoadConversationResult,
   RespondToActionArgs,
@@ -138,6 +140,19 @@ export class WebChat extends BaseModule {
     }
 
     return runtime;
+  }
+
+  /** List conversations for the current subscriber. */
+  async listConversations(args: ListConversationsArgs = {}): Result<ListConversationsResult> {
+    return this.callWithSession(async () => {
+      try {
+        const data = await this.#webChatService.listConversations(args);
+
+        return { data };
+      } catch (error) {
+        return { error: new NovuError('Failed to list conversations', error) };
+      }
+    });
   }
 
   /** @internal */

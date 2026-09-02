@@ -2,6 +2,8 @@ export type { AgentConversationRuntime } from './agent-conversation-runtime';
 export type {
   AgentApprovalPart,
   AgentApprovalPartState,
+  AgentCardChild,
+  AgentCardElement,
   AgentCardPart,
   AgentConversationStatus,
   AgentConversationTyping,
@@ -36,11 +38,14 @@ export type {
   AgentEventEnvelope,
   AgentHashFields,
   FetchMoreResult,
+  ListConversationsArgs,
+  ListConversationsResult,
   LoadConversationResult,
   RespondToActionResult,
   RetryMessageResult,
   SendActionResult,
   SendMessageResult,
+  WebChatConversation,
   WebChatPagination,
   WebChatPaginationStatus,
 } from './types';

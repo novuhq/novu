@@ -108,6 +108,34 @@ describe('WebChatService', () => {
     );
   });
 
+  it('GETs conversations with the session token already on the client', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: [{ identifier: 'conv_abcdefghijkl', title: 'Billing' }],
+        next: null,
+        previous: null,
+      }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    httpClient.setAuthorizationToken('session-token');
+    const service = new WebChatService({ httpClient });
+
+    const result = await service.listConversations({ limit: 5, orderBy: 'lastActivityAt', orderDirection: 'DESC' });
+
+    expect(result.conversations).toEqual([{ identifier: 'conv_abcdefghijkl', title: 'Billing' }]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations?limit=5&orderBy=lastActivityAt&orderDirection=DESC',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ Authorization: 'Bearer session-token' }),
+      })
+    );
+  });
+
   it('GETs conversation events', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

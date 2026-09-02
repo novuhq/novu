@@ -1,3 +1,5 @@
+import type { AgentCardChild, AgentCardElement } from '@novu/react';
+
 export type CardButtonView = { id: string; label: string; value?: string; style?: string };
 
 export type CardChildView =
@@ -14,14 +16,6 @@ export type CardView = {
   children: CardChildView[];
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function readString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() ? value : undefined;
-}
-
 export function toSafeExternalUrl(url?: string): string | undefined {
   if (!url) return undefined;
 
@@ -37,66 +31,88 @@ export function toSafeExternalUrl(url?: string): string | undefined {
   return undefined;
 }
 
-function cardButtonsFromNode(node: unknown): CardButtonView[] {
-  if (!isRecord(node)) return [];
+function linkView(label: string, url: string): CardChildView | null {
+  const safeUrl = toSafeExternalUrl(url);
+  const trimmedLabel = label.trim();
 
-  if (node.type === 'button') {
-    const id = readString(node.id);
-    const label = readString(node.label);
-    if (!id || !label) return [];
-
-    return [{ id, label, value: readString(node.value), style: readString(node.style) }];
-  }
-
-  if (node.type === 'actions' && Array.isArray(node.children)) {
-    return node.children.flatMap((child) => cardButtonsFromNode(child));
-  }
-
-  return [];
+  return safeUrl && trimmedLabel ? { type: 'link', url: safeUrl, label: trimmedLabel } : null;
 }
 
-function cardChildFromNode(node: unknown): CardChildView | null {
-  if (!isRecord(node)) return null;
+function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
+  switch (child.type) {
+    case 'text': {
+      const content = child.content.trim();
 
-  if (node.type === 'text') {
-    const content = readString(node.content);
+      return content ? [{ type: 'text', content }] : [];
+    }
+    case 'divider':
+      return [{ type: 'divider' }];
+    case 'image': {
+      const url = toSafeExternalUrl(child.url);
 
-    return content ? { type: 'text', content } : null;
+      return url ? [{ type: 'image', url, alt: child.alt ?? '' }] : [];
+    }
+    case 'link': {
+      const view = linkView(child.label, child.url);
+
+      return view ? [view] : [];
+    }
+    case 'button':
+      return [
+        {
+          type: 'actions',
+          buttons: [{ id: child.id, label: child.label, value: child.value, style: child.style }],
+        },
+      ];
+    case 'actions': {
+      const views: CardChildView[] = [];
+      const buttons: CardButtonView[] = [];
+
+      for (const actionChild of child.children) {
+        if (actionChild.type === 'button') {
+          buttons.push({
+            id: actionChild.id,
+            label: actionChild.label,
+            value: actionChild.value,
+            style: actionChild.style,
+          });
+          continue;
+        }
+
+        if (actionChild.type === 'link-button') {
+          const view = linkView(actionChild.label, actionChild.url);
+          if (view) {
+            views.push(view);
+          }
+        }
+      }
+
+      if (buttons.length > 0) {
+        views.push({ type: 'actions', buttons });
+      }
+
+      return views;
+    }
+    case 'section':
+      return child.children.flatMap((nested) => viewsFromAgentChild(nested));
+    case 'fields':
+      return child.children
+        .map((field) => `${field.label}: ${field.value}`.trim())
+        .filter(Boolean)
+        .map((content) => ({ type: 'text' as const, content }));
+    case 'table':
+      return [];
   }
-
-  if (node.type === 'divider') {
-    return { type: 'divider' };
-  }
-
-  if (node.type === 'image') {
-    const url = toSafeExternalUrl(readString(node.url));
-
-    return url ? { type: 'image', url, alt: readString(node.alt) ?? '' } : null;
-  }
-
-  if (node.type === 'link') {
-    const url = toSafeExternalUrl(readString(node.url));
-    const label = readString(node.label);
-
-    return url && label ? { type: 'link', url, label } : null;
-  }
-
-  const buttons = cardButtonsFromNode(node);
-
-  return buttons.length > 0 ? { type: 'actions', buttons } : null;
 }
 
-export function cardViewFromRecord(card: Record<string, unknown>): CardView {
+/** Map a typed agent card to the playground view model. Sanitize http(s) URLs. */
+export function cardViewFromElement(card: AgentCardElement): CardView {
   const children = Array.isArray(card.children) ? card.children : [];
 
   return {
-    title: readString(card.title),
-    subtitle: readString(card.subtitle),
-    imageUrl: toSafeExternalUrl(readString(card.imageUrl)),
-    children: children.flatMap((child) => {
-      const view = cardChildFromNode(child);
-
-      return view ? [view] : [];
-    }),
+    title: card.title?.trim() || undefined,
+    subtitle: card.subtitle?.trim() || undefined,
+    imageUrl: toSafeExternalUrl(card.imageUrl),
+    children: children.flatMap((child) => viewsFromAgentChild(child)),
   };
 }
