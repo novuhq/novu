@@ -256,6 +256,17 @@
     margin: 0 0 12px;
   }
 
+  .session-copy code {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.8em;
+    color: var(--text);
+    background: var(--bg-raise);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+  }
+
+  .session.rule { border-top: 1px solid var(--line); }
+
   .terminal {
     border: 1px solid var(--line-strong);
     background: var(--bg-raise);
@@ -332,6 +343,9 @@
     font-size: 0.86rem;
     color: var(--text-dim);
   }
+
+  .terminal-body .you { color: #7eb8d4; }
+  .terminal-body .hdr { color: var(--text-faint); }
 
   /* ---------- steps ---------- */
 
@@ -569,6 +583,31 @@
     <div class="verb">
       <span class="name">tell</span>
       <p>One-way. Delivered and done — for the "it finished" message nobody should have to poll for.</p>
+    </div>
+  </section>
+
+  <section class="session rule" id="contacts">
+    <div class="session-copy">
+      <h2>More than one human.<br /><em>Look first.</em></h2>
+      <p>Agents can list everyone they can address with
+      <code>human contacts</code> — a directory of people in the
+      environment, not a guarantee they have a channel linked yet.</p>
+      <p>Your row is marked <em>(you)</em>. Invite someone new with
+      <code>human invite alice --via slack --name "Alice Chen"</code>,
+      then pass their id to <code>--to</code>.</p>
+    </div>
+    <div class="terminal" aria-label="Contacts directory">
+      <div class="terminal-bar"><span>agent — who can I reach</span><span>tty</span></div>
+      <div class="terminal-body">
+        <div class="line"><span class="p">$</span> <span class="c">human contacts</span></div>
+        <div class="line"><span class="hdr">ID     NAME         EMAIL</span></div>
+        <div class="line"><span class="c">dima   Dima Groza   dima@novu.co</span><span class="you"> (you)</span></div>
+        <div class="line"><span class="c">alice  Alice Chen   alice@acme.com</span></div>
+        <div class="line"><span class="c">bob    Bob          —</span></div>
+        <div class="line">&nbsp;</div>
+        <div class="line"><span class="p">$</span> <span class="c">human approve <span class="d">"Ship the pricing change?"</span> --to alice</span></div>
+        <div class="line"><span class="cursor"></span></div>
+      </div>
     </div>
   </section>
 
