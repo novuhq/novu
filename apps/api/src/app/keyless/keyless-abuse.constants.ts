@@ -24,6 +24,17 @@ export const KEYLESS_GENERATE_CAP_PER_IP_PER_DAY = parsePositiveIntEnv(
 
 export const KEYLESS_MAX_AGENTS_PER_ENV = parsePositiveIntEnv(process.env.KEYLESS_MAX_AGENTS_PER_ENV, 2);
 
+/**
+ * How many `@novu/human` interactions a keyless environment may create before
+ * delivery is replaced by the sign-up CTA. Read at call time (not module load)
+ * so the value can change per process/test without a restart.
+ */
+export const KEYLESS_HUMAN_INTERACTION_CAP_DEFAULT = 5;
+
+export function resolveKeylessHumanInteractionCap(): number {
+  return parsePositiveIntEnv(process.env.KEYLESS_HUMAN_INTERACTION_CAP, KEYLESS_HUMAN_INTERACTION_CAP_DEFAULT);
+}
+
 export const KEYLESS_DAILY_COUNTER_TTL_SECONDS = 86_400;
 
 export const INCR_WITH_EXPIRE_SCRIPT = `
