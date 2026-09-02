@@ -308,7 +308,13 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
 
   async #handleDisconnectSocket(): Result<void> {
     try {
-      this.#partySocket?.close();
+      const socket = this.#partySocket;
+      this.#clearCurrentSocket();
+      socket?.close();
+
+      if (socket) {
+        this.#emitter.emit('socket.disconnect.resolved', { args: { socketUrl: this.#socketUrl } });
+      }
 
       return {};
     } catch (error) {
