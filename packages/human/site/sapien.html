@@ -405,32 +405,6 @@
     padding: 1px 5px;
   }
 
-  /* ---------- exit codes ---------- */
-
-  .codes {
-    border-top: 1px solid var(--line);
-    padding: clamp(64px, 9vw, 110px) clamp(20px, 4vw, 48px);
-  }
-
-  .codes-table {
-    margin-top: 44px;
-    border-top: 1px solid var(--line);
-    font-family: "Geist Mono", monospace;
-    font-size: 0.8rem;
-  }
-
-  .code-row {
-    display: grid;
-    grid-template-columns: 72px 1fr;
-    gap: 20px;
-    padding: 13px 4px;
-    border-bottom: 1px solid var(--line);
-    color: var(--text-dim);
-  }
-
-  .code-row .n { color: var(--text); font-weight: 500; }
-  .code-row.ember .n { color: var(--ember); }
-
   /* ---------- quote ---------- */
 
   .quote {
@@ -547,8 +521,8 @@
     <div class="session-copy">
       <h2>The agent waits.<br /><em>You decide.</em></h2>
       <p>Every blocking call delivers a message with buttons to wherever you
-      already are, then holds the process until you tap one. Exit codes carry
-      the verdict — your scripts branch on the answer, not on hope.</p>
+      already are, then holds the process until you tap one. Your scripts
+      branch on the answer, not on hope.</p>
       <p>Timeouts, retries and resumption are the agent's problem.
       Yours is a five-second decision from your phone.</p>
     </div>
@@ -574,7 +548,7 @@
     </div>
     <div class="verb">
       <span class="name">approve</span>
-      <p>Approve / Deny buttons for anything irreversible. Exit 0 or 10. An audit trail of who said yes.</p>
+      <p>Approve / Deny buttons for anything irreversible. An audit trail of who said yes.</p>
     </div>
     <div class="verb">
       <span class="name">choose</span>
@@ -632,17 +606,6 @@
         <p>The question lands where you already read messages, with buttons.
         Tap one, or just reply. The agent picks it up and keeps going.</p>
       </div>
-    </div>
-  </section>
-
-  <section class="codes">
-    <h2 class="section-title">Exit codes are <em>the contract.</em></h2>
-    <div class="codes-table">
-      <div class="code-row"><span class="n">0</span><span>answered / approved / chosen / delivered</span></div>
-      <div class="code-row ember"><span class="n">10</span><span>denied — the human said no</span></div>
-      <div class="code-row"><span class="n">11</span><span>timed out waiting — still pending, resume with <span style="color:var(--text)">human wait &lt;id&gt;</span></span></div>
-      <div class="code-row"><span class="n">12</span><span>expired or canceled</span></div>
-      <div class="code-row"><span class="n">1</span><span>error</span></div>
     </div>
   </section>
 
