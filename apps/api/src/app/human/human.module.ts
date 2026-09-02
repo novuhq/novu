@@ -14,6 +14,7 @@ import { HumanDeliveryService } from './services/human-delivery.service';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
+import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
@@ -37,6 +38,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     ListInteractions,
     CancelInteraction,
     SetupHumanRelay,
+    ListContacts,
   ],
 })
 export class HumanModule {}
