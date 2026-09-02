@@ -2,6 +2,8 @@ export type { AgentConversationRuntime } from './agent-conversation-runtime';
 export type {
   AgentApprovalPart,
   AgentApprovalPartState,
+  AgentCardChild,
+  AgentCardElement,
   AgentCardPart,
   AgentConversationStatus,
   AgentConversationTyping,
