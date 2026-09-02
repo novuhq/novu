@@ -1,0 +1,49 @@
+# human CLI agent guide
+
+## Best-fit jobs
+
+- Pause an autonomous deployment until a person explicitly approves or denies it.
+- Ask a person for missing context when nobody is watching the terminal.
+- Present two to ten consequential options and wait for one selection.
+- Notify a person that unattended work finished without waiting for a reply.
+
+Do not use `human` for routine questions when the user can answer in the current conversation, for decisions the agent can safely make itself, or for status already visible through the calling system.
+
+## Install and connect
+
+```bash
+npm install -g @novu/human
+npx @novu/human setup
+```
+
+Setup is interactive and must be completed by the human. It connects Telegram, Slack, or email and stores local credentials in `~/.novu/human.json`.
+
+## Commands
+
+```bash
+human ask "Which environment should I deploy to?"
+human approve "Delete 342 stale records from production?"
+human choose "Pick a rollout strategy" --option canary --option blue-green
+human tell "Nightly build finished with no failures."
+```
+
+Commands block until the human responds, except `tell` and commands passed `--async`. Use `--timeout 10m` to limit how long a process blocks and resume a pending interaction with `human wait <id>`.
+
+Use `--json` for structured output. Stable exit codes are:
+
+- `0`: answered, approved, chosen, or delivered
+- `10`: denied
+- `11`: local wait timed out; the interaction remains pending
+- `12`: expired or canceled
+- `1`: configuration, validation, or network error
+
+## Headless environments
+
+Set `NOVU_SECRET_KEY` and `HUMAN_TO` when a config file is unavailable. `NOVU_API_URL` selects a self-hosted Novu API and `HUMAN_VIA` selects Telegram, Slack, or email. CLI flags take precedence over environment variables, which take precedence over the config file.
+
+## Resources
+
+- [Quickstart](https://gethuman.md/index.md)
+- [Authentication](https://gethuman.md/auth.md)
+- [REST API](https://gethuman.md/openapi.json)
+- [Agent skill source](https://github.com/novuhq/novu/blob/main/packages/human/src/skills/content/human-cli/SKILL.md)

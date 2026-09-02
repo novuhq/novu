@@ -1,0 +1,675 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "human interaction API",
+    "version": "0.2.0",
+    "description": "The REST API used by @novu/human to ask, notify, or request a decision from a connected person. The CLI is the recommended client because it handles keyless setup, polling, timeouts, and stable exit codes.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    }
+  },
+  "externalDocs": {
+    "description": "human developer portal",
+    "url": "https://gethuman.md/developers"
+  },
+  "servers": [
+    {
+      "url": "https://api.novu.co",
+      "description": "Novu Cloud"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Setup",
+      "description": "Create and configure a temporary keyless environment."
+    },
+    {
+      "name": "Interactions",
+      "description": "Create and inspect human interactions."
+    }
+  ],
+  "paths": {
+    "/v1/inbox/session": {
+      "post": {
+        "tags": ["Setup"],
+        "operationId": "bootstrapKeylessSession",
+        "summary": "Create a temporary keyless environment",
+        "description": "Starts the no-account sandbox flow used by `human setup`. The returned application identifier is used with the Keyless authentication schemes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Keyless session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "applicationIdentifier": {
+                          "type": "string",
+                          "pattern": "^pk_keyless_"
+                        }
+                      },
+                      "required": ["applicationIdentifier"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    },
+    "/v1/human/setup": {
+      "post": {
+        "tags": ["Setup"],
+        "operationId": "setupHumanRelay",
+        "summary": "Create the relay agent for a human",
+        "x-required-permissions": ["agent:write"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "KeylessAuthorization": [],
+            "KeylessIdentifier": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupHumanRelayRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Relay configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupHumanRelayResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/human/interactions": {
+      "post": {
+        "tags": ["Interactions"],
+        "operationId": "createInteraction",
+        "summary": "Send an interaction to one or more humans",
+        "x-required-permissions": ["agent:write"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "KeylessAuthorization": [],
+            "KeylessIdentifier": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInteractionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Interaction created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interaction"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Interactions"],
+        "operationId": "listInteractions",
+        "summary": "List recent interactions",
+        "x-required-permissions": ["agent:read"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "KeylessAuthorization": [],
+            "KeylessIdentifier": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/InteractionStatus"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Filter by human subscriber ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Internal MongoDB cursor returned by a previous page.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Interaction list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Interaction"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/human/interactions/{interactionId}": {
+      "get": {
+        "tags": ["Interactions"],
+        "operationId": "getInteraction",
+        "summary": "Get an interaction",
+        "x-required-permissions": ["agent:read"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "KeylessAuthorization": [],
+            "KeylessIdentifier": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/InteractionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Interaction state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interaction"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/human/interactions/{interactionId}/cancel": {
+      "post": {
+        "tags": ["Interactions"],
+        "operationId": "cancelInteraction",
+        "summary": "Cancel a pending interaction",
+        "x-required-permissions": ["agent:write"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "KeylessAuthorization": [],
+            "KeylessIdentifier": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/InteractionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canceled interaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interaction"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Novu secret key formatted as `ApiKey <NOVU_SECRET_KEY>`."
+      },
+      "KeylessAuthorization": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Temporary keyless credential formatted as `Keyless <applicationIdentifier>`."
+      },
+      "KeylessIdentifier": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Novu-Application-Identifier",
+        "description": "The `pk_keyless_...` application identifier returned by the bootstrap operation."
+      }
+    },
+    "parameters": {
+      "InteractionId": {
+        "name": "interactionId",
+        "in": "path",
+        "required": true,
+        "description": "Public interaction identifier.",
+        "schema": {
+          "type": "string",
+          "pattern": "^hi_"
+        }
+      }
+    },
+    "schemas": {
+      "InteractionKind": {
+        "type": "string",
+        "enum": ["ask", "approve", "choose", "tell"]
+      },
+      "InteractionStatus": {
+        "type": "string",
+        "enum": ["pending", "answered", "approved", "denied", "expired", "canceled", "delivered"]
+      },
+      "Channel": {
+        "type": "string",
+        "enum": ["telegram", "slack", "email"]
+      },
+      "CreateInteractionRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/InteractionKind"
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "options": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "maxLength": 75
+            }
+          },
+          "to": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "maxItems": 50,
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "via": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "agentIdentifier": {
+            "type": "string",
+            "default": "human-relay"
+          },
+          "from": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "ttlSeconds": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 259200,
+            "default": 86400
+          }
+        },
+        "required": ["kind", "prompt", "to"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "choose"
+                }
+              }
+            },
+            "then": {
+              "required": ["options"]
+            }
+          }
+        ]
+      },
+      "InteractionOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "label"]
+      },
+      "InteractionResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text", "option"]
+          },
+          "text": {
+            "type": "string"
+          },
+          "optionId": {
+            "type": "string"
+          },
+          "respondedBy": {
+            "type": "string"
+          },
+          "respondedBySubscriberId": {
+            "type": "string"
+          },
+          "respondedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["type", "respondedAt"]
+      },
+      "Interaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^hi_"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/InteractionKind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InteractionStatus"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InteractionOption"
+            }
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "integrationIdentifier": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "response": {
+            "$ref": "#/components/schemas/InteractionResponse"
+          },
+          "failedTo": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "prompt",
+          "to",
+          "integrationIdentifier",
+          "platform",
+          "expiresAt",
+          "createdAt"
+        ]
+      },
+      "SetupHumanRelayRequest": {
+        "type": "object",
+        "properties": {
+          "subscriberId": {
+            "type": "string"
+          },
+          "agentIdentifier": {
+            "type": "string",
+            "default": "human-relay"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["subscriberId"]
+      },
+      "SetupHumanRelayResponse": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string"
+          },
+          "agentIdentifier": {
+            "type": "string"
+          },
+          "subscriberId": {
+            "type": "string"
+          }
+        },
+        "required": ["agentId", "agentIdentifier", "subscriberId"]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "required": ["message"]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing, expired, or invalid credential",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Credential lacks the operation's declared agent permission",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Interaction not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests",
+        "headers": {
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

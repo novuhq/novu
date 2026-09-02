@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "name": "human",
+  "description": "Capabilities for reaching a real person from an AI agent or script.",
+  "skills": [
+    {
+      "name": "human-ask",
+      "description": "Ask a freeform question when an unattended agent needs information only a person can provide.",
+      "command": "human ask <question>",
+      "documentation": "https://gethuman.md/llms-full.txt"
+    },
+    {
+      "name": "human-approve",
+      "description": "Pause a risky or irreversible action until a person explicitly approves or denies it.",
+      "command": "human approve <action>",
+      "documentation": "https://gethuman.md/llms-full.txt"
+    },
+    {
+      "name": "human-choose",
+      "description": "Present a consequential multi-way decision to a person and wait for one selected option.",
+      "command": "human choose <question> --option <choice>",
+      "documentation": "https://gethuman.md/llms-full.txt"
+    },
+    {
+      "name": "human-tell",
+      "description": "Send a non-blocking completion or status notification from unattended work.",
+      "command": "human tell <message>",
+      "documentation": "https://gethuman.md/llms-full.txt"
+    }
+  ]
+}

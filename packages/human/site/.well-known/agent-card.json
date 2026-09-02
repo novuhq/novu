@@ -1,0 +1,47 @@
+{
+  "name": "human",
+  "description": "Reach a real person from an AI agent over Telegram, Slack, or email.",
+  "version": "0.2.0",
+  "documentationUrl": "https://gethuman.md/developers",
+  "contactEndpoint": "https://gethuman.md/developers",
+  "interfaces": [
+    {
+      "type": "cli",
+      "package": "@novu/human",
+      "setup": "npx @novu/human setup"
+    },
+    {
+      "type": "rest",
+      "url": "https://api.novu.co/v1/human/interactions",
+      "openapi": "https://gethuman.md/openapi.json",
+      "authentication": "https://gethuman.md/auth.md"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": true,
+    "stateTransitionHistory": true
+  },
+  "skills": [
+    {
+      "id": "ask",
+      "name": "Ask a human",
+      "description": "Wait for a freeform answer from a connected person."
+    },
+    {
+      "id": "approve",
+      "name": "Request human approval",
+      "description": "Wait for an explicit approval or denial."
+    },
+    {
+      "id": "choose",
+      "name": "Ask a human to choose",
+      "description": "Wait for a selection from two to ten options."
+    },
+    {
+      "id": "tell",
+      "name": "Notify a human",
+      "description": "Deliver a one-way message."
+    }
+  ]
+}

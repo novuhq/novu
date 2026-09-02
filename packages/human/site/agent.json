@@ -1,0 +1,55 @@
+{
+  "name": "human",
+  "description": "A CLI and REST interface for asking, notifying, or requesting a decision from a real person over Telegram, Slack, or email.",
+  "mode": "agent",
+  "recommendedInterface": {
+    "type": "cli",
+    "package": "@novu/human",
+    "install": "npm install -g @novu/human",
+    "setup": "npx @novu/human setup",
+    "structuredOutputFlag": "--json"
+  },
+  "whenToUse": [
+    "An autonomous or scheduled agent needs information and nobody is watching its terminal.",
+    "A risky or irreversible action requires explicit human approval.",
+    "A consequential choice should be selected by a person instead of guessed.",
+    "Long-running work should notify a person when it finishes."
+  ],
+  "whenNotToUse": [
+    "The user is active in the current conversation and can answer directly.",
+    "The agent can make the decision safely from existing instructions.",
+    "The calling system already surfaces the same status."
+  ],
+  "capabilities": [
+    {
+      "name": "ask",
+      "description": "Ask a freeform question and wait for a text response."
+    },
+    {
+      "name": "approve",
+      "description": "Request an explicit approval or denial with stable exit codes."
+    },
+    {
+      "name": "choose",
+      "description": "Present two to ten options and wait for a selection."
+    },
+    {
+      "name": "tell",
+      "description": "Deliver a one-way notification without waiting."
+    }
+  ],
+  "api": {
+    "baseUrl": "https://api.novu.co",
+    "openapi": "https://gethuman.md/openapi.json",
+    "authentication": "https://gethuman.md/auth.md",
+    "permissions": {
+      "read": "agent:read",
+      "write": "agent:write"
+    }
+  },
+  "documentation": {
+    "quickstart": "https://gethuman.md/index.md",
+    "developers": "https://gethuman.md/developers",
+    "fullGuide": "https://gethuman.md/llms-full.txt"
+  }
+}

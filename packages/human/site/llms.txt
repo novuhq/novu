@@ -1,0 +1,19 @@
+# human — the human API for agents
+
+`human` is a CLI for reaching a real person from an unattended AI agent or script. It can ask a freeform question, request approval, offer a choice, or send a notification over Telegram, Slack, or email.
+
+## When to use this
+
+Use `human` when an agent is running unattended, needs approval for a risky or irreversible action, faces a consequential choice it should not guess, or must notify a person when long-running work finishes. If a person is already active in the current chat, ask them there instead.
+
+## Start here
+
+- [Agent quickstart and command contract](https://gethuman.md/index.md)
+- [Developer portal](https://gethuman.md/developers)
+- [Authentication guide](https://gethuman.md/auth.md)
+- [OpenAPI specification](https://gethuman.md/openapi.json)
+- [Full agent guidance](https://gethuman.md/llms-full.txt)
+- [Install from npm](https://www.npmjs.com/package/@novu/human)
+- [Source code](https://github.com/novuhq/novu/tree/main/packages/human)
+
+Agents should normally call the `human` CLI, not invoke the REST API directly. Install with `npm install -g @novu/human`, ask the human to run `npx @novu/human setup` once, then use `human ask`, `human approve`, `human choose`, or `human tell`. Add `--json` for machine-readable output.

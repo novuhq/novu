@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>human developer portal</title>
+  <meta name="description" content="Install, authenticate, and integrate the human CLI and REST API." />
+  <link rel="canonical" href="https://gethuman.md/developers" />
+  <style>
+    :root { color-scheme: dark; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    body { max-width: 860px; margin: 0 auto; padding: 48px 24px 96px; color: #ebe2d6; background: #0a0908; line-height: 1.65; }
+    h1, h2 { line-height: 1.2; }
+    h1 { font-size: clamp(2rem, 7vw, 4rem); margin-bottom: 0.25em; }
+    h2 { margin-top: 2.5em; color: #ff7854; }
+    a { color: #ff7854; }
+    code { color: #fff; }
+    pre { overflow-x: auto; padding: 18px; border: 1px solid #403b35; background: #100f0d; }
+    .lede { color: #a9a095; font-size: 1.1rem; }
+    nav { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 56px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #403b35; text-align: left; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">agent homepage</a>
+    <a href="/index.md">markdown quickstart</a>
+    <a href="/openapi.json">OpenAPI</a>
+    <a href="/auth.md">authentication</a>
+  </nav>
+
+  <main>
+    <h1>human developer portal</h1>
+    <p class="lede">Reach a real person from an unattended agent, then continue from their answer.</p>
+
+    <h2>Quickstart</h2>
+    <pre><code>npm install -g @novu/human
+npx @novu/human setup
+human approve "Deploy to production?" --from deploy-bot --json</code></pre>
+    <p>The human completes setup once by connecting Telegram, Slack, or email. No account or manually-created API key is required for the keyless setup flow.</p>
+
+    <h2>Machine output</h2>
+    <p>Pass <code>--json</code> to receive the full interaction object. Exit codes are a stable contract and should be preferred over parsing display text.</p>
+    <table>
+      <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>0</code></td><td>answered, approved, chosen, or delivered</td></tr>
+        <tr><td><code>10</code></td><td>denied</td></tr>
+        <tr><td><code>11</code></td><td>local wait timed out; interaction remains pending</td></tr>
+        <tr><td><code>12</code></td><td>expired or canceled</td></tr>
+        <tr><td><code>1</code></td><td>configuration, validation, or network error</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Authentication and permissions</h2>
+    <p>Setup creates a temporary keyless Novu environment and stores its identifier in <code>~/.novu/human.json</code>. Existing Novu environments can set <code>NOVU_SECRET_KEY</code>. Headless runs also set <code>HUMAN_TO</code>. Read the <a href="/auth.md">agent authentication guide</a> for headers, errors, and revocation.</p>
+    <p>REST reads require <code>agent:read</code>; creates and cancellations require <code>agent:write</code>. The <a href="/openapi.json">OpenAPI document</a> declares these requirements on each operation.</p>
+
+    <h2>Sandbox</h2>
+    <p>The keyless setup flow is the sandbox: <code>POST /v1/inbox/session</code> provisions a temporary environment without an account, after which the CLI configures a relay and channel. Run <code>npx @novu/human setup</code> to use the supported guided flow.</p>
+
+    <h2>Direct REST access</h2>
+    <p>The CLI is the supported default because it handles setup, polling, timeouts, and exit codes. Integrators that need direct access can use the API at <code>https://api.novu.co</code> with the published <a href="/openapi.json">OpenAPI 3.1 specification</a>.</p>
+
+    <h2>Resources</h2>
+    <ul>
+      <li><a href="https://www.npmjs.com/package/@novu/human">npm package</a></li>
+      <li><a href="https://github.com/novuhq/novu/tree/main/packages/human">source and README</a></li>
+      <li><a href="/llms-full.txt">full agent guidance</a></li>
+      <li><a href="/.well-known/agent-skills/index.json">agent skills index</a></li>
+    </ul>
+  </main>
+</body>
+</html>
