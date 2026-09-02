@@ -25,7 +25,7 @@ function PlaygroundApp() {
   const { events, clear } = useDebugLog();
   const socketStatus = useSocketStatus();
   const session = usePlaygroundSession();
-  const conversations = useConversations(config.backendUrl);
+  const conversations = useConversations();
 
   const reloadConversations = useCallback(() => {
     void conversations.reload();
