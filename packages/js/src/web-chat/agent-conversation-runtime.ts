@@ -315,9 +315,9 @@ export class AgentConversationRuntime {
     return response;
   }
 
-  /** Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. */
+  /** Resolve a pending `approval`. Pass `approvalId` from `pendingActions` or message parts. */
   async respondToAction(args: {
-    actionId: string;
+    approvalId: string;
     decision: AgentToolApprovalDecision;
   }): Promise<{ data?: { conversationId: string }; error?: NovuError | WebChatPlanLimitError }> {
     const response = await this.#webChat.respondToAction({
@@ -325,7 +325,7 @@ export class AgentConversationRuntime {
       agentHash: this.#agentHash,
       key: this.key,
       conversationId: this.#conversationId,
-      actionId: args.actionId,
+      approvalId: args.approvalId,
       decision: args.decision,
     });
 
