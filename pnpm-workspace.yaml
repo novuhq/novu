@@ -232,6 +232,12 @@ overrides:
   # instances of @codemirror/autocomplete@6.18.3 with incompatible types.
   '@codemirror/state': 6.6.0
   '@codemirror/autocomplete': 6.18.3
+  # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist <=4.28.6 has
+  # unbounded memory growth (no cache eviction) leading to OOM and a crash /
+  # prototype-write via untrusted browserslist-stats.json in normalizeStats.
+  # Pulled transitively through @nx/jest > @babel/helper-compilation-targets.
+  # Patched in >=4.28.7 (patch bumps within the 4.28.x line).
+  browserslist@<4.28.7: ^4.28.7
 
 # allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
 # Values map package names to `true` (always allow scripts) or `false` (always deny).
