@@ -22,6 +22,22 @@ Use these fields to drive the UI. See [`useWebChat`](/platform/sdks/react/hooks/
 
 See [Reconnect](#reconnect) (`isRecovering`, `catchUpError`). See [Older messages](#older-messages) (`pagination`).
 
+## Errors
+
+`error` in the table above is the last failure (load, send, retry, or action). Show that message.
+
+`sendMessage`, `respondToAction`, `sendAction`, and `retryMessage` do not throw. A `try/catch` around them will not run.
+
+To react to one call, wait for the result and read `error`:
+
+```tsx
+const result = await sendMessage(text);
+
+if (result.error) {
+  // this send failed
+}
+```
+
 ## Parts
 
 Start with `type === 'text'`. Then handle the other part types. See [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) for part types.
