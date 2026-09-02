@@ -1,0 +1,117 @@
+---
+title: "useWebChat"
+description: "API reference for the useWebChat hook: conversation state, sendMessage, retry, tool approval, live typing, and history pagination in the Novu React SDK."
+tag: Beta
+---
+
+The `useWebChat` hook is the headless client for [Web Chat](/agents/channels/web-chat). It loads conversation history, sends messages, streams live turns over the socket, and exposes pending tool approvals.
+
+Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). See [Quickstart](/agents/channels/web-chat/quickstart), [Chat UI](/agents/channels/web-chat/chat-ui), and [State](/agents/channels/web-chat/chat-ui#state).
+
+## Hook parameters
+
+Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `conversation`. Do not mix the two.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `agentId` | `string` | Public agent identifier from the dashboard. Required unless you pass `conversation`. |
+| `conversationId` | `string` | Resume this conversation and load history on mount. Omit this prop to start a new chat. The first `sendMessage` creates the conversation. See [Resume a conversation](/agents/channels/web-chat/chat-ui#resume-a-conversation). |
+| `agentHash` | `string` | HMAC-SHA256 of `agentId` with the environment secret. Required when Security HMAC is on for the Web Chat integration. |
+| `conversation` | `AgentConversationRuntime` | Share an existing runtime across hook instances. Do not pass `agentId`, `conversationId`, or `agentHash` with this prop. Get the runtime from `loadWebChat(novu)` then `novu.webChat.conversation()`. |
+| `onSuccess` | `(data: LoadConversationResult) => void` | Fires after a history fetch succeeds. |
+| `onError` | `(error: NovuError \| WebChatPlanLimitError) => void` | Fires when a load, send, retry, or action response fails. Also fires when reconnect recovery fails. |
+| `onMessage` | `(message: AgentMessage) => void` | Fires once per new message id. History pages are silent. The first event of a turn can create an empty assistant message before text arrives. A send that never reaches the server does not fire. The message status becomes `failed` instead. |
+| `onActionRequested` | `(action: AgentPendingAction) => void` | Fires once per pending action, including actions still pending on mount. Paging backwards is silent. |
+| `onEvent` | `(envelope: AgentEventEnvelope) => void` | Raw live envelopes for this conversation. Duplicate envelopes that the store drops do not fire. |
+
+## Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `messages` | `AgentMessage[]` | Timeline for the current conversation. |
+| `pendingActions` | `AgentPendingAction[]` | Tool approvals and MCP connect items that are still pending. Derived from `messages`. |
+| `conversationId` | `string \| undefined` | Server conversation id after create or resume. Undefined until the first successful send on a new chat. |
+| `error` | `NovuError \| WebChatPlanLimitError \| undefined` | Last error from load, send, retry, `respondToAction`, `sendAction`, or a failed agent run. |
+| `isLoading` | `boolean` | True while the Web Chat module loads. For an existing conversation, it stays true until the first history fetch completes. |
+| `isRunning` | `boolean` | True while the agent turn is in progress. Same as `run.isRunning`. |
+| `typing` | `AgentConversationTyping \| undefined` | Ephemeral typing indicator. Same as `run.typing`. Absent when the agent is not typing. |
+| `run` | `{ isRunning: boolean; typing?: AgentConversationTyping }` | Current agent-run snapshot. |
+| `conversationStatus` | `'active' \| 'resolved'` | Conversation lifecycle. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. See [State](/agents/channels/web-chat/chat-ui#state). |
+| `pagination` | `{ status, hasMore, fetchMore }` | Older history pages. Not a top-level `hasMore` or `fetchMore`. See [Pagination](#pagination). |
+| `isRecovering` | `boolean` | True while reconnect recovery is in progress. |
+| `catchUpError` | `NovuError \| undefined` | Set when reconnect recovery fails. Separate from send and fetch `error`. |
+| `refetch` | `() => Promise<void>` | Reload the newest history page. No-op when there is no conversation id. |
+| `sendMessage` | `(input: SendMessageInput) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. |
+| `retryMessage` | `(messageId: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. Does not create a second message. See [Retry a failed send](/agents/channels/web-chat/chat-ui#retry-a-failed-send). |
+| `respondToAction` | `(args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{ data?: RespondToActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. Typical decisions: `'approved'` or `'denied'`. |
+| `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. See [Cards](/agents/channels/web-chat/chat-ui#cards). |
+
+## Pagination
+
+`pagination` is the older-history control. It is not a top-level `hasMore` or `fetchMore`.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `status` | `'idle' \| 'loading' \| 'error'` | Status of the older-history request. |
+| `hasMore` | `boolean` | True when an older page is available. |
+| `fetchMore` | `() => Promise<{ data?: { messages: AgentMessage[]; hasMore: boolean }; error?: NovuError }>` | Load the next older page. Overlapping calls do not run. |
+
+See [Older messages](/agents/channels/web-chat/chat-ui#older-messages).
+
+## Recovery
+
+The hook reconnects and catches up on its own. Use these fields for a banner.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `isRecovering` | `boolean` | True while recovery is in progress. |
+| `catchUpError` | `NovuError \| undefined` | Set when recovery fails. `conversationStatus` does not become an error state. |
+
+See [Reconnect](/agents/channels/web-chat/chat-ui#reconnect).
+
+## Message type
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Message id. Optimistic local ids are replaced after the server ack. |
+| `role` | `AgentMessageRole` | Sender role (`user` or `assistant`). |
+| `parts` | `AgentMessagePart[]` | Ordered content. See part types below. |
+| `createdAt` | `string` | ISO timestamp. |
+| `status` | `'sending' \| 'sent' \| 'failed'` | Delivery status for the local send. If the status is `failed`, call `retryMessage(id)`. |
+
+### Part types
+
+| `type` | When you see it |
+| --- | --- |
+| `text` | Visible message text. `state` is `streaming` or `done`. |
+| `thinking` | Chain-of-thought / plan text while the agent reasons. |
+| `tool` | Tool call and result. |
+| `approval` | Gated tool waiting on the subscriber. Use `pendingActions` + `respondToAction`. |
+| `mcp-connection` | MCP server connect card. Open `authorizeUrl` in the browser. |
+| `card` | Structured Card tree (`card` object). Render it in your UI. Button clicks call `sendAction`. Agents send Cards with [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). See [Cards](/agents/channels/web-chat/chat-ui#cards). |
+| `data` | Custom payload (`name` + `data`). The UI decides how to render it. See [Custom data parts](/agents/channels/web-chat/chat-ui#custom-data-parts). |
+| `file` | File attachment metadata. |
+| `source` | Citation (`url` or `document`). |
+
+## Pending actions
+
+`pendingActions` is derived from pending `approval` and `mcp-connection` parts.
+
+| `type` | What to do |
+| --- | --- |
+| `tool-approval` | Call `respondToAction({ actionId: action.id, decision: 'approved' \| 'denied' })`. |
+| `mcp-connection` | Open `authorizeUrl` in the browser. Do not invent action ids. |
+
+## Plan limit error
+
+`WebChatPlanLimitError` is set on the hook `error` field when the organization is over a plan limit. The HTTP status is `402`.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `name` | `'WebChatPlanLimitError'` | Discriminator. |
+| `reason` | `'agents' \| 'channels' \| 'conversations'` | Which limit blocked the request. |
+| `message` | `string` | Human-readable error. |
+
+## JavaScript SDK
+
+The same runtime lives on `novu.webChat.conversation()` in [`@novu/js`](/platform/sdks/javascript#web-chat). Call `loadWebChat(novu)` first in JavaScript. The React hook loads Web Chat for you. Do not call `novu.webChat.subscribe()` from React UI code.

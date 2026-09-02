@@ -50,56 +50,56 @@ export const catalog = {
       : fail('user was signed into the dashboard but a connect command used --keyless instead of dashboard OAuth');
   },
 
-  usedAgentChatChannel: (result: RunResult): GraderOutcome | 'pass' => {
+  usedWebChatChannel: (result: RunResult): GraderOutcome | 'pass' => {
     const commands = connectCommands(result);
 
     if (commands.length === 0) {
-      return fail('Agent Chat flow never ran connect');
+      return fail('Web Chat flow never ran connect');
     }
 
-    return commands.every((cmd) => /--channel[\s=]+agent-chat\b/.test(cmd))
+    return commands.every((cmd) => /--channel[\s=]+web-chat\b/.test(cmd))
       ? 'pass'
-      : fail('Agent Chat flow did not use --channel agent-chat');
+      : fail('Web Chat flow did not use --channel web-chat');
   },
 
-  usedManagedAgentChatDefaults: (result: RunResult): GraderOutcome | 'pass' => {
+  usedManagedWebChatDefaults: (result: RunResult): GraderOutcome | 'pass' => {
     const invalidCommand = connectCommands(result).find(
-      (cmd) => /--runtime\b/.test(cmd) || /--agent-chat-setup\b/.test(cmd)
+      (cmd) => /--runtime\b/.test(cmd) || /--web-chat-setup\b/.test(cmd)
     );
 
     return invalidCommand
-      ? fail(`managed Agent Chat passed --runtime or an unrequested --agent-chat-setup override: ${invalidCommand}`)
+      ? fail(`managed Web Chat passed --runtime or an unrequested --web-chat-setup override: ${invalidCommand}`)
       : 'pass';
   },
 
-  skippedChannelPickerForAgentChat: (result: RunResult): GraderOutcome | 'pass' => {
+  skippedChannelPickerForWebChat: (result: RunResult): GraderOutcome | 'pass' => {
     const channelQuestion = result.toolCalls.find(
       (call) => call.name === 'AskUserQuestion' && /\bchannel\b/i.test(String(call.args.question ?? ''))
     );
 
-    return channelQuestion ? fail('asked for a channel after the user explicitly selected Agent Chat') : 'pass';
+    return channelQuestion ? fail('asked for a channel after the user explicitly selected Web Chat') : 'pass';
   },
 
-  readAgentChatEmbedPrompt: (result: RunResult): GraderOutcome | 'pass' =>
+  readWebChatEmbedPrompt: (result: RunResult): GraderOutcome | 'pass' =>
     result.toolCalls.some(
       (call) =>
-        call.name === 'Read' && String(call.args.file_path ?? '').includes('novu-connect-agent-chat-embed-prompt')
+        call.name === 'Read' && String(call.args.file_path ?? '').includes('novu-connect-web-chat-embed-prompt')
     )
       ? 'pass'
-      : fail('never read the Agent Chat embed prompt file'),
+      : fail('never read the Web Chat embed prompt file'),
 
-  reportedAgentChatSuccess: (result: RunResult): GraderOutcome | 'pass' =>
-    /^✓ Agent Chat connected/m.test(result.finalText)
+  reportedWebChatSuccess: (result: RunResult): GraderOutcome | 'pass' =>
+    /^✓ Web Chat connected/m.test(result.finalText)
       ? 'pass'
-      : fail('final report did not use the Agent Chat success line'),
+      : fail('final report did not use the Web Chat success line'),
 
-  didNotPromiseAgentChatClaim: (result: RunResult): GraderOutcome | 'pass' =>
+  didNotPromiseWebChatClaim: (result: RunResult): GraderOutcome | 'pass' =>
     /\bclaim your agent\b|\b(?:open|use|follow|visit)\s+(?:the|this|your)\s+claim (?:link|url)\b/i.test(
       result.finalText
     ) ||
     /https?:\/\/\S*\/claim(?:\/|\b)/i.test(result.finalText) ||
     result.capturedUrls.some((url) => /\/claim(?:\/|$)/i.test(url))
-      ? fail('promised a claim link that Agent Chat does not print')
+      ? fail('promised a claim link that Web Chat does not print')
       : 'pass',
 
   backgroundConnectShell: (result: RunResult): GraderOutcome | 'pass' => {

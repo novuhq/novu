@@ -145,6 +145,10 @@ const integrationSchema = new Schema<IntegrationDBModel>(
         ],
       },
     ],
+    rules: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
     connected: Schema.Types.Boolean,
     _parentId: {
       type: Schema.Types.ObjectId,

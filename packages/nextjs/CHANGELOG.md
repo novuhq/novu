@@ -1,3 +1,7 @@
+## v3.19.1 (2026-08-31)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
 ## v3.19.0 (2026-08-07)
 
 This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.

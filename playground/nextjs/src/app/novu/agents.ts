@@ -37,6 +37,16 @@ export const humanHitlAgent = agent('human-hitl', {
 
     const text = message.text.trim().toLowerCase();
 
+    if (text.includes('multi-approve')) {
+      const to = (process.env.NEXT_PUBLIC_HITL_SENT_TO ?? '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0);
+      ctx.approve('Deploy v2.4.1 to production?', to.length > 0 ? { to } : undefined);
+
+      return 'Sent an approval card in this thread. Approve or deny it to continue.';
+    }
+
     if (text.includes('approve')) {
       ctx.approve('Deploy v2.4.1 to production?');
 
@@ -64,6 +74,7 @@ export const humanHitlAgent = agent('human-hitl', {
     return [
       'Framework HITL demo. Message me with one of:',
       '- `approve` — `ctx.approve("Deploy v2.4.1 to production?")`',
+      '- `multi-approve` — `ctx.approve("Deploy v2.4.1 to production?", { to: ["alice", "bob"] })`',
       '- `ask` — `ctx.ask("What environment should we deploy to?")`',
       '- `choose` — `ctx.choose("Which region?", ["us-east", "eu-west", "ap-south"])`',
       '- `tell` — `ctx.tell("Deploy finished. v2.4.1 is live.")`',

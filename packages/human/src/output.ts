@@ -31,6 +31,10 @@ export function exitCodeFor(interaction: Interaction): number {
   }
 }
 
+function formatInteractionTo(to: string[]): string {
+  return to.join(', ');
+}
+
 export function describeInteraction(interaction: Interaction): string {
   const by = interaction.response?.respondedBy ? ` by ${interaction.response.respondedBy}` : '';
   const at = interaction.response?.respondedAt
@@ -53,7 +57,7 @@ export function describeInteraction(interaction: Interaction): string {
       return `${pc.green('Chose')} "${label}"${by}${at}.`;
     }
     case 'delivered':
-      return `${pc.green('Delivered')} to ${interaction.to} on ${interaction.platform}.`;
+      return `${pc.green('Delivered')} to ${formatInteractionTo(interaction.to)} on ${interaction.platform}.`;
     case 'expired':
       return `${pc.yellow('Expired')} — nobody answered within the TTL.`;
     case 'canceled':

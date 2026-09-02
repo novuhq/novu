@@ -128,7 +128,7 @@ export class WorkflowOriginService {
               )
             : null;
           break;
-        case AgentPlatformEnum.AGENT_CHAT:
+        case AgentPlatformEnum.WEB_CHAT:
           break;
         default: {
           const _exhaustive: never = config.platform;

@@ -620,6 +620,7 @@ export class HandleAgentReply {
             options: signal.options,
             from: signal.from,
             ttlSeconds: signal.ttlSeconds,
+            to: signal.to,
           })
         );
       } catch (err) {

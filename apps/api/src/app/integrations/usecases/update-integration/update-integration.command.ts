@@ -50,6 +50,10 @@ export class UpdateIntegrationCommand extends OrganizationCommand {
 
   @IsOptional()
   @IsObject()
+  rules?: Record<string, unknown> | null;
+
+  @IsOptional()
+  @IsObject()
   configurations?: IConfigurations;
 
   /**

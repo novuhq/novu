@@ -14,6 +14,7 @@ import {
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { esmImport } from '../../../utils/esm-import';
+import { createProviderHttpClient } from '../../../utils/http';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 import { omitIncompleteLinkButtons } from '../card-render.utils';
@@ -36,7 +37,7 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.MsTeams;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
-  private axiosInstance: AxiosInstance = axios.create();
+  private axiosInstance: AxiosInstance = createProviderHttpClient();
 
   private static readonly BOT_FRAMEWORK_SERVICE_URL = 'https://smba.trafficmanager.net';
 

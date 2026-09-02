@@ -102,11 +102,11 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
     });
 
-    it('agent-chat routes should be wildcarded', () => {
+    it('web-chat routes should be wildcarded', () => {
       const callbackSpy = spy();
 
       // @ts-expect-error - corsOptionsDelegate is not typed correctly
-      corsOptionsDelegate({ url: '/v1/agent-chat/conversations' }, callbackSpy);
+      corsOptionsDelegate({ url: '/v1/web-chat/conversations' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
       expect(callbackSpy.firstCall.firstArg).to.be.null;

@@ -16,7 +16,8 @@
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "removeComments": false
+    "removeComments": false,
+    "stripInternal": true
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
   "exclude": ["node_modules", "**/node_modules/*"]

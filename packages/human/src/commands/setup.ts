@@ -1,6 +1,5 @@
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import readline from 'node:readline';
 import pc from 'picocolors';
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
 import { createInteraction, setupHumanRelay } from '../api/human';
@@ -16,12 +15,12 @@ import {
   type IntegrationRecord,
   issueSlackSetupLink,
   issueTelegramMobileLink,
-  issueTelegramSubscriberLink,
   linkAgentIntegration,
   listAgentIntegrations,
   listIntegrations,
   slackQuickSetup,
 } from '../api/setup';
+import { info, promptLine } from '../cli-io';
 import {
   configPath,
   DEFAULT_API_URL,
@@ -34,14 +33,19 @@ import { pollUntil, sleep } from '../poll';
 import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
 import { handleError } from './interact';
+import {
+  CHANNEL_POLL_INTERVAL_MS,
+  CHANNEL_POLL_TIMEOUT_MS,
+  CREDENTIAL_PROPAGATION_TIMEOUT_MS,
+  HUMAN_CHANNELS,
+  type HumanChannel,
+  isMissingSlackCredentialsError,
+  issueTelegramSubscriberLinkWithRetry,
+  parseEmailAddress,
+  waitForEndpoint,
+} from './link-channel';
 
-const CHANNEL_POLL_INTERVAL_MS = 2_000;
-const CHANNEL_POLL_TIMEOUT_MS = 5 * 60_000;
-const CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
 const BOTFATHER_URL = 'https://t.me/botfather';
-
-const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
-type SetupChannel = (typeof SUPPORTED_CHANNELS)[number];
 
 interface SetupOptions {
   apiUrl?: string;
@@ -174,22 +178,22 @@ async function maybeInstallSkill(options: SetupOptions): Promise<void> {
   }
 }
 
-async function resolveChannelChoice(channelArg: string | undefined): Promise<SetupChannel> {
+async function resolveChannelChoice(channelArg: string | undefined): Promise<HumanChannel> {
   if (channelArg) {
     const normalized = channelArg.toLowerCase();
-    if ((SUPPORTED_CHANNELS as readonly string[]).includes(normalized)) {
-      return normalized as SetupChannel;
+    if ((HUMAN_CHANNELS as readonly string[]).includes(normalized)) {
+      return normalized as HumanChannel;
     }
 
     if (normalized === 'whatsapp') {
       throw new Error('whatsapp is not supported by `human setup` yet — use telegram, slack, or email for now.');
     }
 
-    throw new Error(`Unknown channel "${channelArg}". Supported: ${SUPPORTED_CHANNELS.join(', ')}.`);
+    throw new Error(`Unknown channel "${channelArg}". Supported: ${HUMAN_CHANNELS.join(', ')}.`);
   }
 
   if (!process.stdin.isTTY) {
-    throw new Error(`Pass a channel when running non-interactively: human setup <${SUPPORTED_CHANNELS.join('|')}>`);
+    throw new Error(`Pass a channel when running non-interactively: human setup <${HUMAN_CHANNELS.join('|')}>`);
   }
 
   process.stdout.write(
@@ -199,15 +203,15 @@ async function resolveChannelChoice(channelArg: string | undefined): Promise<Set
       `  ${pc.bold('3')}. Email    ${pc.dim('(buttons in your inbox, reply to answer)')}\n\n`
   );
 
-  const answer = await promptLine(`Channel [1-${SUPPORTED_CHANNELS.length}]: `);
+  const answer = await promptLine(`Channel [1-${HUMAN_CHANNELS.length}]: `);
   const index = Number(answer.trim()) - 1;
-  const byNumber = SUPPORTED_CHANNELS[index];
+  const byNumber = HUMAN_CHANNELS[index];
   if (byNumber) return byNumber;
 
-  const byName = SUPPORTED_CHANNELS.find((name) => name === answer.trim().toLowerCase());
+  const byName = HUMAN_CHANNELS.find((name) => name === answer.trim().toLowerCase());
   if (byName) return byName;
 
-  throw new Error(`Pick 1-${SUPPORTED_CHANNELS.length} (or run: human setup <${SUPPORTED_CHANNELS.join('|')}>).`);
+  throw new Error(`Pick 1-${HUMAN_CHANNELS.length} (or run: human setup <${HUMAN_CHANNELS.join('|')}>).`);
 }
 
 // --- Telegram -------------------------------------------------------------
@@ -233,7 +237,7 @@ async function connectTelegram(
   const mobileLink = await issueTelegramMobileLink(client, integrationIdentifier, subscriberId);
   await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
 
-  const subscriberLink = await issueSubscriberLinkWithRetry(client, integrationIdentifier, subscriberId);
+  const subscriberLink = await issueTelegramSubscriberLinkWithRetry(client, integrationIdentifier, subscriberId);
 
   process.stdout.write(
     `\nScan this QR (or open the link) and tap ${pc.bold('Start')} in Telegram:\n\n` +
@@ -269,7 +273,10 @@ async function connectEmail(
     throw new Error('Pass --email <address> when running `human setup email` non-interactively.');
   }
 
-  const email = options.email?.trim().toLowerCase() ?? (await promptForEmail());
+  const email = options.email?.trim() ? parseEmailAddress(options.email) : await promptForEmail();
+  if (!email) {
+    throw new Error('No valid email address provided. Re-run `human setup email` or pass --email.');
+  }
 
   info('Registering your email address...');
   await setupHumanRelay(client, { subscriberId, agentIdentifier, email });
@@ -283,8 +290,8 @@ async function connectEmail(
 
 async function promptForEmail(): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const email = (await promptLine('Your email address: ')).trim().toLowerCase();
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return email;
+    const email = parseEmailAddress(await promptLine('Your email address: '));
+    if (email) return email;
     process.stdout.write(`${pc.yellow('That does not look like an email address.')}\n`);
   }
 
@@ -463,10 +470,6 @@ function validateSlackConfigTokenFormat(token: string): string | undefined {
   return undefined;
 }
 
-function isMissingSlackCredentialsError(err: unknown): boolean {
-  return err instanceof HumanApiError && err.status === 404 && /missing credentials/i.test(err.message);
-}
-
 // --- shared helpers ---------------------------------------------------------
 
 /** Reuse an integration already linked to the relay, else create + link one. */
@@ -509,43 +512,6 @@ async function resolveLinkedSlackIntegration(
   return integration;
 }
 
-async function waitForEndpoint(
-  client: HumanApiClient,
-  integrationIdentifier: string,
-  subscriberId: string,
-  waitingFor: string
-): Promise<void> {
-  const connected = await pollUntil(
-    async () => ((await hasChannelEndpoint(client, integrationIdentifier, subscriberId)) ? 'done' : 'pending'),
-    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
-  );
-
-  if (!connected) {
-    throw new Error(
-      `We didn't see ${waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. Re-run \`human setup\` to continue.`
-    );
-  }
-}
-
-/** The token can take a moment to propagate after save — retry the 422 briefly. */
-async function issueSubscriberLinkWithRetry(
-  client: HumanApiClient,
-  integrationIdentifier: string,
-  subscriberId: string
-): Promise<{ deepLinkUrl: string; botUsername: string }> {
-  const deadline = Date.now() + CREDENTIAL_PROPAGATION_TIMEOUT_MS;
-
-  while (true) {
-    try {
-      return await issueTelegramSubscriberLink(client, integrationIdentifier, subscriberId);
-    } catch (err) {
-      const retryable = err instanceof HumanApiError && err.status === 422 && /bot token is missing/i.test(err.message);
-      if (!retryable || Date.now() >= deadline) throw err;
-      await sleep(2_000);
-    }
-  }
-}
-
 async function promptForBotToken(): Promise<string> {
   process.stdout.write(
     `\nCreate a Telegram bot (this is your private line to your agents):\n` +
@@ -563,18 +529,6 @@ async function promptForBotToken(): Promise<string> {
   throw new Error('No valid bot token provided. Re-run `human setup telegram` or pass --telegram-bot-token.');
 }
 
-async function promptLine(question: string): Promise<string> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-
-  try {
-    return await new Promise((resolve) => {
-      rl.question(question, resolve);
-    });
-  } finally {
-    rl.close();
-  }
-}
-
 /** Best-effort platform browser open — the URL is always printed as fallback. */
 function openInBrowser(url: string): void {
   const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
@@ -586,8 +540,4 @@ function openInBrowser(url: string): void {
   } catch {
     // URL is printed above — the human can click it.
   }
-}
-
-function info(message: string): void {
-  process.stdout.write(`${pc.dim('•')} ${message}\n`);
 }

@@ -104,9 +104,7 @@ export class SendMessageEmail extends SendMessageBase {
         userId: command.userId,
         recipientEmail: email,
         identifier: overrideSelectedIntegration as string,
-        filterData: {
-          tenant: command.job.tenant,
-        },
+        filterData: this.getIntegrationFilterData(command),
       });
     } catch (e) {
       let detailEnum = DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION;

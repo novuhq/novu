@@ -17,14 +17,14 @@ export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'co
   return hasAgentInboundConnection(link.connectedAt);
 }
 
-export function getAgentChatIntegrationLink<T extends { integration: { providerId: string; identifier: string } }>(
+export function getWebChatIntegrationLink<T extends { integration: { providerId: string; identifier: string } }>(
   links: T[] | undefined
 ): T | undefined {
-  return links?.find((link) => link.integration.providerId === ChatProviderIdEnum.NovuAgentChat);
+  return links?.find((link) => link.integration.providerId === ChatProviderIdEnum.NovuWebChat);
 }
 
-export function getAgentChatIntegrationIdentifier(
+export function getWebChatIntegrationIdentifier(
   links: Array<{ integration: { providerId: string; identifier: string } }> | undefined
 ): string | undefined {
-  return getAgentChatIntegrationLink(links)?.integration.identifier;
+  return getWebChatIntegrationLink(links)?.integration.identifier;
 }
