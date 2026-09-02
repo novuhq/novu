@@ -469,6 +469,7 @@
               "agents/channels/email",
               {
                 "group": "Web Chat",
+                "tag": "Beta",
                 "root": "agents/channels/web-chat",
                 "pages": ["agents/channels/web-chat/quickstart", "agents/channels/web-chat/chat-ui"]
               }
@@ -917,14 +918,69 @@
                     "pages": ["guides/inngest", "guides/triggerdotdev"]
                   },
                   {
-                    "group": "Webhooks",
+                    "group": "Incoming webhooks",
                     "expanded": false,
                     "pages": ["guides/webhooks/clerk", "guides/webhooks/auth0", "guides/webhooks/stripe"]
                   },
                   {
-                    "group": "Data & warehouses",
+                    "group": "Webhook connectors",
                     "expanded": false,
-                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch", "guides/analytics/databricks"]
+                    "pages": [
+                      {
+                        "group": "Data warehouses",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/data-warehouse-sync",
+                          "guides/webhook-connectors/clickhouse",
+                          "guides/webhook-connectors/google-bigquery",
+                          "guides/webhook-connectors/snowflake",
+                          "guides/webhook-connectors/amazon-redshift",
+                          "guides/webhook-connectors/postgres"
+                        ]
+                      },
+                      {
+                        "group": "Object storage",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/amazon-s3",
+                          "guides/webhook-connectors/azure-blob-storage",
+                          "guides/webhook-connectors/google-cloud-storage"
+                        ]
+                      },
+                      {
+                        "group": "Messaging",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/amazon-sqs",
+                          "guides/webhook-connectors/amazon-sns",
+                          "guides/webhook-connectors/amazon-eventbridge",
+                          "guides/webhook-connectors/rabbitmq",
+                          "guides/webhook-connectors/google-cloud-pubsub"
+                        ]
+                      },
+                      {
+                        "group": "Analytics & observability",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/segment",
+                          "guides/webhook-connectors/opentelemetry-collector"
+                        ]
+                      },
+                      {
+                        "group": "HTTP delivery",
+                        "expanded": false,
+                        "pages": ["guides/webhook-connectors/polling-endpoint", "guides/webhook-connectors/fifo-endpoint"]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Data sources",
+                    "expanded": false,
+                    "pages": [
+                      "guides/analytics/segment",
+                      "guides/analytics/hightouch",
+                      "guides/analytics/databricks"
+                    ]
                   },
                   {
                     "group": "Recipes",
@@ -1722,7 +1778,17 @@
       "permanent": true
     },
     {
+      "source": "/platform/integrations/chat/agent-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
       "source": "/platform/integrations/chat/web-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat",
       "destination": "/agents/channels/web-chat",
       "permanent": true
     },
@@ -1732,8 +1798,33 @@
       "permanent": true
     },
     {
+      "source": "/agents/agent-chat/quickstart",
+      "destination": "/agents/channels/web-chat/quickstart",
+      "permanent": true
+    },
+    {
       "source": "/agents/web-chat/quickstart",
       "destination": "/agents/channels/web-chat/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/quickstart",
+      "destination": "/agents/channels/web-chat/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/chat-ui",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/rendering",
+      "destination": "/agents/channels/web-chat/chat-ui",
       "permanent": true
     },
     {
@@ -1742,13 +1833,28 @@
       "permanent": true
     },
     {
+      "source": "/agents/channels/agent-chat/production",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
       "source": "/agents/channels/web-chat/production",
       "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
+      "source": "/agents/channels/agent-chat/messages",
+      "destination": "/agents/channels/web-chat/chat-ui",
+      "permanent": true
+    },
+    {
       "source": "/agents/channels/web-chat/messages",
       "destination": "/agents/channels/web-chat/chat-ui",
+      "permanent": true
+    },
+    {
+      "source": "/platform/sdks/react/hooks/use-agent-chat",
+      "destination": "/platform/sdks/react/hooks/use-web-chat",
       "permanent": true
     },
     {

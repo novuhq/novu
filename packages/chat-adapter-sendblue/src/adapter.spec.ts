@@ -59,7 +59,7 @@ describe('SendblueAdapterImpl', () => {
   });
 
   describe('postMessage', () => {
-    it('passes plain text and markdown through to the vendor unchanged', async () => {
+    it('passes plain text through and converts markdown to plain text for iMessage/SMS', async () => {
       const postMessage = spyOnVendorPostMessage();
       const adapter = new SendblueAdapterImpl(CONFIG);
 
@@ -67,7 +67,33 @@ describe('SendblueAdapterImpl', () => {
       await adapter.postMessage('sendblue:t', { markdown: 'Hello **world**' });
 
       expect(postMessage).toHaveBeenNthCalledWith(1, 'sendblue:t', 'hello');
-      expect(postMessage).toHaveBeenNthCalledWith(2, 'sendblue:t', { markdown: 'Hello **world**' });
+      expect(postMessage).toHaveBeenNthCalledWith(2, 'sendblue:t', { markdown: 'Hello world' });
+    });
+
+    it('keeps attachments when converting markdown to plain text', async () => {
+      const postMessage = spyOnVendorPostMessage();
+      const adapter = new SendblueAdapterImpl(CONFIG);
+      const files = [{ name: 'photo.png', mimeType: 'image/png', data: Buffer.from('img') }];
+
+      await adapter.postMessage('sendblue:t', { markdown: 'See **this**', files } as never);
+
+      expect(postMessage).toHaveBeenCalledWith('sendblue:t', { markdown: 'See this', files });
+    });
+
+    it('converts markdown tables and links before handing off to the vendor', async () => {
+      const postMessage = spyOnVendorPostMessage();
+      const adapter = new SendblueAdapterImpl(CONFIG);
+
+      await adapter.postMessage('sendblue:t', {
+        markdown: ['See [docs](https://example.com).', '', '| A | B |', '| --- | --- |', '| 1 | 2 |'].join('\n'),
+      });
+
+      const delivered = postMessage.mock.calls[0]?.[1] as { markdown: string };
+      expect(delivered.markdown).toContain('docs (https://example.com)');
+      expect(delivered.markdown).toContain('1');
+      expect(delivered.markdown).toContain('2');
+      expect(delivered.markdown).not.toContain('| ---');
+      expect(delivered.markdown).not.toContain('[docs]');
     });
 
     it('flattens a bare card to markdown text, since the vendor adapter cannot render cards', async () => {
@@ -87,6 +113,19 @@ describe('SendblueAdapterImpl', () => {
       expect(postMessage).toHaveBeenCalledWith('sendblue:t', {
         markdown: 'Your order shipped\n\nPowered by Novu',
       });
+    });
+
+    it('keeps attachments posted alongside a card', async () => {
+      const postMessage = spyOnVendorPostMessage();
+      const adapter = new SendblueAdapterImpl(CONFIG);
+      const files = [{ name: 'receipt.pdf', mimeType: 'application/pdf', data: Buffer.from('pdf') }];
+
+      await adapter.postMessage('sendblue:t', {
+        card: { type: 'card', children: [{ type: 'text', content: 'Your order shipped' }] },
+        files,
+      } as never);
+
+      expect(postMessage).toHaveBeenCalledWith('sendblue:t', { markdown: 'Your order shipped', files });
     });
 
     it('prefers an explicit fallbackText over rendering the card', async () => {

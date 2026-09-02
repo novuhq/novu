@@ -21,7 +21,7 @@ export function setSocketStatus(status: SocketStatus): void {
   if (status === current) return;
 
   current = status;
-  listeners.forEach((listener) => listener(status));
+  listeners.forEach((listener) => listener(current));
 }
 
 export function subscribeSocketStatus(listener: Listener): () => void {

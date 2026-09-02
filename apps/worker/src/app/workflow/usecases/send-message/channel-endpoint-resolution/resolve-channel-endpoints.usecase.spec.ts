@@ -620,6 +620,126 @@ describe('ResolveChannelEndpoints - Tool Webhook', () => {
   });
 });
 
+describe('ResolveChannelEndpoints - integration rules', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let integrationRepository: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  /** Mirrors a subscriber registered on both a Telegram and a chat-webhook integration. */
+  function givenIntegrations(integrations: Array<{ identifier: string; rules?: unknown }>) {
+    integrationRepository.find.resolves(integrations);
+    channelEndpointRepository.find.resolves(
+      integrations.map(({ identifier }) =>
+        buildTelegramEndpoint({ identifier: `${identifier}-endpoint`, integrationIdentifier: identifier })
+      )
+    );
+  }
+
+  function resolvedIdentifiers(groups: Array<{ integrationIdentifier: string }>) {
+    return groups.map((group) => group.integrationIdentifier);
+  }
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub().resolves([]),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    integrationRepository = {
+      findOne: sandbox.stub(),
+      find: sandbox.stub().resolves([]),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      integrationRepository as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      { getConnectionToken: sandbox.stub() } as any
+    );
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('fans out to every integration when none define rules', async () => {
+    givenIntegrations([{ identifier: 'telegram-integration' }, { identifier: 'chat-webhook' }]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['telegram-integration', 'chat-webhook']);
+  });
+
+  it('keeps only the integration whose rules match the subscriber', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+      { identifier: 'chat-webhook', rules: { '==': [{ var: 'subscriber.locale' }, 'de'] } },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { locale: 'fr' } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['telegram-integration']);
+  });
+
+  it('keeps only the integration whose rules match the trigger tenant context', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { and: [{ '==': [{ var: 'context.tenant.id' }, 'vasilib'] }] } },
+      { identifier: 'chat-webhook', rules: { and: [{ '==': [{ var: 'context.tenant.id' }, 'acme'] }] } },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { context: { tenant: { id: 'acme' } } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+  });
+
+  it('still delivers through integrations without rules alongside a matching one', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+      { identifier: 'chat-webhook' },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { locale: 'fr' } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['telegram-integration', 'chat-webhook']);
+  });
+
+  it('resolves no endpoints when no integration rules match', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+      { identifier: 'chat-webhook', rules: { '==': [{ var: 'subscriber.locale' }, 'de'] } },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { locale: 'es' } } }));
+
+    expect(result).to.deep.equal([]);
+    sinon.assert.notCalled(channelConnectionRepository.find);
+  });
+
+  it('skips integrations whose rules use unsupported json-logic operators', async () => {
+    givenIntegrations([{ identifier: 'telegram-integration', rules: { log: { var: 'subscriber.email' } } }]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { email: 'secret@example.com' } } }));
+
+    expect(result).to.deep.equal([]);
+  });
+
+  it('reads the rules field so gating can be applied', async () => {
+    givenIntegrations([{ identifier: 'telegram-integration' }]);
+
+    await usecase.execute(buildCommand());
+
+    expect(integrationRepository.find.firstCall.args[1]).to.equal('identifier rules');
+  });
+});
+
 function buildCommand(overrides: Record<string, unknown> = {}) {
   return {
     organizationId: ORGANIZATION_ID,
@@ -628,8 +748,25 @@ function buildCommand(overrides: Record<string, unknown> = {}) {
     subscriberId: SUBSCRIBER_ID,
     channelType: ChannelTypeEnum.CHAT,
     contextKeys: [],
+    filterData: {},
     ...overrides,
   } as any;
+}
+
+function buildTelegramEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'telegram-endpoint',
+    integrationIdentifier: INTEGRATION_IDENTIFIER,
+    providerId: ChatProviderIdEnum.Telegram,
+    channel: ChannelTypeEnum.CHAT,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+    endpoint: { chatId: '495078234' },
+    ...overrides,
+  };
 }
 
 function buildWebexEndpoint(overrides: Record<string, unknown> = {}) {

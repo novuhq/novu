@@ -45,5 +45,9 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
 
   @IsOptional()
   @IsObject()
+  rules?: Record<string, unknown> | null;
+
+  @IsOptional()
+  @IsObject()
   configurations?: Record<string, string>;
 }

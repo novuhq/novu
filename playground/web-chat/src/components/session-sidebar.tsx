@@ -2,10 +2,9 @@
 
 import type { AgentConversationStatus } from '@novu/react';
 import { useEffect, useRef, useState } from 'react';
-import type { ConversationSummary } from '../lib/conversations';
+import { WebChatThreadList } from '@/components/assistant-ui/thread-list';
 import type { RunOrigin, RunTransition } from '../lib/run-activity';
 import type { SocketStatus } from '../lib/socket-status';
-import { ConversationList } from './conversation-list';
 import { CheckIcon, CopyIcon } from './icons';
 
 function CopyValue({ value }: { value?: string }) {
@@ -60,20 +59,13 @@ type SessionSidebarProps = {
   subscriberId: string;
   backendUrl: string;
   socketUrl: string;
-  resumeDraft: string;
-  onResumeDraftChange: (value: string) => void;
-  onResume: () => void;
-  onNewChat: () => void;
   isRunning: boolean;
   runOrigin: RunOrigin;
   lastRunTransition?: RunTransition;
   conversationStatus: AgentConversationStatus;
   socketStatus: SocketStatus;
   pendingApprovalCount: number;
-  conversations: ConversationSummary[];
-  conversationsLoading: boolean;
   conversationsError?: string;
-  onSelectConversation: (identifier: string) => void;
   onReloadConversations: () => void;
 };
 
@@ -83,20 +75,13 @@ export function SessionSidebar({
   subscriberId,
   backendUrl,
   socketUrl,
-  resumeDraft,
-  onResumeDraftChange,
-  onResume,
-  onNewChat,
   isRunning,
   runOrigin,
   lastRunTransition,
   conversationStatus,
   socketStatus,
   pendingApprovalCount,
-  conversations,
-  conversationsLoading,
   conversationsError,
-  onSelectConversation,
   onReloadConversations,
 }: SessionSidebarProps) {
   return (
@@ -104,43 +89,10 @@ export function SessionSidebar({
       <aside className="panel session-panel" aria-label="Conversations">
         <div className="panel-head">
           <h2>Conversations</h2>
-          <button type="button" className="btn btn-primary" onClick={onNewChat}>
-            New
-          </button>
         </div>
 
         <div className="sidebar-body">
-          <ConversationList
-            items={conversations}
-            activeId={conversationId}
-            isLoading={conversationsLoading}
-            error={conversationsError}
-            onSelect={onSelectConversation}
-            onReload={onReloadConversations}
-          />
-
-          <section className="sidebar-section">
-            <h3 className="sidebar-section-title">Open by ID</h3>
-            <form
-              className="resume-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                onResume();
-              }}
-            >
-              <input
-                className="text-input"
-                value={resumeDraft}
-                onChange={(event) => onResumeDraftChange(event.target.value)}
-                placeholder="conv_…"
-                spellCheck={false}
-                aria-label="Conversation ID"
-              />
-              <button type="submit" className="btn btn-outline btn-block" disabled={!resumeDraft.trim()}>
-                Open
-              </button>
-            </form>
-          </section>
+          <WebChatThreadList error={conversationsError} onRetryError={onReloadConversations} />
         </div>
       </aside>
 

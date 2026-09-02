@@ -107,8 +107,21 @@ export class IntegrationResponseDto {
 
   @ApiPropertyOptional({
     description:
-      'An array of conditions associated with the integration that may influence its behavior or processing logic.',
+      'Legacy StepFilter conditions. Ignored when `rules` is also set.',
     type: [StepFilterDto],
+    deprecated: true,
   })
   conditions?: StepFilterDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'JSONLogic used at send time to select this integration. Takes precedence over `conditions`.',
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: {
+      '==': [{ var: 'context.tenant.id' }, 'acme'],
+    },
+  })
+  rules?: object | null;
 }

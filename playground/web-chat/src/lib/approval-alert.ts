@@ -7,7 +7,7 @@ import { emitDebugEvent } from './debug-events';
 /**
  * One-time reaction to a pending action.
  *
- * `pendingActions` already drives the card and the dock, so this covers only what a
+ * `pendingActions` already drives in-thread approval UI, so this covers only what a
  * derived list cannot: telling you while the tab is in the background. The hook fires
  * `onActionRequested` once per action id, so no dedupe is needed here.
  */

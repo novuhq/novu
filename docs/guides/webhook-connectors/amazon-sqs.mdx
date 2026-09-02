@@ -1,0 +1,178 @@
+---
+title: 'Send webhook events to Amazon SQS'
+description: 'Configure the Amazon SQS webhook connector to deliver Novu events as queue messages, including the batch transformation contract, message body control, and verification steps.'
+sidebarTitle: 'Amazon SQS'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Amazon SQS connector sends selected Novu webhook events to an SQS queue. Novu delivers events in batches, and every event in a batch is sent to the queue as a separate message. Use this connector when you want to process Novu events asynchronously with your own consumers instead of exposing an HTTP receiver.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- An existing SQS queue in the AWS account and region you want to send to
+- The full queue URL, for example `https://sqs.us-east-1.amazonaws.com/000000000000/my-queue`
+- An AWS access key ID and secret access key for a principal that can send messages to that queue
+- Permission to manage webhook endpoints in the Novu environment you are configuring
+
+### Required AWS permission
+
+Batches are delivered with the `SendMessageBatch` API, which is authorized by the `sqs:SendMessage` action on the destination queue. Additional permissions may be required by your own setup, for example KMS key permissions when the queue uses server-side encryption with a customer managed key, or permissions needed to satisfy an organizational policy, service control policy, or queue policy condition.
+
+Novu configures this connector through the embedded webhook portal. The portal collects the queue URL and credentials and does not create the queue or evaluate an IAM policy document for you.
+
+## Configuration
+
+These are the fields collected for the Amazon SQS connector.
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Queue URL** | Yes | Full URL of the destination SQS queue. |
+| **Region** | Yes | AWS region that hosts the queue. |
+| **Access key ID** | Yes | AWS access key ID used to authenticate. |
+| **Secret access key** | Yes | AWS secret access key paired with the access key ID. |
+| **Endpoint URL** | No | Optional custom endpoint for SQS-compatible services, for example a local development stack. Leave it empty for standard AWS SQS. |
+| **Transformation** | Yes | JavaScript that shapes the body of each queue message. |
+
+There is no webhook URL field for this connector. Delivery targets the queue through the AWS SQS API rather than an HTTPS endpoint you host.
+
+## Transformation contract
+
+The handler receives a batch and returns the messages to send.
+
+<WebhookBatchInput />
+
+The handler must return:
+
+```ts
+{
+  messages: Array<{
+    payload: unknown;
+  }>;
+}
+```
+
+Each entry in `messages` is sent as a separate SQS message, and its `payload` becomes that message's body. The default template sends one message per event, serialized as JSON:
+
+```js
+function handler(input) {
+  const messages = input.events.map((event) => ({
+    payload: event,
+  }));
+
+  return {
+    messages,
+  };
+}
+```
+
+With the default template, two events produce two message bodies:
+
+```json
+{"payload":{"email":"joe@enterprise.io"},"eventType":"user.created"}
+```
+
+```json
+{"payload":{"id":12,"timestamp":"2025-07-21T14:23:17.861Z"},"eventType":"user.login"}
+```
+
+### Novu example
+
+This example keeps the event type at the top level of the body so consumers can route on it without parsing nested fields, and passes the Novu payload through unchanged.
+
+```js
+function handler(input) {
+  const messages = input.events.map((event) => ({
+    payload: JSON.stringify({
+      eventType: event.eventType,
+      payload: event.payload,
+    }),
+  }));
+
+  return {
+    messages,
+  };
+}
+```
+
+Return fewer entries than the input length if you want to filter events in the transformation, and return a single entry to combine a batch into one aggregate message. The number of messages you return controls how many queue messages are produced, independent of how many events arrived in the batch.
+
+### Batching and limits
+
+SQS accepts at most 10 messages per batch request, so larger batches are automatically split across multiple `SendMessageBatch` calls. Do not assume a specific endpoint batch size or wait interval. Design consumers to handle each message independently and to tolerate messages from the same Novu batch arriving in separate requests.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the queue
+
+Create the destination queue and copy its full queue URL from the AWS console. Confirm the queue's region matches the region you will configure.
+  </Step>
+
+  <Step>
+## Create credentials
+
+Create an access key for a principal that can perform `sqs:SendMessage` on the queue. If the queue is encrypted with a customer managed key, confirm the credentials can use that key.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Amazon SQS" />
+
+  <Step>
+## Enter connection details
+
+Enter **Queue URL**, **Region**, **Access key ID**, and **Secret access key**. Leave **Endpoint URL** empty unless you are targeting an SQS-compatible service. Add a description that identifies the queue and AWS account.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the provided template and send a test before customizing. When you change the body, keep the shape stable for existing consumers and version it in the payload if consumers depend on the structure.
+  </Step>
+
+  <Step>
+## Select event types
+
+Select the [event types](/platform/developer/webhooks/event-types) you want to queue. Only selected event types reach the endpoint and its transformation, so start with one event type when validating a new queue.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint, open **Testing**, and send an example for a subscribed event type. Confirm the attempt succeeded in **Logs**, then read the message from the queue and compare its body with the logged transformation output.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Check the following in AWS after a successful test:
+
+- The queue shows available messages, or your consumer receives them.
+- Each message body matches the shape your transformation returns.
+- Message count grows per returned message rather than per delivered batch.
+
+If a consumer is already draining the queue, pause it or use a separate test queue so the test message is still visible when you look for it.
+
+## Troubleshooting
+
+- **Access denied on delivery**: The credentials cannot perform `sqs:SendMessage` on this queue. Check the identity policy, the queue policy, and any condition that restricts the caller.
+- **The queue does not exist or is rejected**: Confirm the full queue URL is exact, including account ID and queue name, and that the configured region matches the queue's region.
+- **Delivery succeeds but the queue looks empty**: Another consumer likely received the messages already, or messages are in flight. Check the in flight metric, or test against a queue with no active consumers.
+- **Encrypted queues fail**: If the queue uses a customer managed KMS key, the credentials also need permission to use that key.
+- **Message bodies are not valid JSON for consumers**: Confirm what your transformation returns in `payload`. Returning a string sends that string as the body, while returning an object sends its serialized JSON.
+- **Fewer messages than events**: Confirm the transformation returns one entry per event and does not filter or combine events unintentionally.
+- **Some event types never arrive**: Review the endpoint's selected event types, and test each event type separately from the **Testing** tab.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix Amazon SQS endpoints](https://docs.svix.com/advanced-endpoints/sqs)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [Amazon SQS documentation](https://docs.aws.amazon.com/sqs/)
