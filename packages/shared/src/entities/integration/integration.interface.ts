@@ -1,12 +1,25 @@
 import {
+  BuilderFieldType,
+  BuilderGroupValues,
   ChannelTypeEnum,
   EnvironmentId,
+  FilterParts,
   IntegrationKindEnum,
-  IPreviousStepFilterPart,
   OrganizationId,
 } from '../../types';
 import { IConfigurations } from './configuration.interface';
 import { ICredentials } from './credential.interface';
+
+/**
+ * Structurally identical to `IMessageFilter`, redeclared here to keep the integration
+ * entity free of a cyclic import on the notification-template entity.
+ */
+export interface IIntegrationFilter {
+  isNegated?: boolean;
+  type?: BuilderFieldType;
+  value: BuilderGroupValues;
+  children: FilterParts[];
+}
 
 export interface IIntegration {
   _id: string;
@@ -42,7 +55,10 @@ export interface IIntegration {
 
   deletedBy: string;
 
-  conditions?: IPreviousStepFilterPart[];
+  /** @deprecated Use `rules` (JSONLogic) instead. */
+  conditions?: IIntegrationFilter[];
+
+  rules?: Record<string, unknown> | null;
 
   connected?: boolean;
 }

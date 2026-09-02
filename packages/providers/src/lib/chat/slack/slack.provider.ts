@@ -12,9 +12,9 @@ import {
   SlackUserData,
   WebhookData,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { esmImport } from '../../../utils/esm-import';
+import { createProviderHttpClient } from '../../../utils/http';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 import { omitIncompleteLinkButtons } from '../card-render.utils';
@@ -30,7 +30,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   public id = ChatProviderIdEnum.Slack;
   private slackAPI = 'https://slack.com/api';
-  private axiosInstance = axios.create();
+  private axiosInstance = createProviderHttpClient();
 
   /**
    * Rich Chat: serialize a `CardElement` to Slack Block Kit + mrkdwn fallback text.

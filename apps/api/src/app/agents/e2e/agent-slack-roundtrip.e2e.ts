@@ -250,7 +250,7 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     expect(bridgeStub.calls.length, 'bridge executor invoked').to.be.gte(1);
 
     // Plain markdown replies from orgs without `removeNovuBranding` get the
-    // free-plan "Powered by Novu" watermark appended as the last line, so the
+    // free-plan "Powered by Novu" watermark appended as a markdown footer, so the
     // delivered text is no longer exactly the bridge reply.
     const replyMessage = await pollFor(async () => {
       const replies = await getThreadReplies(channel.id, threadTs);
