@@ -1,9 +1,8 @@
 /**
  * Live socket state for the header pill.
  *
- * The SDK only emits `socket.connect.pending` and `socket.connect.resolved`; a socket
- * that drops after a successful open emits nothing. The WebSocket patch in
- * `debug-events.ts` is the only place that sees `close`, so it reports here.
+ * ConnectionTracker writes this store from SDK events only:
+ * `socket.connect.pending`, `socket.connect.resolved`, `socket.disconnect.resolved`.
  */
 export type SocketStatus = 'connecting' | 'online' | 'offline';
 

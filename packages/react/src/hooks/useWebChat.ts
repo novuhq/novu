@@ -67,7 +67,11 @@ export type UseWebChatProps = UseWebChatCallbacks &
       }
   );
 
-/** State and actions returned by {@link useWebChat}. */
+/**
+ * State and actions returned by {@link useWebChat}.
+ * `sendMessage`, `respondToAction`, `sendAction`, and `retryMessage` resolve `{ data, error }` and never reject.
+ * Inspect `error` on the result, or show hook `error`.
+ */
 export type UseWebChatResult = {
   /** Conversation timeline. */
   messages: AgentMessage[];
@@ -75,7 +79,7 @@ export type UseWebChatResult = {
   pendingActions: AgentPendingAction[];
   /** Server conversation id after create or resume. */
   conversationId?: string;
-  /** Last error from load, send, retry, or action. */
+  /** Last error from load, send, retry, or action. Mutations also return `{ error }` for that call. */
   error?: NovuError | WebChatPlanLimitError;
   /** True while Web Chat loads and, for an existing conversation, until the first history fetch completes. */
   isLoading: boolean;
@@ -100,26 +104,43 @@ export type UseWebChatResult = {
   catchUpError?: NovuError;
   /** Reload the newest history page. No-op when there is no conversation id. */
   refetch: () => Promise<void>;
-  /** Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. */
+  /**
+   * Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   sendMessage: (input: SendMessageInput) => Promise<{
     data?: SendMessageResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
-  /** Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. */
+  /**
+   * Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
-  /** Click a Card button. Do not use this for tool approval. */
+  /**
+   * Click a Card button. Do not use this for tool approval.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
     data?: SendActionResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
-  /** Resend a message whose `status` is `failed`. Reuses the original idempotency key. */
+  /**
+   * Resend a message whose `status` is `failed`. Reuses the original idempotency key.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   */
   retryMessage: (messageId: string) => Promise<{
     data?: SendMessageResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
+  /**
+   * Start a new empty chat for the current `agentId`. The next `sendMessage` creates the server conversation.
+   * No-op when `conversationId` or `conversation` is provided.
+   */
+  startNewConversation: () => void;
 };
 
 const EMPTY_SERVER_SNAPSHOT = {
@@ -217,13 +238,14 @@ function getCreateFlowKey(agentId: string, agentHash?: string): string {
 function getManagedRuntimeKey(
   agentId: string,
   agentHash: string | undefined,
-  conversationIdProp: string | undefined
+  conversationIdProp: string | undefined,
+  createEpoch: number
 ): string {
   if (conversationIdProp) {
     return `resume:${agentId}\0${agentHash ?? ''}\0${conversationIdProp}`;
   }
 
-  return getCreateFlowKey(agentId, agentHash);
+  return `${getCreateFlowKey(agentId, agentHash)}\0${createEpoch}`;
 }
 
 type ManagedRuntimeEntry = {
@@ -306,9 +328,10 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
 
   const ownedRuntimeRef = useRef<OwnedRuntimeEntry | null>(null);
   const [managedRuntime, setManagedRuntime] = useState<ManagedRuntimeEntry | null>(null);
+  const [createEpoch, setCreateEpoch] = useState(0);
   const managedRuntimeKey = sharedRuntime
     ? null
-    : getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
+    : getManagedRuntimeKey(agentId, agentHash, conversationIdProp, createEpoch);
 
   useEffect(() => {
     if (sharedRuntime) {
@@ -319,13 +342,13 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       return;
     }
 
-    if (!webChatReady) {
+    if (!webChatReady || !managedRuntimeKey) {
       setManagedRuntime(null);
 
       return;
     }
 
-    const key = getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
+    const key = managedRuntimeKey;
     const current = ownedRuntimeRef.current;
 
     let runtime: AgentConversationRuntime;
@@ -346,7 +369,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       ownedRuntimeRef.current = null;
       setManagedRuntime(null);
     };
-  }, [webChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
+  }, [webChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash, createEpoch, managedRuntimeKey]);
 
   const runtime =
     sharedRuntime ?? (managedRuntime?.key === managedRuntimeKey ? managedRuntime.runtime : null);
@@ -483,6 +506,13 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     (messageId: string) => callRuntime((target) => target.retryMessage(messageId)),
     [callRuntime]
   );
+  const startNewConversation = useCallback(() => {
+    if (sharedRuntime || conversationIdProp) {
+      return;
+    }
+
+    setCreateEpoch((epoch) => epoch + 1);
+  }, [sharedRuntime, conversationIdProp]);
 
   return {
     messages: [...snapshot.messages],
@@ -502,5 +532,6 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     respondToAction,
     sendAction,
     retryMessage,
+    startNewConversation,
   };
 };

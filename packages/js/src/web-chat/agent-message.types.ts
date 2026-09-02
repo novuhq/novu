@@ -123,6 +123,8 @@ export type AgentFilePart = {
 export type AgentCardPart = {
   type: 'card';
   card: AgentCardElement;
+  /** Id of the message that contains this card. */
+  sourceMessageId: string;
 };
 
 /** Custom payload. The UI decides how to render it. */

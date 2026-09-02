@@ -218,7 +218,9 @@ export function ChatMessageRow({
             key={`${message.id}-card-${index}`}
             card={part.card}
             disabled={cardActionsDisabled}
-            onAction={onCardAction ? (action) => onCardAction({ ...action, sourceMessageId: message.id }) : undefined}
+            onAction={
+              onCardAction ? (action) => onCardAction({ ...action, sourceMessageId: part.sourceMessageId }) : undefined
+            }
           />
         ))}
         {visibleTools.length > 0 ? (
