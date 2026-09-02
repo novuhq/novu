@@ -1,4 +1,15 @@
-import type { AgentMessageRole, AgentToolResultContent, AgentToolSource } from '@novu/agent-event-protocol';
+import type {
+  AgentMessageRole,
+  AgentToolResultContent,
+  AgentToolSource,
+  CardElement,
+  CardElementChild,
+} from '@novu/agent-event-protocol';
+
+/** Wire card JSON. Alias of the protocol `CardElement`. */
+export type AgentCardElement = CardElement;
+/** One card child. Alias of the protocol `CardElementChild`. */
+export type AgentCardChild = CardElementChild;
 
 export type { AgentMessageRole };
 
@@ -111,7 +122,7 @@ export type AgentFilePart = {
 /** Structured Card. Button clicks call `sendAction`. */
 export type AgentCardPart = {
   type: 'card';
-  card: Record<string, unknown>;
+  card: AgentCardElement;
   /** Id of the message that contains this card. */
   sourceMessageId: string;
 };

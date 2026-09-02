@@ -9,7 +9,7 @@ import { MarkdownText } from '@/components/assistant-ui/elements/markdown-text';
 import { field, pressable } from '@/components/assistant-ui/elements/surfaces';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { cardViewFromRecord } from '../../lib/card-view';
+import { cardViewFromElement } from '../../lib/card-view';
 import { ConnectCard } from '../connect-card';
 import { useWebChatUi } from './web-chat-actions';
 
@@ -43,7 +43,7 @@ export const NovuFileUI = makeAssistantDataUI<FilePart>({
 function NovuCard({ data }: { data: AgentCardPart }) {
   const { sendAction } = useWebChatUi();
   const [busyId, setBusyId] = useState<string>();
-  const view = cardViewFromRecord(data.card);
+  const view = cardViewFromElement(data.card);
 
   async function clickButton(actionId: string, value?: string) {
     if (busyId) return;

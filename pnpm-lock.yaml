@@ -3646,6 +3646,9 @@ importers:
       '@novu/agent-event-protocol':
         specifier: workspace:*
         version: link:../agent-event-protocol
+      '@novu/stateless':
+        specifier: workspace:*
+        version: link:../stateless
       '@sveltejs/kit':
         specifier: ^2.70.2
         version: 2.70.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.16.2)(yaml@2.9.0)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.16.2)(yaml@2.9.0))
@@ -4733,13 +4736,13 @@ importers:
     dependencies:
       '@assistant-ui/react':
         specifier: ^0.15.16
-        version: 0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
+        version: 0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(immer@10.1.1)(ioredis@5.11.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
       '@assistant-ui/react-markdown':
         specifier: ^0.14.12
-        version: 0.14.12(@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.14.12(@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(immer@10.1.1)(ioredis@5.11.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@base-ui/react':
         specifier: ^1.7.0
-        version: 1.7.0(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 1.7.0(@types/react@19.2.8)(date-fns@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@novu/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -4754,7 +4757,7 @@ importers:
         version: 1.34.0(react@18.3.1)
       next:
         specifier: ^16.2.11
-        version: 16.2.11(@babel/core@7.29.7)(@types/node@22.15.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -4769,7 +4772,7 @@ importers:
         version: 4.0.1
       shadcn:
         specifier: ^4.19.0
-        version: 4.19.0(typescript@5.6.2)
+        version: 4.19.0(@cfworker/json-schema@4.1.1)(babel-plugin-macros@3.1.0)(typescript@5.6.2)
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -30270,24 +30273,24 @@ snapshots:
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
-  '@assistant-ui/core@0.3.15(@assistant-ui/store@0.3.10(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(react@18.3.1))(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(assistant-cloud@0.1.41)(react@18.3.1)(zustand@5.0.15(@types/react@19.2.8)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))':
+  '@assistant-ui/core@0.3.15(@assistant-ui/store@0.3.10(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(react@18.3.1))(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(assistant-cloud@0.1.41(ioredis@5.11.1))(ioredis@5.11.1)(react@18.3.1)(zustand@5.0.15(@types/react@19.2.8)(immer@10.1.1)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))':
     dependencies:
       '@assistant-ui/store': 0.3.10(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(react@18.3.1)
       '@assistant-ui/tap': 0.9.14(@types/react@19.2.8)(react@18.3.1)
-      assistant-stream: 0.3.39
+      assistant-stream: 0.3.39(ioredis@5.11.1)
       nanoid: 6.0.1
     optionalDependencies:
       '@types/react': 19.2.8
-      assistant-cloud: 0.1.41
+      assistant-cloud: 0.1.41(ioredis@5.11.1)
       react: 18.3.1
-      zustand: 5.0.15(@types/react@19.2.8)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
+      zustand: 5.0.15(@types/react@19.2.8)(immer@10.1.1)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
     transitivePeerDependencies:
       - ioredis
       - redis
 
-  '@assistant-ui/react-markdown@0.14.12(@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@assistant-ui/react-markdown@0.14.12(@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(immer@10.1.1)(ioredis@5.11.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@assistant-ui/react': 0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
+      '@assistant-ui/react': 0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(immer@10.1.1)(ioredis@5.11.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
       '@radix-ui/react-primitive': 2.1.10(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-use-callback-ref': 1.1.4(@types/react@19.2.8)(react@18.3.1)
       classnames: 2.5.1
@@ -30300,9 +30303,9 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))':
+  '@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(immer@10.1.1)(ioredis@5.11.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))':
     dependencies:
-      '@assistant-ui/core': 0.3.15(@assistant-ui/store@0.3.10(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(react@18.3.1))(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(assistant-cloud@0.1.41)(react@18.3.1)(zustand@5.0.15(@types/react@19.2.8)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))
+      '@assistant-ui/core': 0.3.15(@assistant-ui/store@0.3.10(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(react@18.3.1))(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(assistant-cloud@0.1.41(ioredis@5.11.1))(ioredis@5.11.1)(react@18.3.1)(zustand@5.0.15(@types/react@19.2.8)(immer@10.1.1)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))
       '@assistant-ui/store': 0.3.10(@assistant-ui/tap@0.9.14(@types/react@19.2.8)(react@18.3.1))(@types/react@19.2.8)(react@18.3.1)
       '@assistant-ui/tap': 0.9.14(@types/react@19.2.8)(react@18.3.1)
       '@radix-ui/primitive': 1.1.7
@@ -30313,15 +30316,15 @@ snapshots:
       '@radix-ui/react-use-callback-ref': 1.1.4(@types/react@19.2.8)(react@18.3.1)
       '@radix-ui/react-use-controllable-state': 1.2.6(@types/react@19.2.8)(react@18.3.1)
       '@radix-ui/react-use-escape-keydown': 1.1.5(@types/react@19.2.8)(react@18.3.1)
-      assistant-cloud: 0.1.41
-      assistant-stream: 0.3.39
+      assistant-cloud: 0.1.41(ioredis@5.11.1)
+      assistant-stream: 0.3.39(ioredis@5.11.1)
       radix-ui: 1.6.7(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-textarea-autosize: 8.5.9(@types/react@19.2.8)(react@18.3.1)
       safe-content-frame: 0.0.27
       zod: 4.4.3
-      zustand: 5.0.15(@types/react@19.2.8)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
+      zustand: 5.0.15(@types/react@19.2.8)(immer@10.1.1)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
     optionalDependencies:
       '@types/react': 19.2.8
       '@types/react-dom': 19.2.3(@types/react@19.2.8)
@@ -34034,7 +34037,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@base-ui/react@1.7.0(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@base-ui/react@1.7.0(@types/react@19.2.8)(date-fns@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@base-ui/utils': 0.3.2(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -34045,6 +34048,7 @@ snapshots:
       use-sync-external-store: 1.6.0(react@18.3.1)
     optionalDependencies:
       '@types/react': 19.2.8
+      date-fns: 4.1.0
 
   '@base-ui/utils@0.3.2(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -37223,6 +37227,30 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@3.25.20)':
+    dependencies:
+      '@hono/node-server': 2.0.11(hono@4.12.34)
+      ajv: 8.20.0
+      ajv-formats: 3.0.1(ajv@8.20.0)
+      content-type: 1.0.5
+      cors: 2.8.6
+      cross-spawn: 7.0.5
+      eventsource: 3.0.7
+      eventsource-parser: 3.1.0
+      express: 5.2.1
+      express-rate-limit: 8.5.2(express@5.2.1)
+      hono: 4.12.34
+      jose: 6.1.3
+      json-schema-typed: 8.0.2
+      pkce-challenge: 5.0.1
+      raw-body: 3.0.2
+      zod: 3.25.20
+      zod-to-json-schema: 3.25.2(zod@3.25.20)
+    optionalDependencies:
+      '@cfworker/json-schema': 4.1.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)':
     dependencies:
       '@hono/node-server': 2.0.11(hono@4.12.34)
@@ -37244,28 +37272,6 @@ snapshots:
       zod-to-json-schema: 3.25.2(zod@4.4.3)
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
-    transitivePeerDependencies:
-      - supports-color
-
-  '@modelcontextprotocol/sdk@1.30.0(zod@3.25.20)':
-    dependencies:
-      '@hono/node-server': 2.0.11(hono@4.12.34)
-      ajv: 8.20.0
-      ajv-formats: 3.0.1(ajv@8.20.0)
-      content-type: 1.0.5
-      cors: 2.8.6
-      cross-spawn: 7.0.5
-      eventsource: 3.0.7
-      eventsource-parser: 3.1.0
-      express: 5.2.1
-      express-rate-limit: 8.5.2(express@5.2.1)
-      hono: 4.12.34
-      jose: 6.1.3
-      json-schema-typed: 8.0.2
-      pkce-challenge: 5.0.1
-      raw-body: 3.0.2
-      zod: 3.25.20
-      zod-to-json-schema: 3.25.2(zod@3.25.20)
     transitivePeerDependencies:
       - supports-color
 
@@ -48480,18 +48486,20 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
-  assistant-cloud@0.1.41:
+  assistant-cloud@0.1.41(ioredis@5.11.1):
     dependencies:
-      assistant-stream: 0.3.39
+      assistant-stream: 0.3.39(ioredis@5.11.1)
     transitivePeerDependencies:
       - ioredis
       - redis
 
-  assistant-stream@0.3.39:
+  assistant-stream@0.3.39(ioredis@5.11.1):
     dependencies:
       '@standard-schema/spec': 1.1.0
       nanoid: 6.0.1
       secure-json-parse: 4.1.0
+    optionalDependencies:
+      ioredis: 5.11.1
 
   ast-module-types@6.0.0: {}
 
@@ -50617,8 +50625,6 @@ snapshots:
       mimic-response: 3.1.0
 
   dedent@0.7.0: {}
-
-  dedent@1.6.0: {}
 
   dedent@1.6.0(babel-plugin-macros@3.1.0):
     optionalDependencies:
@@ -57141,31 +57147,6 @@ snapshots:
       - '@types/node'
       - babel-plugin-macros
 
-  next@16.2.11(@babel/core@7.29.7)(@types/node@22.15.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      '@next/env': 16.2.11
-      '@swc/helpers': 0.5.15
-      baseline-browser-mapping: 2.10.12
-      caniuse-lite: 1.0.30001764
-      postcss: 8.5.25
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.6(@babel/core@7.29.7)(react@18.3.1)
-    optionalDependencies:
-      '@next/swc-darwin-arm64': 16.2.11
-      '@next/swc-darwin-x64': 16.2.11
-      '@next/swc-linux-arm64-gnu': 16.2.11
-      '@next/swc-linux-arm64-musl': 16.2.11
-      '@next/swc-linux-x64-gnu': 16.2.11
-      '@next/swc-linux-x64-musl': 16.2.11
-      '@next/swc-win32-arm64-msvc': 16.2.11
-      '@next/swc-win32-x64-msvc': 16.2.11
-      sharp: 0.35.3(@types/node@22.15.13)
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@types/node'
-      - babel-plugin-macros
-
   nice-try@1.0.5: {}
 
   nimma@0.2.3:
@@ -60481,19 +60462,19 @@ snapshots:
 
   setprototypeof@1.2.0: {}
 
-  shadcn@4.19.0(typescript@5.6.2):
+  shadcn@4.19.0(@cfworker/json-schema@4.1.1)(babel-plugin-macros@3.1.0)(typescript@5.6.2):
     dependencies:
       '@babel/core': 7.29.7
       '@babel/parser': 7.29.7
       '@babel/plugin-transform-typescript': 7.29.7(@babel/core@7.29.7)
       '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7)
       '@dotenvx/dotenvx': 1.75.1
-      '@modelcontextprotocol/sdk': 1.30.0(zod@3.25.20)
+      '@modelcontextprotocol/sdk': 1.30.0(@cfworker/json-schema@4.1.1)(zod@3.25.20)
       '@types/validate-npm-package-name': 4.0.2
       browserslist: 4.28.1
       commander: 14.0.3
       cosmiconfig: 9.0.2(typescript@5.6.2)
-      dedent: 1.6.0
+      dedent: 1.6.0(babel-plugin-macros@3.1.0)
       deepmerge: 4.3.1
       diff: 8.0.4
       execa: 9.6.1
@@ -61311,13 +61292,6 @@ snapshots:
     optionalDependencies:
       '@babel/core': 7.29.7
       babel-plugin-macros: 3.1.0
-
-  styled-jsx@5.1.6(@babel/core@7.29.7)(react@18.3.1):
-    dependencies:
-      client-only: 0.0.1
-      react: 18.3.1
-    optionalDependencies:
-      '@babel/core': 7.29.7
 
   stylehacks@7.0.2(postcss@8.5.25):
     dependencies:
@@ -63911,9 +63885,10 @@ snapshots:
       immer: 10.1.1
       react: 19.2.3
 
-  zustand@5.0.15(@types/react@19.2.8)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)):
+  zustand@5.0.15(@types/react@19.2.8)(immer@10.1.1)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)):
     optionalDependencies:
       '@types/react': 19.2.8
+      immer: 10.1.1
       react: 18.3.1
       use-sync-external-store: 1.6.0(react@18.3.1)
 
