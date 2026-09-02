@@ -41,7 +41,7 @@ export class ListContacts {
 
 function toContact(subscriber: SubscriberEntity): HumanContactDto {
   return {
-    subscriberId: subscriber.subscriberId,
+    id: subscriber.subscriberId,
     ...(subscriber.firstName ? { firstName: subscriber.firstName } : {}),
     ...(subscriber.lastName ? { lastName: subscriber.lastName } : {}),
     ...(subscriber.email ? { email: subscriber.email } : {}),

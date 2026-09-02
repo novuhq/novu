@@ -86,10 +86,10 @@ else a job finished — look before you ask:
 human contacts --json
 ```
 
-Each row is a subscriber the environment knows about: `subscriberId`,
+Each row is a subscriber the environment knows about: `id` (the subscriberId),
 `firstName`/`lastName`, `email`, `phone`, free-form `data`, and `self: true`
 on the person who ran setup (the default `--to` when you pass nothing).
-Pick by name or id and pass the `subscriberId` to `--to`:
+Pick by name or id and pass the `id` to `--to`:
 
 ```bash
 human approve "Ship the pricing change?" --to alice
@@ -99,7 +99,7 @@ human tell "Deploy is done." --to alice,bob
 Contacts is a directory, not a reachability guarantee. If delivery fails with
 "no linked <channel> endpoint", that person exists but hasn't connected the
 channel yet — run `human invite <id> --via <channel> --name "…"`, send them
-the URL, and retry. Never invent a subscriberId that isn't in the list, and
+the URL, and retry. Never invent an id that isn't in the list, and
 never page `self` as if they were a third party.
 
 ## The four commands

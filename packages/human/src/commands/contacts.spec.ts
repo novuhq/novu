@@ -27,7 +27,7 @@ const config: HumanCliConfig = {
   subscriberId: 'human_me',
 };
 
-function contact(overrides: Partial<Contact> & { subscriberId: string }): Contact {
+function contact(overrides: Partial<Contact> & { id: string }): Contact {
   return { createdAt: '2026-09-01T00:00:00.000Z', updatedAt: '2026-09-01T00:00:00.000Z', ...overrides };
 }
 
@@ -43,21 +43,21 @@ describe('parseContactsLimit', () => {
 
 describe('markSelf', () => {
   it('flags only the operator row', () => {
-    const rows = markSelf([contact({ subscriberId: 'alice' }), contact({ subscriberId: 'human_me' })], 'human_me');
+    const rows = markSelf([contact({ id: 'alice' }), contact({ id: 'human_me' })], 'human_me');
     expect(rows.map((row) => row.self)).toEqual([false, true]);
   });
 
   it('flags nothing when the config has no subscriberId', () => {
-    const rows = markSelf([contact({ subscriberId: 'alice' })], undefined);
+    const rows = markSelf([contact({ id: 'alice' })], undefined);
     expect(rows[0].self).toBe(false);
   });
 });
 
 describe('displayName', () => {
   it('joins first and last name and tolerates either missing', () => {
-    expect(displayName(contact({ subscriberId: 'a', firstName: 'Alice', lastName: 'Chen' }))).toBe('Alice Chen');
-    expect(displayName(contact({ subscriberId: 'a', firstName: 'Alice' }))).toBe('Alice');
-    expect(displayName(contact({ subscriberId: 'a' }))).toBe('');
+    expect(displayName(contact({ id: 'a', firstName: 'Alice', lastName: 'Chen' }))).toBe('Alice Chen');
+    expect(displayName(contact({ id: 'a', firstName: 'Alice' }))).toBe('Alice');
+    expect(displayName(contact({ id: 'a' }))).toBe('');
   });
 });
 
@@ -69,10 +69,7 @@ describe('renderContactsTable', () => {
   it('marks (you) and hints when more pages exist', () => {
     const out = renderContactsTable(
       markSelf(
-        [
-          contact({ subscriberId: 'alice', firstName: 'Alice', email: 'a@x.co' }),
-          contact({ subscriberId: 'human_me' }),
-        ],
+        [contact({ id: 'alice', firstName: 'Alice', email: 'a@x.co' }), contact({ id: 'human_me' })],
         'human_me'
       ),
       'cursor-1',
@@ -87,7 +84,7 @@ describe('renderContactsTable', () => {
   });
 
   it('omits the hint on the last page', () => {
-    expect(renderContactsTable(markSelf([contact({ subscriberId: 'alice' })], 'human_me'), null, 50)).not.toContain(
+    expect(renderContactsTable(markSelf([contact({ id: 'alice' })], 'human_me'), null, 50)).not.toContain(
       'More contacts'
     );
   });
@@ -113,7 +110,7 @@ describe('contactsCommand', () => {
 
   it('prints { data, next } JSON with self markers', async () => {
     listContacts.mockResolvedValue({
-      data: [contact({ subscriberId: 'human_me', firstName: 'Dima' }), contact({ subscriberId: 'alice' })],
+      data: [contact({ id: 'human_me', firstName: 'Dima' }), contact({ id: 'alice' })],
       next: 'cursor-2',
     });
 
@@ -122,14 +119,14 @@ describe('contactsCommand', () => {
     expect(listContacts).toHaveBeenCalledWith({}, { limit: 10 });
     const parsed = JSON.parse(stdout);
     expect(parsed.next).toBe('cursor-2');
-    expect(parsed.data.map((row: { subscriberId: string; self: boolean }) => [row.subscriberId, row.self])).toEqual([
+    expect(parsed.data.map((row: { id: string; self: boolean }) => [row.id, row.self])).toEqual([
       ['human_me', true],
       ['alice', false],
     ]);
   });
 
   it('renders the table by default', async () => {
-    listContacts.mockResolvedValue({ data: [contact({ subscriberId: 'alice', firstName: 'Alice' })], next: null });
+    listContacts.mockResolvedValue({ data: [contact({ id: 'alice', firstName: 'Alice' })], next: null });
 
     await expect(contactsCommand({})).rejects.toThrow('exit:0');
 

@@ -26,8 +26,8 @@ export class ListContactsQueryDto {
  * legacy `channels`, and topic membership stay out of the contract.
  */
 export class HumanContactDto {
-  @ApiProperty()
-  subscriberId: string;
+  @ApiProperty({ description: 'The subscriberId — pass it to `--to`.' })
+  id: string;
 
   @ApiPropertyOptional()
   firstName?: string;

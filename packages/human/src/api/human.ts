@@ -88,9 +88,9 @@ export async function setupHumanRelay(
   return unwrap(res.data);
 }
 
-/** A contact is a subscriber in the environment — someone `--to` can address. */
+/** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */
 export interface Contact {
-  subscriberId: string;
+  id: string;
   firstName?: string;
   lastName?: string;
   email?: string;

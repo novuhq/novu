@@ -30,7 +30,7 @@ export function parseContactsLimit(raw: string | undefined): number {
 export function markSelf(contacts: Contact[], selfSubscriberId: string | undefined): ContactRow[] {
   return contacts.map((contact) => ({
     ...contact,
-    self: selfSubscriberId !== undefined && contact.subscriberId === selfSubscriberId,
+    self: selfSubscriberId !== undefined && contact.id === selfSubscriberId,
   }));
 }
 
@@ -43,7 +43,7 @@ export function renderContactsTable(rows: ContactRow[], next: string | null, lim
     return 'No contacts found. Run `human setup` or `human invite <id> --via <channel>` to add people.\n';
   }
 
-  const idWidth = Math.max(...rows.map((row) => row.subscriberId.length), 'ID'.length);
+  const idWidth = Math.max(...rows.map((row) => row.id.length), 'ID'.length);
   const nameWidth = Math.max(...rows.map((row) => displayName(row).length), 'NAME'.length);
   const lines = [pc.dim(`${'ID'.padEnd(idWidth)}  ${'NAME'.padEnd(nameWidth)}  EMAIL`)];
 
@@ -51,7 +51,7 @@ export function renderContactsTable(rows: ContactRow[], next: string | null, lim
     const name = displayName(row) || pc.dim('—');
     const email = row.email ?? pc.dim('—');
     const self = row.self ? pc.cyan(' (you)') : '';
-    lines.push(`${row.subscriberId.padEnd(idWidth)}  ${name.padEnd(nameWidth)}  ${email}${self}`);
+    lines.push(`${row.id.padEnd(idWidth)}  ${name.padEnd(nameWidth)}  ${email}${self}`);
   }
 
   if (next) {

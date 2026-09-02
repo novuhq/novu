@@ -66,7 +66,7 @@ describe('Human contacts (setup names → list) #novu-v2', () => {
       expect(res.status).to.equal(200, JSON.stringify(res.body));
 
       const rows = res.body.data as Array<Record<string, unknown>>;
-      const byId = new Map(rows.map((row) => [row.subscriberId as string, row]));
+      const byId = new Map(rows.map((row) => [row.id as string, row]));
       expect(byId.has(`alice-${stamp}`)).to.equal(true);
       expect(byId.has(`bob-${stamp}`)).to.equal(true);
       expect(byId.has(`carol-${stamp}`)).to.equal(true);
@@ -82,16 +82,7 @@ describe('Human contacts (setup names → list) #novu-v2', () => {
       expect(carol?.createdAt).to.be.a('string');
       expect(carol?.updatedAt).to.be.a('string');
 
-      const allowedKeys = new Set([
-        'subscriberId',
-        'firstName',
-        'lastName',
-        'email',
-        'phone',
-        'data',
-        'createdAt',
-        'updatedAt',
-      ]);
+      const allowedKeys = new Set(['id', 'firstName', 'lastName', 'email', 'phone', 'data', 'createdAt', 'updatedAt']);
       for (const row of rows) {
         for (const key of Object.keys(row)) {
           expect(allowedKeys.has(key), `unexpected contact field "${key}"`).to.equal(true);
@@ -112,7 +103,7 @@ describe('Human contacts (setup names → list) #novu-v2', () => {
       const second = await session.testAgent.get('/v1/human/contacts').query({ limit: 1, after: first.body.next });
       expect(second.status).to.equal(200);
       expect(second.body.data).to.have.length(1);
-      expect(second.body.data[0].subscriberId).to.not.equal(first.body.data[0].subscriberId);
+      expect(second.body.data[0].id).to.not.equal(first.body.data[0].id);
     });
 
     it('returns an empty page for a malformed cursor', async () => {
