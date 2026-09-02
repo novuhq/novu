@@ -43,8 +43,8 @@
     "openapi": "https://gethuman.md/openapi.json",
     "authentication": "https://gethuman.md/auth.md",
     "permissions": {
-      "read": "agent:read",
-      "write": "agent:write"
+      "read": "org:agent:read",
+      "write": "org:agent:write"
     }
   },
   "documentation": {

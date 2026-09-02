@@ -48,7 +48,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Keyless session created",
             "content": {
               "application/json": {
@@ -85,7 +85,7 @@
         "tags": ["Setup"],
         "operationId": "setupHumanRelay",
         "summary": "Create the relay agent for a human",
-        "x-required-permissions": ["agent:write"],
+        "x-required-permissions": ["org:agent:write"],
         "security": [
           {
             "ApiKeyAuth": []
@@ -111,7 +111,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SetupHumanRelayResponse"
+                  "$ref": "#/components/schemas/SetupHumanRelayEnvelope"
                 }
               }
             }
@@ -130,7 +130,7 @@
         "tags": ["Interactions"],
         "operationId": "createInteraction",
         "summary": "Send an interaction to one or more humans",
-        "x-required-permissions": ["agent:write"],
+        "x-required-permissions": ["org:agent:write"],
         "security": [
           {
             "ApiKeyAuth": []
@@ -156,7 +156,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Interaction"
+                  "$ref": "#/components/schemas/InteractionEnvelope"
                 }
               }
             }
@@ -179,7 +179,7 @@
         "tags": ["Interactions"],
         "operationId": "listInteractions",
         "summary": "List recent interactions",
-        "x-required-permissions": ["agent:read"],
+        "x-required-permissions": ["org:agent:read"],
         "security": [
           {
             "ApiKeyAuth": []
@@ -259,7 +259,7 @@
         "tags": ["Interactions"],
         "operationId": "getInteraction",
         "summary": "Get an interaction",
-        "x-required-permissions": ["agent:read"],
+        "x-required-permissions": ["org:agent:read"],
         "security": [
           {
             "ApiKeyAuth": []
@@ -280,7 +280,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Interaction"
+                  "$ref": "#/components/schemas/InteractionEnvelope"
                 }
               }
             }
@@ -302,7 +302,7 @@
         "tags": ["Interactions"],
         "operationId": "cancelInteraction",
         "summary": "Cancel a pending interaction",
-        "x-required-permissions": ["agent:write"],
+        "x-required-permissions": ["org:agent:write"],
         "security": [
           {
             "ApiKeyAuth": []
@@ -323,7 +323,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Interaction"
+                  "$ref": "#/components/schemas/InteractionEnvelope"
                 }
               }
             }
@@ -560,11 +560,21 @@
           "createdAt"
         ]
       },
+      "InteractionEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Interaction"
+          }
+        },
+        "required": ["data"]
+      },
       "SetupHumanRelayRequest": {
         "type": "object",
         "properties": {
           "subscriberId": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 128
           },
           "agentIdentifier": {
             "type": "string",
@@ -591,6 +601,15 @@
           }
         },
         "required": ["agentId", "agentIdentifier", "subscriberId"]
+      },
+      "SetupHumanRelayEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SetupHumanRelayResponse"
+          }
+        },
+        "required": ["data"]
       },
       "Error": {
         "type": "object",

@@ -59,7 +59,7 @@ These flows produce an API credential rather than an OAuth `access_token`. The C
 
 ## Errors
 
-`401` means the credential is missing, expired, or invalid. `403` means the environment lacks the required `agent:read` or `agent:write` permission. `429` means the caller should honor `Retry-After` and back off. A future OAuth-protected version would advertise discovery through `WWW-Authenticate`; the current API-key routes do not.
+`401` means the credential is missing, expired, or invalid. `403` means the environment lacks the required `org:agent:read` or `org:agent:write` permission. `429` means the caller should honor `Retry-After` and back off. A future OAuth-protected version would advertise discovery through `WWW-Authenticate`; the current API-key routes do not.
 
 ## Revocation
 

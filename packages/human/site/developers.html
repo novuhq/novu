@@ -54,7 +54,7 @@ human approve "Deploy to production?" --from deploy-bot --json</code></pre>
 
     <h2>Authentication and permissions</h2>
     <p>Setup creates a temporary keyless Novu environment and stores its identifier in <code>~/.novu/human.json</code>. Existing Novu environments can set <code>NOVU_SECRET_KEY</code>. Headless runs also set <code>HUMAN_TO</code>. Read the <a href="/auth.md">agent authentication guide</a> for headers, errors, and revocation.</p>
-    <p>REST reads require <code>agent:read</code>; creates and cancellations require <code>agent:write</code>. The <a href="/openapi.json">OpenAPI document</a> declares these requirements on each operation.</p>
+    <p>REST reads require <code>org:agent:read</code>; creates and cancellations require <code>org:agent:write</code>. The <a href="/openapi.json">OpenAPI document</a> declares these requirements on each operation.</p>
 
     <h2>Sandbox</h2>
     <p>The keyless setup flow is the sandbox: <code>POST /v1/inbox/session</code> provisions a temporary environment without an account, after which the CLI configures a relay and channel. Run <code>npx @novu/human setup</code> to use the supported guided flow.</p>
