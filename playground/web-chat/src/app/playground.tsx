@@ -37,7 +37,6 @@ function PlaygroundApp() {
       <SdkEventBridge />
       <main className="workbench">
         <WebChat
-          key={session.sessionKey}
           conversationId={session.conversationId}
           onAssistantMessage={reloadConversations}
           threadList={{

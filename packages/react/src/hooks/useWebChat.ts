@@ -120,6 +120,11 @@ export type UseWebChatResult = {
     data?: SendMessageResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
+  /**
+   * Start a new empty chat for the current `agentId`. The next `sendMessage` creates the server conversation.
+   * No-op when `conversationId` or `conversation` is provided.
+   */
+  startNewConversation: () => void;
 };
 
 const EMPTY_SERVER_SNAPSHOT = {
@@ -217,13 +222,14 @@ function getCreateFlowKey(agentId: string, agentHash?: string): string {
 function getManagedRuntimeKey(
   agentId: string,
   agentHash: string | undefined,
-  conversationIdProp: string | undefined
+  conversationIdProp: string | undefined,
+  createEpoch: number
 ): string {
   if (conversationIdProp) {
     return `resume:${agentId}\0${agentHash ?? ''}\0${conversationIdProp}`;
   }
 
-  return getCreateFlowKey(agentId, agentHash);
+  return `${getCreateFlowKey(agentId, agentHash)}\0${createEpoch}`;
 }
 
 type ManagedRuntimeEntry = {
@@ -306,9 +312,10 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
 
   const ownedRuntimeRef = useRef<OwnedRuntimeEntry | null>(null);
   const [managedRuntime, setManagedRuntime] = useState<ManagedRuntimeEntry | null>(null);
+  const [createEpoch, setCreateEpoch] = useState(0);
   const managedRuntimeKey = sharedRuntime
     ? null
-    : getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
+    : getManagedRuntimeKey(agentId, agentHash, conversationIdProp, createEpoch);
 
   useEffect(() => {
     if (sharedRuntime) {
@@ -319,13 +326,13 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       return;
     }
 
-    if (!webChatReady) {
+    if (!webChatReady || !managedRuntimeKey) {
       setManagedRuntime(null);
 
       return;
     }
 
-    const key = getManagedRuntimeKey(agentId, agentHash, conversationIdProp);
+    const key = managedRuntimeKey;
     const current = ownedRuntimeRef.current;
 
     let runtime: AgentConversationRuntime;
@@ -346,7 +353,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       ownedRuntimeRef.current = null;
       setManagedRuntime(null);
     };
-  }, [webChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
+  }, [webChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash, createEpoch, managedRuntimeKey]);
 
   const runtime =
     sharedRuntime ?? (managedRuntime?.key === managedRuntimeKey ? managedRuntime.runtime : null);
@@ -483,6 +490,13 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     (messageId: string) => callRuntime((target) => target.retryMessage(messageId)),
     [callRuntime]
   );
+  const startNewConversation = useCallback(() => {
+    if (sharedRuntime || conversationIdProp) {
+      return;
+    }
+
+    setCreateEpoch((epoch) => epoch + 1);
+  }, [sharedRuntime, conversationIdProp]);
 
   return {
     messages: [...snapshot.messages],
@@ -502,5 +516,6 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     respondToAction,
     sendAction,
     retryMessage,
+    startNewConversation,
   };
 };
