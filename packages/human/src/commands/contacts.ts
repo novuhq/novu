@@ -7,6 +7,8 @@ export const MAX_CONTACTS_LIMIT = 100;
 
 export interface ContactsOptions {
   limit?: string;
+  /** `next` cursor from a previous page. */
+  after?: string;
   json?: boolean;
   apiUrl?: string;
 }
@@ -38,7 +40,7 @@ export function displayName(contact: Contact): string {
   return [contact.firstName, contact.lastName].filter(Boolean).join(' ');
 }
 
-export function renderContactsTable(rows: ContactRow[], next: string | null, limit: number): string {
+export function renderContactsTable(rows: ContactRow[], next: string | null): string {
   if (rows.length === 0) {
     return 'No contacts found. Run `human setup` or `human invite <id> --via <channel>` to add people.\n';
   }
@@ -55,11 +57,7 @@ export function renderContactsTable(rows: ContactRow[], next: string | null, lim
   }
 
   if (next) {
-    lines.push(
-      pc.dim(
-        `More contacts — rerun with --limit ${Math.min(limit * 2, MAX_CONTACTS_LIMIT)} or use --json for the cursor.`
-      )
-    );
+    lines.push(pc.dim(`More contacts — next page: human contacts --after ${next}`));
   }
 
   return `${lines.join('\n')}\n`;
@@ -80,12 +78,13 @@ export async function contactsCommand(options: ContactsOptions): Promise<never> 
 async function renderContacts(options: ContactsOptions): Promise<string> {
   const limit = parseContactsLimit(options.limit);
   const { client, config } = clientFromConfig(options.apiUrl);
-  const page = await listContacts(client, { limit });
+  const after = options.after?.trim() || undefined;
+  const page = await listContacts(client, { limit, ...(after ? { after } : {}) });
   const rows = markSelf(page.data, config.subscriberId);
 
   if (options.json) {
     return `${JSON.stringify({ data: rows, next: page.next }, null, 2)}\n`;
   }
 
-  return renderContactsTable(rows, page.next, limit);
+  return renderContactsTable(rows, page.next);
 }

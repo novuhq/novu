@@ -89,6 +89,8 @@ human contacts --json
 Each row is a subscriber the environment knows about: `id` (the subscriberId),
 `firstName`/`lastName`, `email`, `phone`, free-form `data`, and `self: true`
 on the person who ran setup (the default `--to` when you pass nothing).
+Pages are 50 rows by default; when `next` is non-null, fetch the rest with
+`human contacts --after <next>` before concluding someone isn't there.
 Pick by name or id and pass the `id` to `--to`:
 
 ```bash

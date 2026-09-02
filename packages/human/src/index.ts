@@ -135,8 +135,9 @@ program
 
 program
   .command('contacts')
-  .option('--limit <n>', 'max contacts to print (default: 50, max: 100)')
-  .option('--json', 'print JSON ({ data, next }; rows carry `self: true` for you)')
+  .option('--limit <n>', 'max contacts per page (default: 50, max: 100)')
+  .option('--after <cursor>', 'continue from the `next` cursor of a previous page')
+  .option('--json', 'print JSON ({ data, next }; rows carry `self: true` for you; pass `next` to --after)')
   .option('--api-url <url>', 'Novu API URL override')
   .description('List humans (subscribers) agents can reach with --to')
   .action(contactsCommand);

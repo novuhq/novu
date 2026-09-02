@@ -63,7 +63,7 @@ describe('displayName', () => {
 
 describe('renderContactsTable', () => {
   it('prints an empty-state hint', () => {
-    expect(renderContactsTable([], null, 50)).toContain('No contacts found');
+    expect(renderContactsTable([], null)).toContain('No contacts found');
   });
 
   it('marks (you) and hints when more pages exist', () => {
@@ -72,21 +72,18 @@ describe('renderContactsTable', () => {
         [contact({ id: 'alice', firstName: 'Alice', email: 'a@x.co' }), contact({ id: 'human_me' })],
         'human_me'
       ),
-      'cursor-1',
-      50
+      'cursor-1'
     );
     expect(out).toContain('alice');
     expect(out).toContain('Alice');
     expect(out).toContain('a@x.co');
     expect(out).toContain('(you)');
     expect(out).toContain('More contacts');
-    expect(out).toContain('--limit 100');
+    expect(out).toContain('--after cursor-1');
   });
 
   it('omits the hint on the last page', () => {
-    expect(renderContactsTable(markSelf([contact({ id: 'alice' })], 'human_me'), null, 50)).not.toContain(
-      'More contacts'
-    );
+    expect(renderContactsTable(markSelf([contact({ id: 'alice' })], 'human_me'), null)).not.toContain('More contacts');
   });
 });
 
@@ -133,5 +130,15 @@ describe('contactsCommand', () => {
     expect(stdout).toContain('alice');
     expect(stdout).toContain('Alice');
     expect(listContacts).toHaveBeenCalledWith({}, { limit: 50 });
+  });
+
+  it('passes --after through as the page cursor', async () => {
+    listContacts.mockResolvedValue({ data: [contact({ id: 'bob' })], next: null });
+
+    await expect(contactsCommand({ after: 'cursor-2', limit: '25' })).rejects.toThrow('exit:0');
+
+    expect(listContacts).toHaveBeenCalledWith({}, { limit: 25, after: 'cursor-2' });
+    expect(stdout).toContain('bob');
+    expect(stdout).not.toContain('More contacts');
   });
 });
