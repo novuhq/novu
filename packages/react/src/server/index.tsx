@@ -98,6 +98,7 @@ export function useWebChat(_: UseWebChatProps): UseWebChatResult {
     respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
     sendAction: () => Promise.resolve({ data: undefined, error: undefined }),
     retryMessage: () => Promise.resolve({ data: undefined, error: undefined }),
+    startNewConversation: () => {},
   };
 }
 

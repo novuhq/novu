@@ -40,6 +40,18 @@ type OrganizationMembershipLike = {
   };
 };
 
+type OrganizationSuggestionLike = {
+  id: string;
+  status: 'pending' | 'accepted';
+  publicOrganizationData: {
+    id: string;
+    name: string;
+    slug: string | null;
+    imageUrl: string;
+  };
+  accept: () => Promise<OrganizationSuggestionLike>;
+};
+
 type OrganizationPickerProps = {
   afterCreateOrganizationUrl: string;
   afterSelectOrganizationUrl: string;
@@ -155,26 +167,89 @@ function OrganizationRow({ membership, onSelect, isBusy, busyId }: OrganizationR
   );
 }
 
+type OrganizationSuggestionRowProps = {
+  suggestion: OrganizationSuggestionLike;
+  onRequestJoin: (suggestion: OrganizationSuggestionLike) => void;
+  isBusy: boolean;
+  isRequesting: boolean;
+  isAccepted: boolean;
+};
+
+function OrganizationSuggestionRow({
+  suggestion,
+  onRequestJoin,
+  isBusy,
+  isRequesting,
+  isAccepted,
+}: OrganizationSuggestionRowProps) {
+  const organization = suggestion.publicOrganizationData;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.15 }}
+      className="border-stroke-soft flex w-full items-center gap-3 border-t px-1 py-3 first:border-t-0"
+    >
+      <OrganizationAvatar imageUrl={organization.imageUrl} name={organization.name} />
+      <div className="min-w-0 flex-1">
+        <p className="text-label-sm text-text-strong truncate font-medium">{organization.name}</p>
+        <p className="text-label-xs text-text-sub">Suggested for your verified email domain</p>
+      </div>
+      {isAccepted ? (
+        <span className="text-label-xs text-text-sub shrink-0">Request sent</span>
+      ) : (
+        <Button
+          type="button"
+          variant="secondary"
+          mode="outline"
+          size="xs"
+          onClick={() => onRequestJoin(suggestion)}
+          disabled={isBusy}
+        >
+          {isRequesting ? (
+            <>
+              <RiLoader4Line className="size-3.5 animate-spin" />
+              Requesting…
+            </>
+          ) : (
+            'Request to join'
+          )}
+        </Button>
+      )}
+    </motion.div>
+  );
+}
+
 type OrganizationListViewProps = {
   memberships: OrganizationMembershipLike[];
+  suggestions: OrganizationSuggestionLike[];
   onSelect: (organizationId: string) => void;
+  onRequestJoin: (suggestion: OrganizationSuggestionLike) => void;
   onCreateClick: () => void;
   isBusy: boolean;
   busyId: string | null;
+  requestingSuggestionId: string | null;
+  acceptedSuggestionIds: Set<string>;
   // True while additional pages are streaming in from Clerk after page 1 has rendered.
   isLoadingMore: boolean;
 };
 
 function OrganizationListView({
   memberships,
+  suggestions,
   onSelect,
+  onRequestJoin,
   onCreateClick,
   isBusy,
   busyId,
+  requestingSuggestionId,
+  acceptedSuggestionIds,
   isLoadingMore,
 }: OrganizationListViewProps) {
   const productLabel = 'Novu Cloud';
-  const shouldScroll = memberships.length > ORG_LIST_VISIBLE_ROWS || isLoadingMore;
+  const shouldScroll = memberships.length + suggestions.length > ORG_LIST_VISIBLE_ROWS || isLoadingMore;
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -187,6 +262,24 @@ function OrganizationListView({
         <ScrollArea className={cn('w-full', shouldScroll && ORG_LIST_SCROLL_HEIGHT)}>
           {/* `pr-2` reserves room for the overlay scrollbar so the row chevron doesn't get clipped. */}
           <div className="flex flex-col pr-2">
+            {suggestions.length > 0 ? (
+              <div className="flex flex-col">
+                <p className="text-label-xs text-text-sub px-1 pb-1 font-medium">Suggested organizations</p>
+                <AnimatePresence initial={false} mode="popLayout">
+                  {suggestions.map((suggestion) => (
+                    <OrganizationSuggestionRow
+                      key={suggestion.id}
+                      suggestion={suggestion}
+                      onRequestJoin={onRequestJoin}
+                      isBusy={isBusy}
+                      isRequesting={requestingSuggestionId === suggestion.id}
+                      isAccepted={suggestion.status === 'accepted' || acceptedSuggestionIds.has(suggestion.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            ) : null}
+
             <AnimatePresence initial={false} mode="popLayout">
               {memberships.map((membership) => (
                 <OrganizationRow
@@ -354,8 +447,13 @@ export function OrganizationPicker({
   const track = useTelemetry();
   const navigate = useNavigate();
 
-  const { isLoaded, userMemberships, createOrganization, setActive } = useOrganizationList({
+  const { isLoaded, userMemberships, userSuggestions, createOrganization, setActive } = useOrganizationList({
     userMemberships: { infinite: true, pageSize: MEMBERSHIPS_PAGE_SIZE },
+    userSuggestions: {
+      infinite: true,
+      pageSize: MEMBERSHIPS_PAGE_SIZE,
+      status: ['pending', 'accepted'],
+    },
   });
 
   const [hasRevalidated, setHasRevalidated] = useState(false);
@@ -365,6 +463,8 @@ export function OrganizationPicker({
   // `setHasRevalidated(true)` runs.
   const userMembershipsRef = useRef(userMemberships);
   userMembershipsRef.current = userMemberships;
+  const userSuggestionsRef = useRef(userSuggestions);
+  userSuggestionsRef.current = userSuggestions;
 
   // Force a fresh fetch on mount so a user arriving after delete/leave doesn't see a tombstoned
   // org, and so a freshly-accepted invitation membership (e.g. from a Clerk-hosted accept page)
@@ -375,7 +475,10 @@ export function OrganizationPicker({
     let cancelled = false;
     const refresh = async () => {
       try {
-        await userMembershipsRef.current?.revalidate?.();
+        await Promise.allSettled([
+          userMembershipsRef.current?.revalidate?.(),
+          userSuggestionsRef.current?.revalidate?.(),
+        ]);
       } catch {
         // Revalidation failures shouldn't strand the user — show whatever is cached.
       } finally {
@@ -394,12 +497,24 @@ export function OrganizationPicker({
 
   // Drain pagination so the picker renders against the full membership list.
   useEffect(() => {
-    if (!isLoaded || !userMemberships?.hasNextPage || userMemberships?.isFetching) {
-      return;
+    if (!isLoaded) return;
+
+    if (userMemberships?.hasNextPage && !userMemberships.isFetching) {
+      userMemberships.fetchNext?.();
     }
 
-    userMemberships.fetchNext?.();
-  }, [isLoaded, userMemberships?.hasNextPage, userMemberships?.isFetching, userMemberships]);
+    if (userSuggestions?.hasNextPage && !userSuggestions.isFetching) {
+      userSuggestions.fetchNext?.();
+    }
+  }, [
+    isLoaded,
+    userMemberships?.hasNextPage,
+    userMemberships?.isFetching,
+    userMemberships,
+    userSuggestions?.hasNextPage,
+    userSuggestions?.isFetching,
+    userSuggestions,
+  ]);
 
   // Two readiness signals:
   //   - `isFirstPageReady` — render the picker as soon as page 1 lands so users with many orgs
@@ -407,16 +522,27 @@ export function OrganizationPicker({
   //   - `isFullListLoaded` — gate the "auto-switch to create view if empty" decision on the
   //     complete list (an org might sit on page 2).
   const isFirstPageReady = isLoaded && hasRevalidated;
-  const isFullListLoaded = isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
+  const isFullListLoaded =
+    isFirstPageReady &&
+    !userMemberships?.isFetching &&
+    userMemberships?.hasNextPage !== true &&
+    !userSuggestions?.isFetching &&
+    userSuggestions?.hasNextPage !== true;
 
   const filteredMemberships = useMemo<OrganizationMembershipLike[]>(
     () => (userMemberships?.data ?? []) as OrganizationMembershipLike[],
     [userMemberships?.data]
   );
+  const filteredSuggestions = useMemo<OrganizationSuggestionLike[]>(
+    () => (userSuggestions?.data ?? []).filter(Boolean) as OrganizationSuggestionLike[],
+    [userSuggestions?.data]
+  );
 
   const [view, setView] = useState<View>('picker');
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectingId, setSelectingId] = useState<string | null>(null);
+  const [requestingSuggestionId, setRequestingSuggestionId] = useState<string | null>(null);
+  const [acceptedSuggestionIds, setAcceptedSuggestionIds] = useState<Set<string>>(() => new Set());
   const [isCreating, setIsCreating] = useState(false);
   const hasTrackedRef = useRef(false);
   const hasInitializedViewRef = useRef(false);
@@ -428,10 +554,10 @@ export function OrganizationPicker({
 
     hasInitializedViewRef.current = true;
 
-    if (filteredMemberships.length === 0) {
+    if (filteredMemberships.length === 0 && filteredSuggestions.length === 0) {
       setView('create');
     }
-  }, [isFullListLoaded, filteredMemberships.length]);
+  }, [isFullListLoaded, filteredMemberships.length, filteredSuggestions.length]);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
@@ -517,22 +643,43 @@ export function OrganizationPicker({
     [createOrganization, setActive, afterCreateOrganizationUrl, track, navigate]
   );
 
+  const handleRequestJoin = useCallback(
+    async (suggestion: OrganizationSuggestionLike) => {
+      if (requestingSuggestionId) return;
+
+      setRequestingSuggestionId(suggestion.id);
+
+      try {
+        await suggestion.accept();
+        setAcceptedSuggestionIds((current) => new Set(current).add(suggestion.id));
+        void userSuggestionsRef.current?.revalidate?.().catch(() => undefined);
+      } catch (error) {
+        const message = readClerkErrorMessage(error, 'Unable to request access to this organization.');
+        showErrorToast(message, 'Join request failed');
+      } finally {
+        setRequestingSuggestionId(null);
+      }
+    },
+    [requestingSuggestionId]
+  );
+
   const handleCancel = useCallback(() => {
-    if (filteredMemberships.length > 0) {
+    if (filteredMemberships.length > 0 || filteredSuggestions.length > 0) {
       setView('picker');
 
       return;
     }
 
     void onSignOut();
-  }, [filteredMemberships.length, onSignOut]);
+  }, [filteredMemberships.length, filteredSuggestions.length, onSignOut]);
 
   // Show the full-screen spinner only while page 1 is in flight. Once page 1 lands we render the
   // picker and surface the inline "Loading more…" row for any subsequent pages. Exception: if
   // page 1 yields no orgs but more pages are still streaming, keep the spinner so we don't briefly
   // render an empty header.
   const isStreamingMorePages = isFirstPageReady && !isFullListLoaded;
-  const shouldWaitForMorePages = isStreamingMorePages && filteredMemberships.length === 0;
+  const shouldWaitForMorePages =
+    isStreamingMorePages && filteredMemberships.length === 0 && filteredSuggestions.length === 0;
 
   if (!isFirstPageReady || shouldWaitForMorePages) {
     return (
@@ -545,7 +692,7 @@ export function OrganizationPicker({
   if (view === 'create') {
     return (
       <CreateOrganizationView
-        hasExistingOrgs={filteredMemberships.length > 0}
+        hasExistingOrgs={filteredMemberships.length > 0 || filteredSuggestions.length > 0}
         onCancel={handleCancel}
         onSubmit={handleCreate}
         isSubmitting={isCreating}
@@ -556,10 +703,14 @@ export function OrganizationPicker({
   return (
     <OrganizationListView
       memberships={filteredMemberships}
+      suggestions={filteredSuggestions}
       onSelect={handleSelect}
+      onRequestJoin={handleRequestJoin}
       onCreateClick={() => setView('create')}
-      isBusy={isSelecting || isCreating}
+      isBusy={isSelecting || isCreating || requestingSuggestionId !== null}
       busyId={selectingId}
+      requestingSuggestionId={requestingSuggestionId}
+      acceptedSuggestionIds={acceptedSuggestionIds}
       isLoadingMore={isStreamingMorePages}
     />
   );

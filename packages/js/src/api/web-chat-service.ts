@@ -1,7 +1,12 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { WebChatPlanLimitError, type WebChatPlanLimitReason } from '../web-chat/web-chat-plan-limit-error';
-import type { AgentHashFields } from '../web-chat/types';
+import type {
+  AgentHashFields,
+  ListConversationsArgs,
+  ListConversationsResult,
+  WebChatConversation,
+} from '../web-chat/types';
 import { validateHistoryPageResponse } from '../web-chat/validate-envelope';
+import { WebChatPlanLimitError, type WebChatPlanLimitReason } from '../web-chat/web-chat-plan-limit-error';
 import { HttpClient } from './http-client';
 
 const WEB_CHAT_CONVERSATIONS_ROUTE = '/web-chat/conversations';
@@ -130,6 +135,37 @@ export class WebChatService {
     }
 
     return err;
+  }
+
+  async listConversations(args: ListConversationsArgs = {}): Promise<ListConversationsResult> {
+    const params = new URLSearchParams();
+    if (args.limit != null) {
+      params.set('limit', String(args.limit));
+    }
+    if (args.after) {
+      params.set('after', args.after);
+    }
+    if (args.before) {
+      params.set('before', args.before);
+    }
+    if (args.orderBy) {
+      params.set('orderBy', args.orderBy);
+    }
+    if (args.orderDirection) {
+      params.set('orderDirection', args.orderDirection);
+    }
+
+    const raw = await this.#httpClient.get<{
+      data?: WebChatConversation[];
+      next?: string | null;
+      previous?: string | null;
+    }>(WEB_CHAT_CONVERSATIONS_ROUTE, params.toString() ? params : undefined, false);
+
+    return {
+      conversations: raw.data ?? [],
+      next: raw.next ?? null,
+      previous: raw.previous ?? null,
+    };
   }
 
   async getEvents(args: WebChatGetEventsArgs): Promise<WebChatGetEventsResponse> {
