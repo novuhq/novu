@@ -400,14 +400,9 @@ const approvalOptionLabel = (option: ToolApprovalOption) =>
   option.id;
 
 const offersInterruptAction = (
-  status: ToolCallMessagePartStatus | undefined,
   approval: ToolCallMessagePart["approval"],
   interrupt: ToolCallMessagePart["interrupt"],
-) =>
-  status?.type !== "requires-action" ||
-  status.reason !== "interrupt" ||
-  approval != null ||
-  interrupt != null;
+) => approval != null || interrupt != null;
 
 function ToolFallbackApproval({
   className,
@@ -437,7 +432,7 @@ function ToolFallbackApproval({
   )
     return null;
 
-  if (!offersInterruptAction(status, approval, interrupt)) return null;
+  if (!offersInterruptAction(approval, interrupt)) return null;
 
   // A declared option list is a host constraint: render only what the host
   // exposes; do not invent actions the runtime cannot execute.
@@ -624,7 +619,7 @@ const ToolFallbackImpl: ToolCallMessagePartComponent = ({
     status?.type === "incomplete" && status.reason === "cancelled";
   const isRequiresAction = status?.type === "requires-action";
   const shouldRenderApproval =
-    isRequiresAction && offersInterruptAction(status, approval, interrupt);
+    isRequiresAction && offersInterruptAction(approval, interrupt);
 
   const [open, setOpen] = useState(isRequiresAction);
   const [prevRequiresAction, setPrevRequiresAction] =
