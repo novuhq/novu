@@ -124,3 +124,28 @@ export type SendActionArgs = AgentHashFields & {
 export type SendActionResult = {
   conversationId: string;
 };
+
+/** One conversation in a `listConversations` page. */
+export type WebChatConversation = {
+  identifier: string;
+  title: string;
+  status: AgentConversationStatus;
+  agentIdentifier: string;
+  lastActivityAt: string;
+  createdAt: string;
+};
+
+export type ListConversationsArgs = {
+  limit?: number;
+  after?: string;
+  before?: string;
+  orderBy?: 'lastActivityAt' | 'createdAt';
+  orderDirection?: 'ASC' | 'DESC';
+};
+
+/** One page of the current subscriber's conversations. */
+export type ListConversationsResult = {
+  conversations: WebChatConversation[];
+  next: string | null;
+  previous: string | null;
+};
