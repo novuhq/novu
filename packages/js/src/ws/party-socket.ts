@@ -237,6 +237,11 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     }
   }
 
+  #clearCurrentSocket(): void {
+    this.#clearHibernationHeartbeat();
+    this.#partySocket = undefined;
+  }
+
   #startHibernationHeartbeat(): void {
     this.#clearHibernationHeartbeat();
 
@@ -284,8 +289,8 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
         return;
       }
 
-      this.#clearHibernationHeartbeat();
-      this.#partySocket = undefined;
+      this.#clearCurrentSocket();
+      this.#emitter.emit('socket.disconnect.resolved', { args });
     });
 
     socket.addEventListener('message', this.#handleMessage);
@@ -303,9 +308,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
 
   async #handleDisconnectSocket(): Result<void> {
     try {
-      this.#clearHibernationHeartbeat();
       this.#partySocket?.close();
-      this.#partySocket = undefined;
 
       return {};
     } catch (error) {

@@ -6,7 +6,7 @@ import { setApiToken } from '../lib/api-token';
 import { setSocketStatus } from '../lib/socket-status';
 
 /**
- * Playground wiring: mirror SDK connect events into the socket status store, and
+ * Playground wiring: mirror SDK socket events into the socket status store, and
  * capture the session JWT for the recent-conversations list (not wrapped by the SDK).
  */
 export function ConnectionTracker() {
@@ -17,6 +17,7 @@ export function ConnectionTracker() {
     const cleanupResolved = novu.on('socket.connect.resolved', ({ error }) =>
       setSocketStatus(error ? 'offline' : 'online')
     );
+    const cleanupDisconnected = novu.on('socket.disconnect.resolved', () => setSocketStatus('offline'));
     const cleanupSession = novu.on('session.initialize.resolved', ({ data }) => {
       if (data?.token) setApiToken(data.token);
     });
@@ -24,6 +25,7 @@ export function ConnectionTracker() {
     return () => {
       cleanupPending();
       cleanupResolved();
+      cleanupDisconnected();
       cleanupSession();
     };
   }, [novu]);
