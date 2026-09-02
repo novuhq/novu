@@ -155,7 +155,7 @@ function ToolFallbackTrigger({
   const Icon = isDeniedApproval ? XCircleIcon : statusIconMap[statusType];
   const label = isCancelled
     ? "Cancelled tool"
-    : isPendingApproval || statusType === "requires-action"
+    : isPendingApproval
       ? "Tool approval"
       : isDeniedApproval
         ? "Denied tool"
@@ -621,12 +621,12 @@ const ToolFallbackImpl: ToolCallMessagePartComponent = ({
   const shouldRenderApproval =
     isRequiresAction && offersInterruptAction(approval, interrupt);
 
-  const [open, setOpen] = useState(isRequiresAction);
-  const [prevRequiresAction, setPrevRequiresAction] =
-    useState(isRequiresAction);
-  if (isRequiresAction !== prevRequiresAction) {
-    setPrevRequiresAction(isRequiresAction);
-    if (isRequiresAction) setOpen(true);
+  const [open, setOpen] = useState(shouldRenderApproval);
+  const [prevShouldRenderApproval, setPrevShouldRenderApproval] =
+    useState(shouldRenderApproval);
+  if (shouldRenderApproval !== prevShouldRenderApproval) {
+    setPrevShouldRenderApproval(shouldRenderApproval);
+    if (shouldRenderApproval) setOpen(true);
   }
 
   return (
