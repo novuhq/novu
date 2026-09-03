@@ -66,7 +66,8 @@ Sign up to keep your channels and continue: https://dashboard.novu.co/connect/cl
 
 The human already received that link on their channel. Stop retrying, surface
 the link where the human will see it, and wait — the human signs up and then
-re-points the CLI with `human setup --secret-key <key>` (or `NOVU_SECRET_KEY`).
+runs `human auth`. That browser login keeps the existing human and channel
+preferences while switching the CLI to the claimed Development environment.
 
 In sandboxes and containers with no config file, the CLI is fully operational
 when `NOVU_SECRET_KEY` and `HUMAN_TO` are set in the environment

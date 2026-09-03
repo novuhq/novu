@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { version } from '../package.json';
+import { authCommand } from './commands/auth';
 import { channelsCommand } from './commands/channels';
 import { contactsCommand } from './commands/contacts';
 import { runInteraction } from './commands/interact';
@@ -27,6 +28,7 @@ program.addHelpText(
     '  HUMAN_TO           default recipient subscriberId(s), comma-separated (as --to)\n' +
     '  HUMAN_VIA          default channel: telegram, slack, or email (as --via)\n' +
     '  NOVU_API_URL       Novu API URL override\n' +
+    '  NOVU_DASHBOARD_URL Novu Dashboard URL override (for `human auth`)\n' +
     '  NOVU_HUMAN_CONFIG  config file path override\n' +
     'Precedence: CLI flags > environment variables > ~/.novu/human.json\n'
 );
@@ -77,6 +79,13 @@ withCommonOptions(
     .argument('<message>', 'the message to deliver')
     .description('Send a one-way notification (no waiting)')
 ).action((message, options) => runInteraction('tell', message, options));
+
+program
+  .command('auth')
+  .option('--api-url <url>', 'Novu API URL override')
+  .option('--dashboard-url <url>', 'Novu Dashboard URL override')
+  .description('Authenticate with Novu and save the Development environment key')
+  .action(authCommand);
 
 program
   .command('wait')

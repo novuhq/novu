@@ -176,6 +176,7 @@ export function parseDuration(value: string): number {
 
 /** Matches the API's `KEYLESS_HUMAN_CAP_REACHED_CODE`. The CLI cannot import `apps/api`. */
 const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
+const KEYLESS_CLAIMED_CODE = 'KEYLESS_HUMAN_CLAIMED';
 
 export interface KeylessCapDetails {
   claimUrl?: string;
@@ -218,18 +219,29 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
     lines.push('Sign up for a free Novu account to keep your channels and continue.');
   }
 
-  lines.push(
-    '(We also sent this link to you on your linked channel.)',
-    'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
-  );
+  lines.push('(We also sent this link to you on your linked channel.)', 'After signing up, run: human auth');
 
   return lines.join('\n');
+}
+
+export function isKeylessClaimedError(err: unknown): boolean {
+  if (!(err instanceof HumanApiError) || err.status !== 403) {
+    return false;
+  }
+
+  const body = (err.body && typeof err.body === 'object' ? err.body : {}) as { code?: unknown };
+
+  return body.code === KEYLESS_CLAIMED_CODE || /demo workspace was claimed/i.test(err.message);
 }
 
 export function handleError(err: unknown): never {
   const keylessCap = getKeylessCapDetails(err);
   if (keylessCap) {
     fail(formatKeylessCapMessage(keylessCap));
+  }
+
+  if (isKeylessClaimedError(err)) {
+    fail('This demo workspace is now in your Novu account. Run `human auth` to continue.');
   }
 
   if (err instanceof HumanApiError) {

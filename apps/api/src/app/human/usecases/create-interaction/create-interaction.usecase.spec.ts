@@ -413,7 +413,8 @@ describe('CreateInteraction', () => {
       }
 
       expect(thrown?.getStatus()).to.equal(403);
-      expect(thrown?.message).to.include('human setup --secret-key');
+      expect(thrown?.message).to.include('human auth');
+      expect((thrown?.getResponse() as Record<string, unknown>).code).to.equal('KEYLESS_HUMAN_CLAIMED');
       expect(agentRepository.findOne.called).to.equal(false);
     });
 

@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -59,6 +59,7 @@ export function saveConfig(config: HumanCliConfig): void {
   mkdirSync(dirname(path), { recursive: true });
   const { channels: _ignored, ...persisted } = config as HumanCliConfig & { channels?: unknown };
   writeFileSync(path, `${JSON.stringify(persisted, null, 2)}\n`, { mode: 0o600 });
+  chmodSync(path, 0o600);
 }
 
 /**

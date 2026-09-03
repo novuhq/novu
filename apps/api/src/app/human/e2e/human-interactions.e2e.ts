@@ -677,7 +677,8 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const after = await createInteraction({ kind: 'tell', prompt: 'Still here?' });
       expect(after.status).to.equal(403, JSON.stringify(after.body));
       expect(after.body.message).to.match(/claimed into your Novu account/);
-      expect(after.body.message).to.include('human setup --secret-key');
+      expect(after.body.message).to.include('human auth');
+      expect(after.body.code).to.equal('KEYLESS_HUMAN_CLAIMED');
     });
   });
 });

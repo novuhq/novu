@@ -11,8 +11,15 @@ vi.mock('../output', async (importOriginal) => {
   };
 });
 
-const { formatKeylessCapMessage, getKeylessCapDetails, handleError, parseDuration, parseHumanToOption, resolveTo } =
-  await import('./interact');
+const {
+  formatKeylessCapMessage,
+  getKeylessCapDetails,
+  handleError,
+  isKeylessClaimedError,
+  parseDuration,
+  parseHumanToOption,
+  resolveTo,
+} = await import('./interact');
 const { HumanApiError } = await import('../api/client');
 const { exitCodeFor, EXIT_DENIED, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
 
@@ -135,11 +142,31 @@ describe('keyless cap errors', () => {
     const text = formatKeylessCapMessage({ claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
     expect(text).toContain('5 free messages');
     expect(text).toContain('https://dash/connect/claim?token=t');
-    expect(text).toContain('human setup --secret-key');
+    expect(text).toContain('human auth');
   });
 
   it('routes the cap error through fail with the claim link', () => {
     const err = capError({ code: 'KEYLESS_HUMAN_CAP_REACHED', claimUrl: 'https://dash/connect/claim?token=t' });
     expect(() => handleError(err)).toThrow('https://dash/connect/claim?token=t');
+  });
+});
+
+describe('claimed keyless errors', () => {
+  const claimedError = (body: unknown, message = 'forbidden') =>
+    new HumanApiError(message, 403, 'POST https://api.novu.co/v1/human/interactions', body);
+
+  it('detects the stable API code and the legacy claimed-workspace message', () => {
+    expect(isKeylessClaimedError(claimedError({ code: 'KEYLESS_HUMAN_CLAIMED' }))).toBe(true);
+    expect(isKeylessClaimedError(claimedError({}, 'This demo workspace was claimed into your Novu account.'))).toBe(
+      true
+    );
+  });
+
+  it('ignores unrelated forbidden errors', () => {
+    expect(isKeylessClaimedError(claimedError({}, 'Missing permission'))).toBe(false);
+  });
+
+  it('routes claimed workspaces to human auth', () => {
+    expect(() => handleError(claimedError({ code: 'KEYLESS_HUMAN_CLAIMED' }))).toThrow('human auth');
   });
 });

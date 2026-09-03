@@ -1,5 +1,10 @@
 import { useClerk, useAuth as useClerkAuth, useUser } from '@clerk/react';
-import { CLI_DEVICE_SESSION_NAME_NOVU_CONNECT, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import {
+  CLI_DEVICE_SESSION_NAME_HUMAN,
+  CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+} from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCheckLine, RiCommandLine, RiLockLine } from 'react-icons/ri';
@@ -99,8 +104,9 @@ function CliAuthContent() {
   const deviceCodeOk = isValidDeviceCode(deviceCode);
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
 
-  const isConnect = callerName === CLI_DEVICE_SESSION_NAME_NOVU_CONNECT;
-  const callerDisplayName = isConnect ? 'Novu Connect' : 'Novu Wizard';
+  const caller = resolveCliAuthCaller(callerName);
+  const isConnect = caller === 'connect';
+  const callerDisplayName = resolveCallerDisplayName(caller);
   const signedInEmail = user?.primaryEmailAddress?.emailAddress;
 
   const apiKey = apiKeysQuery.data?.data?.[0]?.key;
@@ -140,14 +146,24 @@ function CliAuthContent() {
         isConnect,
         onboardingSessionId,
       });
-      showSuccessToast('Novu CLI authorized. You can return to your terminal.');
+      showSuccessToast(`${callerDisplayName} authorized. You can return to your terminal.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to approve CLI authorization';
       showErrorToast(`Authorization failed: ${message}`);
     } finally {
       setIsAuthorizing(false);
     }
-  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment, callerName, isConnect, onboardingSessionId, telemetry]);
+  }, [
+    deviceCodeOk,
+    deviceCode,
+    apiKey,
+    currentEnvironment,
+    callerName,
+    callerDisplayName,
+    isConnect,
+    onboardingSessionId,
+    telemetry,
+  ]);
 
   function handleCancel() {
     telemetry(TelemetryEvent.CLI_AUTH_DENIED, {
@@ -175,7 +191,7 @@ function CliAuthContent() {
 
   const reason = (() => {
     if (!deviceCodeOk) return 'This page must be opened from the Novu CLI.';
-    if (!isConnect && !isLlmGatewayEnabled) {
+    if (caller === 'wizard' && !isLlmGatewayEnabled) {
       return `${callerDisplayName} is not enabled for your account yet.`;
     }
     if (isAuthorizeDataLoading) return null;
@@ -220,7 +236,7 @@ function CliAuthContent() {
               <br />
               account and be able to:
             </h1>
-            <ScopeList isConnect={isConnect} />
+            <ScopeList caller={caller} />
           </div>
 
           {reason ? (
@@ -230,9 +246,7 @@ function CliAuthContent() {
             </div>
           ) : (
             <div className="text-text-sub w-full rounded-lg border border-stroke-soft bg-neutral-alpha-50 p-3 text-label-xs">
-              {isConnect
-                ? 'New here? Finish sign-up and create your organization first: you will return here to authorize the CLI. Keep your terminal open while you complete this step.'
-                : 'Keep your terminal open while you authorize. If you just signed up, create or select an organization first: you will return here afterward.'}
+              {resolveAuthorizationHint(caller)}
             </div>
           )}
 
@@ -333,40 +347,94 @@ type ScopeItem = {
   parts: ScopePart[];
 };
 
-function ScopeList({ isConnect }: { isConnect: boolean }) {
-  const scopes: ScopeItem[] = isConnect
-    ? [
-        {
-          parts: [{ text: 'Read', bold: true }, { text: ' your Novu API key for the selected environment' }],
-        },
-        {
-          parts: [
-            { text: 'Create', bold: true },
-            { text: ' and ' },
-            { text: 'manage', bold: true },
-            { text: ' agents on your behalf' },
-          ],
-        },
-        {
-          parts: [{ text: 'Connect', bold: true }, { text: ' channels to your agent' }],
-        },
-      ]
-    : [
-        {
-          parts: [{ text: 'Read', bold: true }, { text: ' your Novu API key for the selected environment' }],
-        },
-        {
-          parts: [{ text: 'Trigger', bold: true }, { text: ' workflows on your behalf during the integration' }],
-        },
-        {
-          parts: [
-            { text: 'Create', bold: true },
-            { text: ' or ' },
-            { text: 'update', bold: true },
-            { text: ' workflows via Novu MCP' },
-          ],
-        },
-      ];
+type CliAuthCaller = 'connect' | 'human' | 'wizard';
+
+function resolveCliAuthCaller(callerName: string | null): CliAuthCaller {
+  if (callerName === CLI_DEVICE_SESSION_NAME_NOVU_CONNECT) {
+    return 'connect';
+  }
+
+  if (callerName === CLI_DEVICE_SESSION_NAME_HUMAN) {
+    return 'human';
+  }
+
+  return 'wizard';
+}
+
+function resolveCallerDisplayName(caller: CliAuthCaller): string {
+  if (caller === 'connect') {
+    return 'Novu Connect';
+  }
+
+  if (caller === 'human') {
+    return 'Human CLI';
+  }
+
+  return 'Novu Wizard';
+}
+
+function resolveAuthorizationHint(caller: CliAuthCaller): string {
+  if (caller === 'connect') {
+    return 'New here? Finish sign-up and create your organization first: you will return here to authorize the CLI. Keep your terminal open while you complete this step.';
+  }
+
+  if (caller === 'human') {
+    return 'Keep your terminal open while you authorize. Your claimed workspace and linked channels will remain available in Development.';
+  }
+
+  return 'Keep your terminal open while you authorize. If you just signed up, create or select an organization first: you will return here afterward.';
+}
+
+function ScopeList({ caller }: { caller: CliAuthCaller }) {
+  let scopes: ScopeItem[];
+
+  if (caller === 'connect') {
+    scopes = [
+      {
+        parts: [{ text: 'Read', bold: true }, { text: ' your Novu API key for the selected environment' }],
+      },
+      {
+        parts: [
+          { text: 'Create', bold: true },
+          { text: ' and ' },
+          { text: 'manage', bold: true },
+          { text: ' agents on your behalf' },
+        ],
+      },
+      {
+        parts: [{ text: 'Connect', bold: true }, { text: ' channels to your agent' }],
+      },
+    ];
+  } else if (caller === 'human') {
+    scopes = [
+      {
+        parts: [{ text: 'Read', bold: true }, { text: ' your Development environment API key' }],
+      },
+      {
+        parts: [{ text: 'Send', bold: true }, { text: ' questions, approvals, and notifications to humans' }],
+      },
+      {
+        parts: [{ text: 'Use', bold: true }, { text: ' your claimed workspace, contacts, and linked channels' }],
+      },
+    ];
+  } else {
+    scopes = [
+      {
+        parts: [{ text: 'Read', bold: true }, { text: ' your Novu API key for the selected environment' }],
+      },
+      {
+        parts: [{ text: 'Trigger', bold: true }, { text: ' workflows on your behalf during the integration' }],
+      },
+      {
+        parts: [
+          { text: 'Create', bold: true },
+          { text: ' or ' },
+          { text: 'update', bold: true },
+          { text: ' workflows via Novu MCP' },
+        ],
+      },
+    ];
+  }
 
   return (
     <ul className="flex w-full flex-col px-3 py-2">
