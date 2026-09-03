@@ -221,6 +221,11 @@ overrides:
   degit@<2.8.6: ^2.8.6
   liquidjs@<10.26.0: ^10.27.0
   linkify-it@<5.0.2: ^5.0.2
+  # GHSA-vcc3-ghjq-m6fr: decode-uri-component <=0.4.2 DoS via exponential
+  # decoding of malformed percent-encoded input. Pulled transitively via
+  # pkg-pr-new > query-registry > query-string. Patched in >=0.4.3, but the
+  # only published patched release is 0.5.0.
+  decode-uri-component@<0.5.0: ^0.5.0
   # Force single instances of @codemirror/state and @codemirror/autocomplete.
   # Without this, transitive lang-* packages pin to state@6.4.1 while direct
   # dashboard imports resolve against state@6.6.0, producing two virtual peer

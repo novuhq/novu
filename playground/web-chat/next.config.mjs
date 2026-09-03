@@ -9,7 +9,7 @@ const novuJs = path.join(monorepoRoot, 'packages/js');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@novu/react', '@novu/js'],
+    transpilePackages: ['@novu/react', '@novu/js', '@assistant-ui/react'],
   // Turbopack uses the monorepo root as project root for this workspace app,
   // so playground-local node_modules links are invisible without aliases.
   // Absolute alias targets are treated as relative (`./Users/...`) — use repo-relative paths.

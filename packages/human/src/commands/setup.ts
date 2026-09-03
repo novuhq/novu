@@ -33,6 +33,7 @@ import { pollUntil, sleep } from '../poll';
 import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
 import { handleError } from './interact';
+import { splitName } from './invite';
 import {
   CHANNEL_POLL_INTERVAL_MS,
   CHANNEL_POLL_TIMEOUT_MS,
@@ -47,12 +48,38 @@ import {
 
 const BOTFATHER_URL = 'https://t.me/botfather';
 
+/**
+ * `--name` always wins. Otherwise ask once — only on the very first setup
+ * (no subscriberId in config yet) and only on a TTY; an empty answer or a
+ * non-interactive run just leaves the name unset.
+ */
+export async function resolveOperatorName(
+  options: Pick<SetupOptions, 'name'>,
+  alreadySetUp: boolean,
+  io: { isTTY: boolean; prompt: (question: string) => Promise<string> } = {
+    isTTY: Boolean(process.stdin.isTTY),
+    prompt: promptLine,
+  }
+): Promise<{ firstName: string; lastName?: string } | undefined> {
+  if (options.name !== undefined) {
+    return splitName(options.name);
+  }
+
+  if (alreadySetUp || !io.isTTY) {
+    return undefined;
+  }
+
+  return splitName(await io.prompt('Your name (shown to agents, optional): '));
+}
+
 interface SetupOptions {
   apiUrl?: string;
   secretKey?: string;
   telegramBotToken?: string;
   slackConfigToken?: string;
   email?: string;
+  /** Your display name; skips the first-run prompt. */
+  name?: string;
   agentIdentifier?: string;
   /** Tri-state: undefined = ask (TTY) / skip (non-TTY); true/false = explicit `--skill`/`--no-skill`. */
   skill?: boolean;
@@ -87,9 +114,10 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     // 2. Provision the relay agent + the human's subscriber row.
     const subscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
     const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
+    const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
 
     info('Setting up your human relay...');
-    const relay = await setupHumanRelay(client, { subscriberId, agentIdentifier: relayIdentifier });
+    const relay = await setupHumanRelay(client, { subscriberId, agentIdentifier: relayIdentifier, ...name });
 
     // 3. Channel linking — linked channels live on the server; locally we only
     // remember a default preference for when the caller does not pass `--via`.
@@ -121,7 +149,7 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     // 5. Smoke test on the channel that was just linked.
     await createInteraction(client, {
       kind: 'tell',
-      prompt: 'You\'re connected. Agents can now reach you here — try `human approve "Deploy to production?"`.',
+      prompt: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`human approve "Deploy to production?"\`.`,
       to: subscriberId,
       via: channel,
       agentIdentifier: relay.agentIdentifier,

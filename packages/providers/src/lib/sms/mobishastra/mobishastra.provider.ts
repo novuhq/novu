@@ -1,8 +1,9 @@
 import { isOutboundSsrfProtectionEnabled, SmsProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -23,7 +24,7 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
       baseURL: config.baseUrl,
       headers: {
         'Content-Type': 'application/json',

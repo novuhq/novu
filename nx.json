@@ -3,7 +3,8 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "cache": true
+      "cache": true,
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build"]
     },
     "test": {
       "cache": true

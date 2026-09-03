@@ -42,6 +42,41 @@ describe('scaffoldWebChatProject', () => {
       })
     ).rejects.toThrow(/Invalid scaffold directory name/);
   });
+
+  it('does not hardcode localhost when merging Web Chat into an existing project', async () => {
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-merge-'));
+    fs.writeFileSync(
+      path.join(projectDir, 'package.json'),
+      JSON.stringify(
+        {
+          name: 'agent-app',
+          dependencies: {
+            '@novu/react': 'latest',
+            '@novu/js': 'latest',
+            'react-markdown': '^10.1.0',
+            'remark-gfm': '^4.0.1',
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    await scaffoldWebChatProject({
+      parentDir: projectDir,
+      agentIdentifier: 'support-agent',
+      applicationIdentifier: 'app-id',
+      subscriberId: 'subscriber-id',
+      apiUrl: 'https://api.novu.co',
+      mergeIntoProjectDir: projectDir,
+      mergeAtRoot: true,
+    });
+
+    const page = fs.readFileSync(path.join(projectDir, 'app', 'page.tsx'), 'utf8');
+    expect(page).not.toContain('localhost:3000');
+    expect(page).toContain('...(apiUrl ? { apiUrl } : {})');
+    expect(page).toContain('...(socketUrl ? { socketUrl } : {})');
+  });
 });
 
 describe('resolveWebChatNovuDependencies', () => {

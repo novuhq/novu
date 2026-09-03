@@ -1,8 +1,9 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import qs from 'qs';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
@@ -18,7 +19,7 @@ export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
       auth: {
         username: config.apiKey,
         password: config.secretKey,

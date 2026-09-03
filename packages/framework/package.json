@@ -314,6 +314,7 @@
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@arethetypeswrong/cli": "^0.17.4",
     "@novu/agent-event-protocol": "workspace:*",
+    "@novu/stateless": "workspace:*",
     "@langchain/core": "^1.1.44",
     "@nestjs/common": "11.1.27",
     "@sveltejs/kit": "^1.27.3",

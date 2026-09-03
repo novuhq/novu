@@ -294,6 +294,7 @@ export class IntegrationsController {
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
+          rules: body.rules,
           configurations: body.configurations,
         })
       );
@@ -349,6 +350,7 @@ export class IntegrationsController {
           active: body.active,
           check: body.check ?? false,
           conditions: body.conditions,
+          rules: body.rules,
           configurations: body.configurations,
           restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
         })

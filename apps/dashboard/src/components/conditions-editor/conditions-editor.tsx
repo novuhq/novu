@@ -17,7 +17,11 @@ import {
 import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
 import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
-import { DEFAULT_MAX_CONDITIONS_PER_GROUP, normalizeMaxConditionsPerGroup } from '@/components/conditions-editor/types';
+import {
+  type ConditionsValueInput,
+  DEFAULT_MAX_CONDITIONS_PER_GROUP,
+  normalizeMaxConditionsPerGroup,
+} from '@/components/conditions-editor/types';
 import { ValueEditor } from '@/components/conditions-editor/value-editor';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useNumericFeatureFlag } from '@/hooks/use-feature-flag';
@@ -82,6 +86,7 @@ function InternalConditionsEditor({
   saveForm,
   enhancedVariables,
   disabled,
+  valueInput,
 }: {
   fields: EnhancedField[];
   variables: LiquidVariable[];
@@ -91,6 +96,7 @@ function InternalConditionsEditor({
   saveForm: () => void;
   enhancedVariables?: EnhancedLiquidVariable[];
   disabled?: boolean;
+  valueInput?: ConditionsValueInput;
 }) {
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
@@ -207,8 +213,9 @@ function InternalConditionsEditor({
       saveForm,
       getPlaceholder,
       getHelpText,
+      valueInput,
     }),
-    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText]
+    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText, valueInput]
   );
 
   return (
@@ -238,6 +245,7 @@ export type ConditionsEditorContext = {
     fieldName: string,
     operator: string
   ) => { title: string; description: string; examples: string[]; notes?: string[] };
+  valueInput?: ConditionsValueInput;
 };
 
 export function ConditionsEditor({
@@ -249,6 +257,7 @@ export function ConditionsEditor({
   isAllowedVariable,
   enhancedVariables,
   disabled,
+  valueInput,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
@@ -258,6 +267,7 @@ export function ConditionsEditor({
   isAllowedVariable: IsAllowedVariable;
   enhancedVariables?: EnhancedLiquidVariable[];
   disabled?: boolean;
+  valueInput?: ConditionsValueInput;
 }) {
   const configuredMaxConditionsPerGroup = useNumericFeatureFlag(
     FeatureFlagsKeysEnum.MAX_STEP_CONDITIONS_PER_GROUP_NUMBER,
@@ -295,6 +305,7 @@ export function ConditionsEditor({
         saveForm={saveForm}
         enhancedVariables={enhancedVariables}
         disabled={disabled}
+        valueInput={valueInput}
       />
     </ConditionsEditorProvider>
   );

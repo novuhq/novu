@@ -176,6 +176,32 @@ describe('activity-to-events run lifecycle', () => {
     ]);
   });
 
+  it('falls back to markdown when a stored card has no children array', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.MESSAGE,
+          identifier: 'msg_card_empty_1',
+          platformMessageId: 'act_card_empty_1',
+          sequence: 1,
+          content: 'fallback markdown',
+          richContent: { card: { type: 'card' } },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes.map((envelope) => envelope.event)).to.deep.equal([
+      {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'act_card_empty_1',
+        content: { markdown: 'fallback markdown' },
+        files: undefined,
+      },
+    ]);
+  });
+
   it('uses immutable activity ids for approval request messages', () => {
     const envelopes = mapNewestFirstEventActivities(
       [

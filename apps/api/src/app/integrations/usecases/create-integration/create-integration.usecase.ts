@@ -29,6 +29,7 @@ import {
   slugify,
 } from '@novu/shared';
 import shortid from 'shortid';
+import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -162,6 +163,7 @@ export class CreateIntegration {
     }
 
     await this.validate(command);
+    assertValidIntegrationRules(command.rules);
 
     const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
 
@@ -209,6 +211,7 @@ export class CreateIntegration {
         credentials: encryptCredentials(managedCredentials),
         active: command.active,
         conditions: command.conditions,
+        rules: command.rules ?? undefined,
         configurations: command.configurations,
         kind: command.kind ?? IntegrationKindEnum.DELIVERY,
       };

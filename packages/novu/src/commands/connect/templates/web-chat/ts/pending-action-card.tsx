@@ -206,7 +206,7 @@ export function ToolApprovalCard({
     setFailure(undefined);
 
     try {
-      const result = await onRespond({ actionId: part.approvalId, decision });
+      const result = await onRespond({ approvalId: part.approvalId, decision });
       if (result.error) setFailure(result.error.message);
     } finally {
       setBusy(undefined);

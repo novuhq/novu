@@ -46,6 +46,24 @@ Each environment can support multiple active integrations per channel, but only 
 
 The primary integration serves as the default route when a message is sent over that channel unless explicitly overridden. You can update which integration is marked as primary or deactivate an integration entirely.
 
+## Conditional routing with integration conditions
+
+You can attach **conditions** to an integration so Novu only selects it when the notification matches those conditions. This is useful when you run multiple integrations for the same channel, for example a separate email or push provider account per tenant, and want Novu to route each notification to the right one.
+
+Add conditions from the dashboard when you create or edit an integration, under **Integration conditions**. Conditions are evaluated at send time against the recipient and the notification context, and support these fields:
+
+- `context.tenant.id`
+- `subscriber.subscriberId`, `subscriber.email`, `subscriber.phone`, `subscriber.firstName`, `subscriber.lastName`, `subscriber.locale`
+- `subscriber.data` (custom subscriber attributes)
+
+When a notification is sent over a channel, Novu uses the **first active integration whose conditions match**. If no conditioned integration matches, Novu falls back to the **primary** integration for that channel.
+
+<Note>
+  An integration with conditions cannot also be the primary integration. Adding conditions to an integration removes its primary flag, because the primary integration is the fallback used when no conditions match.
+</Note>
+
+To route by tenant, see [Contexts](/platform/workflow/advanced-features/contexts/contexts-in-workflows) for how `context.tenant` is populated on a trigger.
+
 ## Integration credentials
 
 Integrations require credentials to authenticate with third-party providers. These credentials are encrypted at rest and managed securely within Novu. 

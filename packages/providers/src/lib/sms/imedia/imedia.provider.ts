@@ -7,9 +7,10 @@ import {
   type ISmsProvider,
   SmsEventStatusEnum,
 } from '@novu/stateless';
-import axios, { type AxiosInstance } from 'axios';
+import { type AxiosInstance } from 'axios';
 
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import type { WithPassthrough } from '../../../utils/types';
 
 interface IMediaSmsConfig {
@@ -51,7 +52,7 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
   constructor(private config: IMediaSmsConfig) {
     super();
 
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
       baseURL: IMediaSmsProvider.BASE_URL,
       headers: {
         'Content-Type': 'application/json',

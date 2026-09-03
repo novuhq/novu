@@ -11,6 +11,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -76,12 +77,28 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
 
   @ApiPropertyOptional({
     type: [StepFilterDto],
-    description: 'Conditions for the integration',
+    deprecated: true,
+    description: 'Legacy StepFilter conditions. Ignored when `rules` is also set.',
   })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
   conditions?: StepFilterDto[];
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    description:
+      'JSONLogic used at send time to select this integration. Takes precedence over `conditions`.',
+    example: {
+      '==': [{ var: 'context.tenant.id' }, 'acme'],
+    },
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsObject()
+  rules?: Record<string, unknown> | null;
 
   @ApiPropertyOptional({
     type: Object,

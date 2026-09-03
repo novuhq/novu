@@ -183,12 +183,22 @@ export class Socket extends BaseModule implements BaseSocketInterface {
       ...(this.#socketOptions ?? {}),
     });
 
+    const socket = this.#socketIo;
+
     this.#socketIo.on('connect', () => {
       this.#emitter.emit('socket.connect.resolved', { args });
     });
 
     this.#socketIo.on('connect_error', (error) => {
       this.#emitter.emit('socket.connect.resolved', { args, error });
+    });
+
+    this.#socketIo.on('disconnect', () => {
+      if (this.#socketIo !== undefined && socket !== this.#socketIo) {
+        return;
+      }
+
+      this.#emitter.emit('socket.disconnect.resolved', { args });
     });
 
     this.#socketIo?.on(WebSocketEvent.RECEIVED, this.#notificationReceived);

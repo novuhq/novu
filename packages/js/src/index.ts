@@ -20,6 +20,8 @@ export { Novu } from './novu';
 export type {
   AgentApprovalPart,
   AgentApprovalPartState,
+  AgentCardChild,
+  AgentCardElement,
   AgentCardPart,
   AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
@@ -32,7 +34,6 @@ export type {
   AgentEventEnvelope,
   AgentFilePart,
   AgentHashFields,
-  AgentMcpConnectionAction,
   AgentMcpConnectionPart,
   AgentMcpConnectionPartState,
   AgentMessage,
@@ -44,7 +45,6 @@ export type {
   AgentTextPart,
   AgentTextPartState,
   AgentThinkingPart,
-  AgentToolApprovalAction,
   AgentToolApprovalDecision,
   AgentToolDefinition,
   AgentToolPart,
@@ -52,6 +52,8 @@ export type {
   AgentToolPartState,
   ConversationArgs,
   FetchMoreResult,
+  ListConversationsArgs,
+  ListConversationsResult,
   LoadConversationResult,
   RespondToActionResult,
   RetryMessageResult,
@@ -59,12 +61,14 @@ export type {
   SendMessageInput,
   SendMessageResult,
   WebChat,
+  WebChatConversation,
   WebChatDefinition,
   WebChatPagination,
   WebChatPaginationStatus,
   WebChatToolsDefinition,
 } from './web-chat';
 export { WebChatPlanLimitError, type WebChatPlanLimitReason } from './web-chat/web-chat-plan-limit-error';
+export { pendingActionKey } from './web-chat/derive-pending-actions';
 
 /**
  * Load Web Chat on a {@link Novu} instance. Safe to call more than one time.

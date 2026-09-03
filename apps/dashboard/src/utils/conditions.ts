@@ -1,5 +1,6 @@
-import { RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
+import { defaultRuleProcessorJsonLogic, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
+import { isRelativeDateOperator, isUnaryJsonLogicOperator } from '@/components/conditions-editor/field-type-operators';
 
 function parseArrayOperatorArgs(val: any, operator: string) {
   if (!val || !Array.isArray(val) || val.length < 2) {
@@ -150,5 +151,58 @@ export const getUniqueOperators = (jsonLogic?: RQBJsonLogic): string[] => {
   return recursiveGetUniqueOperators(query);
 };
 
-// Export shared configuration for use in other files
+const CONTAINS_ANY_OPERATORS = ['containsAny', 'doesNotContainAny'] as const;
+
+function isContainsAnyOperator(operator: string): boolean {
+  return (CONTAINS_ANY_OPERATORS as readonly string[]).includes(operator);
+}
+
+export const customRuleProcessor = (rule: RuleType, options: Parameters<typeof defaultRuleProcessorJsonLogic>[1]) => {
+  if (isUnaryJsonLogicOperator(rule.operator)) {
+    return {
+      [rule.operator]: [{ var: rule.field }],
+    };
+  }
+
+  if (isRelativeDateOperator(rule.operator)) {
+    try {
+      const parsedValue = JSON.parse(rule.value as string);
+
+      if (
+        parsedValue &&
+        (typeof parsedValue.amount === 'number' || typeof parsedValue.amount === 'string') &&
+        parsedValue.unit
+      ) {
+        return {
+          [rule.operator]: [{ var: rule.field }, parsedValue],
+        };
+      }
+    } catch {
+      // Fall through to the default processor when the relative-date payload is invalid.
+    }
+  }
+
+  if (isContainsAnyOperator(rule.operator)) {
+    const trimmedValue = (rule.value as string).trim();
+    const variableMatch = trimmedValue.match(/^\{\{(.+?)\}\}$/);
+
+    if (variableMatch) {
+      return {
+        [rule.operator]: [{ var: rule.field }, { var: variableMatch[1].trim() }],
+      };
+    }
+
+    const values = trimmedValue
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    return {
+      [rule.operator]: [{ var: rule.field }, values],
+    };
+  }
+
+  return defaultRuleProcessorJsonLogic(rule, options);
+};
+
 export { parseJsonLogicOptions };
