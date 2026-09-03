@@ -192,6 +192,10 @@ overrides:
   # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
   # scheme/hostname normalization. Patched in 3.1.6.
   fast-uri@<3.1.6: ^3.1.6
+  # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
+  # growth (OOM) via distinct query results and uncaught crash / prototype
+  # write via untrusted browserslist-stats.json. Patched in 4.28.7.
+  browserslist@<4.28.7: ^4.28.7
   sharp@<0.35.0: ^0.35.3
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
