@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -20,7 +20,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENT_IMESSAGE_LABEL } from '@/utils/agent-channel-branding';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -35,6 +37,7 @@ import { AgentChannelsEmptyState } from './agent-channels-empty-state';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
 import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
 import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
+import { ImessageIntegrationSelectProvider } from './imessage-integration-select';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 
 type AgentIntegrationsTabProps = {
@@ -371,6 +374,37 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     saveLastSelectedChannel(currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier);
   }, [currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier]);
 
+  // The iMessage guides embed a vendor/integration picker that can point at an
+  // integration this agent isn't linked to yet, so selecting one links it here
+  // (additively, like Add channel) and opens that integration's guide.
+  const linkedIntegrationIds = useMemo(
+    () => new Set((linkedRows ?? []).map((link) => link.integration._id)),
+    [linkedRows]
+  );
+  const { linkProvider: linkImessageIntegration } = useLinkAgentIntegration({
+    agentIdentifier: agent.identifier,
+    linkedIntegrationIds,
+  });
+
+  // linkProvider resolves only after the agent's links have been refetched, so
+  // navigating on the resolved integration avoids landing on the guide route
+  // before the new link is in the list.
+  const handleSelectImessageIntegration = async (providerId: string, integration?: IIntegration) => {
+    const linked = await linkImessageIntegration(
+      {
+        providerId,
+        displayName: AGENT_IMESSAGE_LABEL,
+        integration,
+        newIntegrationName: agent.name ?? agent.identifier,
+      },
+      integration?._id ?? `${providerId}-imessage-new`
+    );
+
+    if (linked) {
+      navigateToGuide(linked.identifier);
+    }
+  };
+
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess
@@ -394,17 +428,19 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   };
 
   const mainPanel = (
-    <IntegrationsMainPanel
-      integrationIdentifier={integrationIdentifier}
-      agent={agent}
-      selectedIntegration={selectedIntegration}
-      canRemoveAgentIntegration={canRemoveAgentIntegration}
-      onBackFromGuide={handleBackFromGuide}
-      onRequestRemoveSelected={handleRequestRemoveSelected}
-      isRemovingIntegration={removeIntegrationMutation.isPending}
-      isLoading={isLoading}
-      links={links}
-    />
+    <ImessageIntegrationSelectProvider onSelect={handleSelectImessageIntegration}>
+      <IntegrationsMainPanel
+        integrationIdentifier={integrationIdentifier}
+        agent={agent}
+        selectedIntegration={selectedIntegration}
+        canRemoveAgentIntegration={canRemoveAgentIntegration}
+        onBackFromGuide={handleBackFromGuide}
+        onRequestRemoveSelected={handleRequestRemoveSelected}
+        isRemovingIntegration={removeIntegrationMutation.isPending}
+        isLoading={isLoading}
+        links={links}
+      />
+    </ImessageIntegrationSelectProvider>
   );
 
   return (

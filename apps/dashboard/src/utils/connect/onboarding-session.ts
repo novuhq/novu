@@ -1,14 +1,14 @@
 import {
   AGENTS_STEP_COUNT,
   ONBOARDING_STEP_DELAY_MS,
-  type OnboardingLoaderVariant,
   PLATFORM_STEP_COUNT,
+  type OnboardingLoaderVariant,
 } from '@/components/onboarding/onboarding-loader';
 
-const ONBOARDING_PROVISIONING_KEY = 'novu.onboarding.provisioning';
+export const ONBOARDING_PROVISIONING_KEY = 'novu.onboarding.provisioning';
 /** Legacy Connect-only flag — still read for in-flight sessions. */
-const CONNECT_PROVISIONING_KEY = 'novu.connect.provisioning';
-const CONNECT_PROVISION_QUERY = 'provision';
+export const CONNECT_PROVISIONING_KEY = 'novu.connect.provisioning';
+export const CONNECT_PROVISION_QUERY = 'provision';
 
 const PROVISIONING_CHANGE_EVENT = 'novu.onboarding.provisioning-change';
 
@@ -17,7 +17,7 @@ type ProvisioningPayload = {
   startedAt: number;
 };
 
-function notifyOnboardingProvisioningChange(): void {
+export function notifyOnboardingProvisioningChange(): void {
   if (typeof window === 'undefined') return;
 
   window.dispatchEvent(new Event(PROVISIONING_CHANGE_EVENT));
@@ -34,10 +34,10 @@ export function subscribeOnboardingProvisioningChange(listener: () => void): () 
 }
 
 /** @deprecated Use `subscribeOnboardingProvisioningChange`. */
-const subscribeConnectProvisioningChange = subscribeOnboardingProvisioningChange;
+export const subscribeConnectProvisioningChange = subscribeOnboardingProvisioningChange;
 
 /** @deprecated Use `notifyOnboardingProvisioningChange`. */
-const notifyConnectProvisioningChange = notifyOnboardingProvisioningChange;
+export const notifyConnectProvisioningChange = notifyOnboardingProvisioningChange;
 
 // `connect` is the legacy name for the agents-flavored loader; map it forward to `agents`.
 function normalizeVariant(variant: string | undefined): OnboardingLoaderVariant | null {
@@ -93,11 +93,11 @@ export function beginOnboardingProvisioning(variant: OnboardingLoaderVariant): v
   }
 }
 
-function beginAgentsProvisioning(): void {
+export function beginAgentsProvisioning(): void {
   beginOnboardingProvisioning('agents');
 }
 
-function beginPlatformProvisioning(): void {
+export function beginPlatformProvisioning(): void {
   beginOnboardingProvisioning('platform');
 }
 
@@ -113,7 +113,7 @@ export function isOnboardingProvisioningActive(): boolean {
   return getOnboardingProvisioningVariant() !== null;
 }
 
-function isAgentsProvisioningActive(): boolean {
+export function isAgentsProvisioningActive(): boolean {
   return getOnboardingProvisioningVariant() === 'agents';
 }
 
@@ -139,14 +139,14 @@ export function getMinLoaderDurationMs(variant: OnboardingLoaderVariant): number
   return stepCount * ONBOARDING_STEP_DELAY_MS;
 }
 
-function buildConnectProvisionOrgListPath(orgListPath: string): string {
+export function buildConnectProvisionOrgListPath(orgListPath: string): string {
   const url = new URL(orgListPath, 'http://local');
   url.searchParams.set(CONNECT_PROVISION_QUERY, '1');
 
   return `${url.pathname}${url.search}`;
 }
 
-function withConnectProvisioningIntent(href: string): string {
+export function withConnectProvisioningIntent(href: string): string {
   if (!href) return href;
 
   try {
@@ -165,7 +165,7 @@ function withConnectProvisioningIntent(href: string): string {
   }
 }
 
-function consumeConnectProvisionIntentFromLocation(): boolean {
+export function consumeConnectProvisionIntentFromLocation(): boolean {
   if (typeof window === 'undefined') {
     return false;
   }
@@ -185,7 +185,7 @@ function consumeConnectProvisionIntentFromLocation(): boolean {
   return true;
 }
 
-function hasConnectProvisionIntent(): boolean {
+export function hasConnectProvisionIntent(): boolean {
   if (typeof window === 'undefined') {
     return false;
   }

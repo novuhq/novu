@@ -14,7 +14,12 @@ import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../sh
 import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import { ChatInstanceRegistry, type ChatWithAdapters, type PlatformAdapters } from '../ingress/chat-instance.registry';
+import {
+  ChatInstanceRegistry,
+  type ChatWithAdapters,
+  type PlatformAdapters,
+  platformAdapterKey,
+} from '../ingress/chat-instance.registry';
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
 import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
@@ -337,7 +342,7 @@ export class OutboundGateway {
 
     const postArg = this.withPreferredMessageId(
       this.buildAdapterPostableMessage(tokenizedContent, config),
-      chat.getAdapter(config.platform),
+      chat.getAdapter(platformAdapterKey(config.platform)),
       preferredMessageId
     );
 
@@ -417,7 +422,7 @@ export class OutboundGateway {
 
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-    const adapter = chat.getAdapter(config.platform);
+    const adapter = chat.getAdapter(platformAdapterKey(config.platform));
 
     // Most platforms have no explicit stop API — indicators expire or clear on
     // post. Adapters with in-process delivery (web) expose `stopTyping`.
@@ -576,7 +581,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     if (typeof adapter.editMessage !== 'function') {
       throw new BadRequestException(`Platform ${platform} does not support editing messages`);
     }
@@ -609,7 +614,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     if (typeof adapter.deleteMessage !== 'function') {
       return;
     }
@@ -718,7 +723,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
 
     return { chat, config, adapter };
   }
@@ -735,7 +740,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.addReaction(platformThreadId, platformMessageId, resolved)
@@ -754,7 +759,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.removeReaction(platformThreadId, platformMessageId, resolved)
@@ -877,7 +882,7 @@ export class OutboundGateway {
     platform: AgentPlatformEnum,
     platformUserId: string
   ): Promise<Thread> {
-    const adapter: Adapter = chat.getAdapter(platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(platform));
 
     if (typeof adapter.openDM === 'function') {
       const threadId = await adapter.openDM(platformUserId);

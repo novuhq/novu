@@ -903,6 +903,125 @@ export async function removeAgentSendblueWebhooks(
   return response.data;
 }
 
+export type ConfigurePhotonWebhookFailure = {
+  code: 'missing_credentials' | 'photon_rejected' | 'unknown';
+  message: string;
+};
+
+export type ConfigurePhotonWebhookResponse = {
+  success: boolean;
+  callbackUrl: string;
+  fallbackToManual?: boolean;
+  reason?: ConfigurePhotonWebhookFailure;
+  /**
+   * Other Novu agent webhook URLs already registered on this Photon project. Every inbound
+   * message is delivered to all of them — surface a warning and offer to remove the stale
+   * entries via {@link removeAgentPhotonWebhooks}.
+   */
+  existingNovuWebhookUrls?: string[];
+};
+
+export async function configureAgentPhotonWebhook(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  options?: { force?: boolean }
+): Promise<ConfigurePhotonWebhookResponse> {
+  const response = await post<{ data: ConfigurePhotonWebhookResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/photon/configure-webhook`,
+    { environment, body: { force: options?.force === true } }
+  );
+
+  return response.data;
+}
+
+export type RemovePhotonWebhooksResponse = {
+  success: boolean;
+  removedWebhookUrls: string[];
+  message?: string;
+};
+
+export async function removeAgentPhotonWebhooks(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  webhookUrls: string[]
+): Promise<RemovePhotonWebhooksResponse> {
+  const response = await post<{ data: RemovePhotonWebhooksResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/photon/remove-webhooks`,
+    { environment, body: { webhookUrls } }
+  );
+
+  return response.data;
+}
+
+export type RegisterPhotonRecipientResponse = {
+  success: boolean;
+  /** The Photon number the recipient can text to opt in. */
+  assignedPhoneNumber?: string;
+  inviteSent?: boolean;
+  message?: string;
+};
+
+export async function registerPhotonRecipient(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  recipient: { phoneNumber: string; email?: string }
+): Promise<RegisterPhotonRecipientResponse> {
+  const response = await post<{ data: RegisterPhotonRecipientResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/photon/register-recipient`,
+    { environment, body: recipient }
+  );
+
+  return response.data;
+}
+
+export type StartPhotonDeviceAuthResponse = {
+  available: boolean;
+  reason?: string;
+  userCode?: string;
+  verificationUri?: string;
+  verificationUriComplete?: string;
+  deviceCode?: string;
+  interval?: number;
+  expiresIn?: number;
+};
+
+export async function startPhotonDeviceAuth(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string
+): Promise<StartPhotonDeviceAuthResponse> {
+  const response = await post<{ data: StartPhotonDeviceAuthResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/photon/device-auth/start`,
+    { environment }
+  );
+
+  return response.data;
+}
+
+export type PollPhotonDeviceAuthResponse = {
+  status: 'pending' | 'slow_down' | 'complete' | 'expired' | 'denied' | 'error';
+  projectId?: string;
+  warning?: string;
+  error?: { code: string; message: string };
+};
+
+export async function pollPhotonDeviceAuth(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  deviceCode: string
+): Promise<PollPhotonDeviceAuthResponse> {
+  const response = await post<{ data: PollPhotonDeviceAuthResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/photon/device-auth/poll`,
+    { environment, body: { deviceCode } }
+  );
+
+  return response.data;
+}
+
 export type ConfigureTelegramWebhookResult = {
   webhookUrl: string;
   configuredAt: string;

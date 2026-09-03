@@ -272,7 +272,7 @@
       "includes": [
         "apps/api/src/app/agents/**/*.{ts,tsx,js}",
         "!apps/api/src/app/agents/agents.module.ts",
-        "!apps/api/src/app/agents/conversation-runtime/conversation/conversation-activity-ledger.ts",
+        "!apps/api/src/app/agents/conversation-runtime/conversation/conversation-activity-ledger.service.ts",
         "!apps/api/src/app/agents/conversation-runtime/conversation/conversation-event-sequence.service.ts",
         "!apps/api/src/app/agents/conversation-runtime/conversation/agent-conversation.service.ts",
         "!apps/api/src/app/agents/**/*.spec.ts",
@@ -302,7 +302,7 @@
                   },
                   "@novu/dal": {
                     "importNames": ["ConversationActivityRepository"],
-                    "message": "Import ConversationActivityRepository only from agents.module.ts, conversation-activity-ledger.ts, conversation-event-sequence.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                    "message": "Import ConversationActivityRepository only from agents.module.ts, conversation-activity-ledger.service.ts, conversation-event-sequence.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
                   },
                   "svix": {
                     "importNames": ["Svix"],
@@ -342,14 +342,14 @@
                 },
                 "patterns": [
                   {
-                    "group": ["**/conversation-activity-ledger", "**/conversation-activity-ledger.ts"],
+                    "group": ["**/conversation-activity-ledger.service", "**/conversation-activity-ledger.service.ts"],
                     "importNamePattern": "ConversationActivityLedger",
                     "message": "Import ConversationActivityLedger only from agents.module.ts, agent-conversation.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
                   },
                   {
                     "group": ["**/conversation-event-sequence.service", "**/conversation-event-sequence.service.ts"],
                     "importNamePattern": "ConversationEventSequenceService",
-                    "message": "Import ConversationEventSequenceService only from agents.module.ts, conversation-activity-ledger.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                    "message": "Import ConversationEventSequenceService only from agents.module.ts, conversation-activity-ledger.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
                   }
                 ]
               }

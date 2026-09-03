@@ -70,6 +70,7 @@
     "@novu/application-generic": "workspace:*",
     "@novu/agent-event-protocol": "workspace:*",
     "@novu/chat-adapter-email": "workspace:*",
+    "@novu/chat-adapter-photon-imessage": "workspace:*",
     "@novu/chat-adapter-sendblue": "workspace:*",
     "@novu/chat-adapter-web-chat": "workspace:*",
     "@novu/dal": "workspace:*",

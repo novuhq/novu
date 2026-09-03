@@ -49,9 +49,26 @@ export type PlatformAdapters = {
   web_chat: NovuWebChatAdapter;
   email: Adapter;
   sendblue: Adapter;
+  /**
+   * Keyed `imessage`, NOT `photon_imessage`: the Chat SDK resolves adapters by
+   * thread-id prefix, and the Photon vendor adapter encodes threads as
+   * `imessage:{chatGuid}` — a mismatched key breaks every thread-addressed
+   * send (e.g. the agent reply endpoint) while inbound-context replies still
+   * work, which is exactly the silent way it fails.
+   */
+  imessage: Adapter;
 };
 
 export type ChatWithAdapters = Chat<PlatformAdapters>;
+
+/**
+ * Adapter map key for a platform. Usually the enum value itself — except
+ * Photon, whose vendor adapter encodes thread ids with the `imessage:` prefix
+ * the Chat SDK resolves adapters by, so its map key is `imessage`.
+ */
+export function platformAdapterKey(platform: AgentPlatformEnum): keyof PlatformAdapters {
+  return platform === AgentPlatformEnum.PHOTON_IMESSAGE ? 'imessage' : (platform as keyof PlatformAdapters);
+}
 
 interface ChatStateLogger {
   debug: (msg: string, ctx?: Record<string, unknown>) => void;
@@ -455,6 +472,32 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           }),
         };
       }
+      case AgentPlatformEnum.PHOTON_IMESSAGE: {
+        if (!credentials.apiKey || !credentials.secretKey) {
+          throw new BadRequestException(
+            'Photon agent integration requires Project ID and Project Secret credentials'
+          );
+        }
+
+        if (!credentials.token) {
+          throw new BadRequestException(
+            'Photon agent integration requires a webhook signing secret. ' +
+              'Run the "Configure webhook" step to register the webhook before this integration can receive messages.'
+          );
+        }
+
+        const { createPhotonImessageAdapter } = await esmImport('@novu/chat-adapter-photon-imessage');
+
+        return {
+          // Key must match the vendor thread-id prefix (`imessage:`) — see PlatformAdapters.
+          imessage: createPhotonImessageAdapter({
+            projectId: credentials.apiKey,
+            projectSecret: credentials.secretKey,
+            webhookSecret: credentials.token,
+            userName: config.agentName,
+          }),
+        };
+      }
       case AgentPlatformEnum.EMAIL: {
         const { outboundIntegrationId } = credentials;
 
@@ -546,7 +589,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
+        rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.rethrowWebChatInboundError(cached, err, {
@@ -559,7 +602,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
+        rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.rethrowWebChatInboundError(cached, err, {
@@ -628,7 +671,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
         if (event.message) {
-          rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), event.message);
+          rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), event.message);
         }
 
         await callbacks.onReaction(agentId, cached.config, {

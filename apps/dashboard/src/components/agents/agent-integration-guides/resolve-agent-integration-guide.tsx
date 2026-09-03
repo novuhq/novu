@@ -2,6 +2,7 @@ import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@
 import { type ReactNode } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { PhotonSetupGuide } from '@/components/agents/photon-setup-guide';
 import { SendblueSetupGuide } from '@/components/agents/sendblue-setup-guide';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
@@ -171,6 +172,10 @@ export function ResolveAgentIntegrationGuide({
       setupGuide = <SendblueSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
       setupDisplayName = 'Sendblue';
       break;
+    case ChatProviderIdEnum.PhotonImessage:
+      setupGuide = <PhotonSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Photon';
+      break;
     default:
       setupGuide = null;
   }
@@ -240,8 +245,9 @@ export function ResolveAgentIntegrationGuide({
             justConnected={justConnected}
           />
         );
-      // No bespoke connected details for Sendblue yet — fall back to the generic guide.
+      // No bespoke connected details for Sendblue/Photon yet — fall back to the generic guide.
       case ChatProviderIdEnum.Sendblue:
+      case ChatProviderIdEnum.PhotonImessage:
         return (
           <GenericAgentIntegrationGuide
             embedded={embedded}

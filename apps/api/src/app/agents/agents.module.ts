@@ -45,6 +45,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
 import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
+import { PhotonDeviceAuthBindingService } from './channels/photon-imessage/shared/photon-device-auth-binding.service';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
@@ -53,7 +54,7 @@ import { AgentConversationService } from './conversation-runtime/conversation/ag
 import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
-import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger';
+import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger.service';
 import { ConversationEventSequenceService } from './conversation-runtime/conversation/conversation-event-sequence.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
@@ -161,6 +162,7 @@ import { USE_CASES } from './usecases';
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
+    PhotonDeviceAuthBindingService,
     AgentInboundHandler,
     WorkflowOriginService,
     ReplyApprovalInterceptor,
