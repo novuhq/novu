@@ -56,7 +56,7 @@ describe('human auth', () => {
     });
 
     expect(post).toHaveBeenNthCalledWith(1, '/v1/cli/device-sessions', { name: 'human' });
-    expect(post).toHaveBeenNthCalledWith(2, '/v1/cli/device-sessions/device-code/poll');
+    expect(post).toHaveBeenNthCalledWith(2, '/v1/cli/device-sessions/device-code/poll', undefined);
     expect(openBrowser).toHaveBeenCalledOnce();
     const openedUrl = new URL(openBrowser.mock.calls[0][0]);
     expect(openedUrl.pathname).toBe('/cli/auth');
@@ -80,6 +80,28 @@ describe('human auth', () => {
         openBrowser: vi.fn(),
       })
     ).rejects.toThrow('human auth');
+  });
+
+  it('stops polling when the authorization window times out', async () => {
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    post
+      .mockResolvedValueOnce({
+        data: { data: { deviceCode: 'pending-code', expiresIn: 1, interval: 1 } },
+      })
+      .mockResolvedValue({ data: { data: { status: 'pending', expiresIn: 1, interval: 1 } } });
+
+    await expect(
+      authorizeWithDashboard({
+        apiUrl: 'https://api.novu.co',
+        dashboardUrl: 'https://dashboard.novu.co',
+        timeoutMs: 1000,
+        openBrowser: vi.fn(),
+        wait: async (ms) => {
+          now += ms;
+        },
+      })
+    ).rejects.toThrow('timed out');
   });
 
   it('uses explicit and environment dashboard URLs before known API mappings', () => {
