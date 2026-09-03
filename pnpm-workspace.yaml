@@ -188,7 +188,18 @@ overrides:
   ip-address@<10.3.1: ^10.3.1
   mongoose@>=8.0.0 <8.24.1: ^8.24.1
   newrelic: 13.19.2
-  fast-uri@<3.1.5: ^3.1.5
+  # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
+  # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
+  # scheme/hostname normalization. Patched in 3.1.6.
+  fast-uri@<3.1.6: ^3.1.6
+  # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
+  # growth (OOM) via distinct query results and uncaught crash / prototype
+  # write via untrusted browserslist-stats.json. Patched in 4.28.7.
+  browserslist@<4.28.7: ^4.28.7
+  # GHSA-p498-v437-472g: @humanfs/node recursive copy follows symlinked files
+  # and copies data from outside the source tree. Patched in 0.16.8. Only
+  # pulled transitively via eslint (dev-only tooling).
+  '@humanfs/node@<0.16.8': ^0.16.8
   sharp@<0.35.0: ^0.35.3
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
