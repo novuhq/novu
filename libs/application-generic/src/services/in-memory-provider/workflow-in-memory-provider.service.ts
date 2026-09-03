@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
-import { validateRedisClusterProviderConfig } from './providers/redis-cluster-provider';
 import { InMemoryProviderClient, InMemoryProviderEnum } from './types';
 import { isClusterModeEnabled } from './utils';
 
@@ -16,11 +15,16 @@ const isMemoryDbConfigured = (): boolean =>
  * Rules for the provider selection:
  * - Community self-hosted always uses a single-node Redis instance for BullMQ.
  * - Self-hosted enterprise defaults to single-node Redis. Opt into MemoryDB when
- *   MEMORY_DB_CLUSTER_SERVICE_HOST/PORT are set, or into OSS Redis Cluster when
- *   cluster mode is enabled and REDIS_CLUSTER_SERVICE_HOST plus ports are set.
- *   MemoryDB wins if both are configured.
+ *   MEMORY_DB_CLUSTER_SERVICE_HOST/PORT are set, or into OSS Redis Cluster by
+ *   enabling cluster mode. MemoryDB wins if both are configured.
  * - Novu Cloud uses MemoryDB, falling back to Redis Cluster when MemoryDB is
  *   not configured (see /in-memory-provider/providers/index.ts).
+ *
+ * Selection is intent-based, never validated here: cluster mode already routes
+ * construction through the cluster path, so silently returning REDIS on an
+ * incomplete cluster config would move queues to a different backend rather
+ * than fix anything. Endpoint validation belongs to the provider mapping, which
+ * fails startup with the offending provider named.
  */
 export const selectWorkflowInMemoryProvider = (): InMemoryProviderEnum => {
   if (isSelfHosted()) {
@@ -28,7 +32,7 @@ export const selectWorkflowInMemoryProvider = (): InMemoryProviderEnum => {
       return InMemoryProviderEnum.MEMORY_DB;
     }
 
-    if (isEnterprise() && isClusterModeEnabled() && validateRedisClusterProviderConfig()) {
+    if (isEnterprise() && isClusterModeEnabled()) {
       return InMemoryProviderEnum.REDIS_CLUSTER;
     }
 

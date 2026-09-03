@@ -90,6 +90,31 @@ describe('Redis Cluster provider config', () => {
     });
   });
 
+  describe('TLS flag', () => {
+    beforeEach(() => {
+      process.env.REDIS_CLUSTER_SERVICE_HOST = 'redis-0, redis-1';
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = '[6379]';
+    });
+
+    it.each(['false', 'FALSE', '0', 'no', 'off'])('leaves TLS off for %s', (value) => {
+      process.env.REDIS_CLUSTER_TLS = value;
+
+      expect(getRedisClusterProviderConfig().tls).toBeUndefined();
+    });
+
+    it('leaves TLS off when unset', () => {
+      delete process.env.REDIS_CLUSTER_TLS;
+
+      expect(getRedisClusterProviderConfig().tls).toBeUndefined();
+    });
+
+    it('enables TLS against the first seed host', () => {
+      process.env.REDIS_CLUSTER_TLS = 'true';
+
+      expect(getRedisClusterProviderConfig().tls).toEqual({ servername: 'redis-0' });
+    });
+  });
+
   describe('getRedisCluster', () => {
     it('uses master reads and disables request retries for BullMQ', () => {
       process.env.REDIS_CLUSTER_SERVICE_HOST = 'redis.internal';

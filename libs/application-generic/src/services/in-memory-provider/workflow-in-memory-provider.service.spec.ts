@@ -1,5 +1,5 @@
 import { InMemoryProviderEnum } from './types';
-import { selectWorkflowInMemoryProvider } from './workflow-in-memory-provider.service';
+import { selectWorkflowInMemoryProvider, WorkflowInMemoryProviderService } from './workflow-in-memory-provider.service';
 
 describe('selectWorkflowInMemoryProvider', () => {
   const originalEnv = { ...process.env };
@@ -60,5 +60,26 @@ describe('selectWorkflowInMemoryProvider', () => {
     process.env.MEMORY_DB_CLUSTER_SERVICE_PORT = '6379';
 
     expect(selectWorkflowInMemoryProvider()).toEqual(InMemoryProviderEnum.MEMORY_DB);
+  });
+
+  /**
+   * Cluster mode routes construction through the cluster path regardless of the
+   * selected provider, so an incomplete cluster config must fail startup rather
+   * than quietly send queues to a single-node Redis the operator did not pick.
+   */
+  it('fails startup instead of downgrading to standalone Redis when cluster endpoints are missing', () => {
+    process.env.IS_SELF_HOSTED = 'true';
+    process.env.NOVU_ENTERPRISE = 'true';
+    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+    delete process.env.MEMORY_DB_CLUSTER_SERVICE_HOST;
+    delete process.env.MEMORY_DB_CLUSTER_SERVICE_PORT;
+    delete process.env.REDIS_CLUSTER_SERVICE_HOST;
+    delete process.env.REDIS_CLUSTER_SERVICE_PORT;
+    delete process.env.REDIS_CLUSTER_SERVICE_PORTS;
+
+    expect(selectWorkflowInMemoryProvider()).toEqual(InMemoryProviderEnum.REDIS_CLUSTER);
+    expect(() => new WorkflowInMemoryProviderService()).toThrow(
+      'Provider RedisCluster is not properly configured in the environment variables'
+    );
   });
 });

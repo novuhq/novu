@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import Redis, { ChainableCommander, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
-import { convertStringValues } from './variable-mappers';
+import { convertStringValues, isTlsFlagEnabled } from './variable-mappers';
 
 export { ChainableCommander, Cluster, ClusterOptions };
 
@@ -110,9 +110,9 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
     keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
     family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
     keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
-    tls: process.env.REDIS_CLUSTER_TLS
+    tls: isTlsFlagEnabled(process.env.REDIS_CLUSTER_TLS)
       ? {
-          servername: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST)?.split(',')[0],
+          servername: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST)?.split(',')[0]?.trim(),
         }
       : undefined,
   };
