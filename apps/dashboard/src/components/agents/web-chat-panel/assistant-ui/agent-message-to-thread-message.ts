@@ -1,53 +1,6 @@
 import type { ThreadMessageLike, ToolApprovalOption } from '@assistant-ui/react';
-import type { AgentCardElement, AgentMessage } from '@novu/react';
+import type { AgentMessage } from '@novu/react';
 import { APPROVAL_OPTIONS } from './approval-options';
-
-const POWERED_BY =
-  /(?:\n+)?(?:_*Powered by\s*\[[^\]]+\]\([^)]+\)_*|_*\[Powered by Novu\]\([^)]+\)_*|Powered by\s*<https?:\/\/[^|>]+\|[^>]+>|Powered by\s*<a\b[^>]*>[\s\S]*?<\/a>|Powered by Novu\u200B?)\s*$/i;
-
-function stripPoweredBy(text: string): string {
-  return text.replace(POWERED_BY, '').trimEnd();
-}
-
-function isPoweredByWatermark(content: string): boolean {
-  const trimmed = content
-    .trim()
-    .replace(/^_+|_+$/g, '')
-    .trim();
-
-  return /^powered by/i.test(trimmed) && /novu/i.test(trimmed);
-}
-
-function brandedReplyMarkdown(card: AgentCardElement): string | null {
-  if (card.title?.trim()) return null;
-  if (card.subtitle?.trim()) return null;
-  if (card.imageUrl?.trim()) return null;
-
-  const texts: string[] = [];
-  let sawWatermark = false;
-
-  for (const child of card.children) {
-    if (child.type !== 'text') {
-      return null;
-    }
-
-    const content = child.content;
-    if (!content) continue;
-
-    if (isPoweredByWatermark(content)) {
-      sawWatermark = true;
-      continue;
-    }
-
-    texts.push(content);
-  }
-
-  if (!sawWatermark || texts.length === 0) {
-    return null;
-  }
-
-  return texts.join('\n\n');
-}
 
 function approvalOptions(part: Extract<AgentMessage['parts'][number], { type: 'approval' }>): ToolApprovalOption[] {
   const options: ToolApprovalOption[] = [];
@@ -104,7 +57,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
   for (const part of message.parts) {
     switch (part.type) {
       case 'text': {
-        const text = stripPoweredBy(part.text);
+        const text = part.text;
         if (!text.trim()) break;
         content.push({
           type: 'text',
@@ -145,14 +98,6 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         break;
       }
       case 'card': {
-        const unwrapped = brandedReplyMarkdown(part.card);
-        if (unwrapped) {
-          const text = stripPoweredBy(unwrapped);
-          if (text.trim()) {
-            content.push({ type: 'text', text, status: { type: 'complete' } });
-          }
-          break;
-        }
         content.push({
           type: 'data',
           name: 'novu-card',
