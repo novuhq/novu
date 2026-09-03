@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "timestamp": "2026-01-01T00:00:00.000Z",
+  "deliveryId": "del-123",
+  "event": "onMessage",
+  "agentId": "test-bot",
+  "replyUrl": "https://api.novu.co/v1/agents/test-bot/reply",
+  "eventsUrl": "https://api.novu.co/v1/agents/events/ingest",
+  "conversationId": "conv-456",
+  "integrationIdentifier": "slack-main",
+  "action": null,
+  "reaction": null,
+  "message": {
+    "text": "Hello bot!",
+    "platformMessageId": "msg-789",
+    "author": {
+      "userId": "u1",
+      "fullName": "Alice",
+      "userName": "alice",
+      "isBot": false
+    },
+    "timestamp": "2026-01-01T00:00:00.000Z"
+  },
+  "conversation": {
+    "identifier": "conv-456",
+    "status": "active",
+    "metadata": {},
+    "messageCount": 1,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "lastActivityAt": "2026-01-01T00:00:00.000Z"
+  },
+  "subscriber": {
+    "subscriberId": "sub-001",
+    "firstName": "Alice",
+    "email": "alice@example.com"
+  },
+  "history": [],
+  "platform": "slack",
+  "platformContext": {
+    "threadId": "t1",
+    "channelId": "c1",
+    "isDM": false
+  }
+}
