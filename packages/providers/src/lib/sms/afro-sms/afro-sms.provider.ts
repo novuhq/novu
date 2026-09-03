@@ -1,8 +1,8 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class AfroSmsProvider extends BaseProvider implements ISmsProvider {
@@ -11,6 +11,7 @@ export class AfroSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.SNAKE_CASE;
   private readonly BASE_URL = 'https://api.afromessage.com';
   private readonly ENDPOINT = '/api/send';
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -35,7 +36,7 @@ export class AfroSmsProvider extends BaseProvider implements ISmsProvider {
       message: options.content,
     };
 
-    const { data } = await axios.get(url, {
+    const { data } = await this.httpClient.get(url, {
       params: this.transform(bridgeProviderData, queryParams).body,
       headers: {
         Authorization: `Bearer ${this.config.apiKey}`,

@@ -14,11 +14,13 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
+import { ListContactsQueryDto, ListContactsResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import { SetupHumanRelayRequestDto, SetupHumanRelayResponseDto } from './dtos/setup-human-relay.dto';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
@@ -27,6 +29,8 @@ import { CreateInteractionCommand } from './usecases/create-interaction/create-i
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
+import { ListContactsCommand } from './usecases/list-contacts/list-contacts.command';
+import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractionsCommand } from './usecases/list-interactions/list-interactions.command';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
@@ -43,11 +47,13 @@ export class HumanInteractionsController {
     private readonly getInteractionUsecase: GetInteraction,
     private readonly listInteractionsUsecase: ListInteractions,
     private readonly cancelInteractionUsecase: CancelInteraction,
-    private readonly setupHumanRelayUsecase: SetupHumanRelay
+    private readonly setupHumanRelayUsecase: SetupHumanRelay,
+    private readonly listContactsUsecase: ListContacts
   ) {}
 
   @Post('/interactions')
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createInteraction(
     @UserSession() user: UserSessionData,
@@ -72,6 +78,7 @@ export class HumanInteractionsController {
 
   @Get('/interactions')
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listInteractions(
     @UserSession() user: UserSessionData,
@@ -92,6 +99,7 @@ export class HumanInteractionsController {
 
   @Get('/interactions/:identifier')
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   getInteraction(
     @UserSession() user: UserSessionData,
@@ -110,6 +118,7 @@ export class HumanInteractionsController {
   @Post('/interactions/:identifier/cancel')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   cancelInteraction(
     @UserSession() user: UserSessionData,
@@ -125,9 +134,34 @@ export class HumanInteractionsController {
     );
   }
 
+  /**
+   * Contacts are the environment's subscribers — the people an agent can
+   * address with `--to`. Deliberately a thin subscriber list today; filters
+   * and a per-contact `channels` field are the intended extension points.
+   */
+  @Get('/contacts')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listContacts(
+    @UserSession() user: UserSessionData,
+    @Query() query: ListContactsQueryDto
+  ): Promise<ListContactsResponseDto> {
+    return this.listContactsUsecase.execute(
+      ListContactsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        limit: query.limit,
+        after: query.after,
+      })
+    );
+  }
+
   @Post('/setup')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   setup(
     @UserSession() user: UserSessionData,
@@ -141,6 +175,8 @@ export class HumanInteractionsController {
         subscriberId: body.subscriberId,
         agentIdentifier: body.agentIdentifier,
         email: body.email,
+        firstName: body.firstName,
+        lastName: body.lastName,
       })
     );
   }

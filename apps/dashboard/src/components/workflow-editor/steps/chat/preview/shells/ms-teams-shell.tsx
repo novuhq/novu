@@ -17,7 +17,7 @@ const TEAMS_FONT =
  * the message rendered inside its own bordered content card. The full preview also shows the Teams
  * compose bar. Colors follow Teams' desktop message list (`#242424` body, `#616161` meta).
  */
-export function MsTeamsPreviewFrame({ children, variant = 'default' }: MsTeamsPreviewFrameProps) {
+function MsTeamsPreviewFrame({ children, variant = 'default' }: MsTeamsPreviewFrameProps) {
   return (
     <div
       className="border-stroke-soft bg-bg-white pointer-events-none flex w-full flex-col gap-4 rounded-lg border p-2.75"

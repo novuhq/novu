@@ -4,6 +4,7 @@ import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { PinoLogger } from '../../logging';
+import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
 import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 import { AttachmentRehydrator } from './attachment-rehydrator';
@@ -12,6 +13,9 @@ import { InboundDomainRouteDelivery, InboundDomainRouteMailInput } from './inbou
 describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
   let usecase: InboundDomainRouteDelivery;
   let sandbox: sinon.SinonSandbox;
+  let attachmentRehydrator: sinon.SinonStubbedInstance<AttachmentRehydrator>;
+  let featureFlagsService: { getFlag: sinon.SinonStub };
+  let sendWebhookMessage: sinon.SinonStubbedInstance<SendWebhookMessage>;
 
   const baseMail: InboundDomainRouteMailInput = {
     from: [{ address: 'sender@example.com', name: 'Sender' }],
@@ -30,15 +34,19 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
+    attachmentRehydrator = sandbox.createStubInstance(AttachmentRehydrator);
+    featureFlagsService = { getFlag: sandbox.stub().resolves(false) };
+    sendWebhookMessage = sandbox.createStubInstance(SendWebhookMessage);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InboundDomainRouteDelivery,
-        { provide: SendWebhookMessage, useValue: sandbox.createStubInstance(SendWebhookMessage) },
+        { provide: SendWebhookMessage, useValue: sendWebhookMessage },
         { provide: HttpClientService, useValue: sandbox.createStubInstance(HttpClientService) },
         { provide: IntegrationRepository, useValue: sandbox.createStubInstance(IntegrationRepository) },
         { provide: AgentIntegrationRepository, useValue: sandbox.createStubInstance(AgentIntegrationRepository) },
-        { provide: AttachmentRehydrator, useValue: sandbox.createStubInstance(AttachmentRehydrator) },
+        { provide: AttachmentRehydrator, useValue: attachmentRehydrator },
+        { provide: FeatureFlagsService, useValue: featureFlagsService },
         { provide: PinoLogger, useValue: { info: () => {}, warn: () => {}, error: () => {}, setContext: () => {} } },
       ],
     }).compile();
@@ -73,6 +81,71 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
     expect(att.size).to.equal(1024);
     expect(att.url).to.equal('https://s3.example.com/inbound-mail/msg-001/0-doc.pdf?sig=xyz');
     expect(att).to.not.have.property('contentBase64');
+  });
+
+  it('uses signed attachment URLs when enabled for the organization', async () => {
+    featureFlagsService.getFlag.resolves(true);
+    attachmentRehydrator.createSignedUrls.resolves([]);
+    sendWebhookMessage.execute.resolves({ eventId: 'event-1' });
+
+    await usecase.deliverToWebhook({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      domain: {
+        _id: 'domain-1',
+        name: 'inbox.example.com',
+        status: DomainStatusEnum.VERIFIED,
+        mxRecordConfigured: true,
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        data: {},
+      },
+      route: {
+        _id: 'route-1',
+        _domainId: 'domain-1',
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        data: {},
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+      } as DomainRouteEntity,
+      mail: baseMail,
+    });
+
+    sinon.assert.calledOnceWithExactly(attachmentRehydrator.createSignedUrls, baseMail.attachments);
+    sinon.assert.notCalled(attachmentRehydrator.rehydrate);
+  });
+
+  it('keeps legacy attachment content when the flag is disabled', async () => {
+    attachmentRehydrator.rehydrate.resolves([]);
+    sendWebhookMessage.execute.resolves({ eventId: 'event-1' });
+
+    await usecase.deliverToWebhook({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      domain: {
+        _id: 'domain-1',
+        name: 'inbox.example.com',
+        status: DomainStatusEnum.VERIFIED,
+        mxRecordConfigured: true,
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        data: {},
+      },
+      route: {
+        _id: 'route-1',
+        _domainId: 'domain-1',
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        data: {},
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+      } as DomainRouteEntity,
+      mail: baseMail,
+    });
+
+    sinon.assert.calledOnceWithExactly(attachmentRehydrator.rehydrate, baseMail.attachments);
+    sinon.assert.notCalled(attachmentRehydrator.createSignedUrls);
   });
 
   it('emits contentBase64 for inline-mode attachments (S3 not configured)', () => {
@@ -150,6 +223,38 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
     expect(payload.inReplyTo).to.equal('previous@example.com');
     expect(payload.references).to.equal('ref-1@example.com ref-2@example.com');
     expect(payload.date).to.equal(new Date('2024-01-01T00:00:00.000Z').toISOString());
+  });
+
+  it('includes the resolved BCC recipient in domain-route webhook payloads', () => {
+    const payload = usecase.buildDomainRouteWebhookPayload(
+      {
+        _id: 'domain-1',
+        name: 'inbox.example.com',
+        status: DomainStatusEnum.VERIFIED,
+        mxRecordConfigured: true,
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        data: {},
+      },
+      {
+        _id: 'route-1',
+        _domainId: 'domain-1',
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        data: {},
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+      } as DomainRouteEntity,
+      {
+        ...baseMail,
+        to: [],
+        bcc: [{ address: 'support@inbox.example.com', name: '' }],
+      },
+      []
+    );
+
+    expect(payload.mail.to).to.deep.equal([]);
+    expect(payload.mail.bcc).to.deep.equal([{ address: 'support@inbox.example.com', name: '' }]);
   });
 
   it('includes normalized headers with a size cap', () => {

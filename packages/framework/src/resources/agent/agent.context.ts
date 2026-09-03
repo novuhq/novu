@@ -9,6 +9,7 @@ import type {
   AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
+  AgentHumanResponse,
   AgentMessage,
   AgentMessageContext,
   AgentNotification,
@@ -19,6 +20,9 @@ import type {
   AgentToolCall,
   DeleteMessagePayload,
   FileRef,
+  HumanAskApproveOptions,
+  HumanChooseOptions,
+  HumanTellOptions,
   MessageContent,
   PendingApproval as PendingApprovalType,
   ReplyContent,
@@ -35,6 +39,7 @@ import type {
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
 import { AgentEventOutbox } from './agent-event-outbox';
+import { normalizeHumanTo } from './human-to';
 import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
@@ -216,9 +221,9 @@ function mint(prefix: string): string {
 }
 
 /**
- * `ReplyContent['card']` is the structured `CardElement` type; `AgentMessageContent['card']` is
- * `Record<string, unknown>` on the wire, since the protocol can't depend on the `chat` package's
- * types. This is the one place that crosses that boundary for outbound (SDK → sink) card content.
+ * `ReplyContent['card']` is Chat SDK `CardElement`. `AgentMessageContent['card']` is the
+ * Novu-owned protocol `CardElement`. This is the one place that crosses that authoring
+ * → wire boundary for outbound card content.
  */
 function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
   if (reply.markdown !== undefined) {
@@ -226,7 +231,7 @@ function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
   }
 
   if (reply.card !== undefined) {
-    return { card: reply.card as unknown as Record<string, unknown> };
+    return { card: reply.card };
   }
 
   throw new Error('Invalid reply content — expected markdown or card');
@@ -606,6 +611,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   readonly history: AgentHistoryEntry[];
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
+  readonly humanResponse: AgentHumanResponse | null;
   readonly typing: TypingControl;
   readonly toolApproval: ToolApprovalControl;
 
@@ -639,6 +645,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.history = request.history;
     this.platform = request.platform;
     this.platformContext = request.platformContext;
+    this.humanResponse = request.humanResponse ?? null;
 
     this._toolApprovalConfig = toolApprovalConfig;
     this._transport = request.eventsUrl
@@ -738,6 +745,52 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
+  }
+
+  ask(question: string, opts?: HumanAskApproveOptions): string {
+    return this.queueHumanSignal('ask', question, opts);
+  }
+
+  approve(action: string, opts?: HumanAskApproveOptions): string {
+    return this.queueHumanSignal('approve', action, opts);
+  }
+
+  choose(question: string, options: string[], opts?: HumanChooseOptions): string {
+    if (options.length < 2 || options.length > 10) {
+      throw new Error('ctx.choose requires between 2 and 10 options');
+    }
+
+    if (options.some((option) => typeof option !== 'string' || option.trim().length === 0)) {
+      throw new Error('ctx.choose options must be non-empty strings');
+    }
+
+    return this.queueHumanSignal('choose', question, opts, options);
+  }
+
+  tell(message: string, opts?: HumanTellOptions): string {
+    return this.queueHumanSignal('tell', message, opts);
+  }
+
+  private queueHumanSignal(
+    kind: 'ask' | 'approve' | 'choose' | 'tell',
+    prompt: string,
+    opts?: HumanAskApproveOptions | HumanTellOptions,
+    options?: string[]
+  ): string {
+    const requestId = mint('hr');
+    const to = opts?.to !== undefined ? normalizeHumanTo(opts.to) : undefined;
+    this._signals.push({
+      type: 'human',
+      kind,
+      prompt,
+      requestId,
+      ...(options ? { options } : {}),
+      ...(opts?.from ? { from: opts.from } : {}),
+      ...(opts && 'ttlSeconds' in opts && opts.ttlSeconds !== undefined ? { ttlSeconds: opts.ttlSeconds } : {}),
+      ...(to !== undefined ? { to } : {}),
+    });
+
+    return requestId;
   }
 
   /** @internal Queue a gated tool call for the ledger; flushed with the next reply. */

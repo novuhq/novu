@@ -8,22 +8,24 @@ import {
 } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
+import { ConnectModule } from '../connect/connect.module';
 import { SharedModule } from '../shared/shared.module';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
+import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
 /**
- * The human-in-the-loop interaction API behind the `@novu/human` CLI. State
- * (interactions) lives here; delivery and inbound resolution ride the agents
- * conversation-runtime through the hidden `human_relay` system agent.
+ * The human-in-the-loop interaction API. State lives here.
+ * `POST /v1/human/interactions` DMs the named agent (default `human-relay`).
+ * Framework `ctx.*` helpers create in-thread cards via `CreateConversationInteraction`.
  */
 @Module({
-  imports: [SharedModule, AuthModule, AgentsModule],
+  imports: [SharedModule, AuthModule, AgentsModule, ConnectModule],
   controllers: [HumanInteractionsController],
   providers: [
     HumanInteractionRepository,
@@ -37,6 +39,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     ListInteractions,
     CancelInteraction,
     SetupHumanRelay,
+    ListContacts,
   ],
 })
 export class HumanModule {}

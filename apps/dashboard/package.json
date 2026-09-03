@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "3.19.2",
+  "version": "3.19.3",
   "type": "module",
   "portless": {
     "name": "dashboard.novu"
@@ -31,6 +31,8 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.51",
+    "@assistant-ui/react": "^0.15.16",
+    "@assistant-ui/react-markdown": "^0.14.12",
     "@better-auth/sso": "^1.6.23",
     "@calcom/embed-react": "1.5.2",
     "@clerk/react": "^6.11.3",
@@ -143,6 +145,7 @@
     "react-router-dom": "^7.18.2",
     "react-timezone-select": "^3.2.8",
     "recharts": "2.15.4",
+    "remark-gfm": "^4.0.1",
     "sanitize-html": "^2.17.5",
     "shiki": "^3.21.0",
     "sonner": "^1.7.0",

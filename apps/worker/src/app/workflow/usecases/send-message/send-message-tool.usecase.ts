@@ -224,6 +224,7 @@ export class SendMessageTool extends SendMessageBase {
         subscriberId: command.subscriberId,
         channelType: ChannelTypeEnum.TOOL,
         contextKeys: command.contextKeys,
+        filterData: this.getIntegrationFilterData(command),
       })
     );
 

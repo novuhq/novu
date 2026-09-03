@@ -14,6 +14,7 @@ import { SMTPServer } from 'smtp-server';
 import util from 'util';
 import { v4 as uuidv4 } from 'uuid';
 
+import { extractEmailDomain } from './address-utils';
 import { uploadAttachmentsToS3 } from './attachment-uploader';
 import { collectClientIpSources } from './client-ip-sources';
 import { InboundMailService } from './inbound-mail.service';
@@ -134,7 +135,7 @@ class Mailin extends events.EventEmitter {
             return reject(new Error(localErrorMessage));
           }
 
-          const domain = /@(.*)/.exec(email)[1];
+          const domain = extractEmailDomain(email);
 
           const validateViaLocal = () => {
             if (_this.listeners(validateEvent).length) {
@@ -153,6 +154,11 @@ class Mailin extends events.EventEmitter {
           };
 
           const validateViaDNS = () => {
+            if (domain === null) {
+              _this.emit(validationFailedEvent, email);
+
+              return reject(new Error(dnsErrorMessage));
+            }
             try {
               dns.resolveMx(domain, (err, addresses) => {
                 if (err || !addresses || !addresses.length) {

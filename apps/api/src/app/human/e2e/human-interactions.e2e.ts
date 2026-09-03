@@ -4,6 +4,7 @@ import {
   ChannelEndpointRepository,
   HumanInteractionRepository,
   IntegrationRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanInteractionStatusEnum } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
@@ -15,11 +16,13 @@ import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/
 import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
 import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
+import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
 
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
 const humanInteractionRepository = new HumanInteractionRepository();
+const subscriberRepository = new SubscriberRepository();
 
 const TELEGRAM_CHAT_ID = '777001';
 
@@ -138,13 +141,16 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   async function sendMessageToRelay(text: string, raw: Record<string, unknown> = {}) {
     const inboundHandler = testServer.getService(AgentInboundHandler);
     const config = await resolveConfig();
+    const message = makeMessage(text, raw);
     await inboundHandler.handle(
       relayAgentId,
       config,
       makeTelegramThread() as any,
-      makeMessage(text, raw) as any,
+      message as any,
       AgentEventEnum.ON_MESSAGE
     );
+
+    return message;
   }
 
   describe('setup', () => {
@@ -179,6 +185,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const interaction = createRes.body.data;
       expect(interaction.status).to.equal(HumanInteractionStatusEnum.PENDING);
       expect(interaction.id).to.match(/^hi_/);
+      expect(interaction.to).to.deep.equal([subscriberId]);
 
       const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
       expect(sends.length).to.be.greaterThan(0);
@@ -194,7 +201,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(sentPayload).to.not.include('Powered by');
 
       const row = await humanInteractionRepository.findByIdentifier(session.environment._id, interaction.id);
-      expect(row!.platformMessageId).to.be.a('string');
+      expect(row?.deliveries?.[0]?.platformMessageId).to.be.a('string');
 
       await clickAction(`human:${interaction.id}:approve`);
 
@@ -208,6 +215,55 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(editedText).to.include('Approved');
       // The subtitle and status line must be visually separated, not crammed together.
       expect(editedText).to.match(/\n\s*\n/);
+    });
+
+    it('lets a listed secondary subscriber settle, and still ignores bystanders', async () => {
+      const bobSubscriberId = `${subscriberId}-bob`;
+      const bobChatId = '777003';
+      await subscriberRepository.create({
+        subscriberId: bobSubscriberId,
+        firstName: 'Bob',
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+      await channelEndpointRepository.create({
+        identifier: `ce-human-e2e-bob-${Date.now()}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        integrationIdentifier,
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        subscriberId: bobSubscriberId,
+        contextKeys: [],
+        type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+        endpoint: { chatId: bobChatId },
+      });
+
+      const createRes = await createInteraction({
+        kind: 'approve',
+        prompt: 'Ship the hotfix?',
+        to: [subscriberId, bobSubscriberId],
+      });
+      expect(createRes.status).to.equal(201, JSON.stringify(createRes.body));
+      expect(createRes.body.data.to).to.deep.equal([subscriberId, bobSubscriberId]);
+
+      const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
+      expect(sends.length).to.be.greaterThan(1);
+
+      const interaction = createRes.body.data;
+      await clickAction(`human:${interaction.id}:approve`, '777002');
+
+      const pendingRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
+      expect(pendingRes.body.data.status).to.equal(HumanInteractionStatusEnum.PENDING);
+
+      await clickAction(`human:${interaction.id}:approve`, bobChatId);
+
+      const settledRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
+      expect(settledRes.body.data.status).to.equal(HumanInteractionStatusEnum.APPROVED);
+      expect(settledRes.body.data.response.respondedBySubscriberId).to.equal(bobSubscriberId);
+
+      const edits = telegramApiStub.calls.filter((call) => call.method === 'editMessageText');
+      expect(edits.length).to.be.greaterThan(1);
     });
 
     it('ignores clicks from anyone other than the addressed human', async () => {
@@ -327,7 +383,9 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const firstRow = await humanInteractionRepository.findByIdentifier(session.environment._id, first.id);
       // The stored id is the adapter's `chatId:messageId` composite; the webhook's
       // reply_to_message carries only the bare Telegram message id.
-      const bareMessageId = Number(firstRow!.platformMessageId!.split(':').pop());
+      const platformMessageId = firstRow?.deliveries?.[0]?.platformMessageId;
+      expect(platformMessageId).to.be.a('string');
+      const bareMessageId = Number(platformMessageId?.split(':').pop());
 
       await sendMessageToRelay('answer to the first', {
         reply_to_message: { message_id: bareMessageId },
@@ -344,14 +402,14 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const first = (await createInteraction({ kind: 'ask', prompt: 'First question?' })).body.data;
       const second = (await createInteraction({ kind: 'ask', prompt: 'Second question?' })).body.data;
 
-      await sendMessageToRelay('ambiguous answer');
+      const message = await sendMessageToRelay('ambiguous answer');
 
       let firstStatus = (await session.testAgent.get(`/v1/human/interactions/${first.id}`)).body.data.status;
       let secondStatus = (await session.testAgent.get(`/v1/human/interactions/${second.id}`)).body.data.status;
       expect(firstStatus).to.equal(HumanInteractionStatusEnum.PENDING);
       expect(secondStatus).to.equal(HumanInteractionStatusEnum.PENDING);
 
-      await clickAction(`human:pick:${second.id}`);
+      await clickAction(`human:pick:${second.id}:${message.id}`);
 
       firstStatus = (await session.testAgent.get(`/v1/human/interactions/${first.id}`)).body.data.status;
       secondStatus = (await session.testAgent.get(`/v1/human/interactions/${second.id}`)).body.data.status;
@@ -452,8 +510,6 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
         .send({ subscriberId, email: 'Human@Example.com' });
       expect(withEmail.status).to.equal(200);
 
-      const { SubscriberRepository } = await import('@novu/dal');
-      const subscriberRepository = new SubscriberRepository();
       let subscriber = await subscriberRepository.findOne({
         _environmentId: session.environment._id,
         subscriberId,
@@ -528,6 +584,100 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const listRes = await session.testAgent.get('/v1/human/interactions?status=pending');
       expect(listRes.status).to.equal(200);
       expect(listRes.body.data.length).to.be.greaterThan(0);
+    });
+  });
+
+  describe('keyless demo cap', () => {
+    let originalKeylessOrgId: string | undefined;
+    let originalCap: string | undefined;
+
+    beforeEach(() => {
+      originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
+      originalCap = process.env.KEYLESS_HUMAN_INTERACTION_CAP;
+      process.env.KEYLESS_ORGANIZATION_ID = session.organization._id;
+      process.env.KEYLESS_HUMAN_INTERACTION_CAP = '2';
+    });
+
+    afterEach(() => {
+      restoreEnv('KEYLESS_ORGANIZATION_ID', originalKeylessOrgId);
+      restoreEnv('KEYLESS_HUMAN_INTERACTION_CAP', originalCap);
+    });
+
+    function restoreEnv(name: string, value: string | undefined) {
+      if (value === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = value;
+      }
+    }
+
+    function telegramSends() {
+      return telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
+    }
+
+    it('replaces delivery with the sign-up card once the cap is reached, and only sends it once', async () => {
+      expect((await createInteraction({ kind: 'tell', prompt: 'One.' })).status).to.equal(201);
+      expect((await createInteraction({ kind: 'tell', prompt: 'Two.' })).status).to.equal(201);
+      const sendsBefore = telegramSends().length;
+
+      const third = await createInteraction({ kind: 'ask', prompt: 'Three?' });
+      expect(third.status).to.equal(429, JSON.stringify(third.body));
+      expect(third.body.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
+      expect(third.body.cap).to.equal(2);
+      expect(third.body.claimUrl).to.match(/\/connect\/claim\?token=/);
+      expect(third.body.message).to.include(third.body.claimUrl);
+
+      // The human got the CTA card on the channel the prompt would have used — not the prompt itself.
+      const sends = telegramSends();
+      expect(sends.length).to.equal(sendsBefore + 1);
+      const cta = JSON.stringify(sends[sends.length - 1].payload);
+      expect(cta).to.include('connect/claim');
+      expect(cta).to.include('Sign up');
+      expect(cta).to.not.include('Three?');
+
+      // Nothing was persisted for the blocked call.
+      expect(await humanInteractionRepository.count({ _environmentId: session.environment._id })).to.equal(2);
+
+      // A retrying agent keeps getting the 429 + link, but the human is not spammed again.
+      const fourth = await createInteraction({ kind: 'ask', prompt: 'Four?' });
+      expect(fourth.status).to.equal(429);
+      expect(fourth.body.claimUrl).to.equal(third.body.claimUrl);
+      expect(telegramSends().length).to.equal(sendsBefore + 1);
+    });
+
+    it('does not apply to non-keyless organizations', async () => {
+      process.env.KEYLESS_ORGANIZATION_ID = 'some-other-org';
+
+      expect((await createInteraction({ kind: 'tell', prompt: 'One.' })).status).to.equal(201);
+      expect((await createInteraction({ kind: 'tell', prompt: 'Two.' })).status).to.equal(201);
+      expect((await createInteraction({ kind: 'tell', prompt: 'Three.' })).status).to.equal(201);
+    });
+
+    it('moves interactions with the claim and points a stale keyless credential at re-auth', async () => {
+      const created = await createInteraction({ kind: 'approve', prompt: 'Keep me?' });
+      expect(created.status).to.equal(201, JSON.stringify(created.body));
+
+      const tokenService = testServer.getService(ConnectClaimTokenService);
+      const { token } = await tokenService.issueOrGetForEnvironment({
+        env: session.environment._id,
+        org: session.organization._id,
+      });
+
+      const claimer = new UserSession();
+      await claimer.initialize();
+      const claimRes = await claimer.testAgent.post('/v1/connect/claim').send({ token });
+      expect(claimRes.status).to.equal(200, JSON.stringify(claimRes.body));
+      const targetEnvironmentId = claimRes.body.data.environmentId as string;
+
+      const row = await humanInteractionRepository.findByIdentifier(targetEnvironmentId, created.body.data.id);
+      expect(row?._organizationId).to.equal(claimer.organization._id);
+      expect(await humanInteractionRepository.count({ _environmentId: session.environment._id })).to.equal(0);
+
+      // The keyless env is now empty; the CLI must be told to re-auth, not to run setup again.
+      const after = await createInteraction({ kind: 'tell', prompt: 'Still here?' });
+      expect(after.status).to.equal(403, JSON.stringify(after.body));
+      expect(after.body.message).to.match(/claimed into your Novu account/);
+      expect(after.body.message).to.include('human setup --secret-key');
     });
   });
 });

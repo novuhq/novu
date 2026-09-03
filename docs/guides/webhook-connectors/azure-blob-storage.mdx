@@ -1,0 +1,115 @@
+---
+title: 'Send webhook events to Azure Blob Storage'
+description: 'Configure the Azure Blob Storage webhook connector to store selected Novu events as batched blobs.'
+sidebarTitle: 'Azure Blob Storage'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import ObjectStorageTransformation from "/snippets/object-storage-transformation.mdx";
+
+The Azure Blob Storage connector writes selected Novu webhook events to a container. Each delivered batch creates a new blob.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). This connector maps to the Svix [object storage advanced endpoint](https://docs.svix.com/advanced-endpoints/object-storage), which is shared with Amazon S3 and Google Cloud Storage.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- An Azure storage account
+- An existing blob container, created before you configure the endpoint
+- The storage account name and one of its access keys
+
+### Access model
+
+The connector authenticates with a storage account access key. An account key grants full access to every container in that storage account, and it cannot be narrowed to a single container the way an Azure RBAC role assignment or a container-scoped SAS token can.
+
+Because of that, use a storage account dedicated to webhook exports rather than one that also holds application data, and rotate the key on your normal schedule. Azure supports two keys per account so you can rotate without downtime: update the endpoint to the second key, then regenerate the first.
+
+## Configuration
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Container** | Yes | Name of the destination Azure Blob Storage container. |
+| **Account** | Yes | Azure storage account name. |
+| **Access key** | Yes | Access key for the storage account. |
+| **Transformation** | Yes | JavaScript that defines the blob key, format, and data. |
+
+<ObjectStorageTransformation />
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the container
+
+Create the storage account and container. Keep the account name and access key available.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Azure Blob Storage" />
+
+  <Step>
+## Enter connection details
+
+Enter **Container**, **Account**, and **Access key**.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the provided object storage template. Change `config.key` to the prefix you want and keep `config.format` aligned with `data`.
+  </Step>
+
+  <Step>
+## Select event types
+
+Choose only the [event types](/platform/developer/webhooks/event-types) that you want to store. The connector processes selected events in batches.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint. Open its **Testing** tab, choose a subscribed event type, and click **Send Example**. Confirm success in **Logs**, then verify that a timestamp-suffixed blob exists in the container and contains the expected data.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+List the most recent blobs under your key prefix:
+
+```bash
+az storage blob list \
+  --account-name mystorageaccount \
+  --container-name novu-events \
+  --prefix novu-events/ \
+  --query "[].name" \
+  --output tsv
+```
+
+Download one blob and compare its contents with the transformation output in the endpoint's **Logs**:
+
+```bash
+az storage blob download \
+  --account-name mystorageaccount \
+  --container-name novu-events \
+  --name "novu-events/dt=2026-09-01/events-<timestamp>" \
+  --file ./events.jsonl
+```
+
+## Troubleshooting
+
+- **Authentication fails**: Recheck the account name and access key. Confirm the key is active and can access the configured container.
+- **The container is not found**: Confirm the container already exists in the specified storage account and that its spelling and casing match.
+- **A successful delivery has unexpected contents**: Inspect the transformed output in **Logs** and verify that `format` and `data` agree.
+- **A raw blob is invalid**: Return a string in `data` when `config.format` is `"raw"`.
+- **Expected events are absent**: Check the endpoint's selected event types and the current Novu environment.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix object storage endpoints](https://docs.svix.com/advanced-endpoints/object-storage)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [Azure Blob Storage documentation](https://learn.microsoft.com/azure/storage/blobs/)

@@ -1,8 +1,8 @@
 import type { InboxProps } from '../components/Inbox';
 import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
-  UseAgentChatProps,
-  UseAgentChatResult,
+  UseWebChatProps,
+  UseWebChatResult,
   UseCreateSubscriptionProps,
   UseCreateSubscriptionResult,
   UseNotificationsProps,
@@ -77,14 +77,13 @@ export function useNovu() {
   return null;
 }
 
-export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
+export function useWebChat(_: UseWebChatProps): UseWebChatResult {
   return {
     messages: [],
     pendingActions: [],
-    isLoading: false,
+    isLoading: true,
     isRunning: false,
     typing: undefined,
-    status: 'active',
     conversationStatus: 'active',
     run: { isRunning: false },
     pagination: {
@@ -99,6 +98,7 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
     respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
     sendAction: () => Promise.resolve({ data: undefined, error: undefined }),
     retryMessage: () => Promise.resolve({ data: undefined, error: undefined }),
+    startNewConversation: () => {},
   };
 }
 
@@ -181,7 +181,7 @@ export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResu
 }
 
 export type * from '@novu/js';
-export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { pendingActionKey, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   AllLocalization,
@@ -218,8 +218,8 @@ export type {
 export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from '../components';
 
 export type {
-  UseAgentChatProps,
-  UseAgentChatResult,
+  UseWebChatProps,
+  UseWebChatResult,
   UseCountsProps,
   UseCountsResult,
   UseNotificationsProps,
