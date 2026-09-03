@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { version } from '../package.json';
 import { channelsCommand } from './commands/channels';
+import { contactsCommand } from './commands/contacts';
 import { runInteraction } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { cancelCommand, listCommand } from './commands/list';
@@ -111,6 +112,7 @@ program
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
   .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
   .option('--email <address>', 'your email address for the email channel (skips the interactive prompt)')
+  .option('--name <name>', 'your name, shown to agents (skips the first-run prompt)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .option('--skill', 'also install the human-cli skill for coding agents (default: prompt on a TTY)')
   .option('--no-skill', 'skip the coding-agent skill install')
@@ -125,10 +127,20 @@ program
     'channel to link them on (telegram, slack, email). Required when several channels are linked.'
   )
   .option('--email <address>', 'their email address (required for --via email when not a TTY)')
+  .option('--name <name>', 'their display name, e.g. "Alice Chen" (shown in `human contacts`)')
   .option('--async', 'print the connect URL and exit instead of waiting for them to finish')
   .option('--api-url <url>', 'Novu API URL override')
   .description('Link another human to a channel (sends them a Slack/Telegram connect URL)')
   .action(inviteCommand);
+
+program
+  .command('contacts')
+  .option('--limit <n>', 'max contacts per page (default: 50, max: 100)')
+  .option('--after <cursor>', 'continue from the `next` cursor of a previous page')
+  .option('--json', 'print JSON ({ data, next }; rows carry `self: true` for you; pass `next` to --after)')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('List humans (subscribers) agents can reach with --to')
+  .action(contactsCommand);
 
 program
   .command('channels')

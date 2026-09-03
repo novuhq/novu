@@ -61,7 +61,7 @@ export function WebChatRuntimeProvider({
   const onRespondToToolApproval = useCallback(
     async (options: { approvalId: string; approved: boolean; optionId?: string }) => {
       await chat.respondToAction({
-        actionId: options.approvalId,
+        approvalId: options.approvalId,
         decision: decisionFromApprovalOption(options.optionId, options.approved),
       });
     },

@@ -1,6 +1,6 @@
 'use client';
 
-import type { AgentPendingAction } from '@novu/react';
+import { pendingActionKey, type AgentPendingAction } from '@novu/react';
 import { useCallback, useEffect, useRef } from 'react';
 import { emitDebugEvent } from './debug-events';
 
@@ -34,11 +34,12 @@ export function useApprovalAlert(): (action: AgentPendingAction) => void {
   }, []);
 
   return useCallback((action: AgentPendingAction) => {
-    const label = action.type === 'tool-approval' ? action.toolName : action.displayName;
+    const label = action.type === 'approval' ? action.toolName : action.displayName;
+    const key = pendingActionKey(action);
     emitDebugEvent({
       source: 'sdk',
       name: `onActionRequested ${label}`,
-      payload: { actionId: action.id, type: action.type },
+      payload: { actionId: key, type: action.type },
     });
 
     if (document.visibilityState === 'visible') return;
@@ -50,7 +51,7 @@ export function useApprovalAlert(): (action: AgentPendingAction) => void {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       new Notification('Action needed', {
         body: label,
-        tag: action.id,
+        tag: key,
       });
     }
   }, []);

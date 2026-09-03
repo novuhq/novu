@@ -34,7 +34,6 @@ export type {
   AgentEventEnvelope,
   AgentFilePart,
   AgentHashFields,
-  AgentMcpConnectionAction,
   AgentMcpConnectionPart,
   AgentMcpConnectionPartState,
   AgentMessage,
@@ -46,7 +45,6 @@ export type {
   AgentTextPart,
   AgentTextPartState,
   AgentThinkingPart,
-  AgentToolApprovalAction,
   AgentToolApprovalDecision,
   AgentToolDefinition,
   AgentToolPart,
@@ -70,6 +68,7 @@ export type {
   WebChatToolsDefinition,
 } from './web-chat';
 export { WebChatPlanLimitError, type WebChatPlanLimitReason } from './web-chat/web-chat-plan-limit-error';
+export { pendingActionKey } from './web-chat/derive-pending-actions';
 
 /**
  * Load Web Chat on a {@link Novu} instance. Safe to call more than one time.

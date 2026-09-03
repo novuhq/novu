@@ -155,7 +155,7 @@ function ToolFallbackTrigger({
   const Icon = isDeniedApproval ? XCircleIcon : statusIconMap[statusType];
   const label = isCancelled
     ? "Cancelled tool"
-    : isPendingApproval || statusType === "requires-action"
+    : isPendingApproval
       ? "Tool approval"
       : isDeniedApproval
         ? "Denied tool"
@@ -400,14 +400,9 @@ const approvalOptionLabel = (option: ToolApprovalOption) =>
   option.id;
 
 const offersInterruptAction = (
-  status: ToolCallMessagePartStatus | undefined,
   approval: ToolCallMessagePart["approval"],
   interrupt: ToolCallMessagePart["interrupt"],
-) =>
-  status?.type !== "requires-action" ||
-  status.reason !== "interrupt" ||
-  approval != null ||
-  interrupt != null;
+) => approval != null || interrupt != null;
 
 function ToolFallbackApproval({
   className,
@@ -437,7 +432,7 @@ function ToolFallbackApproval({
   )
     return null;
 
-  if (!offersInterruptAction(status, approval, interrupt)) return null;
+  if (!offersInterruptAction(approval, interrupt)) return null;
 
   // A declared option list is a host constraint: render only what the host
   // exposes; do not invent actions the runtime cannot execute.
@@ -624,14 +619,14 @@ const ToolFallbackImpl: ToolCallMessagePartComponent = ({
     status?.type === "incomplete" && status.reason === "cancelled";
   const isRequiresAction = status?.type === "requires-action";
   const shouldRenderApproval =
-    isRequiresAction && offersInterruptAction(status, approval, interrupt);
+    isRequiresAction && offersInterruptAction(approval, interrupt);
 
-  const [open, setOpen] = useState(isRequiresAction);
-  const [prevRequiresAction, setPrevRequiresAction] =
-    useState(isRequiresAction);
-  if (isRequiresAction !== prevRequiresAction) {
-    setPrevRequiresAction(isRequiresAction);
-    if (isRequiresAction) setOpen(true);
+  const [open, setOpen] = useState(shouldRenderApproval);
+  const [prevShouldRenderApproval, setPrevShouldRenderApproval] =
+    useState(shouldRenderApproval);
+  if (shouldRenderApproval !== prevShouldRenderApproval) {
+    setPrevShouldRenderApproval(shouldRenderApproval);
+    if (shouldRenderApproval) setOpen(true);
   }
 
   return (
