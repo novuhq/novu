@@ -12,7 +12,7 @@
     "start:test": "vite --mode test",
     "start:static:build": "http-server dist -p 4201 --proxy http://127.0.0.1:4201?",
     "dev": "pnpm start",
-    "build": "NODE_OPTIONS='--max-old-space-size=6144' tsc -b && NODE_OPTIONS='--max-old-space-size=6144' vite build",
+    "build": "NODE_OPTIONS='--max-old-space-size=6144' vite build",
     "docker:build": "docker buildx build --load -f ./dockerfile -t novu-dashboard ./../.. $DOCKER_BUILD_ARGUMENTS",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
@@ -27,7 +27,8 @@
     "test:e2e:install": "playwright install --with-deps",
     "test:e2e:codegen": "playwright codegen",
     "test:e2e:show-report": "npx playwright show-report",
-    "test:e2e:merge-report": "playwright merge-reports --reporter html"
+    "test:e2e:merge-report": "playwright merge-reports --reporter html",
+    "typecheck": "NODE_OPTIONS='--max-old-space-size=6144' tsc -b"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.51",
@@ -206,6 +207,20 @@
         "options": {
           "command": "npx biome lint apps/dashboard"
         }
+      },
+      "typecheck": {
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [
+          "default",
+          "^default"
+        ],
+        "outputs": [
+          "{projectRoot}/tsconfig.app.tsbuildinfo",
+          "{projectRoot}/tsconfig.node.tsbuildinfo"
+        ]
       }
     }
   }
