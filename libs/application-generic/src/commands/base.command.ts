@@ -11,7 +11,7 @@ type ClassLike = abstract new (...args: never[]) => unknown;
 /**
  * Controls how `BaseCommand.create` instantiates commands, via `NOVU_COMMAND_FAST_PATH`:
  * - `off` (default): always `plainToInstance` (legacy, deep-copies every nested value).
- * - `on`: `Object.assign(new Command(), data)` for commands without class-transformer
+ * - `on`: copy own data properties onto `new Command()` for commands without class-transformer
  *   decorators (`@Type`, `@Transform`, `@Expose`, `@Exclude`); decorated commands keep `plainToInstance`.
  * - `shadow`: runs both paths, returns the legacy result, logs a warning on mismatch.
  * - `shadow-strict`: like `shadow` but throws on mismatch. Intended for e2e suites.
@@ -84,8 +84,33 @@ function instantiateWithClassTransformer<T>(target: CommandConstructor<T>, data:
   return plainToInstance<T, unknown>(target, { ...data });
 }
 
-function instantiateWithAssign<T>(target: CommandConstructor<T>, data: T): T {
-  return Object.assign(new target(), data);
+function isUnsafeObjectKey(key: string): boolean {
+  return key === '__proto__' || key === 'prototype' || key === 'constructor';
+}
+
+/**
+ * Copies enumerable own data properties without `Object.assign`.
+ * `Object.assign` uses [[Set]], so a `__proto__` own key (e.g. from `JSON.parse`)
+ * replaces the target's [[Prototype]] and breaks `instanceof`.
+ */
+function assignOwnDataProperties<T extends object>(target: T, source: object | null | undefined): T {
+  if (source == null || typeof source !== 'object') {
+    return target;
+  }
+
+  for (const key of Object.keys(source)) {
+    if (isUnsafeObjectKey(key)) {
+      continue;
+    }
+
+    (target as Record<string, unknown>)[key] = (source as Record<string, unknown>)[key];
+  }
+
+  return target;
+}
+
+function instantiateWithAssign<T extends object>(target: CommandConstructor<T>, data: T): T {
+  return assignOwnDataProperties(new target(), data);
 }
 
 export class CommandFastPathMismatchError extends Error {
@@ -111,7 +136,7 @@ function instantiateInShadowMode<T extends object>(target: CommandConstructor<T>
     const mismatchedKeys = findMismatchedKeys(fastResult, legacyResult);
     const message =
       `${FAST_PATH_ENV_VAR} shadow mismatch for ${target.name} on keys [${mismatchedKeys.join(', ')}]: ` +
-      'plainToInstance and Object.assign produced different commands';
+      'plainToInstance and the fast path produced different commands';
 
     if (isStrict) {
       throw new CommandFastPathMismatchError(message);
@@ -165,7 +190,7 @@ export abstract class BaseCommand {
     }
 
     if (extras) {
-      Object.assign(convertedObject, extras);
+      assignOwnDataProperties(convertedObject, extras);
     }
 
     return convertedObject;

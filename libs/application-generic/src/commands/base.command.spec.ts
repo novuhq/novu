@@ -128,6 +128,19 @@ describe('BaseCommand', () => {
       expect(command.session).toBe(session);
     });
 
+    it('does not replace the instance prototype when data has a __proto__ own key', () => {
+      const data = JSON.parse('{"id":"1","__proto__":{"polluted":true}}') as PlainCommand;
+
+      const command = PlainCommand.create(data);
+
+      expect(command).toBeInstanceOf(PlainCommand);
+      expect(Object.getPrototypeOf(command)).toBe(PlainCommand.prototype);
+      expect(command.id).toBe('1');
+      expect(Object.prototype.hasOwnProperty.call(command, '__proto__')).toBe(false);
+      expect(({} as { polluted?: boolean }).polluted).toBeUndefined();
+      expect((Object.prototype as { polluted?: boolean }).polluted).toBeUndefined();
+    });
+
     it('still instantiates @Type nested classes so @ValidateNested validates', () => {
       const command = TypedCommand.create({ nested: { name: 'ok' } });
 
