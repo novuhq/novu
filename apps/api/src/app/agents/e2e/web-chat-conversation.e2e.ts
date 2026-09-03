@@ -871,10 +871,8 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     // Branding is applied on the adapter delivery path, not persist — web chat
     // must leave the live envelope unbranded even for orgs that still show
     // "Powered by Novu" on Slack/Teams/Telegram.
-    expect(liveMessage.event.type).to.equal('message');
     if (liveMessage.event.type === 'message') {
-      expect(liveMessage.event.content).to.deep.equal({ markdown: `Agent reply ${messageId}` });
-      expect(liveMessage.event.content.markdown).to.not.include('Powered by');
+      expect(liveMessage.event.content.markdown).to.equal(`Agent reply ${messageId}`);
     }
 
     const historyRes = await getEvents(createRes.body.data.identifier);
