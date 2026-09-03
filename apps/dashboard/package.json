@@ -172,7 +172,7 @@
     "@novu/testing": "workspace:*",
     "@playwright/test": "^1.55.1",
     "@sentry/vite-plugin": "^5.3.0",
-    "@tiptap/core": "^2.11.5",
+    "@tiptap/core": "^3.30.4",
     "@types/json-schema": "^7.0.15",
     "@types/lodash.debounce": "^4.0.9",
     "@types/lodash.isequal": "^4.5.8",
