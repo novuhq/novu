@@ -12,8 +12,11 @@ const VISIBLE_LIMIT = 5;
 const PAGE_SIZE = 20;
 const MAX_PAGES = 5;
 
-export const webChatConversationListQueryKey = (agentIdentifier: string) =>
-  ['web-chat-conversation-list', agentIdentifier] as const;
+export const webChatConversationListQueryKey = (
+  agentIdentifier: string,
+  environmentIdentifier: string,
+  subscriberId: string
+) => ['web-chat-conversation-list', agentIdentifier, environmentIdentifier, subscriberId] as const;
 
 async function fetchAgentConversations(
   novu: ReturnType<typeof useNovu>,
@@ -67,20 +70,25 @@ async function fetchAgentConversations(
   return matches;
 }
 
-export function useWebChatConversationList(agentIdentifier: string) {
+export function useWebChatConversationList(
+  agentIdentifier: string,
+  environmentIdentifier: string,
+  subscriberId: string
+) {
   const novu = useNovu();
   const queryClient = useQueryClient();
-
   const query = useQuery({
-    queryKey: webChatConversationListQueryKey(agentIdentifier),
+    queryKey: webChatConversationListQueryKey(agentIdentifier, environmentIdentifier, subscriberId),
     queryFn: ({ signal }) => fetchAgentConversations(novu, agentIdentifier, signal),
-    enabled: Boolean(agentIdentifier),
+    enabled: Boolean(agentIdentifier && environmentIdentifier && subscriberId),
     refetchOnWindowFocus: false,
   });
 
   const reload = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: webChatConversationListQueryKey(agentIdentifier) });
-  }, [agentIdentifier, queryClient]);
+    void queryClient.invalidateQueries({
+      queryKey: webChatConversationListQueryKey(agentIdentifier, environmentIdentifier, subscriberId),
+    });
+  }, [agentIdentifier, environmentIdentifier, queryClient, subscriberId]);
 
   return {
     items: query.data ?? [],

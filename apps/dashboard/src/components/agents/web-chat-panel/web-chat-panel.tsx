@@ -65,6 +65,8 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
           addToAppHref={addToAppHref}
           onSelectConversation={setResumeId}
           onNewChat={() => setResumeId(undefined)}
+          environmentIdentifier={currentEnvironment.identifier}
+          subscriberId={testerSubscriberId}
         />
       </div>
     </NovuProvider>
@@ -79,6 +81,8 @@ function WebChatSurface({
   addToAppHref,
   onSelectConversation,
   onNewChat,
+  environmentIdentifier,
+  subscriberId,
 }: {
   agentId: string;
   agentName: string;
@@ -87,8 +91,14 @@ function WebChatSurface({
   addToAppHref?: string;
   onSelectConversation: (identifier: string) => void;
   onNewChat: () => void;
+  environmentIdentifier: string;
+  subscriberId: string;
 }) {
-  const { items: conversations, failed: conversationListFailed, reload } = useWebChatConversationList(agentId);
+  const {
+    items: conversations,
+    failed: conversationListFailed,
+    reload,
+  } = useWebChatConversationList(agentId, environmentIdentifier, subscriberId);
   const {
     messages,
     pendingActions,
@@ -105,6 +115,7 @@ function WebChatSurface({
     catchUpError,
     refetch,
     typing,
+    startNewConversation,
   } = useWebChat({
     agentId,
     conversationId,
@@ -131,7 +142,10 @@ function WebChatSurface({
       conversations,
       conversationListFailed,
       onSelectConversation,
-      onShowConversationList: onNewChat,
+      onShowConversationList: () => {
+        onNewChat();
+        startNewConversation();
+      },
       banner: bannerDetail
         ? {
             title: catchUpError ? "Couldn't sync missed messages" : 'Something went wrong',
@@ -153,6 +167,7 @@ function WebChatSurface({
       conversationListFailed,
       onSelectConversation,
       onNewChat,
+      startNewConversation,
       bannerDetail,
       catchUpError,
       activeConversationId,
