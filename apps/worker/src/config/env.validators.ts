@@ -69,6 +69,13 @@ export const envValidators = {
   REDIS_MASTER_PORT: str({ default: '' }),
   REDIS_SLAVE_HOST: str({ default: '' }),
   REDIS_SLAVE_PORT: str({ default: '' }),
+  IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
+  REDIS_CLUSTER_SERVICE_HOST: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORTS: str({ default: undefined }),
+  REDIS_CLUSTER_USERNAME: str({ default: undefined }),
+  REDIS_CLUSTER_PASSWORD: str({ default: undefined }),
+  REDIS_CLUSTER_TLS: str({ default: undefined }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
   MONGO_MAX_POOL_SIZE: num({ default: 50 }),
@@ -114,7 +121,7 @@ export const envValidators = {
   ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
-  ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AZURE' && {
     AZURE_ACCOUNT_NAME: str(),
     AZURE_ACCOUNT_KEY: str(),
     AZURE_HOST_NAME: str({ default: `https://${processEnv.AZURE_ACCOUNT_NAME}.blob.core.windows.net` }),
@@ -122,13 +129,13 @@ export const envValidators = {
   }),
 
   // GCS validators
-  ...(processEnv.STORAGE_SERVICE === 'GCS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'GCS' && {
     GCS_BUCKET_NAME: str(),
     GCS_DOMAIN: str(),
   }),
 
   // AWS validators
-  ...(processEnv.STORAGE_SERVICE === 'AWS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AWS' && {
     S3_LOCAL_STACK: str({ default: '' }),
     S3_BUCKET_NAME: str(),
     S3_REGION: str(),
