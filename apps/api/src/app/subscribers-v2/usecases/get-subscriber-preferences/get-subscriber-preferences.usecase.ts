@@ -143,16 +143,20 @@ export class GetSubscriberPreferences {
     subscriberGlobalPreference: PreferencesEntity | null
   ): Promise<SubscriberGlobalPreferenceDto> {
     const { preference } = await this.getSubscriberGlobalPreference.execute(
-      GetSubscriberGlobalPreferenceCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        includeInactiveChannels: false,
-        contextKeys: command.contextKeys,
-        subscriber,
-        workflowList,
-        subscriberGlobalPreference,
-      })
+      GetSubscriberGlobalPreferenceCommand.create(
+        {
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+          includeInactiveChannels: false,
+          contextKeys: command.contextKeys,
+        },
+        {
+          subscriber,
+          workflowList,
+          subscriberGlobalPreference,
+        }
+      )
     );
 
     return {
@@ -167,17 +171,21 @@ export class GetSubscriberPreferences {
     subscriberGlobalPreference: PreferencesEntity | null
   ) {
     const subscriberWorkflowPreferences = await this.getSubscriberPreference.execute(
-      GetSubscriberPreferenceCommand.create({
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        organizationId: command.organizationId,
-        includeInactiveChannels: false,
-        criticality: command.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
-        contextKeys: command.contextKeys,
-        subscriber,
-        workflowList,
-        subscriberGlobalPreference,
-      })
+      GetSubscriberPreferenceCommand.create(
+        {
+          environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+          organizationId: command.organizationId,
+          includeInactiveChannels: false,
+          criticality: command.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
+          contextKeys: command.contextKeys,
+        },
+        {
+          subscriber,
+          workflowList,
+          subscriberGlobalPreference,
+        }
+      )
     );
 
     return subscriberWorkflowPreferences.map(this.mapToWorkflowPreference);
