@@ -78,6 +78,33 @@ describe('OutboundGateway branding', () => {
     expect(postable).to.deep.equal({ markdown: 'Hello **world**', files: undefined });
   });
 
+  it('never appends the watermark on web chat, even for branded orgs', () => {
+    const gateway = makeGateway();
+    const brandedWebChat = {
+      removeNovuBranding: false,
+      agentIdentifier: 'my-agent',
+      platform: AgentPlatformEnum.WEB_CHAT,
+    };
+
+    const postable = (gateway as any).buildAdapterPostableMessage({ markdown: 'Hello **world**' }, brandedWebChat);
+
+    expect(postable).to.deep.equal({ markdown: 'Hello **world**', files: undefined });
+    expect(postable.markdown).to.not.include('Powered by');
+  });
+
+  it('still brands other platforms when the org has not removed branding', () => {
+    const gateway = makeGateway();
+
+    for (const platform of [AgentPlatformEnum.TEAMS, AgentPlatformEnum.TELEGRAM, AgentPlatformEnum.WHATSAPP]) {
+      const postable = (gateway as any).buildAdapterPostableMessage(
+        { markdown: 'Hello **world**' },
+        { ...brandedSlack, platform }
+      );
+
+      expect(postable.markdown, platform).to.include('Powered by');
+    }
+  });
+
   it('falls back to a split card when Slack markdown exceeds the markdown_text limit', () => {
     const gateway = makeGateway();
     const oversized = `x`.repeat(SLACK_MARKDOWN_TEXT_LIMIT + 1);

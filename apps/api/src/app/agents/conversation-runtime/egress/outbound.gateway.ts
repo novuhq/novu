@@ -6,7 +6,7 @@ import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
-import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum, supportsPoweredByWatermark } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
@@ -901,14 +901,15 @@ export class OutboundGateway {
   /**
    * Appends a "Powered by Novu" markdown footer for orgs that have not removed
    * Novu branding. Pro and above can disable it via `removeNovuBranding`.
-   * Cards and action messages are left untouched.
+   * Cards and action messages are left untouched, as are platforms that opt
+   * out of the watermark (web chat renders inside the customer's own UI).
    */
   private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
     if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
       return content;
     }
 
-    if (branding.removeNovuBranding) {
+    if (branding.removeNovuBranding || !supportsPoweredByWatermark(branding.platform)) {
       return content;
     }
 
