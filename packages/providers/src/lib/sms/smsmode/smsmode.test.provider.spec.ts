@@ -54,11 +54,11 @@ afterEach(() => {
 
 describe('sendMessage method', () => {
   test('should call smsmode API sms endpoint once with POST method', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     await provider.sendMessage(mockNovuMessage);
 
@@ -66,11 +66,11 @@ describe('sendMessage method', () => {
   });
 
   test('should call smsmode API endpoint with right URL', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     await provider.sendMessage(mockNovuMessage);
 
@@ -78,11 +78,11 @@ describe('sendMessage method', () => {
   });
 
   test('should call smsmode API using config apiKey', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     await provider.sendMessage(mockNovuMessage);
 
@@ -94,11 +94,11 @@ describe('sendMessage method', () => {
   });
 
   test('should send message with provided config from', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     const { from, ...mockNovuMessageWithoutFrom } = mockNovuMessage;
 
@@ -111,11 +111,11 @@ describe('sendMessage method', () => {
   });
 
   test('should send message with provided option from overriding config from', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     await provider.sendMessage(mockNovuMessage);
 
@@ -125,11 +125,11 @@ describe('sendMessage method', () => {
   });
 
   test('should send message with provided option to', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     await provider.sendMessage(mockNovuMessage);
 
@@ -139,11 +139,11 @@ describe('sendMessage method', () => {
   });
 
   test('should send message with provided option content', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     await provider.sendMessage(mockNovuMessage);
 
@@ -153,11 +153,11 @@ describe('sendMessage method', () => {
   });
 
   test('should send message with provided option content with _passthrough', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     const { mockPost: fakePost } = axiosSpy({
       data: '0',
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     await provider.sendMessage(mockNovuMessage, {
       _passthrough: {
@@ -175,11 +175,11 @@ describe('sendMessage method', () => {
   });
 
   test('should return id returned in request response', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     axiosSpy({
       data: mockSmsmodeApiResponse,
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     const result = await provider.sendMessage(mockNovuMessage);
 
@@ -189,11 +189,11 @@ describe('sendMessage method', () => {
   });
 
   test('should return date returned in request response', async () => {
-    const provider = new SmsmodeSmsProvider(mockConfig);
-
     axiosSpy({
       data: mockSmsmodeApiResponse,
     });
+
+    const provider = new SmsmodeSmsProvider(mockConfig);
 
     const result = await provider.sendMessage(mockNovuMessage);
 

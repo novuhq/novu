@@ -1,6 +1,7 @@
 import { ChannelEndpointByType, ENDPOINT_TYPES, IChatOptions } from '@novu/stateless';
 import { nanoid } from 'nanoid';
 import { expect, test } from 'vitest';
+import { PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { SendblueChatProvider } from './sendblue.provider';
 
@@ -117,5 +118,6 @@ function expectedHeaders(apiKey: string, secretKey: string) {
       'sb-api-secret-key': secretKey,
       'Content-Type': 'application/json',
     },
+    timeout: PROVIDER_HTTP_TIMEOUT_MS,
   };
 }

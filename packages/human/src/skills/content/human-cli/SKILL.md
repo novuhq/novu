@@ -48,7 +48,7 @@ process/logs already surface.
 If it isn't configured on this machine yet, every command exits 1 with:
 
 ```
-No human connected yet. Ask your human to run: npx @novu/human setup
+No human connected yet. Ask your human to run: npx @novu/human setup (or set NOVU_SECRET_KEY + HUMAN_TO).
 ```
 
 Treat that message as the actual next step: surface it to whoever *is*
@@ -56,18 +56,53 @@ reachable (chat, PR description, logs) rather than silently giving up or
 looping. Never attempt to configure it on the human's behalf — you don't have
 their Telegram/Slack/email credentials, and setup is interactive by design.
 
+In sandboxes and containers with no config file, the CLI is fully operational
+when `NOVU_SECRET_KEY` and `HUMAN_TO` are set in the environment
+(optionally `HUMAN_VIA` for the channel). `--to`/`--via` flags still
+override the env values.
+
 To reach a *different* person than the one who ran setup, they need a linked
 channel too:
 
 ```bash
-human invite alice --via slack
-human invite bob --via telegram --async
-human invite carol --via email --email carol@acme.com
+human invite alice --via slack --name "Alice Chen"
+human invite bob --via telegram --async --name "Bob"
+human invite carol --via email --email carol@acme.com --name "Carol Diaz"
 ```
 
 Send them the printed URL (Slack authorize or Telegram Start). `--async`
 prints the URL and returns immediately. This does **not** change
 `~/.novu/human.json`. After they connect, address them with `--to alice`.
+`--name` is what `human contacts` shows next to the id, so always pass it
+when you know who the person is.
+
+## Who can I reach: check contacts before coordinating between people
+
+When a task involves more than the one human who ran setup — routing a
+question to the right owner, getting a second approval, telling someone
+else a job finished — look before you ask:
+
+```bash
+human contacts --json
+```
+
+Each row is a subscriber the environment knows about: `id` (the subscriberId),
+`firstName`/`lastName`, `email`, `phone`, free-form `data`, and `self: true`
+on the person who ran setup (the default `--to` when you pass nothing).
+Pages are 50 rows by default; when `next` is non-null, fetch the rest with
+`human contacts --after <next>` before concluding someone isn't there.
+Pick by name or id and pass the `id` to `--to`:
+
+```bash
+human approve "Ship the pricing change?" --to alice
+human tell "Deploy is done." --to alice,bob
+```
+
+Contacts is a directory, not a reachability guarantee. If delivery fails with
+"no linked <channel> endpoint", that person exists but hasn't connected the
+channel yet — run `human invite <id> --via <channel> --name "…"`, send them
+the URL, and retry. Never invent an id that isn't in the list, and
+never page `self` as if they were a third party.
 
 ## The four commands
 
@@ -132,9 +167,9 @@ other useful work to do while you wait.
   is asking. Set this whenever you have a stable identity (skip it for
   one-off ad hoc runs).
 - `--to <humanId>` / `--via <telegram|slack|email>` — `--to` addresses humans
-  who are already linked. Link someone else first with
-  `human invite alice --via slack` (prints a connect URL for them; does not
-  change your local identity). `--to alice,bob` lets any listed human settle
+  who are already linked. Find them with `human contacts --json` first; link
+  someone new with `human invite alice --via slack --name "Alice Chen"`
+  (prints a connect URL for them; does not change your local identity). `--to alice,bob` lets any listed human settle
   (first valid answer wins, max 50). `--via` on ask/approve is only a delivery
   override when that person has several channels; don't guess — if you need
   a specific one, pass `--via`. If they have no endpoint yet, the API tells

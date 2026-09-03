@@ -132,6 +132,7 @@ export class AgentConversationRuntime {
           isRecovering: data.isRecovering,
           catchUpError: data.catchUpError,
           conversationId: data.conversationId,
+          error: data.error,
           sessionStatus:
             this.#snapshot.status === 'loading' || this.#snapshot.status === 'fetching'
               ? this.#snapshot.status
@@ -230,6 +231,7 @@ export class AgentConversationRuntime {
           pagination: store?.pagination ?? storePagination(response.data.hasMore),
           isRecovering: store?.isRecovering ?? false,
           catchUpError: store?.catchUpError,
+          error: store?.error,
           conversationId: response.data.conversationId,
           sessionStatus: 'ready',
         },
@@ -276,6 +278,7 @@ export class AgentConversationRuntime {
         isRecovering: store?.isRecovering ?? this.#snapshot.isRecovering,
         catchUpError: store?.catchUpError,
         conversationId: store?.conversationId ?? this.#conversationId,
+        error: store?.error,
         sessionStatus: 'ready',
       });
     }
@@ -312,9 +315,9 @@ export class AgentConversationRuntime {
     return response;
   }
 
-  /** Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`. */
+  /** Resolve a pending `approval`. Pass `approvalId` from `pendingActions` or message parts. */
   async respondToAction(args: {
-    actionId: string;
+    approvalId: string;
     decision: AgentToolApprovalDecision;
   }): Promise<{ data?: { conversationId: string }; error?: NovuError | WebChatPlanLimitError }> {
     const response = await this.#webChat.respondToAction({
@@ -322,7 +325,7 @@ export class AgentConversationRuntime {
       agentHash: this.#agentHash,
       key: this.key,
       conversationId: this.#conversationId,
-      actionId: args.actionId,
+      approvalId: args.approvalId,
       decision: args.decision,
     });
 
@@ -427,6 +430,7 @@ export class AgentConversationRuntime {
       isRecovering: boolean;
       catchUpError?: NovuError;
       conversationId?: string;
+      error?: NovuError;
       sessionStatus: AgentConversationSessionStatus;
     },
     meta?: AgentConversationPublicationMeta
@@ -446,7 +450,7 @@ export class AgentConversationRuntime {
         pendingActions: derivePendingActions([...args.messages]),
         isRecovering: args.isRecovering,
         catchUpError: args.catchUpError,
-        error: undefined,
+        error: args.error,
       },
       meta
     );

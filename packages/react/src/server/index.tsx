@@ -98,6 +98,7 @@ export function useWebChat(_: UseWebChatProps): UseWebChatResult {
     respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
     sendAction: () => Promise.resolve({ data: undefined, error: undefined }),
     retryMessage: () => Promise.resolve({ data: undefined, error: undefined }),
+    startNewConversation: () => {},
   };
 }
 
@@ -180,7 +181,7 @@ export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResu
 }
 
 export type * from '@novu/js';
-export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { pendingActionKey, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   AllLocalization,

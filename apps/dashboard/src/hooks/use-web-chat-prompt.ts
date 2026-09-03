@@ -1,4 +1,8 @@
-import { buildWebChatPrompt, isNovuConnectBridgeRuntime, type NovuConnectBridgeRuntime } from '@novu/shared';
+import {
+  buildWebChatPrompt,
+  resolveWebChatConnectRuntime as resolveConnectBridgeRuntime,
+  type NovuConnectBridgeRuntime,
+} from '@novu/shared';
 import { useMemo } from 'react';
 import type { AgentResponse } from '@/api/agents';
 import type { ConnectorId } from '@/components/agents/connectors/connector-options';
@@ -8,15 +12,7 @@ export function resolveWebChatConnectRuntime(
   agent: AgentResponse,
   connectorId?: ConnectorId
 ): NovuConnectBridgeRuntime | undefined {
-  if (agent.runtime === 'managed') {
-    return undefined;
-  }
-
-  if (isNovuConnectBridgeRuntime(connectorId)) {
-    return connectorId;
-  }
-
-  return undefined;
+  return resolveConnectBridgeRuntime(agent.runtime, connectorId);
 }
 
 export function useWebChatPrompt(agent: AgentResponse, connectorId?: ConnectorId): string {

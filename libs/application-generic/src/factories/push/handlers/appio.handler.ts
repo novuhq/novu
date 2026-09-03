@@ -1,5 +1,5 @@
-import { ChannelTypeEnum, ICredentials, PushProviderIdEnum } from '@novu/shared';
 import { AppioPushProvider } from '@novu/providers';
+import { ChannelTypeEnum, ICredentials, PushProviderIdEnum } from '@novu/shared';
 import { BasePushHandler } from './base.handler';
 
 export class AppIOHandler extends BasePushHandler {
@@ -8,7 +8,7 @@ export class AppIOHandler extends BasePushHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    const config: { AppIOBaseUrl?: string } = { AppIOBaseUrl: credentials.apiKey };
+    const config: { AppIOBaseUrl?: string } = { AppIOBaseUrl: credentials.AppIOBaseUrl };
 
     this.provider = new AppioPushProvider(config);
   }

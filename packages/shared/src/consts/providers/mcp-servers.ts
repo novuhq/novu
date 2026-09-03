@@ -326,7 +326,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.newrelic.com/mcp/',
     category: 'code',
     popular: true,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
   },
   {
     id: 'pagerduty',
@@ -409,7 +409,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.canva.com/mcp',
     category: 'design',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
   },
   {
     id: 'cloudflare',

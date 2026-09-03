@@ -1,4 +1,15 @@
-import type { AgentMessageRole, AgentToolResultContent, AgentToolSource } from '@novu/agent-event-protocol';
+import type {
+  AgentMessageRole,
+  AgentToolResultContent,
+  AgentToolSource,
+  CardElement,
+  CardElementChild,
+} from '@novu/agent-event-protocol';
+
+/** Wire card JSON. Alias of the protocol `CardElement`. */
+export type AgentCardElement = CardElement;
+/** One card child. Alias of the protocol `CardElementChild`. */
+export type AgentCardChild = CardElementChild;
 
 export type { AgentMessageRole };
 
@@ -55,9 +66,9 @@ export type AgentApprovalPart = {
   input?: Record<string, unknown>;
   source?: AgentToolSource;
   state: AgentApprovalPartState;
-  /** Server-generated. Pass this id to `respondToAction`. Do not create it on the client. */
+  /** Server-generated approve action id. Mapped internally when `decision` is `'approved'`. */
   approveActionId?: string;
-  /** Server-generated. Pass this id to `respondToAction`. Do not create it on the client. */
+  /** Server-generated deny action id. Mapped internally when `decision` is `'denied'`. */
   denyActionId?: string;
   /** Server-generated always-allow-this-tool action id. Present for managed tools that support trust. */
   trustToolActionId?: string;
@@ -77,19 +88,10 @@ export type AgentMcpConnectionPart = {
   message?: string;
 };
 
-/** Pending tool-approval item. Pass `id` to `respondToAction`. */
-export type AgentToolApprovalAction = Omit<AgentApprovalPart, 'type' | 'state'> & {
-  type: 'tool-approval';
-  id: string;
-};
-
-/** Pending MCP connect item. Open `authorizeUrl`. */
-export type AgentMcpConnectionAction = Omit<AgentMcpConnectionPart, 'state' | 'message'> & {
-  id: string;
-};
-
-/** One item the UI must handle: a tool approval or an MCP connect card. */
-export type AgentPendingAction = AgentToolApprovalAction | AgentMcpConnectionAction;
+/** One pending item the UI must handle. Same shape as the message part. */
+export type AgentPendingAction =
+  | (AgentApprovalPart & { state: 'pending' })
+  | (AgentMcpConnectionPart & { state: 'pending' });
 
 /** Citation. */
 export type AgentSourcePart = {
@@ -111,7 +113,9 @@ export type AgentFilePart = {
 /** Structured Card. Button clicks call `sendAction`. */
 export type AgentCardPart = {
   type: 'card';
-  card: Record<string, unknown>;
+  card: AgentCardElement;
+  /** Id of the message that contains this card. */
+  sourceMessageId: string;
 };
 
 /** Custom payload. The UI decides how to render it. */
