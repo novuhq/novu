@@ -45,26 +45,28 @@ export class ProcessBulkTrigger {
             const workflow = workflowMap.get(event.name);
 
             const result = (await this.parseEventRequest.execute(
-              ParseEventRequestMulticastCommand.create({
-                userId: command.userId,
-                environmentId: command.environmentId,
-                organizationId: command.organizationId,
-                identifier: event.name,
-                payload: event.payload,
-                overrides: event.overrides || {},
-                to: event.to,
-                actor: event.actor,
-                tenant: event.tenant,
-                context: event.context,
-                transactionId: event.transactionId,
-                addressingType: AddressingTypeEnum.MULTICAST,
-                requestCategory: TriggerRequestCategoryEnum.BULK,
-                bridgeUrl: event.bridgeUrl,
-                requestId: command.requestId,
-                workflow,
-                skipQueueInsertion: true,
-                ...(event.agentId !== undefined && { agentId: event.agentId }),
-              })
+              ParseEventRequestMulticastCommand.create(
+                {
+                  userId: command.userId,
+                  environmentId: command.environmentId,
+                  organizationId: command.organizationId,
+                  identifier: event.name,
+                  payload: event.payload,
+                  overrides: event.overrides || {},
+                  to: event.to,
+                  actor: event.actor,
+                  tenant: event.tenant,
+                  context: event.context,
+                  transactionId: event.transactionId,
+                  addressingType: AddressingTypeEnum.MULTICAST,
+                  requestCategory: TriggerRequestCategoryEnum.BULK,
+                  bridgeUrl: event.bridgeUrl,
+                  requestId: command.requestId,
+                  skipQueueInsertion: true,
+                  ...(event.agentId !== undefined && { agentId: event.agentId }),
+                },
+                { workflow }
+              )
             )) as unknown as TriggerEventResponseDto;
 
             return result;
