@@ -196,6 +196,10 @@ overrides:
   # growth (OOM) via distinct query results and uncaught crash / prototype
   # write via untrusted browserslist-stats.json. Patched in 4.28.7.
   browserslist@<4.28.7: ^4.28.7
+  # GHSA-p498-v437-472g: @humanfs/node recursive copy follows symlinked files
+  # and copies data from outside the source tree. Patched in 0.16.8. Only
+  # pulled transitively via eslint (dev-only tooling).
+  '@humanfs/node@<0.16.8': ^0.16.8
   sharp@<0.35.0: ^0.35.3
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
