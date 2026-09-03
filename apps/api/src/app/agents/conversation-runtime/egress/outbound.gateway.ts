@@ -10,8 +10,8 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
-import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
-import { splitOversizedSlackText } from '../../shared/util/slack-section-limits';
+import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import {
@@ -904,13 +904,9 @@ export class OutboundGateway {
   }
 
   /**
-   * Wraps outbound markdown replies with a muted "Powered by Novu" footnote for
-   * organizations that have not removed Novu branding (free plan). Pro and above
-   * can disable it via the existing `removeNovuBranding` org setting, resolved
-   * once per delivery by `AgentConfigResolver`.
-   *
-   * Only plain markdown replies are branded — cards/action messages are left
-   * untouched.
+   * Appends a "Powered by Novu" markdown footer for orgs that have not removed
+   * Novu branding. Pro and above can disable it via `removeNovuBranding`.
+   * Cards and action messages are left untouched.
    */
   private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
     if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
@@ -921,9 +917,10 @@ export class OutboundGateway {
       return content;
     }
 
-    const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
-
-    return { ...content, card, markdown: undefined };
+    return {
+      ...content,
+      markdown: appendPoweredByWatermark(content.markdown, branding.agentIdentifier, branding.platform),
+    };
   }
 
   /**
@@ -946,8 +943,20 @@ export class OutboundGateway {
       } as AdapterPostableMessage;
     }
 
+    const markdown = deliveryContent.markdown ?? '';
+
+    if (branding.platform === AgentPlatformEnum.SLACK && markdown.length > SLACK_MARKDOWN_TEXT_LIMIT) {
+      return {
+        card: splitOversizedSlackText({
+          type: 'card',
+          children: [{ type: 'text', content: markdown }],
+        }),
+        ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
+      } as AdapterPostableMessage;
+    }
+
     return {
-      markdown: deliveryContent.markdown ?? '',
+      markdown,
       files: deliveryContent.files,
     } as AdapterPostableMessage;
   }

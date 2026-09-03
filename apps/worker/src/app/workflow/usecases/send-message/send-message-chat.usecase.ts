@@ -456,9 +456,7 @@ export class SendMessageChat extends SendMessageBase {
             channelType: ChannelTypeEnum.CHAT,
             providerId,
             userId: command.userId,
-            filterData: {
-              tenant: command.job.tenant,
-            },
+            filterData: this.getIntegrationFilterData(command),
           })
         );
 
@@ -645,6 +643,7 @@ export class SendMessageChat extends SendMessageBase {
         subscriberId: command.subscriberId,
         channelType: ChannelTypeEnum.CHAT,
         contextKeys: command.contextKeys,
+        filterData: this.getIntegrationFilterData(command),
       })
     );
   }
@@ -1023,9 +1022,7 @@ export class SendMessageChat extends SendMessageBase {
       providerId,
       channelType: ChannelTypeEnum.CHAT,
       userId: command.userId,
-      filterData: {
-        tenant: command.job.tenant,
-      },
+      filterData: this.getIntegrationFilterData(command),
       ...(integrationId && { id: integrationId }),
       ...(integrationIdentifier && { identifier: integrationIdentifier }),
     };

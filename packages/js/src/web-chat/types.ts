@@ -2,11 +2,9 @@ import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
   AgentConversationStatus,
   AgentConversationTyping,
-  AgentMcpConnectionAction,
   AgentMcpConnectionPart,
   AgentMessage,
   AgentPendingAction,
-  AgentToolApprovalAction,
   AgentToolApprovalDecision,
 } from './agent-message.types';
 
@@ -14,11 +12,9 @@ export type {
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
-  AgentMcpConnectionAction,
   AgentMcpConnectionPart,
   AgentMessage,
   AgentPendingAction,
-  AgentToolApprovalAction,
   AgentToolApprovalDecision,
 };
 
@@ -95,7 +91,7 @@ export type {
 
 export type RespondToActionArgs = AgentHashFields & {
   agentId: string;
-  actionId: string;
+  approvalId: string;
   decision: AgentToolApprovalDecision;
   conversationId?: string;
   /** @internal Session key for the local cache. */
@@ -123,4 +119,29 @@ export type SendActionArgs = AgentHashFields & {
 /** Result of a Card button click. */
 export type SendActionResult = {
   conversationId: string;
+};
+
+/** One conversation in a `listConversations` page. */
+export type WebChatConversation = {
+  identifier: string;
+  title: string;
+  status: AgentConversationStatus;
+  agentIdentifier: string;
+  lastActivityAt: string;
+  createdAt: string;
+};
+
+export type ListConversationsArgs = {
+  limit?: number;
+  after?: string;
+  before?: string;
+  orderBy?: 'lastActivityAt' | 'createdAt';
+  orderDirection?: 'ASC' | 'DESC';
+};
+
+/** One page of the current subscriber's conversations. */
+export type ListConversationsResult = {
+  conversations: WebChatConversation[];
+  next: string | null;
+  previous: string | null;
 };

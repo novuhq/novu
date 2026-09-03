@@ -1,13 +1,13 @@
 'use client';
 
-import type { AgentPendingAction } from '@novu/react';
+import { pendingActionKey, type AgentPendingAction } from '@novu/react';
 import { useCallback, useEffect, useRef } from 'react';
 import { emitDebugEvent } from './debug-events';
 
 /**
  * One-time reaction to a pending action.
  *
- * `pendingActions` already drives the card and the dock, so this covers only what a
+ * `pendingActions` already drives in-thread approval UI, so this covers only what a
  * derived list cannot: telling you while the tab is in the background. The hook fires
  * `onActionRequested` once per action id, so no dedupe is needed here.
  */
@@ -34,11 +34,12 @@ export function useApprovalAlert(): (action: AgentPendingAction) => void {
   }, []);
 
   return useCallback((action: AgentPendingAction) => {
-    const label = action.type === 'tool-approval' ? action.toolName : action.displayName;
+    const label = action.type === 'approval' ? action.toolName : action.displayName;
+    const key = pendingActionKey(action);
     emitDebugEvent({
       source: 'sdk',
       name: `onActionRequested ${label}`,
-      payload: { actionId: action.id, type: action.type },
+      payload: { actionId: key, type: action.type },
     });
 
     if (document.visibilityState === 'visible') return;
@@ -50,7 +51,7 @@ export function useApprovalAlert(): (action: AgentPendingAction) => void {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       new Notification('Action needed', {
         body: label,
-        tag: action.id,
+        tag: key,
       });
     }
   }, []);

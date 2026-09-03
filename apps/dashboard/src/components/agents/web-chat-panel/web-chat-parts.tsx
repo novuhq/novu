@@ -133,7 +133,7 @@ export function ChatMessageRow({
   showAvatar: boolean;
   onCardAction?: CardActionHandler;
   cardActionsDisabled?: boolean;
-  onRespondToAction?: (args: { actionId: string; decision: ToolApprovalDecision }) => void;
+  onRespondToAction?: (args: { approvalId: string; decision: ToolApprovalDecision }) => void;
   onRetry?: (messageId: string) => void;
 }) {
   const isUser = message.role === 'user';
@@ -218,7 +218,9 @@ export function ChatMessageRow({
             key={`${message.id}-card-${index}`}
             card={part.card}
             disabled={cardActionsDisabled}
-            onAction={onCardAction ? (action) => onCardAction({ ...action, sourceMessageId: message.id }) : undefined}
+            onAction={
+              onCardAction ? (action) => onCardAction({ ...action, sourceMessageId: part.sourceMessageId }) : undefined
+            }
           />
         ))}
         {visibleTools.length > 0 ? (
@@ -240,7 +242,7 @@ export function ChatMessageRow({
             trustServerActionId={part.trustServerActionId}
             disabled={cardActionsDisabled}
             onRespond={
-              onRespondToAction ? (decision) => onRespondToAction({ actionId: part.approvalId, decision }) : undefined
+              onRespondToAction ? (decision) => onRespondToAction({ approvalId: part.approvalId, decision }) : undefined
             }
           />
         ))}
