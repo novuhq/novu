@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Query,
+  ServiceUnavailableException,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -27,6 +28,7 @@ import {
   ApiRateLimitCategoryEnum,
   ButtonTypeEnum,
   DirectionEnum,
+  FeatureFlagsKeysEnum,
   MessageActionStatusEnum,
   PermissionsEnum,
   SubscriberCustomData,
@@ -371,6 +373,18 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Body() body: BulkUpdateSubscriberPreferencesDto
   ): Promise<GetPreferencesResponseDto[]> {
+    const isPreferencesDisabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+      environment: { _id: user.environmentId },
+      component: 'preferences',
+    });
+
+    if (isPreferencesDisabled) {
+      throw new ServiceUnavailableException('Service temporarily unavailable for this organization');
+    }
+
     const preferences = body.preferences.map((preference) => ({
       workflowId: preference.workflowId,
       ...preference.channels,
