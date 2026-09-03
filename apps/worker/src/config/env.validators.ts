@@ -114,7 +114,7 @@ export const envValidators = {
   ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
-  ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AZURE' && {
     AZURE_ACCOUNT_NAME: str(),
     AZURE_ACCOUNT_KEY: str(),
     AZURE_HOST_NAME: str({ default: `https://${processEnv.AZURE_ACCOUNT_NAME}.blob.core.windows.net` }),
@@ -122,13 +122,13 @@ export const envValidators = {
   }),
 
   // GCS validators
-  ...(processEnv.STORAGE_SERVICE === 'GCS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'GCS' && {
     GCS_BUCKET_NAME: str(),
     GCS_DOMAIN: str(),
   }),
 
   // AWS validators
-  ...(processEnv.STORAGE_SERVICE === 'AWS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AWS' && {
     S3_LOCAL_STACK: str({ default: '' }),
     S3_BUCKET_NAME: str(),
     S3_REGION: str(),
