@@ -14,15 +14,17 @@ describe('assertPreferencesUpdateEnabled', () => {
     const featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
     featureFlagsService.getFlag.resolves(false);
 
-    await assertPreferencesUpdateEnabled(featureFlagsService, 'org-1', 'env-1');
+    await assertPreferencesUpdateEnabled(featureFlagsService as any, 'org-1', 'env-1');
 
-    expect(featureFlagsService.getFlag.calledOnceWithExactly({
-      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
-      defaultValue: false,
-      organization: { _id: 'org-1' },
-      environment: { _id: 'env-1' },
-      component: 'preferences',
-    })).to.be.true;
+    expect(
+      featureFlagsService.getFlag.calledOnceWithExactly({
+        key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+        defaultValue: false,
+        organization: { _id: 'org-1' },
+        environment: { _id: 'env-1' },
+        component: 'preferences',
+      })
+    ).to.be.true;
   });
 
   it('should reject preference updates when the organization killswitch is enabled', async () => {
@@ -30,7 +32,7 @@ describe('assertPreferencesUpdateEnabled', () => {
     featureFlagsService.getFlag.resolves(true);
 
     try {
-      await assertPreferencesUpdateEnabled(featureFlagsService, 'org-1', 'env-1');
+      await assertPreferencesUpdateEnabled(featureFlagsService as any, 'org-1', 'env-1');
       expect.fail('Should throw an exception');
     } catch (error) {
       expect(error).to.be.instanceOf(ServiceUnavailableException);
