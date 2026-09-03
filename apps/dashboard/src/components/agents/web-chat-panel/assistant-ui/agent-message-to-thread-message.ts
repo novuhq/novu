@@ -57,11 +57,10 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
   for (const part of message.parts) {
     switch (part.type) {
       case 'text': {
-        const text = part.text;
-        if (!text.trim()) break;
+        if (!part.text.trim()) break;
         content.push({
           type: 'text',
-          text,
+          text: part.text,
           status: part.state === 'streaming' ? { type: 'running' } : { type: 'complete' },
         });
         break;
@@ -98,11 +97,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         break;
       }
       case 'card': {
-        content.push({
-          type: 'data',
-          name: 'novu-card',
-          data: part,
-        });
+        content.push({ type: 'data', name: 'novu-card', data: part });
         break;
       }
       case 'mcp-connection': {
