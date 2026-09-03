@@ -16,6 +16,7 @@ import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/
 import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
 import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
+import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
 
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
@@ -583,6 +584,100 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const listRes = await session.testAgent.get('/v1/human/interactions?status=pending');
       expect(listRes.status).to.equal(200);
       expect(listRes.body.data.length).to.be.greaterThan(0);
+    });
+  });
+
+  describe('keyless demo cap', () => {
+    let originalKeylessOrgId: string | undefined;
+    let originalCap: string | undefined;
+
+    beforeEach(() => {
+      originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
+      originalCap = process.env.KEYLESS_HUMAN_INTERACTION_CAP;
+      process.env.KEYLESS_ORGANIZATION_ID = session.organization._id;
+      process.env.KEYLESS_HUMAN_INTERACTION_CAP = '2';
+    });
+
+    afterEach(() => {
+      restoreEnv('KEYLESS_ORGANIZATION_ID', originalKeylessOrgId);
+      restoreEnv('KEYLESS_HUMAN_INTERACTION_CAP', originalCap);
+    });
+
+    function restoreEnv(name: string, value: string | undefined) {
+      if (value === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = value;
+      }
+    }
+
+    function telegramSends() {
+      return telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
+    }
+
+    it('replaces delivery with the sign-up card once the cap is reached, and only sends it once', async () => {
+      expect((await createInteraction({ kind: 'tell', prompt: 'One.' })).status).to.equal(201);
+      expect((await createInteraction({ kind: 'tell', prompt: 'Two.' })).status).to.equal(201);
+      const sendsBefore = telegramSends().length;
+
+      const third = await createInteraction({ kind: 'ask', prompt: 'Three?' });
+      expect(third.status).to.equal(429, JSON.stringify(third.body));
+      expect(third.body.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
+      expect(third.body.cap).to.equal(2);
+      expect(third.body.claimUrl).to.match(/\/connect\/claim\?token=/);
+      expect(third.body.message).to.include(third.body.claimUrl);
+
+      // The human got the CTA card on the channel the prompt would have used — not the prompt itself.
+      const sends = telegramSends();
+      expect(sends.length).to.equal(sendsBefore + 1);
+      const cta = JSON.stringify(sends[sends.length - 1].payload);
+      expect(cta).to.include('connect/claim');
+      expect(cta).to.include('Sign up');
+      expect(cta).to.not.include('Three?');
+
+      // Nothing was persisted for the blocked call.
+      expect(await humanInteractionRepository.count({ _environmentId: session.environment._id })).to.equal(2);
+
+      // A retrying agent keeps getting the 429 + link, but the human is not spammed again.
+      const fourth = await createInteraction({ kind: 'ask', prompt: 'Four?' });
+      expect(fourth.status).to.equal(429);
+      expect(fourth.body.claimUrl).to.equal(third.body.claimUrl);
+      expect(telegramSends().length).to.equal(sendsBefore + 1);
+    });
+
+    it('does not apply to non-keyless organizations', async () => {
+      process.env.KEYLESS_ORGANIZATION_ID = 'some-other-org';
+
+      expect((await createInteraction({ kind: 'tell', prompt: 'One.' })).status).to.equal(201);
+      expect((await createInteraction({ kind: 'tell', prompt: 'Two.' })).status).to.equal(201);
+      expect((await createInteraction({ kind: 'tell', prompt: 'Three.' })).status).to.equal(201);
+    });
+
+    it('moves interactions with the claim and points a stale keyless credential at re-auth', async () => {
+      const created = await createInteraction({ kind: 'approve', prompt: 'Keep me?' });
+      expect(created.status).to.equal(201, JSON.stringify(created.body));
+
+      const tokenService = testServer.getService(ConnectClaimTokenService);
+      const { token } = await tokenService.issueOrGetForEnvironment({
+        env: session.environment._id,
+        org: session.organization._id,
+      });
+
+      const claimer = new UserSession();
+      await claimer.initialize();
+      const claimRes = await claimer.testAgent.post('/v1/connect/claim').send({ token });
+      expect(claimRes.status).to.equal(200, JSON.stringify(claimRes.body));
+      const targetEnvironmentId = claimRes.body.data.environmentId as string;
+
+      const row = await humanInteractionRepository.findByIdentifier(targetEnvironmentId, created.body.data.id);
+      expect(row?._organizationId).to.equal(claimer.organization._id);
+      expect(await humanInteractionRepository.count({ _environmentId: session.environment._id })).to.equal(0);
+
+      // The keyless env is now empty; the CLI must be told to re-auth, not to run setup again.
+      const after = await createInteraction({ kind: 'tell', prompt: 'Still here?' });
+      expect(after.status).to.equal(403, JSON.stringify(after.body));
+      expect(after.body.message).to.match(/claimed into your Novu account/);
+      expect(after.body.message).to.include('human setup --secret-key');
     });
   });
 });

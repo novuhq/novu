@@ -58,6 +58,8 @@ human contacts --json
 
 `setup` stores credentials in `~/.novu/human.json`. Alternatively set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment.
 
+The keyless environment `setup` creates is a free demo with a small message allowance. Once it's used up, the next command exits `1` with a sign-up link (the same link is sent to you on your linked channel) instead of delivering the message. Sign up, claim the demo — your channels and relay move into your own Development environment — then point the CLI at it: `human setup --secret-key <key>` or `NOVU_SECRET_KEY`.
+
 In containers, sandboxes, and CI — anywhere no config file exists — the CLI is fully operational from environment variables alone:
 
 ```bash
