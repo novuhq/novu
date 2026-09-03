@@ -103,6 +103,15 @@ export class GetWorkflowRunResponseBaseDto {
   topics?: TopicResponseDto[];
 }
 
+export enum WorkflowRunStatsGroupByEnum {
+  DAY = 'day',
+  STATUS = 'status',
+  DELIVERY_LIFECYCLE_STATUS = 'deliveryLifecycleStatus',
+  DELIVERY_LIFECYCLE_DETAIL = 'deliveryLifecycleDetail',
+  WORKFLOW = 'workflow',
+  CHANNEL = 'channel',
+}
+
 export enum ReportTypeEnum {
   DELIVERY_TREND = 'delivery-trend',
   INTERACTION_TREND = 'interaction-trend',

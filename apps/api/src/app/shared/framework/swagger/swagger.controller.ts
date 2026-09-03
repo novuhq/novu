@@ -39,6 +39,11 @@ function buildBaseOptions() {
     .addSecurity(API_KEY_SWAGGER_SECURITY_NAME, API_KEY_SECURITY_DEFINITIONS)
     .addSecurityRequirements(API_KEY_SWAGGER_SECURITY_NAME)
     .addTag(
+      'Activity',
+      `Activity APIs expose workflow-run history and aggregated counts so you can inspect delivery outcomes and slice runs by status, workflow, channel, or delivery lifecycle.`,
+      { url: 'https://docs.novu.co/platform/activity-feed' }
+    )
+    .addTag(
       'Events',
       `Events represent a change in state of a subscriber. They are used to trigger workflows, and enable you to send notifications to subscribers based on their actions.`,
       { url: 'https://docs.novu.co/workflows' }

@@ -1,7 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  ClickhouseOperator,
-  FieldCondition,
   PinoLogger,
   QueryBuilder,
   StepRun,
@@ -9,12 +7,11 @@ import {
   Where,
   WorkflowRun,
   WorkflowRunRepository,
-  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { TopicSubscribersRepository } from '@novu/dal';
-import { SeverityLevelEnum } from '@novu/shared';
-import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
+import { ActivityRetentionService } from '../../shared/activity-retention.service';
+import { applyWorkflowRunFilters } from '../../shared/build-workflow-run-where';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
 
@@ -66,6 +63,7 @@ export class GetWorkflowRuns {
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
+    private activityRetentionService: ActivityRetentionService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -83,108 +81,26 @@ export class GetWorkflowRuns {
     );
 
     try {
+      const retentionWindow = await this.activityRetentionService.validateRetentionLimitForTier(
+        command.organizationId,
+        command.createdGte,
+        command.createdLte
+      );
+      const queryWindow = this.activityRetentionService.queryWindowForWorkflowRuns(retentionWindow, command.createdLte);
+
       const queryBuilder = new QueryBuilder<WorkflowRun>({
         environmentId: command.environmentId,
       });
 
-      if (command.workflowIds?.length) {
-        queryBuilder.whereIn('workflow_id', command.workflowIds);
-      }
-
-      if (command.subscriberIds?.length) {
-        queryBuilder.whereIn('external_subscriber_id', command.subscriberIds);
-      }
-
-      if (command.transactionIds?.length) {
-        queryBuilder.whereIn('transaction_id', command.transactionIds);
-      }
-
-      if (command.statuses?.length) {
-        const statuses = command.statuses.map((status) => {
-          //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
-          if (status === WorkflowRunStatusDtoEnum.PROCESSING) {
-            return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
-          }
-          if (status === WorkflowRunStatusDtoEnum.COMPLETED) {
-            return [WorkflowRunStatusEnum.SUCCESS, WorkflowRunStatusEnum.COMPLETED];
-          }
-          if (status === WorkflowRunStatusDtoEnum.ERROR) {
-            return [WorkflowRunStatusEnum.ERROR];
-          }
-          return status;
-        });
-        queryBuilder.whereIn('status', statuses.flat());
-      }
-
-      if (command.createdGte) {
-        queryBuilder.whereGreaterThanOrEqual('created_at', new Date(command.createdGte));
-      }
-
-      if (command.createdLte) {
-        queryBuilder.whereLessThanOrEqual('created_at', new Date(command.createdLte));
-      }
-
-      if (command.channels?.length) {
-        queryBuilder.orWhere(
-          command.channels.map((channel) => ({
-            field: 'channels',
-            operator: 'LIKE',
-            value: `%"${channel}"%`,
-          }))
-        );
-      }
-
-      const severity = command.severity ?? [];
-      if (severity.length) {
-        const orConditions: Array<FieldCondition<WorkflowRun, keyof WorkflowRun, ClickhouseOperator>> = [];
-        if (severity.includes(SeverityLevelEnum.NONE)) {
-          orConditions.push({
-            field: 'severity',
-            operator: 'IS NULL',
-          });
-          orConditions.push({
-            field: 'severity',
-            operator: '=',
-            value: SeverityLevelEnum.NONE,
-          });
-        }
-        const severityWithoutNone = severity.filter((severity) => severity !== SeverityLevelEnum.NONE);
-        for (const severity of severityWithoutNone) {
-          orConditions.push({
-            field: 'severity',
-            operator: '=',
-            value: severity.toString(),
-          });
-        }
-        queryBuilder.orWhere(orConditions);
-      }
-
-      if (command.topicKey) {
-        queryBuilder.whereLike('topics', `%${command.topicKey}%`);
-      }
-
-      if (command.subscriptionId) {
-        const subscription = await this.topicSubscribersRepository.findOne({
-          _environmentId: command.environmentId,
-          identifier: command.subscriptionId,
-        });
-
-        if (subscription) {
-          queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
-          queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
-          queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
-        }
-      }
-
-      if (command.contextKeys !== undefined) {
-        if (command.contextKeys.length === 0) {
-          // Empty array = filter for records with no context (empty context_keys)
-          queryBuilder.whereEquals('context_keys', []);
-        } else {
-          // Non-empty array = filter for records containing all specified contexts
-          queryBuilder.whereHasAll('context_keys', command.contextKeys);
-        }
-      }
+      await applyWorkflowRunFilters(
+        queryBuilder,
+        {
+          ...command,
+          createdGte: queryWindow.after,
+          createdLte: queryWindow.before,
+        },
+        this.topicSubscribersRepository
+      );
 
       const safeWhere = queryBuilder.build();
 
