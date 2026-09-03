@@ -141,8 +141,14 @@ export class VerifyPayloadService {
     return invalidKeys;
   }
 
+  /**
+   * The root is an ordinary object, matching the nested nodes `safeSetPath` creates.
+   * Prototype pollution is prevented by the path segment allowlist, not by the root's
+   * prototype, and a null-prototype root would otherwise leak through `toMerged` into
+   * every trigger payload.
+   */
   fillDefaults(variables: ITemplateVariable[]): Record<string, unknown> {
-    const payload = Object.create(null) as Record<string, unknown>;
+    const payload: Record<string, unknown> = {};
 
     for (const variable of variables.filter(
       (elem) => elem.defaultValue !== undefined && elem.defaultValue !== null && !this.isSystemVariable(elem.name)
