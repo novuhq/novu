@@ -84,6 +84,30 @@ export class ConnectClaimTokenService {
     return issued;
   }
 
+  /**
+   * True once the claim token issued for this keyless environment has been
+   * consumed — i.e. its assets now live in a real organization. Best-effort:
+   * cache outages and missing tokens read as "not claimed".
+   */
+  async isEnvironmentClaimed(environmentId: string): Promise<boolean> {
+    if (!this.cacheService.cacheEnabled()) {
+      return false;
+    }
+
+    try {
+      const token = await this.cacheService.get(`${ENV_TOKEN_KEY_PREFIX}{${environmentId}}`);
+      if (!token || !isConnectClaimTokenFormat(token)) {
+        return false;
+      }
+
+      return await this.tokens.isTokenUsed(token);
+    } catch (error) {
+      this.logger.warn({ err: error, environmentId }, 'Failed to read connect claim state for environment');
+
+      return false;
+    }
+  }
+
   async isSignupCtaPosted(conversationId: string): Promise<boolean> {
     if (!this.cacheService.cacheEnabled()) {
       return false;

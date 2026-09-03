@@ -165,7 +165,7 @@ export function MessageRow({ message, onCardAction, onRespond, cardActionsDisabl
             key={`${message.id}-card-${index}`}
             card={part.card}
             disabled={cardActionsDisabled}
-            onAction={(action) => void onCardAction({ ...action, sourceMessageId: message.id })}
+            onAction={(action) => void onCardAction({ ...action, sourceMessageId: part.sourceMessageId })}
           />
         ))}
 

@@ -106,6 +106,7 @@ export function WebChat({
     catchUpError,
     refetch,
     typing,
+    startNewConversation,
   } = useWebChat({
     agentId: config.agentId,
     conversationId,
@@ -118,7 +119,7 @@ export function WebChat({
     conversationId: activeConversationId,
     isRunning,
     conversationStatus,
-    pendingApprovalCount: pendingActions.filter((action) => action.type === 'tool-approval').length,
+    pendingApprovalCount: pendingActions.filter((action) => action.type === 'approval').length,
     runOrigin: runOrigin(isRunning, lastTransition),
     lastRunTransition: lastTransition,
   };
@@ -166,9 +167,12 @@ export function WebChat({
       threads: mapConversationsToThreadData(threadList.items),
       isLoading: threadList.isLoading,
       onSwitchToThread: threadList.onSwitchToThread,
-      onSwitchToNewThread: threadList.onSwitchToNewThread,
+      onSwitchToNewThread: () => {
+        startNewConversation();
+        threadList.onSwitchToNewThread();
+      },
     };
-  }, [activeThreadId, threadList]);
+  }, [activeThreadId, threadList, startNewConversation]);
 
   return (
     <WebChatRuntimeProvider

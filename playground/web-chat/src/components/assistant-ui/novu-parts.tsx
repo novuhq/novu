@@ -1,6 +1,6 @@
 'use client';
 
-import type { AgentMessage } from '@novu/react';
+import type { AgentCardPart, AgentMessage } from '@novu/react';
 import { makeAssistantDataUI, TextMessagePartProvider } from '@assistant-ui/react';
 import { LoaderCircleIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -9,15 +9,14 @@ import { MarkdownText } from '@/components/assistant-ui/elements/markdown-text';
 import { field, pressable } from '@/components/assistant-ui/elements/surfaces';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { cardViewFromRecord } from '../../lib/card-view';
+import { cardViewFromElement } from '../../lib/card-view';
 import { ConnectCard } from '../connect-card';
 import { useWebChatUi } from './web-chat-actions';
 
-type NovuCardData = { card: Record<string, unknown>; sourceMessageId: string };
 type McpPart = Extract<AgentMessage['parts'][number], { type: 'mcp-connection' }>;
 type FilePart = Extract<AgentMessage['parts'][number], { type: 'file' }>;
 
-export const NovuCardUI = makeAssistantDataUI<NovuCardData>({
+export const NovuCardUI = makeAssistantDataUI<AgentCardPart>({
   name: 'novu-card',
   render: ({ data }) => <NovuCard data={data} />,
 });
@@ -41,10 +40,10 @@ export const NovuFileUI = makeAssistantDataUI<FilePart>({
   ),
 });
 
-function NovuCard({ data }: { data: NovuCardData }) {
+function NovuCard({ data }: { data: AgentCardPart }) {
   const { sendAction } = useWebChatUi();
   const [busyId, setBusyId] = useState<string>();
-  const view = cardViewFromRecord(data.card);
+  const view = cardViewFromElement(data.card);
 
   async function clickButton(actionId: string, value?: string) {
     if (busyId) return;

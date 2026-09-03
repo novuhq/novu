@@ -1,5 +1,3 @@
-import { setSocketStatus } from './socket-status';
-
 export type DebugEventSource = 'http' | 'ws' | 'sdk';
 
 export type DebugEvent = {
@@ -28,6 +26,7 @@ export const SDK_DEBUG_EVENTS = [
   'session.initialize.resolved',
   'socket.connect.pending',
   'socket.connect.resolved',
+  'socket.disconnect.resolved',
 ] as const;
 
 /**
@@ -184,11 +183,9 @@ export function installNetworkInspector(watchedUrls: string[]): void {
 
     const path = shortPath(urlString);
 
-    setSocketStatus('connecting');
     emitDebugEvent({ source: 'ws', name: `connecting ${path}`, payload: { url: urlString } });
 
     socket.addEventListener('open', () => {
-      setSocketStatus('online');
       emitDebugEvent({ source: 'ws', name: `open ${path}`, payload: { url: urlString } });
     });
 
@@ -201,12 +198,10 @@ export function installNetworkInspector(watchedUrls: string[]): void {
     });
 
     socket.addEventListener('error', () => {
-      setSocketStatus('offline');
       emitDebugEvent({ source: 'ws', name: `error ${path}`, payload: { url: urlString } });
     });
 
     socket.addEventListener('close', (event) => {
-      setSocketStatus('offline');
       emitDebugEvent({
         source: 'ws',
         name: `close ${path}`,

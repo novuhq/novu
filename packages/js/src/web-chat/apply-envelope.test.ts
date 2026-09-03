@@ -553,9 +553,9 @@ describe('applyEnvelope', () => {
 
   it('folds card content into a card part', () => {
     const card = {
-      type: 'card',
+      type: 'card' as const,
       title: 'Support Agent',
-      children: [{ type: 'text', content: 'How can I help?' }],
+      children: [{ type: 'text' as const, content: 'How can I help?' }],
     };
     const next = applyEnvelope(
       createInitialAgentConversationState(),
@@ -567,11 +567,11 @@ describe('applyEnvelope', () => {
       })
     );
 
-    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card }]);
+    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card, sourceMessageId: 'm-card' }]);
   });
 
   it('folds exclusive durable content as markdown or card, not both', () => {
-    const card = { type: 'card', title: 'Support' };
+    const card = { type: 'card' as const, title: 'Support', children: [] as const };
     const next = applyEnvelope(
       createInitialAgentConversationState(),
       envelope(1, {

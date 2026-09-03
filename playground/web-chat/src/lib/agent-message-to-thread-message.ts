@@ -1,4 +1,4 @@
-import type { AgentMessage } from '@novu/react';
+import type { AgentCardElement, AgentMessage } from '@novu/react';
 import type { ThreadMessageLike, ToolApprovalOption } from '@assistant-ui/react';
 import { APPROVAL_OPTIONS } from './approval-options';
 
@@ -16,21 +16,20 @@ function isPoweredByWatermark(content: string): boolean {
 }
 
 /** Novu-branded empty cards unwrap to plain markdown instead of rendering a card shell. */
-function brandedReplyMarkdown(card: Record<string, unknown>): string | null {
-  if (typeof card.title === 'string' && card.title.trim()) return null;
-  if (typeof card.subtitle === 'string' && card.subtitle.trim()) return null;
-  if (typeof card.imageUrl === 'string' && card.imageUrl.trim()) return null;
+function brandedReplyMarkdown(card: AgentCardElement): string | null {
+  if (card.title?.trim()) return null;
+  if (card.subtitle?.trim()) return null;
+  if (card.imageUrl?.trim()) return null;
 
-  const children = Array.isArray(card.children) ? card.children : [];
   const texts: string[] = [];
   let sawWatermark = false;
 
-  for (const child of children) {
-    if (!child || typeof child !== 'object' || !('type' in child) || child.type !== 'text') {
+  for (const child of card.children) {
+    if (child.type !== 'text') {
       return null;
     }
 
-    const content = typeof child.content === 'string' ? child.content : '';
+    const content = child.content;
     if (!content) continue;
 
     if (isPoweredByWatermark(content)) {
@@ -98,6 +97,9 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
   const isStreaming = message.parts.some(
     (part) => (part.type === 'text' || part.type === 'thinking') && part.state === 'streaming'
   );
+  const hasPendingApproval = message.parts.some(
+    (part) => part.type === 'approval' && part.state === 'pending'
+  );
 
   for (const part of message.parts) {
     switch (part.type) {
@@ -154,7 +156,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         content.push({
           type: 'data',
           name: 'novu-card',
-          data: { card: part.card, sourceMessageId: message.id },
+          data: part,
         });
         break;
       }
@@ -177,11 +179,6 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         break;
     }
   }
-
-  const hasPendingApproval = message.parts.some(
-    (part): part is Extract<AgentMessage['parts'][number], { type: 'approval' }> =>
-      part.type === 'approval' && part.state === 'pending'
-  );
 
   if (message.role === 'user') {
     // Stable assistant-ui identity across optimistic opt_* → server msg_* reconciliation.
