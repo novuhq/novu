@@ -473,3 +473,40 @@ describe.skip('FcmPushProvider', () => {
     });
   });
 });
+
+describe('FcmPushProvider.isTokenInvalid', () => {
+  const provider = new FcmPushProvider({
+    secretKey: '--BEGIN PRIVATE KEY--abc',
+    projectId: 'test',
+    email: 'test@iam.firebase.google.com',
+  });
+
+  const invalidTokenMessages = [
+    'Requested entity was not found',
+    'NotRegistered',
+    'InvalidRegistration',
+    'Unregistered',
+    'UNREGISTERED',
+    'registration-token-not-registered',
+    'messaging/registration-token-not-registered',
+    'messaging/invalid-registration-token',
+    'The registration token is not a valid FCM registration token',
+    'Sending message failed due to "NotRegistered"',
+    'Sending message failed due to "messaging/registration-token-not-registered: Requested entity was not found"',
+  ];
+
+  test.each(invalidTokenMessages)('returns true for %s', (errorMessage) => {
+    expect(provider.isTokenInvalid(errorMessage)).toBe(true);
+  });
+
+  test.each([
+    'Internal server error',
+    'Connection timeout',
+    'Rate limit exceeded',
+    'MismatchSenderId',
+    'SenderId mismatch',
+    '',
+  ])('returns false for %s', (errorMessage) => {
+    expect(provider.isTokenInvalid(errorMessage)).toBe(false);
+  });
+});
