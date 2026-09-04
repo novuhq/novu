@@ -471,7 +471,11 @@
                 "group": "Web Chat",
                 "tag": "Beta",
                 "root": "agents/channels/web-chat",
-                "pages": ["agents/channels/web-chat/quickstart", "agents/channels/web-chat/chat-ui"]
+                "pages": [
+                  "agents/channels/web-chat/quickstart",
+                  "agents/channels/web-chat/chat-ui",
+                  "agents/channels/web-chat/starter-ui"
+                ]
               }
             ],
             "icon": "messages-square"

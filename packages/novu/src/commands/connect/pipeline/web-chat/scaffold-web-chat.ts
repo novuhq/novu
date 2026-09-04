@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { getNovuScaffoldSdkTag } from '@novu/shared';
+import { getNovuScaffoldSdkTag, isNovuLocalApiUrl } from '@novu/shared';
 import { CloudRegionEnum } from '../../../dev/enums';
 import { tryGitInit } from '../../../init/helpers/git';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
@@ -33,7 +33,8 @@ export type ScaffoldWebChatProjectResult = {
 };
 
 /**
- * Templates live at <build root>/commands/connect/templates/web-chat/ts.
+ * Official Web Chat connect template at <build root>/commands/connect/templates/web-chat/ts.
+ * Edit the template in-repo directly — it is not synced from playground/web-chat.
  * Under the module layout (tsc output or ts-node dev) `__dirname` is this
  * file's directory; from the bundled CLI entry it is `dist/src` — try both.
  */
@@ -104,6 +105,7 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
   }
 
   const dependenciesChanged = ensureWebChatDependencies(resolved, input.apiUrl, input.region);
+  ensureWebChatNextConfig(resolved);
   const componentsDir = path.join(resolved, 'components', 'web-chat');
   fs.mkdirSync(componentsDir, { recursive: true });
   copyTemplateComponents(componentsDir);
@@ -116,6 +118,10 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
     'utf8'
   );
 
+  if (input.mergeAtRoot) {
+    ensureWebChatGlobalsImport(resolved);
+  }
+
   appendEnvExample(resolved, input);
 
   if (dependenciesChanged && (await getOnline())) {
@@ -127,16 +133,12 @@ function ensureWebChatDependencies(projectDir: string, apiUrl: string, region?: 
   const packageJsonPath = path.join(projectDir, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
     dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };
   const dependencies = packageJson.dependencies ?? {};
-  const sdk = resolveWebChatNovuDependencies(apiUrl, region);
-  const required = {
-    '@novu/react': sdk.react,
-    ...(sdk.js ? { '@novu/js': sdk.js } : {}),
-    'react-markdown': '^10.1.0',
-    'remark-gfm': '^4.0.1',
-  };
+  const sdk = resolveWebChatNovuDependenciesForProject(projectDir, apiUrl, region);
+  const required = webChatRuntimeDependencies(sdk);
   let changed = false;
 
   for (const [name, version] of Object.entries(required)) {
@@ -146,10 +148,21 @@ function ensureWebChatDependencies(projectDir: string, apiUrl: string, region?: 
     }
   }
 
+  const devDependencies = packageJson.devDependencies ?? {};
+  for (const [name, version] of Object.entries(WEB_CHAT_DEV_DEPENDENCIES)) {
+    if (devDependencies[name] !== version) {
+      devDependencies[name] = version;
+      changed = true;
+    }
+  }
+
   if (changed) {
     packageJson.dependencies = dependencies;
+    packageJson.devDependencies = devDependencies;
     fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
   }
+
+  ensureWebChatPostcssConfig(projectDir);
 
   return changed;
 }
@@ -186,10 +199,11 @@ async function writeStandaloneWebChatApp(root: string, input: ScaffoldWebChatPro
     }),
     'utf8'
   );
-  const sdk = resolveWebChatNovuDependencies(input.apiUrl, input.region);
+  const sdk = resolveWebChatNovuDependenciesForProject(root, input.apiUrl, input.region);
   fs.writeFileSync(path.join(root, 'package.json'), renderPackageJson(path.basename(root), sdk), 'utf8');
   fs.writeFileSync(path.join(root, 'tsconfig.json'), STANDALONE_TSCONFIG, 'utf8');
-  fs.writeFileSync(path.join(root, 'next.config.mjs'), STANDALONE_NEXT_CONFIG, 'utf8');
+  fs.writeFileSync(path.join(root, 'next.config.mjs'), WEB_CHAT_NEXT_CONFIG, 'utf8');
+  fs.writeFileSync(path.join(root, 'postcss.config.mjs'), STANDALONE_POSTCSS_CONFIG, 'utf8');
   fs.writeFileSync(path.join(root, '.env.local'), renderEnvLocal(input), 'utf8');
   fs.writeFileSync(path.join(root, '.env.example'), renderEnvExample(input), 'utf8');
   fs.writeFileSync(path.join(root, '.gitignore'), STANDALONE_GITIGNORE, 'utf8');
@@ -202,10 +216,54 @@ async function writeStandaloneWebChatApp(root: string, input: ScaffoldWebChatPro
 }
 
 function copyTemplateComponents(targetDir: string): void {
-  for (const file of fs.readdirSync(TEMPLATE_ROOT)) {
-    if (!file.endsWith('.tsx') && !file.endsWith('.css') && !file.endsWith('.ts')) continue;
-    fs.copyFileSync(path.join(TEMPLATE_ROOT, file), path.join(targetDir, file));
+  copyTemplateDir(TEMPLATE_ROOT, targetDir);
+}
+
+function copyTemplateDir(from: string, to: string): void {
+  fs.mkdirSync(to, { recursive: true });
+
+  for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
+    const source = path.join(from, entry.name);
+    const destination = path.join(to, entry.name);
+
+    if (entry.isDirectory()) {
+      copyTemplateDir(source, destination);
+      continue;
+    }
+
+    if (!/\.(tsx?|jsx?|css)$/.test(entry.name)) {
+      continue;
+    }
+
+    fs.copyFileSync(source, destination);
   }
+}
+
+function ensureWebChatGlobalsImport(projectDir: string): void {
+  const globalsPath = path.join(projectDir, 'app', 'globals.css');
+  const importLine = "@import '../components/web-chat/globals.css';";
+
+  if (fs.existsSync(globalsPath)) {
+    const existing = fs.readFileSync(globalsPath, 'utf8');
+    if (existing.includes('components/web-chat/globals.css')) {
+      return;
+    }
+
+    fs.writeFileSync(globalsPath, `${importLine}\n${existing}`, 'utf8');
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(globalsPath), { recursive: true });
+  fs.writeFileSync(globalsPath, `${importLine}\n`, 'utf8');
+}
+
+function ensureWebChatPostcssConfig(projectDir: string): void {
+  const postcssPath = path.join(projectDir, 'postcss.config.mjs');
+  if (fs.existsSync(postcssPath) || fs.existsSync(path.join(projectDir, 'postcss.config.js'))) {
+    return;
+  }
+
+  fs.writeFileSync(postcssPath, STANDALONE_POSTCSS_CONFIG, 'utf8');
 }
 
 function renderChatPage(opts: { standalone: boolean; configImport: string }): string {
@@ -225,9 +283,7 @@ export default function Page() {
       apiUrl={config.backendUrl}
       socketUrl={config.socketUrl}
     >
-      <main className="novu-web-chat web-chat-page">
-        <WebChat />
-      </main>
+      <WebChat agentId={config.agentId} />
     </NovuProvider>
   );
 }
@@ -256,9 +312,9 @@ export default function WebChatPage() {
       {...(apiUrl ? { apiUrl } : {})}
       {...(socketUrl ? { socketUrl } : {})}
     >
-      <main className={\`novu-web-chat web-chat-page \${inter.className}\`}>
+      <div className={inter.className}>
         <WebChat />
-      </main>
+      </div>
     </NovuProvider>
   );
 }
@@ -316,10 +372,206 @@ export type WebChatNovuDependencies = {
   js?: string;
 };
 
+/**
+ * When `novu connect` runs from this monorepo against a local API, pin
+ * `@novu/react` / `@novu/js` to the built workspace packages. npm `@next`
+ * lags the monorepo build (no `listConversations`, weaker typing).
+ * Published CLI has no sibling packages — keep the dist-tag.
+ */
+export function resolveLocalNovuSdkRoots(fromDir = __dirname): { react: string; js: string } | null {
+  let dir = fromDir;
+
+  for (let i = 0; i < 12; i += 1) {
+    const reactDir = path.join(dir, 'packages', 'react');
+    const jsDir = path.join(dir, 'packages', 'js');
+    const reactPkg = path.join(reactDir, 'package.json');
+    const jsPkg = path.join(jsDir, 'package.json');
+
+    if (fs.existsSync(reactPkg) && fs.existsSync(jsPkg)) {
+      try {
+        const react = JSON.parse(fs.readFileSync(reactPkg, 'utf8')) as { name?: string };
+        const js = JSON.parse(fs.readFileSync(jsPkg, 'utf8')) as { name?: string };
+        if (
+          react.name === '@novu/react' &&
+          js.name === '@novu/js' &&
+          fs.existsSync(path.join(reactDir, 'dist')) &&
+          fs.existsSync(path.join(jsDir, 'dist'))
+        ) {
+          return { react: reactDir, js: jsDir };
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+
+    dir = parent;
+  }
+
+  return null;
+}
+
 export function resolveWebChatNovuDependencies(apiUrl: string, region?: CloudRegionEnum): WebChatNovuDependencies {
   const tag = getNovuScaffoldSdkTag(apiUrl, region);
+  const local = isNovuLocalApiUrl(apiUrl) ? resolveLocalNovuSdkRoots() : null;
+
+  if (local) {
+    return {
+      react: 'file:./vendor/@novu/react',
+      js: 'file:./vendor/@novu/js',
+    };
+  }
 
   return { react: tag, js: tag };
+}
+
+function resolveWebChatNovuDependenciesForProject(
+  projectDir: string,
+  apiUrl: string,
+  region?: CloudRegionEnum
+): WebChatNovuDependencies {
+  const local = isNovuLocalApiUrl(apiUrl) ? resolveLocalNovuSdkRoots() : null;
+
+  if (local) {
+    return vendorLocalNovuSdks(projectDir, local);
+  }
+
+  return resolveWebChatNovuDependencies(apiUrl, region);
+}
+
+/**
+ * Copy built workspace SDK packages into the scaffold so Next.js / Turbopack
+ * resolve them inside the app. Symlinks to the monorepo (`file:/abs/path`)
+ * break Turbopack; tarballs fail on `workspace:*` deps.
+ */
+export function vendorLocalNovuSdks(
+  projectDir: string,
+  local: { react: string; js: string }
+): WebChatNovuDependencies {
+  const reactVendor = path.join(projectDir, 'vendor', '@novu', 'react');
+  const jsVendor = path.join(projectDir, 'vendor', '@novu', 'js');
+
+  copyBuiltPackageVendor(local.js, jsVendor);
+  copyBuiltPackageVendor(local.react, reactVendor, { '@novu/js': 'file:../js' });
+
+  return {
+    react: 'file:./vendor/@novu/react',
+    js: 'file:./vendor/@novu/js',
+  };
+}
+
+function copyBuiltPackageVendor(
+  sourceDir: string,
+  targetDir: string,
+  dependencyOverrides: Record<string, string> = {}
+): void {
+  const sourcePkgPath = path.join(sourceDir, 'package.json');
+  const sourceDist = path.join(sourceDir, 'dist');
+
+  if (!fs.existsSync(sourcePkgPath) || !fs.existsSync(sourceDist)) {
+    throw new Error(
+      `Cannot vendor ${sourceDir}. Run "pnpm build" in packages/react and packages/js before scaffolding locally.`
+    );
+  }
+
+  const sourcePkg = JSON.parse(fs.readFileSync(sourcePkgPath, 'utf8')) as {
+    name?: string;
+    version?: string;
+    type?: string;
+    main?: string;
+    browser?: string;
+    types?: string;
+    exports?: unknown;
+    dependencies?: Record<string, string>;
+  };
+
+  const dependencies: Record<string, string> = {};
+  for (const [name, version] of Object.entries(sourcePkg.dependencies ?? {})) {
+    if (!version.startsWith('workspace:')) {
+      dependencies[name] = version;
+    }
+  }
+
+  for (const [name, version] of Object.entries(dependencyOverrides)) {
+    dependencies[name] = version;
+  }
+
+  fs.rmSync(targetDir, { recursive: true, force: true });
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.cpSync(sourceDist, path.join(targetDir, 'dist'), { recursive: true });
+  fs.writeFileSync(
+    path.join(targetDir, 'package.json'),
+    `${JSON.stringify(
+      {
+        name: sourcePkg.name,
+        version: sourcePkg.version,
+        type: sourcePkg.type,
+        main: sourcePkg.main,
+        browser: sourcePkg.browser,
+        types: sourcePkg.types,
+        exports: sourcePkg.exports,
+        dependencies,
+      },
+      null,
+      2
+    )}\n`,
+    'utf8'
+  );
+}
+
+function ensureWebChatNextConfig(projectDir: string): void {
+  const configPath = path.join(projectDir, 'next.config.mjs');
+
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, WEB_CHAT_NEXT_CONFIG, 'utf8');
+    return;
+  }
+
+  const source = fs.readFileSync(configPath, 'utf8');
+  if (source.includes('transpilePackages')) {
+    return;
+  }
+
+  fs.writeFileSync(
+    configPath,
+    source.replace(
+      'const nextConfig = {',
+      "const nextConfig = {\n  transpilePackages: ['@novu/react', '@novu/js', '@assistant-ui/react'],"
+    ),
+    'utf8'
+  );
+}
+
+const WEB_CHAT_UI_DEPENDENCIES = {
+  '@assistant-ui/react': '^0.15.16',
+  '@assistant-ui/react-markdown': '^0.14.12',
+  '@base-ui/react': '^1.7.0',
+  'class-variance-authority': '^0.7.1',
+  clsx: '^2.1.1',
+  'lucide-react': '^1.34.0',
+  'react-markdown': '^10.1.0',
+  'remark-gfm': '^4.0.1',
+  shadcn: '^4.19.0',
+  'tailwind-merge': '^3.6.0',
+  'tw-animate-css': '^1.4.0',
+  'tw-shimmer': '^0.4.12',
+} as const;
+
+const WEB_CHAT_DEV_DEPENDENCIES = {
+  '@tailwindcss/postcss': '^4.3.3',
+  tailwindcss: '^4.3.3',
+} as const;
+
+function webChatRuntimeDependencies(sdk: WebChatNovuDependencies): Record<string, string> {
+  return {
+    '@novu/react': sdk.react,
+    ...(sdk.js ? { '@novu/js': sdk.js } : {}),
+    ...WEB_CHAT_UI_DEPENDENCIES,
+  };
 }
 
 function renderPackageJson(name: string, sdk: WebChatNovuDependencies): string {
@@ -333,15 +585,13 @@ function renderPackageJson(name: string, sdk: WebChatNovuDependencies): string {
         start: 'next start -p 4012',
       },
       dependencies: {
-        '@novu/react': sdk.react,
-        ...(sdk.js ? { '@novu/js': sdk.js } : {}),
+        ...webChatRuntimeDependencies(sdk),
         next: '^16.2.11',
         react: '^18.3.1',
         'react-dom': '^18.3.1',
-        'react-markdown': '^10.1.0',
-        'remark-gfm': '^4.0.1',
       },
       devDependencies: {
+        ...WEB_CHAT_DEV_DEPENDENCIES,
         '@types/node': '^22.0.0',
         '@types/react': '^19.0.0',
         '@types/react-dom': '^19.0.0',
@@ -373,7 +623,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning style={{ margin: 0 }}>
+      <body className={inter.className} suppressHydrationWarning>
         {children}
       </body>
     </html>
@@ -407,9 +657,27 @@ const STANDALONE_TSCONFIG = JSON.stringify(
   2
 );
 
-const STANDALONE_NEXT_CONFIG = `/** @type {import('next').NextConfig} */
-const nextConfig = {};
+const WEB_CHAT_NEXT_CONFIG = `import path from 'path';
+import { fileURLToPath } from 'url';
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  transpilePackages: ['@novu/react', '@novu/js', '@assistant-ui/react'],
+  turbopack: {
+    root: projectRoot,
+  },
+};
+
 export default nextConfig;
 `;
 
-const STANDALONE_GITIGNORE = `.next\nnode_modules\n.env.local\n`;
+const STANDALONE_POSTCSS_CONFIG = `export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+`;
+
+const STANDALONE_GITIGNORE = `.next\nnode_modules\nvendor\n.env.local\n`;

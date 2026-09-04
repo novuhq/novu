@@ -117,7 +117,9 @@ export function resolveConnectEmbedDocLinks(input: {
 
   links.push(
     { label: 'Web Chat UI', url: 'https://docs.novu.co/agents/channels/web-chat/quickstart.md' },
-    { label: 'useWebChat hook', url: 'https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md' }
+    { label: 'useWebChat hook', url: 'https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md' },
+    { label: 'Starter UI', url: 'https://docs.novu.co/agents/channels/web-chat/starter-ui.md' },
+    { label: 'assistant-ui primitives', url: 'https://www.assistant-ui.com/docs/primitives.md' }
   );
 
   return links;
@@ -207,7 +209,9 @@ function renderInspectSection(): string {
 - Router: App Router vs Pages Router, \`src/\` or not, where API routes live.
 - Package manager: read the lockfile (pnpm, yarn, bun, or npm).
 - Existing Novu code: search for \`@novu/framework\`, \`@novu/react\`, and existing API routes — do not duplicate.
+- Existing chat UI: search \`package.json\` and imports for \`@assistant-ui/react\`, \`stream-chat-react\`, \`@copilotkit/react-ui\`, \`ai/react\` \`useChat\` UI kits, or similar. If one is already the product chat, keep it.
 - LLM / provider: read \`package.json\` and env vars for providers already in use.
+- Host design tokens: find existing CSS variables (\`--primary\`, \`--background\`, \`--radius\`, Tailwind theme). You will remap assistant-ui to those.
 - Match existing formatting, lint rules, naming, and imports.`;
 }
 
@@ -288,10 +292,25 @@ Hard rules:
 function renderWebChatSection(input: { subscriberId: string }): string {
   return `## Part 2 — Web Chat UI
 
+Default UI is **assistant-ui** driven by \`useWebChat\`. The connect template is the reference for look and behavior.
+
 Follow these docs (fetch as \`.md\`). **Skip** dashboard channel-setup steps.
 
-- https://docs.novu.co/agents/channels/web-chat/quickstart.md — hook + parts API
+- https://docs.novu.co/agents/channels/web-chat/quickstart.md — hook + first message
+- https://docs.novu.co/agents/channels/web-chat/starter-ui.md — assistant-ui mapping + connect template
 - https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md — hook reference
+- https://www.assistant-ui.com/docs/primitives.md — primitives stay unstyled; you own the look
+- https://www.assistant-ui.com/docs/tools/generative-ui.md — remap CSS variables (\`--primary\`, \`--background\`, \`--radius\`, …) to this app
+
+### Choose the UI kit
+
+1. If this app already has a chat library (see Inspect), **keep it**. Wire \`useWebChat\` into that library. Do not add a second chat kit.
+2. Otherwise install \`@assistant-ui/react\` + \`@assistant-ui/react-markdown\` and copy the connect template structure: runtime adapter, Thread, Novu parts (cards, MCP, files, approvals), conversation list.
+
+Reference implementation (behavior + part rendering — not colors):
+
+- GitHub: ${CONNECT_EMBED_TEMPLATE_URL}
+- Novu monorepo only: \`${CONNECT_EMBED_TEMPLATE_LOCAL_PATH}/\`
 
 Must render (capabilities only — match this app's routing, components, and styling):
 
@@ -300,21 +319,17 @@ Must render (capabilities only — match this app's routing, components, and sty
 - Approvals + MCP authorize **in the thread** via \`respondToAction\` / authorize URL — not a footer stack
 - Thinking indicator from \`typing\` / \`isRunning\` ("Thinking…"); hide it while a pending approval or MCP connect is on screen
 - Composer disabled while \`isRunning\` / \`isLoading\`
-- Error banner
+- Error banner; reconnect state via \`isRecovering\` / \`catchUpError\` with retry when applicable
 - Optional: load older messages with \`pagination.hasMore\` / \`pagination.fetchMore\`
-
-If you need a working example of those capabilities:
-
-- GitHub: ${CONNECT_EMBED_TEMPLATE_URL}
-- Novu monorepo only: \`${CONNECT_EMBED_TEMPLATE_LOCAL_PATH}/\`
+- Optional: conversation list via \`novu.webChat.listConversations\` + \`startNewConversation\`
 
 Hard rules (partly in docs, rest connect-specific):
 
-- Install \`@novu/react\`; no \`<WebChat />\` component exists.
+- Install \`@novu/react\`. There is no \`<WebChat />\` export from \`@novu/react\` — the template \`WebChat\` is local source.
 - Wire env vars from the Context section; do not hardcode identifiers in source.
 - Pass \`socketUrl\` from env as-is — do not rewrite \`127.0.0.1\` to \`localhost\` or swap in \`socket.novu.co\`.
 - Do not gate the first send behind a second click or a "connected" wait the SDK does not expose.
-- **Match this app's design system** — do not paste scaffold CSS, dashboard components, or dashboard tokens.
+- **Match this app's design system.** Remap assistant-ui / shadcn CSS variables to the host tokens. Do not paste scaffold, playground, or dashboard colors into an app that already has a theme.
 - If HMAC is enabled: follow the quickstart "Going to production" section for \`subscriberHash\` / \`agentHash\`.
 - When the app has no auth yet, use subscriber id \`${input.subscriberId}\` — do not send a test message to prove it.`;
 }

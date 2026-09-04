@@ -1,72 +1,27 @@
 'use client';
 
-import type { AgentConversationTyping, AgentMessage, UseWebChatResult } from '@novu/react';
-import { ChatThread } from './chat-thread';
-import { Composer } from './composer';
+import { ConnectionState } from './assistant-ui/elements/connection-state';
+import { WebChatThread } from './assistant-ui/thread';
 
 /**
- * Presentational shell. Swap this (and the components it uses) for your own UI —
- * it only consumes values from `useWebChat`.
+ * assistant-ui shell. `useWebChat` still owns messages, send, and approvals.
+ * Error banners live in the thread's `Banner` slot, above the composer.
  */
 export type ChatPanelProps = {
-  error?: { message: string };
-  messages: AgentMessage[];
-  hasPendingActions: boolean;
-  isRunning: boolean;
-  isLoading: boolean;
-  typing?: AgentConversationTyping;
-  hasMore: boolean;
-  isFetching: boolean;
-  onFetchMore: () => Promise<unknown>;
-  onRespond: UseWebChatResult['respondToAction'];
-  onCardAction: UseWebChatResult['sendAction'];
-  onSend: UseWebChatResult['sendMessage'];
+  isRecovering: boolean;
 };
 
-export function ChatPanel({
-  error,
-  messages,
-  hasPendingActions,
-  isRunning,
-  isLoading,
-  typing,
-  hasMore,
-  isFetching,
-  onFetchMore,
-  onRespond,
-  onCardAction,
-  onSend,
-}: ChatPanelProps) {
-  const interactionDisabled = isRunning || isLoading;
-
+export function ChatPanel({ isRecovering }: ChatPanelProps) {
   return (
     <div className="chat-main">
-      <ChatThread
-        messages={messages}
-        isRunning={isRunning}
-        isLoading={isLoading}
-        typing={typing}
-        hasPendingActions={hasPendingActions}
-        hasMore={hasMore}
-        isFetching={isFetching}
-        onFetchMore={onFetchMore}
-        onCardAction={onCardAction}
-        onRespond={onRespond}
-        cardActionsDisabled={interactionDisabled}
-        onSend={onSend}
-      />
-
-      <div className="chat-foot">
-        <div className="chat-foot-inner">
-          {error ? (
-            <div className="banner-error" role="alert">
-              {error.message}
-            </div>
-          ) : null}
-
-          <Composer isLoading={isLoading} isRunning={isRunning} onSend={onSend} />
+      {isRecovering ? (
+        // Float over the thread so a reconnect does not shift the messages.
+        <div className="absolute top-3 left-1/2 z-20 w-[calc(100%-48px)] max-w-[680px] -translate-x-1/2">
+          <ConnectionState phase="reconnecting" className="w-full max-w-none" />
         </div>
-      </div>
+      ) : null}
+
+      <WebChatThread />
     </div>
   );
 }

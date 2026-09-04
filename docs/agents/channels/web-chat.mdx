@@ -6,7 +6,7 @@ sidebarTitle: Overview
 
 Web Chat is an ACI channel. The messaging surface is your product UI.
 
-The agent brain, conversation history, tool approval, and dashboard observability match other ACI channels. The React client is [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) from `@novu/react`. You render the message list and the composer. There is no prebuilt `<WebChat />` component.
+The agent brain, conversation history, tool approval, and dashboard observability match other ACI channels. The React client is [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) from `@novu/react`. `@novu/react` has no `<WebChat />` export. `npx novu connect` can scaffold a [starter UI](/agents/channels/web-chat/starter-ui).
 
 Web Chat supports live typing, thinking parts, tool approval, MCP connect, cards, custom data parts, and file parts. HMAC is available on the integration.
 
@@ -77,6 +77,9 @@ useWebChat({
   </Card>
   <Card href="/agents/channels/web-chat/chat-ui" title="Chat UI" icon="list">
     Parts, retry, resume, cards, approvals, and reconnect.
+  </Card>
+  <Card href="/agents/channels/web-chat/starter-ui" title="Starter UI" icon="layout">
+    assistant-ui template and Novu part mapping.
   </Card>
   <Card href="/platform/sdks/react/hooks/use-web-chat" title="useWebChat" icon="code">
     Hook props, return value, and callbacks.

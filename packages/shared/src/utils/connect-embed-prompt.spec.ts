@@ -17,6 +17,7 @@ describe('buildConnectEmbedPrompt', () => {
   it('points embed agents at the connect template, not dashboard chat', () => {
     expect(prompt).toContain(CONNECT_EMBED_TEMPLATE_URL);
     expect(prompt).toContain(CONNECT_EMBED_TEMPLATE_LOCAL_PATH);
+    expect(prompt).toContain('https://docs.novu.co/agents/channels/web-chat/starter-ui.md');
     expect(prompt).not.toContain('apps/dashboard/src/components/agents/web-chat-panel');
   });
 
@@ -25,6 +26,6 @@ describe('buildConnectEmbedPrompt', () => {
     expect(prompt).toContain('Approvals + MCP authorize **in the thread**');
     expect(prompt).toContain('Thinking indicator');
     expect(prompt).toContain("Match this app's design system");
-    expect(prompt).toContain('do not paste scaffold CSS');
+    expect(prompt).toContain('Do not paste scaffold, playground, or dashboard colors');
   });
 });

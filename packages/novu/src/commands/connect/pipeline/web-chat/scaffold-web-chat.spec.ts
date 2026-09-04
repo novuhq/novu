@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { CloudRegionEnum } from '../../../dev/enums';
 import {
   assertSafeScaffoldDirectoryName,
+  resolveLocalNovuSdkRoots,
   resolveWebChatNovuDependencies,
   scaffoldWebChatProject,
 } from './scaffold-web-chat';
@@ -22,9 +23,7 @@ describe('assertSafeScaffoldDirectoryName', () => {
   });
 
   it('rejects absolute paths', () => {
-    expect(() => assertSafeScaffoldDirectoryName('/tmp/malicious-web-chat')).toThrow(
-      /Invalid scaffold directory name/
-    );
+    expect(() => assertSafeScaffoldDirectoryName('/tmp/malicious-web-chat')).toThrow(/Invalid scaffold directory name/);
   });
 });
 
@@ -53,13 +52,34 @@ describe('scaffoldWebChatProject', () => {
           dependencies: {
             '@novu/react': 'latest',
             '@novu/js': 'latest',
+            '@assistant-ui/react': '^0.15.16',
+            '@assistant-ui/react-markdown': '^0.14.12',
+            '@base-ui/react': '^1.7.0',
+            'class-variance-authority': '^0.7.1',
+            clsx: '^2.1.1',
+            'lucide-react': '^1.34.0',
             'react-markdown': '^10.1.0',
             'remark-gfm': '^4.0.1',
+            shadcn: '^4.19.0',
+            'tailwind-merge': '^3.6.0',
+            'tw-animate-css': '^1.4.0',
+            'tw-shimmer': '^0.4.12',
+          },
+          devDependencies: {
+            '@tailwindcss/postcss': '^4.3.3',
+            tailwindcss: '^4.3.3',
           },
         },
         null,
         2
       )
+    );
+
+    fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
+    fs.writeFileSync(
+      path.join(projectDir, 'app', 'globals.css'),
+      `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n`,
+      'utf8'
     );
 
     await scaffoldWebChatProject({
@@ -76,6 +96,27 @@ describe('scaffoldWebChatProject', () => {
     expect(page).not.toContain('localhost:3000');
     expect(page).toContain('...(apiUrl ? { apiUrl } : {})');
     expect(page).toContain('...(socketUrl ? { socketUrl } : {})');
+
+    const runtime = fs.readFileSync(
+      path.join(projectDir, 'components', 'web-chat', 'assistant-ui', 'web-chat-runtime.tsx'),
+      'utf8'
+    );
+    expect(runtime).toContain('@assistant-ui/react');
+
+    const webChat = fs.readFileSync(path.join(projectDir, 'components', 'web-chat', 'web-chat.tsx'), 'utf8');
+    expect(webChat).toContain('className="shell"');
+    expect(webChat).toContain('className="workbench"');
+    expect(webChat).toContain('showAgentActivity');
+    expect(page).not.toContain('novu-web-chat');
+
+    const mergedGlobals = fs.readFileSync(path.join(projectDir, 'app', 'globals.css'), 'utf8');
+    expect(mergedGlobals).toContain("components/web-chat/globals.css");
+    expect(mergedGlobals).toContain('@tailwind base');
+
+    const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8')) as {
+      dependencies: Record<string, string>;
+    };
+    expect(packageJson.dependencies['@assistant-ui/react']).toBe('^0.15.16');
   });
 });
 
@@ -87,10 +128,12 @@ describe('resolveWebChatNovuDependencies', () => {
     });
   });
 
-  it('pins @novu/react and @novu/js to next on local API', () => {
+  it('pins @novu/react and @novu/js to vendored workspace packages on local API', () => {
+    const local = resolveLocalNovuSdkRoots();
+    expect(local).not.toBeNull();
     expect(resolveWebChatNovuDependencies('http://localhost:3000')).toEqual({
-      react: 'next',
-      js: 'next',
+      react: 'file:./vendor/@novu/react',
+      js: 'file:./vendor/@novu/js',
     });
   });
 
@@ -102,7 +145,7 @@ describe('resolveWebChatNovuDependencies', () => {
   });
 
   it('pins next packages when --staging region is set even with a custom api url', () => {
-    expect(resolveWebChatNovuDependencies('http://localhost:3000', CloudRegionEnum.STAGING)).toEqual({
+    expect(resolveWebChatNovuDependencies('https://api.novu.co', CloudRegionEnum.STAGING)).toEqual({
       react: 'next',
       js: 'next',
     });

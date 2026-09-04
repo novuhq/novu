@@ -1,0 +1,92 @@
+---
+title: "Web Chat starter UI"
+description: "Map useWebChat messages to assistant-ui. Use the novu connect template for Thread, cards, approvals, and conversation list."
+sidebarTitle: Starter UI
+---
+
+`useWebChat` is headless. It does not render a thread.
+
+`npx novu connect` can copy a starter UI that uses [assistant-ui](https://www.assistant-ui.com/docs/primitives). That starter is local source in your app. `@novu/react` has no `<WebChat />` export.
+
+Use this page when you want that starter. Use [Chat UI](/agents/channels/web-chat/chat-ui) when you build a different renderer.
+
+## When to use it
+
+| App state | What to do |
+| --- | --- |
+| New app from `novu connect` | Keep the scaffolded template. |
+| Existing app with no chat kit | Copy the [connect template](https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/web-chat/ts). Wire `useWebChat`. |
+| Existing app that already has a chat kit | Keep that kit. Map [Chat UI](/agents/channels/web-chat/chat-ui) fields into it. Do not add a second chat kit. |
+
+## Install
+
+```package-install
+npm install @novu/react @assistant-ui/react @assistant-ui/react-markdown
+```
+
+Copy the template into your app. The important files:
+
+| File | Role |
+| --- | --- |
+| `web-chat.tsx` | Calls `useWebChat`. Passes state into the runtime. |
+| `assistant-ui/web-chat-runtime.tsx` | `useExternalStoreRuntime` + message converter. |
+| `lib/agent-message-to-thread-message.ts` | Maps Novu parts to assistant-ui content. |
+| `assistant-ui/novu-parts.tsx` | Cards, MCP connect, files. |
+| `assistant-ui/thread.tsx` | Thread slots: typing, banner, user message. |
+
+Canonical copy: [connect template](https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/web-chat/ts).
+
+## Map Novu parts to assistant-ui
+
+Novu owns the message list. assistant-ui renders `ThreadMessageLike` content. The converter does this map:
+
+| Novu `part.type` | assistant-ui content | Notes |
+| --- | --- | --- |
+| `text` | `text` | Stream with `part.state === 'streaming'`. |
+| `thinking` | `reasoning` | Model reasoning in the bubble. Not the same as `typing`. |
+| `tool` | `tool-call` | Skip the tool row when an `approval` part exists for the same `toolUseId`. |
+| `approval` | `tool-call` + `approval` | User decision calls `respondToAction`. |
+| `card` | `data` name `novu-card` | Button clicks call `sendAction`. Pass `sourceMessageId`. |
+| `mcp-connection` | `data` name `novu-mcp` | Open `authorizeUrl`. Do not call `respondToAction`. |
+| `file` | `data` name `novu-file` | |
+| `data` | `data` with `part.name` | Custom payload. You choose the UI. |
+| `source` | omit | Read-path only. No public producer yet. |
+
+Turn-level signals stay on the hook. Do not invent them in the UI:
+
+| Hook field | What the starter does |
+| --- | --- |
+| `isRunning` | Marks the turn as active. Disables send. |
+| `typing?.status` | Thinking label ("Thinking…"). Hide it while a pending approval or MCP connect is on screen. |
+| `pendingActions` | In-thread approval / MCP cards. |
+| `isRecovering` / `catchUpError` | Banner + retry. |
+| `pagination` | Load older messages. |
+
+`isRunning` and `typing` come from the socket. The starter treats either as "agent working" so the indicator can show before `run-start`.
+
+See [Chat UI](/agents/channels/web-chat/chat-ui) for the full field list.
+
+## Theme
+
+assistant-ui primitives are unstyled. The template uses CSS variables (`--primary`, `--background`, `--radius`, and related tokens).
+
+If the host app already has a theme, remap those variables to the host tokens. Do not paste scaffold, playground, or dashboard colors into a branded app.
+
+See [assistant-ui primitives](https://www.assistant-ui.com/docs/primitives) and [generative UI tokens](https://www.assistant-ui.com/docs/tools/generative-ui).
+
+## Next steps
+
+<Columns cols={2}>
+  <Card href="/agents/channels/web-chat/quickstart" title="Quickstart" icon="rocket">
+    Headless first message with `useWebChat`.
+  </Card>
+  <Card href="/agents/channels/web-chat/chat-ui" title="Chat UI" icon="list">
+    Parts, cards, approvals, retry, and reconnect.
+  </Card>
+  <Card href="/platform/sdks/react/hooks/use-web-chat" title="useWebChat" icon="code">
+    Hook props, return value, and callbacks.
+  </Card>
+  <Card href="https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/web-chat/ts" title="Connect template" icon="github">
+    Source for the starter Thread and adapters.
+  </Card>
+</Columns>
