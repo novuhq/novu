@@ -162,7 +162,10 @@ function ensureWebChatDependencies(projectDir: string, apiUrl: string, region?: 
     fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
   }
 
-  ensureWebChatPostcssConfig(projectDir);
+  const postcssUpgraded = ensureWebChatPostcssConfig(projectDir);
+  if (postcssUpgraded) {
+    migrateHostTailwindCss(projectDir);
+  }
 
   return changed;
 }
@@ -244,9 +247,14 @@ function ensureWebChatGlobalsImport(projectDir: string): void {
   const importLine = "@import '../components/web-chat/globals.css';";
 
   if (fs.existsSync(globalsPath)) {
-    const existing = fs.readFileSync(globalsPath, 'utf8');
+    let existing = fs.readFileSync(globalsPath, 'utf8');
     if (existing.includes('components/web-chat/globals.css')) {
       return;
+    }
+
+    const migrated = migrateLegacyTailwindDirectives(existing);
+    if (migrated) {
+      existing = migrated;
     }
 
     fs.writeFileSync(globalsPath, `${importLine}\n${existing}`, 'utf8');
@@ -255,6 +263,33 @@ function ensureWebChatGlobalsImport(projectDir: string): void {
 
   fs.mkdirSync(path.dirname(globalsPath), { recursive: true });
   fs.writeFileSync(globalsPath, `${importLine}\n`, 'utf8');
+}
+
+function migrateHostTailwindCss(projectDir: string): void {
+  const globalsPath = path.join(projectDir, 'app', 'globals.css');
+  if (!fs.existsSync(globalsPath)) {
+    return;
+  }
+
+  const source = fs.readFileSync(globalsPath, 'utf8');
+  const migrated = migrateLegacyTailwindDirectives(source);
+  if (migrated) {
+    fs.writeFileSync(globalsPath, migrated, 'utf8');
+  }
+}
+
+/** Tailwind 4 uses `@import "tailwindcss"` instead of `@tailwind base/components/utilities`. */
+function migrateLegacyTailwindDirectives(css: string): string | null {
+  if (!/@tailwind\s+(base|components|utilities)/.test(css)) {
+    return null;
+  }
+
+  if (css.includes("@import 'tailwindcss'") || css.includes('@import "tailwindcss"')) {
+    return null;
+  }
+
+  const stripped = css.replace(/@tailwind\s+(base|components|utilities)\s*;\s*\n?/g, '').trimStart();
+  return `@import "tailwindcss";\n\n${stripped}`;
 }
 
 const NEXT_CONFIG_FILENAMES = ['next.config.ts', 'next.config.js', 'next.config.mjs', 'next.config.cjs'] as const;
@@ -273,8 +308,21 @@ function findNextConfigPath(projectDir: string): string | null {
 }
 
 function patchNextConfigSource(source: string): string | null {
-  if (source.includes('transpilePackages')) {
+  const missingPackages = WEB_CHAT_TRANSPILE_PACKAGES.filter(
+    (pkg) => !source.includes(`'${pkg}'`) && !source.includes(`"${pkg}"`)
+  );
+
+  if (missingPackages.length === 0) {
     return null;
+  }
+
+  const transpileArrayMatch = source.match(/transpilePackages\s*:\s*\[([\s\S]*?)\]/);
+  if (transpileArrayMatch) {
+    const inner = transpileArrayMatch[1].trim();
+    const additions = missingPackages.map((pkg) => `'${pkg}'`).join(', ');
+    const mergedInner = inner ? `${inner.replace(/,\s*$/, '')}, ${additions}` : additions;
+
+    return source.replace(transpileArrayMatch[0], `transpilePackages: [${mergedInner}]`);
   }
 
   const insertion = `  transpilePackages: ${JSON.stringify([...WEB_CHAT_TRANSPILE_PACKAGES])},`;
@@ -283,6 +331,10 @@ function patchNextConfigSource(source: string): string | null {
     "const nextConfig: import('next').NextConfig = {",
     'const nextConfig = {',
     'module.exports = {',
+    'withBundleAnalyzer({',
+    'withSentryConfig({',
+    'withNextIntl({',
+    'export default {',
   ];
 
   for (const marker of markers) {
@@ -294,30 +346,40 @@ function patchNextConfigSource(source: string): string | null {
   return null;
 }
 
-function ensureWebChatPostcssConfig(projectDir: string): void {
+function upgradePostcssConfigSource(source: string): string | null {
+  if (source.includes('@tailwindcss/postcss')) {
+    return null;
+  }
+
+  if (!/\btailwindcss\b/.test(source)) {
+    return null;
+  }
+
+  const upgraded = source
+    .replace(/(['"])tailwindcss\1\s*:/g, "'@tailwindcss/postcss':")
+    .replace(/\btailwindcss\s*:/g, "'@tailwindcss/postcss':");
+
+  return upgraded === source ? null : upgraded;
+}
+
+function ensureWebChatPostcssConfig(projectDir: string): boolean {
   const mjsPath = path.join(projectDir, 'postcss.config.mjs');
   const jsPath = path.join(projectDir, 'postcss.config.js');
   const existingPath = fs.existsSync(mjsPath) ? mjsPath : fs.existsSync(jsPath) ? jsPath : null;
 
   if (!existingPath) {
     fs.writeFileSync(mjsPath, STANDALONE_POSTCSS_CONFIG, 'utf8');
-    return;
+    return true;
   }
 
   const source = fs.readFileSync(existingPath, 'utf8');
-  if (source.includes('@tailwindcss/postcss')) {
-    return;
+  const upgraded = upgradePostcssConfigSource(source);
+  if (!upgraded) {
+    return false;
   }
 
-  if (!source.includes('tailwindcss')) {
-    return;
-  }
-
-  const upgraded =
-    existingPath.endsWith('.js') && !existingPath.endsWith('.mjs')
-      ? STANDALONE_POSTCSS_CONFIG_CJS
-      : STANDALONE_POSTCSS_CONFIG;
   fs.writeFileSync(existingPath, upgraded, 'utf8');
+  return true;
 }
 
 function renderChatPage(opts: { standalone: boolean; configImport: string }): string {
@@ -720,13 +782,6 @@ export default nextConfig;
 `;
 
 const STANDALONE_POSTCSS_CONFIG = `export default {
-  plugins: {
-    '@tailwindcss/postcss': {},
-  },
-};
-`;
-
-const STANDALONE_POSTCSS_CONFIG_CJS = `module.exports = {
   plugins: {
     '@tailwindcss/postcss': {},
   },
