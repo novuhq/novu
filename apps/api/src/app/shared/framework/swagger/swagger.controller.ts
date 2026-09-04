@@ -13,9 +13,8 @@ import {
 } from './open.api.manipulation.component';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
-  type: 'apiKey',
-  name: 'Authorization',
-  in: 'header',
+  type: 'http',
+  scheme: 'ApiKey',
   description: 'API key authentication. Allowed headers-- "Authorization: ApiKey <novu_secret_key>".',
   'x-speakeasy-example': 'YOUR_SECRET_KEY_HERE',
 } as unknown as SecuritySchemeObject;
