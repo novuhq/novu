@@ -82,6 +82,68 @@ describe('scaffoldWebChatProject', () => {
     expect(page).toContain('...(apiUrl ? { apiUrl } : {})');
     expect(page).toContain('...(socketUrl ? { socketUrl } : {})');
   });
+
+  it('bootstraps the Tailwind toolchain when merging into a project without Tailwind', async () => {
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-merge-no-tw-'));
+    fs.writeFileSync(
+      path.join(projectDir, 'package.json'),
+      JSON.stringify({ name: 'agent-app', dependencies: { next: '^16.0.0' } }, null, 2)
+    );
+
+    await scaffoldWebChatProject({
+      parentDir: projectDir,
+      agentIdentifier: 'support-agent',
+      applicationIdentifier: 'app-id',
+      subscriberId: 'subscriber-id',
+      apiUrl: 'https://api.novu.co',
+      mergeIntoProjectDir: projectDir,
+    });
+
+    const postcss = fs.readFileSync(path.join(projectDir, 'postcss.config.mjs'), 'utf8');
+    expect(postcss).toContain('@tailwindcss/postcss');
+
+    const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8')) as {
+      devDependencies?: Record<string, string>;
+    };
+    expect(packageJson.devDependencies?.tailwindcss).toBeDefined();
+    expect(packageJson.devDependencies?.['@tailwindcss/postcss']).toBeDefined();
+  });
+
+  it('leaves an existing Tailwind setup untouched when merging', async () => {
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-merge-tw3-'));
+    fs.writeFileSync(
+      path.join(projectDir, 'package.json'),
+      JSON.stringify(
+        {
+          name: 'agent-app',
+          dependencies: { next: '^16.0.0' },
+          devDependencies: { tailwindcss: '^3.4.0', postcss: '^8.4.0' },
+        },
+        null,
+        2
+      )
+    );
+    const tw3Postcss = `module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };\n`;
+    fs.writeFileSync(path.join(projectDir, 'postcss.config.js'), tw3Postcss, 'utf8');
+
+    await scaffoldWebChatProject({
+      parentDir: projectDir,
+      agentIdentifier: 'support-agent',
+      applicationIdentifier: 'app-id',
+      subscriberId: 'subscriber-id',
+      apiUrl: 'https://api.novu.co',
+      mergeIntoProjectDir: projectDir,
+    });
+
+    expect(fs.existsSync(path.join(projectDir, 'postcss.config.mjs'))).toBe(false);
+    expect(fs.readFileSync(path.join(projectDir, 'postcss.config.js'), 'utf8')).toBe(tw3Postcss);
+
+    const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8')) as {
+      devDependencies?: Record<string, string>;
+    };
+    expect(packageJson.devDependencies?.tailwindcss).toBe('^3.4.0');
+    expect(packageJson.devDependencies?.['@tailwindcss/postcss']).toBeUndefined();
+  });
 });
 
 describe('resolveWebChatNovuDependencies', () => {
