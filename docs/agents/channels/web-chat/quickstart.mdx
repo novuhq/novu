@@ -4,7 +4,7 @@ description: "Install @novu/react, wrap NovuProvider, and use useWebChat to send
 sidebarTitle: Quickstart
 ---
 
-Build a two-way Web Chat in your React app. Novu supplies conversation state, delivery, and the live socket. You render the UI. `useWebChat` is headless.
+Build a two-way Web Chat in your React app. You supply the UI. Novu supplies conversation state, delivery, and the live socket.
 
 ## Prerequisites
 
@@ -74,23 +74,21 @@ export function App() {
 <Prompt description="Add Novu Web Chat to my React app" icon="plug" actions={["copy", "cursor"]}>
 # Add Novu Web Chat to a React app
 
-Install `@novu/react`. Wrap the app in `NovuProvider`. Call `useWebChat` and render messages with the headless parts API (text, cards, tools, approvals).
+Install `@novu/react`. Wrap the app in `NovuProvider`. Call `useWebChat` and render your own message list and composer. There is no prebuilt `<WebChat />` component.
 
 Canonical example: https://docs.novu.co/agents/channels/web-chat/quickstart
-Starter UI (full assistant-ui template): https://docs.novu.co/agents/channels/web-chat/starter-ui
 
 ALWAYS:
 
 - Detect the project's package manager and use it for installation
 - Use `NovuProvider` from `@novu/react` (not a second Novu client)
 - Pass the dashboard agent identifier as `agentId`
-- Render from `messages` and `parts` — do not invent a `<WebChat />` export from `@novu/react`
 - Disable the composer while `isRunning` or `isLoading` is true
 - Use TypeScript, no comments, no empty props
 
 NEVER:
 
-- Invent a `<WebChat />` export from `@novu/react`. It does not exist.
+- Invent a `<WebChat />` component from `@novu/react`. It does not exist.
 - Use `useChat` from `@ai-sdk/react`. Web Chat uses `useWebChat`.
 - Compute HMAC hashes in the browser
 - Hardcode real API keys
@@ -153,16 +151,13 @@ export default function App() {
 
 Omit `conversationId` to start a new chat. The first successful send creates the conversation.
 
-See [Chat UI](/agents/channels/web-chat/chat-ui) for parts, retry, resume, and reconnect. See [Starter UI](/agents/channels/web-chat/starter-ui) for the assistant-ui template.
+See [Chat UI](/agents/channels/web-chat/chat-ui) for parts, retry, resume, and reconnect.
 
 ## Next steps
 
 <Columns cols={2}>
   <Card href="/agents/channels/web-chat/chat-ui" title="Chat UI" icon="list">
     Parts, retry, resume, cards, approvals, and reconnect.
-  </Card>
-  <Card href="/agents/channels/web-chat/starter-ui" title="Starter UI" icon="layout">
-    assistant-ui template and Novu part mapping.
   </Card>
   <Card href="/platform/sdks/react/hooks/use-web-chat" title="useWebChat reference" icon="code">
     Props, return value, callbacks, and message parts.
