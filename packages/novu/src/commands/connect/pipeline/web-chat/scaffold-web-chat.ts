@@ -371,6 +371,10 @@ function patchNextConfigSource(source: string): string | null {
     }
   }
 
+  if (hasTranspilePackages) {
+    return null;
+  }
+
   const defaultExportId = source.match(/export\s+default\s+([A-Za-z_$][\w$]*)\s*;/);
   if (defaultExportId) {
     const patched = patchNextConfigVariableDefinition(source, defaultExportId[1], insertion);
