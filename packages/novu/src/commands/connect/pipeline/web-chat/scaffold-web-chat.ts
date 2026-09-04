@@ -257,13 +257,67 @@ function ensureWebChatGlobalsImport(projectDir: string): void {
   fs.writeFileSync(globalsPath, `${importLine}\n`, 'utf8');
 }
 
+const NEXT_CONFIG_FILENAMES = ['next.config.ts', 'next.config.js', 'next.config.mjs', 'next.config.cjs'] as const;
+
+const WEB_CHAT_TRANSPILE_PACKAGES = ['@novu/react', '@novu/js', '@assistant-ui/react'] as const;
+
+function findNextConfigPath(projectDir: string): string | null {
+  for (const filename of NEXT_CONFIG_FILENAMES) {
+    const configPath = path.join(projectDir, filename);
+    if (fs.existsSync(configPath)) {
+      return configPath;
+    }
+  }
+
+  return null;
+}
+
+function patchNextConfigSource(source: string): string | null {
+  if (source.includes('transpilePackages')) {
+    return null;
+  }
+
+  const insertion = `  transpilePackages: ${JSON.stringify([...WEB_CHAT_TRANSPILE_PACKAGES])},`;
+  const markers = [
+    'const nextConfig: NextConfig = {',
+    "const nextConfig: import('next').NextConfig = {",
+    'const nextConfig = {',
+    'module.exports = {',
+  ];
+
+  for (const marker of markers) {
+    if (source.includes(marker)) {
+      return source.replace(marker, `${marker}\n${insertion}`);
+    }
+  }
+
+  return null;
+}
+
 function ensureWebChatPostcssConfig(projectDir: string): void {
-  const postcssPath = path.join(projectDir, 'postcss.config.mjs');
-  if (fs.existsSync(postcssPath) || fs.existsSync(path.join(projectDir, 'postcss.config.js'))) {
+  const mjsPath = path.join(projectDir, 'postcss.config.mjs');
+  const jsPath = path.join(projectDir, 'postcss.config.js');
+  const existingPath = fs.existsSync(mjsPath) ? mjsPath : fs.existsSync(jsPath) ? jsPath : null;
+
+  if (!existingPath) {
+    fs.writeFileSync(mjsPath, STANDALONE_POSTCSS_CONFIG, 'utf8');
     return;
   }
 
-  fs.writeFileSync(postcssPath, STANDALONE_POSTCSS_CONFIG, 'utf8');
+  const source = fs.readFileSync(existingPath, 'utf8');
+  if (source.includes('@tailwindcss/postcss')) {
+    return;
+  }
+
+  if (!source.includes('tailwindcss')) {
+    return;
+  }
+
+  const upgraded =
+    existingPath.endsWith('.js') && !existingPath.endsWith('.mjs')
+      ? STANDALONE_POSTCSS_CONFIG_CJS
+      : STANDALONE_POSTCSS_CONFIG;
+  fs.writeFileSync(existingPath, upgraded, 'utf8');
 }
 
 function renderChatPage(opts: { standalone: boolean; configImport: string }): string {
@@ -524,26 +578,18 @@ function copyBuiltPackageVendor(
 }
 
 function ensureWebChatNextConfig(projectDir: string): void {
-  const configPath = path.join(projectDir, 'next.config.mjs');
+  const existingPath = findNextConfigPath(projectDir);
 
-  if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(configPath, WEB_CHAT_NEXT_CONFIG, 'utf8');
+  if (!existingPath) {
+    fs.writeFileSync(path.join(projectDir, 'next.config.mjs'), WEB_CHAT_NEXT_CONFIG, 'utf8');
     return;
   }
 
-  const source = fs.readFileSync(configPath, 'utf8');
-  if (source.includes('transpilePackages')) {
-    return;
+  const source = fs.readFileSync(existingPath, 'utf8');
+  const patched = patchNextConfigSource(source);
+  if (patched) {
+    fs.writeFileSync(existingPath, patched, 'utf8');
   }
-
-  fs.writeFileSync(
-    configPath,
-    source.replace(
-      'const nextConfig = {',
-      "const nextConfig = {\n  transpilePackages: ['@novu/react', '@novu/js', '@assistant-ui/react'],"
-    ),
-    'utf8'
-  );
 }
 
 const WEB_CHAT_UI_DEPENDENCIES = {
@@ -674,6 +720,13 @@ export default nextConfig;
 `;
 
 const STANDALONE_POSTCSS_CONFIG = `export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+`;
+
+const STANDALONE_POSTCSS_CONFIG_CJS = `module.exports = {
   plugins: {
     '@tailwindcss/postcss': {},
   },
