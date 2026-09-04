@@ -2,18 +2,6 @@ import type { ThreadMessageLike, ToolApprovalOption } from '@assistant-ui/react'
 import type { AgentCardElement, AgentMessage } from '@novu/react';
 import { APPROVAL_OPTIONS } from './approval-options';
 
-/** Reserved assistant-ui data surfaces — only typed protocol parts may use these names. */
-const RESERVED_NOVU_DATA_UI_NAMES = new Set(['novu-mcp', 'novu-card', 'novu-file']);
-
-function customDataUiName(name: string): string | null {
-  const trimmed = name.trim();
-  if (!trimmed || RESERVED_NOVU_DATA_UI_NAMES.has(trimmed)) {
-    return null;
-  }
-
-  return trimmed;
-}
-
 const POWERED_BY =
   /(?:\n+)?(?:_*Powered by\s*\[[^\]]+\]\([^)]+\)_*|_*\[Powered by Novu\]\([^)]+\)_*|Powered by\s*<https?:\/\/[^|>]+\|[^>]+>|Powered by\s*<a\b[^>]*>[\s\S]*?<\/a>|Powered by Novu\u200B?)\s*$/i;
 
@@ -183,9 +171,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         break;
       }
       case 'data': {
-        const uiName = customDataUiName(part.name);
-        if (!uiName) break;
-        content.push({ type: 'data', name: uiName, data: part.data });
+        content.push({ type: 'data', name: part.name, data: part.data });
         break;
       }
       default:
