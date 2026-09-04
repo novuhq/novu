@@ -8,11 +8,27 @@ export interface IThrottleGrouping {
 }
 
 /**
- * Resolves both supported throttle-key contracts without inferring intent from the rendered value.
+ * Redis suffix appended after `throttle:<env>:<subscriber>:<workflow>:<step>`.
+ * Keep this identical to production `buildSetKey` so in-flight windows survive deploy.
+ */
+export function buildThrottleGroupingSuffix(grouping: IThrottleGrouping): string {
+  return grouping.throttleKey && grouping.throttleValue !== undefined
+    ? `:${grouping.throttleKey}:${grouping.throttleValue}`
+    : '';
+}
+
+/**
+ * Resolves throttle grouping without inferring a payload path from a rendered value.
  *
- * Stateful workflows expose the configured control value. A bare path keeps the legacy lookup
- * behavior and Redis identity, while a Liquid expression uses the value already rendered by the
- * framework. Stateless workflows only expose the rendered value.
+ * Production identities that must stay byte-identical:
+ * - no custom key → `:default:default`
+ * - bare payload path with a value → `:<path>:<value>`
+ * - bare payload path with a missing value → ungrouped (`''`)
+ * - Liquid/custom key with a missing/empty value → `:default:default` (falsy compiled output)
+ *
+ * Dashboard/Liquid keys with a real value used to collapse onto the ungrouped key because the
+ * compiled value was looked up as a path. That is the bug this change fixes; those windows reset
+ * once onto a per-value identity.
  */
 export function resolveThrottleGrouping(
   configuredThrottleKey: unknown,
@@ -32,10 +48,6 @@ export function resolveThrottleGrouping(
     const value = String(resolvedThrottleValue);
 
     return { throttleKey: value, throttleValue: value };
-  }
-
-  if (configuredThrottleKey) {
-    return {};
   }
 
   return { throttleKey: DEFAULT_GROUPING, throttleValue: DEFAULT_GROUPING };

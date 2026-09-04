@@ -1,41 +1,57 @@
-import { resolveThrottleGrouping } from './resolve-throttle-grouping';
+import { buildThrottleGroupingSuffix, resolveThrottleGrouping } from './resolve-throttle-grouping';
+
+function redisIdentity(configured: unknown, resolved: unknown, payload: unknown): string {
+  return buildThrottleGroupingSuffix(resolveThrottleGrouping(configured, resolved, payload));
+}
 
 describe('resolveThrottleGrouping', () => {
-  it('uses the rendered Liquid value without treating it as another payload path', () => {
-    expect(
-      resolveThrottleGrouping('{{payload.group}}', 'tenantId', {
-        group: 'tenantId',
-        tenantId: 'acme',
-      })
-    ).toEqual({
-      throttleKey: 'tenantId',
-      throttleValue: 'tenantId',
+  describe('production Redis identity (must not change for working customers)', () => {
+    it('keeps the default window when no custom key is configured', () => {
+      expect(redisIdentity(undefined, undefined, {})).toBe(':default:default');
+      expect(redisIdentity('', '', {})).toBe(':default:default');
+    });
+
+    it('keeps the bare-path identity so API-configured keys survive deploy', () => {
+      expect(redisIdentity('userId', 'userId', { userId: 'user-1' })).toBe(':userId:user-1');
+    });
+
+    it('keeps the ungrouped identity when a bare path is missing from the payload', () => {
+      expect(redisIdentity('userId', 'userId', {})).toBe('');
+    });
+
+    it('keeps the default window when a Liquid key renders empty, matching falsy compiled output', () => {
+      expect(redisIdentity('{{payload.userId}}', '', {})).toBe(':default:default');
+      expect(redisIdentity('{{payload.userId}}', undefined, {})).toBe(':default:default');
+    });
+
+    it('stringifies null/number bare-path values the same way Redis interpolation did', () => {
+      expect(redisIdentity('count', 'count', { count: 0 })).toBe(':count:0');
+      expect(redisIdentity('flag', 'flag', { flag: false })).toBe(':flag:false');
+      expect(redisIdentity('org', 'org', { org: null })).toBe(':org:null');
     });
   });
 
-  it('preserves the legacy Redis identity for a bare payload path', () => {
-    expect(resolveThrottleGrouping('userId', 'userId', { userId: 'user-1' })).toEqual({
-      throttleKey: 'userId',
-      throttleValue: 'user-1',
+  describe('dashboard Liquid keys (the original bug)', () => {
+    it('groups by the rendered value instead of collapsing every value onto one ungrouped window', () => {
+      expect(
+        redisIdentity('{{payload.group}}', 'tenantId', {
+          group: 'tenantId',
+          tenantId: 'acme',
+        })
+      ).toBe(':tenantId:tenantId');
     });
-  });
 
-  it('preserves the legacy ungrouped identity when a bare path is missing', () => {
-    expect(resolveThrottleGrouping('userId', 'userId', {})).toEqual({
-      throttleKey: 'userId',
-      throttleValue: undefined,
+    it('does not look the rendered value up as another payload path', () => {
+      expect(
+        resolveThrottleGrouping('{{payload.group}}', 'tenantId', {
+          group: 'tenantId',
+          tenantId: 'acme',
+        })
+      ).toEqual({
+        throttleKey: 'tenantId',
+        throttleValue: 'tenantId',
+      });
     });
-  });
-
-  it('uses the legacy default identity when no custom key is configured', () => {
-    expect(resolveThrottleGrouping(undefined, undefined, {})).toEqual({
-      throttleKey: 'default',
-      throttleValue: 'default',
-    });
-  });
-
-  it('keeps a missing Liquid value on the legacy ungrouped identity', () => {
-    expect(resolveThrottleGrouping('{{payload.userId}}', '', {})).toEqual({});
   });
 
   it('supports stateless workflows that only expose the resolved value', () => {
@@ -43,5 +59,6 @@ describe('resolveThrottleGrouping', () => {
       throttleKey: 'project-1',
       throttleValue: 'project-1',
     });
+    expect(redisIdentity(undefined, 'project-1', {})).toBe(':project-1:project-1');
   });
 });
