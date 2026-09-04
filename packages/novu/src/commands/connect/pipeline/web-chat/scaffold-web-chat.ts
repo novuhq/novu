@@ -255,9 +255,9 @@ export function stripUnlayeredUniversalReset(css: string): string {
       }
 
       const stripped = body
-        .split('\n')
-        .filter((line) => !/^\s*(?:padding|margin)\s*:\s*0\s*;?\s*$/.test(line))
-        .join('\n')
+        .replace(/\b(?:padding|margin)\s*:\s*0\s*;?\s*/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/;\s*;/g, ';')
         .trim();
 
       if (!stripped) {
@@ -381,6 +381,14 @@ function patchNextConfigSource(source: string): string | null {
     return source.replace(transpileArrayMatch[0], `transpilePackages: [${mergedInner}]`);
   }
 
+  const transpileRefMatch = source.match(/transpilePackages\s*:\s*([A-Za-z_$][\w$]*)/);
+  if (transpileRefMatch) {
+    const patched = patchTranspilePackagesVariable(source, transpileRefMatch[1], missingPackages);
+    if (patched) {
+      return patched;
+    }
+  }
+
   const insertion = `  transpilePackages: ${JSON.stringify([...missingPackages])},`;
   const markers = [
     'const nextConfig: NextConfig = {',
@@ -397,8 +405,14 @@ function patchNextConfigSource(source: string): string | null {
     markers.push('return {');
   }
 
+  const hasTranspilePackages = /transpilePackages\s*:/.test(source);
+
   for (const marker of markers) {
     if (source.includes(marker)) {
+      if (hasTranspilePackages) {
+        break;
+      }
+
       return source.replace(marker, `${marker}\n${insertion}`);
     }
   }
@@ -420,6 +434,26 @@ function patchNextConfigSource(source: string): string | null {
   }
 
   return null;
+}
+
+function patchTranspilePackagesVariable(
+  source: string,
+  variableName: string,
+  missingPackages: readonly string[]
+): string | null {
+  const arrayPattern = new RegExp(
+    `((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*\\[)([\\s\\S]*?)(\\])`
+  );
+  const match = source.match(arrayPattern);
+  if (!match) {
+    return null;
+  }
+
+  const inner = match[2].replace(/\/\/[^\n]*/g, '').trim();
+  const additions = missingPackages.map((pkg) => `'${pkg}'`).join(', ');
+  const mergedInner = inner ? `${inner.replace(/,\s*$/, '')}, ${additions}` : additions;
+
+  return source.replace(match[0], `${match[1]}${mergedInner}${match[3]}`);
 }
 
 function patchNextConfigVariableDefinition(source: string, variableName: string, insertion: string): string | null {
