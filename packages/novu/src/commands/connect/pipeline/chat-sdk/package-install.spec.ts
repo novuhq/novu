@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { NPM_INSTALL_DISPLAY_FLAGS } from '../../../init/helpers/install';
 import { buildChatSdkInstallCommand, resolveChatSdkPackagesToInstall } from './package-install';
 
 const tempDirs: string[] = [];
@@ -33,7 +34,7 @@ describe('resolveChatSdkPackagesToInstall', () => {
     );
 
     expect(resolveChatSdkPackagesToInstall(dir)).toEqual(['@novu/chat-sdk-adapter']);
-    expect(buildChatSdkInstallCommand(dir)).toBe('npm install @novu/chat-sdk-adapter --no-workspaces');
+    expect(buildChatSdkInstallCommand(dir)).toBe(`npm install @novu/chat-sdk-adapter ${NPM_INSTALL_DISPLAY_FLAGS}`);
   });
 
   it('includes state-memory only when no state adapter is present', () => {

@@ -74,20 +74,17 @@ export function App() {
 <Prompt description="Add Novu Web Chat to my React app" icon="plug" actions={["copy", "cursor"]}>
 # Add Novu Web Chat to a React app
 
-Install `@novu/react` and `@assistant-ui/react`. Wrap the app in `NovuProvider`. Call `useWebChat` and render it with assistant-ui unless this app already has another chat library.
+Install `@novu/react`. Wrap the app in `NovuProvider`. Call `useWebChat` and render messages with the headless parts API (text, cards, tools, approvals).
 
 Canonical example: https://docs.novu.co/agents/channels/web-chat/quickstart
-Starter UI: https://docs.novu.co/agents/channels/web-chat/starter-ui
-Reference UI: https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/web-chat/ts
-Theming: https://www.assistant-ui.com/docs/primitives
+Starter UI (full assistant-ui template): https://docs.novu.co/agents/channels/web-chat/starter-ui
 
 ALWAYS:
 
 - Detect the project's package manager and use it for installation
 - Use `NovuProvider` from `@novu/react` (not a second Novu client)
 - Pass the dashboard agent identifier as `agentId`
-- Default to assistant-ui. If the app already uses a chat kit, keep that kit and wire `useWebChat` into it
-- Remap assistant-ui / shadcn CSS variables to the host theme. Do not paste Novu playground colors into an existing design system
+- Render from `messages` and `parts` — do not invent a `<WebChat />` export from `@novu/react`
 - Disable the composer while `isRunning` or `isLoading` is true
 - Use TypeScript, no comments, no empty props
 

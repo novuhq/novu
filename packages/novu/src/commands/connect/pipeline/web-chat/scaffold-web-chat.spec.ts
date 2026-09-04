@@ -17,6 +17,60 @@ import {
   stripUnlayeredUniversalReset,
 } from './scaffold-web-chat';
 
+const MERGE_HOST_WEB_CHAT_UI_DEPS = {
+  '@novu/react': 'latest',
+  '@novu/js': 'latest',
+  '@assistant-ui/react': '^0.15.16',
+  '@assistant-ui/react-markdown': '^0.14.12',
+  '@base-ui/react': '^1.7.0',
+  'class-variance-authority': '^0.7.1',
+  clsx: '^2.1.1',
+  'lucide-react': '^1.34.0',
+  'react-markdown': '^10.1.0',
+  'remark-gfm': '^4.0.1',
+  shadcn: '^4.19.0',
+  'tailwind-merge': '^3.6.0',
+  'tw-animate-css': '^1.4.0',
+  'tw-shimmer': '^0.4.12',
+} as const;
+
+function buildMergeHostPackageJson(
+  options: {
+    includeNext?: boolean;
+    tailwind?: '3' | '4';
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  } = {}
+) {
+  const { includeNext = false, tailwind = '4', dependencies = {}, devDependencies = {} } = options;
+
+  return {
+    name: 'agent-app',
+    dependencies: {
+      ...MERGE_HOST_WEB_CHAT_UI_DEPS,
+      ...(includeNext ? { next: '^16.0.0' } : {}),
+      ...dependencies,
+    },
+    devDependencies: {
+      ...(tailwind === '4'
+        ? { '@tailwindcss/postcss': '^4.3.3', tailwindcss: '^4.3.3' }
+        : { tailwindcss: '^3.4.0', autoprefixer: '^10.4.0', postcss: '^8.4.0' }),
+      ...devDependencies,
+    },
+  };
+}
+
+function writeMergeHostPackageJson(
+  projectDir: string,
+  options?: Parameters<typeof buildMergeHostPackageJson>[0]
+): void {
+  fs.writeFileSync(
+    path.join(projectDir, 'package.json'),
+    `${JSON.stringify(buildMergeHostPackageJson(options), null, 2)}\n`,
+    'utf8'
+  );
+}
+
 describe('stripUnlayeredUniversalReset', () => {
   it('removes the AI SDK * padding reset so Tailwind utilities can apply', () => {
     const css = `@import '../components/web-chat/globals.css';
@@ -74,36 +128,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('does not hardcode localhost when merging Web Chat into an existing project', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-merge-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-          },
-          devDependencies: {
-            '@tailwindcss/postcss': '^4.3.3',
-            tailwindcss: '^4.3.3',
-          },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir);
 
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
@@ -163,37 +188,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('patches an existing next.config.ts instead of creating next.config.mjs', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-next-config-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-            next: '^16.0.0',
-          },
-          devDependencies: {
-            '@tailwindcss/postcss': '^4.3.3',
-            tailwindcss: '^4.3.3',
-          },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { includeNext: true });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'next.config.ts'),
@@ -219,33 +214,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('upgrades Tailwind 3 postcss config when pinning Tailwind 4 dependencies', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-postcss-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-          },
-          devDependencies: { tailwindcss: '^3.4.0', autoprefixer: '^10.4.0', postcss: '^8.4.0' },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { tailwind: '3' });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'postcss.config.js'),
@@ -275,37 +244,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('merges transpilePackages into an existing next.config.ts array', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-transpile-merge-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-            next: '^16.0.0',
-          },
-          devDependencies: {
-            '@tailwindcss/postcss': '^4.3.3',
-            tailwindcss: '^4.3.3',
-          },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { includeNext: true });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'next.config.ts'),
@@ -330,37 +269,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('patches wrapped next.config.js exports', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-next-wrap-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-            next: '^16.0.0',
-          },
-          devDependencies: {
-            '@tailwindcss/postcss': '^4.3.3',
-            tailwindcss: '^4.3.3',
-          },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { includeNext: true });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'next.config.js'),
@@ -384,33 +293,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('migrates legacy @tailwind directives when upgrading postcss for Tailwind 4', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-tailwind-css-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-          },
-          devDependencies: { tailwindcss: '^3.4.0', autoprefixer: '^10.4.0', postcss: '^8.4.0' },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { tailwind: '3' });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'app', 'globals.css'),
@@ -445,33 +328,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('patches postcss.config.cjs instead of creating postcss.config.mjs', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-postcss-cjs-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-          },
-          devDependencies: { tailwindcss: '^3.4.0', autoprefixer: '^10.4.0', postcss: '^8.4.0' },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { tailwind: '3' });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'postcss.config.cjs'),
@@ -496,33 +353,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('migrates src/app/globals.css when upgrading Tailwind 4', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-src-globals-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-          },
-          devDependencies: { tailwindcss: '^3.4.0', autoprefixer: '^10.4.0', postcss: '^8.4.0' },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { tailwind: '3' });
     fs.mkdirSync(path.join(projectDir, 'src/app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'src/app/globals.css'),
@@ -552,37 +383,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('patches phase-dependent next.config.js exports', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-next-phase-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-            next: '^16.0.0',
-          },
-          devDependencies: {
-            '@tailwindcss/postcss': '^4.3.3',
-            tailwindcss: '^4.3.3',
-          },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { includeNext: true });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'next.config.js'),
@@ -606,37 +407,7 @@ describe('scaffoldWebChatProject', () => {
 
   it('patches next.config.ts when config is exported by identifier', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-next-id-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'agent-app',
-          dependencies: {
-            '@novu/react': 'latest',
-            '@novu/js': 'latest',
-            '@assistant-ui/react': '^0.15.16',
-            '@assistant-ui/react-markdown': '^0.14.12',
-            '@base-ui/react': '^1.7.0',
-            'class-variance-authority': '^0.7.1',
-            clsx: '^2.1.1',
-            'lucide-react': '^1.34.0',
-            'react-markdown': '^10.1.0',
-            'remark-gfm': '^4.0.1',
-            shadcn: '^4.19.0',
-            'tailwind-merge': '^3.6.0',
-            'tw-animate-css': '^1.4.0',
-            'tw-shimmer': '^0.4.12',
-            next: '^16.0.0',
-          },
-          devDependencies: {
-            '@tailwindcss/postcss': '^4.3.3',
-            tailwindcss: '^4.3.3',
-          },
-        },
-        null,
-        2
-      )
-    );
+    writeMergeHostPackageJson(projectDir, { includeNext: true });
     fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
     fs.writeFileSync(
       path.join(projectDir, 'next.config.ts'),
@@ -656,6 +427,30 @@ describe('scaffoldWebChatProject', () => {
     const nextConfig = fs.readFileSync(path.join(projectDir, 'next.config.ts'), 'utf8');
     expect(nextConfig).toContain('transpilePackages');
     expect(nextConfig).toContain('@assistant-ui/react');
+  });
+
+  it('warns when next.config uses an unsupported export shape', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-next-warn-'));
+    writeMergeHostPackageJson(projectDir, { includeNext: true });
+    fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true });
+    fs.writeFileSync(
+      path.join(projectDir, 'next.config.mjs'),
+      `export default function () {\n  return Promise.resolve({ reactStrictMode: true });\n}\n`,
+      'utf8'
+    );
+
+    await scaffoldWebChatProject({
+      parentDir: projectDir,
+      agentIdentifier: 'support-agent',
+      applicationIdentifier: 'app-id',
+      subscriberId: 'subscriber-id',
+      apiUrl: 'https://api.novu.co',
+      mergeIntoProjectDir: projectDir,
+    });
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not patch transpilePackages'));
+    warn.mockRestore();
   });
 });
 

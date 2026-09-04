@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { getNovuScaffoldSdkTag, isNovuLocalApiUrl } from '@novu/shared';
+import { yellow } from 'picocolors';
 import { CloudRegionEnum } from '../../../dev/enums';
 import { tryGitInit } from '../../../init/helpers/git';
 import { install } from '../../../init/helpers/install';
@@ -730,6 +731,19 @@ function ensureWebChatNextConfig(projectDir: string): void {
   const patched = patchNextConfigSource(source);
   if (patched) {
     fs.writeFileSync(existingPath, patched, 'utf8');
+    return;
+  }
+
+  const configName = path.basename(existingPath);
+  const missingPackages = WEB_CHAT_TRANSPILE_PACKAGES.filter(
+    (pkg) => !source.includes(`'${pkg}'`) && !source.includes(`"${pkg}"`)
+  );
+  if (missingPackages.length > 0) {
+    console.warn(
+      yellow(
+        `Web Chat could not patch transpilePackages in ${configName}. Add ${missingPackages.join(', ')} manually so @novu/react and assistant-ui compile.`
+      )
+    );
   }
 }
 
