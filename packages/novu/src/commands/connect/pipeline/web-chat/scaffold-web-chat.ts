@@ -106,6 +106,7 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
   }
 
   const dependenciesChanged = ensureWebChatDependencies(resolved, input.apiUrl, input.region);
+  const toolchainBootstrapped = bootstrapTailwindToolchainIfAbsent(resolved);
   ensureWebChatNextConfig(resolved);
   const componentsDir = path.join(resolved, 'components', 'web-chat');
   fs.mkdirSync(componentsDir, { recursive: true });
@@ -123,9 +124,36 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
 
   appendEnvExample(resolved, input);
 
-  if (dependenciesChanged && (await getOnline())) {
+  if ((dependenciesChanged || toolchainBootstrapped) && (await getOnline())) {
     await install(resolvePackageManager(resolved), true, false, resolved);
   }
+}
+
+/**
+ * A host with no Tailwind and no PostCSS pipeline cannot build the copied template —
+ * components/web-chat/globals.css imports tailwindcss and tw-animate-css, which only
+ * resolve through @tailwindcss/postcss. Bootstrapping is safe there because nothing
+ * exists to conflict with (this covers the bridge project connect scaffolds itself).
+ * Hosts with their own Tailwind setup are left untouched; warnHostTailwindSetup
+ * reports any gaps instead.
+ */
+function bootstrapTailwindToolchainIfAbsent(projectDir: string): boolean {
+  const packageJsonPath = path.join(projectDir, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const hasTailwind = Boolean(packageJson.dependencies?.tailwindcss ?? packageJson.devDependencies?.tailwindcss);
+
+  if (hasTailwind || findPostcssConfigPath(projectDir)) {
+    return false;
+  }
+
+  packageJson.devDependencies = { ...packageJson.devDependencies, ...WEB_CHAT_DEV_DEPENDENCIES };
+  fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(path.join(projectDir, 'postcss.config.mjs'), STANDALONE_POSTCSS_CONFIG, 'utf8');
+
+  return true;
 }
 
 function ensureWebChatDependencies(projectDir: string, apiUrl: string, region?: CloudRegionEnum): boolean {
