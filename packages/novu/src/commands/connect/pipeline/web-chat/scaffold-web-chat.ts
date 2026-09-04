@@ -119,9 +119,7 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
     'utf8'
   );
 
-  if (input.mergeAtRoot) {
-    ensureWebChatGlobalsImport(resolved);
-  }
+  warnHostTailwindSetup(resolved);
 
   appendEnvExample(resolved, input);
 
@@ -149,23 +147,9 @@ function ensureWebChatDependencies(projectDir: string, apiUrl: string, region?: 
     }
   }
 
-  const devDependencies = packageJson.devDependencies ?? {};
-  for (const [name, version] of Object.entries(WEB_CHAT_DEV_DEPENDENCIES)) {
-    if (devDependencies[name] !== version) {
-      devDependencies[name] = version;
-      changed = true;
-    }
-  }
-
   if (changed) {
     packageJson.dependencies = dependencies;
-    packageJson.devDependencies = devDependencies;
     fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
-  }
-
-  const postcssUpgraded = ensureWebChatPostcssConfig(projectDir);
-  if (postcssUpgraded) {
-    migrateHostTailwindCss(projectDir);
   }
 
   return changed;
@@ -242,110 +226,80 @@ function copyTemplateDir(from: string, to: string): void {
   }
 }
 
-/**
- * The AI SDK Next template leaves an unlayered `* { padding: 0 }` reset.
- * Tailwind utilities live in `@layer utilities`, so that reset wins and
- * zeros composer / chip / button spacing after a root merge.
- */
-export function stripUnlayeredUniversalReset(css: string): string {
-  return css
-    .replace(/(\*,\s*\*::before,\s*\*::after\s*\{)([\s\S]*?)(\})/g, (match, open, body, close) => {
-      if (!/(?:padding|margin)\s*:\s*0/.test(body)) {
-        return match;
-      }
-
-      const stripped = body
-        .replace(/\b(?:padding|margin)\s*:\s*0\s*;?\s*/g, '')
-        .replace(/\s{2,}/g, ' ')
-        .replace(/;\s*;/g, ';')
-        .trim();
-
-      if (!stripped) {
-        return '';
-      }
-
-      const separator = body.startsWith('\n') ? '\n' : ' ';
-      return `${open}${separator}${stripped}${separator}${close}`;
-    })
-    .replace(/\n{3,}/g, '\n\n');
-}
+const POSTCSS_CONFIG_FILENAMES = ['postcss.config.mjs', 'postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'] as const;
 
 const HOST_GLOBALS_CSS_PATHS = ['src/app/globals.css', 'app/globals.css', 'styles/globals.css'] as const;
 
-function findHostGlobalsCssPath(projectDir: string): string | null {
-  for (const relativePath of HOST_GLOBALS_CSS_PATHS) {
-    const candidate = path.join(projectDir, relativePath);
-    if (fs.existsSync(candidate)) {
-      return candidate;
+function findPostcssConfigPath(projectDir: string): string | null {
+  for (const filename of POSTCSS_CONFIG_FILENAMES) {
+    const configPath = path.join(projectDir, filename);
+    if (fs.existsSync(configPath)) {
+      return configPath;
     }
   }
 
   return null;
 }
 
-function webChatGlobalsImportLine(projectDir: string, globalsPath: string): string {
-  const relativeImport = path
-    .relative(path.dirname(globalsPath), path.join(projectDir, 'components/web-chat/globals.css'))
-    .replace(/\\/g, '/');
+/** The connect template targets Tailwind v4 — warn on merge; do not rewrite host toolchain. */
+function detectHostTailwind4Gaps(projectDir: string): string[] {
+  const warnings: string[] = [];
+  const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8')) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+  const tailwindVersion = deps.tailwindcss ?? '';
+  const tailwindMajor = tailwindVersion.match(/(\d+)/)?.[1];
+  const hasTw4Postcss = Boolean(deps['@tailwindcss/postcss']);
 
-  return `@import '${relativeImport}';`;
-}
-
-function ensureWebChatGlobalsImport(projectDir: string): void {
-  const globalsPath = findHostGlobalsCssPath(projectDir) ?? path.join(projectDir, 'app', 'globals.css');
-  const importLine = webChatGlobalsImportLine(projectDir, globalsPath);
-
-  if (fs.existsSync(globalsPath)) {
-    const original = fs.readFileSync(globalsPath, 'utf8');
-    let next = original;
-    if (!next.includes('components/web-chat/globals.css')) {
-      const migrated = migrateLegacyTailwindDirectives(next);
-      if (migrated) {
-        next = migrated;
-      }
-
-      next = `${importLine}\n${next}`;
-    }
-
-    next = stripUnlayeredUniversalReset(next);
-    if (next !== original) {
-      fs.writeFileSync(globalsPath, next, 'utf8');
-    }
-
-    return;
+  if (!hasTw4Postcss && tailwindMajor !== '4') {
+    warnings.push('package.json is missing Tailwind CSS v4 tooling (@tailwindcss/postcss and tailwindcss ^4).');
   }
 
-  fs.mkdirSync(path.dirname(globalsPath), { recursive: true });
-  fs.writeFileSync(globalsPath, `${importLine}\n`, 'utf8');
-}
+  const postcssPath = findPostcssConfigPath(projectDir);
+  if (postcssPath) {
+    const postcss = fs.readFileSync(postcssPath, 'utf8');
+    if (!postcss.includes('@tailwindcss/postcss') && /\btailwindcss\b/.test(postcss)) {
+      warnings.push(`${path.basename(postcssPath)} still uses the Tailwind v3 PostCSS plugin.`);
+    }
+  }
 
-function migrateHostTailwindCss(projectDir: string): void {
   for (const relativePath of HOST_GLOBALS_CSS_PATHS) {
     const globalsPath = path.join(projectDir, relativePath);
     if (!fs.existsSync(globalsPath)) {
       continue;
     }
 
-    const source = fs.readFileSync(globalsPath, 'utf8');
-    const migrated = migrateLegacyTailwindDirectives(source);
-    if (migrated) {
-      fs.writeFileSync(globalsPath, migrated, 'utf8');
+    const css = fs.readFileSync(globalsPath, 'utf8');
+    if (
+      /@tailwind\s+(base|components|utilities)/.test(css) &&
+      !css.includes('@import "tailwindcss"') &&
+      !css.includes("@import 'tailwindcss'")
+    ) {
+      warnings.push(`${relativePath} uses @tailwind directives; the template expects @import "tailwindcss".`);
+      break;
     }
   }
+
+  return warnings;
 }
 
-/** Tailwind 4 uses `@import "tailwindcss"` instead of `@tailwind base/components/utilities`. */
-function migrateLegacyTailwindDirectives(css: string): string | null {
-  if (!/@tailwind\s+(base|components|utilities)/.test(css)) {
-    return null;
+function warnHostTailwindSetup(projectDir: string): void {
+  const warnings = detectHostTailwind4Gaps(projectDir);
+  if (warnings.length === 0) {
+    return;
   }
 
-  if (css.includes("@import 'tailwindcss'") || css.includes('@import "tailwindcss"')) {
-    return null;
-  }
-
-  const stripped = css.replace(/@tailwind\s+(base|components|utilities)\s*;\s*\n?/g, '').trimStart();
-  return `@import "tailwindcss";\n\n${stripped}`;
+  console.warn(
+    yellow(
+      [
+        'Web Chat template uses Tailwind CSS v4. Connect copied components/web-chat/ but did not modify host PostCSS or global CSS.',
+        ...warnings.map((warning) => `- ${warning}`),
+        'Follow the connect embed prompt to upgrade Tailwind/PostCSS or adapt the template styles to this app.',
+      ].join('\n')
+    )
+  );
 }
 
 const NEXT_CONFIG_FILENAMES = ['next.config.ts', 'next.config.js', 'next.config.mjs', 'next.config.cjs'] as const;
@@ -464,55 +418,6 @@ function patchNextConfigVariableDefinition(source: string, variableName: string,
   }
 
   return source.replace(match[0], `${match[0]}\n${insertion}`);
-}
-
-function upgradePostcssConfigSource(source: string): string | null {
-  if (source.includes('@tailwindcss/postcss')) {
-    return null;
-  }
-
-  if (!/\btailwindcss\b/.test(source)) {
-    return null;
-  }
-
-  const upgraded = source
-    .replace(/(['"])tailwindcss\1\s*:/g, "'@tailwindcss/postcss':")
-    .replace(/\btailwindcss\s*:/g, "'@tailwindcss/postcss':")
-    .replace(/require\(\s*(['"])tailwindcss\1\s*\)/g, "require('@tailwindcss/postcss')")
-    .replace(/(\[\s*)(['"])tailwindcss\2/g, "$1'@tailwindcss/postcss'");
-
-  return upgraded === source ? null : upgraded;
-}
-
-const POSTCSS_CONFIG_FILENAMES = ['postcss.config.mjs', 'postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'] as const;
-
-function findPostcssConfigPath(projectDir: string): string | null {
-  for (const filename of POSTCSS_CONFIG_FILENAMES) {
-    const configPath = path.join(projectDir, filename);
-    if (fs.existsSync(configPath)) {
-      return configPath;
-    }
-  }
-
-  return null;
-}
-
-function ensureWebChatPostcssConfig(projectDir: string): boolean {
-  const existingPath = findPostcssConfigPath(projectDir);
-
-  if (!existingPath) {
-    fs.writeFileSync(path.join(projectDir, 'postcss.config.mjs'), STANDALONE_POSTCSS_CONFIG, 'utf8');
-    return true;
-  }
-
-  const source = fs.readFileSync(existingPath, 'utf8');
-  const upgraded = upgradePostcssConfigSource(source);
-  if (!upgraded) {
-    return false;
-  }
-
-  fs.writeFileSync(existingPath, upgraded, 'utf8');
-  return true;
 }
 
 function renderChatPage(opts: { standalone: boolean; configImport: string }): string {

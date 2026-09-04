@@ -323,6 +323,17 @@ Web Chat is a **full in-app surface** (thread + composer), not a floating widget
 1. If this app already has a chat library (see Inspect), **keep it**. Wire \`useWebChat\` into that library. Do not add a second chat kit.
 2. Otherwise install \`@assistant-ui/react\` + \`@assistant-ui/react-markdown\` and copy the connect template structure: runtime adapter, Thread, Novu parts (cards, MCP, files, approvals), conversation list.
 
+### Tailwind CSS (merge into existing app)
+
+The connect template targets **Tailwind CSS v4** (\`@import "tailwindcss"\` in \`components/web-chat/globals.css\`). Connect copies that folder and the chat route imports it — it does **not** upgrade the host PostCSS config or root \`globals.css\`.
+
+If Connect warned about Tailwind v3 tooling or \`@tailwind\` directives:
+
+1. **Preferred:** upgrade the app to Tailwind v4 (install \`tailwindcss@^4\` + \`@tailwindcss/postcss\`, switch PostCSS to \`@tailwindcss/postcss\`, migrate root CSS to \`@import "tailwindcss"\`). Follow https://tailwindcss.com/docs/upgrade-guide.
+2. **Alternative:** keep the host on v3 and adapt \`components/web-chat/\` styles to match — do not blindly paste v4-only syntax into v3 globals.
+
+Either way, keep \`@/components/web-chat/globals.css\` imported on the chat route and remap assistant-ui CSS variables to this app's design tokens.
+
 Reference implementation (behavior + part rendering — not colors):
 
 - GitHub: ${CONNECT_EMBED_TEMPLATE_URL}
