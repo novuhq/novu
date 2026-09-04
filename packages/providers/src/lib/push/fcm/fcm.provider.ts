@@ -11,7 +11,16 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
 
-  private readonly INVALID_TOKEN_ERRORS = ['Requested entity was not found'];
+  private readonly INVALID_TOKEN_ERRORS = [
+    'Requested entity was not found',
+    'NotRegistered',
+    'InvalidRegistration',
+    'Unregistered',
+    'UNREGISTERED',
+    'messaging/registration-token-not-registered',
+    'messaging/invalid-registration-token',
+    'The registration token is not a valid FCM registration token',
+  ];
 
   private appName: string;
   private messaging: Messaging;
