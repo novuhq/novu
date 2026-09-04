@@ -317,14 +317,88 @@ function findNextConfigPath(projectDir: string): string | null {
   return null;
 }
 
-function findMatchingBracketEnd(source: string, openIndex: number): number | null {
+function skipLineComment(source: string, index: number): number {
+  const end = source.indexOf('\n', index);
+  return end === -1 ? source.length - 1 : end;
+}
+
+function skipBlockComment(source: string, index: number): number | null {
+  const end = source.indexOf('*/', index + 2);
+  return end === null ? null : end + 1;
+}
+
+function skipQuotedString(source: string, index: number): number | null {
+  const quote = source[index];
+
+  for (let cursor = index + 1; cursor < source.length; cursor++) {
+    const char = source[cursor];
+    if (char === '\\') {
+      cursor += 1;
+      continue;
+    }
+
+    if (quote === '`' && char === '$' && source[cursor + 1] === '{') {
+      const expressionEnd = findMatchingDelimitedEnd(source, cursor + 1, '{', '}');
+      if (expressionEnd === null) {
+        return null;
+      }
+
+      cursor = expressionEnd;
+      continue;
+    }
+
+    if (char === quote) {
+      return cursor;
+    }
+  }
+
+  return null;
+}
+
+function findMatchingDelimitedEnd(
+  source: string,
+  openIndex: number,
+  openChar: string,
+  closeChar: string
+): number | null {
+  if (source[openIndex] !== openChar) {
+    return null;
+  }
+
   let depth = 0;
 
   for (let index = openIndex; index < source.length; index++) {
     const char = source[index];
-    if (char === '[') {
+    const next = source[index + 1];
+
+    if (char === '/' && next === '/') {
+      index = skipLineComment(source, index);
+      continue;
+    }
+
+    if (char === '/' && next === '*') {
+      const commentEnd = skipBlockComment(source, index);
+      if (commentEnd === null) {
+        return null;
+      }
+
+      index = commentEnd;
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      const stringEnd = skipQuotedString(source, index);
+      if (stringEnd === null) {
+        return null;
+      }
+
+      index = stringEnd;
+      continue;
+    }
+
+    if (char === openChar) {
       depth += 1;
-    } else if (char === ']') {
+    } else if (char === closeChar) {
       depth -= 1;
       if (depth === 0) {
         return index;
@@ -333,6 +407,10 @@ function findMatchingBracketEnd(source: string, openIndex: number): number | nul
   }
 
   return null;
+}
+
+function findMatchingBracketEnd(source: string, openIndex: number): number | null {
+  return findMatchingDelimitedEnd(source, openIndex, '[', ']');
 }
 
 function matchTranspilePackagesInlineArray(
