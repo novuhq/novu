@@ -119,6 +119,7 @@ export enum SmsProviderIdEnum {
   Kannel = 'kannel',
   Maqsam = 'maqsam',
   Termii = 'termii',
+  TextLk = 'textlk',
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
