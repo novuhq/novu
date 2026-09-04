@@ -216,7 +216,10 @@ overrides:
   '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
   mermaid@>=11.0.0-alpha.1 <11.16.1: ^11.16.1
   tsup@<8.3.5: ^8.3.5
-  sanitize-html@<2.17.4: ^2.17.4
+  # GHSA-g8qq-57p8-ggw5 / GHSA-jxwj-j7wr-gfrw: stored/mutation XSS via SVG SMIL
+  # URI-list scheme-policy bypass and literal `</textarea/>` solidus close.
+  # Patched in 2.17.7 (patch bump within the 2.17.x line).
+  sanitize-html@<2.17.7: ^2.17.7
   samlify@<2.13.0: ^2.13.0
   better-auth@<1.6.13: ^1.6.23
   '@better-auth/sso@<1.6.13': ^1.6.23
