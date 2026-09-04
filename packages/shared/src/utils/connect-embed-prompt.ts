@@ -207,9 +207,12 @@ function renderInspectSection(): string {
   return `## Inspect this project first
 
 - Router: App Router vs Pages Router, \`src/\` or not, where API routes live.
+- App shell: find the authenticated layout (\`(app)/layout.tsx\`, dashboard shell, sidebar, top nav). Web Chat should live **inside** this shell when one exists.
+- Navigation: where primary nav links are defined — you will add a link to the chat route when appropriate.
 - Package manager: read the lockfile (pnpm, yarn, bun, or npm).
 - Existing Novu code: search for \`@novu/framework\`, \`@novu/react\`, and existing API routes — do not duplicate.
 - Existing chat UI: search \`package.json\` and imports for \`@assistant-ui/react\`, \`stream-chat-react\`, \`@copilotkit/react-ui\`, \`ai/react\` \`useChat\` UI kits, or similar. If one is already the product chat, keep it.
+- Scaffold leftovers: if \`components/web-chat/\` or \`app/web-chat/\` already exist from connect, treat them as source to **relocate or wrap** — do not leave an orphan route with no nav link.
 - LLM / provider: read \`package.json\` and env vars for providers already in use.
 - Host design tokens: find existing CSS variables (\`--primary\`, \`--background\`, \`--radius\`, Tailwind theme). You will remap assistant-ui to those.
 - Match existing formatting, lint rules, naming, and imports.`;
@@ -301,6 +304,19 @@ Follow these docs (fetch as \`.md\`). **Skip** dashboard channel-setup steps.
 - https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md — hook reference
 - https://www.assistant-ui.com/docs/primitives.md — primitives stay unstyled; you own the look
 - https://www.assistant-ui.com/docs/tools/generative-ui.md — remap CSS variables (\`--primary\`, \`--background\`, \`--radius\`, …) to this app
+
+### Place chat in this app (not a bolt-on URL)
+
+Web Chat is a **full in-app surface** (thread + composer), not a floating widget or Intercom bubble.
+
+1. **Prefer the existing app shell.** Wrap \`NovuProvider\` + \`WebChat\` (or your wired chat kit) in the same layout as the rest of the product — shared header, sidebar, auth, and page container.
+2. **Pick a route that fits the product.** Examples: \`/support\`, \`/assistant\`, \`/help\`, or a first-class nav item. Use \`(app)/…/page.tsx\` (or the project's equivalent) so the chat feels native.
+3. **Add navigation.** If the app has a sidebar or top nav, add a link to that route using the app's existing link component and naming (e.g. "Help", "Assistant").
+4. **Reuse scaffold source when present.** If \`components/web-chat/\` was copied already, import from there — relocate or re-export from your chosen route; do not leave a disconnected \`/web-chat\` page with no nav entry.
+5. **Do not replace the home page** unless the app has no real landing content yet. Do not mount chat as a popup, drawer launcher, or iframe unless the user explicitly asked for that pattern.
+6. **Split layout only when the app already uses one.** If the product is inbox-style (list + detail), you may embed the thread in the detail pane; otherwise use a dedicated page.
+
+\`NovuProvider\` should wrap only the subtree that needs Web Chat (layout segment or page), not necessarily the entire monorepo root.
 
 ### Choose the UI kit
 

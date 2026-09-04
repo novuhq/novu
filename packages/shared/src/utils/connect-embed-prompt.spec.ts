@@ -28,4 +28,12 @@ describe('buildConnectEmbedPrompt', () => {
     expect(prompt).toContain("Match this app's design system");
     expect(prompt).toContain('Do not paste scaffold, playground, or dashboard colors');
   });
+
+  it('tells embed agents to place chat inside the existing app shell', () => {
+    expect(prompt).toContain('Place chat in this app');
+    expect(prompt).toContain('not a bolt-on URL');
+    expect(prompt).toContain('not a floating widget');
+    expect(prompt).toContain('Add navigation');
+    expect(prompt).toContain('Do not replace the home page');
+  });
 });
