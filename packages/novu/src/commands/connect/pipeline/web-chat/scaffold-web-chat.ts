@@ -317,6 +317,69 @@ function findNextConfigPath(projectDir: string): string | null {
   return null;
 }
 
+function findMatchingBracketEnd(source: string, openIndex: number): number | null {
+  let depth = 0;
+
+  for (let index = openIndex; index < source.length; index++) {
+    const char = source[index];
+    if (char === '[') {
+      depth += 1;
+    } else if (char === ']') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return null;
+}
+
+function matchTranspilePackagesInlineArray(
+  source: string
+): { full: string; inner: string } | null {
+  const labelMatch = source.match(/transpilePackages\s*:\s*\[/);
+  if (!labelMatch || labelMatch.index === undefined) {
+    return null;
+  }
+
+  const openIndex = labelMatch.index + labelMatch[0].length - 1;
+  const closeIndex = findMatchingBracketEnd(source, openIndex);
+  if (closeIndex === null) {
+    return null;
+  }
+
+  return {
+    full: source.slice(labelMatch.index, closeIndex + 1),
+    inner: source.slice(openIndex + 1, closeIndex),
+  };
+}
+
+function matchVariableArrayAssignment(
+  source: string,
+  variableName: string
+): { full: string; prefix: string; inner: string } | null {
+  const headerPattern = new RegExp(
+    `((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*)\\[`
+  );
+  const headerMatch = source.match(headerPattern);
+  if (!headerMatch || headerMatch.index === undefined) {
+    return null;
+  }
+
+  const openIndex = headerMatch.index + headerMatch[0].length - 1;
+  const closeIndex = findMatchingBracketEnd(source, openIndex);
+  if (closeIndex === null) {
+    return null;
+  }
+
+  return {
+    full: source.slice(headerMatch.index, closeIndex + 1),
+    prefix: headerMatch[1],
+    inner: source.slice(openIndex + 1, closeIndex),
+  };
+}
+
 function patchNextConfigSource(source: string): string | null {
   const missingPackages = WEB_CHAT_TRANSPILE_PACKAGES.filter(
     (pkg) => !source.includes(`'${pkg}'`) && !source.includes(`"${pkg}"`)
@@ -326,13 +389,13 @@ function patchNextConfigSource(source: string): string | null {
     return null;
   }
 
-  const transpileArrayMatch = source.match(/transpilePackages\s*:\s*\[([\s\S]*?)\]/);
+  const transpileArrayMatch = matchTranspilePackagesInlineArray(source);
   if (transpileArrayMatch) {
-    const inner = transpileArrayMatch[1].replace(/\/\/[^\n]*/g, '').trim();
+    const inner = transpileArrayMatch.inner.replace(/\/\/[^\n]*/g, '').trim();
     const additions = missingPackages.map((pkg) => `'${pkg}'`).join(', ');
     const mergedInner = inner ? `${inner.replace(/,\s*$/, '')}, ${additions}` : additions;
 
-    return source.replace(transpileArrayMatch[0], `transpilePackages: [${mergedInner}]`);
+    return source.replace(transpileArrayMatch.full, `transpilePackages: [${mergedInner}]`);
   }
 
   const transpileRefMatch = source.match(/transpilePackages\s*:\s*([A-Za-z_$][\w$]*)/);
@@ -399,19 +462,16 @@ function patchTranspilePackagesVariable(
   variableName: string,
   missingPackages: readonly string[]
 ): string | null {
-  const arrayPattern = new RegExp(
-    `((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*\\[)([\\s\\S]*?)(\\])`
-  );
-  const match = source.match(arrayPattern);
-  if (!match) {
+  const arrayMatch = matchVariableArrayAssignment(source, variableName);
+  if (!arrayMatch) {
     return null;
   }
 
-  const inner = match[2].replace(/\/\/[^\n]*/g, '').trim();
+  const inner = arrayMatch.inner.replace(/\/\/[^\n]*/g, '').trim();
   const additions = missingPackages.map((pkg) => `'${pkg}'`).join(', ');
   const mergedInner = inner ? `${inner.replace(/,\s*$/, '')}, ${additions}` : additions;
 
-  return source.replace(match[0], `${match[1]}${mergedInner}${match[3]}`);
+  return source.replace(arrayMatch.full, `${arrayMatch.prefix}[${mergedInner}]`);
 }
 
 function patchNextConfigVariableDefinition(source: string, variableName: string, insertion: string): string | null {
