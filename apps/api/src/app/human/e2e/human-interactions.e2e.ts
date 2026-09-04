@@ -95,11 +95,21 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   });
 
   async function createInteraction(body: Record<string, unknown>) {
+    const { prompt, options, card, ...rest } = body;
+    const title =
+      (card && typeof card === 'object' && 'title' in card && typeof card.title === 'string' && card.title) ||
+      (typeof prompt === 'string' ? prompt : undefined);
+
     return session.testAgent.post('/v1/human/interactions').send({
       to: subscriberId,
       via: 'telegram',
       agentIdentifier: relayAgentIdentifier,
-      ...body,
+      ...rest,
+      card: {
+        ...(card && typeof card === 'object' ? card : {}),
+        ...(title ? { title } : {}),
+        ...(Array.isArray(options) ? { options } : {}),
+      },
     });
   }
 
@@ -542,7 +552,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
 
       const res = await session.testAgent.post('/v1/human/interactions').send({
         kind: 'tell',
-        prompt: 'hello',
+        card: { title: 'hello' },
         to: subscriberId,
         via: 'email',
         agentIdentifier: relayAgentIdentifier,

@@ -34,7 +34,7 @@ describe('HandleNovuHuman', () => {
       organizationId: 'org1',
       toolUseId: 'sevt_1',
       sessionId: 'ses_1',
-      input: overrides?.input ?? { kind: 'approve', prompt: 'Deploy to production?' },
+      input: overrides?.input ?? { kind: 'approve', card: { title: 'Deploy to production?' } },
       conversationId: 'conv1',
       agentIdentifier: 'ship-bot',
       integrationIdentifier: 'slack-main',
@@ -54,16 +54,56 @@ describe('HandleNovuHuman', () => {
     expect(createConversationInteraction.execute.calledOnce).to.equal(true);
     const created = createConversationInteraction.execute.firstCall.args[0];
     expect(created.kind).to.equal(HumanInteractionKindEnum.APPROVE);
-    expect(created.prompt).to.equal('Deploy to production?');
     expect(created.requestId).to.equal('novu_human:ses_1:sevt_1');
     expect(created.from).to.equal('ship-bot');
     expect(created.to).to.equal('sub-1');
+    expect(created.card).to.deep.include({ title: 'Deploy to production?' });
+    expect(created.prompt).to.equal(undefined);
     expect(managedAgentService.sendToolResult.called).to.equal(false);
+  });
+
+  it('accepts nested card chrome', async () => {
+    const { usecase, command, createConversationInteraction } = setup({
+      input: {
+        kind: 'approve',
+        card: { title: 'Refund $25?', icon: 'stripe', subtitle: 'issue_refund', extraActions: ['Always allow'] },
+      },
+    });
+
+    await usecase.execute(command);
+
+    const created = createConversationInteraction.execute.firstCall.args[0];
+    expect(created.card.title).to.equal('Refund $25?');
+    expect(created.card.icon).to.equal('stripe');
+    expect(created.card.extraActions).to.deep.equal(['Always allow']);
+  });
+
+  it('ignores a leftover top-level prompt', async () => {
+    const { usecase, command, createConversationInteraction } = setup({
+      input: { kind: 'ask', prompt: 'String title', card: { title: 'Card title', body: 'More' } },
+    });
+
+    await usecase.execute(command);
+
+    const created = createConversationInteraction.execute.firstCall.args[0];
+    expect(created.card).to.deep.include({ title: 'Card title', body: 'More' });
+  });
+
+  it('resumes with an error when card.title is missing', async () => {
+    const { usecase, command, createConversationInteraction, managedAgentService } = setup({
+      input: { kind: 'approve', card: { subtitle: 'no title' } },
+    });
+
+    await usecase.execute(command);
+
+    expect(createConversationInteraction.execute.called).to.equal(false);
+    const content = JSON.parse(managedAgentService.sendToolResult.firstCall.args[0].content);
+    expect(content.error).to.equal('invalid_title');
   });
 
   it('delivers tell then resumes immediately', async () => {
     const { usecase, command, createConversationInteraction, managedAgentService } = setup({
-      input: { kind: 'tell', prompt: 'Deploy finished.' },
+      input: { kind: 'tell', card: { title: 'Deploy finished.' } },
     });
 
     await usecase.execute(command);
@@ -88,7 +128,7 @@ describe('HandleNovuHuman', () => {
 
   it('resumes with an error when choose has too few options', async () => {
     const { usecase, command, createConversationInteraction, managedAgentService } = setup({
-      input: { kind: 'choose', prompt: 'Which region?', options: ['only-one'] },
+      input: { kind: 'choose', card: { title: 'Which region?', options: ['only-one'] } },
     });
 
     await usecase.execute(command);

@@ -62,7 +62,9 @@ Novu attaches a **Novu HITL** skill on every managed agent that supports skills.
 
 Anthropic can only load skills when the **Read** built-in is enabled. Attaching this skill therefore turns Read on if it was off. If skill upload fails, the `novu_human` tool is still attached and the agent continues without the skill.
 
-`novu_human` is not MCP tool approval. When an MCP or provider tool is already parked on an Approve/Deny card, the model should not call `novu_human` to re-gate that same call.
+`novu_human` is not MCP tool approval. When an MCP or provider tool is already parked on an Approve/Deny card, the model should not call `novu_human` to re-gate that same call. Do not invent `trust-tool` or `trust-server` extra buttons — those are injected by Novu on parked tool cards.
+
+Pass a `card` with `card.title`. Optional chrome: `subtitle` and `body` on every channel; `icon` is Slack-only (MCP catalog id like `stripe` / `github`, or an https 32×32 URL). Approve extras (`approveLabel`, `denyLabel`, `extraActions`) also live on `card`. `choose` needs `card.options` (2–10). Do not pass top-level `prompt` or `options`.
 
 ## Tips for writing good skills
 

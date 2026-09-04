@@ -33,12 +33,14 @@ describe('HumanInteractionInboundService', () => {
       requestId: 'hr_1',
       kind: HumanInteractionKindEnum.ASK,
       status: HumanInteractionStatusEnum.PENDING,
-      prompt: 'First?',
+      content: { cardChrome: { title: 'First?' } },
       subscriberIds: ['sub-1'],
       _environmentId: 'env1',
     };
     const humanInteractionRepository = {
       findByIdentifier: sinon.stub().resolves(null),
+      findByRequestId: sinon.stub().resolves(null),
+      findPendingByRequestId: sinon.stub().resolves(null),
       findPendingByPlatformMessageId: sinon.stub().resolves(null),
       findPendingAsksByConversation: sinon.stub().resolves([]),
       findPendingAsks: sinon.stub().resolves([]),
@@ -60,16 +62,31 @@ describe('HumanInteractionInboundService', () => {
       get: sinon.stub().resolves(null),
       del: sinon.stub().resolves(undefined),
     };
+    const channelEndpointRepository = {
+      findOne: sinon.stub().resolves(null),
+    };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+    const featureFlagsService = { getFlag: sinon.stub().resolves(false) };
     const service = new HumanInteractionInboundService(
       humanInteractionRepository as any,
       settlement as any,
       outboundGateway as any,
       cacheService as any,
-      logger as any
+      channelEndpointRepository as any,
+      logger as any,
+      featureFlagsService as any
     );
 
-    return { service, humanInteractionRepository, settlement, outboundGateway, cacheService, pendingAsk };
+    return {
+      service,
+      humanInteractionRepository,
+      settlement,
+      outboundGateway,
+      cacheService,
+      channelEndpointRepository,
+      pendingAsk,
+      featureFlagsService,
+    };
   }
 
   it('ignores non-human actions', async () => {
@@ -80,6 +97,103 @@ describe('HumanInteractionInboundService', () => {
     );
 
     expect(result).to.deep.equal({ outcome: 'ignored' });
+  });
+
+  it('settles a tool-approval click against the HITL row when the flag is on', async () => {
+    const { service, humanInteractionRepository, settlement, featureFlagsService } = setup();
+    featureFlagsService.getFlag.resolves(true);
+    humanInteractionRepository.findPendingByRequestId.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      requestId: 'tool_approval:apr_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['sub-1'],
+      _environmentId: 'env1',
+    });
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'tool-approval:approve:apr_1' },
+        message: null,
+        subscriber: { subscriberId: 'sub-1', firstName: 'Ada' },
+      }) as any,
+      'conversation'
+    );
+
+    expect(humanInteractionRepository.findPendingByRequestId.calledOnceWith('env1', 'tool_approval:apr_1')).to.equal(
+      true
+    );
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settlement.settle.firstCall.args[2].optionId).to.equal('approve');
+    expect(result.outcome).to.equal('settled');
+  });
+
+  it('settles a managed always-allow click as approved with the trust optionId', async () => {
+    const { service, humanInteractionRepository, settlement, featureFlagsService } = setup();
+    featureFlagsService.getFlag.resolves(true);
+    humanInteractionRepository.findPendingByRequestId.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      requestId: 'tool_approval:apr_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['sub-1'],
+      _environmentId: 'env1',
+    });
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'mcp-approval:approve-tool:apr_1:issueRefund:Stripe' },
+        message: null,
+        subscriber: { subscriberId: 'sub-1' },
+      }) as any,
+      'conversation'
+    );
+
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settlement.settle.firstCall.args[2].optionId).to.equal('trust-tool');
+    expect(result.outcome).to.equal('settled');
+  });
+
+  it('ignores a tool-approval click when the flag is off', async () => {
+    const { service, humanInteractionRepository, settlement, featureFlagsService } = setup();
+    featureFlagsService.getFlag.resolves(false);
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'tool-approval:approve:apr_1' },
+        message: null,
+      }) as any,
+      'conversation'
+    );
+
+    expect(result).to.deep.equal({ outcome: 'ignored' });
+    expect(humanInteractionRepository.findPendingByRequestId.called).to.equal(false);
+    expect(settlement.settle.called).to.equal(false);
+  });
+
+  it('ignores a tool-approval click when no pending HITL row exists', async () => {
+    const { service, humanInteractionRepository, settlement, featureFlagsService } = setup();
+    featureFlagsService.getFlag.resolves(true);
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'tool-approval:approve:apr_1' },
+        message: null,
+      }) as any,
+      'conversation'
+    );
+
+    expect(result).to.deep.equal({ outcome: 'ignored' });
+    expect(humanInteractionRepository.findPendingByRequestId.calledOnce).to.equal(true);
+    expect(settlement.settle.called).to.equal(false);
   });
 
   it('settles an approve click addressed to the conversation subscriber', async () => {
@@ -110,6 +224,147 @@ describe('HumanInteractionInboundService', () => {
     expect(settlement.settle.firstCall.args[2].respondedBy).to.equal('Ada');
     expect(result.outcome).to.equal('settled');
     expect(result.outcome === 'settled' && result.settled.identifier).to.equal('hi_1');
+  });
+
+  it('settles a posted-card extra click by requestId without stored extraActions', async () => {
+    const { service, humanInteractionRepository, settlement } = setup();
+    const pending = {
+      _id: 'hi1',
+      identifier: 'hi_1',
+      requestId: 'hr_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['sub-1'],
+      _environmentId: 'env1',
+      content: {
+        card: {
+          type: 'card',
+          title: 'Refund $25?',
+          children: [
+            { type: 'button', id: 'human:hr_1:approve', label: 'OK' },
+            { type: 'button', id: 'human:hr_1:opt:escalate', label: 'Escalate' },
+          ],
+        },
+      },
+    };
+    humanInteractionRepository.findByRequestId.resolves(pending);
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:hr_1:opt:escalate' },
+        message: null,
+        subscriber: { subscriberId: 'sub-1', firstName: 'Ada' },
+      }) as any,
+      'conversation'
+    );
+
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settlement.settle.firstCall.args[2].optionId).to.equal('escalate');
+    expect(result.outcome).to.equal('settled');
+  });
+
+  it('ignores a posted-card extra click whose option id is not on the card', async () => {
+    const { service, humanInteractionRepository, settlement } = setup();
+    humanInteractionRepository.findByRequestId.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      requestId: 'hr_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['sub-1'],
+      _environmentId: 'env1',
+      content: {
+        card: {
+          type: 'card',
+          title: 'Refund $25?',
+          children: [
+            { type: 'button', id: 'human:hr_1:approve', label: 'OK' },
+            { type: 'button', id: 'human:hr_1:opt:escalate', label: 'Escalate' },
+          ],
+        },
+      },
+    });
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:hr_1:opt:forged' },
+        message: null,
+        subscriber: { subscriberId: 'sub-1', firstName: 'Ada' },
+      }) as any,
+      'conversation'
+    );
+
+    expect(settlement.settle.called).to.equal(false);
+    expect(result.outcome).to.equal('consumed');
+  });
+
+  it('settles a renderApprove click by requestId when the button uses hr_ ids', async () => {
+    const { service, humanInteractionRepository, settlement } = setup();
+    const pending = {
+      _id: 'hi1',
+      identifier: 'hi_1',
+      requestId: 'hr_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['sub-1'],
+      _environmentId: 'env1',
+      content: { cardChrome: { title: 'Refund $25?', extraActions: [{ id: 'escalate', label: 'Escalate' }] } },
+    };
+    humanInteractionRepository.findByRequestId.resolves(pending);
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:hr_1:opt:escalate' },
+        message: null,
+        subscriber: { subscriberId: 'sub-1', firstName: 'Ada' },
+      }) as any,
+      'conversation'
+    );
+
+    expect(humanInteractionRepository.findByIdentifier.calledOnceWith('env1', 'hr_1')).to.equal(true);
+    expect(humanInteractionRepository.findByRequestId.calledOnceWith('env1', 'hr_1')).to.equal(true);
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settlement.settle.firstCall.args[2].optionId).to.equal('escalate');
+    expect(result.outcome).to.equal('settled');
+  });
+
+  it('settles an approve extra click as approved with that optionId', async () => {
+    const { service, humanInteractionRepository, settlement } = setup();
+    humanInteractionRepository.findByIdentifier.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      requestId: 'tool_approval:apr_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['sub-1'],
+      _environmentId: 'env1',
+      content: {
+        cardChrome: {
+          title: 'Tool approval required',
+          extraActions: [{ id: 'trust-tool', label: 'Always allow this tool' }],
+        },
+      },
+    });
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:hi_1:opt:trust-tool' },
+        message: null,
+        subscriber: { subscriberId: 'sub-1', firstName: 'Ada' },
+      }) as any,
+      'conversation'
+    );
+
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settlement.settle.firstCall.args[2].optionId).to.equal('trust-tool');
+    expect(result.outcome).to.equal('settled');
   });
 
   it('falls back to subscriberId when firstName is missing', async () => {
@@ -200,7 +455,13 @@ describe('HumanInteractionInboundService', () => {
 
   it('keeps each ambiguous answer on its own cache key so a later reply cannot overwrite it', async () => {
     const { service, humanInteractionRepository, cacheService, pendingAsk } = setup();
-    const otherAsk = { ...pendingAsk, _id: 'hi2', identifier: 'hi_2', requestId: 'hr_2', prompt: 'Second?' };
+    const otherAsk = {
+      ...pendingAsk,
+      _id: 'hi2',
+      identifier: 'hi_2',
+      requestId: 'hr_2',
+      content: { cardChrome: { title: 'Second?' } },
+    };
     humanInteractionRepository.findPendingAsksByConversation.resolves([pendingAsk, otherAsk]);
 
     await service.tryHandleMessage(
@@ -337,6 +598,101 @@ describe('HumanInteractionInboundService', () => {
     expect(result.outcome).to.equal('consumed');
   });
 
+  it('settles when a duplicate-identity subscriber shares the delivered platform user', async () => {
+    const { service, humanInteractionRepository, settlement, channelEndpointRepository } = setup();
+    humanInteractionRepository.findByIdentifier.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['68f7f193'],
+      _environmentId: 'env1',
+      deliveries: [
+        {
+          subscriberId: '68f7f193',
+          integrationIdentifier: 'test-slack',
+          platform: 'slack',
+          platformMessageId: '1788513299.627669',
+          platformThreadId: 'slack:D0BL84VGMBN:1788513299.627669',
+        },
+      ],
+    });
+    channelEndpointRepository.findOne.resolves({ _id: 'endpoint-1' });
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:hi_1:approve' },
+        message: null,
+        platformUserId: 'U091UCSSM8F',
+        subscriber: { subscriberId: 'human_d0cd035b1573', firstName: 'Paweł' },
+      }) as any,
+      'relay'
+    );
+
+    expect(channelEndpointRepository.findOne.calledOnce).to.equal(true);
+    const [query] = channelEndpointRepository.findOne.firstCall.args;
+    expect(query._environmentId).to.equal('env1');
+    expect(query.$or).to.deep.equal([
+      {
+        subscriberId: '68f7f193',
+        integrationIdentifier: 'test-slack',
+        type: 'slack_user',
+        'endpoint.userId': 'U091UCSSM8F',
+      },
+    ]);
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settlement.settle.firstCall.args[2].respondedBySubscriberId).to.equal('human_d0cd035b1573');
+    expect(result.outcome).to.equal('settled');
+  });
+
+  it('rejects a different platform user even when they clicked the delivered card', async () => {
+    const { service, humanInteractionRepository, settlement, outboundGateway, channelEndpointRepository } = setup();
+    humanInteractionRepository.findByIdentifier.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      status: HumanInteractionStatusEnum.PENDING,
+      subscriberIds: ['68f7f193'],
+      _environmentId: 'env1',
+      deliveries: [
+        {
+          subscriberId: '68f7f193',
+          integrationIdentifier: 'test-slack',
+          platform: 'slack',
+          platformMessageId: '1788513299.627669',
+          platformThreadId: 'slack:C0PUBLIC:1788513299.627669',
+        },
+      ],
+    });
+    // Mongo finds no endpoint whose linked identity equals the bystander's id.
+    channelEndpointRepository.findOne.resolves(null);
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:hi_1:approve' },
+        message: null,
+        platformUserId: 'U_BYSTANDER',
+        subscriber: { subscriberId: 'bystander-sub' },
+      }) as any,
+      'relay'
+    );
+
+    expect(channelEndpointRepository.findOne.firstCall.args[0].$or).to.deep.equal([
+      {
+        subscriberId: '68f7f193',
+        integrationIdentifier: 'test-slack',
+        type: 'slack_user',
+        'endpoint.userId': 'U_BYSTANDER',
+      },
+    ]);
+    expect(settlement.settle.called).to.equal(false);
+    expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    expect(result.outcome).to.equal('consumed');
+  });
+
   it('lets a listed secondary subscriber answer a conversation ask', async () => {
     const { service, humanInteractionRepository, settlement } = setup();
     humanInteractionRepository.findPendingAsksByConversation.resolves([
@@ -345,7 +701,7 @@ describe('HumanInteractionInboundService', () => {
         identifier: 'hi_1',
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.PENDING,
-        prompt: 'Env?',
+        content: { cardChrome: { title: 'Env?' } },
         subscriberIds: ['sub-1', 'sub-2'],
         _environmentId: 'env1',
       },

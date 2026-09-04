@@ -10,7 +10,7 @@ describe('CreateInteraction', () => {
       identifier: 'hi_1',
       kind: HumanInteractionKindEnum.APPROVE,
       status: HumanInteractionStatusEnum.PENDING,
-      prompt: 'Deploy?',
+      card: { title: 'Deploy?' },
       subscriberIds: ['sub-1'],
       expiresAt: '2026-01-01T00:00:00.000Z',
       createdAt: '2026-01-01T00:00:00.000Z',
@@ -47,7 +47,7 @@ describe('CreateInteraction', () => {
       environmentId: 'env1',
       organizationId: 'org1',
       kind: HumanInteractionKindEnum.APPROVE,
-      prompt: 'Deploy?',
+      card: { title: 'Deploy?' },
       to: 'sub-1',
       agentIdentifier: 'human-hitl',
     };
@@ -76,8 +76,8 @@ describe('CreateInteraction', () => {
     expect(humanInteractionRepository.create.firstCall.args[0]).to.include({
       _agentId: 'agent-hitl',
       kind: HumanInteractionKindEnum.APPROVE,
-      prompt: 'Deploy?',
     });
+    expect(humanInteractionRepository.create.firstCall.args[0].content.cardChrome.title).to.equal('Deploy?');
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['sub-1']);
     expect(humanInteractionRepository.create.firstCall.args[0]).to.not.have.property('subscriberId');
     expect(humanInteractionRepository.create.firstCall.args[0]).to.not.have.property('platform');
@@ -131,6 +131,38 @@ describe('CreateInteraction', () => {
 
     try {
       await usecase.execute({ ...command, kind: HumanInteractionKindEnum.CHOOSE } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
+  });
+
+  it('accepts a posted choose card whose options are action buttons', async () => {
+    const { usecase, command, agentRepository, humanInteractionRepository } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    const card = {
+      type: 'card' as const,
+      title: 'Which region?',
+      children: [
+        { type: 'button', id: 'human:hi_1:opt:us-east', label: 'US' },
+        { type: 'button', id: 'human:hi_1:opt:eu-west', label: 'EU' },
+      ],
+    };
+
+    await usecase.execute({ ...command, kind: HumanInteractionKindEnum.CHOOSE, card } as any);
+
+    expect(humanInteractionRepository.create.firstCall.args[0].content).to.deep.equal({ card });
+  });
+
+  it('rejects a posted choose card without option buttons', async () => {
+    const { usecase, command } = setup();
+
+    try {
+      await usecase.execute({
+        ...command,
+        kind: HumanInteractionKindEnum.CHOOSE,
+        card: { type: 'card', title: 'Which region?', children: [] },
+      } as any);
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(BadRequestException);
@@ -242,7 +274,6 @@ describe('CreateInteraction', () => {
     expect(humanInteractionRepository.stampDelivery.calledOnce).to.equal(true);
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-1']);
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberId).to.equal('sub-1');
     expect(result.to).to.deep.equal(['sub-1']);
     expect(result.failedTo).to.deep.equal(['sub-2']);
     expect(result.id).to.equal('hi_1');
@@ -266,7 +297,6 @@ describe('CreateInteraction', () => {
 
     const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
 
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberId).to.equal('sub-2');
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-2']);
     expect(result.to).to.deep.equal(['sub-2']);
     expect(result.failedTo).to.deep.equal(['sub-1']);

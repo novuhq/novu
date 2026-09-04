@@ -11,8 +11,8 @@ import {
   ConversationRepository,
   isDuplicateKeyError,
 } from '@novu/dal';
-import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
+import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,

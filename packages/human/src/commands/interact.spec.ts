@@ -11,7 +11,7 @@ vi.mock('../output', async (importOriginal) => {
   };
 });
 
-const { parseDuration, parseHumanToOption } = await import('./interact');
+const { parseDuration, parseHumanToOption, parseIdLabelOption } = await import('./interact');
 const { exitCodeFor, EXIT_DENIED, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
 
 describe('parseHumanToOption', () => {
@@ -25,6 +25,21 @@ describe('parseHumanToOption', () => {
     expect(() => parseHumanToOption(Array.from({ length: 51 }, (_, index) => `s${index}`).join(','))).toThrow(
       'at most 50'
     );
+  });
+});
+
+describe('parseIdLabelOption', () => {
+  it('keeps a stable id when given id:label', () => {
+    expect(parseIdLabelOption('trust-tool:Always allow this tool')).toEqual({
+      id: 'trust-tool',
+      label: 'Always allow this tool',
+    });
+    expect(parseIdLabelOption('stg:Staging')).toEqual({ id: 'stg', label: 'Staging' });
+  });
+
+  it('treats a bare label as a string shorthand', () => {
+    expect(parseIdLabelOption('blue-green')).toBe('blue-green');
+    expect(parseIdLabelOption('all at once')).toBe('all at once');
   });
 });
 
@@ -48,7 +63,7 @@ describe('exit code contract', () => {
   const base = {
     id: 'hi_x',
     kind: 'approve' as const,
-    prompt: 'p',
+    content: { cardChrome: { title: 'p' } },
     to: ['s'],
     integrationIdentifier: 'i',
     platform: 'telegram',

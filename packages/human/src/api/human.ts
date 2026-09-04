@@ -4,12 +4,50 @@ export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
 export type InteractionStatus = 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered';
 
+export type HumanInteractionOption = { id: string; label: string };
+
+/** String is shorthand for `{ id: minted opt_N, label }`; structured `{ id, label }` keeps a stable id. */
+export type HumanOptionInput = string | HumanInteractionOption;
+
+export interface InteractionCard {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanInteractionOption[];
+  options?: HumanInteractionOption[];
+}
+
+export type CreateInteractionCard = Omit<InteractionCard, 'extraActions' | 'options'> & {
+  title: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+};
+
+/** Posted chat card element. Structural subset of `CardElement` in `@novu/shared`. */
+export type InteractionCardElement = {
+  type: 'card';
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  children?: unknown[];
+};
+
+/**
+ * Persisted HITL content returned by the API — either normalized chrome
+ * (`cardChrome`) or a posted chat card element (`card`). Mirrors
+ * `HumanInteractionContent` in `@novu/shared`; kept as a local structural copy
+ * because the CLI cannot depend on `@novu/shared`.
+ */
+export type InteractionContent = { cardChrome: InteractionCard } | { card: InteractionCardElement };
+
 export interface Interaction {
   id: string;
   kind: InteractionKind;
   status: InteractionStatus;
-  prompt: string;
-  options?: Array<{ id: string; label: string }>;
+  content: InteractionContent;
   from?: string;
   to: string[];
   integrationIdentifier: string;
@@ -27,10 +65,62 @@ export interface Interaction {
   createdAt: string;
 }
 
+export function isInteractionChrome(content: InteractionContent): content is { cardChrome: InteractionCard } {
+  return 'cardChrome' in content;
+}
+
+export function isInteractionCardElement(content: InteractionContent): content is { card: InteractionCardElement } {
+  return 'card' in content && (content as { card?: { type?: string } }).card?.type === 'card';
+}
+
+function collectCardButtons(node: unknown, into: HumanInteractionOption[] = []): HumanInteractionOption[] {
+  if (Array.isArray(node)) {
+    for (const child of node) collectCardButtons(child, into);
+
+    return into;
+  }
+
+  if (typeof node !== 'object' || node === null) {
+    return into;
+  }
+
+  const record = node as { id?: unknown; label?: unknown; children?: unknown };
+  if (typeof record.id === 'string' && typeof record.label === 'string') {
+    into.push({ id: record.id, label: record.label });
+  }
+
+  if (record.children !== undefined) {
+    collectCardButtons(record.children, into);
+  }
+
+  return into;
+}
+
+/** Title shown in lists — from chrome or the posted card element. */
+export function interactionTitle(interaction: Interaction): string {
+  const { content } = interaction;
+
+  if (isInteractionChrome(content)) {
+    return content.cardChrome.title ?? '';
+  }
+
+  return content.card.title ?? '';
+}
+
+/** Selectable options for `choose` — chrome options, or buttons on a posted card. */
+export function interactionOptions(interaction: Interaction): HumanInteractionOption[] {
+  const { content } = interaction;
+
+  if (isInteractionChrome(content)) {
+    return content.cardChrome.options ?? [];
+  }
+
+  return collectCardButtons(content.card.children);
+}
+
 export interface CreateInteractionInput {
   kind: InteractionKind;
-  prompt: string;
-  options?: string[];
+  card: CreateInteractionCard;
   to: string | string[];
   via?: string;
   agentIdentifier?: string;

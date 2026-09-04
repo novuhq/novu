@@ -14,7 +14,52 @@ export enum AgentEventEnum {
 
 export type HumanInteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
-export type HumanAskApproveOptions = {
+export type HumanOption = { id: string; label: string };
+export type HumanOptionInput = string | HumanOption;
+
+export type HumanCardPresentation = {
+  title?: string;
+  /**
+   * Slack only. MCP catalog id (`stripe`, `github`), catalog display name,
+   * or an `https://` URL (32×32). Ignored on Telegram, Teams, WhatsApp,
+   * email, and web chat. Do not pass emoji names.
+   */
+  icon?: string;
+  /** Secondary line under the title. Shown on every channel. */
+  subtitle?: string;
+  /** Optional details under the subtitle. Shown on every channel. */
+  body?: string;
+};
+
+export type HumanApproveCard = HumanCardPresentation & {
+  /** Approve button label. Defaults to `Approve`. */
+  approveLabel?: string;
+  /** Deny button label. Defaults to `Deny`. */
+  denyLabel?: string;
+  /**
+   * Extra buttons after Approve / Deny (max 4). Do not invent
+   * `trust-tool` / `trust-server` — Novu injects those on parked tool cards.
+   */
+  extraActions?: HumanOptionInput[];
+};
+
+export type HumanChooseCard = HumanCardPresentation & {
+  /** Choose options (2–10). String label or `{ id, label }`. */
+  options?: HumanOptionInput[];
+};
+
+/** Chrome descriptor returned by `askCard()` from `ctx.ask({ render })`. */
+export type HumanAskChrome = HumanCardPresentation & { type: 'human-ask-card' };
+/** Chrome descriptor returned by `approveCard()` from `ctx.approve({ render })`. */
+export type HumanApproveChrome = HumanApproveCard & { type: 'human-approve-card' };
+/** Chrome descriptor returned by `chooseCard()` from `ctx.choose({ render })`. */
+export type HumanChooseChrome = HumanChooseCard & { type: 'human-choose-card' };
+/** Chrome descriptor returned by `tellCard()` from `ctx.tell({ render })`. */
+export type HumanTellChrome = HumanCardPresentation & { type: 'human-tell-card' };
+
+export type HumanChrome = HumanAskChrome | HumanApproveChrome | HumanChooseChrome | HumanTellChrome;
+
+type HumanThreadOptions = {
   /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
   from?: string;
   /** Time until the request expires, in seconds (max 72h; default 24h). */
@@ -27,7 +72,32 @@ export type HumanAskApproveOptions = {
   to?: string | string[];
 };
 
-export type HumanChooseOptions = HumanAskApproveOptions;
+export type HumanAskOptions = HumanThreadOptions & {
+  card?: HumanCardPresentation;
+};
+
+/** `ctx.ask({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanAskRenderOptions = HumanThreadOptions & {
+  render: HumanAskRenderFn;
+};
+
+export type HumanAskApproveOptions = HumanThreadOptions & {
+  card?: HumanApproveCard;
+};
+
+/** `ctx.approve({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanAskApproveRenderOptions = HumanThreadOptions & {
+  render: HumanApproveRenderFn;
+};
+
+export type HumanChooseOptions = HumanThreadOptions & {
+  card?: HumanChooseCard;
+};
+
+/** `ctx.choose({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanChooseRenderOptions = HumanThreadOptions & {
+  render: HumanChooseRenderFn;
+};
 
 export type HumanTellOptions = {
   /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
@@ -37,6 +107,11 @@ export type HumanTellOptions = {
    * still posts one card on the current conversation.
    */
   to?: string | string[];
+};
+
+/** `ctx.tell({ render })` — `render` builds the posted message. */
+export type HumanTellRenderOptions = HumanTellOptions & {
+  render: HumanTellRenderFn;
 };
 
 /**
@@ -337,6 +412,37 @@ export class PendingApproval {
   readonly __novuPendingApproval = true as const;
 }
 
+/** Arguments passed to `ctx.ask({ render })`. */
+export interface HumanAskRenderArgs {
+  requestId: string;
+  askCard: (overrides?: Omit<HumanAskChrome, 'type'>) => HumanAskChrome;
+}
+
+/** Arguments passed to `ctx.approve({ render })`. */
+export interface HumanApproveRenderArgs {
+  requestId: string;
+  actionIds: { approve: string; deny: string };
+  approveCard: (overrides?: Omit<HumanApproveChrome, 'type'>) => HumanApproveChrome;
+}
+
+/** Arguments passed to `ctx.choose({ render })`. */
+export interface HumanChooseRenderArgs {
+  requestId: string;
+  actionIds: { option: (optionId: string) => string };
+  chooseCard: (overrides?: Omit<HumanChooseChrome, 'type'>) => HumanChooseChrome;
+}
+
+/** Arguments passed to `ctx.tell({ render })`. */
+export interface HumanTellRenderArgs {
+  requestId: string;
+  tellCard: (overrides?: Omit<HumanTellChrome, 'type'>) => HumanTellChrome;
+}
+
+export type HumanAskRenderFn = (args: HumanAskRenderArgs) => Awaitable<ChatElement | HumanAskChrome>;
+export type HumanApproveRenderFn = (args: HumanApproveRenderArgs) => Awaitable<ChatElement | HumanApproveChrome>;
+export type HumanChooseRenderFn = (args: HumanChooseRenderArgs) => Awaitable<ChatElement | HumanChooseChrome>;
+export type HumanTellRenderFn = (args: HumanTellRenderArgs) => Awaitable<ChatElement | HumanTellChrome>;
+
 /** Optional customization for tool approval messages. */
 export interface ToolApprovalConfig {
   /**
@@ -377,13 +483,19 @@ export interface ToolApprovalDecision {
 }
 
 /** Controls on `ctx.toolApproval` for gating tool calls. */
+export type ToolApprovalRequestOptions = {
+  from?: string;
+  ttlSeconds?: number;
+  to?: string | string[];
+};
+
 export interface ToolApprovalControl {
   /**
    * Post an approval message and pause the turn.
    * Return the result (`return ctx.toolApproval.request(...)`) from `onMessage`
    * to end the turn until the user decides.
    */
-  request(toolCall: AgentToolCall): Promise<PendingApproval>;
+  request(toolCall: AgentToolCall, opts?: ToolApprovalRequestOptions): Promise<PendingApproval>;
 }
 
 // ---------------------------------------------------------------------------
@@ -529,8 +641,12 @@ export interface AgentHandlerContext {
    * @example
    *   ctx.ask('What environment should we deploy to?');
    *   ctx.ask('Which environment?', { to: 'alice' });
+   *   ctx.ask({ render: ({ askCard }) => askCard({ title: 'What environment?' }) });
+   *   // `card` cannot be passed alongside `render` — return askCard(...) or a Card.
    */
-  ask(question: string, opts?: HumanAskApproveOptions): string;
+  ask(question: string, opts?: HumanAskOptions | HumanAskRenderOptions): string;
+  ask(opts: HumanAskOptions & { card: HumanCardPresentation & { title: string } }): string;
+  ask(opts: HumanAskRenderOptions): string;
   /**
    * Ask the conversation subscriber to approve or deny an action.
    * The verdict arrives later on `onAction` with `ctx.humanResponse` set.
@@ -541,8 +657,15 @@ export interface AgentHandlerContext {
    * @example
    *   ctx.approve('Deploy v2.4.1 to production?');
    *   ctx.approve('Deploy v2.4.1?', { to: ['alice', 'bob'] });
+   *   ctx.approve({
+   *     render: ({ actionIds, approveCard }) =>
+   *       approveCard({ title: 'Refund $25?', extraActions: ['Escalate'] }),
+   *   });
+   *   // `card` cannot be passed alongside `render` — return approveCard(...) or a Card.
    */
-  approve(action: string, opts?: HumanAskApproveOptions): string;
+  approve(action: string, opts?: HumanAskApproveOptions | HumanAskApproveRenderOptions): string;
+  approve(opts: HumanAskApproveOptions & { card: HumanApproveCard & { title: string } }): string;
+  approve(opts: HumanAskApproveRenderOptions): string;
   /**
    * Ask the conversation subscriber to pick one of several options (2–10).
    * The pick arrives later on `onAction` with `ctx.humanResponse` set.
@@ -552,16 +675,26 @@ export interface AgentHandlerContext {
    *
    * @example
    *   ctx.choose('Which region?', ['us-east', 'eu-west', 'ap-south']);
+   *   ctx.choose({
+   *     render: ({ chooseCard }) =>
+   *       chooseCard({ title: 'Which region?', options: ['us-east', 'eu-west'] }),
+   *   });
+   *   // `card` cannot be passed alongside `render` — return chooseCard(...) or a Card.
    */
-  choose(question: string, options: string[], opts?: HumanChooseOptions): string;
+  choose(question: string, options: HumanOptionInput[], opts?: HumanChooseOptions | HumanChooseRenderOptions): string;
+  choose(opts: HumanChooseOptions & { card: HumanChooseCard & { title: string } }): string;
+  choose(opts: HumanChooseRenderOptions): string;
   /**
    * Send a one-way notification to the conversation subscriber. Nothing to wait
    * on — `tell` never sets `ctx.humanResponse`.
    *
    * @example
    *   ctx.tell('Deploy finished. v2.4.1 is live.');
+   *   ctx.tell({ render: ({ tellCard }) => tellCard({ title: 'Deploy finished.' }) });
+   *   // `card` cannot be passed alongside `render` — return tellCard(...) or a Card.
    */
-  tell(message: string, opts?: HumanTellOptions): string;
+  tell(message: string, opts?: HumanTellOptions | HumanTellRenderOptions): string;
+  tell(opts: HumanTellRenderOptions): string;
   /**
    * Add an emoji reaction to any platform message.
    * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
@@ -789,12 +922,32 @@ export type TriggerSignal = {
  * Queued by `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` — instructs
  * Novu to create a human interaction in the current conversation thread.
  */
+export type HumanSignalCard = {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+};
+
 export type HumanSignal = {
   type: 'human';
   kind: HumanInteractionKind;
-  prompt: string;
   requestId: string;
-  options?: string[];
+  /**
+   * When set, Novu mints `human:{actionIdentifier}:…` button ids (the
+   * `requestId` when a HITL `render*` helper is used). Omitted = public `hi_…`.
+   */
+  actionIdentifier?: string;
+  /**
+   * The only content carrier: chrome presentation (built from the simple args or
+   * the `card` arg) or a posted `Card` element (`type: 'card'`) from `{ render }`.
+   * Title lives on `card.title`; choose options on `card.options` / option buttons.
+   */
+  card: HumanSignalCard | CardElement;
   from?: string;
   ttlSeconds?: number;
   /** Novu subscriberId(s) allowed to settle. Omitted = conversation subscriber. */

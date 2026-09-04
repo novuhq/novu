@@ -19,6 +19,21 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     return this.findOne({ _environmentId: environmentId, identifier }, '*');
   }
 
+  async findByRequestId(environmentId: string, requestId: string): Promise<HumanInteractionEntity | null> {
+    return this.findOne({ _environmentId: environmentId, requestId }, '*');
+  }
+
+  async findPendingByRequestId(environmentId: string, requestId: string): Promise<HumanInteractionEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        requestId,
+        status: HumanInteractionStatusEnum.PENDING,
+      },
+      '*'
+    );
+  }
+
   async countPendingForSubscriber(environmentId: string, subscriberId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { type WebChatRawMessage, isValidActionIdempotencyKey } from '@novu/chat-adapter-web-chat';
+import { isValidActionIdempotencyKey, type WebChatRawMessage } from '@novu/chat-adapter-web-chat';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -545,6 +545,7 @@ export class AgentInboundHandler implements OnModuleInit {
       event,
       thread,
       platformThreadId,
+      platformUserId: message.author.userId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
       workflowOrigin: workflowOrigin ?? undefined,
     };
@@ -1254,7 +1255,6 @@ export class AgentInboundHandler implements OnModuleInit {
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER
         : ConversationActivitySenderTypeEnum.PLATFORM_USER;
     const identifier = this.readActionIdempotencyKey(rawEvent);
-    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId, identifier);
     await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
@@ -1279,12 +1279,21 @@ export class AgentInboundHandler implements OnModuleInit {
       event: AgentEventEnum.ON_ACTION,
       thread,
       platformThreadId,
+      platformUserId: userId,
       action,
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
     if (await this.humanConversationInbound.tryHandleAction(turn)) {
       return;
+    }
+
+    // Record the tool-approval verdict on the transcript, but only when the HITL
+    // path did not already settle a `HumanInteraction` for this click — a settled
+    // row persists the decision through its resume chain, so writing here too
+    // would double-record the verdict.
+    if (!turn.toolApprovalSettledByHitl) {
+      await this.recordApprovalVerdict(conversation, config, action, actorType, participantId, identifier);
     }
 
     await runtime.dispatch(turn);

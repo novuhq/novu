@@ -19,6 +19,26 @@ program
   )
   .version(version);
 
+function collect(value: string, previous: string[]): string[] {
+  return [...previous, value];
+}
+
+function withCardOptions(command: Command, kind: 'ask' | 'approve' | 'choose' | 'tell'): Command {
+  command
+    .option('--icon <id-or-url>', 'Slack-only card icon: MCP catalog id (`stripe`) or https URL')
+    .option('--subtitle <text>', 'secondary line under the title')
+    .option('--body <text>', 'supporting body text');
+
+  if (kind === 'approve') {
+    command
+      .option('--approve-label <text>', 'Approve button label')
+      .option('--deny-label <text>', 'Deny button label')
+      .option('--extra-action <spec>', 'extra approve button (`id:label` or label). Repeatable', collect, []);
+  }
+
+  return command;
+}
+
 function withCommonOptions(command: Command): Command {
   return command
     .option(
@@ -34,33 +54,45 @@ function withCommonOptions(command: Command): Command {
     .option('--api-url <url>', 'Novu API URL override');
 }
 
-withCommonOptions(
-  program
-    .command('ask')
-    .argument('<question>', 'the question to ask')
-    .description('Ask the human a freeform question and block until they reply')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('ask')
+      .argument('<question>', 'the question to ask')
+      .description('Ask the human a freeform question and block until they reply')
+  ),
+  'ask'
 ).action((question, options) => runInteraction('ask', question, options));
 
-withCommonOptions(
-  program
-    .command('approve')
-    .argument('<action>', 'description of the action needing approval')
-    .description('Ask for approval (Approve/Deny buttons) and block until decided')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('approve')
+      .argument('<action>', 'description of the action needing approval')
+      .description('Ask for approval (Approve/Deny buttons) and block until decided')
+  ),
+  'approve'
 ).action((action, options) => runInteraction('approve', action, options));
 
-withCommonOptions(
-  program
-    .command('choose')
-    .argument('<question>', 'the question to ask')
-    .requiredOption('--option <label...>', 'a choice (repeat for each option, 2-10)')
-    .description('Ask the human to pick one of several options')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('choose')
+      .argument('<question>', 'the question to ask')
+      .requiredOption('--option <label...>', 'a choice (repeat for each option, 2-10). Also accepts id:label')
+      .description('Ask the human to pick one of several options')
+  ),
+  'choose'
 ).action((question, options) => runInteraction('choose', question, options));
 
-withCommonOptions(
-  program
-    .command('tell')
-    .argument('<message>', 'the message to deliver')
-    .description('Send a one-way notification (no waiting)')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('tell')
+      .argument('<message>', 'the message to deliver')
+      .description('Send a one-way notification (no waiting)')
+  ),
+  'tell'
 ).action((message, options) => runInteraction('tell', message, options));
 
 program

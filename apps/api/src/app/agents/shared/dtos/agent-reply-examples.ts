@@ -133,7 +133,7 @@ export const AGENT_REPLY_BODY_EXAMPLES = {
         {
           type: 'human',
           kind: 'approve',
-          prompt: 'Deploy v2.4.1 to production?',
+          card: { title: 'Deploy v2.4.1 to production?' },
           requestId: 'hr_7c2e1a3b-4d5f-6789-abcd-ef0123456789',
         },
       ],
