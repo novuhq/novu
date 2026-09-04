@@ -7,9 +7,23 @@ type SpawnInstallOptions = {
   cwd?: string;
 };
 
-function buildInstallArgs(packageManager: PackageManager, packages: string[], isOnline: boolean): string[] {
+/** npm flags shown in user-facing install commands (must match buildInstallArgs). */
+export const NPM_INSTALL_DISPLAY_FLAGS = '--no-workspaces --no-audit --fund=false';
+
+export function formatNpmInstallCommand(packages: string[]): string {
+  if (packages.length === 0) {
+    return '';
+  }
+
+  return `npm install ${packages.join(' ')} ${NPM_INSTALL_DISPLAY_FLAGS}`;
+}
+
+export function buildInstallArgs(packageManager: PackageManager, packages: string[], isOnline: boolean): string[] {
   if (packageManager === 'npm') {
-    const args = ['install', ...packages, '--no-workspaces'];
+    // --no-audit/--fund=false: npm 11+ runs a bulk audit after reify and can
+    // sit silent for minutes on leftover registry sockets. create-next-app
+    // uses the same flags for this reason.
+    const args = ['install', ...packages, '--no-workspaces', '--no-audit', '--fund=false'];
     if (!isOnline) {
       args.push('--offline');
     }
