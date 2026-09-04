@@ -5,7 +5,7 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  CreateStepConditionsPassedDetail,
+  CreateStepConditionEvaluationDetail,
   DetailEnum,
   GetPreferences,
   GetSubscriberTemplatePreference,
@@ -87,7 +87,7 @@ export class SendMessage {
     private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail
+    private createStepConditionEvaluationDetail: CreateStepConditionEvaluationDetail
   ) {}
 
   @InstrumentUsecase()
@@ -151,9 +151,10 @@ export class SendMessage {
     // has passed. Channel-level skips further down (e.g. missing email or push
     // token) are reported by their own execution details.
     if (command.job.step.filters?.length) {
-      await this.createStepConditionsPassedDetail.execute({
+      await this.createStepConditionEvaluationDetail.execute({
         job: command.job,
         conditions: stepCondition.conditions,
+        passed: true,
       });
     }
 

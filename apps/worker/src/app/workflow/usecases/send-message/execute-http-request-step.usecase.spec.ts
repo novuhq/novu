@@ -28,7 +28,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     };
   }
 
-  function buildUsecase(controls: Record<string, unknown>) {
+  function buildUsecase(controls: Record<string, unknown>, wasConditionEvaluationTraced = false) {
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const jobRepository = { updateOne: sinon.stub().resolves(undefined) };
     const httpClientService = {
@@ -57,8 +57,8 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       error: sinon.stub(),
     };
 
-    const createStepConditionsPassedDetail = {
-      execute: sinon.stub().resolves(undefined),
+    const createStepConditionEvaluationDetail = {
+      execute: sinon.stub().resolves(wasConditionEvaluationTraced),
       isEnabled: sinon.stub().resolves(false),
     };
 
@@ -70,7 +70,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       logger as never,
       getDecryptedSecretKey as never,
       executeBridgeJob as never,
-      createStepConditionsPassedDetail as never,
+      createStepConditionEvaluationDetail as never,
       {} as never,
       createExecutionDetails as never
     );
@@ -80,6 +80,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       httpClientService,
       executeBridgeJob,
       createExecutionDetails,
+      createStepConditionEvaluationDetail,
     };
   }
 
@@ -162,6 +163,37 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
 
     const requestArgs = httpClientService.request.firstCall.args[0];
     expect(requestArgs.body).to.deep.equal({ eventCount: 2 });
+  });
+
+  it('uses the condition evaluation detail instead of a generic bridge skip detail when tracing succeeds', async () => {
+    const { usecase, createExecutionDetails, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        skip: { '==': [{ var: 'payload.tier' }, 'pro'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    expect(createStepConditionEvaluationDetail.execute.calledOnce).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].passed).to.equal(false);
+    expect(createExecutionDetails.execute.called).to.equal(false);
+  });
+
+  it('keeps the generic bridge skip detail when condition evaluation tracing is disabled', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      skip: { '==': [{ var: 'payload.tier' }, 'pro'] },
+    });
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    expect(createExecutionDetails.execute.calledOnce).to.equal(true);
   });
 
   it('compiles steps.digest-step.events into the HTTP request body', async () => {
