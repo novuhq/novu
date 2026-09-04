@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
 import { buildResolvedContent } from './human-card.builder';
 
 /**
@@ -17,6 +18,8 @@ export class HumanInteractionSettlementService {
   constructor(
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly outboundGateway: OutboundGateway,
+    @Inject(forwardRef(() => ResumeManagedHuman))
+    private readonly resumeManagedHuman: ResumeManagedHuman,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -36,6 +39,7 @@ export class HumanInteractionSettlementService {
 
     if (settled) {
       await this.editDeliveredMessage(settled);
+      await this.resumeManagedIfNeeded(settled);
     } else {
       await this.expireIfOverdue(interaction);
     }
@@ -73,6 +77,7 @@ export class HumanInteractionSettlementService {
     }
 
     await this.editDeliveredMessage(expired);
+    await this.resumeManagedIfNeeded(expired);
 
     return expired;
   }
@@ -112,5 +117,9 @@ export class HumanInteractionSettlementService {
 
   private deliveryEditTargets(interaction: HumanInteractionEntity): HumanInteractionDelivery[] {
     return interaction.deliveries ?? [];
+  }
+
+  private async resumeManagedIfNeeded(interaction: HumanInteractionEntity): Promise<void> {
+    await this.resumeManagedHuman.execute(interaction);
   }
 }

@@ -1,6 +1,7 @@
 import {
   CLAUDE_BUILTIN_TOOLS,
   isNovuInternalToolName,
+  NOVU_HUMAN_SCHEMA,
   NOVU_RESOLVE_SCHEMA,
   NOVU_TOOL_CATALOG_SCHEMA,
 } from '@novu/shared';
@@ -80,13 +81,15 @@ describe('buildToolsPayload', () => {
     expect(platformTools).to.deep.equal([
       { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
       { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+      { type: 'custom', ...NOVU_HUMAN_SCHEMA },
     ]);
   });
 
-  it('buildPlatformToolsPayload returns novu_tool_catalog and novu_resolve', () => {
+  it('buildPlatformToolsPayload returns novu_tool_catalog, novu_resolve, and novu_human', () => {
     expect(buildPlatformToolsPayload()).to.deep.equal([
       { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
       { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+      { type: 'custom', ...NOVU_HUMAN_SCHEMA },
     ]);
   });
 
@@ -94,6 +97,7 @@ describe('buildToolsPayload', () => {
     expect(isNovuInternalToolName('novu_tool_catalog')).to.equal(true);
     expect(isNovuInternalToolName('novu_tools')).to.equal(true);
     expect(isNovuInternalToolName('novu_resolve')).to.equal(true);
+    expect(isNovuInternalToolName('novu_human')).to.equal(true);
     expect(isNovuInternalToolName('customer_tool')).to.equal(false);
     expect(isNovuInternalToolName(undefined)).to.equal(false);
   });

@@ -19,6 +19,7 @@ import {
   McpConnectionScopeEnum,
 } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
+import { EnsureNovuHumanSkill } from '../../../managed-runtime/novu-human/ensure-novu-human-skill.service';
 import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/shared/resolve-mcp-servers';
 import { sanitizeUrlForLogging } from '../../../mcp/shared/sanitize-url-for-logging';
@@ -43,6 +44,7 @@ export class ProvisionManagedAgent {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
+    private readonly ensureNovuHumanSkill: EnsureNovuHumanSkill,
     private readonly logger: PinoLogger
   ) {}
 
@@ -156,13 +158,14 @@ export class ProvisionManagedAgent {
       const resolvedMcpServers = agentDefinitionMcpIds?.length
         ? resolveMcpServersById(agentDefinitionMcpIds)
         : undefined;
+      const skills = await this.ensureNovuHumanSkill.mergeForCreate(runtimeProvider, command.skills);
       const response = await runtimeProvider.createAgent({
         name: command.name ?? '',
         model: command.model,
         systemPrompt: command.systemPrompt,
         tools: command.tools,
         mcpServers: resolvedMcpServers,
-        skills: command.skills,
+        skills,
       });
 
       externalAgentId = response.externalAgentId;

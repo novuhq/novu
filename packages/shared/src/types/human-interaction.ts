@@ -58,6 +58,9 @@ export type HumanInteractionResponse = {
 /** Hard cap on `to` recipient lists for `ctx.*` and `POST /v1/human/interactions`. */
 export const HUMAN_INTERACTION_MAX_RECIPIENTS = 50;
 
+/** `choose` must have at least two options and at most this many (chat button UIs truncate). */
+export const HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS = 10;
+
 /**
  * Delivery channel preference on create. The API resolves the concrete
  * integration from the relay agent's linked integrations + the human's
