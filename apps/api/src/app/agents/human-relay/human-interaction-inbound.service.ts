@@ -1,12 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { CacheService, PinoLogger, shortId } from '@novu/application-generic';
-import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
-import { HumanInteractionResponse, HumanInteractionStatusEnum, humanInteractionRecipientIds } from '@novu/shared';
+import { CacheService, FeatureFlagsService, PinoLogger, shortId } from '@novu/application-generic';
+import { ChannelEndpointRepository, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import { parseApprovalActionId } from '@novu/framework/internal';
+import {
+  buildToolApprovalRequestId,
+  FeatureFlagsKeysEnum,
+  HUMAN_TRUST_SERVER_OPTION_ID,
+  HUMAN_TRUST_TOOL_OPTION_ID,
+  HumanInteractionKindEnum,
+  HumanInteractionResponse,
+  HumanInteractionStatusEnum,
+  humanInteractionRecipientIds,
+} from '@novu/shared';
+import { isKnownHumanContentOption } from '../../human/services/human-interaction-lifecycle';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
-import { parseHumanActionId } from './human-action-id';
+import { parseToolApprovalActionId } from '../shared/tool-approval/action-id';
+import { PLATFORM_ENDPOINT_CONFIG } from '../shared/util/platform-endpoint-config';
+import { type HumanActionParsed, parseHumanActionId } from './human-action-id';
 import { buildDisambiguationCard } from './human-card.builder';
 import { HumanInteractionSettlementService } from './human-interaction-settlement.service';
 
@@ -31,7 +44,9 @@ export class HumanInteractionInboundService {
     private readonly settlement: HumanInteractionSettlementService,
     private readonly outboundGateway: OutboundGateway,
     private readonly cacheService: CacheService,
-    private readonly logger: PinoLogger
+    private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly logger: PinoLogger,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -39,11 +54,21 @@ export class HumanInteractionInboundService {
   async tryHandleAction(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
     const parsed = parseHumanActionId(turn.action?.id);
     if (!parsed) {
-      return { outcome: 'ignored' };
+      return this.tryHandleToolApprovalGrammar(turn);
     }
 
+    return this.handleHumanAction(turn, mode, parsed);
+  }
+
+  private async handleHumanAction(
+    turn: ConversationTurn,
+    mode: HumanInboundMode,
+    parsed: HumanActionParsed
+  ): Promise<HumanInboundResult> {
     const environmentId = turn.config.environmentId;
-    const interaction = await this.humanInteractionRepository.findByIdentifier(environmentId, parsed.identifier);
+    const interaction =
+      (await this.humanInteractionRepository.findByIdentifier(environmentId, parsed.identifier)) ??
+      (await this.humanInteractionRepository.findByRequestId(environmentId, parsed.identifier));
 
     if (!interaction) {
       this.logger.warn(
@@ -54,7 +79,7 @@ export class HumanInteractionInboundService {
       return { outcome: 'consumed' };
     }
 
-    if (!this.isAddressedHuman(turn, interaction)) {
+    if (!(await this.isAddressedHuman(turn, interaction))) {
       await this.rejectForeignResponder(turn, interaction);
 
       return { outcome: 'consumed' };
@@ -82,25 +107,11 @@ export class HumanInteractionInboundService {
         this.buildResponse({ type: 'option', optionId: parsed.type, respondedBy, respondedBySubscriberId })
       );
     } else if (parsed.type === 'option') {
-      const known = current.options?.some((option) => option.id === parsed.optionId);
-      if (!known) {
-        this.logger.warn(
-          { interactionIdentifier: current.identifier, optionId: parsed.optionId },
-          'Choose click carried an unknown option id'
-        );
-
-        return { outcome: 'consumed' };
-      }
-
-      settled = await this.settlement.settle(
-        current,
-        HumanInteractionStatusEnum.ANSWERED,
-        this.buildResponse({ type: 'option', optionId: parsed.optionId, respondedBy, respondedBySubscriberId })
-      );
+      settled = await this.settleOptionClick(current, parsed.optionId, respondedBy, respondedBySubscriberId);
     }
 
     if (!settled) {
-      const latest = await this.humanInteractionRepository.findByIdentifier(environmentId, parsed.identifier);
+      const latest = await this.humanInteractionRepository.findByIdentifier(environmentId, current.identifier);
       if (latest && latest.status !== HumanInteractionStatusEnum.PENDING) {
         return this.consumeNonPending(turn, latest);
       }
@@ -109,6 +120,141 @@ export class HumanInteractionInboundService {
     }
 
     return { outcome: 'settled', settled };
+  }
+
+  private async settleOptionClick(
+    current: HumanInteractionEntity,
+    optionId: string,
+    respondedBy: string | undefined,
+    respondedBySubscriberId: string | undefined
+  ): Promise<HumanInteractionEntity | null> {
+    switch (current.kind) {
+      case HumanInteractionKindEnum.APPROVE:
+      case HumanInteractionKindEnum.CHOOSE: {
+        if (!isKnownHumanContentOption(current.kind, current.content, optionId)) {
+          this.logger.warn(
+            { interactionIdentifier: current.identifier, kind: current.kind, optionId },
+            'Human option click carried an unknown option id'
+          );
+
+          return null;
+        }
+
+        const status =
+          current.kind === HumanInteractionKindEnum.APPROVE
+            ? HumanInteractionStatusEnum.APPROVED
+            : HumanInteractionStatusEnum.ANSWERED;
+
+        return this.settlement.settle(
+          current,
+          status,
+          this.buildResponse({ type: 'option', optionId, respondedBy, respondedBySubscriberId })
+        );
+      }
+      case HumanInteractionKindEnum.ASK:
+      case HumanInteractionKindEnum.TELL:
+        return null;
+      default: {
+        const exhaustive: never = current.kind;
+
+        return exhaustive;
+      }
+    }
+  }
+
+  /**
+   * When HITL is on, author/framework action ids stay on the posted card.
+   * Correlate the click to `requestId = tool_approval:{approvalId}` and settle
+   * that row. No pending row (or flag off) falls through to the old grammar path.
+   */
+  private async tryHandleToolApprovalGrammar(turn: ConversationTurn): Promise<HumanInboundResult> {
+    const click = this.parseToolApprovalGrammarClick(turn.action?.id);
+    if (!click) {
+      return { outcome: 'ignored' };
+    }
+
+    const hitlEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_HUMAN_HITL_ENABLED,
+      defaultValue: false,
+      organization: { _id: turn.config.organizationId },
+      environment: { _id: turn.config.environmentId },
+    });
+    if (!hitlEnabled) {
+      return { outcome: 'ignored' };
+    }
+
+    const interaction = await this.humanInteractionRepository.findPendingByRequestId(
+      turn.config.environmentId,
+      buildToolApprovalRequestId(click.approvalId)
+    );
+    if (!interaction) {
+      return { outcome: 'ignored' };
+    }
+
+    if (!(await this.isAddressedHuman(turn, interaction))) {
+      await this.rejectForeignResponder(turn, interaction);
+
+      return { outcome: 'consumed' };
+    }
+
+    const current = await this.settlement.expireIfOverdue(interaction);
+    if (current.status !== HumanInteractionStatusEnum.PENDING) {
+      return this.consumeNonPending(turn, current);
+    }
+
+    const settled = await this.settlement.settle(
+      current,
+      click.approved ? HumanInteractionStatusEnum.APPROVED : HumanInteractionStatusEnum.DENIED,
+      this.buildResponse({
+        type: 'option',
+        optionId: click.optionId,
+        respondedBy: this.resolveResponder(turn),
+        respondedBySubscriberId: turn.subscriber?.subscriberId,
+      })
+    );
+
+    if (!settled) {
+      const latest = await this.humanInteractionRepository.findByIdentifier(
+        turn.config.environmentId,
+        current.identifier
+      );
+      if (latest && latest.status !== HumanInteractionStatusEnum.PENDING) {
+        return this.consumeNonPending(turn, latest);
+      }
+
+      return { outcome: 'consumed' };
+    }
+
+    return { outcome: 'settled', settled };
+  }
+
+  private parseToolApprovalGrammarClick(actionId: string | undefined): {
+    approvalId: string;
+    approved: boolean;
+    optionId: string;
+  } | null {
+    const selfHosted = parseApprovalActionId(actionId);
+    if (selfHosted) {
+      return {
+        approvalId: selfHosted.approvalId,
+        approved: selfHosted.approved,
+        optionId: selfHosted.approved ? 'approve' : 'deny',
+      };
+    }
+
+    const managed = parseToolApprovalActionId(actionId);
+    if (!managed) {
+      return null;
+    }
+
+    let optionId = managed.approved ? 'approve' : 'deny';
+    if (managed.trust?.scope === 'tool') {
+      optionId = HUMAN_TRUST_TOOL_OPTION_ID;
+    } else if (managed.trust?.scope === 'server') {
+      optionId = HUMAN_TRUST_SERVER_OPTION_ID;
+    }
+
+    return { approvalId: managed.toolUseId, approved: managed.approved, optionId };
   }
 
   async tryHandleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
@@ -134,7 +280,8 @@ export class HumanInteractionInboundService {
       return { outcome: 'ignored' };
     }
 
-    const addressedAsks = pendingAsks.filter((ask) => this.isAddressedHuman(turn, ask));
+    const askAddressing = await Promise.all(pendingAsks.map((ask) => this.isAddressedHuman(turn, ask)));
+    const addressedAsks = pendingAsks.filter((_ask, index) => askAddressing[index]);
 
     if (addressedAsks.length === 0) {
       if (mode === 'relay') {
@@ -253,7 +400,7 @@ export class HumanInteractionInboundService {
     turn: ConversationTurn,
     mode: HumanInboundMode
   ): Promise<HumanInteractionEntity | null> {
-    if (!this.isAddressedHuman(turn, interaction)) {
+    if (!(await this.isAddressedHuman(turn, interaction))) {
       await this.rejectForeignResponder(turn, interaction);
 
       return null;
@@ -302,13 +449,75 @@ export class HumanInteractionInboundService {
     return turn.subscriber?.subscriberId ?? undefined;
   }
 
-  private isAddressedHuman(turn: ConversationTurn, interaction: HumanInteractionEntity): boolean {
+  private async isAddressedHuman(turn: ConversationTurn, interaction: HumanInteractionEntity): Promise<boolean> {
     const responder = turn.subscriber?.subscriberId;
     if (!responder) {
       return false;
     }
 
-    return humanInteractionRecipientIds(interaction).includes(responder);
+    if (humanInteractionRecipientIds(interaction).includes(responder)) {
+      return true;
+    }
+
+    // A single platform identity (e.g. one Slack user) can map to more than one
+    // Novu subscriber — a CLI `--to` subscriber used for delivery and an
+    // auto-provisioned inbound subscriber can both carry the same SLACK_USER
+    // endpoint, so inbound resolution may land on a different subscriber row than
+    // the one we delivered to. Fall back to the platform identity: authorize when
+    // the acting user is the same platform user the card was delivered to.
+    return this.respondsAsDeliveredPlatformUser(turn, interaction);
+  }
+
+  /**
+   * True when the acting user's platform identity (`turn.platformUserId`) matches
+   * the platform identity a delivery was addressed to — read from that delivery's
+   * recipient `ChannelEndpoint`. Channel/broadcast deliveries hold a channel id
+   * (never a user id), so a bystander in a shared channel can't match here.
+   */
+  private async respondsAsDeliveredPlatformUser(
+    turn: ConversationTurn,
+    interaction: HumanInteractionEntity
+  ): Promise<boolean> {
+    const actingPlatformUserId = turn.platformUserId;
+    if (!actingPlatformUserId) {
+      return false;
+    }
+
+    // Build one `$or` per distinct delivery endpoint and let Mongo do the identity
+    // match (indexed on `{integrationIdentifier, type, endpoint.userId}`), so N
+    // deliveries cost a single query instead of one lookup each.
+    const seen = new Set<string>();
+    const endpointMatches: Record<string, unknown>[] = [];
+    for (const delivery of interaction.deliveries ?? []) {
+      const endpointConfig = PLATFORM_ENDPOINT_CONFIG[delivery.platform as AgentPlatformEnum];
+      if (!endpointConfig) {
+        continue;
+      }
+
+      const key = `${delivery.subscriberId}:${delivery.integrationIdentifier}:${endpointConfig.endpointType}:${endpointConfig.identityField}`;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+
+      endpointMatches.push({
+        subscriberId: delivery.subscriberId,
+        integrationIdentifier: delivery.integrationIdentifier,
+        type: endpointConfig.endpointType,
+        [`endpoint.${endpointConfig.identityField}`]: actingPlatformUserId,
+      });
+    }
+
+    if (endpointMatches.length === 0) {
+      return false;
+    }
+
+    const match = await this.channelEndpointRepository.findOne(
+      { _environmentId: interaction._environmentId, $or: endpointMatches },
+      '_id'
+    );
+
+    return match != null;
   }
 
   private async rejectForeignResponder(turn: ConversationTurn, interaction: HumanInteractionEntity): Promise<void> {

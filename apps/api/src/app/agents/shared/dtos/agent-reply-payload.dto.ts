@@ -4,6 +4,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
+  IsInt,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -26,8 +27,11 @@ import {
 export type { FileRef } from '@novu/framework';
 export {
   type AgentSignalDto,
+  type HumanSignalCardDto,
+  type HumanSignalChromeCard,
   HumanSignalDto,
   IsValidTriggerRecipient,
+  isHumanSignalCardElement,
   isValidMetadataSignalKey,
   MetadataClearSignalDto,
   MetadataDeleteSignalDto,
@@ -309,6 +313,22 @@ export class ToolApprovalRequestPayloadDto {
   @IsOptional()
   @IsString()
   mcpServerName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Novu subscriberId(s) allowed to settle this tool gate when HITL is enabled.',
+  })
+  @IsOptional()
+  to?: string | string[];
+
+  @ApiPropertyOptional({ description: 'Attribution label shown on the HITL card.' })
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  @ApiPropertyOptional({ description: 'Seconds until the HITL tool-gate expires.' })
+  @IsOptional()
+  @IsInt()
+  ttlSeconds?: number;
 }
 
 @ApiExtraModels(MarkdownReplyContentDto, CardReplyContentDto, ToolApprovalCardReplyContentDto, FileRefDto)

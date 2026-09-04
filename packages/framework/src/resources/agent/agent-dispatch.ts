@@ -40,6 +40,18 @@ function ctxForEvent(
   return ctx as AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
 }
 
+const TOOL_APPROVAL_REQUEST_ID_PREFIX = 'tool_approval:';
+
+function parseToolApprovalHumanRequestId(requestId: string | undefined): string | null {
+  if (!requestId?.startsWith(TOOL_APPROVAL_REQUEST_ID_PREFIX)) {
+    return null;
+  }
+
+  const approvalId = requestId.slice(TOOL_APPROVAL_REQUEST_ID_PREFIX.length);
+
+  return approvalId.length > 0 ? approvalId : null;
+}
+
 function findApprovalInHistory(
   history: AgentHistoryEntry[],
   approvalId: string
@@ -131,17 +143,21 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
       break;
     }
     case AgentEventEnum.ON_ACTION: {
+      const hitlApprovalId = parseToolApprovalHumanRequestId(ctx.humanResponse?.requestId);
       const parsed = parseApprovalActionId(ctx.action?.id);
+      const routedApprovalId = hitlApprovalId ?? parsed?.approvalId;
+      const routedApproved = hitlApprovalId
+        ? ctx.humanResponse?.status === 'approved' && !ctx.humanResponse.expired
+        : parsed?.approved;
 
-      if (parsed && registeredAgent.handlers.onToolApproval) {
-        const { approved, approvalId } = parsed;
-        const approval = findApprovalInHistory(ctx.history, approvalId);
+      if (routedApprovalId && routedApproved !== undefined && registeredAgent.handlers.onToolApproval) {
+        const approval = findApprovalInHistory(ctx.history, routedApprovalId);
         const toolCall: AgentToolCall = approval
           ? { id: approval.toolCallId, name: approval.name, input: approval.input }
-          : { id: approvalId, name: '' };
+          : { id: routedApprovalId, name: '' };
         const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
 
-        const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
+        const decision: ToolApprovalDecision = { toolCall, approved: routedApproved, approvalMessage };
 
         if (registeredAgent.userOnToolApproval === false) {
           await ctx.typing();

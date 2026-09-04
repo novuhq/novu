@@ -2,19 +2,30 @@ import { BadGatewayException, BadRequestException, HttpException } from '@nestjs
 import { type PinoLogger, shortId } from '@novu/application-generic';
 import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import {
+  type CardChrome,
   HUMAN_INTERACTION_DEFAULT_TTL_SECONDS,
   HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS,
+  HUMAN_INTERACTION_MAX_EXTRA_ACTIONS,
   HUMAN_INTERACTION_MAX_TTL_SECONDS,
+  HUMAN_INTERACTION_RESERVED_OPTION_IDS,
+  type HumanInteractionApproveCard,
+  type HumanInteractionChooseCard,
+  type HumanInteractionContent,
   HumanInteractionKindEnum,
   HumanInteractionStatusEnum,
+  type HumanOptionInput,
+  isHumanCardElement,
+  isHumanCardElementContent,
+  isHumanChromeContent,
+  mintHumanOptions,
 } from '@novu/shared';
+import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
 
 const DEFAULT_PENDING_CAP = 25;
 
 export interface PendingHumanInteractionInput {
   kind: HumanInteractionKindEnum;
-  prompt: string;
-  options?: string[];
+  content: HumanInteractionContent;
   from?: string;
   subscriberIds: string[];
   agentId: string;
@@ -48,7 +59,7 @@ export function resolveHumanTtlSeconds(ttlSeconds?: number): number {
   return Math.min(ttlSeconds ?? HUMAN_INTERACTION_DEFAULT_TTL_SECONDS, HUMAN_INTERACTION_MAX_TTL_SECONDS);
 }
 
-export function assertHumanChooseOptions(kind: HumanInteractionKindEnum, options?: string[]): void {
+export function assertHumanChooseOptions(kind: HumanInteractionKindEnum, options?: HumanOptionInput[]): void {
   if (kind !== HumanInteractionKindEnum.CHOOSE) {
     return;
   }
@@ -64,6 +75,220 @@ export function assertHumanChooseOptions(kind: HumanInteractionKindEnum, options
   }
 }
 
+export function assertHumanApproveExtraActions(
+  kind: HumanInteractionKindEnum,
+  extraActions?: HumanOptionInput[]
+): void {
+  if (kind !== HumanInteractionKindEnum.APPROVE || !extraActions?.length) {
+    return;
+  }
+
+  if (extraActions.length > HUMAN_INTERACTION_MAX_EXTRA_ACTIONS) {
+    throw new BadRequestException(
+      `\`approve\` extraActions support at most ${HUMAN_INTERACTION_MAX_EXTRA_ACTIONS} buttons.`
+    );
+  }
+
+  const minted = mintHumanOptions(extraActions);
+  for (const action of minted) {
+    if (!action.id.trim() || !action.label.trim()) {
+      throw new BadRequestException('`extraActions` ids and labels must be non-empty.');
+    }
+
+    if ((HUMAN_INTERACTION_RESERVED_OPTION_IDS as readonly string[]).includes(action.id)) {
+      throw new BadRequestException('`extraActions` ids cannot be `approve` or `deny`.');
+    }
+  }
+}
+
+function collectCardActionButtons(node: unknown, into: Array<{ id: string; label: string }> = []) {
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      collectCardActionButtons(item, into);
+    }
+
+    return into;
+  }
+
+  if (!node || typeof node !== 'object') {
+    return into;
+  }
+
+  const record = node as Record<string, unknown>;
+  const type = record.type;
+  const id = record.id;
+  if ((type === 'button' || type === 'link-button') && typeof id === 'string' && id.trim()) {
+    into.push({ id, label: typeof record.label === 'string' ? record.label : '' });
+  }
+
+  if ('children' in record) {
+    collectCardActionButtons(record.children, into);
+  }
+
+  return into;
+}
+
+function optionFromCardButton(button: { id: string; label: string }): HumanOptionInput | null {
+  const parsed = parseHumanActionId(button.id);
+  if (parsed?.type === 'approve' || parsed?.type === 'deny' || parsed?.type === 'disambiguation-pick') {
+    return null;
+  }
+
+  if (parsed?.type === 'option') {
+    return { id: parsed.optionId, label: button.label };
+  }
+
+  if ((HUMAN_INTERACTION_RESERVED_OPTION_IDS as readonly string[]).includes(button.id)) {
+    return null;
+  }
+
+  return { id: button.id, label: button.label };
+}
+
+type HumanInteractionChromeInput = {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+};
+
+type HumanPostedCardInput = {
+  type: 'card';
+  children?: unknown[];
+};
+
+function actionsFromCardElement(card: { children?: unknown[] }): {
+  options: HumanOptionInput[];
+  extraActions: HumanOptionInput[];
+} {
+  const options: HumanOptionInput[] = [];
+  const extraActions: HumanOptionInput[] = [];
+
+  for (const button of collectCardActionButtons(card.children)) {
+    const option = optionFromCardButton(button);
+    if (!option) {
+      continue;
+    }
+
+    options.push(option);
+    extraActions.push(option);
+  }
+
+  return { options, extraActions };
+}
+
+function readHumanCardActions(card: HumanInteractionChromeInput | HumanPostedCardInput): {
+  options?: HumanOptionInput[];
+  extraActions?: HumanOptionInput[];
+} {
+  const fieldOptions = 'options' in card && Array.isArray(card.options) ? card.options : undefined;
+  const fieldExtraActions = 'extraActions' in card && Array.isArray(card.extraActions) ? card.extraActions : undefined;
+  if (!isHumanCardElement(card)) {
+    return { options: fieldOptions, extraActions: fieldExtraActions };
+  }
+
+  const fromButtons = actionsFromCardElement(card);
+
+  return {
+    options: fieldOptions ?? fromButtons.options,
+    extraActions: fieldExtraActions ?? fromButtons.extraActions,
+  };
+}
+
+/** Choose options / approve extras on chrome fields or posted-card action buttons. */
+export function assertHumanCardActions(
+  kind: HumanInteractionKindEnum,
+  card: HumanInteractionChromeInput | HumanPostedCardInput
+): void {
+  const { options, extraActions } = readHumanCardActions(card);
+  assertHumanChooseOptions(kind, options);
+  assertHumanApproveExtraActions(kind, extraActions);
+}
+
+function humanOptionId(option: HumanOptionInput): string {
+  return typeof option === 'string' ? option : option.id;
+}
+
+/** Choose options / approve extras already persisted on `content`. */
+export function readHumanContentActions(content: HumanInteractionContent | undefined): {
+  options: HumanOptionInput[];
+  extraActions: HumanOptionInput[];
+} {
+  if (isHumanChromeContent(content)) {
+    const chrome = content.cardChrome;
+
+    return {
+      options: 'options' in chrome && chrome.options ? chrome.options : [],
+      extraActions: 'extraActions' in chrome && chrome.extraActions ? chrome.extraActions : [],
+    };
+  }
+
+  if (isHumanCardElementContent(content)) {
+    return actionsFromCardElement(content.card);
+  }
+
+  return { options: [], extraActions: [] };
+}
+
+export function isKnownHumanContentOption(
+  kind: HumanInteractionKindEnum,
+  content: HumanInteractionContent | undefined,
+  optionId: string
+): boolean {
+  const actions = readHumanContentActions(content);
+  const listed = kind === HumanInteractionKindEnum.APPROVE ? actions.extraActions : actions.options;
+
+  return listed.some((option) => humanOptionId(option) === optionId);
+}
+
+function buildHumanInteractionCard(kind: HumanInteractionKindEnum, card: HumanInteractionChromeInput): CardChrome {
+  const title = card.title?.trim() ?? '';
+  const chrome = {
+    title,
+    ...(card.icon ? { icon: card.icon } : {}),
+    ...(card.subtitle ? { subtitle: card.subtitle } : {}),
+    ...(card.body ? { body: card.body } : {}),
+  };
+
+  if (kind === HumanInteractionKindEnum.CHOOSE) {
+    const chooseCard: HumanInteractionChooseCard = {
+      ...chrome,
+      options: mintHumanOptions(card.options ?? []),
+    };
+
+    return chooseCard;
+  }
+
+  if (kind === HumanInteractionKindEnum.APPROVE) {
+    const extraActions = card.extraActions?.length ? mintHumanOptions(card.extraActions) : undefined;
+    const approveCard: HumanInteractionApproveCard = {
+      ...chrome,
+      ...(card.approveLabel ? { approveLabel: card.approveLabel } : {}),
+      ...(card.denyLabel ? { denyLabel: card.denyLabel } : {}),
+      ...(extraActions ? { extraActions } : {}),
+    };
+
+    return approveCard;
+  }
+
+  return chrome;
+}
+
+export function toStoredContent(
+  kind: HumanInteractionKindEnum,
+  card: HumanInteractionChromeInput | { type: 'card'; title?: string; children?: unknown[] }
+): HumanInteractionContent {
+  if (isHumanCardElement(card)) {
+    return { card };
+  }
+
+  return { cardChrome: buildHumanInteractionCard(kind, card) };
+}
+
 export function buildPendingHumanInteraction(input: PendingHumanInteractionInput) {
   const ttlSeconds = resolveHumanTtlSeconds(input.ttlSeconds);
 
@@ -71,11 +296,8 @@ export function buildPendingHumanInteraction(input: PendingHumanInteractionInput
     identifier: `hi_${shortId(12)}`,
     kind: input.kind,
     status: HumanInteractionStatusEnum.PENDING,
-    prompt: input.prompt,
+    content: input.content,
     ...(input.requestId ? { requestId: input.requestId } : {}),
-    ...(input.kind === HumanInteractionKindEnum.CHOOSE && input.options
-      ? { options: input.options.map((label, index) => ({ id: `opt_${index + 1}`, label })) }
-      : {}),
     ...(input.from ? { fromLabel: input.from } : {}),
     subscriberIds: input.subscriberIds,
     _agentId: input.agentId,

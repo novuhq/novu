@@ -39,6 +39,7 @@ describe('HumanInteractionSettlementService', () => {
       humanInteractionRepository as any,
       outboundGateway as any,
       { execute: sinon.stub().resolves(undefined) } as any,
+      { execute: sinon.stub().resolves(undefined) } as any,
       logger as any
     );
 
@@ -71,6 +72,7 @@ describe('HumanInteractionSettlementService', () => {
       humanInteractionRepository as any,
       outboundGateway as any,
       { execute: sinon.stub().resolves(undefined) } as any,
+      { execute: sinon.stub().resolves(undefined) } as any,
       logger as any
     );
 
@@ -96,17 +98,20 @@ describe('HumanInteractionSettlementService', () => {
     };
     const outboundGateway = { editInConversation: sinon.stub().resolves(undefined) };
     const resumeManagedHuman = { execute: sinon.stub().resolves(undefined) };
+    const resumeToolApprovalFromHitl = { execute: sinon.stub().resolves(undefined) };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const service = new HumanInteractionSettlementService(
       humanInteractionRepository as any,
       outboundGateway as any,
       resumeManagedHuman as any,
+      resumeToolApprovalFromHitl as any,
       logger as any
     );
 
     await service.settle({ _id: 'hi1', _environmentId: 'env1' } as any, HumanInteractionStatusEnum.APPROVED);
 
     expect(resumeManagedHuman.execute.calledOnceWithExactly(settled)).to.equal(true);
+    expect(resumeToolApprovalFromHitl.execute.calledOnceWithExactly(settled)).to.equal(true);
   });
 
   it('resumes a managed HITL session after lazy expiry actually flips the row', async () => {
@@ -124,16 +129,19 @@ describe('HumanInteractionSettlementService', () => {
     };
     const outboundGateway = { editInConversation: sinon.stub().resolves(undefined) };
     const resumeManagedHuman = { execute: sinon.stub().resolves(undefined) };
+    const resumeToolApprovalFromHitl = { execute: sinon.stub().resolves(undefined) };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const service = new HumanInteractionSettlementService(
       humanInteractionRepository as any,
       outboundGateway as any,
       resumeManagedHuman as any,
+      resumeToolApprovalFromHitl as any,
       logger as any
     );
 
     await service.expireIfOverdue(pending as any);
 
     expect(resumeManagedHuman.execute.calledOnceWithExactly(expired)).to.equal(true);
+    expect(resumeToolApprovalFromHitl.execute.calledOnceWithExactly(expired)).to.equal(true);
   });
 });
