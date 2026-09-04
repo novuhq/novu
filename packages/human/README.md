@@ -48,6 +48,10 @@ human invite carol --via email --email carol@acme.com
 - `--json` — full interaction object for programmatic parsing.
 - `--to <humanId>` — address a human who is already linked (`human invite` first), or comma-separated humans (`alice,bob`, max 50) so any listed person can settle.
 - `--via <platform>` — deliver on a specific linked channel instead of the default.
+- `--icon` — Slack-only card icon: MCP catalog id (`stripe`) or https URL (32×32). Ignored on other channels.
+- `--subtitle`, `--body` — optional card chrome on ask / approve / choose / tell.
+- `--approve-label`, `--deny-label`, `--extra-action <id:label>` — approve-only button chrome (repeat `--extra-action`).
+- `--option <id:label>` — choose options can keep a stable id (`stg:Staging`); a bare label still works.
 
 ## Auth
 

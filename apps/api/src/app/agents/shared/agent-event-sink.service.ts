@@ -4,7 +4,6 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, type ConversationChannel, ConversationRepository } from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
-import { WebChatLiveActivityPublisher } from '../web-chat/web-chat-live-activity.publisher';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
@@ -18,6 +17,7 @@ import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-poli
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
+import { WebChatLiveActivityPublisher } from '../web-chat/web-chat-live-activity.publisher';
 import {
   mapToolUseResultEvent,
   toActionRequired,
@@ -237,6 +237,9 @@ export class AgentEventSink {
       toolCallId: event.toolUseId,
       name: event.toolName,
       input: event.input,
+      ...(event.ttlSeconds !== undefined ? { ttlSeconds: event.ttlSeconds } : {}),
+      ...(event.to !== undefined ? { to: event.to } : {}),
+      ...(event.from !== undefined ? { from: event.from } : {}),
     };
 
     try {

@@ -1,43 +1,70 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { HUMAN_INTERACTION_MAX_TTL_SECONDS, HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
 import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-  Validate,
-} from 'class-validator';
+  HUMAN_INTERACTION_MAX_TTL_SECONDS,
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+  type HumanOptionInput,
+} from '@novu/shared';
+import { IsArray, IsEnum, IsInt, IsObject, IsOptional, IsString, Max, MaxLength, Min, Validate } from 'class-validator';
 import { IsValidHumanTo } from '../validators/is-valid-human-to';
+
+export class HumanInteractionCardDto {
+  @ApiProperty({ description: 'Card title. Required. Shown on every channel.' })
+  @IsString()
+  @MaxLength(4000)
+  title: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Slack only. MCP catalog id (`stripe`, `github`) or display name, or an https URL (32×32). Ignored on other channels.',
+  })
+  @IsOptional()
+  @IsString()
+  icon?: string;
+
+  @ApiPropertyOptional({ description: 'Secondary line under the title. Shown on every channel.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  subtitle?: string;
+
+  @ApiPropertyOptional({ description: 'Optional details under the subtitle. Shown on every channel.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  body?: string;
+
+  @ApiPropertyOptional({ description: 'Approve button label. Defaults to Approve.' })
+  @IsOptional()
+  @IsString()
+  approveLabel?: string;
+
+  @ApiPropertyOptional({ description: 'Deny button label. Defaults to Deny.' })
+  @IsOptional()
+  @IsString()
+  denyLabel?: string;
+
+  @ApiPropertyOptional({
+    description: 'Extra approve buttons after Approve / Deny (max 4). Do not invent trust-tool or trust-server.',
+  })
+  @IsOptional()
+  @IsArray()
+  extraActions?: HumanOptionInput[];
+
+  @ApiPropertyOptional({ description: 'Choose options (2–10). String label or `{ id, label }`.' })
+  @IsOptional()
+  @IsArray()
+  options?: HumanOptionInput[];
+}
 
 export class CreateInteractionRequestDto {
   @ApiProperty({ enum: HumanInteractionKindEnum, description: 'Interaction verb.' })
   @IsEnum(HumanInteractionKindEnum)
   kind: HumanInteractionKindEnum;
 
-  @ApiProperty({ description: 'The question / action description / message shown to the human.' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(4000)
-  prompt: string;
-
-  @ApiPropertyOptional({
-    type: [String],
-    description: 'Choice labels — required for `choose`, ignored otherwise. Option ids are assigned server-side.',
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(2)
-  @ArrayMaxSize(10)
-  @IsString({ each: true })
-  @MaxLength(75, { each: true })
-  options?: string[];
+  @ApiProperty({ description: 'Kind-specific card. `title` is required. Choose must set `card.options` (2–10).' })
+  @IsObject()
+  card: HumanInteractionCardDto;
 
   @ApiProperty({
     description:

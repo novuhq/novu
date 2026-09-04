@@ -6,6 +6,9 @@ export interface ToolApprovalRequestPayload {
   toolCallId: string;
   name: string;
   input?: Record<string, unknown>;
+  to?: string | string[];
+  from?: string;
+  ttlSeconds?: number;
 }
 
 export interface ParsedApprovalAction {

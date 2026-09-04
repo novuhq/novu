@@ -1,8 +1,10 @@
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
 import {
+  type CreateInteractionCard,
   type CreateInteractionInput,
   createInteraction,
   getInteraction,
+  type HumanOptionInput,
   type Interaction,
   type InteractionKind,
 } from '../api/human';
@@ -21,6 +23,12 @@ export interface InteractOptions {
   async?: boolean;
   json?: boolean;
   apiUrl?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraAction?: string[];
 }
 
 const POLL_INTERVAL_MS = 2000;
@@ -77,14 +85,26 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     // picks when only one channel is linked.
     const via = resolveVia(config, options.via);
 
+    const parsedOptions = options.option?.map(parseIdLabelOption);
+    const extraActions = options.extraAction?.map(parseIdLabelOption);
+    const card = buildInteractionCard({
+      title: prompt,
+      icon: options.icon,
+      subtitle: options.subtitle,
+      body: options.body,
+      approveLabel: options.approveLabel,
+      denyLabel: options.denyLabel,
+      extraActions,
+      options: parsedOptions,
+    });
+
     const input: CreateInteractionInput = {
       kind,
-      prompt,
+      card,
       to,
       ...(via ? { via } : {}),
       agentIdentifier: config.relayAgentIdentifier,
       ...(options.from ? { from: options.from } : {}),
-      ...(options.option?.length ? { options: options.option } : {}),
       ...(options.ttl ? { ttlSeconds: parseDuration(options.ttl) } : {}),
     };
 
@@ -144,6 +164,42 @@ export async function waitForResolution(
   }
 
   return emitResult(current, Boolean(options.json));
+}
+
+/** `id:label` keeps a stable id; a bare label is minted as `opt_N` server-side. */
+export function parseIdLabelOption(raw: string): HumanOptionInput {
+  const colon = raw.indexOf(':');
+  if (colon > 0) {
+    const id = raw.slice(0, colon).trim();
+    const label = raw.slice(colon + 1).trim();
+    if (id && label && !/\s/.test(id)) {
+      return { id, label };
+    }
+  }
+
+  return raw;
+}
+
+function buildInteractionCard(params: {
+  title: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+}): CreateInteractionCard {
+  return {
+    title: params.title,
+    ...(params.icon ? { icon: params.icon } : {}),
+    ...(params.subtitle ? { subtitle: params.subtitle } : {}),
+    ...(params.body ? { body: params.body } : {}),
+    ...(params.approveLabel ? { approveLabel: params.approveLabel } : {}),
+    ...(params.denyLabel ? { denyLabel: params.denyLabel } : {}),
+    ...(params.extraActions?.length ? { extraActions: params.extraActions } : {}),
+    ...(params.options?.length ? { options: params.options } : {}),
+  };
 }
 
 /** Accepts `90`, `90s`, `10m`, `2h`, `1d`. Plain numbers are seconds. */

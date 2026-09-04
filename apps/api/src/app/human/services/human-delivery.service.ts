@@ -16,7 +16,7 @@ import {
   HumanChannelViaEnum,
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
-import { buildPendingContent } from '../../agents/human-relay/human-card.builder';
+import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
 
 export interface ResolvedHumanTarget {
   platform: string;
@@ -144,7 +144,7 @@ export class HumanDeliveryService {
       interaction._agentId,
       target.integrationIdentifier,
       target.platformUserId,
-      buildPendingContent(interaction)
+      buildPendingDeliveryContent(interaction)
     );
 
     return { platformMessageId: sent.messageId, platformThreadId: sent.platformThreadId };

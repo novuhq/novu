@@ -142,6 +142,24 @@ other useful work to do while you wait.
 - `--ttl 2h` — how long the request stays answerable before it expires
   (default 24h, max 72h). Shorten this for anything time-sensitive so a
   stale approval can't be actioned days later.
+- `--icon` — Slack only; MCP catalog id (`stripe`, `github`) or https URL (32×32). Ignored on other channels.
+- `--subtitle`, `--body` — optional card chrome on every channel.
+- Approve only: `--approve-label`, `--deny-label`, repeatable
+  `--extra-action trust-tool:"Always allow this tool"`.
+- Choose `--option` also accepts `id:label` (`--option stg:Staging`).
+
+```bash
+human approve "Should we deploy to staging?" \
+  --icon stripe \
+  --subtitle "issue_refund: ORD-42" \
+  --body "Refund $25.00" \
+  --extra-action trust-tool:"Always allow this tool"
+
+human choose "Which environment?" \
+  --option stg:Staging \
+  --option prd:Production \
+  --subtitle "This cannot be undone"
+```
 
 ## Checking in without asking something new
 

@@ -35,9 +35,17 @@ describe('ReplyApprovalInterceptor', () => {
       warn: sinon.stub(),
       setContext: sinon.stub(),
     };
-    const interceptor = new ReplyApprovalInterceptor(conversationService as any, outboundGateway as any, logger as any);
+    const humanInteractionRepository = { findPendingByRequestId: sinon.stub().resolves(null) };
+    const settlement = { settle: sinon.stub().resolves(null) };
+    const interceptor = new ReplyApprovalInterceptor(
+      conversationService as any,
+      outboundGateway as any,
+      humanInteractionRepository as any,
+      settlement as any,
+      logger as any
+    );
 
-    return { interceptor, conversationService, outboundGateway };
+    return { interceptor, conversationService, outboundGateway, humanInteractionRepository, settlement };
   }
 
   function makeTurn(overrides: Record<string, unknown> = {}) {
@@ -591,6 +599,75 @@ describe('ReplyApprovalInterceptor', () => {
 
       expect(consumed).to.equal(false);
       expect(conversationService.listForView.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should settle HITL approve/deny and dispatch the author action id', async () => {
+      const { interceptor, conversationService, settlement, humanInteractionRepository } = makeDeps();
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['sub-1'],
+        status: 'pending',
+      });
+      settlement.settle.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        kind: 'approve',
+        status: 'approved',
+        response: { type: 'option', optionId: 'approve' },
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(settlement.settle.calledOnce).to.equal(true);
+      expect(settlement.settle.firstCall.args[1]).to.equal('approved');
+      expect(settlement.settle.firstCall.args[2].optionId).to.equal('approve');
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.firstCall.args[0].action.id).to.equal('tool-approval:approve:approval-1');
+      expect(runtime.dispatch.firstCall.args[0].humanResponse.requestId).to.equal('tool_approval:approval-1');
+    });
+
+    it('should reject a YES from a subscriber not listed on the HITL row', async () => {
+      const { interceptor, settlement, humanInteractionRepository } = makeDeps();
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['alice'],
+        status: 'pending',
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(settlement.settle.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should consume managed HITL YES without dispatching', async () => {
+      const { interceptor, settlement, humanInteractionRepository } = makeDeps();
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['sub-1'],
+        status: 'pending',
+      });
+      settlement.settle.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        kind: 'approve',
+        status: 'approved',
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({ agent: { _id: 'agent-1', runtime: 'managed' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(settlement.settle.calledOnce).to.equal(true);
       expect(runtime.dispatch.called).to.equal(false);
     });
 

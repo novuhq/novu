@@ -377,19 +377,20 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(humanSignals[0]).toMatchObject({
       type: 'human',
       kind: 'ask',
-      prompt: 'What environment?',
+      card: { title: 'What environment?' },
       from: 'deploy-bot',
       ttlSeconds: 120,
     });
     expect(humanSignals[0].requestId).toMatch(/^hr_/);
-    expect(humanSignals[1]).toMatchObject({ type: 'human', kind: 'approve', prompt: 'Deploy v2?' });
+    expect(humanSignals[0].prompt).toBeUndefined();
+    expect(humanSignals[1]).toMatchObject({ type: 'human', kind: 'approve', card: { title: 'Deploy v2?' } });
     expect(humanSignals[2]).toMatchObject({
       type: 'human',
       kind: 'choose',
-      prompt: 'Which region?',
-      options: ['us-east', 'eu-west'],
+      card: { title: 'Which region?', options: ['us-east', 'eu-west'] },
     });
-    expect(humanSignals[3]).toMatchObject({ type: 'human', kind: 'tell', prompt: 'Deploy finished.' });
+    expect(humanSignals[2].options).toBeUndefined();
+    expect(humanSignals[3]).toMatchObject({ type: 'human', kind: 'tell', card: { title: 'Deploy finished.' } });
   });
 
   it('should pass ctx.ask/approve `to` onto the human signal', async () => {
@@ -440,6 +441,460 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     const tooMany = Array.from({ length: 51 }, (_, index) => `s${index}`);
     expect(() => ctx.approve('Deploy?', { to: tooMany })).toThrow('at most 50');
+  });
+
+  it('should queue card chrome on ask/approve/choose and let the string title win', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.ask({
+          card: { title: 'Rollback SHA?', icon: 'github', subtitle: 'main', body: 'Use a commit from main.' },
+        });
+        ctx.approve({
+          card: {
+            title: 'Deploy to staging?',
+            icon: 'stripe',
+            extraActions: [{ id: 'trust-tool', label: 'Always allow this tool' }],
+          },
+        });
+        ctx.approve('String wins', { card: { title: 'Object title', subtitle: 'kept' } });
+        ctx.choose({
+          card: {
+            title: 'Which environment?',
+            options: ['staging', 'production'],
+            subtitle: 'This cannot be undone',
+          },
+        });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
+
+    expect(humanSignals[0]).toMatchObject({
+      kind: 'ask',
+      card: { title: 'Rollback SHA?', icon: 'github', subtitle: 'main', body: 'Use a commit from main.' },
+    });
+    expect(humanSignals[1]).toMatchObject({
+      kind: 'approve',
+      card: {
+        title: 'Deploy to staging?',
+        icon: 'stripe',
+        extraActions: [{ id: 'trust-tool', label: 'Always allow this tool' }],
+      },
+    });
+    expect(humanSignals[2]).toMatchObject({
+      kind: 'approve',
+      card: { title: 'String wins', subtitle: 'kept' },
+    });
+    expect(humanSignals[3]).toMatchObject({
+      kind: 'choose',
+      card: { title: 'Which environment?', subtitle: 'This cannot be undone', options: ['staging', 'production'] },
+    });
+    for (const signal of humanSignals) {
+      expect(signal.prompt).toBeUndefined();
+      expect(signal.options).toBeUndefined();
+    }
+  });
+
+  it('should reject object-form HITL helpers without card.title', () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+
+    expect(() => ctx.approve({ card: { subtitle: 'no title' } as unknown as { title: string } })).toThrow('card.title');
+    expect(() => ctx.ask({ card: { body: 'no title' } as unknown as { title: string } })).toThrow('card.title');
+  });
+
+  it('should queue renderApprove chrome with requestId action identifiers', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.approve({
+          render: ({ approveCard }) => approveCard({ title: 'Refund $25?', extraActions: ['Escalate'] }),
+        });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
+
+    expect(humanSignals).toHaveLength(1);
+    expect(humanSignals[0]).toMatchObject({
+      kind: 'approve',
+      actionIdentifier: humanSignals[0].requestId,
+      card: { title: 'Refund $25?', extraActions: ['Escalate'] },
+    });
+    expect(humanSignals[0].requestId).toMatch(/^hr_/);
+    expect(humanSignals[0].prompt).toBeUndefined();
+    expect(humanSignals[0].content).toBeUndefined();
+  });
+
+  it('should queue renderApprove custom cards as content with minted action ids', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.approve({
+          render: ({ actionIds }) =>
+            Card({
+              title: 'Refund $25?',
+              children: [
+                Button({ id: actionIds.approve, label: 'OK', style: 'primary' }),
+                Button({ id: actionIds.deny, label: 'No' }),
+              ],
+            }),
+        });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const signal = replyBody.signals.find((item: { type: string }) => item.type === 'human');
+
+    expect(signal.actionIdentifier).toBe(signal.requestId);
+    expect(signal.prompt).toBeUndefined();
+    expect(signal.card.type).toBe('card');
+    expect(signal.card.title).toBe('Refund $25?');
+    const buttons = signal.card.children.filter((child: { type: string }) => child.type === 'button');
+    expect(buttons.map((button: { id: string }) => button.id)).toEqual([
+      `human:${signal.requestId}:approve`,
+      `human:${signal.requestId}:deny`,
+    ]);
+  });
+
+  it('should wrap a non-card chat element from render as a card element', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.ask({
+          render: () => Card({ title: 'Which environment?', children: [CardText('Which environment?')] }),
+        });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const signal = replyBody.signals.find((item: { type: string }) => item.type === 'human');
+
+    expect(signal.prompt).toBeUndefined();
+    expect(signal.card.type).toBe('card');
+    expect(signal.card.title).toBe('Which environment?');
+    expect(signal.card.children).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'text', content: 'Which environment?' })])
+    );
+  });
+
+  it('should queue render chrome for ask, choose, and tell', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.ask({ render: ({ askCard }) => askCard({ title: 'What environment?' }) });
+        ctx.choose({
+          render: ({ chooseCard }) => chooseCard({ title: 'Which region?', options: ['us-east', 'eu-west'] }),
+        });
+        ctx.tell({ render: ({ tellCard }) => tellCard({ title: 'Deploy finished.' }) });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
+
+    expect(humanSignals).toHaveLength(3);
+    expect(humanSignals[0]).toMatchObject({
+      kind: 'ask',
+      card: { title: 'What environment?' },
+    });
+    expect(humanSignals[0].actionIdentifier).toBeUndefined();
+    expect(humanSignals[1]).toMatchObject({
+      kind: 'choose',
+      actionIdentifier: humanSignals[1].requestId,
+      card: { title: 'Which region?', options: ['us-east', 'eu-west'] },
+    });
+    expect(humanSignals[2]).toMatchObject({
+      kind: 'tell',
+      card: { title: 'Deploy finished.' },
+    });
+    expect(humanSignals[2].actionIdentifier).toBeUndefined();
+    for (const signal of humanSignals) {
+      expect(signal.prompt).toBeUndefined();
+      expect(signal.options).toBeUndefined();
+    }
+  });
+
+  it('should mint choose option action ids from requestId', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.choose({
+          render: ({ actionIds }) =>
+            Card({
+              title: 'Which region?',
+              children: [
+                Button({ id: actionIds.option('us-east'), label: 'US' }),
+                Button({ id: actionIds.option('eu-west'), label: 'EU' }),
+              ],
+            }),
+        });
+        await ctx.reply('Queued');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    const signal = replyBody.signals.find((item: { type: string }) => item.type === 'human');
+    const buttons = signal.card.children.filter((child: { type: string }) => child.type === 'button');
+
+    expect(signal.prompt).toBeUndefined();
+    expect(signal.card.type).toBe('card');
+
+    expect(signal.actionIdentifier).toBe(signal.requestId);
+    expect(signal.options).toBeUndefined();
+    expect(signal.card.options).toBeUndefined();
+    expect(buttons.map((button: { id: string }) => button.id)).toEqual([
+      `human:${signal.requestId}:opt:us-east`,
+      `human:${signal.requestId}:opt:eu-west`,
+    ]);
+  });
+
+  it('should reject human render that returns a markdown string', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    ctx.ask({
+      render: () => 'please pick an environment' as never,
+    });
+
+    await expect(ctx.flush()).rejects.toThrow('not a markdown string');
+  });
+
+  it('should reject a rendered card element without a title', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    ctx.ask({ render: () => CardText('Which environment?') });
+
+    await expect(ctx.flush()).rejects.toThrow('requires a title');
+  });
+
+  it('should reject render chrome without a title', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    ctx.approve({ render: ({ approveCard }) => approveCard() });
+
+    await expect(ctx.flush()).rejects.toThrow('requires a title');
+  });
+
+  it('should reject a rendered approve card missing approve or deny actions', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    ctx.approve({
+      render: ({ actionIds }) =>
+        Card({
+          title: 'Refund $25?',
+          children: [Button({ id: actionIds.approve, label: 'OK', style: 'primary' })],
+        }),
+    });
+
+    await expect(ctx.flush()).rejects.toThrow('actionIds.deny');
+
+    const missingApprove = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    missingApprove.approve({
+      render: ({ actionIds }) =>
+        Card({
+          title: 'Refund $25?',
+          children: [Button({ id: actionIds.deny, label: 'No' })],
+        }),
+    });
+
+    await expect(missingApprove.flush()).rejects.toThrow('actionIds.approve');
+  });
+
+  it('should reject a rendered approve card with invalid extra actions', async () => {
+    const reservedId = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    reservedId.approve({
+      render: ({ actionIds }) =>
+        Card({
+          title: 'Refund $25?',
+          children: [
+            Button({ id: actionIds.approve, label: 'OK', style: 'primary' }),
+            Button({ id: actionIds.deny, label: 'No' }),
+            Button({ id: 'approve', label: 'Always allow' }),
+          ],
+        }),
+    });
+
+    await expect(reservedId.flush()).rejects.toThrow('cannot be approve or deny');
+
+    const tooMany = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    tooMany.approve({
+      render: ({ actionIds }) =>
+        Card({
+          title: 'Refund $25?',
+          children: [
+            Button({ id: actionIds.approve, label: 'OK', style: 'primary' }),
+            Button({ id: actionIds.deny, label: 'No' }),
+            Button({ id: 'a', label: 'A' }),
+            Button({ id: 'b', label: 'B' }),
+            Button({ id: 'c', label: 'C' }),
+            Button({ id: 'd', label: 'D' }),
+            Button({ id: 'e', label: 'E' }),
+          ],
+        }),
+    });
+
+    await expect(tooMany.flush()).rejects.toThrow('at most 4 buttons');
+  });
+
+  it('should reject a rendered choose card missing option actions', async () => {
+    const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    ctx.choose({
+      render: ({ actionIds }) =>
+        Card({
+          title: 'Which region?',
+          children: [Button({ id: actionIds.option('us-east'), label: 'US' })],
+        }),
+    });
+
+    await expect(ctx.flush()).rejects.toThrow('option action buttons');
+
+    const noOptions = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
+    noOptions.choose({
+      render: () => Card({ title: 'Which region?', children: [CardText('pick one')] }),
+    });
+
+    await expect(noOptions.flush()).rejects.toThrow('option action buttons');
   });
 
   it('should reject ctx.choose with fewer than two options', async () => {
@@ -2523,6 +2978,53 @@ describe('tool approval', () => {
     expect(
       posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
     ).toBeUndefined();
+  });
+
+  it('routes a HITL tool-gate settlement to onToolApproval from humanResponse', async () => {
+    const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};
+    const testAgent = {
+      id: 'a',
+      userOnToolApproval: true,
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: (decision: { approved: boolean; toolCall: unknown }) => {
+          seen.decision = decision;
+
+          return undefined;
+        },
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        humanResponse: {
+          requestId: 'tool_approval:tc',
+          interactionId: 'hi_1',
+          kind: 'approve',
+          status: 'approved',
+          expired: false,
+          optionId: 'approve',
+        },
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: 'human:hi_1:approve', sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(seen.decision?.approved).toBe(true);
+    expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
   });
 
   it('does not auto-delete when userOnToolApproval is unset on a hand-built agent', async () => {

@@ -121,7 +121,9 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     // 5. Smoke test on the channel that was just linked.
     await createInteraction(client, {
       kind: 'tell',
-      prompt: 'You\'re connected. Agents can now reach you here — try `human approve "Deploy to production?"`.',
+      card: {
+        title: 'You\'re connected. Agents can now reach you here — try `human approve "Deploy to production?"`.',
+      },
       to: subscriberId,
       via: channel,
       agentIdentifier: relay.agentIdentifier,
