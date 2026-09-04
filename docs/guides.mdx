@@ -4,6 +4,7 @@ description: "Step-by-step Novu integration guides for Clerk, Stripe, Segment, H
 sidebarTitle: Overview
 ---
 
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
 
 ## Integration Guides
 
@@ -26,7 +27,7 @@ Novu provides various ways to integrate with external services to trigger notifi
   </Card>
 </Columns>
 
-### Webhook Integration Guides
+### Incoming webhook guides
 
 Webhooks enable real-time event-driven communication between applications, making integrations more efficient and responsive.
 
@@ -54,9 +55,24 @@ This allows for real-time notifications - whether it's a welcome email, payment 
   </Card>
 </Columns>
 
-### Data & warehouse integrations
+### Webhook connector guides
 
-These guides sync warehouse or CDP data into Novu subscribers and topics. They do not replace event-stream triggers for real-time notifications.
+Webhook connectors send Novu delivery and engagement events to data warehouses, object storage, queues, analytics tools, and HTTP consumers.
+
+<WebhookConnectorsPlanNote />
+
+<Columns cols={2}>
+  <Card title="Browse webhook connectors" icon="plug" href="/platform/developer/webhooks/connectors">
+    Compare every supported destination and open its step-by-step setup guide.
+  </Card>
+  <Card title="Export events to a data warehouse" icon="database-zap" href="/guides/webhook-connectors/data-warehouse-sync">
+    Plan a notification analytics export, then configure BigQuery, ClickHouse, Snowflake, Redshift, or Postgres.
+  </Card>
+</Columns>
+
+### Data sources
+
+Sync warehouse and CDP data into Novu to create subscribers and trigger workflows.
 
 <Columns cols={2}>
   <Card title="Segment" icon="activity" href="/guides/analytics/segment">

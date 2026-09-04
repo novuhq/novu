@@ -22,8 +22,29 @@ import {
 export interface InviteOptions {
   via?: string;
   email?: string;
+  /** Display name, e.g. "Alice Chen" — split into firstName/lastName on the subscriber. */
+  name?: string;
   async?: boolean;
   apiUrl?: string;
+}
+
+/**
+ * `--name "Alice Chen"` → `{ firstName: 'Alice', lastName: 'Chen' }`; a single
+ * token is just a firstName. Returns undefined for blank input so callers can
+ * spread it straight into the setup payload without clearing an existing name.
+ */
+export function splitName(raw: string | undefined): { firstName: string; lastName?: string } | undefined {
+  const name = raw?.trim().replace(/\s+/g, ' ');
+  if (!name) {
+    return undefined;
+  }
+
+  const spaceAt = name.indexOf(' ');
+  if (spaceAt === -1) {
+    return { firstName: name };
+  }
+
+  return { firstName: name.slice(0, spaceAt), lastName: name.slice(spaceAt + 1) };
 }
 
 export interface InviteResult {
@@ -76,6 +97,7 @@ export async function runInvite(humanIdArg: string, options: InviteOptions): Pro
   const links = await listAgentIntegrations(client, agentIdentifier);
   const via = resolveInviteVia(links, options.via);
   const linked = findLinkedIntegration(links, via);
+  const name = splitName(options.name);
 
   if (!linked) {
     throw new Error(`No ${via} channel is linked to the relay agent. Run \`human setup ${via}\` first.`);
@@ -87,11 +109,11 @@ export async function runInvite(humanIdArg: string, options: InviteOptions): Pro
       result = await inviteEmail(client, humanId, agentIdentifier, linked.integration.sharedInboundAddress, options);
       break;
     case 'telegram':
-      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier });
+      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
       result = await inviteTelegram(client, humanId, linked.integration.identifier, options);
       break;
     case 'slack':
-      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier });
+      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
       result = await inviteSlack(client, humanId, agentIdentifier, linked.integration.identifier, options);
       break;
     default: {
@@ -106,10 +128,11 @@ export async function runInvite(humanIdArg: string, options: InviteOptions): Pro
 export async function inviteCommand(humanIdArg: string, options: InviteOptions): Promise<never> {
   try {
     const result = await runInvite(humanIdArg, options);
+    const who = options.name?.trim() ? `${result.humanId} (${options.name.trim()})` : result.humanId;
     const lead =
       options.async && !result.alreadyLinked && result.via !== 'email'
         ? 'Link issued. After they connect, address them with:'
-        : `${result.humanId} is ${result.alreadyLinked ? 'already ' : ''}linked on ${result.via}. Address them with:`;
+        : `${who} is ${result.alreadyLinked ? 'already ' : ''}linked on ${result.via}. Address them with:`;
 
     process.stdout.write(`\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`human ask "…" --to ${result.humanId}`)}\n`);
 
@@ -193,12 +216,19 @@ async function inviteEmail(
   if (existingEmail && !options.email) {
     info(`${humanId} is already linked on email (${existingEmail}).`);
 
+    // Still honor a name passed alongside so `invite --name` is a way to label
+    // someone who was linked before names existed.
+    const name = splitName(options.name);
+    if (name) {
+      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
+    }
+
     return { humanId, via: 'email', alreadyLinked: true };
   }
 
   const email = options.email ? requireEmail(options.email) : await promptInviteEmail();
 
-  await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, email });
+  await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, email, ...splitName(options.name) });
 
   if (inboundAddress) {
     info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);

@@ -41,6 +41,20 @@ export abstract class StorageService {
   abstract deleteFile(key: string): Promise<void>;
 }
 
+function isAzureBlobNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const azureError = error as { code?: string; details?: { errorCode?: string } };
+
+  return azureError.code === 'BlobNotFound' || azureError.details?.errorCode === 'BlobNotFound';
+}
+
+function azureSasStartsOn(): Date {
+  return new Date(Date.now() - 5 * 60 * 1000);
+}
+
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
   return await new Promise((resolve, reject) => {
     const chunks: Uint8Array[] = [];
@@ -258,8 +272,8 @@ export class AzureBlobStorageService implements StorageService {
 
     try {
       return await blockBlobClient.downloadToBuffer();
-    } catch (error: any) {
-      if (error.statusCode === 404) {
+    } catch (error: unknown) {
+      if (isAzureBlobNotFound(error)) {
         throw new NonExistingFileError();
       }
       throw error;
@@ -271,7 +285,7 @@ export class AzureBlobStorageService implements StorageService {
 
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
-    blockBlobClient.delete();
+    await blockBlobClient.deleteIfExists();
   }
 
   async getSignedUrl(key: string, contentType: string) {
@@ -284,8 +298,8 @@ export class AzureBlobStorageService implements StorageService {
         containerName,
         blobName,
         permissions: BlobSASPermissions.parse('racwd'),
-        startsOn: new Date(),
-        expiresOn: new Date(new Date().valueOf() + 60 * 60 * 1000), // 60 minutes
+        startsOn: azureSasStartsOn(),
+        expiresOn: new Date(Date.now() + 60 * 60 * 1000), // 60 minutes
         protocol: SASProtocol.HttpsAndHttp,
         contentType,
       },
@@ -315,7 +329,7 @@ export class AzureBlobStorageService implements StorageService {
         containerName,
         blobName,
         permissions: BlobSASPermissions.parse('r'),
-        startsOn: new Date(),
+        startsOn: azureSasStartsOn(),
         expiresOn: new Date(Date.now() + ttlSeconds * 1000),
         protocol: SASProtocol.Https,
       },

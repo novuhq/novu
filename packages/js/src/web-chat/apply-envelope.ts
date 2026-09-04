@@ -72,13 +72,13 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'message-end':
       return withAssistantMessage(state, envelope, event.messageId, (message) => ({
         ...message,
-        parts: finalizeMessageEndParts(message.parts, event.content, event.files),
+        parts: finalizeMessageEndParts(message.parts, event.messageId, event.content, event.files),
       }));
 
     case 'message': {
       const next = withMessage(state, envelope, event.messageId, event.role, (message) => ({
         ...message,
-        parts: applyDurableMessageParts(message.parts, event.content, event.files),
+        parts: applyDurableMessageParts(message.parts, event.content, event.messageId, event.files),
         status: 'sent',
       }));
 
@@ -161,9 +161,11 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'tool-approval-response':
       return applyApprovalResponse(state, event.approvalId, event.decision);
 
-    case 'mcp-connection-request':
+    case 'mcp-connection-request': {
+      const messageId = state.activeAssistantMessageId ?? event.actionId;
+
       return clearTyping(
-        withActiveAssistantMessage(state, envelope, (message) => ({
+        withMessage(state, envelope, messageId, 'assistant', (message) => ({
           ...message,
           parts: [
             ...message.parts,
@@ -179,6 +181,7 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
           ],
         }))
       );
+    }
 
     case 'mcp-connection-result':
       return applyMcpConnectionResult(state, event.actionId, event.status, event.message);
@@ -348,6 +351,7 @@ function appendToStreamingTextPart(parts: AgentMessagePart[], delta: string): Ag
 function applyDurableMessageParts(
   parts: AgentMessagePart[],
   content: AgentMessageContent,
+  messageId: string,
   files?: AgentFileRef[]
 ): AgentMessagePart[] {
   let next = parts.slice();
@@ -361,7 +365,7 @@ function applyDurableMessageParts(
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }
   } else {
-    next = [...next, { type: 'card', card: content.card }];
+    next = [...next, { type: 'card', card: content.card, sourceMessageId: messageId }];
   }
 
   return appendFileParts(next, files);
@@ -369,6 +373,7 @@ function applyDurableMessageParts(
 
 function finalizeMessageEndParts(
   parts: AgentMessagePart[],
+  messageId: string,
   content?: AgentMessageContent,
   files?: AgentFileRef[]
 ): AgentMessagePart[] {
@@ -376,7 +381,7 @@ function finalizeMessageEndParts(
   const streamingIndex = findStreamingTextPartIndex(next);
 
   if (content) {
-    next = applyDurableMessageParts(next, content, files);
+    next = applyDurableMessageParts(next, content, messageId, files);
 
     return next;
   }
@@ -585,7 +590,7 @@ function editMessage(
   const edited: AgentMessage = {
     ...existing,
     createdAt: timestamp,
-    parts: applyDurableMessageParts([], content, files),
+    parts: applyDurableMessageParts([], content, messageId, files),
   };
 
   const nextMessages = state.messages.slice();

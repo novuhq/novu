@@ -24,7 +24,8 @@ Integration is third party service used by Novu to send notification for a speci
 | `deletedAt` | `string` | The timestamp indicating when the integration was deleted. This is set when the integration is soft deleted. |
 | `deletedBy` | `string` | The identifier of the user who performed the deletion of this integration. Useful for audit trails. |
 | `primary` | `boolean` | Indicates whether this integration is marked as primary. A primary integration is often the default choice for processing. |
-| `conditions` | `StepFilterDto[]` | An array of conditions associated with the integration that may influence its behavior or processing logic. |
+| `conditions` | `StepFilterDto[]` | Legacy StepFilter conditions. Ignored when `rules` is also set. |
+| `rules` | `Record<string, unknown>` | JSONLogic used at send time to select this integration. Takes precedence over `conditions`. |
 
 ### Credentials
 

@@ -77,6 +77,20 @@ describe('MCP_SERVERS catalog', () => {
       }
     });
 
+    // Both advertise a `registration_endpoint` but gate the redirect URI behind an
+    // allowlist, so a DCR client Novu registers never completes authorize. Pinned
+    // here because a `registration_endpoint` probe alone would flip them back.
+    it('keeps allowlist-gated MCPs off dcr', () => {
+      const allowlistGatedIds = ['new-relic', 'canva'];
+
+      for (const id of allowlistGatedIds) {
+        const entry = MCP_SERVERS.find((server) => server.id === id);
+
+        expect(entry).toBeDefined();
+        expect(entry?.oauth?.mode).toBe(McpConnectionAuthModeEnum.ProviderManaged);
+      }
+    });
+
     it('uses unique catalog ids and urls', () => {
       const ids = MCP_SERVERS.map((entry) => entry.id);
       const urls = MCP_SERVERS.map((entry) => entry.url);

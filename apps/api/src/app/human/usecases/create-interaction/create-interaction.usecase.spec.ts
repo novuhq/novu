@@ -19,6 +19,7 @@ describe('CreateInteraction', () => {
     };
     const humanInteractionRepository = {
       countPendingForSubscriber: sinon.stub().resolves(0),
+      count: sinon.stub().resolves(0),
       create: sinon.stub().resolves(created),
       stampDelivery: sinon.stub().resolves(undefined),
       markDeliveredIfPending: sinon.stub().resolves({ ...created, status: HumanInteractionStatusEnum.DELIVERED }),
@@ -34,12 +35,20 @@ describe('CreateInteraction', () => {
         platformUserId: '777',
       }),
       deliver: sinon.stub().resolves({ platformMessageId: 'msg-1', platformThreadId: 'thread-1' }),
+      deliverContent: sinon.stub().resolves({ platformMessageId: 'cta-1', platformThreadId: 'thread-1' }),
+    };
+    const connectClaimTokenService = {
+      isEnvironmentClaimed: sinon.stub().resolves(false),
+      issueOrGetForEnvironment: sinon.stub().resolves({ token: 'tok', expiresAt: '2026-01-08T00:00:00.000Z' }),
+      isSignupCtaPosted: sinon.stub().resolves(false),
+      tryMarkSignupCtaPosted: sinon.stub().resolves(true),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
       deliveryService as any,
+      connectClaimTokenService as any,
       logger as any
     );
     const command = {
@@ -59,6 +68,7 @@ describe('CreateInteraction', () => {
       agentRepository,
       deliveryService,
       humanInteractionRepository,
+      connectClaimTokenService,
     };
   }
 
@@ -270,5 +280,153 @@ describe('CreateInteraction', () => {
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-2']);
     expect(result.to).to.deep.equal(['sub-2']);
     expect(result.failedTo).to.deep.equal(['sub-1']);
+  });
+
+  describe('keyless demo cap', () => {
+    let originalKeylessOrgId: string | undefined;
+    let originalCap: string | undefined;
+
+    beforeEach(() => {
+      originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
+      originalCap = process.env.KEYLESS_HUMAN_INTERACTION_CAP;
+      process.env.KEYLESS_ORGANIZATION_ID = 'org1';
+      process.env.KEYLESS_HUMAN_INTERACTION_CAP = '2';
+    });
+
+    afterEach(() => {
+      restoreEnv('KEYLESS_ORGANIZATION_ID', originalKeylessOrgId);
+      restoreEnv('KEYLESS_HUMAN_INTERACTION_CAP', originalCap);
+    });
+
+    function restoreEnv(name: string, value: string | undefined) {
+      if (value === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = value;
+      }
+    }
+
+    it('creates normally while under the cap', async () => {
+      const { usecase, command, agentRepository, humanInteractionRepository, deliveryService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+      humanInteractionRepository.count.resolves(1);
+
+      await usecase.execute(command as any);
+
+      expect(humanInteractionRepository.create.calledOnce).to.equal(true);
+      expect(deliveryService.deliverContent.called).to.equal(false);
+    });
+
+    it('sends the sign-up card instead of the prompt and returns 429 with the claim link once capped', async () => {
+      const {
+        usecase,
+        command,
+        agentRepository,
+        humanInteractionRepository,
+        deliveryService,
+        connectClaimTokenService,
+      } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+      humanInteractionRepository.count.resolves(2);
+
+      let thrown: unknown;
+      try {
+        await usecase.execute(command as any);
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).to.be.instanceOf(HttpException);
+      const response = (thrown as HttpException).getResponse() as Record<string, unknown>;
+      expect((thrown as HttpException).getStatus()).to.equal(429);
+      expect(response.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
+      expect(response.cap).to.equal(2);
+      expect(response.claimUrl).to.match(/\/connect\/claim\?token=tok$/);
+      expect(response.message).to.include(response.claimUrl as string);
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+      expect(deliveryService.deliver.called).to.equal(false);
+      expect(deliveryService.deliverContent.calledOnce).to.equal(true);
+      expect(deliveryService.deliverContent.firstCall.args[0]).to.equal('agent-hitl');
+      expect(JSON.stringify(deliveryService.deliverContent.firstCall.args[2])).to.include('Sign up');
+      expect(connectClaimTokenService.tryMarkSignupCtaPosted.calledOnceWith('human:env1')).to.equal(true);
+    });
+
+    it('does not resend the card when the CTA was already posted for the environment', async () => {
+      const {
+        usecase,
+        command,
+        agentRepository,
+        humanInteractionRepository,
+        deliveryService,
+        connectClaimTokenService,
+      } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+      humanInteractionRepository.count.resolves(5);
+      connectClaimTokenService.isSignupCtaPosted.resolves(true);
+
+      let status: number | undefined;
+      try {
+        await usecase.execute(command as any);
+      } catch (error) {
+        status = (error as HttpException).getStatus();
+      }
+
+      expect(status).to.equal(429);
+      expect(deliveryService.deliverContent.called).to.equal(false);
+    });
+
+    it('still returns 429 when the claim link cannot be issued', async () => {
+      const {
+        usecase,
+        command,
+        agentRepository,
+        humanInteractionRepository,
+        deliveryService,
+        connectClaimTokenService,
+      } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+      humanInteractionRepository.count.resolves(2);
+      connectClaimTokenService.issueOrGetForEnvironment.rejects(new Error('cache down'));
+
+      let thrown: HttpException | undefined;
+      try {
+        await usecase.execute(command as any);
+      } catch (error) {
+        thrown = error as HttpException;
+      }
+
+      expect(thrown?.getStatus()).to.equal(429);
+      expect((thrown?.getResponse() as Record<string, unknown>).claimUrl).to.equal(undefined);
+      expect(deliveryService.deliverContent.called).to.equal(false);
+    });
+
+    it('rejects a claimed keyless environment with a re-auth hint before looking up the agent', async () => {
+      const { usecase, command, agentRepository, connectClaimTokenService } = setup();
+      connectClaimTokenService.isEnvironmentClaimed.resolves(true);
+
+      let thrown: HttpException | undefined;
+      try {
+        await usecase.execute(command as any);
+      } catch (error) {
+        thrown = error as HttpException;
+      }
+
+      expect(thrown?.getStatus()).to.equal(403);
+      expect(thrown?.message).to.include('human setup --secret-key');
+      expect(agentRepository.findOne.called).to.equal(false);
+    });
+
+    it('ignores the cap for non-keyless organizations', async () => {
+      process.env.KEYLESS_ORGANIZATION_ID = 'some-other-org';
+      const { usecase, command, agentRepository, humanInteractionRepository, connectClaimTokenService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+      humanInteractionRepository.count.resolves(50);
+
+      await usecase.execute(command as any);
+
+      expect(humanInteractionRepository.create.calledOnce).to.equal(true);
+      expect(connectClaimTokenService.isEnvironmentClaimed.called).to.equal(false);
+    });
   });
 });

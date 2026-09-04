@@ -14,7 +14,11 @@ const BASE_IDS = {
   turnId: 'turn-1',
 } as const;
 
-function envelope(sequence: number, event: AgentEvent, overrides: Partial<typeof BASE_IDS> = {}): AgentEventEnvelope {
+function envelope(
+  sequence: number,
+  event: AgentEvent,
+  overrides: Partial<{ conversationId: string; agentId: string; runId: string; turnId: string }> = {}
+): AgentEventEnvelope {
   return {
     version: AGENT_EVENT_PROTOCOL_VERSION,
     sequence,
@@ -376,6 +380,63 @@ describe('applyEnvelope', () => {
     });
   });
 
+  it('does not merge a later MCP connection into an earlier one after run-finish', () => {
+    const historyRun = { runId: 'history' };
+    const state = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, {
+        type: 'message',
+        role: 'user',
+        messageId: 'u1',
+        content: { markdown: 'Find a Notion page' },
+      }),
+      envelope(
+        2,
+        {
+          type: 'mcp-connection-request',
+          actionId: 'sevt_notion',
+          mcpId: 'notion',
+          displayName: 'Notion',
+          authorizeUrl: 'https://example.com/notion',
+        },
+        historyRun
+      ),
+      envelope(3, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm1',
+        content: { markdown: 'I do not have Notion connected yet.' },
+      }),
+      envelope(4, { type: 'run-finish', outcome: 'completed' }),
+      envelope(5, {
+        type: 'message',
+        role: 'user',
+        messageId: 'u2',
+        content: { markdown: 'retrieve last Linear task' },
+      }),
+      envelope(
+        6,
+        {
+          type: 'mcp-connection-request',
+          actionId: 'sevt_linear',
+          mcpId: 'linear',
+          displayName: 'Linear',
+          authorizeUrl: 'https://example.com/linear',
+        },
+        historyRun
+      ),
+    ]);
+
+    const notionMessage = state.messages.find((message) =>
+      message.parts.some((part) => part.type === 'mcp-connection' && part.mcpId === 'notion')
+    );
+    const linearMessage = state.messages.find((message) =>
+      message.parts.some((part) => part.type === 'mcp-connection' && part.mcpId === 'linear')
+    );
+
+    expect(linearMessage?.id).not.toBe(notionMessage?.id);
+    expect(linearMessage?.parts.filter((part) => part.type === 'mcp-connection')).toHaveLength(1);
+  });
+
   it('folds durable user messages when role is user', () => {
     const state = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, {
@@ -492,9 +553,9 @@ describe('applyEnvelope', () => {
 
   it('folds card content into a card part', () => {
     const card = {
-      type: 'card',
+      type: 'card' as const,
       title: 'Support Agent',
-      children: [{ type: 'text', content: 'How can I help?' }],
+      children: [{ type: 'text' as const, content: 'How can I help?' }],
     };
     const next = applyEnvelope(
       createInitialAgentConversationState(),
@@ -506,11 +567,11 @@ describe('applyEnvelope', () => {
       })
     );
 
-    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card }]);
+    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card, sourceMessageId: 'm-card' }]);
   });
 
   it('folds exclusive durable content as markdown or card, not both', () => {
-    const card = { type: 'card', title: 'Support' };
+    const card = { type: 'card' as const, title: 'Support', children: [] as const };
     const next = applyEnvelope(
       createInitialAgentConversationState(),
       envelope(1, {

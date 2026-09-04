@@ -1,65 +1,27 @@
 'use client';
 
-import type { AgentConversationTyping, AgentMessage, AgentPendingAction, UseWebChatResult } from '@novu/react';
-import type { RespondToAction } from './approval-card';
-import { ApprovalDock } from './approval-dock';
-import { ChatThread } from './chat-thread';
-import { Composer } from './composer';
+import { ConnectionState } from '@/components/assistant-ui/elements/connection-state';
+import { WebChatThread } from './assistant-ui/thread';
 
 /**
- * Presentational shell. Swap this (and the components it uses) for your own UI —
- * it only consumes values from `useWebChat`.
+ * assistant-ui shell. `useWebChat` still owns messages, send, and approvals.
+ * Error banners live in the thread's `Banner` slot, above the composer.
  */
 export type ChatPanelProps = {
-  conversationId?: string;
-  error?: { message: string };
-  messages: AgentMessage[];
-  pendingActions: AgentPendingAction[];
-  isRunning: boolean;
-  typing?: AgentConversationTyping;
-  pagination: UseWebChatResult['pagination'];
-  onRespond: RespondToAction;
-  composerDisabled: boolean;
-  onSend: (text: string) => void;
+  isRecovering: boolean;
 };
 
-export function ChatPanel({
-  conversationId,
-  error,
-  messages,
-  pendingActions,
-  isRunning,
-  typing,
-  pagination,
-  onRespond,
-  composerDisabled,
-  onSend,
-}: ChatPanelProps) {
+export function ChatPanel({ isRecovering }: ChatPanelProps) {
   return (
     <div className="chat-main">
-      <header className="chat-topbar">
-        <h1>{conversationId ? 'Conversation' : 'New conversation'}</h1>
-        {conversationId ? <code>{conversationId}</code> : null}
-      </header>
-
-      {error ? (
-        <div className="banner-error" role="alert">
-          {error.message}
+      {isRecovering ? (
+        // Float over the thread so a reconnect does not shift the messages.
+        <div className="absolute top-3 left-1/2 z-20 w-[calc(100%-48px)] max-w-[680px] -translate-x-1/2">
+          <ConnectionState phase="reconnecting" className="w-full max-w-none" />
         </div>
       ) : null}
 
-      <ChatThread
-        messages={messages}
-        isRunning={isRunning}
-        typing={typing}
-        pagination={pagination}
-        onRespond={onRespond}
-      />
-
-      <div className="chat-foot">
-        <ApprovalDock actions={pendingActions} />
-        <Composer pending={composerDisabled} isRunning={isRunning} onSend={onSend} />
-      </div>
+      <WebChatThread />
     </div>
   );
 }

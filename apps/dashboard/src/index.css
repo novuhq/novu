@@ -544,6 +544,27 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+
+  .aui-thread-viewport {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--stroke-soft)) transparent;
+  }
+
+  .aui-thread-viewport::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .aui-thread-viewport::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .aui-thread-viewport::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--stroke-soft));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
 }
 
 .mly-prose :where(h2 strong):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {

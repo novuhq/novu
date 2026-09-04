@@ -209,6 +209,89 @@ describe('without SSRF protection (self-hosted)', () => {
   });
 });
 
+describe('retry budget', () => {
+  const PAYLOAD = {
+    to: ['johndoe@example.com'],
+    from: 'janedoe@example.com',
+    subject: 'test',
+    html: '<h1>test</h1>',
+    text: 'test',
+  };
+
+  let failingServer: http.Server;
+  let failingUrl: string;
+  let attempts: number;
+
+  beforeAll(() => {
+    process.env.NOVU_ENTERPRISE = 'true';
+    process.env.IS_SELF_HOSTED = 'true';
+  });
+
+  afterAll(() => {
+    restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
+    restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
+  });
+
+  beforeEach(async () => {
+    attempts = 0;
+    failingServer = http.createServer((_req, res) => {
+      attempts += 1;
+      res.writeHead(500);
+      res.end('nope');
+    });
+
+    await new Promise<void>((resolve) => failingServer.listen(0, '127.0.0.1', () => resolve()));
+    const addr = failingServer.address();
+    if (!addr || typeof addr === 'string') throw new Error('listen failed');
+    failingUrl = `http://127.0.0.1:${addr.port}/webhook`;
+  });
+
+  afterEach(async () => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    await new Promise<void>((resolve) => failingServer.close(() => resolve()));
+  });
+
+  test('stops retrying once the wall-clock budget is spent, ignoring the remaining retryCount', async () => {
+    vi.stubEnv('NOVU_PROVIDER_HTTP_TIMEOUT_MS', '300');
+    vi.resetModules();
+    const { EmailWebhookProvider: BudgetedProvider } = await import('./email-webhook.provider.js');
+
+    // Left uncapped this would run 10 attempts with 200ms between them.
+    const provider = new BudgetedProvider({
+      webhookUrl: failingUrl,
+      hmacSecretKey: 'super-secret-key',
+      retryCount: 10,
+      retryDelay: 200,
+    });
+
+    const startedAt = Date.now();
+
+    await expect(provider.sendMessage(PAYLOAD)).rejects.toThrow('webhook send failed !');
+
+    expect(Date.now() - startedAt).toBeLessThan(1_500);
+    expect(attempts).toBeGreaterThanOrEqual(1);
+    expect(attempts).toBeLessThan(10);
+  });
+
+  test('still honours retryCount when it is exhausted before the budget', async () => {
+    vi.stubEnv('NOVU_PROVIDER_HTTP_TIMEOUT_MS', '10000');
+    vi.resetModules();
+    const { EmailWebhookProvider: BudgetedProvider } = await import('./email-webhook.provider.js');
+
+    const provider = new BudgetedProvider({
+      webhookUrl: failingUrl,
+      hmacSecretKey: 'super-secret-key',
+      retryCount: 3,
+      retryDelay: 1,
+    });
+
+    await expect(provider.sendMessage(PAYLOAD)).rejects.toThrow('webhook send failed !');
+
+    expect(attempts).toBe(3);
+  });
+});
+
 describe('computeHmac secret key encodings', () => {
   const PAYLOAD =
     '{"to":["johndoe@example.com"],"from":"janedoe@example.com","subject":"test","html":"<h1>test</h1>","text":"test"}';

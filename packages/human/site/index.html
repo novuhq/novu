@@ -34,6 +34,8 @@ USAGE (forever after, by any agent on the machine)
   human approve "Delete 342 stale records from prod?"
   human choose "Pick a release strategy" --option canary --option blue-green
   human tell "Nightly build finished — 0 failures."
+  human contacts                       # who --to can address
+  human contacts --json
 
 HOW IT WORKS
 ------------
@@ -49,6 +51,9 @@ HOW IT WORKS
     --timeout elapses.
   - Answers flow back through button clicks or plain replies; the CLI
     resolves and your agent continues.
+  - `contacts` lists every subscriber `--to` can address so an agent
+    can check who exists before coordinating. It's a directory, not a
+    reachability check.
 
 EXIT CODES (stable contract for agents)
 ----------------------------------------
@@ -67,18 +72,31 @@ FLAGS
   --async                don't block; print the interaction id immediately
   --json                 full interaction object for programmatic parsing
   --to <humanId>         address a linked human, or comma-separated humans
-                          (link others first with `human invite`)
+                          (find them with `human contacts`; link others
+                          first with `human invite`)
   --via <platform>       deliver on a specific linked channel instead of default
 
 INVITE (link another human)
 ---------------------------
-  human invite alice --via slack
+  human invite alice --via slack --name "Alice Chen"
   human invite bob --via telegram --async
-  human invite carol --via email --email carol@acme.com
+  human invite carol --via email --email carol@acme.com --name "Carol Diaz"
 
   Prints a connect URL for that person (same OAuth / Telegram deep-link
   as setup). Does not change your local subscriberId. After they connect,
-  address them with --to.
+  address them with --to. Pass --name so they show up by name in contacts.
+
+CONTACTS (who agents can reach)
+-------------------------------
+  human contacts
+  human contacts --json
+  human contacts --limit 20 --after <cursor>
+
+  Lists every subscriber in the environment — the directory `--to`
+  addresses. The operator's row is marked (you) / self: true. A directory,
+  not a reachability check: if delivery fails with "no linked endpoint",
+  invite them on that channel. Pages are 50 by default (max 100); when
+  next is set, continue with --after.
 
 AUTH
 ----

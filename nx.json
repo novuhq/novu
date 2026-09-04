@@ -3,7 +3,9 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "cache": true
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build"]
     },
     "test": {
       "cache": true
@@ -28,6 +30,7 @@
       "!{projectRoot}/biome.json"
     ],
     "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.json",
       {
         "runtime": "node --version"
       }
