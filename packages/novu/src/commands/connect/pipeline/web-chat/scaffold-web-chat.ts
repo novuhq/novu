@@ -249,7 +249,24 @@ function copyTemplateDir(from: string, to: string): void {
  */
 export function stripUnlayeredUniversalReset(css: string): string {
   return css
-    .replace(/\*,\s*\*::before,\s*\*::after\s*\{[^}]*?(?:padding|margin)\s*:\s*0[^}]*\}\s*/g, '')
+    .replace(/(\*,\s*\*::before,\s*\*::after\s*\{)([\s\S]*?)(\})/g, (match, open, body, close) => {
+      if (!/(?:padding|margin)\s*:\s*0/.test(body)) {
+        return match;
+      }
+
+      const stripped = body
+        .split('\n')
+        .filter((line) => !/^\s*(?:padding|margin)\s*:\s*0\s*;?\s*$/.test(line))
+        .join('\n')
+        .trim();
+
+      if (!stripped) {
+        return '';
+      }
+
+      const separator = body.startsWith('\n') ? '\n' : ' ';
+      return `${open}${separator}${stripped}${separator}${close}`;
+    })
     .replace(/\n{3,}/g, '\n\n');
 }
 
@@ -613,14 +630,6 @@ export function resolveLocalNovuSdkRoots(fromDir = __dirname): { react: string; 
 
 export function resolveWebChatNovuDependencies(apiUrl: string, region?: CloudRegionEnum): WebChatNovuDependencies {
   const tag = getNovuScaffoldSdkTag(apiUrl, region);
-  const local = isNovuLocalApiUrl(apiUrl) ? resolveLocalNovuSdkRoots() : null;
-
-  if (local) {
-    return {
-      react: 'file:./vendor/@novu/react',
-      js: 'file:./vendor/@novu/js',
-    };
-  }
 
   return { react: tag, js: tag };
 }
