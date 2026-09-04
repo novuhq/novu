@@ -374,7 +374,7 @@ function patchNextConfigSource(source: string): string | null {
 
   const transpileArrayMatch = source.match(/transpilePackages\s*:\s*\[([\s\S]*?)\]/);
   if (transpileArrayMatch) {
-    const inner = transpileArrayMatch[1].trim();
+    const inner = transpileArrayMatch[1].replace(/\/\/[^\n]*/g, '').trim();
     const additions = missingPackages.map((pkg) => `'${pkg}'`).join(', ');
     const mergedInner = inner ? `${inner.replace(/,\s*$/, '')}, ${additions}` : additions;
 
@@ -443,7 +443,9 @@ function upgradePostcssConfigSource(source: string): string | null {
 
   const upgraded = source
     .replace(/(['"])tailwindcss\1\s*:/g, "'@tailwindcss/postcss':")
-    .replace(/\btailwindcss\s*:/g, "'@tailwindcss/postcss':");
+    .replace(/\btailwindcss\s*:/g, "'@tailwindcss/postcss':")
+    .replace(/require\(\s*(['"])tailwindcss\1\s*\)/g, "require('@tailwindcss/postcss')")
+    .replace(/(\[\s*)(['"])tailwindcss\2/g, "$1'@tailwindcss/postcss'");
 
   return upgraded === source ? null : upgraded;
 }
