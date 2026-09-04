@@ -1,9 +1,9 @@
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { getNovuScaffoldSdkTag, isNovuLocalApiUrl } from '@novu/shared';
 import { CloudRegionEnum } from '../../../dev/enums';
 import { tryGitInit } from '../../../init/helpers/git';
+import { install } from '../../../init/helpers/install';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { detectBridgeProject } from '../bridge/detect-project';
@@ -125,7 +125,7 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
   appendEnvExample(resolved, input);
 
   if (dependenciesChanged && (await getOnline())) {
-    execFileSync(resolvePackageManager(resolved), ['install'], { cwd: resolved, stdio: 'inherit' });
+    await install(resolvePackageManager(resolved), true, false, resolved);
   }
 }
 
@@ -213,8 +213,7 @@ async function writeStandaloneWebChatApp(root: string, input: ScaffoldWebChatPro
 
   const isOnline = await getOnline();
   if (isOnline) {
-    const { execSync } = await import('node:child_process');
-    execSync('npm install', { cwd: root, stdio: 'inherit' });
+    await install('npm', isOnline, false, root);
   }
 }
 
@@ -242,22 +241,59 @@ function copyTemplateDir(from: string, to: string): void {
   }
 }
 
+/**
+ * The AI SDK Next template leaves an unlayered `* { padding: 0 }` reset.
+ * Tailwind utilities live in `@layer utilities`, so that reset wins and
+ * zeros composer / chip / button spacing after a root merge.
+ */
+export function stripUnlayeredUniversalReset(css: string): string {
+  return css
+    .replace(/\*,\s*\*::before,\s*\*::after\s*\{[^}]*?(?:padding|margin)\s*:\s*0[^}]*\}\s*/g, '')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+const HOST_GLOBALS_CSS_PATHS = ['src/app/globals.css', 'app/globals.css', 'styles/globals.css'] as const;
+
+function findHostGlobalsCssPath(projectDir: string): string | null {
+  for (const relativePath of HOST_GLOBALS_CSS_PATHS) {
+    const candidate = path.join(projectDir, relativePath);
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function webChatGlobalsImportLine(projectDir: string, globalsPath: string): string {
+  const relativeImport = path
+    .relative(path.dirname(globalsPath), path.join(projectDir, 'components/web-chat/globals.css'))
+    .replace(/\\/g, '/');
+
+  return `@import '${relativeImport}';`;
+}
+
 function ensureWebChatGlobalsImport(projectDir: string): void {
-  const globalsPath = path.join(projectDir, 'app', 'globals.css');
-  const importLine = "@import '../components/web-chat/globals.css';";
+  const globalsPath = findHostGlobalsCssPath(projectDir) ?? path.join(projectDir, 'app', 'globals.css');
+  const importLine = webChatGlobalsImportLine(projectDir, globalsPath);
 
   if (fs.existsSync(globalsPath)) {
-    let existing = fs.readFileSync(globalsPath, 'utf8');
-    if (existing.includes('components/web-chat/globals.css')) {
-      return;
+    const original = fs.readFileSync(globalsPath, 'utf8');
+    let next = original;
+    if (!next.includes('components/web-chat/globals.css')) {
+      const migrated = migrateLegacyTailwindDirectives(next);
+      if (migrated) {
+        next = migrated;
+      }
+
+      next = `${importLine}\n${next}`;
     }
 
-    const migrated = migrateLegacyTailwindDirectives(existing);
-    if (migrated) {
-      existing = migrated;
+    next = stripUnlayeredUniversalReset(next);
+    if (next !== original) {
+      fs.writeFileSync(globalsPath, next, 'utf8');
     }
 
-    fs.writeFileSync(globalsPath, `${importLine}\n${existing}`, 'utf8');
     return;
   }
 
@@ -266,15 +302,17 @@ function ensureWebChatGlobalsImport(projectDir: string): void {
 }
 
 function migrateHostTailwindCss(projectDir: string): void {
-  const globalsPath = path.join(projectDir, 'app', 'globals.css');
-  if (!fs.existsSync(globalsPath)) {
-    return;
-  }
+  for (const relativePath of HOST_GLOBALS_CSS_PATHS) {
+    const globalsPath = path.join(projectDir, relativePath);
+    if (!fs.existsSync(globalsPath)) {
+      continue;
+    }
 
-  const source = fs.readFileSync(globalsPath, 'utf8');
-  const migrated = migrateLegacyTailwindDirectives(source);
-  if (migrated) {
-    fs.writeFileSync(globalsPath, migrated, 'utf8');
+    const source = fs.readFileSync(globalsPath, 'utf8');
+    const migrated = migrateLegacyTailwindDirectives(source);
+    if (migrated) {
+      fs.writeFileSync(globalsPath, migrated, 'utf8');
+    }
   }
 }
 
@@ -325,7 +363,7 @@ function patchNextConfigSource(source: string): string | null {
     return source.replace(transpileArrayMatch[0], `transpilePackages: [${mergedInner}]`);
   }
 
-  const insertion = `  transpilePackages: ${JSON.stringify([...WEB_CHAT_TRANSPILE_PACKAGES])},`;
+  const insertion = `  transpilePackages: ${JSON.stringify([...missingPackages])},`;
   const markers = [
     'const nextConfig: NextConfig = {',
     "const nextConfig: import('next').NextConfig = {",
@@ -337,13 +375,43 @@ function patchNextConfigSource(source: string): string | null {
     'export default {',
   ];
 
+  if (/module\.exports\s*=\s*\(\s*phase\b/.test(source) || /export\s+default\s*\(\s*phase\b/.test(source)) {
+    markers.push('return {');
+  }
+
   for (const marker of markers) {
     if (source.includes(marker)) {
       return source.replace(marker, `${marker}\n${insertion}`);
     }
   }
 
+  const defaultExportId = source.match(/export\s+default\s+([A-Za-z_$][\w$]*)\s*;/);
+  if (defaultExportId) {
+    const patched = patchNextConfigVariableDefinition(source, defaultExportId[1], insertion);
+    if (patched) {
+      return patched;
+    }
+  }
+
+  const cjsExportId = source.match(/module\.exports\s*=\s*([A-Za-z_$][\w$]*)\s*;/);
+  if (cjsExportId) {
+    const patched = patchNextConfigVariableDefinition(source, cjsExportId[1], insertion);
+    if (patched) {
+      return patched;
+    }
+  }
+
   return null;
+}
+
+function patchNextConfigVariableDefinition(source: string, variableName: string, insertion: string): string | null {
+  const variablePattern = new RegExp(`((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*\\{)`);
+  const match = source.match(variablePattern);
+  if (!match) {
+    return null;
+  }
+
+  return source.replace(match[0], `${match[0]}\n${insertion}`);
 }
 
 function upgradePostcssConfigSource(source: string): string | null {
@@ -362,13 +430,24 @@ function upgradePostcssConfigSource(source: string): string | null {
   return upgraded === source ? null : upgraded;
 }
 
+const POSTCSS_CONFIG_FILENAMES = ['postcss.config.mjs', 'postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'] as const;
+
+function findPostcssConfigPath(projectDir: string): string | null {
+  for (const filename of POSTCSS_CONFIG_FILENAMES) {
+    const configPath = path.join(projectDir, filename);
+    if (fs.existsSync(configPath)) {
+      return configPath;
+    }
+  }
+
+  return null;
+}
+
 function ensureWebChatPostcssConfig(projectDir: string): boolean {
-  const mjsPath = path.join(projectDir, 'postcss.config.mjs');
-  const jsPath = path.join(projectDir, 'postcss.config.js');
-  const existingPath = fs.existsSync(mjsPath) ? mjsPath : fs.existsSync(jsPath) ? jsPath : null;
+  const existingPath = findPostcssConfigPath(projectDir);
 
   if (!existingPath) {
-    fs.writeFileSync(mjsPath, STANDALONE_POSTCSS_CONFIG, 'utf8');
+    fs.writeFileSync(path.join(projectDir, 'postcss.config.mjs'), STANDALONE_POSTCSS_CONFIG, 'utf8');
     return true;
   }
 
