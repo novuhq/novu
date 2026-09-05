@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { buildThrottleGroupingSuffix } from './resolve-throttle-grouping';
 import { IThrottleReservationParams, IThrottleReservationResult } from './throttle.types';
 
 const LOG_CONTEXT = 'RedisThrottleService';
@@ -102,9 +103,11 @@ export class RedisThrottleService {
     throttleValue?: string;
   }): string {
     const baseKey = `throttle:${params.environmentId}:${params.subscriberId}:${params.workflowId}:${params.stepId}`;
-    const throttleKeyPart =
-      params.throttleKey && params.throttleValue !== undefined ? `:${params.throttleKey}:${params.throttleValue}` : '';
-    const finalKey = `${baseKey}${throttleKeyPart}:set`;
+    const groupingPart = buildThrottleGroupingSuffix({
+      throttleKey: params.throttleKey,
+      throttleValue: params.throttleValue,
+    });
+    const finalKey = `${baseKey}${groupingPart}:set`;
 
     return finalKey;
   }

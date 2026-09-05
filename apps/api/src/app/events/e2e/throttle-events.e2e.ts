@@ -287,7 +287,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
             amount: 1,
             unit: 'minutes',
             threshold: 1,
-            throttleKey: 'userId',
+            throttleKey: '{{payload.userId}}',
           },
         },
         {
