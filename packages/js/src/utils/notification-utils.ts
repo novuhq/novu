@@ -494,3 +494,17 @@ export function checkNotificationMatchesFilter(notification: Notification, filte
     checkNotificationTimeframeFilter(notification.createdAt, filter.createdGte, filter.createdLte)
   );
 }
+
+/**
+ * Whether a notification still belongs in a notifications-cache bucket after a local mutation.
+ * Status fields (read/seen/archived/snoozed) and tags can change membership; data and timeframe
+ * are stable for in-flight mutations and are validated when the bucket is populated from the API.
+ */
+export function notificationMatchesCacheBucket(
+  notification: Notification,
+  filter: NotificationFilter
+): boolean {
+  return (
+    checkBasicFilters(notification, filter) && checkNotificationTagFilter(notification.tags, filter.tags)
+  );
+}

@@ -153,3 +153,4 @@ export {
   isSameFilter,
   normalizeTagGroups,
 } from './utils/notification-utils';
+export { COUNT_MUTATION_RESOLVED_EVENTS } from './notifications/count-invalidation-events';
