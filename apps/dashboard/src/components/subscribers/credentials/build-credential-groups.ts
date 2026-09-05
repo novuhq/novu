@@ -125,7 +125,11 @@ function getProviderDisplayName(providerId: string): string {
 }
 
 /** Chat providers that deliver to the subscriber's phone number rather than a webhook/channel endpoint. */
-const PHONE_BASED_CHAT_PROVIDERS = new Set<string>([ChatProviderIdEnum.WhatsAppBusiness, ChatProviderIdEnum.Sendblue]);
+const PHONE_BASED_CHAT_PROVIDERS = new Set<string>([
+  ChatProviderIdEnum.WhatsAppBusiness,
+  ChatProviderIdEnum.Sendblue,
+  ChatProviderIdEnum.EightByEightWhatsApp,
+]);
 
 function isPhoneBasedChatProvider(providerId: string): boolean {
   return PHONE_BASED_CHAT_PROVIDERS.has(providerId);
