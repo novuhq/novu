@@ -10,11 +10,10 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
-import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
-import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry, type ChatWithAdapters, type PlatformAdapters } from '../ingress/chat-instance.registry';
+import { buildAdapterPostableMessage } from './adapter-postable-message';
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
 import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
@@ -30,9 +29,6 @@ import {
 } from './slack-native-delivery';
 
 export type { SlackNativeDelivery } from './slack-native-delivery';
-
-/** The subset of the resolved config that drives outbound watermarking. */
-type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
 
 export interface ConversationTarget {
   agentId: string;
@@ -336,7 +332,7 @@ export class OutboundGateway {
     );
 
     const postArg = this.withPreferredMessageId(
-      this.buildAdapterPostableMessage(tokenizedContent, config),
+      buildAdapterPostableMessage(tokenizedContent, config),
       chat.getAdapter(config.platform),
       preferredMessageId
     );
@@ -485,7 +481,7 @@ export class OutboundGateway {
       this.toActionTokenBinding(agentId, config)
     );
 
-    const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
+    const postArg = buildAdapterPostableMessage(tokenizedContent, config);
 
     // openDM must run inside the token binding: Slack multi-workspace adapters have no default
     // bot token, and conversations.open fails with AuthenticationError outside withBotToken().
@@ -588,7 +584,7 @@ export class OutboundGateway {
     );
 
     // Edits re-brand so a post-then-edit delivery never strips the watermark.
-    const editPayload = this.buildAdapterPostableMessage(tokenizedContent, config);
+    const editPayload = buildAdapterPostableMessage(tokenizedContent, config);
 
     const edited = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.editMessage(platformThreadId, platformMessageId, editPayload)
@@ -896,64 +892,6 @@ export class OutboundGateway {
     }
 
     return resolved;
-  }
-
-  /**
-   * Appends a "Powered by Novu" markdown footer for orgs that have not removed
-   * Novu branding. Pro and above can disable it via `removeNovuBranding`.
-   * Cards and action messages are left untouched.
-   */
-  private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
-    if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
-      return content;
-    }
-
-    if (branding.removeNovuBranding) {
-      return content;
-    }
-
-    return {
-      ...content,
-      markdown: appendPoweredByWatermark(content.markdown, branding.agentIdentifier, branding.platform),
-    };
-  }
-
-  /**
-   * Single payload-construction chokepoint for adapter deliveries (post, DM,
-   * edit). Branding is applied here so no delivery path can miss the watermark.
-   */
-  private buildAdapterPostableMessage(
-    content: ChatSdkReplyContent,
-    branding: OutboundBrandingContext
-  ): AdapterPostableMessage {
-    const deliveryContent = this.applyOutboundBranding(content, branding);
-
-    if (deliveryContent.card) {
-      return {
-        card:
-          branding.platform === AgentPlatformEnum.SLACK
-            ? splitOversizedSlackText(deliveryContent.card)
-            : deliveryContent.card,
-        ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
-      } as AdapterPostableMessage;
-    }
-
-    const markdown = deliveryContent.markdown ?? '';
-
-    if (branding.platform === AgentPlatformEnum.SLACK && markdown.length > SLACK_MARKDOWN_TEXT_LIMIT) {
-      return {
-        card: splitOversizedSlackText({
-          type: 'card',
-          children: [{ type: 'text', content: markdown }],
-        }),
-        ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
-      } as AdapterPostableMessage;
-    }
-
-    return {
-      markdown,
-      files: deliveryContent.files,
-    } as AdapterPostableMessage;
   }
 
   private async persistDelivered(

@@ -27,12 +27,19 @@ type PlatformEgressCapabilities = {
    * user's next matching inbound message is consumed as the verdict.
    */
   interactiveButtons: boolean;
+  /**
+   * Whether free-plan replies carry the "Powered by Novu" markdown footer.
+   * Platforms whose UI is rendered by the customer (web chat) skip it: the
+   * footer would otherwise land as raw markdown inside their message bubble.
+   */
+  poweredByWatermark: boolean;
 };
 
 const DEFAULT_EGRESS_CAPABILITIES: PlatformEgressCapabilities = {
   markdownLinks: true,
   nativeUrlButtons: true,
   interactiveButtons: true,
+  poweredByWatermark: true,
 };
 
 const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapabilities> = {
@@ -41,17 +48,21 @@ const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapa
   [AgentPlatformEnum.TELEGRAM]: DEFAULT_EGRESS_CAPABILITIES,
   [AgentPlatformEnum.EMAIL]: DEFAULT_EGRESS_CAPABILITIES,
   [AgentPlatformEnum.WHATSAPP]: {
+    ...DEFAULT_EGRESS_CAPABILITIES,
     markdownLinks: false,
     nativeUrlButtons: false,
-    interactiveButtons: true,
   },
   // iMessage/SMS delivery is plain text — no markdown links or buttons of any kind.
   [AgentPlatformEnum.SENDBLUE]: {
+    ...DEFAULT_EGRESS_CAPABILITIES,
     markdownLinks: false,
     nativeUrlButtons: false,
     interactiveButtons: false,
   },
-  [AgentPlatformEnum.WEB_CHAT]: DEFAULT_EGRESS_CAPABILITIES,
+  [AgentPlatformEnum.WEB_CHAT]: {
+    ...DEFAULT_EGRESS_CAPABILITIES,
+    poweredByWatermark: false,
+  },
 };
 
 function resolvePlatformEgressCapabilities(platform: string): PlatformEgressCapabilities {
@@ -64,6 +75,11 @@ export function supportsMarkdownLinks(platform: string): boolean {
 
 export function requiresShortConnectUrl(platform: string): boolean {
   return !resolvePlatformEgressCapabilities(platform).nativeUrlButtons;
+}
+
+/** Platforms that receive the free-plan "Powered by Novu" footer on text replies. */
+export function supportsPoweredByWatermark(platform: string): boolean {
+  return resolvePlatformEgressCapabilities(platform).poweredByWatermark;
 }
 
 /** Platforms without callback buttons approve tools by texting back YES / NO. */
