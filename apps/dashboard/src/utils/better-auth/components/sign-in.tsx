@@ -110,6 +110,8 @@ export function SignIn() {
           <Input
             type="email"
             id={emailId}
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -137,6 +139,8 @@ export function SignIn() {
           <Input
             type="password"
             id={passwordId}
+            name="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="Password"

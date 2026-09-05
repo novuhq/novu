@@ -150,6 +150,9 @@ export function SignUp() {
           </label>
           <Input
             type="text"
+            id="firstName"
+            name="given-name"
+            autoComplete="given-name"
             value={firstName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
             placeholder="John"
@@ -163,6 +166,9 @@ export function SignUp() {
           </label>
           <Input
             type="text"
+            id="lastName"
+            name="family-name"
+            autoComplete="family-name"
             value={lastName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
             placeholder="Doe"
@@ -175,6 +181,9 @@ export function SignUp() {
           </label>
           <Input
             type="email"
+            id="email"
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -188,6 +197,9 @@ export function SignUp() {
           </label>
           <Input
             type="password"
+            id="password"
+            name="new-password"
+            autoComplete="new-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsSubmitted(false);

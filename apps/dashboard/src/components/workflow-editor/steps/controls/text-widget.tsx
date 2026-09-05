@@ -60,6 +60,7 @@ export function TextWidget(props: WidgetProps) {
                   readOnly={readonly}
                   disabled={disabled}
                   placeholder={capitalize(label)}
+                  autoComplete="off"
                 />
               ) : (
                 <InputRoot hasError={!!fieldState.error}>

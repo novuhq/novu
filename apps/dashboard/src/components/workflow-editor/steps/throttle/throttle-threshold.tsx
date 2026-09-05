@@ -41,6 +41,7 @@ export const ThrottleThreshold = () => {
               min={minThresholdValue}
               size="2xs"
               placeholder="1"
+              autoComplete="off"
               onChange={(e) => {
                 field.onChange(e.target.value ? Number(e.target.value) : undefined);
                 saveForm();
