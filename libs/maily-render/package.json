@@ -50,7 +50,7 @@
     "@antfu/utils": "^0.7.10",
     "@babel/preset-react": "^7.25.9",
     "@novu/maily-tsconfig": "workspace:*",
-    "@tiptap/core": "^2.11.5",
+    "@tiptap/core": "^3.30.4",
     "@types/react": "^19.2.8",
     "happy-dom": "^20.8.9",
     "tsup": "^8.1.0",

@@ -155,7 +155,7 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tailwindcss/postcss": "^4.1.8",
-    "@tiptap/core": "^2.11.5",
+    "@tiptap/core": "^3.30.4",
     "@tiptap/extension-code-block-lowlight": "^2.11.5",
     "@tiptap/extension-color": "^2.11.5",
     "@tiptap/extension-document": "^2.11.5",
