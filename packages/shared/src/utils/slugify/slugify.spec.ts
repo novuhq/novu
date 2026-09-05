@@ -47,6 +47,17 @@ describe('slugify', () => {
     expect(slugify('foo bar baz', { separator: '' }), 'foobarbaz');
   });
 
+  it('collapses trailing -s/-t contractions with the default separator', () => {
+    expect(slugify("it's")).toBe('its');
+    expect(slugify("cat's toy")).toBe('cats-toy');
+  });
+
+  it('collapses trailing -s/-t contractions with a custom separator', () => {
+    expect(slugify("it's", { separator: '_' })).toBe('its');
+    expect(slugify("cat's toy", { separator: '_' })).toBe('cats_toy');
+    expect(slugify("that's it", { separator: '.' })).toBe('thats.it');
+  });
+
   it('lowercases the string', () => {
     expect(slugify('Foo bAr baZ'), 'foo-bar-baz');
   });

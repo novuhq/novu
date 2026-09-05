@@ -262,13 +262,19 @@ export const slugify = (string: string, options?: Options) => {
   string = string.replace(patternSlug, options.separator ?? '-');
   string = string.replace(/\\/g, '');
 
-  /*
-   * Detect contractions/possessives by looking for any word followed by a `-t`
-   * or `-s` in isolation and then remove it.
-   */
-  string = string.replace(/([a-zA-Z\d]+)-([ts])(-|$)/g, '$1$2$3');
-
   if (options.separator) {
+    /*
+     * Detect contractions/possessives by looking for any word followed by a `-t`
+     * or `-s` in isolation and then remove it. Use the configured separator so the
+     * collapse also works for custom separators (with the default `-` this is
+     * unchanged); an empty separator already strips these characters entirely.
+     */
+    const escapedSeparator = escapeStringRegexp(options.separator);
+    string = string.replace(
+      new RegExp(`([a-zA-Z\\d]+)${escapedSeparator}([ts])(${escapedSeparator}|$)`, 'g'),
+      '$1$2$3',
+    );
+
     string = removeMootSeparators(string, options.separator);
   }
 
