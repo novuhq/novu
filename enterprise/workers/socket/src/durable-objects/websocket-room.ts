@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import type { IConnectionMetadata, IEnv } from '../types';
+import type { IConnectionMetadata, IEnv, IOnlineReportRecord } from '../types';
 
 /**
  * WebSocket Room Durable Object with Hibernation Support
@@ -7,6 +7,22 @@ import type { IConnectionMetadata, IEnv } from '../types';
  */
 export class WebSocketRoom extends DurableObject<IEnv> {
   private static readonly MAX_CONNECTIONS = 100;
+
+  /**
+   * How long to wait after the last connection closes before reporting the
+   * subscriber as offline. Quick reconnects (page navigations, reloads) within
+   * this window cancel out the offline+online API call pair entirely.
+   */
+  private static readonly OFFLINE_DEBOUNCE_MS = 60_000;
+
+  /**
+   * How long a successful online report is trusted before being re-asserted.
+   * Bounds divergence caused by external writers (legacy ws service), failed
+   * API calls, or out-of-band DB changes, while keeping API traffic low.
+   */
+  private static readonly ONLINE_REASSERT_TTL_MS = 6 * 60 * 60 * 1000;
+
+  private static readonly ONLINE_REPORT_KEY = 'onlineReport';
 
   /**
    * Constructor - called when DO is instantiated or wakes from hibernation
@@ -71,7 +87,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
     // Use waitUntil to allow hibernation without waiting for API call
     this.ctx.waitUntil(
-      this.notifySubscriberOnlineState(userId, environmentId, true, undefined, jwtToken).catch((error) =>
+      this.reportOnlineIfNeeded(currentConnections, userId, environmentId, jwtToken).catch((error) =>
         console.error('Failed to notify subscriber online state:', error)
       )
     );
@@ -99,13 +115,44 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
     ws.close(code, reason);
 
-    const metadata = this.getConnectionMetadata(ws);
+    // The closing socket is still included in getWebSockets() at this point
+    const remainingConnections = this.ctx.getWebSockets().length - 1;
 
-    if (metadata) {
-      this.handleSubscriberDisconnection(metadata);
+    if (remainingConnections <= 0) {
+      await this.scheduleOfflineReport();
+    }
+  }
+
+  /**
+   * Debounced offline reporting: fires OFFLINE_DEBOUNCE_MS after the last
+   * connection closes. If the subscriber reconnected in the meantime, this is
+   * a no-op and no offline/online API call pair is sent at all.
+   */
+  async alarm(): Promise<void> {
+    if (this.ctx.getWebSockets().length > 0) {
+      return;
     }
 
-    // No need to delete from connectionTokens - using serializeAttachment instead
+    const report = await this.ctx.storage.get<IOnlineReportRecord>(WebSocketRoom.ONLINE_REPORT_KEY);
+
+    if (!report?.jwtToken) {
+      console.warn('No online report record available, skipping offline notification');
+
+      return;
+    }
+
+    const succeeded = await this.notifySubscriberOnlineState(
+      report.userId,
+      report.environmentId,
+      false,
+      undefined,
+      report.jwtToken
+    );
+
+    if (!succeeded) {
+      // Throwing makes the Cloudflare runtime retry the alarm with backoff
+      throw new Error('Failed to report subscriber offline state, alarm will be retried');
+    }
   }
 
   /**
@@ -183,6 +230,55 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   }
 
   /**
+   * Report the subscriber as online unless it is redundant. The online state
+   * is considered already reported when the room had live connections before
+   * this one, or when an offline alarm is still pending (the offline report
+   * was never sent). A successful report older than ONLINE_REASSERT_TTL_MS is
+   * re-asserted regardless, to self-heal external state divergence.
+   */
+  private async reportOnlineIfNeeded(
+    connectionsBeforeAccept: number,
+    userId: string,
+    environmentId: string,
+    jwtToken: string
+  ): Promise<void> {
+    const [pendingAlarm, report] = await Promise.all([
+      this.ctx.storage.getAlarm(),
+      this.ctx.storage.get<IOnlineReportRecord>(WebSocketRoom.ONLINE_REPORT_KEY),
+    ]);
+
+    const isFreshlyReported =
+      report !== undefined && Date.now() - report.reportedAt < WebSocketRoom.ONLINE_REASSERT_TTL_MS;
+    const isAlreadyOnline = connectionsBeforeAccept > 0 || pendingAlarm !== null;
+
+    if (isAlreadyOnline && isFreshlyReported) {
+      return;
+    }
+
+    const succeeded = await this.notifySubscriberOnlineState(userId, environmentId, true, undefined, jwtToken);
+
+    if (succeeded) {
+      const record: IOnlineReportRecord = { reportedAt: Date.now(), jwtToken, userId, environmentId };
+      await this.ctx.storage.put(WebSocketRoom.ONLINE_REPORT_KEY, record);
+    }
+  }
+
+  /**
+   * Schedule the debounced offline report. An already pending alarm is left
+   * untouched (resetting or deleting alarms costs extra storage writes and the
+   * alarm handler no-ops when connections exist anyway).
+   */
+  private async scheduleOfflineReport(): Promise<void> {
+    const pendingAlarm = await this.ctx.storage.getAlarm();
+
+    if (pendingAlarm !== null) {
+      return;
+    }
+
+    await this.ctx.storage.setAlarm(Date.now() + WebSocketRoom.OFFLINE_DEBOUNCE_MS);
+  }
+
+  /**
    * Notify the API about subscriber online state changes
    */
   private async notifySubscriberOnlineState(
@@ -191,19 +287,19 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     isOnline: boolean,
     organizationId?: string,
     jwtToken?: string
-  ): Promise<void> {
+  ): Promise<boolean> {
     const apiUrl = this.env.API_URL;
 
     if (!apiUrl) {
       console.warn('API_URL not configured, skipping online state notification');
 
-      return;
+      return false;
     }
 
     if (!jwtToken) {
       console.warn('JWT token not available, skipping online state notification');
 
-      return;
+      return false;
     }
 
     try {
@@ -225,8 +321,12 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       if (!response.ok) {
         console.error(`Failed to notify API about subscriber online state: ${response.status} ${response.statusText}`);
       }
+
+      return response.ok;
     } catch (error) {
       console.error(`Error notifying API about subscriber online state:`, error);
+
+      return false;
     }
   }
 
@@ -262,25 +362,6 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       jwtToken: attachment.jwtToken,
       contextKeys: attachment.contextKeys,
     };
-  }
-
-  private handleSubscriberDisconnection(metadata: IConnectionMetadata): void {
-    const activeConnections = this.getActiveConnectionsForUser(metadata.userId);
-
-    const remainingConnections = activeConnections - 1;
-
-    if (remainingConnections <= 0) {
-      // Use waitUntil to allow hibernation without waiting for API call
-      this.ctx.waitUntil(
-        this.notifySubscriberOnlineState(
-          metadata.userId,
-          metadata.environmentId,
-          false,
-          undefined,
-          metadata.jwtToken
-        ).catch((error) => console.error('Failed to notify subscriber offline state:', error))
-      );
-    }
   }
 
   private extractContextKeysFromHeader(request: Request): string[] {
