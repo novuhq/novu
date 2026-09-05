@@ -70,6 +70,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     workflowId: template.triggers[0].identifier,
     slug: buildSlug(workflowName, ShortIsPrefixEnum.WORKFLOW, template._id),
     name: workflowName,
+    description: template.description,
     origin: computeOrigin(template),
     tags: template.tags,
     updatedAt: template.updatedAt || '',
