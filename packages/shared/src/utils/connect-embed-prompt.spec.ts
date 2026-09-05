@@ -25,6 +25,6 @@ describe('buildConnectEmbedPrompt', () => {
     expect(prompt).toContain('Approvals + MCP authorize **in the thread**');
     expect(prompt).toContain('Thinking indicator');
     expect(prompt).toContain("Match this app's design system");
-    expect(prompt).toContain('do not paste scaffold CSS');
+    expect(prompt).toContain('Do not paste scaffold, playground, or dashboard colors');
   });
 });
