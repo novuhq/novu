@@ -163,7 +163,7 @@ overrides:
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
   yaml@>=1.0.0 <1.10.3: ^1.10.3
   yaml@>=2.0.0 <2.8.3: ^2.8.3
-  '@xmldom/xmldom@<0.8.13': ^0.8.13
+  '@xmldom/xmldom@<0.8.15': ^0.8.15
   micromatch@<4.0.0: ^4.0.8
   defu@<=6.1.4: ^6.1.5
   '@smithy/config-resolver@<4.4.0': ^4.4.0
