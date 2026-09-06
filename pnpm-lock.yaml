@@ -45,6 +45,8 @@ overrides:
   form-data@<2.5.6: ^2.5.6
   form-data@>=3.0.0 <3.0.5: ^3.0.5
   form-data@>=4.0.0 <4.0.6: ^4.0.6
+  fflate@>=0.4.5 <0.4.9: ^0.4.9
+  fflate@>=0.8.0 <0.8.3: ^0.8.3
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.3: ^6.4.3
   node-forge@<1.4.0: ^1.4.0
@@ -20463,11 +20465,11 @@ packages:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
     engines: {node: ^12.20 || >= 14.13}
 
-  fflate@0.4.8:
-    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
+  fflate@0.4.9:
+    resolution: {integrity: sha512-zdxgIEddhfsyCaWpJ2SdXEP8ZMrKJ6+5jl4OupODcywU0IhRk6gdXuVGcPICyfx2H97hVK7xmJtRLPjkxAX8Vw==}
 
-  fflate@0.8.2:
-    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   figures@1.7.0:
     resolution: {integrity: sha512-UxKlfCRuCBxSXU4C6t9scbDyWZ4VlaFFdojKtzJuSkuOBQ5CNFum+zZXFwHjo+CxBC1t6zlYPgHIgFjL8ggoEQ==}
@@ -30285,7 +30287,7 @@ snapshots:
       '@andrewbranch/untar.js': 1.0.3
       '@loaderkit/resolve': 1.0.3
       cjs-module-lexer: 1.4.1
-      fflate: 0.8.2
+      fflate: 0.8.3
       lru-cache: 10.4.3
       semver: 7.7.4
       typescript: 5.6.1-rc
@@ -52772,9 +52774,9 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.2.1
 
-  fflate@0.4.8: {}
+  fflate@0.4.9: {}
 
-  fflate@0.8.2: {}
+  fflate@0.8.3: {}
 
   figures@1.7.0:
     dependencies:
@@ -61163,7 +61165,7 @@ snapshots:
       '@types/css-font-loading-module': 0.0.7
       '@xstate/fsm': 1.6.5
       base64-arraybuffer: 1.0.2
-      fflate: 0.4.8
+      fflate: 0.4.9
       mitt: 3.0.1
       rrdom: 2.0.0-alpha.16
       rrweb-snapshot: 2.0.0-alpha.16
