@@ -5,6 +5,7 @@ import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.s
 import type { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import type { StoredAttachment } from '../conversation/agent-attachment-storage.service';
+import type { UnseenThreadMessage } from '../ingress/seed-slack-thread-history';
 import type { WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 import type { BridgeReaction } from './bridge-executor.service';
 
@@ -34,5 +35,6 @@ export interface ConversationTurn {
   action?: AgentAction;
   reaction?: BridgeReaction;
   workflowOrigin?: WorkflowOriginSnapshot | null;
+  unseenThreadMessages?: UnseenThreadMessage[];
   humanResponse?: AgentHumanResponse | null;
 }

@@ -63,4 +63,14 @@ describe('HumanConversationInboundInterceptor', () => {
 
     expect(await interceptor.tryHandleMessage(makeTurn() as any)).to.equal(false);
   });
+
+  it('reports whether a conversation has a pending ask', async () => {
+    const inbound = {
+      hasPendingConversationAsk: sinon.stub().resolves(true),
+    };
+    const interceptor = new HumanConversationInboundInterceptor(inbound as any);
+
+    expect(await interceptor.hasPendingAsk('env1', 'conv1')).to.equal(true);
+    expect(inbound.hasPendingConversationAsk.calledOnceWithExactly('env1', 'conv1')).to.equal(true);
+  });
 });

@@ -58,6 +58,7 @@ import { InboundDispatcher } from './inbound.dispatcher';
 import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
+import { requiresExplicitMention } from './requires-explicit-mention';
 import { seedSlackThreadHistory } from './seed-slack-thread-history';
 import { WorkflowOriginService } from './workflow-origin.service';
 
@@ -301,6 +302,15 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    if (
+      requiresExplicitMention(thread, message) &&
+      !(await this.isAwaitingHumanReply(agentId, config, thread, message))
+    ) {
+      await thread.unsubscribe();
+
+      return;
+    }
+
     if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
       return;
     }
@@ -497,7 +507,7 @@ export class AgentInboundHandler implements OnModuleInit {
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
 
-    await seedSlackThreadHistory({
+    const unseenThreadMessages = await seedSlackThreadHistory({
       agentId,
       config,
       conversation,
@@ -560,6 +570,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
       workflowOrigin: workflowOrigin ?? undefined,
+      unseenThreadMessages,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
@@ -573,6 +584,10 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     if (event === AgentEventEnum.ON_MESSAGE && (await this.humanConversationInbound.tryHandleMessage(turn))) {
+      return;
+    }
+
+    if (event === AgentEventEnum.ON_MESSAGE && requiresExplicitMention(thread, message)) {
       return;
     }
 
@@ -599,6 +614,28 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     await runtime.dispatch(turn);
+  }
+
+  private async isAwaitingHumanReply(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<boolean> {
+    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
+    const conversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      config.integrationId,
+      platformThreadId
+    );
+
+    if (!conversation) {
+      return false;
+    }
+
+    return this.humanConversationInbound.hasPendingAsk(config.environmentId, conversation._id);
   }
 
   /**

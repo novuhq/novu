@@ -20,6 +20,7 @@ import {
   type StoredAttachment,
 } from '../conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import type { UnseenThreadMessage } from '../conversation-runtime/ingress/seed-slack-thread-history';
 import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
 import { WorkflowOriginService } from '../conversation-runtime/ingress/workflow-origin.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
@@ -45,6 +46,7 @@ export interface ManagedAgentContext {
   senderName?: string | null;
   storedAttachments?: StoredAttachment[];
   workflowOrigin?: WorkflowOriginSnapshot | null;
+  unseenThreadMessages?: UnseenThreadMessage[];
   platformThreadId?: string;
   platformMessageId?: string;
 }
@@ -150,6 +152,7 @@ export class ManagedAgentService implements OnModuleInit {
             {
               userMessageText: labeledUserText,
               workflowOrigin: context.workflowOrigin?.source === 'hydrated' ? context.workflowOrigin : null,
+              unseenThreadMessages: context.unseenThreadMessages,
             },
             userContent
           )

@@ -21,9 +21,9 @@ function slackMessage(
     fullName: 'Ada',
     isBot: false,
   },
-  raw?: Record<string, unknown>
+  extras: { raw?: Record<string, unknown>; isMention?: boolean } = {}
 ) {
-  return { id, text, author, raw };
+  return { id, text, author, raw: extras.raw, isMention: extras.isMention };
 }
 
 describe('seedSlackThreadHistory', () => {
@@ -87,15 +87,16 @@ describe('seedSlackThreadHistory', () => {
     };
 
     it('imports prior messages once and leaves all unmatched authors as platform users', async () => {
-      const importInboundMessages = sinon.stub().resolves(2);
+      const importInboundMessages = sinon.stub().callsFake(({ messages }) => Promise.resolve(messages));
       const logger = { warn: sinon.stub() };
-      const mention = slackMessage('mention', '@bot help', undefined, { type: 'app_mention' });
+      const mention = slackMessage('mention', '@bot help', undefined, { isMention: true });
 
       await seedSlackThreadHistory({
         agentId: 'agent1',
         config: config as any,
         conversation: { _id: 'conv1' } as any,
         thread: {
+          isDM: false,
           messages: asyncMessages([
             mention,
             slackMessage('human', 'can you look?', { userId: 'U9', fullName: 'Ada', isBot: false }),
@@ -131,15 +132,16 @@ describe('seedSlackThreadHistory', () => {
     });
 
     it('swallows fetch errors so the mention still proceeds', async () => {
-      const importInboundMessages = sinon.stub().resolves(0);
+      const importInboundMessages = sinon.stub().resolves([]);
       const logger = { warn: sinon.stub() };
-      const mention = slackMessage('mention', '@bot help', undefined, { type: 'app_mention' });
+      const mention = slackMessage('mention', '@bot help', undefined, { isMention: true });
 
       await seedSlackThreadHistory({
         agentId: 'agent1',
         config: config as any,
         conversation: { _id: 'conv1' } as any,
         thread: {
+          isDM: false,
           messages: {
             [Symbol.asyncIterator]: () => {
               throw new Error('slack down');
@@ -158,15 +160,84 @@ describe('seedSlackThreadHistory', () => {
 
     it('does nothing for non-mention Slack messages', async () => {
       const importInboundMessages = sinon.stub();
-      const message = slackMessage('message', 'hello', undefined, { type: 'message' });
+      const message = slackMessage('message', 'hello');
 
       await seedSlackThreadHistory({
         agentId: 'agent1',
         config: config as any,
         conversation: { _id: 'conv1' } as any,
-        thread: { messages: asyncMessages([message]) } as any,
+        thread: { isDM: false, messages: asyncMessages([message]) } as any,
         message: message as any,
         platformThreadId: 'slack:C1:1.0',
+        conversationService: { importInboundMessages },
+        logger: { warn: sinon.stub() },
+      });
+
+      expect(importInboundMessages.called).to.equal(false);
+    });
+
+    it('returns the newly imported human messages for the model, oldest first', async () => {
+      const importInboundMessages = sinon
+        .stub()
+        .callsFake(({ messages }) =>
+          Promise.resolve(messages.filter((message) => message.platformMessageId !== 'already-seen'))
+        );
+      const mention = slackMessage('mention', '@bot help', undefined, { isMention: true });
+
+      const unseen = await seedSlackThreadHistory({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: { _id: 'conv1' } as any,
+        thread: {
+          isDM: false,
+          messages: asyncMessages([
+            mention,
+            slackMessage('newer', 'and la chapelle ?', { userId: 'U9', fullName: 'Nikita', isBot: false }),
+            slackMessage('bot', 'Finished thinking', { userId: 'B1', fullName: 'Agent', isBot: true }),
+            slackMessage('older', 'what about hermitage ?', { userId: 'U9', fullName: 'Nikita', isBot: false }),
+            slackMessage('already-seen', 'the first thing i asked', { userId: 'U9', fullName: 'Nikita' }),
+          ]),
+        } as any,
+        message: mention as any,
+        platformThreadId: 'slack:C1:1.0',
+        conversationService: { importInboundMessages },
+        logger: { warn: sinon.stub() },
+      });
+
+      expect(unseen).to.deep.equal([
+        { senderName: 'Nikita', content: 'what about hermitage ?' },
+        { senderName: 'Nikita', content: 'and la chapelle ?' },
+      ]);
+    });
+
+    it('returns nothing when the gate skips seeding', async () => {
+      const message = slackMessage('message', 'hello');
+
+      const unseen = await seedSlackThreadHistory({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: { _id: 'conv1' } as any,
+        thread: { isDM: false, messages: asyncMessages([message]) } as any,
+        message: message as any,
+        platformThreadId: 'slack:C1:1.0',
+        conversationService: { importInboundMessages: sinon.stub() },
+        logger: { warn: sinon.stub() },
+      });
+
+      expect(unseen).to.deep.equal([]);
+    });
+
+    it('does nothing for Slack DMs even when isMention is set', async () => {
+      const importInboundMessages = sinon.stub();
+      const mention = slackMessage('mention', '@bot help', undefined, { isMention: true });
+
+      await seedSlackThreadHistory({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: { _id: 'conv1' } as any,
+        thread: { isDM: true, messages: asyncMessages([mention]) } as any,
+        message: mention as any,
+        platformThreadId: 'slack:D1:1.0',
         conversationService: { importInboundMessages },
         logger: { warn: sinon.stub() },
       });

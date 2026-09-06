@@ -120,7 +120,7 @@ describe('AgentInboundHandler', () => {
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
-      importInboundMessages: sinon.stub().resolves(0),
+      importInboundMessages: sinon.stub().callsFake(({ messages }) => Promise.resolve(messages)),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
       persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
       persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
@@ -258,6 +258,7 @@ describe('AgentInboundHandler', () => {
     const humanInteractionInbound = {
       tryHandleAction: sinon.stub().resolves({ outcome: 'ignored' }),
       tryHandleMessage: sinon.stub().resolves({ outcome: 'ignored' }),
+      hasPendingConversationAsk: sinon.stub().resolves(false),
     };
     const humanConversationInbound = new HumanConversationInboundInterceptor(humanInteractionInbound as any);
     const handler = new AgentInboundHandler(
@@ -324,6 +325,7 @@ describe('AgentInboundHandler', () => {
       }),
       startTyping: sinon.stub().resolves(undefined),
       post: sinon.stub().resolves({ id: '1777837479.427739', threadId: 'slack:D123:1777837477.371619' }),
+      unsubscribe: sinon.stub().resolves(undefined),
     };
   }
 
@@ -466,6 +468,7 @@ describe('AgentInboundHandler', () => {
         id: 'mention-ts',
         text: '<@UBOT> help',
         author: { userId: 'U1', fullName: 'Ada', userName: 'ada', isBot: false },
+        isMention: true,
         raw: { type: 'app_mention', thread_ts: 'root-ts' },
         attachments: [],
       };
@@ -486,6 +489,7 @@ describe('AgentInboundHandler', () => {
         toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
         startTyping: sinon.stub().resolves(undefined),
         post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        unsubscribe: sinon.stub().resolves(undefined),
       };
 
       await handler.handle('agent1', config as any, thread as any, mention as any, AgentEventEnum.ON_MESSAGE);
@@ -505,6 +509,53 @@ describe('AgentInboundHandler', () => {
         platformMessageId: 'mention-ts',
         content: '<@UBOT> help',
       });
+    });
+
+    it('should hand a managed agent the thread messages it missed between mentions', async () => {
+      const { handler, managedAgentService } = makeHandler({
+        ...makeResolvedSubscriberOverrides(),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const mention = {
+        id: 'mention-ts',
+        text: '<@UBOT> ?',
+        author: { userId: 'U1', fullName: 'Ada', userName: 'ada', isBot: false },
+        isMention: true,
+        raw: { type: 'app_mention', thread_ts: 'root-ts' },
+        attachments: [],
+      };
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        messages: {
+          [Symbol.asyncIterator]: async function* () {
+            yield mention;
+            yield {
+              id: 'later-ts',
+              text: 'any thoughts on la chapelle ?',
+              author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            };
+            yield {
+              id: 'prior-ts',
+              text: 'what about hermitage ?',
+              author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            };
+          },
+        },
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        unsubscribe: sinon.stub().resolves(undefined),
+      };
+
+      await handler.handle('agent1', config as any, thread as any, mention as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.firstCall.args[0].unseenThreadMessages).to.deep.equal([
+        { senderName: 'Ada', content: 'what about hermitage ?' },
+        { senderName: 'Ada', content: 'any thoughts on la chapelle ?' },
+      ]);
     });
 
     it('should not fetch Slack thread history for a subscribed non-mention message', async () => {
@@ -558,6 +609,63 @@ describe('AgentInboundHandler', () => {
       );
 
       expect(next.called).to.equal(false);
+    });
+
+    it('drops an unmentioned shared-room message and unsubscribes when no ask is pending', async () => {
+      const { handler, conversationService, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'the deploy is still failing',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(humanInteractionInbound.hasPendingConversationAsk.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('lets an unmentioned shared-room message settle a pending ask without dispatching a turn', async () => {
+      const { handler, conversationService, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.hasPendingConversationAsk.resolves(true);
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'staging',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(unsubscribe.called).to.equal(false);
+      expect(humanInteractionInbound.tryHandleMessage.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
     it('should dispatch ON_MESSAGE with humanResponse when a conversation HITL ask settles', async () => {
@@ -1460,6 +1568,7 @@ describe('AgentInboundHandler', () => {
         toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
         startTyping: sinon.stub().resolves(undefined),
         post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+        unsubscribe: sinon.stub().resolves(undefined),
       };
       const message = {
         id: 'msg-1',
@@ -1498,12 +1607,14 @@ describe('AgentInboundHandler', () => {
         toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
         startTyping: sinon.stub().resolves(undefined),
         post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+        unsubscribe: sinon.stub().resolves(undefined),
       };
       const message = {
         id: 'msg-1',
         threadId: 'telegram:-100123',
         text: 'hello group',
         author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        isMention: true,
         raw: {},
         attachments: [],
       };

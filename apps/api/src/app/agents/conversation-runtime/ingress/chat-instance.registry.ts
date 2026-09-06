@@ -545,7 +545,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
-        await thread.subscribe();
+        if (thread.isDM) {
+          await thread.subscribe();
+        }
         rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {

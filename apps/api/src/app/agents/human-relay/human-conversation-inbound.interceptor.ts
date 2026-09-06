@@ -16,6 +16,11 @@ import { toAgentHumanResponse } from './to-agent-human-response';
 export class HumanConversationInboundInterceptor {
   constructor(private readonly inbound: HumanInteractionInboundService) {}
 
+  async hasPendingAsk(environmentId: string, conversationId: string): Promise<boolean> {
+
+    return this.inbound.hasPendingConversationAsk(environmentId, conversationId);
+  }
+
   async tryHandleMessage(turn: ConversationTurn): Promise<boolean> {
     if (turn.agent.runtime === 'human_relay') {
       return false;

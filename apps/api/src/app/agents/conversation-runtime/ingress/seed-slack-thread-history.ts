@@ -7,13 +7,9 @@ import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AGENT_HISTORY_LIMIT, AgentConversationService } from '../conversation/agent-conversation.service';
 import type { WorkflowOriginSnapshot } from './workflow-origin.helpers';
 
-function isSlackAppMention(message: Message): boolean {
-  const rawType =
-    message.raw && typeof message.raw === 'object' && 'type' in message.raw
-      ? message.raw.type
-      : undefined;
-
-  return rawType === 'app_mention';
+export interface UnseenThreadMessage {
+  senderName?: string;
+  content: string;
 }
 
 export async function collectSlackThreadHistoryMessages(params: {
@@ -71,11 +67,11 @@ export async function seedSlackThreadHistory(params: {
   workflowOrigin?: WorkflowOriginSnapshot | null;
   conversationService: Pick<AgentConversationService, 'importInboundMessages'>;
   logger: Pick<PinoLogger, 'warn'>;
-}): Promise<void> {
+}): Promise<UnseenThreadMessage[]> {
   const { agentId, config, conversation, thread, message, platformThreadId, workflowOrigin } = params;
 
-  if (config.platform !== AgentPlatformEnum.SLACK || !isSlackAppMention(message)) {
-    return;
+  if (config.platform !== AgentPlatformEnum.SLACK || thread.isDM || message.isMention !== true) {
+    return [];
   }
 
   try {
@@ -85,7 +81,7 @@ export async function seedSlackThreadHistory(params: {
       originPlatformMessageId: workflowOrigin?.data.platformMessageId,
     });
 
-    await params.conversationService.importInboundMessages({
+    const imported = await params.conversationService.importInboundMessages({
       conversationId: conversation._id,
       platform: config.platform,
       integrationId: config.integrationId,
@@ -100,6 +96,12 @@ export async function seedSlackThreadHistory(params: {
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
+
+    const importedIds = new Set(imported.map((entry) => entry.platformMessageId));
+
+    return prior
+      .filter((msg) => importedIds.has(msg.id) && msg.author.isBot !== true)
+      .map((msg) => ({ senderName: msg.author.fullName, content: msg.text }));
   } catch (err) {
     params.logger.warn(err, `[agent:${agentId}] Failed to seed Slack thread history; continuing without it`);
     captureAgentWarning(err, {
@@ -108,5 +110,7 @@ export async function seedSlackThreadHistory(params: {
       agentId,
       extra: { conversationId: conversation._id, platformThreadId },
     });
+
+    return [];
   }
 }

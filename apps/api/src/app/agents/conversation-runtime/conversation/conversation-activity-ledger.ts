@@ -16,6 +16,7 @@ import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
+  ImportInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
@@ -191,9 +192,9 @@ export class ConversationActivityLedger {
     }
   }
 
-  async importInboundMessages(params: ImportInboundMessagesParams): Promise<number> {
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
     if (params.messages.length === 0) {
-      return 0;
+      return [];
     }
 
     const existingPlatformMessageIds = await this.activityRepository.findExistingPlatformMessageIds(
@@ -206,7 +207,7 @@ export class ConversationActivityLedger {
     );
 
     if (messages.length === 0) {
-      return 0;
+      return [];
     }
 
     const sequences = await this.eventSequenceService.mintRange(
@@ -238,7 +239,7 @@ export class ConversationActivityLedger {
         session
       );
 
-      return insertedCount;
+      return messages;
     });
   }
 

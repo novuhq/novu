@@ -134,7 +134,7 @@ describe('ConversationActivityLedger', () => {
   });
 
   describe('importInboundMessages', () => {
-    it('bulk imports one sequenced batch and increments messageCount by inserted rows', async () => {
+    it('bulk imports one sequenced batch, returns the new rows, and increments messageCount', async () => {
       const importUserActivities = sinon.stub().resolves(2);
       const findExistingPlatformMessageIds = sinon.stub().resolves(new Set(['agent-reply']));
       const activityRepository = makeActivityRepository({ findExistingPlatformMessageIds, importUserActivities });
@@ -177,7 +177,7 @@ describe('ConversationActivityLedger', () => {
         organizationId: 'org-1',
       });
 
-      expect(inserted).to.equal(2);
+      expect(inserted.map((message) => message.platformMessageId)).to.deep.equal(['1', '2']);
       expect(importUserActivities.calledOnce).to.equal(true);
       expect(importUserActivities.firstCall.args[0].messages.map((message) => message.sequence)).to.deep.equal([4, 5]);
       expect(importUserActivities.firstCall.args[0].messages.map((message) => message.platformMessageId)).to.deep.equal([

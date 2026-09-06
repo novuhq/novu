@@ -100,6 +100,15 @@ export class CreateConversationInteraction {
       }
     );
 
+    if (command.conversation.isDirectMessage !== true) {
+      await this.outboundGateway.setThreadSubscribed(
+        command.conversation._agentId,
+        command.integrationIdentifier,
+        command.channel.platformThreadId,
+        true
+      );
+    }
+
     return delivered.interaction;
   }
 

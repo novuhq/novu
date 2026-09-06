@@ -35,6 +35,7 @@ function mockThread(id: string, opts: { channelId?: string; isDM?: boolean } = {
     isDM: opts.isDM ?? false,
     startTyping: async () => {},
     subscribe: async () => {},
+    unsubscribe: async () => {},
     post: async () => mockSentMessage(),
     toJSON: () => ({ id, channelId }),
     createSentMessageFromMessage: () => mockSentMessage(),
@@ -46,6 +47,7 @@ function mockMessage(opts: { id?: string; userId: string; text: string }) {
     id: opts.id ?? `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text: opts.text,
     author: { userId: opts.userId, fullName: 'Test User', userName: 'testuser', isBot: false },
+    isMention: true,
     metadata: { dateSent: new Date() },
   };
 }
