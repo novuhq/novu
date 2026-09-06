@@ -37,7 +37,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { saveForm } = useSaveForm();
   const { control, reset } = useFormContext();
   const watchedValues = useWatch({ control });
-  const isReadOnly = useStepContentReadOnly();
+  const isReadOnly = useStepContentReadOnly({ lockExternal: false });
 
   const dataSchemaDefaults = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
   const dbValues = step?.controls.values ?? {};

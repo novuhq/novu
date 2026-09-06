@@ -51,7 +51,7 @@ function CodeView(props: { isHidden: boolean }) {
   );
 }
 
-function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () => void }) {
+function PreviewView(props: { node: NodeViewRendererProps['node']; onClick?: () => void }) {
   const { node, onClick } = props;
 
   const parseNodeContent = (content: NodeContent[]): string => {
@@ -91,7 +91,7 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
   }, [node.content]);
 
   return (
-    <div className="group relative cursor-pointer" onClick={onClick}>
+    <div className={cn('group relative', onClick && 'cursor-pointer')} onClick={onClick}>
       <div
         className={cn(
           '-mx-2 min-h-[42px] rounded-md border px-2',
@@ -151,13 +151,13 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
   }, [activeTab, editor, updateAttributes]);
 
   const handlePreviewClick = () => {
-    if (!editor.isEditable) return;
-
     updateAttributes({ activeTab: 'code' });
     editor.commands.setTextSelection(props.getPos() + 1);
   };
 
-  const isCodeTab = activeTab === 'code';
+  // `activeTab` persists as 'code' and a locked editor exposes no way to switch tabs, so it
+  // always shows the preview rather than stranding the reader on the raw source.
+  const isCodeTab = activeTab === 'code' && editor.isEditable;
 
   return (
     <NodeViewWrapper draggable={false} data-drag-handle={false} data-type="htmlCodeBlock" ref={nodeRef}>
@@ -166,7 +166,7 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
        * ProseMirror's contentDOM and clears the block before autosave runs.
        */}
       <CodeView isHidden={!isCodeTab} />
-      {!isCodeTab && <PreviewView node={node} onClick={handlePreviewClick} />}
+      {!isCodeTab && <PreviewView node={node} onClick={editor.isEditable ? handlePreviewClick : undefined} />}
     </NodeViewWrapper>
   );
 }
