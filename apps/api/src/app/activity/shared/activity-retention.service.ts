@@ -22,8 +22,7 @@ export class ActivityRetentionService {
       throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    const maxRetentionMs = this.getMaxRetentionPeriodByOrganization(organization);
-    const earliestAllowedDate = new Date(Date.now() - maxRetentionMs);
+    const earliestAllowedDate = this.getEarliestAllowedDate(organization);
     const effectiveStartDate = createdAtGte ? new Date(createdAtGte) : earliestAllowedDate;
     const effectiveEndDate = createdAtLte ? new Date(createdAtLte) : new Date();
 
@@ -71,15 +70,19 @@ export class ActivityRetentionService {
     }
   }
 
+  private getEarliestAllowedDate(organization: OrganizationEntity): Date {
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return new Date(0);
+    }
+
+    return new Date(Date.now() - this.getMaxRetentionPeriodByOrganization(organization));
+  }
+
   /**
    * Charts and activity data follow the same retention policy as activity feed notifications.
    * Data is automatically deleted after a certain period of time based on the organization's tier.
    */
   private getMaxRetentionPeriodByOrganization(organization: OrganizationEntity) {
-    if (process.env.IS_SELF_HOSTED === 'true') {
-      return Number.MAX_SAFE_INTEGER;
-    }
-
     const { apiServiceLevel, createdAt } = organization;
 
     if (apiServiceLevel === ApiServiceLevelEnum.FREE && new Date(createdAt) < new Date('2025-02-28')) {
