@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { cn } from '@/utils/ui';
 import {
   type ContentSource,
@@ -34,7 +34,7 @@ export function ContentSourceSelector({
   onSelectSource,
   onAddOverride,
 }: ContentSourceSelectorProps) {
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
   const supportsOverrides = !!onAddOverride;
   // Existing overrides stay browsable in read-only environments; only creating new ones is blocked.
   const canAddOverrides = supportsOverrides && !isReadOnly;

@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { ControlInput } from '@/components/workflow-editor/control-input';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize } from '@/utils/string';
@@ -13,7 +13,7 @@ export const BaseBody = () => {
   const { control } = useFormContext();
   const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   const hintMessage = workflow?.isTranslationEnabled
     ? 'Type {{ to access variables or {t. to access translation keys.'

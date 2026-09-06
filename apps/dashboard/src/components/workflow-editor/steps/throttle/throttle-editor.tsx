@@ -2,12 +2,12 @@ import { UiSchemaGroupEnum } from '@novu/shared';
 import { Separator } from '@/components/primitives/separator';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 export const ThrottleEditor = () => {
   const { step } = useWorkflow();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
   const { uiSchema } = step?.controls ?? {};
 
   if (!uiSchema || uiSchema?.group !== UiSchemaGroupEnum.THROTTLE) {

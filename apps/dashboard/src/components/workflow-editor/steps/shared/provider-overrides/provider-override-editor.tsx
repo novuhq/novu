@@ -6,9 +6,9 @@ import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
 import { InputRoot } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { SectionHeader } from '@/components/workflow-editor/steps/http-request/section-header';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
@@ -142,7 +142,7 @@ export function ProviderOverrideEditor({
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
   const registrySchema = useProviderOverrideSchema(providerId);
   const rootSchema = rootSchemaOverride ?? registrySchema.rootSchema;
   // A top-level-keys-only schema has no types or descriptions, so it drives completion but must not

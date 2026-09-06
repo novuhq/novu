@@ -1,6 +1,7 @@
 import { UiComponentEnum } from '@novu/shared';
 import { ChatEditorSelect } from '@/components/chat-editor-select';
 import { EmailEditorSelect } from '@/components/email-editor-select';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { DelayWindow } from '@/components/workflow-editor/steps/delay/delay-window';
 import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-delay-tabs';
 import { DigestKey } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-key';
@@ -27,12 +28,11 @@ import { LayoutSelect } from './email/layout-select';
 import { useSaveForm } from './save-form-context';
 import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
 import { ExtendToSchedule } from './shared/extend-to-schedule';
-import { useStepContentReadOnly } from './use-step-content-read-only';
 
 const EmailEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();
   const { saveForm } = useSaveForm();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   return <EmailEditorSelect isLoading={isUpdatePatchPending} saveForm={saveForm} disabled={isReadOnly} />;
 };
@@ -40,7 +40,7 @@ const EmailEditorSelectInternal = () => {
 const ChatEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();
   const { saveForm } = useSaveForm();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   return <ChatEditorSelect isLoading={isUpdatePatchPending} saveForm={saveForm} disabled={isReadOnly} />;
 };

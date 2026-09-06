@@ -6,6 +6,7 @@ import { HtmlEditor } from '@/components/html-editor';
 import { FormField } from '@/components/primitives/form/form';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
@@ -16,7 +17,6 @@ import { isMailyJson } from '../../../maily/maily-utils';
 import { ControlInput } from '../../control-input';
 import { useWorkflow } from '../../workflow-provider';
 import { useWorkflowSchema } from '../../workflow-schema-provider';
-import { useStepContentReadOnly } from '../use-step-content-read-only';
 
 export const EmailBodyHtml = () => {
   const viewRef = useRef<EditorView | null>(null);
@@ -27,7 +27,7 @@ export const EmailBodyHtml = () => {
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const { saveForm } = useSaveForm();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   const onChange = useCallback(
     (value: string) => {

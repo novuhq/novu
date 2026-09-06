@@ -4,15 +4,15 @@ import { RiLayout5Line } from 'react-icons/ri';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useSaveForm } from '../save-form-context';
-import { useStepContentReadOnly } from '../use-step-content-read-only';
 
 export const LayoutSelect = () => {
   const { control } = useFormContext();
   const { data, isFetching } = useFetchLayouts({ limit: 100, refetchOnWindowFocus: false });
   const { saveForm } = useSaveForm();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   const layoutsSortedByDefault = useMemo(() => {
     if (!data?.layouts) return [];

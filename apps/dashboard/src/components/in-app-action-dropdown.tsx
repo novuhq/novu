@@ -20,7 +20,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { ControlInput } from '@/components/workflow-editor/control-input';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { URLInput } from '@/components/workflow-editor/url-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -33,9 +32,14 @@ import { InputRoot } from './primitives/input';
 const primaryActionKey = 'primaryAction';
 const secondaryActionKey = 'secondaryAction';
 
-export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () => void }) => {
+export const InAppActionDropdown = ({
+  onMenuItemClick,
+  readOnly = false,
+}: {
+  onMenuItemClick?: () => void;
+  readOnly?: boolean;
+}) => {
   const { control, setValue, getFieldState } = useFormContext();
-  const readOnly = useStepContentReadOnly();
 
   const primaryAction = useWatch({ control, name: primaryActionKey });
   const secondaryAction = useWatch({ control, name: secondaryActionKey });
@@ -70,7 +74,12 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               </Button>
             )}
             {primaryAction && (
-              <ConfigureActionPopover title="Primary action" asChild fields={{ actionKey: primaryActionKey }}>
+              <ConfigureActionPopover
+                title="Primary action"
+                asChild
+                fields={{ actionKey: primaryActionKey }}
+                readOnly={readOnly}
+              >
                 <button
                   className={inboxButtonVariants({
                     variant: 'default',
@@ -82,7 +91,12 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               </ConfigureActionPopover>
             )}
             {secondaryAction && (
-              <ConfigureActionPopover title="Secondary action" asChild fields={{ actionKey: secondaryActionKey }}>
+              <ConfigureActionPopover
+                title="Secondary action"
+                asChild
+                fields={{ actionKey: secondaryActionKey }}
+                readOnly={readOnly}
+              >
                 <button
                   className={inboxButtonVariants({
                     variant: 'secondary',
@@ -201,15 +215,19 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
 };
 
 const ConfigureActionPopover = (
-  props: ComponentProps<typeof PopoverTrigger> & { title: string; fields: { actionKey: string } }
+  props: ComponentProps<typeof PopoverTrigger> & {
+    title: string;
+    fields: { actionKey: string };
+    readOnly?: boolean;
+  }
 ) => {
   const {
     title,
     fields: { actionKey },
+    readOnly = false,
     ...rest
   } = props;
   const { control } = useFormContext();
-  const readOnly = useStepContentReadOnly();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
@@ -260,6 +278,7 @@ const ConfigureActionPopover = (
               }}
               variables={variables}
               isAllowedVariable={isAllowedVariable}
+              readOnly={readOnly}
             />
           </div>
         </div>

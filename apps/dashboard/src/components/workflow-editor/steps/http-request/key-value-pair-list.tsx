@@ -6,8 +6,8 @@ import { FormField } from '@/components/primitives/form/form';
 import { InputRoot } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
@@ -39,7 +39,7 @@ function FieldArrayKeyValuePairList({ fieldName, label, tooltip, rightSlot }: Ke
   const { saveForm, saveFormDebounced } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -183,7 +183,7 @@ function BodyKeyValuePairList({
   const { saveForm, saveFormDebounced } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
   const initialBodyRef = useRef<HttpRequestBodyValue>(getValues('body') as HttpRequestBodyValue);
   const [fields, setFields] = useState<KeyValuePair[]>(() => getKeyValuePairsFromBody(initialBodyRef.current));
 

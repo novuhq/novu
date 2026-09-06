@@ -7,12 +7,11 @@ import { CopyButton } from '@/components/primitives/copy-button';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { InputRoot } from '../../../primitives/input';
-import { useStepEditor } from '../context/step-editor-context';
 import { parseJsonValue } from '../utils/preview-context.utils';
 import { SectionHeader } from './section-header';
 import { useHttpRequestTest } from './use-http-request-test';
@@ -34,9 +33,8 @@ export function RequestEndpoint() {
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const { editorValue } = useStepEditor();
+  const { editorValue, isReadOnly } = useStepEditor();
   const { triggerTest, isTestPending } = useHttpRequestTest();
-  const isReadOnly = useStepContentReadOnly();
 
   const handleTestEndpoint = useCallback(async () => {
     const controlValues = getValues() as Record<string, unknown>;

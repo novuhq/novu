@@ -5,9 +5,9 @@ import { useFormContext } from 'react-hook-form';
 import { RiErrorWarningFill } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import {
   DEFAULT_CONTENT_SOURCE,
@@ -57,7 +57,7 @@ export function ContentOverridePanel({
   const { saveForm } = useSaveForm();
   const { step } = useWorkflow();
   const { selectedSource, setSelectedSource } = useContentSource();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
   // Only one override editor is mounted at a time, so at most one provider can have an uncommitted parse error.
   const [draftParseErrorProviderId, setDraftParseErrorProviderId] = useState<string | null>(null);
   const [pendingResetProviderId, setPendingResetProviderId] = useState<ContentOverrideProviderId | null>(null);

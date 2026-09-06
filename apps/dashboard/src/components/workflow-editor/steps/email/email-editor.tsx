@@ -1,15 +1,15 @@
 import { UiComponentEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { useState } from 'react';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { SenderConfigDrawer } from '@/components/workflow-editor/steps/email/sender-config-drawer';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { cn } from '../../../../utils/ui';
 
 type EmailEditorProps = { uiSchema: UiSchema; isEditorV2?: boolean };
 
 export const EmailEditor = (props: EmailEditorProps) => {
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
   const { uiSchema, isEditorV2 = false } = props;
   const [senderDrawerOpen, setSenderDrawerOpen] = useState(false);
 

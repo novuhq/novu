@@ -1,30 +1,31 @@
-import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import {
+  EnvironmentTypeEnum,
+  PermissionsEnum,
+  ResourceOriginEnum,
+  type StepResponseDto,
+  type WorkflowResponseDto,
+} from '@novu/shared';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 
-type UseStepContentReadOnlyOptions = {
-  /**
-   * Framework workflows keep an explicit override path in Development. Pass false from that
-   * control so code-defined defaults can still be overridden without unlocking native editors.
-   */
-  lockExternal?: boolean;
-};
-
 /**
- * Central edit policy for native step content. Content remains visible when this returns true,
- * while every mutating control and autosave path stays locked.
+ * Central edit policy for step content authored in the dashboard. Content remains visible when this
+ * returns true, while every mutating control and autosave path stays locked.
+ *
+ * Framework workflows and code steps are excluded: their content lives in code and the dashboard
+ * only edits control values, which stay writable in every environment.
  */
-export function useStepContentReadOnly({ lockExternal = true }: UseStepContentReadOnlyOptions = {}): boolean {
+export function useStepContentReadOnly(workflow: WorkflowResponseDto, step: StepResponseDto): boolean {
   const { currentEnvironment, readOnly } = useEnvironment();
-  const { workflow } = useWorkflow();
   const has = useHasPermission();
-  const isExternal = workflow?.origin === ResourceOriginEnum.EXTERNAL;
+
+  if (workflow.origin === ResourceOriginEnum.EXTERNAL || step.stepResolverHash) {
+    return false;
+  }
 
   return (
     readOnly ||
     currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
-    !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
-    (lockExternal && isExternal)
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE })
   );
 }

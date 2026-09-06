@@ -5,8 +5,8 @@ import { FormControl, FormField, FormItem } from '@/components/primitives/form/f
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useHttpRequestTest } from './use-http-request-test';
 
 function inferJsonSchema(value: unknown): Record<string, unknown> {
@@ -41,7 +41,7 @@ export function EnforceSchemaValidation({ onSchemaGenerated }: EnforceSchemaVali
   const { control, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
   const { testResult } = useHttpRequestTest();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   function handleGenerateFromLastTest() {
     if (!testResult?.body) return;

@@ -70,6 +70,7 @@ const CONTENT_OVERRIDE_STEP_TYPES: StepTypeEnum[] = [StepTypeEnum.CHAT, StepType
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
   step: StepResponseDto;
+  isReadOnly: boolean;
   className?: string;
 };
 
@@ -380,7 +381,7 @@ function StepEditorContent() {
   );
 }
 
-export function StepEditorLayout({ workflow, step, className }: StepEditorLayoutProps) {
+export function StepEditorLayout({ workflow, step, isReadOnly, className }: StepEditorLayoutProps) {
   const content = (
     <HttpRequestTestProvider>
       <StepEditorContent />
@@ -389,7 +390,7 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
 
   return (
     <div className={cn('h-full w-full', className)}>
-      <StepEditorProvider workflow={workflow} step={step}>
+      <StepEditorProvider workflow={workflow} step={step} isReadOnly={isReadOnly}>
         {CONTENT_OVERRIDE_STEP_TYPES.includes(step.type) ? (
           <ContentSourceProvider>{content}</ContentSourceProvider>
         ) : (

@@ -7,9 +7,9 @@ import {
   SegmentedControlTrigger,
 } from '@/components/primitives/segmented-control';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import {
   type BodyEditorMode,
   canMethodHaveBody,
@@ -30,7 +30,7 @@ type HttpRequestEditorProps = {
 };
 
 export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
   const { watch, setValue, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const method = watch('method');

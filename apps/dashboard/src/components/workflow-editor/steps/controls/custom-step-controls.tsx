@@ -1,5 +1,6 @@
 import { type Controls } from '@novu/shared';
 import { RJSFSchema } from '@rjsf/utils';
+import isEqual from 'lodash.isequal';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -14,7 +15,6 @@ import { Switch } from '@/components/primitives/switch';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { ResourceOriginEnum } from '@/utils/enums';
 import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
 import { cn } from '@/utils/ui';
@@ -36,14 +36,13 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { saveForm } = useSaveForm();
   const { control, reset } = useFormContext();
   const watchedValues = useWatch({ control });
-  const isReadOnly = useStepContentReadOnly({ lockExternal: false });
 
   const dataSchemaDefaults = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
   const dbValues = step?.controls.values ?? {};
-  // Enabling the switch force-saves the current form values, which can still equal the code
-  // defaults. Treat any persisted schema key as an explicit override so the switch stays on
-  // after that save (and after reload). Restoring clears control values with null.
-  const initialIsOverridden = Object.keys(dataSchemaDefaults).some((k) => dbValues[k] !== undefined);
+  const initialIsOverridden = Object.keys(dataSchemaDefaults).some((k) => {
+    const dbVal = dbValues[k];
+    return dbVal !== undefined && !isEqual(dbVal, dataSchemaDefaults[k]);
+  });
 
   const [isOverridden, setIsOverridden] = useState(initialIsOverridden);
 
@@ -135,7 +134,6 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
         </div>
         <Switch
           checked={isOverridden}
-          disabled={isReadOnly}
           onCheckedChange={(checked) => {
             if (!checked) {
               setIsRestoreDefaultModalOpen(true);
@@ -179,7 +177,6 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
                 schema={(dataSchema as RJSFSchema) || {}}
                 formData={isOverridden ? watchedValues : dataSchemaDefaults}
                 disabled={!isOverridden}
-                readonly={isReadOnly}
               />
             </div>
           </AccordionContent>

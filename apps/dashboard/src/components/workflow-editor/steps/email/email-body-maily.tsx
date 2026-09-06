@@ -13,6 +13,7 @@ import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/vie
 import { FormField } from '@/components/primitives/form/form';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
@@ -27,7 +28,6 @@ import { isMailyJson } from '../../../maily/maily-utils';
 import { ControlInput } from '../../control-input';
 import { useWorkflow } from '../../workflow-provider';
 import { useWorkflowSchema } from '../../workflow-schema-provider';
-import { useStepContentReadOnly } from '../use-step-content-read-only';
 
 const MailyVariablesListViewForWorkflows = React.forwardRef<
   VariableSuggestionsPopoverRef,
@@ -142,7 +142,7 @@ export const EmailBodyMaily = () => {
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const track = useTelemetry();
-  const isReadOnly = useStepContentReadOnly();
+  const { isReadOnly } = useStepEditor();
 
   const blocks = useMemo(() => {
     return createEditorBlocks({

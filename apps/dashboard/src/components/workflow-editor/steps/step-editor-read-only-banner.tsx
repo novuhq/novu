@@ -2,15 +2,13 @@ import { EnvironmentTypeEnum } from '@novu/shared';
 import { RiArrowRightSLine, RiLockLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useSwitchToDevelopment } from '@/components/workflow-editor/use-switch-to-development';
 import { useEnvironment } from '@/context/environment/hooks';
 
 export const StepEditorReadOnlyBanner = () => {
   const { currentEnvironment } = useEnvironment();
-  const { workflow } = useStepEditor();
+  const { workflow, isReadOnly } = useStepEditor();
   const { developmentEnvironment, switchToDevelopment } = useSwitchToDevelopment(workflow.workflowId);
-  const isReadOnly = useStepContentReadOnly();
 
   if (!isReadOnly || !currentEnvironment || currentEnvironment.type === EnvironmentTypeEnum.DEV) {
     return null;

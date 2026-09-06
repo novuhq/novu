@@ -9,7 +9,7 @@ import { JSON_SCHEMA_FORM_ID_DELIMITER, UI_SCHEMA, WIDGETS } from './template-ut
 
 type JsonFormProps<TFormData = unknown> = Pick<
   FormProps<TFormData>,
-  'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName' | 'onError' | 'disabled' | 'readonly'
+  'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName' | 'onError' | 'disabled'
 > & {
   variables?: string[];
 };

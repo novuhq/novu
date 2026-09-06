@@ -5,7 +5,6 @@ import { InputProps, InputRoot } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 type URLInputProps = Omit<InputProps, 'value' | 'onChange' | 'readOnly'> & {
@@ -16,6 +15,7 @@ type URLInputProps = Omit<InputProps, 'value' | 'onChange' | 'readOnly'> & {
   };
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
+  readOnly?: boolean;
 };
 
 export const URLInput = ({
@@ -24,10 +24,10 @@ export const URLInput = ({
   fields: { urlKey, targetKey },
   variables = [],
   isAllowedVariable,
+  readOnly = false,
 }: URLInputProps) => {
   const { control, getFieldState } = useFormContext();
   const { saveForm } = useSaveForm();
-  const readOnly = useStepContentReadOnly();
   const url = getFieldState(`${urlKey}`);
   const target = getFieldState(`${targetKey}`);
   const error = url.error || target.error;
