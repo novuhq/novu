@@ -1,6 +1,5 @@
 import { type Controls } from '@novu/shared';
 import { RJSFSchema } from '@rjsf/utils';
-import isEqual from 'lodash.isequal';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -41,10 +40,10 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
 
   const dataSchemaDefaults = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
   const dbValues = step?.controls.values ?? {};
-  const initialIsOverridden = Object.keys(dataSchemaDefaults).some((k) => {
-    const dbVal = dbValues[k];
-    return dbVal !== undefined && !isEqual(dbVal, dataSchemaDefaults[k]);
-  });
+  // Enabling the switch force-saves the current form values, which can still equal the code
+  // defaults. Treat any persisted schema key as an explicit override so the switch stays on
+  // after that save (and after reload). Restoring clears control values with null.
+  const initialIsOverridden = Object.keys(dataSchemaDefaults).some((k) => dbValues[k] !== undefined);
 
   const [isOverridden, setIsOverridden] = useState(initialIsOverridden);
 
