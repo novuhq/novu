@@ -21,6 +21,7 @@
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
       "!playground",
+      "!packages/novu/src/commands/connect/templates/web-chat",
       "!libs/internal-sdk",
       "!.github",
       "!scripts",

@@ -198,7 +198,15 @@
                   "platform/integrations/chat/discord",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
-                  "platform/integrations/chat/ms-teams",
+                  {
+                    "group": "MS Teams",
+                    "pages": [
+                      "platform/integrations/chat/ms-teams",
+                      "platform/integrations/chat/ms-teams-azure-setup",
+                      "platform/integrations/chat/ms-teams-connect",
+                      "platform/integrations/chat/ms-teams-workflows"
+                    ]
+                  },
                   "platform/integrations/chat/slack",
                   "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/telegram",
@@ -991,6 +999,16 @@
                     "group": "Framework",
                     "expanded": false,
                     "pages": ["guides/framework/using-translations"]
+                  },
+                  {
+                    "group": "Migration to New Dashboard",
+                    "expanded": false,
+                    "pages": [
+                      "guides/migration-to-new-dashboard/overview",
+                      "guides/migration-to-new-dashboard/feature-comparison",
+                      "guides/migration-to-new-dashboard/workflow-conversion",
+                      "guides/migration-to-new-dashboard/application-and-cutover"
+                    ]
                   },
                   {
                     "group": "Migrate to Novu",

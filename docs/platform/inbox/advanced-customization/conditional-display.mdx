@@ -9,7 +9,12 @@ You can use worklow data such as tags, identifiers, data object or notfication s
 
 ## Display notifications based on workflow tags
 
-You can conditionally display customized notification based on [workflow tags](/platform/concepts/workflows#workflow-tags). These tags are defined in your workflow and are accessible via `notification.tags` property.
+You can conditionally display customized notification based on [workflow tags](/platform/workflow/configure-workflow#tags). These tags are defined in your workflow and are accessible via `notification.tags` property.
+
+<Note>
+  Inbox filters use the tags copied onto the notification at create time. Changing workflow tags later does not
+  update historical notifications. See [Tags](/platform/workflow/configure-workflow#tags).
+</Note>
 
 ```tsx
 import { Inbox } from '@novu/react';

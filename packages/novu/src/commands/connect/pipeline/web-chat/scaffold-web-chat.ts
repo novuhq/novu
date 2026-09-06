@@ -1,9 +1,10 @@
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { getNovuScaffoldSdkTag } from '@novu/shared';
+import { getNovuScaffoldSdkTag, isNovuLocalApiUrl } from '@novu/shared';
+import { yellow } from 'picocolors';
 import { CloudRegionEnum } from '../../../dev/enums';
 import { tryGitInit } from '../../../init/helpers/git';
+import { install } from '../../../init/helpers/install';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { detectBridgeProject } from '../bridge/detect-project';
@@ -33,7 +34,8 @@ export type ScaffoldWebChatProjectResult = {
 };
 
 /**
- * Templates live at <build root>/commands/connect/templates/web-chat/ts.
+ * Official Web Chat connect template at <build root>/commands/connect/templates/web-chat/ts.
+ * Edit the template in-repo directly — it is not synced from playground/web-chat.
  * Under the module layout (tsc output or ts-node dev) `__dirname` is this
  * file's directory; from the bundled CLI entry it is `dist/src` — try both.
  */
@@ -104,6 +106,7 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
   }
 
   const dependenciesChanged = ensureWebChatDependencies(resolved, input.apiUrl, input.region);
+  ensureWebChatNextConfig(resolved);
   const componentsDir = path.join(resolved, 'components', 'web-chat');
   fs.mkdirSync(componentsDir, { recursive: true });
   copyTemplateComponents(componentsDir);
@@ -116,10 +119,12 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
     'utf8'
   );
 
+  warnHostTailwindSetup(resolved);
+
   appendEnvExample(resolved, input);
 
   if (dependenciesChanged && (await getOnline())) {
-    execFileSync(resolvePackageManager(resolved), ['install'], { cwd: resolved, stdio: 'inherit' });
+    await install(resolvePackageManager(resolved), true, false, resolved);
   }
 }
 
@@ -127,16 +132,12 @@ function ensureWebChatDependencies(projectDir: string, apiUrl: string, region?: 
   const packageJsonPath = path.join(projectDir, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
     dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };
   const dependencies = packageJson.dependencies ?? {};
-  const sdk = resolveWebChatNovuDependencies(apiUrl, region);
-  const required = {
-    '@novu/react': sdk.react,
-    ...(sdk.js ? { '@novu/js': sdk.js } : {}),
-    'react-markdown': '^10.1.0',
-    'remark-gfm': '^4.0.1',
-  };
+  const sdk = resolveWebChatNovuDependenciesForProject(projectDir, apiUrl, region);
+  const required = webChatRuntimeDependencies(sdk);
   let changed = false;
 
   for (const [name, version] of Object.entries(required)) {
@@ -186,26 +187,379 @@ async function writeStandaloneWebChatApp(root: string, input: ScaffoldWebChatPro
     }),
     'utf8'
   );
-  const sdk = resolveWebChatNovuDependencies(input.apiUrl, input.region);
+  const sdk = resolveWebChatNovuDependenciesForProject(root, input.apiUrl, input.region);
   fs.writeFileSync(path.join(root, 'package.json'), renderPackageJson(path.basename(root), sdk), 'utf8');
   fs.writeFileSync(path.join(root, 'tsconfig.json'), STANDALONE_TSCONFIG, 'utf8');
-  fs.writeFileSync(path.join(root, 'next.config.mjs'), STANDALONE_NEXT_CONFIG, 'utf8');
+  fs.writeFileSync(path.join(root, 'next.config.mjs'), WEB_CHAT_NEXT_CONFIG, 'utf8');
+  fs.writeFileSync(path.join(root, 'postcss.config.mjs'), STANDALONE_POSTCSS_CONFIG, 'utf8');
   fs.writeFileSync(path.join(root, '.env.local'), renderEnvLocal(input), 'utf8');
   fs.writeFileSync(path.join(root, '.env.example'), renderEnvExample(input), 'utf8');
   fs.writeFileSync(path.join(root, '.gitignore'), STANDALONE_GITIGNORE, 'utf8');
 
   const isOnline = await getOnline();
   if (isOnline) {
-    const { execSync } = await import('node:child_process');
-    execSync('npm install', { cwd: root, stdio: 'inherit' });
+    await install('npm', isOnline, false, root);
   }
 }
 
 function copyTemplateComponents(targetDir: string): void {
-  for (const file of fs.readdirSync(TEMPLATE_ROOT)) {
-    if (!file.endsWith('.tsx') && !file.endsWith('.css') && !file.endsWith('.ts')) continue;
-    fs.copyFileSync(path.join(TEMPLATE_ROOT, file), path.join(targetDir, file));
+  copyTemplateDir(TEMPLATE_ROOT, targetDir);
+}
+
+function copyTemplateDir(from: string, to: string): void {
+  fs.mkdirSync(to, { recursive: true });
+
+  for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
+    const source = path.join(from, entry.name);
+    const destination = path.join(to, entry.name);
+
+    if (entry.isDirectory()) {
+      copyTemplateDir(source, destination);
+      continue;
+    }
+
+    if (!/\.(tsx?|jsx?|css)$/.test(entry.name)) {
+      continue;
+    }
+
+    fs.copyFileSync(source, destination);
   }
+}
+
+const POSTCSS_CONFIG_FILENAMES = ['postcss.config.mjs', 'postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'] as const;
+
+const HOST_GLOBALS_CSS_PATHS = ['src/app/globals.css', 'app/globals.css', 'styles/globals.css'] as const;
+
+function findPostcssConfigPath(projectDir: string): string | null {
+  for (const filename of POSTCSS_CONFIG_FILENAMES) {
+    const configPath = path.join(projectDir, filename);
+    if (fs.existsSync(configPath)) {
+      return configPath;
+    }
+  }
+
+  return null;
+}
+
+/** The connect template targets Tailwind v4 — warn on merge; do not rewrite host toolchain. */
+function detectHostTailwind4Gaps(projectDir: string): string[] {
+  const warnings: string[] = [];
+  const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8')) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+  const tailwindVersion = deps.tailwindcss ?? '';
+  const tailwindMajor = tailwindVersion.match(/(\d+)/)?.[1];
+  const hasTw4Postcss = Boolean(deps['@tailwindcss/postcss']);
+
+  if (!hasTw4Postcss && tailwindMajor !== '4') {
+    warnings.push('package.json is missing Tailwind CSS v4 tooling (@tailwindcss/postcss and tailwindcss ^4).');
+  }
+
+  const postcssPath = findPostcssConfigPath(projectDir);
+  if (postcssPath) {
+    const postcss = fs.readFileSync(postcssPath, 'utf8');
+    if (!postcss.includes('@tailwindcss/postcss') && /\btailwindcss\b/.test(postcss)) {
+      warnings.push(`${path.basename(postcssPath)} still uses the Tailwind v3 PostCSS plugin.`);
+    }
+  }
+
+  for (const relativePath of HOST_GLOBALS_CSS_PATHS) {
+    const globalsPath = path.join(projectDir, relativePath);
+    if (!fs.existsSync(globalsPath)) {
+      continue;
+    }
+
+    const css = fs.readFileSync(globalsPath, 'utf8');
+    if (
+      /@tailwind\s+(base|components|utilities)/.test(css) &&
+      !css.includes('@import "tailwindcss"') &&
+      !css.includes("@import 'tailwindcss'")
+    ) {
+      warnings.push(`${relativePath} uses @tailwind directives; the template expects @import "tailwindcss".`);
+      break;
+    }
+  }
+
+  return warnings;
+}
+
+function warnHostTailwindSetup(projectDir: string): void {
+  const warnings = detectHostTailwind4Gaps(projectDir);
+  if (warnings.length === 0) {
+    return;
+  }
+
+  console.warn(
+    yellow(
+      [
+        'Web Chat template uses Tailwind CSS v4. Connect copied components/web-chat/ but did not modify host PostCSS or global CSS.',
+        ...warnings.map((warning) => `- ${warning}`),
+        'Follow the connect embed prompt to upgrade Tailwind/PostCSS or adapt the template styles to this app.',
+      ].join('\n')
+    )
+  );
+}
+
+const NEXT_CONFIG_FILENAMES = ['next.config.ts', 'next.config.js', 'next.config.mjs', 'next.config.cjs'] as const;
+
+const WEB_CHAT_TRANSPILE_PACKAGES = ['@novu/react', '@novu/js', '@assistant-ui/react'] as const;
+
+function findNextConfigPath(projectDir: string): string | null {
+  for (const filename of NEXT_CONFIG_FILENAMES) {
+    const configPath = path.join(projectDir, filename);
+    if (fs.existsSync(configPath)) {
+      return configPath;
+    }
+  }
+
+  return null;
+}
+
+function skipLineComment(source: string, index: number): number {
+  const end = source.indexOf('\n', index);
+  return end === -1 ? source.length - 1 : end;
+}
+
+function skipBlockComment(source: string, index: number): number | null {
+  const end = source.indexOf('*/', index + 2);
+  return end === null ? null : end + 1;
+}
+
+function skipQuotedString(source: string, index: number): number | null {
+  const quote = source[index];
+
+  for (let cursor = index + 1; cursor < source.length; cursor++) {
+    const char = source[cursor];
+    if (char === '\\') {
+      cursor += 1;
+      continue;
+    }
+
+    if (quote === '`' && char === '$' && source[cursor + 1] === '{') {
+      const expressionEnd = findMatchingDelimitedEnd(source, cursor + 1, '{', '}');
+      if (expressionEnd === null) {
+        return null;
+      }
+
+      cursor = expressionEnd;
+      continue;
+    }
+
+    if (char === quote) {
+      return cursor;
+    }
+  }
+
+  return null;
+}
+
+function findMatchingDelimitedEnd(
+  source: string,
+  openIndex: number,
+  openChar: string,
+  closeChar: string
+): number | null {
+  if (source[openIndex] !== openChar) {
+    return null;
+  }
+
+  let depth = 0;
+
+  for (let index = openIndex; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+
+    if (char === '/' && next === '/') {
+      index = skipLineComment(source, index);
+      continue;
+    }
+
+    if (char === '/' && next === '*') {
+      const commentEnd = skipBlockComment(source, index);
+      if (commentEnd === null) {
+        return null;
+      }
+
+      index = commentEnd;
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      const stringEnd = skipQuotedString(source, index);
+      if (stringEnd === null) {
+        return null;
+      }
+
+      index = stringEnd;
+      continue;
+    }
+
+    if (char === openChar) {
+      depth += 1;
+    } else if (char === closeChar) {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return null;
+}
+
+function findMatchingBracketEnd(source: string, openIndex: number): number | null {
+  return findMatchingDelimitedEnd(source, openIndex, '[', ']');
+}
+
+function matchTranspilePackagesInlineArray(
+  source: string
+): { full: string; inner: string } | null {
+  const labelMatch = source.match(/transpilePackages\s*:\s*\[/);
+  if (!labelMatch || labelMatch.index === undefined) {
+    return null;
+  }
+
+  const openIndex = labelMatch.index + labelMatch[0].length - 1;
+  const closeIndex = findMatchingBracketEnd(source, openIndex);
+  if (closeIndex === null) {
+    return null;
+  }
+
+  return {
+    full: source.slice(labelMatch.index, closeIndex + 1),
+    inner: source.slice(openIndex + 1, closeIndex),
+  };
+}
+
+function matchVariableArrayAssignment(
+  source: string,
+  variableName: string
+): { full: string; prefix: string; inner: string } | null {
+  const headerPattern = new RegExp(
+    `((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*)\\[`
+  );
+  const headerMatch = source.match(headerPattern);
+  if (!headerMatch || headerMatch.index === undefined) {
+    return null;
+  }
+
+  const openIndex = headerMatch.index + headerMatch[0].length - 1;
+  const closeIndex = findMatchingBracketEnd(source, openIndex);
+  if (closeIndex === null) {
+    return null;
+  }
+
+  return {
+    full: source.slice(headerMatch.index, closeIndex + 1),
+    prefix: headerMatch[1],
+    inner: source.slice(openIndex + 1, closeIndex),
+  };
+}
+
+function patchNextConfigSource(source: string): string | null {
+  const missingPackages = WEB_CHAT_TRANSPILE_PACKAGES.filter(
+    (pkg) => !source.includes(`'${pkg}'`) && !source.includes(`"${pkg}"`)
+  );
+
+  if (missingPackages.length === 0) {
+    return null;
+  }
+
+  const transpileArrayMatch = matchTranspilePackagesInlineArray(source);
+  if (transpileArrayMatch) {
+    const inner = transpileArrayMatch.inner.replace(/\/\/[^\n]*/g, '').trim();
+    const additions = missingPackages.map((pkg) => `'${pkg}'`).join(', ');
+    const mergedInner = inner ? `${inner.replace(/,\s*$/, '')}, ${additions}` : additions;
+
+    return source.replace(transpileArrayMatch.full, `transpilePackages: [${mergedInner}]`);
+  }
+
+  const transpileRefMatch = source.match(/transpilePackages\s*:\s*([A-Za-z_$][\w$]*)/);
+  if (transpileRefMatch) {
+    const patched = patchTranspilePackagesVariable(source, transpileRefMatch[1], missingPackages);
+    if (patched) {
+      return patched;
+    }
+  }
+
+  const insertion = `  transpilePackages: ${JSON.stringify([...missingPackages])},`;
+  const markers = [
+    'const nextConfig: NextConfig = {',
+    "const nextConfig: import('next').NextConfig = {",
+    'const nextConfig = {',
+    'module.exports = {',
+    'withBundleAnalyzer({',
+    'withSentryConfig({',
+    'withNextIntl({',
+    'export default {',
+  ];
+
+  if (/module\.exports\s*=\s*\(\s*phase\b/.test(source) || /export\s+default\s*\(\s*phase\b/.test(source)) {
+    markers.push('return {');
+  }
+
+  const hasTranspilePackages = /transpilePackages\s*:/.test(source);
+
+  for (const marker of markers) {
+    if (source.includes(marker)) {
+      if (hasTranspilePackages) {
+        break;
+      }
+
+      return source.replace(marker, `${marker}\n${insertion}`);
+    }
+  }
+
+  if (hasTranspilePackages) {
+    return null;
+  }
+
+  const defaultExportId = source.match(/export\s+default\s+([A-Za-z_$][\w$]*)\s*;/);
+  if (defaultExportId) {
+    const patched = patchNextConfigVariableDefinition(source, defaultExportId[1], insertion);
+    if (patched) {
+      return patched;
+    }
+  }
+
+  const cjsExportId = source.match(/module\.exports\s*=\s*([A-Za-z_$][\w$]*)\s*;/);
+  if (cjsExportId) {
+    const patched = patchNextConfigVariableDefinition(source, cjsExportId[1], insertion);
+    if (patched) {
+      return patched;
+    }
+  }
+
+  return null;
+}
+
+function patchTranspilePackagesVariable(
+  source: string,
+  variableName: string,
+  missingPackages: readonly string[]
+): string | null {
+  const arrayMatch = matchVariableArrayAssignment(source, variableName);
+  if (!arrayMatch) {
+    return null;
+  }
+
+  const inner = arrayMatch.inner.replace(/\/\/[^\n]*/g, '').trim();
+  const additions = missingPackages.map((pkg) => `'${pkg}'`).join(', ');
+  const mergedInner = inner ? `${inner.replace(/,\s*$/, '')}, ${additions}` : additions;
+
+  return source.replace(arrayMatch.full, `${arrayMatch.prefix}[${mergedInner}]`);
+}
+
+function patchNextConfigVariableDefinition(source: string, variableName: string, insertion: string): string | null {
+  const variablePattern = new RegExp(`((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*\\{)`);
+  const match = source.match(variablePattern);
+  if (!match) {
+    return null;
+  }
+
+  return source.replace(match[0], `${match[0]}\n${insertion}`);
 }
 
 function renderChatPage(opts: { standalone: boolean; configImport: string }): string {
@@ -225,9 +579,7 @@ export default function Page() {
       apiUrl={config.backendUrl}
       socketUrl={config.socketUrl}
     >
-      <main className="novu-web-chat web-chat-page">
-        <WebChat />
-      </main>
+      <WebChat agentId={config.agentId} />
     </NovuProvider>
   );
 }
@@ -256,9 +608,9 @@ export default function WebChatPage() {
       {...(apiUrl ? { apiUrl } : {})}
       {...(socketUrl ? { socketUrl } : {})}
     >
-      <main className={\`novu-web-chat web-chat-page \${inter.className}\`}>
+      <div className={inter.className}>
         <WebChat />
-      </main>
+      </div>
     </NovuProvider>
   );
 }
@@ -316,10 +668,203 @@ export type WebChatNovuDependencies = {
   js?: string;
 };
 
+/**
+ * When `novu connect` runs from this monorepo against a local API, pin
+ * `@novu/react` / `@novu/js` to the built workspace packages. npm `@next`
+ * lags the monorepo build (no `listConversations`, weaker typing).
+ * Published CLI has no sibling packages — keep the dist-tag.
+ */
+export function resolveLocalNovuSdkRoots(fromDir = __dirname): { react: string; js: string } | null {
+  let dir = fromDir;
+
+  for (let i = 0; i < 12; i += 1) {
+    const reactDir = path.join(dir, 'packages', 'react');
+    const jsDir = path.join(dir, 'packages', 'js');
+    const reactPkg = path.join(reactDir, 'package.json');
+    const jsPkg = path.join(jsDir, 'package.json');
+
+    if (fs.existsSync(reactPkg) && fs.existsSync(jsPkg)) {
+      try {
+        const react = JSON.parse(fs.readFileSync(reactPkg, 'utf8')) as { name?: string };
+        const js = JSON.parse(fs.readFileSync(jsPkg, 'utf8')) as { name?: string };
+        if (
+          react.name === '@novu/react' &&
+          js.name === '@novu/js' &&
+          fs.existsSync(path.join(reactDir, 'dist')) &&
+          fs.existsSync(path.join(jsDir, 'dist'))
+        ) {
+          return { react: reactDir, js: jsDir };
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+
+    dir = parent;
+  }
+
+  return null;
+}
+
 export function resolveWebChatNovuDependencies(apiUrl: string, region?: CloudRegionEnum): WebChatNovuDependencies {
   const tag = getNovuScaffoldSdkTag(apiUrl, region);
 
   return { react: tag, js: tag };
+}
+
+function resolveWebChatNovuDependenciesForProject(
+  projectDir: string,
+  apiUrl: string,
+  region?: CloudRegionEnum
+): WebChatNovuDependencies {
+  const local = isNovuLocalApiUrl(apiUrl) ? resolveLocalNovuSdkRoots() : null;
+
+  if (local) {
+    return vendorLocalNovuSdks(projectDir, local);
+  }
+
+  return resolveWebChatNovuDependencies(apiUrl, region);
+}
+
+/**
+ * Copy built workspace SDK packages into the scaffold so Next.js / Turbopack
+ * resolve them inside the app. Symlinks to the monorepo (`file:/abs/path`)
+ * break Turbopack; tarballs fail on `workspace:*` deps.
+ */
+export function vendorLocalNovuSdks(
+  projectDir: string,
+  local: { react: string; js: string }
+): WebChatNovuDependencies {
+  const reactVendor = path.join(projectDir, 'vendor', '@novu', 'react');
+  const jsVendor = path.join(projectDir, 'vendor', '@novu', 'js');
+
+  copyBuiltPackageVendor(local.js, jsVendor);
+  copyBuiltPackageVendor(local.react, reactVendor, { '@novu/js': 'file:../js' });
+
+  return {
+    react: 'file:./vendor/@novu/react',
+    js: 'file:./vendor/@novu/js',
+  };
+}
+
+function copyBuiltPackageVendor(
+  sourceDir: string,
+  targetDir: string,
+  dependencyOverrides: Record<string, string> = {}
+): void {
+  const sourcePkgPath = path.join(sourceDir, 'package.json');
+  const sourceDist = path.join(sourceDir, 'dist');
+
+  if (!fs.existsSync(sourcePkgPath) || !fs.existsSync(sourceDist)) {
+    throw new Error(
+      `Cannot vendor ${sourceDir}. Run "pnpm build" in packages/react and packages/js before scaffolding locally.`
+    );
+  }
+
+  const sourcePkg = JSON.parse(fs.readFileSync(sourcePkgPath, 'utf8')) as {
+    name?: string;
+    version?: string;
+    type?: string;
+    main?: string;
+    browser?: string;
+    types?: string;
+    exports?: unknown;
+    dependencies?: Record<string, string>;
+  };
+
+  const dependencies: Record<string, string> = {};
+  for (const [name, version] of Object.entries(sourcePkg.dependencies ?? {})) {
+    if (!version.startsWith('workspace:')) {
+      dependencies[name] = version;
+    }
+  }
+
+  for (const [name, version] of Object.entries(dependencyOverrides)) {
+    dependencies[name] = version;
+  }
+
+  fs.rmSync(targetDir, { recursive: true, force: true });
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.cpSync(sourceDist, path.join(targetDir, 'dist'), { recursive: true });
+  fs.writeFileSync(
+    path.join(targetDir, 'package.json'),
+    `${JSON.stringify(
+      {
+        name: sourcePkg.name,
+        version: sourcePkg.version,
+        type: sourcePkg.type,
+        main: sourcePkg.main,
+        browser: sourcePkg.browser,
+        types: sourcePkg.types,
+        exports: sourcePkg.exports,
+        dependencies,
+      },
+      null,
+      2
+    )}\n`,
+    'utf8'
+  );
+}
+
+function ensureWebChatNextConfig(projectDir: string): void {
+  const existingPath = findNextConfigPath(projectDir);
+
+  if (!existingPath) {
+    fs.writeFileSync(path.join(projectDir, 'next.config.mjs'), WEB_CHAT_NEXT_CONFIG, 'utf8');
+    return;
+  }
+
+  const source = fs.readFileSync(existingPath, 'utf8');
+  const patched = patchNextConfigSource(source);
+  if (patched) {
+    fs.writeFileSync(existingPath, patched, 'utf8');
+    return;
+  }
+
+  const configName = path.basename(existingPath);
+  const missingPackages = WEB_CHAT_TRANSPILE_PACKAGES.filter(
+    (pkg) => !source.includes(`'${pkg}'`) && !source.includes(`"${pkg}"`)
+  );
+  if (missingPackages.length > 0) {
+    console.warn(
+      yellow(
+        `Web Chat could not patch transpilePackages in ${configName}. Add ${missingPackages.join(', ')} manually so @novu/react and assistant-ui compile.`
+      )
+    );
+  }
+}
+
+const WEB_CHAT_UI_DEPENDENCIES = {
+  '@assistant-ui/react': '^0.15.16',
+  '@assistant-ui/react-markdown': '^0.14.12',
+  '@base-ui/react': '^1.7.0',
+  'class-variance-authority': '^0.7.1',
+  clsx: '^2.1.1',
+  'lucide-react': '^1.34.0',
+  'react-markdown': '^10.1.0',
+  'remark-gfm': '^4.0.1',
+  shadcn: '^4.19.0',
+  'tailwind-merge': '^3.6.0',
+  'tw-animate-css': '^1.4.0',
+  'tw-shimmer': '^0.4.12',
+} as const;
+
+const WEB_CHAT_DEV_DEPENDENCIES = {
+  '@tailwindcss/postcss': '^4.3.3',
+  tailwindcss: '^4.3.3',
+} as const;
+
+function webChatRuntimeDependencies(sdk: WebChatNovuDependencies): Record<string, string> {
+  return {
+    '@novu/react': sdk.react,
+    ...(sdk.js ? { '@novu/js': sdk.js } : {}),
+    ...WEB_CHAT_UI_DEPENDENCIES,
+  };
 }
 
 function renderPackageJson(name: string, sdk: WebChatNovuDependencies): string {
@@ -333,15 +878,13 @@ function renderPackageJson(name: string, sdk: WebChatNovuDependencies): string {
         start: 'next start -p 4012',
       },
       dependencies: {
-        '@novu/react': sdk.react,
-        ...(sdk.js ? { '@novu/js': sdk.js } : {}),
+        ...webChatRuntimeDependencies(sdk),
         next: '^16.2.11',
         react: '^18.3.1',
         'react-dom': '^18.3.1',
-        'react-markdown': '^10.1.0',
-        'remark-gfm': '^4.0.1',
       },
       devDependencies: {
+        ...WEB_CHAT_DEV_DEPENDENCIES,
         '@types/node': '^22.0.0',
         '@types/react': '^19.0.0',
         '@types/react-dom': '^19.0.0',
@@ -373,7 +916,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning style={{ margin: 0 }}>
+      <body className={inter.className} suppressHydrationWarning>
         {children}
       </body>
     </html>
@@ -407,9 +950,27 @@ const STANDALONE_TSCONFIG = JSON.stringify(
   2
 );
 
-const STANDALONE_NEXT_CONFIG = `/** @type {import('next').NextConfig} */
-const nextConfig = {};
+const WEB_CHAT_NEXT_CONFIG = `import path from 'path';
+import { fileURLToPath } from 'url';
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  transpilePackages: ['@novu/react', '@novu/js', '@assistant-ui/react'],
+  turbopack: {
+    root: projectRoot,
+  },
+};
+
 export default nextConfig;
 `;
 
-const STANDALONE_GITIGNORE = `.next\nnode_modules\n.env.local\n`;
+const STANDALONE_POSTCSS_CONFIG = `export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+`;
+
+const STANDALONE_GITIGNORE = `.next\nnode_modules\nvendor\n.env.local\n`;

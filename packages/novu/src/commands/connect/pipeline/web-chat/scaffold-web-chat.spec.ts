@@ -2,8 +2,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { NOVU_STAGING_API_URL } from '@novu/shared';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CloudRegionEnum } from '../../../dev/enums';
+
+vi.mock('../../../init/helpers/is-online', () => ({
+  getOnline: vi.fn(async () => false),
+}));
+
 import {
   assertSafeScaffoldDirectoryName,
   resolveWebChatNovuDependencies,

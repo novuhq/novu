@@ -127,7 +127,7 @@ export function buildWebChatPrompt(
     const lines = [
       `${signedInDashboardLine(apiUrl)} Add Web Chat to this project for an existing ${bridgeRuntimeLabel(runtime)} bridge agent following instructions from this markdown file: ${AGENT_ONBOARDING_PLAYBOOK_URL}`,
       buildNovuConnectStagingHint(apiUrl),
-      `The dashboard already created "${agentName}" (id: ${agentIdentifier}) with ${bridgeRuntimeLabel(runtime)} and Web Chat selected. Run one \`npx novu connect\` with \`--runtime ${runtime} --channel web-chat --agent-identifier ${agentIdentifier}\`. Do not ask me to pick runtime, channel, or agent. Scaffold or embed in that same run, then start the app with \`npm run dev:novu\`.`,
+      `The dashboard already created "${agentName}" (id: ${agentIdentifier}) with ${bridgeRuntimeLabel(runtime)} and Web Chat selected. Run one \`npx novu connect\` with \`--runtime ${runtime} --channel web-chat --agent-identifier ${agentIdentifier}\`. Do not ask me to pick runtime, channel, or agent. Scaffold or embed in that same run, then start the app with \`npm run dev:novu\`. After connect, read the embed prompt file if printed — integrate Web Chat into this app's existing layout and navigation (not an orphan \`/web-chat\` URL or floating widget).`,
     ].filter((line): line is string => Boolean(line));
 
     return lines.join('\n\n');
@@ -136,7 +136,7 @@ export function buildWebChatPrompt(
   const lines = [
     `${signedInDashboardLine(apiUrl)} Connect a Novu agent to Web Chat for this project following instructions from this markdown file: ${AGENT_ONBOARDING_PLAYBOOK_URL}`,
     buildNovuConnectStagingHint(apiUrl),
-    `The dashboard already has "${agentName}" (id: ${agentIdentifier}) with Web Chat linked for preview.`,
+    `The dashboard already has "${agentName}" (id: ${agentIdentifier}) with Web Chat linked for preview. After \`npx novu connect\`, read the embed prompt file if printed — integrate Web Chat into this app's existing layout and navigation (not an orphan \`/web-chat\` URL or floating widget).`,
   ].filter((line): line is string => Boolean(line));
 
   return lines.join('\n\n');
