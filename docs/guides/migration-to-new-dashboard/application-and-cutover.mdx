@@ -109,17 +109,19 @@ Use the Production Application Identifier in the production Inbox client and the
 
 Legacy and new workflows have different identifiers, so a preference attached to the legacy workflow does not automatically become a preference for its replacement. Copy preferences after the replacement workflow is published and active in Production, and before the application deploy moves traffic to the new workflow ID.
 
-For every workflow pair:
+Exclude critical workflows from the copy job. Both [update subscriber preferences](/api-reference/subscribers/update-subscriber-preferences) and [bulk update subscriber preferences](/api-reference/subscribers/bulk-update-subscriber-preferences) reject critical workflows. If a bulk request includes even one critical workflow, the entire batch fails, so preferences for the non-critical workflows in that request are not copied either.
+
+For every non-critical workflow pair:
 
 1. Record the legacy and new workflow IDs.
-2. Record whether the workflow is critical.
-3. Record its default channel preferences.
-4. Read each subscriber's stored preference for the legacy workflow with [retrieve subscriber preferences](/api-reference/subscribers/retrieve-subscriber-preferences).
-5. Write the same channel settings against the new workflow ID with [update subscriber preferences](/api-reference/subscribers/update-subscriber-preferences) or [bulk update subscriber preferences](/api-reference/subscribers/bulk-update-subscriber-preferences).
-6. Select subscribers with global and workflow-specific overrides.
-7. Compare their effective preferences before and after the copy.
-8. Verify enabled and disabled channels through controlled triggers.
-9. Confirm that critical workflows still ignore subscriber preference changes.
+2. Record its default channel preferences.
+3. Read each subscriber's stored preference for the legacy workflow with [retrieve subscriber preferences](/api-reference/subscribers/retrieve-subscriber-preferences).
+4. Write the same channel settings against the new workflow ID with the single or bulk update endpoint. Send only non-critical workflow IDs in each request.
+5. Select subscribers with global and workflow-specific overrides.
+6. Compare their effective preferences before and after the copy.
+7. Verify enabled and disabled channels through controlled triggers.
+
+Handle critical workflow pairs separately. Do not write subscriber preference overrides for them. After the replacement is published and active, confirm that it still bypasses subscriber preference changes and delivers on the workflow's default channels.
 
 Run the copy against Production credentials, make it re-runnable, and log each subscriber and workflow pair so a partial run can be resumed.
 
@@ -174,7 +176,7 @@ Send a controlled trigger to an internal subscriber and confirm the rendered out
   <Step>
 ## Copy subscriber preferences
 
-Run the preference copy for every workflow pair, then compare representative subscribers before continuing. Copy preferences after the replacement workflow exists in Production and before production traffic moves to it.
+Run the preference copy for every non-critical workflow pair, then compare representative subscribers before continuing. Copy preferences after the replacement workflow exists in Production and before production traffic moves to it. Do not include critical workflows in the copy job. Verify their preference-bypass behavior separately.
   </Step>
 
   <Step>
