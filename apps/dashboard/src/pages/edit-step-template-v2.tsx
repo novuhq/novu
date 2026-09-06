@@ -51,7 +51,10 @@ type StepTemplateFormProps = {
 
 function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
   const isChatBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
-  const isReadOnly = useStepContentReadOnly();
+  // External workflows swap the native editors for the code-defined control overrides, which stay
+  // writable in Development — so this gate covers environment and permissions only. Native editors
+  // apply the stricter origin lock themselves.
+  const isReadOnly = useStepContentReadOnly({ lockExternal: false });
   const form = useForm({
     defaultValues: getControlsDefaultValues(step),
     shouldFocusError: false,
