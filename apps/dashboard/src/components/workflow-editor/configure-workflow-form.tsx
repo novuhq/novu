@@ -809,8 +809,9 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                       <span className="text-label-xs text-text-strong">Send & reply via agent</span>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span
-                            className="inline-flex shrink-0 cursor-help"
+                          <button
+                            type="button"
+                            className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center"
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
@@ -821,7 +822,8 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                             }}
                           >
                             <RiInformation2Line className="size-4 text-text-soft" />
-                          </span>
+                            <span className="sr-only">About send and reply via agent</span>
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent side="left" hideWhenDetached className="max-w-xs">
                           Assign an agent so this workflow can send through the agent&apos;s connected channels and

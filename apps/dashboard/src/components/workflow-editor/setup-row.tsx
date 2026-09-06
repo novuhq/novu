@@ -22,14 +22,15 @@ export function SetupRow({ title, tooltipContent, description, className }: Setu
           <span className="text-label-xs text-text-strong">{title}</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span
-                className="inline-flex shrink-0 cursor-help"
+              <button
+                type="button"
+                className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center"
                 onClick={stopRowNavigation}
                 onPointerDown={stopRowNavigation}
-                onKeyDown={stopRowNavigation}
               >
                 <RiInformation2Line className="size-4 text-text-soft" />
-              </span>
+                <span className="sr-only">About {title}</span>
+              </button>
             </TooltipTrigger>
             <TooltipPortal>
               <TooltipContent side="left" hideWhenDetached>
