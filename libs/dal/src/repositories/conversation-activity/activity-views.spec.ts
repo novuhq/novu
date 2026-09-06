@@ -70,6 +70,10 @@ describe('activity-views', () => {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.AGENT,
       },
+      {
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
+      },
     ]);
   });
 

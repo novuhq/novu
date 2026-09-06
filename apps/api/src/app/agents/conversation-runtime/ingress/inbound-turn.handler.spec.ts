@@ -120,6 +120,7 @@ describe('AgentInboundHandler', () => {
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
+      importInboundMessages: sinon.stub().resolves(0),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
       persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
       persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
@@ -457,6 +458,106 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistInboundMessage.firstCall.args[0].platformThreadId).to.equal(expectedThreadId);
       expect(conversationService.setFirstPlatformMessageId.firstCall.args[3]).to.equal(expectedThreadId);
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
+    });
+
+    it('should seed Slack thread history before recording a mention even when the conversation already exists', async () => {
+      const { handler, conversationService } = makeHandler();
+      const mention = {
+        id: 'mention-ts',
+        text: '<@UBOT> help',
+        author: { userId: 'U1', fullName: 'Ada', userName: 'ada', isBot: false },
+        raw: { type: 'app_mention', thread_ts: 'root-ts' },
+        attachments: [],
+      };
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        messages: {
+          [Symbol.asyncIterator]: async function* () {
+            yield mention;
+            yield {
+              id: 'prior-ts',
+              text: 'the deploy failed',
+              author: { userId: 'U2', fullName: 'Bob', isBot: false },
+            };
+          },
+        },
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+      };
+
+      await handler.handle('agent1', config as any, thread as any, mention as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(conversationService.importInboundMessages.calledOnce).to.equal(true);
+      expect(conversationService.importInboundMessages.firstCall.args[0].messages).to.deep.equal([
+        {
+          platformMessageId: 'prior-ts',
+          content: 'the deploy failed',
+          senderName: 'Bob',
+          senderId: 'slack:U2',
+          identifier: `slack_hist_${conversation._id}_prior-ts`,
+        },
+      ]);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.firstCall.args[0]).to.include({
+        platformMessageId: 'mention-ts',
+        content: '<@UBOT> help',
+      });
+    });
+
+    it('should not fetch Slack thread history for a subscribed non-mention message', async () => {
+      const { handler, conversationService } = makeHandler();
+      const next = sinon.stub();
+      const thread = {
+        ...makeSlackDmThread(),
+        messages: {
+          [Symbol.asyncIterator]: () => {
+            next();
+
+            return { next: async () => ({ done: true, value: undefined }) };
+          },
+        },
+      };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        thread as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(next.called).to.equal(false);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+    });
+
+    it('should not seed thread history on non-Slack platforms', async () => {
+      const { handler, conversationService } = makeHandler();
+      conversationService.findByPlatformThread.resolves(null);
+      const next = sinon.stub();
+      const thread = {
+        ...makeEmailDmThread(),
+        messages: {
+          [Symbol.asyncIterator]: () => {
+            next();
+
+            return { next: async () => ({ done: true, value: undefined }) };
+          },
+        },
+      };
+      const emailConfig = { ...config, platform: 'email' };
+
+      await handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage('ada@example.com') as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(next.called).to.equal(false);
     });
 
     it('should dispatch ON_MESSAGE with humanResponse when a conversation HITL ask settles', async () => {

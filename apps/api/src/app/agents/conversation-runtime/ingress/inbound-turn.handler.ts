@@ -58,6 +58,7 @@ import { InboundDispatcher } from './inbound.dispatcher';
 import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
+import { seedSlackThreadHistory } from './seed-slack-thread-history';
 import { WorkflowOriginService } from './workflow-origin.service';
 
 /**
@@ -495,6 +496,18 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
+
+    await seedSlackThreadHistory({
+      agentId,
+      config,
+      conversation,
+      thread,
+      message,
+      platformThreadId,
+      workflowOrigin,
+      conversationService: this.conversationService,
+      logger: this.logger,
+    });
 
     await this.recordInboundMessage(agentId, config, conversation, message, {
       subscriberId,

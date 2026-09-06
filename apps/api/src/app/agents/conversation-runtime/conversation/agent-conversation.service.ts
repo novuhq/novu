@@ -12,6 +12,7 @@ import {
 import { getConversationTitle } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
+  ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
@@ -39,6 +40,7 @@ export {
 
 export type {
   ConversationActivityContext,
+  ImportInboundMessagesParams,
   MetadataOp,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
@@ -326,6 +328,10 @@ export class AgentConversationService {
 
   async persistInboundMessage(params: PersistInboundMessageParams): Promise<ConversationActivityEntity> {
     return this.ledger.persistInboundMessage(params);
+  }
+
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<number> {
+    return this.ledger.importInboundMessages(params);
   }
 
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {

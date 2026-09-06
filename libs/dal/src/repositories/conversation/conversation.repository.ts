@@ -204,6 +204,24 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  async incrementMessageCount(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    count: number,
+    session?: ClientSession | null
+  ): Promise<void> {
+    if (count === 0) {
+      return;
+    }
+
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $inc: { messageCount: count } },
+      session ? { session } : {}
+    );
+  }
+
   /**
    * Refresh `lastActivityAt` and `lastMessagePreview` without incrementing `messageCount`.
    * Used for in-place message edits (replyHandle.edit) — the message count stays the same,
@@ -504,6 +522,28 @@ export class ConversationRepository extends BaseRepositoryV2<
     conversationId: string,
     minimum = 0
   ): Promise<number> {
+    const [sequence] = await this.allocateEventSequenceRange(
+      environmentId,
+      organizationId,
+      conversationId,
+      1,
+      minimum
+    );
+
+    return sequence;
+  }
+
+  async allocateEventSequenceRange(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    count: number,
+    minimum = 0
+  ): Promise<number[]> {
+    if (count <= 0) {
+      return [];
+    }
+
     const filter = {
       _id: conversationId,
       _environmentId: environmentId,
@@ -520,9 +560,11 @@ export class ConversationRepository extends BaseRepositoryV2<
       );
     }
 
-    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: count } }, { new: true });
+    const lastSequence = updated?.eventSequence ?? count;
+    const firstSequence = lastSequence - count + 1;
 
-    return updated?.eventSequence ?? 1;
+    return Array.from({ length: count }, (_, index) => firstSequence + index);
   }
 
   async incrementTokenUsage(

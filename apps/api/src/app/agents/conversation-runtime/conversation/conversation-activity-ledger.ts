@@ -16,6 +16,7 @@ import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
+  ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
@@ -188,6 +189,57 @@ export class ConversationActivityLedger {
 
       throw err;
     }
+  }
+
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<number> {
+    if (params.messages.length === 0) {
+      return 0;
+    }
+
+    const existingPlatformMessageIds = await this.activityRepository.findExistingPlatformMessageIds(
+      params.environmentId,
+      params.conversationId,
+      params.messages.map((message) => message.platformMessageId)
+    );
+    const messages = params.messages.filter(
+      (message) => !existingPlatformMessageIds.has(message.platformMessageId)
+    );
+
+    if (messages.length === 0) {
+      return 0;
+    }
+
+    const sequences = await this.eventSequenceService.mintRange(
+      {
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        conversationId: params.conversationId,
+      },
+      messages.length
+    );
+
+    return this.activityRepository.withTransaction(async (session) => {
+      const insertedCount = await this.activityRepository.importUserActivities(
+        {
+          ...params,
+          messages: messages.map((message, index) => ({
+            ...message,
+            sequence: sequences[index],
+          })),
+        },
+        session
+      );
+
+      await this.conversationRepository.incrementMessageCount(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        insertedCount,
+        session
+      );
+
+      return insertedCount;
+    });
   }
 
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {

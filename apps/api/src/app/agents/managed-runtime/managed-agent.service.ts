@@ -32,6 +32,7 @@ import {
   preserveMediaThroughThalamusPacking,
 } from './build-user-message-content';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
+import { formatUserMessageWithSenderName } from './format-user-message-with-sender-name';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
@@ -41,6 +42,7 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
+  senderName?: string | null;
   storedAttachments?: StoredAttachment[];
   workflowOrigin?: WorkflowOriginSnapshot | null;
   platformThreadId?: string;
@@ -129,8 +131,9 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberMongoId: context.subscriber?._id,
     });
 
+    const labeledUserText = formatUserMessageWithSenderName(context.userMessageText, context.senderName);
     const userContent = await buildUserMessageContent({
-      userMessageText: context.userMessageText,
+      userMessageText: labeledUserText,
       attachments: context.storedAttachments,
       getBytes: (storageKey) =>
         this.attachmentStorage.getBytes(storageKey, {
@@ -145,7 +148,7 @@ export class ManagedAgentService implements OnModuleInit {
       sessionId
         ? buildLiveSessionMessages(
             {
-              userMessageText: context.userMessageText,
+              userMessageText: labeledUserText,
               workflowOrigin: context.workflowOrigin?.source === 'hydrated' ? context.workflowOrigin : null,
             },
             userContent
@@ -227,6 +230,7 @@ export class ManagedAgentService implements OnModuleInit {
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
+        senderName: activity.senderName,
         workflowOrigin,
         platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
@@ -451,8 +455,10 @@ export class ManagedAgentService implements OnModuleInit {
 
   private async buildMessagesWithHistory(
     context: ManagedAgentContext,
-    userContent: string | ContentPart[]
+    userContent?: string | ContentPart[]
   ): Promise<Message[]> {
+    const labeledUserText = formatUserMessageWithSenderName(context.userMessageText, context.senderName);
+    const turnContent = userContent ?? labeledUserText;
     const page = await this.conversationService.listForView({
       view: 'llm_transcript',
       environmentId: context.config.environmentId,
@@ -465,16 +471,25 @@ export class ManagedAgentService implements OnModuleInit {
     const messages: Message[] = history
       .filter((entry) => entry.type === ConversationActivityTypeEnum.MESSAGE)
       .reverse()
-      .map((entry) => ({
-        role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
-        content: entry.content,
-      }));
+      .map((entry) => {
+        if (entry.senderType === ConversationActivitySenderTypeEnum.AGENT) {
+          return {
+            role: MessageRole.ASSISTANT,
+            content: entry.content,
+          };
+        }
+
+        return {
+          role: MessageRole.USER,
+          content: formatUserMessageWithSenderName(entry.content, entry.senderName),
+        };
+      });
 
     // New Anthropic session (no externalSessionId) — collapse so Thalamus does not
     // re-run every historical USER turn as a live event on reopen after resolve.
     const collapsed = applyUserContentToLatestUserTurn(
-      collapseHistoryForNewSession(messages, context.userMessageText),
-      userContent
+      collapseHistoryForNewSession(messages, labeledUserText),
+      turnContent
     );
 
     if (!context.workflowOrigin) {
