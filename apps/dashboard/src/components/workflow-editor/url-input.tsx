@@ -5,9 +5,10 @@ import { InputProps, InputRoot } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
-type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
+type URLInputProps = Omit<InputProps, 'value' | 'onChange' | 'readOnly'> & {
   options: string[];
   fields: {
     urlKey: string;
@@ -26,6 +27,7 @@ export const URLInput = ({
 }: URLInputProps) => {
   const { control, getFieldState } = useFormContext();
   const { saveForm } = useSaveForm();
+  const readOnly = useStepContentReadOnly();
   const url = getFieldState(`${urlKey}`);
   const target = getFieldState(`${targetKey}`);
   const error = url.error || target.error;
@@ -48,6 +50,7 @@ export const URLInput = ({
                     onChange={field.onChange}
                     variables={variables}
                     isAllowedVariable={isAllowedVariable}
+                    readOnly={readOnly}
                   />
                 </FormItem>
               )}
@@ -64,6 +67,7 @@ export const URLInput = ({
                         field.onChange(value);
                         saveForm();
                       }}
+                      disabled={readOnly}
                     >
                       <SelectTrigger className="border h-[36px] max-w-24 rounded-l-none border-l-0 text-xs focus:ring-0">
                         <SelectValue />

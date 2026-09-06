@@ -14,6 +14,7 @@ import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-edito
 import { deriveChatEditorType } from '@/components/workflow-editor/steps/chat/derive-chat-editor-type';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor-layout';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { UpdateWorkflowFn, useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -50,6 +51,7 @@ type StepTemplateFormProps = {
 
 function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
   const isChatBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
+  const isReadOnly = useStepContentReadOnly();
   const form = useForm({
     defaultValues: getControlsDefaultValues(step),
     shouldFocusError: false,
@@ -94,6 +96,8 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
   const { onBlur, saveForm, saveFormDebounced } = useFormAutosave({
     previousData: {},
     form,
+    // Live environments render the editors read-only; never let a stray blur write to them.
+    isReadOnly,
     save: (data, { onSuccess }) => {
       const { providerOverrides, ...controlValues } = data as Record<string, unknown> & {
         providerOverrides?: StepUpdateDto['providerOverrides'];

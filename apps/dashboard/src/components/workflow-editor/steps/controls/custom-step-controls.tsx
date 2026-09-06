@@ -15,6 +15,7 @@ import { Switch } from '@/components/primitives/switch';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { ResourceOriginEnum } from '@/utils/enums';
 import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
 import { cn } from '@/utils/ui';
@@ -36,6 +37,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { saveForm } = useSaveForm();
   const { control, reset } = useFormContext();
   const watchedValues = useWatch({ control });
+  const isReadOnly = useStepContentReadOnly();
 
   const dataSchemaDefaults = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
   const dbValues = step?.controls.values ?? {};
@@ -134,6 +136,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
         </div>
         <Switch
           checked={isOverridden}
+          disabled={isReadOnly}
           onCheckedChange={(checked) => {
             if (!checked) {
               setIsRestoreDefaultModalOpen(true);
@@ -177,6 +180,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
                 schema={(dataSchema as RJSFSchema) || {}}
                 formData={isOverridden ? watchedValues : dataSchemaDefaults}
                 disabled={!isOverridden}
+                readonly={isReadOnly}
               />
             </div>
           </AccordionContent>

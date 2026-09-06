@@ -116,13 +116,15 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
 }
 
 export function HTMLCodeBlockView(props: NodeViewProps) {
-  const { node, updateAttributes } = props;
+  const { editor, node, updateAttributes } = props;
   const { activeTab: rawActiveTab } = node.attrs as HtmlCodeBlockAttributes;
   const activeTab = rawActiveTab || 'code';
 
   const nodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!editor.isEditable) return;
+
     /*
      * When clicking outside the code block (except for the bubble menu),
      * switch to preview mode.
@@ -140,17 +142,19 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
 
       if (!isClickingOutside) return;
 
-      props.editor?.commands.blur();
+      editor.commands.blur();
       updateAttributes({ activeTab: 'preview' });
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeTab, updateAttributes, props.editor]);
+  }, [activeTab, editor, updateAttributes]);
 
   const handlePreviewClick = () => {
+    if (!editor.isEditable) return;
+
     updateAttributes({ activeTab: 'code' });
-    props.editor?.commands.setTextSelection(props.getPos() + 1);
+    editor.commands.setTextSelection(props.getPos() + 1);
   };
 
   const isCodeTab = activeTab === 'code';

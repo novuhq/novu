@@ -27,6 +27,7 @@ import { isMailyJson } from '../../../maily/maily-utils';
 import { ControlInput } from '../../control-input';
 import { useWorkflow } from '../../workflow-provider';
 import { useWorkflowSchema } from '../../workflow-schema-provider';
+import { useStepContentReadOnly } from '../use-step-content-read-only';
 
 const MailyVariablesListViewForWorkflows = React.forwardRef<
   VariableSuggestionsPopoverRef,
@@ -141,6 +142,7 @@ export const EmailBodyMaily = () => {
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const track = useTelemetry();
+  const isReadOnly = useStepContentReadOnly();
 
   const blocks = useMemo(() => {
     return createEditorBlocks({
@@ -193,6 +195,7 @@ export const EmailBodyMaily = () => {
     resourceId,
     resourceType,
     isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
+    isReadOnly,
   });
 
   const createTranslationKeyMutation = useCreateTranslationKey();
@@ -260,6 +263,7 @@ export const EmailBodyMaily = () => {
             key={`${editorKey}-repeat-block-enabled`}
             value={isMaily ? field.value : ''}
             onChange={field.onChange}
+            editable={!isReadOnly}
             variables={parsedVariables}
             blocks={blocks}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}

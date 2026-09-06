@@ -16,6 +16,7 @@ import { isMailyJson } from '../../../maily/maily-utils';
 import { ControlInput } from '../../control-input';
 import { useWorkflow } from '../../workflow-provider';
 import { useWorkflowSchema } from '../../workflow-schema-provider';
+import { useStepContentReadOnly } from '../use-step-content-read-only';
 
 export const EmailBodyHtml = () => {
   const viewRef = useRef<EditorView | null>(null);
@@ -26,6 +27,7 @@ export const EmailBodyHtml = () => {
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const { saveForm } = useSaveForm();
+  const isReadOnly = useStepContentReadOnly();
 
   const onChange = useCallback(
     (value: string) => {
@@ -72,6 +74,7 @@ export const EmailBodyHtml = () => {
     resourceId,
     resourceType,
     isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
+    isReadOnly,
   });
 
   const { isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
@@ -114,6 +117,7 @@ export const EmailBodyHtml = () => {
             skipContainerClick={isTranslationPopoverOpen}
             onManageSchemaClick={openSchemaDrawer}
             onCreateNewVariable={handleCreateNewVariable}
+            readOnly={isReadOnly}
             className="max-h-[calc(100%-124px)]"
           >
             <EditorOverlays

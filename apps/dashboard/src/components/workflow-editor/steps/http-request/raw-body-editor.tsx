@@ -4,6 +4,7 @@ import { RiErrorWarningLine } from 'react-icons/ri';
 import { InputRoot } from '@/components/primitives/input';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { formatJsonBodyString, getRawBodyString, type HttpRequestBodyValue } from './curl-utils';
@@ -39,6 +40,7 @@ export function RawBodyEditor({ rightSlot }: RawBodyEditorProps) {
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const isReadOnly = useStepContentReadOnly();
 
   // Local draft state — what the user is typing right now (may be invalid)
   // Initialized once from the form value to avoid resetting on each render
@@ -83,6 +85,7 @@ export function RawBodyEditor({ rightSlot }: RawBodyEditorProps) {
                 onBlur={() => {
                   field.onBlur();
                 }}
+                readOnly={isReadOnly}
               />
             </InputRoot>
             {jsonError && (

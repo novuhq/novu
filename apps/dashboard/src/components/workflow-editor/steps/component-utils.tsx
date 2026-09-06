@@ -1,4 +1,4 @@
-import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
+import { UiComponentEnum } from '@novu/shared';
 import { ChatEditorSelect } from '@/components/chat-editor-select';
 import { EmailEditorSelect } from '@/components/email-editor-select';
 import { DelayWindow } from '@/components/workflow-editor/steps/delay/delay-window';
@@ -18,7 +18,6 @@ import { InAppSubject } from '@/components/workflow-editor/steps/in-app/in-app-s
 import { ThrottleKey } from '@/components/workflow-editor/steps/throttle/throttle-key';
 import { ThrottleThreshold } from '@/components/workflow-editor/steps/throttle/throttle-threshold';
 import { ThrottleWindow } from '@/components/workflow-editor/steps/throttle/throttle-window';
-import { useEnvironment } from '@/context/environment/hooks';
 import { useWorkflow } from '../workflow-provider';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
@@ -28,33 +27,22 @@ import { LayoutSelect } from './email/layout-select';
 import { useSaveForm } from './save-form-context';
 import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
 import { ExtendToSchedule } from './shared/extend-to-schedule';
+import { useStepContentReadOnly } from './use-step-content-read-only';
 
 const EmailEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();
   const { saveForm } = useSaveForm();
-  const { currentEnvironment } = useEnvironment();
+  const isReadOnly = useStepContentReadOnly();
 
-  return (
-    <EmailEditorSelect
-      isLoading={isUpdatePatchPending}
-      saveForm={saveForm}
-      disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
-    />
-  );
+  return <EmailEditorSelect isLoading={isUpdatePatchPending} saveForm={saveForm} disabled={isReadOnly} />;
 };
 
 const ChatEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();
   const { saveForm } = useSaveForm();
-  const { currentEnvironment } = useEnvironment();
+  const isReadOnly = useStepContentReadOnly();
 
-  return (
-    <ChatEditorSelect
-      isLoading={isUpdatePatchPending}
-      saveForm={saveForm}
-      disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
-    />
-  );
+  return <ChatEditorSelect isLoading={isUpdatePatchPending} saveForm={saveForm} disabled={isReadOnly} />;
 };
 
 export const getComponentByType = ({ component }: { component?: UiComponentEnum }) => {

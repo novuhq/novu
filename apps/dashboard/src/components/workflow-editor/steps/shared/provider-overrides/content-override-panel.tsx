@@ -7,6 +7,7 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import {
   DEFAULT_CONTENT_SOURCE,
@@ -56,6 +57,7 @@ export function ContentOverridePanel({
   const { saveForm } = useSaveForm();
   const { step } = useWorkflow();
   const { selectedSource, setSelectedSource } = useContentSource();
+  const isReadOnly = useStepContentReadOnly();
   // Only one override editor is mounted at a time, so at most one provider can have an uncommitted parse error.
   const [draftParseErrorProviderId, setDraftParseErrorProviderId] = useState<string | null>(null);
   const [pendingResetProviderId, setPendingResetProviderId] = useState<ContentOverrideProviderId | null>(null);
@@ -237,8 +239,9 @@ export function ContentOverridePanel({
         {overrideProviderId && (
           <button
             type="button"
-            className="border-stroke-soft bg-bg-white text-label-xs text-text-strong hover:bg-bg-weak flex h-7 items-center gap-1 border-r pl-1.5 pr-2 transition-colors"
+            className="border-stroke-soft bg-bg-white text-label-xs text-text-strong hover:bg-bg-weak flex h-7 items-center gap-1 border-r pl-1.5 pr-2 transition-colors disabled:opacity-50"
             onClick={() => setPendingResetProviderId(overrideProviderId)}
+            disabled={isReadOnly}
           >
             <Undo2 className="size-3.5" />
             <span>Reset to default</span>

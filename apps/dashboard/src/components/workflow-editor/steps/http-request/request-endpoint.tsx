@@ -8,6 +8,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/prim
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { InputRoot } from '../../../primitives/input';
@@ -35,6 +36,7 @@ export function RequestEndpoint() {
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const { editorValue } = useStepEditor();
   const { triggerTest, isTestPending } = useHttpRequestTest();
+  const isReadOnly = useStepContentReadOnly();
 
   const handleTestEndpoint = useCallback(async () => {
     const controlValues = getValues() as Record<string, unknown>;
@@ -60,7 +62,7 @@ export function RequestEndpoint() {
             size="2xs"
             className="gap-1 px-1 text-xs font-medium text-text-strong"
             onClick={handleTestEndpoint}
-            disabled={isTestPending}
+            disabled={isTestPending || isReadOnly}
           >
             {isTestPending ? (
               <RiLoader4Line className="size-3.5 animate-spin" />
@@ -88,6 +90,7 @@ export function RequestEndpoint() {
                         field.onChange(value);
                         saveForm();
                       }}
+                      disabled={isReadOnly}
                     >
                       <SelectTrigger
                         size="2xs"
@@ -133,6 +136,7 @@ export function RequestEndpoint() {
                         field.onBlur();
                         saveForm();
                       }}
+                      readOnly={isReadOnly}
                       className="py-0"
                     />
                   </InputRoot>

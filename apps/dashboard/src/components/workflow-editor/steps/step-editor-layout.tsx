@@ -46,6 +46,7 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { ContentSourceProvider } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
 import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
+import { StepEditorReadOnlyBanner } from '@/components/workflow-editor/steps/step-editor-read-only-banner';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
@@ -284,6 +285,7 @@ function StepEditorContent() {
                   : !isExternalWorkflow && <StepEditorModeToggle />}
               </div>
             </PanelHeader>
+            <StepEditorReadOnlyBanner />
             <div className="flex-1 overflow-y-auto">
               <div className="h-full p-3">
                 <StepEditorFactory />

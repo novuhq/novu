@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { SectionHeader } from '@/components/workflow-editor/steps/http-request/section-header';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
@@ -141,6 +142,7 @@ export function ProviderOverrideEditor({
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const isReadOnly = useStepContentReadOnly();
   const registrySchema = useProviderOverrideSchema(providerId);
   const rootSchema = rootSchemaOverride ?? registrySchema.rootSchema;
   // A top-level-keys-only schema has no types or descriptions, so it drives completion but must not
@@ -285,7 +287,7 @@ export function ProviderOverrideEditor({
                       displayName={displayName}
                       resolver={browsableResolver}
                       usedKeys={usedDraftKeys}
-                      canInsert={!parseError}
+                      canInsert={!parseError && !isReadOnly}
                       annotateField={annotateField}
                       onInsertField={handleInsertField}
                     />
@@ -294,8 +296,9 @@ export function ProviderOverrideEditor({
                         <button
                           type="button"
                           aria-label="Format JSON"
-                          className="text-text-sub hover:text-text-strong flex items-center justify-center transition-colors"
+                          className="text-text-sub hover:text-text-strong flex items-center justify-center transition-colors disabled:opacity-50"
                           onClick={formatJson}
+                          disabled={isReadOnly}
                         >
                           <Braces className="size-3.5" />
                         </button>
@@ -334,6 +337,7 @@ export function ProviderOverrideEditor({
                   onBlur={() => {
                     field.onBlur();
                   }}
+                  readOnly={isReadOnly}
                 />
               </InputRoot>
               {parseError ? (

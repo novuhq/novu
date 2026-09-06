@@ -1,19 +1,18 @@
-import { EnvironmentTypeEnum } from '@novu/shared';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiLayout5Line } from 'react-icons/ri';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useSaveForm } from '../save-form-context';
+import { useStepContentReadOnly } from '../use-step-content-read-only';
 
 export const LayoutSelect = () => {
-  const { currentEnvironment } = useEnvironment();
   const { control } = useFormContext();
   const { data, isFetching } = useFetchLayouts({ limit: 100, refetchOnWindowFocus: false });
   const { saveForm } = useSaveForm();
+  const isReadOnly = useStepContentReadOnly();
 
   const layoutsSortedByDefault = useMemo(() => {
     if (!data?.layouts) return [];
@@ -49,11 +48,7 @@ export const LayoutSelect = () => {
                       field.onChange(newValue);
                       saveForm({ forceSubmit: true });
                     }}
-                    disabled={
-                      isFetching ||
-                      layoutsSortedByDefault?.length === 0 ||
-                      currentEnvironment?.type !== EnvironmentTypeEnum.DEV
-                    }
+                    disabled={isFetching || layoutsSortedByDefault?.length === 0 || isReadOnly}
                   >
                     <SelectTrigger
                       size="2xs"

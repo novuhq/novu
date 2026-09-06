@@ -20,6 +20,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { URLInput } from '@/components/workflow-editor/url-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -34,6 +35,7 @@ const secondaryActionKey = 'secondaryAction';
 
 export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () => void }) => {
   const { control, setValue, getFieldState } = useFormContext();
+  const readOnly = useStepContentReadOnly();
 
   const primaryAction = useWatch({ control, name: primaryActionKey });
   const secondaryAction = useWatch({ control, name: secondaryActionKey });
@@ -91,13 +93,14 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
                 </button>
               </ConfigureActionPopover>
             )}
-            <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} />
+            <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} disabled={readOnly} />
           </div>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild disabled={readOnly}>
             <CompactButton
               icon={RiExpandUpDownLine}
               size="lg"
               variant="ghost"
+              disabled={readOnly}
               data-testid="in-app-action-dropdown-trigger"
             >
               <span className="sr-only">Actions</span>
@@ -206,12 +209,13 @@ const ConfigureActionPopover = (
     ...rest
   } = props;
   const { control } = useFormContext();
+  const readOnly = useStepContentReadOnly();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   return (
     <Popover>
-      <PopoverTrigger {...rest} />
+      <PopoverTrigger {...rest} disabled={readOnly} />
       <PopoverContent className="max-w-72 overflow-visible" side="bottom" align="end">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2 text-sm font-medium leading-none">
@@ -238,6 +242,7 @@ const ConfigureActionPopover = (
                       value={field.value}
                       onChange={field.onChange}
                       enableTranslations
+                      readOnly={readOnly}
                     />
                   </InputRoot>
                 </FormControl>

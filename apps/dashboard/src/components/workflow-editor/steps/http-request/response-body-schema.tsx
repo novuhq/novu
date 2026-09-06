@@ -5,6 +5,7 @@ import type { JSONSchema7 } from '@/components/schema-editor';
 import { SchemaEditor } from '@/components/schema-editor';
 import { useSchemaForm } from '@/components/schema-editor/use-schema-form';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useStepEditor } from '../context/step-editor-context';
 import { EnforceSchemaValidation } from './enforce-schema-validation';
 import { SectionHeader } from './section-header';
@@ -13,6 +14,7 @@ export function ResponseBodySchema() {
   const { getValues, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step } = useStepEditor();
+  const isReadOnly = useStepContentReadOnly();
 
   const initialSchema = (getValues('responseBodySchema') as JSONSchema7) ?? { type: 'object', properties: {} };
 
@@ -43,6 +45,7 @@ export function ResponseBodySchema() {
         addProperty={addProperty}
         removeProperty={removeProperty}
         methods={methods}
+        readOnly={isReadOnly}
       />
 
       <Separator className="mt-1.5 mb-1.5 bg-neutral-50" />

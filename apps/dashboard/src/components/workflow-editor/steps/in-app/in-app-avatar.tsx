@@ -2,12 +2,14 @@ import { useFormContext } from 'react-hook-form';
 import { AvatarPicker } from '@/components/primitives/form/avatar-picker';
 import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 
 const avatarKey = 'avatar';
 
 export const InAppAvatar = () => {
   const { control } = useFormContext();
   const { saveForm } = useSaveForm();
+  const isReadOnly = useStepContentReadOnly();
 
   return (
     <FormField
@@ -18,6 +20,7 @@ export const InAppAvatar = () => {
           <FormControl>
             <AvatarPicker
               {...field}
+              readOnly={isReadOnly}
               onPick={(value) => {
                 field.onChange(value);
                 saveForm();

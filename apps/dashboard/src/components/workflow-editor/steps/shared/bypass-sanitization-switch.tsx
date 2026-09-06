@@ -3,12 +3,14 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Switch } from '@/components/primitives/switch';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 
 const fieldKey = 'disableOutputSanitization';
 
 export const BypassSanitizationSwitch = () => {
   const { control } = useFormContext();
   const { saveForm } = useSaveForm();
+  const isReadOnly = useStepContentReadOnly();
 
   return (
     <div className="flex items-center gap-1">
@@ -24,6 +26,7 @@ export const BypassSanitizationSwitch = () => {
                   field.onChange(e);
                   saveForm();
                 }}
+                disabled={isReadOnly}
               />
             </FormControl>
             <FormMessage />

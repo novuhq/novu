@@ -19,6 +19,7 @@ import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { CHAT_IMAGE_BOUNDS } from '@/components/workflow-editor/steps/chat/preview/chat-image-sizing';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
@@ -189,6 +190,7 @@ export const ChatBodyMaily = () => {
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const track = useTelemetry();
+  const isReadOnly = useStepContentReadOnly();
 
   const blocks = useMemo(
     () => createChatEditorBlocks({ track, digestStepBeforeCurrent }),
@@ -223,6 +225,7 @@ export const ChatBodyMaily = () => {
     resourceId,
     resourceType,
     isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
+    isReadOnly,
   });
 
   const createTranslationKeyMutation = useCreateTranslationKey();
@@ -287,6 +290,7 @@ export const ChatBodyMaily = () => {
             key={editorKey}
             value={getEditorValue()}
             onChange={field.onChange}
+            editable={!isReadOnly}
             variables={parsedVariables}
             blocks={blocks}
             menuConfig={CHAT_MENU_CONFIG}
