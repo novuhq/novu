@@ -1,4 +1,5 @@
 import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 
@@ -7,47 +8,73 @@ type SetupRowProps = {
   tooltipContent: React.ReactNode;
   description: React.ReactNode;
   className?: string;
+  to?: string;
 };
 
-export function SetupRow({ title, tooltipContent, description, className }: SetupRowProps) {
-  const stopRowNavigation = (e: React.SyntheticEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
+type SetupRowInfoTooltipProps = {
+  title: string;
+  tooltipContent: React.ReactNode;
+};
+
+function SetupRowInfoTooltip({ title, tooltipContent }: SetupRowInfoTooltipProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button type="button" className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center">
+          <RiInformation2Line className="size-4 text-text-soft" />
+          <span className="sr-only">About {title}</span>
+        </button>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent side="left" hideWhenDetached>
+          {tooltipContent}
+        </TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
+  );
+}
+
+export function SetupRow({ title, tooltipContent, description, className, to }: SetupRowProps) {
+  const actionContent = (
+    <>
+      <span className="text-text-sub inline-flex shrink-0 items-center text-xs font-medium transition-colors duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-text-strong">
+        Setup
+      </span>
+      <RiArrowRightSLine
+        aria-hidden
+        className="size-4 shrink-0 text-text-sub transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-text-strong"
+      />
+    </>
+  );
 
   return (
-    <div className={cn('flex w-full min-w-0 flex-col gap-1.5', className)}>
+    <div className={cn('group flex w-full min-w-0 flex-col gap-1.5', className)}>
       <div className="flex w-full min-w-0 items-center gap-1.5">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="text-label-xs text-text-strong">{title}</span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center"
-                onClick={stopRowNavigation}
-                onPointerDown={stopRowNavigation}
-              >
-                <RiInformation2Line className="size-4 text-text-soft" />
-                <span className="sr-only">About {title}</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipPortal>
-              <TooltipContent side="left" hideWhenDetached>
-                {tooltipContent}
-              </TooltipContent>
-            </TooltipPortal>
-          </Tooltip>
-        </div>
-        <span className="text-text-sub inline-flex shrink-0 items-center text-xs font-medium transition-colors duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-text-strong">
-          Setup
-        </span>
-        <RiArrowRightSLine
-          aria-hidden
-          className="size-4 shrink-0 text-text-sub transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-text-strong"
-        />
+        {to ? (
+          <Link to={to} className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="text-label-xs text-text-strong">{title}</span>
+          </Link>
+        ) : (
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="text-label-xs text-text-strong">{title}</span>
+          </div>
+        )}
+        <SetupRowInfoTooltip title={title} tooltipContent={tooltipContent} />
+        {to ? (
+          <Link to={to} className="inline-flex shrink-0 items-center">
+            {actionContent}
+          </Link>
+        ) : (
+          <div className="inline-flex shrink-0 items-center">{actionContent}</div>
+        )}
       </div>
-      <span className="text-text-soft text-xs">{description}</span>
+      {to ? (
+        <Link to={to} className="text-text-soft text-xs">
+          {description}
+        </Link>
+      ) : (
+        <span className="text-text-soft text-xs">{description}</span>
+      )}
     </div>
   );
 }

@@ -801,52 +801,49 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             )}
           />
           {isWorkflowAgentAssignmentEnabled ? (
-            <Link to={ROUTES.EDIT_WORKFLOW_AGENT} className="group block border-t border-stroke-weak">
+            <div className="group border-t border-stroke-weak">
               {workflow.agent?.identifier ? (
                 <div className="flex w-full min-w-0 flex-col gap-1.5 px-3 py-4">
                   <div className="flex w-full min-w-0 items-center gap-1.5">
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <Link to={ROUTES.EDIT_WORKFLOW_AGENT} className="flex min-w-0 flex-1 items-center gap-2">
                       <span className="text-label-xs text-text-strong">Send & reply via agent</span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                            }}
-                            onPointerDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                            }}
-                          >
-                            <RiInformation2Line className="size-4 text-text-soft" />
-                            <span className="sr-only">About send and reply via agent</span>
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left" hideWhenDetached className="max-w-xs">
-                          Assign an agent so this workflow can send through the agent&apos;s connected channels and
-                          route replies back automatically.
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <RiArrowRightSLine
-                      aria-hidden
-                      className="size-4 shrink-0 text-text-sub transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-text-strong"
-                    />
+                    </Link>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center"
+                        >
+                          <RiInformation2Line className="size-4 text-text-soft" />
+                          <span className="sr-only">About send and reply via agent</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" hideWhenDetached className="max-w-xs">
+                        Assign an agent so this workflow can send through the agent&apos;s connected channels and route
+                        replies back automatically.
+                      </TooltipContent>
+                    </Tooltip>
+                    <Link to={ROUTES.EDIT_WORKFLOW_AGENT} className="inline-flex shrink-0 items-center">
+                      <RiArrowRightSLine
+                        aria-hidden
+                        className="size-4 shrink-0 text-text-sub transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-text-strong"
+                      />
+                    </Link>
                   </div>
-                  <WorkflowAgentAssignmentSummary agentIdentifier={workflow.agent.identifier} />
+                  <Link to={ROUTES.EDIT_WORKFLOW_AGENT}>
+                    <WorkflowAgentAssignmentSummary agentIdentifier={workflow.agent.identifier} />
+                  </Link>
                 </div>
               ) : (
                 <SetupRow
+                  to={ROUTES.EDIT_WORKFLOW_AGENT}
                   title="Send & reply via agent"
                   tooltipContent="Assign an agent so this workflow can send through the agent's connected channels and route replies back automatically."
                   description="Let your user reply and continue with an agent"
-                  className="px-3 py-4"
+                  className="px-3 py-4 transition-colors hover:bg-bg-weak"
                 />
               )}
-            </Link>
+            </div>
           ) : null}
         </SidebarContent>
         <Separator />

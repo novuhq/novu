@@ -55,25 +55,17 @@ export function TranslationToggleSection({
   };
 
   if (needsOnboarding) {
-    const handleOnboardingClick = () => {
-      navigate(translationsUrl);
-    };
-
     return (
-      <button
-        type="button"
-        onClick={handleOnboardingClick}
+      <SetupRow
+        to={translationsUrl}
+        title="Enable Translations"
+        tooltipContent="When enabled, allows you to create and manage translations for your workflow content across different languages."
+        description="Set up your target locales first to enable translations"
         className={cn(
-          'group w-full min-w-0 cursor-pointer rounded-none bg-transparent text-left transition-colors hover:bg-bg-weak focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-stroke-strong focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'w-full min-w-0 rounded-none px-3 py-4 transition-colors hover:bg-bg-weak focus-within:outline-hidden focus-within:ring-2 focus-within:ring-stroke-strong focus-within:ring-offset-2 focus-within:ring-offset-background',
           className
         )}
-      >
-        <SetupRow
-          title="Enable Translations"
-          tooltipContent="When enabled, allows you to create and manage translations for your workflow content across different languages."
-          description="Set up your target locales first to enable translations"
-        />
-      </button>
+      />
     );
   }
 
