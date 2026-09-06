@@ -52,9 +52,9 @@ export function SetupRow({
         <div className="flex w-full min-w-0 items-center gap-1.5">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="text-label-xs text-text-strong">{title}</span>
-          </div>
-          <div className="pointer-events-auto">
-            <SetupRowInfoTooltip title={title} tooltipContent={tooltipContent} />
+            <div className="pointer-events-auto">
+              <SetupRowInfoTooltip title={title} tooltipContent={tooltipContent} />
+            </div>
           </div>
           <div className="inline-flex shrink-0 items-center">
             {showSetupLabel ? (
