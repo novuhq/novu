@@ -11,7 +11,9 @@ vi.mock('../output', async (importOriginal) => {
   };
 });
 
-const { parseDuration, parseHumanToOption, resolveTo } = await import('./interact');
+const { formatKeylessCapMessage, getKeylessCapDetails, handleError, parseDuration, parseHumanToOption, resolveTo } =
+  await import('./interact');
+const { HumanApiError } = await import('../api/client');
 const { exitCodeFor, EXIT_DENIED, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
 
 type HumanCliConfig = import('../config').HumanCliConfig;
@@ -106,5 +108,38 @@ describe('exit code contract', () => {
     expect(exitCodeFor({ ...base, status: 'expired' })).toBe(EXIT_GONE);
     expect(exitCodeFor({ ...base, status: 'canceled' })).toBe(EXIT_GONE);
     expect(exitCodeFor({ ...base, status: 'pending' })).toBe(EXIT_TIMEOUT);
+  });
+});
+
+describe('keyless cap errors', () => {
+  const capError = (body: unknown, status = 429, message = 'limit') =>
+    new HumanApiError(message, status, 'POST https://api.novu.co/v1/human/interactions', body);
+
+  it('detects the structured 429 body and extracts the claim link', () => {
+    const err = capError({ code: 'KEYLESS_HUMAN_CAP_REACHED', claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
+    expect(getKeylessCapDetails(err)).toEqual({ claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
+  });
+
+  it('falls back to the message wording when the body has no code', () => {
+    const err = capError({}, 429, "You've used the 5 free messages of this keyless demo.");
+    expect(getKeylessCapDetails(err)).toEqual({ claimUrl: undefined, cap: undefined });
+  });
+
+  it('ignores other 429s and non-API errors', () => {
+    expect(getKeylessCapDetails(capError({}, 429, 'already has 25 pending interactions'))).toBeNull();
+    expect(getKeylessCapDetails(capError({ code: 'KEYLESS_HUMAN_CAP_REACHED' }, 400))).toBeNull();
+    expect(getKeylessCapDetails(new Error('boom'))).toBeNull();
+  });
+
+  it('prints the claim link and the recovery command', () => {
+    const text = formatKeylessCapMessage({ claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
+    expect(text).toContain('5 free messages');
+    expect(text).toContain('https://dash/connect/claim?token=t');
+    expect(text).toContain('human setup --secret-key');
+  });
+
+  it('routes the cap error through fail with the claim link', () => {
+    const err = capError({ code: 'KEYLESS_HUMAN_CAP_REACHED', claimUrl: 'https://dash/connect/claim?token=t' });
+    expect(() => handleError(err)).toThrow('https://dash/connect/claim?token=t');
   });
 });

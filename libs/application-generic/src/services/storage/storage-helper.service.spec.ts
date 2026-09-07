@@ -24,6 +24,8 @@ jest.mock('@azure/storage-blob', () => ({
         upload: azureUpload,
         downloadToBuffer: azureDownloadToBuffer,
         delete: azureDelete,
+        deleteIfExists: azureDelete,
+        exists: jest.fn(() => Promise.resolve(true)),
       })),
     })),
   })),
@@ -211,8 +213,7 @@ describe('Storage-Helper service', () => {
           mime: 'image/png',
         },
       ];
-      azureDownloadToBuffer.mockImplementationOnce(() => Promise.reject({ statusCode: 404 }));
-      // sets the file to null if the get-file method throws error with status code 404
+      azureDownloadToBuffer.mockImplementationOnce(() => Promise.reject({ code: 'BlobNotFound', statusCode: 404 }));
       await azureStorageHelperService.getAttachments(azureAttachments2);
 
       expect(azureDownloadToBuffer).toHaveBeenCalledTimes(1);
