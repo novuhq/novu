@@ -18,6 +18,8 @@ describe('HandleAgentReply - active-conversation counting', () => {
     const conversationService = {
       getConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().returns(channel),
+      persistToolApprovalRequest: sinon.stub().resolves({ _id: 'act-1' }),
+      linkToolApprovalRequestCard: sinon.stub().resolves(undefined),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub(), error: sinon.stub() };
     const parseEventRequest = { execute: sinon.stub().resolves({ transactionId: 'txn1' }) };
@@ -67,6 +69,8 @@ describe('HandleAgentReply - active-conversation counting', () => {
       conversation,
       createConversationInteraction,
       featureFlagsService,
+      conversationService,
+      channel,
     };
   }
 
@@ -113,7 +117,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
   });
 
   it('deletes platform messages for a deleteMessages-only request', async () => {
-    const { usecase, baseCommand, outboundGateway } = setup();
+    const { usecase, baseCommand, outboundGateway, conversationActivation } = setup();
 
     await usecase.execute({
       ...baseCommand,
@@ -121,6 +125,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
     } as any);
 
     expect(outboundGateway.deliver.called).to.equal(false);
+    expect(conversationActivation.assertOutboundWithinLimit.called).to.equal(false);
     expect(outboundGateway.deleteInConversation.callCount).to.equal(2);
     expect(outboundGateway.deleteInConversation.getCall(0).args[3]).to.equal('msg-abc');
     expect(outboundGateway.deleteInConversation.getCall(1).args[3]).to.equal('msg-def');
@@ -139,7 +144,14 @@ describe('HandleAgentReply - active-conversation counting', () => {
   });
 
   it('creates a conversation interaction for each human signal when the flag is on', async () => {
-    const { usecase, baseCommand, conversation, createConversationInteraction, featureFlagsService } = setup();
+    const {
+      usecase,
+      baseCommand,
+      conversation,
+      createConversationInteraction,
+      featureFlagsService,
+      conversationActivation,
+    } = setup();
     featureFlagsService.getFlag.resolves(true);
     (conversation as { participants: Array<{ type: string; id: string }> }).participants = [
       { type: 'subscriber', id: 'sub-1' },
@@ -148,15 +160,275 @@ describe('HandleAgentReply - active-conversation counting', () => {
     await usecase.execute({
       ...baseCommand,
       signals: [
-        { type: 'human', kind: 'approve', prompt: 'Deploy?', requestId: 'hr_1', to: ['alice', 'bob'] },
-        { type: 'human', kind: 'ask', prompt: 'Which env?', requestId: 'hr_2' },
+        {
+          type: 'human',
+          kind: 'approve',
+          prompt: 'Deploy?',
+          requestId: 'hr_1',
+          to: ['alice', 'bob'],
+          card: { title: 'Deploy?' },
+        },
+        { type: 'human', kind: 'ask', prompt: 'Which env?', requestId: 'hr_2', card: { title: 'Which env?' } },
       ],
     } as any);
 
+    expect(conversationActivation.assertOutboundWithinLimit.calledOnce).to.equal(true);
+    expect(conversationActivation.registerEngagement.calledOnce).to.equal(true);
     expect(createConversationInteraction.execute.calledTwice).to.equal(true);
     expect(createConversationInteraction.execute.firstCall.args[0].kind).to.equal('approve');
     expect(createConversationInteraction.execute.firstCall.args[0].requestId).to.equal('hr_1');
     expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['alice', 'bob']);
+    expect(createConversationInteraction.execute.firstCall.args[0].card.title).to.equal('Deploy?');
     expect(createConversationInteraction.execute.secondCall.args[0].kind).to.equal('ask');
+    expect(createConversationInteraction.execute.secondCall.args[0].card.title).to.equal('Which env?');
+  });
+
+  it('passes a posted card element through as card without inventing chrome', async () => {
+    const { usecase, baseCommand, conversation, createConversationInteraction, featureFlagsService } = setup();
+    featureFlagsService.getFlag.resolves(true);
+    (conversation as { participants: Array<{ type: string; id: string }> }).participants = [
+      { type: 'subscriber', id: 'sub-1' },
+    ];
+    const card = { type: 'card', title: 'Refund $25?', children: [] };
+
+    await usecase.execute({
+      ...baseCommand,
+      signals: [
+        {
+          type: 'human',
+          kind: 'approve',
+          requestId: 'hr_1',
+          actionIdentifier: 'hr_1',
+          card,
+        },
+      ],
+    } as any);
+
+    expect(createConversationInteraction.execute.firstCall.args[0].card).to.deep.equal(card);
+    expect(createConversationInteraction.execute.firstCall.args[0].content).to.equal(undefined);
+    expect(createConversationInteraction.execute.firstCall.args[0].actionIdentifier).to.equal('hr_1');
+  });
+
+  it('does not create a human signal when the outbound limit is reached', async () => {
+    const {
+      usecase,
+      baseCommand,
+      conversation,
+      createConversationInteraction,
+      featureFlagsService,
+      conversationActivation,
+    } = setup();
+    featureFlagsService.getFlag.resolves(true);
+    (conversation as { participants: Array<{ type: string; id: string }> }).participants = [
+      { type: 'subscriber', id: 'sub-1' },
+    ];
+    conversationActivation.assertOutboundWithinLimit.rejects(new Error('plan limit'));
+
+    try {
+      await usecase.execute({
+        ...baseCommand,
+        signals: [{ type: 'human', kind: 'approve', prompt: 'Deploy?', requestId: 'hr_1' }],
+      } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect((err as Error).message).to.equal('plan limit');
+    }
+    expect(createConversationInteraction.execute.called).to.equal(false);
+    expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('creates a HITL tool-approval row when the flag is on', async () => {
+    const {
+      usecase,
+      baseCommand,
+      createConversationInteraction,
+      featureFlagsService,
+      conversationService,
+      conversation,
+      channel,
+      conversationActivation,
+    } = setup();
+    channel.platform = 'web_chat';
+    featureFlagsService.getFlag.resolves(true);
+    (conversation as { participants: Array<{ type: string; id: string }> }).participants = [
+      { type: 'subscriber', id: 'sub-1' },
+    ];
+    createConversationInteraction.execute.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      subscriberIds: ['sub-1'],
+    });
+
+    await usecase.execute({
+      ...baseCommand,
+      toolApprovalRequest: {
+        approvalId: 'apr_1',
+        toolCallId: 'tc_1',
+        name: 'issueRefund',
+        input: { orderId: 'ORD-1' },
+        mcpServerName: 'Stripe',
+        approveActionId: 'mcp-approval:approve:apr_1',
+        denyActionId: 'mcp-approval:deny:apr_1',
+      },
+      reply: { toolApprovalCard: { type: 'tool-approval-card' } },
+    } as any);
+
+    expect(createConversationInteraction.execute.calledOnce).to.equal(true);
+    const created = createConversationInteraction.execute.firstCall.args[0];
+    expect(created.kind).to.equal('approve');
+    expect(created.requestId).to.equal('tool_approval:apr_1');
+    expect(created.skipDelivery).to.equal(true);
+    expect(created.card.extraActions).to.deep.equal([
+      { id: 'trust-tool', label: 'Always allow this tool' },
+      { id: 'trust-server', label: 'Always allow Stripe' },
+    ]);
+    expect(conversationService.persistToolApprovalRequest.firstCall.args[0].approveActionId).to.equal(
+      'mcp-approval:approve:apr_1'
+    );
+    expect(conversationService.persistToolApprovalRequest.firstCall.args[0].denyActionId).to.equal(
+      'mcp-approval:deny:apr_1'
+    );
+    expect(conversationActivation.assertOutboundWithinLimit.calledOnce).to.equal(true);
+    expect(conversationActivation.registerEngagement.calledOnce).to.equal(true);
+  });
+
+  it('delivers the author action ids and stamps HITL delivery on Slack when the flag is on', async () => {
+    const {
+      usecase,
+      baseCommand,
+      createConversationInteraction,
+      featureFlagsService,
+      conversationService,
+      conversation,
+      channel,
+      outboundGateway,
+    } = setup();
+    channel.platform = 'slack';
+    featureFlagsService.getFlag.resolves(true);
+    (conversation as { participants: Array<{ type: string; id: string }> }).participants = [
+      { type: 'subscriber', id: 'sub-1' },
+    ];
+    createConversationInteraction.execute.resolves({
+      _id: 'hi1',
+      identifier: 'hi_1',
+      subscriberIds: ['sub-1'],
+      deliveries: [{ platformMessageId: 'msg-hitl' }],
+    });
+
+    await usecase.execute({
+      ...baseCommand,
+      toolApprovalRequest: {
+        approvalId: 'apr_1',
+        toolCallId: 'tc_1',
+        name: 'issueRefund',
+        approveActionId: 'tool-approval:approve:apr_1',
+        denyActionId: 'tool-approval:deny:apr_1',
+      },
+      reply: { toolApprovalCard: { type: 'tool-approval-card' } },
+    } as any);
+
+    expect(createConversationInteraction.execute.calledOnce).to.equal(true);
+    const created = createConversationInteraction.execute.firstCall.args[0];
+    expect(created.skipDelivery).to.equal(undefined);
+    expect(created.card.type).to.equal('card');
+    expect(created.card).to.not.have.property('extraActions');
+    expect(conversationService.persistToolApprovalRequest.firstCall.args[0].approveActionId).to.equal(
+      'tool-approval:approve:apr_1'
+    );
+    expect(outboundGateway.deliver.called).to.equal(false);
+    expect(conversationService.linkToolApprovalRequestCard.calledOnce).to.equal(true);
+    expect(conversationService.linkToolApprovalRequestCard.firstCall.args[0]).to.include({
+      activityId: 'act-1',
+      platformMessageId: 'msg-hitl',
+    });
+  });
+
+  it('does not deliver the approval card when HITL create fails', async () => {
+    const {
+      usecase,
+      baseCommand,
+      createConversationInteraction,
+      featureFlagsService,
+      conversationService,
+      outboundGateway,
+      conversationActivation,
+    } = setup();
+    featureFlagsService.getFlag.resolves(true);
+    createConversationInteraction.execute.rejects(new Error('create failed'));
+
+    await usecase.execute({
+      ...baseCommand,
+      toolApprovalRequest: {
+        approvalId: 'apr_1',
+        toolCallId: 'tc_1',
+        name: 'issueRefund',
+        approveActionId: 'tool-approval:approve:apr_1',
+        denyActionId: 'tool-approval:deny:apr_1',
+      },
+      reply: { toolApprovalCard: { type: 'tool-approval-card' } },
+    } as any);
+
+    expect(conversationService.persistToolApprovalRequest.called).to.equal(false);
+    expect(outboundGateway.deliver.called).to.equal(false);
+    expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('does not create a HITL tool-approval row when the outbound limit is reached', async () => {
+    const { usecase, baseCommand, createConversationInteraction, featureFlagsService, conversationActivation } =
+      setup();
+    featureFlagsService.getFlag.resolves(true);
+    conversationActivation.assertOutboundWithinLimit.rejects(new Error('plan limit'));
+
+    try {
+      await usecase.execute({
+        ...baseCommand,
+        toolApprovalRequest: {
+          approvalId: 'apr_1',
+          toolCallId: 'tc_1',
+          name: 'issueRefund',
+          approveActionId: 'mcp-approval:approve:apr_1',
+          denyActionId: 'mcp-approval:deny:apr_1',
+        },
+        reply: { toolApprovalCard: { type: 'tool-approval-card' } },
+      } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect((err as Error).message).to.equal('plan limit');
+    }
+    expect(createConversationInteraction.execute.called).to.equal(false);
+    expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('does not create a HITL tool-approval row when the flag is off', async () => {
+    const {
+      usecase,
+      baseCommand,
+      createConversationInteraction,
+      featureFlagsService,
+      conversationService,
+      channel,
+      conversationActivation,
+    } = setup();
+    channel.platform = 'web_chat';
+    featureFlagsService.getFlag.resolves(false);
+
+    await usecase.execute({
+      ...baseCommand,
+      toolApprovalRequest: {
+        approvalId: 'apr_1',
+        toolCallId: 'tc_1',
+        name: 'issueRefund',
+        approveActionId: 'tool-approval:approve:apr_1',
+        denyActionId: 'tool-approval:deny:apr_1',
+      },
+      reply: { toolApprovalCard: { type: 'tool-approval-card' } },
+    } as any);
+
+    expect(createConversationInteraction.execute.called).to.equal(false);
+    expect(conversationActivation.assertOutboundWithinLimit.calledOnce).to.equal(true);
+    expect(conversationService.persistToolApprovalRequest.calledOnce).to.equal(true);
+    expect(conversationService.persistToolApprovalRequest.firstCall.args[0].approveActionId).to.equal(
+      'tool-approval:approve:apr_1'
+    );
   });
 });

@@ -1,4 +1,4 @@
-import { agent } from '@novu/framework';
+import { Actions, agent, Button, Card } from '@novu/framework';
 
 function formatHumanResponse(response: {
   kind: string;
@@ -50,6 +50,41 @@ export const humanHitlAgent = agent('human-hitl', {
       return 'Sent an approval card in this thread. Approve or deny it to continue.';
     }
 
+    if (text.includes('custom-chrome-approve')) {
+      ctx.approve({
+        card: {
+          title: 'Deploy v2.4.1 to production?',
+          subtitle: 'From Deployment Agent',
+          body: 'This is a custom chrome approval card.',
+          approveLabel: 'Yes',
+          denyLabel: 'No',
+        },
+        ttlSeconds: 10,
+      });
+
+      return 'Sent a custom chrome approval card in this thread. Approve or deny it to continue.';
+    }
+
+    if (text.includes('custom-approve')) {
+      ctx.approve({
+        render: ({ actionIds }) => {
+          return Card({
+            title: 'Deploy v2.4.1 to production?',
+            subtitle: 'From Deployment Agent',
+            children: [
+              Actions([
+                Button({ label: 'Yes', id: actionIds.approve, actionType: 'action', style: 'primary' }),
+                Button({ label: 'No', id: actionIds.deny, actionType: 'action' }),
+              ]),
+            ],
+          });
+        },
+        ttlSeconds: 10,
+      });
+
+      return 'Sent a custom approval card in this thread. Approve or deny it to continue.';
+    }
+
     if (text.includes('approve')) {
       ctx.approve('Deploy v2.4.1 to production?');
 
@@ -74,6 +109,12 @@ export const humanHitlAgent = agent('human-hitl', {
       return 'Asked a question in this thread. Reply with the environment name.';
     }
 
+    if (text.includes('tool-approval')) {
+      ctx.toolApproval.request({ id: 'call_1', name: 'issueRefund', input: { orderId: 'A-123' } }, { ttlSeconds: 10 });
+
+      return 'Sent a tool approval card in this thread. Approve or deny it to continue.';
+    }
+
     return [
       'Framework HITL demo. Message me with one of:',
       '- `approve` — `ctx.approve("Deploy v2.4.1 to production?")`',
@@ -81,11 +122,25 @@ export const humanHitlAgent = agent('human-hitl', {
       '- `ask` — `ctx.ask("What environment should we deploy to?")`',
       '- `choose` — `ctx.choose("Which region?", ["us-east", "eu-west", "ap-south"])`',
       '- `tell` — `ctx.tell("Deploy finished. v2.4.1 is live.")`',
+      '- `tool-approval` — `ctx.toolApproval.request(...)`',
+      '- `custom-approve` — `ctx.approve({ render: ({ actionIds }) => { return Card(...) })`',
+      '- `custom-chrome-approve` — `ctx.approve({ card: {...} })`',
     ].join('\n');
   },
   onAction: async (_action, ctx) => {
     if (ctx.humanResponse) {
       return formatHumanResponse(ctx.humanResponse);
     }
+  },
+
+  onToolApproval: async (decision) => {
+    if (decision.toolCall.id !== 'call_1') {
+      return 'Action cancelled.';
+    }
+
+    // await decision.approvalMessage.delete();
+    if (!decision.approved) return 'Action cancelled.';
+
+    return 'Done. Refund issued.';
   },
 });

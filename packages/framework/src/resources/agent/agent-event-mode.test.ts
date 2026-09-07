@@ -251,6 +251,36 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
   });
 
+  it('carries ttlSeconds/to/from onto the tool-approval-request event', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          await ctx.toolApproval.request(
+            { id: 'tc-2', name: 'doIt', input: { x: 1 } },
+            { ttlSeconds: 10, to: ['alice', 'bob'], from: 'deploy-bot' }
+          );
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0][1].event).toEqual({
+      type: 'tool-approval-request',
+      approvalId: 'tc-2',
+      toolUseId: 'tc-2',
+      toolName: 'doIt',
+      input: { x: 1 },
+      ttlSeconds: 10,
+      to: ['alice', 'bob'],
+      from: 'deploy-bot',
+      deliverCard: true,
+    });
+  });
+
   function flattenEventTypes(
     eventBatches: Array<{ sequence: number; event: { type: string; [key: string]: unknown } }[]>
   ) {
