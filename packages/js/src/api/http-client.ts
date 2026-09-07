@@ -115,9 +115,12 @@ export class HttpClient {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
+      const error = new Error(
         `${this.headers['Novu-Client-Version']} error. Status: ${response.status}, Message: ${errorData.message}`
-      );
+      ) as Error & { status?: number; body?: unknown };
+      error.status = response.status;
+      error.body = errorData;
+      throw error;
     }
     if (response.status === 204) {
       return undefined as unknown as T;

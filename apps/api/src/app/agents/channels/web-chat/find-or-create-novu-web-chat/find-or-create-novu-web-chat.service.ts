@@ -29,6 +29,9 @@ export class NovuWebChatProvisioningService {
   /**
    * Ensure the environment has a `novu-web-chat` integration and link the agent
    * to it. Idempotent — safe to call repeatedly for the same agent.
+   *
+   * Does not stamp `connectedAt`. Same as Slack: Connected only after the first
+   * genuine inbound user message (via the shared inbound handler).
    */
   async execute(
     agentId: string,
@@ -80,7 +83,8 @@ export class NovuWebChatProvisioningService {
       return existing;
     }
 
-    const displayName = providers.find((p) => p.id === ChatProviderIdEnum.NovuWebChat)?.displayName ?? 'Novu Web Chat';
+    const displayName =
+      providers.find((p) => p.id === ChatProviderIdEnum.NovuWebChat)?.displayName ?? 'Novu Web Chat';
     const identifier = `${slugify(displayName)}-${shortid.generate()}`;
 
     return this.integrationRepository.create(

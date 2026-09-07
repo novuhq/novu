@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import {
-  ConversationActivityRepository,
-  ConversationChannel,
-  ConversationEntity,
-  ConversationRepository,
-} from '@novu/dal';
+import { ConversationChannel, ConversationEntity, ConversationRepository } from '@novu/dal';
 import { AGENT_AUTH_METADATA_KEYS } from '@novu/shared';
 import type { CardElement } from 'chat';
 import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
@@ -28,7 +23,6 @@ import { ConfirmLinkedAuthCardsCommand } from './confirm-linked-auth-cards.comma
 export class ConfirmLinkedAuthCards {
   constructor(
     private readonly conversationRepository: ConversationRepository,
-    private readonly conversationActivityRepository: ConversationActivityRepository,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,
@@ -143,9 +137,10 @@ export class ConfirmLinkedAuthCards {
     conversationId: string,
     storedMessageId: string
   ): Promise<string | undefined> {
-    const activity = await this.conversationActivityRepository.findOne(
-      { _environmentId: environmentId, _conversationId: conversationId, identifier: storedMessageId },
-      ['platformMessageId']
+    const activity = await this.conversationService.findAgentMessageByIdentifier(
+      environmentId,
+      conversationId,
+      storedMessageId
     );
 
     if (activity?.platformMessageId) {

@@ -632,6 +632,66 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
           }
         }
       });
+
+      it('should mask secret environment variables in delivered channel content', async () => {
+        const secretValue = `sk_live_delivery_exfil_${uuid()}`;
+        const publicValue = 'https://cdn.example.com/assets';
+
+        const createSecretResponse = await session.testAgent.post('/v1/environment-variables').send({
+          key: 'DELIVERY_STRIPE_SECRET',
+          isSecret: true,
+          values: [{ _environmentId: session.environment._id, value: secretValue }],
+        });
+        expect(createSecretResponse.status).to.equal(200);
+
+        const createPublicResponse = await session.testAgent.post('/v1/environment-variables').send({
+          key: 'DELIVERY_CDN_URL',
+          isSecret: false,
+          values: [{ _environmentId: session.environment._id, value: publicValue }],
+        });
+        expect(createPublicResponse.status).to.equal(200);
+
+        const workflowBody: CreateWorkflowDto = {
+          name: 'Secret Env Delivery Mask Workflow',
+          workflowId: `secret-env-delivery-mask-${uuid()}`,
+          __source: WorkflowCreationSourceEnum.DASHBOARD,
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              name: 'In-App Step',
+              controlValues: {
+                subject: 'Secret delivery check',
+                body: 'secret={{env.DELIVERY_STRIPE_SECRET}} public={{env.DELIVERY_CDN_URL}}',
+              },
+            },
+          ],
+        };
+
+        const workflowResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+        expect(workflowResponse.status).to.equal(201);
+        const v2Workflow = workflowResponse.body.data as WorkflowResponseDto;
+
+        await novuClient.trigger({
+          workflowId: v2Workflow.workflowId,
+          to: [subscriber.subscriberId],
+          payload: {},
+        });
+
+        await session.waitForJobCompletion(v2Workflow._id);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+          _templateId: v2Workflow._id,
+        });
+        expect(messages.length).to.equal(1);
+
+        const content = String(messages[0].content ?? '');
+        expect(content).to.include(publicValue);
+        expect(content).to.include(SECRET_MASK);
+        expect(content).to.not.include(secretValue);
+      });
     });
 
     it('should digest events with filters', async () => {
@@ -869,6 +929,41 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       await createTenant({ session, identifier: 'test', name: 'test' });
 
       await sendTrigger(template, subscriber.subscriberId, {}, {}, 'test');
+
+      await session.waitForJobCompletion(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(
+        session.environment._id,
+        subscriber.subscriberId
+      );
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(message?.providerId).to.equal(payload.providerId);
+    });
+
+    it('should use JsonLogic conditions to select integration by subscriber', async () => {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        rules: {
+          '==': [{ var: 'subscriber.subscriberId' }, subscriber.subscriberId],
+        },
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      await sendTrigger(template, subscriber.subscriberId, {});
 
       await session.waitForJobCompletion(template._id);
 

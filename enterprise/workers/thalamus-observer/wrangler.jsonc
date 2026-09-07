@@ -22,6 +22,10 @@
     "local": {
       "name": "thalamus-observer-local",
       "workers_dev": true,
+      // Keep local thalamus off 8787 so @novu/socket-worker can own that port.
+      "dev": {
+        "port": 8788
+      },
       "durable_objects": {
         "bindings": [
           {

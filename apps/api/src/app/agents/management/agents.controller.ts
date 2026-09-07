@@ -26,7 +26,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -117,6 +117,7 @@ export class AgentsController {
   }
 
   @Post('/')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @KeylessAccessible()
   @SdkGroupName('Agents')
@@ -152,6 +153,7 @@ export class AgentsController {
   }
 
   @Get('/')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @KeylessAccessible()
   @SdkGroupName('Agents')
@@ -213,6 +215,7 @@ export class AgentsController {
   }
 
   @Get('/:identifier')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
   @SdkMethodName('retrieve')
@@ -262,6 +265,7 @@ export class AgentsController {
   }
 
   @Patch('/:identifier')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
   @SdkMethodName('update')
@@ -297,6 +301,7 @@ export class AgentsController {
   }
 
   @Delete('/:identifier')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
   @SdkMethodName('delete')

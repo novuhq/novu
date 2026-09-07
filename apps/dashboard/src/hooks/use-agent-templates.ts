@@ -59,12 +59,20 @@ export function useAgentTemplates() {
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEY,
     queryFn: async ({ signal }) => {
-      const result = await fetchSanity<SanityAgentTemplate[]>(agentTemplatesQuery, { signal });
+      try {
+        const result = await fetchSanity<SanityAgentTemplate[]>(agentTemplatesQuery, { signal });
 
-      return (result ?? []).map(mapSanityTemplate).filter((template): template is AgentTemplate => template !== null);
+        return (result ?? []).map(mapSanityTemplate).filter((template): template is AgentTemplate => template !== null);
+      } catch (error) {
+        console.error('Failed to fetch agent templates from Sanity', error);
+
+        return [];
+      }
     },
     // Templates rarely change — keep them fresh for an hour like the changelog query.
     staleTime: 60 * 60 * 1000,
+    // Non-critical Sanity content — never surface fetch failures as toasts
+    meta: { showError: false },
   });
 
   const templates = data && data.length > 0 ? data : AGENT_TEMPLATES;

@@ -113,7 +113,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Gupshup',
     channel: ChannelTypeEnum.SMS,
     credentials: gupshupConfig,
-    docReference: 'https://docs.gupshup.io/docs/send-single-message',
+    docReference: `https://docs.novu.co/platform/integrations/sms/gupshup${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'gupshup.png', dark: 'gupshup.png' },
   },
   {
@@ -121,7 +121,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Firetext',
     channel: ChannelTypeEnum.SMS,
     credentials: firetextConfig,
-    docReference: 'https://www.firetext.co.uk/docs',
+    docReference: `https://docs.novu.co/platform/integrations/sms/firetext${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'firetext.svg', dark: 'firetext.svg' },
   },
   {
@@ -137,7 +137,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Kudosity (formerly BurstSMS)',
     channel: ChannelTypeEnum.SMS,
     credentials: burstSmsConfig,
-    docReference: 'https://docs.novu.co/platform/integrations/sms/kudosity',
+    docReference: `https://docs.novu.co/platform/integrations/sms/kudosity${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
   },
   {
@@ -145,7 +145,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'BulkSMS',
     channel: ChannelTypeEnum.SMS,
     credentials: bulkSmsConfig,
-    docReference: 'https://www.bulksms.com/developer/json/v1/',
+    docReference: `https://docs.novu.co/platform/integrations/sms/bulk-sms${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'bulk-sms.png', dark: 'bulk-sms.png' },
   },
   {
@@ -153,7 +153,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'iSend SMS',
     channel: ChannelTypeEnum.SMS,
     credentials: iSendSmsConfig,
-    docReference: 'https://send.com.ly/developers/docs',
+    docReference: `https://docs.novu.co/platform/integrations/sms/isend-sms${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'isend-sms.svg', dark: 'isend-sms.svg' },
   },
   {
@@ -170,7 +170,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: '46elks',
     channel: ChannelTypeEnum.SMS,
     credentials: fortySixElksConfig,
-    docReference: 'https://46elks.com/docs/send-sms',
+    docReference: `https://docs.novu.co/platform/integrations/sms/46elks${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: '46elks.png', dark: '46elks.png' },
   },
   {
@@ -179,7 +179,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: kannelConfig,
     betaVersion: true,
-    docReference: 'https://www.kannel.org/doc.shtml',
+    docReference: `https://docs.novu.co/platform/integrations/sms/kannel${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
   },
   {
@@ -187,7 +187,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Maqsam',
     channel: ChannelTypeEnum.SMS,
     credentials: maqsamConfig,
-    docReference: 'https://portal.maqsam.com/docs/v2/sms',
+    docReference: `https://docs.novu.co/platform/integrations/sms/maqsam${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'maqsam.png', dark: 'maqsam.png' },
   },
   {
@@ -195,7 +195,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'SMS Central',
     channel: ChannelTypeEnum.SMS,
     credentials: smsCentralConfig,
-    docReference: 'https://www.smscentral.com.au/sms-api/',
+    docReference: `https://docs.novu.co/platform/integrations/sms/sms-central${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sms-central.png', dark: 'sms-central.png' },
   },
   {
@@ -228,14 +228,14 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: genericSmsConfig,
     docReference: `https://docs.novu.co/platform/integrations/sms/sms-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
+    logoFileName: { light: 'webhook.svg', dark: 'webhook.svg' },
   },
   {
     id: SmsProviderIdEnum.Clicksend,
     displayName: `Clicksend`,
     channel: ChannelTypeEnum.SMS,
     credentials: clickSendConfig,
-    docReference: 'https://developers.clicksend.com/docs/rest/v3/?javascript--nodejs#send-sms',
+    docReference: `https://docs.novu.co/platform/integrations/sms/clicksend${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
   },
   {
@@ -243,7 +243,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `SimpleTexting`,
     channel: ChannelTypeEnum.SMS,
     credentials: simpleTextingConfig,
-    docReference: `https://docs.novu.co/channels/sms/simpletexting${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/simpletexting${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'simpletexting.png', dark: 'simpletexting.png' },
   },
   {
@@ -252,7 +252,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: bandwidthConfig,
     betaVersion: true,
-    docReference: `https://dev.bandwidth.com/docs/messaging/createMessage${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/bandwidth${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
   },
   {
@@ -260,7 +260,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Azure Sms`,
     channel: ChannelTypeEnum.SMS,
     credentials: azureSmsConfig,
-    docReference: `https://docs.novu.co/channels/sms/azure${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/azure${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'azure-sms.png', dark: 'azure-sms.png' },
   },
   {
@@ -268,7 +268,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `RingCentral`,
     channel: ChannelTypeEnum.SMS,
     credentials: ringCentralConfig,
-    docReference: 'https://developers.ringcentral.com/guide/messaging',
+    docReference: `https://docs.novu.co/platform/integrations/sms/ring-central${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'ring-central.svg', dark: 'ring-central.svg' },
   },
   {
@@ -276,7 +276,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Brevo`,
     channel: ChannelTypeEnum.SMS,
     credentials: brevoSmsConfig,
-    docReference: 'https://developers.brevo.com/reference/sendtransacsms',
+    docReference: `https://docs.novu.co/platform/integrations/sms/brevo${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
   },
   {
@@ -284,7 +284,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Eazy`,
     channel: ChannelTypeEnum.SMS,
     credentials: eazySmsConfig,
-    docReference: 'https://developers.eazy.im/#678805af-be7b-4487-93a4-c1007b7920f5',
+    docReference: `https://docs.novu.co/platform/integrations/sms/eazy${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'eazy-sms.svg', dark: 'eazy-sms.svg' },
   },
   {
@@ -292,7 +292,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Mobishastra',
     channel: ChannelTypeEnum.SMS,
     credentials: mobishastraConfig,
-    docReference: 'https://telkosh.com/mobishastra/',
+    docReference: `https://docs.novu.co/platform/integrations/sms/mobishastra${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'mobishastra.png', dark: 'mobishastra.png' },
   },
   {
@@ -308,7 +308,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Afro Message',
     channel: ChannelTypeEnum.SMS,
     credentials: afroSmsConfig,
-    docReference: 'https://afromessage.com/developers',
+    docReference: `https://docs.novu.co/platform/integrations/sms/afro-message${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'afro-sms.png', dark: 'afro-sms.png' },
   },
   {
@@ -316,7 +316,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Unifonic',
     channel: ChannelTypeEnum.SMS,
     credentials: unifonicConfig,
-    docReference: 'https://docs.unifonic.com/articles/#!products-documentation/getting-started-with-unifonic',
+    docReference: `https://docs.novu.co/platform/integrations/sms/unifonic${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'unifonic.svg', dark: 'unifonic.svg' },
   },
   {
@@ -324,7 +324,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'smsmode',
     channel: ChannelTypeEnum.SMS,
     credentials: smsmodeProviderConfig,
-    docReference: 'https://dev.smsmode.com/sms/v1/#tag/Message/operation/send-message',
+    docReference: `https://docs.novu.co/platform/integrations/sms/smsmode${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'smsmode.svg', dark: 'smsmode.svg' },
   },
   {
@@ -332,7 +332,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'iMedia',
     channel: ChannelTypeEnum.SMS,
     credentials: iMediaConfig,
-    docReference: '',
+    docReference: `https://docs.novu.co/platform/integrations/sms/imedia${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'imedia.png', dark: 'imedia.png' },
   },
   {
@@ -340,7 +340,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'iSendPro',
     channel: ChannelTypeEnum.SMS,
     credentials: ISendProProviderConfig,
-    docReference: 'https://www.isendpro.com/sms-api.php',
+    docReference: `https://docs.novu.co/platform/integrations/sms/isendpro${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'isendpro.svg', dark: 'isendpro.svg' },
   },
   {
@@ -348,7 +348,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'CM.com',
     channel: ChannelTypeEnum.SMS,
     credentials: cmTelecomConfig,
-    docReference: 'https://developers.cm.com/messaging/docs/sms',
+    docReference: `https://docs.novu.co/platform/integrations/sms/cm-com${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'cm-telecom.svg', dark: 'cm-telecom.svg' },
   },
   {
@@ -356,7 +356,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Ruach SMS',
     channel: ChannelTypeEnum.SMS,
     credentials: ruachSmsConfig,
-    docReference: 'https://docs.ruach.ng/',
+    docReference: `https://docs.novu.co/platform/integrations/sms/ruach-sms${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'ruach-sms.svg', dark: 'ruach-sms.svg' },
   },
 ];

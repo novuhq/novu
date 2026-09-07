@@ -51,7 +51,7 @@ export function agent(id: string, handlers: LangChainMessageHandler | LangChainA
 
   // The decision is persisted to `ctx.history` before this turn fires, so resuming is just
   // re-running `onMessage`: the adapter executes the approved tool, records its result, and
-  // `toLangChainMessages(ctx.history)` replays a completed cycle for the model to continue from.
+  // `toLangChainMessages(ctx)` replays a completed cycle for the model to continue from.
   const resume = async (ctx: AgentActionContext): Promise<void> => {
     const runtime = requireRuntimeContext(ctx);
     const result = await h.onMessage(RESUME_MESSAGE, runtime.asMessageContext());

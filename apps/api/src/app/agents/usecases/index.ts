@@ -1,3 +1,6 @@
+import { GetWebChatConversation } from '../web-chat/usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
+import { ListWebChatConversationEvents } from '../web-chat/usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
+import { ListWebChatConversations } from '../web-chat/usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
 import { AddAgentIntegration } from '../channels/integrations/add-agent-integration/add-agent-integration.usecase';
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
@@ -14,6 +17,8 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
+import { HandleNovuHuman } from '../managed-runtime/novu-human/handle-novu-human.usecase';
+import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
 import { HandleNovuResolve } from '../managed-runtime/novu-resolve/handle-novu-resolve.usecase';
 import { ConfirmToolApproval } from '../managed-runtime/tool-approval/confirm-tool-approval.usecase';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
@@ -45,9 +50,6 @@ import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generat
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { IngestAgentEvents } from '../shared/ingest-agent-events/ingest-agent-events.usecase';
-import { GetWebChatConversation } from '../web-chat/usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
-import { ListWebChatConversationEvents } from '../web-chat/usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
-import { ListWebChatConversations } from '../web-chat/usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
 
 export { ConsumeSlackSetupLink, GetSlackSetupLinkStatus, IssueSlackSetupLink };
 
@@ -98,6 +100,8 @@ export const USE_CASES = [
   ConfirmToolApproval,
   HandleNovuTools,
   HandleNovuResolve,
+  HandleNovuHuman,
+  ResumeManagedHuman,
   IngestAgentEvents,
   GetWebChatConversation,
   ListWebChatConversations,

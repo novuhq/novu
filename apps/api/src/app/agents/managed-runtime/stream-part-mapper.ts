@@ -19,13 +19,14 @@ interface RunEventBuilderIds {
 
 export function mapStreamPart(part: StreamPart): AgentEvent[] {
   switch (part.type) {
-    case 'stream-start':
+    case 'run-start':
       return [{ type: 'run-start' }];
 
     case 'message':
       return [
         {
           type: 'message',
+          role: 'assistant',
           messageId: randomUUID(),
           content: { markdown: part.text },
         },
@@ -41,6 +42,7 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
       return [
         {
           type: 'message',
+          role: 'assistant',
           messageId: randomUUID(),
           content: { markdown: part.text },
         },
@@ -116,8 +118,9 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
     case 'provider-event':
       return [
         {
-          type: 'custom',
-          name: `provider.${part.provider}.${part.event}`,
+          type: 'provider-event',
+          provider: part.provider,
+          event: part.event,
           data: part.data,
         },
       ];

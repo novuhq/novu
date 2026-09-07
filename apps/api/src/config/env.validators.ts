@@ -68,10 +68,31 @@ export const envValidators = {
   REDIS_CACHE_SERVICE_PORT: str({ default: '' }),
   REDIS_CACHE_SERVICE_TLS: json({ default: undefined }),
   REDIS_CLUSTER_SERVICE_HOST: str({ default: '' }),
+  REDIS_CLUSTER_SERVICE_PORT: str({ default: '' }),
   REDIS_CLUSTER_SERVICE_PORTS: str({ default: '' }),
+  REDIS_CLUSTER_USERNAME: str({ default: undefined }),
+  REDIS_CLUSTER_PASSWORD: str({ default: undefined }),
+  REDIS_CLUSTER_TLS: str({ default: undefined }),
+  IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
   STORE_NOTIFICATION_CONTENT: bool({ default: false }),
+  STORAGE_SERVICE: str({ default: undefined }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
+  // SQS queue backend (optional - when unset, jobs are produced to BullMQ only)
+  SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
+  SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
+  SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
+  SQS_QUEUE_URL_WEB_SOCKETS: str({ default: undefined }),
+  SQS_ENDPOINT: str({ default: undefined }),
+  SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
+  SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
+  // EventBridge Scheduler for delays beyond the SQS 900s cap (optional - when
+  // unset, long delays keep going to BullMQ)
+  EVENTBRIDGE_SCHEDULER_GROUP_PREFIX: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_ROLE_ARN: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_DLQ_ARN: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_MAX_RETRY_ATTEMPTS: num({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_MAX_EVENT_AGE_SECONDS: num({ default: undefined }),
   ENABLE_OTEL: bool({ default: false }),
   ENABLE_OTEL_LOGS: bool({ default: false }),
   OTEL_PROMETHEUS_PORT: num({ default: 9464 }),
@@ -156,7 +177,7 @@ export const envValidators = {
   ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
-  ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AZURE' && {
     AZURE_ACCOUNT_NAME: str(),
     AZURE_ACCOUNT_KEY: str(),
     AZURE_HOST_NAME: str({ default: `https://${processEnv.AZURE_ACCOUNT_NAME}.blob.core.windows.net` }),
@@ -164,13 +185,13 @@ export const envValidators = {
   }),
 
   // GCS validators
-  ...(processEnv.STORAGE_SERVICE === 'GCS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'GCS' && {
     GCS_BUCKET_NAME: str(),
     GCS_DOMAIN: str(),
   }),
 
   // AWS validators
-  ...(processEnv.STORAGE_SERVICE === 'AWS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AWS' && {
     S3_LOCAL_STACK: str({ default: '' }),
     S3_BUCKET_NAME: str(),
     S3_REGION: str(),

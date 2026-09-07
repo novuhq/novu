@@ -132,7 +132,7 @@ export const chatProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.CHAT,
     credentials: chatWebhookConfig,
     docReference: `https://docs.novu.co/channels-and-providers/chat/chat-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'chat-webhook.svg', dark: 'chat-webhook.svg' },
+    logoFileName: { light: 'webhook.svg', dark: 'webhook.svg' },
     betaVersion: true,
   },
   {
@@ -156,7 +156,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Novu Web Chat',
     channel: ChannelTypeEnum.CHAT,
     credentials: novuWebChatConfig,
-    docReference: `https://docs.novu.co/platform/integrations/chat/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+    docReference: `https://docs.novu.co/agents/channels/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu-web-chat.svg', dark: 'novu-web-chat.svg' },
   },
 ];

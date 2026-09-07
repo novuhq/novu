@@ -1,4 +1,4 @@
-import { InboxService } from './api';
+import { HttpClient, InboxService } from './api';
 import { ChannelConnections } from './channel-connections';
 import { ChannelEndpoints } from './channel-endpoints';
 import type { EventHandler, EventNames, Events } from './event-emitter';
@@ -8,14 +8,19 @@ import { Preferences } from './preferences';
 import { Session } from './session';
 import { Subscriptions } from './subscriptions';
 import type { Context, NovuOptions, Subscriber } from './types';
-import { buildContextKey, buildSubscriber } from './ui/internal';
+import { buildContextKey } from './utils/build-context-key';
+import { buildSubscriber } from './utils/build-subscriber';
+import type { WebChat } from './web-chat';
 import { createSocket } from './ws';
 import type { BaseSocketInterface } from './ws/base-socket';
 
-export class Novu implements Pick<NovuEventEmitter, 'on'> {
+export class Novu {
   #emitter: NovuEventEmitter;
   #session: Session;
+  #httpClient: HttpClient;
   #inboxService: InboxService;
+  #webChat?: WebChat;
+  #webChatLoad?: Promise<WebChat>;
   #options: NovuOptions;
 
   public readonly notifications: Notifications;
@@ -56,10 +61,65 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     return buildContextKey(this.#session.context);
   }
 
+  /**
+   * True after `loadWebChat` has resolved on this instance.
+   */
+  public get isWebChatLoaded(): boolean {
+    return this.#webChat !== undefined;
+  }
+
+  /**
+   * Web Chat client. Call `loadWebChat` before first use.
+   * @throws When Web Chat has not been loaded yet.
+   */
+  public get webChat(): WebChat {
+    if (!this.#webChat) {
+      throw new Error('Web Chat is not loaded. Call await novu.loadWebChat() before accessing novu.webChat.');
+    }
+
+    return this.#webChat;
+  }
+
+  /**
+   * Load the Web Chat module. Safe to call more than one time.
+   * Apps that never call this method do not download the Web Chat bundle.
+   */
+  public loadWebChat(): Promise<WebChat> {
+    if (this.#webChat) {
+      return Promise.resolve(this.#webChat);
+    }
+
+    if (this.#webChatLoad) {
+      return this.#webChatLoad;
+    }
+
+    this.#webChatLoad = (async () => {
+      try {
+        const { createBoundWebChat } = await import('./web-chat/bind-web-chat');
+        this.#webChat = createBoundWebChat({
+          inboxService: this.#inboxService,
+          emitter: this.#emitter,
+          httpClient: this.#httpClient,
+          socket: this.socket,
+        });
+
+        return this.#webChat;
+      } catch (error) {
+        this.#webChatLoad = undefined;
+        throw error;
+      }
+    })();
+
+    return this.#webChatLoad;
+  }
+
   constructor(options: NovuOptions) {
     this.#options = options;
-    this.#inboxService = new InboxService({
+    this.#httpClient = new HttpClient({
       apiUrl: options.apiUrl || options.backendUrl,
+    });
+    this.#inboxService = new InboxService({
+      httpClient: this.#httpClient,
     });
     this.#emitter = new NovuEventEmitter();
     const subscriber = buildSubscriber({ subscriberId: options.subscriberId, subscriber: options.subscriber });
@@ -109,7 +169,6 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
     });
-
     this.on = (eventName, listener) => {
       if (this.socket.isSocketEvent(eventName)) {
         this.socket.connect();
@@ -132,6 +191,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.preferences.cache.clearAll();
     this.preferences.scheduleCache.clearAll();
     this.subscriptions.cache.clearAll();
+    this.#webChat?.clearCache();
   }
 
   /**

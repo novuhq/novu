@@ -1,15 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsIn,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-  ValidateIf,
-  ValidateNested,
-} from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, MinLength, ValidateIf, ValidateNested } from 'class-validator';
 import { SkipControlDto } from '../skip.dto';
 
 export class EmailFromControlDto {
@@ -87,12 +78,8 @@ export class EmailControlDto extends SkipControlDto {
   @IsString()
   replyTo?: string;
 
-  @ApiPropertyOptional({
-    description: 'One-line inbox preview text shown next to the subject.',
-    maxLength: 84,
-  })
+  @ApiPropertyOptional({ description: 'One-line inbox preview text shown next to the subject.' })
   @IsOptional()
   @IsString()
-  @MaxLength(84)
   preheader?: string;
 }

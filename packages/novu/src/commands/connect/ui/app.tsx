@@ -50,7 +50,9 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
         previewMorphProgress={phase.kind === 'preview-generated' ? previewMorphProgress : null}
         paused={orbPaused}
       />
-      <PhaseContent phase={phase} onChannelHover={setHoveredChannel} previewMorphComplete={previewMorphComplete} />
+      <Box key={phase.kind} flexDirection="column" alignItems="center">
+        <PhaseContent phase={phase} onChannelHover={setHoveredChannel} previewMorphComplete={previewMorphComplete} />
+      </Box>
     </Box>
   );
 }

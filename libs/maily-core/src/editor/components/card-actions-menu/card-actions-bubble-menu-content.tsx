@@ -6,6 +6,7 @@ import {
   allowedCardButtonStyle,
   CardButtonAttributes,
 } from '@/editor/nodes/card-button/card-button';
+import { useMailyContext } from '@/editor/provider';
 import { cn } from '@/editor/utils/classname';
 import { ButtonLabelInput } from '../../nodes/button/button-label-input';
 import { Divider } from '../ui/divider';
@@ -28,8 +29,13 @@ const FIELD_CONTROL_CLASS =
   // min-height:auto grows the row and shifts the form when switching buttons.
   'mly-box-border mly-h-6 mly-max-h-6 mly-min-h-6 mly-w-full mly-overflow-hidden mly-rounded mly-border mly-border-[#f2f5f8] mly-bg-soft-gray mly-px-1.5 mly-text-xs mly-font-medium mly-text-[#0e121b] hover:mly-bg-soft-gray focus:mly-border-[#c1c7d0] focus:mly-bg-soft-gray focus:mly-outline-none focus-visible:mly-border-[#c1c7d0] focus-visible:mly-ring-0';
 
+// Blocking validation error border; last in `cn` so tailwind-merge overrides the default border color.
+const FIELD_ERROR_CLASS =
+  'mly-border-red-500 focus:mly-border-red-500 focus-visible:mly-border-red-500 hover:mly-border-red-500';
+
 export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
   const state = useCardActionsState(editor);
+  const { validateCardButtonField } = useMailyContext();
 
   if (!state.isActive) {
     return null;
@@ -40,6 +46,9 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
   if (!activeButton) {
     return null;
   }
+
+  const labelError = validateCardButtonField?.('label', activeButton.label, activeButton.isLabelVariable) ?? null;
+  const urlError = validateCardButtonField?.('url', activeButton.url, activeButton.isUrlVariable) ?? null;
 
   const updateActiveButton = (attrs: Partial<CardButtonAttributes>) => {
     editor.chain().selectCardButton(state.activeIndex).updateCardButtonAttributes(attrs).run();
@@ -106,13 +115,15 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
             />
           </FieldRow>
 
-          <FieldRow label="Label">
+          <FieldRow label="Label" error={labelError}>
             <ButtonLabelInput
               key={`label-${state.activeIndex}`}
               value={activeButton.label}
               isVariable={activeButton.isLabelVariable}
               editor={editor}
-              className={FIELD_CONTROL_CLASS}
+              wrapVariablesInLiquid
+              placeholder="Button"
+              className={cn(FIELD_CONTROL_CLASS, labelError && FIELD_ERROR_CLASS)}
               onValueChange={(value, isVariable) =>
                 updateActiveButton({ label: value, isLabelVariable: isVariable ?? false })
               }
@@ -136,14 +147,16 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
 
           <Divider type="horizontal" className="mly-mx-0 mly-bg-[#f2f5f8]" />
 
-          <FieldRow label="URL">
+          <FieldRow label="URL" error={urlError}>
             <ButtonLabelInput
               key={`url-${state.activeIndex}`}
               value={activeButton.url}
               isVariable={activeButton.isUrlVariable}
               editor={editor}
               enabledProviders={['variable']}
-              className={FIELD_CONTROL_CLASS}
+              wrapVariablesInLiquid
+              placeholder="https://google.com"
+              className={cn(FIELD_CONTROL_CLASS, urlError && FIELD_ERROR_CLASS)}
               onValueChange={(value, isVariable) =>
                 updateActiveButton({ url: value, isUrlVariable: isVariable ?? false })
               }
@@ -166,13 +179,19 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
   );
 }
 
-function FieldRow({ label, children }: { label: string; children: ReactNode }) {
+function FieldRow({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {
   return (
-    <div className="mly-flex mly-w-full mly-items-center mly-justify-center mly-gap-3">
-      <span className="mly-w-[50px] mly-shrink-0 mly-text-xs mly-font-medium mly-leading-4 mly-text-[#525866]">
-        {label}
-      </span>
-      <div className="mly-flex mly-min-w-0 mly-flex-1 mly-items-center">{children}</div>
+    <div className="mly-flex mly-w-full mly-flex-col mly-gap-1">
+      <div className="mly-flex mly-w-full mly-items-center mly-justify-center mly-gap-3">
+        <span className="mly-w-[50px] mly-shrink-0 mly-text-xs mly-font-medium mly-leading-4 mly-text-[#525866]">
+          {label}
+        </span>
+        <div className="mly-flex mly-min-w-0 mly-flex-1 mly-items-center">{children}</div>
+      </div>
+      {error ? (
+        // Align the message under the control column (50px label + 12px gap).
+        <span className="mly-pl-[62px] mly-text-[11px] mly-font-medium mly-leading-3 mly-text-red-600">{error}</span>
+      ) : null}
     </div>
   );
 }

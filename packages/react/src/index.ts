@@ -1,5 +1,5 @@
 export type * from '@novu/js';
-export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { pendingActionKey, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   AllLocalization,
@@ -65,6 +65,8 @@ export {
   TelegramConnectButton,
 } from './components';
 export type {
+  UseWebChatProps,
+  UseWebChatResult,
   UseChannelConnectionProps,
   UseChannelConnectionResult,
   UseChannelConnectionsProps,
@@ -85,6 +87,7 @@ export type {
   UseTelegramSubscriberLinkResult,
 } from './hooks';
 export {
+  useWebChat,
   useChannelConnection,
   useChannelConnections,
   useChannelEndpoint,

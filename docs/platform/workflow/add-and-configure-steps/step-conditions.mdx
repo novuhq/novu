@@ -44,6 +44,8 @@ This structure allows you to model both simple checks and complex branching logi
     | --------------------- | --------------------------------------- | ----------------------------------------------- |
     | `=`                   | Equal to                                | `subscriber.locale = "en-US"`                   |
     | `!=`                  | Not equal to                            | `subscriber.isOnline != true`                   |
+    | `is empty`            | Is an empty string                      | `payload.marketingName is empty`                |
+    | `is not empty`        | Is a non-empty string                   | `payload.marketingName is not empty`            |
     | `<`                   | Less than                               | `payload.totalAmount < 100`                     |
     | `>`                   | Greater than                            | `payload.totalAmount > 100`                     |
     | `<=`                  | Less than or equal to                   | `payload.totalAmount <= 200`                    |
@@ -61,6 +63,13 @@ This structure allows you to model both simple checks and complex branching logi
     | `between`             | Within a range                          | `payload.totalAmount between [50, 200]`         |
     | `not between`         | Outside of a range                      | `payload.totalAmount not between [0, 50]`       |
 
+  **is empty** and **is not empty** are available only for string fields. They check the exact string value, so
+  whitespace-only strings are considered non-empty. Missing fields, `null`, arrays, objects, numbers, and booleans do
+  not match either operator.
+
+  Existing step conditions are unchanged. Saved `equals`, `is null`, and other operators keep the same result until
+  you add an **is empty** or **is not empty** rule.
+
 ## Data used for step conditions
 
 Step conditions can evaluate data from several sources. Choose the source that best represents the decision you’re trying to make.
@@ -70,6 +79,16 @@ Step conditions can evaluate data from several sources. Choose the source that b
 You can apply conditions on subscriber attributes so notifications only go to the right people. For example, send an SMS only when `subscriber.isOnline` is `false` (isOnline is a subscriber attribute that comes from whether the subscriber has an active Inbox session).
 
 For custom fields you store on the subscriber (e.g. plan, preferences), use the full path to the property. For example, use `subscriber.data.subscription_plan` equals `premium` to run a step only for subscribers on the premium plan.
+
+<Warning>
+  Custom properties under `subscriber.data.*` do not have a declared schema. The condition builder therefore treats
+  them as strings, even when a subscriber profile currently stores a number or boolean. Numeric operators such as
+  `<`, `>`, `between`, and `not between` are not available for these properties.
+
+  When you need typed comparisons, include the value in the workflow payload, declare its number or boolean type in
+  the [payload schema](/platform/workflow/configure-workflow#payload-schema), and create the condition against that
+  `payload.*` field.
+</Warning>
 
 <Note>
   To learn more about Subscribers model, refer to the [Subscribers documentation](/platform/concepts/subscribers)

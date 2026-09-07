@@ -1,13 +1,22 @@
-import { ContentIssueEnum, StepResponseDto, StepUpdateDto, WorkflowResponseDto } from '@novu/shared';
+import {
+  ContentIssueEnum,
+  FeatureFlagsKeysEnum,
+  StepResponseDto,
+  StepTypeEnum,
+  StepUpdateDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { PageMeta } from '@/components/page-meta';
 import { Form } from '@/components/primitives/form/form';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
+import { deriveChatEditorType } from '@/components/workflow-editor/steps/chat/derive-chat-editor-type';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor-layout';
 import { UpdateWorkflowFn, useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { getControlsDefaultValues } from '@/utils/default-values';
 
@@ -40,6 +49,7 @@ type StepTemplateFormProps = {
 };
 
 function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
+  const isChatBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
   const form = useForm({
     defaultValues: getControlsDefaultValues(step),
     shouldFocusError: false,
@@ -88,6 +98,11 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       const { providerOverrides, ...controlValues } = data as Record<string, unknown> & {
         providerOverrides?: StepUpdateDto['providerOverrides'];
       };
+
+      if (step.type === StepTypeEnum.CHAT && isChatBlockEditorEnabled) {
+        controlValues.editorType = deriveChatEditorType(controlValues.body, controlValues.editorType, true);
+      }
+
       const fp = JSON.stringify({
         v: controlValues,
         po: providerOverrides,

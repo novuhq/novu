@@ -28,25 +28,25 @@ describe('toSlackFlavoredCard', () => {
 });
 
 describe('validateSlackCard', () => {
-  test('returns no warnings for a small card', () => {
+  test('returns no findings for a small card', () => {
     expect(validateSlackCard(markdownCard('hello'))).toEqual([]);
   });
 
-  test('warns when block count exceeds the Slack limit', () => {
+  test('flags an over-limit block count as a blocking error (Slack rejects the payload)', () => {
     const card: CardElement = {
       type: 'card',
       children: Array.from({ length: 51 }, () => ({ type: 'divider' as const })),
     };
 
-    const warnings = validateSlackCard(card);
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toMatchObject({
+    const findings = validateSlackCard(card);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
       code: 'BLOCK_LIMIT_EXCEEDED',
-      level: ChatRenderValidationLevelEnum.WARNING,
+      level: ChatRenderValidationLevelEnum.ERROR,
     });
   });
 
-  test('warns when an actions row exceeds the Slack button limit', () => {
+  test('flags an actions row over the Slack button limit', () => {
     const card: CardElement = {
       type: 'card',
       children: [

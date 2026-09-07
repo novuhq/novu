@@ -28,6 +28,14 @@ export const COMPARISON_OPERATORS = [
   JsonComparisonOperatorEnum.ENDS_WITH,
 ] as const;
 
+export const UNARY_STRING_OPERATORS = ['isEmpty', 'isNonEmpty'] as const;
+
+export type UnaryStringOperator = (typeof UNARY_STRING_OPERATORS)[number];
+
+export function isUnaryStringOperator(operator: string): operator is UnaryStringOperator {
+  return UNARY_STRING_OPERATORS.some((candidate) => candidate === operator);
+}
+
 export const LOGICAL_OPERATORS = [
   JsonLogicOperatorEnum.AND,
   JsonLogicOperatorEnum.OR,

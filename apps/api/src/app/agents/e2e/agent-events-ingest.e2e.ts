@@ -61,7 +61,7 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
   ): AgentEventEnvelope {
     return buildEnvelope(
       conversationId,
-      { type: 'message', messageId, content: { markdown: `Content for ${messageId}` } },
+      { type: 'message', role: 'assistant', messageId, content: { markdown: `Content for ${messageId}` } },
       overrides
     );
   }
@@ -233,6 +233,47 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
 
     // A bridge tool-approval-request with deliverCard auto-delivers the approval card to the platform.
     expect((outboundGateway.postToConversation as sinon.SinonStub).called).to.be.true;
+  });
+
+  it('should persist run-start and run-finish as sequenced lifecycle activities', async () => {
+    const conversationId = await seedConversation(ctx);
+    const runId = `run-lifecycle-${Date.now()}`;
+
+    const res = await postIngest([
+      buildEnvelope(conversationId, { type: 'run-start' }, { runId, sequence: 1 }),
+      buildEnvelope(
+        conversationId,
+        { type: 'run-finish', outcome: 'completed', finishReason: 'stop' },
+        { runId, sequence: 2 }
+      ),
+    ]);
+
+    expect(res.status).to.equal(200);
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    const runStart = activities.find((a) => a.type === ConversationActivityTypeEnum.RUN_START);
+    const runFinish = activities.find((a) => a.type === ConversationActivityTypeEnum.RUN_FINISH);
+
+    expect(runStart).to.exist;
+    expect(runStart!.identifier).to.equal(`run_${runId}_start`);
+    expect(runStart!.sequence).to.be.a('number');
+
+    expect(runFinish).to.exist;
+    expect(runFinish!.identifier).to.equal(`run_${runId}_finish`);
+    expect(runFinish!.sequence).to.be.a('number');
+    expect(runFinish!.richContent).to.deep.include({
+      lifecycle: { outcome: 'completed', finishReason: 'stop' },
+    });
+
+    const handoff = await activityRepository.listForView({
+      view: 'agent_handoff',
+      environmentId: ctx.session.environment._id,
+      organizationId: ctx.session.organization._id,
+      conversationId,
+      limit: 50,
+    });
+    expect(handoff.data.some((a) => a.type === ConversationActivityTypeEnum.RUN_START)).to.equal(false);
+    expect(handoff.data.some((a) => a.type === ConversationActivityTypeEnum.RUN_FINISH)).to.equal(false);
   });
 
   it('should accept a tool-approval-request without deliverCard and persist the activity without posting a card', async () => {

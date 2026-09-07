@@ -154,6 +154,10 @@ const messageSchema = new Schema<MessageDBModel>(
       type: [Schema.Types.String],
       default: undefined,
     },
+    _agentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Agent',
+    },
   },
   schemaOptions
 );

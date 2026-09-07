@@ -143,15 +143,22 @@ function InlineRouteForm({
       <TableRow className="[&>td]:border-0">
         {/* Address */}
         <TableCell className="px-3 py-4">
-          <div className="flex items-center gap-1">
-            <Input
-              className="h-7 w-28 text-sm"
-              placeholder="support"
-              value={form.address}
-              disabled={isAddressLocked}
-              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-            />
-            <span className="text-foreground-400 shrink-0 text-xs">@{domainName}</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1">
+              <Input
+                className="h-7 w-28 text-sm"
+                placeholder="support"
+                value={form.address}
+                disabled={isAddressLocked}
+                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+              />
+              <span className="text-foreground-400 shrink-0 text-xs">@{domainName}</span>
+            </div>
+            {form.address.includes('+') && (
+              <p className="text-warning text-label-xs max-w-[220px] leading-4">
+                Avoid <code className="font-medium">+</code> in route addresses — it is reserved for Novu reply tokens.
+              </p>
+            )}
           </div>
         </TableCell>
 

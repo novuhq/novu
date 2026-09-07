@@ -1,6 +1,17 @@
 import { HttpStatus } from '@nestjs/common';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, ChatProviderIdEnum, EmailProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import {
+  ChannelConnectionRepository,
+  ChannelEndpointRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+} from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  ENDPOINT_TYPES,
+  PushProviderIdEnum,
+} from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -8,6 +19,8 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', (
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();
+  const channelEndpointRepository = new ChannelEndpointRepository();
+  const channelConnectionRepository = new ChannelConnectionRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -20,6 +33,67 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', (
 
     expect(body.statusCode).to.equal(404);
     expect(body.message).to.equal(`Entity with id ${integrationId} not found`);
+  });
+
+  it('should delete channel connections immediately and clean up subscriber endpoints in the background', async () => {
+    const identifier = `slack-delete-${Date.now()}`;
+    const connectionIdentifier = `${identifier}-connection`;
+    const endpointIdentifier = `${identifier}-endpoint`;
+    const integration = await integrationRepository.create({
+      name: 'Slack',
+      identifier,
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      active: true,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    await channelConnectionRepository.create({
+      identifier: connectionIdentifier,
+      integrationIdentifier: identifier,
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId: 'subscriber-delete-integration',
+      contextKeys: [],
+      workspace: { id: 'T-delete-integration' },
+      auth: { accessToken: 'xoxb-delete-integration' },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    await channelEndpointRepository.create({
+      identifier: endpointIdentifier,
+      connectionIdentifier,
+      integrationIdentifier: identifier,
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId: 'subscriber-delete-integration',
+      contextKeys: [],
+      type: ENDPOINT_TYPES.SLACK_CHANNEL,
+      endpoint: { channelId: 'C-delete-integration' },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const { statusCode } = await session.testAgent.delete(`/v1/integrations/${integration._id}`).send();
+
+    expect(statusCode).to.equal(HttpStatus.OK);
+    expect(
+      await channelConnectionRepository.findOne({
+        identifier: connectionIdentifier,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      })
+    ).to.equal(null);
+
+    const endpointGone = await waitUntilGone(() =>
+      channelEndpointRepository.findOne({
+        identifier: endpointIdentifier,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      })
+    );
+    expect(endpointGone).to.equal(true);
   });
 
   it('should not recalculate primary and priority fields for push channel', async () => {
@@ -328,3 +402,17 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', (
     });
   });
 });
+
+async function waitUntilGone(lookup: () => Promise<unknown>, timeoutMs = 2000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if ((await lookup()) == null) {
+      return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+
+  return false;
+}

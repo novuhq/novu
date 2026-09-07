@@ -420,7 +420,7 @@ export class ParseEventRequest {
 
     if (!command.skipQueueInsertion) {
       await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
-      this.logger.info(
+      this.logger.debug(
         { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
         'Event dispatched to [Workflow] Queue'
       );

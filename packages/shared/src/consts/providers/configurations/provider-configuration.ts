@@ -106,12 +106,6 @@ const sesConfigurations: ConfigConfiguration[] = [
       },
     ],
   },
-  {
-    key: 'configurationSetName',
-    displayName: 'Configuration Set Name',
-    type: 'string',
-    required: false,
-  },
 ];
 
 export const pushConfigurations: ConfigConfiguration[] = [

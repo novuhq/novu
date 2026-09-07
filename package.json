@@ -21,6 +21,8 @@
     "dev-environment-setup": "./scripts/dev-environment-setup.sh",
     "dev:portless": "node scripts/mprocs-dev.mjs",
     "dev:config": "node scripts/novu-dev-config.mjs",
+    "dev:thalamus-observer": "pnpm --filter @novu/thalamus-observer-worker dev",
+    "dev:socket-worker": "pnpm --filter @novu/socket-worker dev",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
     "g:module": "hygen module new --name=$pnpm_config_name",
     "g:usecase": "hygen usecase new --name=$pnpm_config_name --module=$pnpm_config_module",

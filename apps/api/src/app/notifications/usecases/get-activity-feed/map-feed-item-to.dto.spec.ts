@@ -53,6 +53,54 @@ describe('mapFeedItemToDto', () => {
     expect(job!.step.filters[0].children[0].on).to.equal(FilterPartTypeEnum.PAYLOAD);
   });
 
+  it('preserves parent negation when promoting a nested-only filter group', () => {
+    const entity = {
+      _id: 'notification-id',
+      jobs: [
+        {
+          _id: 'job-id',
+          type: StepTypeEnum.EMAIL,
+          status: 'completed',
+          executionDetails: [],
+          step: {
+            _id: 'step-id',
+            active: true,
+            filters: [
+              {
+                isNegated: true,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    isNegated: false,
+                    type: 'GROUP',
+                    value: FieldLogicalOperatorEnum.OR,
+                    children: [
+                      {
+                        on: FilterPartTypeEnum.PAYLOAD,
+                        field: 'status',
+                        value: 'active',
+                        operator: FieldOperatorEnum.EQUAL,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    } as unknown as NotificationFeedItemEntity;
+
+    const dto = mapFeedItemToDto(entity);
+    const filters = dto.jobs?.[0]?.step.filters;
+
+    expect(filters).to.have.length(1);
+    expect(filters![0].isNegated).to.equal(true);
+    expect(filters![0].value).to.equal(FieldLogicalOperatorEnum.OR);
+    expect(filters![0].children[0].on).to.equal(FilterPartTypeEnum.PAYLOAD);
+  });
+
   it('keeps leaf children on the parent while promoting sibling nested groups', () => {
     const entity = {
       _id: 'notification-id',

@@ -579,9 +579,7 @@ export class SendMessagePush extends SendMessageBase {
       channelType: ChannelTypeEnum.PUSH,
       providerId: channel.providerId,
       userId: command.userId,
-      filterData: {
-        tenant: command.job.tenant,
-      },
+      filterData: this.getIntegrationFilterData(command),
     });
 
     if (!integration) {
@@ -868,9 +866,7 @@ export class SendMessagePush extends SendMessageBase {
         channelType: ChannelTypeEnum.PUSH,
         providerId: providerOverride.providerId,
         userId: command.userId,
-        filterData: {
-          tenant: command.job.tenant,
-        },
+        filterData: this.getIntegrationFilterData(command),
       });
 
       if (!integration) continue;

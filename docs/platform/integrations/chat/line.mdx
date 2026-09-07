@@ -127,11 +127,11 @@ await novu.trigger({
 });
 ```
 
-The chat step content is sent as a plain text LINE message unless you override the message type at trigger time.
+The chat step content is sent as a LINE text message by default. Block or card content is converted to a text/markdown-style fallback. Use trigger overrides for `flex`, `image`, or `sticker` when you need LINE-native message types. See [Writing chat templates](/platform/integrations/chat/writing-chat-template).
 
 ## Rich message types
 
-Pass `flex`, `image`, or `sticker` under `overrides.chat` when triggering a workflow. When present, Novu sends that message type instead of plain text.
+Pass `flex`, `image`, or `sticker` under `overrides.chat` when triggering a workflow. When present, Novu sends that message type instead of the rendered Chat step text.
 
 <Tabs>
   <Tab title="Sticker">

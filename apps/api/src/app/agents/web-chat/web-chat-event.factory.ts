@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import {
+  AGENT_EVENT_PROTOCOL_VERSION,
+  type AgentEvent,
+  type AgentEventEnvelope,
+  type AgentMessageContent,
+} from '@novu/agent-event-protocol';
 import { shortId } from '@novu/application-generic';
 
 type WebChatFactoryBaseInput = {
   conversationId: string;
+  conversationIdentifier: string;
   agentId: string;
   sequence: number;
   runId?: string;
@@ -13,12 +19,12 @@ type WebChatFactoryBaseInput = {
 
 export type WebChatFactoryMessageInput = WebChatFactoryBaseInput & {
   platformMessageId: string;
-  content: { markdown: string };
+  content: AgentMessageContent;
 };
 
 export type WebChatFactoryEditInput = WebChatFactoryBaseInput & {
   platformMessageId: string;
-  content: { markdown: string };
+  content: AgentMessageContent;
 };
 
 export type WebChatFactoryDeleteInput = WebChatFactoryBaseInput & {
@@ -40,6 +46,7 @@ export class WebChatEventFactory {
   createMessageEnvelope(input: WebChatFactoryMessageInput): AgentEventEnvelope {
     return this.build(input, {
       type: 'message',
+      role: 'assistant',
       messageId: input.platformMessageId,
       content: input.content,
     });
@@ -68,20 +75,18 @@ export class WebChatEventFactory {
     });
   }
 
-  private build(
-    input: {
-      conversationId: string;
-      agentId: string;
-      sequence: number;
-      runId?: string;
-      turnId?: string;
-      timestamp?: string;
-    },
-    event: AgentEvent
+  /** Live-only envelopes (typing, provider-event) with a minted conversation sequence. */
+  createEphemeralEnvelope(
+    input: WebChatFactoryBaseInput & { event: AgentEvent; runId?: string; turnId?: string }
   ): AgentEventEnvelope {
+    return this.build(input, input.event);
+  }
+
+  private build(input: WebChatFactoryBaseInput, event: AgentEvent): AgentEventEnvelope {
     return {
       version: AGENT_EVENT_PROTOCOL_VERSION,
       conversationId: input.conversationId,
+      conversationIdentifier: input.conversationIdentifier,
       agentId: input.agentId,
       runId: input.runId ?? `web_${shortId(12)}`,
       turnId: input.turnId ?? `turn_${shortId(12)}`,

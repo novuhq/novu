@@ -1,3 +1,4 @@
+import type { Editor as TiptapEditor } from '@tiptap/core';
 import { ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   RiArrowRightUpLine,
@@ -66,6 +67,8 @@ type EditVariablePopoverProps = {
   getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined;
   onManageSchemaClick?: (variableName: string) => void;
   onAddToSchemaClick?: (variableName: string) => void;
+  /** When set, TipTap selection/focus moves inside the editor won't dismiss this popover. */
+  editor?: TiptapEditor;
 };
 
 export const EditVariablePopover = ({
@@ -81,6 +84,7 @@ export const EditVariablePopover = ({
   getSchemaPropertyByKey,
   onManageSchemaClick,
   onAddToSchemaClick,
+  editor,
 }: EditVariablePopoverProps) => {
   const { parsedName, parsedAliasForRoot, parsedDefaultValue, parsedFilters } = useVariableParser(
     variable?.name || '',
@@ -112,9 +116,15 @@ export const EditVariablePopover = ({
     setFilters(parsedFilters || []);
   }, [parsedName, parsedDefaultValue, parsedFilters]);
 
-  const handlePopoverOpen = useCallback(() => {
-    track(TelemetryEvent.VARIABLE_POPOVER_OPENED);
-  }, [track]);
+  const handlePopoverOpen = useCallback(
+    (event: Event) => {
+      // Prefer the variable name field over the visually-hidden submit control.
+      event.preventDefault();
+      track(TelemetryEvent.VARIABLE_POPOVER_OPENED);
+      nameInputRef.current?.focus();
+    },
+    [track]
+  );
 
   const handleNameChange = useCallback((newName: string) => {
     setName(newName);
@@ -184,10 +194,18 @@ export const EditVariablePopover = ({
         side="bottom"
         updatePositionStrategy="optimized"
         onOpenAutoFocus={handlePopoverOpen}
+        onFocusOutside={(event) => {
+          // Selecting the card button (to hide the Actions tippy) moves focus into ProseMirror.
+          // Treat that as still "inside" so Configure Variable stays open.
+          if (editor?.view?.dom.contains(event.target as Node)) {
+            event.preventDefault();
+          }
+        }}
       >
         <form
           onClick={(event) => {
-            event.preventDefault();
+            // Keep TipTap from treating clicks inside Configure as editor interactions.
+            // Do not preventDefault — that blocks Enter from submitting this form.
             event.stopPropagation();
           }}
           onSubmit={(event) => {
@@ -196,6 +214,10 @@ export const EditVariablePopover = ({
             handleOpenChange(false);
           }}
         >
+          {/* First submit control so Enter in text fields applies + closes (HTML form semantics). */}
+          <button type="submit" tabIndex={-1} className="sr-only">
+            Apply
+          </button>
           <div className="bg-bg-weak border-b border-b-neutral-100">
             <div className="flex flex-row items-center justify-between space-y-0 px-1.5 py-1">
               <div className="flex w-full items-center justify-between gap-1">
@@ -233,6 +255,14 @@ export const EditVariablePopover = ({
                           ref={nameInputRef}
                           value={name}
                           onChange={(e) => handleNameChange(e.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key !== 'Enter') {
+                              return;
+                            }
+
+                            event.preventDefault();
+                            handleOpenChange(false);
+                          }}
                           autoFocus
                           className="text-xs"
                           placeholder="Variable name (e.g. payload.name)"
@@ -322,7 +352,10 @@ export const EditVariablePopover = ({
 
                     <Popover open={isCommandOpen} onOpenChange={setIsCommandOpen}>
                       <PopoverTrigger asChild>
-                        <button className="text-text-soft bg-background flex h-[30px] w-full items-center justify-between rounded-md border px-2 text-xs">
+                        <button
+                          type="button"
+                          className="text-text-soft bg-background flex h-[30px] w-full items-center justify-between rounded-md border px-2 text-xs"
+                        >
                           <span>Add a filter</span>
                           <RiSearchLine className="h-3 w-3" />
                         </button>

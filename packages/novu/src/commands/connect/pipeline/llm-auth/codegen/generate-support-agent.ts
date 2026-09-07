@@ -82,7 +82,7 @@ function buildAiSdkGenerateTextReturn(modelLine: string, withTools: boolean): st
   return `    return generateText({
       model: ${modelLine},
       instructions: '${instructions}',
-      messages: toModelMessages(ctx.history),${toolsLine}
+      messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx)),${toolsLine}
     });`;
 }
 
@@ -134,10 +134,10 @@ function buildAiSdkImports(kind: GenerateSupportAgentInput['llmAuth']['kind']): 
   const withTools = aiSdkCodegenSupportsTools(kind);
   const toolImports = withTools
     ? `import { generateText, tool } from 'ai';
-import { toModelMessages } from '@novu/framework/ai-sdk';
+import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';
 import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`
     : `import { generateText } from 'ai';
-import { toModelMessages } from '@novu/framework/ai-sdk';`;
+import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';`;
 
   const base = `/** @jsxImportSource @novu/framework */
 import { Actions, Button, Card, CardText } from '@novu/framework';

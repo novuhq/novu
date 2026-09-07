@@ -55,6 +55,7 @@ export enum WebSocketEvent {
   RECEIVED = 'notification_received',
   UNREAD = 'unread_count_changed',
   UNSEEN = 'unseen_count_changed',
+  AGENT_EVENT = 'agent_event',
 }
 
 export enum SocketType {

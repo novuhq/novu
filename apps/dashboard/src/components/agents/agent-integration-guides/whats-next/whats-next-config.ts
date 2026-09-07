@@ -1,4 +1,5 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import type { AgentIntegrationLink } from '@/api/agents';
 import { buildMsTeamsWhatsNextConfig } from './msteams-whats-next-config';
 import { buildSlackWhatsNextConfig } from './slack-whats-next-config';
 import { buildTelegramWhatsNextConfig } from './telegram-whats-next-config';
@@ -28,4 +29,31 @@ export function resolveChannelWhatsNextConfig(ctx: WhatsNextConfigContext): Chan
  */
 export function providerHasWhatsNextPhase(providerId: string): boolean {
   return Boolean(WHATS_NEXT_CONFIG_BUILDERS[providerId]);
+}
+
+/** Whether Overview / rollout tracking should treat this provider as a user-facing connect flow. */
+export function isUserRolloutChannel(
+  providerId: string,
+  options: { isMsTeamsWhatsNextEnabled: boolean; isEmailWhatsNextEnabled: boolean }
+): boolean {
+  if (providerId === EmailProviderIdEnum.NovuAgent) {
+    return options.isEmailWhatsNextEnabled;
+  }
+
+  if (!providerHasWhatsNextPhase(providerId)) {
+    return false;
+  }
+
+  if (providerId === ChatProviderIdEnum.MsTeams && !options.isMsTeamsWhatsNextEnabled) {
+    return false;
+  }
+
+  return true;
+}
+
+export function filterUserRolloutLinks(
+  links: ReadonlyArray<AgentIntegrationLink>,
+  options: { isMsTeamsWhatsNextEnabled: boolean; isEmailWhatsNextEnabled: boolean }
+): AgentIntegrationLink[] {
+  return links.filter((link) => isUserRolloutChannel(link.integration.providerId, options));
 }

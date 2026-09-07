@@ -911,7 +911,7 @@ export class WorkflowRunService {
     const channelJobs = jobs.filter((job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type));
 
     const logResolution = (status: DeliveryLifecycleStatusEnum, extra?: Record<string, unknown>) => {
-      this.logger.info(
+      this.logger.debug(
         {
           notificationId,
           resolvedStatus: status,

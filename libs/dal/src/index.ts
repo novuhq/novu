@@ -20,6 +20,7 @@ export * from './repositories/environment';
 export * from './repositories/environment-variable';
 export * from './repositories/execution-details';
 export * from './repositories/feed';
+export * from './repositories/human-interaction';
 export * from './repositories/integration';
 export * from './repositories/job';
 export * from './repositories/layout';

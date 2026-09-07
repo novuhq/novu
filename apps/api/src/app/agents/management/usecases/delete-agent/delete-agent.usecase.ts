@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, resolveAgentRuntime } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -34,6 +34,10 @@ export class DeleteAgent {
 
     if (!agent) {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
+    }
+
+    if (agent.runtime === 'human_relay') {
+      throw new ForbiddenException('System human-relay agents cannot be deleted.');
     }
 
     const shouldDeleteFromProvider = command.deleteFromProvider === true;

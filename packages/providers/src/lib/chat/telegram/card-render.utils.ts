@@ -1,5 +1,19 @@
-import { CardElement, CardElementChild } from '@novu/stateless';
-import { convertText, escapeHtml, escapeHtmlAttribute, InlineNode } from '../card-render.utils';
+import {
+  CardElement,
+  CardElementActionChild,
+  CardElementChild,
+  ChatRenderValidationLevelEnum,
+  IChatRenderValidation,
+} from '@novu/stateless';
+import {
+  CardValidator,
+  convertText,
+  escapeHtml,
+  escapeHtmlAttribute,
+  InlineNode,
+  maxMessageLength,
+  runCardValidators,
+} from '../card-render.utils';
 
 /** Telegram `parse_mode: HTML`: `<b>`, `<i>`, `<s>`, `<code>`, `<a href>`, with entity escaping. */
 function inlineToTelegramHtml(nodes: InlineNode[]): string {
@@ -35,6 +49,42 @@ function inlineToTelegramHtml(nodes: InlineNode[]): string {
     .join('');
 }
 
+/**
+ * Telegram flattens the whole card into one `parse_mode: HTML` text message (link buttons render as
+ * inline `<a>` text, not a keyboard — see `render()`), so there is no block-count or per-block cap:
+ * the only limit is the 4096-character message cap, applied to the *whole* rendered message. Telegram
+ * silently truncates past it, so it is a non-blocking degradation `WARNING`.
+ */
+const TELEGRAM_VALIDATORS: CardValidator[] = [
+  maxMessageLength({
+    level: ChatRenderValidationLevelEnum.WARNING,
+    limit: 4096,
+    measure: telegramVisibleTextLength,
+  }),
+];
+
+export function validateTelegramCard(card: CardElement): IChatRenderValidation[] {
+  return runCardValidators(card, TELEGRAM_VALIDATORS);
+}
+
+/**
+ * Telegram counts a message's length "after entities parsing" — the visible text, not the HTML
+ * markup `render()` emits. Strip the tags and decode the escaped entities so the measured length
+ * matches what Telegram's 4096 cap actually counts.
+ */
+export function telegramVisibleTextLength(card: CardElement): number {
+  const decoded = cardToTelegramHtml(card).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+  let visible = decoded;
+  let previous: string;
+  do {
+    previous = visible;
+    visible = visible.replace(/<[^>]+>/g, '');
+  } while (visible !== previous);
+
+  return visible.length;
+}
+
 /** Telegram has no native card payload: degrade the card to an HTML string (`parse_mode: HTML`). */
 export function cardToTelegramHtml(card: CardElement): string {
   const sections: string[] = [];
@@ -62,6 +112,24 @@ export function cardToTelegramHtml(card: CardElement): string {
   return sections.join('\n\n');
 }
 
+function telegramActionChildToHtml(action: CardElementActionChild): string {
+  switch (action.type) {
+    case 'link-button':
+      return action.url
+        ? `<a href="${escapeHtmlAttribute(action.url)}">${escapeHtml(action.label)}</a>`
+        : escapeHtml(action.label);
+    case 'button':
+    case 'select':
+    case 'radio_select':
+      return escapeHtml(action.label);
+    default: {
+      const exhaustiveCheck: never = action;
+
+      return exhaustiveCheck;
+    }
+  }
+}
+
 function telegramChildToHtml(child: CardElementChild): string {
   switch (child.type) {
     case 'text': {
@@ -81,14 +149,21 @@ function telegramChildToHtml(child: CardElementChild): string {
       return `<a href="${escapeHtmlAttribute(child.url)}">${child.alt ? escapeHtml(child.alt) : escapeHtml(child.url)}</a>`;
     case 'divider':
       return '———';
+    case 'link':
+      return child.url
+        ? `<a href="${escapeHtmlAttribute(child.url)}">${escapeHtml(child.label)}</a>`
+        : escapeHtml(child.label);
     case 'actions':
-      return child.children
-        .map((button) =>
-          button.url
-            ? `<a href="${escapeHtmlAttribute(button.url)}">${escapeHtml(button.label)}</a>`
-            : escapeHtml(button.label)
-        )
-        .join('\n');
+      return child.children.map(telegramActionChildToHtml).filter(Boolean).join('\n');
+    case 'section':
+      return child.children.map(telegramChildToHtml).filter(Boolean).join('\n\n');
+    case 'fields':
+      return child.children.map((field) => `<b>${escapeHtml(field.label)}:</b> ${escapeHtml(field.value)}`).join('\n');
+    case 'table':
+      return [
+        child.headers.map(escapeHtml).join(' | '),
+        ...child.rows.map((row) => row.map(escapeHtml).join(' | ')),
+      ].join('\n');
     default: {
       const exhaustiveCheck: never = child;
 

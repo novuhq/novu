@@ -42,8 +42,11 @@ export const ConfigureStepTemplateIssueCta = (props: ConfigureStepTemplateIssueC
 
   const linkTo = isError ? './editor' : '/integrations';
 
+  // Not every blocking content issue maps to a variable (e.g. chat card platform-limit findings have
+  // no `variableName`) — fall back to a generic title so we never render "Invalid variable: undefined".
+  const errorTitle = issue.variableName ? `Invalid variable: ${issue.variableName}` : 'Invalid content';
   const truncatedTextContent = isError
-    ? `Invalid variable: ${issue.variableName}`
+    ? errorTitle
     : `${titleize(step.type?.replace('_', ' ') || '')} provider not connected`;
 
   return (

@@ -37,7 +37,7 @@ export const toolProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.TOOL,
     credentials: toolWebhookConfig,
     docReference: `https://docs.novu.co/platform/integrations/tool/webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'tool-webhook.svg', dark: 'tool-webhook.svg' },
+    logoFileName: { light: 'webhook.svg', dark: 'webhook.svg' },
     betaVersion: true,
   },
 ];

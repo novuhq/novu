@@ -29,8 +29,8 @@
         ]
       },
       "vars": {
-        "NODE_ENV": "staging",
-        "API_URL": "https://fa3f-46-117-110-24.ngrok-free.app",
+        "NODE_ENV": "development",
+        "API_URL": "http://127.0.0.1:3000",
         "REGION": "global"
       }
     },

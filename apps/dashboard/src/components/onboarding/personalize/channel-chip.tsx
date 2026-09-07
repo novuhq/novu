@@ -3,7 +3,7 @@ import { cn } from '@/utils/ui';
 
 type ChannelChipProps = {
   label: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   accent: string;
   isSelected: boolean;
   onToggle: () => void;
@@ -21,7 +21,7 @@ export function ChannelChip({ label, icon, accent, isSelected, onToggle }: Chann
       )}
       style={isSelected ? { backgroundColor: `${accent}1f`, borderColor: `${accent}3d` } : undefined}
     >
-      <span className="flex size-4 shrink-0 items-center justify-center">{icon}</span>
+      {icon ? <span className="flex size-4 shrink-0 items-center justify-center">{icon}</span> : null}
       {label}
     </button>
   );

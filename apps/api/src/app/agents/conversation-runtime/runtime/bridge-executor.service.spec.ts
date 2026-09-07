@@ -33,7 +33,7 @@ describe('BridgeExecutorService', () => {
   ) {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
-    const conversationService = { getHistory: sinon.stub().resolves([]) };
+    const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
     const featureFlagsService = makeFeatureFlagsService(overrides.isEventProtocolEnabled);
 
     const service = new BridgeExecutorService(
@@ -98,6 +98,71 @@ describe('BridgeExecutorService', () => {
     };
   }
 
+  describe('resolveBridgeUrl', () => {
+    function resolve(
+      config: Record<string, unknown>,
+      bridgeUrlOverride?: string
+    ): { url: string | null; logger: ReturnType<typeof makeLogger> } {
+      const { service, logger } = makeService();
+      const url = (service as any).resolveBridgeUrl(config, 'agent-1', AgentEventEnum.ON_MESSAGE, bridgeUrlOverride);
+
+      return { url, logger };
+    }
+
+    it('uses the agent default bridge URL when no override or dev bridge is set', () => {
+      const { url } = resolve({ bridgeUrl: 'https://agent-default.example.com/api/novu' });
+
+      expect(url).to.be.a('string');
+      const parsed = new URL(url as string);
+      expect(parsed.origin + parsed.pathname).to.equal('https://agent-default.example.com/api/novu');
+      expect(parsed.searchParams.get('action')).to.equal('agent-event');
+      expect(parsed.searchParams.get('agentId')).to.equal('agent-1');
+    });
+
+    it('prefers the per-context override over the agent default', () => {
+      const { url, logger } = resolve(
+        { bridgeUrl: 'https://agent-default.example.com/api/novu' },
+        'https://tenant-acme.example.com/api/novu'
+      );
+
+      expect(new URL(url as string).host).to.equal('tenant-acme.example.com');
+      expect(logger.info.calledOnce, 'logs when an override is applied').to.equal(true);
+    });
+
+    it('prefers the active dev bridge over the context override', () => {
+      const { url } = resolve(
+        {
+          bridgeUrl: 'https://agent-default.example.com/api/novu',
+          devBridgeActive: true,
+          devBridgeUrl: 'https://dev.example.com/api/novu',
+        },
+        'https://tenant-acme.example.com/api/novu'
+      );
+
+      expect(new URL(url as string).host).to.equal('dev.example.com');
+    });
+
+    it('falls back to the context override when a dev bridge URL exists but is inactive', () => {
+      const { url } = resolve(
+        {
+          bridgeUrl: 'https://agent-default.example.com/api/novu',
+          devBridgeActive: false,
+          devBridgeUrl: 'https://dev.example.com/api/novu',
+        },
+        'https://tenant-acme.example.com/api/novu'
+      );
+
+      expect(new URL(url as string).host).to.equal('tenant-acme.example.com');
+    });
+
+    it('returns null when neither an override nor an agent bridge URL is configured', () => {
+      const { url, logger } = resolve({});
+
+      expect(url).to.equal(null);
+      expect(logger.warn.calledOnce).to.equal(true);
+    });
+  });
+
   describe('buildPayload', () => {
     it('should include eventsUrl when the agent event protocol flag is enabled', async () => {
       const { service, featureFlagsService } = makeService({ isEventProtocolEnabled: true });
@@ -119,6 +184,46 @@ describe('BridgeExecutorService', () => {
 
       expect(payload).to.not.have.property('eventsUrl');
       expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
+    });
+
+    it('should map workflowOrigin onto notification for the bridge wire', async () => {
+      const { service } = makeService();
+      const workflowOrigin = {
+        data: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-shipped',
+          messageId: 'msg-1',
+          platformMessageId: 'wamid.abc',
+          sentAt: '2026-01-01T00:00:00.000Z',
+          body: 'Your order ORD-1 shipped',
+          payload: { orderId: 'ORD-1' },
+          jobId: 'job-1',
+        },
+        source: 'existing' as const,
+      };
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        workflowOrigin,
+      });
+
+      expect(payload.notification).to.deep.equal({
+        id: 'notif-1',
+        workflowId: 'order-shipped',
+        messageId: 'msg-1',
+        platformMessageId: 'wamid.abc',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        body: 'Your order ORD-1 shipped',
+        payload: { orderId: 'ORD-1' },
+      });
+    });
+
+    it('should send notification null when no workflow origin is present', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload(makeExecutionParams());
+
+      expect(payload.notification).to.equal(null);
     });
   });
 

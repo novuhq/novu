@@ -34,6 +34,11 @@ type ContentOverridePanelProps = {
   providerOptions: ProviderOverrideOption[];
   providerOverrides: ProviderOverrides | undefined;
   defaultContent: ReactNode;
+  /**
+   * Rendered at the top-right inside the TabsSection when showing default content
+   * (e.g. Block/Text editor toggle). Hidden while a provider override is selected.
+   */
+  defaultContentActions?: ReactNode;
   showEscapeHatchBadge?: boolean;
   getEditorExtras?: (providerId: ContentOverrideProviderId) => ProviderOverrideEditorExtras;
 };
@@ -43,6 +48,7 @@ export function ContentOverridePanel({
   providerOptions,
   providerOverrides,
   defaultContent,
+  defaultContentActions,
   showEscapeHatchBadge,
   getEditorExtras,
 }: ContentOverridePanelProps) {
@@ -251,8 +257,13 @@ export function ContentOverridePanel({
           />
         ) : (
           defaultContent && (
-            <div className="rounded-12 bg-bg-weak flex min-h-0 flex-1 flex-col gap-2 border border-neutral-100 p-2">
-              {defaultContent}
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
+              {defaultContentActions && (
+                <div className="flex shrink-0 items-center justify-end">{defaultContentActions}</div>
+              )}
+              <div className="rounded-12 bg-bg-weak flex min-h-0 flex-1 flex-col gap-2 border border-neutral-100 p-2">
+                {defaultContent}
+              </div>
             </div>
           )
         )}

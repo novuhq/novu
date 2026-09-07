@@ -26,8 +26,8 @@
   "scripts": {
     "build": "tsup",
     "lint": "biome lint .",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests"
   },
   "dependencies": {},
   "devDependencies": {

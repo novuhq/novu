@@ -1,5 +1,6 @@
 import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
-import Ajv, { ErrorObject } from 'ajv';
+import Ajv, { type AnySchema, ErrorObject } from 'ajv';
+import Ajv2020 from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { capitalize } from '../services/helper-service';
@@ -90,9 +91,31 @@ export type ControlIssues = {
   controls?: Record<string, RuntimeIssue[]>;
 };
 
+const DRAFT_2020_12_SCHEMA_ID = 'https://json-schema.org/draft/2020-12/schema';
+
+function usesDraft2020Schema(schema: AnySchema): boolean {
+  if (typeof schema !== 'object' || schema === null || !('$schema' in schema)) {
+    return false;
+  }
+
+  const schemaId = (schema as { $schema?: string }).$schema;
+
+  return schemaId === DRAFT_2020_12_SCHEMA_ID || schemaId?.includes('2020-12') === true;
+}
+
 /** Single AJV configuration for every control-value schema check, so issues stay consistent. */
-export const createSchemaValidationAjv = ({ verbose = false }: { verbose?: boolean } = {}): Ajv => {
-  const ajv = new Ajv({ allErrors: true, strict: false, verbose });
+export const createSchemaValidationAjv = ({
+  verbose = false,
+  schema,
+}: {
+  verbose?: boolean;
+  schema?: AnySchema;
+} = {}): Ajv => {
+  const ajv =
+    schema && usesDraft2020Schema(schema)
+      ? new Ajv2020({ allErrors: true, strict: false, verbose })
+      : new Ajv({ allErrors: true, strict: false, verbose });
+
   addFormats(ajv);
 
   return ajv;
@@ -182,7 +205,7 @@ export const processControlValuesBySchema = ({
     return {};
   }
 
-  const validate = createSchemaValidationAjv().compile(controlSchema);
+  const validate = createSchemaValidationAjv({ schema: controlSchema }).compile(controlSchema);
   const isValid = validate(controlValues);
   const errors = validate.errors as null | ErrorObject[];
 

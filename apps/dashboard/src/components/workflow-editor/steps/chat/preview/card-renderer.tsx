@@ -3,10 +3,13 @@ import type {
   CardElementActionsElement,
   CardElementChild,
   CardElementLinkButtonElement,
+  CardElementLinkElement,
   CardElementTextElement,
 } from '@novu/shared';
+import { useState } from 'react';
 
 import { cn } from '@/utils/ui';
+import { CHAT_IMAGE_BOUNDS, fitChatImage } from './chat-image-sizing';
 import { renderInlineMarkdown } from './inline-markdown';
 
 /**
@@ -69,6 +72,20 @@ function MessageText({ element }: { element: CardElementTextElement }) {
 }
 
 function MessageImage({ src, alt }: { src: string; alt: string }) {
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [hasError, setHasError] = useState(false);
+  const [loadedSrc, setLoadedSrc] = useState(src);
+
+  if (loadedSrc !== src) {
+    setLoadedSrc(src);
+    setDimensions(null);
+    setHasError(false);
+  }
+
+  if (hasError) {
+    return null;
+  }
+
   return (
     <img
       src={src}
@@ -76,7 +93,22 @@ function MessageImage({ src, alt }: { src: string; alt: string }) {
       loading="lazy"
       decoding="async"
       draggable={false}
-      className="pointer-events-none my-2 max-h-60 w-full max-w-full object-contain object-left"
+      className="pointer-events-none my-2 max-w-full object-contain object-left"
+      style={
+        dimensions
+          ? {
+              width: dimensions.width,
+              maxWidth: '100%',
+              height: 'auto',
+              aspectRatio: `${dimensions.width} / ${dimensions.height}`,
+            }
+          : { maxWidth: '100%', maxHeight: CHAT_IMAGE_BOUNDS.maxHeight, visibility: 'hidden' }
+      }
+      onLoad={(event) => {
+        const target = event.currentTarget;
+        setDimensions(fitChatImage(target.naturalWidth, target.naturalHeight));
+      }}
+      onError={() => setHasError(true)}
     />
   );
 }
@@ -100,6 +132,44 @@ function MessageActions({ element }: { element: CardElementActionsElement }) {
   );
 }
 
+const SAFE_PREVIEW_HREF_PROTOCOLS = new Set(['http:', 'https:']);
+
+/**
+ * Only http(s) URLs are safe as live `<a href>` values in the chat preview.
+ * Rejects `javascript:`, `data:`, and other schemes that would execute in the
+ * dashboard session when a reviewer clicks the link.
+ */
+export function getSafePreviewHref(url: string): string | undefined {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    return SAFE_PREVIEW_HREF_PROTOCOLS.has(parsed.protocol) ? trimmed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function MessageLink({ element }: { element: CardElementLinkElement }) {
+  const href = getSafePreviewHref(element.url);
+
+  return (
+    <p className="leading-5.5 m-0 mb-1 text-[15px] font-normal text-[#1d1c1d]">
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#1264a3] hover:underline">
+          {element.label}
+        </a>
+      ) : (
+        <span className="text-[#1264a3]">{element.label}</span>
+      )}
+    </p>
+  );
+}
+
 function MessageChild({ child }: { child: CardElementChild }) {
   switch (child.type) {
     case 'text':
@@ -108,6 +178,8 @@ function MessageChild({ child }: { child: CardElementChild }) {
       return <MessageImage src={child.url} alt={child.alt ?? ''} />;
     case 'divider':
       return <hr className="my-1 mb-2 h-px w-full border-0 bg-[rgba(29,28,29,0.13)]" />;
+    case 'link':
+      return <MessageLink element={child} />;
     case 'actions':
       return <MessageActions element={child} />;
     default: {

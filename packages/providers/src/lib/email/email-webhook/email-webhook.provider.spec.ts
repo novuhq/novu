@@ -208,3 +208,149 @@ describe('without SSRF protection (self-hosted)', () => {
     expect(lastRequest?.method).toBe('POST');
   });
 });
+
+describe('retry budget', () => {
+  const PAYLOAD = {
+    to: ['johndoe@example.com'],
+    from: 'janedoe@example.com',
+    subject: 'test',
+    html: '<h1>test</h1>',
+    text: 'test',
+  };
+
+  let failingServer: http.Server;
+  let failingUrl: string;
+  let attempts: number;
+
+  beforeAll(() => {
+    process.env.NOVU_ENTERPRISE = 'true';
+    process.env.IS_SELF_HOSTED = 'true';
+  });
+
+  afterAll(() => {
+    restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
+    restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
+  });
+
+  beforeEach(async () => {
+    attempts = 0;
+    failingServer = http.createServer((_req, res) => {
+      attempts += 1;
+      res.writeHead(500);
+      res.end('nope');
+    });
+
+    await new Promise<void>((resolve) => failingServer.listen(0, '127.0.0.1', () => resolve()));
+    const addr = failingServer.address();
+    if (!addr || typeof addr === 'string') throw new Error('listen failed');
+    failingUrl = `http://127.0.0.1:${addr.port}/webhook`;
+  });
+
+  afterEach(async () => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    await new Promise<void>((resolve) => failingServer.close(() => resolve()));
+  });
+
+  test('stops retrying once the wall-clock budget is spent, ignoring the remaining retryCount', async () => {
+    vi.stubEnv('NOVU_PROVIDER_HTTP_TIMEOUT_MS', '300');
+    vi.resetModules();
+    const { EmailWebhookProvider: BudgetedProvider } = await import('./email-webhook.provider.js');
+
+    // Left uncapped this would run 10 attempts with 200ms between them.
+    const provider = new BudgetedProvider({
+      webhookUrl: failingUrl,
+      hmacSecretKey: 'super-secret-key',
+      retryCount: 10,
+      retryDelay: 200,
+    });
+
+    const startedAt = Date.now();
+
+    await expect(provider.sendMessage(PAYLOAD)).rejects.toThrow('webhook send failed !');
+
+    expect(Date.now() - startedAt).toBeLessThan(1_500);
+    expect(attempts).toBeGreaterThanOrEqual(1);
+    expect(attempts).toBeLessThan(10);
+  });
+
+  test('still honours retryCount when it is exhausted before the budget', async () => {
+    vi.stubEnv('NOVU_PROVIDER_HTTP_TIMEOUT_MS', '10000');
+    vi.resetModules();
+    const { EmailWebhookProvider: BudgetedProvider } = await import('./email-webhook.provider.js');
+
+    const provider = new BudgetedProvider({
+      webhookUrl: failingUrl,
+      hmacSecretKey: 'super-secret-key',
+      retryCount: 3,
+      retryDelay: 1,
+    });
+
+    await expect(provider.sendMessage(PAYLOAD)).rejects.toThrow('webhook send failed !');
+
+    expect(attempts).toBe(3);
+  });
+});
+
+describe('computeHmac secret key encodings', () => {
+  const PAYLOAD =
+    '{"to":["johndoe@example.com"],"from":"janedoe@example.com","subject":"test","html":"<h1>test</h1>","text":"test"}';
+
+  // Signature produced by the legacy behavior: the raw UTF-8 bytes of 'super-secret-key'.
+  const TEXT_SIGNATURE = 'd1e94cd19eeceec2e0717e36f7edacaa93612b311bde8756ee35b89d4a994767';
+
+  test.each([
+    ['base64', Buffer.from('super-secret-key').toString('base64')],
+    ['hex', Buffer.from('super-secret-key').toString('hex')],
+  ])('should sign identically when a %s-encoded key decodes to the same binary material', (encoding, encodedKey) => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: encodedKey,
+      hmacSecretKeyEncoding: encoding as 'base64' | 'hex',
+    });
+
+    expect(provider.computeHmac(PAYLOAD)).toBe(TEXT_SIGNATURE);
+  });
+
+  test('should keep signing as plain text when no encoding is configured', () => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: 'super-secret-key',
+    });
+    const explicitTextProvider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: 'super-secret-key',
+      hmacSecretKeyEncoding: 'text',
+    });
+
+    expect(provider.computeHmac(PAYLOAD)).toBe(TEXT_SIGNATURE);
+    expect(explicitTextProvider.computeHmac(PAYLOAD)).toBe(provider.computeHmac(PAYLOAD));
+  });
+
+  test('should reject an empty decoded key for non-text encodings', () => {
+    // Node's decoders are lenient: only a value with zero valid digits yields an empty buffer.
+    const base64Provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: '!!!!',
+      hmacSecretKeyEncoding: 'base64',
+    });
+    const missingKeyProvider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKeyEncoding: 'hex',
+    });
+
+    expect(() => base64Provider.computeHmac(PAYLOAD)).toThrow(/not valid base64/);
+    expect(() => missingKeyProvider.computeHmac(PAYLOAD)).toThrow(/requires a non-empty hmacSecretKey/);
+  });
+
+  test('should reject unsupported encodings instead of signing with unintended key bytes', () => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: 'super-secret-key',
+      // Runtime values are not constrained by the TypeScript union — the API persists raw strings.
+      hmacSecretKeyEncoding: 'latin1' as 'base64' | 'hex',
+    });
+
+    expect(() => provider.computeHmac(PAYLOAD)).toThrow(/Unsupported hmacSecretKeyEncoding: 'latin1'/);
+  });
+});

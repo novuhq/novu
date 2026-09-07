@@ -91,10 +91,11 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           credentials: cleanCredentials(data.credentials),
           check: data.check,
           configurations: data.configurations,
+          rules: data.rules ?? null,
         },
       });
 
-      if (data.primary && data.active && isChannelSupportPrimary) {
+      if (data.primary && data.active && isChannelSupportPrimary && !data.rules) {
         await setPrimaryIntegration({ integrationId: integration._id });
       }
 

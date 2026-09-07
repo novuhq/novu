@@ -6,6 +6,7 @@ import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { EventBridgeSchedulerService } from '../scheduler';
 import { SqsService } from '../sqs';
 import { QueueBaseService } from './queue-base.service';
 
@@ -18,7 +19,8 @@ export class StandardQueueService extends QueueBaseService {
     sqsService: SqsService,
     featureFlagsService: FeatureFlagsService,
     organizationRepository: CommunityOrganizationRepository,
-    logger: PinoLogger
+    logger: PinoLogger,
+    schedulerService: EventBridgeSchedulerService
   ) {
     super(
       JobTopicNameEnum.STANDARD,
@@ -26,7 +28,9 @@ export class StandardQueueService extends QueueBaseService {
       sqsService,
       featureFlagsService,
       organizationRepository,
-      logger
+      logger,
+      // Standard is the only topic that ever carries a delay.
+      schedulerService
     );
 
     Logger.log({ topic: this.topic }, 'Creating queue', LOG_CONTEXT);

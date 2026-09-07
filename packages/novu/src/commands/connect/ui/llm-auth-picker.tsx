@@ -16,9 +16,20 @@ export function LlmAuthPicker({
 }): React.ReactElement {
   const options = getLlmAuthPickerOptions(connectMode);
   const [idx, setIdx] = React.useState(0);
+  const idxRef = React.useRef(0);
+  const settledRef = React.useRef(false);
+
+  React.useEffect(() => {
+    idxRef.current = idx;
+  }, [idx]);
 
   useInput((_input, key) => {
+    if (settledRef.current) {
+      return;
+    }
+
     if (key.escape) {
+      settledRef.current = true;
       onCancel();
 
       return;
@@ -29,7 +40,8 @@ export function LlmAuthPicker({
     } else if (key.downArrow) {
       setIdx((current) => (current + 1) % options.length);
     } else if (key.return) {
-      onChange(options[idx].kind);
+      settledRef.current = true;
+      onChange(options[idxRef.current].kind);
     }
   });
 

@@ -142,7 +142,7 @@ describe('Create Organization - /organizations (POST) #novu-v0-os', async () => 
       expect(integrations.length).to.eq(6);
       expect(novuEmailIntegration?.length).to.eq(2);
       expect(novuSmsIntegration?.length).to.eq(2);
-      expect(novuChatIntegration?.length).to.eq(1);
+      expect(novuChatIntegration?.length).to.eq(0);
       expect(novuInAppIntegration?.length).to.eq(2);
 
       expect(novuEmailIntegrationProduction.length).to.eq(1);
@@ -202,10 +202,6 @@ describe('Create Organization - /organizations (POST) #novu-v0-os', async () => 
       expect(novuEmailIntegrations.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
       expect(novuEmailIntegrations.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
       process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID = oldNovuSmsIntegrationAccountSid;
-    });
-
-    it('when Novu Chat credentials are not set it should not create Novu Chat integration', async () => {
-      // todo
     });
   });
 });

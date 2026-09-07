@@ -23,6 +23,30 @@ export function buildToolApprovalActionId(
   return `${prefix}:${verdict}:${toolUseId}`;
 }
 
+export type ToolApprovalPersistTarget = {
+  toolUseId: string;
+  toolName: string;
+  mcpServerName?: string;
+};
+
+/** Persist-verdict ids for MCP tools — keep in sync with {@link parseToolApprovalActionId}. */
+export function buildMcpToolApprovalPersistActionId(
+  verdict: 'approve-tool' | 'approve-server',
+  tool: ToolApprovalPersistTarget
+): string {
+  const toolName = encodeURIComponent(tool.toolName);
+  const mcpServerName = encodeURIComponent(tool.mcpServerName ?? '');
+
+  return `${MCP_TOOL_APPROVAL_ACTION_PREFIX}:${verdict}:${tool.toolUseId}:${toolName}:${mcpServerName}`;
+}
+
+/** Persist-verdict id for direct (non-MCP) managed tools. */
+export function buildDirectToolApprovalPersistActionId(tool: ToolApprovalPersistTarget): string {
+  const toolName = encodeURIComponent(tool.toolName);
+
+  return `${DIRECT_TOOL_APPROVAL_ACTION_PREFIX}:approve-tool:${tool.toolUseId}:${toolName}`;
+}
+
 const TOOL_APPROVAL_VERDICTS = ['approve', 'deny', 'approve-tool', 'approve-server'] as const;
 type ToolApprovalVerdict = (typeof TOOL_APPROVAL_VERDICTS)[number];
 

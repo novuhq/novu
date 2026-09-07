@@ -160,19 +160,16 @@ describe('ChatOutputRendererUsecase', () => {
     });
   });
 
-  it('resolves cardButton label, url, and actionId from variable picker paths', async () => {
+  it('resolves cardButton label, url, and actionId from {{ }} variable expressions', async () => {
     const maily: MailyJSONContent = {
       type: 'doc',
       content: [
         {
           type: 'cardButton',
           attrs: {
-            label: 'payload.foo',
-            isLabelVariable: true,
-            url: 'payload.url',
-            isUrlVariable: true,
-            actionId: 'payload.actionId',
-            isActionIdVariable: true,
+            label: '{{ payload.foo }}',
+            url: '{{ payload.url }}',
+            actionId: '{{ payload.actionId }}',
           },
         } as MailyJSONContent,
       ],
@@ -196,7 +193,7 @@ describe('ChatOutputRendererUsecase', () => {
     });
   });
 
-  it('resolves cardButton attrs stored as bare variable paths without is*Variable flags', async () => {
+  it('treats bare variable paths as literal text (only {{ }} expressions are resolved)', async () => {
     const maily: MailyJSONContent = {
       type: 'doc',
       content: [
@@ -221,9 +218,9 @@ describe('ChatOutputRendererUsecase', () => {
       children: [
         {
           type: 'link-button',
-          label: 'hello',
-          url: 'https://novu.co',
-          id: 'btn-1',
+          label: 'payload.foo',
+          url: 'payload.url',
+          id: 'payload.actionId',
         },
       ],
     });

@@ -78,6 +78,12 @@ export type VariableOptions = {
 
 export type VariableStorage = {
   popover: boolean;
+  /**
+   * When a Configure Variable popover is open, whether the card Actions bubble should stay visible
+   * underneath it. Set true when the popover is opened from a card button's Label/URL field pill
+   * (the popover renders on top of the bubble), false when opened from the button content on canvas.
+   */
+  keepCardActionsMenu: boolean;
 };
 
 export const VariablePluginKey = new PluginKey('variable');
@@ -92,6 +98,7 @@ export const VariableExtension = Node.create<VariableOptions, VariableStorage>({
   addStorage() {
     return {
       popover: false,
+      keepCardActionsMenu: false,
     };
   },
 

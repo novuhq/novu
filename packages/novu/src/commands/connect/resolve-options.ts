@@ -8,6 +8,8 @@ export type ConnectCommandInput = Omit<ConnectCommandOptions, 'apiUrl' | 'dashbo
   apiUrl?: string;
   dashboardUrl?: string;
   connectDashboardUrl?: string;
+  /** Shorthand for `--region staging`. Wins over `--region`. */
+  staging?: boolean;
 };
 
 function resolveRuntimeFromFlags(input: ConnectCommandInput): AgentConnectMode | undefined {
@@ -19,7 +21,7 @@ function resolveRuntimeFromFlags(input: ConnectCommandInput): AgentConnectMode |
 }
 
 export function resolveConnectCommandOptions(input: ConnectCommandInput): ConnectCommandOptions {
-  const region = input.region;
+  const region = input.staging ? CloudRegionEnum.STAGING : input.region;
   if (!CONNECT_REGION_VALUES.includes(region)) {
     throw new Error(`Invalid --region "${region}". Expected one of: ${CONNECT_REGION_VALUES.join(', ')}.`);
   }

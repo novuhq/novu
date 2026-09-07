@@ -9,6 +9,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeInfobipBaseUrl } from '../../../utils/safe-infobip-base-url';
 import { WithPassthrough } from '../../../utils/types';
 
 export class InfobipEmailProvider extends BaseProvider implements IEmailProvider {
@@ -26,8 +27,10 @@ export class InfobipEmailProvider extends BaseProvider implements IEmailProvider
     }
   ) {
     super();
+    const baseUrl = resolveSafeInfobipBaseUrl(this.config.baseUrl);
+
     this.infobipClient = new Infobip({
-      baseUrl: this.config.baseUrl,
+      baseUrl,
       apiKey: this.config.apiKey,
       authType: AuthType.ApiKey,
     });

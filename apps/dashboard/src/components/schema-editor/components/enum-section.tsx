@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { type Control, Controller, Path, useFieldArray } from 'react-hook-form';
 import { RiAddLine, RiDeleteBin2Line, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
 
@@ -15,9 +15,18 @@ interface EnumChoiceProps {
   enumIndex: number;
   control: Control<any>;
   onRemove: () => void;
+  readOnly?: boolean;
+  isRemoveDisabled?: boolean;
 }
 
-const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, enumIndex, control, onRemove }) {
+const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({
+  enumChoicePath,
+  enumIndex,
+  control,
+  onRemove,
+  readOnly = false,
+  isRemoveDisabled = false,
+}) {
   return (
     <div className="flex items-center space-x-2">
       <Controller
@@ -25,7 +34,12 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
         control={control}
         render={({ field: choiceField, fieldState: choiceFieldState }) => (
           <InputRoot hasError={!!choiceFieldState.error} size="2xs" className="flex-1">
-            <InputPure {...choiceField} placeholder={`Choice ${enumIndex + 1}`} className="pl-2 text-xs" />
+            <InputPure
+              {...choiceField}
+              placeholder={`Choice ${enumIndex + 1}`}
+              className="pl-2 text-xs"
+              disabled={readOnly}
+            />
             {choiceFieldState.error && (
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
@@ -50,8 +64,9 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
         size="2xs"
         leadingIcon={RiDeleteBin2Line}
         onClick={onRemove}
-        aria-label="Delete property"
+        aria-label="Delete choice"
         className={cn('border ml-1.5! h-7 w-7 border-neutral-200')}
+        disabled={readOnly || isRemoveDisabled}
       />
     </div>
   );
@@ -61,9 +76,15 @@ interface EnumSectionProps {
   enumArrayPath: Path<SchemaEditorFormValues>;
   control: Control<any>;
   indentationLevel: number;
+  readOnly?: boolean;
 }
 
-export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArrayPath, control, indentationLevel }) {
+export const EnumSection = memo<EnumSectionProps>(function EnumSection({
+  enumArrayPath,
+  control,
+  indentationLevel,
+  readOnly = false,
+}) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: enumArrayPath,
@@ -74,6 +95,20 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArr
     append('', { shouldFocus: true });
   }, [append]);
 
+  // An enum with no choices matches nothing, so the editor always offers at
+  // least one row. The latch keeps StrictMode's double-invoked effect from
+  // seeding two rows.
+  const hasSeededFirstChoice = useRef(false);
+
+  useEffect(() => {
+    if (readOnly || hasSeededFirstChoice.current || fields.length > 0) {
+      return;
+    }
+
+    hasSeededFirstChoice.current = true;
+    append('', { shouldFocus: false });
+  }, [readOnly, fields.length, append]);
+
   return (
     <div className={cn('mt-1 space-y-1', getMarginClassPx(indentationLevel + 1))}>
       {fields.map((enumField, enumIndex) => (
@@ -83,6 +118,8 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArr
           enumIndex={enumIndex}
           control={control}
           onRemove={() => remove(enumIndex)}
+          readOnly={readOnly}
+          isRemoveDisabled={fields.length <= 1}
         />
       ))}
       <Button
@@ -92,6 +129,7 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArr
         onClick={handleAddChoice}
         leadingIcon={RiAddLine}
         className="mt-1"
+        disabled={readOnly}
       >
         Add Choice
       </Button>

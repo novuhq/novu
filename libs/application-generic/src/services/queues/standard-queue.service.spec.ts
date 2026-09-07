@@ -3,6 +3,7 @@ import { ApiServiceLevelEnum, QueueBackendMode } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { EventBridgeSchedulerService } from '../scheduler';
 import { SqsService } from '../sqs';
 import { StandardQueueService } from './standard-queue.service';
 
@@ -32,6 +33,12 @@ const mockLogger = {
   error: jest.fn(),
 } as unknown as PinoLogger;
 
+const mockSchedulerService = {
+  isConfigured: jest.fn(() => false),
+  createDelayedFire: jest.fn(),
+  deleteSchedule: jest.fn(),
+} as unknown as EventBridgeSchedulerService;
+
 describe('Standard Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
@@ -40,7 +47,8 @@ describe('Standard Queue service', () => {
         mockSqsService,
         mockFeatureFlagsService,
         mockOrganizationRepository,
-        mockLogger
+        mockLogger,
+        mockSchedulerService
       );
       await standardQueueService.queue.obliterate();
     });
@@ -208,7 +216,8 @@ describe('Standard Queue service', () => {
         mockSqsService,
         mockFeatureFlagsService,
         mockOrganizationRepository,
-        mockLogger
+        mockLogger,
+        mockSchedulerService
       );
       await standardQueueService.queue.obliterate();
     });

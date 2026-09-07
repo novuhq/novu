@@ -157,6 +157,13 @@ function mapStepFilterToDto(stepFilter: StepFilter): StepFilterDto[] {
   }
 
   if (directChildren.length === 0 && nestedFilters.length > 0) {
+    if (stepFilter.isNegated) {
+      return nestedFilters.map((nestedFilter) => ({
+        ...nestedFilter,
+        isNegated: Boolean(stepFilter.isNegated) !== Boolean(nestedFilter.isNegated),
+      }));
+    }
+
     return nestedFilters;
   }
 

@@ -26,7 +26,7 @@ class IsEmailLocalPartConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `${args.property} must be a valid inbox address local part, for example "hello" or "sales+vip".`;
+    return `${args.property} must be a valid inbox address local part, for example "hello" or "support". Prefer avoiding "+" — it is reserved for Novu reply tokens.`;
   }
 }
 

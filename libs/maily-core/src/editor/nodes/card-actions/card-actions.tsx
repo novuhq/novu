@@ -51,6 +51,43 @@ export function findCardActions(editor: Editor): CardActionsMatch | null {
 }
 
 /**
+ * Clears the card-button / cardActions node selection so the Actions bubble's `shouldShow`
+ * returns false.
+ *
+ * Prefer a caret in the nearest valid textblock outside the row. Placing TipTap's
+ * `setTextSelection` at `pos + nodeSize` when the row is last lands on a doc-level gap
+ * (not a textblock); ProseMirror then clamps back inside `cardActions` and the bubble stays open.
+ */
+export function dismissCardActionsMenu(editor: Editor): void {
+  const match = findCardActions(editor);
+
+  if (!match) {
+    return;
+  }
+
+  const { doc } = editor.state;
+  const afterPos = match.pos + match.node.nodeSize;
+
+  // Prefer content before the row (usually a paragraph). `Selection.near` finds a valid
+  // textblock/gap cursor; raw positions after an isolating block often are not.
+  const candidates: Selection[] = [Selection.near(doc.resolve(match.pos), -1)];
+
+  if (afterPos <= doc.content.size) {
+    candidates.push(Selection.near(doc.resolve(afterPos), 1));
+  }
+
+  candidates.push(Selection.atStart(doc), Selection.atEnd(doc));
+
+  const selection = candidates.find((candidate) => !findCardActionsFromSelection(candidate));
+
+  if (!selection) {
+    return;
+  }
+
+  editor.view.dispatch(editor.state.tr.setSelection(selection).scrollIntoView());
+}
+
+/**
  * Index of the button under the current selection within its row. `cardButton`
  * nodes are atoms (nodeSize 1), so a child's start position is `row.pos + 1 + index`.
  */

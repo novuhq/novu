@@ -9,6 +9,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import {
+  AGENTS_ORG_FUNNEL_EVENTS,
   buildWorkflowPreferences,
   ControlValuesLevelEnum,
   ResourceOriginEnum,
@@ -26,7 +27,7 @@ import { StepIssuesDto } from '../../dtos/step-issues.dto';
 import { EmailRenderOutput } from '../../dtos/workflow/generate-preview-response.dto';
 import { WorkflowResponseDto } from '../../dtos/workflow/workflow-response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import { EmailControlType } from '../../schemas/control';
+import { ChatControlType, EmailControlType } from '../../schemas/control';
 import { AnalyticsService } from '../../services';
 import {
   computeWorkflowStatus,
@@ -37,6 +38,7 @@ import {
   slugifyOrRandom,
 } from '../../utils';
 import { isStringifiedMailyJSONContent } from '../../utils/maily-utils';
+import { resolveChatEditorType } from '../../utils/resolve-chat-editor-type';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { NotificationStep } from '../../value-objects';
 import { SendWebhookMessage } from '../../webhooks';
@@ -115,6 +117,8 @@ export class UpsertWorkflowUseCase {
         skipPreferencesCache: true,
       })
     );
+
+    this.trackAgentAssignedToWorkflow(existingWorkflow, updatedWorkflow, resolvedCommand);
 
     if (existingWorkflow) {
       await this.sendWebhookMessage.execute({
@@ -526,6 +530,22 @@ export class UpsertWorkflowUseCase {
       }
     }
 
+    if (
+      step.template?.type === StepTypeEnum.CHAT &&
+      (command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD ||
+        command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1) &&
+      !isStepResolverActive(step.template?.stepResolverHash)
+    ) {
+      const chatControlValues = newControlValues as ChatControlType;
+      const resolvedEditorType = resolveChatEditorType(chatControlValues.body, chatControlValues.editorType);
+
+      if (resolvedEditorType) {
+        chatControlValues.editorType = resolvedEditorType;
+      } else {
+        delete chatControlValues.editorType;
+      }
+    }
+
     return this.upsertControlValuesUseCase.execute(
       UpsertControlValuesCommand.create({
         organizationId: command.user.organizationId,
@@ -661,5 +681,38 @@ export class UpsertWorkflowUseCase {
       origin: command.workflowDto.origin,
       source: command.workflowDto.__source,
     });
+  }
+
+  private trackAgentAssignedToWorkflow(
+    existingWorkflow: NotificationTemplateEntity | null,
+    updatedWorkflow: WorkflowResponseDto,
+    command: UpsertWorkflowCommand
+  ): void {
+    const nextAgentIdentifier = updatedWorkflow.agent?.identifier ?? null;
+    if (!nextAgentIdentifier) {
+      return;
+    }
+
+    const previousAgentIdentifier = existingWorkflow?.agent?.identifier ?? null;
+    if (nextAgentIdentifier === previousAgentIdentifier) {
+      return;
+    }
+
+    const userId = command.user?._id;
+    if (!userId) {
+      return;
+    }
+
+    const properties = {
+      _organization: command.user.organizationId,
+      environmentId: command.user.environmentId,
+      workflowId: updatedWorkflow.workflowId,
+      workflowName: updatedWorkflow.name,
+      agentIdentifier: nextAgentIdentifier,
+      previousAgentIdentifier,
+      source: command.workflowDto.__source,
+    };
+
+    this.analyticsService.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_ASSIGNED_TO_WORKFLOW, userId, properties);
   }
 }

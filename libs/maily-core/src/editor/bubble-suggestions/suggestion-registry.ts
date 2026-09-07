@@ -1,6 +1,19 @@
 import { Editor } from '@tiptap/core';
 import { SuggestionContext, SuggestionProvider, SuggestionProviderFactory } from './suggestion-provider';
 
+/**
+ * Whether `query` (text after a trigger) is still an open suggestion, vs completed content.
+ * For the liquid trigger `{{`, a closing `}}` means the expression is finished — focusing a field
+ * that already contains `{{ payload.foo }} bar {{ subscriber.firstName }}` must not open Variables.
+ */
+function isOpenSuggestionQuery(triggerPattern: string, query: string): boolean {
+  if (triggerPattern === '{{') {
+    return !query.includes('}}');
+  }
+
+  return true;
+}
+
 class SuggestionRegistry {
   private factories: Map<string, SuggestionProviderFactory> = new Map();
 
@@ -39,19 +52,35 @@ class SuggestionRegistry {
     const sortedProviders = [...providers].sort((a, b) => {
       const aLength = typeof a.triggerPattern === 'string' ? a.triggerPattern.length : 0;
       const bLength = typeof b.triggerPattern === 'string' ? b.triggerPattern.length : 0;
+
       return bLength - aLength;
     });
 
     for (const provider of sortedProviders) {
       if (typeof provider.triggerPattern === 'string') {
-        const triggerIndex = value.lastIndexOf(provider.triggerPattern);
-        if (triggerIndex !== -1) {
+        // Walk triggers from the end so an open `{{` after completed expressions still wins, while
+        // completed `{{ ... }}` content (card button label/url) does not reopen the Variables list.
+        let searchFrom = value.length;
+
+        while (searchFrom > 0) {
+          const triggerIndex = value.lastIndexOf(provider.triggerPattern, searchFrom - 1);
+
+          if (triggerIndex === -1) {
+            break;
+          }
+
           const query = value.slice(triggerIndex + provider.triggerPattern.length);
-          return { query, provider, triggerIndex };
+
+          if (isOpenSuggestionQuery(provider.triggerPattern, query)) {
+            return { query, provider, triggerIndex };
+          }
+
+          searchFrom = triggerIndex;
         }
       } else {
         // RegExp pattern
         const match = provider.triggerPattern.exec(value);
+
         if (match) {
           return {
             query: match[1] || '',
@@ -61,6 +90,7 @@ class SuggestionRegistry {
         }
       }
     }
+
     return null;
   }
 

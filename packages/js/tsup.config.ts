@@ -57,7 +57,13 @@ const baseConfig: Options = {
 const baseModuleConfig: Options = {
   ...baseConfig,
   treeshake: true,
-  dts: true,
+  dts: {
+    resolve: ['@novu/agent-event-protocol'],
+    compilerOptions: {
+      stripInternal: true,
+    },
+  },
+  noExternal: ['@novu/agent-event-protocol'],
   entry: {
     index: './src/index.ts',
     'ui/index': './src/ui/index.ts',
@@ -94,6 +100,7 @@ export default defineConfig((config: Options) => {
     format: ['iife'],
     minify: true,
     dts: false,
+    noExternal: ['@novu/agent-event-protocol'],
     outExtension: () => {
       return {
         js: '.min.js',

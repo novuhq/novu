@@ -76,6 +76,7 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(eventBatches[0][0].event).toEqual({ type: 'run-start' });
     expect(eventBatches[0][1].event).toEqual({
       type: 'message',
+      role: 'assistant',
       messageId: 'msg_00000000-0000-4000-8000-000000000001',
       content: { markdown: 'Hello from event mode' },
     });
@@ -102,6 +103,7 @@ describe('event mode (AgentEvent protocol)', () => {
 
     expect(eventBatches[0][1].event).toEqual({
       type: 'message',
+      role: 'assistant',
       messageId: 'msg_00000000-0000-4000-8000-000000000001',
       content: { markdown: 'Here is the report' },
       files: [

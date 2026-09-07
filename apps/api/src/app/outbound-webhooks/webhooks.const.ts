@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MessageWebhookResponseDto, WorkflowResponseDto } from '@novu/application-generic';
 import { WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { InboxPreference } from '../inbox/utils/types';
@@ -106,6 +106,12 @@ export class WebhookInboundEmailMailDto {
 
   @ApiProperty({ description: 'Recipient address info', type: [WebhookInboundEmailAddressDto] })
   to: WebhookInboundEmailAddressDto[];
+
+  @ApiPropertyOptional({
+    description: 'Matched SMTP envelope recipient when it is absent from the To and Cc headers',
+    type: [WebhookInboundEmailAddressDto],
+  })
+  bcc?: WebhookInboundEmailAddressDto[];
 
   @ApiProperty({ description: 'Email subject' })
   subject: string;

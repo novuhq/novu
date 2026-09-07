@@ -29,8 +29,14 @@ export type ImageExtensionOptions = {
   defaultAlignment?: 'left' | 'center' | 'right';
   /** Cap applied when auto-sizing a newly loaded image. */
   maxWidth?: number;
-  /** Cap applied when auto-sizing a newly loaded image (e.g. chat preview `max-h-60`). */
+  /** Cap applied when auto-sizing a newly loaded image (e.g. chat Slack-like bounds). */
   maxHeight?: number;
+  /**
+   * When true (rich chat only), size images with maxWidth/maxHeight scale math that matches
+   * the chat preview — ignores editor container width and re-syncs stale attrs. Email keeps
+   * the default container-based fit (leave unset / false).
+   */
+  fitToMaxBounds?: boolean;
 };
 
 declare module '@tiptap/core' {
@@ -49,6 +55,7 @@ export const ImageExtension = TiptapImage.extend<ImageExtensionOptions>({
       defaultAlignment: 'center',
       maxWidth: undefined,
       maxHeight: undefined,
+      fitToMaxBounds: false,
     };
   },
 

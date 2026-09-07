@@ -1,8 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationQuery, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
+import { evaluateRules } from '../../services/query-parser';
+import {
+  getIntegrationRulesIssues,
+  hasIntegrationRules,
+  hasLegacyIntegrationConditions,
+} from '../../utils/integration-conditions';
 import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
@@ -27,54 +34,23 @@ export class SelectIntegration {
       isCrossEnvironmentIntegrationEnabled
     );
 
-    if (!command.identifier && command.filterData.tenant && command.userId) {
-      const query = this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled);
+    if (!command.identifier) {
+      const integrations = await this.integrationRepository.find(
+        this.getConditionedIntegrationsQuery(command, isCrossEnvironmentIntegrationEnabled),
+        '',
+        { sort: { priority: -1, createdAt: -1 } }
+      );
 
-      const integrations = await this.integrationRepository.find(query);
+      if (integrations.length > 0) {
+        const tenant = await this.resolveTenant(command);
 
-      let tenant: TenantEntity | null = null;
-      const commandTenantIdentifier =
-        typeof command.filterData.tenant === 'string'
-          ? command.filterData.tenant
-          : command.filterData.tenant.identifier;
-      if (commandTenantIdentifier) {
-        tenant = await this.tenantRepository.findOne({
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          identifier: commandTenantIdentifier,
-        });
-      }
+        for (const currentIntegration of integrations) {
+          const passed = await this.integrationMatchesConditions(command, currentIntegration, tenant);
 
-      for (const currentIntegration of integrations) {
-        if (!currentIntegration.conditions || currentIntegration.conditions.length === 0) {
-          continue;
-        }
-
-        const variables = await this.normalizeVariablesUsecase.execute(
-          NormalizeVariablesCommand.create({
-            filters: currentIntegration.conditions || [],
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-            variables: {
-              tenant,
-            },
-          })
-        );
-
-        const { passed } = await this.conditionsFilter.filter(
-          ConditionsFilterCommand.create({
-            filters: currentIntegration.conditions,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-            variables,
-          })
-        );
-
-        if (passed) {
-          integration = currentIntegration;
-          break;
+          if (passed) {
+            integration = currentIntegration;
+            break;
+          }
         }
       }
     }
@@ -84,6 +60,76 @@ export class SelectIntegration {
     }
 
     return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+  }
+
+  private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {
+    if (!command.filterData.tenant) {
+      return null;
+    }
+
+    const commandTenantIdentifier =
+      typeof command.filterData.tenant === 'string' ? command.filterData.tenant : command.filterData.tenant.identifier;
+
+    if (!commandTenantIdentifier) {
+      return null;
+    }
+
+    return await this.tenantRepository.findOne({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      identifier: commandTenantIdentifier,
+    });
+  }
+
+  private async integrationMatchesConditions(
+    command: SelectIntegrationCommand,
+    currentIntegration: IntegrationEntity,
+    tenant: TenantEntity | null
+  ): Promise<boolean> {
+    if (hasIntegrationRules(currentIntegration.rules)) {
+      if (getIntegrationRulesIssues(currentIntegration.rules).length > 0) {
+        return false;
+      }
+
+      const { result } = evaluateRules(
+        currentIntegration.rules as RulesLogic<AdditionalOperation>,
+        {
+          subscriber: command.filterData.subscriber,
+          context: command.filterData.context,
+        },
+        true
+      );
+
+      return result;
+    }
+
+    if (!hasLegacyIntegrationConditions(currentIntegration.conditions) || !command.userId) {
+      return false;
+    }
+
+    const variables = await this.normalizeVariablesUsecase.execute(
+      NormalizeVariablesCommand.create({
+        filters: currentIntegration.conditions || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        variables: {
+          tenant,
+        },
+      })
+    );
+
+    const { passed } = await this.conditionsFilter.filter(
+      ConditionsFilterCommand.create({
+        filters: currentIntegration.conditions,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        variables,
+      })
+    );
+
+    return passed;
   }
 
   @Instrument()
@@ -146,5 +192,15 @@ export class SelectIntegration {
     }
 
     return query;
+  }
+
+  private getConditionedIntegrationsQuery(
+    command: SelectIntegrationCommand,
+    isCrossEnvironmentIntegrationEnabled: boolean
+  ): IntegrationQuery {
+    return {
+      ...this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled),
+      $or: [{ rules: { $type: 'object' } }, { 'conditions.0': { $exists: true } }],
+    };
   }
 }

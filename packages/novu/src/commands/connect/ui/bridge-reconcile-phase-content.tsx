@@ -46,6 +46,7 @@ export function BridgeReconcilePhaseContent({ phase }: { phase: BridgeReconcileP
           projectDir={phase.projectDir}
           appName={phase.appName}
           variant={phase.variant ?? 'chat-sdk'}
+          llmAuthLabel={phase.llmAuthLabel}
           onResolve={phase.resolve}
         />
       );

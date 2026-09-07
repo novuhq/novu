@@ -5,6 +5,7 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeferReasonEnum,
   DetailEnum,
   DurationUtils,
   getDigestType,
@@ -22,6 +23,7 @@ import {
   NormalizeVariablesCommand,
   PinoLogger,
   RedisThrottleService,
+  resolveThrottleGrouping,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -60,6 +62,7 @@ import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import _ from 'lodash';
+import type { ExecuteBridgeJobResult } from '../execute-bridge-job';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { AddJobCommand } from './add-job.command';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
@@ -69,6 +72,17 @@ import { validateDigest } from './validation';
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
 }
+
+/**
+ * Groups the job's EventBridge schedule when the delay outlives the SQS cap.
+ * Only the deferring step types appear here; anything else that reaches
+ * queueJob is either immediate or a schedule extension, both handled below.
+ */
+const DEFER_REASON_BY_STEP_TYPE: Partial<Record<StepTypeEnum, DeferReasonEnum>> = {
+  [StepTypeEnum.DELAY]: DeferReasonEnum.DELAY,
+  [StepTypeEnum.DIGEST]: DeferReasonEnum.DIGEST,
+  [StepTypeEnum.THROTTLE]: DeferReasonEnum.THROTTLE,
+};
 
 /*
  * @description: This is the result of the add job usecase
@@ -593,7 +607,7 @@ export class AddJob {
     command: AddJobCommand,
     filterVariables: IFilterVariables,
     workflow?: NotificationTemplateEntity
-  ): Promise<ExecuteOutput | null> {
+  ): Promise<ExecuteBridgeJobResult | null> {
     const response = await this.executeBridgeJob.execute(
       ExecuteBridgeJobCommand.create({
         identifier: command.job.identifier,
@@ -831,7 +845,7 @@ export class AddJob {
   private async handleThrottle(
     command: AddJobCommand,
     job: JobEntity,
-    bridgeResponse: ExecuteOutput | null
+    bridgeResponse: ExecuteBridgeJobResult | null
   ): Promise<{ shouldSkip: boolean; executionCount?: number; threshold?: number; throttledUntil?: string }> {
     // Get throttle configuration from bridge response or job step
     const throttleConfig = bridgeResponse?.outputs || {};
@@ -881,7 +895,11 @@ export class AddJob {
       throw new Error('Step ID is required for throttle reservation');
     }
 
-    const throttleValue = throttleKey ? getNestedValue(job.payload, throttleKey as string) : 'default';
+    const { throttleKey: groupingKey, throttleValue } = resolveThrottleGrouping(
+      bridgeResponse?.sourceControls?.throttleKey,
+      throttleKey,
+      job.payload
+    );
 
     const throttleJobId = `${job._id}:${Date.now()}`;
 
@@ -894,8 +912,8 @@ export class AddJob {
       windowMs,
       limit: threshold as number,
       nowMs,
-      throttleKey: (throttleKey as string) || 'default',
-      throttleValue: throttleValue,
+      throttleKey: groupingKey,
+      throttleValue,
     });
 
     this.logger.debug(
@@ -1114,11 +1132,24 @@ export class AddJob {
       },
       groupId: job._organizationId,
       options,
+      deferReason: this.resolveDeferReason(job),
     });
 
     if (delay) {
       await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
     }
+  }
+
+  /**
+   * A quiet-hours extension re-queues a channel-typed job, so the step type
+   * alone cannot tell the two apart - the extension counter can.
+   */
+  private resolveDeferReason(job: JobEntity): DeferReasonEnum {
+    if (job.scheduleExtensionsCount) {
+      return DeferReasonEnum.SCHEDULE_EXTENSION;
+    }
+
+    return (job.type && DEFER_REASON_BY_STEP_TYPE[job.type]) || DeferReasonEnum.DELAY;
   }
 
   private async createDelayExecutionDetails(job: JobEntity, delay: number, untilDate: Date | null, timezone?: string) {

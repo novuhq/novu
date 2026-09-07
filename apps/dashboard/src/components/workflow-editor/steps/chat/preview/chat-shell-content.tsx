@@ -93,7 +93,7 @@ export function ChatShellContent({
     return <Shell card={card} variant={variant} />;
   }
 
-  if (isPreviewPending) {
+  if (isPreviewPending || isMailyChatBody(body)) {
     return (
       <Shell variant={variant}>
         <ContentSkeleton />

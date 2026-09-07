@@ -131,7 +131,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
 
     expect(notificationTemplateRepository.findOne.called).to.equal(false);
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
-    expect(result).to.deep.equal({ outputs: {}, options: {} });
+    expect(result).to.deep.equal({ outputs: {}, options: {}, sourceControls: {} });
   });
 
   it('passes actor to the bridge event when provided in variables', async () => {
@@ -176,6 +176,58 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
     expect(bridgeRequest.event.actor).to.deep.equal(actor);
+  });
+
+  it('encodes rehydrated attachment Buffers as base64 for the bridge event', async () => {
+    const { usecase, executeBridgeRequest } = buildUsecase();
+    const fileBytes = Buffer.from('pdf-bytes');
+    const attachment = {
+      name: 'invoice.pdf',
+      mime: 'application/pdf',
+      file: fileBytes,
+      storagePath: 'org/env/id/invoice.pdf',
+    };
+
+    const command = {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: { stepId: 'step_1', uuid: 'step_1' },
+      },
+      variables: {
+        subscriber: { subscriberId: 'recipient-01' },
+        payload: { attachments: [attachment] },
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+
+    await usecase.execute(command);
+
+    const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
+    expect(bridgeRequest.event.payload.attachments).to.deep.equal([
+      {
+        name: 'invoice.pdf',
+        mime: 'application/pdf',
+        file: fileBytes.toString('base64'),
+        storagePath: 'org/env/id/invoice.pdf',
+      },
+    ]);
+    // Original in-memory attachment used for channel delivery must stay a Buffer.
+    expect(Buffer.isBuffer(attachment.file)).to.equal(true);
   });
 
   it('stitches STEP_PROVIDER_CONTROLS docs into controls.providerOverrides for the bridge event', async () => {

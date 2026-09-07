@@ -29,6 +29,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       apiKey: Schema.Types.String,
       user: Schema.Types.String,
       secretKey: Schema.Types.String,
+      hmacSecretKeyEncoding: Schema.Types.String,
       domain: Schema.Types.String,
       password: Schema.Types.String,
       host: Schema.Types.String,
@@ -56,6 +57,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       redirectUrl: Schema.Types.String,
       hmac: Schema.Types.Boolean,
       ipPoolName: Schema.Types.String,
+      configurationSetName: Schema.Types.String,
       apiKeyRequestHeader: Schema.Types.String,
       secretKeyRequestHeader: Schema.Types.String,
       idPath: Schema.Types.String,
@@ -143,6 +145,10 @@ const integrationSchema = new Schema<IntegrationDBModel>(
         ],
       },
     ],
+    rules: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
     connected: Schema.Types.Boolean,
     _parentId: {
       type: Schema.Types.ObjectId,

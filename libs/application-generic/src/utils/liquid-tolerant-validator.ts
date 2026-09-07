@@ -154,7 +154,7 @@ function dedupe(errors: ErrorObject[]): ErrorObject[] {
  * so callers are expected to build one per schema and keep it.
  */
 export function createLiquidTolerantValidator(schema: JSONSchemaDto): (value: unknown) => ErrorObject[] {
-  const validate = createSchemaValidationAjv({ verbose: true }).compile(schema);
+  const validate = createSchemaValidationAjv({ verbose: true, schema }).compile(schema);
   const pathIndex = buildSchemaPathIndex(schema);
 
   return (value: unknown) => {

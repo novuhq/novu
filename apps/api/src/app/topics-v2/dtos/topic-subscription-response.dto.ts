@@ -1,4 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsArray, IsOptional, ValidateNested } from 'class-validator';
+import { SubscriptionPreferenceDto } from '../../shared/dtos/subscriptions/create-subscriptions-response.dto';
 import { TopicResponseDto } from './topic-response.dto';
 
 export class SubscriberDto {
@@ -80,4 +83,14 @@ export class TopicSubscriptionResponseDto {
     type: [String],
   })
   contextKeys?: string[];
+
+  @ApiPropertyOptional({
+    description: 'The preferences for workflows in this subscription',
+    type: [SubscriptionPreferenceDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SubscriptionPreferenceDto)
+  @IsOptional()
+  preferences?: SubscriptionPreferenceDto[];
 }

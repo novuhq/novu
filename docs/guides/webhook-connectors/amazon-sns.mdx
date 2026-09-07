@@ -1,0 +1,186 @@
+---
+title: 'Publish webhook events to Amazon SNS'
+description: 'Configure the Amazon SNS webhook connector to publish Novu events to a topic, including the batch transformation contract, message subject support, and verification steps.'
+sidebarTitle: 'Amazon SNS'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Amazon SNS connector publishes selected Novu webhook events to an SNS topic. Novu delivers events in batches, and every event in a batch is published to the topic as a separate message. Use this connector to fan a single Novu event out to multiple subscribers, such as an SQS queue, a Lambda function, and an HTTP subscriber at the same time.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- An existing SNS topic in the AWS account and region you want to publish to
+- The topic ARN, for example `arn:aws:sns:us-east-1:000000000000:my-topic`
+- An AWS access key ID and secret access key for a principal that can publish to that topic
+- At least one topic subscription you can inspect during verification
+- Permission to manage webhook endpoints in the Novu environment you are configuring
+
+### Required AWS permission
+
+Batches are delivered with the `PublishBatch` API, which is authorized by the `sns:Publish` action on the destination topic. Additional permissions may be required by your own setup, for example KMS key permissions when the topic uses server-side encryption with a customer managed key, or permissions needed to satisfy an organizational policy, service control policy, or topic policy condition.
+
+Novu configures this connector through the embedded webhook portal. The portal collects the topic ARN and credentials and does not create the topic, add subscriptions, or evaluate an IAM policy document for you.
+
+## Configuration
+
+These are the fields collected for the Amazon SNS connector.
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Topic ARN** | Yes | ARN of the destination SNS topic. |
+| **Region** | Yes | AWS region that hosts the topic. |
+| **Access key ID** | Yes | AWS access key ID used to authenticate. |
+| **Secret access key** | Yes | AWS secret access key paired with the access key ID. |
+| **Endpoint URL** | No | Optional custom endpoint for SNS-compatible services, for example a local development stack. Leave it empty for standard AWS SNS. |
+| **Transformation** | Yes | JavaScript that shapes the published message body and optional subject. |
+
+There is no webhook URL field for this connector. Delivery targets the topic through the AWS SNS API rather than an HTTPS endpoint you host.
+
+## Transformation contract
+
+The handler receives a batch and returns the messages to publish.
+
+<WebhookBatchInput />
+
+The handler must return:
+
+```ts
+{
+  messages: Array<{
+    payload: unknown;
+    subject?: string;
+  }>;
+}
+```
+
+| Return field | Behavior |
+| --- | --- |
+| `messages[].payload` | Becomes the SNS message body. |
+| `messages[].subject` | Optional SNS subject for that message. Omitted by default. |
+
+The default template publishes one message per event, serialized as JSON, with no subject:
+
+```js
+function handler(input) {
+  const messages = input.events.map((event) => ({
+    payload: event,
+  }));
+
+  return {
+    messages,
+  };
+}
+```
+
+With the default template, two events produce two message bodies:
+
+```json
+{"payload":{"email":"joe@enterprise.io"},"eventType":"user.created"}
+```
+
+```json
+{"payload":{"id":12,"timestamp":"2025-07-21T14:23:17.861Z"},"eventType":"user.login"}
+```
+
+### Novu example
+
+This example sets the Novu event type as the subject, which is useful when subscribers filter or display the subject, and keeps the full event in the body.
+
+```js
+function handler(input) {
+  const messages = input.events.map((event) => ({
+    payload: JSON.stringify({
+      eventType: event.eventType,
+      payload: event.payload,
+    }),
+    subject: event.eventType,
+  }));
+
+  return {
+    messages,
+  };
+}
+```
+
+Subject values are visible to subscribers such as email, so avoid putting subscriber data or other sensitive values in `subject`. Keep it to the event type or another low cardinality label.
+
+### Batching and limits
+
+SNS accepts at most 10 messages per batch request, so larger batches are automatically split across multiple `PublishBatch` calls. Do not assume a specific endpoint batch size or wait interval. Design subscribers to handle each message independently, because messages from the same Novu batch can be published in separate requests.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the topic
+
+Create the destination topic, copy its ARN, and attach at least one subscription you can inspect, such as an SQS queue you control. Confirm the topic's region matches the region you will configure.
+  </Step>
+
+  <Step>
+## Create credentials
+
+Create an access key for a principal that can perform `sns:Publish` on the topic. If the topic is encrypted with a customer managed key, confirm the credentials can use that key.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Amazon SNS" />
+
+  <Step>
+## Enter connection details
+
+Enter **Topic ARN**, **Region**, **Access key ID**, and **Secret access key**. Leave **Endpoint URL** empty unless you are targeting an SNS-compatible service. Add a description that identifies the topic and AWS account.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the provided template and send a test before customizing. Add `subject` only if your subscribers use it, and keep the body shape stable for existing subscribers.
+  </Step>
+
+  <Step>
+## Select event types
+
+Select the [event types](/platform/developer/webhooks/event-types) you want to publish. Only selected event types reach the endpoint and its transformation, so start with one event type when validating a new topic.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint, open **Testing**, and send an example for a subscribed event type. Confirm the attempt succeeded in **Logs**, then inspect a subscription and compare the delivered message with the logged transformation output.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Check the following in AWS after a successful test:
+
+- A subscriber received the message, for example the subscribed SQS queue has an available message.
+- The message body matches the shape your transformation returns, and the subject matches if you set one.
+- Delivery counts grow per returned message rather than per delivered batch.
+
+A topic without subscriptions accepts publishes and discards them, so always verify through a subscription rather than the topic alone.
+
+## Troubleshooting
+
+- **Access denied on delivery**: The credentials cannot perform `sns:Publish` on this topic. Check the identity policy, the topic policy, and any condition that restricts the caller.
+- **The topic ARN is rejected**: Confirm the ARN is exact, including account ID and topic name, and that the configured region matches the region inside the ARN.
+- **Delivery succeeds but nothing is received**: The topic likely has no matching subscription, or a subscription filter policy excluded the message. Check the subscription list and its filter policy.
+- **Encrypted topics fail**: If the topic uses a customer managed KMS key, the credentials also need permission to use that key.
+- **Subscribers cannot parse the body**: Confirm what your transformation returns in `payload`. Returning a string publishes that string as the body, while returning an object publishes its serialized JSON.
+- **The subject is missing**: `subject` is optional and omitted by the default template. Set it explicitly if subscribers depend on it.
+- **Some event types never arrive**: Review the endpoint's selected event types, and test each event type separately from the **Testing** tab.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix Amazon SNS endpoints](https://docs.svix.com/advanced-endpoints/sns)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [Amazon SNS documentation](https://docs.aws.amazon.com/sns/)

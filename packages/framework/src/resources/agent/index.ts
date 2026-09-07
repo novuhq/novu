@@ -4,13 +4,14 @@ export type {
   CardChild,
   CardElement,
   DividerElement,
+  ImageElement,
   LinkElement,
   SelectElement,
   SelectOptionElement,
   TextElement,
   TextInputElement,
 } from 'chat';
-export { Actions, Button, Card, CardLink, CardText, Divider, Select, SelectOption, TextInput } from 'chat';
+export { Actions, Button, Card, CardLink, CardText, Divider, Image, Select, SelectOption, TextInput } from 'chat';
 export { AgentDeliveryError, AgentError, toAgentError } from './agent.errors';
 export { agent } from './agent.resource';
 export type {
@@ -25,9 +26,11 @@ export type {
   AgentHandlerContext,
   AgentHandlers,
   AgentHistoryEntry,
+  AgentHumanResponse,
   AgentMessage,
   AgentMessageAuthor,
   AgentMessageContext,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentReactionContext,
@@ -36,9 +39,14 @@ export type {
   AgentSubscriberAccess,
   AgentToolCall,
   FileRef,
+  HumanAskApproveOptions,
+  HumanChooseOptions,
+  HumanInteractionKind,
+  HumanTellOptions,
   MessageContent,
   ReplyHandle,
   ToolApprovalCard,
   ToolApprovalConfig,
   ToolApprovalDecision,
 } from './agent.types';
+export { isFromWorkflow } from './guards';

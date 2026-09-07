@@ -26,6 +26,15 @@ export class TopicDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Additional custom data associated with the topic',
+    type: Object,
+    additionalProperties: true,
+    example: { category: 'product', priority: 1 },
+  })
+  @IsOptional()
+  data?: Record<string, unknown>;
 }
 
 export class SubscriberDto {

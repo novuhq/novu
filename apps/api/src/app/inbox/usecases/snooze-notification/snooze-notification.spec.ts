@@ -223,6 +223,61 @@ describe('SnoozeNotification', () => {
     expect(createExecutionDetailsMock.execute.called).to.be.true;
   });
 
+  it('should enqueue the unsnooze job only after the transaction has closed', async () => {
+    const command = createCommand(SNOOZE_DURATION.ONE_DAY);
+    const sequence: string[] = [];
+    let transactionDepth = 0;
+    let transactionDepthAtEnqueue = -1;
+
+    // Mirrors session.withTransaction: the session stays open for the whole callback.
+    // @ts-expect-error Mocking the withTransaction method
+    messageRepositoryMock.withTransaction = sinon.stub().callsFake(async (callback) => {
+      transactionDepth += 1;
+      sequence.push('transaction:begin');
+      try {
+        return await callback();
+      } finally {
+        sequence.push('transaction:end');
+        transactionDepth -= 1;
+      }
+    });
+
+    jobRepositoryMock.create.callsFake(async () => {
+      sequence.push('job:create');
+
+      return mockJob;
+    });
+
+    markNotificationAsMock.execute.callsFake(async () => {
+      sequence.push('notification:snoozed');
+
+      return mockNotification;
+    });
+
+    standardQueueServiceMock.add.callsFake(async () => {
+      transactionDepthAtEnqueue = transactionDepth;
+      sequence.push('queue:add');
+    });
+
+    await snoozeNotification.execute(command);
+
+    /*
+     * Enqueueing is an external call - SQS, or a CreateSchedule round trip to
+     * EventBridge Scheduler for any snooze past the 900s delay cap. Doing it
+     * inside the transaction pins a Mongo connection and its locks for the
+     * length of that call, and an abort afterwards strands the schedule.
+     */
+    expect(standardQueueServiceMock.add.calledOnce).to.be.true;
+    expect(transactionDepthAtEnqueue).to.equal(0);
+    expect(sequence).to.deep.equal([
+      'transaction:begin',
+      'job:create',
+      'notification:snoozed',
+      'transaction:end',
+      'queue:add',
+    ]);
+  });
+
   it('should enqueue job with correct parameters', async () => {
     const delay = 3600000; // 1 hour in milliseconds
 

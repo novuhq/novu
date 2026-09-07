@@ -1,4 +1,5 @@
 import { BaseRepository } from '@novu/dal';
+import { ShortIsPrefixEnum } from '@novu/shared';
 import { decodeBase62 } from '../utils/base62';
 
 export type InternalId = string;
@@ -6,12 +7,17 @@ const INTERNAL_ID_LENGTH = 24;
 const ENCODED_ID_LENGTH = 16;
 
 /**
- * Checks if the value is a short resource identifier (less than encoded ID length)
- * Examples: 'welcome-email', 'my-template', 'newsletter-topic'
+ * The step prefix was `stp_` before it was shortened to `st_`. Slugs built back then can
+ * still reach us from bookmarked dashboard URLs, so they stay decodable.
  */
-function isShortResourceIdentifier(value: string): boolean {
-  return value.length < ENCODED_ID_LENGTH;
-}
+const LEGACY_SHORT_ID_PREFIXES = ['stp_'] as const;
+
+/**
+ * Prefixes that `buildSlug` (and its historical variants) put before the encoded internal ID.
+ * Decode is intentionally limited to these — every 16-character base62 string can look like a
+ * valid ObjectId after decoding, so bare identifiers of any length must never be decoded.
+ */
+const DECODABLE_PREFIXES = [...Object.values(ShortIsPrefixEnum), ...LEGACY_SHORT_ID_PREFIXES] as const;
 
 /**
  * Checks if the value is a MongoDB internal ID (24 character ObjectId)
@@ -22,35 +28,36 @@ function isInternalId(value: string): boolean {
 }
 
 /**
- * Determines if the value is a valid resource identifier
- * Returns the value if it's either an internal ID or short identifier, null otherwise
+ * Inverse of `buildSlug`: `${name}_${prefix}${encodeBase62(id)}`.
+ * Returns the trailing encoded ID only when the value has a non-empty name and a known prefix.
+ * Identifiers of any length without that shape (including exact 16-char ones like
+ * `exerciseReminder`) return null and are left unchanged by the caller.
  */
-function lookoutForResourceId(value: string): string | null {
-  if (isInternalId(value)) {
-    return value;
+function extractEncodedId(value: string): string | null {
+  if (value.length <= ENCODED_ID_LENGTH) {
+    return null;
   }
 
-  if (isShortResourceIdentifier(value)) {
-    return value;
+  const encodedValue = value.slice(-ENCODED_ID_LENGTH);
+  const withoutEncoded = value.slice(0, -ENCODED_ID_LENGTH);
+
+  for (const prefix of DECODABLE_PREFIXES) {
+    // ShortIsPrefixEnum values already include the trailing underscore (e.g. 'wf_').
+    // buildSlug joins name + '_' + prefix + encodedId, so withoutEncoded ends with `_${prefix}`.
+    const suffix = `_${prefix}`;
+    if (!withoutEncoded.endsWith(suffix)) {
+      continue;
+    }
+
+    const name = withoutEncoded.slice(0, -suffix.length);
+    if (!name) {
+      continue;
+    }
+
+    return encodedValue;
   }
 
   return null;
-}
-
-/**
- * Slug IDs always end with `_` followed by a 16-character base62-encoded internal ID.
- * Examples: 'welcome-email_wf_1A2B3C4D5E6F7890', 'email-template_et_1A2B3C4D5E6F7890'
- */
-function shouldAttemptSlugDecode(value: string): boolean {
-  if (value.length === ENCODED_ID_LENGTH) {
-    return true;
-  }
-
-  if (value.length < ENCODED_ID_LENGTH) {
-    return false;
-  }
-
-  return value[value.length - ENCODED_ID_LENGTH - 1] === '_';
 }
 
 /**
@@ -58,7 +65,7 @@ function shouldAttemptSlugDecode(value: string): boolean {
  *
  * Handles multiple input formats:
  * - MongoDB ObjectId: '6615943e7ace93b0540ae377' → '6615943e7ace93b0540ae377'
- * - Short identifier: 'welcome-email' → 'welcome-email'
+ * - Resource identifier (any length): 'welcome-email' / 'exerciseReminder' / 'dailyDigestPatient' → unchanged
  * - Slug format: 'welcome-email_wf_1A2B3C4D5E6F7890' → '6615943e7ace93b0540ae377' (decoded)
  * - Invalid format: 'invalid-slug_bad_encoding' → 'invalid-slug_bad_encoding' (unchanged)
  *
@@ -66,37 +73,21 @@ function shouldAttemptSlugDecode(value: string): boolean {
  * @returns The parsed internal ID or original value if parsing fails
  */
 export function parseSlugId(value: string): InternalId {
-  if (!value) {
+  if (!value || isInternalId(value)) {
     return value;
   }
 
-  // Check if it's already a valid resource identifier
-  const validId = lookoutForResourceId(value);
-  if (validId) {
-    return validId;
-  }
-
-  if (!shouldAttemptSlugDecode(value)) {
+  const encodedValue = extractEncodedId(value);
+  if (!encodedValue) {
     return value;
   }
-
-  // Try to extract and decode the base62 encoded part from the end
-  const encodedValue = value.slice(-ENCODED_ID_LENGTH);
-  let decodedValue: string;
 
   try {
-    decodedValue = decodeBase62(encodedValue);
-  } catch (error) {
+    const decodedValue = decodeBase62(encodedValue);
+
+    return isInternalId(decodedValue) ? decodedValue : value;
+  } catch {
     // If decoding fails, return the original value
     return value;
   }
-
-  // Check if the decoded value is a valid resource identifier
-  const validDecodedId = lookoutForResourceId(decodedValue);
-  if (validDecodedId) {
-    return validDecodedId;
-  }
-
-  // If decoded value is not valid, return the original value
-  return value;
 }

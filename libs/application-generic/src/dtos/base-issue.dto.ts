@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { StepIssueSeverityEnum } from '@novu/shared';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class BaseIssueDto<T> {
   @ApiProperty({
@@ -23,4 +24,14 @@ export class BaseIssueDto<T> {
   })
   @IsString()
   message: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Blocking severity of the issue. `error` (default when omitted) blocks save; `warning` is a non-blocking notice.',
+    enum: [...Object.values(StepIssueSeverityEnum)],
+    enumName: 'StepIssueSeverityEnum',
+  })
+  @IsOptional()
+  @IsEnum(StepIssueSeverityEnum)
+  severity?: StepIssueSeverityEnum;
 }

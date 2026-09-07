@@ -12,6 +12,7 @@ const validCard: CardElement = {
     { type: 'text', content: 'The **release** is live.', style: 'bold' },
     { type: 'image', url: 'https://example.com/graph.png', alt: 'graph' },
     { type: 'divider' },
+    { type: 'link', label: 'Release notes', url: 'https://example.com/notes' },
     {
       type: 'actions',
       children: [{ type: 'link-button', label: 'View', url: 'https://example.com', style: 'primary' }],
@@ -42,6 +43,15 @@ describe('cardElementZodSchema', () => {
     const result = cardElementZodSchema.safeParse({
       ...validCard,
       children: [{ type: 'actions', children: [{ type: 'link-button', label: 'View' }] }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a link child with a missing url', () => {
+    const result = cardElementZodSchema.safeParse({
+      ...validCard,
+      children: [{ type: 'link', label: 'Docs' }],
     });
 
     expect(result.success).toBe(false);

@@ -35,7 +35,13 @@ export class BridgeExpireSupersededApprovalsService {
 
   async expireOnNewMessage(turn: ConversationTurn): Promise<void> {
     const { config, conversation } = turn;
-    const activities = await this.conversationService.getHistory(config.environmentId, conversation._id);
+    const page = await this.conversationService.listForView({
+      view: 'approval_activities',
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      conversationId: conversation._id,
+    });
+    const activities = page.data;
     const pending = findUnresolvedToolApprovalRequests(activities);
     const orphaned = findOrphanedApprovedToolApprovalRequests(activities);
 

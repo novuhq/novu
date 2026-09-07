@@ -42,8 +42,8 @@ This step defines when and how a chat message should be sent as part of your not
 
 ### Define the chat content
 
-Within the Chat step editor, write the message body.  
-The editor supports dynamic data for personalized and contextual messages.
+Within the Chat step editor, compose the message with the **block editor** (structured cards with text, images, and link buttons) or the **text editor** (plain text and Liquid).  
+Both modes support dynamic data for personalized messages. See [Writing chat templates](/platform/integrations/chat/writing-chat-template).
 
 </Step>
 
@@ -243,7 +243,7 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
 
 ## Provider content overrides
 
-The Chat step body is plain text. When you need a platform's richer message format, such as Slack Block Kit, configure a **provider content override** on the Chat step in the workflow editor.
+For many workflows, the [Chat block editor](/platform/integrations/chat/writing-chat-template) is enough: you author one shared rich message and Novu maps it to each provider. Use a **provider content override** when you need a platform's native message format instead, such as Slack Block Kit fields that the shared card model does not expose.
 
 An override is a JSON object that Novu merges into the request it sends to that provider. It is saved on the step, so it is versioned and promoted between environments with the rest of the workflow, and it applies to every trigger without any change to your trigger call.
 

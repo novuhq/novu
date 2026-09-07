@@ -20,7 +20,6 @@ import {
   RiCodeSSlashLine,
   RiDeleteBin2Line,
   RiErrorWarningFill,
-  RiInformationLine,
   RiListView,
   RiMore2Fill,
   RiRobot2Line,
@@ -56,7 +55,6 @@ import { Switch } from '@/components/primitives/switch';
 import { Tag } from '@/components/primitives/tag';
 import { TagInput } from '@/components/primitives/tag-input';
 import { Textarea } from '@/components/primitives/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { usePromotionalBanner } from '@/components/promotional/coming-soon-banner';
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { workflowSchema } from '@/components/workflow-editor/schema';
@@ -74,6 +72,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { PayloadSchemaDrawer } from './payload-schema-drawer';
+import { SetupRow } from './setup-row';
 import { TranslationToggleSection } from './translation-toggle-section';
 
 interface ConfigureWorkflowFormProps {
@@ -800,44 +799,22 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             )}
           />
           {isWorkflowAgentAssignmentEnabled ? (
-            <Link to={ROUTES.EDIT_WORKFLOW_AGENT} className="block border-t border-stroke-weak">
-              <div className="flex flex-col gap-0.5 px-2.5 py-3">
-                <div className="flex h-5 items-center gap-2">
-                  <div className="flex min-w-0 flex-1 items-center">
-                    <span className="text-text-strong text-label-xs font-medium whitespace-nowrap">
-                      Send & reply via agent
-                    </span>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center"
-                          onClick={(event) => event.preventDefault()}
-                        >
-                          <RiInformationLine className="size-3.5" />
-                          <span className="sr-only">About send and reply via agent</span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        Assign an agent so this workflow can send through the agent&apos;s connected channels and route
-                        replies back automatically.
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <span className="text-text-sub inline-flex shrink-0 items-center gap-0 pl-1 text-label-xs font-medium">
-                    {!workflow.agent?.identifier ? 'Setup' : null}
-                    <RiArrowRightSLine className="size-4" />
-                  </span>
-                </div>
-                {workflow.agent?.identifier ? (
-                  <WorkflowAgentAssignmentSummary agentIdentifier={workflow.agent.identifier} />
-                ) : (
-                  <p className="text-text-soft text-label-2xs leading-3.5">
-                    Let your user reply and continue with an agent
-                  </p>
-                )}
-              </div>
-            </Link>
+            <div className="border-t border-stroke-weak">
+              <SetupRow
+                to={ROUTES.EDIT_WORKFLOW_AGENT}
+                title="Send & reply via agent"
+                tooltipContent="Assign an agent so this workflow can send through the agent's connected channels and route replies back automatically."
+                showSetupLabel={!workflow.agent?.identifier}
+                description={
+                  workflow.agent?.identifier ? (
+                    <WorkflowAgentAssignmentSummary agentIdentifier={workflow.agent.identifier} />
+                  ) : (
+                    'Let your user reply and continue with an agent'
+                  )
+                }
+                className="px-3 py-4 transition-colors hover:bg-bg-weak"
+              />
+            </div>
           ) : null}
         </SidebarContent>
         <Separator />

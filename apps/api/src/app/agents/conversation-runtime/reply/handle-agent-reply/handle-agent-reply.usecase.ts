@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ConversationChannel,
@@ -8,9 +8,17 @@ import {
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
-import type { SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework/internal';
-import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
+import type { HumanSignal, SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework/internal';
+import {
+  AddressingTypeEnum,
+  FeatureFlagsKeysEnum,
+  HumanInteractionKindEnum,
+  type TriggerRecipientsPayload,
+  TriggerRequestCategoryEnum,
+} from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../../events/usecases/parse-event-request';
+import { CreateConversationInteractionCommand } from '../../../../human/usecases/create-conversation-interaction/create-conversation-interaction.command';
+import { CreateConversationInteraction } from '../../../../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../../channels/agent-config-resolver.service';
 import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analytics';
 import type {
@@ -20,7 +28,11 @@ import type {
 } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
-import { AgentPlatformEnum, usesReplyBasedApprovals } from '../../../shared/enums/agent-platform.enum';
+import {
+  AgentPlatformEnum,
+  usesProtocolEventApprovals,
+  usesReplyBasedApprovals,
+} from '../../../shared/enums/agent-platform.enum';
 import { adaptApprovalContentForReplyBasedPlatform } from '../../../shared/tool-approval/reply-based-approval';
 import {
   buildSelfHostedApprovalCard,
@@ -51,7 +63,9 @@ export class HandleAgentReply {
     private readonly analyticsService: AnalyticsService,
     private readonly outboundGateway: OutboundGateway,
     private readonly inboundAck: InboundAckService,
-    private readonly conversationActivation: ConversationActivationService
+    private readonly conversationActivation: ConversationActivationService,
+    private readonly createConversationInteraction: CreateConversationInteraction,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -159,6 +173,13 @@ export class HandleAgentReply {
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
+      const skipProtocolPortableApprovalCard =
+        usesProtocolEventApprovals(channel.platform) &&
+        !!command.toolApprovalRequest &&
+        !!command.reply.toolApprovalCard &&
+        command.reply.markdown === undefined &&
+        command.reply.card === undefined;
+
       // System-generated replies (e.g. runtime error notices) are always
       // delivered but never count an active conversation, and they bypass the
       // free-tier gate so an error message is never swallowed by a 402.
@@ -174,7 +195,9 @@ export class HandleAgentReply {
         });
       }
 
-      replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
+      if (!skipProtocolPortableApprovalCard) {
+        replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
+      }
 
       if (toolApprovalActivityId && replyInfo) {
         await this.linkToolApprovalRequestCard(command, conversation, toolApprovalActivityId, replyInfo.messageId);
@@ -241,6 +264,7 @@ export class HandleAgentReply {
 
     const triggerSignalCount = (command.signals ?? []).filter((s) => s.type === 'trigger').length;
     const metadataSignalCount = (command.signals ?? []).filter((s) => s.type === 'metadata').length;
+    const humanSignalCount = (command.signals ?? []).filter((s) => s.type === 'human').length;
     const reactionCount = command.addReactions?.length ?? 0;
     const deleteMessageCount = command.deleteMessages?.length ?? 0;
     const actions: string[] = [];
@@ -251,6 +275,7 @@ export class HandleAgentReply {
     if (command.toolApprovalRequest) actions.push('tool_approval_request');
     if (triggerSignalCount > 0) actions.push('trigger_signals');
     if (metadataSignalCount > 0) actions.push('metadata_signals');
+    if (humanSignalCount > 0) actions.push('human_signals');
     if (reactionCount > 0) actions.push('add_reactions');
     if (deleteMessageCount > 0) actions.push('delete_messages');
     if (command.typing) actions.push('typing');
@@ -265,6 +290,7 @@ export class HandleAgentReply {
       actions,
       triggerSignalCount,
       metadataSignalCount,
+      humanSignalCount,
       reactionCount,
     });
 
@@ -548,6 +574,62 @@ export class HandleAgentReply {
     if (triggerSignals.length) {
       await this.executeTriggerSignals(command, conversation, channel, triggerSignals);
     }
+
+    const humanSignals = (signals ?? []).filter((s): s is HumanSignal => s.type === 'human');
+    if (humanSignals.length) {
+      await this.executeHumanSignals(command, conversation, channel, humanSignals);
+    }
+  }
+
+  private async executeHumanSignals(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    signals: HumanSignal[]
+  ): Promise<void> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_HUMAN_HITL_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+    });
+
+    if (!isEnabled) {
+      this.logger.warn(
+        { agentIdentifier: command.agentIdentifier, count: signals.length },
+        `[agent:${command.agentIdentifier}] Skipping human signals — IS_AGENT_HUMAN_HITL_ENABLED is off`
+      );
+
+      return;
+    }
+
+    for (const signal of signals) {
+      try {
+        await this.createConversationInteraction.execute(
+          CreateConversationInteractionCommand.create({
+            userId: command.userId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            conversation,
+            channel,
+            agentIdentifier: command.agentIdentifier,
+            integrationIdentifier: command.integrationIdentifier,
+            kind: signal.kind as HumanInteractionKindEnum,
+            prompt: signal.prompt,
+            requestId: signal.requestId,
+            options: signal.options,
+            from: signal.from,
+            ttlSeconds: signal.ttlSeconds,
+            to: signal.to,
+          })
+        );
+      } catch (err) {
+        this.logger.warn(
+          { err, agentIdentifier: command.agentIdentifier, kind: signal.kind, requestId: signal.requestId },
+          `[agent:${command.agentIdentifier}] Failed to create human interaction (${signal.kind})`
+        );
+      }
+    }
   }
 
   private async persistToolApprovalRequest(
@@ -565,6 +647,9 @@ export class HandleAgentReply {
         toolCallId: request.toolCallId,
         toolName: request.name,
         input: request.input,
+        approveActionId: request.approveActionId,
+        denyActionId: request.denyActionId,
+        mcpServerName: request.mcpServerName,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       });

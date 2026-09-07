@@ -1,4 +1,5 @@
 import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
+import { ChatEditorSelect } from '@/components/chat-editor-select';
 import { EmailEditorSelect } from '@/components/email-editor-select';
 import { DelayWindow } from '@/components/workflow-editor/steps/delay/delay-window';
 import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-delay-tabs';
@@ -42,6 +43,20 @@ const EmailEditorSelectInternal = () => {
   );
 };
 
+const ChatEditorSelectInternal = () => {
+  const { isUpdatePatchPending } = useWorkflow();
+  const { saveForm } = useSaveForm();
+  const { currentEnvironment } = useEnvironment();
+
+  return (
+    <ChatEditorSelect
+      isLoading={isUpdatePatchPending}
+      saveForm={saveForm}
+      disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+    />
+  );
+};
+
 export const getComponentByType = ({ component }: { component?: UiComponentEnum }) => {
   switch (component) {
     case UiComponentEnum.IN_APP_AVATAR: {
@@ -73,6 +88,10 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.EMAIL_EDITOR_SELECT: {
       return <EmailEditorSelectInternal />;
+    }
+
+    case UiComponentEnum.CHAT_EDITOR_SELECT: {
+      return <ChatEditorSelectInternal />;
     }
 
     case UiComponentEnum.EMAIL_BODY:

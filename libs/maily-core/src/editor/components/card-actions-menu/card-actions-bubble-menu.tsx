@@ -1,7 +1,7 @@
 import { BubbleMenu } from '@tiptap/react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { sticky } from 'tippy.js';
-import { findCardActions } from '@/editor/nodes/card-actions/card-actions';
+import { dismissCardActionsMenu, findCardActions } from '@/editor/nodes/card-actions/card-actions';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { TooltipProvider } from '../ui/tooltip';
@@ -9,16 +9,52 @@ import { CardActionsBubbleMenuContent } from './card-actions-bubble-menu-content
 
 export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
-  if (!editor) {
-    return null;
-  }
 
   const getReferenceClientRect = useCallback(() => {
+    if (!editor) {
+      return new DOMRect(-1000, -1000, 0, 0);
+    }
+
     const renderContainer = getRenderContainer(editor, 'cardActions');
     const rect = renderContainer?.getBoundingClientRect() || new DOMRect(-1000, -1000, 0, 0);
 
     return rect;
   }, [editor]);
+
+  // Escape closes Actions unless a Configure Variable popover is handling Escape first.
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      // Configure Variable owns Escape while open (incl. when layered on top of Actions).
+      if (editor.storage?.variable?.popover) {
+        return;
+      }
+
+      if (!findCardActions(editor)) {
+        return;
+      }
+
+      event.preventDefault();
+      dismissCardActionsMenu(editor);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [editor]);
+
+  if (!editor) {
+    return null;
+  }
 
   const bubbleMenuProps: EditorBubbleMenuProps = {
     ...props,
@@ -28,9 +64,10 @@ export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
         return false;
       }
 
-      // Match the email button: while Configure Variable is open, hide Actions so
-      // only the variable popover is shown.
-      if (editor.storage?.variable?.popover) {
+      // While a Configure Variable popover is open, hide Actions so only the variable popover shows
+      // (same as the email button) — UNLESS it was opened from a Label/URL field pill, which flags
+      // the bubble to stay mounted so the popover renders on top of it.
+      if (editor.storage?.variable?.popover && !editor.storage?.variable?.keepCardActionsMenu) {
         return false;
       }
 
@@ -54,8 +91,24 @@ export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
       duration: [150, 100],
       // Keep the tippy open for nested menus / autocomplete that render outside fields.
       interactive: true,
-      // Focus can move into nested dropdown items; don't dismiss Actions on blur.
+      // Visibility is selection-driven (`shouldShow`); Tippy hide alone would re-open on the next
+      // transaction. Outside clicks clear the card selection instead (see `onClickOutside`).
       hideOnClick: false,
+      onClickOutside: (_instance, event) => {
+        // Configure Variable (portaled) is outside this tippy — don't steal its outside-click.
+        if (editor.storage?.variable?.popover) {
+          return;
+        }
+
+        const target = event.target as HTMLElement | null;
+
+        // Clicks on the actions row / a button keep or retarget selection via node views.
+        if (target?.closest('[data-type="cardActions"], [data-type="cardButton"]')) {
+          return;
+        }
+
+        dismissCardActionsMenu(editor);
+      },
       onCreate: (instance) => {
         instance.popper.style.overflow = 'visible';
       },

@@ -47,11 +47,15 @@ export async function promptConfirmScaffoldInConsole(opts: {
   projectDir: string;
   appName: string;
   variant: BridgeScaffoldVariant;
+  llmAuthLabel?: string;
 }): Promise<boolean> {
   console.log('');
   console.log(chalk.bold(scaffoldTitle(opts.variant)));
   console.log(chalk.dim(`No project was found here. We'll create one at:`));
   console.log(`  ${chalk.bold(opts.projectDir)}/${chalk.cyan(opts.appName)}`);
+  if (opts.llmAuthLabel) {
+    console.log(`  ${chalk.bold('LLM wiring:')} ${chalk.cyan(opts.llmAuthLabel)}`);
+  }
   console.log(chalk.dim(scaffoldSummary(opts.variant)));
   console.log(chalk.cyan('Enter · scaffold · s · cancel'));
 

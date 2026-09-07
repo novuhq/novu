@@ -24,6 +24,8 @@ function printBrowserAuthHint(): void {
 
 async function ensureCodexCliAuth(ui: ConnectUI, ci?: boolean): Promise<void> {
   if (hasCodexCliAuth()) {
+    console.log(chalk.green('✓ Codex CLI login already on this machine — using your existing session.'));
+
     return;
   }
 
@@ -79,6 +81,8 @@ async function ensureLangchainCodexOauthAuth(ui: ConnectUI, ci?: boolean): Promi
 
 async function ensureClaudeCodeAuth(ui: ConnectUI, ci?: boolean): Promise<void> {
   if (hasClaudeCodeAuth()) {
+    console.log(chalk.green('✓ Claude Code login already on this machine — using your existing session.'));
+
     return;
   }
 

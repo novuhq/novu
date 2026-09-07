@@ -3,9 +3,9 @@ import { readClerkAuthParamFromLocation } from '@/utils/product-auth-urls';
 // `?product_type=agents` on the auth pages selects the agents onboarding path. The value is captured
 // before Clerk's sign-up redirect drops it, persisted in sessionStorage, and resolved after org
 // creation to skip the usecase picker and land on the agents setup page.
-export const PRODUCT_TYPE_PARAM = 'product_type';
+const PRODUCT_TYPE_PARAM = 'product_type';
 
-export const PRODUCT_TYPES = ['agents'] as const;
+const PRODUCT_TYPES = ['agents'] as const;
 
 export type ProductType = (typeof PRODUCT_TYPES)[number];
 
@@ -25,11 +25,11 @@ export function readProductTypeParam(searchParams?: URLSearchParams): ProductTyp
 
 // Resolves the product type for the current page: the live URL param takes priority, falling back to
 // the value persisted earlier in the session so the choice survives navigation that drops the param.
-export function resolveProductType(searchParams?: URLSearchParams): ProductType | null {
+function resolveProductType(searchParams?: URLSearchParams): ProductType | null {
   return readProductTypeParam(searchParams) ?? readPendingProductType();
 }
 
-export function storePendingProductType(value: ProductType): void {
+function storePendingProductType(value: ProductType): void {
   if (typeof window === 'undefined' || !isValidProductType(value)) {
     return;
   }

@@ -1,38 +1,46 @@
 ---
 title: "Braze Email Integration with Novu"
-sidebarTitle: 'Braze'
-description: "Connect Braze to Novu to send transactional emails through workflows. Store your Braze API key and endpoint, then deliver via the Braze transactional API."
+sidebarTitle: "Braze"
+description: "Connect Braze to Novu to send transactional emails through workflows. Store your Braze API key, REST endpoint, and app ID in the Novu dashboard."
 ---
 
-You can use the [Braze](https://braze.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
+You can use [Braze](https://www.braze.com/) to send transactional emails through Novu. Novu calls Braze's messaging API and maps recipients by email address to Braze external user IDs.
 
-## Getting Started
+## Getting started
 
-To use the Braze provider in the email channel, you will need to create a [Braze account](https://braze.com/) and add your API key and other credentials to the Braze integration on the Novu platform.
+You need a Braze account, a REST API key with messaging permissions, your Braze REST endpoint (base URL), and an app ID from your Braze workspace.
 
-## Generating an API Key
+## Generating an API key
 
-To generate a new API key in Braze, you can follow these steps:
+1. [Sign up](https://www.braze.com/) or log in to Braze.
+2. Go to **Settings > APIs and Identifiers** (wording can vary slightly by Braze dashboard version).
+3. Create an API key with permission to send messages.
+4. Copy the key and store it securely.
 
-- [Sign up](https://braze.com) or [Log in](https://braze.com) to your Braze account.
-- Go to **Settings > API Keys**.
-- Click **+ Create New API Key**.
-- Give your new key a name for identification at a glance.
-- Select the right permission you want to be associated with the new API key.
+## Finding your base URL and app ID
+
+1. Use the [Braze REST endpoint](https://www.braze.com/docs/api/basics/#endpoints) that matches your Braze instance (for example `https://rest.iad-01.braze.com`).
+2. Copy an **App Identifier** from **Settings > APIs and Identifiers**. Novu sends this as `app_id` on each email message.
+
+<Note>
+  Recipients must already exist in Braze with an email address Novu can resolve to a Braze `external_id`. If Braze cannot map the email, the send fails.
+</Note>
 
 ## Creating a Braze integration with Novu
 
-- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-braze) page on Novu.
-- Click on `Add a Provider`.
-- Locate **Braze** under the Email section and click on the **Next** button.
-- Select Your Environment add condition (Optional).
-- Click on the `Create` button.
-- Click on the `Disabled` button and mark it as `Active`.
-- Enter the `API Key`.
-- Enter the `Base URL`.
-- Enter the `From email address`.
-- Enter the `Sender name`.
-- Click on the **Update** button.
+1. Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-braze) page on Novu.
+2. Click **Add a provider**.
+3. Locate **Braze** under the Email section and click **Connect**.
+4. Enter your:
+   - **API Key**
+   - **Base URL** (Braze REST endpoint)
+   - **App ID**
+   - **From email address**
+   - **Sender name**
+5. Confirm **Active Integration** is on. New integrations start active by default.
+6. Click **Create Integration**.
+
+You can now send transactional email with Braze through Novu.
 
 ## Next Steps
 

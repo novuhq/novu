@@ -45,7 +45,7 @@ const RELEASE_ARTIFACT_BASENAME = 'step-resolver-release';
 
 type ScaffoldResult = { mode: 'react-email'; templatePath: string } | { mode: 'placeholder'; stepType: string };
 
-const KNOWN_STEP_TYPES = new Set(['email', 'sms', 'push', 'chat', 'in_app', 'delay', 'digest', 'throttle']);
+const KNOWN_STEP_TYPES = new Set(['email', 'sms', 'push', 'chat', 'in_app', 'tool', 'delay', 'digest', 'throttle']);
 
 export async function stepPublish(options: PublishOptions): Promise<void> {
   try {
@@ -218,6 +218,7 @@ async function promptForStepType(rootDir: string): Promise<ScaffoldResult | unde
         { title: 'Push         — mobile push notification', value: 'push' },
         { title: 'Chat         — chat message (Slack, MS Teams, etc.)', value: 'chat' },
         { title: 'In-App       — in-app notification', value: 'in_app' },
+        { title: 'Tool         — PagerDuty, Opsgenie, Grafana, or webhook', value: 'tool' },
         { title: 'Delay        — pause execution for a duration', value: 'delay' },
         { title: 'Digest       — batch events over a time window', value: 'digest' },
         { title: 'Throttle     — limit send frequency per subscriber', value: 'throttle' },

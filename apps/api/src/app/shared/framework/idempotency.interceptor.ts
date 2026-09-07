@@ -23,6 +23,7 @@ import { createHash } from 'crypto';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { EXCLUDE_FROM_IDEMPOTENCY } from './exclude-from-idempotency';
+import { restoreCachedHttpException, serializeCachedHttpError } from './idempotency-http-error';
 
 const IDEMPOTENCY_CACHE_TTL = 60 * 60 * 24; // 24h
 const IDEMPOTENCY_PROGRESS_TTL = 60 * 5; // 5min
@@ -110,16 +111,17 @@ export class IdempotencyInterceptor implements NestInterceptor {
         return await this.handlerDuplicateRequest(context, bodyHash);
       }
     } catch (err) {
-      this.logger.warn(
-        `An error occurred while making idempotency check, key:${idempotencyKey}. error: ${err.message}`
-      );
       if (err instanceof HttpException) {
         return throwError(() => err);
       }
-    }
 
-    // something unexpected happened, both cached response and handler did not execute as expected
-    return throwError(() => new ServiceUnavailableException());
+      this.logger.warn(
+        { err, idempotencyKey },
+        `An error occurred while making idempotency check, key:${idempotencyKey}`
+      );
+
+      return throwError(() => new ServiceUnavailableException());
+    }
   }
 
   private getIdempotencyKey(context: ExecutionContext): string | undefined {
@@ -165,7 +167,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
       }
       await this.cacheService.set(key, JSON.stringify(val), { ttl });
     } catch (err) {
-      this.logger.warn(`An error occurred while setting idempotency cache, key:${key} error: ${err.message}`);
+      this.logger.warn({ err, key }, `An error occurred while setting idempotency cache, key:${key}`);
     }
 
     return null;
@@ -200,6 +202,18 @@ export class IdempotencyInterceptor implements NestInterceptor {
     this.setHeaders(context.switchToHttp().getResponse(), {
       [HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]: idempotencyKey,
     });
+    if (!data) {
+      this.logger.warn({ idempotencyKey }, `Idempotency cache entry is missing, key:${idempotencyKey}`);
+      this.setHeaders(context.switchToHttp().getResponse(), {
+        [HttpResponseHeaderKeysEnum.RETRY_AFTER]: `1`,
+        [HttpResponseHeaderKeysEnum.LINK]: DOCS_LINK,
+      });
+
+      throw new ConflictException(
+        `Request with key "${idempotencyKey}" is currently being processed. Please retry after 1 second`
+      );
+    }
+
     const parsed = JSON.parse(data);
     if (parsed.status === ReqStatusEnum.PROGRESS) {
       // api call is in progress, so client need to handle this case
@@ -228,9 +242,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     // already seen the request return cached response
     if (parsed.status === ReqStatusEnum.ERROR) {
+      const restored = restoreCachedHttpException(parsed.data);
       this.logger.trace(`returning cached error response. key: "${idempotencyKey}"`);
 
-      throw parsed.data;
+      throw restored;
     }
 
     return of(parsed.data);
@@ -266,7 +281,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
           {
             status: ReqStatusEnum.ERROR,
             bodyHash,
-            data: err,
+            data: serializeCachedHttpError(err),
           },
           IDEMPOTENCY_CACHE_TTL
         ).catch(() => {});

@@ -69,6 +69,13 @@ export const envValidators = {
   REDIS_MASTER_PORT: str({ default: '' }),
   REDIS_SLAVE_HOST: str({ default: '' }),
   REDIS_SLAVE_PORT: str({ default: '' }),
+  IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
+  REDIS_CLUSTER_SERVICE_HOST: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORTS: str({ default: undefined }),
+  REDIS_CLUSTER_USERNAME: str({ default: undefined }),
+  REDIS_CLUSTER_PASSWORD: str({ default: undefined }),
+  REDIS_CLUSTER_TLS: str({ default: undefined }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
   MONGO_MAX_POOL_SIZE: num({ default: 50 }),
@@ -89,6 +96,21 @@ export const envValidators = {
   SQS_DEFAULT_VISIBILITY_TIMEOUT: num({ default: undefined }),
   SQS_DEFAULT_BATCH_SIZE: num({ default: undefined }),
   SQS_DEFAULT_WAIT_TIME_SECONDS: num({ default: undefined }),
+  // SQS queue backend (optional - when unset, the worker runs BullMQ-only)
+  SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
+  SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
+  SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
+  SQS_QUEUE_URL_WEB_SOCKETS: str({ default: undefined }),
+  SQS_ENDPOINT: str({ default: undefined }),
+  SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
+  SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
+  // EventBridge Scheduler for delays beyond the SQS 900s cap (optional - when
+  // unset, long delays keep going to BullMQ)
+  EVENTBRIDGE_SCHEDULER_GROUP_PREFIX: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_ROLE_ARN: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_DLQ_ARN: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_MAX_RETRY_ATTEMPTS: num({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_MAX_EVENT_AGE_SECONDS: num({ default: undefined }),
   SOCKET_WORKER_URL: str({ default: undefined }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
@@ -99,7 +121,7 @@ export const envValidators = {
   ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
-  ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AZURE' && {
     AZURE_ACCOUNT_NAME: str(),
     AZURE_ACCOUNT_KEY: str(),
     AZURE_HOST_NAME: str({ default: `https://${processEnv.AZURE_ACCOUNT_NAME}.blob.core.windows.net` }),
@@ -107,13 +129,13 @@ export const envValidators = {
   }),
 
   // GCS validators
-  ...(processEnv.STORAGE_SERVICE === 'GCS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'GCS' && {
     GCS_BUCKET_NAME: str(),
     GCS_DOMAIN: str(),
   }),
 
   // AWS validators
-  ...(processEnv.STORAGE_SERVICE === 'AWS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AWS' && {
     S3_LOCAL_STACK: str({ default: '' }),
     S3_BUCKET_NAME: str(),
     S3_REGION: str(),

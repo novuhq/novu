@@ -1,7 +1,9 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import io, { Socket as SocketIO } from 'socket.io-client';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
+  WebChatAgentEvent,
   NotificationReceivedEvent,
   NotificationUnreadEvent,
   NotificationUnseenEvent,
@@ -27,6 +29,7 @@ const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
 const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
+const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
 
 const mapToNotification = ({
   _id,
@@ -157,6 +160,12 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     });
   };
 
+  #agentEvent = (envelope: AgentEventEnvelope) => {
+    this.#emitter.emit(WEB_CHAT_AGENT_EVENT, {
+      result: envelope,
+    });
+  };
+
   async #initializeSocket(): Promise<void> {
     if (this.#socketIo) {
       return;
@@ -174,6 +183,8 @@ export class Socket extends BaseModule implements BaseSocketInterface {
       ...(this.#socketOptions ?? {}),
     });
 
+    const socket = this.#socketIo;
+
     this.#socketIo.on('connect', () => {
       this.#emitter.emit('socket.connect.resolved', { args });
     });
@@ -182,9 +193,18 @@ export class Socket extends BaseModule implements BaseSocketInterface {
       this.#emitter.emit('socket.connect.resolved', { args, error });
     });
 
+    this.#socketIo.on('disconnect', () => {
+      if (this.#socketIo !== undefined && socket !== this.#socketIo) {
+        return;
+      }
+
+      this.#emitter.emit('socket.disconnect.resolved', { args });
+    });
+
     this.#socketIo?.on(WebSocketEvent.RECEIVED, this.#notificationReceived);
     this.#socketIo?.on(WebSocketEvent.UNSEEN, this.#unseenCountChanged);
     this.#socketIo?.on(WebSocketEvent.UNREAD, this.#unreadCountChanged);
+    this.#socketIo?.on(WebSocketEvent.AGENT_EVENT, this.#agentEvent);
   }
 
   async #handleConnectSocket(): Result<void> {
@@ -210,7 +230,10 @@ export class Socket extends BaseModule implements BaseSocketInterface {
 
   isSocketEvent(eventName: string): eventName is SocketEventNames {
     return (
-      eventName === NOTIFICATION_RECEIVED || eventName === UNSEEN_COUNT_CHANGED || eventName === UNREAD_COUNT_CHANGED
+      eventName === NOTIFICATION_RECEIVED ||
+      eventName === UNSEEN_COUNT_CHANGED ||
+      eventName === UNREAD_COUNT_CHANGED ||
+      eventName === WEB_CHAT_AGENT_EVENT
     );
   }
 

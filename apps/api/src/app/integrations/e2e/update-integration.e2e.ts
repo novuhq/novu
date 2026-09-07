@@ -145,6 +145,34 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.operator).to.equal('EQUAL');
   });
 
+  it('should update JsonLogic conditions on integration', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'SG.123', secretKey: 'abc' },
+      active: true,
+      check: false,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    };
+
+    const { data } = (await session.testAgent.get(`/v1/integrations`)).body;
+
+    const integration = data.find((i) => i.primary && i.channel === 'email');
+
+    await session.testAgent.put(`/v1/integrations/${integration._id}`).send(payload);
+
+    const result = await integrationRepository.findOne({
+      _id: integration._id,
+      _organizationId: session.organization._id,
+    });
+
+    expect(result?.rules).to.deep.equal(payload.rules);
+    expect(result?.conditions).to.deep.equal([]);
+    expect(result?.primary).to.equal(false);
+  });
+
   it('should return error with malformed conditions', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,

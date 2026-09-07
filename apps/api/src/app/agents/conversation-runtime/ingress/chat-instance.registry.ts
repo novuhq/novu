@@ -2,23 +2,30 @@ import type { SlackAdapter } from '@chat-adapter/slack';
 import type { TeamsAdapter } from '@chat-adapter/teams';
 import type { TelegramAdapter } from '@chat-adapter/telegram';
 import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
-import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { NovuWebChatAdapter } from '@novu/chat-adapter-web';
+import type { NovuWebChatAdapter } from '@novu/chat-adapter-web-chat';
+import { stripAgentReplyToken } from '@novu/shared';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import { WebChatAcceptIdempotencyService } from '../../web-chat/web-chat-accept-idempotency.service';
+import {
+  type WebChatPlatformDeliveryContext,
+  WebChatPlatformDeliveryService,
+} from '../../web-chat/web-chat-platform-delivery.service';
+import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
+import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
-import { WebChatPlatformDeliveryService } from '../../web-chat/web-chat-platform-delivery.service';
-import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
-import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
+import { PlanLimitGateService } from './plan-limit-gate.service';
+import { rehydrateInboundAttachments } from './rehydrate-inbound-attachments';
 
 /**
  * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
@@ -118,7 +125,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentEmailSender: AgentEmailSender,
     private readonly webChatSessionVerifier: WebChatSessionVerifier,
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
-    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService
+    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
+    private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
+    @Inject(forwardRef(() => PlanLimitGateService))
+    private readonly planLimitGate: PlanLimitGateService
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -199,9 +209,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     config: ResolvedAgentConfig,
     adapterFingerprint: string
   ): Promise<ChatWithAdapters> {
-    const chat = await this.createChatInstance(instanceKey, agentId, platform, config);
+    const cached: CachedChat = {
+      chat: null as unknown as ChatWithAdapters,
+      config,
+      adapterFingerprint,
+    };
+    const chat = await this.createChatInstance(instanceKey, agentId, platform, cached);
     await chat.initialize();
-    const cached: CachedChat = { chat, config, adapterFingerprint };
+    cached.chat = chat;
     this.registerEventHandlers(agentId, cached);
     this.instances.set(instanceKey, cached);
 
@@ -238,14 +253,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     instanceKey: string,
     agentId: string,
     platform: AgentPlatformEnum,
-    config: ResolvedAgentConfig
+    cached: CachedChat
   ): Promise<ChatWithAdapters> {
     const [{ Chat: ChatCtor }, { createIoRedisState }] = await Promise.all([
       esmImport('chat'),
       esmImport('@chat-adapter/state-ioredis'),
     ]);
 
-    const adapters = await this.buildAdapters(agentId, platform, config);
+    const adapters = await this.buildAdapters(agentId, platform, cached);
     const client = this.cacheService.client;
     if (!client) {
       throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
@@ -305,8 +320,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
   private async buildAdapters(
     agentId: string,
     platform: AgentPlatformEnum,
-    config: ResolvedAgentConfig
+    cached: CachedChat
   ): Promise<Record<string, unknown>> {
+    const config = cached.config;
     const { credentials, connectionAccessToken } = config;
 
     switch (platform) {
@@ -453,6 +469,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
+            stripAgentReplyToken,
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
               const { url } = await this.emailActionTokenService.signActionToken({
@@ -477,8 +494,13 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         };
       }
       case AgentPlatformEnum.WEB_CHAT: {
-        const { createWebChatAdapter } = await esmImport('@novu/chat-adapter-web');
-        const deliveryContext = { agentId, config };
+        const { createWebChatAdapter } = await esmImport('@novu/chat-adapter-web-chat');
+        const deliveryContext: WebChatPlatformDeliveryContext = {
+          agentId,
+          get config() {
+            return cached.config;
+          },
+        };
 
         return {
           web_chat: createWebChatAdapter({
@@ -486,6 +508,20 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
             authorizeResume: ({ conversationId, session }) =>
               this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
+            checkAcceptLimits: ({ isNewThread, conversationId }) =>
+              this.planLimitGate.checkWebChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
+            claimInbound: ({ session, key, conversationId }) =>
+              this.webChatAcceptIdempotency.claimInbound(session.environmentId, key, conversationId),
+            releaseInbound: ({ session, key, conversationId, claimToken }) =>
+              this.webChatAcceptIdempotency.releaseInbound(session.environmentId, key, conversationId, claimToken),
+            completeInbound: ({ session, key, conversationId, claimToken, messageId }) =>
+              this.webChatAcceptIdempotency.completeInbound(
+                session.environmentId,
+                key,
+                conversationId,
+                claimToken,
+                messageId
+              ),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
@@ -510,22 +546,26 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
+        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
-        captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-new-mention', agentId });
+        this.rethrowWebChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-new-mention',
+          logMessage: `[agent:${agentId}] Error handling new mention`,
+        });
       }
     });
 
     cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
+        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
-        captureAgentException(err, {
-          component: 'chat-instance-registry',
-          operation: 'on-subscribed-message',
+        this.rethrowWebChatInboundError(cached, err, {
           agentId,
+          operation: 'on-subscribed-message',
+          logMessage: `[agent:${agentId}] Error handling subscribed message`,
         });
       }
     });
@@ -576,11 +616,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           event.raw
         );
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
-        captureAgentException(err, {
-          component: 'chat-instance-registry',
-          operation: 'on-action',
+        this.rethrowWebChatInboundError(cached, err, {
           agentId,
+          operation: 'on-action',
+          logMessage: `[agent:${agentId}] Error handling action ${event.actionId}`,
           extra: { actionId: event.actionId },
         });
       }
@@ -588,6 +627,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
+        if (event.message) {
+          rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), event.message);
+        }
+
         await callbacks.onReaction(agentId, cached.config, {
           emoji: event.emoji,
           added: event.added,
@@ -602,6 +645,29 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-reaction', agentId });
       }
     });
+  }
+
+  /**
+   * Slack/Telegram keep swallowing inbound errors so their webhooks stay 200.
+   * Web chat must rethrow so the adapter releases the accept lock instead of
+   * writing a 24h success cache for a failed turn.
+   */
+  private rethrowWebChatInboundError(
+    cached: CachedChat,
+    err: unknown,
+    args: { agentId: string; operation: string; logMessage: string; extra?: Record<string, unknown> }
+  ): void {
+    this.logger.error(err, args.logMessage);
+    captureAgentException(err, {
+      component: 'chat-instance-registry',
+      operation: args.operation,
+      agentId: args.agentId,
+      extra: args.extra,
+    });
+
+    if (cached.config.platform === AgentPlatformEnum.WEB_CHAT) {
+      throw err;
+    }
   }
 
   /**

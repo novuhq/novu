@@ -1,0 +1,142 @@
+---
+title: 'Send webhook events to Segment'
+description: 'Configure the Segment webhook connector to map selected Novu events to Segment Track calls.'
+sidebarTitle: 'Segment'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+
+The Segment connector sends selected Novu webhook events to Segment's HTTP API. Its transformation runs once per event and can map a Novu message object to a Segment Track call.
+
+<WebhookConnectorsPlanNote />
+
+This outbound connector sends Novu events to Segment. To send Segment events into Novu and trigger workflows, use the separate [inbound Segment guide](/guides/analytics/segment).
+
+## Prerequisites
+
+- A Segment source that accepts HTTP API calls
+- The source **Write Key**
+- Permission to manage webhook endpoints in the Novu environment
+- Novu event types whose payloads contain the fields your Segment call requires
+
+## Configuration
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Write key** | Yes | Segment source Write Key used by the connector. |
+| **Transformation** | Yes | Per-message JavaScript that sets the Segment API URL and request payload. |
+
+## Transformation contract
+
+Unlike batched storage and messaging connectors, Segment uses `handler(webhook)` for one webhook at a time. The input and output object contains:
+
+| Property | Description |
+| --- | --- |
+| `webhook.eventType` | Selected Novu webhook event type. |
+| `webhook.payload` | Novu webhook body. Resource data is under `webhook.payload.data.object`. |
+| `webhook.url` | Destination URL. Set this to the required Segment API endpoint. |
+| `webhook.method` | HTTP method. Supported transformation values are `POST`, `PUT`, and `PATCH`. |
+| `webhook.cancel` | Set to `true` when the event should not be sent. |
+
+The webhook body wraps the resource in an envelope: `webhook.payload.object` is the resource type as a string, such as `"message"`, and the resource itself is under `webhook.payload.data.object`. For message events, `subscriberId` and related message fields are therefore at `webhook.payload.data.object`.
+
+This example maps message events to Segment Track:
+
+```js
+function handler(webhook) {
+  const message = webhook.payload.data?.object ?? {};
+
+  if (!message.subscriberId) {
+    webhook.cancel = true;
+
+    return webhook;
+  }
+
+  webhook.url = "https://api.segment.io/v1/track";
+  webhook.payload = {
+    userId: message.subscriberId,
+    event: webhook.eventType,
+    properties: {
+      novu: message,
+    },
+  };
+
+  return webhook;
+}
+```
+
+Segment rejects a Track call that has neither `userId` nor `anonymousId`, so the example cancels the delivery instead of sending an invalid call when an event carries no subscriber. Cancelled events are not retried.
+
+The resulting Track payload has this shape:
+
+```json
+{
+  "userId": "subscriber-123",
+  "event": "message.sent",
+  "properties": {
+    "novu": {
+      "subscriberId": "subscriber-123",
+      "channel": "email"
+    }
+  }
+}
+```
+
+Subscribe this example only to message events that include `data.object.subscriberId`. For workflow events or other shapes, inspect the [event type](/platform/developer/webhooks/event-types) payload and map a valid Segment `userId` or `anonymousId`.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the Segment source
+
+Create or select a Segment source that supports the HTTP Tracking API. Copy its **Write Key**.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Segment" />
+
+  <Step>
+## Enter connection details
+
+Enter the **Write key**.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Map each subscribed event shape, keep `handler(webhook)`, and return the webhook object.
+  </Step>
+
+  <Step>
+## Select event types
+
+Choose the [event types](/platform/developer/webhooks/event-types) to send. Add explicit transformation handling for every selected type.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint. In **Testing**, send an example for each selected event type. Confirm success in **Logs**, then verify the call and payload in the Segment source debugger.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Open the Segment source debugger and confirm the Track call has the expected `userId`, event name, and properties. Compare it with the transformed request in the endpoint's **Logs** tab.
+
+## Troubleshooting
+
+- **Segment rejects authentication**: Confirm the Write Key belongs to the intended source and environment.
+- **`userId` is missing**: Read it from `webhook.payload.data.object.subscriberId` for supported message events. Inspect the test payload before mapping other event types.
+- **Track properties are empty**: Preserve the original payload before assigning a new value to `webhook.payload`.
+- **Only some events reach Segment**: Confirm every required event type is selected and handled by the transformation.
+- **Events appear in the wrong direction**: This connector is Novu to Segment. Use the [Segment Destination Functions guide](/guides/analytics/segment) for Segment to Novu.
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix Segment connector](https://docs.svix.com/connectors#segment)
+- [Segment HTTP Track API](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#track)

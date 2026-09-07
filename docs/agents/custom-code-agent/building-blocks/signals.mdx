@@ -6,7 +6,7 @@ description: "Use signals in custom code agent handlers to update metadata, trig
 
 Signals let you change conversation state without sending another chat message. [Replies](/agents/custom-code-agent/building-blocks/reply) go to the user; signals update metadata, fire workflows, or mark a thread resolved.
 
-Use `ctx.reply()` when the user should see something. Use signals when you only need to persist data, trigger a Novu workflow, or close the conversation.
+Use `ctx.reply()` when the user should see something. Use signals when you only need to persist data, trigger a Novu workflow, or close the conversation. Use [`ctx.emit`](/agents/custom-code-agent/building-blocks/emit) when your client needs a named payload during the turn. That call is not a signal.
 
 ## Channel support
 

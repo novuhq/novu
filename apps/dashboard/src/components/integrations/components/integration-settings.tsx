@@ -21,7 +21,9 @@ import { ROUTES } from '@/utils/routes';
 import { cn } from '../../../utils/ui';
 import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
+import { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
+import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
 import { GeneralSettings } from './integration-general-settings';
 import { ProviderDeprecationNotice } from './provider-deprecation';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
@@ -32,17 +34,6 @@ import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-
 import { isDemoIntegration } from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
-
-type IntegrationFormData = {
-  name: string;
-  identifier: string;
-  credentials: Record<string, string>;
-  configurations: Record<string, string>;
-  active: boolean;
-  check: boolean;
-  primary: boolean;
-  environmentId: string;
-};
 
 type IntegrationConfigurationProps = {
   provider: IProviderConfig;
@@ -98,6 +89,7 @@ export function IntegrationSettings({
           credentials: integration.credentials as Record<string, string>,
           configurations: integration.configurations as Record<string, string>,
           environmentId: integration._environmentId,
+          rules: integration.rules ?? null,
         }
       : {
           name: provider?.displayName ?? '',
@@ -107,6 +99,7 @@ export function IntegrationSettings({
           credentials: {},
           configurations: {},
           environmentId: currentEnvironment?._id ?? '',
+          rules: null,
         },
   });
 
@@ -236,6 +229,7 @@ export function IntegrationSettings({
               <AccordionContent>
                 <GeneralSettings
                   control={control}
+                  setValue={setValue}
                   mode={mode}
                   isReadOnly={isReadOnly}
                   hidePrimarySelector={!isChannelSupportPrimary}
@@ -368,6 +362,15 @@ export function IntegrationSettings({
               </Accordion>
             </Protect>
           </div>
+        )}
+
+        {!isAgentOnboarding && (
+          <IntegrationConditionsDrawer
+            control={control}
+            setValue={setValue}
+            legacyConditions={integration?.conditions}
+            isReadOnly={isReadOnly}
+          />
         )}
       </FormRoot>
     </Form>

@@ -150,7 +150,9 @@ export abstract class SendMessageBase extends SendMessageType {
     userId: string;
     recipientEmail?: string;
     filterData: {
-      tenant: ITenantDefine | undefined;
+      tenant?: ITenantDefine;
+      subscriber?: SendMessageChannelCommand['compileContext']['subscriber'];
+      context?: SendMessageChannelCommand['compileContext']['context'];
     };
   }): Promise<IntegrationEntity | undefined> {
     const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
@@ -175,6 +177,14 @@ export abstract class SendMessageBase extends SendMessageType {
     }
 
     return integration;
+  }
+
+  protected getIntegrationFilterData(command: SendMessageChannelCommand) {
+    return {
+      tenant: command.job.tenant,
+      subscriber: command.compileContext?.subscriber,
+      context: command.compileContext?.context,
+    };
   }
 
   protected storeContent(): boolean {

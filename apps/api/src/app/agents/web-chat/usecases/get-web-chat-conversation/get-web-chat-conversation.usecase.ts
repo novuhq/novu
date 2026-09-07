@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AgentRepository, ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import { withWebChatContextFilter } from '../../web-chat-context-query.util';
 import type { WebChatConversationMetadataDto } from '../../dtos/web-chat-conversation.dto';
 import { GetWebChatConversationCommand } from './get-web-chat-conversation.command';
 
@@ -13,11 +14,15 @@ export class GetWebChatConversation {
 
   async execute(command: GetWebChatConversationCommand): Promise<WebChatConversationMetadataDto> {
     const conversation = await this.conversationRepository.findOne(
-      {
-        identifier: command.conversationIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
+      withWebChatContextFilter(
+        this.conversationRepository,
+        {
+          identifier: command.conversationIdentifier,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        command.contextKeys
+      ),
       '*'
     );
 

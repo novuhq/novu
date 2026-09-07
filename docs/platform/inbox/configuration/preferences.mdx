@@ -17,11 +17,11 @@ The Preferences interface in the Inbox component lets subscribers customize how 
 
 ## Global preferences
 
-Global preferences apply across all workflows. For example, a subscriber can turn off an email or SMS channels globally, ensuring that they don’t receive notifications through that channel from any workflow.
+Global preferences act as the subscriber's baseline across all workflows. For example, a subscriber can turn the email or SMS channel off globally rather than turning it off workflow by workflow.
 
 ![Global preferences](/images/inbox/global-preferences.png)
 
-Global preferences override individual workflow preferences. If a channel is turned off (disabled) globally, notifications for that channel will not be sent even if it is enabled for a specific workflow.
+Turning a channel off globally disables it for every workflow the subscriber has not configured individually. If the subscriber then sets a preference for one specific workflow, that more specific choice wins for that workflow — so they can disable `email` globally and re-enable it for the single workflow they care about. See [Priority of preferences](/platform/concepts/preferences#priority-of-preferences) for the full resolution order.
 
 ### Hide global preferences UI
 

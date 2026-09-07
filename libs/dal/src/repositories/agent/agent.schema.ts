@@ -36,7 +36,7 @@ const agentSchema = new Schema<AgentDBModel>(
     },
     runtime: {
       type: Schema.Types.String,
-      enum: ['self-hosted', 'managed'],
+      enum: ['self-hosted', 'managed', 'human_relay'],
       default: 'self-hosted',
     },
     visibility: {

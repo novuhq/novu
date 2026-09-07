@@ -2,16 +2,18 @@
  * Agents activation Mixpanel funnel (beginning of path). Identity is the acting
  * userId; `_organization` is attached for org-level filtering/breakdown.
  *
- * Create Organization → Agents Usecase Selected → Agent Created
+ * Create Organization → Agents Usecase Selected → Agent Created → Agent Assigned To Workflow → Workflow Origin Hydrated
  */
 export const AGENTS_ORG_FUNNEL_EVENTS = {
   USECASE_SELECTED: 'Agents Usecase Selected - [Agents]',
   AGENT_CREATED: 'Agent Created - [Agents]',
+  AGENT_ASSIGNED_TO_WORKFLOW: 'Agent Assigned To Workflow - [Agents]',
+  WORKFLOW_ORIGIN_HYDRATED: 'Workflow Origin Hydrated - [Agents]',
 } as const;
 
 export type AgentsOrgFunnelEvent = (typeof AGENTS_ORG_FUNNEL_EVENTS)[keyof typeof AGENTS_ORG_FUNNEL_EVENTS];
 
-export const AGENT_ANALYTICS_SOURCES = ['cli', 'dashboard_onboarding', 'dashboard', 'api'] as const;
+export const AGENT_ANALYTICS_SOURCES = ['cli', 'dashboard_onboarding', 'dashboard', 'api', 'mcp'] as const;
 
 export type AgentAnalyticsSource = (typeof AGENT_ANALYTICS_SOURCES)[number];
 

@@ -5,6 +5,17 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { ResolveChannelEndpoints } from './resolve-channel-endpoints.usecase';
 
+function stubIntegrationRepository(sandbox: sinon.SinonSandbox) {
+  return {
+    findOne: sandbox.stub(),
+    find: sandbox.stub().callsFake(async (query: { identifier?: { $in?: string[] } }) => {
+      const identifiers = query.identifier?.$in ?? [];
+
+      return identifiers.map((identifier) => ({ identifier, active: true }));
+    }),
+  };
+}
+
 const ORGANIZATION_ID = 'org_123';
 const ENVIRONMENT_ID = 'env_123';
 const SUBSCRIBER_ID = 'subscriber_123';
@@ -36,7 +47,7 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       rotatingConnectionTokenService as any
     );
@@ -121,6 +132,7 @@ describe('ResolveChannelEndpoints - Slack', () => {
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
   let channelConnectionRepository: Record<string, sinon.SinonStub>;
   let rotatingConnectionTokenService: Record<string, sinon.SinonStub>;
+  let integrationRepository: ReturnType<typeof stubIntegrationRepository>;
   let usecase: ResolveChannelEndpoints;
 
   beforeEach(() => {
@@ -137,11 +149,12 @@ describe('ResolveChannelEndpoints - Slack', () => {
     rotatingConnectionTokenService = {
       getConnectionToken: sandbox.stub(),
     };
+    integrationRepository = stubIntegrationRepository(sandbox);
 
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      integrationRepository as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       rotatingConnectionTokenService as any
     );
@@ -185,12 +198,65 @@ describe('ResolveChannelEndpoints - Slack', () => {
     expect(result[0].channelData[0]).to.deep.include({ token: '' });
     sinon.assert.notCalled(rotatingConnectionTokenService.getConnectionToken);
   });
+
+  it('does not load connections or refresh tokens for endpoints without an active integration', async () => {
+    const connection = buildSlackConnection({ accessToken: 'xoxb-stale-token', refreshToken: 'refresh-token' });
+    channelEndpointRepository.find.resolves([buildSlackEndpoint()]);
+    channelConnectionRepository.find.resolves([connection]);
+    integrationRepository.find.resolves([]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result).to.deep.equal([]);
+    expect(integrationRepository.find.firstCall.args[0]).to.deep.include({
+      _environmentId: ENVIRONMENT_ID,
+      _organizationId: ORGANIZATION_ID,
+      channel: ChannelTypeEnum.CHAT,
+      active: true,
+    });
+    expect(integrationRepository.find.firstCall.args[0].identifier).to.deep.equal({
+      $in: [SLACK_INTEGRATION_IDENTIFIER],
+    });
+    sinon.assert.notCalled(rotatingConnectionTokenService.getConnectionToken);
+    sinon.assert.notCalled(channelConnectionRepository.find);
+  });
+
+  it('refreshes only the active Slack integration when a subscriber still has a leftover deleted one', async () => {
+    const liveIdentifier = 'slack-live';
+    const liveConnectionIdentifier = 'slack-live-connection';
+    const liveConnection = buildSlackConnection({ accessToken: 'xoxb-live-token' });
+    liveConnection.identifier = liveConnectionIdentifier;
+    liveConnection.integrationIdentifier = liveIdentifier;
+
+    channelEndpointRepository.find.resolves([
+      buildSlackEndpoint(),
+      buildSlackEndpoint({
+        identifier: 'slack-live-endpoint',
+        integrationIdentifier: liveIdentifier,
+        connectionIdentifier: liveConnectionIdentifier,
+      }),
+    ]);
+    channelConnectionRepository.find.resolves([liveConnection]);
+    rotatingConnectionTokenService.getConnectionToken.resolves('xoxb-live-token');
+    integrationRepository.find.resolves([{ identifier: liveIdentifier, active: true }]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result).to.have.length(1);
+    expect(result[0].integrationIdentifier).to.equal(liveIdentifier);
+    expect(result[0].channelData[0]).to.deep.include({ token: 'xoxb-live-token' });
+    sinon.assert.calledOnceWithExactly(rotatingConnectionTokenService.getConnectionToken, liveConnection);
+    expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
+      $in: [liveConnectionIdentifier],
+    });
+  });
 });
 
 describe('ResolveChannelEndpoints - PagerDuty', () => {
   let sandbox: sinon.SinonSandbox;
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
   let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let integrationRepository: ReturnType<typeof stubIntegrationRepository>;
   let usecase: ResolveChannelEndpoints;
 
   beforeEach(() => {
@@ -204,11 +270,12 @@ describe('ResolveChannelEndpoints - PagerDuty', () => {
       find: sandbox.stub(),
       buildContextExactMatchQuery: sandbox.stub().returns({}),
     };
+    integrationRepository = stubIntegrationRepository(sandbox);
 
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      integrationRepository as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { refreshAccessToken: sandbox.stub() } as any
     );
@@ -216,6 +283,22 @@ describe('ResolveChannelEndpoints - PagerDuty', () => {
 
   afterEach(() => {
     sandbox.restore();
+  });
+
+  it('does not decrypt stored secrets for endpoints without an active integration', async () => {
+    channelEndpointRepository.find.resolves([
+      buildPagerDutyEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.PAGERDUTY_SERVICE, {
+          routingKey: 'R0UTINGK3YEXAMPLE000000000000000',
+          region: 'us',
+        }),
+      }),
+    ]);
+    integrationRepository.find.resolves([]);
+
+    const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
+
+    expect(result).to.deep.equal([]);
   });
 
   it('decrypts routingKey from endpoint.endpoint and returns channelData without a connection', async () => {
@@ -284,7 +367,7 @@ describe('ResolveChannelEndpoints - Opsgenie', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { getConnectionToken: sandbox.stub() } as any
     );
@@ -360,7 +443,7 @@ describe('ResolveChannelEndpoints - Grafana', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { refreshAccessToken: sandbox.stub() } as any
     );
@@ -458,7 +541,7 @@ describe('ResolveChannelEndpoints - Tool Webhook', () => {
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      { findOne: sandbox.stub() } as any,
+      stubIntegrationRepository(sandbox) as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
       { refreshAccessToken: sandbox.stub() } as any
     );
@@ -537,6 +620,126 @@ describe('ResolveChannelEndpoints - Tool Webhook', () => {
   });
 });
 
+describe('ResolveChannelEndpoints - integration rules', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let integrationRepository: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  /** Mirrors a subscriber registered on both a Telegram and a chat-webhook integration. */
+  function givenIntegrations(integrations: Array<{ identifier: string; rules?: unknown }>) {
+    integrationRepository.find.resolves(integrations);
+    channelEndpointRepository.find.resolves(
+      integrations.map(({ identifier }) =>
+        buildTelegramEndpoint({ identifier: `${identifier}-endpoint`, integrationIdentifier: identifier })
+      )
+    );
+  }
+
+  function resolvedIdentifiers(groups: Array<{ integrationIdentifier: string }>) {
+    return groups.map((group) => group.integrationIdentifier);
+  }
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub().resolves([]),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    integrationRepository = {
+      findOne: sandbox.stub(),
+      find: sandbox.stub().resolves([]),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      integrationRepository as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      { getConnectionToken: sandbox.stub() } as any
+    );
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('fans out to every integration when none define rules', async () => {
+    givenIntegrations([{ identifier: 'telegram-integration' }, { identifier: 'chat-webhook' }]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['telegram-integration', 'chat-webhook']);
+  });
+
+  it('keeps only the integration whose rules match the subscriber', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+      { identifier: 'chat-webhook', rules: { '==': [{ var: 'subscriber.locale' }, 'de'] } },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { locale: 'fr' } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['telegram-integration']);
+  });
+
+  it('keeps only the integration whose rules match the trigger tenant context', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { and: [{ '==': [{ var: 'context.tenant.id' }, 'vasilib'] }] } },
+      { identifier: 'chat-webhook', rules: { and: [{ '==': [{ var: 'context.tenant.id' }, 'acme'] }] } },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { context: { tenant: { id: 'acme' } } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+  });
+
+  it('still delivers through integrations without rules alongside a matching one', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+      { identifier: 'chat-webhook' },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { locale: 'fr' } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['telegram-integration', 'chat-webhook']);
+  });
+
+  it('resolves no endpoints when no integration rules match', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+      { identifier: 'chat-webhook', rules: { '==': [{ var: 'subscriber.locale' }, 'de'] } },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { locale: 'es' } } }));
+
+    expect(result).to.deep.equal([]);
+    sinon.assert.notCalled(channelConnectionRepository.find);
+  });
+
+  it('skips integrations whose rules use unsupported json-logic operators', async () => {
+    givenIntegrations([{ identifier: 'telegram-integration', rules: { log: { var: 'subscriber.email' } } }]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { subscriber: { email: 'secret@example.com' } } }));
+
+    expect(result).to.deep.equal([]);
+  });
+
+  it('reads the rules field so gating can be applied', async () => {
+    givenIntegrations([{ identifier: 'telegram-integration' }]);
+
+    await usecase.execute(buildCommand());
+
+    expect(integrationRepository.find.firstCall.args[1]).to.equal('identifier rules');
+  });
+});
+
 function buildCommand(overrides: Record<string, unknown> = {}) {
   return {
     organizationId: ORGANIZATION_ID,
@@ -545,8 +748,25 @@ function buildCommand(overrides: Record<string, unknown> = {}) {
     subscriberId: SUBSCRIBER_ID,
     channelType: ChannelTypeEnum.CHAT,
     contextKeys: [],
+    filterData: {},
     ...overrides,
   } as any;
+}
+
+function buildTelegramEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'telegram-endpoint',
+    integrationIdentifier: INTEGRATION_IDENTIFIER,
+    providerId: ChatProviderIdEnum.Telegram,
+    channel: ChannelTypeEnum.CHAT,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+    endpoint: { chatId: '495078234' },
+    ...overrides,
+  };
 }
 
 function buildWebexEndpoint(overrides: Record<string, unknown> = {}) {

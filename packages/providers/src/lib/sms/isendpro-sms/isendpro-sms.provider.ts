@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 // Define payload type to ensure TypeScript knows the structure
@@ -21,6 +21,7 @@ export class ISendProSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.CAMEL_CASE;
 
   public readonly DEFAULT_BASE_URL = 'https://apirest.isendpro.com/cgi-bin';
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -57,7 +58,7 @@ export class ISendProSmsProvider extends BaseProvider implements ISmsProvider {
     params.append('emetteur', this.config.from || 'NOVU');
 
     // Send the SMS via iSendPro API
-    const response = await axios.post(`${this.DEFAULT_BASE_URL}/sms`, params, {
+    const response = await this.httpClient.post(`${this.DEFAULT_BASE_URL}/sms`, params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...payload.headers,

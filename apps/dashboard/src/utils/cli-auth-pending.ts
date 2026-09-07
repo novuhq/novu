@@ -20,11 +20,11 @@ function isValidDeviceCode(deviceCode: string | null | undefined): deviceCode is
   return DEVICE_CODE_PATTERN.test(deviceCode);
 }
 
-export function isCliAuthPath(pathname: string): boolean {
+function isCliAuthPath(pathname: string): boolean {
   return pathname === ROUTES.CLI_AUTH;
 }
 
-export function isCliAuthReturnUrl(url: string): boolean {
+function isCliAuthReturnUrl(url: string): boolean {
   try {
     const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local');
 
@@ -34,7 +34,7 @@ export function isCliAuthReturnUrl(url: string): boolean {
   }
 }
 
-export function parseCliAuthFromUrl(url: string): PendingCliAuth | null {
+function parseCliAuthFromUrl(url: string): PendingCliAuth | null {
   try {
     const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local');
 
@@ -96,7 +96,7 @@ export function storePendingCliAuth(pending: PendingCliAuth | string, name?: str
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(resolved));
 }
 
-export function readPendingCliAuth(): PendingCliAuth | null {
+function readPendingCliAuth(): PendingCliAuth | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -132,7 +132,7 @@ export function clearPendingCliAuth(): void {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
-export function buildCliAuthUrl(pending: PendingCliAuth): string {
+function buildCliAuthUrl(pending: PendingCliAuth): string {
   const params = new URLSearchParams();
   params.set('device_code', pending.deviceCode);
 
@@ -196,6 +196,6 @@ export function appendRedirectUrlParam(url: string, redirectUrl: string): string
   return parsed.toString();
 }
 
-export function hasPendingCliAuth(): boolean {
+function hasPendingCliAuth(): boolean {
   return readPendingCliAuth() !== null;
 }

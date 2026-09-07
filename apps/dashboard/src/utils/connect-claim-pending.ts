@@ -7,7 +7,7 @@ function isValidToken(token: string | null | undefined): token is string {
   return typeof token === 'string' && isConnectClaimTokenFormat(token);
 }
 
-export function isConnectClaimPath(pathname: string): boolean {
+function isConnectClaimPath(pathname: string): boolean {
   return pathname === ROUTES.CONNECT_CLAIM;
 }
 
@@ -25,7 +25,7 @@ export function storePendingConnectClaim(token: string): void {
   sessionStorage.setItem(STORAGE_KEY, token);
 }
 
-export function isConnectClaimReturnUrl(url: string): boolean {
+function isConnectClaimReturnUrl(url: string): boolean {
   try {
     const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local');
 
@@ -35,7 +35,7 @@ export function isConnectClaimReturnUrl(url: string): boolean {
   }
 }
 
-export function storePendingConnectClaimFromPath(pathname: string, search = ''): boolean {
+function storePendingConnectClaimFromPath(pathname: string, search = ''): boolean {
   if (!isConnectClaimPath(pathname)) {
     return false;
   }

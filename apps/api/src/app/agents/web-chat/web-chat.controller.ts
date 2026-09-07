@@ -13,32 +13,33 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { FeatureFlagsService } from '@novu/application-generic';
+import { DirectionEnum } from '@novu/shared';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import {
   SubscriberSession,
   type SubscriberSession as SubscriberSessionData,
 } from '../../shared/framework/user.decorator';
 import { InboundDispatcher } from '../conversation-runtime/ingress/inbound.dispatcher';
+import { WebChatEnabledGuard } from '../shared/web-chat-enabled.guard';
 import { assertWebChatEnabled } from '../shared/assert-web-chat-enabled';
 import { toWebRequest } from '../shared/util/express-to-web-request';
-import { WebChatEnabledGuard } from '../shared/web-chat-enabled.guard';
+import { WebChatPublicationService } from './web-chat-publication.service';
+import { WebChatSessionVerifier } from './web-chat-session.verifier';
+import {
+  WebChatConversationMetadataDto,
+  ListWebChatConversationsQueryDto,
+  ListWebChatConversationsResponseDto,
+} from './dtos/web-chat-conversation.dto';
 import {
   ListWebChatConversationEventsQueryDto,
   ListWebChatConversationEventsResponseDto,
 } from './dtos/list-web-chat-conversation-events.dto';
-import {
-  ListWebChatConversationsQueryDto,
-  ListWebChatConversationsResponseDto,
-  WebChatConversationMetadataDto,
-} from './dtos/web-chat-conversation.dto';
 import { GetWebChatConversationCommand } from './usecases/get-web-chat-conversation/get-web-chat-conversation.command';
 import { GetWebChatConversation } from './usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
 import { ListWebChatConversationEventsCommand } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.command';
 import { ListWebChatConversationEvents } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
 import { ListWebChatConversationsCommand } from './usecases/list-web-chat-conversations/list-web-chat-conversations.command';
 import { ListWebChatConversations } from './usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
-import { WebChatPublicationService } from './web-chat-publication.service';
-import { WebChatSessionVerifier } from './web-chat-session.verifier';
 
 @Controller('/web-chat')
 @ApiExcludeController()
@@ -54,8 +55,9 @@ export class WebChatController {
   ) {}
 
   /**
-   * Adapter webhook ingress (same spine as other channels). Plan limits are
-   * enforced mid-turn by `PlanLimitGateService` in inbound-turn. Optional body
+   * Adapter webhook ingress (same spine as other channels). Plan limits on web
+   * chat accept are enforced synchronously (HTTP 402) before minting `conv_*`;
+   * other channels soft-block mid-turn via `PlanLimitGateService`. Optional body
    * `conversationIdentifier` / `id` resumes via ACL.
    */
   @Post('/conversations')
@@ -75,10 +77,12 @@ export class WebChatController {
         throw new BadRequestException('agentId is required');
       }
 
+      const agentHash = typeof req.body?.agentHash === 'string' ? req.body.agentHash.trim() : undefined;
       const published = await this.publicationService.resolvePublishedAgent(
         agentIdentifier,
         session.environmentId,
-        session.organizationId
+        session.organizationId,
+        agentHash
       );
 
       await this.inboundDispatcher.handleWebhook(published.agentId, published.integrationIdentifier, req, res, {
@@ -106,9 +110,13 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         after: query.after,
         before: query.before,
         limit: query.limit ?? 50,
+        orderBy: query.orderBy || 'lastActivityAt',
+        orderDirection: query.orderDirection || DirectionEnum.DESC,
+        includeCursor: query.includeCursor,
       })
     );
   }
@@ -124,6 +132,7 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
       })
     );
@@ -141,10 +150,9 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
-        after: query.after,
         before: query.before,
-        afterSequence: query.afterSequence ?? 0,
         limit: query.limit ?? 50,
       })
     );

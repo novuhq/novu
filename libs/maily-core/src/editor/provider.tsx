@@ -6,9 +6,20 @@ import { DEFAULT_SLASH_COMMANDS } from './extensions/slash-command/default-slash
 
 export const DEFAULT_PLACEHOLDER_URL = 'https://maily.to/';
 
+/** Field name of a card (link) button validated by {@link MailyContextType.validateCardButtonField}. */
+export type CardButtonFieldName = 'label' | 'url';
+
+/**
+ * Validates a single card-button field value. Returns an error message when invalid, or `null`
+ * when valid. Injected by the host app so the Actions bubble and the app share one validation
+ * source of truth; when absent no inline validation runs.
+ */
+export type ValidateCardButtonField = (field: CardButtonFieldName, value: string, isVariable: boolean) => string | null;
+
 export type MailyContextType = {
   placeholderUrl?: string;
   blocks?: BlockGroupItem[];
+  validateCardButtonField?: ValidateCardButtonField;
 };
 
 export const MailyContext = createContext<MailyContextType>({

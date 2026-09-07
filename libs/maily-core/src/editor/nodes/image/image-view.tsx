@@ -18,14 +18,35 @@ function fitImageWithinBounds({
   containerWidth,
   maxWidth,
   maxHeight,
+  fitToMaxBounds,
 }: {
   naturalWidth: number;
   naturalHeight: number;
   containerWidth: number;
   maxWidth?: number;
   maxHeight?: number;
+  /** Chat-only: preview-matching scale; email leaves this false. */
+  fitToMaxBounds?: boolean;
 }) {
   const aspectRatio = getAspectRatio(naturalWidth, naturalHeight);
+
+  // Rich chat: same scale math as the preview — ignore editor container width so stored
+  // size matches preview. CSS `maxWidth: 100%` handles narrow panels.
+  if (fitToMaxBounds) {
+    const scale = Math.min(
+      1,
+      (maxWidth ?? Number.POSITIVE_INFINITY) / naturalWidth,
+      (maxHeight ?? Number.POSITIVE_INFINITY) / naturalHeight
+    );
+
+    return {
+      width: Math.round(naturalWidth * scale),
+      height: Math.round(naturalHeight * scale),
+      aspectRatio,
+    };
+  }
+
+  // Email / default: fit within the editor container (and optional max caps), never upscale.
   let width = Math.min(containerWidth, naturalWidth, maxWidth ?? Number.POSITIVE_INFINITY);
   let height = Math.min(getNewHeight(width, aspectRatio), naturalHeight);
 
@@ -40,7 +61,7 @@ function fitImageWithinBounds({
 export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 export function ImageView(props: NodeViewProps) {
-  const { node, selected, editor } = props;
+  const { node, selected, editor, updateAttributes } = props;
 
   const [status, setStatus] = useState<ImageStatus>('idle');
   const [isPlaceholderImage, setIsPlaceholderImage] = useState(false);
@@ -147,6 +168,11 @@ export function ImageView(props: NodeViewProps) {
 
   const imageOptions = getNodeOptions<ImageExtensionOptions>(editor, 'image');
   const { alignment = imageOptions?.defaultAlignment ?? 'center', width, height, src, borderRadius } = node.attrs || {};
+  const fitToMaxBounds = imageOptions?.fitToMaxBounds === true;
+  const fittedWidth = width && width !== 'auto' ? Number(width) : null;
+  const fittedHeight = height && height !== 'auto' ? Number(height) : null;
+  const hasFittedSize =
+    fittedWidth != null && !Number.isNaN(fittedWidth) && fittedHeight != null && !Number.isNaN(fittedHeight);
 
   const {
     externalLink,
@@ -210,15 +236,15 @@ export function ImageView(props: NodeViewProps) {
       const { naturalWidth, naturalHeight } = img;
       const wrapper = wrapperRef?.current;
       const imageOptions = getNodeOptions<ImageExtensionOptions>(editor, 'image');
+      const fitToMaxBounds = imageOptions?.fitToMaxBounds === true;
       const numericWidth = width === 'auto' ? null : Number(width);
       const numericHeight = height === 'auto' ? null : Number(height);
       const exceedsMaxWidth =
         imageOptions?.maxWidth != null && numericWidth != null && numericWidth > imageOptions.maxWidth;
       const exceedsMaxHeight =
         imageOptions?.maxHeight != null && numericHeight != null && numericHeight > imageOptions.maxHeight;
-      const shouldFitSize = width === 'auto' || exceedsMaxWidth || exceedsMaxHeight;
 
-      if (!wrapper || !naturalWidth || !shouldFitSize) {
+      if (!wrapper || !naturalWidth) {
         return;
       }
 
@@ -232,16 +258,28 @@ export function ImageView(props: NodeViewProps) {
         containerWidth: wrapper.offsetWidth,
         maxWidth: imageOptions?.maxWidth,
         maxHeight: imageOptions?.maxHeight,
+        fitToMaxBounds,
       });
 
-      editor
-        .chain()
-        .updateImageAttributes({
-          width: nextWidth,
-          height: nextHeight,
-          aspectRatio,
-        })
-        .run();
+      // Chat (`fitToMaxBounds`): re-sync when attrs drift from preview math. Email: auto / overflow only.
+      const sizeMismatch =
+        fitToMaxBounds &&
+        numericWidth != null &&
+        numericHeight != null &&
+        (Math.round(numericWidth) !== nextWidth || Math.round(numericHeight) !== nextHeight);
+      const shouldFitSize = width === 'auto' || exceedsMaxWidth || exceedsMaxHeight || sizeMismatch;
+
+      if (!shouldFitSize) {
+        return;
+      }
+
+      // Use NodeView `updateAttributes` — `editor.chain().updateImageAttributes` only
+      // touches the current selection, so unloaded/saved images would keep stale sizes.
+      updateAttributes({
+        width: nextWidth,
+        height: nextHeight,
+        aspectRatio,
+      });
     };
     img.onerror = () => {
       setStatus('error');
@@ -312,11 +350,20 @@ export function ImageView(props: NodeViewProps) {
       className={cn('mly-image-drop-zone', isDraggingOver && 'mly-drag-over')}
       style={{
         ...(hasImageSrc && status === 'loaded'
-          ? {
-              width: width ? `${width}px` : undefined,
-              height: height ? `${height}px` : undefined,
-              ...resizingStyle,
-            }
+          ? fitToMaxBounds
+            ? {
+                // Keep aspect ratio when `maxWidth: 100%` shrinks below the fitted width
+                // (fixed height + object-fit:fill would otherwise stretch the image).
+                width: hasFittedSize ? `${fittedWidth}px` : undefined,
+                maxWidth: '100%',
+                height: 'auto',
+                aspectRatio: hasFittedSize ? `${fittedWidth} / ${fittedHeight}` : undefined,
+              }
+            : {
+                width: width ? `${width}px` : undefined,
+                height: height ? `${height}px` : undefined,
+                ...resizingStyle,
+              }
           : {}),
         overflow: 'hidden',
         position: 'relative',
@@ -369,15 +416,28 @@ export function ImageView(props: NodeViewProps) {
           <img
             {...attrs}
             ref={imgRef}
-            style={{
-              ...resizingStyle,
-              cursor: 'default',
-              objectFit: 'fill',
-              marginBottom: 0,
-              borderRadius,
-              width: resizingStyle?.width ? `${resizingStyle.width}px` : width ? `${width}px` : 'auto',
-              height: resizingStyle?.height ? `${resizingStyle.height}px` : height ? `${height}px` : 'auto',
-            }}
+            style={
+              fitToMaxBounds
+                ? {
+                    cursor: 'default',
+                    objectFit: 'contain',
+                    marginBottom: 0,
+                    borderRadius,
+                    width: '100%',
+                    height: 'auto',
+                    maxWidth: '100%',
+                  }
+                : {
+                    ...resizingStyle,
+                    cursor: 'default',
+                    objectFit: 'fill',
+                    marginBottom: 0,
+                    borderRadius,
+                    width: resizingStyle?.width ? `${resizingStyle.width}px` : width ? `${width}px` : 'auto',
+                    height: resizingStyle?.height ? `${resizingStyle.height}px` : height ? `${height}px` : 'auto',
+                    maxWidth: '100%',
+                  }
+            }
             draggable={editor.isEditable}
             className={cn(isPlaceholderImage && 'mly-animate-pulse mly-opacity-40')}
           />

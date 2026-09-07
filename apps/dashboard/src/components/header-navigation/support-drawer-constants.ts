@@ -20,7 +20,6 @@ import { Bell, NovuIcon } from '@/components/icons';
 import { BotIcon } from '@/components/icons/bot';
 
 export const DRAWER_WIDTH_DEFAULT = 350;
-export const DRAWER_WIDTH_EXPANDED = 700;
 
 const DOCS_BASE_URL = 'https://docs.novu.co';
 const UTM_SUFFIX = '?utm_campaign=support_drawer';
@@ -34,13 +33,6 @@ export function docsUrl(path = '') {
   const url = `${DOCS_BASE_URL}${basePath}${UTM_SUFFIX}`;
 
   return hash ? `${url}#${hash}` : url;
-}
-
-export function toEmbedUrl(url: string) {
-  const [baseWithParams, hash] = url.split('#');
-  const embedUrl = `${baseWithParams}&full=true`;
-
-  return hash ? `${embedUrl}#${hash}` : embedUrl;
 }
 
 export type SuggestionItem = {
@@ -364,9 +356,6 @@ const CONTEXTUAL_GETTING_STARTED: Partial<Record<RouteContext, SuggestionItem[]>
   agents: AGENT_GETTING_STARTED,
   conversations: AGENT_GETTING_STARTED,
 };
-
-/** Default getting-started links shown outside agent surfaces. */
-export const GETTING_STARTED = DEFAULT_GETTING_STARTED;
 
 export function useContextualGettingStarted(): SuggestionItem[] {
   const location = useLocation();

@@ -113,7 +113,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
   it('sends a welcome email to the dashboard subscriber address', async () => {
     const result = await buildUsecase().execute(buildCommand());
 
-    expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: undefined });
+    expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id' });
     expect(subscriberRepository.findBySubscriberId.calledOnceWith(ENV_ID, USER_ID)).to.equal(true);
     expect(channelEndpointRepository.findOne.called).to.equal(false);
     expect(
@@ -184,7 +184,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
 
     const result = await buildUsecase().execute(buildCommand({ integrationIdentifier: 'slack-integration' }));
 
-    expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: undefined });
+    expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id' });
     expect(
       channelConnectionRepository.findOne.calledOnceWith(
         sinon.match({
@@ -276,6 +276,54 @@ describe('SendAgentWelcomeMessage usecase', () => {
       )
     ).to.equal(true);
     expect(outboundGateway.sendDirectMessage.calledOnce).to.equal(true);
+  });
+
+  it('returns a claim token for a keyless org even when a welcome conversation already exists', async () => {
+    const originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
+    process.env.KEYLESS_ORGANIZATION_ID = ORG_ID;
+    conversationService.findByAgentIntegrationParticipant.resolves({
+      _id: 'existing-conversation-id',
+      title: 'Connected! Reply to this email to try it out.',
+    });
+
+    try {
+      const result = await buildUsecase().execute(buildCommand());
+
+      expect(result).to.deep.equal({
+        sent: true,
+        conversationId: 'existing-conversation-id',
+        claimToken: 'claim-token',
+      });
+      expect(connectClaimTokenService.issueOrGetForEnvironment.calledOnceWith({ env: ENV_ID, org: ORG_ID })).to.equal(
+        true
+      );
+      expect(outboundGateway.sendDirectMessage.called).to.equal(false);
+    } finally {
+      if (originalKeylessOrgId === undefined) {
+        delete process.env.KEYLESS_ORGANIZATION_ID;
+      } else {
+        process.env.KEYLESS_ORGANIZATION_ID = originalKeylessOrgId;
+      }
+    }
+  });
+
+  it('includes a claim token and signup card when sending a keyless welcome', async () => {
+    const originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
+    process.env.KEYLESS_ORGANIZATION_ID = ORG_ID;
+
+    try {
+      const result = await buildUsecase().execute(buildCommand());
+
+      expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: 'claim-token' });
+      expect(outboundGateway.sendDirectMessage.calledOnce).to.equal(true);
+      expect(outboundGateway.sendDirectMessage.firstCall.args[3]).to.have.property('card');
+    } finally {
+      if (originalKeylessOrgId === undefined) {
+        delete process.env.KEYLESS_ORGANIZATION_ID;
+      } else {
+        process.env.KEYLESS_ORGANIZATION_ID = originalKeylessOrgId;
+      }
+    }
   });
 
   it('returns sent:false when the dashboard subscriber has no email', async () => {

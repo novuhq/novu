@@ -8,6 +8,7 @@ import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { WebChatAgentIntegrationGuide } from './web-chat-agent-integration-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
@@ -109,6 +110,21 @@ export function ResolveAgentIntegrationGuide({
   if (providerId === EmailProviderIdEnum.NovuAgent) {
     return (
       <EmailAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  // Web Chat: setup → connected transition; no What's next (embed is the user surface).
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
+    return (
+      <WebChatAgentIntegrationGuide
         embedded={embedded}
         onBack={onBack}
         agent={agent}

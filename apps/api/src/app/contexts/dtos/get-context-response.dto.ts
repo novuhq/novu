@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ContextData, ContextType } from '@novu/shared';
 
 export class GetContextResponseDto {
@@ -19,6 +19,12 @@ export class GetContextResponseDto {
     additionalProperties: true,
   })
   data: ContextData;
+
+  @ApiPropertyOptional({
+    description: 'Bridge URL override for agent connect, if configured on this context',
+    type: String,
+  })
+  bridgeUrl?: string;
 
   @ApiProperty({
     description: 'Creation timestamp',

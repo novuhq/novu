@@ -191,6 +191,59 @@ describe('SqsPayloadOffloadService', () => {
       expect(result).toBe(invalid);
       expect(mockSend).not.toHaveBeenCalled();
     });
+
+    it('should reject a reference pointing at a bucket other than the configured one', async () => {
+      const service = new SqsPayloadOffloadService('us-east-1');
+
+      const reference = JSON.stringify({
+        __sqsLargePayload: {
+          bucket: 'attacker-controlled-bucket',
+          key: 'sqs-payloads/standard/org-123/2026-03-17/msg-1-abc123.json',
+        },
+      });
+
+      await expect(service.maybeResolve(reference)).rejects.toThrow(
+        'Refusing to resolve SQS offloaded payload from an untrusted bucket'
+      );
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it('should reject a reference whose key is outside the offload prefix', async () => {
+      const service = new SqsPayloadOffloadService('us-east-1');
+
+      const reference = JSON.stringify({
+        __sqsLargePayload: {
+          bucket: BUCKET,
+          key: 'secrets/production-credentials.json',
+        },
+      });
+
+      await expect(service.maybeResolve(reference)).rejects.toThrow(
+        'Refusing to resolve SQS offloaded payload outside the offload key prefix'
+      );
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it('should always fetch from the configured bucket, never the referenced one', async () => {
+      const service = new SqsPayloadOffloadService('us-east-1');
+      const originalPayload = JSON.stringify({ job: 'data' });
+
+      const reference = JSON.stringify({
+        __sqsLargePayload: {
+          bucket: BUCKET,
+          key: 'sqs-payloads/standard/org-123/2026-03-17/msg-1-abc123.json',
+        },
+      });
+
+      mockSend.mockResolvedValueOnce({
+        Body: createReadableFromString(originalPayload),
+      });
+
+      await service.maybeResolve(reference);
+
+      const getCall = mockSend.mock.calls[0][0];
+      expect(getCall.input.Bucket).toBe(BUCKET);
+    });
   });
 
   describe('round-trip', () => {

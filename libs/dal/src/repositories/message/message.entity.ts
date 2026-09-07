@@ -137,6 +137,8 @@ export class MessageEntity {
   channelData?: MessageChannelData[];
 
   contextKeys?: string[];
+
+  _agentId?: string;
 }
 
 export type MessageDBModel = ChangePropsValueType<
@@ -150,4 +152,5 @@ export type MessageDBModel = ChangePropsValueType<
   | '_subscriberId'
   | '_feedId'
   | '_actorId'
+  | '_agentId'
 >;

@@ -1,6 +1,8 @@
 import type { InboxProps } from '../components/Inbox';
 import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
+  UseWebChatProps,
+  UseWebChatResult,
   UseCreateSubscriptionProps,
   UseCreateSubscriptionResult,
   UseNotificationsProps,
@@ -73,6 +75,31 @@ export function TelegramConnectButton() {
 
 export function useNovu() {
   return null;
+}
+
+export function useWebChat(_: UseWebChatProps): UseWebChatResult {
+  return {
+    messages: [],
+    pendingActions: [],
+    isLoading: true,
+    isRunning: false,
+    typing: undefined,
+    conversationStatus: 'active',
+    run: { isRunning: false },
+    pagination: {
+      status: 'idle',
+      hasMore: false,
+      fetchMore: () => Promise.resolve({ data: undefined, error: undefined }),
+    },
+    isRecovering: false,
+    catchUpError: undefined,
+    refetch: () => Promise.resolve(),
+    sendMessage: () => Promise.resolve({ data: undefined, error: undefined }),
+    respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
+    sendAction: () => Promise.resolve({ data: undefined, error: undefined }),
+    retryMessage: () => Promise.resolve({ data: undefined, error: undefined }),
+    startNewConversation: () => {},
+  };
 }
 
 export function useCounts(_: UseCountsProps): UseCountsResult {
@@ -154,7 +181,7 @@ export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResu
 }
 
 export type * from '@novu/js';
-export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { pendingActionKey, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   AllLocalization,
@@ -191,6 +218,8 @@ export type {
 export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from '../components';
 
 export type {
+  UseWebChatProps,
+  UseWebChatResult,
   UseCountsProps,
   UseCountsResult,
   UseNotificationsProps,

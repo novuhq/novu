@@ -6,4 +6,5 @@ export {
   generateReactEmailStepFile,
   generateSmsStepFile,
   generateStepFileForType,
+  generateToolStepFile,
 } from './step-file';

@@ -8,7 +8,11 @@ Providers are the third-party services that deliver your notifications through t
 
 Novu provides a unified integration layer that connects your application to all these different providers. You connect your provider accounts to Novu from the Integration Store on the Novu dashboard, and Novu's API handles the rest.
 
-This approach means you can add, remove, or switch providers at any time without having to change your application's code. It also allows Novu to manage complex logic like provider fallbacks, for example, "If SendGrid fails, try sending with Amazon SES".
+This approach means you can add, remove, or switch providers at any time without having to change your application's code.
+
+<Note>
+  Novu sends through one integration per channel step and does not automatically fall back to another provider if that send fails. See the [delivery retry policy](/platform/developer/delivery-retries) for what happens when a provider rejects a message.
+</Note>
 
 ## Provider vs. Integration
 

@@ -4,6 +4,7 @@ import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   EmailWebhookPayload,
+  FeatureFlagsKeysEnum,
   InboundEmailAttachment,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -11,6 +12,7 @@ import {
 import { IFrom, IHeaders, IInboundParseAttachment, ITo } from '../../dtos/inbound-parse-job.dto';
 import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
+import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
@@ -76,6 +78,7 @@ export interface InboundDomainRouteMailInput {
   references?: string | string[];
   date: Date;
   cc?: unknown[];
+  bcc?: ITo[];
   /**
    * Sender-authentication verdicts (`'pass'` / `'failed'`) computed by the
    * inbound-mail service. Forwarded to the agent webhook so the agent runtime
@@ -111,6 +114,7 @@ export interface DomainRouteWebhookPayload {
     references?: string | string[];
     date: Date;
     cc?: unknown[];
+    bcc?: ITo[];
   };
 }
 
@@ -122,6 +126,7 @@ export class InboundDomainRouteDelivery {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly attachmentRehydrator: AttachmentRehydrator,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -156,6 +161,7 @@ export class InboundDomainRouteDelivery {
         references: mail.references,
         date: mail.date,
         cc: mail.cc,
+        bcc: mail.bcc,
       },
     };
   }
@@ -168,13 +174,15 @@ export class InboundDomainRouteDelivery {
     mail: InboundDomainRouteMailInput;
   }): Promise<{ latencyMs: number; skipped: boolean }> {
     const started = Date.now();
-    const rehydratedAttachments = await this.attachmentRehydrator.rehydrate(params.mail.attachments);
-    const payload = this.buildDomainRouteWebhookPayload(
-      params.domain,
-      params.route,
-      params.mail,
-      rehydratedAttachments
-    );
+    const shouldUseSignedUrls = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOK_ATTACHMENT_URLS_ENABLED,
+      organization: { _id: params.organizationId },
+      defaultValue: false,
+    });
+    const attachments = shouldUseSignedUrls
+      ? await this.attachmentRehydrator.createSignedUrls(params.mail.attachments)
+      : await this.attachmentRehydrator.rehydrate(params.mail.attachments);
+    const payload = this.buildDomainRouteWebhookPayload(params.domain, params.route, params.mail, attachments);
     const result = await this.sendWebhookMessage.execute({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
@@ -194,6 +202,8 @@ export class InboundDomainRouteDelivery {
     route: DomainRouteEntity;
     mail: InboundDomainRouteMailInput;
     toAddress: string;
+    /** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token. */
+    originToken?: string;
   }): Promise<{ httpStatus: number; body: unknown; latencyMs: number }> {
     this.logger.info({ toAddress: params.toAddress }, 'Delivering inbound email to agent');
 
@@ -213,6 +223,7 @@ export class InboundDomainRouteDelivery {
     const payload = this.buildAgentEmailWebhookPayload(params.mail, {
       domain: params.domain,
       route: params.route,
+      originToken: params.originToken,
     });
     const signature = buildNovuSignatureHeader(secretKey, payload);
     const apiBaseUrl = process.env.API_ROOT_URL;
@@ -240,14 +251,14 @@ export class InboundDomainRouteDelivery {
 
   previewAgentMailPayload(
     mail: InboundDomainRouteMailInput,
-    options?: { domain?: RoutableDomain; route?: DomainRouteEntity }
+    options?: { domain?: RoutableDomain; route?: DomainRouteEntity; originToken?: string }
   ): EmailWebhookPayload {
     return this.buildAgentEmailWebhookPayload(mail, options);
   }
 
   private buildAgentEmailWebhookPayload(
     mail: InboundDomainRouteMailInput,
-    options?: { domain?: RoutableDomain; route?: DomainRouteEntity }
+    options?: { domain?: RoutableDomain; route?: DomainRouteEntity; originToken?: string }
   ): EmailWebhookPayload {
     const from = mail.from[0];
     const refs = normalizeReferences(mail.references);
@@ -268,6 +279,7 @@ export class InboundDomainRouteDelivery {
       text: mail.text || undefined,
       html: mail.html || undefined,
       headers,
+      originToken: options?.originToken,
       domain: options?.domain
         ? {
             id: options.domain._id,

@@ -4,6 +4,7 @@ import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
+import { resolveLifecycleChannel } from '../../conversation-runtime/conversation/run-lifecycle-activity';
 import { AgentEventContext, AgentEventSink } from '../agent-event-sink.service';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import { IngestAgentEventsCommand } from './ingest-agent-events.command';
@@ -146,6 +147,8 @@ export class IngestAgentEvents {
       throw new BadRequestException('Agent does not match conversation');
     }
 
+    const lifecycleChannel = resolveLifecycleChannel(conversation);
+
     const context: AgentEventContext = {
       userId: command.userId,
       environmentId: command.environmentId,
@@ -154,8 +157,9 @@ export class IngestAgentEvents {
       agentIdentifier: agent.identifier,
       integrationIdentifier: integration.identifier,
       agentId: agent._id,
-      platform: parsePlatform(channel.platform),
-      platformThreadId: channel.platformThreadId,
+      platform: parsePlatform(lifecycleChannel.platform),
+      platformThreadId: lifecycleChannel.platformThreadId,
+      channel: lifecycleChannel,
       source: 'bridge',
     };
 
