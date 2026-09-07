@@ -51,6 +51,12 @@ class Client:
     def get_agent(self, agent_id: str) -> RegisteredAgent | None:
         return self._agents.get(agent_id)
 
+    def discover(self) -> dict:
+        return {
+            "workflows": [],
+            "agents": [{"agentId": aid} for aid in self._agents],
+        }
+
     def __repr__(self) -> str:
         agents = list(self._agents.keys())
 

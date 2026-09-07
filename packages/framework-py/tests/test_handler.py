@@ -190,3 +190,29 @@ async def test_event_mode_emits_signal_and_resolve_events():
     assert sent_events[1]["event"]["signal"]["type"] == "human"
 
     await http_client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_discover_returns_agents():
+    bot_a = agent("bot-a", AgentHandlers(on_message=AsyncMock(return_value="a")))
+    bot_b = agent("bot-b", AgentHandlers(on_message=AsyncMock(return_value="b")))
+
+    handler = NovuRequestHandler(
+        ServeOptions(
+            client=Client(ClientOptions(strict_authentication=False)),
+            agents=[bot_a, bot_b],
+        )
+    )
+
+    response = await handler.handle(
+        method="GET",
+        url="http://localhost/api/novu?action=discover",
+        headers={},
+    )
+
+    assert response.status == 200
+    body = json.loads(response.body)
+    assert body == {
+        "workflows": [],
+        "agents": [{"agentId": "bot-a"}, {"agentId": "bot-b"}],
+    }

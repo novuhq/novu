@@ -37,6 +37,7 @@ _background_tasks: set[asyncio.Task[Any]] = set()
 
 POST_ACTION_AGENT_EVENT = "agent-event"
 GET_ACTION_HEALTH_CHECK = "health-check"
+GET_ACTION_DISCOVER = "discover"
 
 _AGENT_EVENT_SET: frozenset[str] = frozenset(AGENT_EVENTS)
 
@@ -105,7 +106,10 @@ class NovuRequestHandler:
                 if action == GET_ACTION_HEALTH_CHECK:
                     return self._ok({"status": "ok"})
 
-                raise InvalidActionError(action, [GET_ACTION_HEALTH_CHECK])
+                if action == GET_ACTION_DISCOVER:
+                    return self._ok(self.client.discover())
+
+                raise InvalidActionError(action, [GET_ACTION_HEALTH_CHECK, GET_ACTION_DISCOVER])
 
             if method == "OPTIONS":
                 return self._ok({})
