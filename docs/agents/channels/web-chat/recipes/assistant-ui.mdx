@@ -1,0 +1,153 @@
+---
+title: "Use assistant-ui"
+sidebarTitle: assistant-ui
+description: "Use assistant-ui components with useWebChat. Novu holds the conversation; assistant-ui draws the UI."
+---
+
+[assistant-ui](https://www.assistant-ui.com/) is a React library for chat UIs. Novu does not ship a `<WebChat />` component, so you can keep [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) as the conversation and use any assistant-ui primitive, element, or part renderer you want on top.
+
+The sections below are hints for common pieces (`Thread`, composer, reasoning, tools, custom UI). They are not the full assistant-ui surface.
+
+## The split
+
+`useWebChat` holds the conversation: `messages`, `sendMessage`, `respondToAction`, `sendAction`, `isRunning`, and `isLoading`.
+
+assistant-ui draws whatever you mount: `Thread`, `ThreadList`, composer, action bars, tool UIs, attachments, your own `makeAssistantDataUI` renderers, and the rest of the library. `useExternalStoreRuntime` is the glue. assistant-ui normally talks to its own backend. This runtime lets you feed it Novu instead.
+
+## Thread
+
+Convert Novu messages into assistant-ui thread messages, then wrap `Thread` in that runtime.
+
+```tsx
+import { useWebChat } from '@novu/react';
+import {
+  AssistantRuntimeProvider,
+  useExternalMessageConverter,
+  useExternalStoreRuntime,
+} from '@assistant-ui/react';
+
+const chat = useWebChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
+
+const messages = useExternalMessageConverter({
+  callback: toThreadMessage,
+  messages: chat.messages,
+  isRunning: chat.isRunning,
+  joinStrategy: 'none',
+});
+
+const runtime = useExternalStoreRuntime({
+  messages,
+  isRunning: chat.isRunning,
+  isLoading: chat.isLoading,
+  onNew: async (message) => {
+    /* see Composer */
+  },
+});
+
+return (
+  <AssistantRuntimeProvider runtime={runtime}>
+    <Thread />
+  </AssistantRuntimeProvider>
+);
+```
+
+`toThreadMessage` maps each Novu `part` to an assistant-ui content item (`text`, `reasoning`, `tool-call`, or `data`). Start with `part.type === 'text'`. Add the cases below as you need them.
+
+Add a Thread UI from assistant-ui (their [Thread](https://www.assistant-ui.com/docs/primitives/thread), or `npx shadcn@latest add @assistant-ui/thread`) if you do not already have one.
+
+## Composer
+
+When the subscriber sends, assistant-ui calls `onNew`. Read the text and pass it to Novu. Do not start a second chat client.
+
+```tsx
+onNew: async (message) => {
+  const text = message.content
+    .filter((part) => part.type === 'text')
+    .map((part) => part.text)
+    .join('');
+  if (text.trim()) await chat.sendMessage(text);
+},
+```
+
+Disable the composer with `isRunning` or `isLoading` on the runtime (`isDisabled`) if you want the same behavior as the [first-message](/agents/channels/web-chat#send-a-first-message) form.
+
+## Reasoning
+
+A Novu `thinking` part is the agent's reasoning while the turn runs. Map it to assistant-ui `reasoning` so `Thread` can collapse it.
+
+```tsx
+if (part.type === 'thinking' && part.text.trim()) {
+  return { type: 'reasoning', text: part.text };
+}
+```
+
+See [Thinking](/agents/channels/web-chat/messages#thinking) for the Novu fields.
+
+## Tool UI
+
+A `tool` part is a call that already ran. Map it to `tool-call` and let assistant-ui `ToolFallback` (or your own tool renderer) show the name, args, and result.
+
+```tsx
+if (part.type === 'tool') {
+  return {
+    type: 'tool-call',
+    toolCallId: part.toolUseId,
+    toolName: part.toolName,
+    argsText: JSON.stringify(part.input ?? {}),
+    result: part.output,
+  };
+}
+```
+
+A pending `approval` is the same `tool-call` shape, plus an `approval` object. When the subscriber picks Approve or Deny, `onRespondToToolApproval` must call `respondToAction`:
+
+```tsx
+onRespondToToolApproval: async ({ approvalId, approved }) => {
+  await chat.respondToAction({
+    approvalId,
+    decision: approved ? 'approved' : 'denied',
+  });
+},
+```
+
+See [Tools](/agents/channels/web-chat/tools) for the Novu actions. For MCP connect, open `authorizeUrl` in a custom part UI. Do not send that through `respondToAction`.
+
+## Custom UI
+
+Novu cards and `ctx.emit` payloads are not assistant-ui types. Send them through as named `data` items and register a renderer with `makeAssistantDataUI`.
+
+```tsx
+if (part.type === 'card') {
+  return {
+    type: 'data',
+    name: 'novu-card',
+    data: { ...part, sourceMessageId: message.id },
+  };
+}
+```
+
+```tsx
+const NovuCardUI = makeAssistantDataUI({
+  name: 'novu-card',
+  render: ({ data }) => (
+    <YourCard
+      card={data.card}
+      onAction={(actionId, value) =>
+        void chat.sendAction({
+          actionId,
+          value,
+          sourceMessageId: data.sourceMessageId,
+        })
+      }
+    />
+  ),
+});
+```
+
+Mount `NovuCardUI` next to `Thread` (assistant-ui picks it up by `name`). Button clicks must call `sendAction`, not `sendMessage`. See [Generative UI](/agents/channels/web-chat/generative-ui).
+
+The same slot works for your own `ctx.emit` names. Register one `makeAssistantDataUI` per `name` you want to draw.
+
+## Full example
+
+The [Web Chat connect template](https://github.com/novuhq/novu/tree/next/packages/novu/src/commands/connect/templates/web-chat/ts) is a complete reference: converter, Thread, cards, approvals, and a sidebar. Run `npx novu connect --channel web-chat` to copy it into an app. The `WebChat` component in that output is scaffold code. It is not exported from `@novu/react`.

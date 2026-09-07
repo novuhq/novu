@@ -479,7 +479,17 @@
                 "group": "Web Chat",
                 "tag": "Beta",
                 "root": "agents/channels/web-chat",
-                "pages": ["agents/channels/web-chat/quickstart", "agents/channels/web-chat/chat-ui"]
+                "pages": [
+                  "agents/channels/web-chat/messages",
+                  "agents/channels/web-chat/tools",
+                  "agents/channels/web-chat/generative-ui",
+                  "agents/channels/web-chat/conversations",
+                  {
+                    "group": "Recipes",
+                    "pages": ["agents/channels/web-chat/recipes/assistant-ui"]
+                  },
+                  "agents/channels/web-chat/security"
+                ]
               }
             ],
             "icon": "messages-square"
@@ -1817,12 +1827,17 @@
     },
     {
       "source": "/agents/agent-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
       "source": "/agents/web-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
@@ -1832,42 +1847,47 @@
     },
     {
       "source": "/agents/channels/agent-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/chat-ui",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/starter-ui",
+      "destination": "/agents/channels/web-chat/recipes/assistant-ui",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/rendering",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
       "source": "/agents/channels/web-chat/rendering",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/production",
-      "destination": "/agents/channels/web-chat",
+      "destination": "/agents/channels/web-chat/security",
       "permanent": true
     },
     {
       "source": "/agents/channels/web-chat/production",
-      "destination": "/agents/channels/web-chat",
+      "destination": "/agents/channels/web-chat/security",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/messages",
-      "destination": "/agents/channels/web-chat/chat-ui",
-      "permanent": true
-    },
-    {
-      "source": "/agents/channels/web-chat/messages",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
