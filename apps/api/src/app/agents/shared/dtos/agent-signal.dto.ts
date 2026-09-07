@@ -1,15 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS,
   HUMAN_INTERACTION_MAX_RECIPIENTS,
   HUMAN_INTERACTION_MAX_TTL_SECONDS,
+  type HumanOptionInput,
+  isHumanCardElement,
   type TriggerRecipientsPayload,
 } from '@novu/shared';
+import type { CardElement } from 'chat';
 import { type ClassConstructor, plainToInstance } from 'class-transformer';
 import {
-  ArrayMaxSize,
-  ArrayMinSize,
   Equals,
-  IsArray,
   IsDefined,
   IsIn,
   IsInt,
@@ -21,7 +22,7 @@ import {
   Max,
   Min,
   Validate,
-  ValidateIf,
+  type ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
@@ -29,6 +30,62 @@ import { IsValidHumanTo } from '../../../human/validators/is-valid-human-to';
 
 const SIGNAL_TYPES = ['metadata', 'trigger', 'human'] as const;
 const HUMAN_SIGNAL_KINDS = ['ask', 'approve', 'choose', 'tell'] as const;
+
+/** Chrome presentation from default `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell`. */
+export type HumanSignalChromeCard = {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+};
+
+export type HumanSignalCardDto = HumanSignalChromeCard | CardElement;
+
+export function isHumanSignalCardElement(card: unknown): card is CardElement {
+  return isHumanCardElement(card);
+}
+
+function humanSignalKind(args: ValidationArguments | undefined): string | undefined {
+  const kind = (args?.object as { kind?: unknown } | undefined)?.kind;
+
+  return typeof kind === 'string' ? kind : undefined;
+}
+
+@ValidatorConstraint({ name: 'isValidHumanSignalCard', async: false })
+class IsValidHumanSignalCard implements ValidatorConstraintInterface {
+  validate(card: unknown, args?: ValidationArguments): boolean {
+    if (card === null || typeof card !== 'object' || Array.isArray(card)) {
+      return false;
+    }
+
+    const type = (card as { type?: unknown }).type;
+    if (type !== undefined && type !== 'card') {
+      return false;
+    }
+
+    // `choose` chrome must carry its options on the card itself (a posted Card
+    // element carries them as option buttons, validated by the framework/render).
+    if (humanSignalKind(args) === 'choose' && type !== 'card') {
+      const options = (card as { options?: unknown }).options;
+
+      return Array.isArray(options) && options.length >= 2 && options.length <= HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS;
+    }
+
+    return true;
+  }
+
+  defaultMessage(args?: ValidationArguments): string {
+    if (humanSignalKind(args) === 'choose') {
+      return `choose card requires card.options (2–${HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS} items) or option action buttons`;
+    }
+
+    return 'card must be HITL chrome or a Card element (`type: "card"`)';
+  }
+}
 
 /**
  * Allowed characters for a metadata signal key.
@@ -247,12 +304,36 @@ export class HumanSignalDto {
   kind: (typeof HUMAN_SIGNAL_KINDS)[number];
 
   @ApiProperty({
-    description: 'Question, action description, or one-way message shown to the human.',
-    example: 'Deploy v2.4.1 to production?',
+    description: 'Markdown, HITL chrome, or a posted Card element (`type: "card"`) from `{ render }`.',
+    oneOf: [
+      {
+        type: 'object',
+        additionalProperties: true,
+        description: 'Plain markdown body.',
+        example: { markdown: 'Please approve in the thread.' },
+      },
+      {
+        type: 'object',
+        additionalProperties: true,
+        description: 'Chrome presentation (`title`, labels, options).',
+        example: { title: 'Deploy v2.4.1?', approveLabel: 'Ship it' },
+      },
+      {
+        type: 'object',
+        additionalProperties: true,
+        description: 'Chat SDK Card element.',
+        example: {
+          type: 'card',
+          title: 'Refund $25?',
+          children: [{ type: 'button', id: 'human:hr_1:approve', label: 'OK', style: 'primary' }],
+        },
+      },
+    ],
   })
-  @IsString()
-  @Matches(/\S/)
-  prompt: string;
+  @IsNotEmpty()
+  @IsObject()
+  @Validate(IsValidHumanSignalCard)
+  card: HumanSignalCardDto;
 
   @ApiProperty({
     description: 'Client-minted id returned by the framework helper; echoed on `ctx.humanResponse.requestId`.',
@@ -263,17 +344,13 @@ export class HumanSignalDto {
   requestId: string;
 
   @ApiPropertyOptional({
-    type: [String],
-    description: 'Choice labels — required for `choose`, ignored otherwise.',
-    example: ['us-east', 'eu-west'],
+    description:
+      'When set, pending chrome buttons use `human:{actionIdentifier}:…` (the client `requestId` for `renderApprove`).',
+    example: 'hr_7c2e1a3b-4d5f-6789-abcd-ef0123456789',
   })
-  @ValidateIf((signal: HumanSignalDto) => signal.kind === 'choose')
-  @IsArray()
-  @ArrayMinSize(2)
-  @ArrayMaxSize(10)
-  @IsString({ each: true })
-  @Matches(/\S/, { each: true })
-  options?: string[];
+  @IsOptional()
+  @IsString()
+  actionIdentifier?: string;
 
   @ApiPropertyOptional({
     description: 'Attribution label rendered in the card.',

@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
@@ -57,7 +58,11 @@ export class HumanInteractionsController {
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createInteraction(
     @UserSession() user: UserSessionData,
-    @Body() body: CreateInteractionRequestDto
+    // `whitelist` strips unknown properties (e.g. a `type: 'card'` + `children`
+    // card element) so this chrome-only endpoint cannot be coerced into posting
+    // a raw card element with attacker-controlled action buttons.
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
+    body: CreateInteractionRequestDto
   ): Promise<InteractionResponseDto> {
     return this.createInteractionUsecase.execute(
       CreateInteractionCommand.create({
@@ -65,8 +70,7 @@ export class HumanInteractionsController {
         organizationId: user.organizationId,
         userId: user._id,
         kind: body.kind,
-        prompt: body.prompt,
-        options: body.options,
+        card: body.card,
         to: body.to,
         via: body.via,
         agentIdentifier: body.agentIdentifier,

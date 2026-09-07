@@ -1,6 +1,6 @@
 import type {
+  HumanInteractionContent,
   HumanInteractionKindEnum,
-  HumanInteractionOption,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
 } from '@novu/shared';
@@ -23,11 +23,8 @@ export class HumanInteractionEntity {
 
   status: HumanInteractionStatusEnum;
 
-  /** The question / action description / message shown to the human. */
-  prompt: string;
-
-  /** `choose` options. `approve` uses implicit approve/deny buttons. */
-  options?: HumanInteractionOption[];
+  /** Required `{ cardChrome }` | `{ card }`. */
+  content: HumanInteractionContent;
 
   /** `--from` attribution rendered in the card ("deploy-bot needs approval"). */
   fromLabel?: string;

@@ -41,7 +41,7 @@ This applies to email, SMS, chat, and push. Provider rejections are treated as t
 
 ### There is no automatic provider failover
 
-Novu selects one integration for a channel before the send - the primary integration, or the one specified by payload in override. If that provider fails, Novu does **not** fall back to another configured integration for the same channel.
+Novu selects the integration for a channel before the send. See [Integration conditions](/platform/integrations/integration-conditions). If that provider fails, Novu does **not** fall back to another configured integration for the same channel.
 
 ## Bridge endpoint calls
 

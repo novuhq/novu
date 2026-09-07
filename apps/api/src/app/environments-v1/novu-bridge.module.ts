@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import {
   AnalyticsService,
   CreateExecutionDetails,
-  CreateStepConditionsPassedDetail,
+  CreateStepConditionEvaluationDetail,
   CreateVariablesObject,
   FeatureFlagsService,
   GetDecryptedSecretKey,
@@ -88,7 +88,7 @@ export const featureFlagsService = {
     JobRepository,
     ExecutionDetailsRepository,
     CreateExecutionDetails,
-    CreateStepConditionsPassedDetail,
+    CreateStepConditionEvaluationDetail,
     featureFlagsService,
     InMemoryLRUCacheService,
   ],
