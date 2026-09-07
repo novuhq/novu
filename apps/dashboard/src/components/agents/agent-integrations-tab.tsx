@@ -1,0 +1,573 @@
+import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type ReactNode, useEffect } from 'react';
+import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  type AgentIntegrationLink,
+  type AgentResponse,
+  getAgentDetailQueryKey,
+  getAgentIntegrationsQueryKey,
+  listAgentIntegrations,
+  removeAgentIntegration,
+} from '@/api/agents';
+import { NovuApiError } from '@/api/api.client';
+import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { InlineToast } from '@/components/primitives/inline-toast';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { buildRoute } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { cn } from '@/utils/ui';
+import { AddChannelPicker } from './add-channel-picker';
+import {
+  clearLastSelectedChannel,
+  loadLastSelectedChannel,
+  saveLastSelectedChannel,
+} from './agent-channel-selection-storage';
+import { AgentChannelsEmptyState } from './agent-channels-empty-state';
+import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
+import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
+import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
+import { isAgentIntegrationConnected } from './is-agent-integration-connected';
+
+type AgentIntegrationsTabProps = {
+  agent: AgentResponse;
+  integrationIdentifier: string | undefined;
+};
+
+const CHANNEL_GROUP_ORDER: ChannelTypeEnum[] = [
+  ChannelTypeEnum.IN_APP,
+  ChannelTypeEnum.CHAT,
+  ChannelTypeEnum.EMAIL,
+  ChannelTypeEnum.PUSH,
+  ChannelTypeEnum.SMS,
+];
+
+/** Channel labels for the connected-provider list (matches product / Figma copy). */
+const CONNECTED_PROVIDER_CHANNEL_LABEL: Record<ChannelTypeEnum, string> = {
+  [ChannelTypeEnum.IN_APP]: 'In-app',
+  [ChannelTypeEnum.CHAT]: 'Chat',
+  [ChannelTypeEnum.EMAIL]: 'Email',
+  [ChannelTypeEnum.PUSH]: 'Push',
+  [ChannelTypeEnum.SMS]: 'SMS',
+  [ChannelTypeEnum.TOOL]: 'Tool',
+};
+
+type LastUpdatedParts = {
+  prefix: string;
+  emphasis: string;
+};
+
+function formatLastUpdatedParts(timestamp: number | undefined): LastUpdatedParts {
+  if (timestamp == null || Number.isNaN(timestamp)) {
+    return { prefix: 'Last updated ', emphasis: '-' };
+  }
+
+  const diffSec = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+
+  if (diffSec < 60) {
+    return { prefix: 'Last updated ', emphasis: 'just now' };
+  }
+
+  const diffMin = Math.round(diffSec / 60);
+
+  if (diffMin < 60) {
+    const emphasis = `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+
+    return { prefix: 'Last updated ', emphasis };
+  }
+
+  const diffHr = Math.round(diffMin / 60);
+
+  if (diffHr < 48) {
+    const emphasis = `${diffHr} hour${diffHr === 1 ? '' : 's'} ago`;
+
+    return { prefix: 'Last updated ', emphasis };
+  }
+
+  const diffDay = Math.round(diffHr / 24);
+  const emphasis = `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
+
+  return { prefix: 'Last updated ', emphasis };
+}
+
+function groupLinksByChannel(links: AgentIntegrationLink[]) {
+  const map = new Map<ChannelTypeEnum, AgentIntegrationLink[]>();
+
+  for (const link of links) {
+    const list = map.get(link.integration.channel) ?? [];
+    list.push(link);
+    map.set(link.integration.channel, list);
+  }
+
+  const groups: { channel: ChannelTypeEnum; items: AgentIntegrationLink[] }[] = [];
+
+  for (const channel of CHANNEL_GROUP_ORDER) {
+    const items = map.get(channel);
+
+    if (items?.length) {
+      groups.push({ channel, items });
+    }
+  }
+
+  return groups;
+}
+
+type IntegrationsHubPlaceholderProps = {
+  title: string;
+  description: ReactNode;
+};
+
+function IntegrationsHubPlaceholder({ title, description }: IntegrationsHubPlaceholderProps) {
+  return (
+    <div className="border-stroke-soft bg-bg-weak/30 flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
+      <p className="text-text-strong text-label-sm font-medium">{title}</p>
+      <p className="text-text-soft text-label-sm mt-2 max-w-sm leading-5">{description}</p>
+    </div>
+  );
+}
+
+type IntegrationsMainPanelProps = {
+  integrationIdentifier: string | undefined;
+  agent: AgentResponse;
+  selectedIntegration: AgentIntegrationLink | undefined;
+  canRemoveAgentIntegration: boolean;
+  onBackFromGuide: () => void;
+  onRequestRemoveSelected: () => void;
+  isRemovingIntegration: boolean;
+  isLoading: boolean;
+  links: AgentIntegrationLink[];
+};
+
+function IntegrationsMainPanel({
+  integrationIdentifier,
+  agent,
+  selectedIntegration,
+  canRemoveAgentIntegration,
+  onBackFromGuide,
+  onRequestRemoveSelected,
+  isRemovingIntegration,
+  isLoading,
+  links,
+}: IntegrationsMainPanelProps) {
+  const guideSkeleton = (
+    <div className="flex min-h-[320px] flex-col gap-4">
+      <Skeleton className="h-12 w-2/3 max-w-md rounded-lg" />
+      <Skeleton className="h-40 w-full rounded-xl" />
+      <Skeleton className="h-32 w-full rounded-xl" />
+    </div>
+  );
+
+  if (integrationIdentifier) {
+    if (isLoading) {
+      return guideSkeleton;
+    }
+
+    if (!selectedIntegration) {
+      return (
+        <IntegrationsHubPlaceholder
+          title="Integration not found"
+          description="This integration is not linked to this agent or may have been removed."
+        />
+      );
+    }
+
+    return (
+      <ResolveAgentIntegrationGuide
+        embedded
+        onBack={onBackFromGuide}
+        agent={agent}
+        integrationLink={selectedIntegration}
+        canRemoveIntegration={canRemoveAgentIntegration}
+        onRequestRemoveIntegration={onRequestRemoveSelected}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  if (isLoading) {
+    return guideSkeleton;
+  }
+
+  if (links.length > 0) {
+    return <AgentChannelsEmptyState />;
+  }
+
+  return (
+    <IntegrationsHubPlaceholder
+      title="No integrations linked yet"
+      description={
+        <>
+          Use <span className="text-text-strong">Add channel</span> in the list to connect an integration from this
+          environment.
+        </>
+      }
+    />
+  );
+}
+
+export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentIntegrationsTabProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const { currentEnvironment, readOnly, oppositeEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  const track = useTelemetry();
+  const agentRoutes = useAgentRoutes();
+  const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
+
+  const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    agentIdentifier: encodeURIComponent(agent.identifier),
+    agentTab: 'integrations',
+  })}${location.search}`;
+
+  const navigateToGuide = (nextIntegrationIdentifier: string) => {
+    if (!currentEnvironment?.slug) {
+      return;
+    }
+
+    navigate(
+      `${buildRoute(agentRoutes.integrationDetail, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(agent.identifier),
+        integrationIdentifier: encodeURIComponent(nextIntegrationIdentifier),
+      })}${location.search}`
+    );
+  };
+
+  const handleBackFromGuide = () => {
+    clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
+    navigate(integrationsHubPath);
+  };
+
+  const listQuery = useQuery({
+    queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+    queryFn: () =>
+      listAgentIntegrations({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        agentIdentifier: agent.identifier,
+        limit: 100,
+      }),
+    enabled: Boolean(currentEnvironment && agent.identifier),
+  });
+
+  const linkedRows = listQuery.data?.data;
+  const planUsage = listQuery.data?.planUsage;
+  const isOverChannelLimit = Boolean(planUsage && planUsage.used > planUsage.limit);
+
+  useEffect(() => {
+    if (integrationIdentifier != null) {
+      return;
+    }
+
+    if (!currentEnvironment?.slug) {
+      return;
+    }
+
+    if (!listQuery.isSuccess || !linkedRows?.length) {
+      return;
+    }
+
+    const storedIdentifier = loadLastSelectedChannel(currentEnvironment._id, agent.identifier);
+
+    if (!storedIdentifier) {
+      return;
+    }
+
+    const isStillLinked = linkedRows.some((row) => row.integration.identifier === storedIdentifier);
+
+    if (!isStillLinked) {
+      clearLastSelectedChannel(currentEnvironment._id, agent.identifier);
+
+      return;
+    }
+
+    navigate(
+      `${buildRoute(agentRoutes.integrationDetail, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(agent.identifier),
+        integrationIdentifier: encodeURIComponent(storedIdentifier),
+      })}${location.search}`,
+      { replace: true }
+    );
+  }, [
+    agent.identifier,
+    agentRoutes.integrationDetail,
+    currentEnvironment?._id,
+    currentEnvironment?.slug,
+    linkedRows,
+    listQuery.isSuccess,
+    location.search,
+    navigate,
+    integrationIdentifier,
+  ]);
+
+  const handleProviderDropdownSelect = (_providerId: string, integration?: IIntegration) => {
+    if (integration?.identifier) {
+      navigateToGuide(integration.identifier);
+    }
+  };
+
+  const removeIntegrationMutation = useMutation({
+    mutationFn: (agentIntegrationId: string) =>
+      removeAgentIntegration(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        agentIntegrationId
+      ),
+    onSuccess: async (_, agentIntegrationId) => {
+      const rows = listQuery.data?.data ?? [];
+      const removed = rows.find((row) => row._id === agentIntegrationId);
+      const name = removed?.integration.name ?? 'Integration';
+
+      showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
+      track(TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD, {
+        agentIdentifier: agent.identifier,
+        agentIntegrationId,
+        integrationIdentifier: removed?.integration.identifier,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agent.identifier),
+      });
+      handleBackFromGuide();
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not remove integration.';
+
+      showErrorToast(message, 'Remove failed');
+    },
+  });
+
+  const handleLinkedRowClick = (link: AgentIntegrationLink) => {
+    navigateToGuide(link.integration.identifier);
+  };
+
+  const isLoading = listQuery.isLoading;
+  const links = linkedRows ?? [];
+  const grouped = groupLinksByChannel(links);
+  const selectedIntegration =
+    integrationIdentifier != null
+      ? links.find((link) => link.integration.identifier === integrationIdentifier)
+      : undefined;
+
+  const selectedIntegrationIdentifier = selectedIntegration?.integration.identifier;
+
+  useEffect(() => {
+    if (!selectedIntegrationIdentifier) {
+      return;
+    }
+
+    saveLastSelectedChannel(currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier);
+  }, [currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier]);
+
+  const selectedIntegrationUpdatedAtMs =
+    selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
+  const lastUpdatedParts = listQuery.isSuccess
+    ? formatLastUpdatedParts(selectedIntegrationUpdatedAtMs)
+    : { prefix: 'Last updated ', emphasis: '-' };
+
+  if (listQuery.isError) {
+    return (
+      <div className="px-6 pt-4">
+        <p className="text-error-base text-label-sm">Could not load integrations for this agent. Try again later.</p>
+      </div>
+    );
+  }
+
+  const handleRequestRemoveSelected = () => {
+    if (!selectedIntegration || removeIntegrationMutation.isPending) {
+      return;
+    }
+
+    removeIntegrationMutation.mutate(selectedIntegration._id);
+  };
+
+  const mainPanel = (
+    <IntegrationsMainPanel
+      integrationIdentifier={integrationIdentifier}
+      agent={agent}
+      selectedIntegration={selectedIntegration}
+      canRemoveAgentIntegration={canRemoveAgentIntegration}
+      onBackFromGuide={handleBackFromGuide}
+      onRequestRemoveSelected={handleRequestRemoveSelected}
+      isRemovingIntegration={removeIntegrationMutation.isPending}
+      isLoading={isLoading}
+      links={links}
+    />
+  );
+
+  return (
+    <div className="flex min-w-0 w-full flex-col gap-4 px-4 pt-4 pb-6 md:flex-row md:gap-6 md:px-6 md:pb-0">
+      <aside className="w-full md:w-[300px] md:shrink-0">
+        <div className="flex flex-col gap-2.5">
+          {/* When the agent itself is over the agent limit it won't respond on any
+              channel: the agent-level banner above already says so, and stacking
+              the channel-limit banner here would just be duplicate warning noise. */}
+          {isOverChannelLimit && planUsage && !agent.exceedsPlanLimit && (
+            <ChannelsPlanLimitBanner planUsage={planUsage} />
+          )}
+          {readOnly && (
+            <InlineToast
+              variant="soft-warning"
+              description="Viewing in production"
+              ctaLabel="Switch to dev"
+              onCtaClick={() => {
+                if (!oppositeEnvironment?.slug) return;
+                navigate(
+                  buildRoute(agentRoutes.detailsTab, {
+                    environmentSlug: oppositeEnvironment.slug,
+                    agentIdentifier: encodeURIComponent(agent.identifier),
+                    agentTab: 'integrations',
+                  })
+                );
+              }}
+            />
+          )}
+          <div className="bg-bg-weak flex flex-col gap-2 rounded p-1 py-1.5">
+            <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected channels</p>
+            {isLoading ? (
+              <>
+                <div className="text-text-soft px-1 pt-1 text-label-xs font-medium leading-4">In-app</div>
+                {[0, 1].map((key) => (
+                  <div
+                    key={key}
+                    className="bg-bg-white border-stroke-weak flex items-center gap-1.5 rounded-md border px-2 py-1.5"
+                  >
+                    <Skeleton className="size-4 shrink-0 rounded" />
+                    <Skeleton className="h-4 flex-1 rounded" />
+                  </div>
+                ))}
+              </>
+            ) : (
+              <>
+                {grouped.map(({ channel, items }) => (
+                  <div key={channel} className="flex flex-col gap-2">
+                    <p className="text-text-soft px-1 text-label-xs font-medium leading-4">
+                      {CONNECTED_PROVIDER_CHANNEL_LABEL[channel]}
+                    </p>
+                    {items.map((link) => {
+                      const int = link.integration;
+                      const providerMeta = novuProviders.find((p) => p.id === int.providerId);
+                      const channelDisplayName = getAgentChannelDisplayName(
+                        int.providerId,
+                        providerMeta?.displayName ?? int.name
+                      );
+                      const isSelected = integrationIdentifier === int.identifier;
+                      const isConnected = isAgentIntegrationConnected(link);
+                      // Setup ("Action needed") takes precedence — the plan limit only
+                      // becomes the blocking issue once the channel is actually connected.
+                      const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
+                      const showActionNeeded = !isConnected;
+
+                      let statusLabel = 'Active';
+
+                      if (exceedsPlan) {
+                        statusLabel = 'Exceeds plan';
+                      } else if (showActionNeeded) {
+                        statusLabel = 'Action needed';
+                      }
+
+                      const row = (
+                        <button
+                          key={link._id}
+                          type="button"
+                          onClick={() => handleLinkedRowClick(link)}
+                          aria-label={`${channelDisplayName}, ${statusLabel}`}
+                          className={cn(
+                            'bg-bg-white border-stroke-weak hover:border-stroke-soft flex w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors',
+                            isSelected && 'border-stroke-soft'
+                          )}
+                        >
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            <ProviderIcon
+                              providerId={int.providerId}
+                              providerDisplayName={channelDisplayName}
+                              className="size-4 shrink-0"
+                            />
+                            <span className="text-text-sub text-label-sm min-w-0 truncate font-medium leading-5">
+                              {channelDisplayName}
+                            </span>
+                          </span>
+                          <span className="flex shrink-0 items-center gap-1" aria-hidden>
+                            {exceedsPlan && (
+                              <span className="text-warning-base text-[10px] font-medium leading-4">Exceeds plan</span>
+                            )}
+                            {exceedsPlan || showActionNeeded ? (
+                              <RiErrorWarningFill className="text-warning-base size-3 shrink-0" />
+                            ) : (
+                              <div className="bg-success-base size-1.5 shrink-0 rounded-full" />
+                            )}
+                            <RiArrowRightSLine className="text-text-soft size-4 shrink-0" />
+                          </span>
+                        </button>
+                      );
+
+                      if (!exceedsPlan) {
+                        return row;
+                      }
+
+                      return (
+                        <Tooltip key={link._id}>
+                          <TooltipTrigger asChild>{row}</TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[260px]">
+                            {getExceedsPlanTooltipCopy('channel')}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                ))}
+
+                {links.length > 0 ? <div className="bg-stroke-weak h-px" role="presentation" /> : null}
+
+                {!readOnly && (
+                  <AddChannelPicker
+                    agentIdentifier={agent.identifier}
+                    agentName={agent.name}
+                    links={links}
+                    planUsage={planUsage}
+                    selectedIntegrationId={selectedIntegration?.integration._id}
+                    onSelected={handleProviderDropdownSelect}
+                    renderTrigger={({ isBusy }) => (
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        className="bg-bg-white border-stroke-weak hover:border-stroke-soft text-text-sub flex h-auto w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left font-medium transition-colors disabled:opacity-60"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <RiAddLine className="size-4 shrink-0" aria-hidden />
+                          <span className="text-label-sm leading-5">Add channel</span>
+                        </span>
+                        <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
+                      </button>
+                    )}
+                  />
+                )}
+              </>
+            )}
+          </div>
+
+          <p className="text-label-xs px-0.5 leading-4">
+            <span className="text-text-soft">{lastUpdatedParts.prefix}</span>
+            <span className="text-text-sub font-medium">{lastUpdatedParts.emphasis}</span>
+          </p>
+        </div>
+      </aside>
+
+      <div className="min-w-0 flex-1 mt-10 md:mt-0 border-t border-stroke-weak md:border-t-0 pt-4 md:pt-0">
+        {mainPanel}
+      </div>
+    </div>
+  );
+}

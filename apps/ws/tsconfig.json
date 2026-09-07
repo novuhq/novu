@@ -3,11 +3,15 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "module": "commonjs",
+    "sourceMap": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["node", "mocha", "chai"],
-    "esModuleInterop": false,
-    "target": "es2017",
+    "emitDecoratorMetadata": true,
+    "types": ["node", "mocha", "chai", "sinon"],
+    "target": "es6",
     "allowJs": false,
-    "declarationMap": true
-  }
+    "esModuleInterop": true,
+    "declarationMap": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"]
 }

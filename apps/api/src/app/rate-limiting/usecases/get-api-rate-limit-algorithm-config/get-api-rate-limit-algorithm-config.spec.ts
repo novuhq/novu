@@ -1,11 +1,11 @@
 import { Test } from '@nestjs/testing';
-import { GetApiRateLimitAlgorithmConfig } from './get-api-rate-limit-algorithm-config.usecase';
 import {
   ApiRateLimitAlgorithmEnum,
   ApiRateLimitAlgorithmEnvVarFormat,
   DEFAULT_API_RATE_LIMIT_ALGORITHM_CONFIG,
 } from '@novu/shared';
 import { expect } from 'chai';
+import { GetApiRateLimitAlgorithmConfig } from './get-api-rate-limit-algorithm-config.usecase';
 
 describe('GetApiRateLimitAlgorithmConfig', () => {
   let useCase: GetApiRateLimitAlgorithmConfig;

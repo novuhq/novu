@@ -1,0 +1,100 @@
+import { ChannelTypeEnum, ChatProviderIdEnum, ContentIssueEnum, ToolProviderIdEnum } from '@novu/shared';
+import { describe, expect, it } from 'vitest';
+import {
+  buildProviderOverrideOptions,
+  getUnsupportedOverrideKeys,
+  isEscapeHatchProvider,
+  isTopLevelOverrideIssuePath,
+  PROVIDER_OVERRIDES_FIELD,
+  shouldKeepServerOverrideIssue,
+} from './content-source';
+
+describe('getUnsupportedOverrideKeys', () => {
+  it('allows arbitrary webhook keys while preserving strict provider schemas', () => {
+    expect(getUnsupportedOverrideKeys(ToolProviderIdEnum.Webhook, { custom: true })).toEqual([]);
+    expect(getUnsupportedOverrideKeys(ToolProviderIdEnum.PagerDuty, { custom: true })).toEqual(['custom']);
+    expect(getUnsupportedOverrideKeys(ToolProviderIdEnum.Opsgenie, { custom: true })).toEqual(['custom']);
+  });
+
+  it('checks top-level keys for providers whose schema is loaded lazily', () => {
+    expect(getUnsupportedOverrideKeys(ChatProviderIdEnum.Slack, { blocks: [], custom: true })).toEqual(['custom']);
+  });
+});
+
+describe('isTopLevelOverrideIssuePath', () => {
+  const prefix = `${PROVIDER_OVERRIDES_FIELD}.${ChatProviderIdEnum.WhatsAppBusiness}`;
+
+  it('matches only a single segment under the provider path', () => {
+    expect(isTopLevelOverrideIssuePath(`${prefix}.custom`, prefix)).toBe(true);
+    expect(isTopLevelOverrideIssuePath(`${prefix}.document.link`, prefix)).toBe(false);
+    expect(isTopLevelOverrideIssuePath(`${prefix}.document.id`, prefix)).toBe(false);
+    expect(isTopLevelOverrideIssuePath(prefix, prefix)).toBe(false);
+    expect(isTopLevelOverrideIssuePath(`${PROVIDER_OVERRIDES_FIELD}.slack.custom`, prefix)).toBe(false);
+  });
+});
+
+describe('shouldKeepServerOverrideIssue', () => {
+  const prefix = `${PROVIDER_OVERRIDES_FIELD}.${ChatProviderIdEnum.WhatsAppBusiness}`;
+
+  it('drops mirrored top-level unsupported keys and keeps nested ones', () => {
+    expect(
+      shouldKeepServerOverrideIssue(
+        { issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY, variableName: `${prefix}.custom` },
+        prefix,
+        prefix
+      )
+    ).toBe(false);
+    expect(
+      shouldKeepServerOverrideIssue(
+        { issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY, variableName: `${prefix}.document.link` },
+        `${prefix}.document.link`,
+        prefix
+      )
+    ).toBe(true);
+    expect(
+      shouldKeepServerOverrideIssue(
+        { issueType: ContentIssueEnum.MISSING_VALUE, variableName: `${prefix}.document.id` },
+        `${prefix}.document.id`,
+        prefix
+      )
+    ).toBe(true);
+  });
+});
+
+describe('isEscapeHatchProvider', () => {
+  it('separates schema-backed providers from free-form passthroughs', () => {
+    expect(isEscapeHatchProvider(ToolProviderIdEnum.PagerDuty)).toBe(false);
+    expect(isEscapeHatchProvider(ChatProviderIdEnum.Slack)).toBe(false);
+    expect(isEscapeHatchProvider(ToolProviderIdEnum.Webhook)).toBe(true);
+    expect(isEscapeHatchProvider(ChatProviderIdEnum.Discord)).toBe(true);
+  });
+});
+
+describe('buildProviderOverrideOptions', () => {
+  it('lists configured overrides first, then schema-backed before escape-hatch, then alphabetically', () => {
+    const options = buildProviderOverrideOptions({
+      channel: ChannelTypeEnum.CHAT,
+      activeProviderIds: new Set([
+        ChatProviderIdEnum.Telegram,
+        ChatProviderIdEnum.Discord,
+        ChatProviderIdEnum.Slack,
+        ChatProviderIdEnum.Mattermost,
+        ChatProviderIdEnum.WhatsAppBusiness,
+      ]),
+      providerOverrides: {
+        [ChatProviderIdEnum.Discord]: { text: 'hi' },
+        [ChatProviderIdEnum.Telegram]: { text: 'hi' },
+      },
+    });
+
+    expect(options.map((option) => option.providerId)).toEqual([
+      ChatProviderIdEnum.Telegram,
+      ChatProviderIdEnum.Discord,
+      ChatProviderIdEnum.Slack,
+      ChatProviderIdEnum.WhatsAppBusiness,
+      ChatProviderIdEnum.Mattermost,
+    ]);
+    expect(options.map((option) => option.hasOverride)).toEqual([true, true, false, false, false]);
+    expect(options.map((option) => option.isEscapeHatch)).toEqual([false, true, false, false, true]);
+  });
+});

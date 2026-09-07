@@ -1,11 +1,8 @@
-import * as mongoose from 'mongoose';
-import { Schema } from 'mongoose';
-import * as mongooseDelete from 'mongoose-delete';
-import { ActorTypeEnum } from '@novu/shared';
+import { ActorTypeEnum, SeverityLevelEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { MessageDBModel } from './message.entity';
-import { getTTLOptions } from '../../shared';
 
 const messageSchema = new Schema<MessageDBModel>(
   {
@@ -37,6 +34,7 @@ const messageSchema = new Schema<MessageDBModel>(
       ref: 'Job',
     },
     templateIdentifier: Schema.Types.String,
+    stepId: Schema.Types.String,
     email: Schema.Types.String,
     subject: Schema.Types.String,
     cta: {
@@ -53,6 +51,8 @@ const messageSchema = new Schema<MessageDBModel>(
             },
             content: Schema.Types.String,
             resultContent: Schema.Types.String,
+            url: Schema.Types.String,
+            target: Schema.Types.String,
           },
         ],
         result: {
@@ -72,7 +72,7 @@ const messageSchema = new Schema<MessageDBModel>(
     phone: Schema.Types.String,
     directWebhookUrl: Schema.Types.String,
     providerId: Schema.Types.String,
-    deviceTokens: [Schema.Types.Array],
+    deviceTokens: [Schema.Types.String],
     title: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,
@@ -82,24 +82,31 @@ const messageSchema = new Schema<MessageDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
-    lastSeenDate: Schema.Types.Date,
-    lastReadDate: Schema.Types.Date,
-    createdAt: {
-      type: Schema.Types.Date,
-      default: Date.now,
+    archived: {
+      type: Schema.Types.Boolean,
+      default: false,
     },
+    snoozedUntil: Schema.Types.Date,
+    deliveredAt: {
+      type: [Schema.Types.Date],
+      default: undefined,
+    },
+    lastSeenDate: Schema.Types.Date,
+    firstSeenDate: Schema.Types.Date,
+    lastReadDate: Schema.Types.Date,
+    archivedAt: Schema.Types.Date,
     status: {
       type: Schema.Types.String,
       default: 'sent',
     },
     errorId: Schema.Types.String,
     errorText: Schema.Types.String,
-    providerResponse: Schema.Types.Mixed,
     transactionId: {
       type: Schema.Types.String,
     },
     identifier: Schema.Types.String,
     payload: Schema.Types.Mixed,
+    data: Schema.Types.Mixed,
     overrides: Schema.Types.Mixed,
     actor: {
       type: {
@@ -112,12 +119,76 @@ const messageSchema = new Schema<MessageDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
-    expireAt: Schema.Types.Date,
+    tags: [Schema.Types.String],
+    avatar: Schema.Types.String,
+    severity: {
+      type: Schema.Types.String,
+      enum: SeverityLevelEnum,
+      default: SeverityLevelEnum.NONE,
+    },
+    channelData: {
+      type: [
+        {
+          _id: false,
+          identifier: {
+            type: Schema.Types.String,
+            required: true,
+          },
+          type: {
+            type: Schema.Types.String,
+            required: true,
+          },
+          endpoint: {
+            type: Schema.Types.Mixed,
+            required: true,
+          },
+          token: {
+            type: Schema.Types.String,
+            required: false,
+          },
+        },
+      ],
+      default: undefined,
+    },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
+    _agentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Agent',
+    },
   },
   schemaOptions
 );
 
-messageSchema.index({ expireAt: 1 }, getTTLOptions());
+messageSchema.pre('init', function sanitizeCorruptCta(doc: Record<string, unknown>) {
+  if (doc.cta !== undefined && doc.cta !== null && typeof doc.cta !== 'object') {
+    doc.cta = {};
+  }
+  if (doc.cta && typeof doc.cta === 'object') {
+    const cta = doc.cta as Record<string, unknown>;
+    if (cta.action !== undefined && cta.action !== null && typeof cta.action !== 'object') {
+      cta.action = {};
+    }
+  }
+});
+
+/**
+ * todo: all the pre hooks should be removed after all the soft deletes are removed task nv-5688
+ */
+messageSchema.pre('find', function filterDeletedFind() {
+  this.where({ deleted: { $exists: false } });
+});
+messageSchema.pre('findOne', function filterDeletedFindOne() {
+  this.where({ deleted: { $exists: false } });
+});
+messageSchema.pre('findOneAndUpdate', function filterDeletedFindOneAndUpdate() {
+  this.where({ deleted: { $exists: false } });
+});
+messageSchema.pre('countDocuments', function filterDeletedCountDocuments() {
+  this.where({ deleted: { $exists: false } });
+});
 
 messageSchema.virtual('subscriber', {
   ref: 'Subscriber',
@@ -138,24 +209,6 @@ messageSchema.virtual('actorSubscriber', {
   localField: '_actorId',
   foreignField: '_id',
   justOne: true,
-});
-
-messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
-
-/*
- * This index was initially created to optimize:
- *
- * Path : apps/webhook/src/webhooks/usecases/webhook/webhook.usecase.ts
- * Context : parseEvent()
- *  Query : findOne({
- *    identifier: messageIdentifier,
- *    _environmentId: command.environmentId,
- *    _organizationId: command.organizationId,
- *  });
- */
-messageSchema.index({
-  identifier: 1,
-  _environmentId: 1,
 });
 
 /*
@@ -209,19 +262,13 @@ messageSchema.index({
   _subscriberId: 1,
   _environmentId: 1,
   channel: 1,
+  contextKeys: 1,
   seen: 1,
   read: 1,
+  archived: 1,
+  snoozedUntil: 1,
+  severity: 1,
   createdAt: -1,
-});
-
-/*
- * Path : libs/dal/src/repositories/message/message.repository.ts
- * Context : updateFeedByMessageTemplateId()
- * Query : update({ _environmentId: environmentId, _messageTemplateId: messageId }
- */
-messageSchema.index({
-  _messageTemplateId: 1,
-  _environmentId: 1,
 });
 
 /*
@@ -242,7 +289,7 @@ messageSchema.index({
  * });
  *
  *
- * Path: apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
+ * Path: libs/application-generic/src/usecases/conditions-filter/conditions-filter.usecase.ts
  * Context: processPreviousStep
  * Query: findOne({
  *   _jobId: job._id,
@@ -279,13 +326,72 @@ messageSchema.index({
  *     createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
  *   }
  */
+
 messageSchema.index({
   _environmentId: 1,
   providerId: 1,
   createdAt: 1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+/*
+ * This index was created to push entries to Online Archive
+ */
+messageSchema.index({ createdAt: 1 });
+
+/**
+ * todo: remove deleted field after all the soft deletes are removed task nv-5688
+ */
+messageSchema.index({ _environmentId: 1, _jobId: 1, deleted: 1 });
+
+/**
+ * Used in worker to find messages that are snoozed
+ * process-unsnooze-job.usecase.ts
+ */
+messageSchema.index({ _notificationId: 1, snoozedUntil: 1 });
+
+messageSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
+  channel: 1,
+  seen: 1,
+  read: 1,
+  archived: 1,
+  snoozedUntil: 1,
+  severity: 1,
+  createdAt: -1,
+});
+
+messageSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
+  channel: 1,
+  read: 1,
+  seen: 1,
+  tags: 1,
+  archived: 1,
+  snoozedUntil: 1,
+  createdAt: -1,
+  _id: -1,
+});
+
+messageSchema.index({
+  identifier: 1,
+  _environmentId: 1,
+  _organizationId: 1,
+});
+
+messageSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
+  channel: 1,
+  seen: 1,
+  read: 1,
+  archived: 1,
+  deleted: 1,
+  createdAt: -1,
+  _id: -1,
+});
+
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||
   mongoose.model<MessageDBModel>('Message', messageSchema);

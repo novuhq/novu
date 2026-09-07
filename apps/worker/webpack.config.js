@@ -1,6 +1,4 @@
-module.exports = function (options) {
-  return {
-    ...options,
-    devtool: 'source-map',
-  };
-};
+module.exports = (options) => ({
+  ...options,
+  devtool: 'source-map',
+});

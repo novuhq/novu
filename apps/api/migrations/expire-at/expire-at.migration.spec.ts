@@ -1,18 +1,18 @@
-import { expect } from 'chai';
 import {
-  MessageRepository,
-  NotificationTemplateEntity,
-  SubscriberRepository,
   ExecutionDetailsRepository,
   JobRepository,
+  MessageRepository,
   NotificationRepository,
+  NotificationTemplateEntity,
+  SubscriberRepository,
 } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { createExpireAt, messagesSetExpireAt } from './expire-at.migration';
 
-describe('Create expireAt - TTL support', function () {
+describe('Create expireAt - TTL support', () => {
   const messageRepository = new MessageRepository();
   const notificationRepository = new NotificationRepository();
   const jobRepository = new JobRepository();
@@ -32,7 +32,7 @@ describe('Create expireAt - TTL support', function () {
       expireAt: { $exists: false },
     };
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, template, newSubscriberIdInAppNotification);
     }
@@ -43,14 +43,14 @@ describe('Create expireAt - TTL support', function () {
     await jobRepository.update({ _environmentId: session.environment._id }, { $unset: { expireAt: 1 } });
     await executionDetailsRepository.update({ _environmentId: session.environment._id }, { $unset: { expireAt: 1 } });
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, template, newSubscriberIdInAppNotification);
     }
     await new Promise((r) => setTimeout(r, 1000));
   });
 
-  it('should set expireAt for messages', async function () {
+  it('should set expireAt for messages', async () => {
     await messagesSetExpireAt(query);
 
     const messages = await messageRepository.find({ _environmentId: session.environment._id });
@@ -60,7 +60,7 @@ describe('Create expireAt - TTL support', function () {
     });
   });
 
-  it('should set expireAt for notification and its jobs and execution details', async function () {
+  it('should set expireAt for notification and its jobs and execution details', async () => {
     await createExpireAt();
     const notifications = await notificationRepository.find({ _environmentId: session.environment._id });
     const jobs = await jobRepository.find({ _environmentId: session.environment._id });

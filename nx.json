@@ -1,46 +1,101 @@
 {
-  "extends": "@nrwl/workspace/presets/npm.json",
-  "npmScope": "novuhq",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/nx-cloud",
-      "options": {
-        "cacheableOperations": ["build", "test", "lint", "package", "prepare"],
-        "canTrackAnalytics": false,
-        "accessToken": "N2EyNDhhMGUtYmJkNS00YzQ5LTg5NDYtODg5ZmE2NDE5YWNmfHJlYWQtd3JpdGU="
-      }
+  "parallel": 4,
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build"]
+    },
+    "test": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
+    "lint-biome": {
+      "inputs": ["default", "{workspaceRoot}/biome.json"],
+      "cache": true
     }
   },
-  "targetDependencies": {
-    "build": [
-      {
-        "target": "build",
-        "inputs": ["!{projectRoot}/enterprise/**/*"],
-        "projects": "dependencies"
-      }
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s",
+      "!{projectRoot}/biome.json"
     ],
-    "prepare": [
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.json",
       {
-        "target": "prepare",
-        "projects": "dependencies"
-      }
-    ],
-    "package": [
-      {
-        "target": "package",
-        "projects": "dependencies"
+        "runtime": "node --version"
       }
     ]
   },
-  "affected": {
-    "defaultBase": "main"
-  },
-  "targetDefaults": {
-    "build-ee": {
-      "dependsOn": ["^build-ee"]
+  "release": {
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": true
     },
-    "build": {
-      "dependsOn": ["^build"]
+    "projectsRelationship": "independent",
+    "conventionalCommits": true,
+    "groups": {
+      "apps": {
+        "projects": [
+          "@novu/api-service",
+          "@novu/dashboard",
+          "@novu/inbound-mail",
+          "@novu/webhook",
+          "@novu/worker",
+          "@novu/ws"
+        ],
+        "projectsRelationship": "independent",
+        "version": {
+          "generatorOptions": {
+            "preserveLocalDependencyProtocols": true
+          }
+        }
+      },
+      "packages": {
+        "projects": [
+          "novu",
+          "@novu/framework",
+          "@novu/js",
+          "@novu/react",
+          "@novu/react-native",
+          "@novu/nextjs",
+          "@novu/providers",
+          "@novu/shared",
+          "@novu/stateless"
+        ],
+        "projectsRelationship": "independent",
+        "version": {
+          "generatorOptions": {
+            "preserveLocalDependencyProtocols": true
+          }
+        }
+      }
+    },
+    "version": {
+      "useLegacyVersioning": true
     }
+  },
+  "tasksRunnerOptions": {
+    "default": {
+      "options": {
+        "canTrackAnalytics": false,
+        "nxCloudId": "61d98cffc3343830d132e541"
+      },
+      "runner": "nx-cloud"
+    }
+  },
+  "useInferencePlugins": false,
+  "defaultBase": "next",
+  "generatorOptions": {
+    "preserveLocalDependencyProtocols": true
   }
 }

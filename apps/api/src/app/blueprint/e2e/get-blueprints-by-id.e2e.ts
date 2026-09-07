@@ -1,7 +1,4 @@
-import { expect } from 'chai';
-
-import { UserSession } from '@novu/testing';
-import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import {
   EmailBlockTypeEnum,
   FieldLogicalOperatorEnum,
@@ -10,11 +7,12 @@ import {
   INotificationTemplateStep,
   StepTypeEnum,
 } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { CreateWorkflowRequestDto } from '../../workflows-v1/dtos';
+import { GroupedBlueprintResponse } from '../dtos/grouped-blueprint.response.dto';
 
-import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
-import { CreateWorkflowRequestDto } from '../../workflows/dto';
-
-describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
+describe('Get blueprints by id - /blueprints/:templateId (GET) #novu-v0', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
@@ -26,7 +24,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
 
   afterEach(() => {});
 
-  it('should get the blueprint by id', async function () {
+  it('should get the blueprint by id', async () => {
     const prodEnv = await getProductionEnvironment();
 
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
@@ -37,7 +35,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
 
     const blueprintById = (await session.testAgent.get(`/v1/blueprints/${blueprint._id}`).send()).body.data;
 
-    //validate that fetched blueprint by id is the same as from the initial allBlueprints fetch
+    // validate that fetched blueprint by id is the same as from the initial allBlueprints fetch
     expect(blueprintById.isBlueprint).to.equal(true);
     expect(blueprint.name).to.equal(blueprintById.name);
     expect(blueprint.description).to.equal(blueprintById.description);
@@ -54,7 +52,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
     );
   });
 
-  it('should get the blueprint by trigger identifier', async function () {
+  it('should get the blueprint by trigger identifier', async () => {
     const prodEnv = await getProductionEnvironment();
 
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
@@ -68,7 +66,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
 
     const test = await session.testAgent.get(`/v1/blueprints/${blueprint.triggers[0].identifier}`).send();
 
-    //validate that fetched blueprint by trigger identifier is the same as from the initial allBlueprints fetch
+    // validate that fetched blueprint by trigger identifier is the same as from the initial allBlueprints fetch
     expect(blueprintById.isBlueprint).to.equal(true);
     expect(blueprint.name).to.equal(blueprintById.name);
     expect(blueprint.description).to.equal(blueprintById.description);

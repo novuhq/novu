@@ -1,27 +1,29 @@
-import { expect } from 'chai';
-
 import {
-  MemberRepository,
-  OrganizationRepository,
-  UserRepository,
-  IntegrationRepository,
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
   EnvironmentRepository,
+  IntegrationRepository,
 } from '@novu/dal';
-import { UserSession } from '@novu/testing';
 import {
   ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   ICreateOrganizationDto,
+  InAppProviderIdEnum,
   JobTitleEnum,
   MemberRoleEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Create Organization - /organizations (POST)', async () => {
+describe('Create Organization - /organizations (POST) #novu-v0-os', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
-  const userRepository = new UserRepository();
-  const memberRepository = new MemberRepository();
+  const organizationRepository = new CommunityOrganizationRepository();
+  const userRepository = new CommunityUserRepository();
+  const memberRepository = new CommunityMemberRepository();
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
 
@@ -46,7 +48,7 @@ describe('Create Organization - /organizations (POST)', async () => {
 
       expect(members.length).to.eq(1);
       expect(members[0]._userId).to.eq(session.user._id);
-      expect(members[0].roles[0]).to.eq(MemberRoleEnum.ADMIN);
+      expect(members[0].roles[0]).to.eq(MemberRoleEnum.OSS_ADMIN);
     });
 
     it('should create organization with correct name', async () => {
@@ -76,10 +78,6 @@ describe('Create Organization - /organizations (POST)', async () => {
     it('should create organization with questionnaire data', async () => {
       const testOrganization: ICreateOrganizationDto = {
         name: 'Org Name',
-        productUseCases: {
-          in_app: true,
-          multi_channel: true,
-        },
         domain: 'org.com',
       };
 
@@ -88,8 +86,6 @@ describe('Create Organization - /organizations (POST)', async () => {
 
       expect(dbOrganization?.name).to.eq(testOrganization.name);
       expect(dbOrganization?.domain).to.eq(testOrganization.domain);
-      expect(dbOrganization?.productUseCases?.in_app).to.eq(testOrganization.productUseCases?.in_app);
-      expect(dbOrganization?.productUseCases?.multi_channel).to.eq(testOrganization.productUseCases?.multi_channel);
     });
 
     it('should update user job title on organization creation', async () => {
@@ -115,10 +111,16 @@ describe('Create Organization - /organizations (POST)', async () => {
       const productionEnv = environments.find((e) => e.name === 'Production');
       const developmentEnv = environments.find((e) => e.name === 'Development');
       const novuEmailIntegration = integrations.filter(
-        (i) => i.active && i.name === 'Novu Email' && i.providerId === EmailProviderIdEnum.Novu
+        (i) => i.active && i.channel === ChannelTypeEnum.EMAIL && i.providerId === EmailProviderIdEnum.Novu
       );
       const novuSmsIntegration = integrations.filter(
-        (i) => i.active && i.name === 'Novu SMS' && i.providerId === SmsProviderIdEnum.Novu
+        (i) => i.active && i.channel === ChannelTypeEnum.SMS && i.providerId === SmsProviderIdEnum.Novu
+      );
+      const novuChatIntegration = integrations.filter(
+        (i) => i.active && i.channel === ChannelTypeEnum.CHAT && i.providerId === ChatProviderIdEnum.Novu
+      );
+      const novuInAppIntegration = integrations.filter(
+        (i) => i.active && i.channel === ChannelTypeEnum.IN_APP && i.providerId === InAppProviderIdEnum.Novu
       );
       const novuEmailIntegrationProduction = novuEmailIntegration.filter(
         (el) => el._environmentId === productionEnv?._id
@@ -130,15 +132,25 @@ describe('Create Organization - /organizations (POST)', async () => {
       const novuSmsIntegrationDevelopment = novuSmsIntegration.filter(
         (el) => el._environmentId === developmentEnv?._id
       );
+      const novuInAppIntegrationProduction = novuInAppIntegration.filter(
+        (el) => el._environmentId === productionEnv?._id
+      );
+      const novuInAppIntegrationDevelopment = novuInAppIntegration.filter(
+        (el) => el._environmentId === developmentEnv?._id
+      );
 
-      expect(integrations.length).to.eq(4);
+      expect(integrations.length).to.eq(6);
       expect(novuEmailIntegration?.length).to.eq(2);
       expect(novuSmsIntegration?.length).to.eq(2);
+      expect(novuChatIntegration?.length).to.eq(0);
+      expect(novuInAppIntegration?.length).to.eq(2);
 
       expect(novuEmailIntegrationProduction.length).to.eq(1);
       expect(novuSmsIntegrationProduction.length).to.eq(1);
+      expect(novuInAppIntegrationProduction.length).to.eq(1);
       expect(novuEmailIntegrationDevelopment.length).to.eq(1);
       expect(novuSmsIntegrationDevelopment.length).to.eq(1);
+      expect(novuInAppIntegrationDevelopment.length).to.eq(1);
 
       expect(novuEmailIntegrationProduction[0].primary).to.eq(true);
       expect(novuSmsIntegrationProduction[0].primary).to.eq(true);
@@ -162,7 +174,7 @@ describe('Create Organization - /organizations (POST)', async () => {
         (i) => i.active && i.name === 'Novu SMS' && i.providerId === SmsProviderIdEnum.Novu
       );
 
-      expect(integrations.length).to.eq(2);
+      expect(integrations.length).to.eq(4);
       expect(novuSmsIntegration?.length).to.eq(2);
       expect(novuSmsIntegration.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
       expect(novuSmsIntegration.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
@@ -185,7 +197,7 @@ describe('Create Organization - /organizations (POST)', async () => {
         (i) => i.active && i.name === 'Novu Email' && i.providerId === EmailProviderIdEnum.Novu
       );
 
-      expect(integrations.length).to.eq(2);
+      expect(integrations.length).to.eq(4);
       expect(novuEmailIntegrations?.length).to.eq(2);
       expect(novuEmailIntegrations.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
       expect(novuEmailIntegrations.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);

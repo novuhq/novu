@@ -1,0 +1,31 @@
+---
+description: Rules for working with DAL repositories in the Novu monorepo
+globs: libs/dal/**/*.ts, **/repositories/**/*.ts
+alwaysApply: false
+---
+
+### DAL Repository Rules
+
+#### Choosing a base class
+
+- **New repositories must extend `BaseRepositoryV2`** — it enforces required field selection and provides auto-inferred return types (`Pick<Entity, Keys>`).
+- **Existing repositories stay on `BaseRepository`** — `BaseRepository` is deprecated but must not be changed; all 32 existing repos continue to extend it.
+- Do NOT extend `BaseRepository` for any new repository going forward.
+
+#### BaseRepositoryV2 — required `select`
+
+- Every read method (`find`, `findOne`, `findById`, `findBatch`, `findWithCursorBasedPagination`) requires an explicit `select` argument — there is no default `SELECT *`.
+- Use array syntax as the default: `find(query, ['_id', 'name', 'status'])`. Array syntax returns exactly the listed fields — `_id` is excluded unless explicitly included.
+- Use object syntax when you need MongoDB-style projections where `_id` is included by default: `findOne(query, { name: 1, email: 1 })`, or explicitly excluded: `findOne(query, { _id: 0, name: 1 })`.
+- Exclusion projections for non-`_id` fields (e.g. `{ name: 0 }`) are intentionally unsupported — they are a compile error.
+- Return types are automatically inferred as `Pick<Entity, Keys>` — do not manually annotate the return type.
+- Use `select: '*'` to retrieve all fields with a fully-typed `Entity` return (instead of a `Pick`). All five read methods support this overload: `find(query, '*')`, `findOne(query, '*')`, `findById(id, '*')`, `findBatch(query, '*')`, and `findWithCursorBasedPagination({ select: '*', ... })`.
+- Omitting `select` entirely is still a compile error — `'*'` is the explicit opt-in for SELECT *.
+
+#### Enforcement (applies to both V1 and V2)
+
+- **Never use `_model` or `MongooseModel` directly** in repository methods. Always use the inherited methods (`update`, `find`, `findOne`, `delete`, `create`, `bulkWrite`, etc.) which enforce `_environmentId` / `_organizationId` via the `EnforceEnvOrOrgIds` type.
+- All query methods must include `_environmentId` or `_organizationId` in their filter to satisfy the enforcement type constraint.
+- When adding new repository methods that need `$push`, `$pull`, or other update operators, pass the `environmentId` as a parameter and use `this.update()` with the enforcement fields.
+- For bulk operations, use `this.bulkWrite()` instead of `this._model.updateMany()`.
+- **Transactions**: start via `repository.withTransaction(async (session) => { ... })` and pass `session` to every repo call inside it (e.g. `repo.findOne(query, select, { session })`). Run all operations sequentially — parallel execution (`Promise.all`, etc.) inside a transaction is undefined behaviour in Mongoose.

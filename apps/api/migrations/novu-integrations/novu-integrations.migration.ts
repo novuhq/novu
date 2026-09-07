@@ -1,16 +1,15 @@
 import '../../src/config';
+import { NestFactory } from '@nestjs/core';
 import {
-  OrganizationRepository,
-  EnvironmentRepository,
-  IntegrationRepository,
   ChannelTypeEnum,
   EnvironmentEntity,
+  EnvironmentRepository,
+  IntegrationRepository,
+  OrganizationRepository,
 } from '@novu/dal';
-import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
-import { NestFactory } from '@nestjs/core';
+import { EmailProviderIdEnum, SmsProviderIdEnum, slugify } from '@novu/shared';
+import shortid from 'shortid';
 import { AppModule } from '../../src/app.module';
-import slugify from 'slugify';
-import * as shortid from 'shortid';
 
 const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
@@ -47,11 +46,11 @@ const createNovuIntegration = async (
     providerId,
     channel,
     name,
-    identifier: `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`,
+    identifier: `${slugify(name)}-${shortid.generate()}`,
     active: countChannelIntegrations === 0,
   });
 
-  console.log('Created Integration' + response._id);
+  console.log(`Created Integration${response._id}`);
 };
 
 export async function createNovuIntegrations() {
@@ -60,10 +59,8 @@ export async function createNovuIntegrations() {
     logger: false,
   });
 
-  // eslint-disable-next-line no-console
   console.log('start migration - novu integrations');
 
-  // eslint-disable-next-line no-console
   console.log('get organizations and its environments');
 
   const organizations = await organizationRepository.find({});
@@ -78,13 +75,12 @@ export async function createNovuIntegrations() {
       await createNovuIntegration(environment, ChannelTypeEnum.SMS);
       await createNovuIntegration(environment, ChannelTypeEnum.EMAIL);
 
-      console.log('Processed environment' + environment._id);
+      console.log(`Processed environment${environment._id}`);
     }
 
-    console.log('Processed organization' + organization._id);
+    console.log(`Processed organization${organization._id}`);
   }
 
-  // eslint-disable-next-line no-console
   console.log('end migration');
 }
 

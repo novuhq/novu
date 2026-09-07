@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import * as request from 'supertest';
-import * as defaults from 'superagent-defaults';
+import defaults from 'superagent-defaults';
+import request from 'supertest';
 
 describe('Health-check', () => {
   let testAgent;

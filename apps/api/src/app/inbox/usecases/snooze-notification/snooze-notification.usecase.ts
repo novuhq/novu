@@ -1,0 +1,254 @@
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  AnalyticsService,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DeferReasonEnum,
+  DetailEnum,
+  getEffectiveJobPayload,
+  PinoLogger,
+  StandardQueueService,
+} from '@novu/application-generic';
+import {
+  CommunityOrganizationRepository,
+  JobEntity,
+  JobRepository,
+  MessageEntity,
+  MessageRepository,
+  NotificationRepository,
+  OrganizationEntity,
+} from '@novu/dal';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
+  JobStatusEnum,
+} from '@novu/shared';
+import { v4 as uuidv4 } from 'uuid';
+import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
+import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
+import { AnalyticsEventsEnum } from '../../utils';
+import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
+import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
+import { SnoozeNotificationCommand } from './snooze-notification.command';
+
+@Injectable()
+export class SnoozeNotification {
+  private readonly RETRY_ATTEMPTS = 3;
+
+  constructor(
+    private readonly logger: PinoLogger,
+    private messageRepository: MessageRepository,
+    private jobRepository: JobRepository,
+    private notificationRepository: NotificationRepository,
+    private standardQueueService: StandardQueueService,
+    private organizationRepository: CommunityOrganizationRepository,
+    private createExecutionDetails: CreateExecutionDetails,
+    private markNotificationAs: MarkNotificationAs,
+    private analyticsService: AnalyticsService,
+    private getSubscriber: GetSubscriber
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  public async execute(command: SnoozeNotificationCommand): Promise<InboxNotificationDto> {
+    const snoozeDurationMs = this.calculateDelayInMs(command.snoozeUntil);
+    await this.validateSnoozeDuration(command, snoozeDurationMs);
+    const notification = await this.findNotification(command);
+
+    try {
+      let scheduledJob = {} as JobEntity;
+      let snoozedNotification = {} as InboxNotificationDto;
+
+      await this.messageRepository.withTransaction(async () => {
+        scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);
+        snoozedNotification = await this.markNotificationAsSnoozed(command);
+      });
+
+      /*
+       * Enqueueing has to stay outside the transaction: it is an external call,
+       * and once the snooze outlives the 900s SQS delay cap - which any snooze
+       * measured in hours does - it becomes a CreateSchedule round trip to
+       * EventBridge. Inside the transaction that held the Mongo session, and its
+       * locks, open for the length of an AWS call, and an abort after the call
+       * had succeeded would leave a schedule behind with no job left to wake.
+       */
+      await this.enqueueJob(scheduledJob, snoozeDurationMs);
+
+      // fire and forget
+      this.createExecutionDetails
+        .execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(scheduledJob),
+            detail: DetailEnum.MESSAGE_SNOOZED,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.PENDING,
+            isTest: false,
+            isRetry: false,
+          })
+        )
+        .catch((error) => {
+          this.logger.error({ err: error }, 'Failed to create execution details');
+        });
+
+      this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SNOOZE_NOTIFICATION, '', {
+        _organization: command.organizationId,
+        _notification: command.notificationId,
+        _subscriber: notification._subscriberId,
+        snoozeUntil: command.snoozeUntil,
+      });
+
+      return snoozedNotification;
+    } catch (error) {
+      this.logger.error({ error }, 'Failed to snooze notification');
+      throw new InternalServerErrorException(`Failed to snooze notification: ${error.message}`);
+    }
+  }
+
+  public async enqueueJob(job: JobEntity, delay: number) {
+    await this.standardQueueService.add({
+      name: job._id,
+      data: {
+        _environmentId: job._environmentId,
+        _id: job._id,
+        _organizationId: job._organizationId,
+        _userId: job._userId,
+      },
+      groupId: job._organizationId,
+      options: { delay, attempts: this.RETRY_ATTEMPTS, backoff: { type: 'exponential', delay: 5000 } },
+      deferReason: DeferReasonEnum.SNOOZE,
+    });
+  }
+
+  private async validateSnoozeDuration(command: SnoozeNotificationCommand, snoozeDurationMs: number) {
+    const organization = await this.getOrganization(command.organizationId);
+
+    const tierLimitMs = getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
+      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      true
+    );
+
+    if (snoozeDurationMs > tierLimitMs) {
+      throw new HttpException(
+        {
+          message: 'Snooze Duration Limit Exceeded',
+          reason:
+            'The snooze duration you selected exceeds your current plan limit. ' +
+            'Please upgrade your plan for extended snooze durations.',
+        },
+        HttpStatus.PAYMENT_REQUIRED
+      );
+    }
+  }
+
+  private calculateDelayInMs(snoozeUntil: Date): number {
+    return snoozeUntil.getTime() - Date.now();
+  }
+
+  private async getOrganization(organizationId: string): Promise<OrganizationEntity> {
+    const organization = await this.organizationRepository.findOne({
+      _id: organizationId,
+    });
+
+    if (!organization) {
+      throw new NotFoundException(`Organization id: '${organizationId}' not found`);
+    }
+
+    return organization;
+  }
+
+  private async findNotification(command: SnoozeNotificationCommand): Promise<MessageEntity> {
+    const subscriber = await this.getSubscriber.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: command.subscriberId,
+    });
+    if (!subscriber) {
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
+    }
+
+    const message = await this.messageRepository.findOne({
+      _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.IN_APP,
+      _id: command.notificationId,
+      contextKeys: command.contextKeys,
+    });
+
+    if (!message) {
+      throw new NotFoundException(`Notification id: '${command.notificationId}' not found`);
+    }
+
+    return message;
+  }
+
+  private async createScheduledUnsnoozeJob(notification: MessageEntity, delay: number): Promise<JobEntity> {
+    const originalJob = await this.jobRepository.findOne({
+      _id: notification._jobId,
+      _environmentId: notification._environmentId,
+    });
+
+    if (!originalJob) {
+      throw new InternalServerErrorException(`Job id: '${notification._jobId}' not found`);
+    }
+
+    // The unsnooze job diverges from its notification (it carries the
+    // `unsnooze` flag), so under the all-or-nothing payload model it must store
+    // a complete payload copy. When the original job doesn't carry one
+    // (payload-dedup), resolve it from the parent notification first.
+    const parentNotification =
+      originalJob.payload == null
+        ? await this.notificationRepository.findOne(
+            { _id: originalJob._notificationId, _environmentId: originalJob._environmentId },
+            'payload'
+          )
+        : null;
+    const basePayload = getEffectiveJobPayload(originalJob, parentNotification) ?? {};
+
+    const newJobData = {
+      ...originalJob,
+      transactionId: uuidv4(),
+      /*
+       * DELAYED (not PENDING): this job is enqueued directly below with a
+       * delay, bypassing AddJob. RunJob's atomic claim only accepts
+       * QUEUED/DELAYED, so a PENDING unsnooze job would be unclaimable and
+       * the unsnooze delivery silently dropped.
+       */
+      status: JobStatusEnum.DELAYED,
+      delay,
+      createdAt: Date.now().toString(),
+      _id: JobRepository.createObjectId(),
+      _parentId: null,
+      payload: {
+        ...basePayload,
+        unsnooze: true,
+      },
+    };
+
+    return this.jobRepository.create(newJobData);
+  }
+
+  private async markNotificationAsSnoozed(command: SnoozeNotificationCommand) {
+    return this.markNotificationAs.execute(
+      MarkNotificationAsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        notificationId: command.notificationId,
+        snoozedUntil: command.snoozeUntil,
+        contextKeys: command.contextKeys,
+      })
+    );
+  }
+}

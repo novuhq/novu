@@ -1,0 +1,171 @@
+---
+title: "Build the Web Chat UI"
+description: "Install @novu/react, wrap NovuProvider, and use useWebChat to send a first in-app agent conversation."
+sidebarTitle: Quickstart
+---
+
+Build a two-way Web Chat in your React app. You supply the UI. Novu supplies conversation state, delivery, and the live socket.
+
+## Prerequisites
+
+Complete [channel setup](/agents/channels/web-chat#setup) first. Then you need:
+
+- Your **application identifier** from [API Keys](https://dashboard.novu.co/api-keys)
+- A [subscriber](/platform/additional-resources/glossary) id for the signed-in person
+- The public **agent identifier** from the agent page in the dashboard
+
+See [Security](/agents/channels/web-chat#security) for HMAC.
+
+## Install
+
+```package-install
+npm install @novu/react
+```
+
+<Note>
+  `@novu/react` requires React 18 or later (`^18.0.0` or `^19.0.0`).
+</Note>
+
+`useWebChat` reads the Novu client from context. Place `NovuProvider` above the chat.
+
+<Tabs>
+  <Tab title="US">
+```tsx
+import { NovuProvider } from '@novu/react';
+
+export function App() {
+  return (
+    <NovuProvider
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+    >
+      <Chat />
+    </NovuProvider>
+  );
+}
+```
+  </Tab>
+  <Tab title="EU">
+```tsx
+import { NovuProvider } from '@novu/react';
+
+export function App() {
+  return (
+    <NovuProvider
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      apiUrl="https://eu.api.novu.co"
+      socketUrl="wss://eu.socket.novu.co"
+    >
+      <Chat />
+    </NovuProvider>
+  );
+}
+```
+  </Tab>
+</Tabs>
+
+`NovuProvider` authenticates the subscriber. `useWebChat` selects which agent to talk to.
+
+<Note>
+  Replace `YOUR_*` placeholders with values from [API Keys](https://dashboard.novu.co/api-keys) and [Subscribers](/platform/additional-resources/glossary) in the dashboard.
+</Note>
+
+<Prompt description="Add Novu Web Chat to my React app" icon="plug" actions={["copy", "cursor"]}>
+# Add Novu Web Chat to a React app
+
+Install `@novu/react`. Wrap the app in `NovuProvider`. Call `useWebChat` and render your own message list and composer. There is no prebuilt `<WebChat />` component.
+
+Canonical example: https://docs.novu.co/agents/channels/web-chat/quickstart
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Use `NovuProvider` from `@novu/react` (not a second Novu client)
+- Pass the dashboard agent identifier as `agentId`
+- Disable the composer while `isRunning` or `isLoading` is true
+- Use TypeScript, no comments, no empty props
+
+NEVER:
+
+- Invent a `<WebChat />` component from `@novu/react`. It does not exist.
+- Use `useChat` from `@ai-sdk/react`. Web Chat uses `useWebChat`.
+- Compute HMAC hashes in the browser
+- Hardcode real API keys
+</Prompt>
+
+## Send a message
+
+```tsx
+'use client';
+
+import { NovuProvider, useWebChat } from '@novu/react';
+
+function Chat() {
+  const { messages, sendMessage, isRunning, isLoading, error } = useWebChat({
+    agentId: 'YOUR_AGENT_IDENTIFIER',
+  });
+
+  return (
+    <div>
+      {error ? <p>{error.message}</p> : null}
+      <ul>
+        {messages.map((message) => (
+          <li key={message.id}>
+            <strong>{message.role}</strong>{' '}
+            {message.parts.map((part, index) =>
+              part.type === 'text' ? <span key={index}>{part.text}</span> : null
+            )}
+          </li>
+        ))}
+      </ul>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const input = form.elements.namedItem('text') as HTMLInputElement;
+          void sendMessage(input.value);
+          form.reset();
+        }}
+      >
+        <input name="text" disabled={isRunning || isLoading} />
+        <button type="submit" disabled={isRunning || isLoading}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <NovuProvider
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+    >
+      <Chat />
+    </NovuProvider>
+  );
+}
+```
+
+Omit `conversationId` to start a new chat. The first successful send creates the conversation.
+
+See [Chat UI](/agents/channels/web-chat/chat-ui) for parts, retry, resume, and reconnect.
+
+## Next steps
+
+<Columns cols={2}>
+  <Card href="/agents/channels/web-chat/chat-ui" title="Chat UI" icon="list">
+    Parts, retry, resume, cards, approvals, and reconnect.
+  </Card>
+  <Card href="/platform/sdks/react/hooks/use-web-chat" title="useWebChat reference" icon="code">
+    Props, return value, callbacks, and message parts.
+  </Card>
+  <Card href="/agents/channels/web-chat" title="Channel setup" icon="plug">
+    Link Web Chat on the agent. Turn on HMAC.
+  </Card>
+  <Card href="/platform/sdks/javascript#web-chat" title="JavaScript SDK" icon="code">
+    Call `loadWebChat(novu)`, then `novu.webChat.conversation()` in `@novu/js`.
+  </Card>
+</Columns>

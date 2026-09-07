@@ -46,7 +46,7 @@ If you come across a vulnerability, please inform us promptly so we can promptly
 
 6. Please share enough details for us to understand and fix the issue as fast as we can. Typically, providing the IP address or the URL of the affected system along with a description of the problem should be enough, though more intricate issues might need additional clarification.
 
-## What *We* Promise
+## What _We_ Promise
 
 1. We'll get back to you within 3 business days with our assessment of the report and an estimated date when we expect to resolve it.
 

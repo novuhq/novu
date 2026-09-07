@@ -1,0 +1,453 @@
+---
+title: 'Stripe'
+description: "Integrate Stripe subscription webhooks with Novu in a Next.js app. Trigger workflows when subscriptions are created or updated."
+---
+
+
+You'll learn how to automatically trigger notification workflows when Stripe events occur, such as payments, subscriptions, or customer changes.
+
+## Overview
+
+When specific events happen in Stripe (for example, payment, subscription, or customer events), this integration will:
+
+1. Receive the webhook event from Stripe.
+2. Verify the webhook signature.
+3. Process the event data.
+4. Trigger the corresponding **Novu notification workflow**.
+
+<Note>
+  You can also clone this repository: https://github.com/novuhq/stripe-to-novu-webhooks
+</Note>
+
+## Prerequisites
+
+Before proceeding, ensure you have:
+
+- A **Stripe account** ([Sign up here](https://dashboard.stripe.com/signup)).
+- A **Novu account** ([Sign up here](https://novu.com/signup)).
+
+<Steps>
+<Step>
+
+## Install Dependencies
+
+Run the following command to install the required packages:
+
+```
+npm install stripe @novu/api
+```
+
+</Step>
+
+<Step>
+
+## Configure Environment Variables
+
+Add the following variables to your `.env.local` file:
+
+```
+NOVU_SECRET_KEY=novu_secret_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+</Step>
+
+<Step>
+
+## Expose Your Local Server
+
+To test webhooks locally, you need to expose your **local server** to the internet.
+
+There are two common options:
+
+<Tabs>
+<Tab title="localtunnel">
+
+**localtunnel** is a simple and free way to expose your local server without requiring an account.
+
+1. Start a localtunnel listener
+
+   ```bash
+   npx localtunnel 3000
+   ```
+
+2. Copy and save the generated **public URL** (for example, `https://your-localtunnel-url.loca.lt`).
+
+Learn more about **localtunnel** [here](https://www.npmjs.com/package/localtunnel).
+
+<Note>
+  **localtunnel** links may expire quickly and sometimes face reliability issues.
+</Note>
+
+</Tab>
+<Tab title="ngrok">
+
+For a more stable and configurable tunnel, use **ngrok**:
+
+1. Create an account at [ngrok dashboard](https://dashboard.ngrok.com/).
+2. Follow the [setup guide](https://dashboard.ngrok.com/get-started/setup).
+3. Run the command:
+
+   ```bash
+   ngrok http 3000
+   ```
+
+4. Copy and save the **Forwarding URL** (for example, `https://your-ngrok-url.ngrok.io`).
+
+Learn more about **ngrok** [here](https://dashboard.ngrok.com/get-started/setup).
+
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step>
+
+## Set Up Stripe Webhook Endpoint
+
+Stripe supports two endpoint types: Account and Connect. Create an endpoint for Account unless you’ve created a Connect application. You can register up to 16 webhook endpoints on each Stripe account.
+
+<Note>
+  When you create an endpoint in the Dashboard, you can choose between your Account's API version or the latest API version. You can test other API versions in Workbench using stripe webhook_endpoints create, but you must create a webhook endpoint using the API to use other API versions in production.
+</Note>
+
+Use the following steps to register a webhook endpoint in the Developers Dashboard.
+
+1. Navigate to the [**Webhooks page**](https://dashboard.stripe.com/webhooks).
+2. Click **Add Endpoint**.
+3. Add your webhook endpoint’s HTTPS URL in **Endpoint URL**.
+
+   ```
+      https://your-forwarding-URL/api/webhooks/stripe
+   ```
+
+4. If you have a **Stripe Connect account**, enter a description, then click **Listen to events** on **Connected accounts**.
+5. Select the [event types](https://docs.stripe.com/api#event_types) you’re currently receiving in your local webhook endpoint in **Select events**.
+6. Click **Add endpoint**.
+
+</Step>
+
+<Step>
+
+## Add Signing Secret to Environment Variables
+
+1. Copy the **Signing Secret** from Stripe's **Webhook Endpoint Settings**.
+2. Add it to your `.env.local` file:
+
+```
+STRIPE_WEBHOOK_SECRET=your_signing_secret_here
+```
+
+</Step>
+
+<Step>
+
+## Keep the webhook route public
+
+Stripe signs webhook requests itself. Do not put `/api/webhooks/stripe` behind session authentication.
+
+If your app uses Clerk middleware and you protect routes by default, exclude the webhook path:
+
+```tsx
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+
+const isPublicRoute = createRouteMatcher(['/api/webhooks(.*)']);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
+});
+```
+
+If you are not using Clerk, skip this step and make sure your framework is not requiring a logged-in session for the webhook route.
+
+</Step>
+
+<Step>
+
+## Create the Stripe webhook endpoint in Next.js
+
+Create `app/api/webhooks/stripe/route.ts`:
+
+<Tree>
+  <Tree.Folder name="app" defaultOpen>
+    <Tree.Folder name="api">
+      <Tree.Folder name="webhooks">
+        <Tree.Folder name="stripe">
+          <Tree.File name="route.ts" />
+        </Tree.Folder>
+      </Tree.Folder>
+    </Tree.Folder>
+  </Tree.Folder>
+</Tree>
+
+The following snippet is the complete webhook route for Stripe in Next.js:
+
+```tsx
+import Stripe from "stripe";
+import { NextResponse, NextRequest } from "next/server";
+import { triggerWorkflow } from "@/app/utils/novu";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+const supportedEvents = [
+  "customer.subscription.created",
+  "customer.subscription.updated",
+] as const;
+
+export async function POST(request: NextRequest) {
+  const webhookPayload = await request.text();
+  const signature = request.headers.get("stripe-signature");
+
+  if (!signature) {
+    return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
+  }
+
+  try {
+    const event = stripe.webhooks.constructEvent(
+      webhookPayload,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+
+    if (supportedEvents.includes(event.type as (typeof supportedEvents)[number])) {
+      const workflow = event.type.replaceAll(".", "-");
+      const subscriber = await buildSubscriberData(event);
+      const payload = payloadBuilder(event);
+
+      await triggerWorkflow(workflow, subscriber, payload);
+      return NextResponse.json({ status: "success", workflow });
+    }
+
+    return NextResponse.json({ status: "ignored", event: event.type });
+  } catch (error) {
+    console.error("Stripe webhook error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Webhook handler failed" },
+      { status: 400 }
+    );
+  }
+}
+
+async function buildSubscriberData(event: Stripe.Event) {
+  const object = event.data.object as { customer?: string | Stripe.Customer | Stripe.DeletedCustomer | null };
+  const customerId = typeof object.customer === "string" ? object.customer : object.customer?.id;
+
+  if (!customerId) {
+    throw new Error("Missing customer id on Stripe event");
+  }
+
+  const customer = await stripe.customers.retrieve(customerId);
+
+  if (customer.deleted) {
+    throw new Error("Customer has been deleted");
+  }
+
+  const [firstName = "", lastName = ""] = (customer.name || "").split(" ");
+
+  return {
+    subscriberId: customer.id,
+    email: customer.email || undefined,
+    firstName: firstName || undefined,
+    lastName: lastName || undefined,
+    phone: customer.phone || undefined,
+    locale: customer.preferred_locales?.[0] || "en",
+    data: {
+      stripeCustomerId: customer.id,
+    },
+  };
+}
+
+function payloadBuilder(event: Stripe.Event) {
+  return event.data.object;
+}
+```
+
+</Step>
+
+<Step>
+
+## Add Novu Workflow Notification Trigger Function
+
+Create `app/utils/novu.ts` :
+
+<Tree>
+  <Tree.Folder name="app" defaultOpen>
+    <Tree.Folder name="utils">
+      <Tree.File name="novu.ts" />
+    </Tree.Folder>
+    <Tree.Folder name="api">
+      <Tree.Folder name="webhooks">
+        <Tree.Folder name="stripe">
+          <Tree.File name="route.ts" />
+        </Tree.Folder>
+      </Tree.Folder>
+    </Tree.Folder>
+  </Tree.Folder>
+</Tree>
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: process.env.NOVU_SECRET_KEY!,
+});
+
+export async function triggerWorkflow(
+  workflowId: string,
+  subscriber: Record<string, unknown>,
+  payload: Record<string, unknown>
+) {
+  await novu.trigger({ workflowId, to: subscriber, payload });
+}
+```
+
+This helper is for the Next.js route above. For other languages, see the [server SDKs](/platform/sdks#server-side-sdks).
+
+</Step>
+
+<Step>
+
+## Add or create Novu workflows in your Novu dashboard
+
+In Novu, a Stripe webhook event can trigger one or more workflows, depending on how you want to handle those events.
+
+A workflow defines a sequence of actions (for example, sending email or in-app notifications) that run when triggered.
+
+The Novu dashboard lets you create a custom workflow from scratch or start from a template.
+
+Follow these steps to set up your workflow(s) in the Novu dashboard:
+
+### Identify the Triggering Event(s)
+
+   Determine which Stripe webhook events will activate your workflow (for example, `customer.subscription.created`).
+
+   Your route maps each Stripe event type to a Novu workflow identifier by replacing dots with dashes, so `customer.subscription.created` becomes `customer-subscription-created`. Create matching workflow IDs in Novu.
+
+<AccordionGroup>
+  <Accordion title="Supported webhook events">
+
+  To find a list of all the events Stripe supports and learn more about them, visit the [Stripe documentation](https://docs.stripe.com/event-destinations).
+
+  </Accordion>
+
+  <Accordion title="Payload structure">
+
+  Stripe wraps each event as `{ id, type, data: { object } }`. Your route uses `event.data.object` as the Novu payload and loads the customer from `event.data.object.customer`.
+
+  See the full shape in the [Stripe event types docs](https://docs.stripe.com/api/events/object). A shortened `customer.subscription.created` object looks like:
+
+  ```json
+  {
+    "id": "sub_1Qy9WoR7RyRE3Uxrj6iaIAHV",
+    "object": "subscription",
+    "status": "active",
+    "customer": "cus_RrtJuJIveFMpmq",
+    "items": {
+      "data": [
+        {
+          "price": {
+            "id": "price_1Qy9WnR7RyRE3UxrRi33EJNc",
+            "unit_amount": 1500,
+            "currency": "usd",
+            "recurring": { "interval": "month" }
+          }
+        }
+      ]
+    }
+  }
+  ```
+
+  </Accordion>
+
+</AccordionGroup>
+
+### Choose Your Starting Point
+
+<Tabs>
+<Tab title="Use a Workflow Template">
+   
+   Browse the workflow template store in the Novu dashboard. If a template matches your use case (for example, a billing or subscription notice), select it and customize it.
+
+   <img alt="Create a Novu workflow from a template" src="./media-assets/clerk/workflow-fromTemplate.gif" />
+ 
+
+</Tab>
+<Tab title="Create a Blank Workflow">
+
+   If no template fits or you need full control, start with a blank workflow and define every step yourself.
+
+   <img alt="Create a blank Novu workflow" src="./media-assets/clerk/blankWorkflow.gif" />
+</Tab>
+<Tab title="Code-First Workflow (Novu Framework)">
+
+   If you prefer a more code-based approach, you can create a workflow using the Novu Framework.
+   
+   <Card title="Novu Framework" icon="square-code" href="/framework">
+   <p>
+      The Novu framework allows you to build and manage advanced notification workflows with code, and expose no-code controls for non-technical users to modify.
+   </p>
+   </Card>
+
+</Tab>
+</Tabs>
+   
+
+### Configure the Workflow  
+
+   - For a template, tweak the existing steps to align with your requirements.  
+
+   - For a blank workflow, add actions like sending emails, sending in-app notifications, Push notifications, or other actions.
+
+   - For a code-first workflow, you can use the Novu Framework to build your workflow right within your code base.
+
+### Set Trigger Conditions
+
+   - Link the workflow to the correct webhook event(s). 
+
+   - Ensure the Novu workflow identifier matches the mapped Stripe event type (for example, `customer-subscription-created`).
+
+<Tip>
+  - **Start Simple:** Use templates for common tasks and switch to blank workflows for unique needs.  
+
+  - **Test Thoroughly:** Simulate webhook events to ensure your workflows behave as expected.  
+
+  - **Plan for Growth:** Organize workflows logically (separate or combined) to make future updates easier.
+</Tip>
+
+</Step>
+
+<Step>
+
+## Disable Email Delivery by Stripe
+
+By default, Stripe sends email notifications whenever necessary, such as subscription created, updated, and more.
+
+To prevent users from receiving duplicate emails, we need to disable email delivery by Stripe for the notifications handled by Novu.
+
+1. In your Stripe Dashboard, navigate to the **Settings**.
+
+2. Under the **Product Settings** section, navigate to the **Billing** tab.
+
+3. Toggle **off** delivery of the events you want to handle with Novu.
+
+This keeps Stripe from sending the same email that Novu already handles.
+
+</Step>
+
+<Step>
+
+## Test the Webhook
+
+<Columns cols={2}>
+<Card title="Stripe CLI" href="https://docs.stripe.com/stripe-cli/triggers">
+
+Learn how you can test the webhook events using the Stripe CLI.
+
+</Card>
+</Columns>
+
+</Step>
+</Steps>

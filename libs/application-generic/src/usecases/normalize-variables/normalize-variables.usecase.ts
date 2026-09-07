@@ -1,0 +1,116 @@
+import { Injectable } from '@nestjs/common';
+import { SubscriberEntity, SubscriberRepository, TenantEntity, TenantRepository } from '@novu/dal';
+import { FilterPartTypeEnum, IMessageFilter } from '@novu/shared';
+import { buildSubscriberKey, CachedResponse } from '../../services';
+import { IFilterVariables } from '../../utils';
+import { ConditionsFilterCommand } from '../conditions-filter';
+
+/**
+ * This service class is responsible for normalizing the variables used within the message filtering process.
+ * Normalization in this context refers to ensuring all necessary data is present for filter evaluation.
+ *
+ * It achieves this by:
+ *  1. Checking if subscriber and tenant information are provided in the command itself.
+ *  2. If missing, it tries to infer them from the filters and job data (if available).
+ *  3. Finally, it fetches the complete subscriber and tenant entities from the database if necessary.
+ *
+ * By providing a normalized set of variables, this service simplifies filter evaluation and promotes code clarity.
+ */
+@Injectable()
+export class NormalizeVariables {
+  constructor(
+    private subscriberRepository: SubscriberRepository,
+    private tenantRepository: TenantRepository
+  ) {}
+
+  public async execute(command: ConditionsFilterCommand): Promise<IFilterVariables> {
+    const filterVariables: IFilterVariables = {};
+
+    const combinedFilters = [command.step, ...(command.step?.variants || [])].flatMap((variant) =>
+      variant?.filters ? variant?.filters : []
+    );
+
+    filterVariables.subscriber = await this.fetchSubscriberIfMissing(command);
+    filterVariables.tenant = await this.fetchTenantIfMissing(command, combinedFilters);
+    filterVariables.payload = command.variables?.payload
+      ? command.variables?.payload
+      : (command.job?.payload ?? undefined);
+
+    filterVariables.step = command.variables?.step ?? undefined;
+    filterVariables.actor = command.variables?.actor ?? undefined;
+    filterVariables.context = command.variables?.context ?? undefined;
+
+    return filterVariables;
+  }
+  private async fetchSubscriberIfMissing(command: ConditionsFilterCommand): Promise<SubscriberEntity | undefined> {
+    if (command.variables?.subscriber) {
+      return command.variables.subscriber;
+    }
+
+    if (!command.job) {
+      return undefined;
+    }
+
+    /*
+     * Always hydrate the subscriber for filter evaluation so that deferred steps
+     * (Digest / Delay / Throttle) receive the same subscriber context as channel steps.
+     * Previously the subscriber was only loaded when a `subscriber`-typed filter was
+     * detected up front, which dropped the subscriber for deferred steps and for
+     * conditions that reference it only inside a Handlebars value (e.g. `{{subscriber.x}}`).
+     * The lookup is cached via @CachedResponse, so this is effectively free when the
+     * subscriber was already loaded earlier in the job lifecycle. See issue #11602.
+     */
+    return (
+      (await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.subscriberId,
+        _environmentId: command.environmentId,
+      })) ?? undefined
+    );
+  }
+
+  private async fetchTenantIfMissing(
+    command: ConditionsFilterCommand,
+    filters: IMessageFilter[]
+  ): Promise<TenantEntity | undefined> {
+    if (command.variables?.tenant) {
+      return command.variables.tenant;
+    }
+
+    const tenantIdentifier =
+      typeof command.job?.tenant === 'string' ? command.job?.tenant : command.job?.tenant?.identifier;
+    const tenantFilterExist = filters?.find((filter) => {
+      return filter?.children?.find((item) => item?.on === FilterPartTypeEnum.TENANT);
+    });
+
+    if (tenantFilterExist && tenantIdentifier && command.job) {
+      return (
+        (await this.tenantRepository.findOne({
+          _environmentId: command.job._environmentId,
+          identifier: tenantIdentifier,
+        })) ?? undefined
+      );
+    }
+
+    return undefined;
+  }
+
+  @CachedResponse({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  public async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
+  }
+}

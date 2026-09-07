@@ -1,0 +1,235 @@
+---
+title: 'Vanilla JS In-App Notifications Quickstart - Novu Inbox'
+description: "Integrate the Novu Inbox component into a Vanilla JS or plain HTML project and start showing real-time in-app notifications without a frontend framework."
+sidebarTitle: 'Vanilla JS'
+---
+
+
+Add real-time in-app notifications to a Vanilla JS and HTML project using the Novu Inbox component.
+
+<Prompt description="Add Novu Inbox to my JavaScript app" icon="sparkles" actions={["copy", "cursor"]}>
+# Add Novu Inbox to JavaScript App
+
+Install `@novu/js`. Mount the Inbox in your header, navbar, or sidebar.
+
+Latest docs: https://docs.novu.co/platform/quickstart/vanilla-js
+
+## Install
+
+```bash
+npm install @novu/js
+```
+
+## Component
+
+```ts
+import { NovuUI } from '@novu/js/ui';
+
+const novu = new NovuUI({
+  options: {
+    applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
+    subscriber: 'YOUR_SUBSCRIBER_ID',
+  },
+});
+
+novu.mountComponent({
+  name: 'Inbox',
+  props: {},
+  element: document.getElementById('notification-inbox'),
+});
+```
+
+## Subscriber ID
+
+Use the app's existing auth system to get a unique user identifier for subscriberId. If no auth system exists, use `YOUR_SUBSCRIBER_ID`.
+
+## Appearance
+
+Extract design tokens from the host app and apply via the appearance configuration. Only set values extracted from the host app's design system.
+
+## Rules
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Initialize Novu after DOM content is loaded
+- Mount the Inbox inline in existing UI - no new pages or wrappers
+- Use the existing auth system to source subscriberId when available
+
+NEVER:
+
+- Create wrapper components or new pages just for the inbox
+- Pollute the global scope
+- Introduce styles not in the host app
+
+## Verify Before Responding
+
+1. Is `@novu/js` installed with the project's package manager?
+2. Is the Inbox mounted inline in existing UI?
+3. Is subscriberId sourced from the auth system when available?
+
+If any fails, revise.
+</Prompt>
+
+<Steps>
+  <Step>
+  ### Add Novu ESM script 
+  Add the following code to your HTML file:
+
+  ```html title="index.html"
+  <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Novu Inbox - Vanilla JS</title>
+
+    <!-- Novu Styles (important for proper UI rendering) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@novu/js@3.11.0/dist/index.css"
+    />
+    <style>
+      /*
+        Example: hide the 3rd option in the Inbox status dropdown.
+        (We add stable custom classes via `appearance.elements.*` and then use plain CSS.)
+      */
+      .hide-snooze-dropdown-item:nth-child(3) {
+        display: none !important;
+      }
+
+      .hide-snooze-button {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Novu Inbox - Vanilla JS Demo</h2>
+
+    <!-- Mount point: Novu will inject Inbox UI here -->
+    <div id="novu-inbox"></div>
+
+    <!--
+    Novu UI for vanilla HTML:
+    - The published UI entrypoint is ESM and has dependencies (SolidJS, etc.)
+    - esm.sh bundles those deps so it can run directly in the browser.
+  -->
+    <script type="module">
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const mountEl = document.getElementById("novu-inbox");
+        if (!mountEl) {
+          console.error("Missing #novu-inbox mount element");
+          return;
+        }
+
+        const novu = new NovuUI({
+          options: {
+            applicationIdentifier: "NOVU_APPLICATION_IDENTIFIER",
+            subscriberId: "NOVU_SUBSCRIBER_ID",
+          },
+
+          // to hide the snooze button and the 3rd option in the Inbox status dropdown
+          appearance: {
+            elements: {
+              notificationSnooze__button: "hide-snooze-button",
+              inboxStatus__dropdownItem: "hide-snooze-dropdown-item",
+            },
+          },
+        });
+
+        // Mount Inbox into #novu-inbox
+        novu.mountComponent({
+          name: "Inbox",
+          props: {
+            onNotificationClick: (notification) => {
+              console.log("notification clicked", notification);
+            },
+          },
+          element: mountEl,
+        });
+
+        // Optional cleanup example
+        window.addEventListener("beforeunload", () => {
+          novu.unmountComponent(mountEl);
+        });
+      });
+    </script>
+  </body>
+</html>
+
+  ```
+  </Step>
+
+  <Step>
+  ### Change subscriberId and applicationIdentifier
+
+  In above code, replace `NOVU_APPLICATION_IDENTIFIER` with actual <Tooltip tip="The application identifier is a unique identifier for your application. You can find it in the Novu Dashboard under the API keys page.">applicationIdentifier</Tooltip> value and `NOVU_SUBSCRIBER_ID` with actual <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's id in your database.">subscriberId</Tooltip> value.
+    * `applicationIdentifier` – In the Novu dashboard, click API Keys, and then locate your unique Application Identifier.
+    * `subscriberId` – This represents a user in your system (typically the user's ID in your database). For quick start purposes, an auto-generated subscriberId is provided for your Dashboard user.
+
+    <Note>
+      If you pass a `subscriberId` that does not exist yet, Novu will automatically create a new subscriber with that ID.
+    </Note>
+
+  </Step>
+
+  
+
+  <Step>
+  ### Run Your Application
+    Open `index.html` in your browser. You should see the Novu Inbox component with a bell icon.
+
+  </Step>
+
+  <Step>
+  ### Trigger your first notification
+
+In this step, you'll create a simple workflow to send your first notification via the Inbox component. Follow these steps to set up and trigger a workflow from your Novu dashboard.
+
+1. Go to your [Novu dashboard](https://dashboard.novu.co/auth/sign-in).
+2. In the sidebar, click **Workflows**.
+3. Click **Create Workflow**. Enter a name for your workflow (e.g., "Welcome Notification").
+4. Click **Create Workflow** to save it.
+5. Click the **Add Step** icon in the workflow editor and then select **In-App** as the step type.
+6. In the In-App template editor, enter the following:
+
+   - **Subject**: "Welcome to Novu"
+   - **Body**: "Hello, world! "
+
+7. Once you’ve added the subject and body, close the editor.
+8. Click **Trigger**.
+9. Click **Test Workflow**.
+
+  </Step>
+
+<Step>
+###  View the notification in your app
+Open `index.html` in your browser, then click the bell icon.
+
+You should see the notification you just sent from Novu! 🎉
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Styling" icon="palette" href="/inbox/react/styling">
+    Customize the look and feel of your Inbox to match your application's design.
+  </Card>
+  <Card
+    title="Inbox and preferences UI components"
+    icon="library"
+    href="/platform/inbox"
+  >
+    Explore our full-stack UI components libraries for building in-app notifications.
+  </Card>
+  <Card title="Build Workflow" icon="workflow" href="/platform/workflow">
+     Design and manage advanced notification workflows.
+  </Card>
+  <Card title="Multi Tenancy" icon="square-code" href="/platform/concepts/tenants">
+    Manage multiple tenants within an organization.
+  </Card>
+</Columns>

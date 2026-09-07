@@ -1,7 +1,7 @@
-import { IsDefined } from 'class-validator';
+import { EnvironmentCommand } from '@novu/application-generic';
 // TODO: Implement a DTO or shared entity
 import { JobEntity } from '@novu/dal';
-import { EnvironmentCommand } from '@novu/application-generic';
+import { IsDefined } from 'class-validator';
 
 export class StoreSubscriberJobsCommand extends EnvironmentCommand {
   @IsDefined()

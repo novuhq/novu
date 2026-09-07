@@ -1,6 +1,6 @@
+import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class DeleteSubscriberCredentialsCommand extends EnvironmentCommand {
   @IsString()

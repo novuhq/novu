@@ -1,10 +1,21 @@
-import { expect } from 'chai';
-import axios, { AxiosResponse } from 'axios';
+// noinspection ExceptionCaughtLocallyJS
 
-import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import type { AxiosResponse } from 'axios';
+import axios, { AxiosError } from 'axios';
+import { expect } from 'chai';
 
-describe('Create Tenant - /tenants (POST)', function () {
+function assertValidationMessages(e: AxiosError<any, any>, field: string, msg1: string) {
+  if (!(e instanceof AxiosError)) {
+    throw new Error(e);
+  }
+  const messages = e.response?.data.errors[field].messages;
+
+  expect(messages).to.be.an('array').that.includes(msg1);
+}
+
+describe('Create Tenant - /tenants (POST) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -13,7 +24,7 @@ describe('Create Tenant - /tenants (POST)', function () {
     await session.initialize();
   });
 
-  it('should create a new tenant', async function () {
+  it('should create a new tenant', async () => {
     const response = await createTenant({
       session,
       identifier: 'identifier_123',
@@ -35,7 +46,7 @@ describe('Create Tenant - /tenants (POST)', function () {
     expect(createdTenant?.data).to.deep.equal({ test1: 'test value1', test2: 'test value2' });
   });
 
-  it('should throw error if a tenant is already exist in the environment', async function () {
+  it('should throw error if a tenant is already exist in the environment', async () => {
     await createTenant({
       session,
       identifier: 'identifier_123',
@@ -58,16 +69,16 @@ describe('Create Tenant - /tenants (POST)', function () {
     }
   });
 
-  it('should throw error if a missing tenant identifier', async function () {
+  it('should throw error if a missing tenant identifier', async () => {
     try {
       await createTenant({
         session,
       });
 
-      throw new Error('');
+      throw new Error('Should Not Succeed In the call');
     } catch (e) {
-      expect(e.response.data.message).to.be.an('array').that.includes('identifier should not be empty');
-      expect(e.response.data.message).to.be.an('array').that.includes('identifier must be a string');
+      assertValidationMessages(e, 'identifier', 'identifier should not be empty');
+      assertValidationMessages(e, 'identifier', 'identifier must be a string');
     }
   });
 });
@@ -88,9 +99,9 @@ export async function createTenant({
   return await axiosInstance.post(
     `${session.serverUrl}/v1/tenants`,
     {
-      identifier: identifier,
-      name: name,
-      data: data,
+      identifier,
+      name,
+      data,
     },
     {
       headers: {

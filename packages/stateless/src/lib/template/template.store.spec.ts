@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { ChannelTypeEnum, IMessage, ITemplate } from './template.interface';
 import { TemplateStore } from './template.store';
 

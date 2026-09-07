@@ -1,10 +1,9 @@
-import * as mongoose from 'mongoose';
-import { IndexOptions, Schema } from 'mongoose';
-import * as mongooseDelete from 'mongoose-delete';
-
+import mongoose, { IndexOptions, Schema } from 'mongoose';
+import { IndexDefinition } from '../../shared/types';
 import { schemaOptions } from '../schema-default.options';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
-import { IndexDefinition } from '../../shared/types';
+
+const mongooseDelete = require('mongoose-delete');
 
 const subscriberSchema = new Schema<SubscriberDBModel>(
   {
@@ -27,9 +26,11 @@ const subscriberSchema = new Schema<SubscriberDBModel>(
     isOnline: {
       type: Schema.Types.Boolean,
       required: false,
+      default: false,
     },
     lastOnlineAt: Schema.Types.Date,
     data: Schema.Types.Mixed,
+    timezone: Schema.Types.String,
   },
   schemaOptions
 );
@@ -175,21 +176,58 @@ subscriberSchema.index({
  *
  * We can not add `deleted` field to the index the client wont be able to delete twice subscriber with the same subscriberId.
  */
-index(
-  {
-    subscriberId: 1,
-    _environmentId: 1,
-  },
-  { unique: true }
+subscriberSchema.index(
+  { subscriberId: 1, _environmentId: 1 },
+  { name: 'unique_subscriber_per_environment', unique: true, partialFilterExpression: { deleted: false } }
+);
+subscriberSchema.index({
+  _organizationId: 1,
+});
+
+subscriberSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  deleted: 1,
+});
+
+subscriberSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  updatedAt: 1,
+  _id: 1,
+});
+
+subscriberSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _id: 1,
+});
+
+subscriberSchema.index(
+  { _environmentId: 1, subscriberId: 1 },
+  { name: 'unique_subscriber_per_environment', unique: true, partialFilterExpression: { deleted: false } }
 );
 
-subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+/*
+ * Supports the per-organization cap on agent-auto-provisioned subscribers
+ * (`AgentSubscriberResolver.resolveOrProvision` counts rows whose
+ * `data.__novu_source === 'agent-platform-provision'`). Sparse so subscribers
+ * without a provenance marker — i.e. everything created through the normal
+ * customer API or the dashboard — don't bloat the index. Flat key shape
+ * because `SubscriberCustomData` is a `Record<string, scalar>`.
+ */
+subscriberSchema.index(
+  { _organizationId: 1, 'data.__novu_source': 1 },
+  { name: 'subscriber_provenance_count', sparse: true }
+);
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+subscriberSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  deletedBy: true,
+  overrideMethods: 'all',
+  use$neOperator: false,
+});
+
 export const Subscriber =
   (mongoose.models.Subscriber as mongoose.Model<SubscriberDBModel>) ||
   mongoose.model<SubscriberDBModel>('Subscriber', subscriberSchema);
-
-function index(fields: IndexDefinition<SubscriberEntity>, options?: IndexOptions) {
-  subscriberSchema.index(fields, options);
-}

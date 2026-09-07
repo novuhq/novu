@@ -1,17 +1,17 @@
 name: Extend Disk Space
-description: This action removes some preinstalled tools in favor of opening space for our docker runs with QEMU 
+description: This action removes some preinstalled tools in favor of opening space for our docker runs with QEMU
 runs:
   using: composite
   steps:
     - name: Run script
       run: |
         set -eux
-        
+
         df -h
         echo "::group::apt clean"
         sudo apt clean
         echo "::endgroup::"
-        
+
         echo "::group::/usr/local/*"
         du -hsc /usr/local/*
         echo "::endgroup::"
@@ -66,6 +66,6 @@ runs:
         sudo rm -rf /opt/hostedtoolcache/CodeQL || :
         # 1.4GB
         sudo rm -rf /opt/hostedtoolcache/go || :
-        
+
         df -h
       shell: bash

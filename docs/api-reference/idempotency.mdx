@@ -1,0 +1,316 @@
+---
+title: 'Idempotency'
+description: "Use idempotency keys with the Novu API to safely retry POST and PATCH requests without triggering duplicate workflow runs or duplicate side effects."
+---
+
+Idempotency is a crucial feature for building reliable integrations with Novu's API. It allows you to safely retry requests without worrying about duplicate operations, which is especially important for critical actions like triggering workflows.
+
+An idempotent request is one that can be made multiple times with the same effect as making it once. This is achieved by including a unique idempotency key with your request.
+
+<Note>
+  Idempotency feature is currently not enabled for all organizations. Please contact us at support@novu.co to enable it for your organization.
+</Note>
+
+## How It Works
+
+When you send a request with an idempotency key:
+
+1. Novu checks if a request with the same key has been processed before
+2. If it's a new key, the request is processed normally and the response is cached
+3. If the key was seen before, Novu returns the cached response without reprocessing the request
+
+This mechanism protects against network issues, timeouts, and other scenarios where a request might be retried.
+
+## Trigger events and billing
+
+On `POST /v1/events/trigger`, idempotency keys are enforced at the API layer before the request is queued. If you send 100 requests with the same `Idempotency-Key`, only the first is processed. Once that request completes, subsequent requests receive the cached response and count as **one** workflow run toward billing. While the first request is still in progress, duplicates receive a `409 Conflict` response and are not queued.
+
+This differs from the optional `transactionId` request field, which is checked for uniqueness during trigger processing rather than at the API boundary. `transactionId` is useful for tracing and cancellation, but it does not provide the same deduplication or billing protection as an idempotency key. For safe retries, always prefer `Idempotency-Key`. See the [Trigger event](/api-reference/events/trigger-event) API reference and [Trigger](/platform/concepts/trigger) concepts page for details.
+
+## Using Idempotency Keys
+
+To make an idempotent trigger request, pass a unique idempotency key with your request:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger(
+  {
+    workflowId: "workflow-id",
+    to: "unique_subscriber_identifier",
+    payload: {
+      postId: "123",
+    },
+  },
+  // Idempotency key
+  "unique-request-id-12345"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(
+        trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+            workflow_id="workflow-id",
+            to="unique_subscriber_identifier",
+            payload={
+                "postId": "123",
+            },
+        ),
+        idempotency_key="unique-request-id-12345",
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+idempotencyKey := "unique-request-id-12345"
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow-id",
+    To: components.CreateToStr("unique_subscriber_identifier"),
+    Payload: map[string]any{
+        "postId": "123",
+    },
+}, &idempotencyKey)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow-id',
+        to: 'unique_subscriber_identifier',
+        payload: ['postId' => '123'],
+    ),
+    idempotencyKey: 'unique-request-id-12345',
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(
+    triggerEventRequestDto: new TriggerEventRequestDto() {
+        WorkflowId = "workflow-id",
+        To = To.CreateStr("unique_subscriber_identifier"),
+        Payload = new Dictionary<string, object>() {
+            { "postId", "123" },
+        },
+    },
+    idempotencyKey: "unique-request-id-12345"
+);
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .idempotencyKey("unique-request-id-12345")
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow-id")
+        .to(To2.of("unique_subscriber_identifier"))
+        .payload(Map.of("postId", "123"))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  --header 'Idempotency-Key: unique-request-id-12345' \
+  --header 'Content-Type: application/json' \
+  --data '{"name": "workflow-id", "to": "unique_subscriber_identifier", "payload": {"postId": "123"}}'
+```
+  </Tab>
+</Tabs>
+
+### Key Requirements
+
+- **Maximum length**: 255 characters
+- **Uniqueness**: Keys should be unique per organization
+- **Format**: Any string value (UUIDs are recommended)
+
+<Note>
+  We recommend using UUIDs or other unique identifiers that include context about the operation, such as `order-confirmation-{orderId}-{timestamp}`.
+</Note>
+
+## Supported Methods
+
+Idempotency is supported for the following HTTP methods:
+
+| Method | Supported |
+|--------|-----------|
+| POST   | ✅ Yes    |
+| PATCH  | ✅ Yes    |
+| GET    | ❌ No     |
+| PUT    | ❌ No     |
+| DELETE | ❌ No     |
+
+<Info>
+  GET, PUT, and DELETE methods are inherently idempotent by design and don't require idempotency keys.
+</Info>
+
+## Authentication Requirements
+
+Idempotency is only available when authenticating with an API Key. Include the `Authorization: ApiKey <NOVU_SECRET_KEY>` header, as shown in the **cURL** tab above.
+
+Requests using other authentication methods will be processed normally without idempotency support.
+
+## Cache Duration
+
+| Scenario | Cache TTL |
+|----------|-----------|
+| Successful response | 24 hours |
+| Error response | 24 hours |
+| In-progress request | 5 minutes |
+
+After the cache expires, the same idempotency key can be reused.
+
+## HTTP Response Headers
+
+When making idempotent requests, Novu includes helpful headers in the response:
+
+### Idempotency-Key
+
+Confirms the idempotency key that was used for the request:
+
+```
+Idempotency-Key: unique-request-id-12345
+```
+
+### Idempotency-Replay
+
+Indicates that the response was served from the cache rather than processing a new request:
+
+```
+Idempotency-Replay: true
+```
+
+This header is only present when returning a cached response.
+
+## Error Handling
+
+### Request In Progress (409 Conflict)
+
+If you send a request with an idempotency key while a previous request with the same key is still being processed:
+
+```json
+{
+  "statusCode": 409,
+  "message": "Request with key \"unique-request-id-12345\" is currently being processed. Please retry after 1 second"
+}
+```
+
+The response includes a `Retry-After` header indicating when to retry:
+
+```
+Retry-After: 1
+```
+
+### Key Reused with Different Body (422 Unprocessable Entity)
+
+If you send a request with an idempotency key that was previously used with a different request body:
+
+```json
+{
+  "statusCode": 422,
+  "message": "Request with key \"unique-request-id-12345\" is being reused for a different body"
+}
+```
+
+<Warning>
+  Each idempotency key must be associated with a specific request body. Using the same key with different payloads will result in an error.
+</Warning>
+
+### Key Too Long (400 Bad Request)
+
+If the idempotency key exceeds 255 characters:
+
+```json
+{
+  "statusCode": 400,
+  "message": "idempotencyKey \"...\" has exceeded the maximum allowed length of 255 characters"
+}
+```
+
+## Best Practices
+
+1. **Generate unique keys**: Use UUIDs or combine entity IDs with timestamps to ensure uniqueness
+2. **Store keys**: Keep track of idempotency keys you've used in case you need to retry requests
+3. **Handle 409 responses**: Implement retry logic with exponential backoff when you receive a conflict response
+4. **Don't reuse keys for different operations**: Each unique operation should have its own idempotency key
+5. **Include meaningful context**: Consider including the operation type and relevant IDs in your key for easier debugging
+
+## Example: Safe Retry Logic
+
+Here's an example of implementing safe retry logic with idempotency:
+
+```javascript
+import { Novu } from '@novu/api';
+import { v4 as uuidv4 } from 'uuid';
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>"
+});
+
+async function triggerNotificationWithRetry(workflowId, subscriberId, payload, maxRetries = 3) {
+
+  const uniqueId = uuidv4();
+  const idempotencyKey = `trigger-${workflowId}-${subscriberId}-${uniqueId}`;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await novu.trigger({
+        workflowId: workflowId,
+        to: { subscriberId: subscriberId },
+        payload,
+      }, idempotencyKey);
+        
+      return response;
+    } catch (error) {
+      if (error.statusCode === 409 && attempt < maxRetries) {
+        // Request in progress, wait and retry
+        const retryAfter = error.headers?.['retry-after'] || 1;
+        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+```

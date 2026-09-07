@@ -5,7 +5,7 @@
     "outDir": "build/module",
     "module": "esnext",
     "esModuleInterop": true,
-    "types": ["jest", "node"],
+    "types": ["node", "jest"],
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },
   "exclude": ["node_modules/**"]

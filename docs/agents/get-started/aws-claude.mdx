@@ -1,0 +1,123 @@
+---
+title: "Connect AWS Claude managed agent"
+description: "Create a managed agent on Claude Platform for AWS with the Novu CLI. Provide region, workspace ID, and API key, then connect Slack."
+sidebarTitle: AWS Claude Managed
+---
+
+Create a managed agent on **Claude Platform for AWS** and connect it to Slack with the Novu CLI. No bridge server is required.
+
+This path uses AWS Claude Platform credentials (region, workspace ID, API key). For Anthropic Claude directly, see [Connect Claude managed agent](/agents/get-started/claude-managed).
+
+<Note>
+  **AWS Bedrock AgentCore** is a separate connector and is not available yet. Use **AWS Claude Managed Agent** for managed agents on AWS today.
+</Note>
+
+## Prerequisites
+
+- Node.js on your machine
+- A [Novu account](https://dashboard.novu.co/agents) (you can create one during setup)
+- An [AWS Claude Platform](https://docs.aws.amazon.com/claude-platform/latest/userguide/setup.html) workspace with:
+  - Commercial **AWS region**
+  - **Workspace ID** (`wrkspc_…`)
+  - **API key** ([authentication docs](https://docs.aws.amazon.com/claude-platform/latest/userguide/authentication.html))
+- A Slack workspace where you can install apps
+
+## Connect AWS Claude
+
+<Steps>
+
+<Step>
+## Run the CLI
+
+```bash
+npx novu connect
+```
+</Step>
+
+<Step>
+## Choose AWS Claude Managed Agent
+
+When the CLI asks **Where your agent runs?**, select **AWS Claude Managed Agent**.
+
+The CLI prompts for:
+
+1. **AWS Claude API key** — from the AWS Claude Platform console
+2. **AWS Claude region** — commercial region for your workspace
+3. **AWS Claude workspace ID** — `wrkspc_…` under Workspaces in the AWS Console
+
+Novu verifies the credentials and creates an AWS Claude runtime integration in your environment.
+</Step>
+
+<Step>
+## Create the agent
+
+1. Describe the agent in plain text, for example:
+
+    ```text
+    Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
+    ```
+
+2. Novu generates a name, identifier, system prompt, tools, MCP servers, and skills from that description.
+3. Review the fields. Select **Create this agent**, or **Regenerate from description** to revise.
+</Step>
+
+<Step>
+## Connect Slack
+
+When prompted to pick a channel, select **Slack**.
+
+1. Open [https://api.slack.com/apps](https://api.slack.com/apps).
+2. Under **App Configuration Tokens**, click **Generate Token**.
+3. Copy the access token (starts with `xoxe.xoxp-`).
+4. Paste it into the CLI. Novu uses it once to create the Slack app and does not store it.
+5. Follow the install link to add the bot to your workspace.
+</Step>
+
+<Step>
+## Send a message
+
+Open Slack and DM the agent (or @mention it in a channel). If the generated config includes Linear or GitHub MCP servers, the agent may prompt you to authorize them in-thread.
+
+Manage channels and conversations in the [Novu dashboard](https://dashboard.novu.co/agents).
+</Step>
+
+</Steps>
+
+<Note>
+  Non-interactive / CI:
+
+  ```bash
+  npx novu connect \
+    --runtime claude-aws \
+    --aws-claude-api-key <key> \
+    --aws-claude-region <region> \
+    --aws-claude-workspace-id <wrkspc_…>
+  ```
+
+  See [Create an agent](/api-reference/agents/create-an-agent) for the REST API.
+</Note>
+
+<Prompt description="Copy an example agent description" icon="plug" actions={["copy", "cursor"]}>
+Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
+
+Use the Novu CLI (`npx novu connect`) with AWS Claude Managed Agent. Provide AWS region, workspace ID (wrkspc_…), and API key. Connect Slack as the first channel.
+
+Reference: https://docs.novu.co/agents/get-started/aws-claude
+</Prompt>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="sparkles" href="/agents/get-started/claude-managed" title="Claude (Anthropic)">
+    Same flow with an Anthropic API key.
+  </Card>
+  <Card icon="brain" href="/agents/managed-agent/concepts" title="Concepts">
+    Connectors, MCP servers, skills, and conversation lifecycle.
+  </Card>
+  <Card icon="link" href="/agents/managed-agent/configure-mcp-servers" title="Configure MCP servers">
+    Enable Linear, GitHub, Notion, and other MCP tools.
+  </Card>
+  <Card icon="messages-square" href="/agents/conversations" title="Conversation observability">
+    Inspect live conversations in the dashboard.
+  </Card>
+</Columns>

@@ -1,0 +1,110 @@
+---
+title: 'Store webhook events in Amazon S3'
+description: 'Configure the Amazon S3 webhook connector to archive batched Novu events as objects, including the transformation contract, object key behavior, and verification steps.'
+sidebarTitle: 'Amazon S3'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import ObjectStorageTransformation from "/snippets/object-storage-transformation.mdx";
+
+The Amazon S3 connector writes selected Novu webhook events to an S3 bucket. Novu delivers events in batches, and each delivered batch creates one new object in the bucket. Use this connector to build a durable event archive for replay, auditing, or downstream processing with tools that read from S3.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- An existing S3 bucket in the AWS account and region you want to write to
+- An AWS access key ID and secret access key for a principal that can write objects to that bucket
+- Permission to manage webhook endpoints in the Novu environment you are configuring
+
+### Required AWS permission
+
+The connector writes each batch as an object, so the credentials need the `s3:PutObject` action on the destination bucket. Additional permissions may be required by your own setup, for example KMS key permissions when the bucket enforces server-side encryption with a customer managed key, or permissions needed to satisfy an organizational policy, service control policy, or bucket policy condition.
+
+Novu configures this connector through the embedded webhook portal. The portal collects bucket and credential values and does not create the bucket, apply a bucket policy, or validate an IAM policy document for you.
+
+## Configuration
+
+These are the fields collected for the Amazon S3 connector.
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Bucket** | Yes | Name of the destination S3 bucket. |
+| **Region** | Yes | AWS region that hosts the bucket. |
+| **Access key ID** | Yes | AWS access key ID used to authenticate. |
+| **Secret access key** | Yes | AWS secret access key paired with the access key ID. |
+| **Transformation** | Yes | JavaScript that sets the object key, the object format, and the object contents. |
+
+There is no URL field for this connector. Delivery targets the bucket through the AWS S3 API rather than an HTTPS endpoint you host.
+
+<ObjectStorageTransformation />
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the bucket
+
+Create the destination bucket in the region you plan to configure, and decide on the key prefix you want, for example a date partition. If the bucket enforces encryption with a customer managed key, confirm the credentials can use that key.
+  </Step>
+
+  <Step>
+## Create credentials
+
+Create an access key for a principal that can perform `s3:PutObject` on the bucket. Store the secret access key securely, because it is entered once into the connector configuration.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Amazon S3" />
+
+  <Step>
+## Enter connection details
+
+Enter **Bucket**, **Region**, **Access key ID**, and **Secret access key**. Add a description that identifies the destination, for example the bucket name and the AWS account it belongs to.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the provided template. Change `config.key` to the prefix you want and keep `config.format` aligned with the type of `data` you return.
+  </Step>
+
+  <Step>
+## Select event types
+
+Select the [event types](/platform/developer/webhooks/event-types) you want to archive. Only selected event types reach the endpoint and its transformation, so start with one event type when validating a new bucket.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint, open **Testing**, and send an example for a subscribed event type. Confirm the attempt succeeded in **Logs**, then list the bucket under your key prefix and confirm a new timestamp-suffixed object exists. Download the object and confirm its contents match the format you configured.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Check the following in AWS after a successful test:
+
+- The object exists under the prefix you set in `config.key`, with a timestamp appended.
+- The object contents parse in the format you selected, one JSON document per line for `"jsonl"`.
+- The object count grows by one per delivered batch rather than one per event.
+
+## Troubleshooting
+
+- **Access denied on delivery**: The credentials cannot perform `s3:PutObject` on this bucket. Check the bucket policy, the identity policy, and any condition that restricts the caller, prefix, or encryption headers.
+- **The bucket or region is rejected**: Confirm the bucket name is exact and the region matches the bucket's actual region. A bucket in another region will not accept the request.
+- **Delivery succeeds but no object appears**: You are likely looking at the wrong prefix. Compare the transformed output in **Logs** with the `config.key` value, then list the bucket at that prefix.
+- **Object contents are not what you expect**: Confirm `config.format` matches the type of `data`. For `"raw"`, `data` must be a string containing the exact contents.
+- **Encrypted buckets fail**: If the bucket requires a customer managed KMS key, the credentials also need permission to use that key.
+- **Some event types never appear**: Review the endpoint's selected event types, and test each event type separately from the **Testing** tab.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix object storage endpoints](https://docs.svix.com/advanced-endpoints/object-storage)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [Amazon S3 documentation](https://docs.aws.amazon.com/s3/)

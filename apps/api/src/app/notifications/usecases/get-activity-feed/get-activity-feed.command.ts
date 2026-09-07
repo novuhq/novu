@@ -1,11 +1,13 @@
+import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { IsArray, IsEnum, IsMongoId, IsNumber, IsOptional, IsString } from 'class-validator';
-import { ChannelTypeEnum } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   @IsNumber()
-  @IsOptional()
   page: number;
+
+  @IsNumber()
+  limit: number;
 
   @IsOptional()
   @IsEnum(ChannelTypeEnum, {
@@ -31,6 +33,33 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   subscriberIds?: string[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  transactionId?: string[];
+
+  @IsOptional()
   @IsString()
-  transactionId?: string;
+  topicKey?: string;
+
+  @IsOptional()
+  @IsString()
+  subscriptionId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(SeverityLevelEnum, { each: true })
+  severity?: SeverityLevelEnum[] | null;
+
+  @IsOptional()
+  @IsString()
+  after?: string;
+
+  @IsOptional()
+  @IsString()
+  before?: string;
 }

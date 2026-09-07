@@ -1,9 +1,9 @@
-import * as mongoose from 'mongoose';
-import { Schema } from 'mongoose';
-import * as mongooseDelete from 'mongoose-delete';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { WorkflowOverrideDBModel } from './workflow-override.entity';
+
+const mongooseDelete = require('mongoose-delete');
 
 const workflowOverrideSchema = new Schema<WorkflowOverrideDBModel>(
   {
@@ -78,7 +78,6 @@ workflowOverrideSchema.index(
   { unique: true }
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const WorkflowOverride =
   (mongoose.models.WorkflowOverride as mongoose.Model<WorkflowOverrideDBModel>) ||
   mongoose.model<WorkflowOverrideDBModel>('WorkflowOverride', workflowOverrideSchema);

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { ChannelTypeEnum } from '../template/template.interface';
 import { CheckIntegrationResponseEnum } from './provider.enum';
 import { ProviderStore } from './provider.store';
@@ -8,8 +10,7 @@ test('should register a provider', async () => {
   await store.addProvider('sms', {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   const providers = await store.getProviders();
@@ -24,15 +25,13 @@ test('should get a provider by id', async () => {
   await store.addProvider('sms', {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await store.addProvider('email', {
     id: 'test 2',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -53,15 +52,13 @@ test('should get a provider by channel', async () => {
   await store.addProvider('sms', {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await store.addProvider('email', {
     id: 'test 2',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',

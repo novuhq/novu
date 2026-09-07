@@ -1,17 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberEntity } from '@novu/dal';
-import { ActorTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-
-import { GetMessagesCommand } from './get-messages.command';
+import { FeatureFlagsService, NotificationPayloadService } from '@novu/application-generic';
+import { MessageEntity, MessageRepository, OrganizationEntity, SubscriberEntity } from '@novu/dal';
+import { ActorTypeEnum, ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
-import { GetFeatureFlag, GetFeatureFlagCommand } from '@novu/application-generic';
+import { GetMessagesCommand } from './get-messages.command';
 
 @Injectable()
 export class GetMessages {
   constructor(
     private messageRepository: MessageRepository,
+    private notificationPayloadService: NotificationPayloadService,
     private getSubscriberUseCase: GetSubscriber,
-    private getFeatureFlag: GetFeatureFlag
+    private featureFlagService: FeatureFlagsService
   ) {}
 
   async execute(command: GetMessagesCommand) {
@@ -22,10 +22,13 @@ export class GetMessages {
       throw new BadRequestException('Limit can not be larger then 1000');
     }
 
-    const query: Partial<Omit<MessageEntity, 'transactionId'>> & { _environmentId: string; transactionId?: string[] } =
-      {
-        _environmentId: command.environmentId,
-      };
+    const query: Partial<Omit<MessageEntity, 'transactionId'>> & {
+      _environmentId: string;
+      transactionId?: string[];
+      contextKeys?: string[];
+    } = {
+      _environmentId: command.environmentId,
+    };
 
     if (command.subscriberId) {
       const subscriber = await this.getSubscriberUseCase.execute(
@@ -47,8 +50,13 @@ export class GetMessages {
       query.transactionId = command.transactionIds;
     }
 
+    if (command.contextKeys) {
+      query.contextKeys = command.contextKeys;
+    }
+
     const data = await this.messageRepository.getMessages(query, '', {
       limit: LIMIT,
+      sort: { createdAt: -1 },
       skip: command.page * LIMIT,
     });
 
@@ -58,14 +66,16 @@ export class GetMessages {
       }
     }
 
-    const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_NEW_MESSAGES_API_RESPONSE_ENABLED,
-        organizationId: command.organizationId,
-        userId: 'system',
-        environmentId: 'system',
-      })
-    );
+    // Payload-dedup: email/SMS/push messages no longer persist their own payload;
+    // backfill from the parent notification so the API response shape stays stable.
+    await this.notificationPayloadService.hydrateEntitiesPayload(data);
+    this.stripAttachmentsForParity(data);
+
+    const isEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NEW_MESSAGES_API_RESPONSE_ENABLED,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      defaultValue: false,
+    });
 
     if (isEnabled) {
       return {
@@ -87,6 +97,25 @@ export class GetMessages {
       pageSize: LIMIT,
       data,
     };
+  }
+
+  /**
+   * Email/SMS message payloads historically omitted `attachments` (stripped at
+   * send time). Hydrating from the notification re-introduces the uploaded
+   * attachment metadata, so drop it for those channels to preserve the prior
+   * API shape. Clones (via rest) so the shared notification payload reference
+   * is never mutated. Push kept attachments before, so it is left untouched.
+   */
+  private stripAttachmentsForParity(messages: MessageEntity[]): void {
+    for (const message of messages) {
+      const isAttachmentStrippingChannel =
+        message.channel === ChannelTypeEnum.EMAIL || message.channel === ChannelTypeEnum.SMS;
+
+      if (isAttachmentStrippingChannel && message.payload?.attachments) {
+        const { attachments, ...payloadWithoutAttachments } = message.payload;
+        message.payload = payloadWithoutAttachments;
+      }
+    }
   }
 
   private getHasMore(page: number, limit: number, feedLength: number, totalCount: number) {

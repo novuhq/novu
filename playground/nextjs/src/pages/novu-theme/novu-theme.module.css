@@ -1,0 +1,64 @@
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  justify-content: center;
+  align-items: center;
+}
+
+.notification-btn {
+  height: 32px;
+  padding: 0px 12px;
+  border-radius: 8px;
+}
+
+.notification-primary-action__button {
+  background: linear-gradient(90deg, #dd2476 0%, #ff512f 100%);
+}
+
+.notification-secondary-action__button {
+  background-color: transparent;
+  border: 1px solid #dd2476;
+  color: #fff;
+}
+
+.notification-secondary-action__button:hover {
+  background: linear-gradient(90deg, #ff512f 0%, #dd2476 100%);
+}
+
+.notification-item:hover {
+  background-color: #292933;
+}
+
+.notification-default-actions {
+  background-color: #292933;
+}
+
+.notification-title {
+  color: white;
+}
+
+.notification-content {
+  color: #828299;
+}
+
+.action-button[data-variant='icon']:hover {
+  background-color: #3d3d4d;
+}
+
+.dropdown-item:hover {
+  background-color: #292933;
+}
+
+.tabs-trigger[data-state='active']::after {
+  background-color: #dd2476;
+}
+
+.channel-switch .nt-peer:checked ~ .peer-checked\:nt-bg-primary {
+  background: linear-gradient(90deg, #dd2476 0%, #ff512f 100%);
+}
+
+.workflow-label-container > svg {
+  color: #828299;
+}

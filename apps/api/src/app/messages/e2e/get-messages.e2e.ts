@@ -1,73 +1,57 @@
-import { SubscribersService, UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
+import { ChannelTypeEnum } from '@novu/api/models/components';
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import axios from 'axios';
+import { CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/shared';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const axiosInstance = axios.create();
-
-describe('Get Message - /messages (GET)', function () {
+describe('Get Message - /messages (GET) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let novuClient: Novu;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
+    novuClient = initNovuClassSdk(session);
   });
 
-  it('should fetch existing messages', async function () {
+  it('should fetch existing messages', async () => {
     const subscriber2 = await subscriberService.createSubscriber();
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [
-          { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
-          { subscriberId: subscriber2.subscriberId, email: 'john@doe.com' },
-        ],
-        payload: {
-          email: 'new-test-email@gmail.com',
-          firstName: 'Testing of User Name',
-          urlVar: '/test/url/path',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
 
-    await session.awaitRunningJobs(template._id);
-
-    let body = await axiosInstance.get(`${session.serverUrl}/v1/messages/`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: [
+        { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
+        { subscriberId: subscriber2.subscriberId, email: 'john@doe.com' },
+      ],
+      payload: {
+        email: 'new-test-email@gmail.com',
+        firstName: 'Testing of User Name',
+        urlVar: '/test/url/path',
       },
     });
-    expect(body.data.data.length).to.be.equal(4);
 
-    body = await axiosInstance.get(`${session.serverUrl}/v1/messages?channel=${ChannelTypeEnum.EMAIL}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-    expect(body.data.data.length).to.be.equal(2);
+    await session.waitForJobCompletion(template._id);
 
-    body = await axiosInstance.get(`${session.serverUrl}/v1/messages?subscriberId=${subscriber2.subscriberId}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-    expect(body.data.data.length).to.be.equal(2);
+    let response = await novuClient.messages.retrieve({});
+    expect(response.result.data.length).to.be.equal(4);
+
+    response = await novuClient.messages.retrieve({ channel: ChannelTypeEnum.Email });
+    expect(response.result.data.length).to.be.equal(2);
+
+    response = await novuClient.messages.retrieve({ subscriberId: subscriber2.subscriberId });
+    expect(response.result.data.length).to.be.equal(2);
   });
 
-  it('should fetch messages using transactionId filter', async function () {
+  it('should fetch messages using transactionId filter', async () => {
     const subscriber3 = await subscriberService.createSubscriber();
 
     const transactionId1 = '1566f9d0-6037-48c1-b356-42667921cadd';
@@ -75,62 +59,93 @@ describe('Get Message - /messages (GET)', function () {
 
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId1);
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId2);
-    await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId1);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+    await session.waitForStandardQueueCompletion();
+    await session.waitForJobCompletion(template._id);
 
-    let body = await axiosInstance.get(`${session.serverUrl}/v1/messages?subscriberId=${subscriber3.subscriberId}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
+    let response = await novuClient.messages.retrieve({ subscriberId: subscriber3.subscriberId });
+    expect(response.result.data.length).to.be.equal(4);
 
-    // here we are expecting 6 messages because workflow has 2 steps in-app and email
-    expect(body.data.data.length).to.be.equal(6);
+    response = await novuClient.messages.retrieve({ transactionId: [transactionId1] });
+    expect(response.result.data.length).to.be.equal(2);
 
-    body = await axiosInstance.get(`${session.serverUrl}/v1/messages?transactionId=${transactionId1}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-    expect(body.data.data.length).to.be.equal(4);
+    response = await novuClient.messages.retrieve({ transactionId: [transactionId1, transactionId2] });
+    expect(response.result.data.length).to.be.equal(4);
 
-    body = await axiosInstance.get(
-      `${session.serverUrl}/v1/messages?transactionId=${transactionId1}&transactionId=${transactionId2}`,
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-    expect(body.data.data.length).to.be.equal(6);
-
-    body = await axiosInstance.get(`${session.serverUrl}/v1/messages?transactionId=${transactionId2}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-    expect(body.data.data.length).to.be.equal(2);
+    response = await novuClient.messages.retrieve({ transactionId: [transactionId2] });
+    expect(response.result.data.length).to.be.equal(2);
   });
 
-  const triggerEventWithTransactionId = async (
+  it('should fetch messages using contextKeys filter', async () => {
+    const subscriber4 = await subscriberService.createSubscriber();
+
+    const workflowBody: CreateWorkflowDto = {
+      name: 'Test Context Workflow',
+      workflowId: 'test-context-workflow-messages',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'Test Step',
+          controlValues: {
+            subject: 'Test Subject',
+            body: 'Test Body',
+          },
+        },
+      ],
+    };
+
+    const workflowResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+    expect(workflowResponse.status).to.equal(201);
+    const workflow: WorkflowResponseDto = workflowResponse.body.data;
+
+    await novuClient.trigger({
+      workflowId: workflow.workflowId,
+      to: subscriber4.subscriberId,
+      payload: {},
+      context: { teamId: 'team-alpha' },
+    });
+
+    await novuClient.trigger({
+      workflowId: workflow.workflowId,
+      to: subscriber4.subscriberId,
+      payload: {},
+      context: { teamId: 'team-beta' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+    await session.waitForStandardQueueCompletion();
+    await session.waitForJobCompletion(workflow._id);
+
+    let response = await novuClient.messages.retrieve({ subscriberId: subscriber4.subscriberId });
+    expect(response.result.data.length).to.be.equal(2);
+
+    response = await novuClient.messages.retrieve({
+      subscriberId: subscriber4.subscriberId,
+      contextKeys: ['teamId:team-alpha'],
+    });
+    expect(response.result.data.length).to.be.equal(1);
+
+    response = await novuClient.messages.retrieve({
+      subscriberId: subscriber4.subscriberId,
+      contextKeys: ['teamId:team-beta'],
+    });
+    expect(response.result.data.length).to.be.equal(1);
+  });
+
+  async function triggerEventWithTransactionId(
     templateIdentifier: string,
     subscriberId: string,
     transactionId: string
-  ) => {
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: templateIdentifier,
-        to: { subscriberId: subscriberId, email: 'gg@ff.com' },
-        payload: {},
-        transactionId: transactionId,
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-  };
+  ) {
+    return await novuClient.trigger({
+      workflowId: templateIdentifier,
+      to: [{ subscriberId, email: 'gg@ff.com' }],
+      payload: {},
+      transactionId,
+    });
+  }
 });

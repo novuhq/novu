@@ -1,17 +1,20 @@
 {
-  "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "declarationMap": true,
+    "downlevelIteration": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "lib": ["es2015", "dom"],
     "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-    }
-  },
-  "types": [
-    "node",
-    "mocha",
-    "chai",
-    "sinon",
-    "cypress",
-    "jest"
-  ]
+    "noImplicitAny": false,
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "target": "es5"
+  }
 }

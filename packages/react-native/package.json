@@ -1,0 +1,59 @@
+{
+  "name": "@novu/react-native",
+  "version": "3.19.0",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's React Native SDK for building custom inbox notification experiences",
+  "author": "",
+  "license": "ISC",
+  "main": "dist/client/index.js",
+  "module": "dist/client/index.mjs",
+  "types": "dist/client/index.d.ts",
+  "files": [
+    "dist",
+    "dist/client/**/*"
+  ],
+  "sideEffects": false,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/client/index.d.mts",
+        "default": "./dist/client/index.mjs"
+      },
+      "require": {
+        "types": "./dist/client/index.d.ts",
+        "default": "./dist/client/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build:watch": "tsup --watch",
+    "build": "tsup && pnpm run check:exports",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "check:exports": "attw --pack .",
+    "release:preview": "pnpx pkg-pr-new publish"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.17.4",
+    "@types/node": "^22.0.0",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "tsup": "^8.2.1",
+    "typescript": "5.6.2"
+  },
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "dependencies": {
+    "@novu/react": "workspace:*"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

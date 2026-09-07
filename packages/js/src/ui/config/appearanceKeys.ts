@@ -1,0 +1,381 @@
+/*
+ * The double underscore signals that entire key extends the right part of the key
+ * i.e. foo__bar means that foo_bar is an extension of bar. Both keys will be applied when foo_bar is used
+ * meaning you would have `bar foo__bar` in the dom
+ */
+export const commonAppearanceKeys = [
+  // Primitives
+  'root',
+  'button',
+  'input',
+  'icon',
+  'badge',
+  'popoverContent',
+  'popoverTrigger',
+  'popoverClose',
+  'collapsible',
+  'tooltipContent',
+  'tooltipTrigger',
+] as const;
+
+export const inboxAppearanceKeys = [
+  // General
+  'bellIcon',
+  'lockIcon',
+  'bellContainer',
+  'severityHigh__bellContainer',
+  'severityMedium__bellContainer',
+  'severityLow__bellContainer',
+  'bellSeverityGlow',
+  'severityGlowHigh__bellSeverityGlow',
+  'severityGlowMedium__bellSeverityGlow',
+  'severityGlowLow__bellSeverityGlow',
+  'bellDot',
+  'preferences__button',
+  'preferencesContainer',
+  'inboxHeader',
+  'loading',
+
+  'dropdownContent',
+  'dropdownTrigger',
+  'dropdownItem',
+  'dropdownItemLabel',
+  'dropdownItemLabelContainer',
+  'dropdownItemLeft__icon',
+  'dropdownItemRight__icon',
+  'dropdownItem__icon',
+
+  'datePicker',
+  'datePickerGrid',
+  'datePickerGridRow',
+  'datePickerGridCell',
+  'datePickerGridCellTrigger',
+  'datePickerTrigger',
+  'datePickerGridHeader',
+  'datePickerControl',
+  'datePickerControlPrevTrigger',
+  'datePickerControlNextTrigger',
+  'datePickerControlPrevTrigger__icon',
+  'datePickerControlNextTrigger__icon',
+  'datePickerCalendar',
+  'datePickerHeaderMonth',
+  'datePickerCalendarDay__button',
+
+  'timePicker',
+  'timePicker__hourSelect',
+  'timePicker__minuteSelect',
+  'timePicker__periodSelect',
+  'timePicker__separator',
+  'timePickerHour__input',
+  'timePickerMinute__input',
+
+  'snoozeDatePicker',
+  'snoozeDatePicker__actions',
+  'snoozeDatePickerCancel__button',
+  'snoozeDatePickerApply__button',
+  'snoozeDatePicker__timePickerContainer',
+  'snoozeDatePicker__timePickerLabel',
+
+  'back__button',
+
+  'skeletonText',
+  'skeletonAvatar',
+  'skeletonSwitch',
+  'skeletonSwitchThumb',
+
+  'tabsRoot',
+  'tabsList',
+  'tabsContent',
+  'tabsTrigger',
+  'dots',
+
+  // Inbox
+  'inboxContent',
+  'inbox__popoverTrigger',
+  'inbox__popoverContent',
+
+  // Notifications
+  'notificationListContainer',
+  'notificationList',
+  'notificationListEmptyNoticeContainer',
+  'notificationListEmptyNoticeOverlay',
+  'notificationListEmptyNoticeIcon',
+  'notificationListEmptyNotice',
+  'notificationList__skeleton',
+  'notificationList__skeletonContent',
+  'notificationList__skeletonItem',
+  'notificationList__skeletonAvatar',
+  'notificationList__skeletonText',
+  'notificationListNewNotificationsNotice__button',
+
+  'notification',
+  'severityHigh__notification',
+  'severityMedium__notification',
+  'severityLow__notification',
+  'notificationBar',
+  'severityHigh__notificationBar',
+  'severityMedium__notificationBar',
+  'severityLow__notificationBar',
+  'notificationContent',
+  'notificationTextContainer',
+  'notificationDot',
+  'notificationSubject',
+  'notificationSubject__strong',
+  'notificationSubject__em',
+  'notificationBody',
+  'notificationBody__strong',
+  'notificationBody__em',
+  'notificationBodyContainer',
+  'notificationImage',
+  'notificationImageLoadingFallback',
+  'notificationDate',
+  'notificationDateActionsContainer',
+  'notificationDefaultActions',
+  'notificationCustomActions',
+  'notificationPrimaryAction__button',
+  'notificationSecondaryAction__button',
+  'notificationRead__button',
+  'notificationUnread__button',
+  'notificationArchive__button',
+  'notificationUnarchive__button',
+  'notificationSnooze__button',
+  'notificationUnsnooze__button',
+  'notificationRead__icon',
+  'notificationUnread__icon',
+  'notificationArchive__icon',
+  'notificationUnarchive__icon',
+  'notificationSnooze__icon',
+  'notificationUnsnooze__icon',
+
+  // Notifications tabs
+  'notificationsTabs__tabsRoot',
+  'notificationsTabs__tabsList',
+  'notificationsTabs__tabsContent',
+  'notificationsTabs__tabsTrigger',
+  'notificationsTabsTriggerLabel',
+  'notificationsTabsTriggerCount',
+
+  // Inbox status
+  'inboxStatus__title',
+  'inboxStatus__dropdownTrigger',
+  'inboxStatus__dropdownContent',
+  'inboxStatus__dropdownItem',
+  'inboxStatus__dropdownItemLabel',
+  'inboxStatus__dropdownItemLabelContainer',
+  'inboxStatus__dropdownItemLeft__icon',
+  'inboxStatus__dropdownItemRight__icon',
+  'inboxStatus__dropdownItem__icon',
+  'inboxStatus__dropdownItemCheck__icon',
+  // More actions
+  'moreActionsContainer',
+  'moreActions__dropdownTrigger',
+  'moreActions__dropdownContent',
+  'moreActions__dropdownItem',
+  'moreActions__dropdownItemLabel',
+  'moreActions__dropdownItemLeft__icon',
+  'moreActions__dots',
+
+  // More tabs
+  'moreTabs__button',
+  'moreTabs__icon',
+  'moreTabs__dropdownTrigger',
+  'moreTabs__dropdownContent',
+  'moreTabs__dropdownItem',
+  'moreTabs__dropdownItemLabel',
+  'moreTabs__dropdownItemRight__icon',
+
+  // workflow
+  'workflowContainer',
+  'workflowLabel',
+  'workflowLabelHeader',
+  'workflowLabelHeaderContainer',
+  'workflowLabelIcon',
+  'workflowLabelContainer',
+  'workflowContainerDisabledNotice',
+  'workflowLabelDisabled__icon',
+  'workflowContainerRight__icon',
+  'workflowArrow__icon',
+  'workflowDescription',
+
+  // preference groups
+  'preferencesGroupContainer',
+  'preferencesGroupHeader',
+  'preferencesGroupLabelContainer',
+  'preferencesGroupLabelIcon',
+  'preferencesGroupLabel',
+  'preferencesGroupActionsContainer',
+  'preferencesGroupActionsContainerRight__icon',
+  'preferencesGroupBody',
+  'preferencesGroupChannels',
+  'preferencesGroupInfo',
+  'preferencesGroupInfoIcon',
+  'preferencesGroupWorkflows',
+
+  // channel
+  'channelContainer',
+  'channelIconContainer',
+  'channel__icon',
+  'channelsContainerCollapsible',
+  'channelsContainer',
+  'channelLabel',
+  'channelLabelContainer',
+  'channelName',
+  'channelSwitchContainer',
+  'channelSwitch',
+  'channelSwitchThumb',
+
+  // Preferences Header
+  'preferencesHeader',
+  'preferencesHeader__back__button',
+  'preferencesHeader__back__button__icon',
+  'preferencesHeader__title',
+  'preferencesHeader__icon',
+
+  // Preferences Loading
+  'preferencesListEmptyNoticeContainer',
+  'preferencesListEmptyNotice',
+  'preferencesList__skeleton',
+  'preferencesList__skeletonContent',
+  'preferencesList__skeletonItem',
+  'preferencesList__skeletonIcon',
+  'preferencesList__skeletonSwitch',
+  'preferencesList__skeletonSwitchThumb',
+  'preferencesList__skeletonText',
+
+  // Schedule
+  'scheduleContainer',
+  'scheduleHeader',
+  'scheduleLabelContainer',
+  'scheduleLabelScheduleIcon',
+  'scheduleLabelInfoIcon',
+  'scheduleLabel',
+  'scheduleActionsContainer',
+  'scheduleActionsContainerRight',
+  'scheduleBody',
+  'scheduleDescription',
+  'scheduleTable',
+  'scheduleTableHeader',
+  'scheduleHeaderColumn',
+  'scheduleTableBody',
+  'scheduleBodyRow',
+  'scheduleBodyColumn',
+  'scheduleInfoContainer',
+  'scheduleInfoIcon',
+  'scheduleInfo',
+
+  // Day Schedule Copy
+  'dayScheduleCopyTitle',
+  'dayScheduleCopyIcon',
+  'dayScheduleCopySelectAll',
+  'dayScheduleCopyDay',
+  'dayScheduleCopyFooterContainer',
+  'dayScheduleCopy__dropdownTrigger',
+  'dayScheduleCopy__dropdownContent',
+
+  // Time Select
+  'timeSelect__dropdownTrigger',
+  'timeSelect__time',
+  'timeSelect__dropdownContent',
+  'timeSelect__dropdownItem',
+  'timeSelect__dropdownItemLabel',
+  'timeSelect__dropdownItemLabelContainer',
+  'timeSelect__dropdownItemCheck__icon',
+
+  // Notification Snooze
+  'notificationSnooze__dropdownContent',
+  'notificationSnooze__dropdownItem',
+  'notificationSnooze__dropdownItem__icon',
+  'notificationSnoozeCustomTime_popoverContent',
+
+  // Notification Delivered At
+  'notificationDeliveredAt__badge',
+  'notificationDeliveredAt__icon',
+  'notificationSnoozedUntil__icon',
+  // Text formatting
+  'strong',
+  'em',
+] as const;
+
+export const subscriptionAppearanceKeys = [
+  // Subscription
+  'subscriptionContainer',
+  // Subscription Button
+  'subscriptionButton__button',
+  'subscriptionButtonContainer',
+  'subscriptionButtonIcon',
+  'subscriptionButtonLabel',
+  // Subscription Popover
+  'subscription__popoverTriggerContainer',
+  'subscription__popoverTrigger',
+  'subscriptionTriggerIcon',
+  'subscription__popoverContent',
+  // Subscription Preferences
+  'subscriptionPreferencesContainer',
+  'subscriptionPreferencesHeaderContainer',
+  'subscriptionPreferencesHeader',
+  'subscriptionPreferencesInfoIcon',
+  'subscriptionPreferencesContent',
+  'subscriptionPreferencesGroupsContainer',
+  // Subscription Preferences Fallback
+  'subscriptionPreferencesFallback',
+  'subscriptionPreferencesFallbackTexts',
+  'subscriptionPreferencesFallbackHeader',
+  'subscriptionPreferencesFallbackDescription',
+  // Subscription Preference Row
+  'subscriptionPreferenceRow',
+  'subscriptionPreferenceLabel',
+  // Subscription Preference Group Row
+  'subscriptionPreferenceGroupContainer',
+  'subscriptionPreferenceGroupHeader',
+  'subscriptionPreferenceGroupLabelContainer',
+  'subscriptionPreferenceGroupLabelIcon',
+  'subscriptionPreferenceGroupLabel',
+  'subscriptionPreferenceGroupActionsContainer',
+  'subscriptionPreferenceGroupActionsContainerRight__icon',
+  'subscriptionPreferenceGroupBody',
+  'subscriptionPreferenceGroupWorkflowRow',
+  'subscriptionPreferenceGroupWorkflowLabel',
+] as const;
+
+export const connectChatAppearanceKeys = [
+  'connectChatContainer',
+  'connectChatButton',
+  'connectChatButtonContainer',
+  'connectChatButtonLabel',
+  'connectChatMisconfiguredTooltip',
+] as const;
+
+export const channelConnectButtonAppearanceKeys = [
+  'channelConnectButtonContainer',
+  'channelConnectButton',
+  'channelConnectButtonInner',
+  'channelConnectButtonIcon',
+  'channelConnectButtonLabel',
+  'channelConnectButtonMisconfiguredTooltip',
+] as const;
+
+export const linkSlackUserAppearanceKeys = [
+  'linkSlackUserContainer',
+  'linkSlackUserButton',
+  'linkSlackUserButtonContainer',
+  'linkSlackUserButtonIcon',
+  'linkSlackUserButtonLabel',
+] as const;
+
+export const linkMsTeamsUserAppearanceKeys = [
+  'linkMsTeamsUserContainer',
+  'linkMsTeamsUserButton',
+  'linkMsTeamsUserButtonContainer',
+  'linkMsTeamsUserButtonIcon',
+  'linkMsTeamsUserButtonLabel',
+] as const;
+
+export const appearanceKeys = [
+  ...commonAppearanceKeys,
+  ...inboxAppearanceKeys,
+  ...subscriptionAppearanceKeys,
+  ...connectChatAppearanceKeys,
+  ...linkSlackUserAppearanceKeys,
+  ...linkMsTeamsUserAppearanceKeys,
+  ...channelConnectButtonAppearanceKeys,
+];

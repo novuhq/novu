@@ -1,0 +1,47 @@
+{
+  "name": "nestjs",
+  "version": "0.0.6",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "dev:debug": "nest start --debug --watch",
+    "start": "node dist/main",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "test": "vitest",
+    "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "start:studio": "npx novu@latest dev --port 4000 --dashboard-url http://localhost:4201",
+    "sync:studio": "npx novu@latest sync -s SECRET_KEY -b TUNNEL_URL -a http://localhost:3000"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.1.27",
+    "@nestjs/config": "4.0.4",
+    "@nestjs/core": "11.1.27",
+    "@nestjs/platform-express": "11.1.27",
+    "@novu/framework": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.23",
+    "@nestjs/schematics": "11.1.0",
+    "@nestjs/testing": "11.1.27",
+    "@types/express": "^4.17.17",
+    "@types/node": "^22.0.0",
+    "@types/supertest": "^6.0.2",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "5.6.2",
+    "unplugin-swc": "^1.5.1",
+    "vitest": "^4.1.0"
+  }
+}

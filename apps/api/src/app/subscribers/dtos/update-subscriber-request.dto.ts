@@ -1,41 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
-import { SubscriberCustomData } from '@novu/shared';
-import { Transform } from 'class-transformer';
+import { IsArray, IsOptional } from 'class-validator';
+import { BaseSubscriberFieldsDto } from '../../shared/dtos/base-subscriber-fields.dto';
+import { SubscriberChannelDto } from './create-subscriber-request.dto';
 
-export class UpdateSubscriberRequestDto {
-  @ApiProperty()
-  @Transform((params) => (params.value === '' ? null : params.value))
+export class UpdateSubscriberRequestDto extends BaseSubscriberFieldsDto {
+  @ApiProperty({
+    description: 'An array of communication channels for the subscriber.',
+    type: SubscriberChannelDto,
+    isArray: true,
+    required: false,
+  })
   @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  firstName?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  lastName?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  phone?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  avatar?: string;
-
-  @ApiProperty()
-  @IsLocale()
-  @IsOptional()
-  locale?: string;
-
-  @ApiProperty()
-  @IsOptional()
-  data?: SubscriberCustomData;
+  @IsArray()
+  channels?: SubscriberChannelDto[];
 }

@@ -1,66 +1,60 @@
-FROM node:20-alpine3.19 as dev_base
-RUN apk add g++ make py3-pip
+# Use the base image for development
+FROM node:22.23.0-alpine3.23 AS dev_base
+RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
-RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@8.9.0
-RUN pnpm --version
+# Install global dependencies
+RUN npm --no-update-notifier --no-fund --global install pm2@6.0.14 pnpm@11.0.9 && \
+    pnpm --version
+
+# Set non-root user
+USER 1000
+WORKDIR /usr/src/app
+
+FROM dev_base AS dev
+ARG PACKAGE_PATH
+
+# Copy necessary directories to the image with appropriate ownership
+COPY --chown=1000:1000 ./meta ./deps ./pkg ./
+
+# Install dependencies and build the webhook service
+RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
+    pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..." \
+    --frozen-lockfile --unsafe-perm --reporter=silent && \
+    NODE_ENV=production pnpm build:webhook
+
+# Set the working directory to the webhook app and copy example environment file
+WORKDIR /usr/src/app/apps/webhook
+RUN cp src/.example.env dist/.env
+RUN cp src/.env.development dist/.env.development
+RUN cp src/.env.production dist/.env.production
+
+# Set the working directory to the root of the app
+WORKDIR /usr/src/app
+
+# ------- DEPLOY ----------
+FROM dev AS deploy
+
+WORKDIR /usr/src/app
+RUN pnpm --filter @novu/webhook deploy --legacy --prod /usr/src/deploy
+
+# ------- PRODUCTION BUILD ----------
+# Use clean base for production (NO Python)
+FROM node:22.23.0-alpine3.23 AS prod
+
+ENV CI=true
+
+# Install only runtime dependencies
+RUN npm --no-update-notifier --no-fund --global install pm2@6.0.14 && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 USER 1000
 WORKDIR /usr/src/app
 
-# ------- DEV BUILD ----------
-FROM dev_base AS dev
-ARG PACKAGE_PATH
+# Flat node_modules from pnpm deploy (no symlinks, no hoisting issues)
+COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 
+# Built output (not included by pnpm deploy because dist is gitignored)
+COPY --chown=1000:1000 --from=dev /usr/src/app/apps/webhook/dist ./dist
 
-COPY --chown=1000:1000 ./meta .
-COPY --chown=1000:1000 ./deps .
-COPY --chown=1000:1000 ./pkg .
-
-RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
- pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
- --frozen-lockfile\
- --unsafe-perm\
- --reporter=silent
-
-RUN NODE_ENV=production pnpm build:webhook
-
-WORKDIR /usr/src/app/apps/webhook
-
-RUN cp src/.example.env dist/src/.env
-RUN cp src/.env.test dist/src/.env.test
-RUN cp src/.env.development dist/src/.env.development
-RUN cp src/.env.production dist/src/.env.production
-
-WORKDIR /usr/src/app
-
-# ------- ASSETS BUILD ----------
-FROM dev AS assets
-
-WORKDIR /usr/src/app
-
-# Remove all dependencies so later we can only install prod dependencies without devDependencies
-RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
-
-# ------- PRODUCTION BUILD ----------
-FROM dev_base AS prod
-ARG PACKAGE_PATH
-
-ENV CI=true
-
-WORKDIR /usr/src/app
-
-COPY --chown=1000:1000 ./meta .
-
-# Get the build artifacts that only include dist folders
-COPY --chown=1000:1000 --from=assets /usr/src/app .
-
-RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
- pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..."\
- --frozen-lockfile\
- --unsafe-perm\
- --reporter=silent
-
-WORKDIR /usr/src/app/apps/webhook
-CMD [ "pm2-runtime", "dist/main.js" ]
+ENTRYPOINT [ "sh", "-c", "pm2-runtime start dist/main.js -i max" ]

@@ -1,17 +1,23 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-
-import { applyDiff } from 'recursive-diff';
-import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
-import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { applyDiff, rdiffResult } from 'recursive-diff';
+import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
 import { PromoteLayoutChange } from '../promote-layout-change';
-import { PromoteNotificationTemplateChange } from '../promote-notification-template-change';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
-import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
 import { PromoteTranslationChange } from '../promote-translation-change';
 import { PromoteTranslationGroupChange } from '../promote-translation-group-change';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { INotificationTemplateChangeService } from '../shared';
+import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
+
+function sanitizeDiff(diff: unknown): rdiffResult[] {
+  if (!Array.isArray(diff)) return [];
+
+  return diff.filter((item) => item && Array.isArray(item.path));
+}
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -19,21 +25,27 @@ export class PromoteChangeToEnvironment {
     private changeRepository: ChangeRepository,
     private environmentRepository: EnvironmentRepository,
     private promoteLayoutChange: PromoteLayoutChange,
-    @Inject(forwardRef(() => PromoteNotificationTemplateChange))
-    private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
+    @Inject('INotificationTemplateChangeService')
+    private promoteNotificationTemplateChange: INotificationTemplateChangeService,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,
     private promoteFeedChange: PromoteFeedChange,
     private promoteTranslationChange: PromoteTranslationChange,
-    private promoteTranslationGroupChange: PromoteTranslationGroupChange
-  ) {}
+    private promoteTranslationGroupChange: PromoteTranslationGroupChange,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: PromoteChangeToEnvironmentCommand) {
     const changes = await this.changeRepository.getEntityChanges(command.organizationId, command.type, command.itemId);
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {
-        return applyDiff(prev, change.change);
+        const sanitized = sanitizeDiff(change.change);
+        if (sanitized.length === 0) return prev;
+
+        return applyDiff(prev, sanitized);
       }, {});
 
     const environment = await this.environmentRepository.findOne({
@@ -72,7 +84,9 @@ export class PromoteChangeToEnvironment {
         await this.promoteTranslationGroupChange.execute(typeCommand);
         break;
       default:
-        Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);
+        this.logger.error(
+          `Change with type ${command.type} could not be enabled from environment ${command.environmentId}`
+        );
     }
   }
 }

@@ -6,13 +6,13 @@ runs:
   using: composite
 
   steps:
-    - uses: mansagroup/nrwl-nx-action@v3
+    - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
       env:
         PORT: '1336'
       with:
         targets: lint:openapi
-        projects: '@novu/api'
-        
+        projects: '@novu/api-service'
+
     - name: Kill port for api 1336 for unit tests
       shell: bash
       run: sudo kill -9 $(sudo lsof -t -i:1336)

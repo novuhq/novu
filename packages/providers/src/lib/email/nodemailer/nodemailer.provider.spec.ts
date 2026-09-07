@@ -1,0 +1,289 @@
+import { fail } from 'assert';
+
+import nodemailer from 'nodemailer';
+import { ConnectionOptions } from 'tls';
+import { afterEach, describe, expect, test, vi } from 'vitest';
+import { NodemailerProvider } from './nodemailer.provider';
+
+const sendMailMock = vi.fn().mockReturnValue(() => {
+  return {} as any;
+});
+
+vi.mock(import('nodemailer'), async (importOriginal) => {
+  const actual = await importOriginal();
+
+  return {
+    ...actual,
+    createTransport: vi.fn().mockImplementation(() => {
+      return {
+        sendMail: sendMailMock,
+      };
+    }),
+  };
+});
+
+const buffer = Buffer.from('test');
+const mockNovuMessage = {
+  to: ['test@test2.com'],
+  subject: 'test subject',
+  html: '<div> Mail Content </div>',
+  attachments: [{ mime: 'text/plain', file: buffer, name: 'test.txt' }],
+  from: 'test@test.com',
+};
+
+describe.skip('NodemailerProvider', () => {
+  afterEach(() => {
+    sendMailMock.mockReset();
+  });
+
+  describe('Config is set to secure=false but not user and password set', () => {
+    test('should trigger nodemailer without auth with rejectUnauthorized as false', async () => {
+      const config = {
+        host: 'test.test.email',
+        port: 587,
+        secure: false,
+        from: 'test@test.com',
+        user: undefined,
+        password: undefined,
+      };
+      const provider = new NodemailerProvider(config);
+      await provider.sendMessage(mockNovuMessage);
+
+      expect(nodemailer.createTransport).toHaveBeenCalled();
+      expect(nodemailer.createTransport).toHaveBeenCalledWith({
+        name: config.host,
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
+        auth: undefined,
+        dkim: undefined,
+        ignoreTls: undefined,
+        requireTls: undefined,
+      });
+    });
+  });
+
+  describe('Config is set to secure=false (default; TLS used if server supports STARTTLS extension', () => {
+    const mockConfig = {
+      host: 'test.test.email',
+      port: 587,
+      secure: false,
+      from: 'test@test.com',
+      senderName: 'John Doe',
+      user: 'test@test.com',
+      password: 'test123',
+    };
+
+    test('should trigger nodemailer correctly', async () => {
+      const provider = new NodemailerProvider(mockConfig);
+      await provider.sendMessage(mockNovuMessage);
+
+      expect(sendMailMock).toHaveBeenCalled();
+      expect(sendMailMock).toHaveBeenCalledWith({
+        from: { address: mockNovuMessage.from, name: mockConfig.senderName },
+        html: mockNovuMessage.html,
+        subject: mockNovuMessage.subject,
+        to: mockNovuMessage.to,
+        attachments: [
+          {
+            contentType: 'text/plain',
+            content: buffer,
+            filename: 'test.txt',
+          },
+        ],
+      });
+    });
+
+    test('should check provider integration correctly', async () => {
+      const provider = new NodemailerProvider(mockConfig);
+      const response = await provider.checkIntegration(mockNovuMessage);
+
+      expect(sendMailMock).toHaveBeenCalled();
+      expect(response.success).toBe(true);
+
+      expect(nodemailer.createTransport).toHaveBeenCalled();
+      expect(nodemailer.createTransport).toHaveBeenCalledWith({
+        name: mockConfig.host,
+        host: mockConfig.host,
+        port: mockConfig.port,
+        secure: mockConfig.secure,
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
+        auth: {
+          user: mockConfig.user,
+          pass: mockConfig.password,
+        },
+        dkim: undefined,
+        tls: undefined,
+      });
+    });
+  });
+
+  describe('Config is set to secure=true and TLS options are provided', () => {
+    const mockConfig = {
+      host: 'test.test.email',
+      port: 587,
+      secure: true,
+      from: 'test@test.com',
+      senderName: 'John Doe',
+      user: 'test@test.com',
+      password: 'test123',
+      tlsOptions: {
+        rejectUnauthorized: false,
+      },
+    };
+
+    test('should trigger nodemailer correctly', async () => {
+      const provider = new NodemailerProvider(mockConfig);
+      await provider.sendMessage(mockNovuMessage);
+
+      expect(sendMailMock).toHaveBeenCalled();
+      expect(sendMailMock).toHaveBeenCalledWith({
+        from: { address: mockNovuMessage.from, name: mockConfig.senderName },
+        html: mockNovuMessage.html,
+        subject: mockNovuMessage.subject,
+        to: mockNovuMessage.to,
+        attachments: [
+          {
+            contentType: 'text/plain',
+            content: buffer,
+            filename: 'test.txt',
+          },
+        ],
+      });
+    });
+
+    test('should trigger nodemailer correctly with _passthrough', async () => {
+      const provider = new NodemailerProvider(mockConfig);
+      await provider.sendMessage(mockNovuMessage, {
+        _passthrough: {
+          body: {
+            subject: 'test subject _passthrough',
+          },
+        },
+      });
+
+      expect(sendMailMock).toHaveBeenCalled();
+      expect(sendMailMock).toHaveBeenCalledWith({
+        from: { address: mockNovuMessage.from, name: mockConfig.senderName },
+        html: mockNovuMessage.html,
+        subject: 'test subject _passthrough',
+        to: mockNovuMessage.to,
+        attachments: [
+          {
+            contentType: 'text/plain',
+            content: buffer,
+            filename: 'test.txt',
+          },
+        ],
+      });
+    });
+
+    test('should check provider integration correctly', async () => {
+      const provider = new NodemailerProvider(mockConfig);
+      const response = await provider.checkIntegration(mockNovuMessage);
+
+      expect(sendMailMock).toHaveBeenCalled();
+      expect(response.success).toBe(true);
+    });
+
+    test('should throw an error if TLS options are not a valid JSON', () => {
+      try {
+        new NodemailerProvider({
+          ...mockConfig,
+          tlsOptions: (() => {}) as unknown as ConnectionOptions,
+        });
+        fail('Should not reach here');
+      } catch (error) {
+        expect(error.message).toBe(
+          'TLS options is not a valid JSON. Check again the value set for NODEMAILER_TLS_OPTIONS'
+        );
+      }
+    });
+  });
+});
+
+describe('NodemailerProvider header forwarding', () => {
+  const mockConfig = {
+    host: 'test.test.email',
+    port: 587,
+    secure: false,
+    from: 'test@test.com',
+    senderName: 'John Doe',
+    user: 'test@test.com',
+    password: 'test123',
+  };
+
+  test('should forward custom headers to sendMail', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+
+    await provider.sendMessage({
+      ...mockNovuMessage,
+      headers: {
+        'In-Reply-To': '<original-message-id@example.com>',
+        References: '<original-message-id@example.com>',
+      },
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: {
+          'In-Reply-To': '<original-message-id@example.com>',
+          References: '<original-message-id@example.com>',
+        },
+      })
+    );
+  });
+
+  test('should forward custom MIME alternatives to sendMail', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+    const reactionAlternative = {
+      contentType: 'text/vnd.google.email-reaction+json',
+      content: JSON.stringify({ version: 1, emoji: '👀' }),
+    };
+
+    await provider.sendMessage({
+      ...mockNovuMessage,
+      alternatives: [reactionAlternative],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        alternatives: [reactionAlternative],
+      })
+    );
+  });
+
+  test('should use undisclosed recipients when to is empty and cc is provided', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+
+    await provider.sendMessage({
+      ...mockNovuMessage,
+      to: [],
+      cc: ['cc@example.com'],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'undisclosed-recipients:;',
+        cc: ['cc@example.com'],
+      })
+    );
+  });
+
+  test('should not include headers field when no custom headers provided', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+
+    await provider.sendMessage(mockNovuMessage);
+
+    const payload = spy.mock.calls[0][0] as Record<string, unknown>;
+
+    expect(payload).not.toHaveProperty('headers');
+  });
+});

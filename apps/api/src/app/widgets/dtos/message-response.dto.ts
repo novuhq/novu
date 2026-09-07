@@ -1,218 +1,403 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { SubscriberResponseDto } from '@novu/application-generic';
 import {
   ButtonTypeEnum,
   ChannelCTATypeEnum,
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  IMessage,
+  IMessageAction,
+  IMessageCTA,
   MessageActionStatusEnum,
   TextAlignEnum,
 } from '@novu/shared';
-import { SubscriberResponseDto } from '../../subscribers/dtos';
-import { WorkflowResponse } from '../../workflows/dto/workflow-response.dto';
+import { WorkflowResponse } from '../../workflows-v1/dtos/workflow-response.dto';
 
 class EmailBlockStyles {
   @ApiProperty({
-    enum: ['left', 'right', 'center'],
+    enum: [...Object.values(TextAlignEnum)],
+    enumName: 'TextAlignEnum',
+    description: 'Text alignment for the email block',
   })
   textAlign?: TextAlignEnum;
 }
 
-class EmailBlock {
+export class EmailBlock {
   @ApiProperty({
-    enum: ['text', 'button'],
+    enum: [...Object.values(EmailBlockTypeEnum)],
+    enumName: 'EmailBlockTypeEnum',
+    description: 'Type of the email block',
   })
   type: EmailBlockTypeEnum;
-  @ApiProperty()
+
+  @ApiProperty({
+    type: String,
+    description: 'Content of the email block',
+  })
   content: string;
-  @ApiPropertyOptional()
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'URL associated with the email block, if any',
+  })
   url?: string;
+
   @ApiPropertyOptional({
     type: EmailBlockStyles,
+    description: 'Styles applied to the email block',
   })
   styles?: EmailBlockStyles;
 }
 
 class MessageActionResult {
-  @ApiPropertyOptional()
-  payload?: Record<string, unknown>;
   @ApiPropertyOptional({
-    enum: ButtonTypeEnum,
+    description: 'Payload of the action result',
+    type: 'object',
+    additionalProperties: true,
+  })
+  payload?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    enum: [...Object.values(ButtonTypeEnum)],
+    enumName: 'ButtonTypeEnum',
+    description: 'Type of button for the action result',
   })
   type?: ButtonTypeEnum;
 }
 
 class MessageButton {
   @ApiProperty({
-    enum: ButtonTypeEnum,
+    enum: [...Object.values(ButtonTypeEnum)],
+    enumName: 'ButtonTypeEnum',
+    description: 'Type of the button',
   })
   type: ButtonTypeEnum;
-  @ApiProperty()
+
+  @ApiProperty({
+    type: String,
+    description: 'Content of the button',
+  })
   content: string;
-  @ApiPropertyOptional()
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Content of the result when the button is clicked',
+  })
   resultContent?: string;
 }
 
-class MessageAction {
+class MessageAction implements IMessageAction {
   @ApiPropertyOptional({
-    enum: MessageActionStatusEnum,
+    enum: [...Object.values(MessageActionStatusEnum)],
+    enumName: 'MessageActionStatusEnum',
+    description: 'Status of the message action',
   })
   status?: MessageActionStatusEnum;
 
   @ApiPropertyOptional({
     type: MessageButton,
     isArray: true,
+    description: 'List of buttons associated with the message action',
   })
   buttons?: MessageButton[];
 
   @ApiPropertyOptional({
     type: MessageActionResult,
+    description: 'Result of the message action',
   })
-  result?: MessageActionResult;
+  result: MessageActionResult;
 }
 
 class MessageCTAData {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'URL for the call to action',
+  })
   url?: string;
 }
 
-class MessageCTA {
-  @ApiPropertyOptional()
-  type?: ChannelCTATypeEnum;
-  @ApiProperty()
+export class MessageCTA implements IMessageCTA {
+  @ApiPropertyOptional({
+    enum: [...Object.values(ChannelCTATypeEnum)],
+    enumName: 'ChannelCTATypeEnum',
+    description: 'Type of call to action',
+  })
+  type: ChannelCTATypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Data associated with the call to action',
+    type: MessageCTAData,
+  })
   data: MessageCTAData;
-  @ApiPropertyOptional()
+
+  @ApiPropertyOptional({
+    description: 'Action associated with the call to action',
+    type: MessageAction,
+  })
   action?: MessageAction;
 }
 
 @ApiExtraModels(EmailBlock, MessageCTA)
-export class MessageResponseDto {
-  @ApiPropertyOptional()
-  _id?: string;
+export class MessageResponseDto implements IMessage {
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Unique identifier for the message',
+  })
+  _id: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: 'Template ID associated with the message',
+  })
   _templateId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    description: 'Environment ID where the message is sent',
+  })
   _environmentId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: 'Message template ID',
+  })
   _messageTemplateId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    description: 'Organization ID associated with the message',
+  })
   _organizationId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    description: 'Notification ID associated with the message',
+  })
   _notificationId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    description: 'Subscriber ID associated with the message',
+  })
   _subscriberId: string;
 
   @ApiPropertyOptional({
     type: SubscriberResponseDto,
+    description: 'Subscriber details, if available',
   })
   subscriber?: SubscriberResponseDto;
 
   @ApiPropertyOptional({
     type: WorkflowResponse,
+    description: 'Workflow template associated with the message',
   })
   template?: WorkflowResponse;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Identifier for the message template',
+  })
   templateIdentifier?: string;
 
-  @ApiPropertyOptional()
-  createdAt?: string;
-
   @ApiProperty({
+    type: String,
+    description: 'Creation date of the message',
+  })
+  createdAt: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Array of delivery dates for the message, if the message has multiple delivery dates, for example after being snoozed',
+  })
+  deliveredAt?: string[];
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Last seen date of the message, if available',
+  })
+  lastSeenDate?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Last read date of the message, if available',
+  })
+  lastReadDate?: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
     oneOf: [
       {
-        $ref: getSchemaPath(EmailBlock),
+        type: 'array',
+        items: {
+          $ref: getSchemaPath(EmailBlock),
+        },
       },
       {
         type: 'string',
+        description: 'String representation of the content',
       },
     ],
+    description: 'Content of the message, can be an email block or a string',
   })
   content: string | EmailBlock[];
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    description: 'Transaction ID associated with the message',
+  })
   transactionId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Subject of the message, if applicable',
+  })
   subject?: string;
 
   @ApiProperty({
-    enum: ChannelTypeEnum,
+    enum: [...Object.values(ChannelTypeEnum)],
+    enumName: 'ChannelTypeEnum',
+    description: 'Channel type through which the message is sent',
   })
   channel: ChannelTypeEnum;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: Boolean,
+    description: 'Indicates if the message has been read',
+  })
+  read: boolean;
+
+  @ApiProperty({
+    type: Boolean,
+    description: 'Indicates if the message has been seen',
+  })
   seen: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Date when the message will be unsnoozed',
+  })
+  snoozedUntil?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Email address associated with the message, if applicable',
+  })
   email?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Phone number associated with the message, if applicable',
+  })
   phone?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Direct webhook URL for the message, if applicable',
+  })
   directWebhookUrl?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Provider ID associated with the message, if applicable',
+  })
   providerId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Device tokens associated with the message, if applicable',
+  })
   deviceTokens?: string[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Title of the message, if applicable',
+  })
   title?: string;
-
-  @ApiProperty()
-  lastSeenDate: string;
 
   @ApiProperty({
     type: MessageCTA,
+    description: 'Call to action associated with the message',
   })
   cta: MessageCTA;
 
-  @ApiProperty()
-  _feedId?: string;
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Feed ID associated with the message, if applicable',
+  })
+  _feedId?: string | null;
 
   @ApiProperty({
     enum: ['sent', 'error', 'warning'],
+    enumName: 'MessageStatusEnum',
+    description: 'Status of the message',
   })
   status: 'sent' | 'error' | 'warning';
 
-  @ApiProperty()
-  errorId: string;
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Error ID if the message has an error',
+  })
+  errorId?: string;
 
-  @ApiProperty()
-  errorText: string;
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Error text if the message has an error',
+  })
+  errorText?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The payload that was used to send the notification trigger',
+    type: 'object',
+    additionalProperties: true,
   })
   payload: Record<string, unknown>;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Provider specific overrides used when triggering the notification',
+    type: 'object',
+    additionalProperties: true,
   })
-  overrides: Record<string, unknown>;
+  overrides?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Context (single or multi) in which the message was sent',
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys?: string[];
 }
 
 export class MessagesResponseDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: Number,
+    description: 'Total number of messages available',
+  })
   totalCount?: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: Boolean,
+    description: 'Indicates if there are more messages available',
+  })
   hasMore: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: [MessageResponseDto],
+    description: 'List of messages',
+  })
   data: MessageResponseDto[];
 
-  @ApiProperty()
+  @ApiProperty({
+    type: Number,
+    description: 'Number of messages per page',
+  })
   pageSize: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: Number,
+    description: 'Current page number',
+  })
   page: number;
 }

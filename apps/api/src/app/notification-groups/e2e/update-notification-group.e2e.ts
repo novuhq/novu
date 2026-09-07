@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Update Notification Group - /notification-groups/:id (PATCH)', async () => {
+describe('Update Notification Group - /notification-groups/:id (PATCH) #novu-v0', async () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -9,12 +9,12 @@ describe('Update Notification Group - /notification-groups/:id (PATCH)', async (
     await session.initialize();
   });
 
-  it('update the notification group by id', async function () {
+  it('update the notification group by id', async () => {
     const postNotificationGroup = await session.testAgent.post(`/v1/notification-groups`).send({
       name: 'Test name 1',
     });
 
-    const id = postNotificationGroup.body.data.id;
+    const { id } = postNotificationGroup.body.data;
 
     const { body: getNotificationGroupResult } = await session.testAgent.get(`/v1/notification-groups/${id}`);
 
@@ -35,12 +35,12 @@ describe('Update Notification Group - /notification-groups/:id (PATCH)', async (
     expect(getUpdatedNotificationGroupResult.data._environmentId).to.equal(session.environment._id);
   });
 
-  it('should return a 404 error if the notification group to be updated does not exist', async function () {
+  it('should return a 404 error if the notification group to be updated does not exist', async () => {
     const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send({
       name: 'Test name',
     });
 
-    const id = postNotificationGroup1.body.data.id;
+    const { id } = postNotificationGroup1.body.data;
 
     await session.testAgent.delete(`/v1/notification-groups/${id}`);
 

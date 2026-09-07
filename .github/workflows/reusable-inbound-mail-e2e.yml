@@ -1,5 +1,8 @@
 name: E2E Inbound Mail Tests
 
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
@@ -27,26 +30,30 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - id: setup
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-             echo "has_token=true" >> $GITHUB_OUTPUT
+          if [ -n "${SUBMODULES_TOKEN:-}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
           else
-             echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
           fi
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         if: steps.setup.outputs.has_token == 'true'
         with:
           submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
 
         # Runs a single command using the runners shell
       - name: Build Inbound Mail
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: CI='' pnpm build:inbound-mail
 
       - name: Run unit tests

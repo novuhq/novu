@@ -1,0 +1,110 @@
+{
+  "name": "@novu/nextjs",
+  "version": "3.19.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novuhq/novu",
+    "directory": "packages/nextjs"
+  },
+  "homepage": "https://novu.co",
+  "description": "Novu <Inbox /> Next.js SDK",
+  "author": "Novu",
+  "license": "ISC",
+  "main": "./dist/cjs/server/index.js",
+  "module": "./dist/esm/pages-router/index.js",
+  "types": "./dist/types/pages-router/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/types/pages-router/index.d.ts",
+        "react-server": "./dist/esm/app-router/index.js",
+        "default": "./dist/esm/pages-router/index.js"
+      },
+      "require": {
+        "types": "./dist/types/pages-router/index.d.ts",
+        "react-server": "./dist/cjs/app-router/index.js",
+        "default": "./dist/cjs/pages-router/index.js"
+      }
+    },
+    "./hooks": {
+      "import": {
+        "types": "./dist/types/hooks/index.d.ts",
+        "default": "./dist/esm/hooks/index.js"
+      },
+      "require": {
+        "types": "./dist/types/hooks/index.d.ts",
+        "default": "./dist/cjs/hooks/index.js"
+      }
+    },
+    "./themes": {
+      "import": {
+        "types": "./dist/types/themes/index.d.ts",
+        "default": "./dist/esm/themes/index.js"
+      },
+      "require": {
+        "types": "./dist/types/themes/index.d.ts",
+        "default": "./dist/cjs/themes/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "dist/cjs/**/*",
+    "dist/esm/**/*",
+    "dist/types/**/*",
+    "server/**/*",
+    "hooks/**/*",
+    "themes/**/*"
+  ],
+  "sideEffects": false,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:watch": "tsup --watch",
+    "build": "tsup && pnpm run build:declarations && pnpm run check-exports",
+    "build:declarations": "tsc -p tsconfig.declarations.json",
+    "check-exports": "attw --pack . --ignore-rules unexpected-module-syntax",
+    "publish:rc": "pnpm publish --tag rc"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.17.4",
+    "@types/node": "^22.0.0",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "esbuild-plugin-file-path-extensions": "^2.1.4",
+    "tsup": "^8.2.1",
+    "typescript": "5.6.2"
+  },
+  "peerDependencies": {
+    "next": ">=13.5.2 || ^14.0.0 || ^15.0.0 || ^16.0.0",
+    "react": "^18.0.0 || ^19.0.0 || ^19.0.0-0",
+    "react-dom": "^18.0.0 || ^19.0.0 || ^19.0.0-0"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@novu/react": "workspace:*"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

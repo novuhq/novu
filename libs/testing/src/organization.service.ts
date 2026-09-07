@@ -1,11 +1,10 @@
-import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { faker } from '@faker-js/faker';
-import { MemberRepository, OrganizationRepository } from '@novu/dal';
+import { CommunityMemberRepository, CommunityOrganizationRepository, OrganizationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 export class OrganizationService {
-  private organizationRepository = new OrganizationRepository();
-
-  private memberRepository = new MemberRepository();
+  private organizationRepository = new CommunityOrganizationRepository();
+  private memberRepository = new CommunityMemberRepository();
 
   async createOrganization(options?: Parameters<OrganizationRepository['create']>[0]) {
     if (options) {
@@ -25,18 +24,16 @@ export class OrganizationService {
   async addMember(organizationId: string, userId: string) {
     await this.memberRepository.addMember(organizationId, {
       _userId: userId,
-      roles: [MemberRoleEnum.ADMIN],
+      roles: [MemberRoleEnum.OSS_ADMIN],
       memberStatus: MemberStatusEnum.ACTIVE,
     });
   }
 
   async getOrganization(organizationId: string) {
-    return await this.organizationRepository.findOne({
-      _id: organizationId,
-    });
+    return await this.organizationRepository.findById(organizationId);
   }
 
   async updateServiceLevel(organizationId: string, serviceLevel: ApiServiceLevelEnum) {
-    await this.organizationRepository.updateServiceLevel(organizationId, serviceLevel);
+    await this.organizationRepository.update({ _id: organizationId }, { apiServiceLevel: serviceLevel });
   }
 }

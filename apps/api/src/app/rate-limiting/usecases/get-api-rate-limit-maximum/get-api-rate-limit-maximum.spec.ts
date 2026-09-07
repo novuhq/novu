@@ -1,15 +1,20 @@
-import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum } from '@novu/shared';
-import { expect } from 'chai';
-import * as sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
-import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
+import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCategoryToFeatureName,
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  getFeatureForTierAsNumber,
+} from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { SharedModule } from '../../../shared/shared.module';
-import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
 import { RateLimitingModule } from '../../rate-limiting.module';
 import { CUSTOM_API_SERVICE_LEVEL } from './get-api-rate-limit-maximum.dto';
+import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
 
 const mockDefaultApiRateLimits = {
   [ApiServiceLevelEnum.FREE]: {
@@ -27,13 +32,11 @@ const mockDefaultApiRateLimits = {
 describe('GetApiRateLimitMaximum', async () => {
   let useCase: GetApiRateLimitMaximum;
   let session: UserSession;
-  let organizationRepository: OrganizationRepository;
+  let organizationRepository: CommunityOrganizationRepository;
   let environmentRepository: EnvironmentRepository;
-  let getDefaultApiRateLimits: GetApiRateLimitServiceMaximumConfig;
 
   let findOneEnvironmentStub: sinon.SinonStub;
   let findOneOrganizationStub: sinon.SinonStub;
-  let defaultApiRateLimits: sinon.SinonStub;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -43,18 +46,17 @@ describe('GetApiRateLimitMaximum', async () => {
       .overrideProvider(CacheService)
       .useValue(MockCacheService.createClient())
       .compile();
+    await moduleRef.init(); // Trigger OnModuleInit
 
     session = new UserSession();
     await session.initialize();
 
     useCase = moduleRef.get<GetApiRateLimitMaximum>(GetApiRateLimitMaximum);
-    organizationRepository = moduleRef.get<OrganizationRepository>(OrganizationRepository);
+    organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
     environmentRepository = moduleRef.get<EnvironmentRepository>(EnvironmentRepository);
-    getDefaultApiRateLimits = moduleRef.get<GetApiRateLimitServiceMaximumConfig>(GetApiRateLimitServiceMaximumConfig);
 
     findOneEnvironmentStub = sinon.stub(environmentRepository, 'findOne');
-    findOneOrganizationStub = sinon.stub(organizationRepository, 'findOne');
-    defaultApiRateLimits = sinon.stub(getDefaultApiRateLimits, 'default').value(mockDefaultApiRateLimits);
+    findOneOrganizationStub = sinon.stub(organizationRepository, 'findById');
   });
 
   afterEach(() => {
@@ -135,8 +137,11 @@ describe('GetApiRateLimitMaximum', async () => {
       });
 
       it('should return default api rate limit for the organizations apiServiceLevel when apiServiceLevel IS set on organization', async () => {
-        const defaultApiRateLimit = mockDefaultApiRateLimits[mockApiServiceLevel][mockApiRateLimitCategory];
-
+        const defaultApiRateLimit = getFeatureForTierAsNumber(
+          ApiRateLimitCategoryToFeatureName[mockApiRateLimitCategory],
+          mockApiServiceLevel,
+          false
+        );
         const [rateLimit] = await useCase.execute(
           GetApiRateLimitMaximumCommand.create({
             organizationId: session.organization._id,
@@ -149,8 +154,6 @@ describe('GetApiRateLimitMaximum', async () => {
       });
 
       it('should return the api service level set on organization when apiServiceLevel IS set on organization', async () => {
-        const mockApiServiceLevel = ApiServiceLevelEnum.FREE;
-
         const [, apiServiceLevel] = await useCase.execute(
           GetApiRateLimitMaximumCommand.create({
             organizationId: session.organization._id,
@@ -171,7 +174,11 @@ describe('GetApiRateLimitMaximum', async () => {
       });
 
       it('should return default api rate limit for the UNLIMITED service level when apiServiceLevel IS NOT set on organization', async () => {
-        const defaultApiRateLimit = mockDefaultApiRateLimits[ApiServiceLevelEnum.UNLIMITED][mockApiRateLimitCategory];
+        const defaultApiRateLimit = getFeatureForTierAsNumber(
+          ApiRateLimitCategoryToFeatureName[mockApiRateLimitCategory],
+          ApiServiceLevelEnum.UNLIMITED,
+          false
+        );
 
         const [rateLimit] = await useCase.execute(
           GetApiRateLimitMaximumCommand.create({

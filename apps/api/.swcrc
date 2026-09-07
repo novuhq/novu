@@ -1,0 +1,16 @@
+{
+  "$schema": "https://swc.rs/schema.json",
+  "jsc": {
+    "target": "es5",
+    "parser": {
+      "syntax": "typescript",
+      "tsx": true,
+      "decorators": true,
+      "dynamicImport": true
+    }
+  },
+  "module": {
+    "type": "commonjs"
+  },
+  "sourceMaps": "inline"
+}

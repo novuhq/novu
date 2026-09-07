@@ -1,7 +1,7 @@
 import { processTestAgentExpectedStatusCode, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update user name and profile picture - /users/profile (PUT)', async () => {
+describe('Update user name and profile picture - /users/profile (PUT) #novu-v0-os', async () => {
   let session: UserSession;
 
   before(async () => {
@@ -18,7 +18,7 @@ describe('Update user name and profile picture - /users/profile (PUT)', async ()
       .send({
         firstName: 'John',
         lastName: 'Doe',
-        profilePicture: profilePicture,
+        profilePicture,
       })
       .expect(processTestAgentExpectedStatusCode(200));
 

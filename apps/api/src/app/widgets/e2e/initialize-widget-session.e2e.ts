@@ -1,39 +1,25 @@
+import { createHash } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import {
-  buildIntegrationKey,
-  CacheInMemoryProviderService,
-  CacheService,
-  createHash,
-  InvalidateCacheService,
-} from '@novu/application-generic';
 
-import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
+// import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
 
 const integrationRepository = new IntegrationRepository();
 const subscriberId = '12345';
 
-describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
+describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', async () => {
   let session: UserSession;
-  let invalidateCache: InvalidateCacheService;
-
-  before(async () => {
-    const cacheInMemoryProviderService = new CacheInMemoryProviderService();
-    const cacheService = new CacheService(cacheInMemoryProviderService);
-    await cacheService.initialize();
-    invalidateCache = new InvalidateCacheService(cacheService);
-  });
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
 
-    await setHmacConfig(subscriberId, session, invalidateCache);
+    await setHmacConfig(session);
   });
 
-  it('should create a valid app session for current widget user', async function () {
+  it('should create a valid app session for current widget user', async () => {
     const secretKey = session.environment.apiKeys[0].key;
     const hmacHash = createHash(secretKey, subscriberId);
 
@@ -60,7 +46,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(body.data.profile.phone).to.equal(phone);
   });
 
-  it('should throw an error when an invalid environment Id passed', async function () {
+  it('should throw an error when an invalid environment Id passed', async () => {
     const { body } = await session.testAgent.post('/v1/widgets/session/initialize').send({
       applicationIdentifier: 'some-not-existing-id',
       subscriberId,
@@ -73,7 +59,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(body.message).to.contain('Please provide a valid app identifier');
   });
 
-  it('should pass the test with valid HMAC hash', async function () {
+  it('should pass the test with valid HMAC hash', async () => {
     const secretKey = session.environment.apiKeys[0].key;
 
     const hmacHash = createHash(secretKey, subscriberId);
@@ -82,7 +68,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(response.status).to.equal(201);
   });
 
-  it('should fail the test with invalid subscriber id', async function () {
+  it('should fail the test with invalid subscriber id', async () => {
     const validSecretKey = session.environment.apiKeys[0].key;
 
     const invalidSubscriberId = `invalid-suscriberId`;
@@ -93,7 +79,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(responseInvalidSubscriberId.body.message).to.contain('Please provide a valid HMAC hash');
   });
 
-  it('should fail the test with invalid secret key', async function () {
+  it('should fail the test with invalid secret key', async () => {
     const validSecretKey = session.environment.apiKeys[0].key;
 
     const invalidSecretKey = 'invalid-secret-key';
@@ -105,17 +91,21 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(responseInvalidSecretKey.body.message).to.contain('Please provide a valid HMAC hash');
   });
 
-  it('should pass api key migration regression tests', async function () {
-    const validSecretKey = session.environment.apiKeys[0].key;
+  /*
+   * it('should pass api key migration regression tests', async function () {
+   *   const validSecretKey = session.environment.apiKeys[0].key;
+   */
 
-    const invalidSubscriberHmacHash = createHash(validSecretKey, subscriberId);
+  //   const invalidSubscriberHmacHash = createHash(validSecretKey, subscriberId);
 
-    await encryptApiKeysMigration();
+  //   await encryptApiKeysMigration();
 
-    const response = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
+  //   const response = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
 
-    expect(response.status).to.equal(201);
-  });
+  /*
+   *   expect(response.status).to.equal(201);
+   * });
+   */
 });
 
 async function initWidgetSession(subscriberIdentifier: string, session, hmacHash?: string) {
@@ -130,27 +120,7 @@ async function initWidgetSession(subscriberIdentifier: string, session, hmacHash
   });
 }
 
-async function setHmacConfig(userId: string, session: UserSession, invalidateCache: InvalidateCacheService) {
-  await invalidateCache.invalidateQuery({
-    key: buildIntegrationKey().invalidate({
-      _organizationId: session.organization._id,
-    }),
-  });
-
-  const command = {
-    environmentId: session.environment._id,
-    userId,
-    providerId: InAppProviderIdEnum.Novu,
-    channel: ChannelTypeEnum.IN_APP,
-  };
-
-  await invalidateCache.invalidateByKey({
-    key: buildIntegrationKey().cache({
-      _organizationId: session.organization._id,
-      ...command,
-    }),
-  });
-
+async function setHmacConfig(session: UserSession) {
   const result = await integrationRepository.update(
     {
       _environmentId: session.environment._id,

@@ -1,248 +1,141 @@
 {
   "version": "0.2.0",
   "configurations": [
-
     {
       "name": "API - TEST ENV",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:test"
-      ],
+      "runtimeArgs": ["run-script", "start:test"],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/api",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "API",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start"
-      ],
-      "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/api",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceFolder}/apps/api/src/main.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "sourceMaps": true,
+      "protocol": "inspector",
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "stopOnEntry": false
     },
     {
-      "name": "worker",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start"
-      ],
-      "runtimeExecutable": "npm",
+      "name": "Worker",
       "cwd": "${workspaceFolder}/apps/worker",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceFolder}/apps/worker/src/main.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "sourceMaps": true,
+      "protocol": "inspector",
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "stopOnEntry": false
     },
     {
-      "name": "WEB",
+      "name": "DASHBOARD",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:dev"
-      ],
+      "runtimeArgs": ["run-script", "start"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "cwd": "${workspaceFolder}/apps/dashboard",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "WIDGET",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:dev"
-      ],
+      "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/widget",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "WIDGET - test",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:test"
-      ],
+      "runtimeArgs": ["run-script", "start:test"],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/widget",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "WS",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start"
-      ],
+      "runtimeArgs": ["run-script", "start"],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/ws",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "WS - TEST ENV",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:test"
-      ],
+      "runtimeArgs": ["run-script", "start:test"],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/ws",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "DAL",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:dev"
-      ],
+      "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/libs/dal",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "TESTING LIB",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:dev"
-      ],
+      "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/libs/testing",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
-    },
-    {
-      "name": "EMBED",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:dev"
-      ],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/libs/embed",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       "name": "SHARED",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:dev"
-      ],
+      "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/libs/shared",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "cwd": "${workspaceFolder}/packages/shared",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
-      "name": "STORYBOOK",
+      "name": "APPLICATION GENERIC",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "storybook"
-      ],
+      "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
-    },
-    {
-      "name": "CORE",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start:dev"
-      ],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/packages/node",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
-    },
-    {
-      "name": "Cypress open - web",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "cypress:open"
-      ],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
-    },
-    {
-      "name": "Cypress open - widget",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "cypress:open"
-      ],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/widget",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
+      "cwd": "${workspaceFolder}/libs/application-generic",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     }
   ],
   "compounds": [
     {
-      "name": "-- RUN FULL ENV - Local",
-      "configurations": ["API", "DAL", "EMBED", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET"]
+      "name": "-- RUN ENV - Local",
+      "configurations": ["API", "DAL", "SHARED", "DASHBOARD", "worker", "APPLICATION GENERIC"]
     },
     {
-      "name": "-- RUN FULL ENV - Test",
+      "name": "-- RUN ENV - Test",
       "configurations": [
         "API - TEST ENV",
         "DAL",
-        "EMBED",
         "SHARED",
         "TESTING LIB",
         "WS - TEST ENV",
-        "WEB",
-        "WIDGET - test"
+        "DASHBOARD",
+        "WIDGET - test",
+        "worker"
       ]
     }
   ]

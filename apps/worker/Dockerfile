@@ -1,10 +1,12 @@
-FROM node:20-alpine3.19 as dev_base
-RUN apk --update --no-cache add curl g++ make py3-pip
+FROM node:22.23-alpine3.23 AS dev_base
+RUN apk --update --no-cache add curl g++ make py3-pip git
 ENV NX_DAEMON=false
 
-RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@8.9.0
+
+RUN npm i pm2@6.0.14 -g
+RUN npm --no-update-notifier --no-fund --global install pnpm@11.0.9
 RUN pnpm --version
+
 
 USER 1000
 WORKDIR /usr/src/app
@@ -31,42 +33,50 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/worker
 
-RUN cp src/.example.env dist/src/.env
-RUN cp src/.env.test dist/src/.env.test
-RUN cp src/.env.development dist/src/.env.development
-RUN cp src/.env.production dist/src/.env.production
+RUN cp src/.example.env dist/.env
+RUN cp src/.env.development dist/.env.development
+RUN cp src/.env.production dist/.env.production
+RUN rm -f dist/.env.test dist/.env.ci
 
 WORKDIR /usr/src/app
 
-# ------- ASSETS BUILD ----------
-FROM dev AS assets
+# ------- DEPLOY ----------
+FROM dev AS deploy
 
 WORKDIR /usr/src/app
-
-# Remove all dependencies so later we can only install prod dependencies without devDependencies
-RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    pnpm --filter @novu/worker deploy --legacy --prod /usr/src/deploy && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
+      cd $(mktemp -d) && \
+      echo "@taskforcesh:registry=https://npm.taskforce.sh/" > .npmrc && \
+      echo "//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" >> .npmrc && \
+      npm init -y > /dev/null 2>&1 && \
+      npm install @taskforcesh/bullmq-pro@6.11.0 2>/dev/null && \
+      cp -r node_modules/@taskforcesh /usr/src/deploy/node_modules/@taskforcesh && \
+      rm -rf node_modules/@taskforcesh && \
+      mv node_modules /usr/src/deploy/node_modules/@taskforcesh/bullmq-pro/node_modules; \
+    fi
 
 # ------- PRODUCTION BUILD ----------
-FROM dev_base AS prod
-ARG PACKAGE_PATH
+FROM node:22.23-alpine3.23 AS prod
 
 ENV CI=true
 
+RUN apk upgrade --no-cache && \
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 musl musl-utils && \
+    apk --no-cache add curl && \
+    npm i pm2@6.0.14 -g && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+USER 1000
 WORKDIR /usr/src/app
 
-COPY --chown=1000:1000 ./meta .
+# Flat node_modules from pnpm deploy (no symlinks, no hoisting issues)
+COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 
-# Get the build artifacts that only include dist folders
-COPY --chown=1000:1000 --from=assets /usr/src/app .
-
-RUN --mount=type=cache,id=pnpm-store-worker,target=/root/.pnpm-store\
-    --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
- pnpm install --filter "{${PACKAGE_PATH}}..." \
- --frozen-lockfile \
- --unsafe-perm \
- --reporter=silent
+# Built output (not included by pnpm deploy because dist is gitignored)
+COPY --chown=1000:1000 --from=dev /usr/src/app/apps/worker/dist ./dist
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
-WORKDIR /usr/src/app/apps/worker
-CMD [ "pm2-runtime","start", "dist/main.js" ]
+ENTRYPOINT [ "sh", "-c", "pm2-runtime start dist/main.js -i max" ]

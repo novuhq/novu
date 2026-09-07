@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { NotificationGroupEntity, NotificationGroupRepository } from '@novu/dal';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 
 @Injectable()
 export class PromoteNotificationGroupChange {

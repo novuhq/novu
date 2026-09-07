@@ -1,0 +1,692 @@
+import { Injectable } from '@nestjs/common';
+import { AGENT_AUTH_METADATA_KEYS, DirectionEnum } from '@novu/shared';
+import { type ClientSession, FilterQuery, Types } from 'mongoose';
+import { EnforceEnvOrOrgIds } from '../../types';
+import { SortOrder } from '../../types/sort-order';
+import { BaseRepositoryV2 } from '../base-repository-v2';
+import { buildActivationOrConditions } from './billing-activation-rules';
+import {
+  ConversationDBModel,
+  ConversationEntity,
+  ConversationParticipant,
+  ConversationParticipantTypeEnum,
+  ConversationStatusEnum,
+  PendingManagedAgentSetup,
+} from './conversation.entity';
+import { Conversation } from './conversation.schema';
+
+const LIST_CONVERSATIONS_SORT_FIELDS = ['_id', 'createdAt', 'lastActivityAt'] as const;
+type ListConversationsSortField = (typeof LIST_CONVERSATIONS_SORT_FIELDS)[number];
+
+function resolveListConversationsSortBy(sortBy?: string): ListConversationsSortField {
+  if (sortBy && (LIST_CONVERSATIONS_SORT_FIELDS as readonly string[]).includes(sortBy)) {
+    return sortBy as ListConversationsSortField;
+  }
+
+  return '_id';
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+@Injectable()
+export class ConversationRepository extends BaseRepositoryV2<
+  ConversationDBModel,
+  ConversationEntity,
+  EnforceEnvOrOrgIds
+> {
+  constructor() {
+    super(Conversation, ConversationEntity);
+  }
+
+  /**
+   * Resolves a conversation for an inbound platform thread. Must be scoped by
+   * agent and integration so Telegram private-chat IDs (same numeric chat.id
+   * across different bots) do not collide across agents in one environment.
+   */
+  async findByPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    integrationId: string,
+    platformThreadId: string
+  ): Promise<ConversationEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _agentId: agentId,
+        channels: {
+          $elemMatch: {
+            platformThreadId,
+            _integrationId: new Types.ObjectId(integrationId),
+          },
+        },
+      },
+      '*'
+    );
+  }
+
+  async findByAgentIntegrationParticipant(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    integrationId: string,
+    participantId: string,
+    participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER,
+    title?: string,
+    /**
+     * When set, only match conversations whose channel belongs to this platform workspace
+     * (e.g. Slack `team_id`). Required for multi-workspace welcome dedup so a prior welcome
+     * in workspace A does not suppress a welcome in workspace B for the same participant key.
+     */
+    workspaceId?: string
+  ): Promise<ConversationEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _agentId: agentId,
+        channels: {
+          $elemMatch: {
+            _integrationId: new Types.ObjectId(integrationId),
+            ...(workspaceId ? { 'workspace.id': workspaceId } : {}),
+          },
+        },
+        participants: { $elemMatch: { id: participantId, type: participantType } },
+        ...(title ? { title } : {}),
+      },
+      '*'
+    );
+  }
+
+  async findActiveByParticipant(
+    environmentId: string,
+    organizationId: string,
+    participantId: string,
+    participantType = ConversationParticipantTypeEnum.SUBSCRIBER
+  ): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        participants: { $elemMatch: { id: participantId, type: participantType } },
+        status: ConversationStatusEnum.ACTIVE,
+      },
+      '*'
+    );
+  }
+
+  async updateStatus(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    status: ConversationStatusEnum
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { status } }
+    );
+  }
+
+  async updateMetadata(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    metadata: Record<string, unknown>
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { metadata } }
+    );
+  }
+
+  async updateParticipants(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    participants: ConversationParticipant[]
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { participants } }
+    );
+  }
+
+  /**
+   * Repoint every SUBSCRIBER participant from `fromSubscriberId` to
+   * `toSubscriberId` (both external `subscriberId` strings) across the whole
+   * environment. Used by the email adoption merge when an auto-provisioned
+   * "phantom" subscriber is folded into a real customer-created one so its
+   * conversation history follows the surviving identity. The positional `$`
+   * updates the single matching participant per conversation — email threads are
+   * 1:1 (one human + agent), so a conversation never carries both ids. Returns
+   * the number of conversations updated.
+   */
+  async repointSubscriberParticipant(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<number> {
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        participants: {
+          $elemMatch: { id: params.fromSubscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
+        },
+      },
+      { $set: { 'participants.$.id': params.toSubscriberId } }
+    );
+
+    return result.modified;
+  }
+
+  async touchActivity(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    messagePreview: string,
+    session?: ClientSession | null
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      {
+        $set: {
+          lastActivityAt: new Date().toISOString(),
+          lastMessagePreview: messagePreview.slice(0, 200),
+        },
+        $inc: { messageCount: 1 },
+      },
+      session ? { session } : {}
+    );
+  }
+
+  /**
+   * Refresh `lastActivityAt` and `lastMessagePreview` without incrementing `messageCount`.
+   * Used for in-place message edits (replyHandle.edit) — the message count stays the same,
+   * but the conversation's timeline and preview should reflect the latest content.
+   */
+  async touchPreview(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    messagePreview: string,
+    session?: ClientSession | null
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      {
+        $set: {
+          lastActivityAt: new Date().toISOString(),
+          lastMessagePreview: messagePreview.slice(0, 200),
+        },
+      },
+      session ? { session } : {}
+    );
+  }
+
+  async setFirstPlatformMessageId(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    platformThreadId: string,
+    firstPlatformMessageId: string
+  ): Promise<void> {
+    await this.update(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        channels: {
+          $elemMatch: {
+            platformThreadId,
+            firstPlatformMessageId: { $exists: false },
+          },
+        },
+      },
+      { $set: { 'channels.$.firstPlatformMessageId': firstPlatformMessageId } }
+    );
+  }
+
+  /**
+   * Atomically set externalSessionId only if not already set.
+   * Prevents race conditions when two concurrent first-messages
+   * try to create sessions simultaneously.
+   *
+   * Optionally writes `managedSessionVaultId` in the same `$set` so the
+   * vault binding always agrees with the session it was opened against —
+   * a separate write could win the `externalSessionId` race but still
+   * overwrite the vault id of the live session, defeating the rebind
+   * check on the next turn.
+   */
+  async setExternalSessionIdIfMissing(
+    environmentId: string,
+    conversationId: string,
+    sessionId: string,
+    managedSessionVaultId?: string
+  ): Promise<boolean> {
+    const update: Record<string, string> = { externalSessionId: sessionId };
+
+    if (managedSessionVaultId) {
+      update.managedSessionVaultId = managedSessionVaultId;
+    }
+
+    const result = await this.update(
+      {
+        _id: conversationId,
+        _environmentId: environmentId,
+        externalSessionId: { $exists: false },
+      },
+      { $set: update }
+    );
+
+    return result.matched > 0;
+  }
+
+  async setNotificationId(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    notificationId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { _notificationId: notificationId } }
+    );
+  }
+
+  async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId },
+      { $unset: { externalSessionId: '', managedSessionVaultId: '' } }
+    );
+  }
+
+  async setPendingManagedAgentSetup(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    value: PendingManagedAgentSetup
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { pendingManagedAgentSetup: value } }
+    );
+  }
+
+  async setActivePlanMessageId(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    planMessageId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { activePlanMessageId: planMessageId } }
+    );
+  }
+
+  async clearActivePlanMessageId(environmentId: string, organizationId: string, conversationId: string): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $unset: { activePlanMessageId: '' } }
+    );
+  }
+
+  async clearPendingManagedAgentSetup(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $unset: { pendingManagedAgentSetup: '' } }
+    );
+  }
+
+  async findWithPendingManagedAgentSetup(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    participantId: string,
+    participantType = ConversationParticipantTypeEnum.SUBSCRIBER
+  ): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _agentId: agentId,
+        participants: { $elemMatch: { id: participantId, type: participantType } },
+        pendingManagedAgentSetup: { $exists: true },
+      },
+      '*'
+    );
+  }
+
+  /**
+   * Finds conversations where a platform user was shown the auth CTA card and has
+   * not yet been confirmed as linked — i.e. `metadata` still carries the auth-card
+   * tracking key written by the framework auth gate. Scoped to the integration and
+   * the platform participant so a link event only touches that user's own threads.
+   * Powers the real-time "account linked" card update on `CreateChannelEndpoint`.
+   */
+  async findPendingAuthCards(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    participantId: string;
+  }): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: {
+          $elemMatch: {
+            _integrationId: new Types.ObjectId(params.integrationId),
+          },
+        },
+        participants: {
+          $elemMatch: { id: params.participantId, type: ConversationParticipantTypeEnum.PLATFORM_USER },
+        },
+        [`metadata.${AGENT_AUTH_METADATA_KEYS.authCardMessageId}`]: { $exists: true },
+      } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds,
+      '*'
+    );
+  }
+
+  async clearExternalSessionIdsForAgent(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    options?: { session?: ClientSession | null }
+  ): Promise<void> {
+    await this.update(
+      {
+        _agentId: agentId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      { $unset: { externalSessionId: '' } },
+      options?.session ? { session: options.session } : {}
+    );
+  }
+
+  /**
+   * Atomically claims a new active-conversation activation for this billing
+   * period. Returns `true` only for the single caller that wins the race —
+   * MongoDB serializes `findOneAndUpdate`, so a concurrent engagement that
+   * arrives after the winner stamps the billing state re-evaluates the `$or`
+   * against the updated document and matches nothing.
+   *
+   * An engagement starts a new activation when any of the following hold:
+   *   - the conversation has never been counted (`lastCountedPeriodKey` absent);
+   *   - it was resolved since it was last counted (`resolvedAt` present) — reopen;
+   *   - it was last counted in a different billing period — new cycle;
+   *   - the rolling inactivity window has lapsed since the last engagement.
+   */
+  async startActivationIfNeeded(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    periodKey: string;
+    /** ISO timestamp; engagements older than this are window-expired. */
+    windowThresholdIso: string;
+    nowIso: string;
+  }): Promise<boolean> {
+    const updated = await this.findOneAndUpdate(
+      {
+        _id: params.conversationId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        // Single source of truth shared with `classifyActivationReason` — see billing-activation-rules.ts.
+        $or: buildActivationOrConditions({
+          periodKey: params.periodKey,
+          windowThresholdIso: params.windowThresholdIso,
+        }) as FilterQuery<ConversationDBModel>[],
+      },
+      {
+        $set: {
+          'billing.lastCountedPeriodKey': params.periodKey,
+          'billing.lastEngagementAt': params.nowIso,
+          'billing.activationStartedAt': params.nowIso,
+        },
+        $unset: { 'billing.resolvedAt': '' },
+      }
+    );
+
+    return updated !== null;
+  }
+
+  /**
+   * Slides the rolling inactivity window forward without counting a new
+   * activation. Called for every engagement that did not start a new
+   * activation so a continuous thread keeps its window fresh.
+   */
+  async bumpLastEngagement(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    nowIso: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { 'billing.lastEngagementAt': nowIso } }
+    );
+  }
+
+  /**
+   * Marks the conversation resolved for billing so the next agent engagement is
+   * counted as a reopen activation. Paired with the status flip in
+   * `resolveConversation`.
+   */
+  async markBillingResolved(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    nowIso: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { 'billing.resolvedAt': nowIso } }
+    );
+  }
+
+  /**
+   * Atomically advances the conversation event high-watermark and returns the
+   * allocated sequence number (1-based).
+   */
+  async allocateEventSequence(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    minimum = 0
+  ): Promise<number> {
+    const filter = {
+      _id: conversationId,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
+
+    if (minimum > 0) {
+      await this.update(
+        {
+          ...filter,
+          $or: [{ eventSequence: { $lt: minimum } }, { eventSequence: { $exists: false } }],
+        },
+        { $set: { eventSequence: minimum } }
+      );
+    }
+
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+
+    return updated?.eventSequence ?? 1;
+  }
+
+  async incrementTokenUsage(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    delta: {
+      inputTokens?: number;
+      outputTokens?: number;
+      cacheReadTokens?: number;
+      cacheCreationTokens?: number;
+      totalTokens?: number;
+    }
+  ): Promise<void> {
+    const inc: Record<string, number> = {};
+
+    if (delta.inputTokens) inc['tokenUsage.inputTokens'] = delta.inputTokens;
+    if (delta.outputTokens) inc['tokenUsage.outputTokens'] = delta.outputTokens;
+    if (delta.cacheReadTokens) inc['tokenUsage.cacheReadTokens'] = delta.cacheReadTokens;
+    if (delta.cacheCreationTokens) inc['tokenUsage.cacheCreationTokens'] = delta.cacheCreationTokens;
+    if (delta.totalTokens) inc['tokenUsage.totalTokens'] = delta.totalTokens;
+
+    if (Object.keys(inc).length === 0) {
+      return;
+    }
+
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $inc: inc }
+    );
+  }
+
+  /**
+   * Intentionally queries without _environmentId scope — session recovery and
+   * edge callbacks only have the CF-generated session UUID and need to resolve
+   * which environment owns it. Session IDs are system-generated UUIDs from
+   * Cloudflare Durable Objects, not user-supplied input.
+   */
+  async findByExternalSessionId(sessionId: string) {
+    return this.findOne({ externalSessionId: sessionId } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds, [
+      '_id',
+      '_agentId',
+      '_environmentId',
+      '_organizationId',
+      'externalSessionId',
+      'channels',
+      // Needed by `ManagedAgentService.resolveSessionContext` to recover the
+      // subscriber participant after a process restart so the Connect-card
+      // OAuth path stays available on sessions that outlive the API instance.
+      'participants',
+    ]);
+  }
+
+  async listConversations({
+    organizationId,
+    environmentId,
+    limit = 10,
+    after,
+    before,
+    sortBy = '_id',
+    sortDirection = 1,
+    includeCursor = false,
+    status,
+    subscriberId,
+    agentId,
+    identifier,
+    provider,
+    createdAfter,
+    contextKeys,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    limit?: number;
+    after?: string;
+    before?: string;
+    sortBy?: string;
+    sortDirection?: SortOrder;
+    includeCursor?: boolean;
+    status?: ConversationStatusEnum;
+    subscriberId?: string;
+    agentId?: string;
+    identifier?: string;
+    provider?: string[];
+    createdAfter?: string;
+    contextKeys?: string[];
+  }): Promise<{
+    data: ConversationEntity[];
+    next: string | null;
+    previous: string | null;
+    totalCount: number;
+    totalCountCapped: boolean;
+  }> {
+    if (before && after) {
+      throw new Error('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
+    const validatedSortBy = resolveListConversationsSortBy(sortBy);
+
+    let conversation: ConversationEntity | null = null;
+    const id = before || after;
+
+    if (id) {
+      conversation = await this.findOne(
+        { _environmentId: environmentId, _organizationId: organizationId, _id: id },
+        '*'
+      );
+
+      if (!conversation) {
+        return { data: [], next: null, previous: null, totalCount: 0, totalCountCapped: false };
+      }
+    }
+
+    const afterCursor =
+      after && conversation ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id } : undefined;
+    const beforeCursor =
+      before && conversation ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id } : undefined;
+
+    const query: FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (subscriberId) {
+      query.participants = {
+        $elemMatch: { id: subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
+      };
+    }
+
+    if (agentId) {
+      query._agentId = agentId;
+    }
+
+    const trimmedIdentifier = identifier?.trim();
+    if (trimmedIdentifier) {
+      query.identifier = new RegExp(escapeRegExp(trimmedIdentifier), 'i');
+    }
+
+    if (provider?.length) {
+      query.channels = { $elemMatch: { platform: { $in: provider } } };
+    }
+
+    if (createdAfter) {
+      query.createdAt = { $gte: new Date(createdAfter) };
+    }
+
+    if (contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(contextKeys);
+      query.$and = [...(query.$and ?? []), contextQuery];
+    }
+
+    return this.findWithCursorBasedPagination({
+      after: afterCursor,
+      before: beforeCursor,
+      paginateField: '_id',
+      limit,
+      sortDirection: sortDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
+      sortBy: validatedSortBy,
+      includeCursor,
+      query,
+      select: '*',
+    });
+  }
+}

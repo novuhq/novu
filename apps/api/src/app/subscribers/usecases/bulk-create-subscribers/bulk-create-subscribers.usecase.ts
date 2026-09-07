@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { BulkCreateSubscribersCommand } from './bulk-create-subscribers.command';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BulkCreateSubscriberResponseDto } from '../../dtos/bulk-create-subscriber-response.dto';
+import { BulkCreateSubscribersCommand } from './bulk-create-subscribers.command';
 
 @Injectable()
 export class BulkCreateSubscribers {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
-  async execute(command: BulkCreateSubscribersCommand) {
+  async execute(command: BulkCreateSubscribersCommand): Promise<BulkCreateSubscriberResponseDto> {
     try {
       return await this.subscriberRepository.bulkCreateSubscribers(
         command.subscribers,
@@ -15,7 +15,7 @@ export class BulkCreateSubscribers {
         command.organizationId
       );
     } catch (e) {
-      throw new ApiException(e.message);
+      throw new BadRequestException(e.message);
     }
   }
 }

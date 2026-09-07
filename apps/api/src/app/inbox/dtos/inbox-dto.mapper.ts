@@ -1,0 +1,20 @@
+import { ChannelConnectionEntity, ChannelEndpointEntity } from '@novu/dal';
+import { InboxChannelConnectionResponseDto } from './inbox-channel-connection-response.dto';
+import { InboxChannelEndpointResponseDto } from './inbox-channel-endpoint-response.dto';
+
+export function mapChannelConnectionToInboxDto(entity: ChannelConnectionEntity): InboxChannelConnectionResponseDto {
+  return {
+    identifier: entity.identifier,
+    workspace: entity.workspace
+      ? { id: entity.workspace.id, name: entity.workspace.name, botUserId: entity.workspace.botUserId }
+      : undefined,
+    createdAt: entity.createdAt,
+  };
+}
+
+export function mapChannelEndpointToInboxDto(entity: ChannelEndpointEntity): InboxChannelEndpointResponseDto {
+  return {
+    identifier: entity.identifier,
+    type: entity.type,
+  };
+}

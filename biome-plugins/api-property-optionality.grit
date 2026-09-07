@@ -1,0 +1,10 @@
+// Flags @ApiProperty on optional (`?`) DTO fields — OpenAPI should reflect optionality.
+// Heuristic only: does not evaluate `required:` in decorator options — use `pnpm check:api-property-optionality` for a full audit.
+// Pair: api-property-optionality-required-prop.grit. File filtering: biome.json **/*.dto.ts
+
+engine biome(1.0)
+language js(typescript)
+
+`@ApiProperty($args) $prop?: $rest` where {
+  register_diagnostic(span=$match, severity="warn", message="Optional property: prefer @ApiPropertyOptional or @ApiProperty({ required: false }) so OpenAPI matches TypeScript. Run pnpm check:api-property-optionality for a full audit.")
+}

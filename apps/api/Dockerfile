@@ -1,16 +1,15 @@
-FROM node:20-alpine3.19 as dev_base
-RUN apk add g++ make py3-pip
-
+FROM node:22.23-alpine3.23 AS dev_base
+RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
-RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@8.9.0
-RUN pnpm --version
+# Install global dependencies
+RUN npm --no-update-notifier --no-fund --global install pm2@6.0.14 pnpm@11.0.9&& \
+    pnpm --version
 
+# Set non-root user
 USER 1000
 WORKDIR /usr/src/app
 
-# ------- DEV BUILD ----------
 FROM dev_base AS dev
 ARG PACKAGE_PATH
 
@@ -31,42 +30,62 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/api
 
-RUN cp src/.example.env dist/src/.env
-RUN cp src/.env.test dist/src/.env.test
-RUN cp src/.env.development dist/src/.env.development
-RUN cp src/.env.production dist/src/.env.production
+RUN cp src/.example.env dist/.env
+RUN cp src/.env.development dist/.env.development
+RUN cp src/.env.production dist/.env.production
+RUN rm -f dist/.env.test dist/.env.ci
 
 WORKDIR /usr/src/app
 
-# ------- ASSETS BUILD ----------
-FROM dev AS assets
+# ------- DEPLOY ----------
+FROM dev AS deploy
 
 WORKDIR /usr/src/app
-
-# Remove all dependencies so later we can only install prod dependencies without devDependencies
-RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    pnpm --filter @novu/api-service deploy --legacy --prod /usr/src/deploy && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
+      cd $(mktemp -d) && \
+      echo "@taskforcesh:registry=https://npm.taskforce.sh/" > .npmrc && \
+      echo "//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" >> .npmrc && \
+      npm init -y > /dev/null 2>&1 && \
+      npm install @taskforcesh/bullmq-pro@6.11.0 2>/dev/null && \
+      cp -r node_modules/@taskforcesh /usr/src/deploy/node_modules/@taskforcesh && \
+      rm -rf node_modules/@taskforcesh && \
+      mv node_modules /usr/src/deploy/node_modules/@taskforcesh/bullmq-pro/node_modules; \
+    fi
 
 # ------- PRODUCTION BUILD ----------
-FROM dev_base AS prod
-
-ARG PACKAGE_PATH
+FROM node:22.23-alpine3.23 AS prod
 
 ENV CI=true
 
+RUN apk upgrade --no-cache && \
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 musl musl-utils && \
+    npm --no-update-notifier --no-fund --global install pm2@6.0.14 && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+# Set non-root user
+USER 1000
 WORKDIR /usr/src/app
 
-COPY --chown=1000:1000 ./meta .
+# Flat node_modules from pnpm deploy (no symlinks, no hoisting issues)
+COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 
-# Get the build artifacts that only include dist folders
-COPY --chown=1000:1000 --from=assets /usr/src/app .
+# Built output (not included by pnpm deploy because dist is gitignored)
+COPY --chown=1000:1000 --from=dev /usr/src/app/apps/api/dist ./dist
 
-RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
-    --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
- pnpm install --filter "{${PACKAGE_PATH}}..." \
- --frozen-lockfile \
- --unsafe-perm
+# The NestJS swagger plugin generates dist/metadata.js with hardcoded
+# monorepo-relative paths (e.g. ../../../packages/shared/dist/...).
+# These break in the flat pnpm-deploy layout. Rewrite them so they
+# resolve against node_modules instead.
+RUN if [ -f dist/metadata.js ]; then \
+      sed -i \
+        -e 's|../../../packages/shared/dist|../node_modules/@novu/shared/dist|g' \
+        -e 's|../../../libs/application-generic/build|../node_modules/@novu/application-generic/build|g' \
+        -e 's|../../../libs/dal/dist|../node_modules/@novu/dal/dist|g' \
+        dist/metadata.js; \
+    fi
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
-WORKDIR /usr/src/app/apps/api
-CMD [ "pm2-runtime","start", "dist/main.js" ]
+ENTRYPOINT [ "sh", "-c", "pm2-runtime start dist/main.js -i max" ]

@@ -1,54 +1,246 @@
+import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
+import {
+  ContextPayload,
+  ProvidersIdEnum,
+  SeverityLevelEnum,
+  TriggerRecipientSubscriber,
+  TriggerRecipientsPayload,
+  TriggerRecipientsTypeEnum,
+  TriggerTenantContext,
+} from '@novu/shared';
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayNotEmpty,
   IsArray,
   IsDefined,
+  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import {
-  TopicKey,
-  TriggerRecipientSubscriber,
-  TriggerRecipients,
-  TriggerRecipientsTypeEnum,
-  TriggerTenantContext,
-} from '@novu/shared';
+import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
+import { IsTriggerRecipientsPayload } from '../validators/is-trigger-recipients-payload.validator';
+
+export class WorkflowToStepControlValuesDto {
+  /**
+   * A mapping of step IDs to their corresponding data.
+   * Built for stateless triggering by the local studio, those values will not be persisted outside of the job scope
+   * First key is step id, second is controlId, value is the control value
+   * @type {Record<stepId, Data>}
+   * @optional
+   */
+  @ApiProperty({
+    description: 'A mapping of step IDs to their corresponding data.',
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+    required: false,
+  })
+  steps?: Record<string, Record<string, unknown>>;
+}
 
 export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
 export class TenantPayloadDto extends UpdateTenantRequestDto {}
 
 export class TopicPayloadDto {
-  @ApiProperty()
-  topicKey: TopicKey;
+  @ApiProperty({ minLength: 1 })
+  @IsString()
+  @IsNotEmpty({ message: 'topicKey is required' })
+  topicKey: string;
 
-  @ApiProperty({ example: 'Topic', enum: TriggerRecipientsTypeEnum })
+  @ApiProperty({
+    enum: [...Object.values(TriggerRecipientsTypeEnum)],
+    enumName: 'TriggerRecipientsTypeEnum',
+  })
   type: TriggerRecipientsTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Optional array of subscriber IDs to exclude from the topic trigger',
+    type: [String],
+  })
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  @IsOptional()
+  exclude?: string[];
 }
 
-@ApiExtraModels(SubscriberPayloadDto)
-@ApiExtraModels(TenantPayloadDto)
-@ApiExtraModels(TopicPayloadDto)
-export class TriggerEventRequestDto {
-  @ApiProperty({
-    description:
-      'The trigger identifier of the workflow you wish to send. This identifier can be found on the workflow page.',
+export class StepsOverrides {
+  @ApiPropertyOptional({
+    description: 'Passing the provider id and the provider specific configurations',
+    example: {
+      sendgrid: {
+        templateId: '1234567890',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
   })
+  providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+
+  @ApiPropertyOptional({
+    description: 'Override the or remove the layout for this specific step',
+    example: 'welcome-email-layout',
+    nullable: true,
+    type: 'string',
+  })
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
+}
+
+export class EmailChannelOverrides {
+  @ApiPropertyOptional({
+    description: 'Override or remove the layout for all email steps in the workflow',
+    example: 'promotional-layout-2024',
+    nullable: true,
+    type: 'string',
+  })
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
+}
+
+export class ChannelOverrides {
+  @ApiPropertyOptional({
+    description: 'Email channel specific overrides',
+    type: () => EmailChannelOverrides,
+  })
+  email?: EmailChannelOverrides;
+}
+
+export class TriggerOverrides {
+  @ApiPropertyOptional({
+    description: 'This could be used to override provider specific configurations or layout at the step level',
+    example: {
+      'email-step': {
+        providers: {
+          sendgrid: {
+            templateId: '1234567890',
+          },
+        },
+        layoutId: 'step-specific-layout',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      $ref: getSchemaPath(StepsOverrides),
+    },
+  })
+  steps?: Record<string, StepsOverrides>;
+
+  @ApiPropertyOptional({
+    description:
+      'Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.',
+    example: {
+      email: {
+        layoutId: 'promotional-layout-2024',
+      },
+    },
+    type: () => ChannelOverrides,
+  })
+  channels?: ChannelOverrides;
+
+  @ApiPropertyOptional({
+    description: 'Overrides the provider configuration for the entire workflow and all steps',
+    example: {
+      sendgrid: {
+        templateId: '1234567890',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  })
+  providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+
+  @ApiPropertyOptional({
+    description: 'Override the email provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  email?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the push provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  push?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the sms provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  sms?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the chat provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  chat?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the layout identifier for the entire workflow',
+    deprecated: true,
+  })
+  layoutIdentifier?: string;
+
+  @ApiPropertyOptional({
+    description: 'Override the severity of the workflow',
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  })
+  severity?: SeverityLevelEnum;
+}
+
+@ApiExtraModels(
+  SubscriberPayloadDto,
+  TenantPayloadDto,
+  TopicPayloadDto,
+  StepsOverrides,
+  EmailChannelOverrides,
+  ChannelOverrides
+)
+export class TriggerEventRequestDto {
+  @SdkApiProperty(
+    {
+      description:
+        'The trigger identifier of the workflow you wish to send. This identifier can be found on the workflow page.',
+      example: 'workflow_identifier',
+    },
+    { nameOverride: 'workflowId' }
+  )
   @IsString()
   @IsDefined()
   name: string;
 
   @ApiProperty({
-    description:
-      // eslint-disable-next-line max-len
-      `The payload object is used to pass additional custom information that could be used to render the workflow, or perform routing rules based on it. 
+    description: `The payload object is used to pass additional custom information that could be 
+    used to render the workflow, or perform routing rules based on it. 
       This data will also be available when fetching the notifications feed from the API to display certain parts of the UI.`,
+    type: 'object',
+    required: false,
+    additionalProperties: true,
     example: {
       comment_id: 'string',
       post: {
@@ -61,6 +253,16 @@ export class TriggerEventRequestDto {
   payload?: Record<string, unknown>;
 
   @ApiPropertyOptional({
+    description: `Optional Bridge Endpoint URL used to route this trigger to a specific Bridge application. Useful during local development when multiple engineers share an organization: set this to your personal tunnel URL from \`npx novu@latest dev\` (for example via NOVU_BRIDGE_URL) so app-fired triggers hit your machine instead of the environment's synced Bridge URL. Must be a publicly reachable https URL — private or localhost addresses are rejected.`,
+    type: 'string',
+    required: false,
+    example: 'https://your-tunnel.novu.co/api/novu',
+  })
+  @IsString()
+  @IsOptional()
+  bridgeUrl?: string;
+
+  @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations',
     example: {
       fcm: {
@@ -69,34 +271,70 @@ export class TriggerEventRequestDto {
         },
       },
     },
+    type: TriggerOverrides,
+    required: false,
   })
   @IsObject()
   @IsOptional()
-  overrides?: Record<string, Record<string, unknown>>;
+  overrides?: TriggerOverrides;
+
+  @ApiPropertyOptional({
+    description:
+      'Override the workflow-assigned agent for this trigger using the public agent identifier. Omit to use the workflow default; pass null to disable agent routing for this execution.',
+    type: 'string',
+    nullable: true,
+    example: 'support-agent',
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @IsNotEmpty()
+  agentId?: string | null;
 
   @ApiProperty({
-    description: 'The recipients list of people who will receive the notification.',
+    description:
+      'The recipients list of people who will receive the notification. Maximum number of recipients can be 100.',
     oneOf: [
       {
-        $ref: getSchemaPath(SubscriberPayloadDto),
+        type: 'array',
+        items: {
+          oneOf: [
+            {
+              $ref: getSchemaPath(SubscriberPayloadDto),
+            },
+            {
+              $ref: getSchemaPath(TopicPayloadDto),
+            },
+            {
+              type: 'string',
+              minLength: 1,
+              description: 'Unique identifier of a subscriber in your systems',
+              example: 'SUBSCRIBER_ID',
+            },
+          ],
+        },
       },
       {
         type: 'string',
+        minLength: 1,
         description: 'Unique identifier of a subscriber in your systems',
         example: 'SUBSCRIBER_ID',
+      },
+      {
+        $ref: getSchemaPath(SubscriberPayloadDto),
       },
       {
         $ref: getSchemaPath(TopicPayloadDto),
       },
     ],
-    type: [String, SubscriberPayloadDto, TopicPayloadDto],
-    isArray: true,
   })
   @IsDefined()
-  to: TriggerRecipients;
+  @IsTriggerRecipientsPayload()
+  to: TriggerRecipientsPayload;
 
-  @ApiProperty({
-    description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',
+  @ApiPropertyOptional({
+    description: `A unique identifier for deduplication. If the same **transactionId** is sent again, 
+      the trigger is ignored. Useful to prevent duplicate notifications. The retention period depends on your billing tier.`,
   })
   @IsString()
   @IsOptional()
@@ -104,12 +342,12 @@ export class TriggerEventRequestDto {
 
   @ApiProperty({
     description: `It is used to display the Avatar of the provided actor's subscriber id or actor object.
-    If a new actor object is provided, we will create a new subscriber in our system
-    `,
+    If a new actor object is provided, we will create a new subscriber in our system`,
     oneOf: [
       { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
       { $ref: getSchemaPath(SubscriberPayloadDto) },
     ],
+    required: false,
   })
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')
@@ -119,18 +357,26 @@ export class TriggerEventRequestDto {
 
   @ApiProperty({
     description: `It is used to specify a tenant context during trigger event.
-    If a new tenant object is provided, we will create a new tenant.
-    `,
+    Existing tenants will be updated with the provided details.`,
     oneOf: [
       { type: 'string', description: 'Unique identifier of a tenant in your system' },
       { $ref: getSchemaPath(TenantPayloadDto) },
     ],
+    required: false,
   })
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()
   @Type(() => TenantPayloadDto)
   tenant?: TriggerTenantContext;
+
+  @ApiHideProperty()
+  controls?: WorkflowToStepControlValuesDto;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }
 
 export class BulkTriggerEventDto {
@@ -140,6 +386,7 @@ export class BulkTriggerEventDto {
   })
   @IsArray()
   @ArrayNotEmpty()
-  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => TriggerEventRequestDto)
   events: TriggerEventRequestDto[];
 }

@@ -1,11 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
 import { IPaginationWithQueryParams } from '@novu/shared';
+import { IsOptional, IsString } from 'class-validator';
 
 import { Constructor } from '../types';
 import { PaginationRequestDto } from './pagination-request';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function PaginationWithFiltersRequestDto({
   defaultLimit = 10,
   maxLimit = 100,

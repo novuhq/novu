@@ -1,0 +1,417 @@
+import { StepTypeEnum } from '@novu/shared';
+import { isEmpty } from 'lodash';
+import { PinoLogger } from '../logging';
+import {
+  ChatControlType,
+  DelayControlType,
+  DelayDynamicControlType,
+  DelayRegularControlType,
+  DelayTimedControlType,
+  DigestControlSchemaType,
+  DigestRegularControlType,
+  DigestTimedControlType,
+  EmailControlType,
+  InAppRedirectType,
+  LayoutControlType,
+  LookBackWindowType,
+  PushControlType,
+  SmsControlType,
+  ThrottleControlType,
+  ToolControlType,
+} from '../schemas/control';
+import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
+import { resolveChatEditorType } from './resolve-chat-editor-type';
+
+// Cast input T_Type to trigger Ajv validation errors - possible undefined
+function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
+  return isEmpty(input) ? defaultValue : input;
+}
+
+export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
+  if (!redirect?.url || redirect.url.length === 0) {
+    return undefined;
+  }
+
+  const url = redirect.url as string;
+  const isRelativeUrl = url.startsWith('/');
+  const defaultTarget = isRelativeUrl ? '_self' : '_blank';
+
+  return {
+    url,
+    target: (redirect.target ?? defaultTarget) as '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop',
+  };
+}
+
+function sanitizeAction(action: InAppActionType) {
+  // TODO: There is a bug here, if the action doesn't contain both a label and a redirect it is removed from the new controlValues
+  if (!action?.label) {
+    return undefined;
+  }
+
+  return {
+    label: action.label as string,
+    redirect: sanitizeRedirect(action.redirect) as InAppRedirectType,
+  };
+}
+
+function sanitizeInApp(controlValues: InAppControlType) {
+  const normalized: InAppControlType = {
+    subject: sanitizeEmptyInput<string>(controlValues.subject),
+    body: sanitizeEmptyInput<string>(controlValues.body),
+    avatar: sanitizeEmptyInput<string>(controlValues.avatar),
+    primaryAction: undefined,
+    secondaryAction: undefined,
+    redirect: undefined,
+    data: controlValues.data,
+    skip: controlValues.skip,
+    disableOutputSanitization: controlValues.disableOutputSanitization,
+  };
+
+  if (controlValues.primaryAction) {
+    normalized.primaryAction = sanitizeAction(controlValues.primaryAction as InAppActionType);
+  }
+
+  if (controlValues.secondaryAction) {
+    normalized.secondaryAction = sanitizeAction(controlValues.secondaryAction as InAppActionType);
+  }
+
+  if (controlValues.redirect) {
+    normalized.redirect = sanitizeRedirect(controlValues.redirect as InAppRedirectType);
+  }
+
+  return filterNullishValues(normalized);
+}
+
+function sanitizeEmail(controlValues: EmailControlType) {
+  const EMPTY_TIP_TAP = JSON.stringify({
+    type: 'doc',
+    content: [{ type: 'paragraph' }],
+  });
+
+  const emailControls: EmailControlType = {
+    editorType: controlValues.editorType,
+    subject: sanitizeEmptyInput(controlValues.subject, ' '),
+    body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
+    skip: controlValues.skip,
+    disableOutputSanitization: controlValues.disableOutputSanitization,
+    layoutId: controlValues.layoutId,
+    from: controlValues.from,
+    useProviderDefaults: controlValues.useProviderDefaults,
+    replyTo: controlValues.replyTo,
+    preheader: controlValues.preheader,
+  };
+
+  return filterNullishValues(emailControls);
+}
+
+function sanitizeSms(controlValues: SmsControlType) {
+  const mappedValues: SmsControlType = {
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+  };
+
+  return filterNullishValues(mappedValues);
+}
+
+function sanitizePush(controlValues: PushControlType) {
+  const mappedValues: PushControlType = {
+    subject: sanitizeEmptyInput(controlValues.subject),
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+  };
+
+  return filterNullishValues(mappedValues);
+}
+
+type WithProviderOverrides<T> = T & { providerOverrides?: Record<string, unknown> };
+
+/**
+ * Runtime/preview may still nest providerOverrides (stitched or form-sourced).
+ * They are not part of the persisted main control schema — pass them through.
+ */
+function keepProviderOverrides(
+  sanitized: Record<string, unknown>,
+  controlValues: { providerOverrides?: Record<string, unknown> }
+): Record<string, unknown> {
+  if (controlValues.providerOverrides === undefined) {
+    return sanitized;
+  }
+
+  return { ...sanitized, providerOverrides: controlValues.providerOverrides };
+}
+
+function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
+  const editorType = resolveChatEditorType(controlValues.body, controlValues.editorType);
+  const mappedValues: ChatControlType = {
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+    ...(editorType ? { editorType } : {}),
+  };
+
+  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
+}
+
+function sanitizeTool(controlValues: WithProviderOverrides<ToolControlType>) {
+  const mappedValues: ToolControlType = {
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+  };
+
+  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
+}
+
+function sanitizeDigest(controlValues: DigestControlSchemaType) {
+  if (isTimedDigestControl(controlValues)) {
+    const mappedValues: DigestTimedControlType = {
+      type: controlValues.type,
+      cron: controlValues.cron,
+      digestKey: controlValues.digestKey,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  if (isRegularDigestControl(controlValues)) {
+    const lookBackAmount = (controlValues.lookBackWindow as LookBackWindowType)?.amount;
+    const mappedValues: DigestRegularControlType = {
+      type: controlValues.type,
+      // Cast to trigger Ajv validation errors - possible undefined
+      ...(parseAmount(controlValues.amount) as { amount?: number }),
+      unit: controlValues.unit,
+      digestKey: controlValues.digestKey,
+      skip: controlValues.skip,
+      lookBackWindow: controlValues.lookBackWindow
+        ? {
+            // Cast to trigger Ajv validation errors - possible undefined
+            ...(parseAmount(lookBackAmount) as { amount?: number }),
+            unit: (controlValues.lookBackWindow as LookBackWindowType).unit,
+          }
+        : undefined,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  const anyControlValues = controlValues as Record<string, unknown>;
+  const lookBackWindow = (anyControlValues.lookBackWindow as LookBackWindowType)?.amount;
+
+  return filterNullishValues({
+    // Cast to trigger Ajv validation errors - possible undefined
+    ...(parseAmount(anyControlValues.amount) as { amount?: number }),
+    unit: anyControlValues.unit,
+    digestKey: anyControlValues.digestKey,
+    skip: anyControlValues.skip,
+    lookBackWindow: anyControlValues.lookBackWindow
+      ? {
+          // Cast to trigger Ajv validation errors - possible undefined
+          ...(parseAmount(lookBackWindow) as { amount?: number }),
+          unit: (anyControlValues.lookBackWindow as LookBackWindowType).unit,
+        }
+      : undefined,
+    extendToSchedule: anyControlValues.extendToSchedule,
+  });
+}
+
+function sanitizeDelay(controlValues: DelayControlType) {
+  if (isTimedDelayControl(controlValues)) {
+    const mappedValues: DelayTimedControlType = {
+      type: controlValues.type,
+      cron: controlValues.cron,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  if (isDynamicDelayControl(controlValues)) {
+    const mappedValues: DelayDynamicControlType = {
+      type: controlValues.type,
+      dynamicKey: controlValues.dynamicKey,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  if (isRegularDelayControl(controlValues)) {
+    const mappedValues: DelayRegularControlType = {
+      type: controlValues.type,
+      // Cast to trigger Ajv validation errors - possible undefined
+      ...(parseAmount(controlValues.amount) as { amount?: number }),
+      unit: controlValues.unit,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  return filterNullishValues(controlValues);
+}
+
+/**
+ * A fixed throttle never reads `dynamicKey`, but the dashboard form still persists it as an empty
+ * string. The control schema keeps `dynamicKey` optional with `minLength: 1`, so a present-but-empty
+ * value fails validation and surfaces a "DynamicKey is required" issue on a correctly configured
+ * fixed throttle. Drop the unused key; a dynamic throttle keeps it so the issue still surfaces there.
+ */
+function sanitizeThrottle(controlValues: ThrottleControlType) {
+  const shouldDropDynamicKey = controlValues?.type !== 'dynamic' && isEmpty(controlValues?.dynamicKey);
+
+  return filterNullishValues(shouldDropDynamicKey ? { ...controlValues, dynamicKey: undefined } : controlValues);
+}
+
+function sanitizeLayout(controlValues: LayoutControlType) {
+  return {
+    email: filterNullishValues({
+      body: controlValues.email?.body,
+      editorType: controlValues.email?.editorType,
+    }),
+  };
+}
+
+function parseAmount(amount?: unknown) {
+  try {
+    if (!isNumber(amount)) {
+      return {};
+    }
+
+    const numberAmount = typeof amount === 'string' ? parseInt(amount, 10) : amount;
+
+    return { amount: numberAmount };
+  } catch (error) {
+    return amount;
+  }
+}
+
+function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
+  if (typeof obj === 'object' && obj !== null) {
+    if (Array.isArray(obj)) {
+      return obj as T;
+    }
+
+    const result = {} as T;
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          result[key as keyof T] = value.map((item) =>
+            typeof item === 'object' && item !== null ? filterNullishValues(item as Record<string, unknown>) : item
+          ) as T[keyof T];
+        } else if (typeof value === 'object') {
+          result[key as keyof T] = filterNullishValues(value as Record<string, unknown>) as T[keyof T];
+        } else {
+          result[key as keyof T] = value as T[keyof T];
+        }
+      }
+    }
+
+    return result;
+  }
+
+  return obj;
+}
+
+export type SanitizationType = StepTypeEnum | 'layout';
+
+/**
+ * Sanitizes control values received from client-side forms into a clean minimal object.
+ * This function processes potentially invalid form data that may contain default/placeholder values
+ * and transforms it into a standardized format suitable for preview generation.
+ *
+ * @example
+ * // Input from form with default values:
+ * {
+ *   subject: "Hello",
+ *   body: null,
+ *   unusedField: "test"
+ * }
+ *
+ * // Normalized output:
+ * {
+ *   subject: "Hello",
+ *   body: " "
+ * }
+ *
+ */
+export function dashboardSanitizeControlValues(
+  logger: PinoLogger,
+  controlValues: Record<string, unknown>,
+  type?: StepTypeEnum | 'layout'
+): (Record<string, unknown> & { skip?: Record<string, unknown> }) | null {
+  try {
+    if (!controlValues) {
+      return null;
+    }
+
+    let normalizedValues: Record<string, unknown>;
+    switch (type) {
+      case StepTypeEnum.IN_APP:
+        normalizedValues = sanitizeInApp(controlValues as InAppControlType);
+        break;
+      case StepTypeEnum.EMAIL:
+        normalizedValues = sanitizeEmail(controlValues as EmailControlType);
+        break;
+      case StepTypeEnum.SMS:
+        normalizedValues = sanitizeSms(controlValues as SmsControlType);
+        break;
+      case StepTypeEnum.PUSH:
+        normalizedValues = sanitizePush(controlValues as PushControlType);
+        break;
+      case StepTypeEnum.CHAT:
+        normalizedValues = sanitizeChat(controlValues as WithProviderOverrides<ChatControlType>);
+        break;
+      case StepTypeEnum.TOOL:
+        normalizedValues = sanitizeTool(controlValues as WithProviderOverrides<ToolControlType>);
+        break;
+      case StepTypeEnum.DIGEST:
+        normalizedValues = sanitizeDigest(controlValues as DigestControlSchemaType);
+        break;
+      case StepTypeEnum.DELAY:
+        normalizedValues = sanitizeDelay(controlValues as DelayControlType);
+        break;
+      case StepTypeEnum.THROTTLE:
+        normalizedValues = sanitizeThrottle(controlValues as ThrottleControlType);
+        break;
+      case 'layout':
+        normalizedValues = sanitizeLayout(controlValues as LayoutControlType);
+        break;
+      default:
+        normalizedValues = filterNullishValues(controlValues);
+    }
+
+    return normalizedValues;
+  } catch (error) {
+    logger.error('Error sanitizing control values', error);
+
+    return controlValues;
+  }
+}
+
+function isNumber(value: unknown): value is number {
+  return !Number.isNaN(Number.parseInt(value as string, 10));
+}
+
+function isTimedDigestControl(controlValues: unknown): controlValues is DigestTimedControlType {
+  return !isEmpty((controlValues as DigestTimedControlType)?.cron);
+}
+
+function isRegularDigestControl(controlValues: unknown): controlValues is DigestRegularControlType {
+  return !isTimedDigestControl(controlValues);
+}
+
+function isTimedDelayControl(controlValues: unknown): controlValues is DelayTimedControlType {
+  return !isEmpty((controlValues as DelayTimedControlType)?.cron);
+}
+
+function isDynamicDelayControl(controlValues: unknown): controlValues is DelayDynamicControlType {
+  return !isEmpty((controlValues as DelayDynamicControlType)?.dynamicKey);
+}
+
+function isRegularDelayControl(controlValues: unknown): controlValues is DelayRegularControlType {
+  return !isTimedDelayControl(controlValues) && !isDynamicDelayControl(controlValues);
+}

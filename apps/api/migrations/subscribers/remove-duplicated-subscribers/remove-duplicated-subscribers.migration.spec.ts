@@ -1,9 +1,8 @@
 import { SubscriberRepository } from '@novu/dal';
-import { SubscribersService, UserSession } from '@novu/testing';
-
-import { removeDuplicatedSubscribers } from './remove-duplicated-subscribers.migration';
-import { expect } from 'chai';
 import { ChatProviderIdEnum, IChannelSettings, ISubscriber } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { removeDuplicatedSubscribers } from './remove-duplicated-subscribers.migration';
 
 describe('Migration: Remove Duplicated Subscribers', () => {
   let session: UserSession;

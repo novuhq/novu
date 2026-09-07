@@ -1,0 +1,1 @@
+https://dashboard.novu.test/oauth/device/rerun-abc

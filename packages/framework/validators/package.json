@@ -1,0 +1,4 @@
+{
+  "main": "../dist/cjs/validators.cjs",
+  "types": "../dist/cjs/validators.d.cts"
+}

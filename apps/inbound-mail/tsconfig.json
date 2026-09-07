@@ -1,14 +1,16 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "strictNullChecks": false,
-    "module": "commonjs",
-    "allowSyntheticDefaultImports": true,
-    "types": ["node", "mocha", "chai", "sinon"],
-    "target": "es2017",
     "allowJs": false,
-    "esModuleInterop": false,
-    "declarationMap": true
-  }
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "strictNullChecks": false,
+    "target": "es2017",
+    "types": ["node", "mocha", "chai", "sinon"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
 }

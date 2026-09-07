@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import * as githubPassport from 'passport-github2';
-import { Metadata, StateStoreStoreCallback, StateStoreVerifyCallback } from 'passport-oauth2';
 import { AuthProviderEnum } from '@novu/shared';
-import { AuthService } from '@novu/application-generic';
+import githubPassport from 'passport-github2';
+import { Metadata, StateStoreStoreCallback } from 'passport-oauth2';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'github') {
@@ -11,11 +11,11 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
     super({
       clientID: process.env.GITHUB_OAUTH_CLIENT_ID,
       clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
-      callbackURL: process.env.API_ROOT_URL + '/v1/auth/github/callback',
+      callbackURL: `${process.env.API_ROOT_URL}/v1/auth/github/callback`,
       scope: ['user:email'],
       passReqToCallback: true,
       store: {
-        verify(req, state: string, meta: Metadata, callback: StateStoreVerifyCallback) {
+        verify(req, state: string, meta: Metadata, callback) {
           callback(null, true, JSON.stringify(req.query));
         },
         store(req, meta: Metadata, callback: StateStoreStoreCallback) {
@@ -36,7 +36,7 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
         refreshToken,
         profile,
         parsedState?.distinctId,
-        parsedState?.source
+        { origin: parsedState?.source, invitationToken: parsedState?.invitationToken }
       );
 
       done(null, {

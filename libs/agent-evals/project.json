@@ -1,0 +1,25 @@
+{
+  "name": "@novu/agent-evals",
+  "sourceRoot": "libs/agent-evals/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint libs/agent-evals"
+      }
+    },
+    "eval": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/agent-evals eval"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/agent-evals test"
+      }
+    }
+  }
+}

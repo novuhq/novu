@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "lib": ["es2022", "dom"],
+    "module": "nodenext",
+    "moduleDetection": "force",
+    "moduleResolution": "nodenext",
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "outDir": "./dist/cjs",
+    "resolveJsonModule": true,
+    "rootDir": "./src",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "target": "ES2022",
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules/**"]
+}

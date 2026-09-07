@@ -1,0 +1,18 @@
+// Plugin to detect ClientSession usage in *.command.ts files
+// Reminds developers to add @Exclude() decorator to prevent serialization issues
+// File filtering is configured in biome.json overrides
+
+engine biome(1.0)
+language js(typescript)
+
+// Match any ClientSession type usage
+`ClientSession` where {
+  // Don't match ClientSession in import statements
+  not $match <: within `import { $_ } from $_`,
+  
+  register_diagnostic(
+    span = $match,
+    severity = "warn",
+    message = "MongoDB ClientSession property detected. Ensure @Exclude() decorator is present above this property to prevent serialization issues."
+  )
+}

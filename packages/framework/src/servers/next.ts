@@ -1,0 +1,269 @@
+import { type NextApiRequest, type NextApiResponse } from 'next';
+import { type NextRequest } from 'next/server';
+// `.js` required: Node ESM cannot resolve bare `next/server` when this package is externalized (NV-8366).
+import * as NextServer from 'next/server.js';
+
+import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
+import { type Either, type SupportedFrameworkName } from '../types';
+import { getResponse } from '../utils';
+
+/*
+ * Re-export all top level exports from the main package.
+ * This results in better DX reduces the chances of the dual package hazard for ESM + CJS packages.
+ *
+ * Example:
+ *
+ * import { serve, Client, type Workflow } from '@novu/framework/next';
+ *
+ * instead of
+ *
+ * import { serve } from '@novu/framework/next';
+ * import { Client, type Workflow } from '@novu/framework';
+ */
+export * from '../index';
+export const frameworkName: SupportedFrameworkName = 'next';
+
+/**
+ * Defines a request handler for Next.js 12+.
+ *
+ * The argument types are kept abstract due to varying type checks across
+ * Next.js versions. Next.js 15 uses `RouteContext` for the second argument,
+ * while versions 13 and 14 omit it, and version 12 uses `NextApiResponse`,
+ * which varies by environment (edge vs serverless).
+ */
+export type RequestHandler = (expectedReq: NextRequest, res: unknown) => Promise<Response>;
+
+/**
+ * Builds a `waitUntil` implementation backed by Next.js `after()` (stable since
+ * Next.js 15.1). `after()` extends the invocation lifetime on serverless
+ * platforms (e.g. Vercel) so background agent turns complete after the
+ * acknowledgement response is sent.
+ *
+ * Feature-detected at runtime: on older Next.js versions `after` is not
+ * exported and this returns `undefined`, preserving the previous behavior.
+ */
+const getAfterWaitUntil = (): ((promise: Promise<unknown>) => void) | undefined => {
+  if (typeof NextServer.after !== 'function') {
+    return undefined;
+  }
+
+  return (promise) => {
+    try {
+      NextServer.after(promise);
+    } catch {
+      /*
+       * `after()` requires an App Router request scope and throws in the
+       * pages router. Fall back to fire-and-forget, matching the behavior
+       * on Next.js versions without `after()`.
+       */
+    }
+  };
+};
+
+// Helper function to check if the response is a Next.js 12 API response
+const isNext12ApiResponse = (val: unknown): val is NextApiResponse => {
+  return (
+    typeof val === 'object' &&
+    val !== null &&
+    typeof (val as NextApiResponse).setHeader === 'function' &&
+    typeof (val as NextApiResponse).status === 'function' &&
+    typeof (val as NextApiResponse).send === 'function'
+  );
+};
+
+/**
+ * In Next.js, serve and register any declared workflows with Novu, making
+ * them available to be triggered by events.
+ *
+ * Supports Next.js 12+, both serverless and edge.
+ *
+ * On Next.js >= 15.1 (App Router), background agent turns are kept alive after
+ * the acknowledgement response via `after()` from `next/server`, so agents work
+ * on serverless platforms such as Vercel without extra configuration. On older
+ * versions, pass `waitUntil` to `serve()` when deploying to serverless.
+ *
+ * @example Next.js <=12 or the pages router can export the handler directly
+ * ```ts
+ * import { serve } from "@novu/framework/next";
+ * import { myWorkflow } from "./src/novu/workflows"; // Your workflows
+ *
+ * export default serve({ workflows: [myWorkflow] });
+ * ```
+ *
+ * @example Next.js >=13 with the `app` dir must export individual methods
+ * ```ts
+ * import { serve } from "@novu/framework/next";
+ * import { myWorkflow } from "./src/novu/workflows";
+ *
+ * export const { GET, POST, OPTIONS } = serve({ workflows: [myWorkflow] });
+ * ```
+ */
+export const serve = (
+  options: ServeHandlerOptions
+): RequestHandler & {
+  GET: RequestHandler;
+  POST: RequestHandler;
+  OPTIONS: RequestHandler;
+} => {
+  const novuHandler = new NovuRequestHandler({
+    frameworkName,
+    ...options,
+    handler: (
+      requestMethod: 'GET' | 'POST' | 'OPTIONS' | undefined,
+      incomingRequest: NextRequest,
+      response: unknown
+    ) => {
+      const request = incomingRequest as Either<NextApiRequest, NextRequest>;
+
+      const extractHeader = (key: string): string | null | undefined => {
+        const header = typeof request.headers.get === 'function' ? request.headers.get(key) : request.headers[key];
+
+        return Array.isArray(header) ? header[0] : header;
+      };
+
+      return {
+        body: () => (typeof request.json === 'function' ? request.json() : request.body),
+        waitUntil: getAfterWaitUntil(),
+        headers: extractHeader,
+        method: () => {
+          /**
+           * `req.method`, though types say otherwise, is not available in Next.js
+           * 13 {@link https://nextjs.org/docs/app/building-your-application/routing/route-handlers Route Handlers}.
+           *
+           * Therefore, we must try to set the method ourselves where we know it.
+           */
+          const method = requestMethod || request.method || '';
+
+          return method;
+        },
+        queryString: (key, url) => {
+          const qs = request.query?.[key] || url.searchParams.get(key);
+
+          return Array.isArray(qs) ? qs[0] : qs;
+        },
+
+        url: () => {
+          let absoluteUrl: URL | undefined;
+          try {
+            absoluteUrl = new URL(request.url as string);
+          } catch {
+            // no-op
+          }
+
+          if (absoluteUrl) {
+            /**
+             * `req.url` here should may be the full URL, including query string.
+             * There are some caveats, however, where Next.js will obfuscate
+             * the host. For example, in the case of `host.docker.internal`,
+             * Next.js will instead set the host here to `localhost`.
+             *
+             * To avoid this, we'll try to parse the URL from `req.url`, but
+             * also use the `host` header if it's available.
+             */
+            const host = extractHeader('host');
+            if (host) {
+              const hostWithProtocol = new URL(host.includes('://') ? host : `${absoluteUrl.protocol}//${host}`);
+
+              absoluteUrl.protocol = hostWithProtocol.protocol;
+              absoluteUrl.host = hostWithProtocol.host;
+              absoluteUrl.port = hostWithProtocol.port;
+              absoluteUrl.username = hostWithProtocol.username;
+              absoluteUrl.password = hostWithProtocol.password;
+            }
+
+            return absoluteUrl;
+          }
+
+          let protocol: 'http' | 'https' = 'https';
+          const hostHeader = extractHeader('host') || '';
+
+          try {
+            // biome-ignore lint/suspicious/noExplicitAny: Needed for some edge cases
+            if (process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev') {
+              protocol = 'http';
+            }
+          } catch (error) {
+            // no-op
+          }
+
+          const url = new URL(request.url as string, `${protocol}://${hostHeader}`);
+
+          return url;
+        },
+        transformResponse: ({ body, headers, status }): Response => {
+          /**
+           * Carefully attempt to set headers and data on the response object
+           * for Next.js 12 support.
+           */
+          if (isNext12ApiResponse(response)) {
+            Object.entries(headers).forEach(([headerName, headerValue]) => {
+              response.setHeader(headerName, headerValue);
+            });
+
+            response.status(status).send(body);
+
+            /**
+             * If we're here, we're in a serverless endpoint (not edge), so
+             * we've correctly sent the response and can return `undefined`.
+             *
+             * Next.js 13 edge requires that the return value is typed as
+             * `Response`, so we still enforce that as we cannot dynamically
+             * adjust typing based on the environment.
+             */
+            return undefined as unknown as Response;
+          }
+
+          /**
+           * If we're here, we're in an edge environment and need to return a
+           * `Response` object.
+           *
+           * We also don't know if the current environment has a native
+           * `Response` object, so we'll grab that first.
+           */
+          const Res = getResponse();
+
+          return new Res(body, { status, headers });
+        },
+      };
+    },
+  });
+
+  /**
+   * Next.js 13 uses
+   * {@link https://nextjs.org/docs/app/building-your-application/routing/route-handlers Route Handlers}
+   * to declare API routes instead of a generic catch-all method that was
+   * available using the `pages/api` directory.
+   *
+   * This means that users must now export a function for each method supported
+   * by the endpoint. For us, this means requiring a user explicitly exports
+   * `GET`, `POST`, and `OPTIONS` functions.
+   *
+   * Because of this, we'll add circular references to those property names of
+   * the returned handler, meaning we can write some succinct code to export
+   * cspell:disable-next-line
+   * them. Thanks, @goodoldneon.
+   *
+   * @example
+   * ```ts
+   * export const { GET, POST, OPTIONS } = serve(...);
+   * ```
+   *
+   * See {@link https://nextjs.org/docs/app/building-your-application/routing/route-handlers}
+   */
+  const baseHandler = novuHandler.createHandler();
+
+  const defaultHandler = baseHandler.bind(null, undefined);
+  type HandlerFunction = typeof defaultHandler;
+
+  const handlerFunctions = Object.defineProperties(defaultHandler, {
+    GET: { value: baseHandler.bind(null, 'GET') },
+    POST: { value: baseHandler.bind(null, 'POST') },
+    OPTIONS: { value: baseHandler.bind(null, 'OPTIONS') },
+  }) as HandlerFunction & {
+    GET: HandlerFunction;
+    POST: HandlerFunction;
+    OPTIONS: HandlerFunction;
+  };
+
+  return handlerFunctions;
+};

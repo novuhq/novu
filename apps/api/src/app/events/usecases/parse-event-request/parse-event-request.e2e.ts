@@ -1,17 +1,23 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { v4 as uuid } from 'uuid';
+import { AgentRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  AddressingTypeEnum,
+  AgentSubscriberAccessEnum,
+  TriggerRecipients,
+  TriggerRequestCategoryEnum,
+} from '@novu/shared';
 
 import { SubscribersService, UserSession } from '@novu/testing';
-import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { AddressingTypeEnum, TriggerRecipients, TriggerRequestCategoryEnum } from '@novu/shared';
-
+import { expect } from 'chai';
+import { v4 as uuid } from 'uuid';
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
+import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ParseEventRequest } from './parse-event-request.usecase';
 
-describe('ParseEventRequest Usecase', () => {
+describe('ParseEventRequest Usecase - #novu-v2', () => {
   let session: UserSession;
   let subscribersService: SubscribersService;
   let parseEventRequestUsecase: ParseEventRequest;
@@ -20,7 +26,6 @@ describe('ParseEventRequest Usecase', () => {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule, EventsModule],
-      providers: [],
     }).compile();
 
     session = new UserSession();
@@ -38,7 +43,7 @@ describe('ParseEventRequest Usecase', () => {
     const command = buildCommand(
       session,
       transactionId,
-      [{ subscriberId: subscriberId } as unknown as string],
+      [{ subscriberId } as unknown as string],
       template.triggers[0].identifier
     );
 
@@ -49,6 +54,346 @@ describe('ParseEventRequest Usecase', () => {
         'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
       );
     }
+  });
+
+  it('should validate payload against schema when validatePayload is enabled', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled
+    const templateWithSchema = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          age: { type: 'number' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithSchema.triggers[0].identifier
+    );
+
+    // Test with invalid payload (missing required field)
+    command.payload = { age: 25 };
+
+    try {
+      await parseEventRequestUsecase.execute(command);
+      expect.fail('Should have thrown validation error');
+    } catch (error) {
+      expect(error.message).to.include('Payload validation failed');
+      expect(error.response).to.exist;
+      expect(error.response.type).to.equal('PAYLOAD_VALIDATION_ERROR');
+      expect(error.response.errors).to.be.an('array');
+      expect(error.response.errors).to.have.length.greaterThan(0);
+      expect(error.response.errors[0]).to.have.property('field');
+      expect(error.response.errors[0]).to.have.property('message');
+      expect(error.response.errors[0].field).to.include('name');
+    }
+  });
+
+  it('should pass validation when payload matches schema', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled
+    const templateWithSchema = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          age: { type: 'number' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithSchema.triggers[0].identifier
+    );
+
+    // Test with valid payload
+    command.payload = { name: 'John Doe', age: 25 };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+  });
+
+  it('should skip validation when validatePayload is disabled', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation disabled
+    const templateWithoutValidation = await session.createTemplate({
+      validatePayload: false,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithoutValidation.triggers[0].identifier
+    );
+
+    // Test with invalid payload - should not throw error since validation is disabled
+    command.payload = { invalidField: 'value' };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+  });
+
+  it('should apply default values from schema when validatePayload is enabled', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled and default values
+    const templateWithDefaults = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', default: 'Default Name' },
+          age: { type: 'number', default: 30 },
+          isActive: { type: 'boolean', default: true },
+          settings: {
+            type: 'object',
+            properties: {
+              theme: { type: 'string', default: 'dark' },
+              notifications: { type: 'boolean', default: false },
+            },
+            default: {},
+          },
+        },
+        required: [],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithDefaults.triggers[0].identifier
+    );
+
+    // Test with partial payload - defaults should be applied
+    command.payload = { name: 'John Doe' };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+
+    // Verify that defaults were applied to the payload
+    expect(command.payload.name).to.equal('John Doe'); // Provided value should remain
+    expect(command.payload.age).to.equal(30); // Default value should be applied
+    expect(command.payload.isActive).to.equal(true); // Default value should be applied
+    expect(command.payload.settings).to.deep.equal({ theme: 'dark', notifications: false }); // Nested defaults should be applied
+  });
+
+  it('should tolerate non-standard JSON schema keywords like isRequired', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const templateWithCustomKeyword = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', isRequired: true },
+          age: { type: 'number' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithCustomKeyword.triggers[0].identifier
+    );
+
+    command.payload = { name: 'John Doe', age: 25 };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+  });
+
+  it('should not override provided values with defaults', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled and default values
+    const templateWithDefaults = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', default: 'Default Name' },
+          age: { type: 'number', default: 30 },
+          isActive: { type: 'boolean', default: true },
+        },
+        required: [],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithDefaults.triggers[0].identifier
+    );
+
+    // Test with full payload - no defaults should override provided values
+    command.payload = { name: 'Jane Doe', age: 25, isActive: false };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+
+    // Verify that provided values were not overridden by defaults
+    expect(command.payload.name).to.equal('Jane Doe');
+    expect(command.payload.age).to.equal(25);
+    expect(command.payload.isActive).to.equal(false);
+  });
+
+  it('should throw when an attachment lacks a file property', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'valid.txt', file: Buffer.from('hello').toString('base64'), mime: 'text/plain' },
+        { name: 'missing-file.txt', mime: 'text/plain' },
+      ],
+    };
+
+    try {
+      await parseEventRequestUsecase.execute(command);
+      expect.fail('expected PayloadValidationException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(PayloadValidationException);
+      expect((error as PayloadValidationException).validationErrors).to.deep.include({
+        field: 'attachments.1.file',
+        message: 'Each attachment must include file content as a base64-encoded string or Buffer',
+      });
+    }
+  });
+
+  it('should throw when attachment file is null or non-string', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'null-file.txt', file: null, mime: 'text/plain' },
+        { name: 'number-file.txt', file: 123, mime: 'text/plain' },
+      ],
+    };
+
+    try {
+      await parseEventRequestUsecase.execute(command);
+      expect.fail('expected PayloadValidationException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(PayloadValidationException);
+      expect((error as PayloadValidationException).validationErrors).to.have.length(2);
+    }
+  });
+
+  it('should accept JSON-serialized Buffer attachment file', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'text1.txt', file: 'hello world!', mime: 'text/plain' },
+        {
+          name: 'text2.txt',
+          file: { type: 'Buffer', data: Array.from(Buffer.from('hello world!', 'utf-8')) },
+          mime: 'text/plain',
+        },
+      ],
+    };
+
+    const result = await parseEventRequestUsecase.execute(command);
+
+    expect(result.acknowledged).to.be.true;
+  });
+
+  describe('trigger agent validation', () => {
+    const agentRepository = new AgentRepository();
+
+    const buildAgentCommand = (agentId: unknown): ParseEventRequestCommand => {
+      const command = buildCommand(session, uuid(), [{ subscriberId: uuid() }], template.triggers[0].identifier);
+      command.agentId = agentId as ParseEventRequestCommand['agentId'];
+
+      return command;
+    };
+
+    beforeEach(async () => {
+      await agentRepository.create({
+        name: 'Support Agent',
+        identifier: `support-agent-${uuid()}`,
+        behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+    });
+
+    it('should reject a Mongo query operator as the agent identifier', async () => {
+      try {
+        await parseEventRequestUsecase.execute(buildAgentCommand({ $ne: uuid() }));
+        expect.fail('expected BadRequestException');
+      } catch (error) {
+        expect(error).to.be.instanceOf(BadRequestException);
+        expect((error as BadRequestException).message).to.equal('Agent identifier must be a non-empty string.');
+      }
+    });
+
+    it('should reject an empty agent identifier', async () => {
+      try {
+        await parseEventRequestUsecase.execute(buildAgentCommand('  '));
+        expect.fail('expected BadRequestException');
+      } catch (error) {
+        expect(error).to.be.instanceOf(BadRequestException);
+        expect((error as BadRequestException).message).to.equal('Agent identifier must be a non-empty string.');
+      }
+    });
   });
 });
 
@@ -69,5 +414,6 @@ const buildCommand = (
     overrides: {},
     addressingType: AddressingTypeEnum.MULTICAST,
     requestCategory: TriggerRequestCategoryEnum.SINGLE,
+    requestId: uuid(),
   });
 };

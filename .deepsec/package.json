@@ -1,0 +1,38 @@
+{
+  "name": "deepsec-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "deepsec scanning workspace",
+  "type": "module",
+  "workspaces": [],
+  "packageManager": "pnpm@9.15.4",
+  "dependencies": {
+    "deepsec": "^2.1.2"
+  },
+  "overrides": {
+    "@openai/codex": "0.142.5",
+    "@openai/codex-sdk": "0.142.5",
+    "@hono/node-server": "2.0.12",
+    "body-parser": "2.3.0",
+    "brace-expansion": "5.0.8",
+    "fast-uri": "3.1.4",
+    "hono": "4.12.32",
+    "qs": "6.15.3",
+    "tar": "7.5.22",
+    "undici@^7": "7.29.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@openai/codex": "0.142.5",
+      "@openai/codex-sdk": "0.142.5",
+      "@hono/node-server": "2.0.12",
+      "body-parser": "2.3.0",
+      "brace-expansion": "5.0.8",
+      "fast-uri": "3.1.4",
+      "hono": "4.12.32",
+      "qs": "6.15.3",
+      "tar": "7.5.22",
+      "undici@^7": "7.29.0"
+    }
+  }
+}

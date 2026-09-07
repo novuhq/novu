@@ -1,0 +1,60 @@
+import { createHash } from 'crypto';
+import { BaseRepository } from '../base-repository';
+import { IUserResetTokenCount, UserDBModel, UserEntity } from './user.entity';
+import { User } from './user.schema';
+import { IUserRepository } from './user-repository.interface';
+
+export class CommunityUserRepository
+  extends BaseRepository<UserDBModel, UserEntity, object>
+  implements IUserRepository
+{
+  constructor() {
+    super(User, UserEntity);
+  }
+
+  async findByEmail(email: string): Promise<UserEntity | null> {
+    return this.findOne({
+      email,
+    });
+  }
+
+  async findById(
+    id: string,
+    select?: string,
+    options?: { readPreference?: 'secondaryPreferred' | 'primary' }
+  ): Promise<UserEntity | null> {
+    const data = await this.MongooseModel.findById(id, select).read(options?.readPreference || 'primary');
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
+  }
+
+  private hashResetToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  async findUserByToken(token: string) {
+    return await this.findOne({
+      resetToken: this.hashResetToken(token),
+    });
+  }
+
+  async updatePasswordResetToken(userId: string, token: string, resetTokenCount: IUserResetTokenCount) {
+    return await this.update(
+      {
+        _id: userId,
+      },
+      {
+        $set: {
+          resetToken: this.hashResetToken(token),
+          resetTokenDate: new Date(),
+          resetTokenCount,
+        },
+      }
+    );
+  }
+
+  async findUserSessions(userId: string): Promise<[]> {
+    throw new Error('Not implemented');
+  }
+}

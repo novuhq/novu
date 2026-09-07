@@ -1,6 +1,5 @@
-module.exports = function (options) {
-  return {
-    ...options,
-    devtool: 'source-map',
-  };
-};
+// biome-ignore lint/style/noCommonJs: <explanation>
+module.exports = (options) => ({
+  ...options,
+  devtool: 'source-map',
+});

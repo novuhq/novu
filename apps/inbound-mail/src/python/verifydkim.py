@@ -9,8 +9,9 @@ import os
 import sys
 
 def main():
-    msg = sys.stdin.read()
-    res = None
+    # DKIM operates on the raw message bytes; sys.stdin.read() would decode to
+    # str, which the bytes-oriented dkim library rejects with a TypeError.
+    msg = sys.stdin.buffer.read()
     res = dkim.verify(msg)
 
     print('[' + os.path.basename(__file__) + '] isDkimValid = ' + str(res))

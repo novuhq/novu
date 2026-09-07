@@ -2,7 +2,7 @@ import { getPackageFolders } from './get-packages-folder.mjs';
 import spawn from 'cross-spawn';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import * as fs from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const processArguments = process.argv.slice(2);
 
@@ -65,29 +65,38 @@ function pnpmRun(...args) {
   });
 }
 
-function commaSeparatedListToArray(str) {
-  return str
-    .trim()
-    .split(',')
-    .map((element) => element.trim())
-    .filter((element) => !!element.length);
-}
-
 function getAffectedCommandResult(str) {
   const outputLines = str.trim().split(/\r?\n/);
-  if (outputLines.length > 2) {
-    return outputLines.slice(2).join('');
+
+  // Find the line that contains the JSON array (starts with [ and ends with ])
+  for (const line of outputLines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('[') && trimmedLine.endsWith(']')) {
+      return trimmedLine;
+    }
   }
 
-  return '';
+  // Fallback: look for any line that contains JSON-like content
+  for (const line of outputLines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.includes('[') && trimmedLine.includes(']')) {
+      // Extract just the JSON part from the line
+      const jsonStart = trimmedLine.indexOf('[');
+      const jsonEnd = trimmedLine.lastIndexOf(']') + 1;
+      return trimmedLine.substring(jsonStart, jsonEnd);
+    }
+  }
+
+  // If no JSON found, return empty array
+  return '[]';
 }
 
 async function affectedProjectsContainingTask(taskName, baseBranch) {
   const cachePath = taskName + baseBranch.replace('/', '').replace('/', '') + '-contain-task-cache.json';
 
-  const isCacheExists = fs.existsSync(cachePath);
+  const isCacheExists = existsSync(cachePath);
   if (isCacheExists) {
-    const cache = fs.readFileSync(cachePath, 'utf8');
+    const cache = readFileSync(cachePath, 'utf8');
 
     return JSON.parse(cache);
   }
@@ -108,7 +117,7 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
   // pnpm nx show projects --affected --withTarget=[task] --base [base branch] --json
   const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
 
-  fs.writeFileSync(cachePath, JSON.stringify(result));
+  writeFileSync(cachePath, JSON.stringify(result));
 
   return result;
 }
@@ -116,9 +125,9 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
 async function allProjectsContainingTask(taskName) {
   const cachePath = taskName + '-all-contain-task-cache.json';
 
-  const isCacheExists = fs.existsSync(cachePath);
+  const isCacheExists = existsSync(cachePath);
   if (isCacheExists) {
-    const cache = fs.readFileSync(cachePath, 'utf8');
+    const cache = readFileSync(cachePath, 'utf8');
 
     return JSON.parse(cache);
   }
@@ -138,7 +147,7 @@ async function allProjectsContainingTask(taskName) {
 
   const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
 
-  fs.writeFileSync(cachePath, JSON.stringify(result));
+  writeFileSync(cachePath, JSON.stringify(result));
 
   return result;
 }

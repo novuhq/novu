@@ -12,15 +12,19 @@ runs:
   using: composite
 
   steps:
-    - name: Build API
-      shell: bash
-      run: CI='' pnpm build:api
+    - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
+      with:
+        targets: build
+        projects: '@novu/api-service'
+        args: ''
 
     - name: Start API
       shell: bash
       env:
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
-      run: cd apps/api && pnpm start:test &
+        NODE_ENV: 'test'
+        PORT: '1336'
+      run: cd apps/api && pnpm start:prod &
 
     - name: Wait on API
       shell: bash

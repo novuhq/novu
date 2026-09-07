@@ -1,0 +1,14 @@
+---
+title: "Retrieve a channel endpoint"
+openapi: "GET /v1/channel-endpoints/{identifier}"
+---
+
+Retrieve a single channel endpoint by its identifier.
+
+## `tool_webhook` responses
+
+For `type: "tool_webhook"`, the response includes the wire shape `{ url, headers?, method? }`. Internally, those fields are stored encrypted on the linked `ChannelConnection.auth`; the read path decrypts and re-hydrates them.
+
+Mask sensitive header values in your UI. The Novu dashboard shows only the last four characters of encrypted fields.
+
+See the [Tool Webhook setup guide](/platform/integrations/tool/webhook) for how endpoint headers merge with integration defaults at delivery time.

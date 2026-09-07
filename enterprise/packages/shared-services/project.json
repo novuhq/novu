@@ -1,0 +1,24 @@
+{
+  "name": "@novu/ee-shared-services",
+  "sourceRoot": "enterprise/packages/shared-services/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "cache": false,
+      "inputs": [
+        "default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["{projectRoot}/build", "{projectRoot}/dist", "{projectRoot}/lib"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint enterprise/packages/shared-services"
+      }
+    }
+  }
+}

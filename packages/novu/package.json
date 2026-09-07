@@ -1,0 +1,122 @@
+{
+  "name": "novu",
+  "version": "2.21.1",
+  "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
+  "main": "src/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novuhq/novu.git"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "pnpm prebuild && tsc -p tsconfig.json && tsc -p tsconfig.ui.json && node scripts/build-ui.mjs && cp -r src/commands/init/templates/app* dist/src/commands/init/templates && cp -r src/commands/init/templates/github dist/src/commands/init/templates && cp -r src/commands/connect/templates dist/src/commands/connect/templates && cp -r src/commands/wizard/skills/content dist/src/commands/wizard/skills",
+    "build:prod": "pnpm prebuild && pnpm build",
+    "precommit": "lint-staged",
+    "start": "pnpm start:dev",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon init",
+    "start:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon",
+    "start:dev:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon dev --dashboard-url http://localhost:4201",
+    "start:init:mode": "cross-env NODE_ENV=dev nodemon init",
+    "start:sync:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon sync",
+    "start:connect:mode": "node dist/src/index.js connect --api-url https://api.novu.localhost --connect-dashboard-url https://dashboard.novu.localhost",
+    "start:connect:keyless:mode": "node dist/src/index.js connect --api-url https://api.novu.localhost --connect-dashboard-url https://dashboard.novu.localhost --keyless",
+    "start:test": "cross-env NODE_ENV=test PORT=1336 nodemon init",
+    "start:debug": "cross-env nodemon --config nodemon-debug.json",
+    "start:prod": "cross-env node dist/src/index.js",
+    "print:project-path": "echo \"$PWD\" | sed 's|.*/novu/||'"
+  },
+  "keywords": [
+    "novu",
+    "cli",
+    "novu-cli",
+    "cloud",
+    "sync",
+    "studio"
+  ],
+  "author": "Novu Team <engineering@novu.co>",
+  "license": "ISC",
+  "bin": {
+    "novu": "./dist/src/index.js"
+  },
+  "devDependencies": {
+    "@novu/shared": "workspace:*",
+    "@types/configstore": "^5.0.1",
+    "@types/cross-spawn": "6.0.0",
+    "@types/diff": "7.0.2",
+    "@types/gradient-string": "^1.1.6",
+    "@types/inquirer": "^8.2.0",
+    "@types/mocha": "10.0.2",
+    "@types/prompts": "2.4.2",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.0.0",
+    "@types/uuid": "^8.3.4",
+    "@types/validate-npm-package-name": "3.0.0",
+    "@types/ws": "^8.5.3",
+    "ncp": "^2.0.0",
+    "nodemon": "^3.0.1",
+    "ts-node": "~10.9.1",
+    "typescript": "5.6.2",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.114",
+    "@babel/parser": "^7.29.0",
+    "@inkjs/ui": "2.0.0",
+    "@novu/framework": "workspace:*",
+    "@novu/ntfr-client": "^0.0.5",
+    "@segment/analytics-node": "^1.1.4",
+    "async-sema": "3.0.1",
+    "axios": "^1.18.1",
+    "chalk": "4.1.2",
+    "cli-highlight": "2.1.11",
+    "cli-table3": "0.6.5",
+    "clipboardy": "4.0.0",
+    "commander": "^9.0.0",
+    "configstore": "^5.0.0",
+    "cross-spawn": "7.0.5",
+    "diff": "9.0.0",
+    "dotenv": "^16.6.1",
+    "esbuild": "^0.28.1",
+    "fast-glob": "3.3.1",
+    "figures": "6.1.0",
+    "form-data": "^4.0.5",
+    "get-port": "^5.1.1",
+    "gradient-string": "^2.0.0",
+    "ink": "^7.0.1",
+    "ink-scroll-view": "^0.3.6",
+    "inquirer": "^8.2.0",
+    "jwt-decode": "^3.1.2",
+    "marked": "12.0.2",
+    "nanostores": "1.2.0",
+    "open": "^8.4.0",
+    "ora": "^5.4.1",
+    "picocolors": "^1.0.0",
+    "prompts": "2.4.2",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "string-width": "8.2.0",
+    "uuid": "^11.1.1",
+    "validate-npm-package-name": "3.0.0",
+    "ws": "^8.17.1",
+    "zod": "^3.25.0",
+    "zod-to-json-schema": "^3.25.1"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

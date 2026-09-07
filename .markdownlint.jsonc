@@ -9,7 +9,7 @@
 
   // no-multiple-blanks
   "MD012": false,
-  
+
   // MD032/blanks-around-lists - Lists should be surrounded by blank lines
   "MD032": false,
 
@@ -33,15 +33,7 @@
   // MD044/proper-names - Proper names should have the correct capitalization
   "MD044": {
     "code_blocks": false,
-    "names": [
-      "Cake.Markdownlint",
-      "CommonMark",
-      "JavaScript",
-      "Markdown",
-      "markdown-it",
-      "markdownlint",
-      "Node.js"
-    ]
+    "names": ["Cake.Markdownlint", "CommonMark", "JavaScript", "Markdown", "markdown-it", "markdownlint", "Node.js"]
   },
 
   // MD-46/code-block-style

@@ -1,0 +1,3 @@
+{
+  "main": "../dist/cjs/servers/remix.cjs"
+}

@@ -1,0 +1,191 @@
+{
+  // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "API",
+      "path": "/apps/api",
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Running...",
+          "endsPattern": "Started application in NODE_ENV"
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "WORKER",
+      "path": "/apps/worker",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Running...",
+          "endsPattern": "Listening for NODE_ENV="
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "start:test",
+      "isBackground": true,
+      "label": "WORKER TEST",
+      "path": "/apps/worker",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Successfully compiled",
+          "endsPattern": "Started application in NODE_ENV"
+        }
+      },
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "DASHBOARD",
+      "path": "/apps/dashboard",
+      "icon": {
+        "id": "browser",
+        "color": "terminal.ansiGreen"
+      },
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "vite",
+          "endsPattern": "➜  Local:   http://localhost:4201"
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "SHARED",
+      "path": "/packages/shared",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "APPLICATION GENERIC",
+      "path": "/libs/application-generic",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "DAL",
+      "path": "/libs/dal",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "PROVIDERS",
+      "path": "/packages/providers",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "TESTING",
+      "path": "/libs/testing",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - TRANSLATION",
+      "path": "/enterprise/packages/translation",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - BILLING",
+      "path": "/enterprise/packages/billing",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - DAL",
+      "path": "/enterprise/packages/dal",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "build:watch",
+      "isBackground": true,
+      "label": "EE - API",
+      "path": "/enterprise/packages/api",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "build:watch",
+      "isBackground": true,
+      "label": "EE - AUTH",
+      "path": "/enterprise/packages/auth",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - SHARED SERVICES",
+      "path": "/enterprise/packages/shared-services",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "NC CLIENT",
+      "path": "/packages/client",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "type": "npm",
+      "script": "build:watch",
+      "label": "Novu Javascript",
+      "path": "/packages/js",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "type": "npm",
+      "script": "build:watch",
+      "label": "Novu React",
+      "path": "/packages/react",
+      "problemMatcher": "$tsc"
+    }
+  ]
+}

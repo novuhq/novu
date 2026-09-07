@@ -1,0 +1,37 @@
+name: Deploy DEV DASHBOARD
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - next
+      - main
+    paths:
+      - 'apps/dashboard/**'
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test_dashboard:
+    uses: ./.github/workflows/reusable-dashboard-e2e.yml
+    with:
+      ee: true
+    secrets: inherit
+
+  deploy_dashboard:
+    needs: test_dashboard
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    uses: ./.github/workflows/reusable-dashboard-deploy.yml
+    with:
+      environment: Development
+      netlify_deploy_message: Dev deployment
+      netlify_alias: dev
+      netlify_gh_env: development
+      netlify_site_id: 5b9c0332-3423-42d9-abd6-c3a322ba71dc
+      clerk_publishable_key: pk_live_Y2xlcmsubm92dS1zdGFnaW5nLmNvJA
+      clerk_is_ee_auth_enabled: true
+    secrets: inherit

@@ -1,0 +1,27 @@
+{
+  "name": "@novu/worker",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "tags": ["type:app"],
+  "sourceRoot": "apps/worker/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint apps/worker"
+      }
+    }
+  }
+}

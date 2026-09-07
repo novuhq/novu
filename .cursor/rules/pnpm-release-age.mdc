@@ -1,0 +1,10 @@
+---
+description: pnpm minimumReleaseAge — never bypass for fresh publishes
+alwaysApply: true
+---
+
+### `minimumReleaseAge` and `minimumReleaseAgeExclude`
+
+Do not add packages to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml` to work around the configured `minimumReleaseAge`. That policy applies to every dependency, not only specific names.
+
+If a version was published more recently than `minimumReleaseAge` allows, do not install or bump to it until it is old enough. For urgent security fixes, wait for the window, or resolve to a patched release that already satisfies the age rule—without exempting the package from minimum release age.

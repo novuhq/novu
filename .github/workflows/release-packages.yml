@@ -1,0 +1,357 @@
+name: Release Packages
+run-name: >
+  ${{
+    github.event_name == 'workflow_dispatch' && format('Release {0} ({1}) - {2}', github.event.inputs.version, github.event.inputs.release_type, github.event.inputs.packages) || 'Release Packages'
+  }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: "Packages to release (comma-separated)"
+        required: true
+        type: string
+        default: "@novu/js,@novu/react,@novu/nextjs,@novu/react-native"
+      version:
+        description: "Version to release (e.g., v3.0.0)"
+        required: true
+        type: string
+        default: "v3.0.0"
+      previous_tag:
+        description: "Previous tag to generate changelog from (e.g., @novu/js@v3.4.0)"
+        required: true
+        type: string
+        default: "@novu/js@v3.4.0"
+      release_type:
+        description: "Type of release"
+        required: true
+        type: choice
+        options:
+          - stable
+          - nightly
+          - rc
+        default: stable
+  pull_request:
+    types: [closed]
+    branches: [next, main]
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+jobs:
+  release:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    outputs:
+      pr_number: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-number || '' }}
+      pr_url: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-url || '' }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.ref_name }}
+
+      - name: Normalize and validate version
+        env:
+          RAW_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          SEMVER=$(echo "$RAW_VERSION" | sed 's/^[vV]\.*//')
+          # Numeric identifiers must not have leading zeros; prerelease ids must be
+          # non-empty and dot-separated (rejects 3.1.0-rc., 3.1.0-rc..1, 3.1.0-01).
+          semver_re='^[0-9]+\.[0-9]+\.[0-9]+(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
+          if ! [[ "$SEMVER" =~ $semver_re ]]; then
+            echo "❌ ERROR: Invalid version '$RAW_VERSION'. Must be semver (e.g. v3.1.0 or 3.1.0), got cleaned: '$SEMVER'"
+            exit 1
+          fi
+          echo "RELEASE_SEMVER=$SEMVER" >> "$GITHUB_ENV"
+          echo "✅ Normalized version: v$SEMVER (from input: $RAW_VERSION)"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.0.9
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.23.0"
+          cache: "pnpm"
+
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          npm install -g npm@11.5.2
+          echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          pnpm ci
+          pnpm nx --version
+          pnpm list nx
+
+      - name: Set version for nightly or rc
+        if: github.event.inputs.release_type != 'stable'
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        run: |
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
+            DATE=$(date +'%Y%m%d')
+            echo "RELEASE_VERSION=v${RELEASE_SEMVER}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
+            echo "Using nightly version: v${RELEASE_SEMVER}-nightly.${DATE}.${COMMIT_SHA}"
+          elif [ "$INPUT_RELEASE_TYPE" = "rc" ]; then
+            echo "RELEASE_VERSION=v${RELEASE_SEMVER}-rc.${COMMIT_SHA}" >> $GITHUB_ENV
+            echo "Using rc version: v${RELEASE_SEMVER}-rc.${COMMIT_SHA}"
+          fi
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Release version (without commit)
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_PACKAGES: ${{ github.event.inputs.packages }}
+        run: |
+          if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
+            echo "Running nightly release with version: $RELEASE_VERSION"
+            pnpm nx release version "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --preid nightly --git-commit=false --verbose
+          elif [ "$INPUT_RELEASE_TYPE" = "rc" ]; then
+            echo "Running rc release with version: $RELEASE_VERSION"
+            pnpm nx release version "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --preid rc --git-commit=false --verbose
+          else
+            echo "Running stable release with version: v$RELEASE_SEMVER"
+            pnpm nx release version "v$RELEASE_SEMVER" --projects="$INPUT_PACKAGES" --git-commit=false --verbose
+          fi
+
+      - name: Generate changelog (without commit)
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_PACKAGES: ${{ github.event.inputs.packages }}
+          INPUT_PREVIOUS_TAG: ${{ github.event.inputs.previous_tag }}
+        run: |
+          if [ "$INPUT_RELEASE_TYPE" = "stable" ]; then
+            pnpm nx release changelog "v$RELEASE_SEMVER" --projects="$INPUT_PACKAGES" --from="$INPUT_PREVIOUS_TAG" --git-commit=false
+          else
+            pnpm nx release changelog "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --from="$INPUT_PREVIOUS_TAG" --git-commit=false
+          fi
+
+      - name: Build packages
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        run: |
+          if [ "$INPUT_RELEASE_TYPE" != "stable" ]; then
+            pnpm run build:packages
+          else
+            echo "Skipping build for stable release (will be built after PR merge)"
+          fi
+
+      - name: Publish packages (nightly and rc only)
+        if: github.event.inputs.release_type != 'stable'
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_PACKAGES: ${{ github.event.inputs.packages }}
+        run: |
+          if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
+            echo "📦 Publishing nightly release with OIDC trusted publishing..."
+            pnpm nx run-many -t nx-release-publish --projects="$INPUT_PACKAGES" -- --tag=nightly --provenance
+          elif [ "$INPUT_RELEASE_TYPE" = "rc" ]; then
+            echo "📦 Publishing RC release with OIDC trusted publishing..."
+            pnpm nx run-many -t nx-release-publish --projects="$INPUT_PACKAGES" -- --tag=next --provenance
+          fi
+      - name: Create Pull Request
+        if: github.event.inputs.release_type == 'stable'
+        id: create-pr
+        uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5 # v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: release v${{ env.RELEASE_SEMVER }} (${{ github.event.inputs.packages }})"
+          title: "🚀 Release v${{ env.RELEASE_SEMVER }} - ${{ github.event.inputs.packages }}"
+          body: |
+            ## 🚀 Release v${{ env.RELEASE_SEMVER }}
+
+            This PR contains the release changes for version **v${{ env.RELEASE_SEMVER }}**
+
+            ### 📦 Packages Released:
+            ```
+            ${{ github.event.inputs.packages }}
+            ```
+
+            ### 🔄 Changes:
+            - Updated package versions to v${{ env.RELEASE_SEMVER }}
+            - Generated changelogs from ${{ github.event.inputs.previous_tag }}
+
+            **After merging this PR:**
+            - Packages will be built and published to npm with provenance
+            - Git tags will be created
+            - GitHub releases will be created
+
+            **Please review the changes and merge when ready.**
+          branch: release-v${{ env.RELEASE_SEMVER }}
+          base: ${{ github.ref_name }}
+          delete-branch: false
+          labels: automated-npm-release
+
+  publish-stable:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release-') && contains(github.event.pull_request.labels.*.name, 'automated-npm-release')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Extract version and packages from PR
+        id: extract-info
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "=== PR Title ==="
+          echo "$PR_TITLE"
+          echo ""
+          echo "=== Extraction ==="
+
+          RAW_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*Release \([v0-9\.]*\).*/\1/p')
+          PACKAGES=$(echo "$PR_TITLE" | sed -n 's/.*- \(@novu.*\)/\1/p')
+
+          if [ -z "$RAW_VERSION" ]; then
+            echo "❌ ERROR: Failed to extract version from PR title"
+            echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
+            exit 1
+          fi
+
+          if [ -z "$PACKAGES" ]; then
+            echo "❌ ERROR: Failed to extract packages from PR title"
+            echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
+            exit 1
+          fi
+
+          VERSION=$(echo "$RAW_VERSION" | sed 's/^[vV]\.*/v/')
+          if [ "$VERSION" = "v" ]; then
+            VERSION="$RAW_VERSION"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          echo "✅ Extracted version: $VERSION"
+          echo "✅ Extracted packages: $PACKAGES"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.0.9
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.23.0"
+          cache: "pnpm"
+
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          npm install -g npm@11.5.2
+          echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          pnpm ci
+
+      - name: Build packages
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+        run: pnpm run build:packages
+
+      - name: Publish packages to NPM
+        env:
+          RELEASE_PACKAGES: ${{ steps.extract-info.outputs.packages }}
+        run: |
+          echo "📦 Publishing stable release with OIDC trusted publishing..."
+          pnpm nx run-many -t nx-release-publish --projects="$RELEASE_PACKAGES" -- --tag=latest --provenance
+
+      - name: Create and push tags
+        env:
+          RELEASE_PACKAGES: ${{ steps.extract-info.outputs.packages }}
+          RELEASE_VERSION: ${{ steps.extract-info.outputs.version }}
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+          echo "Creating tags for packages: $RELEASE_PACKAGES"
+          IFS=',' read -ra PACKAGES <<< "$RELEASE_PACKAGES"
+          for package in "${PACKAGES[@]}"; do
+            package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            tag_name="${package}@${RELEASE_VERSION}"
+            echo "Creating tag: $tag_name"
+            git tag "$tag_name"
+            echo "Pushing tag: $tag_name"
+            git push origin "$tag_name"
+          done
+
+      - name: Create GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_PACKAGES: ${{ steps.extract-info.outputs.packages }}
+          RELEASE_VERSION: ${{ steps.extract-info.outputs.version }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          echo "Creating GitHub releases for packages: $RELEASE_PACKAGES"
+
+          IFS=',' read -ra PACKAGES <<< "$RELEASE_PACKAGES"
+          for package in "${PACKAGES[@]}"; do
+            package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            tag_name="${package}@${RELEASE_VERSION}"
+            
+            echo "Creating GitHub release for $package with tag: $tag_name"
+            
+            package_name=$(echo $package | sed 's/@novu\///')
+            release_body="Release of ${package} version ${RELEASE_VERSION}"
+            
+            possible_paths=(
+              "packages/${package_name}/CHANGELOG.md"
+              "${package_name}/CHANGELOG.md"
+              "CHANGELOG.md"
+            )
+            
+            for changelog_path in "${possible_paths[@]}"; do
+              if [ -f "$changelog_path" ]; then
+                echo "Found changelog at: $changelog_path"
+                changelog_content=$(awk -v version="$RELEASE_VERSION" '
+                  BEGIN { capture=0 }
+                  /^## / || /^# / || /^v[0-9]+\./ {
+                    if (capture) exit
+                    if ($0 ~ "(^|[^0-9.])" version "([^0-9.]|$)") {
+                      capture=1
+                      next
+                    }
+                  }
+                  capture { print }
+                ' "$changelog_path" | sed '/^$/d' | head -50)
+                
+                if [ -n "$changelog_content" ]; then
+                  release_body="$changelog_content"
+                  break
+                fi
+              fi
+            done
+            
+            gh release create "$tag_name" \
+              --title "$tag_name" \
+              --notes "$release_body" \
+              --target "$PR_BASE_REF"
+
+            echo "✅ Created GitHub release for $tag_name"
+          done

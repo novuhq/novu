@@ -1,5 +1,4 @@
-const nr = require('newrelic');
-
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
@@ -7,9 +6,9 @@ import {
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CronExpressionEnum } from '@novu/shared';
 
-import { checkingForCronJob } from '../../shared/utils';
+const nr = require('newrelic');
 
 const LOG_CONTEXT = 'ActiveJobMetricService';
 const METRIC_JOB_ID = 'metrics-job';
@@ -22,15 +21,18 @@ export class ActiveJobsMetricService {
     public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService,
     private metricsService: MetricsService
   ) {
-    if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
+    const hasMetricsBackend =
+      (process.env.NOVU_MANAGED_SERVICE === 'true' && !!process.env.NEW_RELIC_LICENSE_KEY) ||
+      process.env.ENABLE_OTEL === 'true';
+
+    if (hasMetricsBackend) {
       this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
-      this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
-        await checkingForCronJob(process.env.ACTIVE_CRON_ID);
+      this.activeJobsMetricWorkerService.bullMqWorker.on('completed', async (job) => {
         Logger.log({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
       });
 
-      this.activeJobsMetricWorkerService.worker.on('failed', async (job, error) => {
+      this.activeJobsMetricWorkerService.bullMqWorker.on('failed', async (job, error) => {
         Logger.error(error, 'Metric Completed Job failed', LOG_CONTEXT);
       });
 
@@ -66,7 +68,7 @@ export class ActiveJobsMetricService {
               repeatJobKey: METRIC_JOB_ID,
               repeat: {
                 immediately: true,
-                pattern: '* * * * * *',
+                pattern: CronExpressionEnum.EVERY_30_SECONDS,
               },
               removeOnFail: true,
               removeOnComplete: true,
@@ -94,32 +96,32 @@ export class ActiveJobsMetricService {
 
   private getWorkerProcessor() {
     return async () => {
-      return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.log('metric job started', LOG_CONTEXT);
-        const deploymentName = process.env.FLEET_NAME ?? 'default';
+      Logger.debug('metric job started', LOG_CONTEXT);
+      const deploymentName = process.env.FLEET_NAME ?? 'default';
+      let fatalError: unknown;
 
+      for (const queueService of this.tokenList) {
         try {
-          for (const queueService of this.tokenList) {
-            const waitCount = queueService.getGroupsJobsCount
-              ? await queueService.getGroupsJobsCount()
-              : await queueService.getWaitingCount();
-            const delayedCount = await queueService.getDelayedCount();
-            const activeCount = await queueService.getActiveCount();
+          const waitCount = queueService.getGroupsJobsCount
+            ? await queueService.getGroupsJobsCount()
+            : await queueService.getWaitingCount();
+          const delayedCount = await queueService.getDelayedCount();
+          const activeCount = await queueService.getActiveCount();
 
-            Logger.verbose('Recording active, waiting, and delayed metrics');
+          Logger.verbose(`Recording metrics for queue: ${queueService.topic}`);
 
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
-          }
-
-          return resolve();
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
         } catch (error) {
-          Logger.error({ error }, 'Error occurred while processing metrics', LOG_CONTEXT);
-
-          return reject(error);
+          Logger.error(error, `Failed to collect metrics for queue: ${queueService.topic}`, LOG_CONTEXT);
+          fatalError = error;
         }
-      });
+      }
+
+      if (fatalError) {
+        throw fatalError;
+      }
     };
   }
 

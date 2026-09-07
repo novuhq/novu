@@ -1,1 +1,0 @@
-export type EnvironmentId = string;

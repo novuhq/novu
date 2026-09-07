@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="SHARED" type="js.build_tools.npm">
-    <package-json value="$PROJECT_DIR$/libs/shared/package.json" />
+    <package-json value="$PROJECT_DIR$/packages/shared/package.json" />
     <command value="run" />
     <scripts>
       <script value="start:dev" />

@@ -8,7 +8,6 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
 # OS
 .DS_Store
@@ -36,5 +35,9 @@ lerna-debug.log*
 
 # tmp mails
 .tmp
+
+# Python bytecode (generated when verifyspf.py / spf.py run locally)
+__pycache__/
+*.py[cod]
 
 dist

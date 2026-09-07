@@ -1,9 +1,29 @@
-import { ISubscribersDefine, StepTypeEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleEventType,
+  ISubscribersDefine,
+  SeverityLevelEnum,
+  StatelessControls,
+  StepTypeEnum,
+} from '@novu/shared';
 
+import type { ChangePropsValueType } from '../../types/helpers';
+import type { EnvironmentId } from '../environment';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
-import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types/helpers';
+
+export interface TopicPreferenceEvaluation {
+  condition?: Record<string, unknown>;
+  result: boolean;
+  subscriptionIdentifier: string;
+}
+
+export type NotificationTopic = {
+  _topicId: string;
+  topicKey: string;
+  preferenceEvaluation?: TopicPreferenceEvaluation;
+};
+
+export type TerminalWorkflowStatusEvent = 'workflow_run_status_completed' | 'workflow_run_status_error';
 
 export class NotificationEntity {
   _id: string;
@@ -15,6 +35,8 @@ export class NotificationEntity {
   _organizationId: OrganizationId;
 
   _subscriberId: string;
+
+  topics: NotificationTopic[];
 
   transactionId: string;
 
@@ -28,15 +50,19 @@ export class NotificationEntity {
    * This is a field that is used to define the subscriber that will receive the notification.
    * This field simplifies metric retrieval by associating external subscriber data, such as subscriberId.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   to?: ISubscribersDefine | any;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
 
   createdAt?: string;
   updatedAt?: string;
-  expireAt?: string;
+  tags?: string[];
+  controls?: StatelessControls;
+  severity?: SeverityLevelEnum;
+  critical?: boolean;
+  contextKeys?: string[];
+  lastEmittedDeliveryEvent?: DeliveryLifecycleEventType;
+  lastEmittedWorkflowStatusEvent?: TerminalWorkflowStatusEvent;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

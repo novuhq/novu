@@ -1,0 +1,55 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "github-actions": false,
+  "ignore": [
+    "**/*.spec.ts",
+    "**/*.e2e*.ts",
+    "**/*.test.ts",
+    "**/test/**",
+    "**/tests/**",
+    "**/e2e/**",
+    "**/__mocks__/**",
+    "**/fixtures/**",
+    "**/migrations/**",
+    "**/*.d.ts",
+    "**/webpack.config.*",
+    "**/swc-register.*",
+    "**/newrelic.ts",
+    "**/scripts/**",
+    "**/self-hosted/**",
+    "libs/internal-sdk/**",
+    "libs/maily-core/**", // cspell:ignore maily
+    "packages/js/**",
+    "packages/framework/**",
+    ".github/**",
+    ".cursor/**",
+    ".cursor-artifacts/**",
+    "docker/**",
+    "playground/**",
+    "enterprise/**"
+  ],
+  "exclude": [
+    "classMembers",
+    "nsExports",
+    "nsTypes",
+    "enumMembers",
+    "types",
+    "dependencies",
+    "devDependencies",
+    "binaries",
+    "unlisted",
+    "unresolved",
+    "duplicates"
+  ],
+  "entry": [
+    "apps/*/src/main.{ts,tsx}",
+    "apps/*/src/**/*.module.ts",
+    "libs/*/src/index.ts",
+    "packages/*/src/index.ts"
+  ],
+  "project": [
+    "apps/*/src/**/*.{ts,tsx}",
+    "libs/*/src/**/*.ts",
+    "packages/*/src/**/*.ts"
+  ]
+}

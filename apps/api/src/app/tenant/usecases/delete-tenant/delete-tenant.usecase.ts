@@ -1,14 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
-import { GetTenantCommand, GetTenant } from '@novu/application-generic';
-import { TenantRepository, DalException } from '@novu/dal';
+import { GetTenant, GetTenantCommand } from '@novu/application-generic';
+import { DalException, TenantRepository } from '@novu/dal';
 
 import { DeleteTenantCommand } from './delete-tenant.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class DeleteTenant {
-  constructor(private tenantRepository: TenantRepository, private getTenantUsecase: GetTenant) {}
+  constructor(
+    private tenantRepository: TenantRepository,
+    private getTenantUsecase: GetTenant
+  ) {}
 
   async execute(command: DeleteTenantCommand) {
     const tenant = await this.getTenantUsecase.execute(
@@ -27,7 +29,7 @@ export class DeleteTenant {
       });
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

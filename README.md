@@ -1,227 +1,259 @@
-<div align="center">
-  <a href="https://novu.co?utm_source=github" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
-    <img alt="Novu Logo" src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
-  </picture>
-  </a>
-</div>
+<a href="https://go.novu.co/github?utm_campaign=readme-logo" target="_blank" rel="noopener noreferrer">
+  <img alt="Novu Logo" src=".github/assets/novu-logo.svg" width="100%"/>
+</a>
 
 <br/>
-
+<br/>
 <p align="center">
-  <a href="https://www.npmjs.com/package/@novu/node">
-    <img src="https://img.shields.io/npm/v/@novu/node" alt="NPM">
+  <a href="https://www.producthunt.com/products/novu" target="_blank" rel="noopener noreferrer"
+>
+    <img src="https://img.shields.io/badge/Product%20Hunt-Golden%20Kitty%20Award%202023-yellow" alt="Product Hunt">
   </a>
-  <a href="https://www.npmjs.com/package/@novu/node">
-    <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
+  <a href="https://news.ycombinator.com/item?id=38419513" target="_blank" rel="noopener noreferrer"
+><img src="https://img.shields.io/badge/Hacker%20News-%231-%23FF6600" alt="Hacker News"></a>
+  <a href="https://www.npmjs.com/package/@novu/react" target="_blank" rel="noopener noreferrer"
+>
+    <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
   </a>
-  <a href="https://github.com/novuhq/novu/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
+  <a href="https://www.npmjs.com/package/@novu/js" target="_blank" rel="noopener noreferrer"
+>
+    <img src="https://img.shields.io/npm/dm/@novu/js" alt="npm downloads">
   </a>
 </p>
 
 <h1 align="center">
-  The open-source notification infrastructure for developers
+ The open-source communication infrastructure for agents and products
 </h1>
 
 <div align="center">
-  The ultimate service for managing multi-channel notifications with a single API.
+  One API and one unified conversation model to connect your <strong>products</strong> and your <strong>agents</strong> to every channel your users live on — Inbox, Email, SMS, Push, Chat, Slack, Microsoft Teams, Telegram, and more.
 </div>
 
 <p align="center">
   <br />
-  <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
+  <a href="https://go.novu.co/github?utm_source=github&utm_medium=readme&utm_campaign=learn-more-link" rel="dofollow"><strong>Learn More »</strong></a>
   <br />
 
 <br/>
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+" target="_blank" rel="noopener noreferrer"
+>Report a bug</a>
   ·
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
+  <a href="https://docs.novu.co" target="_blank" rel="noopener noreferrer"
+>Docs</a>
   ·
-<a href="https://discord.novu.co">Join Our Discord</a>
+  <a href="https://go.novu.co/github?utm_campaign=readme_website" target="_blank" rel="noopener noreferrer"
+>Website</a>
   ·
-  <a href="https://roadmap.novu.co">Roadmap</a>
+  <a href="https://discord.novu.co" target="_blank" rel="noopener noreferrer"
+>Join our Discord</a>
   ·
-  <a href="https://twitter.com/novuhq">X</a>
+  <a href="https://go.novu.co/changelog" target="_blank" rel="noopener noreferrer"
+>Changelog</a>
   ·
-  <a href="https://notifications.directory">Notifications Directory</a>
-</p>
+  <a href="https://go.novu.co/roadmap" target="_blank" rel="noopener noreferrer"
+>Roadmap</a>
+  ·
+  <a href="https://twitter.com/novuhq" target="_blank" rel="noopener noreferrer"
+>X</a>
+  ·
+  <a href="https://go.novu.co/contact?utm_source=github&utm_medium=readme&utm_campaign=contact-us-link" target="_blank" rel="noopener noreferrer"
+>Contact us</a>
+
+Software is becoming more conversational, and user expectations are rising with it. People no longer want static, irrelevant notifications they glance at and forget, they want to engage, ask questions, and go deeper. Instead of a one-way report dropped in their inbox, they expect a thread they can explore: follow up on a metric, drill into an anomaly, or continue a conversation right where they left off. That shift, from broadcast to meaningful dialog is what Novu's communication infrastructure is built for.
 
 ## ⭐️ Why Novu?
-
-Novu provides a unified API that makes it simple to send notifications through multiple channels, including In-App, Push, Email, SMS, and Chat.
-With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible.
-
-## ✨ Features
-
-- 🌈 Single API for all messaging providers (In-App, Email, SMS, Push, Chat)
-- 💅 Fully managed GitOps Flow, deployed from your CI
-- 🔥 Define workflow and step validations with Zod or JSON Schema
-- 💌 React Email/Maizzle/MJML integrations
-- 🚀 Equipped with a CMS for advanced layouts and design management
-- 🛡 Debug and analyze multi-channel messages in a single dashboard
-- 📦 Embeddable notification center with real-time updates
-- 👨‍💻 Community-driven
+ 
+Every product and every agent eventually needs to talk to people, across the channels those people already use. Novu is the open-source layer that handles that communication for you, so you don't rebuild Inbox feeds, provider integrations, and channel webhooks from scratch every time.
+ 
+There are two ways to build with Novu, and they share the same foundation: a single API and a unified conversation model.
+ 
+- **Communication infrastructure for products** — Send notifications across Inbox/In-App, Email, SMS, Push, and Chat through one API, with workflows, digests, and an embeddable `<Inbox />` component.
+- **Agent Communication Infrastructure (ACI)** — Connect any agent you've already built to any communication channel: Slack, Microsoft Teams, Telegram, WhatsApp, email through one conversation model.
 
 ## 🚀 Getting Started
 
-To get started, type the following command in your Terminal.
+[Create a free account](https://go.novu.co/dashboard?utm_source=github&utm_medium=readme&utm_campaign=create-free-account-link) and follow the instructions on the dashboard.
 
-```bash
-npx novu-labs@latest echo
+## 📚 Table of contents
+ 
+- [Why Novu?](#️-why-novu)
+- [Communication infrastructure for products](#-communication-infrastructure-for-products)
+- [Agent Communication Infrastructure (ACI)](#-agent-communication-infrastructure-aci)
+- [Getting Started](#-getting-started)
+- [Embeddable Inbox and Preferences](#embeddable-inbox-component)
+- [Providers](#providers)
+
+## 📬 Communication infrastructure for products
+ 
+The notification platform that turns complex multi-channel delivery into a single component. Built for developers, designed for growth, powered by open source.
+ 
+Novu provides a unified API to send notifications through multiple channels — **Inbox/In-App, Push, Email, SMS, and Chat**. Create custom workflows, define per-channel conditions, and let Novu deliver each notification in the most effective way, without stitching together a provider for every channel yourself.
+ 
+- One API for all messaging providers
+- Embeddable, real-time `<Inbox />` component
+- Notification workflow engine with branching and conditions
+- Digest engine to batch multiple notifications into a single message
+- No-code email editor
+- Embeddable preferences component so users control their own notifications
+
+## 🤖 Agent Communication Infrastructure (ACI)
+ 
+> **You build the agent. Novu gives it a voice.**
+ 
+ACI is a complete suite for companies already building agents that need to talk to users on real communication channels. It connects your agent to any channel and abstracts away the quirks of each platform behind a single, unified conversation model.
+ 
+Novu handles the plumbing in both directions: it receives inbound messages from each channel, normalizes them into one consistent shape, routes them to your agent, and sends your agent's responses back out, so you integrate once instead of building and maintaining a webhook handler per platform.
+ 
+- **Unified conversation model** — one consistent model across every channel, instead of per-platform message formats and webhook quirks
+- **Bidirectional messaging** — receive user messages and send agent replies through the same layer
+- **Channel integrations** — Slack, Microsoft Teams, Telegram, WhatsApp, Email, and an In-App Inbox for agents
+- **Bring your own agent** — works with whatever you've built, whether that's Claude Managed Agents, AI SDK, LangGraph, or a custom stack; Novu doesn't constrain your agent logic
+- **Best practices built in** — conversation threading, reactions, channel-aware formatting, actions and a single integration surface
+Novu connects the agent to the world, it is not the agent itself.
+
+### Want to see ACI in action?
+We have built [Novu Connect](https://novu.co/connect) to showcase the power of ACI, build on integrate an existing Claude Managed Agent as a teammate in Slack, Telegram, or Email in less than 2 minutes. 
+
+Try it now:
+```
+npx novu@latest connect
 ```
 
-## 📚 Table Of Contents
+## Embeddable Inbox component
 
-- [Getting Started](https://github.com/novuhq/novu#-getting-started)
-- [GitOps & React Email Integration](https://github.com/novuhq/novu#-gitops)
-- [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
-- [Providers](https://github.com/novuhq/novu#providers)
-  - [Email](https://github.com/novuhq/novu#-email)
-  - [SMS](https://github.com/novuhq/novu#-sms)
-  - [Push](https://github.com/novuhq/novu#-push)
-  - [Chat](https://github.com/novuhq/novu#-chat)
-  - [In-App](https://github.com/novuhq/novu#-in-app)
-  - [Others](https://github.com/novuhq/novu#other-coming-soon)
-- [Need Help?](https://github.com/novuhq/novu#-need-help)
-- [Links](https://github.com/novuhq/novu#-links)
-- [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
-
-## Notification Workflows as Code
-For API documentation and reference, please visit [Echo API Reference](https://docs.novu.co/echo/quickstart?utm_campaign=github-readme).
-
-```ts
-
-client.workflow('comment-on-post', async ({step, subscriber}) => {
-  const inAppResponse = await step.inApp('in-app-step', async (inputs) => {
-    return {
-      body: renderReactComponent(inputs)
-    };
-  }, {
-    inputSchema: {
-      // ...JSON Schema or ZOD/Ajv/Class Validators definition
-    }
-  });
-
-  // Novu Worker Engine will manage the state and durability of each step in isolation
-  const { events } = await step.digest('1 day');
-
-  await step.email('email-step', async () => {
-    return {
-      subject: 'E-mail Subject',
-      body: renderReactEmail(<ReactEmailComponent events={digestedEvents} />);
-    }
-  }, {
-    // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
-    inputSchema: {
-      // ...JSON Schema
-    },
-    providers: {
-      sendgrid: async (inputs) => {
-        // Echo runs as part of your application, so you have access to your database or resources
-
-        return {
-          to: email,
-          ipPoolName: 'custom-pool'
-        };
-      }
-    },
-    skip: () => {
-      // Write custom skip logic
-      return inAppResponse.seen || subscriber.isOnline;
-    }
-  });
-// Define your workflow trigger payload using json schema and custom validation;
-}, {
-  payloadSchema: {
-    // ...JSON Schema
-  }
-});
-
-```
-
-## Embeddable Notification Center
-
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/notification-center/client/react/get-started?utm_campaign=github-readme) / [Vue](https://docs.novu.co/notification-center/client/vue?utm_campaign=github-readme) / [Angular](https://docs.novu.co/notification-center/client/angular?utm_campaign=github-readme) components or an [iframe embed](https://docs.novu.co/notification-center/client/iframe?utm_campaign=github-readme), as well as a [Web component](https://docs.novu.co/notification-center/client/web-component?utm_campaign=github-readme).
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/platform/quickstart/react?utm_source=github&utm_medium=readme&utm_campaign=react-starter-link), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
 
 <div align="center">
-<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif" alt-text="GIF of Novu's Embeddable Notification Center">
+<img width="4800" height="2700" alt="Novu's Embeddable Inbox components" src="https://github.com/user-attachments/assets/00224c75-7ed0-4e19-b6fd-2a0bdced6258" />
 
-Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
+Read more about how to add a [notification center Inbox](https://docs.novu.co/platform/quickstart/react?utm_source=github&utm_medium=readme&utm_campaign=read-more-react-link) to your app.
 
-<p align="center">
-  <a href="https://docs.novu.co/sdks/react?utm_campaign=github-readme">React Component</a>
-  · <a href="https://docs.novu.co/sdks/vue?utm_campaign=github-readme">Vue Component</a>
-  · <a href="https://docs.novu.co/sdks/angular?utm_campaign=github-readme">Angular Component</a>
-  </p>
-  
 </div>
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use API and UI interface.
 
-#### 💌 Email
+Expand a channel below to browse supported providers.
 
-- [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
-- [x] [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
-- [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
-- [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
-- [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
-- [x] [Custom SMTP](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
-- [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
-- [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
-- [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
-- [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
-- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
-- [x] [Resend](https://github.com/novuhq/novu/tree/main/providers/resend)
-- [x] [SparkPost](https://github.com/novuhq/novu/tree/main/providers/sparkpost)
-- [x] [Outlook 365](https://github.com/novuhq/novu/tree/main/providers/outlook365)
+<details>
+<summary><strong>💌 Email</strong> (20 providers)</summary>
 
-#### 📞 SMS
+| Provider |
+| --- |
+| [Amazon SES](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/ses) |
+| [Anypost](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/anypost) |
+| [Braze](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/braze) |
+| [Brevo](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/brevo) |
+| [Custom SMTP](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/nodemailer) |
+| [Email Webhook](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/email-webhook) |
+| [Email.js](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/emailjs) |
+| [Infobip](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/infobip) |
+| [MailerSend](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/mailersend) |
+| [Mailgun](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/mailgun) |
+| [Mailjet](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/mailjet) |
+| [Mailtrap](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/mailtrap) |
+| [Mandrill](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/mandrill) |
+| [Netcore](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/netcore) |
+| [Outlook 365](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/outlook365) |
+| [Plunk](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/plunk) |
+| [Postmark](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/postmark) |
+| [Resend](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/resend) |
+| [SendGrid](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/sendgrid) |
+| [SparkPost](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/sparkpost) |
 
-- [x] [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
-- [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
-- [x] [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/providers/nexmo)
-- [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
-- [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
-- [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
-- [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
-- [x] [SMS Central](https://github.com/novuhq/novu/tree/main/providers/sms-central)
-- [x] [Maqsam](https://github.com/novuhq/novu/tree/main/providers/maqsam)
-- [x] [46elks](https://github.com/novuhq/novu/tree/main/providers/forty-six-elks)
-- [x] [Clickatell](https://github.com/novuhq/novu/tree/main/providers/clickatell)
-- [x] [Burst SMS](https://github.com/novuhq/novu/tree/main/providers/burst-sms)
-- [x] [Firetext](https://github.com/novuhq/novu/tree/main/providers/firetext)
-- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
-- [ ] Bandwidth
-- [ ] RingCentral
+</details>
 
-#### 📱 Push
+<details>
+<summary><strong>📞 SMS</strong> (37 providers)</summary>
 
-- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
-- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
-- [x] [APNS](https://github.com/novuhq/novu/tree/main/providers/apns)
-- [x] [OneSignal](https://github.com/novuhq/novu/tree/main/providers/one-signal)
-- [x] [Pushpad](https://github.com/novuhq/novu/tree/main/providers/pushpad)
-- [ ] Pushwoosh
+| Provider |
+| --- |
+| [46elks](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/forty-six-elks) |
+| [Africa's Talking](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/africas-talking) |
+| [Afro SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/afro-sms) |
+| [Amazon SNS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/sns) |
+| [Azure SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/azure-sms) |
+| [Bandwidth](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/bandwidth) |
+| [Brevo SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/brevo-sms) |
+| [Bulk SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/bulk-sms) |
+| [Burst SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/burst-sms) |
+| [Clickatell](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/clickatell) |
+| [ClickSend](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/clicksend) |
+| [CM Telecom](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/cm-telecom) |
+| [Eazy SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/eazy-sms) |
+| [Firetext](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/firetext) |
+| [Generic SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/generic-sms) |
+| [Gupshup](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/gupshup) |
+| [iMedia](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/imedia) |
+| [Infobip](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/infobip) |
+| [iSend SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/isend-sms) |
+| [iSendPro SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/isendpro-sms) |
+| [Kannel](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/kannel) |
+| [Maqsam](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/maqsam) |
+| [MessageBird](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/messagebird) |
+| [Mobishastra](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/mobishastra) |
+| [Plivo](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/plivo) |
+| [RingCentral](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/ring-central) |
+| [Sendchamp](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/sendchamp) |
+| [SimpleTexting](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/simpletexting) |
+| [Sinch](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/sinch) |
+| [SMS Central](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/sms-central) |
+| [SMS77](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/sms77) |
+| [SMSMode](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/smsmode) |
+| [Telnyx](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/telnyx) |
+| [Termii](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/termii) |
+| [Twilio](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/twilio) |
+| [Unifonic](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/unifonic) |
+| [Vonage](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/nexmo) |
 
-#### 👇 Chat
+</details>
 
-- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
-- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
-- [x] [MS Teams](https://github.com/novuhq/novu/tree/main/providers/ms-teams)
-- [x] [Mattermost](https://github.com/novuhq/novu/tree/main/providers/mattermost)
+<details>
+<summary><strong>📱 Push</strong> (8 providers)</summary>
 
-#### 📱 In-App
+| Provider |
+| --- |
+| [APNS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/apns) |
+| [App.io](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/appio) |
+| [Expo](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/expo) |
+| [FCM](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/fcm) |
+| [OneSignal](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/one-signal) |
+| [Push Webhook](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/push-webhook) |
+| [Pusher Beams](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/pusher-beams) |
+| [Pushpad](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/push/pushpad) |
 
-- [x] [Novu](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
+</details>
 
-#### Other (Coming Soon...)
+<details>
+<summary><strong>💬 Chat</strong> (13 providers)</summary>
 
-- [ ] PagerDuty
+| Provider |
+| --- |
+| [Chat Webhook](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/chat-webhook) |
+| [Discord](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/discord) |
+| [GetStream](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/getstream) |
+| [Grafana OnCall](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/grafana-on-call) |
+| [Mattermost](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/mattermost) |
+| [Microsoft Teams](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/msTeams) |
+| [Rocket.Chat](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/rocket-chat) |
+| [Ryver](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/ryver) |
+| [Slack](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/slack) |
+| [Telegram](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/telegram) |
+| [Webex Messaging](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/webex-messaging) |
+| [WhatsApp Business](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/whatsapp-business) |
+| [Zulip](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/zulip) |
+
+</details>
+
+<details>
+<summary><strong>📥 In-App</strong> (1 provider)</summary>
+
+| Provider |
+| --- |
+| [Novu Inbox](https://docs.novu.co/platform/quickstart/react?utm_source=github&utm_medium=repository&utm_campaign=inbox-channel-link) |
+
+</details>
 
 ## 📋 Read Our Code Of Conduct
 
@@ -233,17 +265,24 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 ## 🔗 Links
 
-- [Home page](https://novu.co?utm_campaign=github-readme)
-- [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-readme)
+- [Home page](https://novu.co?utm_source=github&utm_medium=readme&utm_campaign=main-link)
+- [Contribution guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
+- [Run Novu locally](https://docs.novu.co/community/run-in-local-machine?utm_source=github&utm_medium=readme&utm_campaign=novu-locally-link)
 
 ## 🛡️ License
 
-Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
+Novu is a commercial open source company, which means some parts of this open source repository require a commercial license. The concept is called "Open Core," where the core technology is fully open source, licensed under MIT license, and the enterprise code is covered under a commercial license ("/enterprise" Enterprise Edition). Enterprise features are built by the core engineering team of Novu which is hired in full-time.
 
-## 💪 Thanks To All Contributors
+The following modules and folders are licensed under the enterprise license:
+
+- `enterprise` folder at the root of the project and all of its subfolders and modules
+
+## 💪 Thanks to all of our contributors
+
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
-<a href="https://novu.co/contributors?utm_source=github">
+<a href="https://novu.co/contributors?utm_source=github" target="_blank" rel="noopener noreferrer">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>
+
+The beatiful header animation was contributed by [LottieFiles](https://lottiefiles.com/) ❤️

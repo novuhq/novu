@@ -1,23 +1,27 @@
-import { NotFoundError } from 'rxjs';
-import { Injectable, Logger } from '@nestjs/common';
-
-import { JobRepository } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
+import { JobEntity, JobRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { DetailEnum, ExecutionLogRoute, ExecutionLogRouteCommand, InstrumentUsecase } from '@novu/application-generic';
-
-import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
+import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
-import { PlatformException } from '../../../shared/utils';
-
-const LOG_CONTEXT = 'HandleLastFailedJob';
+import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
 
 @Injectable()
 export class HandleLastFailedJob {
   constructor(
-    private executionLogRoute: ExecutionLogRoute,
+    private createExecutionDetails: CreateExecutionDetails,
     private queueNextJob: QueueNextJob,
-    private jobRepository: JobRepository
-  ) {}
+    private jobRepository: JobRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   /**
    * This use case is only meant to be executed when a backed off job is in the last of the retry
@@ -32,13 +36,13 @@ export class HandleLastFailedJob {
     const job = await this.jobRepository.findOne({ _id: jobId, _environmentId: command.environmentId });
     if (!job) {
       const message = `Job ${jobId} not found when handling the failure of the latest attempt for a backed off job`;
-      Logger.error(message, new NotFoundError(message), LOG_CONTEXT);
+      this.logger.error(message);
       throw new PlatformException(message);
     }
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY,
         source: ExecutionDetailsSourceEnum.WEBHOOK,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -48,13 +52,14 @@ export class HandleLastFailedJob {
       })
     );
 
-    if (!job?.step?.shouldStopOnFail) {
+    if (!shouldHaltOnStepFailure(job)) {
       await this.queueNextJob.execute(
         QueueNextJobCommand.create({
           parentId: job?._id,
           environmentId: job?._environmentId,
           organizationId: job?._organizationId,
           userId: job?._userId,
+          subscriberId: job?._subscriberId,
         })
       );
     }

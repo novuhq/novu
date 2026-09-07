@@ -1,7 +1,7 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { CacheService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { Ratelimit } from '@upstash/ratelimit';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
-import { CacheService, InstrumentUsecase } from '@novu/application-generic';
 import {
   EvaluateTokenBucketRateLimitResponseDto,
   RegionLimiter,
@@ -15,13 +15,18 @@ export class EvaluateTokenBucketRateLimit {
   private ephemeralCache = new Map<string, number>();
   public algorithm = 'token bucket';
 
-  constructor(private cacheService: CacheService) {}
+  constructor(
+    private cacheService: CacheService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: EvaluateTokenBucketRateLimitCommand): Promise<EvaluateTokenBucketRateLimitResponseDto> {
     if (!this.cacheService.cacheEnabled()) {
       const message = 'Rate limiting cache service is not available';
-      Logger.error(message, LOG_CONTEXT);
+      this.logger.error(message);
       throw new ServiceUnavailableException(message);
     }
 
@@ -50,7 +55,7 @@ export class EvaluateTokenBucketRateLimit {
     } catch (error) {
       const apiMessage = 'Failed to evaluate rate limit';
       const logMessage = `${apiMessage} for identifier: "${command.identifier}". Error: "${error}"`;
-      Logger.error(logMessage, LOG_CONTEXT);
+      this.logger.error(logMessage);
       throw new ServiceUnavailableException(apiMessage);
     }
   }
@@ -137,7 +142,7 @@ export class EvaluateTokenBucketRateLimit {
     const intervalDurationMs = interval * 1e3;
     const fillInterval = intervalDurationMs / refillRate;
 
-    return async function (ctx, identifier) {
+    return async (ctx, identifier) => {
       // Cost needs to be included in local cache identifier to ensure lower cost requests are not blocked
       const localCacheIdentifier = `${identifier}:${cost}`;
 
@@ -148,7 +153,7 @@ export class EvaluateTokenBucketRateLimit {
             success: false,
             limit: refillRate,
             remaining: 0,
-            reset: reset,
+            reset,
             pending: Promise.resolve(),
           };
         }

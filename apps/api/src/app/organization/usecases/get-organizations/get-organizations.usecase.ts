@@ -1,5 +1,5 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { OrganizationRepository } from '@novu/dal';
+import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
 import { GetOrganizationsCommand } from './get-organizations.command';
 
 @Injectable({
@@ -9,6 +9,19 @@ export class GetOrganizations {
   constructor(private readonly organizationRepository: OrganizationRepository) {}
 
   async execute(command: GetOrganizationsCommand) {
-    return await this.organizationRepository.findUserActiveOrganizations(command.userId);
+    const organizations = await this.organizationRepository.findUserActiveOrganizations(command.userId);
+
+    return organizations.map((organization) => {
+      if (!organization.partnerConfigurations?.length) {
+        return organization;
+      }
+
+      return {
+        ...organization,
+        partnerConfigurations: organization.partnerConfigurations.map(
+          ({ accessToken, ...configuration }) => configuration
+        ),
+      } as OrganizationEntity;
+    });
   }
 }

@@ -1,0 +1,222 @@
+import {
+  AiConversationStatusEnum,
+  AiMessageRoleEnum,
+  AiResourceTypeEnum,
+  IEnvironment,
+  StepTypeEnum,
+  WorkflowResponseDto,
+} from '@novu/shared';
+import { UIMessage } from 'ai';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
+import { getApiBaseUrl, getV2, postV2 } from './api.client';
+
+export type GenerateWorkflowRequest = {
+  prompt: string;
+};
+
+export type AiMessage = {
+  role: AiMessageRoleEnum;
+  content: string;
+  timestamp: Date;
+};
+
+export type ChannelRecommendation = {
+  channel: string;
+  reason: string;
+  priority: number;
+};
+
+export type WorkflowReasoning = {
+  summary: string;
+  channelRecommendations: ChannelRecommendation[];
+  bestPractices: string[];
+};
+
+export type GenerateWorkflowResponse = {
+  messages: AiMessage[];
+  status: AiConversationStatusEnum;
+  workflow: WorkflowResponseDto;
+  reasoning: WorkflowReasoning;
+};
+
+export type AiChatSnapshotRef = {
+  _snapshotId: string;
+  messageId: string;
+  checkpointId?: string;
+};
+
+export type AiChatResponseDto = {
+  _id: string;
+  _organizationId: string;
+  _environmentId: string;
+  _userId: string;
+
+  resourceType: AiResourceTypeEnum;
+  resourceId?: string;
+
+  messages: UIMessage[];
+  activeStreamId?: string | null;
+  snapshots?: AiChatSnapshotRef[];
+
+  hasPendingChanges: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function createAiChat({
+  environment,
+  resourceType,
+  resourceId,
+}: {
+  environment: IEnvironment;
+  resourceType: AiResourceTypeEnum;
+  resourceId?: string;
+}): Promise<AiChatResponseDto> {
+  const { data: responseData } = await postV2<{ data: AiChatResponseDto }>('/ai/chat', {
+    environment,
+    body: { resourceType, resourceId },
+  });
+
+  return responseData;
+}
+
+export async function fetchLatestChat({
+  environment,
+  resourceType,
+  resourceId,
+}: {
+  environment: IEnvironment;
+  resourceType: AiResourceTypeEnum;
+  resourceId: string;
+}): Promise<AiChatResponseDto> {
+  const { data: responseData } = await getV2<{ data: AiChatResponseDto }>(
+    `/ai/chat/${resourceType}/${resourceId}/latest`,
+    { environment }
+  );
+
+  return responseData;
+}
+
+export function getChatStreamUrl(): string {
+  return `${getApiBaseUrl()}/v2/ai/chat-stream`;
+}
+
+export async function keepAiChanges({
+  environment,
+  chatId,
+  messageId,
+}: {
+  environment: IEnvironment;
+  chatId: string;
+  messageId: string;
+}): Promise<{ success: boolean }> {
+  const { data: responseData } = await postV2<{ data: { success: boolean } }>('/ai/keep-changes', {
+    environment,
+    body: { chatId, messageId },
+  });
+
+  return responseData;
+}
+
+export async function revertMessage({
+  environment,
+  chatId,
+  messageId,
+  type,
+}: {
+  environment: IEnvironment;
+  chatId: string;
+  messageId: string;
+  type: 'revert' | 'try-again';
+}): Promise<void> {
+  await postV2('/ai/revert-message', {
+    environment,
+    body: { chatId, messageId, type },
+  });
+}
+
+export type WorkflowSuggestionResponse = {
+  id: string;
+  title: string;
+  description: string;
+  examplePrompt: string;
+  steps: StepTypeEnum[];
+};
+
+export async function fetchWorkflowSuggestions({
+  environment,
+  refresh,
+}: {
+  environment: IEnvironment;
+  refresh?: boolean;
+}): Promise<WorkflowSuggestionResponse[]> {
+  if (!IS_AI_FEATURES_ENABLED) return [];
+
+  const endpoint = refresh ? '/ai/workflow-suggestions?refresh=true' : '/ai/workflow-suggestions';
+  const { data: responseData } = await getV2<{ data: WorkflowSuggestionResponse[] }>(endpoint, {
+    environment,
+  });
+
+  return responseData;
+}
+
+export type AgentSuggestionResponse = {
+  id: string;
+  name: string;
+  prompt: string;
+};
+
+export async function fetchAgentSuggestions({
+  environment,
+  refresh,
+}: {
+  environment: IEnvironment;
+  refresh?: boolean;
+}): Promise<AgentSuggestionResponse[]> {
+  if (!IS_AI_FEATURES_ENABLED) return [];
+
+  const endpoint = refresh ? '/ai/agent-suggestions?refresh=true' : '/ai/agent-suggestions';
+  const { data: responseData } = await getV2<{ data: AgentSuggestionResponse[] }>(endpoint, {
+    environment,
+  });
+
+  return responseData;
+}
+
+export async function cancelStream({
+  environment,
+  chatId,
+}: {
+  environment: IEnvironment;
+  chatId: string;
+}): Promise<{ success: boolean }> {
+  const { data: responseData } = await postV2<{ data: { success: boolean } }>('/ai/chat-stream/cancel', {
+    environment,
+    body: { chatId },
+  });
+
+  return responseData;
+}
+
+export type OnboardingSuggestionsResponse = {
+  status: 'pending' | 'generating' | 'completed' | 'failed' | 'skipped' | null;
+  suggestions: WorkflowResponseDto[];
+};
+
+export async function fetchOnboardingWorkflowSuggestions({
+  environment,
+}: {
+  environment: IEnvironment;
+}): Promise<OnboardingSuggestionsResponse> {
+  if (!IS_AI_FEATURES_ENABLED) return { status: 'skipped', suggestions: [] };
+
+  const { data: responseData } = await getV2<{ data: OnboardingSuggestionsResponse }>(
+    '/ai/workflow-suggestions/onboarding',
+    {
+      environment,
+    }
+  );
+
+  return responseData;
+}

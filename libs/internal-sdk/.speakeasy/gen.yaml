@@ -1,0 +1,113 @@
+configVersion: 2.0.0
+generation:
+  sdkClassName: Novu
+  maintainOpenAPIOrder: true
+  usageSnippets:
+    optionalPropertyRendering: withExample
+    sdkInitStyle: constructor
+  useClassNamesForArrayFields: true
+  fixes:
+    nameResolutionDec2023: true
+    nameResolutionFeb2025: false
+    parameterOrderingFeb2024: true
+    requestResponseComponentNamesFeb2024: true
+    securityFeb2025: false
+    sharedErrorComponentsApr2025: false
+    sharedNestedComponentsJan2026: false
+    nameOverrideFeb2026: false
+  auth:
+    oAuth2ClientCredentialsEnabled: false
+    oAuth2PasswordEnabled: false
+    hoistGlobalSecurity: true
+  inferSSEOverload: true
+  sdkHooksConfigAccess: true
+  schemas:
+    allOfMergeStrategy: shallowMerge
+  requestBodyFieldName: ""
+  versioningStrategy: automatic
+  persistentEdits:
+    enabled: never
+  tests:
+    generateTests: true
+    generateNewTests: false
+    skipResponseBodyAssertions: false
+postman:
+  version: 1.0.0
+  baseErrorName: NovuError
+  collectionName: Novu API
+  defaultErrorName: NovuDefaultError
+  imports:
+    option: openapi
+    paths:
+      callbacks: callbacks
+      errors: errors
+      operations: operations
+      shared: shared
+      webhooks: webhooks
+  inferUnionDiscriminators: true
+  inputModelSuffix: input
+  outputModelSuffix: output
+  packageName: novu/api
+typescript:
+  version: 3.19.0
+  acceptHeaderEnum: true
+  additionalDependencies:
+    dependencies: {}
+    devDependencies: {}
+    peerDependencies: {}
+  additionalPackageJSON: {}
+  additionalScripts: {}
+  alwaysIncludeInboundAndOutbound: false
+  apiPromiseHelpers: false
+  author: Novu
+  baseErrorName: NovuError
+  clientServerStatusCodesAsErrors: true
+  constFieldsAlwaysOptional: false
+  defaultErrorName: SDKError
+  enableCustomCodeRegions: false
+  enableMCPServer: false
+  enableReactQuery: true
+  enumFormat: union
+  eventStreamClassName: EventStream
+  exportZodModelNamespace: false
+  fixEnumNameSanitization: false
+  flatAdditionalProperties: false
+  flattenGlobalSecurity: true
+  flatteningOrder: body-first
+  formStringArrayEncodeMode: encoded-string
+  forwardCompatibleEnumsByDefault: false
+  forwardCompatibleUnionsByDefault: tagged-only
+  generateExamples: true
+  imports:
+    option: openapi
+    paths:
+      callbacks: models/callbacks
+      errors: models/errors
+      operations: models/operations
+      shared: models/components
+      webhooks: models/webhooks
+  inferUnionDiscriminators: true
+  inputModelSuffix: input
+  jsonpath: rfc9535
+  laxMode: strict
+  legacyFileNaming: true
+  maxMethodParams: 3
+  methodArguments: require-security-and-request
+  modelPropertyCasing: camel
+  moduleFormat: commonjs
+  multipartArrayFormat: standard
+  outputModelSuffix: output
+  packageName: '@novu/api'
+  preApplyUnionDiscriminators: true
+  preserveModelFieldNames: false
+  privateIdentifierPrefix: '#'
+  requestExtras: false
+  responseFormat: flat
+  sseFlatResponse: false
+  templateVersion: v2
+  unionStrategy: left-to-right
+  usageSDKInitImports: []
+  useIndexModules: true
+  useOxlint: false
+  useTsgo: false
+  zodVersion: v3

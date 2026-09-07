@@ -1,5 +1,5 @@
-import { IsDefined, IsString } from 'class-validator';
 import { LayoutId } from '@novu/shared';
+import { IsDefined, IsString } from 'class-validator';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 

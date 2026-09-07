@@ -1,0 +1,34 @@
+import { expect, test, vi } from 'vitest';
+import { BrazeEmailProvider } from './braze.provider';
+
+const mockConfig = {
+  apiKey: 'your-api-key',
+  apiURL: 'your-api-url',
+  appID: 'your-app-id',
+};
+
+const mockEmailOptions = {
+  from: 'test@example.com',
+  to: ['recipient1@example.com', 'recipient2@example.com'],
+  subject: 'Test Subject',
+  html: '<p>HTML content</p>',
+};
+
+test('should trigger sendMessage method correctly', async () => {
+  const provider = new BrazeEmailProvider(mockConfig);
+
+  const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
+    return {} as any;
+  });
+
+  await provider.sendMessage(mockEmailOptions);
+
+  expect(spy).toHaveBeenCalled();
+
+  expect(spy).toHaveBeenCalledWith({
+    from: mockEmailOptions.from,
+    to: mockEmailOptions.to,
+    html: mockEmailOptions.html,
+    subject: mockEmailOptions.subject,
+  });
+});

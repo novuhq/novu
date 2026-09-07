@@ -1,0 +1,341 @@
+---
+title: 'How do contexts work in Novu?'
+sidebarTitle: 'Contexts'
+description: "Learn how contexts work in Novu, how they differ from payloads, and how they scope, personalize, and filter notifications across workflows and Inbox."
+---
+
+A _context_ is user-defined metadata you attach when triggering a workflow. Contexts let you scope, personalize, and filter notifications without duplicating subscribers, workflows, or templates.
+
+Common context types include `tenant`, `app`, `region`, or any key that matches your product model. Each context entry is either a simple identifier or a rich object with an `id` and optional `data` fields.
+
+![Novu contexts feature showing tenant-scoped notification isolation in the dashboard](/images/inbox/Contexts.png)
+
+## How contexts fit into Novu's model
+
+When you [trigger](/platform/concepts/trigger) a workflow, you pass:
+
+- A **subscriber** (who receives the notification)
+- A **payload** (event-specific data for this run)
+- An optional **context** (shared metadata that scopes and personalizes the notification)
+
+Contexts are persistent. Unlike a payload, which exists only for a single workflow execution, context data is stored in Novu and reused across triggers, templates, the [Inbox](/platform/inbox), and the Activity Feed.
+
+<Note>
+  You can pass up to five context keys per trigger. Each context `data` object is limited to 64KB. See [Manage contexts](/platform/workflow/advanced-features/contexts/manage-contexts) for schema details.
+</Note>
+
+## Context vs payload
+
+| | Payload | Context |
+| --- | --- | --- |
+| **Scope** | Single workflow execution | Persistent across triggers |
+| **Typical use** | Order ID, message text, action URL | Tenant name, app branding, region |
+| **In templates** | `{{payload.field}}` | `{{context.tenant.data.name}}` |
+| **Inbox filtering** | Not used for scoping | Exact-match filtering |
+| **Auto-created** | No | Yes, on first reference |
+| **Data upsert on reuse** | No | Yes on workflow trigger when `data` is provided; no on Inbox |
+
+Use the payload for data that changes on every event. Use context for metadata that defines _where_ or _for whom_ a notification belongs.
+
+## Context structure
+
+Each key in the `context` object is a context type. Novu supports three formats per key:
+
+```ts
+context: {
+  // Simple string: type and id only
+  tenant: "acme-corp",
+
+  // Object with id
+  app: { id: "billing" },
+
+  // Object with id and metadata
+  region: {
+    id: "us-east",
+    data: {
+      name: "US East",
+      timezone: "America/New_York",
+    },
+  },
+}
+```
+
+Contexts are **auto-created** the first time Novu sees them (via a workflow trigger or the Inbox).
+
+During **workflow triggers**, existing context `data` is **upserted** when you include a `data` object inline - similar to subscriber fields. Passing only a string identifier (for example, `tenant: "acme-corp"`) references the context without changing stored `data`.
+
+**Inbox** and other subscriber-facing APIs only find or create contexts and do **not** update existing `data`. You can also manage context data through the [Contexts API](/api-reference/contexts/context-schema) or the Novu dashboard.
+
+## What you can use contexts for
+
+<CardGroup cols={2}>
+  <Card title="Multi-tenancy" icon="building-2" href="/platform/concepts/tenants">
+    Isolate notifications per organization, workspace, or customer using a `tenant` context, without prefixing subscriber IDs or duplicating workflows.
+  </Card>
+  <Card title="App or feature scoping" icon="layout-grid">
+    Route notifications to the right Inbox by scoping with an `app` or feature key when one subscriber uses multiple products.
+  </Card>
+  <Card title="Dynamic branding" icon="palette" href="/platform/workflow/advanced-features/contexts/contexts-in-workflows">
+    Store logos, colors, and plan names in context `data` and reference them in templates with `{{context}}`.
+  </Card>
+  <Card title="Conditional workflow logic" icon="git-branch" href="/platform/workflow/add-and-configure-steps/step-conditions">
+    Branch workflow steps based on context values, such as sending enterprise-only emails when `context.tenant.data.plan` is `enterprise`.
+  </Card>
+  <Card title="Topic subscriptions" icon="bell-ring" href="/platform/subscription/manage-topic-subscriptions#context-scoped-subscriptions">
+    Scope topic subscriptions per tenant or app, match them to workflow triggers using the same Context keys, and filter delivery with payload-based JSON Logic conditions.
+  </Card>
+</CardGroup>
+
+## How context scoping works
+
+### In workflows and templates
+
+Context data is available in every template editor through the `{{context}}` helper:
+
+```liquid
+Welcome to {{context.tenant.data.name}}! Your {{context.tenant.data.plan}} plan is active.
+```
+
+You can also use context in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) to control which steps run.
+
+### In the Inbox
+
+The [Inbox](/platform/inbox) uses **exact-match** filtering. The `context` prop on `<Inbox />` must match the context used at trigger time, key for key and value for value. Notifications triggered with a tenant context only appear in an Inbox initialized with the same tenant context.
+
+| Workflow context | Inbox context | Displayed? |
+| --- | --- | --- |
+| `{ tenant: "acme" }` | `{ tenant: "acme" }` | Yes |
+| `{ tenant: "acme" }` | `{ tenant: "globex" }` | No |
+| `{ tenant: "acme" }` | `{}` | No |
+
+When a subscriber switches tenants in your app, re-render the Inbox with the new context. Novu refetches notifications and reconnects the WebSocket scope automatically.
+
+<Warning>
+  Because `context` is set on the client, secure it with `contextHash` in production. See [Inbox with context](/platform/inbox/configuration/inbox-with-context).
+</Warning>
+
+## Trigger a workflow with context
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.trigger({
+  workflowId: "invoice-paid",
+  to: { subscriberId: "user-123" },
+  payload: { amount: "$250" },
+  context: {
+    tenant: {
+      id: "acme-corp",
+      data: { name: "Acme Corporation", plan: "enterprise" },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="invoice-paid",
+        to={"subscriber_id": "user-123"},
+        payload={"amount": "$250"},
+        context={
+            "tenant": {
+                "id": "acme-corp",
+                "data": {
+                    "name": "Acme Corporation",
+                    "plan": "enterprise",
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "invoice-paid",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{"amount": "$250"},
+    Context: map[string]any{
+        "tenant": map[string]any{
+            "id": "acme-corp",
+            "data": map[string]any{
+                "name": "Acme Corporation",
+                "plan": "enterprise",
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'invoice-paid',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: ['amount' => '$250'],
+        context: [
+            'tenant' => [
+                'id' => 'acme-corp',
+                'data' => [
+                    'name' => 'Acme Corporation',
+                    'plan' => 'enterprise',
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "invoice-paid",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "user-123",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "amount", "$250" },
+    },
+    Context = new Dictionary<string, object>() {
+        { "tenant", new Dictionary<string, object>() {
+            { "id", "acme-corp" },
+            { "data", new Dictionary<string, object>() {
+                { "name", "Acme Corporation" },
+                { "plan", "enterprise" },
+            } },
+        } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("invoice-paid")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("user-123")
+            .build()))
+        .payload(Map.of("amount", "$250"))
+        .context(Map.ofEntries(
+            Map.entry("tenant", TriggerEventRequestDtoContextUnion.of(
+                TriggerEventRequestDtoContext2.builder()
+                    .id("acme-corp")
+                    .data(Map.ofEntries(
+                        Map.entry("name", "Acme Corporation"),
+                        Map.entry("plan", "enterprise")))
+                    .build()))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "invoice-paid",
+    "to": { "subscriberId": "user-123" },
+    "payload": { "amount": "$250" },
+    "context": {
+        "tenant": {
+            "id": "acme-corp",
+            "data": {
+                "name": "Acme Corporation",
+                "plan": "enterprise"
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Multi-tenancy" icon="building-2" href="/platform/concepts/tenants">
+    Implement tenant isolation with contexts end to end.
+  </Card>
+  <Card title="Manage contexts" icon="database" href="/platform/workflow/advanced-features/contexts/manage-contexts">
+    Create, update, and delete contexts through the API or dashboard.
+  </Card>
+  <Card title="Contexts in workflows" icon="git-branch" href="/platform/workflow/advanced-features/contexts/contexts-in-workflows">
+    Personalize templates and add conditional logic with context data.
+  </Card>
+  <Card title="Inbox with context" icon="inbox" href="/platform/inbox/configuration/inbox-with-context">
+    Filter the Inbox by context and secure it with `contextHash`.
+  </Card>
+</CardGroup>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Should I create and update contexts ahead of time or pass context data on every trigger?">
+    Both patterns are supported.
+
+    **Inline on workflow trigger (server-side):** When you trigger a workflow with a rich context object that includes `data`, Novu creates the context if it is missing or replaces stored `data` if it already exists. This works like subscriber upsert and is useful when your backend already has the latest tenant metadata at trigger time. Pass only the context `id` as a string when you want to reference existing data without changing it.
+
+    **Ahead of time via API or dashboard:** Create contexts with initial `data` before you need them, then [update context data](/api-reference/contexts/update-a-context) when metadata changes (for example, tenant name or plan). Use this when you want a single source of truth outside of triggers.
+
+    **Inbox:** Session initialization can auto-create missing contexts but never updates existing context `data`. Do not rely on the Inbox to refresh tenant metadata.
+
+    Recommended approach for multi-tenant apps:
+
+    1. [Create the context](/api-reference/contexts/create-a-context) with initial `data` before you need it, or pass `data` on your first server-side trigger.
+    2. Keep metadata current through [workflow triggers with inline `data`](/platform/workflow/trigger-workflow#trigger-a-workflow-with-context), the Contexts API, or the dashboard.
+    3. Pass only context keys and `id` values to the Inbox unless you are creating a context for the first time.
+  </Accordion>
+
+  <Accordion title="Why are notifications sent but not showing in the Inbox after I added context?">
+    Inbox notifications are scoped per context. If you trigger a workflow with `context` but initialize `<Inbox />` without the same context (or vice versa), the notification will not appear in that Inbox session, even though the in-app job may report success.
+
+    Pass the same context to both your workflow trigger and the Inbox `context` prop. See [Inbox with context](/platform/inbox/configuration/inbox-with-context) for the matching rules and troubleshooting steps.
+  </Accordion>
+</AccordionGroup>

@@ -1,3 +1,5 @@
+.novu-dev.local.json
+.worktrees/
 .nyc_output
 build
 node_modules
@@ -6,6 +8,8 @@ coverage
 *.log
 package-lock.json
 
+terminalOutput
+
 node_modules
 build
 *.log
@@ -13,11 +17,12 @@ coverage
 .DS_Store
 dist
 **-changes-cache.json
+.nx-cache-affected-*.json
+output.json
 
 .idea/workspace.xml
 .idea/usage.statistics.xml
 .idea/tasks.xml
-.eslintcache
 .idea/codestream.xml
 # User-specific stuff
 .idea/**/workspace.xml
@@ -97,16 +102,40 @@ fabric.properties
 # Module directory
 .terraform/
 
-.env
+**/.env
 docker/.env
 .vercel
+nx-cloud.env
 
 .pnpm-store/
 
 # NX Build System
 .nx/cache
+.nx/workspace-data
 
 # EE Symlinked folders - we need these for the EE build
 # @TODO - find a way to remove the symlinks without breaking the build
 !enterprise/packages/**/src
-/.idea/jsLinters/eslint.xml
+
+# Ignore Cursor Plans folder
+.cursor/plans
+
+# Dead code analysis artifacts (generated at runtime)
+.cursor-artifacts/
+
+demos/web-chat-demo/.next
+demos/web-chat-demo/.env.local
+demos/web-chat-demo/tsconfig.tsbuildinfo
+demos/web-chat-demo/next-env.d.ts
+
+.claude/worktrees
+
+# CF Worker
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+**/.wrangler/tmp/**
+
+# Local agent design/plan artifacts (not part of published docs)
+superpowers/
+/tmp/

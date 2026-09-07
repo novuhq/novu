@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "figma-use": {
+      "source": "figma/mcp-server-guide",
+      "sourceType": "github",
+      "skillPath": "skills/figma-use/SKILL.md",
+      "computedHash": "ee93ebdc63dda9331bbaab80c206dd2f13943867d5d9867e1bf708d2f1735cc2"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
+    "linear-release-setup": {
+      "source": "linear/linear-release",
+      "sourceType": "github",
+      "skillPath": "skills/linear-release-setup/SKILL.md",
+      "computedHash": "f6e1b7c9779323210fd4800a10049b30c87bc34bf254acbae606d6dea3f4478d"
+    },
+    "testerarmy-cli": {
+      "source": "tester-army/cli",
+      "sourceType": "github",
+      "skillPath": "skills/testerarmy-cli/SKILL.md",
+      "computedHash": "25d81694661d78160561b54865cdc5a589ba3bd11bace6becaa392a0f9a9e2ff"
+    }
+  }
+}

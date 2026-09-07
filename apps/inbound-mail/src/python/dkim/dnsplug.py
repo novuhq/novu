@@ -42,9 +42,12 @@ def get_txt_pydns(name):
     if name.endswith('.'):
         name = name[:-1]
     response = DNS.DnsRequest(name, qtype='txt').req()
-    if not response.answers:
-        return None
-    return b''.join(response.answers[0]['data'])
+    # The answer section may contain CNAME records (whose data is a str)
+    # before the TXT record, e.g. when the DKIM selector is CNAME-delegated.
+    for answer in response.answers:
+        if answer['typename'].lower() == 'txt':
+            return b''.join(answer['data'])
+    return None
 
 def get_txt_Milter_dns(name):
     """Return a TXT record associated with a DNS name."""
@@ -80,6 +83,7 @@ def get_txt(name):
     except UnicodeDecodeError:
         return None
     txt = _get_txt(unicode_name)
-    if txt:
+    # py3dns and dnspython already return bytes; only str needs encoding.
+    if isinstance(txt, str):
       txt = txt.encode('utf-8')
     return txt

@@ -1,0 +1,189 @@
+import { ActionStepEnum, ChannelStepEnum } from '../../constants';
+import { WorkflowPayloadInvalidError } from '../../errors';
+import {
+  channelStepSchemas,
+  delayActionSchemas,
+  digestActionSchemas,
+  emptySchema,
+  throttleActionSchemas,
+} from '../../schemas';
+import {
+  type CancelEventTriggerResponse,
+  type DiscoverWorkflowOutput,
+  type EventTriggerResponse,
+  type Execute,
+  type FromSchema,
+  type FromSchemaUnvalidated,
+  type Schema,
+  SeverityLevelEnum,
+  type Workflow,
+  type WorkflowOptions,
+} from '../../types';
+import { getBridgeUrl, initApiClient, resolveApiUrl, resolveSecretKey } from '../../utils';
+import { transformSchema, validateData } from '../../validators';
+import { discoverActionStepFactory } from './discover-action-step-factory';
+import { discoverChannelStepFactory } from './discover-channel-step-factory';
+import { discoverCustomStepFactory } from './discover-custom-step-factory';
+import { mapPreferences } from './map-preferences';
+
+/**
+ * Define a new notification workflow.
+ */
+export function workflow<
+  T_PayloadSchema extends Schema,
+  T_ControlSchema extends Schema,
+  T_EnvSchema extends Schema,
+  T_PayloadValidated extends Record<string, unknown> = FromSchema<T_PayloadSchema>,
+  T_PayloadUnvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_PayloadSchema>,
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
+  T_Env extends Record<string, unknown> = FromSchema<T_EnvSchema>,
+>(
+  workflowId: string,
+  execute: Execute<T_PayloadValidated, T_Controls, T_Env>,
+  workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema, T_EnvSchema>
+): Workflow<T_PayloadUnvalidated> {
+  const options = workflowOptions || {};
+
+  const trigger: Workflow<T_PayloadUnvalidated>['trigger'] = async (event) => {
+    const apiClient = initApiClient(resolveSecretKey(event.secretKey), resolveApiUrl(event.apiUrl));
+
+    const unvalidatedData = (event.payload || {}) as T_PayloadUnvalidated;
+    let validatedData: T_PayloadValidated;
+    if (options.payloadSchema) {
+      const validationResult = await validateData(options.payloadSchema, unvalidatedData);
+      if (validationResult.success === false) {
+        throw new WorkflowPayloadInvalidError(workflowId, validationResult.errors);
+      }
+      validatedData = validationResult.data as T_PayloadValidated;
+    } else {
+      // This type coercion provides support to trigger Workflows without a payload schema
+      validatedData = event.payload as unknown as T_PayloadValidated;
+    }
+    const bridgeUrl = await getBridgeUrl();
+
+    const requestPayload = {
+      name: workflowId,
+      to: event.to,
+      payload: {
+        ...validatedData,
+      },
+      ...(event.transactionId && { transactionId: event.transactionId }),
+      ...(event.overrides && { overrides: event.overrides }),
+      ...(event.actor && { actor: event.actor }),
+      ...(event.context && { context: event.context }),
+      ...(event.agentId !== undefined && { agentId: event.agentId }),
+      ...(bridgeUrl && { bridgeUrl }),
+    };
+
+    const result = await apiClient.post<EventTriggerResponse>('/events/trigger', requestPayload);
+
+    const cancel = async () => {
+      return apiClient.delete<CancelEventTriggerResponse>(`/events/trigger/${result.transactionId}`);
+    };
+
+    return {
+      cancel,
+      data: result,
+    };
+  };
+
+  const discover = async (): Promise<DiscoverWorkflowOutput> => {
+    const newWorkflow: DiscoverWorkflowOutput = {
+      workflowId,
+      severity: options.severity ?? SeverityLevelEnum.NONE,
+      steps: [],
+      code: execute.toString(),
+      payload: {
+        schema: await transformSchema(options.payloadSchema || emptySchema),
+        unknownSchema: options.payloadSchema || emptySchema,
+      },
+      controls: {
+        schema: await transformSchema(options.controlSchema || emptySchema),
+        unknownSchema: options.controlSchema || emptySchema,
+      },
+      env: {
+        schema: await transformSchema(options.envSchema || emptySchema),
+        unknownSchema: options.envSchema || emptySchema,
+      },
+      tags: options.tags || [],
+      preferences: mapPreferences(options.preferences),
+      name: options.name,
+      description: options.description,
+      execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
+    };
+
+    await execute({
+      payload: {} as T_PayloadValidated,
+      subscriber: {},
+      env: {} as T_Env & any,
+      controls: {} as T_Controls,
+      context: {},
+      step: {
+        push: await discoverChannelStepFactory(
+          newWorkflow,
+          ChannelStepEnum.PUSH,
+          channelStepSchemas.push.output,
+          channelStepSchemas.push.result
+        ),
+        chat: await discoverChannelStepFactory(
+          newWorkflow,
+          ChannelStepEnum.CHAT,
+          channelStepSchemas.chat.output,
+          channelStepSchemas.chat.result
+        ),
+        email: await discoverChannelStepFactory(
+          newWorkflow,
+          ChannelStepEnum.EMAIL,
+          channelStepSchemas.email.output,
+          channelStepSchemas.email.result
+        ),
+        sms: await discoverChannelStepFactory(
+          newWorkflow,
+          ChannelStepEnum.SMS,
+          channelStepSchemas.sms.output,
+          channelStepSchemas.sms.result
+        ),
+        inApp: await discoverChannelStepFactory(
+          newWorkflow,
+          ChannelStepEnum.IN_APP,
+          channelStepSchemas.in_app.output,
+          channelStepSchemas.in_app.result
+        ),
+        tool: await discoverChannelStepFactory(
+          newWorkflow,
+          ChannelStepEnum.TOOL,
+          channelStepSchemas.tool.output,
+          channelStepSchemas.tool.result
+        ),
+        digest: await discoverActionStepFactory(
+          newWorkflow,
+          ActionStepEnum.DIGEST,
+          digestActionSchemas.output,
+          digestActionSchemas.result
+        ),
+        delay: await discoverActionStepFactory(
+          newWorkflow,
+          ActionStepEnum.DELAY,
+          delayActionSchemas.output,
+          delayActionSchemas.result
+        ),
+        throttle: await discoverActionStepFactory(
+          newWorkflow,
+          ActionStepEnum.THROTTLE,
+          throttleActionSchemas.output,
+          throttleActionSchemas.result
+        ),
+        custom: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.CUSTOM),
+        httpRequest: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.HTTP_REQUEST),
+      } as never,
+    });
+
+    return newWorkflow;
+  };
+
+  return {
+    id: workflowId,
+    trigger,
+    discover,
+  };
+}

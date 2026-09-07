@@ -1,0 +1,44 @@
+# Ignore node_modules to avoid copying them into the image
+node_modules
+
+# Ignore local environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore build directories
+dist
+build
+
+# Ignore test directories and files
+coverage
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# Ignore Docker-related files
+Dockerfile*
+.dockerignore
+
+# Ignore IDE/editor config files
+.vscode
+.idea
+*.swp
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+tmp
+temp
+*.tmp
+*.temp

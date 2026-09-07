@@ -1,8 +1,8 @@
 export { ChannelTypeEnum, IEmailBlock, ITemplateVariable, OrderDirectionEnum } from '@novu/shared';
 
 export { EnvironmentId } from '../environment';
-export { ExternalSubscriberId, SubscriberId } from '../subscriber';
 export { OrganizationId } from '../organization';
+export { ExternalSubscriberId, SubscriberId } from '../subscriber';
 export { UserId } from '../user';
 
 export type LayoutId = string;

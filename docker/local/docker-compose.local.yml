@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      dockerfile: "./apps/api/Dockerfile"
+      context: "../../.."
+  worker:
+    build:
+      dockerfile: "./apps/worker/Dockerfile"
+      context: "../../.."
+  ws:
+    build:
+      dockerfile: "./apps/ws/Dockerfile"
+      context: "../../.."

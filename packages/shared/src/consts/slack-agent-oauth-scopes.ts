@@ -1,0 +1,23 @@
+/**
+ * Bot OAuth scopes for Slack apps used with Novu agents (manifest + OAuth authorize).
+ * Single source of truth for API OAuth and dashboard Slack app manifest.
+ */
+export const SLACK_AGENT_OAUTH_SCOPES = [
+  'app_mentions:read',
+  'assistant:write',
+  'channels:history',
+  'channels:read',
+  'chat:write',
+  'files:read',
+  'files:write',
+  'groups:history',
+  'groups:read',
+  'im:history',
+  'im:read',
+  'im:write',
+  'mpim:history',
+  'mpim:read',
+  'reactions:read',
+  'reactions:write',
+  'users:read',
+] as const;

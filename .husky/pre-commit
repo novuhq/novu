@@ -1,4 +1,12 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$branch" = "next" ] && [ "${ALLOW_NEXT_COMMIT:-}" != "1" ]; then
+  echo "Blocked: do not commit on 'next'."
+  echo "Switch to a feature branch, or approve with:"
+  echo "  ALLOW_NEXT_COMMIT=1 git commit ..."
+  exit 1
+fi
+
 npm run lint-staged

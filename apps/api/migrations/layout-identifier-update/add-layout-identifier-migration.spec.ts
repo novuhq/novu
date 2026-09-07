@@ -1,12 +1,11 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-
-import { LayoutRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 import { addLayoutIdentifierMigration } from './add-layout-identifier-migration';
 
-describe('Add identifier to layout entity', function () {
+describe('Add identifier to layout entity', () => {
   let session: UserSession;
   const layoutRepository = new LayoutRepository();
   const environmentRepository = new EnvironmentRepository();
@@ -47,7 +46,7 @@ describe('Add identifier to layout entity', function () {
     await session.initialize();
   });
 
-  it('should add identifier to layout entity and same identifier for a layout in different environments ', async function () {
+  it('should add identifier to layout entity and same identifier for a layout in different environments ', async () => {
     await pruneLayouts(layoutRepository);
     const devLayout = await createLayout(true);
     await createLayout();
@@ -78,7 +77,7 @@ describe('Add identifier to layout entity', function () {
     expect(temp[0].identifier).to.equal(temp[1].identifier);
   });
 
-  it('should not change identifier for layout with existing identifier', async function () {
+  it('should not change identifier for layout with existing identifier', async () => {
     const existingLayout = await layoutRepository.find({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,

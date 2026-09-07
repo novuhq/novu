@@ -1,37 +1,89 @@
-import { SoftDeleteModel } from 'mongoose-delete';
-import { FilterQuery } from 'mongoose';
-
-import { SubscriberEntity, SubscriberDBModel } from './subscriber.entity';
-import { Subscriber } from './subscriber.schema';
-import { IExternalSubscribersEntity } from './types';
-import { BaseRepository } from '../base-repository';
+import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types';
-import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
-
-type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
-type SubscriberDeleteQuery = Pick<SubscriberQuery, 'subscriberId' | '_environmentId'> & EnforceEnvOrOrgIds;
-type SubscriberDeleteManyQuery = Pick<SubscriberQuery, 'subscriberId' | '_id' | '_environmentId'> & EnforceEnvOrOrgIds;
+import { BaseRepository } from '../base-repository';
+import { BulkCreateSubscriberEntity } from './bulk.create.subscriber.entity';
+import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
+import { Subscriber } from './subscriber.schema';
+import { IExternalSubscribersEntity } from './types';
 
 export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
-  private subscriber: SoftDeleteModel;
   constructor() {
     super(Subscriber, SubscriberEntity);
-    this.subscriber = Subscriber;
   }
 
   async findBySubscriberId(
     environmentId: string,
     subscriberId: string,
-    secondaryRead = false
+    secondaryRead = false,
+    select?: string
   ): Promise<SubscriberEntity | null> {
     return await this.findOne(
       {
         _environmentId: environmentId,
         subscriberId,
       },
-      undefined,
+      select,
       { readPreference: secondaryRead ? 'secondaryPreferred' : 'primary' }
+    );
+  }
+
+  async findByPhone(
+    environmentId: string,
+    organizationId: string,
+    phoneCandidates: string[],
+    digitFlexibleRegexSource?: string | null
+  ): Promise<SubscriberEntity[]> {
+    if (phoneCandidates.length === 0) {
+      return [];
+    }
+
+    // Exact `$in` covers canonical E.164 / Meta digit forms. Optional
+    // digit-flexible regex also matches stored phones with spaces, dashes, or
+    // parentheses (e.g. "+1 (555) 123-4567") so open-access WhatsApp does not
+    // miss a known subscriber or provision a duplicate phantom for the same number.
+    const phoneFilter = digitFlexibleRegexSource
+      ? {
+          $or: [{ phone: { $in: phoneCandidates } }, { phone: { $regex: digitFlexibleRegexSource } }],
+        }
+      : { phone: { $in: phoneCandidates } };
+
+    // Projects `_id` and `data` alongside `subscriberId` so the agent WhatsApp
+    // resolver can (a) map the external id to the Mongo `_id` needed to repoint
+    // MCP / tool-trust rows and (b) read the `__novu_source` provenance marker
+    // to tell an auto-provisioned "phantom" apart from a customer-created
+    // subscriber during the adoption merge. Limit raised from 2 to comfortably
+    // capture a real subscriber plus any phantom(s) sharing the phone.
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        ...phoneFilter,
+      },
+      '_id subscriberId phone data',
+      { limit: 10 }
+    );
+  }
+
+  async findByEmail(environmentId: string, organizationId: string, email: string): Promise<SubscriberEntity[]> {
+    if (!email) {
+      return [];
+    }
+
+    // Projects `_id` and `data` alongside `subscriberId` so the agent email
+    // resolver can (a) map the external id to the Mongo `_id` needed to repoint
+    // MCP / tool-trust rows and (b) read the `__novu_source` provenance marker
+    // to tell an auto-provisioned "phantom" apart from a customer-created
+    // subscriber during the adoption merge. Limit raised from 2 to comfortably
+    // capture a real subscriber plus any phantom(s) sharing the address.
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        email,
+      },
+      '_id subscriberId email data',
+      { limit: 10 }
     );
   }
 
@@ -39,30 +91,46 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     subscribers: ISubscribersDefine[],
     environmentId: EnvironmentId,
     organizationId: OrganizationId
-  ) {
+  ): Promise<BulkCreateSubscriberEntity> {
     const bulkWriteOps = subscribers.map((subscriber) => {
-      const { subscriberId, ...rest } = subscriber;
+      const updatableFields = pickUpdatableSubscriberFields(subscriber);
 
       return {
         updateOne: {
-          filter: { subscriberId, _environmentId: environmentId, _organizationId: organizationId },
-          update: { $set: { ...rest, deleted: false } },
+          filter: {
+            subscriberId: subscriber.subscriberId,
+            _environmentId: environmentId,
+            _organizationId: organizationId,
+          },
+          update: { $set: { ...updatableFields, deleted: false } },
           upsert: true,
         },
       };
     });
 
     let bulkResponse;
+    let writeErrors: Array<{ err: { index: number; errmsg: string; op?: { subscriberId?: string } } }> = [];
     try {
       bulkResponse = await this.bulkWrite(bulkWriteOps);
-    } catch (e) {
-      if (!e.writeErrors) {
-        throw new DalException(e.message);
+    } catch (e: unknown) {
+      if (isErrorWithWriteErrors(e)) {
+        if (!e.writeErrors) {
+          throw new DalException(e.message);
+        }
+        bulkResponse = e.result;
+        writeErrors = e.writeErrors as Array<{
+          err: { index: number; errmsg: string; op?: { subscriberId?: string } };
+        }>;
+      } else {
+        throw new DalException('An unknown error occurred');
       }
-      bulkResponse = e.result;
     }
-    const created = bulkResponse.getUpsertedIds();
-    const writeErrors = bulkResponse.getWriteErrors();
+
+    const upsertedIds = bulkResponse.upsertedIds || {};
+    const created = Object.entries(upsertedIds).map(([index, _id]) => ({
+      index: parseInt(index, 10),
+      _id,
+    }));
 
     const indexes: number[] = [];
 
@@ -72,7 +140,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       return mapToSubscriberObject(subscribers[inserted.index]?.subscriberId);
     });
 
-    let failed = [];
+    let failed: Array<{ message: string; subscriberId?: string }> = [];
     if (writeErrors.length > 0) {
       failed = writeErrors.map((error) => {
         indexes.push(error.err.index);
@@ -111,7 +179,12 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
   }
 
-  async searchSubscribers(environmentId: string, subscriberIds: string[] = [], emails: string[] = [], search?: string) {
+  async searchSubscribers(
+    environmentId: string,
+    subscriberIds: string[] = [],
+    emails: string[] = [],
+    search?: string
+  ): Promise<string[]> {
     const filters: any = [];
 
     if (emails?.length) {
@@ -143,58 +216,162 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
         }
       );
     }
+    if (filters.length === 0) {
+      return [];
+    }
 
-    return await this.find(
-      {
-        _environmentId: environmentId,
-        $or: filters,
+    return (
+      await this.find(
+        {
+          _environmentId: environmentId,
+          $or: filters,
+        },
+        '_id'
+      )
+    ).map((entity) => entity._id);
+  }
+
+  async estimatedDocumentCount(): Promise<number> {
+    return this._model.estimatedDocumentCount();
+  }
+
+  async listSubscribers(query: {
+    environmentId: string;
+    organizationId: string;
+    limit: number;
+    sortBy: 'updatedAt' | '_id';
+    sortDirection: DirectionEnum;
+    after?: string;
+    before?: string;
+    email?: string;
+    phone?: string;
+    subscriberId?: string;
+    name?: string;
+    includeCursor?: boolean;
+  }): Promise<{
+    subscribers: SubscriberEntity[];
+    next: string | null;
+    previous: string | null;
+    totalCount: number;
+    totalCountCapped: boolean;
+  }> {
+    if (query.before && query.after) {
+      throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
+    const id = query.before || query.after;
+    let subscriber: SubscriberEntity | null = null;
+    if (id) {
+      subscriber = await this.findOne({
+        _environmentId: query.environmentId,
+        _organizationId: query.organizationId,
+        _id: id,
+      });
+      if (!subscriber) {
+        return {
+          subscribers: [],
+          next: null,
+          previous: null,
+          totalCount: 0,
+          totalCountCapped: false,
+        };
+      }
+    }
+
+    const after =
+      query.after && subscriber ? { sortBy: subscriber[query.sortBy], paginateField: subscriber._id } : undefined;
+    const before =
+      query.before && subscriber ? { sortBy: subscriber[query.sortBy], paginateField: subscriber._id } : undefined;
+
+    const pagination = await this.findWithCursorBasedPagination({
+      after,
+      before,
+      paginateField: '_id',
+      limit: query.limit,
+      sortDirection: query.sortDirection,
+      sortBy: query.sortBy,
+      includeCursor: query.includeCursor,
+      query: {
+        _environmentId: query.environmentId,
+        _organizationId: query.organizationId,
+        $and: [
+          {
+            ...(query.email && {
+              email: {
+                $regex: regExpEscape(query.email),
+                $options: 'i',
+              },
+            }),
+            ...(query.phone && {
+              phone: {
+                $regex: regExpEscape(query.phone),
+                $options: 'i',
+              },
+            }),
+            ...(query.subscriberId && {
+              subscriberId: query.subscriberId,
+            }),
+            ...(query.name && {
+              $expr: {
+                $regexMatch: {
+                  input: {
+                    $trim: {
+                      input: {
+                        $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }],
+                      },
+                    },
+                  },
+                  regex: regExpEscape(query.name),
+                  options: 'i',
+                },
+              },
+            }),
+          },
+        ],
       },
-      '_id'
-    );
-  }
+    });
 
-  async delete(query: SubscriberDeleteQuery) {
-    const requestQuery: SubscriberDeleteQuery = {
-      _environmentId: query._environmentId,
-      subscriberId: query.subscriberId,
+    return {
+      subscribers: pagination.data,
+      next: pagination.next,
+      previous: pagination.previous,
+      totalCount: pagination.totalCount,
+      totalCountCapped: pagination.totalCountCapped,
     };
-
-    const foundSubscriber = await this.findOne(requestQuery);
-
-    if (!foundSubscriber) {
-      throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
-    }
-
-    return await this.subscriber.delete(requestQuery);
-  }
-
-  async deleteMany(query: SubscriberDeleteManyQuery) {
-    const requestQuery: SubscriberDeleteManyQuery = {
-      _environmentId: query._environmentId,
-      subscriberId: query.subscriberId,
-    };
-
-    if (query._id) {
-      requestQuery._id = query._id;
-    }
-
-    return await this.subscriber.delete(requestQuery);
-  }
-
-  async findDeleted(query: SubscriberQuery) {
-    const requestQuery: SubscriberQuery = {
-      _environmentId: query._environmentId,
-      subscriberId: query.subscriberId,
-    };
-
-    const res = await this.subscriber.findDeleted(requestQuery);
-
-    return this.mapEntity(res);
   }
 }
+
 function mapToSubscriberObject(subscriberId: string) {
   return { subscriberId };
 }
+
+const UPDATABLE_SUBSCRIBER_FIELDS: readonly (keyof ISubscribersDefine)[] = [
+  'firstName',
+  'lastName',
+  'email',
+  'phone',
+  'avatar',
+  'locale',
+  'data',
+  'channels',
+  'timezone',
+];
+
+function pickUpdatableSubscriberFields(subscriber: ISubscribersDefine): Partial<ISubscribersDefine> {
+  const result: Partial<ISubscribersDefine> = {};
+  for (const field of UPDATABLE_SUBSCRIBER_FIELDS) {
+    if (field in subscriber) {
+      (result as Record<string, unknown>)[field] = subscriber[field];
+    }
+  }
+
+  return result;
+}
+
 function regExpEscape(literalString: string): string {
   return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
+}
+
+function isErrorWithWriteErrors(e: unknown): e is { writeErrors?: any; message?: string; result?: any } {
+  return typeof e === 'object' && e !== null && 'writeErrors' in e;
 }

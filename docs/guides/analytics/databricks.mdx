@@ -1,0 +1,626 @@
+---
+title: 'Databricks'
+description: 'Sync subscriber profiles, cohort membership, and workflow events from Databricks to Novu with the REST API. Includes incremental processing, retries, and rate-limit handling.'
+---
+
+Novu does not provide a native Databricks connector. You can sync data from Databricks by calling the [Novu REST API](/api-reference) from a Databricks job.
+
+This guide covers three warehouse syncs:
+
+- [Subscriber](/platform/concepts/subscribers) profiles, such as email address, locale, and plan
+- Cohort membership, represented by [topic subscriptions](/platform/subscription/manage-topic-subscriptions)
+- Notification [events](/platform/concepts/trigger), which trigger workflows
+
+Use Databricks for data that is computed or stored in the warehouse. If an event must notify a user within seconds of happening in your product, [trigger](/platform/concepts/trigger) Novu from Kafka or another event stream instead of waiting for a warehouse job.
+
+If you already run reverse ETL, use the [Hightouch](/guides/analytics/hightouch) guide instead of a custom notebook. For product analytics identify/track streams, use the [Segment](/guides/analytics/segment) guide. The REST pattern below is the same if you call Novu from your own reverse ETL service.
+
+## How the sync works
+
+| Databricks data | Novu resource | Endpoint |
+| --- | --- | --- |
+| Subscriber profiles | [Subscribers](/platform/concepts/subscribers) | [`POST /v1/subscribers/bulk`](/api-reference/subscribers/bulk-create-subscribers) |
+| Cohort membership | [Topic subscriptions](/platform/concepts/topics) | [`POST`](/api-reference/topics/create-topic-subscriptions) and [`DELETE`](/api-reference/topics/delete-topic-subscriptions) `/v2/topics/{topicKey}/subscriptions` |
+| Notification events | [Workflow triggers](/platform/concepts/trigger) | [`POST /v1/events/trigger/bulk`](/api-reference/events/bulk-trigger-event) |
+
+The subscriber job processes at most 500 subscribers per request. The cohort job processes at most 100 topic subscriptions per request. The event job processes at most 100 events per request.
+
+The cohort job also calls [`POST /v2/topics`](/api-reference/topics/create-a-topic) to create the topic and [`GET /v2/topics/{topicKey}/subscriptions`](/api-reference/topics/list-topic-subscriptions) to read current membership.
+
+<Info>
+  Before you start, you need:
+
+  - A Databricks workspace with permission to create jobs, secret scopes, and a checkpoint Volume
+  - Unity Catalog Delta tables for subscribers, and optionally for cohorts and events
+  - A Novu [secret key](/platform/developer/api-keys) from **Developer** > **API Keys** in the Novu Dashboard. Keys are [environment-specific](/platform/developer/environments).
+</Info>
+
+<Steps>
+  <Step>
+## Store the Novu secret key
+
+Create a Databricks secret scope and add the Novu secret key:
+
+```bash
+databricks secrets create-scope novu
+databricks secrets put-secret novu secret-key
+```
+
+The second command prompts you for the secret value. Read the secret in the notebook:
+
+```python
+NOVU_API_URL = "https://api.novu.co"
+NOVU_SECRET_KEY = dbutils.secrets.get(scope="novu", key="secret-key")
+```
+
+Use `https://eu.api.novu.co` for an EU Novu environment. See [API keys](/platform/developer/api-keys#api-urls) for hostnames.
+
+<Warning>
+  A Novu secret key belongs to one environment and one region. Confirm that the key and API URL both point to the intended Novu environment before you run a backfill.
+</Warning>
+  </Step>
+
+  <Step>
+## Add the HTTP and batching helpers
+
+Add this cell once. All three syncs use it.
+
+```python
+import hashlib
+import random
+import time
+from urllib.parse import quote
+
+import requests
+
+
+# Free plan: Configuration 20 tokens/sec, Events 60 tokens/sec.
+# Change these values to the limits for your Novu plan.
+CONFIGURATION_TOKENS_PER_SECOND = 20
+EVENT_TOKENS_PER_SECOND = 60
+
+# Reserve half of each bucket for other traffic that uses the same Novu key.
+RATE_LIMIT_SHARE = 0.5
+
+SUBSCRIBER_BATCH_SIZE = 500
+TOPIC_BATCH_SIZE = 100
+EVENT_BATCH_SIZE = 100
+PROCESSED_TRIGGER_STATUS = "processed"
+
+session = requests.Session()
+session.headers.update(
+    {
+        "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
+)
+
+
+def wait_for_budget(token_cost, tokens_per_second):
+    usable_tokens_per_second = tokens_per_second * RATE_LIMIT_SHARE
+    time.sleep(token_cost / usable_tokens_per_second)
+
+
+def novu_request(method, path, body=None, params=None, headers=None, max_attempts=5):
+    response = None
+
+    for attempt in range(max_attempts):
+        response = session.request(
+            method=method,
+            url=f"{NOVU_API_URL}{path}",
+            json=body,
+            params=params,
+            headers=headers,
+            timeout=60,
+        )
+
+        if response.status_code not in {409, 429, 500, 502, 503, 504}:
+            response.raise_for_status()
+
+            return response
+
+        if attempt == max_attempts - 1:
+            break
+
+        retry_after = float(response.headers.get("Retry-After", 0))
+        backoff = min(2**attempt, 30)
+        time.sleep(max(retry_after, backoff) + random.random())
+
+    response.raise_for_status()
+
+
+def chunks(values, size):
+    for start in range(0, len(values), size):
+        yield values[start : start + size]
+
+
+def batched(rows, to_item, size):
+    batch = []
+    for row in rows:
+        batch.append(to_item(row))
+        if len(batch) == size:
+            yield batch
+            batch = []
+    if batch:
+        yield batch
+
+
+def send_batch(method, path, body, token_cost, tokens_per_second, assert_ok, extra_headers=None):
+    wait_for_budget(token_cost, tokens_per_second)
+    response = novu_request(method, path, body, headers=extra_headers)
+    assert_ok(response)
+
+    return response
+
+
+def assert_no_item_failures(response, operation):
+    result = response.json()
+    if not isinstance(result, dict):
+        raise RuntimeError(f"{operation} returned unexpected body: {result}")
+
+    failures = result.get("failed", [])
+    failed_count = result.get("meta", {}).get("failed", 0)
+
+    if failures or failed_count:
+        details = failures or result.get("errors", [])
+        raise RuntimeError(f"{operation} returned item failures: {details}")
+
+
+def assert_no_trigger_failures(response, operation):
+    result = response.json()
+    if isinstance(result, list):
+        items = result
+    elif isinstance(result, dict) and isinstance(result.get("data"), list):
+        items = result["data"]
+    else:
+        raise RuntimeError(f"{operation} returned unexpected body: {result}")
+
+    failures = [item for item in items if item.get("status") != PROCESSED_TRIGGER_STATUS]
+    if failures:
+        raise RuntimeError(f"{operation} returned item failures: {failures}")
+
+
+def run_change_feed(table_name, checkpoint_path, on_batch, starting_timestamp=None):
+    reader = spark.readStream.option("readChangeFeed", "true")
+    if starting_timestamp:
+        reader = reader.option("startingTimestamp", starting_timestamp)
+
+    query = (
+        reader.table(table_name)
+        .writeStream.foreachBatch(on_batch)
+        .option("checkpointLocation", checkpoint_path)
+        .trigger(availableNow=True)
+        .start()
+    )
+    query.awaitTermination()
+```
+
+`novu_request` retries `429`, `409`, and temporary server errors. `409` is returned when [idempotency](/api-reference/idempotency) is enabled and the same `Idempotency-Key` is still in flight. The helper uses the `Retry-After` header when Novu provides one.
+
+`wait_for_budget` sleeps **before** each write so the first request in a job is paced. It is a simple delay, not a shared token bucket across notebooks.
+
+The default pacing uses half of the Free plan's Configuration and Event limits. Update `CONFIGURATION_TOKENS_PER_SECOND` and `EVENT_TOKENS_PER_SECOND` for your plan, but keep spare capacity if production traffic uses the same secret key. See [Rate limiting](/api-reference/rate-limiting) for current limits and token costs.
+  </Step>
+
+  <Step>
+## Prepare the subscriber source
+
+The source must contain one row per subscriber. Use a stable application ID for `subscriber_id`.
+
+| `subscriber_id` | `email` | `first_name` | `last_name` | `locale` | `plan` |
+| --- | --- | --- | --- | --- | --- |
+| `usr_8f21` | `peter@example.com` | Peter | Gibbons | `en_US` | pro |
+
+The example below reads `main.crm.novu_subscribers`. Replace this name and the column mapping with your own table.
+
+<Note>
+  Sync subscriber profiles before topic subscriptions. Novu rejects a topic subscription if its subscriber does not exist.
+</Note>
+  </Step>
+
+  <Step>
+## Sync subscriber profiles
+
+[`POST /v1/subscribers/bulk`](/api-reference/subscribers/bulk-create-subscribers) creates new subscribers and updates existing subscribers. Replaying a batch is safe because Novu upserts each record by `subscriberId`. See [Bulk import](/platform/concepts/subscribers#bulk-import).
+
+```python
+from pyspark.sql import Window
+from pyspark.sql import functions as F
+
+
+def subscriber_payload(row):
+    return {
+        "subscriberId": str(row["subscriber_id"]),
+        "email": row["email"],
+        "firstName": row["first_name"],
+        "lastName": row["last_name"],
+        "locale": row["locale"],
+        "data": {
+            "plan": row["plan"],
+        },
+    }
+
+
+def sync_subscribers(dataframe):
+    rows = (
+        dataframe.select(
+            "subscriber_id",
+            "email",
+            "first_name",
+            "last_name",
+            "locale",
+            "plan",
+        )
+        .filter(F.col("subscriber_id").isNotNull())
+        .toLocalIterator()
+    )
+
+    for batch in batched(rows, subscriber_payload, SUBSCRIBER_BATCH_SIZE):
+        send_batch(
+            "POST",
+            "/v1/subscribers/bulk",
+            {"subscribers": batch},
+            100,
+            CONFIGURATION_TOKENS_PER_SECOND,
+            lambda response: assert_no_item_failures(response, "Subscriber sync"),
+        )
+
+
+subscribers = spark.table("main.crm.novu_subscribers")
+sync_subscribers(subscribers)
+```
+
+`toLocalIterator()` streams rows to the driver instead of loading the full table into driver memory. The Novu API limits throughput, so a single paced sender is simpler and safer than starting HTTP clients on many Spark executors.
+
+Custom profile fields belong in `data`. Template code can read the example field as `{{subscriber.data.plan}}`. See [Custom data](/platform/concepts/subscribers#custom-data) on the subscriber profile.
+  </Step>
+
+  <Step>
+## Make the subscriber sync incremental
+
+Use Delta Change Data Feed with Structured Streaming. Databricks stores progress in the checkpoint location, so later job runs process only new table versions.
+
+Enable Change Data Feed on the source table:
+
+```sql
+ALTER TABLE main.crm.novu_subscribers
+SET TBLPROPERTIES (delta.enableChangeDataFeed = true);
+```
+
+Create a Unity Catalog Volume for the checkpoint:
+
+```sql
+CREATE VOLUME IF NOT EXISTS main.ops.novu_checkpoints;
+```
+
+Replace the full-table call from the previous step with this stream:
+
+```python
+CHECKPOINT_PATH = "/Volumes/main/ops/novu_checkpoints/subscriber-sync"
+
+
+def sync_subscriber_changes(batch_dataframe, batch_id):
+    newest_first = Window.partitionBy("subscriber_id").orderBy(
+        F.col("_commit_version").desc()
+    )
+    current_values = (
+        batch_dataframe.filter(
+            F.col("_change_type").isin("insert", "update_postimage")
+        )
+        .withColumn("_row_number", F.row_number().over(newest_first))
+        .filter(F.col("_row_number") == 1)
+        .drop("_row_number")
+    )
+    sync_subscribers(current_values)
+
+
+run_change_feed(
+    table_name="main.crm.novu_subscribers",
+    checkpoint_path=CHECKPOINT_PATH,
+    on_batch=sync_subscriber_changes,
+)
+```
+
+On the first run, Databricks returns the current table snapshot as inserts. Later runs resume from the checkpoint. If a Novu request fails, `sync_subscribers` raises an error and Databricks does not commit that micro-batch to the checkpoint. The next run retries the batch.
+
+This example does not delete Novu subscribers when rows are deleted from the source table. Subscriber deletion should follow your product's retention and account-deletion policy. Implement it as a separate reviewed process if required.
+
+<Warning>
+  Change Data Feed records follow the Delta table retention policy. Run the job often enough that its checkpoint does not fall behind the retained table history. If the required source version is no longer available, restore from a known version or start a new checkpoint and run a full sync.
+</Warning>
+  </Step>
+
+  <Step>
+## Sync a cohort to a topic
+
+A Databricks cohort maps to a Novu [topic](/platform/concepts/topics). This example compares the desired warehouse membership with the current Novu membership, then sends only additions and removals.
+
+The job creates the topic before it reads membership. [`POST /v2/topics`](/api-reference/topics/create-a-topic) accepts an existing key, so calling it on every run is safe. See [Automatic topic creation](/platform/concepts/topics#automatic-topic-creation).
+
+<Note>
+  [`POST /v2/topics/{topicKey}/subscriptions`](/api-reference/topics/create-topic-subscriptions) creates the topic automatically when the key does not exist, so an explicit create is not required to add subscriptions. This job still creates the topic first for two reasons. Reading membership with [`GET /v2/topics/{topicKey}/subscriptions`](/api-reference/topics/list-topic-subscriptions) returns `404` when the topic does not exist, and creating the topic explicitly sets the display name shown in the Novu Dashboard.
+</Note>
+
+Run this step after the subscriber sync:
+
+```python
+def list_topic_members(topic_key):
+    encoded_topic_key = quote(topic_key, safe="")
+    members = set()
+    cursor = None
+
+    while True:
+        params = {"limit": 100}
+        if cursor:
+            params["after"] = cursor
+
+        wait_for_budget(1, CONFIGURATION_TOKENS_PER_SECOND)
+        response = novu_request(
+            "GET",
+            f"/v2/topics/{encoded_topic_key}/subscriptions",
+            params=params,
+        )
+        result = response.json()
+
+        for subscription in result["data"]:
+            members.add(subscription["subscriber"]["subscriberId"])
+
+        cursor = result.get("next")
+        if not cursor:
+            return members
+
+
+def sync_topic(topic_key, topic_name, dataframe):
+    encoded_topic_key = quote(topic_key, safe="")
+
+    send_batch(
+        "POST",
+        "/v2/topics",
+        {"key": topic_key, "name": topic_name},
+        1,
+        CONFIGURATION_TOKENS_PER_SECOND,
+        lambda response: None,
+    )
+
+    desired_members = {
+        str(row["subscriber_id"])
+        for row in dataframe.select("subscriber_id")
+        .filter(F.col("subscriber_id").isNotNull())
+        .distinct()
+        .toLocalIterator()
+    }
+    existing_members = list_topic_members(topic_key)
+
+    members_to_add = sorted(desired_members - existing_members)
+    members_to_remove = sorted(existing_members - desired_members)
+
+    for batch in chunks(members_to_add, TOPIC_BATCH_SIZE):
+        send_batch(
+            "POST",
+            f"/v2/topics/{encoded_topic_key}/subscriptions",
+            {"subscriptions": batch},
+            1,
+            CONFIGURATION_TOKENS_PER_SECOND,
+            lambda response: assert_no_item_failures(response, "Topic subscription create"),
+        )
+
+    for batch in chunks(members_to_remove, TOPIC_BATCH_SIZE):
+        send_batch(
+            "DELETE",
+            f"/v2/topics/{encoded_topic_key}/subscriptions",
+            {"subscriptions": batch},
+            1,
+            CONFIGURATION_TOKENS_PER_SECOND,
+            lambda response: assert_no_item_failures(response, "Topic subscription delete"),
+        )
+
+    print(
+        f"Topic {topic_key}: added {len(members_to_add)}, "
+        f"removed {len(members_to_remove)}, total {len(desired_members)}"
+    )
+
+
+trial_ending = spark.table("main.crm.cohort_trial_ending")
+sync_topic(
+    topic_key="cohort:trial-ending",
+    topic_name="Trial ending in 7 days",
+    dataframe=trial_ending,
+)
+```
+
+The job reads the current membership from Novu on every run. If a prior run stops after some requests succeed, the next run recalculates the remaining difference instead of repeating the completed changes.
+
+Both the desired and existing membership sets are held in driver memory. For cohorts with millions of members, use a reverse ETL tool such as [Hightouch](/guides/analytics/hightouch), or store the Novu membership snapshot in Delta and calculate the difference with Spark.
+  </Step>
+
+  <Step>
+## Trigger workflows from warehouse events
+
+A Databricks events table maps to Novu [workflow triggers](/platform/concepts/trigger). Use this path for notifications that are computed in the warehouse, such as a daily digest or a trial-ending campaign. Do not use it for product actions that must notify within seconds.
+
+Keep this job separate from the subscriber sync so you can backfill profiles without sending historical notifications.
+
+The source must contain one row per notification to send. Use a stable `event_id` so retries do not send the same notification twice.
+
+| `event_id` | `subscriber_id` | `workflow_id` | `plan` | `account_type` |
+| --- | --- | --- | --- | --- |
+| `evt_9c01` | `usr_8f21` | `trial-ending` | pro | team |
+
+[`POST /v1/events/trigger/bulk`](/api-reference/events/bulk-trigger-event) accepts at most 100 events per request.
+
+Use both of these on every bulk trigger:
+
+- `Idempotency-Key` on the HTTP request, derived from the event ids in that batch. This is the API-layer retry lock. See [Idempotency](/api-reference/idempotency). It is not enabled for every organization; contact [support](mailto:support@novu.co) to turn it on.
+- `transactionId` set to the warehouse `event_id`. Use it to trace and [cancel](/api-reference/events/cancel-triggered-event) a run. It is **not** the same as an idempotency key. Concurrent retries can still enqueue twice if you rely on `transactionId` alone.
+
+Novu can [create a subscriber at trigger time](/platform/concepts/subscribers#just-in-time) from the `to` object. A prior subscriber sync is still useful so preferences and profile fields exist before the first notification.
+
+Do not call `sync_events` on the full table. The Change Data Feed job below is the production path.
+
+```python
+def event_payload(row):
+    return {
+        "name": str(row["workflow_id"]),
+        "to": {"subscriberId": str(row["subscriber_id"])},
+        "payload": {
+            "plan": row["plan"],
+            "accountType": row["account_type"],
+        },
+        "transactionId": str(row["event_id"]),
+    }
+
+
+def trigger_idempotency_key(batch):
+    joined = ",".join(item["transactionId"] for item in batch)
+
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
+
+
+def sync_events(dataframe):
+    rows = (
+        dataframe.select("event_id", "subscriber_id", "workflow_id", "plan", "account_type")
+        .filter(F.col("event_id").isNotNull() & F.col("subscriber_id").isNotNull())
+        .orderBy("event_id")
+        .toLocalIterator()
+    )
+
+    for batch in batched(rows, event_payload, EVENT_BATCH_SIZE):
+        send_batch(
+            "POST",
+            "/v1/events/trigger/bulk",
+            {"events": batch},
+            100,
+            EVENT_TOKENS_PER_SECOND,
+            lambda response: assert_no_trigger_failures(response, "Event trigger"),
+            extra_headers={"Idempotency-Key": trigger_idempotency_key(batch)},
+        )
+```
+
+`name` is the workflow identifier in Novu. `payload` fields are available in templates as `{{payload.plan}}`.
+
+`orderBy("event_id")` keeps bulk groups stable. If a micro-batch fails after some POSTs succeed, Databricks retries the same rows. An unordered `toLocalIterator()` can split those rows into different groups of 100, which would mint new `Idempotency-Key` values and send already-accepted events again. `event_id` must be unique so the sort order does not depend on Spark's partition layout.
+
+Enable Change Data Feed on the events table, then process **inserts only**. Set `EVENT_START_TIMESTAMP` before the first run so the snapshot of historical rows is not sent.
+
+```sql
+ALTER TABLE main.crm.novu_events
+SET TBLPROPERTIES (delta.enableChangeDataFeed = true);
+```
+
+```python
+EVENT_CHECKPOINT_PATH = "/Volumes/main/ops/novu_checkpoints/event-sync"
+# Inclusive lower bound for the first run. Change this before you start the stream.
+EVENT_START_TIMESTAMP = "2026-08-25T00:00:00.000Z"
+
+
+def sync_event_changes(batch_dataframe, batch_id):
+    inserts = batch_dataframe.filter(F.col("_change_type") == "insert")
+    if "occurred_at" in inserts.columns:
+        inserts = inserts.filter(F.col("occurred_at") >= F.lit(EVENT_START_TIMESTAMP))
+    sync_events(inserts)
+
+
+run_change_feed(
+    table_name="main.crm.novu_events",
+    checkpoint_path=EVENT_CHECKPOINT_PATH,
+    on_batch=sync_event_changes,
+    starting_timestamp=EVENT_START_TIMESTAMP,
+)
+```
+
+`startingTimestamp` is applied only when the checkpoint is empty. After the first successful run, Databricks resumes from the checkpoint and ignores `startingTimestamp`. If you need a new start bound, use a new checkpoint path.
+
+<Warning>
+  Do not replay the full events table. A replay consumes Event-bucket tokens even when Novu later ignores a duplicate `transactionId`.
+</Warning>
+  </Step>
+
+  <Step>
+## Check the rate-limit settings
+
+Novu uses separate token buckets for Configuration and Event endpoints. Subscriber and topic requests use the Configuration bucket. Workflow triggers use the Event bucket.
+
+The requests in this guide have these costs:
+
+| Request | Bucket | Token cost | Maximum items |
+| --- | --- | --- | --- |
+| `POST /v1/subscribers/bulk` | Configuration | 100 | 500 subscribers |
+| Topic create, list, subscribe, or unsubscribe | Configuration | 1 | 100 subscriptions for write requests |
+| `POST /v1/events/trigger/bulk` | Events | 100 | 100 events |
+
+The default helper uses half of the Free plan limits: 10 Configuration tokens per second and 30 Event tokens per second. At those settings, it sends one full subscriber batch every 10 seconds and one full event batch about every 3 seconds.
+
+Before increasing the rate:
+
+1. Check the Configuration and Events limits for your Novu plan in [Rate limiting](/api-reference/rate-limiting).
+2. Set `CONFIGURATION_TOKENS_PER_SECOND` and `EVENT_TOKENS_PER_SECOND` to those limits.
+3. Keep `RATE_LIMIT_SHARE` below `1.0` when other services use the same secret key.
+4. Monitor `429` responses and the `RateLimit-Remaining` response header.
+
+Do not calculate throughput from request count alone. A bulk subscriber or bulk trigger request costs 100 tokens even when the request contains fewer than the maximum number of items.
+  </Step>
+
+  <Step>
+## Schedule and verify the jobs
+
+Create three Databricks job tasks:
+
+1. Run the subscriber sync.
+2. Run the cohort sync after the subscriber task succeeds.
+3. Run the event trigger sync after the subscriber task succeeds. Cohort and event tasks can run in parallel.
+
+For the first production run, filter each source to a small known set of subscribers. Verify the results before removing the filter. For events, start with rows added after a known timestamp so you do not notify on historical warehouse data.
+
+In the Novu Dashboard:
+
+1. Open **Subscribers** and confirm that profile fields match the source table.
+2. Open the topic and confirm that its subscriber count matches the cohort query.
+3. Open **Activity Feed** and confirm that warehouse events triggered the expected workflows.
+4. Check the Databricks task output for partial item failures or exhausted retries.
+
+Set a job timeout and enable task retries. Subscriber bulk upserts by `subscriberId`. The cohort job diffs against Novu before writing. Event retries are safe when each bulk request sends a stable `Idempotency-Key` (and `transactionId` for tracing).
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+- **401 Unauthorized**: Confirm the `Authorization` header uses `ApiKey`, and confirm the secret key matches the Novu environment and API region.
+- **400 from the subscriber bulk endpoint**: Confirm the body contains `{"subscribers": [...]}`, the array has no more than 500 items, and every `subscriberId` is a non-empty string.
+- **Topic subscription failures**: Run the subscriber sync first. Topic subscriptions require existing Novu subscribers.
+- **Workflow not triggering**: Confirm `name` matches an active workflow identifier in the same Novu environment as the secret key, and confirm `to.subscriberId` is present.
+- **Duplicate notifications**: Send an `Idempotency-Key` per bulk request. Set `transactionId` to the warehouse `event_id` for tracing. Process Change Data Feed inserts only, and set `EVENT_START_TIMESTAMP` before the first run.
+- **409 Conflict**: The same `Idempotency-Key` is still in flight. The helper retries this. If it persists, wait and rerun the job.
+- **429 Too Many Requests**: Lower `RATE_LIMIT_SHARE`, `CONFIGURATION_TOKENS_PER_SECOND`, or `EVENT_TOKENS_PER_SECOND`. Confirm those values match your plan.
+- **Change Data Feed cannot find a version**: The checkpoint is older than the retained Delta history. Run a full sync and start again with a new checkpoint location.
+
+## Related documentation
+
+<Columns cols={2}>
+  <Card title="Subscribers" href="/platform/concepts/subscribers">
+    Subscriber identity, profile fields, and bulk import.
+  </Card>
+  <Card title="Topics" href="/platform/concepts/topics">
+    Topic keys, automatic creation, and triggering a workflow to a topic.
+  </Card>
+  <Card title="Manage topic subscriptions" href="/platform/subscription/manage-topic-subscriptions">
+    Subscription identifiers, Context scoping, and JSON Logic conditions.
+  </Card>
+  <Card title="API keys" href="/platform/developer/api-keys">
+    Secret keys, environment isolation, and API hostnames.
+  </Card>
+  <Card title="Rate limiting" href="/api-reference/rate-limiting">
+    Configuration and Events bucket limits, token costs, and `429` handling.
+  </Card>
+  <Card title="Trigger event" href="/api-reference/events/trigger-event">
+    Single workflow trigger request shape, `transactionId`, and idempotency.
+  </Card>
+  <Card title="Bulk trigger event" href="/api-reference/events/bulk-trigger-event">
+    `POST /v1/events/trigger/bulk` request shape and 100-event cap.
+  </Card>
+  <Card title="Idempotency" href="/api-reference/idempotency">
+    `Idempotency-Key` for safe retries of POST requests.
+  </Card>
+  <Card title="Hightouch" href="/guides/analytics/hightouch">
+    Reverse ETL when you do not want to run a custom Databricks notebook.
+  </Card>
+</Columns>

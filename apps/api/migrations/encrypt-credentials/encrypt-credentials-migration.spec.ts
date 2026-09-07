@@ -1,10 +1,10 @@
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/stateless';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { encryptOldCredentialsMigration } from './encrypt-credentials-migration';
-import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum } from '@novu/stateless';
-import { IntegrationRepository } from '@novu/dal';
 
-describe('Encrypt Old Credentials', function () {
+describe('Encrypt Old Credentials', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
@@ -13,7 +13,7 @@ describe('Encrypt Old Credentials', function () {
     await session.initialize();
   });
 
-  it('should decrypt all old credentials', async function () {
+  it('should decrypt all old credentials', async () => {
     await pruneIntegration(integrationRepository);
 
     const data = {
@@ -22,7 +22,7 @@ describe('Encrypt Old Credentials', function () {
       active: false,
     };
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i += 1) {
       await integrationRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
@@ -30,7 +30,7 @@ describe('Encrypt Old Credentials', function () {
         channel: data.channel,
         credentials: {
           apiKey: '123',
-          user: 'smith' + i,
+          user: `smith${i}`,
           secretKey: '123',
           domain: 'domain',
           password: '123',
@@ -63,7 +63,7 @@ describe('Encrypt Old Credentials', function () {
       const integration = encryptIntegration[integrationKey];
 
       expect(integration.credentials.apiKey).to.contains('nvsk.');
-      expect(integration.credentials.user).to.equal('smith' + integrationKey);
+      expect(integration.credentials.user).to.equal(`smith${integrationKey}`);
       expect(integration.credentials.secretKey).to.contains('nvsk.');
       expect(integration.credentials.domain).to.equal('domain');
       expect(integration.credentials.password).to.contains('nvsk.');

@@ -1,0 +1,4 @@
+interface:
+  display_name: "TesterArmy CLI"
+  short_description: "Validate changes with ta markdown tests, artifacts, and strict pass/fail reporting"
+  default_prompt: "Use $testerarmy-cli to run targeted qa validation after code changes. Default to ta run with --json, add --output when needed for reuse, and report exact command + outcome."

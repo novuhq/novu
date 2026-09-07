@@ -1,0 +1,38 @@
+{
+  "name": "@novu/api",
+  "sourceRoot": "libs/internal-sdk/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "{projectRoot}/src/**/*",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/package.json",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)"
+      ],
+      "outputs": [
+        "{projectRoot}/funcs",
+        "{projectRoot}/hooks",
+        "{projectRoot}/lib",
+        "{projectRoot}/models",
+        "{projectRoot}/react-query",
+        "{projectRoot}/sdk",
+        "{projectRoot}/types",
+        "{projectRoot}/utils",
+        "{projectRoot}/docs",
+        "{projectRoot}/speakeasyusagegen",
+        "{projectRoot}/index.js",
+        "{projectRoot}/index.js.map",
+        "{projectRoot}/index.d.ts",
+        "{projectRoot}/index.d.ts.map",
+        "{projectRoot}/core.js",
+        "{projectRoot}/core.js.map",
+        "{projectRoot}/core.d.ts",
+        "{projectRoot}/core.d.ts.map",
+        "{projectRoot}/.tsbuildinfo"
+      ]
+    }
+  }
+} 

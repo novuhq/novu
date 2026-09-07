@@ -1,0 +1,426 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/.nx",
+      "!**/coverage",
+      "!**/.git",
+      "!**/*.log",
+      "!**/*.d.ts",
+      "!**/*.generated.ts",
+      "!**/pnpm-lock.yaml",
+      "!**/swagger-spec.json",
+      "!playground",
+      "!packages/novu/src/commands/connect/templates/web-chat",
+      "!libs/internal-sdk",
+      "!.github",
+      "!scripts",
+      "!packages/framework/scripts",
+      "!packages/framework/src/jsonSchemaFaker.js",
+      "!libs/maily-tsconfig/*",
+      "!libs/maily-tailwind-config/*",
+      "!packages/add-inbox/vitest.config.js"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "linter": {
+    "enabled": true,
+    "domains": {
+      "project": "recommended"
+    },
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "noLabelWithoutControl": "warn",
+        "noNoninteractiveElementToInteractiveRole": "warn",
+        "noNoninteractiveTabindex": "warn",
+        "noRedundantRoles": "warn",
+        "noStaticElementInteractions": "warn",
+        "useAriaPropsForRole": "warn",
+        "useAriaPropsSupportedByRole": "warn",
+        "useFocusableInteractive": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useSemanticElements": "warn",
+        "useValidAnchor": "warn",
+        "noSvgWithoutTitle": "off",
+        "useAltText": "off",
+        "useButtonType": "off"
+      },
+      "complexity": {
+        "noForEach": "warn"
+      },
+      "correctness": {
+        "noEmptyCharacterClassInRegex": "warn",
+        "noInnerDeclarations": "warn",
+        "noSwitchDeclarations": "warn",
+        "noUnsafeOptionalChaining": "warn",
+        "noVoidTypeReturn": "warn",
+        "useExhaustiveDependencies": "warn",
+        "useUniqueElementIds": "warn",
+        "useYield": "warn"
+      },
+      "security": {
+        "noBlankTarget": "warn"
+      },
+      "style": {
+        "useArrayLiterals": "error",
+        "useAsConstAssertion": "error",
+        "noCommonJs": "warn",
+        "noNamespace": "warn",
+        "useConst": "warn",
+        "useImportType": "off",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+              "@novu/shared/utils/ssrf-url-validation": {
+                "importNames": ["validateUrlSsrf"],
+                "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
+              },
+              "@novu/application-generic": {
+                "importNames": ["validateUrlSsrf"],
+                "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/application-generic' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
+              }
+            }
+          }
+        }
+      },
+      "suspicious": {
+        "noAsyncPromiseExecutor": "warn",
+        "noAssignInExpressions": "warn",
+        "noControlCharactersInRegex": "warn",
+        "noDoubleEquals": "warn",
+        "noDuplicateTestHooks": "warn",
+        "noExplicitAny": "warn",
+        "noExportsInTest": "warn",
+        "noFallthroughSwitchClause": "warn",
+        "noImplicitAnyLet": "warn",
+        "noRedeclare": "warn",
+        "noShadowRestrictedNames": "warn",
+        "noThenProperty": "warn",
+        "noUnknownAtRules": "warn",
+        "useIterableCallbackReturn": "warn",
+        "noArrayIndexKey": "off",
+        "noPrototypeBuiltins": "off"
+      },
+      "nursery": {
+        "noFloatingPromises": "warn"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "es5",
+      "jsxQuoteStyle": "double"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "json": {
+    "formatter": {
+      "indentStyle": "space",
+      "indentWidth": 2
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/**/*.{ts,tsx,js}", "libs/**/*.{ts,js}"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noUselessTypeConstraint": "error"
+          },
+          "correctness": {
+            "noUnusedVariables": "warn"
+          },
+          "style": {
+            "useNamingConvention": {
+              "level": "warn",
+              "options": {
+                "strictCase": false,
+                "requireAscii": false,
+                "conventions": [
+                  {
+                    "selector": { "kind": "enumMember" },
+                    "formats": ["CONSTANT_CASE"]
+                  },
+                  {
+                    "selector": { "kind": "typeParameter" },
+                    "formats": ["PascalCase"]
+                  },
+                  {
+                    "selector": { "kind": "class" },
+                    "formats": ["PascalCase"]
+                  },
+                  {
+                    "selector": { "kind": "interface" },
+                    "formats": ["PascalCase"]
+                  },
+                  { "match": ".*" }
+                ]
+              }
+            }
+          },
+          "suspicious": {
+            "noEmptyBlockStatements": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/dashboard/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useHookAtTopLevel": "error"
+          },
+          "style": {
+            "useComponentExportOnlyModules": "warn"
+          },
+          "suspicious": {
+            "noExtraNonNullAssertion": "error",
+            "noMisleadingInstantiator": "error",
+            "noUnsafeDeclarationMerging": "error",
+            "useNamespaceKeyword": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/api/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+                  "@nestjs/common": {
+                    "importNames": ["Logger"],
+                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                  },
+                  "@novu/application-generic": {
+                    "importNames": ["Logger", "validateUrlSsrf"],
+                    "message": "Logger: use PinoLogger from @novu/application-generic. validateUrlSsrf: use safeOutboundRequest / safeOutboundJsonRequest (or HttpClientService with enforceSsrfProtection: true) — see https://novu.atlassian.net/browse/NV-7560"
+                  },
+                  "@novu/shared/utils/ssrf-url-validation": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
+                  },
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  },
+                  "@nestjs/swagger": {
+                    "importNames": [
+                      "ApiOkResponse",
+                      "ApiCreatedResponse",
+                      "ApiAcceptedResponse",
+                      "ApiNoContentResponse",
+                      "ApiMovedPermanentlyResponse",
+                      "ApiFoundResponse",
+                      "ApiBadRequestResponse",
+                      "ApiUnauthorizedResponse",
+                      "ApiTooManyRequestsResponse",
+                      "ApiNotFoundResponse",
+                      "ApiInternalServerErrorResponse",
+                      "ApiBadGatewayResponse",
+                      "ApiConflictResponse",
+                      "ApiForbiddenResponse",
+                      "ApiGatewayTimeoutResponse",
+                      "ApiGoneResponse",
+                      "ApiMethodNotAllowedResponse",
+                      "ApiNotAcceptableResponse",
+                      "ApiNotImplementedResponse",
+                      "ApiPreconditionFailedResponse",
+                      "ApiPayloadTooLargeResponse",
+                      "ApiRequestTimeoutResponse",
+                      "ApiServiceUnavailableResponse",
+                      "ApiUnprocessableEntityResponse",
+                      "ApiUnsupportedMediaTypeResponse",
+                      "ApiDefaultResponse"
+                    ],
+                    "message": "Use 'Api<Error>Response' from '/shared/framework/response.decorator' instead."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/api/src/app/agents/**/*.{ts,tsx,js}",
+        "!apps/api/src/app/agents/agents.module.ts",
+        "!apps/api/src/app/agents/conversation-runtime/conversation/conversation-activity-ledger.ts",
+        "!apps/api/src/app/agents/conversation-runtime/conversation/conversation-event-sequence.service.ts",
+        "!apps/api/src/app/agents/conversation-runtime/conversation/agent-conversation.service.ts",
+        "!apps/api/src/app/agents/**/*.spec.ts",
+        "!apps/api/src/app/agents/**/*.test.ts",
+        "!apps/api/src/app/agents/**/*.e2e.ts",
+        "!apps/api/src/app/agents/e2e/**/*.{ts,tsx,js}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+                  "@nestjs/common": {
+                    "importNames": ["Logger"],
+                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                  },
+                  "@novu/application-generic": {
+                    "importNames": ["Logger", "validateUrlSsrf"],
+                    "message": "Logger: use PinoLogger from @novu/application-generic. validateUrlSsrf: use safeOutboundRequest / safeOutboundJsonRequest (or HttpClientService with enforceSsrfProtection: true) — see https://novu.atlassian.net/browse/NV-7560"
+                  },
+                  "@novu/shared/utils/ssrf-url-validation": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
+                  },
+                  "@novu/dal": {
+                    "importNames": ["ConversationActivityRepository"],
+                    "message": "Import ConversationActivityRepository only from agents.module.ts, conversation-activity-ledger.ts, conversation-event-sequence.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                  },
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  },
+                  "@nestjs/swagger": {
+                    "importNames": [
+                      "ApiOkResponse",
+                      "ApiCreatedResponse",
+                      "ApiAcceptedResponse",
+                      "ApiNoContentResponse",
+                      "ApiMovedPermanentlyResponse",
+                      "ApiFoundResponse",
+                      "ApiBadRequestResponse",
+                      "ApiUnauthorizedResponse",
+                      "ApiTooManyRequestsResponse",
+                      "ApiNotFoundResponse",
+                      "ApiInternalServerErrorResponse",
+                      "ApiBadGatewayResponse",
+                      "ApiConflictResponse",
+                      "ApiForbiddenResponse",
+                      "ApiGatewayTimeoutResponse",
+                      "ApiGoneResponse",
+                      "ApiMethodNotAllowedResponse",
+                      "ApiNotAcceptableResponse",
+                      "ApiNotImplementedResponse",
+                      "ApiPreconditionFailedResponse",
+                      "ApiPayloadTooLargeResponse",
+                      "ApiRequestTimeoutResponse",
+                      "ApiServiceUnavailableResponse",
+                      "ApiUnprocessableEntityResponse",
+                      "ApiUnsupportedMediaTypeResponse",
+                      "ApiDefaultResponse"
+                    ],
+                    "message": "Use 'Api<Error>Response' from '/shared/framework/response.decorator' instead."
+                  }
+                },
+                "patterns": [
+                  {
+                    "group": ["**/conversation-activity-ledger", "**/conversation-activity-ledger.ts"],
+                    "importNamePattern": "ConversationActivityLedger",
+                    "message": "Import ConversationActivityLedger only from agents.module.ts, agent-conversation.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                  },
+                  {
+                    "group": ["**/conversation-event-sequence.service", "**/conversation-event-sequence.service.ts"],
+                    "importNamePattern": "ConversationEventSequenceService",
+                    "message": "Import ConversationEventSequenceService only from agents.module.ts, conversation-activity-ledger.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["libs/application-generic/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  },
+                  "@novu/shared/utils/ssrf-url-validation": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.{ts,tsx,js}", "**/*.spec.{ts,tsx,js}", "**/*.e2e.{ts,js}"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noImplicitAnyLet": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/api/**/*.{ts,tsx,js}",
+        "apps/worker/**/*.{ts,tsx,js}",
+        "libs/application-generic/**/*.{ts,tsx,js}"
+      ],
+      "plugins": ["./biome-plugins/pino-logger-arg-order.grit"]
+    },
+    {
+      "includes": ["**/*.dto.ts"],
+      "plugins": [
+        "./biome-plugins/api-property-record-type.grit",
+        "./biome-plugins/api-property-optionality.grit",
+        "./biome-plugins/api-property-optionality-required-prop.grit"
+      ]
+    },
+    {
+      "includes": ["**/*.command.ts"],
+      "plugins": ["./biome-plugins/command-session-exclusion.grit"]
+    }
+  ],
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

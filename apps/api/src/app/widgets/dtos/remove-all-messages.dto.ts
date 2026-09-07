@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsMongoId } from 'class-validator';
+import { IsMongoId, IsOptional } from 'class-validator';
 
 export class RemoveAllMessagesDto {
   @ApiPropertyOptional({

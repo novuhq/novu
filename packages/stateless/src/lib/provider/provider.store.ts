@@ -1,25 +1,15 @@
 import { ChannelTypeEnum } from '../template/template.interface';
 
-import {
-  IEmailProvider,
-  ISmsProvider,
-  IChatProvider,
-  IPushProvider,
-} from './provider.interface';
+import { IChatProvider, IEmailProvider, IPushProvider, ISmsProvider, IToolProvider } from './provider.interface';
+
+type RegisterableProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | IToolProvider;
 
 export class ProviderStore {
   private providers: {
-    [key: string]:
-      | ISmsProvider
-      | IEmailProvider
-      | IChatProvider
-      | IPushProvider;
+    [key: string]: RegisterableProvider;
   } = {};
 
-  async addProvider(
-    providerId: string,
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
-  ) {
+  async addProvider(providerId: string, provider: RegisterableProvider) {
     this.providers[providerId] = provider;
   }
 
@@ -28,15 +18,11 @@ export class ProviderStore {
   }
 
   async getProviderByInternalId(providerId: string) {
-    return (await this.getProviders()).find(
-      (provider) => provider.id === providerId
-    );
+    return (await this.getProviders()).find((provider) => provider.id === providerId);
   }
 
   async getProviderByChannel(channel: ChannelTypeEnum) {
-    return (await this.getProviders()).find(
-      (provider) => provider.channelType === channel
-    );
+    return (await this.getProviders()).find((provider) => provider.channelType === channel);
   }
 
   async getProviders() {

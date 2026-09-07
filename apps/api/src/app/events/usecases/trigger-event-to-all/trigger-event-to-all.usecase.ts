@@ -1,16 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { SubscriberRepository } from '@novu/dal';
-import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
-
-import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
+import { AddressingTypeEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestBroadcastCommand } from '../parse-event-request';
+import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
 
 @Injectable()
 export class TriggerEventToAll {
-  constructor(private subscriberRepository: SubscriberRepository, private parseEventRequest: ParseEventRequest) {}
+  constructor(private parseEventRequest: ParseEventRequest) {}
 
   public async execute(command: TriggerEventToAllCommand) {
-    await this.parseEventRequest.execute(
+    const result = await this.parseEventRequest.execute(
       ParseEventRequestBroadcastCommand.create({
         userId: command.userId,
         environmentId: command.environmentId,
@@ -22,14 +20,19 @@ export class TriggerEventToAll {
         overrides: command.overrides || {},
         actor: command.actor,
         tenant: command.tenant,
+        context: command.context,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
+        bridgeUrl: command.bridgeUrl,
+        requestId: command.requestId,
+        ...(command.agentId !== undefined && { agentId: command.agentId }),
       })
     );
 
     return {
-      acknowledged: true,
-      status: TriggerEventStatusEnum.PROCESSED,
-      transactionId: command.transactionId,
+      acknowledged: result.acknowledged,
+      status: result.status,
+      transactionId: result.transactionId,
+      activityFeedLink: result.activityFeedLink,
     };
   }
 }

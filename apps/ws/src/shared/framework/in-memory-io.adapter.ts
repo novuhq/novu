@@ -1,9 +1,9 @@
-import { IoAdapter } from '@nestjs/platform-socket.io';
-import { ServerOptions } from 'socket.io';
-import { createAdapter } from '@socket.io/redis-adapter';
-import { getRedisPrefix } from '@novu/shared';
-import { WebSocketsInMemoryProviderService } from '@novu/application-generic';
 import { Logger } from '@nestjs/common';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { WebSocketsInMemoryProviderService } from '@novu/application-generic';
+import { getRedisPrefix } from '@novu/shared';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { ServerOptions } from 'socket.io';
 
 export class InMemoryIoAdapter extends IoAdapter {
   private webSocketsInMemoryProviderService: WebSocketsInMemoryProviderService;

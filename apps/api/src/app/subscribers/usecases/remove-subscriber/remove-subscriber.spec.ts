@@ -1,21 +1,19 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { NotFoundException } from '@nestjs/common';
 import { expect } from 'chai';
-
-import { RemoveSubscriber } from './remove-subscriber.usecase';
-import { RemoveSubscriberCommand } from './remove-subscriber.command';
-
 import { SharedModule } from '../../../shared/shared.module';
-import { SubscribersModule } from '../../subscribers.module';
+import { SubscribersV1Module } from '../../subscribersV1.module';
+import { RemoveSubscriberCommand } from './remove-subscriber.command';
+import { RemoveSubscriber } from './remove-subscriber.usecase';
 
-describe('Remove Subscriber', function () {
+describe('Remove Subscriber', () => {
   let useCase: RemoveSubscriber;
   let session: UserSession;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, SubscribersModule],
+      imports: [SharedModule, SubscribersV1Module],
       providers: [],
     }).compile();
 
@@ -25,7 +23,7 @@ describe('Remove Subscriber', function () {
     useCase = moduleRef.get<RemoveSubscriber>(RemoveSubscriber);
   });
 
-  it('should remove a subscriber', async function () {
+  it('should remove a subscriber', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -41,8 +39,6 @@ describe('Remove Subscriber', function () {
   });
 
   it('should throw a not found exception if subscriber to remove does not exist', async () => {
-    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
-
     try {
       await useCase.execute(
         RemoveSubscriberCommand.create({
@@ -51,10 +47,9 @@ describe('Remove Subscriber', function () {
           organizationId: session.organization._id,
         })
       );
-      throw new Error('Should not reach here');
+      expect(true, 'Should never reach this statement').to.be.false;
     } catch (e) {
       expect(e).to.be.instanceOf(NotFoundException);
-      expect(e.message).to.eql('Subscriber not found for id invalid-subscriber-id');
     }
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "0.24.1",
+  "version": "3.19.1",
   "description": "",
   "author": "",
   "private": true,
@@ -8,54 +8,68 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.json",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/inbound-mail --load -t novu-inbound-mail - $DOCKER_BUILD_ARGUMENTS",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nodemon",
-    "start:dev": "nodemon",
-    "start:test": "cross-env NODE_ENV=test TZ=UTC nodemon",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/inbound-mail --load -t novu-inbound-mail - $DOCKER_BUILD_ARGUMENTS",
+    "start": "tsx watch src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "start:test": "cross-env NODE_ENV=test tsx watch src/main.ts",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --trace-warnings --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts"
+    "lint": "biome check --write .",
+    "test": "cross-env NODE_ENV=test mocha --require tsx/cjs --trace-warnings --timeout 10000 --exit --file e2e/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@novu/application-generic": "^0.24.1",
-    "@novu/shared": "^0.24.1",
-    "@sentry/node": "^7.12.1",
+    "@aws-sdk/client-s3": "^3.996.0",
+    "@aws-sdk/client-secrets-manager": "3.996.0",
+    "@aws-sdk/s3-request-presigner": "^3.996.0",
+    "@novu/application-generic": "workspace:*",
+    "@novu/dal": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "@sentry/nestjs": "^10.63.0",
+    "@sentry/node": "^10.63.0",
+    "@sentry/profiling-node": "^10.63.0",
     "bluebird": "^2.9.30",
-    "dotenv": "^8.6.0",
-    "envalid": "^7.1.0",
+    "dotenv": "^16.4.5",
+    "envalid": "^8.2.0",
     "extend": "^2.0.1",
     "html-to-text": "^9.0.5",
     "languagedetect": "^1.1.1",
-    "lodash": "^4.17.15",
-    "mailparser": "^0.6.0",
-    "newrelic": "^9.15.0",
+    "lodash": "^4.17.23",
+    "mailparser": "^3.9.3",
+    "newrelic": "13.19.2",
+    "pino": "^8.17.2",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
-    "smtp-server": "^1.4.0",
+    "smtp-server": "^3.18.0",
     "spamc": "0.0.5",
-    "uuid": "^9.0.0",
-    "winston": "^3.9.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "@novu/testing": "^0.24.1",
+    "@novu/testing": "workspace:*",
     "@types/chai": "^4.2.11",
     "@types/express": "^4.17.8",
     "@types/html-to-text": "^9.0.1",
-    "@types/mocha": "^10.0.2",
-    "@types/node": "^14.14.6",
-    "@types/sinon": "^9.0.0",
+    "@types/mailparser": "^3.4.6",
+    "@types/mocha": "^10.0.8",
+    "@types/node": "^22.0.0",
+    "@types/sinon": "^17.0.0",
     "@types/smtp-server": "^3.5.7",
     "cross-env": "^7.0.3",
     "mocha": "^10.2.0",
-    "nodemon": "^3.0.1",
-    "prettier": "~2.8.0",
-    "sinon": "^9.2.4",
-    "ts-jest": "^27.0.7",
-    "ts-loader": "~9.4.0",
-    "ts-node": "~10.9.1",
-    "tsconfig-paths": "~4.1.0",
-    "typescript": "4.9.5"
+    "sinon": "^18.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "5.6.2"
+  },
+  "nx": {
+    "tags": [
+      "type:app"
+    ],
+    "targets": {
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx biome lint apps/inbound-mail"
+        }
+      }
+    }
   }
 }

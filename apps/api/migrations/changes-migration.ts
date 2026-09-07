@@ -1,22 +1,21 @@
-/* eslint-disable no-console */
 import '../src/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../src/app.module';
+import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
 import {
-  NotificationTemplateRepository,
+  ChangeRepository,
+  EnvironmentRepository,
+  MemberRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
-  EnvironmentRepository,
-  ChangeRepository,
-  MemberRepository,
+  NotificationTemplateRepository,
   OrganizationRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum, MemberRoleEnum } from '@novu/shared';
-import { CreateEnvironment } from '../src/app/environments/usecases/create-environment/create-environment.usecase';
-import { CreateEnvironmentCommand } from '../src/app/environments/usecases/create-environment/create-environment.command';
-import { ApplyChange } from '../src/app/change/usecases/apply-change/apply-change.usecase';
 import { ApplyChangeCommand } from '../src/app/change/usecases/apply-change/apply-change.command';
-import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
+import { ApplyChange } from '../src/app/change/usecases/apply-change/apply-change.usecase';
+import { CreateEnvironmentCommand } from '../src/app/environments-v1/usecases/create-environment/create-environment.command';
+import { CreateEnvironment } from '../src/app/environments-v1/usecases/create-environment/create-environment.usecase';
+import { AppModule } from '../src/app.module';
 
 export async function run(): Promise<void> {
   console.log('Script started');
@@ -43,7 +42,7 @@ export async function run(): Promise<void> {
   for (const org of orgs) {
     console.log(`Migrating org ${org._id}`);
     const member = await memberRepository.findOne({
-      roles: MemberRoleEnum.ADMIN,
+      roles: MemberRoleEnum.OSS_ADMIN,
       _organizationId: org._id,
     });
 

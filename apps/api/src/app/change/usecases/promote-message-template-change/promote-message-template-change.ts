@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { FeedRepository, LayoutRepository, MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { MessageTemplateEntity, LayoutRepository, MessageTemplateRepository, FeedRepository } from '@novu/dal';
 
 @Injectable()
 export class PromoteMessageTemplateChange {

@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Create Notification Group - /notification-groups (POST)', async () => {
+describe('Create Notification Group - /notification-groups (POST) #novu-v0', async () => {
   let session: UserSession;
 
   before(async () => {
@@ -9,7 +9,7 @@ describe('Create Notification Group - /notification-groups (POST)', async () => 
     await session.initialize();
   });
 
-  it('should create notification group', async function () {
+  it('should create notification group', async () => {
     const testTemplate = {
       name: 'Test name',
     };

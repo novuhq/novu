@@ -1,33 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-import {
-  DalService,
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  ExecutionDetailsRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-  IntegrationRepository,
-  JobRepository,
-} from '@novu/dal';
+import { DalService, ExecutionDetailsRepository, IntegrationRepository, MessageRepository } from '@novu/dal';
 
-const DAL_MODELS = [
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  ExecutionDetailsRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-  IntegrationRepository,
-  JobRepository,
-];
+const DAL_MODELS = [ExecutionDetailsRepository, MessageRepository, IntegrationRepository];
 
 const dalService = new DalService();
 

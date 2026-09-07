@@ -6,7 +6,10 @@ export class SubscribersService {
   private subscriberRepository = new SubscriberRepository();
   private integrationRepository = new IntegrationRepository();
 
-  constructor(private _organizationId: string, private _environmentId: string) {}
+  constructor(
+    private _organizationId: string,
+    private _environmentId: string
+  ) {}
 
   async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
     const integrations = await this.integrationRepository.find({

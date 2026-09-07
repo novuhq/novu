@@ -1,65 +1,73 @@
 import {
   CallHandler,
   ExecutionContext,
+  ForbiddenException,
   HttpException,
   Injectable,
   NestInterceptor,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { OrganizationRepository } from '@novu/dal';
+import { isAgentEmailEnabled, ProductFeature } from '@novu/application-generic';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
-  IJwtPayload,
-  productFeatureEnabledForServiceLevel,
   ProductFeatureKeyEnum,
+  productFeatureEnabledForServiceLevel,
+  UserSessionData,
 } from '@novu/shared';
 import { Observable } from 'rxjs';
-import { ProductFeature } from '../decorators/product-feature.decorator';
 
 @Injectable()
 export class ProductFeatureInterceptor implements NestInterceptor {
-  constructor(private reflector: Reflector, private organizationRepository: OrganizationRepository) {}
+  constructor(
+    private reflector: Reflector,
+    private organizationRepository: CommunityOrganizationRepository
+  ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
-    try {
-      const handler = context.getHandler();
-      const classRef = context.getClass();
-      const requestedFeature: ProductFeatureKeyEnum | undefined = this.reflector.getAllAndOverride(ProductFeature, [
-        handler,
-        classRef,
-      ]);
+    const handler = context.getHandler();
+    const classRef = context.getClass();
+    const requestedFeature: ProductFeatureKeyEnum | undefined = this.reflector.getAllAndOverride(ProductFeature, [
+      handler,
+      classRef,
+    ]);
 
-      if (requestedFeature === undefined) {
-        return next.handle();
-      }
-
-      const user = this.getReqUser(context);
-
-      if (!user) {
-        throw new UnauthorizedException();
-      }
-
-      const { organizationId } = user;
-
-      const organization = await this.organizationRepository.findById(organizationId);
-
-      const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
-        organization?.apiServiceLevel as ApiServiceLevelEnum
-      );
-
-      if (!enabled) {
-        throw new HttpException('Payment Required', 402);
-      }
-
+    if (requestedFeature === undefined) {
       return next.handle();
-    } catch (error) {
-      throw error;
     }
+
+    const user = this.getReqUser(context);
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    if (requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS && process.env.IS_SELF_HOSTED === 'true') {
+      return next.handle();
+    }
+
+    const { organizationId } = user;
+
+    const organization = await this.organizationRepository.findById(organizationId);
+
+    const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
+      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE
+    );
+
+    if (!enabled) {
+      // TODO: Reuse PaymentRequiredException from EE billing module.
+      throw new HttpException('Payment Required', 402);
+    }
+
+    if (requestedFeature === ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION && !isAgentEmailEnabled()) {
+      throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
+    }
+
+    return next.handle();
   }
 
-  private getReqUser(context: ExecutionContext): IJwtPayload {
+  private getReqUser(context: ExecutionContext): UserSessionData {
     const req = context.switchToHttp().getRequest();
 
     return req.user;

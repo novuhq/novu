@@ -20,12 +20,10 @@ export class LimitPipe implements PipeTransform {
       throw new BadRequestException(`${metadata.data} must be a number conforming to the specified constraints`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (value! < this.minInt) {
       throw new BadRequestException(`${metadata.data} must not be less than ${this.minInt}`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (value! > this.maxInt) {
       throw new BadRequestException(`${metadata.data} must not be greater than ${this.maxInt}`);
     }

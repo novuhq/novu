@@ -7,9 +7,53 @@
   </a>
 </div>
 
-# @novu/api
+# @novu/api-service
 
 A RESTful API for accessing the Novu platform, built using [NestJS](https://nestjs.com/).
+
+## Running the API
+
+See the docs for [Run in Local Machine](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-api-readme) to get setup. Then run:
+
+```bash
+# Run the API in watch mode
+$ npm run start:api
+```
+
+## Test
+
+### Unit Tests
+
+```bash
+# unit tests
+$ npm run test
+```
+
+### E2E tests
+
+See the docs for [Running on Local Machine - API Tests](https://docs.novu.co/community/run-in-local-machine#api?utm_campaign=github-api-readme).
+
+## Adding a new Endpoint
+
+### Choose the right controller / new controller.
+
+- If the endpoint is related to an existing entity, add the endpoint to the existing controller.
+
+### Add the correct decorators to the controller method.
+
+- Use the `@Get`, `@Post`, `@Put`, `@Delete` decorators to define the HTTP method.
+- Use the `@Param`, `@Query`, `@Body` decorators to define the parameters.
+- Use the `@RequireAuthentication()` decorator to define the guards as well as make it accessible to novu web app.
+- Use the @ExternalApiAccessible decorator to define the endpoint as accessible by external API (Users with Api-Key) & The official Novu SDK.
+
+#### Naming conventions
+
+- for the controller methods should be in the format `getEntityName`, `createEntityName`, `updateEntityName`, `deleteEntityName`.
+- In Case of a getAll / List use the `list` prefix for the method name and don't forget to add pagination functionality.
+  - Use the `@SdkUsePagination` decorator to alert the sdk of a paginated endpoint (will improve DX with an async iterator) the pagination parameters.
+- In case of a uniuqe usecase outside of the basic REST operations, attempt to use the regular naming conventions just for a sub-resource.
+  - `@SdkGroupName` - Use this decorator to group the endpoints in the SDK, use `.` separator to create a subresource (Ex' 'Subscribers.Notifications' getSubscriberNotifications), the original resource is defined as an openApi Tag .
+  - `@SdkMethodName` in case of a unique operation, use this decorator to define the method name in the SDK.
 
 ## OpenAPI (formerly Swagger)
 
@@ -25,27 +69,8 @@ $ npm run lint:openapi
 
 The command will return warnings and errors that must be fixed before the Github action will pass. These fixes are created by making changes through the `@nestjs/swagger` decorators.
 
-## Running the API
-
-See the docs for [Run in Local Machine](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-api-readme) to get setup. Then run:
-
-```bash
-# Run the API in watch mode
-$ npm run start:api
-```
-
-## Test
-
-### Unit Tests
-```bash
-# unit tests
-$ npm run test
-```
-
-### E2E tests
-See the docs for [Running on Local Machine - API Tests](https://docs.novu.co/community/run-in-local-machine#api?utm_campaign=github-api-readme).
-
 ## Migrations
+
 Database migrations are included for features that have a hard dependency on specific data being available on database entities. These migrations are run by both Novu Cloud and Novu Self-Hosted users to support new feature releases.
 
 ### How to Run

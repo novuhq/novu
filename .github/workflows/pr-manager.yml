@@ -1,4 +1,4 @@
-name: "Pull Request Manager"
+name: 'Pull Request Manager'
 on:
   schedule:
     - cron: '0 * * * *'
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Process stale PRs
-        uses: actions/stale@v9
+        uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9
         with:
           # Get issues in descending (newest first) order.
           ascending: false
@@ -25,6 +25,6 @@ jobs:
           days-before-pr-close: 31
           # Delete the branch when closing PRs. GitHub's "restore branch" function works indefinitely, so no reason not to.
           delete-branch: true
-          stale-pr-message: "This PR is being marked as stale due to inactivity."
-          close-pr-message: "This PR is being closed due to inactivity. Please reopen if work is intended to be continued."
+          stale-pr-message: 'This PR is being marked as stale due to inactivity.'
+          close-pr-message: 'This PR is being closed due to inactivity. Please reopen if work is intended to be continued.'
           operations-per-run: 100

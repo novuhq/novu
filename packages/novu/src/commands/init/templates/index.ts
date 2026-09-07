@@ -1,0 +1,445 @@
+import { getNovuScaffoldSdkTag } from '@novu/shared';
+import { Sema } from 'async-sema';
+import { async as glob } from 'fast-glob';
+import { existsSync, readFileSync } from 'fs';
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
+import { bold, cyan } from 'picocolors';
+import type { BridgeAdapterVariant } from '../../connect/pipeline/bridge-adapter/types';
+import { generateAgentNextConfigSource } from '../../connect/pipeline/llm-auth/codegen/generate-agent-next-config';
+import { generateSupportAgentSource } from '../../connect/pipeline/llm-auth/codegen/generate-support-agent';
+import { codegenSupportsTools } from '../../connect/pipeline/llm-auth/codegen/tool-support';
+import { resolveLlmAuthEnvVars, shouldWireLlmAuth } from '../../connect/pipeline/llm-auth/registry';
+import { resolveBridgeScaffoldDependencies } from '../../connect/pipeline/llm-auth/resolve-scaffold-dependencies';
+import { copy } from '../helpers/copy';
+import { install } from '../helpers/install';
+import { resolveAgentZodDependencies } from './agent-scaffold-deps';
+import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
+
+/**
+ * Templates ship next to this module (<build root>/commands/init/templates).
+ * `__dirname` is that directory under the tsc module layout and ts-node dev,
+ * but `dist/src` when running from the bundled CLI entry — try both, using the
+ * always-present `github` template dir as the marker.
+ */
+function resolveTemplatesDir(): string {
+  const candidates = [__dirname, path.join(__dirname, 'commands', 'init', 'templates')];
+
+  return candidates.find((candidate) => existsSync(path.join(candidate, 'github'))) ?? __dirname;
+}
+
+const TEMPLATES_DIR = resolveTemplatesDir();
+
+function resolveCliPackageJson(): Record<string, any> | null {
+  const distIndex = __dirname.lastIndexOf(`${path.sep}dist${path.sep}`);
+  if (distIndex === -1) return null;
+
+  const pkgRoot = __dirname.slice(0, distIndex);
+  try {
+    return JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function resolveFrameworkVersion(apiUrl: string, region?: string): string {
+  return getNovuScaffoldSdkTag(apiUrl, region);
+}
+
+function resolveCliTag(): string {
+  const pkg = resolveCliPackageJson();
+  if (!pkg?.version) return 'latest';
+
+  if (pkg.version.includes('-beta')) return 'beta';
+  if (pkg.version.includes('-rc')) return 'rc';
+  if (pkg.version.includes('-alpha')) return 'rc';
+
+  return 'latest';
+}
+/**
+ * Get the file path for a given file in a template, e.g. "next.config.js".
+ */
+export const getTemplateFile = ({ template, mode, file }: GetTemplateFileArgs): string => {
+  return path.join(TEMPLATES_DIR, template, mode, file);
+};
+
+export const SRC_DIR_NAMES = ['app', 'pages', 'styles'];
+
+/**
+ * Install a Next.js internal template to a given `root` directory.
+ */
+export const installTemplate = async ({
+  appName,
+  root,
+  packageManager,
+  isOnline,
+  template,
+  mode,
+  eslint,
+  srcDir,
+  importAlias,
+  secretKey,
+  apiUrl,
+  applicationId,
+  userId,
+  agentIdentifier,
+  silent,
+  skipInstall,
+  llmAuth,
+  region,
+}: InstallTemplateArgs) => {
+  if (!silent) console.log(bold(`Using ${packageManager}.`));
+
+  const isAgentTemplate =
+    template === TemplateTypeEnum.APP_AGENT ||
+    template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+    template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
+
+  /**
+   * Copy the template files to the target directory.
+   */
+  if (!silent) console.log('\nInitializing project with template:', template, '\n');
+  const templatePath = path.join(TEMPLATES_DIR, template, mode);
+  const copySource = ['**'];
+  if (!eslint) copySource.push('!eslintrc.json');
+  if (!template.includes('react')) {
+    copySource.push(mode === 'ts' ? 'tailwind.config.ts' : '!tailwind.config.js', '!postcss.config.cjs');
+  }
+
+  const renameAgent =
+    (template === TemplateTypeEnum.APP_AGENT ||
+      template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+      template === TemplateTypeEnum.APP_AGENT_LANGCHAIN) &&
+    agentIdentifier;
+  if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
+    throw new Error(
+      `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
+    );
+  }
+
+  await copy(copySource, root, {
+    parents: true,
+    cwd: templatePath,
+    rename(name) {
+      switch (name) {
+        case 'gitignore':
+        case 'eslintrc.json': {
+          return `.${name}`;
+        }
+        /*
+         * README.md is ignored by webpack-asset-relocator-loader used by ncc:
+         * https://github.com/vercel/webpack-asset-relocator-loader/blob/e9308683d47ff507253e37c9bcbb99474603192b/src/asset-relocator.js#L227
+         */
+        case 'README-template.md': {
+          return 'README.md';
+        }
+        case 'support-agent.tsx': {
+          return renameAgent ? `${agentIdentifier}.tsx` : name;
+        }
+        default: {
+          return name;
+        }
+      }
+    },
+  });
+
+  if (renameAgent) {
+    const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
+    const files = await glob('**/*.{tsx,ts,md}', {
+      cwd: root,
+      absolute: true,
+      followSymbolicLinks: false,
+    });
+    await Promise.all(
+      files.map(async (file) => {
+        const before = await fs.readFile(file, 'utf8');
+        const after = before.replace(/supportAgent/g, camelName).replace(/support-agent/g, agentIdentifier);
+        if (after !== before) await fs.writeFile(file, after);
+      })
+    );
+  }
+
+  const isAiSdkTemplate = template === TemplateTypeEnum.APP_AGENT_AI_SDK;
+  const isLangChainTemplate = template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
+
+  if (renameAgent && llmAuth && shouldWireLlmAuth(llmAuth) && (isAiSdkTemplate || isLangChainTemplate)) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    const agentFilePath = path.join(root, 'app', 'novu', 'agents', `${agentIdentifier}.tsx`);
+    const source = generateSupportAgentSource({
+      runtime,
+      agentIdentifier: agentIdentifier!,
+      llmAuth,
+    });
+
+    await fs.writeFile(agentFilePath, source);
+
+    if (!codegenSupportsTools({ runtime, agentIdentifier: agentIdentifier!, llmAuth })) {
+      const toolsDir = path.join(root, 'app', 'novu', 'agents', 'tools');
+      await fs.rm(path.join(toolsDir, 'search-novu-docs.ts'), { force: true });
+      await fs.rmdir(toolsDir).catch(() => undefined);
+    }
+  }
+
+  if (isAiSdkTemplate || isLangChainTemplate) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    const nextConfigSource = generateAgentNextConfigSource(runtime, llmAuth ?? { kind: 'skip' });
+
+    await fs.writeFile(path.join(root, 'next.config.mjs'), nextConfigSource);
+  }
+
+  const tsconfigFile = path.join(root, 'tsconfig.json');
+  await fs.writeFile(
+    tsconfigFile,
+    (await fs.readFile(tsconfigFile, 'utf8'))
+      .replace(`"@/*": ["./*"]`, srcDir ? `"@/*": ["./src/*"]` : `"@/*": ["./*"]`)
+      .replace(`"@/*":`, `"${importAlias}":`)
+  );
+
+  // update import alias in any files if not using the default
+  if (importAlias !== '@/*') {
+    const files = await glob('**/*', {
+      cwd: root,
+      dot: true,
+      stats: false,
+      /*
+       * We don't want to modify compiler options in [ts/js]config.json
+       * and none of the files in the .git folder
+       */
+      ignore: ['tsconfig.json', 'jsconfig.json', '.git/**/*'],
+    });
+    const writeSema = new Sema(8, { capacity: files.length });
+    await Promise.all(
+      files.map(async (file) => {
+        await writeSema.acquire();
+        const filePath = path.join(root, file);
+        if ((await fs.stat(filePath)).isFile()) {
+          await fs.writeFile(
+            filePath,
+            (await fs.readFile(filePath, 'utf8')).replace(`@/`, `${importAlias.replace(/\*/g, '')}`)
+          );
+        }
+        writeSema.release();
+      })
+    );
+  }
+
+  if (srcDir) {
+    await fs.mkdir(path.join(root, 'src'), { recursive: true });
+    await Promise.all(
+      SRC_DIR_NAMES.map(async (file) => {
+        await fs.rename(path.join(root, file), path.join(root, 'src', file)).catch((err) => {
+          if (err.code !== 'ENOENT') {
+            throw err;
+          }
+        });
+      })
+    );
+
+    const isAppTemplate = template.startsWith('app');
+
+    // Change the `Get started by editing pages/index` / `app/page` to include `src`
+    const indexPageFile = path.join(
+      'src',
+      isAppTemplate ? 'app' : 'pages',
+      `${isAppTemplate ? 'page' : 'index'}.${mode === 'ts' ? 'tsx' : 'js'}`
+    );
+
+    await fs.writeFile(
+      indexPageFile,
+      (await fs.readFile(indexPageFile, 'utf8')).replace(
+        isAppTemplate ? 'app/page' : 'pages/index',
+        isAppTemplate ? 'src/app/page' : 'src/pages/index'
+      )
+    );
+
+    if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
+      const tailwindConfigFile = path.join(root, mode === 'ts' ? 'tailwind.config.ts' : 'tailwind.config.js');
+      await fs.writeFile(
+        tailwindConfigFile,
+        (await fs.readFile(tailwindConfigFile, 'utf8')).replace(
+          /\.\/(\w+)\/\*\*\/\*\.\{js,ts,jsx,tsx,mdx\}/g,
+          './src/$1/**/*.{js,ts,jsx,tsx,mdx}'
+        )
+      );
+    }
+  }
+
+  /* write .env file */
+  const llmEnvVars = llmAuth ? resolveLlmAuthEnvVars(llmAuth) : {};
+  const envVars = isAgentTemplate
+    ? {
+        NOVU_SECRET_KEY: secretKey,
+        NOVU_API_URL: apiUrl ?? 'https://api.novu.co',
+        ...llmEnvVars,
+      }
+    : template === TemplateTypeEnum.APP_CHAT_SDK
+      ? {
+          NOVU_SECRET_KEY: secretKey,
+          NOVU_AGENT_IDENTIFIER: agentIdentifier ?? 'my-chat-sdk-agent',
+          ...(apiUrl && apiUrl !== 'https://api.novu.co' ? { NOVU_API_BASE_URL: apiUrl } : {}),
+        }
+      : {
+          NOVU_SECRET_KEY: secretKey,
+          NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',
+          NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId ?? '',
+        };
+
+  const val = Object.entries(envVars).reduce((acc, [key, value]) => {
+    return `${acc}${key}=${value}${os.EOL}`;
+  }, '');
+
+  await fs.writeFile(path.join(root, '.env.local'), val);
+
+  /* write github action (skip for agent template) */
+  if (!isAgentTemplate && template !== TemplateTypeEnum.APP_CHAT_SDK) {
+    await copy(copySource, `${root}/.github`, {
+      parents: true,
+      cwd: path.join(TEMPLATES_DIR, `./github`),
+    });
+  }
+
+  /** Copy the version from package.json or override for tests. */
+  const version = '16.2.1';
+
+  /** Create a package.json for the new project and write it to disk. */
+  const isChatSdkTemplate = template === TemplateTypeEnum.APP_CHAT_SDK;
+
+  const baseDependencies: Record<string, string> = {
+    react: '^19',
+    'react-dom': '^19',
+    next: version,
+  };
+
+  if (isAgentTemplate) {
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion(apiUrl, region);
+  }
+
+  if (isAiSdkTemplate || isLangChainTemplate) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    Object.assign(baseDependencies, resolveBridgeScaffoldDependencies(runtime, llmAuth));
+  }
+
+  if (isChatSdkTemplate) {
+    baseDependencies.chat = '4.31.0';
+    baseDependencies['@novu/chat-sdk-adapter'] = 'latest';
+    baseDependencies['@chat-adapter/state-memory'] = '4.31.0';
+  }
+
+  if (!isAgentTemplate && !isChatSdkTemplate) {
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion(apiUrl, region);
+    baseDependencies['@novu/nextjs'] = '^2.5.0';
+  }
+
+  const scripts: Record<string, string> = {
+    dev: 'next dev --port=3000',
+    build: 'next build',
+    start: 'next start',
+    lint: 'next lint',
+  };
+
+  if (isAgentTemplate) {
+    const cliTag = resolveCliTag();
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
+    scripts['dev:novu'] = `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --run "next dev --port=4005"`;
+  }
+
+  if (isChatSdkTemplate) {
+    const cliTag = resolveCliTag();
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
+    scripts['dev:novu'] =
+      `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"`;
+  }
+
+  const packageJson: any = {
+    name: appName,
+    version: '0.1.0',
+    private: true,
+    scripts,
+    dependencies: baseDependencies,
+    devDependencies: {},
+  };
+
+  if (mode === 'ts') {
+    packageJson.devDependencies = {
+      ...packageJson.devDependencies,
+      typescript: '^5',
+      '@types/node': '^22',
+      '@types/react': '^19',
+      '@types/react-dom': '^19',
+    };
+  }
+
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
+    packageJson.devDependencies = {
+      ...packageJson.devDependencies,
+      postcss: '^8',
+      tailwindcss: '^3.4.1',
+    };
+
+    packageJson.dependencies = {
+      ...packageJson.dependencies,
+      '@react-email/components': '0.0.18',
+      '@react-email/tailwind': '0.0.18',
+    };
+  }
+
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
+    packageJson.dependencies = {
+      ...packageJson.dependencies,
+      zod: '^3.23.8',
+      'zod-to-json-schema': '^3.23.1',
+    };
+  }
+
+  if (isAgentTemplate) {
+    packageJson.dependencies = {
+      ...packageJson.dependencies,
+      ...resolveAgentZodDependencies(),
+    };
+  }
+
+  /* Default ESLint dependencies. */
+  if (eslint) {
+    packageJson.devDependencies = {
+      ...packageJson.devDependencies,
+      eslint: '^9',
+      'eslint-config-next': version,
+    };
+  }
+
+  if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
+    // chat (transitive via @novu/framework) peers ai@^6 for its own AI helpers.
+    // Framework only uses chat for card components; ai-sdk scaffold installs ai@7.
+    packageJson.pnpm = {
+      peerDependencyRules: {
+        allowedVersions: {
+          'chat>ai': '7',
+        },
+      },
+    };
+  }
+
+  const devDeps = Object.keys(packageJson.devDependencies).length;
+  if (!devDeps) delete packageJson.devDependencies;
+
+  await fs.writeFile(path.join(root, 'package.json'), JSON.stringify(packageJson, null, 2) + os.EOL);
+
+  if (!silent) {
+    console.log('\nInstalling dependencies:');
+    for (const dependency in packageJson.dependencies) console.log(`- ${cyan(dependency)}`);
+
+    if (devDeps) {
+      console.log('\nInstalling devDependencies:');
+      for (const dependency in packageJson.devDependencies) console.log(`- ${cyan(dependency)}`);
+    }
+
+    console.log();
+  }
+
+  if (!skipInstall) {
+    await install(packageManager, isOnline, silent, root);
+  }
+};
+
+export * from './types';

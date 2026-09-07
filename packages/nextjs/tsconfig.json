@@ -1,0 +1,21 @@
+{
+  "include": ["src"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES2020",
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "Bundler",
+    "emitDecoratorMetadata": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "outDir": "./dist/esm",
+    "rootDir": "./src"
+  },
+  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
+}

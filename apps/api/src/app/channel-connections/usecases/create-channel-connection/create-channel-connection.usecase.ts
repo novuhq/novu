@@ -1,0 +1,171 @@
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { encryptChannelConnectionAuth, InstrumentUsecase, shortId } from '@novu/application-generic';
+import {
+  ChannelConnectionEntity,
+  ChannelConnectionRepository,
+  ContextRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+  SubscriberRepository,
+} from '@novu/dal';
+import { validateAndNormalizeConnectionAuth, validateConnectionMode } from '../channel-connection.utils';
+import { assertSubscriberExists } from '../ensure-connect-dashboard-subscriber';
+import { CreateChannelConnectionCommand } from './create-channel-connection.command';
+
+@Injectable()
+export class CreateChannelConnection {
+  constructor(
+    private readonly channelConnectionRepository: ChannelConnectionRepository,
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly contextRepository: ContextRepository
+  ) {}
+
+  @InstrumentUsecase()
+  async execute(command: CreateChannelConnectionCommand): Promise<ChannelConnectionEntity> {
+    this.validateResourceOrContext(command);
+
+    const integration = await this.findIntegration(command);
+    const auth = validateAndNormalizeConnectionAuth(command.auth, integration);
+    const contextKeys = await this.resolveContexts(command);
+
+    await this.ensureSubscriberExists(command);
+    await this.ensureUniqueConnectionForResourceAndContext(command, integration, contextKeys);
+
+    const identifier = command.identifier || this.generateIdentifier();
+
+    // Check if channel connection already exists
+    const existingChannelConnection = await this.channelConnectionRepository.findOne({
+      identifier,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (existingChannelConnection) {
+      throw new ConflictException(
+        `Channel connection with identifier "${identifier}" already exists in environment "${command.environmentId}"`
+      );
+    }
+
+    const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys, auth);
+
+    return channelConnection;
+  }
+
+  private validateResourceOrContext(command: CreateChannelConnectionCommand) {
+    validateConnectionMode({
+      connectionMode: command.connectionMode,
+      subscriberId: command.subscriberId,
+      context: command.context,
+      contextKeys: command.contextKeys,
+    });
+  }
+
+  private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
+    // A session-validated context arrives pre-resolved as keys — persist verbatim
+    // (never re-resolve/trust the raw payload alongside it).
+    if (command.contextKeys?.length) {
+      return command.contextKeys;
+    }
+
+    if (!command.context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      command.environmentId,
+      command.organizationId,
+      command.context
+    );
+
+    return contexts.map((context) => context.key);
+  }
+
+  /**
+   * Ensures only one channel connection exists per unique combination of integration + resource + context.
+   * Any variation in integration, resource, or context creates a separate connection.
+   */
+  private async ensureUniqueConnectionForResourceAndContext(
+    command: CreateChannelConnectionCommand,
+    integration: IntegrationEntity,
+    contextKeys: string[]
+  ) {
+    const baseQuery = {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      integrationIdentifier: integration.identifier,
+      subscriberId: command.subscriberId,
+    };
+
+    const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
+
+    const existingChannelConnection = await this.channelConnectionRepository.findOne({
+      ...baseQuery,
+      ...contextQuery,
+    });
+
+    if (existingChannelConnection) {
+      const subscriberIdPart = command.subscriberId ? `subscriberId "${command.subscriberId}"` : 'no subscriberId';
+      const contextPart = contextKeys.length > 0 ? `context [${contextKeys.join(', ')}]` : 'no context';
+
+      throw new ConflictException(
+        `A channel connection already exists for integration "${integration.identifier}" with ${subscriberIdPart} and ${contextPart}. Connection ID: ${existingChannelConnection.identifier}`
+      );
+    }
+  }
+
+  private async createChannelConnection(
+    command: CreateChannelConnectionCommand,
+    identifier: string,
+    integration: IntegrationEntity,
+    contextKeys: string[],
+    auth: CreateChannelConnectionCommand['auth']
+  ): Promise<ChannelConnectionEntity> {
+    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
+
+    const channelConnection = await this.channelConnectionRepository.create({
+      identifier,
+      integrationIdentifier: integration.identifier,
+      providerId: integration.providerId,
+      channel: integration.channel,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      subscriberId,
+      contextKeys,
+      workspace: command.workspace,
+      auth: encryptChannelConnectionAuth(auth),
+    });
+
+    return channelConnection;
+  }
+
+  private async ensureSubscriberExists(command: CreateChannelConnectionCommand) {
+    if (!command.subscriberId) {
+      return;
+    }
+
+    await assertSubscriberExists({
+      subscriberId: command.subscriberId,
+      environmentId: command.environmentId,
+      subscriberRepository: this.subscriberRepository,
+    });
+  }
+
+  private async findIntegration(command: CreateChannelConnectionCommand) {
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      identifier: command.integrationIdentifier,
+    });
+
+    if (!integration) {
+      throw new NotFoundException(`Integration not found: ${command.integrationIdentifier}`);
+    }
+
+    return integration;
+  }
+
+  private generateIdentifier(): string {
+    return `chconn_${shortId(12)}`;
+  }
+}

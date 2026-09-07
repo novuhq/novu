@@ -1,12 +1,11 @@
-import { OrganizationRepository, MemberRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
+import { CommunityMemberRepository } from '@novu/dal';
 import { IBulkInviteResponse, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Bulk invite members - /invites/bulk (POST)', async () => {
+describe('Bulk invite members - /invites/bulk (POST) #novu-v0-os', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
-  const memberRepository = new MemberRepository();
+  const memberRepository = new CommunityMemberRepository();
 
   before(async () => {
     session = new UserSession();
@@ -61,7 +60,7 @@ describe('Bulk invite members - /invites/bulk (POST)', async () => {
     expect(member.invite.email).to.equal('dddd@asdas.com');
     expect(member.invite._inviterId).to.equal(session.user._id);
     expect(member.roles.length).to.equal(1);
-    expect(member.roles[0]).to.equal(MemberRoleEnum.ADMIN);
+    expect(member.roles[0]).to.equal(MemberRoleEnum.OSS_ADMIN);
     expect(member.memberStatus).to.equal(MemberStatusEnum.INVITED);
   });
 
@@ -103,7 +102,7 @@ describe('Bulk invite members - /invites/bulk (POST)', async () => {
       expect(member.invite.email).to.equal(invitee.email);
       expect(member.invite._inviterId).to.equal(session.user._id);
       expect(member.roles.length).to.equal(1);
-      expect(member.roles[0]).to.equal(MemberRoleEnum.ADMIN);
+      expect(member.roles[0]).to.equal(MemberRoleEnum.OSS_ADMIN);
 
       expect(member.memberStatus).to.equal(MemberStatusEnum.INVITED);
       expect(member._userId).to.be.not.ok;

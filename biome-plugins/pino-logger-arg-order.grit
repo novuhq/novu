@@ -1,0 +1,22 @@
+// Flags reversed pino arg order: this.logger.info(message, { ... })
+// Pino expects: this.logger.info({ ... }, message)
+
+engine biome(1.0)
+language js(typescript)
+
+`this.logger.$level($message, $context)` where {
+  $level <: r"trace|debug|info|warn|error|fatal",
+
+  // 2nd arg is an object literal (any properties, including shorthand)
+  $context <: r"\{[\s\S]*\}",
+
+  // Avoid flagging correct order: this.logger.info({ ... }, message)
+  not $message <: r"\{[\s\S]*\}",
+
+  register_diagnostic(
+    span = $match,
+    severity = "warn",
+    message = "Pino expects (object, message). Use this.logger.<level>({ ... }, message) instead of this.logger.<level>(message, { ... })."
+  )
+}
+

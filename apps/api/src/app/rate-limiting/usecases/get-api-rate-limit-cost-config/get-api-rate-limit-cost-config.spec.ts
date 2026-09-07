@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
-import { GetApiRateLimitCostConfig } from './get-api-rate-limit-cost-config.usecase';
 import { ApiRateLimitCostEnum, ApiRateLimitCostEnvVarFormat, DEFAULT_API_RATE_LIMIT_COST_CONFIG } from '@novu/shared';
 import { expect } from 'chai';
+import { GetApiRateLimitCostConfig } from './get-api-rate-limit-cost-config.usecase';
 
 describe('GetApiRateLimitCostConfig', () => {
   let useCase: GetApiRateLimitCostConfig;

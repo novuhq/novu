@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+### Novu Conventions
+
+- File/directory names: lowercase with dashes (`components/auth-wizard`)
+- Named exports for all components
+- TypeScript: `interface` on the backend, `type` on the frontend — this is the project convention and overrides any general "prefer interfaces" guidance
+- Blank line before every `return` statement
+- Animations: import from `"motion/react"` — not `"framer-motion"` or `"motion-react"`
+- No nested ternaries

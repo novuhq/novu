@@ -1,0 +1,41 @@
+import { JsonSchemaFormatEnum, JsonSchemaTypeEnum } from '@novu/dal';
+
+export class JSONSchema {
+  type?: JsonSchemaTypeEnum;
+  format?: JsonSchemaFormatEnum;
+  title?: string;
+  description?: string;
+  default?: any;
+  const?: any;
+  minimum?: number;
+  maximum?: number;
+  exclusiveMinimum?: boolean;
+  exclusiveMaximum?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  minItems?: number;
+  maxItems?: number;
+  uniqueItems?: boolean;
+  items?: JSONSchema;
+  required?: string[];
+  properties?: Record<string, JSONSchema>;
+  additionalProperties?: JSONSchema | boolean;
+  enum?: any[];
+  allOf?: JSONSchema[];
+  anyOf?: JSONSchema[];
+  oneOf?: JSONSchema[];
+  not?: JSONSchema;
+  if?: JSONSchema;
+  then?: JSONSchema;
+  else?: JSONSchema;
+  contentEncoding?: string;
+  contentMediaType?: string;
+  dependentRequired?: Record<string, string[]>;
+  dependentSchemas?: Record<string, JSONSchema>;
+  $schema?: string;
+  $id?: string;
+  contentSchema?: JSONSchema;
+  examples?: any[];
+  multipleOf?: number;
+}
