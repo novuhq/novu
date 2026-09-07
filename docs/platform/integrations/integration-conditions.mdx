@@ -9,7 +9,7 @@ Use integration conditions when you run more than one active integration for the
 
 - A separate email or SMS provider account per tenant
 - Different sender credentials by locale or subscriber plan
-- Chat or push credentials that should only send for matching tenants
+- Endpoint-based chat connections that should only send for matching tenants
 
 ## Add conditions in the dashboard
 
@@ -21,7 +21,7 @@ Use integration conditions when you run more than one active integration for the
 The same rule builder is used for [step conditions](/platform/workflow/add-and-configure-steps/step-conditions#how-the-condition-builder-works). You can nest groups and compare fields with equals, contains, in, empty, and the other operators listed on that page.
 
 <Note>
-  An integration with conditions cannot be the **primary** integration. Saving conditions unsets the primary flag. Making an integration primary removes its conditions. Keep one unconditioned primary integration as the fallback for email and SMS.
+  In the dashboard, an integration with conditions cannot be primary. Saving conditions unsets the primary flag. Making an integration primary removes its conditions. Keep a separate unconditioned primary integration as the email and SMS fallback.
 </Note>
 
 If an integration still has legacy conditions from the previous dashboard, the editor shows a warning. Saving new conditions in this panel replaces those legacy rules.
@@ -38,14 +38,13 @@ Conditions are evaluated when the channel step sends, not when you save the inte
 
 ### Chat and push
 
-These channels can deliver through more than one active integration at a time.
+These channels can deliver through more than one active integration at a time. Conditions do not replace email and SMS selection.
 
-- Integrations **without** conditions stay eligible.
-- Integrations **with** conditions are used only when the rules match.
+**Endpoint-based chat** (Slack, Teams, Telegram, and other connections stored as channel endpoints): Novu keeps endpoints whose integration has no conditions, and drops endpoints whose conditions do not match. There is no primary fallback. If every remaining integration is conditioned and none match, nothing is sent on those endpoints.
 
-There is no primary fallback. If every eligible integration is conditioned and none match, nothing is sent on that channel.
+**Push and legacy chat** (device tokens, webhook URLs, and other credentials stored on the subscriber): Novu sends through the integration those credentials are stored on. Conditions on that integration are not used to skip the send. Do not use integration conditions to suppress push or legacy chat for a tenant; store credentials on the integration you want to send through.
 
-Pinning `integrationIdentifier` on the trigger skips conditions in the selector used for email and SMS. Chat and push delivery that is tied to subscriber endpoints still evaluates conditions on those integrations.
+Pinning `integrationIdentifier` on the trigger skips the email and SMS condition scan. Endpoint-based chat still evaluates conditions on each integration's endpoints.
 
 ## Data available in conditions
 
@@ -87,7 +86,7 @@ A string value such as `"acme-corp"` and `{ id: "acme-corp" }` both set `context
 
 ## Manage conditions with the API
 
-The dashboard stores conditions as JSON Logic on the integration `rules` field. Create or update an integration with the [Integrations API](/api-reference/integrations/create-an-integration) and pass `rules`. Setting `rules` unsets primary and replaces legacy `conditions`.
+The dashboard stores conditions as JSON Logic on the integration `rules` field. Create or update an integration with the [Integrations API](/api-reference/integrations/create-an-integration) and pass `rules`. Updating with `rules` unsets primary and replaces legacy `conditions`. Creating the first active email or SMS integration can still mark it as primary even when `rules` are present. If those rules do not match, the selector still uses that integration as the primary fallback. Prefer a separate unconditioned primary integration, then add conditioned integrations from the dashboard or the update API.
 
 ```json
 {

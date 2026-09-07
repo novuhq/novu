@@ -23,7 +23,7 @@ Integration is third party service used by Novu to send notification for a speci
 | `deleted` | `boolean` | Indicates whether the integration has been marked as deleted (soft delete). |
 | `deletedAt` | `string` | The timestamp indicating when the integration was deleted. This is set when the integration is soft deleted. |
 | `deletedBy` | `string` | The identifier of the user who performed the deletion of this integration. Useful for audit trails. |
-| `primary` | `boolean` | For email and SMS, the default integration when no conditioned integration is selected. An integration cannot be primary if it has `rules`. |
+| `primary` | `boolean` | For email and SMS, the default integration when no conditioned integration is selected. The dashboard and the update API unset `primary` when you save `rules`. Creating the first active email or SMS integration can still set `primary` even if `rules` are present. |
 | `conditions` | `StepFilterDto[]` | Legacy StepFilter conditions. Ignored when `rules` is also set. Prefer `rules` and the dashboard **Integration conditions** editor. |
 | `rules` | `Record<string, unknown>` | JSON Logic evaluated at send time to select this integration. Allowed variables are `context.*` and `subscriber.*`. Takes precedence over `conditions`. See [Integration conditions](/platform/integrations/integration-conditions). |
 
