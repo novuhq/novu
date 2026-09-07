@@ -1,0 +1,7 @@
+language js(typescript)
+
+`($value as $inner) as $outer` where {
+  not $inner <: `const`,
+  not $outer <: `const`,
+  register_diagnostic(span=$outer, message="This assertion chain discards type evidence. Keep the original precise type, or parse untrusted input at its boundary before narrowing it.", severity="error")
+}

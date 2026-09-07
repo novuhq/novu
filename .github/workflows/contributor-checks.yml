@@ -55,6 +55,10 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           submodules: false
+          fetch-depth: 50
+
+      - name: Fetch comparison branch
+        run: git fetch origin "${{ github.base_ref }}" --depth=50
 
       - name: Install pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
@@ -74,8 +78,8 @@ jobs:
       - name: Reset Nx cache
         run: npx nx reset || true
 
-      - name: Lint
-        run: pnpm run lint
+      - name: Lint changed files
+        run: pnpm exec biome ci --changed --since=origin/${{ github.base_ref }} --no-errors-on-unmatched --reporter=github --max-diagnostics=none
 
       - name: Build
         run: pnpm run build

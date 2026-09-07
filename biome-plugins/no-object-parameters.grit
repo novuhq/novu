@@ -1,0 +1,10 @@
+language js(typescript)
+
+`function $name($params) { $body }` where {
+  $params <: contains `: object`,
+  register_diagnostic(
+    span = $params,
+    severity = "error",
+    message = "This parameter uses the broad `object` type. Accept a named owner type and parse external input at its boundary before calling this function."
+  )
+}

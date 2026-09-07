@@ -1,0 +1,15 @@
+language js(typescript)
+
+or {
+  `($value as unknown) as $outer`,
+  `($value as any) as $outer`,
+  `$value as unknown as $outer`,
+  `$value as any as $outer`
+} as $assertion where {
+  not $outer <: `const`,
+  register_diagnostic(
+    span = $assertion,
+    severity = "error",
+    message = "This assertion widens to unknown/any and then asserts a precise type. Parse untrusted input at its boundary."
+  )
+}

@@ -34,7 +34,7 @@
     "install:with-ee": "pnpm install && pnpm symlink:submodules",
     "jarvis": "node scripts/jarvis.js",
     "lint-staged": "lint-staged",
-    "lint": "nx run-many --target=lint --all --exclude=nextjs",
+    "lint": "biome lint --changed --since=origin/next --no-errors-on-unmatched",
     "lint:fix": "biome check --write .",
     "format": "biome format .",
     "format:fix": "biome format --write .",

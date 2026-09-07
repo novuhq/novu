@@ -42,6 +42,34 @@ jobs:
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+  lint-changed:
+    name: Lint changed files
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 50
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Fetch comparison branch
+        run: |
+          if [[ -n "${{ github.event.pull_request.base.ref }}" ]]; then
+            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=50
+          else
+            git fetch origin next --depth=50
+          fi
+
+      - uses: ./.github/actions/setup-project-minimal
+
+      - name: Biome on changed files
+        run: |
+          if [[ -n "${{ github.event.pull_request.base.ref }}" ]]; then
+            since="origin/${{ github.event.pull_request.base.ref }}"
+          else
+            since="origin/next"
+          fi
+          pnpm exec biome ci --changed --since="$since" --no-errors-on-unmatched --reporter=github --max-diagnostics=none
+
   get-affected:
     name: Get Affected Packages
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -167,7 +195,7 @@ jobs:
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
-          targets: lint,build,test
+          targets: build,test
           parallel: 5
           projects: ${{join(fromJson(needs.get-affected.outputs.test-providers), ',')}}
 
@@ -207,7 +235,7 @@ jobs:
           LOG_LEVEL: "info"
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
-          targets: lint,build,test
+          targets: build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
 
   test_unit_libs:
@@ -228,7 +256,7 @@ jobs:
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
-          targets: lint,build,test
+          targets: build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
   test_unit_services:
@@ -270,11 +298,11 @@ jobs:
           args: ""
 
       - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
-        name: Lint and build and test
+        name: Build and test
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
-          targets: lint,build,test
+          targets: build,test
           projects: ${{matrix.projectName}}
           args: ""
 
@@ -337,6 +365,7 @@ jobs:
     needs:
       - dependency-review
       - find-flags
+      - lint-changed
       - get-affected
       - test_unit_providers
       - test_unit_packages
