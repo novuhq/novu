@@ -5,6 +5,7 @@ import { FormControl, FormField, FormItem } from '@/components/primitives/form/f
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useHttpRequestTest } from './use-http-request-test';
 
@@ -40,6 +41,7 @@ export function EnforceSchemaValidation({ onSchemaGenerated }: EnforceSchemaVali
   const { control, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
   const { testResult } = useHttpRequestTest();
+  const { isReadOnly } = useStepEditor();
 
   function handleGenerateFromLastTest() {
     if (!testResult?.body) return;
@@ -65,6 +67,7 @@ export function EnforceSchemaValidation({ onSchemaGenerated }: EnforceSchemaVali
                   field.onChange(checked);
                   saveForm();
                 }}
+                disabled={isReadOnly}
               />
             </FormControl>
             <div className="flex items-center gap-1">
@@ -90,7 +93,7 @@ export function EnforceSchemaValidation({ onSchemaGenerated }: EnforceSchemaVali
         size="2xs"
         className="shrink-0 self-center gap-1 text-xs text-text-sub rounded-md"
         onClick={handleGenerateFromLastTest}
-        disabled={!testResult?.body}
+        disabled={!testResult?.body || isReadOnly}
       >
         <RiFileCopyLine className="size-3" />
         Generate from last test

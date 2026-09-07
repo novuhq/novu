@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { InputRoot } from '@/components/primitives/input';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize, containsHTMLEntities } from '@/utils/string';
@@ -12,6 +13,7 @@ export const InAppSubject = () => {
   const { control, getValues } = useFormContext();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const { isReadOnly } = useStepEditor();
 
   return (
     <FormField
@@ -30,8 +32,9 @@ export const InAppSubject = () => {
                 onChange={field.onChange}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
-                autoFocus
+                autoFocus={!isReadOnly}
                 enableTranslations
+                readOnly={isReadOnly}
               />
             </InputRoot>
           </FormControl>

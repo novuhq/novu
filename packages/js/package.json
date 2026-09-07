@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "3.19.1",
+  "version": "3.19.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/novuhq/novu",
@@ -100,7 +100,7 @@
   },
   "devDependencies": {
     "@novu/agent-event-protocol": "workspace:*",
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@types/jest": "^29.2.3",
     "@types/node": "^22.0.0",
     "autoprefixer": "^10.4.0",

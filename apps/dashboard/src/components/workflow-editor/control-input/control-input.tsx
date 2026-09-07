@@ -96,6 +96,7 @@ export function ControlInput({
     resourceType,
     enableTranslations,
     isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
+    isReadOnly: disabled || readOnly,
   });
 
   const { enhancedIsAllowedVariable } = useEnhancedVariableValidation({

@@ -202,7 +202,6 @@ export async function generateConnectOauthUrl(
       subscriberId: input.subscriberId,
       connectionMode: 'subscriber',
       autoLinkUser: true,
-      context: { agent: input.agentIdentifier },
     }
   );
   const body = unwrap(res.data);
