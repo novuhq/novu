@@ -46,6 +46,25 @@ describe('HumanConversationInboundInterceptor', () => {
     expect(turn.humanResponse).to.include({ requestId: 'hr_1', interactionId: 'hi_1' });
   });
 
+  it('consumes the turn when a managed novu_human interaction settles', async () => {
+    const inbound = {
+      tryHandleMessage: sinon.stub().resolves({
+        outcome: 'settled',
+        settled: {
+          identifier: 'hi_1',
+          requestId: 'novu_human:ses_1:sevt_1',
+          kind: HumanInteractionKindEnum.APPROVE,
+          status: HumanInteractionStatusEnum.APPROVED,
+        },
+      }),
+    };
+    const interceptor = new HumanConversationInboundInterceptor(inbound as any);
+    const turn = makeTurn('managed');
+
+    expect(await interceptor.tryHandleMessage(turn as any)).to.equal(true);
+    expect(turn.humanResponse).to.include({ requestId: 'novu_human:ses_1:sevt_1', interactionId: 'hi_1' });
+  });
+
   it('consumes the turn when inbound handled it without a settlement', async () => {
     const inbound = {
       tryHandleMessage: sinon.stub().resolves({ outcome: 'consumed' }),

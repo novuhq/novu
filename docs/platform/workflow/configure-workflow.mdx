@@ -31,6 +31,8 @@ Tags can be used to:
 - Filter and search for workflows in the dashboard.
 - [Retrieve](/api-reference/workflows/retrieve-a-workflow) or [list workflows](/api-reference/workflows/list-all-workflows) via the Novu API.
 
+Novu copies the workflow's tags onto each notification when that notification is created. Adding or removing a workflow tag does not update historical notifications. Inbox filters use the snapshotted `notification.tags` field. `notification.workflow.tags` reflects the current workflow, not the tags stored on the message.
+
 ### Add a workflow tag
 1. In the workflow editor, find the Tags field.
 2. Type tag name, If tag already exists, it will be suggested.

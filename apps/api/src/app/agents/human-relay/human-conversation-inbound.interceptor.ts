@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { parseNovuHumanRequestId } from '@novu/shared';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { HumanInteractionInboundService } from './human-interaction-inbound.service';
 import { toAgentHumanResponse } from './to-agent-human-response';
@@ -10,7 +11,9 @@ import { toAgentHumanResponse } from './to-agent-human-response';
  *
  * Returns `true` when the original turn was consumed and must not dispatch.
  * A settled interaction attaches `turn.humanResponse` and returns `false`
- * so the agent continues with `ctx.humanResponse` set.
+ * so the agent continues with `ctx.humanResponse` set. Managed `novu_human`
+ * settlements resume the parked session in the settlement service and consume
+ * the turn so we do not send a second user message into the parked session.
  */
 @Injectable()
 export class HumanConversationInboundInterceptor {
@@ -41,7 +44,7 @@ export class HumanConversationInboundInterceptor {
     if (result.outcome === 'settled') {
       turn.humanResponse = toAgentHumanResponse(result.settled);
 
-      return false;
+      return parseNovuHumanRequestId(result.settled.requestId) !== null;
     }
 
     return result.outcome === 'consumed';

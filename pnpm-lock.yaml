@@ -45,6 +45,8 @@ overrides:
   form-data@<2.5.6: ^2.5.6
   form-data@>=3.0.0 <3.0.5: ^3.0.5
   form-data@>=4.0.0 <4.0.6: ^4.0.6
+  fflate@>=0.4.5 <0.4.9: ^0.4.9
+  fflate@>=0.8.0 <0.8.3: ^0.8.3
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.3: ^6.4.3
   node-forge@<1.4.0: ^1.4.0
@@ -77,7 +79,7 @@ overrides:
   undici@>=7.0.0 <7.29.0: ^7.29.0
   undici@>=6.0.0 <6.28.0: ^6.28.0
   jose@>=3.0.0 <4.15.5: ^4.15.5
-  qs@<6.15.2: ^6.15.2
+  qs@<6.16.0: ^6.16.0
   js-yaml@<3.15.1: ^3.15.1
   js-yaml@>=4.0.0 <4.3.1: ^4.3.1
   smol-toml@<1.6.1: ^1.6.1
@@ -128,7 +130,7 @@ overrides:
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
   yaml@>=1.0.0 <1.10.3: ^1.10.3
   yaml@>=2.0.0 <2.8.3: ^2.8.3
-  '@xmldom/xmldom@<0.8.13': ^0.8.13
+  '@xmldom/xmldom@<0.8.15': ^0.8.15
   micromatch@<4.0.0: ^4.0.8
   defu@<=6.1.4: ^6.1.5
   '@smithy/config-resolver@<4.4.0': ^4.4.0
@@ -3646,8 +3648,8 @@ importers:
         specifier: 11.6.4
         version: 11.6.4
       '@arethetypeswrong/cli':
-        specifier: ^0.17.4
-        version: 0.17.4
+        specifier: ^0.18.5
+        version: 0.18.5
       '@langchain/core':
         specifier: ^1.1.44
         version: 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)
@@ -3801,8 +3803,8 @@ importers:
         version: 2.6.0
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.17.4
-        version: 0.17.4
+        specifier: ^0.18.5
+        version: 0.18.5
       '@novu/agent-event-protocol':
         specifier: workspace:*
         version: link:../agent-event-protocol
@@ -3913,8 +3915,8 @@ importers:
         version: 18.3.1(react@18.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.17.4
-        version: 0.17.4
+        specifier: ^0.18.5
+        version: 0.18.5
       '@types/node':
         specifier: ^22.0.0
         version: 22.15.13
@@ -4238,8 +4240,8 @@ importers:
         specifier: 1.0.0
         version: 1.0.0
       qs:
-        specifier: ^6.15.2
-        version: 6.15.2
+        specifier: ^6.16.0
+        version: 6.16.0
       resend:
         specifier: ^6.0.3
         version: 6.0.3(@react-email/render@1.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
@@ -4324,8 +4326,8 @@ importers:
         version: 18.3.1(react@18.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.17.4
-        version: 0.17.4
+        specifier: ^0.18.5
+        version: 0.18.5
       '@types/node':
         specifier: ^22.0.0
         version: 22.15.13
@@ -4355,8 +4357,8 @@ importers:
         version: 18.3.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.17.4
-        version: 0.17.4
+        specifier: ^0.18.5
+        version: 0.18.5
       '@types/node':
         specifier: ^22.0.0
         version: 22.15.13
@@ -5070,14 +5072,14 @@ packages:
   '@apm-js-collab/tracing-hooks@0.6.0':
     resolution: {integrity: sha512-akdKDRbvPWC7mRfyoJ2f/tpmKqn5rLDPJMQ3+ZImgtiRJsC3LSoDJF3enrEufURIieH/H0S7Le6KLnRaCTk9rQ==}
 
-  '@arethetypeswrong/cli@0.17.4':
-    resolution: {integrity: sha512-AeiKxtf67XD/NdOqXgBOE5TZWH3EOCt+0GkbUpekOzngc+Q/cRZ5azjWyMxISxxfp0EItgm5NoSld9p7BAA5xQ==}
-    engines: {node: '>=18'}
+  '@arethetypeswrong/cli@0.18.5':
+    resolution: {integrity: sha512-gM+8vRsQOD/Uc7EnBedUhkG5OCsDWE4uoak5QvomGpMpaky0Eh41p04nIMgrWb8EOmqZUJGc6zz9hsP6E56R7g==}
+    engines: {node: '>=20'}
     hasBin: true
 
-  '@arethetypeswrong/core@0.17.4':
-    resolution: {integrity: sha512-Izvir8iIoU+X4SKtDAa5kpb+9cpifclzsbA8x/AZY0k0gIfXYQ1fa1B6Epfe6vNA2YfDX8VtrZFgvnXB6aPEoQ==}
-    engines: {node: '>=18'}
+  '@arethetypeswrong/core@0.18.5':
+    resolution: {integrity: sha512-9ytjzGwxjm9Uz7I9avfbt5vlQt6uk9uRRESzJjqrznl6WKvI6dwYTo+vJ3U02Wrq/mR3iql/PzhvHhKdJIAjDQ==}
+    engines: {node: '>=20'}
 
   '@assistant-ui/core@0.3.15':
     resolution: {integrity: sha512-pCeVhMmzK4xFbahtRtvjlGXDxycsvl1plgiD0M5ZyABm+QxINGnBO5GEz1hqDHQVjKlCIJDNj15PlFSkuFnidA==}
@@ -17006,8 +17008,8 @@ packages:
     resolution: {integrity: sha512-CJDxIgE5I0FH+ttq/Fxy6nRpxP70+e2O048EPe85J2use3XKdatVM7dDVvFNjQudd9B49NPoZ+8PG49zj4Er8Q==}
     engines: {node: '>= 16'}
 
-  '@xmldom/xmldom@0.8.13':
-    resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
+  '@xmldom/xmldom@0.8.15':
+    resolution: {integrity: sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==}
     engines: {node: '>=10.0.0'}
 
   '@xstate/fsm@1.6.5':
@@ -17316,10 +17318,6 @@ packages:
   ansi-escapes@4.3.2:
     resolution: {integrity: sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==}
     engines: {node: '>=8'}
-
-  ansi-escapes@7.0.0:
-    resolution: {integrity: sha512-GdYO7a61mR0fOlAsvC9/rIHf7L96sBc6dEWzeOu+KAea5bZyQRPIpojrVoI4AXGJS/ycu/fBTdLrUkA4ODrvjw==}
-    engines: {node: '>=18'}
 
   ansi-escapes@7.3.0:
     resolution: {integrity: sha512-BvU8nYgGQBxcmMuEeUEmNTvrMVjJNSH7RgW24vXexN4Ven6qCvy4TntnvlnwnMLTVlcRQQdbRY8NKnaIoeWDNg==}
@@ -20463,11 +20461,11 @@ packages:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
     engines: {node: ^12.20 || >= 14.13}
 
-  fflate@0.4.8:
-    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
+  fflate@0.4.9:
+    resolution: {integrity: sha512-zdxgIEddhfsyCaWpJ2SdXEP8ZMrKJ6+5jl4OupODcywU0IhRk6gdXuVGcPICyfx2H97hVK7xmJtRLPjkxAX8Vw==}
 
-  fflate@0.8.2:
-    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   figures@1.7.0:
     resolution: {integrity: sha512-UxKlfCRuCBxSXU4C6t9scbDyWZ4VlaFFdojKtzJuSkuOBQ5CNFum+zZXFwHjo+CxBC1t6zlYPgHIgFjL8ggoEQ==}
@@ -26058,8 +26056,8 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  qs@6.15.2:
-    resolution: {integrity: sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==}
+  qs@6.16.0:
+    resolution: {integrity: sha512-h6fhOIaRrID2CbEY2fqs+7t+UXZo+MLAnU5gRIq85uFtdiUPCdsApMlHhXogKVM4HM2DVbIjGNTTYH2OcmP1vA==}
     engines: {node: '>=0.6'}
 
   query-registry@3.0.1:
@@ -27161,6 +27159,10 @@ packages:
     resolution: {integrity: sha512-FCLHtRD/gnpCiCHEiJLOwdmFP+wzCmDEkc9y7NsYxeF4u7Btsn1ZuwgwJGxImImHicJArLP4R0yX4c2KCrMrTA==}
     engines: {node: '>= 0.4'}
 
+  side-channel-list@1.0.1:
+    resolution: {integrity: sha512-mjn/0bi/oUURjc5Xl7IaWi/OJJJumuoJFQJfDDyO46+hBWsfaVM65TBHq2eoZBhzl9EchxOijpkbRC8SVBQU0w==}
+    engines: {node: '>= 0.4'}
+
   side-channel-map@1.0.1:
     resolution: {integrity: sha512-VCjCNfgMsby3tTdo02nbjtM/ewra6jPHmpThenkTYh8pG9ucZ/1P8So4u4FGBek/BjpOVsDCMoLA/iuBKIFXRA==}
     engines: {node: '>= 0.4'}
@@ -27171,6 +27173,10 @@ packages:
 
   side-channel@1.1.0:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
+    engines: {node: '>= 0.4'}
+
+  side-channel@1.1.1:
+    resolution: {integrity: sha512-6x6dK6zJdpTzF4sQeNYxwtvBzf6Eg4GtlesS94HOvTudUeyK2WXAaIfmDgsyslYrRBeFIlsi54AYsFGUuhmvrQ==}
     engines: {node: '>= 0.4'}
 
   sift@17.1.3:
@@ -30262,24 +30268,24 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@arethetypeswrong/cli@0.17.4':
+  '@arethetypeswrong/cli@0.18.5':
     dependencies:
-      '@arethetypeswrong/core': 0.17.4
+      '@arethetypeswrong/core': 0.18.5
       chalk: 4.1.2
       cli-table3: 0.6.5
       commander: 10.0.1
       marked: 9.1.6
       marked-terminal: 7.1.0(marked@9.1.6)
-      semver: 7.6.3
+      semver: 7.8.5
 
-  '@arethetypeswrong/core@0.17.4':
+  '@arethetypeswrong/core@0.18.5':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@loaderkit/resolve': 1.0.3
       cjs-module-lexer: 1.4.1
-      fflate: 0.8.2
-      lru-cache: 10.4.3
-      semver: 7.7.4
+      fflate: 0.8.3
+      lru-cache: 11.5.1
+      semver: 7.8.5
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
@@ -30435,7 +30441,7 @@ snapshots:
 
   '@authenio/xml-encryption@2.0.2':
     dependencies:
-      '@xmldom/xmldom': 0.8.13
+      '@xmldom/xmldom': 0.8.15
       escape-html: 1.0.3
       xpath: 0.0.32
 
@@ -35212,7 +35218,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       mime-types: 2.1.35
       performance-now: 2.1.0
-      qs: 6.15.2
+      qs: 6.16.0
       safe-buffer: 5.2.1
       tough-cookie: 4.1.3
       tunnel-agent: 0.6.0
@@ -37233,7 +37239,7 @@ snapshots:
       '@microsoft/teams.cards': 2.0.11
       '@microsoft/teams.common': 2.0.11
       jwt-decode: 4.0.0
-      qs: 6.15.2
+      qs: 6.16.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -37268,7 +37274,7 @@ snapshots:
   '@microsoft/teams.graph@2.0.11':
     dependencies:
       '@microsoft/teams.common': 2.0.11
-      qs: 6.15.2
+      qs: 6.16.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -48725,7 +48731,7 @@ snapshots:
 
   '@xmldom/is-dom-node@1.0.1': {}
 
-  '@xmldom/xmldom@0.8.13': {}
+  '@xmldom/xmldom@0.8.15': {}
 
   '@xstate/fsm@1.6.5': {}
 
@@ -49100,10 +49106,6 @@ snapshots:
   ansi-escapes@4.3.2:
     dependencies:
       type-fest: 0.21.3
-
-  ansi-escapes@7.0.0:
-    dependencies:
-      environment: 1.1.0
 
   ansi-escapes@7.3.0:
     dependencies:
@@ -49913,7 +49915,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.4.24
       on-finished: 2.4.1
-      qs: 6.15.2
+      qs: 6.16.0
       raw-body: 2.5.3
       type-is: 1.6.18
       unpipe: 1.0.0
@@ -49928,7 +49930,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.7.2
       on-finished: 2.4.1
-      qs: 6.15.2
+      qs: 6.16.0
       raw-body: 3.0.2
       type-is: 2.1.0
     transitivePeerDependencies:
@@ -52515,7 +52517,7 @@ snapshots:
       parseurl: 1.3.3
       path-to-regexp: 0.1.13
       proxy-addr: 2.0.7
-      qs: 6.15.2
+      qs: 6.16.0
       range-parser: 1.2.1
       safe-buffer: 5.2.1
       send: 0.19.0
@@ -52551,7 +52553,7 @@ snapshots:
       once: 1.4.0
       parseurl: 1.3.3
       proxy-addr: 2.0.7
-      qs: 6.15.2
+      qs: 6.16.0
       range-parser: 1.2.1
       router: 2.1.0
       safe-buffer: 5.2.1
@@ -52587,7 +52589,7 @@ snapshots:
       once: 1.4.0
       parseurl: 1.3.3
       proxy-addr: 2.0.7
-      qs: 6.15.2
+      qs: 6.16.0
       range-parser: 1.2.1
       router: 2.2.0
       send: 1.2.1
@@ -52764,9 +52766,9 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.2.1
 
-  fflate@0.4.8: {}
+  fflate@0.4.9: {}
 
-  fflate@0.8.2: {}
+  fflate@0.8.3: {}
 
   figures@1.7.0:
     dependencies:
@@ -53033,7 +53035,7 @@ snapshots:
       '@paralleldrive/cuid2': 2.3.1
       dezalgo: 1.0.4
       once: 1.4.0
-      qs: 6.15.2
+      qs: 6.16.0
 
   formidable@3.5.4:
     dependencies:
@@ -53564,7 +53566,7 @@ snapshots:
       extend: 3.0.2
       gaxios: 4.3.3
       google-auth-library: 6.1.6
-      qs: 6.15.2
+      qs: 6.16.0
       url-template: 2.0.8
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -56797,7 +56799,7 @@ snapshots:
     dependencies:
       gaxios: 6.1.1
       isomorphic-unfetch: 4.0.2
-      qs: 6.15.2
+      qs: 6.16.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -56891,8 +56893,8 @@ snapshots:
 
   marked-terminal@7.1.0(marked@9.1.6):
     dependencies:
-      ansi-escapes: 7.0.0
-      chalk: 5.3.0
+      ansi-escapes: 7.3.0
+      chalk: 5.6.2
       cli-highlight: 2.1.11
       cli-table3: 0.6.5
       marked: 9.1.6
@@ -60006,9 +60008,10 @@ snapshots:
       pngjs: 5.0.0
       yargs: 15.4.1
 
-  qs@6.15.2:
+  qs@6.16.0:
     dependencies:
-      side-channel: 1.1.0
+      es-define-property: 1.0.1
+      side-channel: 1.1.1
 
   query-registry@3.0.1:
     dependencies:
@@ -61154,7 +61157,7 @@ snapshots:
       '@types/css-font-loading-module': 0.0.7
       '@xstate/fsm': 1.6.5
       base64-arraybuffer: 1.0.2
-      fflate: 0.4.8
+      fflate: 0.4.9
       mitt: 3.0.1
       rrdom: 2.0.0-alpha.16
       rrweb-snapshot: 2.0.0-alpha.16
@@ -61226,7 +61229,7 @@ snapshots:
   samlify@2.13.1:
     dependencies:
       '@authenio/xml-encryption': 2.0.2
-      '@xmldom/xmldom': 0.8.13
+      '@xmldom/xmldom': 0.8.15
       node-rsa: 1.1.1
       xml: 1.0.1
       xml-crypto: 6.1.2
@@ -61581,6 +61584,11 @@ snapshots:
       es-errors: 1.3.0
       object-inspect: 1.13.4
 
+  side-channel-list@1.0.1:
+    dependencies:
+      es-errors: 1.3.0
+      object-inspect: 1.13.4
+
   side-channel-map@1.0.1:
     dependencies:
       call-bound: 1.0.3
@@ -61601,6 +61609,14 @@ snapshots:
       es-errors: 1.3.0
       object-inspect: 1.13.4
       side-channel-list: 1.0.0
+      side-channel-map: 1.0.1
+      side-channel-weakmap: 1.0.2
+
+  side-channel@1.1.1:
+    dependencies:
+      es-errors: 1.3.0
+      object-inspect: 1.13.4
+      side-channel-list: 1.0.1
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
 
@@ -62235,7 +62251,7 @@ snapshots:
   stripe@11.18.0:
     dependencies:
       '@types/node': 22.15.13
-      qs: 6.15.2
+      qs: 6.16.0
 
   strnum@2.2.3: {}
 
@@ -62343,7 +62359,7 @@ snapshots:
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.15.2
+      qs: 6.16.0
     transitivePeerDependencies:
       - supports-color
 
@@ -62357,7 +62373,7 @@ snapshots:
       formidable: 2.1.5
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.15.2
+      qs: 6.16.0
       semver: 7.7.4
     transitivePeerDependencies:
       - supports-color
@@ -62372,7 +62388,7 @@ snapshots:
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.15.2
+      qs: 6.16.0
     transitivePeerDependencies:
       - supports-color
 
@@ -62682,7 +62698,7 @@ snapshots:
   telnyx@1.23.0:
     dependencies:
       lodash.isplainobject: 4.0.6
-      qs: 6.15.2
+      qs: 6.16.0
       safe-buffer: 5.2.1
       tweetnacl: 1.0.3
       uuid: 11.1.1
@@ -63326,7 +63342,7 @@ snapshots:
       dayjs: 1.11.9
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.3
-      qs: 6.15.2
+      qs: 6.16.0
       scmp: 2.1.0
       url-parse: 1.5.10
       xmlbuilder: 13.0.2
@@ -63537,7 +63553,7 @@ snapshots:
 
   union@0.5.0:
     dependencies:
-      qs: 6.15.2
+      qs: 6.16.0
 
   unique-string@2.0.0:
     dependencies:
@@ -64609,7 +64625,7 @@ snapshots:
   xml-crypto@6.1.2:
     dependencies:
       '@xmldom/is-dom-node': 1.0.1
-      '@xmldom/xmldom': 0.8.13
+      '@xmldom/xmldom': 0.8.15
       xpath: 0.0.33
 
   xml-escape@1.1.0: {}

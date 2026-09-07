@@ -9,6 +9,7 @@ import { useFormField } from '@/components/primitives/form/form-context';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Input, InputRoot } from '@/components/primitives/input';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -21,6 +22,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const track = useTelemetry();
+  const { isReadOnly } = useStepEditor();
 
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
@@ -132,6 +134,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                       value={pair.key}
                       onChange={(e) => handleUpdatePair(index, 'key', e.target.value)}
                       onBlur={handleBlur}
+                      readOnly={isReadOnly}
                     />
                     <InputRoot>
                       <ControlInput
@@ -146,6 +149,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                         }}
                         onBlur={handleBlur}
                         variables={variables}
+                        readOnly={isReadOnly}
                       />
                     </InputRoot>
                     <Button
@@ -153,6 +157,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                       mode="outline"
                       className="w-7.5 h-8 px-0"
                       onClick={() => handleRemovePair(index)}
+                      disabled={isReadOnly}
                     >
                       <RiDeleteBin2Line className="size-4" />
                     </Button>
@@ -170,6 +175,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
               mode="lighter"
               size="2xs"
               className="self-start"
+              disabled={isReadOnly}
               onClick={() => {
                 handleAddPair();
                 track(TelemetryEvent.INBOX_DATA_OBJECT_PROPERTY_ADDED);
