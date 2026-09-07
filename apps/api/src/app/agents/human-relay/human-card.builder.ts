@@ -12,6 +12,12 @@ import {
 const LISTED_OPTION_LABEL_MAX = 200;
 
 /**
+ * Slack `header` / card title max. Crossing it rejects the whole payload
+ * (`invalid_blocks`: "must be less than 151 characters" on `blocks/0/text`).
+ */
+const CARD_TITLE_MAX = 150;
+
+/**
  * Letters, not full labels, on `choose`/disambiguation buttons. Chat platform
  * button UIs (Telegram inline keyboards especially) truncate or wrap long
  * label text badly; the full text is always listed in the message body
@@ -52,72 +58,114 @@ function attribution(interaction: Pick<HumanInteractionEntity, 'fromLabel'>): st
   return interaction.fromLabel ? `Requested by ${interaction.fromLabel}` : undefined;
 }
 
+function splitFit(text: string, max: number): { visible: string; overflow: string } {
+  if (text.length <= max) {
+    return { visible: text, overflow: '' };
+  }
+
+  return { visible: `${text.slice(0, max - 1)}…`, overflow: text.slice(max - 1) };
+}
+
+/**
+ * Slack header / subtitle are each capped at 150 chars. First prompt line is
+ * the title; leftover fills subtitle when attribution is absent; remaining
+ * lines and any leftover after subtitle go in the body.
+ */
+function layoutCard(
+  prompt: string,
+  attributionSubtitle: string | undefined,
+  children: CardElement['children'],
+  titlePrefix = ''
+): CardElement {
+  const [firstLine = '', ...restLines] = prompt.split('\n');
+  const titleFit = splitFit(`${titlePrefix}${firstLine}`, CARD_TITLE_MAX);
+  const bodyParts: string[] = [];
+
+  let subtitle: string | undefined;
+
+  if (attributionSubtitle) {
+    const subtitleFit = splitFit(attributionSubtitle, CARD_TITLE_MAX);
+    subtitle = subtitleFit.visible;
+    if (titleFit.overflow) {
+      bodyParts.push(titleFit.overflow);
+    }
+    if (subtitleFit.overflow) {
+      bodyParts.push(subtitleFit.overflow);
+    }
+  } else if (titleFit.overflow) {
+    const subtitleFit = splitFit(titleFit.overflow, CARD_TITLE_MAX);
+    subtitle = subtitleFit.visible;
+    if (subtitleFit.overflow) {
+      bodyParts.push(subtitleFit.overflow);
+    }
+  }
+
+  const rest = restLines.join('\n');
+  if (rest) {
+    bodyParts.push(rest);
+  }
+
+  const bodyChildren = bodyParts.length > 0 ? [bodyText(bodyParts.join('\n')), ...children] : children;
+
+  return {
+    type: 'card',
+    title: titleFit.visible,
+    ...(subtitle ? { subtitle } : {}),
+    children: bodyChildren,
+  };
+}
+
 /**
  * The message delivered when an interaction is created. Buttons carry
  * `human:*` action ids; `OutboundGateway` tokenizes them on the way out.
  */
 export function buildPendingContent(interaction: HumanInteractionEntity): ReplyContentDto {
-  const subtitle = attribution(interaction);
+  const attributionSubtitle = attribution(interaction);
 
   switch (interaction.kind) {
     case HumanInteractionKindEnum.APPROVE: {
-      const card: CardElement = {
-        type: 'card',
-        title: interaction.prompt,
-        ...(subtitle ? { subtitle } : {}),
-        children: [
-          {
-            type: 'actions',
-            children: [
-              button(buildHumanDenyActionId(interaction.identifier), 'Deny', 'default'),
-              button(buildHumanApproveActionId(interaction.identifier), 'Approve', 'primary'),
-            ],
-          } satisfies ActionsElement,
-        ],
-      };
+      const card = layoutCard(interaction.prompt, attributionSubtitle, [
+        {
+          type: 'actions',
+          children: [
+            button(buildHumanDenyActionId(interaction.identifier), 'Deny', 'default'),
+            button(buildHumanApproveActionId(interaction.identifier), 'Approve', 'primary'),
+          ],
+        } satisfies ActionsElement,
+      ]);
 
       return { card } as ReplyContentDto;
     }
 
     case HumanInteractionKindEnum.CHOOSE: {
       const options: HumanInteractionOption[] = interaction.options ?? [];
-      const card: CardElement = {
-        type: 'card',
-        title: interaction.prompt,
-        ...(subtitle ? { subtitle } : {}),
-        children: [
-          buildOptionsListText(options.map((option) => option.label)),
-          {
-            type: 'actions',
-            children: options.map((option, index) =>
-              button(buildHumanOptionActionId(interaction.identifier, option.id), optionLetter(index), 'default')
-            ),
-          } satisfies ActionsElement,
-        ],
-      };
+      const card = layoutCard(interaction.prompt, attributionSubtitle, [
+        buildOptionsListText(options.map((option) => option.label)),
+        {
+          type: 'actions',
+          children: options.map((option, index) =>
+            button(buildHumanOptionActionId(interaction.identifier, option.id), optionLetter(index), 'default')
+          ),
+        } satisfies ActionsElement,
+      ]);
 
       return { card } as ReplyContentDto;
     }
 
     case HumanInteractionKindEnum.ASK: {
-      const card: CardElement = {
-        type: 'card',
-        title: `❓ ${interaction.prompt}`,
-        ...(subtitle ? { subtitle } : {}),
-        children: [bodyText('_Reply to this message to answer._')],
-      };
+      const card = layoutCard(
+        interaction.prompt,
+        attributionSubtitle,
+        [bodyText('_Reply to this message to answer._')],
+        '❓ '
+      );
 
       return { card } as ReplyContentDto;
     }
 
     // TELL — a plain FYI card, no actions and no reply expected.
     default: {
-      const card: CardElement = {
-        type: 'card',
-        title: interaction.prompt,
-        ...(subtitle ? { subtitle } : {}),
-        children: [],
-      };
+      const card = layoutCard(interaction.prompt, attributionSubtitle, []);
 
       return { card } as ReplyContentDto;
     }
@@ -129,13 +177,7 @@ export function buildPendingContent(interaction: HumanInteractionEntity): ReplyC
  * buttons disappear so the human can never click a dead control.
  */
 export function buildResolvedContent(interaction: HumanInteractionEntity): ReplyContentDto {
-  const subtitle = attribution(interaction);
-  const card: CardElement = {
-    type: 'card',
-    title: interaction.prompt,
-    ...(subtitle ? { subtitle } : {}),
-    children: [bodyText(resolveStatusLine(interaction))],
-  };
+  const card = layoutCard(interaction.prompt, attribution(interaction), [bodyText(resolveStatusLine(interaction))]);
 
   return { card } as ReplyContentDto;
 }
