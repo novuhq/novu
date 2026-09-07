@@ -10,7 +10,6 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle } from '@
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useWebChatPrompt } from '@/hooks/use-web-chat-prompt';
 
-const MIN_SIZE_PX = 280;
 const DEFAULT_SIZE_PX = 540;
 const MAX_SIZE = '60%';
 
@@ -37,7 +36,7 @@ export function WebChatDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="pointer-events-none inset-0 w-full max-w-none border-0 bg-transparent p-0 shadow-none transition-transform sm:max-w-none [&_[data-close-button]]:hidden"
+        className="pointer-events-none inset-0 w-full max-w-none overflow-hidden border-0 bg-transparent p-0 shadow-none transition-transform sm:max-w-none [&_[data-close-button]]:hidden"
         onOpenAutoFocus={(event) => event.preventDefault()}
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
@@ -48,10 +47,10 @@ export function WebChatDrawer({
           autoSaveId="web-chat-preview"
           className="pointer-events-none h-full"
         >
-          <ResizablePanel id="web-chat-preview-spacer" minSize="20%" className="pointer-events-auto h-full">
+          <ResizablePanel id="web-chat-preview-spacer" minSize="20%" className="pointer-events-auto flex h-full">
             <button
               type="button"
-              className="size-full cursor-default"
+              className="block size-full cursor-default"
               aria-label="Close web chat preview"
               onClick={() => onOpenChange(false)}
             />
@@ -67,7 +66,7 @@ export function WebChatDrawer({
           />
           <ResizablePanel
             id="web-chat-preview-panel"
-            minSize={MIN_SIZE_PX}
+            minSize={DEFAULT_SIZE_PX}
             defaultSize={DEFAULT_SIZE_PX}
             maxSize={MAX_SIZE}
             groupResizeBehavior="preserve-pixel-size"
