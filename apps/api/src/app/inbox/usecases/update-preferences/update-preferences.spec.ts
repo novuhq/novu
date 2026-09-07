@@ -154,6 +154,7 @@ describe('UpdatePreferences', () => {
     getWorkflowByIdsUsecase.execute.resolves(mockedWorkflow);
 
     const result = await updatePreferences.execute(command);
+    const templatePreferenceCommand = getSubscriberTemplatePreferenceUsecase.execute.firstCall.args[0];
 
     expect(result).to.deep.equal({
       level: command.level,
@@ -168,6 +169,8 @@ describe('UpdatePreferences', () => {
         severity: mockedWorkflow.severity,
       },
     });
+    expect(templatePreferenceCommand.template).to.equal(mockedWorkflow);
+    expect(templatePreferenceCommand.subscriber).to.equal(mockedSubscriber);
   });
 
   it('should throw NotFoundException when the subscriptionIdentifier is not owned by the authenticated subscriber', async () => {

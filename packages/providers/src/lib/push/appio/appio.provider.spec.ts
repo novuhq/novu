@@ -55,7 +55,7 @@ describe('AppioPushProvider.sendMessage', () => {
   it('should send message and return id and date', async () => {
     mockAxios.post
       .mockImplementationOnce(() => Promise.resolve({ status: 200, data: { sender_allowed: true } }))
-      .mockImplementationOnce(() => Promise.resolve({ data: { id: 'msg-id-123' } }));
+      .mockImplementationOnce(() => Promise.resolve({ status: 201, data: { id: 'msg-id-123' } }));
 
     const res = await provider.sendMessage(
       {

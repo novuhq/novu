@@ -52,7 +52,8 @@ describe('FiretextSmsProvider', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B44123456789&from=testFrom&message=content'
+      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B44123456789&from=testFrom&message=content',
+      { signal: expect.any(AbortSignal) }
     );
   });
 
@@ -83,7 +84,8 @@ describe('FiretextSmsProvider', () => {
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B24123456789&from=testFrom&message=content'
+      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B24123456789&from=testFrom&message=content',
+      { signal: expect.any(AbortSignal) }
     );
   });
 

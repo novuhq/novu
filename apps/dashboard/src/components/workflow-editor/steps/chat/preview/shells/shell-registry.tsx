@@ -51,10 +51,3 @@ export function isChatPreviewSupported(providerId: string): boolean {
   return getChatPreviewSkin(providerId).isSupported;
 }
 
-export function getChatShell(providerId: string): ComponentType<ChatShellProps> {
-  return getChatPreviewSkin(providerId).Shell;
-}
-
-export function getChatContentSkeleton(providerId: string): ComponentType {
-  return getChatPreviewSkin(providerId).ContentSkeleton;
-}

@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { version } from '../package.json';
 import { channelsCommand } from './commands/channels';
+import { contactsCommand } from './commands/contacts';
 import { runInteraction } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { cancelCommand, listCommand } from './commands/list';
@@ -19,13 +20,27 @@ program
   )
   .version(version);
 
+program.addHelpText(
+  'after',
+  '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
+    '  NOVU_SECRET_KEY    Novu API secret key (replaces `human setup` auth)\n' +
+    '  HUMAN_TO           default recipient subscriberId(s), comma-separated (as --to)\n' +
+    '  HUMAN_VIA          default channel: telegram, slack, or email (as --via)\n' +
+    '  NOVU_API_URL       Novu API URL override\n' +
+    '  NOVU_HUMAN_CONFIG  config file path override\n' +
+    'Precedence: CLI flags > environment variables > ~/.novu/human.json\n'
+);
+
 function withCommonOptions(command: Command): Command {
   return command
     .option(
       '--to <humanId>',
-      'address a linked human, or comma-separated humans (max 50; first valid answer wins; link others with `human invite`)'
+      'address a linked human, or comma-separated humans (max 50; first valid answer wins; link others with `human invite`) (env: HUMAN_TO)'
     )
-    .option('--via <platform>', 'deliver on a specific linked channel (telegram, slack, email) instead of the default')
+    .option(
+      '--via <platform>',
+      'deliver on a specific linked channel (telegram, slack, email) instead of the default (env: HUMAN_VIA)'
+    )
     .option('--from <name>', 'attribution label shown to the human (e.g. "deploy-bot")')
     .option('--ttl <duration>', 'time until the request expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
     .option('--timeout <duration>', 'max time to block waiting (default: block until answered/expired)')
@@ -97,6 +112,7 @@ program
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
   .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
   .option('--email <address>', 'your email address for the email channel (skips the interactive prompt)')
+  .option('--name <name>', 'your name, shown to agents (skips the first-run prompt)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .option('--skill', 'also install the human-cli skill for coding agents (default: prompt on a TTY)')
   .option('--no-skill', 'skip the coding-agent skill install')
@@ -111,10 +127,20 @@ program
     'channel to link them on (telegram, slack, email). Required when several channels are linked.'
   )
   .option('--email <address>', 'their email address (required for --via email when not a TTY)')
+  .option('--name <name>', 'their display name, e.g. "Alice Chen" (shown in `human contacts`)')
   .option('--async', 'print the connect URL and exit instead of waiting for them to finish')
   .option('--api-url <url>', 'Novu API URL override')
   .description('Link another human to a channel (sends them a Slack/Telegram connect URL)')
   .action(inviteCommand);
+
+program
+  .command('contacts')
+  .option('--limit <n>', 'max contacts per page (default: 50, max: 100)')
+  .option('--after <cursor>', 'continue from the `next` cursor of a previous page')
+  .option('--json', 'print JSON ({ data, next }; rows carry `self: true` for you; pass `next` to --after)')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('List humans (subscribers) agents can reach with --to')
+  .action(contactsCommand);
 
 program
   .command('channels')

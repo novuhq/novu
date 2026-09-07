@@ -14,6 +14,25 @@ export type {
 } from './agent-event.types';
 export { AGENT_EVENT_PROTOCOL_VERSION, isAgentEventEnvelope, isDeltaEvent } from './agent-event.types';
 export type {
+  CardElement,
+  CardElementActionChild,
+  CardElementActionsElement,
+  CardElementButtonElement,
+  CardElementChild,
+  CardElementDividerElement,
+  CardElementFieldElement,
+  CardElementFieldsElement,
+  CardElementImageElement,
+  CardElementLinkButtonElement,
+  CardElementLinkElement,
+  CardElementRadioSelectElement,
+  CardElementSectionElement,
+  CardElementSelectElement,
+  CardElementSelectOptionElement,
+  CardElementTableElement,
+  CardElementTextElement,
+} from './card-element.types';
+export type {
   AgentFileRef,
   AgentMessageContent,
   AgentMessageRole,

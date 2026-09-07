@@ -172,6 +172,9 @@ type ChannelEndpointLinkEvents = BaseEvents<
 >;
 
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
+type SocketDisconnectEvents = {
+  'socket.disconnect.resolved': NovuResolvedEvent<{ socketUrl: string }, undefined>;
+};
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
 export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
 export type NotificationUnreadEvent = `notifications.${WebSocketEvent.UNREAD}`;
@@ -228,6 +231,7 @@ export type Events = SessionInitializeEvents &
   ChannelEndpointDeleteEvents &
   ChannelEndpointLinkEvents &
   SocketConnectEvents &
+  SocketDisconnectEvents &
   SocketEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &

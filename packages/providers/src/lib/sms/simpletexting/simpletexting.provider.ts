@@ -1,14 +1,15 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SimpletextingSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Simpletexting;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -29,7 +30,7 @@ export class SimpletextingSmsProvider extends BaseProvider implements ISmsProvid
       mode: 'SINGLE_SMS_STRICTLY',
       text: options.content,
     });
-    const response = await axios.create().post('https://api-app2.simpletexting.com/v2/api/messages', data.body, {
+    const response = await this.httpClient.post('https://api-app2.simpletexting.com/v2/api/messages', data.body, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.config.apiKey}`,

@@ -1,8 +1,6 @@
 import pc from 'picocolors';
-import { loadConfig, NOT_SET_UP_MESSAGE, saveConfig } from '../config';
+import { loadConfig, NOT_SET_UP_MESSAGE, saveConfig, SUPPORTED_CHANNELS } from '../config';
 import { fail } from '../output';
-
-const SUPPORTED = ['telegram', 'slack', 'email'] as const;
 
 export async function channelsCommand(options: { default?: string; json?: boolean }): Promise<never> {
   const config = loadConfig();
@@ -13,8 +11,8 @@ export async function channelsCommand(options: { default?: string; json?: boolea
 
   if (options.default) {
     const target = options.default.toLowerCase();
-    if (!(SUPPORTED as readonly string[]).includes(target)) {
-      fail(`Unknown channel "${target}". Use one of: ${SUPPORTED.join(', ')}.`);
+    if (!(SUPPORTED_CHANNELS as readonly string[]).includes(target)) {
+      fail(`Unknown channel "${target}". Use one of: ${SUPPORTED_CHANNELS.join(', ')}.`);
     }
 
     saveConfig({ ...config, defaultChannel: target });

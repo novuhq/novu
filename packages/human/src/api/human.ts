@@ -74,7 +74,7 @@ export async function cancelInteraction(client: HumanApiClient, id: string): Pro
 
 export async function setupHumanRelay(
   client: HumanApiClient,
-  input: { subscriberId: string; agentIdentifier?: string; email?: string }
+  input: { subscriberId: string; agentIdentifier?: string; email?: string; firstName?: string; lastName?: string }
 ): Promise<{ agentId: string; agentIdentifier: string; subscriberId: string }> {
   const res = await client.axios.post<
     | { data?: { agentId: string; agentIdentifier: string; subscriberId: string } }
@@ -86,4 +86,31 @@ export async function setupHumanRelay(
   >('/v1/human/setup', input);
 
   return unwrap(res.data);
+}
+
+/** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */
+export interface Contact {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  data?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactsPage {
+  data: Contact[];
+  next: string | null;
+}
+
+export async function listContacts(
+  client: HumanApiClient,
+  params: { limit?: number; after?: string } = {}
+): Promise<ContactsPage> {
+  const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', { params });
+  const body = res.data;
+
+  return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
 }

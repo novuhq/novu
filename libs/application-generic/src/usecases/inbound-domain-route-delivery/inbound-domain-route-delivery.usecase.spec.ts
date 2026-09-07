@@ -225,6 +225,38 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
     expect(payload.date).to.equal(new Date('2024-01-01T00:00:00.000Z').toISOString());
   });
 
+  it('includes the resolved BCC recipient in domain-route webhook payloads', () => {
+    const payload = usecase.buildDomainRouteWebhookPayload(
+      {
+        _id: 'domain-1',
+        name: 'inbox.example.com',
+        status: DomainStatusEnum.VERIFIED,
+        mxRecordConfigured: true,
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        data: {},
+      },
+      {
+        _id: 'route-1',
+        _domainId: 'domain-1',
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        data: {},
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+      } as DomainRouteEntity,
+      {
+        ...baseMail,
+        to: [],
+        bcc: [{ address: 'support@inbox.example.com', name: '' }],
+      },
+      []
+    );
+
+    expect(payload.mail.to).to.deep.equal([]);
+    expect(payload.mail.bcc).to.deep.equal([{ address: 'support@inbox.example.com', name: '' }]);
+  });
+
   it('includes normalized headers with a size cap', () => {
     const payload = usecase.previewAgentMailPayload({
       ...baseMail,

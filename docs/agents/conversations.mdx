@@ -33,6 +33,16 @@ Navigate to your agent's detail page to see all conversations, their status, and
 - **Participant details**: which subscribers and platform users are part of each conversation, with identity resolution status.
 - **Platform context**: which provider and thread the conversation is happening on.
 
+## Inspect conversations from an AI tool
+
+If you have the [Novu MCP server](/platform/build-with-ai/mcp) connected, you can list and debug conversations without opening the dashboard:
+
+1. Call `get_agents` and copy the agent's identifier (slug).
+2. Call `get_conversations` with that slug as `agentId`.
+3. Call `get_conversation_activities` with a `conv_*` identifier to inspect the timeline (messages, approvals, MCP connection rows).
+
+These MCP tools require the [Novu Cloud account MCP server](/platform/build-with-ai/mcp). Self-hosted Enterprise can still use Conversations in the dashboard and API, but not through `mcp.novu.co`.
+
 ## Supported platforms
 
 Both managed agents and custom code agents support the same live channels. Capability details (typing, plan cards, buttons, approvals, edits) live in one place:

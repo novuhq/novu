@@ -1,10 +1,11 @@
-import type { Adapter, AdapterPostableMessage, CardElement, RawMessage } from 'chat';
+import type { Adapter, AdapterPostableMessage, CardElement, FileUpload, RawMessage } from 'chat';
 import {
   type SendblueMessagePayload,
   type SendblueThreadId,
   SendblueAdapter as VendorSendblueAdapterRuntime,
 } from 'chat-adapter-sendblue';
 import { renderCardAsText } from './card-renderer.js';
+import { markdownToPlainText } from './markdown-to-plain-text.js';
 import type { SendblueAdapterConfig } from './types.js';
 
 // iMessage-first with SMS fallback matches Sendblue's own delivery behavior;
@@ -78,7 +79,22 @@ export class SendblueAdapterImpl extends VendorSendblueAdapter {
     threadId: string,
     message: AdapterPostableMessage
   ): Promise<RawMessage<SendblueMessagePayload>> {
-    return super.postMessage(threadId, this.flattenCard(message));
+    return super.postMessage(threadId, this.preparePostable(message));
+  }
+
+  private preparePostable(message: AdapterPostableMessage): AdapterPostableMessage {
+    const flattened = this.flattenCard(message);
+
+    if (typeof flattened === 'string') {
+      return flattened;
+    }
+
+    const record = flattened as unknown as Record<string, unknown>;
+    if (typeof record.markdown === 'string') {
+      return { ...flattened, markdown: markdownToPlainText(record.markdown) };
+    }
+
+    return flattened;
   }
 
   /**
@@ -87,7 +103,8 @@ export class SendblueAdapterImpl extends VendorSendblueAdapter {
    * its buttons already stripped by `adaptApprovalContentForReplyBasedPlatform`)
    * renders to an empty string and is silently skipped. Prefer the card's own
    * `fallbackText` when the caller provided one, otherwise flatten it via
-   * `renderCardAsText`.
+   * `renderCardAsText`. Any `files` posted alongside the card are carried over,
+   * since the vendor adapter uploads them for `{ markdown }` postables too.
    */
   private flattenCard(message: AdapterPostableMessage): AdapterPostableMessage {
     if (typeof message === 'string') {
@@ -102,7 +119,11 @@ export class SendblueAdapterImpl extends VendorSendblueAdapter {
     }
 
     const fallbackText = typeof record.fallbackText === 'string' ? record.fallbackText : undefined;
+    const files = Array.isArray(record.files) ? (record.files as FileUpload[]) : undefined;
 
-    return { markdown: fallbackText ?? renderCardAsText(card) };
+    return {
+      markdown: fallbackText ?? renderCardAsText(card),
+      ...(files?.length ? { files } : {}),
+    };
   }
 }

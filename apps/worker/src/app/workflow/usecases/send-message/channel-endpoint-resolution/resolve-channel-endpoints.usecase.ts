@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   decryptChannelConnectionAuth,
   decryptChannelEndpoint,
   decryptCredentials,
+  evaluateRules,
+  getIntegrationRulesIssues,
+  hasIntegrationRules,
   InstrumentUsecase,
   MsTeamsTokenService,
   RotatingConnectionTokenService,
@@ -12,11 +15,15 @@ import {
   ChannelConnectionRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
+  IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
+
+const LOG_CONTEXT = 'ResolveChannelEndpoints';
 
 type EndpointStoredSecretConfig = {
   providerLabel: string;
@@ -82,13 +89,18 @@ export class ResolveChannelEndpoints {
       return [];
     }
 
-    const deliverableEndpoints = await this.keepEndpointsForActiveIntegrations(command, endpoints);
+    const deliverableEndpoints = await this.keepEndpointsForDeliverableIntegrations(command, endpoints);
+
+    if (deliverableEndpoints.length === 0) {
+      return [];
+    }
+
     const connectionMap = await this.fetchConnectionMap(command, deliverableEndpoints);
 
     return this.buildIntegrationGroups(deliverableEndpoints, connectionMap);
   }
 
-  private async keepEndpointsForActiveIntegrations(
+  private async keepEndpointsForDeliverableIntegrations(
     command: ResolveChannelEndpointsCommand,
     endpoints: ChannelEndpointEntity[]
   ): Promise<ChannelEndpointEntity[]> {
@@ -102,11 +114,59 @@ export class ResolveChannelEndpoints {
         channel: command.channelType,
         active: true,
       },
-      'identifier'
+      'identifier rules'
     );
-    const activeIdentifiers = new Set(activeIntegrations.map((integration) => integration.identifier));
+    const deliverableIdentifiers = new Set(
+      activeIntegrations
+        .filter((integration) => this.integrationRulesMatch(command, integration))
+        .map((integration) => integration.identifier)
+    );
 
-    return endpoints.filter((endpoint) => activeIdentifiers.has(endpoint.integrationIdentifier));
+    return endpoints.filter((endpoint) => deliverableIdentifiers.has(endpoint.integrationIdentifier));
+  }
+
+  /**
+   * Endpoint-routed delivery pins the integration by identifier, which makes `SelectIntegration`
+   * take its identifier shortcut and skip conditions entirely. Rules are therefore applied here,
+   * otherwise a subscriber holding endpoints on several integrations is notified through every one
+   * of them regardless of their conditions.
+   *
+   * Only `rules` (JSONLogic) are evaluated — legacy `conditions` predate the endpoint model and are
+   * left to `SelectIntegration`, matching the precedence rules take there.
+   */
+  private integrationRulesMatch(
+    command: ResolveChannelEndpointsCommand,
+    integration: Pick<IntegrationEntity, 'identifier' | 'rules'>
+  ): boolean {
+    if (!hasIntegrationRules(integration.rules)) {
+      return true;
+    }
+
+    const issues = getIntegrationRulesIssues(integration.rules);
+    if (issues.length > 0) {
+      Logger.warn(
+        {
+          issues,
+          integrationIdentifier: integration.identifier,
+          environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+        },
+        `${LOG_CONTEXT} — skipping endpoints for integration with invalid rules`
+      );
+
+      return false;
+    }
+
+    const { result } = evaluateRules(
+      integration.rules as RulesLogic<AdditionalOperation>,
+      {
+        subscriber: command.filterData?.subscriber,
+        context: command.filterData?.context,
+      },
+      true
+    );
+
+    return result;
   }
 
   private async fetchChannelEndpoints(command: ResolveChannelEndpointsCommand): Promise<ChannelEndpointEntity[]> {

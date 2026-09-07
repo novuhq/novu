@@ -6,13 +6,15 @@ import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentConversationRuntime } from './agent-conversation-runtime';
-import { type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
+import { type AgentApprovalPart, type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
 import type { ConversationArgs } from './conversation-runtime.types';
 import { createActionIdempotencyKeyForScope, createMessageIdempotencyKey } from './idempotency';
 import { runtimeCacheKey } from './runtime-cache-key';
 import type {
   FetchMoreArgs,
   FetchMoreResult,
+  ListConversationsArgs,
+  ListConversationsResult,
   LoadConversationArgs,
   LoadConversationResult,
   RespondToActionArgs,
@@ -140,6 +142,19 @@ export class WebChat extends BaseModule {
     return runtime;
   }
 
+  /** List conversations for the current subscriber. */
+  async listConversations(args: ListConversationsArgs = {}): Result<ListConversationsResult> {
+    return this.callWithSession(async () => {
+      try {
+        const data = await this.#webChatService.listConversations(args);
+
+        return { data };
+      } catch (error) {
+        return { error: new NovuError('Failed to list conversations', error) };
+      }
+    });
+  }
+
   /** @internal */
   onMessagesUpdated(listener: (data: WebChatMessagesUpdated) => void): () => void {
     return this._emitter.on('web_chat.messages.updated', ({ data }) => {
@@ -214,8 +229,11 @@ export class WebChat extends BaseModule {
       'Cannot respond to action without a conversation id',
       'Failed to respond to action',
       async (entry, conversationId) => {
-        const pending = derivePendingActions(entry.messages).find((action) => action.id === args.actionId);
-        if (!pending || pending.type !== 'tool-approval') {
+        const pending = derivePendingActions(entry.messages).find(
+          (action): action is AgentApprovalPart & { state: 'pending' } =>
+            action.type === 'approval' && action.approvalId === args.approvalId
+        );
+        if (!pending) {
           return { error: new NovuError('Pending action not found', new Error('pending action not found')) };
         }
 
@@ -234,7 +252,7 @@ export class WebChat extends BaseModule {
           };
         }
 
-        const scope = `respond:${conversationId}:${args.actionId}:${args.decision}`;
+        const scope = `respond:${conversationId}:${args.approvalId}:${args.decision}`;
         const idempotencyKey = createActionIdempotencyKeyForScope(scope);
 
         return this.#webChatService.respondToAction({

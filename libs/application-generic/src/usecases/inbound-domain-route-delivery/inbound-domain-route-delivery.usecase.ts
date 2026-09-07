@@ -78,6 +78,7 @@ export interface InboundDomainRouteMailInput {
   references?: string | string[];
   date: Date;
   cc?: unknown[];
+  bcc?: ITo[];
   /**
    * Sender-authentication verdicts (`'pass'` / `'failed'`) computed by the
    * inbound-mail service. Forwarded to the agent webhook so the agent runtime
@@ -113,6 +114,7 @@ export interface DomainRouteWebhookPayload {
     references?: string | string[];
     date: Date;
     cc?: unknown[];
+    bcc?: ITo[];
   };
 }
 
@@ -159,6 +161,7 @@ export class InboundDomainRouteDelivery {
         references: mail.references,
         date: mail.date,
         cc: mail.cc,
+        bcc: mail.bcc,
       },
     };
   }

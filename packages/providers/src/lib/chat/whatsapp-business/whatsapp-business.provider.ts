@@ -8,8 +8,9 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import Axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 import { cardToWhatsAppText } from './card-render.utils';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
@@ -30,7 +31,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     }
   ) {
     super();
-    this.axiosClient = Axios.create({
+    this.axiosClient = createProviderHttpClient({
       headers: {
         Authorization: `Bearer ${this.config.accessToken}`,
         'Content-Type': 'application/json',

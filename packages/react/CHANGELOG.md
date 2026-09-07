@@ -1,3 +1,24 @@
+## v3.19.1 (2026-08-31)
+
+### 🚀 Features
+
+- **js,react:** lazy-load Agent Chat so Inbox bundles stay isolated fixes NV-8698 ([#12466](https://github.com/novuhq/novu/pull/12466))
+- **react,js:** rebuild useAgentChat on conversation runtime fixes NV-8641 ([#12438](https://github.com/novuhq/novu/pull/12438))
+- **api-service,js:** deliver Agent Chat card parts and sendAction for button clicks fixes NV-8600 ([#12353](https://github.com/novuhq/novu/pull/12353))
+- **api-service,js:** emit MCP connection events for agent chat fixes NV-8578 ([#12321](https://github.com/novuhq/novu/pull/12321))
+- **js,react,api:** wire typing indicator through agent chat fixes NV-8569 ([#12297](https://github.com/novuhq/novu/pull/12297))
+- **js,react,api:** wire agent-chat live WS, status, fetchMore, approvals fixes NV-8445 ([#12292](https://github.com/novuhq/novu/pull/12292))
+
+### 🩹 Fixes
+
+- **react:** prevent Web Chat Next.js hydration mismatch fixes NV-8709 ([#12480](https://github.com/novuhq/novu/pull/12480))
+- **js,react:** harden agent-chat reconnect recovery and surface failures fixes NV-8639 ([#12417](https://github.com/novuhq/novu/pull/12417))
+- **js,react:** correct agent-chat pagination state and run-error exposure fixes NV-8638 ([#12414](https://github.com/novuhq/novu/pull/12414))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.19.0 (2026-08-07)
 
 ### 🚀 Features

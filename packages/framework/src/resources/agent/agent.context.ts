@@ -221,9 +221,9 @@ function mint(prefix: string): string {
 }
 
 /**
- * `ReplyContent['card']` is the structured `CardElement` type; `AgentMessageContent['card']` is
- * `Record<string, unknown>` on the wire, since the protocol can't depend on the `chat` package's
- * types. This is the one place that crosses that boundary for outbound (SDK → sink) card content.
+ * `ReplyContent['card']` is Chat SDK `CardElement`. `AgentMessageContent['card']` is the
+ * Novu-owned protocol `CardElement`. This is the one place that crosses that authoring
+ * → wire boundary for outbound card content.
  */
 function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
   if (reply.markdown !== undefined) {
@@ -231,7 +231,7 @@ function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
   }
 
   if (reply.card !== undefined) {
-    return { card: reply.card as unknown as Record<string, unknown> };
+    return { card: reply.card };
   }
 
   throw new Error('Invalid reply content — expected markdown or card');

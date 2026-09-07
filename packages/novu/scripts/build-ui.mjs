@@ -16,12 +16,14 @@ const sharedConfig = {
   jsxImportSource: 'react',
   sourcemap: false,
   logLevel: 'info',
+  // Keep @inkjs/ui in the bundle. It has no `react` peer, so a runtime
+  // import from this monorepo resolves repo-root React 18 while Ink 7
+  // renders React 19. Select/TextInput then crash on useReducer.
   external: [
     'react',
     'react/jsx-runtime',
     'ink',
     'ink-scroll-view',
-    '@inkjs/ui',
     'ink-spinner',
     'chalk',
     'marked',
@@ -57,6 +59,16 @@ await build({
   entryPoints: [resolve(root, 'src/commands/connect/ui/index.tsx')],
   outfile: resolve(root, 'dist/src/commands/connect/ui/index.mjs'),
 });
+
+for (const outfile of [
+  resolve(root, 'dist/src/commands/wizard/ui/index.mjs'),
+  resolve(root, 'dist/src/commands/connect/ui/index.mjs'),
+]) {
+  const source = readFileSync(outfile, 'utf8');
+  if (source.includes('from "@inkjs/ui"') || source.includes("from '@inkjs/ui'")) {
+    throw new Error(`${outfile} still imports @inkjs/ui. It must stay bundled so Select uses the CLI React.`);
+  }
+}
 
 /**
  * Bundle the CLI entry, replacing the tsc-emitted dist/src/index.js.

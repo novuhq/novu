@@ -154,6 +154,10 @@ export function IntegrationCard({
               <TooltipContent>This is your primary integration for the {provider.channel} channel.</TooltipContent>
             </Tooltip>
           )}
+          {((integration.rules && Object.keys(integration.rules).length > 0) ||
+            (integration.conditions && integration.conditions.length > 0)) && (
+            <span className="text-foreground-400 text-[10px] leading-none">if</span>
+          )}
           {integration.channel === ChannelTypeEnum.IN_APP && isFreePlan && (
             <UpgradeCTATooltip
               description="Remove the Novu branding and extend notification snooze beyond 24 hours in your Inbox component."
