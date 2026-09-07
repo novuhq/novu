@@ -20,10 +20,11 @@ type AvatarPickerProps = {
   value: string;
   onChange: (value: string) => void;
   onPick?: (value: string) => void;
+  readOnly?: boolean;
 };
 
 export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>((props, _) => {
-  const { name, value, onChange, onPick } = props;
+  const { name, value, onChange, onPick, readOnly = false } = props;
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const [isOpen, setIsOpen] = useState(false);
@@ -36,10 +37,11 @@ export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>((pro
 
   return (
     <div className="size-9 space-y-2">
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={!readOnly && isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild className="relative size-full overflow-hidden">
           <Button
             mode="ghost"
+            disabled={readOnly}
             className="text-foreground-600 shadow-xs relative size-full overflow-hidden hover:bg-transparent hover:shadow-sm"
           >
             {value && !error ? (
@@ -82,6 +84,7 @@ export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>((pro
                 multiline={false}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
+                readOnly={readOnly}
               />
             </InputRoot>
           </div>
@@ -91,7 +94,12 @@ export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>((pro
             {DEFAULT_AVATARS.map((path) => {
               const url = `${window.location.origin}${path}`;
               return (
-                <button key={path} className="rounded-full" onClick={() => handlePredefinedAvatarClick(url)}>
+                <button
+                  key={path}
+                  className="rounded-full"
+                  disabled={readOnly}
+                  onClick={() => handlePredefinedAvatarClick(url)}
+                >
                   <Avatar>
                     <AvatarImage src={url} />
                   </Avatar>
