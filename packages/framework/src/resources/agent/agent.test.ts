@@ -3027,6 +3027,57 @@ describe('tool approval', () => {
     expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
   });
 
+  it('routes a HITL tool-gate settlement from humanResponse when the action is absent (expiry/background)', async () => {
+    // A background settlement (timeout / expiry) arrives with humanResponse set
+    // but no action — the handler must still run, not throw on a null action.
+    const seen: { decision?: { approved: boolean; toolCall: unknown }; ran: boolean } = { ran: false };
+    const testAgent = {
+      id: 'a',
+      userOnToolApproval: true,
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: (decision: { approved: boolean; toolCall: unknown }) => {
+          seen.decision = decision;
+          seen.ran = true;
+
+          return undefined;
+        },
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        action: null,
+        humanResponse: {
+          requestId: 'tool_approval:tc',
+          interactionId: 'hi_1',
+          kind: 'approve',
+          status: 'expired',
+          expired: true,
+          optionId: 'deny',
+        },
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+      }),
+      secretKey: 's',
+    });
+
+    expect(seen.ran).toBe(true);
+    expect(seen.decision?.approved).toBe(false);
+    expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
+  });
+
   it('does not auto-delete when userOnToolApproval is unset on a hand-built agent', async () => {
     const posts: any[] = [];
     vi.stubGlobal(

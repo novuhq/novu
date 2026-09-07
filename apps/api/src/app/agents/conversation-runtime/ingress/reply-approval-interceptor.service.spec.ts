@@ -647,6 +647,39 @@ describe('ReplyApprovalInterceptor', () => {
       expect(runtime.dispatch.called).to.equal(false);
     });
 
+    it('should reject a HITL verdict from an unresolved subscriber even when it is the requester', async () => {
+      // Regression: a HITL gate authorizes only by its recipient allow-list.
+      // Without a resolved subscriber we cannot prove membership, so the verdict
+      // must fail closed — never fall back to "the requester", or the person who
+      // triggered the tool could self-approve a gate addressed to someone else.
+      const { interceptor, settlement, humanInteractionRepository } = makeDeps([
+        pendingRequest,
+        {
+          type: ConversationActivityTypeEnum.MESSAGE,
+          senderType: 'platform_user',
+          senderId: 'sendblue:+15557654321',
+          content: 'Please issue the refund',
+        },
+      ]);
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['alice'],
+        status: 'pending',
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({
+        subscriber: null,
+        message: { id: 'msg-yes', text: 'yes', author: { userId: '+15557654321' } },
+      });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(settlement.settle.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
     it('should consume managed HITL YES without dispatching', async () => {
       const { interceptor, settlement, humanInteractionRepository } = makeDeps();
       humanInteractionRepository.findPendingByRequestId.resolves({

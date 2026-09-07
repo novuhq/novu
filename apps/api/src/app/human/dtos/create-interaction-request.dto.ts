@@ -5,7 +5,20 @@ import {
   HumanInteractionKindEnum,
   type HumanOptionInput,
 } from '@novu/shared';
-import { IsArray, IsEnum, IsInt, IsObject, IsOptional, IsString, Max, MaxLength, Min, Validate } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
 import { IsValidHumanTo } from '../validators/is-valid-human-to';
 
 export class HumanInteractionCardDto {
@@ -64,6 +77,8 @@ export class CreateInteractionRequestDto {
 
   @ApiProperty({ description: 'Kind-specific card. `title` is required. Choose must set `card.options` (2–10).' })
   @IsObject()
+  @ValidateNested()
+  @Type(() => HumanInteractionCardDto)
   card: HumanInteractionCardDto;
 
   @ApiProperty({

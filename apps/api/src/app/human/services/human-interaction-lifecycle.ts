@@ -185,18 +185,19 @@ function readHumanCardActions(card: HumanInteractionChromeInput | HumanPostedCar
   options?: HumanOptionInput[];
   extraActions?: HumanOptionInput[];
 } {
-  const fieldOptions = 'options' in card && Array.isArray(card.options) ? card.options : undefined;
-  const fieldExtraActions = 'extraActions' in card && Array.isArray(card.extraActions) ? card.extraActions : undefined;
-  if (!isHumanCardElement(card)) {
-    return { options: fieldOptions, extraActions: fieldExtraActions };
+  // A posted card element carries its buttons in `children`; top-level
+  // `options` / `extraActions` are not part of its shape. Always parse from the
+  // buttons and never let a sibling array override them — otherwise an empty
+  // `extraActions: []` / `options: []` would nullish-coalesce over the real
+  // parsed buttons and let invalid ones skip validation entirely.
+  if (isHumanCardElement(card)) {
+    return actionsFromCardElement(card);
   }
 
-  const fromButtons = actionsFromCardElement(card);
+  const fieldOptions = 'options' in card && Array.isArray(card.options) ? card.options : undefined;
+  const fieldExtraActions = 'extraActions' in card && Array.isArray(card.extraActions) ? card.extraActions : undefined;
 
-  return {
-    options: fieldOptions ?? fromButtons.options,
-    extraActions: fieldExtraActions ?? fromButtons.extraActions,
-  };
+  return { options: fieldOptions, extraActions: fieldExtraActions };
 }
 
 /** Choose options / approve extras on chrome fields or posted-card action buttons. */

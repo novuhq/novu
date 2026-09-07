@@ -135,7 +135,7 @@ export class ReplyApprovalInterceptor {
 
     const hitl = await this.findPendingHitl(turn, approvalId);
     if (hitl) {
-      if (!this.isAllowedHitlResponder(turn, hitl, activities, pending)) {
+      if (!this.isAllowedHitlResponder(turn, hitl)) {
         return false;
       }
 
@@ -200,7 +200,7 @@ export class ReplyApprovalInterceptor {
 
     const hitl = await this.findPendingHitl(turn, approvalId);
     if (hitl) {
-      if (!this.isAllowedHitlResponder(turn, hitl, activities, pending)) {
+      if (!this.isAllowedHitlResponder(turn, hitl)) {
         return false;
       }
 
@@ -409,18 +409,34 @@ export class ReplyApprovalInterceptor {
     }
   }
 
-  private isAllowedHitlResponder(
-    turn: ConversationTurn,
-    interaction: HumanInteractionEntity,
-    activities: ConversationActivityEntity[],
-    request: ConversationActivityEntity
-  ): boolean {
+  /**
+   * A HITL row authorizes strictly by its recipient allow-list
+   * (`subscriberIds` — the `to` targets). When the inbound subscriber cannot be
+   * resolved we cannot prove membership, so fail closed — mirroring the generic
+   * HITL `isAddressedHuman` path.
+   *
+   * Never fall back to `isFromExpectedApprover` here: that is the single-control
+   * tool-approval check (only the participant who prompted the call may answer),
+   * and using it for a HITL gate would let the person who triggered the tool
+   * self-approve a request addressed to someone else — defeating dual-control.
+   */
+  private isAllowedHitlResponder(turn: ConversationTurn, interaction: HumanInteractionEntity): boolean {
     const subscriberId = turn.subscriber?.subscriberId;
-    if (subscriberId) {
-      return humanInteractionRecipientIds(interaction).includes(subscriberId);
+    if (!subscriberId) {
+      this.logger.warn(
+        {
+          conversationId: turn.conversation._id,
+          interactionIdentifier: interaction.identifier,
+          platform: turn.config.platform,
+          responderResolution: turn.subscriberResolution?.outcome,
+        },
+        `[agent:${turn.config.agentIdentifier}] Ignoring reply-based HITL verdict — responder has no resolved subscriber to match the interaction recipient allow-list`
+      );
+
+      return false;
     }
 
-    return this.isFromExpectedApprover(turn, activities, request);
+    return humanInteractionRecipientIds(interaction).includes(subscriberId);
   }
 
   private async findOldestPendingApproval(turn: ConversationTurn): Promise<PendingApprovalWithHistory | null> {

@@ -155,14 +155,18 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
         const toolCall: AgentToolCall = approval
           ? { id: approval.toolCallId, name: approval.name, input: approval.input }
           : { id: routedApprovalId, name: '' };
-        const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
+        // `ctx.action` is absent when the settlement arrives without a click —
+        // a HITL response routed via `humanResponse` (expiry, background/timeout
+        // settlement). Optional-chain the source message so those turns resume
+        // the gate instead of throwing on a null action.
+        const approvalMessage = ctx.createReplyHandle(ctx.action?.sourceMessageId ?? '');
 
         const decision: ToolApprovalDecision = { toolCall, approved: routedApproved, approvalMessage };
 
         if (registeredAgent.userOnToolApproval === false) {
           await ctx.typing();
 
-          if (ctx.action!.sourceMessageId) {
+          if (ctx.action?.sourceMessageId) {
             await approvalMessage.delete();
           }
         }
