@@ -5,7 +5,7 @@ import {
   buildNovuSignatureHeader,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  CreateStepConditionsPassedDetail,
+  CreateStepConditionEvaluationDetail,
   createSchemaValidationAjv,
   DetailEnum,
   dashboardSanitizeControlValues,
@@ -53,7 +53,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     private logger: PinoLogger,
     private getDecryptedSecretKey: GetDecryptedSecretKey,
     private executeBridgeJob: ExecuteBridgeJob,
-    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail,
+    private createStepConditionEvaluationDetail: CreateStepConditionEvaluationDetail,
     protected messageRepository: MessageRepository,
     protected createExecutionDetails: CreateExecutionDetails
   ) {
@@ -68,18 +68,29 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     const skipRules = getSkipRules(controlValues);
     const shouldSkip = skipRules ? this.evaluateSkipCondition(skipRules, compileContext) : false;
 
-    if (shouldSkip) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SKIPPED_BRIDGE_EXECUTION,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({ skip: true }),
+    const wasConditionEvaluationTraced = skipRules
+      ? await this.createStepConditionEvaluationDetail.execute({
+          job: command.job,
+          conditions: skipRules,
+          evaluatedValues: extractRuleVariables(skipRules, compileContext),
+          passed: !shouldSkip,
         })
-      );
+      : false;
+
+    if (shouldSkip) {
+      if (!wasConditionEvaluationTraced) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.SKIPPED_BRIDGE_EXECUTION,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({ skip: true }),
+          })
+        );
+      }
 
       return {
         status: SendMessageStatus.SKIPPED,
@@ -88,14 +99,6 @@ export class ExecuteHttpRequestStep extends SendMessageType {
           detail: DeliveryLifecycleDetail.USER_STEP_CONDITION,
         },
       };
-    }
-
-    if (skipRules) {
-      await this.createStepConditionsPassedDetail.execute({
-        job: command.job,
-        conditions: skipRules,
-        evaluatedValues: extractRuleVariables(skipRules, compileContext),
-      });
     }
 
     const { skip: _skip, ...controlValuesWithoutSkip } = controlValues;
