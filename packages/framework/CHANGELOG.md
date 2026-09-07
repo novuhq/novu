@@ -1,17 +1,12 @@
 ## v2.13.2 (2026-09-07)
 
-### 🚀 Features
-
-- **dashboard:** add read-only mode support across various components for enhanced user experience fixes NV-8775 ([#12574](https://github.com/novuhq/novu/pull/12574))
-
 ### 🩹 Fixes
 
-- **js:** type AgentCardPart.card as AgentCardElement fixes NV-8745 ([#12525](https://github.com/novuhq/novu/pull/12525))
+- **framework:** type outbound agent cards as protocol CardElement instead of Record fixes NV-8745 ([#12525](https://github.com/novuhq/novu/pull/12525))
 
 ### ❤️ Thank You
 
 - Adam Chmara @ChmaraX
-- Pawan Jain
 
 ## v2.13.1 (2026-08-31)
 
