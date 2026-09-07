@@ -189,6 +189,7 @@
             "group": "Integrate Channels Providers",
             "pages": [
               "platform/integrations",
+              "platform/integrations/integration-conditions",
               "platform/integrations/demo-integration",
               {
                 "group": "Chat",

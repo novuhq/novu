@@ -1,0 +1,18 @@
+language js(typescript)
+
+or {
+  `Record<string, unknown>`,
+  `Record<number, unknown>`,
+  `Record<symbol, unknown>`,
+  `Record<PropertyKey, unknown>`,
+  `Record<string, any>`,
+  `Record<number, any>`,
+  `Record<symbol, any>`,
+  `Record<PropertyKey, any>`,
+  `Record<string, object>`,
+  `Record<number, object>`,
+  `Record<symbol, object>`,
+  `Record<PropertyKey, object>`
+} as $dictionary where {
+  register_diagnostic(span=$dictionary, message="This dictionary value type gives callers no concrete contract. Use an owner/schema-derived value type and parse external payloads before insertion.", severity="error")
+}

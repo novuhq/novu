@@ -1,0 +1,11 @@
+language js(typescript)
+
+or {
+  `const $name: unknown = $value`,
+  `const $name: any = $value`,
+  `const $name: object = $value`,
+  `const $name: Record<$key, unknown> = $value`,
+  `const $name: Record<$key, any> = $value`
+} as $binding where {
+  register_diagnostic(span=$binding, message="This explicit broad type can discard known type evidence. Keep inference, validate with `satisfies`, or use a named owner contract.", severity="error")
+}
