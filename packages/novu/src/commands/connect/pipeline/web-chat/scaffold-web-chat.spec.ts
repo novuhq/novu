@@ -79,7 +79,7 @@ describe('scaffoldWebChatProject', () => {
 
     const page = fs.readFileSync(path.join(projectDir, 'app', 'page.tsx'), 'utf8');
     expect(page).not.toContain('localhost:3000');
-    expect(page).toContain('...(apiUrl ? { apiUrl } : {})');
+    expect(page).toContain('...(backendUrl ? { backendUrl } : {})');
     expect(page).toContain('...(socketUrl ? { socketUrl } : {})');
   });
 
