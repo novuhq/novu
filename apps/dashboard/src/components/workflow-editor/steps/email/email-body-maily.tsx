@@ -13,6 +13,7 @@ import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/vie
 import { FormField } from '@/components/primitives/form/form';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
@@ -141,6 +142,7 @@ export const EmailBodyMaily = () => {
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const track = useTelemetry();
+  const { isReadOnly } = useStepEditor();
 
   const blocks = useMemo(() => {
     return createEditorBlocks({
@@ -193,6 +195,7 @@ export const EmailBodyMaily = () => {
     resourceId,
     resourceType,
     isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
+    isReadOnly,
   });
 
   const createTranslationKeyMutation = useCreateTranslationKey();
@@ -260,6 +263,7 @@ export const EmailBodyMaily = () => {
             key={`${editorKey}-repeat-block-enabled`}
             value={isMaily ? field.value : ''}
             onChange={field.onChange}
+            editable={!isReadOnly}
             variables={parsedVariables}
             blocks={blocks}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
