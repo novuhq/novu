@@ -69,6 +69,7 @@ const baseModuleConfig: Options = {
     'ui/index': './src/ui/index.ts',
     'themes/index': './src/ui/themes/index.ts',
     'internal/index': './src/ui/internal/index.ts',
+    'ui-core/index': './src/ui/core/index.ts',
   },
   define: {
     NOVU_API_VERSION: `"2024-06-26"`,

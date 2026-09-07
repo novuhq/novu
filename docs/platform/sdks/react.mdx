@@ -469,6 +469,54 @@ function NotificationList() {
 }
 ```
 
+## NotificationItem
+
+The built-in notification item as a React component. Render it inside `renderNotification` to keep the default look, or pass children to arrange its parts yourself. The parts are `NotificationItem.Avatar`, `Content`, `Text`, `Subject`, `Body`, `DefaultActions`, `CustomActions`, `Date` and `Dot`.
+
+### Props
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `notification` | `Notification` | The notification to render |
+| `children` | `ReactNode` | Your own arrangement of the parts. Without it, the built-in arrangement is rendered |
+| `className` | `string` | Extra classes for the item root |
+| `onNotificationClick` | `NotificationClickHandler` | Falls back to the handler given to `Inbox`, `Notifications` or `InboxContent` |
+| `onPrimaryActionClick` | `NotificationActionClickHandler` | Falls back to the handler given to the parent component |
+| `onSecondaryActionClick` | `NotificationActionClickHandler` | Falls back to the handler given to the parent component |
+| `renderAvatar` | `AvatarRenderer` | Replaces the avatar part |
+| `renderSubject` | `SubjectRenderer` | Replaces the subject part |
+| `renderBody` | `BodyRenderer` | Replaces the body part |
+| `renderDefaultActions` | `DefaultActionsRenderer` | Replaces the read, archive and snooze controls |
+| `renderCustomActions` | `CustomActionsRenderer` | Replaces the primary and secondary action buttons |
+
+### Usage
+
+```tsx
+import { Inbox, NotificationItem } from "@novu/react";
+
+function NovuInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => (
+        <NotificationItem notification={notification}>
+          <NotificationItem.Avatar />
+          <NotificationItem.Content>
+            <NotificationItem.Subject />
+            <NotificationItem.Body />
+            <NotificationItem.Date />
+          </NotificationItem.Content>
+          <NotificationItem.DefaultActions />
+        </NotificationItem>
+      )}
+    />
+  );
+}
+```
+
+Render props such as `renderNotification` are render functions: they run on every notification update and on every re-render of your component, and React reconciles what they return, so state inside them survives updates.
+
 ## InboxContent
 
 A component for building custom notification inboxes.

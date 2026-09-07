@@ -53,6 +53,16 @@
         "types": "./dist/cjs/internal/index.d.ts",
         "default": "./dist/cjs/internal/index.js"
       }
+    },
+    "./ui-core": {
+      "import": {
+        "types": "./dist/esm/ui-core/index.d.mts",
+        "default": "./dist/esm/ui-core/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/ui-core/index.d.ts",
+        "default": "./dist/cjs/ui-core/index.js"
+      }
     }
   },
   "files": [
@@ -63,7 +73,8 @@
     "dist/novu.min.js.gz",
     "ui/**/*",
     "themes/**/*",
-    "internal/**/*"
+    "internal/**/*",
+    "ui-core/**/*"
   ],
   "sideEffects": false,
   "private": false,
@@ -82,9 +93,10 @@
     "check-exports": "attw --pack .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "test": "jest",
+    "test": "vitest run",
     "test:bundle-graph": "node ./scripts/bundle-graph.mjs",
-    "publish:rc": "pnpm publish --tag rc"
+    "publish:rc": "pnpm publish --tag rc",
+    "test:watch": "vitest"
   },
   "browserslist": {
     "production": [
@@ -99,9 +111,8 @@
     ]
   },
   "devDependencies": {
-    "@novu/agent-event-protocol": "workspace:*",
     "@arethetypeswrong/cli": "^0.17.4",
-    "@types/jest": "^29.2.3",
+    "@novu/agent-event-protocol": "workspace:*",
     "@types/node": "^22.0.0",
     "autoprefixer": "^10.4.0",
     "bytes-iec": "^3.1.1",
@@ -113,7 +124,7 @@
     "esbuild-plugin-inline-import": "^1.0.4",
     "esbuild-plugin-solid": "^0.6.0",
     "http-server": "^0.13.0",
-    "jest": "^29.3.1",
+    "jsdom": "^30.0.1",
     "postcss": "^8.4.38",
     "postcss-load-config": "^6.0.1",
     "postcss-prefix-selector": "^1.16.1",
@@ -123,11 +134,12 @@
     "tailwindcss-animate": "^1.0.7",
     "terser-webpack-plugin": "^5.3.9",
     "tiny-glob": "^0.2.9",
-    "ts-jest": "^29.0.3",
     "ts-loader": "~9.4.0",
     "tsup": "^8.1.0",
     "tsup-preset-solid": "^2.2.0",
     "typescript": "5.6.2",
+    "vite-plugin-solid": "^2.11.14",
+    "vitest": "^4.1.0",
     "webpack": "^5.74.0",
     "webpack-bundle-analyzer": "^4.9.0",
     "webpack-cli": "^5.1.4"

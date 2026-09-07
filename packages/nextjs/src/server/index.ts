@@ -4,6 +4,7 @@ export {
   Bell,
   Inbox,
   InboxContent,
+  NotificationItem,
   Notifications,
   NovuProvider,
   PreferenceLevel,

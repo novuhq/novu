@@ -1,8 +1,7 @@
 import { TopicSubscription } from '@novu/js';
 import { SubscriptionProps } from '@novu/js/ui';
-import { useCallback } from 'react';
-import { useNovuUI } from '../../context/NovuUIContext';
-import { useRenderer } from '../../context/RendererContext';
+import { useMemo } from 'react';
+import { useOutletRenderer } from '../../hooks/internal/useOutletRenderer';
 import { Mounter } from '../Mounter';
 
 export type PreferencesRenderer = (subscription?: TopicSubscription, loading?: boolean) => React.ReactNode;
@@ -13,29 +12,21 @@ export type DefaultSubscriptionProps = {
 
 export const DefaultSubscription = (props: DefaultSubscriptionProps) => {
   const { topicKey, identifier, preferences, open, placement, placementOffset, renderPreferences } = props;
-  const { novuUI } = useNovuUI();
-  const { mountElement } = useRenderer();
+  const renderPreferencesOutlet =
+    useOutletRenderer<[TopicSubscription | undefined, boolean | undefined]>(renderPreferences);
 
-  const mount = useCallback(
-    (element: HTMLElement) => {
-      return novuUI.mountComponent({
-        name: 'Subscription',
-        props: {
-          topicKey,
-          identifier,
-          preferences,
-          open,
-          placementOffset,
-          placement,
-          renderPreferences: renderPreferences
-            ? (el, subscription, loading) => mountElement(el, renderPreferences(subscription, loading))
-            : undefined,
-        },
-        element,
-      });
-    },
-    [topicKey, identifier, preferences, open, placementOffset, placement, renderPreferences, novuUI, mountElement]
+  const mountProps = useMemo(
+    () => ({
+      topicKey,
+      identifier,
+      preferences,
+      open,
+      placementOffset,
+      placement,
+      renderPreferences: renderPreferencesOutlet,
+    }),
+    [topicKey, identifier, preferences, open, placementOffset, placement, renderPreferencesOutlet]
   );
 
-  return <Mounter mount={mount} />;
+  return <Mounter name="Subscription" props={mountProps} />;
 };

@@ -1,10 +1,10 @@
 import type { AllAppearance, AllIconKey, AllIconOverrides } from '@novu/js/ui';
-import { MountedElement } from '../context/RendererContext';
+import type { OutletStore } from '../context/OutletStore';
 import type { ReactAllAppearance, ReactIconRenderer, ReactInboxAppearance, ReactSubscriptionAppearance } from './types';
 
 export function adaptAppearanceForJs(
   appearance: ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance,
-  mountElement: (el: HTMLElement, mountedElement: MountedElement) => () => void
+  outlets: OutletStore
 ): AllAppearance | undefined {
   if (!appearance) {
     return undefined;
@@ -22,7 +22,7 @@ export function adaptAppearanceForJs(
 
       if (reactRenderer) {
         jsIcons[iconKey] = (el: HTMLDivElement, props: { class?: string }) => {
-          return mountElement(el, reactRenderer(props));
+          return outlets.mount(el, reactRenderer, [props]);
         };
       }
     }

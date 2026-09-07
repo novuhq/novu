@@ -1,97 +1,21 @@
-import { Accessor, createContext, createMemo, ParentProps, useContext } from 'solid-js';
-import {
-  defaultInboxLocalization,
-  defaultLocalization,
-  defaultSubscriptionLocalization,
-  dynamicLocalization,
-} from '../config/defaultLocalization';
-import { normalizeIntlLocale } from '../helpers/normalizeIntlLocale';
+import { createContext, ParentProps, useContext } from 'solid-js';
+import type { LocalizationStore } from '../core/stores/localization';
 
-export type InboxLocalizationKey = keyof typeof defaultInboxLocalization;
-export type SubscriptionLocalizationKey = keyof typeof defaultSubscriptionLocalization;
-export type AllLocalizationKey = InboxLocalizationKey | SubscriptionLocalizationKey;
+export type {
+  AllLocalization,
+  AllLocalizationKey,
+  InboxLocalization,
+  InboxLocalizationKey,
+  StringLocalizationKey,
+  SubscriptionLocalization,
+  SubscriptionLocalizationKey,
+} from '../core/stores/localization';
 
-export type StringLocalizationKey = {
-  [K in AllLocalizationKey]: (typeof defaultLocalization)[K] extends string ? K : never;
-}[AllLocalizationKey];
+const LocalizationContext = createContext<LocalizationStore | undefined>(undefined);
 
-export type AllLocalization = {
-  [K in AllLocalizationKey]?: (typeof defaultLocalization)[K] extends (...args: infer P) => any
-    ? ((...args: P) => ReturnType<(typeof defaultLocalization)[K]>) | string
-    : string;
-} & {
-  dynamic?: Record<string, string>;
-};
-export type InboxLocalization = {
-  [K in InboxLocalizationKey]?: (typeof defaultInboxLocalization)[K] extends (...args: infer P) => any
-    ? ((...args: P) => ReturnType<(typeof defaultInboxLocalization)[K]>) | string
-    : string;
-} & {
-  dynamic?: Record<string, string>;
-};
-export type SubscriptionLocalization = {
-  [K in SubscriptionLocalizationKey]?: (typeof defaultSubscriptionLocalization)[K] extends (...args: infer P) => any
-    ? ((...args: P) => ReturnType<(typeof defaultSubscriptionLocalization)[K]>) | string
-    : string;
-} & {
-  dynamic?: Record<string, string>;
-};
-
-type TranslateFunctionArg<K extends AllLocalizationKey> = K extends keyof typeof defaultLocalization
-  ? (typeof defaultLocalization)[K] extends (arg: infer A) => any
-    ? A
-    : undefined
-  : undefined;
-
-type TranslateFunction = <K extends AllLocalizationKey>(
-  key: K,
-  ...args: TranslateFunctionArg<K> extends undefined
-    ? [undefined?] // No arguments needed if TranslateFunctionArg<K> is undefined
-    : [TranslateFunctionArg<K>] // A single argument is required if TranslateFunctionArg<K> is defined
-) => string;
-
-type LocalizationContextType = {
-  t: TranslateFunction;
-  locale: Accessor<string>;
-};
-
-const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
-
-type LocalizationProviderProps = ParentProps & { localization?: AllLocalization };
-
-export const LocalizationProvider = (props: LocalizationProviderProps) => {
-  const localization = createMemo<Record<string, string | Function>>(() => {
-    const { dynamic, ...localizationObject } = props.localization || {};
-
-    return {
-      ...defaultLocalization,
-      ...dynamicLocalization(),
-      ...(dynamic || {}),
-      ...localizationObject,
-    };
-  });
-
-  const t: LocalizationContextType['t'] = (key, ...args) => {
-    const value = localization()[key];
-    if (typeof value === 'function') {
-      return value(args[0]);
-    }
-
-    return value as string;
-  };
-
-  const locale = createMemo(() => normalizeIntlLocale(localization().locale as string));
-
-  return (
-    <LocalizationContext.Provider
-      value={{
-        t,
-        locale,
-      }}
-    >
-      {props.children}
-    </LocalizationContext.Provider>
-  );
+/** Adapter over the core localization store; keeps the `t` and `locale` API the components read. */
+export const LocalizationProvider = (props: ParentProps<{ store: LocalizationStore }>) => {
+  return <LocalizationContext.Provider value={props.store}>{props.children}</LocalizationContext.Provider>;
 };
 
 export function useLocalization() {

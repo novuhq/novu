@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { ChannelType } from '../../../../types';
 import { isRenderablePreferenceChannel, RENDERABLE_PREFERENCE_CHANNELS } from './renderable-preference-channels';
 

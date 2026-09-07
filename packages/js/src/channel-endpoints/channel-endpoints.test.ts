@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it, test, vi } from 'vitest';
 import { InboxService } from '../api';
 import type { ChannelEndpointResponse } from '../channel-connections/types';
 import { NovuEventEmitter } from '../event-emitter';
@@ -12,9 +13,9 @@ function createChannelEndpoints(overrides: Partial<MockInboxService> = {}) {
   const emitter = new NovuEventEmitter();
   const inboxService: MockInboxService = {
     isSessionInitialized: true,
-    linkChannelEndpoint: jest.fn(),
-    listChannelEndpoints: jest.fn(),
-    deleteChannelEndpoint: jest.fn(),
+    linkChannelEndpoint: vi.fn(),
+    listChannelEndpoints: vi.fn(),
+    deleteChannelEndpoint: vi.fn(),
     ...overrides,
   };
 
@@ -33,11 +34,11 @@ const TELEGRAM_LINK_RESPONSE = {
 
 describe('ChannelEndpoints.link()', () => {
   it('posts the integration identifier and resolves with the link payload', async () => {
-    const linkChannelEndpoint = jest.fn().mockResolvedValue(TELEGRAM_LINK_RESPONSE);
+    const linkChannelEndpoint = vi.fn().mockResolvedValue(TELEGRAM_LINK_RESPONSE);
     const { channelEndpoints, emitter } = createChannelEndpoints({ linkChannelEndpoint });
 
-    const pending = jest.fn();
-    const resolved = jest.fn();
+    const pending = vi.fn();
+    const resolved = vi.fn();
     emitter.on('channel-endpoint.link.pending', pending);
     emitter.on('channel-endpoint.link.resolved', resolved);
 
@@ -54,10 +55,10 @@ describe('ChannelEndpoints.link()', () => {
 
   it('returns an error result and emits resolved with error when the request fails', async () => {
     const failure = new Error('boom');
-    const linkChannelEndpoint = jest.fn().mockRejectedValue(failure);
+    const linkChannelEndpoint = vi.fn().mockRejectedValue(failure);
     const { channelEndpoints, emitter } = createChannelEndpoints({ linkChannelEndpoint });
 
-    const resolved = jest.fn();
+    const resolved = vi.fn();
     emitter.on('channel-endpoint.link.resolved', resolved);
 
     const result = await channelEndpoints.link({ integrationIdentifier: 'telegram-bot' });
@@ -73,7 +74,7 @@ describe('Telegram connect/poll/disconnect flow', () => {
   const ENDPOINT: ChannelEndpointResponse = { identifier: 'tg-endpoint-1', type: 'telegram_chat' };
 
   it('detects "not connected" when no endpoint exists yet', async () => {
-    const listChannelEndpoints = jest.fn().mockResolvedValue({ data: [] });
+    const listChannelEndpoints = vi.fn().mockResolvedValue({ data: [] });
     const { channelEndpoints } = createChannelEndpoints({ listChannelEndpoints });
 
     const result = await channelEndpoints.list(LIST_ARGS);
@@ -83,9 +84,9 @@ describe('Telegram connect/poll/disconnect flow', () => {
   });
 
   it('connects: link -> poll until a telegram_chat endpoint appears', async () => {
-    const linkChannelEndpoint = jest.fn().mockResolvedValue(TELEGRAM_LINK_RESPONSE);
+    const linkChannelEndpoint = vi.fn().mockResolvedValue(TELEGRAM_LINK_RESPONSE);
     // First poll: still empty. Second poll: endpoint present.
-    const listChannelEndpoints = jest
+    const listChannelEndpoints = vi
       .fn()
       .mockResolvedValueOnce({ data: [] })
       .mockResolvedValueOnce({ data: [ENDPOINT] });
@@ -102,7 +103,7 @@ describe('Telegram connect/poll/disconnect flow', () => {
   });
 
   it('disconnects: deletes the endpoint by identifier', async () => {
-    const deleteChannelEndpoint = jest.fn().mockResolvedValue(undefined);
+    const deleteChannelEndpoint = vi.fn().mockResolvedValue(undefined);
     const { channelEndpoints } = createChannelEndpoints({ deleteChannelEndpoint });
 
     const result = await channelEndpoints.delete({ identifier: ENDPOINT.identifier });
@@ -120,7 +121,7 @@ describe('InboxService.linkChannelEndpoint network contract', () => {
   });
 
   it('POSTs to /v1/inbox/channel-endpoints/link with integration identifier, context, and contextHash', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ data: TELEGRAM_LINK_RESPONSE }),
