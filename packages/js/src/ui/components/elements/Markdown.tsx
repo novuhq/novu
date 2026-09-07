@@ -1,4 +1,5 @@
 import { createMemo, For, JSX, splitProps } from 'solid-js';
+import { markdownStyles } from '../../core/style/tables';
 import { cn, useStyle } from '../../helpers';
 import { parseMarkdownIntoTokens } from '../../internal';
 import { AllAppearanceKey } from '../../types';
@@ -9,8 +10,8 @@ const Bold = (props: { children?: JSX.Element; appearanceKey?: AllAppearanceKey 
   return (
     <strong
       class={style({
-        key: props.appearanceKey || 'strong',
-        className: 'nt-font-semibold',
+        key: props.appearanceKey || markdownStyles.strong.key,
+        className: markdownStyles.strong.className,
       })}
     >
       {props.children}
@@ -24,8 +25,8 @@ const Italic = (props: { children?: JSX.Element; appearanceKey?: AllAppearanceKe
   return (
     <em
       class={style({
-        key: props.appearanceKey || 'em',
-        className: 'nt-italic',
+        key: props.appearanceKey || markdownStyles.em.key,
+        className: markdownStyles.em.className,
       })}
     >
       {props.children}

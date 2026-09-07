@@ -412,6 +412,29 @@
     {
       "includes": ["**/*.command.ts"],
       "plugins": ["./biome-plugins/command-session-exclusion.grit"]
+    },
+    {
+      "includes": ["packages/js/src/ui/core/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "solid-js/web": "The core never renders: it may use solid-js reactivity but not solid-js/web. Rendering belongs to the engine (src/ui/components) or a host wrapper."
+                },
+                "patterns": [
+                  {
+                    "group": ["**/components/**", "**/components"],
+                    "message": "The core must not depend on engine components; move the shared logic into the core instead."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {

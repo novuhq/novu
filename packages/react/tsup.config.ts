@@ -4,8 +4,8 @@ import { name, version } from './package.json';
 
 const baseConfig: Options = {
   // we want to preserve the folders structure together with
-  // 'use client' directives
-  entry: ['src/**/*.{ts,tsx}'],
+  // 'use client' directives; tests never ship
+  entry: ['src/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}'],
   minify: false,
   sourcemap: true,
   clean: true,

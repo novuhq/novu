@@ -7,6 +7,7 @@ export {
   InboxContent,
   MsTeamsConnectButton,
   MsTeamsLinkUser,
+  NotificationItem,
   Notifications,
   NovuProvider,
   PreferenceLevel,

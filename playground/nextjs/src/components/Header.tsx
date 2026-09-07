@@ -12,6 +12,7 @@ const LINKS: LinkType[] = [
   { href: '/', label: 'Default Inbox', category: 'Components' },
   { href: '/render-bell', label: 'Render Bell', category: 'Components' },
   { href: '/render-notification', label: 'Render Notification', category: 'Components' },
+  { href: '/notification-item', label: 'Notification Item', category: 'Components' },
   { href: '/notifications', label: 'Notifications', category: 'Components' },
   { href: '/preferences', label: 'Preferences', category: 'Components' },
   { href: '/subscription', label: 'Subscription', category: 'Components' },

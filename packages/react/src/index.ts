@@ -1,5 +1,5 @@
 export type * from '@novu/js';
-export { pendingActionKey, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { PreferenceLevel, pendingActionKey, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   AllLocalization,
@@ -39,6 +39,7 @@ export type {
   InboxProps,
   MsTeamsConnectButtonProps,
   MsTeamsLinkUserProps,
+  NotificationItemProps,
   NotificationProps,
   NovuProviderProps,
   SlackConnectButtonProps,
@@ -54,6 +55,7 @@ export {
   InboxContent,
   MsTeamsConnectButton,
   MsTeamsLinkUser,
+  NotificationItem,
   Notifications,
   NovuProvider,
   Preferences,
@@ -65,8 +67,6 @@ export {
   TelegramConnectButton,
 } from './components';
 export type {
-  UseWebChatProps,
-  UseWebChatResult,
   UseChannelConnectionProps,
   UseChannelConnectionResult,
   UseChannelConnectionsProps,
@@ -85,9 +85,10 @@ export type {
   UseScheduleProps as UsePreferencesProps,
   UseTelegramSubscriberLinkProps,
   UseTelegramSubscriberLinkResult,
+  UseWebChatProps,
+  UseWebChatResult,
 } from './hooks';
 export {
-  useWebChat,
   useChannelConnection,
   useChannelConnections,
   useChannelEndpoint,
@@ -104,6 +105,7 @@ export {
   useSubscriptions,
   useTelegramSubscriberLink,
   useUpdateSubscription,
+  useWebChat,
 } from './hooks';
 
 export type {
