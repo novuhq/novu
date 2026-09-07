@@ -6,7 +6,7 @@ tag: Beta
 
 The `useWebChat` hook is the headless client for [Web Chat](/agents/channels/web-chat). It loads conversation history, sends messages, streams live turns over the socket, and exposes pending tool approvals.
 
-Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). See [Quickstart](/agents/channels/web-chat/quickstart), [Chat UI](/agents/channels/web-chat/chat-ui), and [State](/agents/channels/web-chat/chat-ui#state).
+Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). See [Web Chat](/agents/channels/web-chat), [Messages](/agents/channels/web-chat/messages), and [State](/agents/channels/web-chat/messages#state).
 
 ## Hook parameters
 
@@ -15,7 +15,7 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | Property | Type | Description |
 | --- | --- | --- |
 | `agentId` | `string` | Public agent identifier from the dashboard. Required unless you pass `conversation`. |
-| `conversationId` | `string` | Resume this conversation and load history on mount. Omit this prop to start a new chat. The first `sendMessage` creates the conversation. See [Resume a conversation](/agents/channels/web-chat/chat-ui#resume-a-conversation). |
+| `conversationId` | `string` | Resume this conversation and load history on mount. Omit this prop to start a new chat. The first `sendMessage` creates the conversation. See [Start or resume](/agents/channels/web-chat/conversations#start-or-resume). |
 | `agentHash` | `string` | HMAC-SHA256 of `agentId` with the environment secret. Required when Security HMAC is on for the Web Chat integration. |
 | `conversation` | `AgentConversationRuntime` | Share an existing runtime across hook instances. Do not pass `agentId`, `conversationId`, or `agentHash` with this prop. Get the runtime from `loadWebChat(novu)` then `novu.webChat.conversation()`. |
 | `onSuccess` | `(data: LoadConversationResult) => void` | Fires after a history fetch succeeds. |
@@ -36,15 +36,15 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `isRunning` | `boolean` | True while the agent turn is in progress. Same as `run.isRunning`. |
 | `typing` | `AgentConversationTyping \| undefined` | Ephemeral typing indicator. Same as `run.typing`. Absent when the agent is not typing. |
 | `run` | `{ isRunning: boolean; typing?: AgentConversationTyping }` | Current agent-run snapshot. |
-| `conversationStatus` | `'active' \| 'resolved'` | Conversation lifecycle. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. See [State](/agents/channels/web-chat/chat-ui#state). |
+| `conversationStatus` | `'active' \| 'resolved'` | Conversation lifecycle. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. See [State](/agents/channels/web-chat/messages#state). |
 | `pagination` | `{ status, hasMore, fetchMore }` | Older history pages. Not a top-level `hasMore` or `fetchMore`. See [Pagination](#pagination). |
 | `isRecovering` | `boolean` | True while reconnect recovery is in progress. |
 | `catchUpError` | `NovuError \| undefined` | Set when reconnect recovery fails. Separate from send and fetch `error`. |
 | `refetch` | `() => Promise<void>` | Reload the newest history page. No-op when there is no conversation id. |
 | `sendMessage` | `(input: SendMessageInput) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Send a user message. `input` is a string, or `{ text, metadata }`. Creates a conversation when `conversationId` is omitted. |
-| `retryMessage` | `(messageId: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. Does not create a second message. See [Retry a failed send](/agents/channels/web-chat/chat-ui#retry-a-failed-send). |
+| `retryMessage` | `(messageId: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. Does not create a second message. See [Retry](/agents/channels/web-chat/conversations#retry). |
 | `respondToAction` | `(args: { approvalId: string; decision: AgentToolApprovalDecision }) => Promise<{ data?: RespondToActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Resolve a pending `approval`. Pass `approvalId` from `pendingActions` or message parts. Typical decisions: `'approved'` or `'denied'`. |
-| `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. See [Cards](/agents/channels/web-chat/chat-ui#cards). |
+| `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. See [Cards](/agents/channels/web-chat/generative-ui#cards). |
 
 ## Pagination
 
@@ -56,7 +56,7 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `hasMore` | `boolean` | True when an older page is available. |
 | `fetchMore` | `() => Promise<{ data?: { messages: AgentMessage[]; hasMore: boolean }; error?: NovuError }>` | Load the next older page. Overlapping calls do not run. |
 
-See [Older messages](/agents/channels/web-chat/chat-ui#older-messages).
+See [Older messages](/agents/channels/web-chat/conversations#older-messages).
 
 ## Recovery
 
@@ -67,7 +67,7 @@ The hook reconnects and catches up on its own. Use these fields for a banner.
 | `isRecovering` | `boolean` | True while recovery is in progress. |
 | `catchUpError` | `NovuError \| undefined` | Set when recovery fails. `conversationStatus` does not become an error state. |
 
-See [Reconnect](/agents/channels/web-chat/chat-ui#reconnect).
+See [Reconnect](/agents/channels/web-chat/conversations#reconnect).
 
 ## Message type
 
@@ -85,11 +85,11 @@ See [Reconnect](/agents/channels/web-chat/chat-ui#reconnect).
 | --- | --- |
 | `text` | Visible message text. `state` is `streaming` or `done`. |
 | `thinking` | Chain-of-thought / plan text while the agent reasons. |
-| `tool` | Tool call and result. |
-| `approval` | Gated tool waiting on the subscriber. Use `pendingActions` + `respondToAction`. |
-| `mcp-connection` | MCP server connect card. Open `authorizeUrl` in the browser. |
-| `card` | Structured Card tree (`card` object). Render it in your UI. Button clicks call `sendAction`. Agents send Cards with [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). See [Cards](/agents/channels/web-chat/chat-ui#cards). |
-| `data` | Custom payload (`name` + `data`). The UI decides how to render it. See [Custom data parts](/agents/channels/web-chat/chat-ui#custom-data-parts). |
+| `tool` | Tool call and result. See [Tool calls](/agents/channels/web-chat/tools#tool-calls). |
+| `approval` | Gated tool waiting on the subscriber. Use `pendingActions` + `respondToAction`. See [Tool approval](/agents/channels/web-chat/tools#tool-approval). |
+| `mcp-connection` | MCP server connect card. Open `authorizeUrl` in the browser. See [MCP connect](/agents/channels/web-chat/tools#mcp-connect). |
+| `card` | Structured Card tree (`card` object). Render it in your UI. Button clicks call `sendAction`. Agents send Cards with [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). See [Cards](/agents/channels/web-chat/generative-ui#cards). |
+| `data` | Custom payload (`name` + `data`). The UI decides how to render it. See [Custom data](/agents/channels/web-chat/generative-ui#custom-data). |
 | `file` | File attachment metadata. |
 | `source` | Citation (`url` or `document`). |
 
