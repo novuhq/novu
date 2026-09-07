@@ -2,7 +2,6 @@
 
 ### 🚀 Features
 
-- **dashboard:** add read-only mode support across various components for enhanced user experience fixes NV-8775 ([#12574](https://github.com/novuhq/novu/pull/12574))
 - **js:** emit socket disconnect events so consumers can show drops fixes NV-8747 ([#12536](https://github.com/novuhq/novu/pull/12536))
 - **js:** add listConversations so clients stop scraping the subscriber JWT fixes NV-8746 ([#12534](https://github.com/novuhq/novu/pull/12534))
 
@@ -16,7 +15,6 @@
 ### ❤️ Thank You
 
 - Adam Chmara @ChmaraX
-- Pawan Jain
 
 ## v3.19.1 (2026-08-31)
 

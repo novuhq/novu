@@ -2,7 +2,6 @@
 
 ### 🚀 Features
 
-- **dashboard:** add read-only mode support across various components for enhanced user experience fixes NV-8775 ([#12574](https://github.com/novuhq/novu/pull/12574))
 - **react:** add startNewConversation to useWebChat so new chats do not remount fixes NV-8744 ([#12535](https://github.com/novuhq/novu/pull/12535))
 
 ### 🩹 Fixes
@@ -12,7 +11,6 @@
 ### ❤️ Thank You
 
 - Adam Chmara @ChmaraX
-- Pawan Jain
 
 ## v3.19.1 (2026-08-31)
 

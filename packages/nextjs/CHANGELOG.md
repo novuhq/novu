@@ -1,12 +1,6 @@
 ## v3.19.2 (2026-09-07)
 
-### 🚀 Features
-
-- **dashboard:** add read-only mode support across various components for enhanced user experience fixes NV-8775 ([#12574](https://github.com/novuhq/novu/pull/12574))
-
-### ❤️ Thank You
-
-- Pawan Jain
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
 
 ## v3.19.1 (2026-08-31)
 
