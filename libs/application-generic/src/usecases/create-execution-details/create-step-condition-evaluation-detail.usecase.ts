@@ -9,20 +9,20 @@ import {
 } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
-import { FeatureFlagsService } from '../../services';
+import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { CreateExecutionDetails } from './create-execution-details.usecase';
 import { DetailEnum } from './types';
 
-const LOG_CONTEXT = 'CreateStepConditionsPassedDetail';
+const LOG_CONTEXT = 'CreateStepConditionEvaluationDetail';
 const MAX_RAW_SIZE = 10_240;
 
 /** Either a v2 json-logic skip rule or v1 legacy filter evaluation results. */
 export type StepConditions = RulesLogic<AdditionalOperation> | ICondition[];
 
-/** The parsed shape of the `raw` payload persisted with STEP_CONDITIONS_PASSED details. */
-export interface IStepConditionsPassedRaw {
-  passed: true;
+/** The parsed shape persisted with step condition evaluation details. */
+export interface IStepConditionEvaluationRaw {
+  passed: boolean;
   conditions: StepConditions;
   /** Actual values resolved for the variables referenced by a json-logic rule. */
   evaluatedValues?: Record<string, unknown>;
@@ -30,28 +30,27 @@ export interface IStepConditionsPassedRaw {
   truncated?: true;
 }
 
-export interface ICreateStepConditionsPassedDetailParams {
+export interface ICreateStepConditionEvaluationDetailParams {
   job: JobEntity;
   conditions: StepConditions;
   evaluatedValues?: Record<string, unknown>;
+  passed: boolean;
 }
 
 /**
- * Persists a STEP_CONDITIONS_PASSED execution detail when a step's conditions
- * matched and the step will execute. Owns the feature-flag gate, the raw
- * payload shape, size limiting, and the failure policy: the trace is
- * best-effort and never throws, because tracing must never break a send.
+ * Persists the outcome of a step's condition evaluation as an execution detail.
+ * Tracing is best-effort and never throws because it must never break a send.
  */
 @Injectable()
-export class CreateStepConditionsPassedDetail {
+export class CreateStepConditionEvaluationDetail {
   constructor(
     private createExecutionDetails: CreateExecutionDetails,
     private featureFlagsService: FeatureFlagsService
   ) {}
 
   /**
-   * Exposed for callers that want to avoid extra work (e.g. a job fetch)
-   * when the trace is disabled. `execute` re-checks the flag itself.
+   * Exposed so callers can avoid expensive preparation, such as fetching a job,
+   * when evaluation tracing is disabled.
    */
   public async isEnabled({
     organizationId,
@@ -62,45 +61,66 @@ export class CreateStepConditionsPassedDetail {
   }): Promise<boolean> {
     try {
       return await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED,
+        key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED,
         defaultValue: false,
         organization: { _id: organizationId },
         environment: { _id: environmentId },
       });
     } catch (error) {
-      Logger.error(error, 'Failed to resolve step conditions passed trace flag', LOG_CONTEXT);
+      Logger.error(error, 'Failed to resolve step conditions evaluation trace flag', LOG_CONTEXT);
 
       return false;
     }
   }
 
-  public async execute({ job, conditions, evaluatedValues }: ICreateStepConditionsPassedDetailParams): Promise<void> {
-    try {
-      const isEnabled = await this.isEnabled({
-        organizationId: job._organizationId,
-        environmentId: job._environmentId,
-      });
-      if (!isEnabled) {
-        return;
-      }
+  /**
+   * Writes an evaluation detail only when the evaluation trace flag is enabled.
+   * Returns whether the detail was written.
+   */
+  public async execute(params: ICreateStepConditionEvaluationDetailParams): Promise<boolean> {
+    const isEnabled = await this.isEnabled({
+      organizationId: params.job._organizationId,
+      environmentId: params.job._environmentId,
+    });
+    if (!isEnabled) {
+      return false;
+    }
 
+    return this.executeAfterEnabledCheck(params);
+  }
+
+  /**
+   * Writes without rechecking the flag. Use only after `isEnabled` when the
+   * caller needs to avoid expensive preparation while tracing is disabled.
+   */
+  public async executeAfterEnabledCheck({
+    job,
+    conditions,
+    evaluatedValues,
+    passed,
+  }: ICreateStepConditionEvaluationDetailParams): Promise<boolean> {
+    try {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_CONDITIONS_PASSED,
+          detail: passed ? DetailEnum.STEP_CONDITIONS_PASSED : DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.SUCCESS,
+          status: passed ? ExecutionDetailsStatusEnum.SUCCESS : ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
           raw: serializeConditionsRaw({
-            passed: true,
+            passed,
             conditions,
             evaluatedValues: redactEnvironmentValues(evaluatedValues),
           }),
         })
       );
+
+      return true;
     } catch (error) {
-      Logger.error(error, 'Failed to create step conditions passed execution detail', LOG_CONTEXT);
+      Logger.error(error, 'Failed to create step conditions evaluation detail', LOG_CONTEXT);
+
+      return false;
     }
   }
 }
@@ -108,13 +128,11 @@ export class CreateStepConditionsPassedDetail {
 /**
  * Environment variables are decrypted into the evaluation context and can hold
  * secrets (API keys, tokens). Their `isSecret` flag is no longer available at
- * this layer, so every env-sourced value is masked before persisting — the
- * execution detail is readable by low-privilege roles via the activity feed.
+ * this layer, so every env-sourced value is masked before persisting.
  *
  * Masking is decided by the variable path's root segment: `env` covers direct
- * references, and an empty root covers unscoped paths — json-logic resolves
- * `{"var": ""}` to the entire evaluation context (including `env`), so such
- * values must never be persisted unmasked.
+ * references, and an empty root covers unscoped paths because json-logic
+ * resolves `{"var": ""}` to the entire evaluation context.
  */
 function redactEnvironmentValues(
   evaluatedValues: Record<string, unknown> | undefined
@@ -135,12 +153,11 @@ function isSensitivePath(path: string): boolean {
 }
 
 /**
- * Keeps the persisted payload valid JSON: instead of slicing the serialized
- * string (which would corrupt it for consumers), oversized payloads
- * progressively drop the largest fields and are marked as truncated.
+ * Keeps the persisted payload valid JSON. Oversized payloads progressively
+ * drop the largest fields and are marked as truncated.
  */
-function serializeConditionsRaw(raw: IStepConditionsPassedRaw): string {
-  const fallbacks: IStepConditionsPassedRaw[] = [
+function serializeConditionsRaw(raw: IStepConditionEvaluationRaw): string {
+  const fallbacks: IStepConditionEvaluationRaw[] = [
     raw,
     { passed: raw.passed, conditions: raw.conditions, truncated: true },
     { passed: raw.passed, conditions: [], truncated: true },
