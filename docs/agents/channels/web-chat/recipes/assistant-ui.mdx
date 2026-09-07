@@ -16,7 +16,28 @@ assistant-ui draws whatever you mount: `Thread`, `ThreadList`, composer, action 
 
 ## Thread
 
-Convert Novu messages into assistant-ui thread messages, then wrap `Thread` in that runtime.
+Convert Novu messages into assistant-ui thread messages, then wrap `Thread` in that runtime. Add a Thread UI from assistant-ui first (their [Thread](https://www.assistant-ui.com/docs/primitives/thread), or `npx shadcn@latest add @assistant-ui/thread`). Change the `Thread` import path to match your app.
+
+Start with text. Add `reasoning`, `tool-call`, or `data` cases as you need them:
+
+```tsx
+import type { AgentMessage } from '@novu/react';
+import type { ThreadMessageLike } from '@assistant-ui/react';
+
+function toThreadMessage(message: AgentMessage): ThreadMessageLike {
+  const text = message.parts
+    .filter((part) => part.type === 'text')
+    .map((part) => part.text)
+    .join('');
+
+  return {
+    id: message.id,
+    role: message.role,
+    createdAt: new Date(message.createdAt),
+    content: [{ type: 'text', text }],
+  };
+}
+```
 
 ```tsx
 import { useWebChat } from '@novu/react';
@@ -25,6 +46,7 @@ import {
   useExternalMessageConverter,
   useExternalStoreRuntime,
 } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
 
 const chat = useWebChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
 
@@ -50,10 +72,6 @@ return (
   </AssistantRuntimeProvider>
 );
 ```
-
-`toThreadMessage` maps each Novu `part` to an assistant-ui content item (`text`, `reasoning`, `tool-call`, or `data`). Start with `part.type === 'text'`. Add the cases below as you need them.
-
-Add a Thread UI from assistant-ui (their [Thread](https://www.assistant-ui.com/docs/primitives/thread), or `npx shadcn@latest add @assistant-ui/thread`) if you do not already have one.
 
 ## Composer
 
