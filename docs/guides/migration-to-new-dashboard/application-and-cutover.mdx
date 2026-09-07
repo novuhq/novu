@@ -1,0 +1,267 @@
+---
+title: "Migrate the Application and Cut Over to New Workflows"
+sidebarTitle: "Application and cutover"
+description: "Update Novu Inbox integrations, switch workflow IDs, publish resources, migrate preferences, verify production delivery, and roll back safely."
+---
+
+Application migration has two independent parts:
+
+1. Update server-side trigger producers to use the replacement workflow IDs and payload contracts.
+2. Update client applications from the legacy Notification Center to the current Inbox SDK and notification model.
+
+Complete both parts in a non-production environment before scheduling the production cutover.
+
+## Update trigger producers
+
+Create a checked-in or release-managed mapping of legacy workflow IDs to new workflow IDs.
+
+| Application event | Legacy workflow ID | New workflow ID | Payload owner |
+| --- | --- | --- | --- |
+| Order confirmed | `order-confirmed` | `order-confirmed-v2` | Orders service |
+| Password reset | `password-reset` | `password-reset-v2` | Identity service |
+
+Search application code, job definitions, webhook handlers, automation platforms, and infrastructure configuration for every legacy ID. A workflow might be triggered outside the primary application repository.
+
+For each call site:
+
+- Replace the workflow ID only after the replacement workflow has passed Development validation.
+- Send all fields required by the new payload schema.
+- Preserve `subscriberId`, topic keys, actor or context data, transaction IDs, and provider overrides that remain valid.
+- Replace the legacy `tenant` input with the context contract selected during workflow conversion.
+- Remove legacy layout overrides only after their replacement has been tested.
+- Keep Development and Production API credentials separate.
+
+<Warning>
+  Do not deploy a new workflow ID before that workflow is published and active in the same target environment. Triggers sent to a workflow ID that is missing or inactive do not fall back to the legacy workflow.
+</Warning>
+
+### Review server-side SDK usage
+
+Legacy Node.js integrations commonly use `@novu/node`. The current server SDK is `@novu/api`, and its trigger method accepts an object containing `workflowId`, `to`, `payload`, and other trigger fields.
+
+Do not combine the SDK upgrade and workflow cutover without testing the request shape. If you upgrade the SDK:
+
+- Replace the package and client initialization using the [TypeScript SDK guide](/platform/sdks/server/typescript).
+- Convert positional or legacy trigger arguments to the current request object.
+- Confirm how the current SDK represents subscribers, topics, actors, contexts, transaction IDs, and overrides.
+- Run the same contract tests used for the migrated payload schema.
+
+Review current method signatures for Python, Go, PHP, .NET, and Java in the [server-side SDK documentation](/platform/sdks). An unchanged package name does not guarantee that a legacy method signature or response type is current.
+
+### Replace legacy management automation
+
+Search CI jobs, release scripts, and internal tools for legacy workflow management and Changes API calls. The legacy Changes mechanism is not the current publication model.
+
+- Replace Changes API promotion with the [environment publish flow](/platform/developer/environments#publish-changes-to-other-environments).
+- Update workflow, subscriber, topic, context, and Inbox management calls against the current [API reference](/api-reference).
+- Use a publish dry run when automating resource publication.
+- Confirm that automation passes public workflow and layout identifiers, not internal database IDs.
+
+Trigger endpoint compatibility does not imply that every legacy management endpoint or response model is current.
+
+## Migrate from Notification Center to Inbox
+
+Every client that still uses the legacy Notification Center must move to Inbox before you trigger replacement workflows that subscribers see in-app.
+
+Use [Choose the Inbox package](/platform/inbox/migration-guide#choose-the-inbox-package) for the host path, then the matching quickstart for the install. React Native uses the [React Native SDK](/platform/sdks/react-native).
+
+### Complete the client migration
+
+The package replacement is only the entry point. Use the [Inbox migration guide](/platform/inbox/migration-guide#choose-the-inbox-package) for the notification object, actions, tabs, appearance, localization, and HMAC changes.
+
+Before cutover, verify that every client:
+
+- Uses the Production Application Identifier
+- Uses the current notification object and mutation methods
+- Replaces `feedIdentifier` filters with workflow tags
+- Preserves notification and action click behavior
+- Preserves preferences, localization, appearance, and HMAC authentication
+- Handles loading, empty, error, read, unread, archived, snoozed, and long-content states
+- Removes the legacy Notification Center package, web component, iframe script, or headless client after Inbox is live
+
+## Prepare each environment
+
+Publishing does not copy all resources.
+
+### Publishable resources
+
+Review and publish:
+
+- Workflows
+- Layouts
+- Translations
+
+### Environment-specific resources
+
+Create or verify separately:
+
+- Application Identifier and secret API key
+- Provider integrations and credentials
+- Subscribers and their channel credentials
+- Topics and memberships
+- Webhook endpoints
+- Activity data
+- Environment variables
+
+Use the Production Application Identifier in the production Inbox client and the Production secret key only in trusted server-side services.
+
+## Migrate subscriber preferences
+
+Legacy and new workflows have different identifiers, so a preference attached to the legacy workflow does not automatically become a preference for its replacement. Copy preferences after the replacement workflow is published and active in Production, and before the application deploy moves traffic to the new workflow ID.
+
+Exclude critical workflows from the copy job. Both [update subscriber preferences](/api-reference/subscribers/update-subscriber-preferences) and [bulk update subscriber preferences](/api-reference/subscribers/bulk-update-subscriber-preferences) reject critical workflows. If a bulk request includes even one critical workflow, the entire batch fails, so preferences for the non-critical workflows in that request are not copied either.
+
+For every non-critical workflow pair:
+
+1. Record the legacy and new workflow IDs.
+2. Record its default channel preferences.
+3. Read each subscriber's stored preference for the legacy workflow with [retrieve subscriber preferences](/api-reference/subscribers/retrieve-subscriber-preferences).
+4. Write the same channel settings against the new workflow ID with the single or bulk update endpoint. Send only non-critical workflow IDs in each request.
+5. Select subscribers with global and workflow-specific overrides.
+6. Compare their effective preferences before and after the copy.
+7. Verify enabled and disabled channels through controlled triggers.
+
+Handle critical workflow pairs separately. Do not write subscriber preference overrides for them. After the replacement is published and active, confirm that it still bypasses subscriber preference changes and delivers on the workflow's default channels.
+
+Run the copy against Production credentials, make it re-runnable, and log each subscriber and workflow pair so a partial run can be resumed.
+
+Test the current Preferences or Subscription UI after the copy. A correct data migration is insufficient if the client filters, labels, or updates the wrong workflow identifier.
+
+## Create a cutover runbook
+
+Legacy and replacement workflows use different workflow IDs in the same environment, so they can exist side by side. Nothing needs to be paused and no maintenance window is required. Traffic moves to the replacement workflow at the moment your application starts sending the new workflow ID.
+
+Keep every legacy workflow active until the replacement has been running in Production for an agreed stabilization period. An active legacy workflow is the rollback path.
+
+Record a named owner and expected completion time for every step.
+
+### Before cutover
+
+- All replacement workflows pass Development validation.
+- Workflow IDs are mapped to every trigger producer.
+- Payload schemas match deployed caller behavior.
+- Layouts and translations are ready to publish.
+- Production provider integrations and webhooks pass connection tests.
+- Inbox changes pass browser and application tests.
+- The preference copy job is written, tested, and re-runnable.
+- Current plan limits cover the legacy and replacement workflows running together.
+- A rollback release or configuration change is ready.
+- Monitoring queries and controlled Production subscribers are identified.
+
+### Cutover sequence
+
+<Steps>
+  <Step>
+## Publish replacement resources to Production
+
+From Development, publish the selected replacement workflows, layouts, and translations. Verify the resource identifiers and the publish result.
+
+Legacy workflows stay active. They keep serving current traffic because your application still sends the legacy workflow IDs.
+  </Step>
+
+  <Step>
+## Verify Production configuration
+
+Confirm provider integrations, environment variables, webhooks, API credentials, and Inbox Application Identifier. These resources are not made correct by workflow publication.
+  </Step>
+
+  <Step>
+## Activate the replacement workflows
+
+Activate each replacement workflow in Production so it can accept triggers. It receives no traffic until the application sends its workflow ID.
+
+Send a controlled trigger to an internal subscriber and confirm the rendered output before any customer traffic reaches the workflow.
+  </Step>
+
+  <Step>
+## Copy subscriber preferences
+
+Run the preference copy for every non-critical workflow pair, then compare representative subscribers before continuing. Copy preferences after the replacement workflow exists in Production and before production traffic moves to it. Do not include critical workflows in the copy job. Verify their preference-bypass behavior separately.
+  </Step>
+
+  <Step>
+## Deploy the application release
+
+Deploy the server-side workflow ID change and the Inbox client migration. Production traffic moves to the replacement workflows as instances roll out.
+
+A gradual rollout is optional. If your deployment supports it, move a subset of instances or a feature-flagged traffic segment first, then check the Activity feed and provider results before completing the rollout.
+  </Step>
+
+  <Step>
+## Confirm legacy traffic has stopped
+
+Watch the Activity feed until no legacy workflow ID receives new triggers. Queued or scheduled events created before the deploy can still carry legacy workflow IDs, and the active legacy workflow processes them correctly.
+  </Step>
+</Steps>
+
+### Retire the legacy workflows
+
+Do this as a separate change, not as part of cutover. After the replacement workflows have run in Production for the agreed stabilization period, typically several weeks and at least one full cycle of the longest Delay or Digest window:
+
+1. Confirm the legacy workflow has received no triggers for the entire period.
+2. Deactivate it, and promote the pending status change when the legacy Dashboard requires it.
+3. Keep it deactivated for an additional observation period before deleting it.
+4. Delete it only after preference, Activity, and reporting checks are complete.
+
+### Production smoke test
+
+For each critical path, verify:
+
+| Check | Expected result |
+| --- | --- |
+| Trigger response | Accepted once with the expected transaction ID |
+| Workflow selection | New workflow ID executed and legacy workflow did not |
+| Schema | Payload accepted without discarded or mistyped fields |
+| Conditions | Exactly the intended conditional path executed |
+| Content | Subject, body, variables, locale, and layout match the approved output |
+| Provider | Intended Production integration delivered the message |
+| Inbox | Notification appears with correct subject, body, data, actions, tags, and state |
+| Preferences | Disabled channels remain disabled and critical behavior is preserved |
+| Observability | Activity shows expected step states and no unexplained skips or failures |
+| Webhooks | Delivery and preference events reach the Production endpoint once per event |
+
+## Monitor after cutover
+
+Monitor for at least the longest Delay or Digest window used by the migrated workflows. A short smoke test cannot validate executions that remain pending.
+
+Track:
+
+- Trigger rejection rate, especially schema validation errors
+- Runs of legacy workflow IDs
+- Duplicate notifications
+- Step skips and condition mismatches
+- Provider failures and missing credentials
+- HTTP step failures and latency
+- Digest batch size and release time
+- Delay completion time
+- Inbox connection and rendering errors
+- Subscriber preference changes
+- Webhook delivery failures and retries
+
+Account for the Activity feed retention limit on your plan. Export or record evidence before it expires.
+
+## Roll back safely
+
+Rollback is a deploy, not an outage, because the legacy workflow is still active and still accepts its own workflow ID. Roll back per affected workflow unless a shared client or credential change requires a wider rollback.
+
+1. Restore the legacy workflow ID in application configuration or deploy the rollback release.
+2. Confirm through the Activity feed that new triggers execute the legacy workflow.
+3. Deactivate the replacement workflow only after its in-flight executions have completed or been accounted for.
+4. Preserve the failed replacement-workflow Activity records for diagnosis.
+5. Correct and revalidate the workflow in Development before attempting cutover again.
+
+Events queued with the replacement workflow ID before the rollback still carry that ID, and application configuration changes do not rewrite them. Let the replacement workflow drain those events, or cancel them according to the queue's delivery guarantees.
+
+Pending Delay and Digest executions in the replacement workflow do not move to the legacy workflow. Decide whether to let them complete or cancel them, and account for subscribers who would otherwise receive both the pending replacement notification and a new legacy notification.
+
+## Completion criteria
+
+The migration is complete when:
+
+- Production code contains no active trigger path for a legacy workflow ID.
+- Legacy workflows have received no triggers for the full stabilization period and have been deactivated as a separate change.
+- New workflows have passed monitoring through their longest pending execution window.
+- Subscriber preferences and Inbox behavior are correct.
+- Production integrations and webhooks report expected delivery.
+- Rollback artifacts are retained for the agreed stabilization period.
+- The workflow mapping and operational runbook are stored with the owning service documentation.

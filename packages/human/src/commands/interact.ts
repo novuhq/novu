@@ -174,7 +174,64 @@ export function parseDuration(value: string): number {
   return amount * multiplier;
 }
 
+/** Matches the API's `KEYLESS_HUMAN_CAP_REACHED_CODE`. The CLI cannot import `apps/api`. */
+const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
+
+export interface KeylessCapDetails {
+  claimUrl?: string;
+  cap?: number;
+}
+
+/**
+ * The keyless demo cap: a 429 whose body carries `code: KEYLESS_HUMAN_CAP_REACHED`
+ * (falling back to the message wording for older APIs). The human already got
+ * the same claim link on their channel; the agent just needs to stop retrying.
+ */
+export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
+  if (!(err instanceof HumanApiError) || err.status !== 429) {
+    return null;
+  }
+
+  const body = (err.body && typeof err.body === 'object' ? err.body : {}) as {
+    code?: unknown;
+    claimUrl?: unknown;
+    cap?: unknown;
+  };
+
+  if (body.code !== KEYLESS_CAP_CODE && !/keyless demo/i.test(err.message)) {
+    return null;
+  }
+
+  return {
+    claimUrl: typeof body.claimUrl === 'string' ? body.claimUrl : undefined,
+    cap: typeof body.cap === 'number' ? body.cap : undefined,
+  };
+}
+
+export function formatKeylessCapMessage(details: KeylessCapDetails): string {
+  const count = details.cap ? `${details.cap} free messages` : 'free messages';
+  const lines = [`You've used the ${count} of this keyless demo.`];
+
+  if (details.claimUrl) {
+    lines.push(`Sign up to keep your channels and continue: ${details.claimUrl}`);
+  } else {
+    lines.push('Sign up for a free Novu account to keep your channels and continue.');
+  }
+
+  lines.push(
+    '(We also sent this link to you on your linked channel.)',
+    'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
+  );
+
+  return lines.join('\n');
+}
+
 export function handleError(err: unknown): never {
+  const keylessCap = getKeylessCapDetails(err);
+  if (keylessCap) {
+    fail(formatKeylessCapMessage(keylessCap));
+  }
+
   if (err instanceof HumanApiError) {
     fail(err.status ? `${err.message} (${err.status})` : err.message);
   }

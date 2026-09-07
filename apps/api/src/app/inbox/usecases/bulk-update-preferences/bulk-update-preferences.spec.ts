@@ -379,6 +379,7 @@ describe('BulkUpdatePreferences', () => {
   });
 
   it('should update multiple workflow preferences in parallel', async () => {
+    const environment = { _id: 'env-1' } as any;
     const command = BulkUpdatePreferencesCommand.create({
       environmentId: 'env-1',
       organizationId: 'org-1',
@@ -399,7 +400,7 @@ describe('BulkUpdatePreferences', () => {
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
     notificationTemplateRepositoryMock.findForBulkPreferences.resolves([mockedWorkflow1, mockedWorkflow2]);
-    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
+    environmentRepositoryMock.findOne.resolves(environment);
 
     updatePreferencesUsecaseMock.execute.onFirstCall().resolves(mockedInboxPreference1);
     updatePreferencesUsecaseMock.execute.onSecondCall().resolves(mockedInboxPreference2);
@@ -418,6 +419,9 @@ describe('BulkUpdatePreferences', () => {
       in_app: true,
       email: false,
     });
+    expect(firstCallArgs.workflow).to.equal(mockedWorkflow1);
+    expect(firstCallArgs.subscriber).to.equal(mockedSubscriber);
+    expect(firstCallArgs.environment).to.equal(environment);
 
     const secondCallArgs = updatePreferencesUsecaseMock.execute.secondCall.args[0];
     expect(secondCallArgs).to.include({
@@ -431,6 +435,59 @@ describe('BulkUpdatePreferences', () => {
     });
 
     expect(result).to.deep.equal([mockedInboxPreference1, mockedInboxPreference2]);
+  });
+
+  it('should update at most five workflow preferences concurrently', async () => {
+    const workflows = Array.from({ length: 6 }, (_, index) => ({
+      ...mockedWorkflow1,
+      _id: index.toString(16).padStart(24, '0'),
+      triggers: [{ identifier: `test-trigger-${index}` }],
+    }));
+    const command = BulkUpdatePreferencesCommand.create({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      subscriberId: 'test-mockSubscriber',
+      preferences: workflows.map((workflow) => ({
+        workflowId: workflow._id,
+        in_app: true,
+      })),
+    });
+    let activeUpdates = 0;
+    let maxActiveUpdates = 0;
+    let releaseFirstBatch: () => void = () => {};
+    const firstBatchGate = new Promise<void>((resolve) => {
+      releaseFirstBatch = resolve;
+    });
+
+    subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves(workflows);
+    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
+    updatePreferencesUsecaseMock.execute.callsFake(async () => {
+      activeUpdates += 1;
+      maxActiveUpdates = Math.max(maxActiveUpdates, activeUpdates);
+
+      if (updatePreferencesUsecaseMock.execute.callCount <= 5) {
+        await firstBatchGate;
+      }
+
+      activeUpdates -= 1;
+
+      return mockedInboxPreference1;
+    });
+
+    const execution = bulkUpdatePreferences.execute(command);
+
+    while (updatePreferencesUsecaseMock.execute.callCount < 5) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+
+    expect(updatePreferencesUsecaseMock.execute.callCount).to.equal(5);
+    releaseFirstBatch();
+    const result = await execution;
+
+    expect(updatePreferencesUsecaseMock.execute.callCount).to.equal(6);
+    expect(maxActiveUpdates).to.equal(5);
+    expect(result).to.have.length(6);
   });
 
   it('should support lookup by workflow identifier', async () => {

@@ -1,0 +1,74 @@
+---
+title: "Legacy and New Dashboard Feature Comparison"
+sidebarTitle: "Feature comparison"
+description: "Identify the Novu legacy Dashboard features that must be rebuilt, preserved, or adopted during migration to the new Dashboard."
+---
+
+Use this page as a migration delta index. It identifies behavior that can break during cutover and links to the page that owns the implementation details.
+
+Current plan entitlements and limits can change. Confirm your plan on the [pricing page](https://novu.co/pricing) and check [platform limits](/platform/developer/limits) before creating replacement resources.
+
+## Migration-blocking differences
+
+| Area | Legacy Dashboard | New Dashboard | Required action |
+| --- | --- | --- | --- |
+| Workflow ID | The trigger identifier could be changed. | The public workflow ID is immutable after creation. | Choose the replacement ID before publishing and maintain an explicit ID map. |
+| Workflow groups | Groups organized workflows. | Tags organize workflows and drive Inbox filters and subscriptions. | Convert meaningful groups to tags. |
+| Step variants | One step contained a root variant and conditional variants. | Each step has one configuration. Step conditions decide whether it runs. | [Replace variants with mutually exclusive conditional steps](/guides/migration-to-new-dashboard/workflow-conversion#replace-variants-with-conditional-flow). |
+| Webhook conditions | A condition could call a webhook and inspect its response. | An HTTP step calls the service and exposes declared response fields to later conditions. | [Convert webhook response conditions](/guides/migration-to-new-dashboard/workflow-conversion#webhook-response-conditions). |
+| Payload variables | Templates could use arbitrary trigger payload fields without a workflow schema. | Dashboard payload variables must exist in the JSON Schema-based payload schema. Schema enforcement is a separate option. | [Build the payload contract](/guides/migration-to-new-dashboard/workflow-conversion#build-the-payload-contract-first). |
+| Template engine | Handlebars rendered variables, helpers, conditions, and loops. | LiquidJS renders template content. | [Convert Handlebars expressions](/guides/migration-to-new-dashboard/workflow-conversion#convert-handlebars-to-liquidjs). |
+| Payload namespace | Payload fields were commonly referenced directly, such as `{{orderId}}`. | Payload fields use `payload.*`, such as `{{ payload.orderId }}`. | Update references and declare each field in the payload schema. |
+| Digest variables | Legacy content used `step.events` and `step.total_count`. | Digest results use `steps.<step-id>.events`, `eventCount`, and summary fields. | Update paths and test zero, one, and multiple events. |
+| Path-based Delay | The Scheduled delay read an ISO date from a top-level payload key configured as `delayPath`. | The Dynamic delay reads a declared payload variable that holds either an ISO-8601 timestamp or a `{ "amount", "unit" }` duration object. | [Rebuild the legacy scheduled delay as a Dynamic delay](/guides/migration-to-new-dashboard/workflow-conversion#delay). |
+| Digest backoff | Regular digest used a backoff type with `backoffAmount` and `backoffUnit`. | Regular digest expresses the same behavior as a look-back window on the **Start digest** option. | Recreate the repeat-event window and test the first-event delivery path. |
+| Email layouts | Layouts inserted content with `{{{body}}}` and could define payload-style variables. | Layouts require `{{content}}`. They support `subscriber`, `context`, `env`, and `content`, but not `payload`, `steps`, or `workflow`. | [Move payload-dependent markup into the Email step](/guides/migration-to-new-dashboard/workflow-conversion#migrate-email-layouts). |
+| Layout selection | A default layout or trigger-time `layoutIdentifier` override could select the wrapper. | Each Email step selects a layout or no layout. | Replace dynamic layout selection with conditional Email steps or separate workflows. |
+| Translations | Independent groups used `{{i18n "group.key"}}`. | Translations belong to a workflow or layout and use `{{t.key}}`. Locale files require `language_REGION`. | [Remap translation groups and expressions](/guides/migration-to-new-dashboard/workflow-conversion#migrate-translations). |
+| Tenants | `tenant.*` supplied reusable data, variants, preferences, and provider routing. | Contexts supply reusable multi-tenant data. Workflow conditions and integration routing remain separate controls. | [Map each tenant use to a context-based replacement](/guides/migration-to-new-dashboard/workflow-conversion#replace-tenants-with-contexts). |
+| In-app custom data | Legacy messages exposed `payload`. | Inbox notifications expose the In-app step Data object as `data`. | Move client-required fields to Data and update client field access. |
+| In-app feeds | `feedIdentifier` and stores separated tabs. | Workflow tags filter Inbox tabs. | Add tags before switching clients. |
+| Notification object | Legacy clients used `_id`, `content`, `payload`, `cta`, and legacy read or seen fields. | Inbox uses the current notification model and methods. | Follow the [Inbox migration guide](/platform/inbox/migration-guide). |
+| React client | `@novu/notification-center` rendered the Notification Center. | `@novu/react` renders `<Inbox />`. | Follow [React Inbox migration](/platform/inbox/migration-guide#react) and the [React quickstart](/platform/quickstart/react). |
+| Angular client | The Angular wrapper embedded the legacy Notification Center. | Angular mounts `NovuUI` from `@novu/js/ui`. | Follow [Angular Inbox migration](/platform/inbox/migration-guide#angular) and the [Angular quickstart](/platform/quickstart/angular). |
+| Vue client | The Vue wrapper embedded the legacy Notification Center. | Vue mounts `NovuUI` from `@novu/js/ui`. | Follow [Vue Inbox migration](/platform/inbox/migration-guide#vue) and the [Vue quickstart](/platform/quickstart/vue). |
+| Vanilla JS client | Web Component, iframe, or `@novu/headless` integrations rendered or queried the legacy feed. | `@novu/js/ui` mounts Inbox and `@novu/js` supports headless clients. | Follow [Vanilla JS Inbox migration](/platform/inbox/migration-guide#vanilla-js) and the [Vanilla JS quickstart](/platform/quickstart/vanilla-js). |
+| React Native client | Legacy mobile integrations used the previous notification client model. | `@novu/react-native` provides the current Inbox client. | Follow the [React Native SDK](/platform/sdks/react-native). |
+| Environment promotion | The Changes page promoted pending differences. | The publish flow promotes selected workflows and associated publishable resources from Development. | Replace Changes API and release automation with [environment publishing](/platform/developer/environments#publish-changes-to-other-environments). |
+| Environment resources | Legacy resources were largely environment-specific. | Workflows, layouts, and translations are publishable. Integrations, keys, subscribers, topics, webhooks, and Activity remain environment-specific. | Verify environment-specific resources independently before cutover. |
+| Server Node.js SDK | Legacy applications commonly used `@novu/node`. | The current SDK is `@novu/api` with a request-object trigger model. | Review SDK migration separately from the workflow ID change. |
+| Management APIs | Legacy automation used v1 workflow, tenant, feed, Inbox, and Changes endpoints. | Current management uses v2 resources, contexts, Inbox APIs, and publishing. | Inventory direct API consumers against the current [API reference](/api-reference). |
+
+## Behavior to preserve
+
+These capabilities still exist, but they require parity testing because copied configuration is not proof of equivalent execution:
+
+| Capability | What to verify |
+| --- | --- |
+| Workflow status and critical behavior | Active state, subscriber preference bypass, and intended channel defaults |
+| Sequential channel and action steps | Step order, dependent results, skip behavior, and failure behavior |
+| Email, In-app, SMS, Push, and Chat | Rendered content, subscriber credentials, provider selection, and overrides |
+| Delay and Digest | Fixed duration, digest window type, calendar schedule, grouping key, time zone, and downstream variables |
+| Subscriber profiles and credentials | Stable `subscriberId`, custom data, locale, phone, email, device tokens, and chat credentials |
+| Subscriber preferences | Global and per-workflow settings, copied to the replacement workflow ID |
+| Topics | Topic keys, memberships, fan-out, and workflow-run usage |
+| Integrations | Production credentials, primary or conditional routing, and provider webhooks |
+| API credentials | Correct Application Identifier in clients and secret key on trusted servers |
+| Activity and delivery tracking | Expected step states, provider events, and plan-based retention |
+| HMAC Inbox authentication | Server-generated hashes and current client properties |
+| RBAC, SSO, and organization access | Release owners can publish and manage environment configuration |
+
+## Optional capabilities in the new Dashboard
+
+Do not add new behavior during a parity migration unless it has its own requirements and tests.
+
+- [Throttle step](/platform/workflow/add-and-configure-steps/configure-action-steps/throttle)
+- [HTTP step](/platform/workflow/add-and-configure-steps/configure-action-steps/http-step)
+- [Calendar-based Scheduled delay](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#scheduled-delay), which resumes at a recurring minute, hour, day, week, or month rather than at a payload-supplied timestamp
+- [Duration objects in Dynamic delay](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#dynamic-delay), which accept a relative `{ "amount", "unit" }` value in addition to an ISO-8601 timestamp
+- [Extend to subscriber schedule](/platform/inbox/features/schedule) on Delay and Digest steps
+- Workflow severity
+- [Outbound webhooks](/platform/developer/webhooks)
+- [Email activity tracking](/platform/integrations/email/activity-tracking)
+
+Continue with [workflow conversion](/guides/migration-to-new-dashboard/workflow-conversion) after every applicable migration-blocking row has an owner.

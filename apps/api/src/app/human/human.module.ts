@@ -8,6 +8,7 @@ import {
 } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
+import { ConnectModule } from '../connect/connect.module';
 import { SharedModule } from '../shared/shared.module';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanDeliveryService } from './services/human-delivery.service';
@@ -24,7 +25,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
  * Framework `ctx.*` helpers create in-thread cards via `CreateConversationInteraction`.
  */
 @Module({
-  imports: [SharedModule, AuthModule, AgentsModule],
+  imports: [SharedModule, AuthModule, AgentsModule, ConnectModule],
   controllers: [HumanInteractionsController],
   providers: [
     HumanInteractionRepository,

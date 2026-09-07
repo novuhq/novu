@@ -80,6 +80,16 @@ You can apply conditions on subscriber attributes so notifications only go to th
 
 For custom fields you store on the subscriber (e.g. plan, preferences), use the full path to the property. For example, use `subscriber.data.subscription_plan` equals `premium` to run a step only for subscribers on the premium plan.
 
+<Warning>
+  Custom properties under `subscriber.data.*` do not have a declared schema. The condition builder therefore treats
+  them as strings, even when a subscriber profile currently stores a number or boolean. Numeric operators such as
+  `<`, `>`, `between`, and `not between` are not available for these properties.
+
+  When you need typed comparisons, include the value in the workflow payload, declare its number or boolean type in
+  the [payload schema](/platform/workflow/configure-workflow#payload-schema), and create the condition against that
+  `payload.*` field.
+</Warning>
+
 <Note>
   To learn more about Subscribers model, refer to the [Subscribers documentation](/platform/concepts/subscribers)
 </Note>

@@ -33,7 +33,9 @@ describe('resolveChatSdkPackagesToInstall', () => {
     );
 
     expect(resolveChatSdkPackagesToInstall(dir)).toEqual(['@novu/chat-sdk-adapter']);
-    expect(buildChatSdkInstallCommand(dir)).toBe('npm install @novu/chat-sdk-adapter --no-workspaces');
+    expect(buildChatSdkInstallCommand(dir)).toBe(
+      'npm install @novu/chat-sdk-adapter --no-workspaces --no-audit --fund=false'
+    );
   });
 
   it('includes state-memory only when no state adapter is present', () => {
