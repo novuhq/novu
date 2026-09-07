@@ -39,13 +39,23 @@ export function WebChatDrawer({
         side="right"
         className="pointer-events-none inset-0 w-full max-w-none border-0 bg-transparent p-0 shadow-none transition-transform sm:max-w-none [&_[data-close-button]]:hidden"
         onOpenAutoFocus={(event) => event.preventDefault()}
+        onPointerDownOutside={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+        onFocusOutside={(event) => event.preventDefault()}
       >
         <ResizablePanelGroup
           orientation="horizontal"
           autoSaveId="web-chat-preview"
           className="pointer-events-none h-full"
         >
-          <ResizablePanel id="web-chat-preview-spacer" minSize="20%" className="pointer-events-none h-full" />
+          <ResizablePanel id="web-chat-preview-spacer" minSize="20%" className="pointer-events-auto h-full">
+            <button
+              type="button"
+              className="size-full cursor-default"
+              aria-label="Close web chat preview"
+              onClick={() => onOpenChange(false)}
+            />
+          </ResizablePanel>
           <ResizableHandle
             withHandle
             className="pointer-events-auto"
@@ -53,6 +63,7 @@ export function WebChatDrawer({
               event.preventDefault();
               event.stopPropagation();
             }}
+            onPointerDown={(event) => event.stopPropagation()}
           />
           <ResizablePanel
             id="web-chat-preview-panel"
