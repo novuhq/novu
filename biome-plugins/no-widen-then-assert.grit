@@ -7,9 +7,5 @@ or {
   `$value as any as $outer`
 } as $assertion where {
   not $outer <: `const`,
-  register_diagnostic(
-    span = $assertion,
-    severity = "error",
-    message = "This assertion widens to unknown/any and then asserts a precise type. Parse untrusted input at its boundary."
-  )
+  register_diagnostic(span=$assertion, severity="error", message="This assertion widens to unknown/any and then asserts a precise type. Parse untrusted input at its boundary.")
 }
