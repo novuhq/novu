@@ -23,6 +23,7 @@ import {
   NormalizeVariablesCommand,
   PinoLogger,
   RedisThrottleService,
+  resolveThrottleGrouping,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -61,6 +62,7 @@ import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import _ from 'lodash';
+import type { ExecuteBridgeJobResult } from '../execute-bridge-job';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { AddJobCommand } from './add-job.command';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
@@ -605,7 +607,7 @@ export class AddJob {
     command: AddJobCommand,
     filterVariables: IFilterVariables,
     workflow?: NotificationTemplateEntity
-  ): Promise<ExecuteOutput | null> {
+  ): Promise<ExecuteBridgeJobResult | null> {
     const response = await this.executeBridgeJob.execute(
       ExecuteBridgeJobCommand.create({
         identifier: command.job.identifier,
@@ -843,7 +845,7 @@ export class AddJob {
   private async handleThrottle(
     command: AddJobCommand,
     job: JobEntity,
-    bridgeResponse: ExecuteOutput | null
+    bridgeResponse: ExecuteBridgeJobResult | null
   ): Promise<{ shouldSkip: boolean; executionCount?: number; threshold?: number; throttledUntil?: string }> {
     // Get throttle configuration from bridge response or job step
     const throttleConfig = bridgeResponse?.outputs || {};
@@ -893,7 +895,11 @@ export class AddJob {
       throw new Error('Step ID is required for throttle reservation');
     }
 
-    const throttleValue = throttleKey ? getNestedValue(job.payload, throttleKey as string) : 'default';
+    const { throttleKey: groupingKey, throttleValue } = resolveThrottleGrouping(
+      bridgeResponse?.sourceControls?.throttleKey,
+      throttleKey,
+      job.payload
+    );
 
     const throttleJobId = `${job._id}:${Date.now()}`;
 
@@ -906,8 +912,8 @@ export class AddJob {
       windowMs,
       limit: threshold as number,
       nowMs,
-      throttleKey: (throttleKey as string) || 'default',
-      throttleValue: throttleValue,
+      throttleKey: groupingKey,
+      throttleValue,
     });
 
     this.logger.debug(
