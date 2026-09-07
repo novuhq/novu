@@ -1,0 +1,5 @@
+language js(typescript)
+
+`typeof $value` as $check where {
+  register_diagnostic(span=$check, message="A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary, then branch on the domain value.", severity="error")
+}
