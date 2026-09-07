@@ -312,7 +312,7 @@
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@novu/agent-event-protocol": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@langchain/core": "^1.1.44",

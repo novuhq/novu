@@ -3,7 +3,7 @@
 import { AnyExtension, FocusPosition, Editor as TiptapEditor } from '@tiptap/core';
 import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
 
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { CardActionsBubbleMenu } from './components/card-actions-menu/card-actions-bubble-menu';
 import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
 import { ContentMenu } from './components/content-menu';
@@ -129,6 +129,13 @@ export function Editor(props: EditorProps) {
     editable,
   });
 
+  // `useEditor` only reads `editable` when it builds the editor, so keep it in sync afterwards.
+  useEffect(() => {
+    if (editor && editor.isEditable !== editable) {
+      editor.setEditable(editable, false);
+    }
+  }, [editor, editable]);
+
   if (!editor) {
     return null;
   }
@@ -143,7 +150,7 @@ export function Editor(props: EditorProps) {
         )}
         ref={menuContainerRef}
       >
-        {hasMenuBar && <EditorMenuBar config={props.config} editor={editor} />}
+        {hasMenuBar && editable && <EditorMenuBar config={props.config} editor={editor} />}
         <div className={cn('mly-mt-4 mly-rounded mly-border mly-border-gray-200 mly-bg-white mly-p-4', bodyClassName)}>
           <TextBubbleMenu editor={editor} appendTo={menuContainerRef} textMenuConfig={menuConfig?.text} />
           <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} imageMenuConfig={menuConfig?.image} />
