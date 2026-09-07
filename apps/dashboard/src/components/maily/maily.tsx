@@ -51,6 +51,8 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
     variables: LiquidVariable[],
     isAllowedVariable: IsAllowedVariable
   ) => (props: NodeViewProps) => JSX.Element;
+  /** When false the content renders exactly as authored, but nothing in it can be changed. */
+  editable?: boolean;
   imageExtensionOptions?: {
     resizable?: boolean;
     defaultAlignment?: 'left' | 'center' | 'right';
@@ -95,6 +97,7 @@ export const Maily = ({
   renderVariable = () => null,
   createVariableNodeView = defaultCreateVariableNodeView,
   translationValueInput,
+  editable = true,
   imageExtensionOptions,
   ...rest
 }: MailyProps) => {
@@ -218,6 +221,7 @@ export const Maily = ({
           blocks={blocks}
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
+          editable={editable}
           onUpdate={onUpdate}
           repeatMenuConfig={repeatMenuConfig}
           menuConfig={menuConfig}

@@ -1,12 +1,10 @@
-import { ChannelTypeEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
 import { type ReactNode } from 'react';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { ContentOverridePanel } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { StepEditorUnavailable } from '../step-editor-unavailable';
 
 type PushEditorProps = { uiSchema: UiSchema };
 
@@ -26,14 +24,9 @@ function PushOverrideEditor({ defaultContent }: { defaultContent: ReactNode }) {
 }
 
 export const PushEditor = (props: PushEditorProps) => {
-  const { currentEnvironment } = useEnvironment();
   const { uiSchema } = props;
   const { body, subject } = uiSchema?.properties ?? {};
   const areProviderOverridesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PUSH_PROVIDER_OVERRIDES_ENABLED);
-
-  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
-    return <StepEditorUnavailable />;
-  }
 
   const defaultContent =
     subject || body ? (
