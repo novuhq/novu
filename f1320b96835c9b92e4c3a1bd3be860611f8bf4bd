@@ -1,0 +1,857 @@
+import { defineSoftwareMap } from "@dev.fast/progressive-review/software-map-model";
+
+export default defineSoftwareMap({
+  people: {
+    agentDeveloper: {
+      label: "Agent developer",
+      description:
+        "Owns the customer agent handler. Calls AgentContext.reply() or posts /reply from a non-JS SDK.",
+    },
+    chatSdkDeveloper: {
+      label: "Chat SDK developer",
+      description:
+        "Owns a Chat SDK scaffold (novu init / novu connect --runtime chat-sdk). Calls thread.post() and adapter methods, not AgentContext.",
+    },
+    subscriber: {
+      label: "Subscriber",
+      description:
+        "The person on Slack, Teams, email, web chat, or another connected channel who sees the delivered reply.",
+    },
+  },
+  systems: {
+    customerRuntime: {
+      label: "Customer agent runtime",
+      description:
+        "Customer-owned process that writes conversation actions back to Novu. Two productized clients: @novu/framework (turn transport) and @novu/chat-sdk-adapter (Chat SDK scaffolds).",
+      containers: {
+        chatSdkAdapter: {
+          label: "@novu/chat-sdk-adapter",
+          description:
+            "Published Chat SDK adapter. Inbound HMAC webhook caches a ThreadSnapshot including deliveryId; every outbound action emits an AgentEvent through a per-conversation outbox to a derived ingest URL. Never reads inbound replyUrl or eventsUrl.",
+          changeStatus: "modified",
+          coverage: {
+            files: [
+              "packages/chat-adapter/src/adapter.ts",
+              "packages/chat-adapter/src/event-outbox.ts",
+              "packages/chat-adapter/src/event-mapper.ts",
+              "packages/chat-adapter/src/event-protocol.ts",
+              "packages/chat-adapter/src/types.ts",
+              "packages/chat-adapter/src/index.ts",
+            ],
+          },
+          components: {
+            novuAdapterImpl: {
+              label: "NovuAdapterImpl",
+              description:
+                "Chat SDK adapter. handleWebhook verifies HMAC, dedupes deliveryId, caches the snapshot with deliveryId, drops that conversation outbox, then dispatches. Outbound post/edit/reaction/signal/resolve emit AgentEvents and mint msg_* on post.",
+              changeStatus: "modified",
+              coverage: {
+                files: [
+                  {
+                    path: "packages/chat-adapter/src/adapter.ts",
+                    ranges: [
+                      { fromLine: 88, toLine: 596 },
+                    ],
+                  },
+                ],
+              },
+              codeElements: {
+                handleWebhook: {
+                  label: "handleWebhook()",
+                  description:
+                    "Verifies the bridge, dedupes on deliveryId, caches the snapshot, drops the conversation outbox, and dispatches onMessage / onAction / onReaction.",
+                  changeStatus: "modified",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/adapter.ts",
+                      fromLine: 154,
+                      toLine: 213,
+                    },
+                  ],
+                },
+                cacheSnapshot: {
+                  label: "cacheSnapshot()",
+                  description:
+                    "Persists history, conversation, subscriber, platform, and bridge.deliveryId as ThreadSnapshot.deliveryId (outbox turnId).",
+                  changeStatus: "modified",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/adapter.ts",
+                      fromLine: 224,
+                      toLine: 243,
+                    },
+                    {
+                      file: "packages/chat-adapter/src/types.ts",
+                      fromLine: 271,
+                      toLine: 280,
+                    },
+                  ],
+                },
+                outboundWrites: {
+                  label: "postMessage / edit / reaction / signal / resolve",
+                  description:
+                    "Five outbound methods. Each emits a typed AgentEvent through the conversation outbox. postMessage mints msg_* before emit and returns that id.",
+                  changeStatus: "modified",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/adapter.ts",
+                      fromLine: 355,
+                      toLine: 448,
+                    },
+                  ],
+                },
+                outboxFor: {
+                  label: "outboxFor()",
+                  description:
+                    "Returns the in-memory outbox for a conversation, or creates one with turnId = snapshot.deliveryId ?? turn_*.",
+                  changeStatus: "added",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/adapter.ts",
+                      fromLine: 552,
+                      toLine: 570,
+                    },
+                  ],
+                },
+              },
+            },
+            agentEventOutbox: {
+              label: "AgentEventOutbox",
+              description:
+                "Per-conversation sequenced outbox. Derives POST ${apiBaseUrl}/v1/agents/events/ingest. Never uses inbound replyUrl or eventsUrl. Retries 5xx, 408, and 429.",
+              changeStatus: "added",
+              coverage: {
+                files: [
+                  "packages/chat-adapter/src/event-outbox.ts",
+                  "packages/chat-adapter/src/event-mapper.ts",
+                  "packages/chat-adapter/src/event-protocol.ts",
+                ],
+              },
+              codeElements: {
+                deriveEventsUrl: {
+                  label: "deriveEventsUrl()",
+                  description:
+                    "Strips a trailing slash on apiBaseUrl and appends /v1/agents/events/ingest.",
+                  changeStatus: "added",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/event-outbox.ts",
+                      fromLine: 10,
+                      toLine: 14,
+                    },
+                  ],
+                },
+                emit: {
+                  label: "emit() / flush()",
+                  description:
+                    "Enqueues an AgentEvent envelope and POSTs { events } with ApiKey auth. Serializes concurrent emits on a promise chain.",
+                  changeStatus: "added",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/event-outbox.ts",
+                      fromLine: 86,
+                      toLine: 163,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        frameworkSdk: {
+          label: "Framework turn transport",
+          description:
+            "Chooses event-outbox or legacy POST transport, then writes replies, edits, typing, and side effects.",
+          coverage: {
+            files: [
+              "packages/framework/src/resources/agent/agent.context.ts",
+              "packages/framework/src/resources/agent/agent-event-outbox.ts",
+              "packages/framework/src/resources/agent/agent.types.ts",
+            ],
+          },
+          components: {
+            agentContext: {
+              label: "AgentContextImpl",
+              description:
+                "Turn API. Selects EventOutboxTransport when the bridge request has eventsUrl; otherwise LegacyPostTransport.",
+              coverage: {
+                files: [
+                  {
+                    path: "packages/framework/src/resources/agent/agent.context.ts",
+                    ranges: [{ fromLine: 601, toLine: 716 }],
+                  },
+                ],
+              },
+              codeElements: {
+                selectTransport: {
+                  label: "constructor transport selection",
+                  description:
+                    "Builds EventOutboxTransport + AgentEventOutbox from eventsUrl, or LegacyPostTransport from replyUrl.",
+                  sourceRanges: [
+                    {
+                      file: "packages/framework/src/resources/agent/agent.context.ts",
+                      fromLine: 636,
+                      toLine: 661,
+                    },
+                  ],
+                },
+                reply: {
+                  label: "reply()",
+                  description:
+                    "Serializes content, drains queued side effects, and sends them through the selected transport.",
+                  sourceRanges: [
+                    {
+                      file: "packages/framework/src/resources/agent/agent.context.ts",
+                      fromLine: 706,
+                      toLine: 716,
+                    },
+                  ],
+                },
+              },
+            },
+            eventOutboxTransport: {
+              label: "EventOutboxTransport",
+              description:
+                "SDK-native write path. Converts a reply into AgentEvent envelopes and flushes them through the outbox.",
+              coverage: {
+                files: [
+                  {
+                    path: "packages/framework/src/resources/agent/agent.context.ts",
+                    ranges: [{ fromLine: 459, toLine: 544 }],
+                  },
+                ],
+              },
+              codeElements: {
+                sendReply: {
+                  label: "sendReply()",
+                  description:
+                    "Mints a client message id, appends a durable assistant message event, and flushes the batch.",
+                  sourceRanges: [
+                    {
+                      file: "packages/framework/src/resources/agent/agent.context.ts",
+                      fromLine: 463,
+                      toLine: 476,
+                    },
+                  ],
+                },
+              },
+            },
+            legacyPostTransport: {
+              label: "LegacyPostTransport",
+              description:
+                "One POST per turn action against the bridge replyUrl. Used when the event protocol is off.",
+              coverage: {
+                files: [
+                  {
+                    path: "packages/framework/src/resources/agent/agent.context.ts",
+                    ranges: [{ fromLine: 364, toLine: 457 }],
+                  },
+                ],
+              },
+              codeElements: {
+                sendReply: {
+                  label: "sendReply()",
+                  description:
+                    "POSTs an AgentReplyPayload to /v1/agents/:id/reply with ApiKey auth.",
+                  sourceRanges: [
+                    {
+                      file: "packages/framework/src/resources/agent/agent.context.ts",
+                      fromLine: 373,
+                      toLine: 456,
+                    },
+                  ],
+                },
+              },
+            },
+            agentEventOutbox: {
+              label: "AgentEventOutbox",
+              description:
+                "Batches AgentEvent envelopes and POSTs them to eventsUrl with retry on 5xx, 408, and 429.",
+              coverage: {
+                files: [
+                  "packages/framework/src/resources/agent/agent-event-outbox.ts",
+                ],
+              },
+              codeElements: {
+                flush: {
+                  label: "flush()",
+                  description:
+                    "Drains the buffer and POSTs { events } to /v1/agents/events/ingest.",
+                  sourceRanges: [
+                    {
+                      file: "packages/framework/src/resources/agent/agent-event-outbox.ts",
+                      fromLine: 63,
+                      toLine: 125,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    novuApi: {
+      label: "Novu API",
+      description:
+        "Conversation write plane. Accepts /reply and event ingest, routes through AgentEventSink, persists activity, and delivers via chat-adapter.",
+      containers: {
+        httpIngress: {
+          label: "HTTP write ingress",
+          description:
+            "Three write entry points: authenticated /reply, authenticated event ingest, and the Thalamus webhook.",
+          coverage: {
+            files: [
+              "apps/api/src/app/agents/conversation-runtime/reply/agent-reply.controller.ts",
+              "apps/api/src/app/agents/shared/ingest-agent-events/agent-events-ingest.controller.ts",
+              "apps/api/src/app/agents/managed-runtime/managed-runtime.controller.ts",
+            ],
+          },
+          components: {
+            agentReplyController: {
+              label: "POST /agents/:agentId/reply",
+              description:
+                "Legacy and non-JS write API. Maps AgentReplyPayloadDto onto HandleAgentReply.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/conversation-runtime/reply/agent-reply.controller.ts",
+                ],
+              },
+              codeElements: {
+                handleAgentReplyHandler: {
+                  label: "handleAgentReplyHandler()",
+                  description:
+                    "Authenticated POST that executes HandleAgentReply and returns SentMessageInfo or null.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/conversation-runtime/reply/agent-reply.controller.ts",
+                      fromLine: 59,
+                      toLine: 149,
+                    },
+                  ],
+                },
+              },
+            },
+            agentEventsIngestController: {
+              label: "POST /agents/events/ingest",
+              description:
+                "SDK-native ingest. Distinct from the Thalamus /agents/events webhook so standard auth guards apply.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/shared/ingest-agent-events/agent-events-ingest.controller.ts",
+                ],
+              },
+              codeElements: {
+                ingest: {
+                  label: "ingest()",
+                  description:
+                    "Accepts a batch of AgentEvent envelopes and hands them to IngestAgentEvents.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/shared/ingest-agent-events/agent-events-ingest.controller.ts",
+                      fromLine: 24,
+                      toLine: 37,
+                    },
+                  ],
+                },
+              },
+            },
+            managedRuntimeController: {
+              label: "POST /agents/events",
+              description:
+                "Thalamus observer webhook. Forwards the raw request to ManagedAgentService.handleWebhook.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/managed-runtime/managed-runtime.controller.ts",
+                ],
+              },
+              codeElements: {
+                handleAgentEvents: {
+                  label: "handleAgentEvents()",
+                  description: "Webhook entry for managed session stream parts.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/managed-runtime/managed-runtime.controller.ts",
+                      fromLine: 11,
+                      toLine: 14,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        eventIngest: {
+          label: "Event ingest and sink",
+          description:
+            "Validates a same-conversation batch, builds AgentEventContext, and dispatches each event to write handlers.",
+          coverage: {
+            files: [
+              "apps/api/src/app/agents/shared/ingest-agent-events/ingest-agent-events.usecase.ts",
+              "apps/api/src/app/agents/shared/agent-event-sink.service.ts",
+              "apps/api/src/app/agents/shared/agent-event-mappers.ts",
+              "packages/agent-event-protocol/src/agent-event.types.ts",
+            ],
+          },
+          components: {
+            ingestAgentEvents: {
+              label: "IngestAgentEvents",
+              description:
+                "Gate for the SDK path. Requires the event-protocol flag, rejects mixed batches, and resolves conversation identity.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/shared/ingest-agent-events/ingest-agent-events.usecase.ts",
+                ],
+              },
+              codeElements: {
+                execute: {
+                  label: "execute()",
+                  description:
+                    "Validates envelopes, loads conversation + agent + integration, then calls AgentEventSink.ingestMany.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/shared/ingest-agent-events/ingest-agent-events.usecase.ts",
+                      fromLine: 30,
+                      toLine: 167,
+                    },
+                  ],
+                },
+              },
+            },
+            agentEventSink: {
+              label: "AgentEventSink",
+              description:
+                "Shared write router for bridge ingest and managed Thalamus events. Assistant messages, channel ops, and run lifecycle become HandleAgentReply commands.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/shared/agent-event-sink.service.ts",
+                ],
+              },
+              codeElements: {
+                ingestMany: {
+                  label: "ingestMany()",
+                  description:
+                    "Walks a batch, skips delta events, and dispatches each durable event independently.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/shared/agent-event-sink.service.ts",
+                      fromLine: 95,
+                      toLine: 221,
+                    },
+                  ],
+                },
+                handleMessageEvent: {
+                  label: "handleMessageEvent()",
+                  description:
+                    "Accepts assistant messages only, dedupes by client message id, and writes through HandleAgentReply.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/shared/agent-event-sink.service.ts",
+                      fromLine: 290,
+                      toLine: 326,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        conversationWrite: {
+          label: "Conversation write",
+          description:
+            "Single command executor for reply, edit, typing, signals, tool results, and resolve. Persists activity then delivers.",
+          coverage: {
+            files: [
+              "apps/api/src/app/agents/conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase.ts",
+              "apps/api/src/app/agents/conversation-runtime/conversation/agent-conversation.service.ts",
+            ],
+          },
+          components: {
+            handleAgentReply: {
+              label: "HandleAgentReply",
+              description:
+                "Validates mutually exclusive actions, loads the conversation, persists tool/ledger rows, and delivers through OutboundGateway.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase.ts",
+                ],
+              },
+              codeElements: {
+                execute: {
+                  label: "execute()",
+                  description:
+                    "Applies action rules, then typing, edit, persist, deliver, signals, reactions, deletes, and resolve.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase.ts",
+                      fromLine: 73,
+                      toLine: 298,
+                    },
+                  ],
+                },
+                deliverMessage: {
+                  label: "deliverMessage()",
+                  description:
+                    "Builds approval-card content when needed and posts through OutboundGateway.deliver.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase.ts",
+                      fromLine: 404,
+                      toLine: 449,
+                    },
+                  ],
+                },
+              },
+            },
+            conversationService: {
+              label: "AgentConversationService",
+              description:
+                "Persists conversation rows, agent messages, tool ledger entries, custom events, and run lifecycle activity.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/conversation-runtime/conversation/agent-conversation.service.ts",
+                ],
+              },
+            },
+          },
+        },
+        outboundDelivery: {
+          label: "Outbound chat-adapter delivery",
+          description:
+            "Posts the persisted reply to the channel through ChatInstanceRegistry-built @chat-adapter adapters.",
+          coverage: {
+            files: [
+              "apps/api/src/app/agents/conversation-runtime/egress/outbound.gateway.ts",
+              "apps/api/src/app/agents/conversation-runtime/ingress/chat-instance.registry.ts",
+            ],
+          },
+          components: {
+            outboundGateway: {
+              label: "OutboundGateway",
+              description:
+                "Delivery chokepoint. Persists then posts when the runtime minted a message id; posts then persists otherwise.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/conversation-runtime/egress/outbound.gateway.ts",
+                ],
+              },
+              codeElements: {
+                deliver: {
+                  label: "deliver()",
+                  description:
+                    "Idempotent outbound write. Uses the activity identifier unique index as the concurrent-delivery claim.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/conversation-runtime/egress/outbound.gateway.ts",
+                      fromLine: 111,
+                      toLine: 169,
+                    },
+                  ],
+                },
+              },
+            },
+            chatInstanceRegistry: {
+              label: "ChatInstanceRegistry",
+              description:
+                "Builds and caches Chat SDK instances with Slack, Teams, Telegram, WhatsApp, email, Sendblue, and web-chat adapters.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/conversation-runtime/ingress/chat-instance.registry.ts",
+                ],
+              },
+            },
+          },
+        },
+        managedRuntime: {
+          label: "Managed Thalamus handler",
+          description:
+            "Turns Thalamus stream parts into AgentEvent envelopes and feeds the shared sink with source=managed.",
+          coverage: {
+            files: [
+              "apps/api/src/app/agents/managed-runtime/managed-agent.service.ts",
+              "apps/api/src/app/agents/managed-runtime/managed-agent-event-handler.service.ts",
+              "apps/api/src/app/agents/managed-runtime/stream-part-mapper.ts",
+            ],
+          },
+          components: {
+            managedAgentService: {
+              label: "ManagedAgentService",
+              description:
+                "Owns the Thalamus webhook handler. onSessionEvents builds ManagedAgentEventHandler callbacks.",
+              coverage: {
+                files: [
+                  {
+                    path: "apps/api/src/app/agents/managed-runtime/managed-agent.service.ts",
+                    ranges: [
+                      { fromLine: 352, toLine: 418 },
+                    ],
+                  },
+                ],
+              },
+            },
+            managedAgentEventHandler: {
+              label: "ManagedAgentEventHandler",
+              description:
+                "Dual adapter. When the event-protocol flag is on, onPart maps every StreamPart; otherwise the typed callbacks ingest.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/managed-runtime/managed-agent-event-handler.service.ts",
+                ],
+              },
+              codeElements: {
+                createHandlers: {
+                  label: "createHandlers()",
+                  description:
+                    "Builds AgentEventContext (source=managed) and ingestPart → AgentEventSink.ingestMany.",
+                  sourceRanges: [
+                    {
+                      file: "apps/api/src/app/agents/managed-runtime/managed-agent-event-handler.service.ts",
+                      fromLine: 25,
+                      toLine: 140,
+                    },
+                  ],
+                },
+              },
+            },
+            streamPartMapper: {
+              label: "mapStreamPart / RunEventBuilder",
+              description:
+                "Expands one Thalamus StreamPart into one or more AgentEvent envelopes for a run.",
+              coverage: {
+                files: [
+                  "apps/api/src/app/agents/managed-runtime/stream-part-mapper.ts",
+                ],
+              },
+            },
+          },
+        },
+      },
+      dataStores: {
+        conversationMongo: {
+          label: "Conversation Mongo",
+          description:
+            "Durable conversation identity and the activity ledger written by HandleAgentReply and the sink.",
+          kind: "database",
+          coverage: {
+            files: [
+              "libs/dal/src/repositories/conversation/conversation.schema.ts",
+              "libs/dal/src/repositories/conversation-activity/conversation-activity.schema.ts",
+            ],
+          },
+          documents: {
+            conversations: {
+              label: "conversations",
+              key: "_id",
+              schema: {
+                _id: { type: "ObjectId", pk: true },
+                identifier: { type: "string" },
+                _agentId: { type: "ObjectId" },
+                status: { type: "string", example: "active" },
+                channels: {
+                  platform: { type: "string", example: "slack" },
+                  _integrationId: { type: "ObjectId" },
+                  platformThreadId: { type: "string" },
+                },
+                _environmentId: { type: "ObjectId" },
+                _organizationId: { type: "ObjectId" },
+              },
+            },
+            conversationActivities: {
+              label: "conversationactivities",
+              key: "identifier",
+              schema: {
+                _id: { type: "ObjectId", pk: true },
+                identifier: {
+                  type: "string",
+                  example: "client-minted message id used for idempotent delivery",
+                },
+                _conversationId: {
+                  type: "ObjectId",
+                  fk: { table: "conversations", field: "_id" },
+                },
+                type: { type: "string", example: "message" },
+                content: { type: "string" },
+                platformMessageId: { type: "string" },
+                senderType: { type: "string", example: "agent" },
+                _environmentId: { type: "ObjectId" },
+                _organizationId: { type: "ObjectId" },
+              },
+            },
+          },
+        },
+      },
+    },
+    thalamus: {
+      label: "Thalamus",
+      description:
+        "Cloudflare durable observer. Runs the managed agent session and streams session events back to POST /v1/agents/events.",
+      external: true,
+    },
+    channelPlatforms: {
+      label: "Channel platforms",
+      description:
+        "Slack, Teams, Telegram, WhatsApp, email, Sendblue, and web chat. Final destination of an outbound write.",
+      external: true,
+    },
+  },
+  relationships: [
+    {
+      kind: "semantic",
+      from: "agentDeveloper",
+      to: "customerRuntime.frameworkSdk.agentContext",
+      label: "Calls reply()",
+      description:
+        "The handler writes conversation output through AgentContext, not by talking to Slack directly.",
+    },
+    {
+      kind: "semantic",
+      from: "chatSdkDeveloper",
+      to: "customerRuntime.chatSdkAdapter.novuAdapterImpl",
+      label: "Calls thread.post()",
+      description:
+        "Chat SDK handlers write through the adapter. They never POST /reply themselves.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.chatSdkAdapter.novuAdapterImpl",
+      to: "customerRuntime.chatSdkAdapter.agentEventOutbox",
+      label: "outbox.emit()",
+      description:
+        "postMessage, editMessage, addReaction, emitSignals, and emitResolve all share this per-conversation outbox.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.chatSdkAdapter.agentEventOutbox",
+      to: "novuApi.httpIngress.agentEventsIngestController",
+      label: "POST derived /v1/agents/events/ingest",
+      description:
+        "Always derived from apiBaseUrl. Inbound replyUrl and eventsUrl are ignored.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.frameworkSdk.agentContext",
+      to: "customerRuntime.frameworkSdk.eventOutboxTransport",
+      label: "Uses event transport",
+      description: "Selected when the bridge request includes eventsUrl.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.frameworkSdk.agentContext",
+      to: "customerRuntime.frameworkSdk.legacyPostTransport",
+      label: "Uses legacy transport",
+      description: "Selected when eventsUrl is absent.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.frameworkSdk.eventOutboxTransport",
+      to: "customerRuntime.frameworkSdk.agentEventOutbox",
+      label: "Enqueues AgentEvents",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.frameworkSdk.agentEventOutbox",
+      to: "novuApi.httpIngress.agentEventsIngestController",
+      label: "POST /v1/agents/events/ingest",
+      description: "Authenticated batch of AgentEvent envelopes.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.frameworkSdk.legacyPostTransport",
+      to: "novuApi.httpIngress.agentReplyController",
+      label: "POST /v1/agents/:id/reply",
+      description: "One AgentReplyPayload per turn action.",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.httpIngress.agentEventsIngestController",
+      to: "novuApi.eventIngest.ingestAgentEvents",
+      label: "Validates the batch",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.eventIngest.ingestAgentEvents",
+      to: "novuApi.eventIngest.agentEventSink",
+      label: "ingestMany(source=bridge)",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.httpIngress.agentReplyController",
+      to: "novuApi.conversationWrite.handleAgentReply",
+      label: "Executes the reply command",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.eventIngest.agentEventSink",
+      to: "novuApi.conversationWrite.handleAgentReply",
+      label: "Dispatches write events",
+      description:
+        "message, channel.*, signal, resolve, tool-approval-request, and run-error become HandleAgentReply commands.",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.conversationWrite.handleAgentReply",
+      to: "novuApi.conversationWrite.conversationService",
+      label: "Persists ledger rows",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.conversationWrite.conversationService",
+      to: "novuApi.conversationMongo",
+      label: "Writes conversation + activity",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.conversationWrite.handleAgentReply",
+      to: "novuApi.outboundDelivery.outboundGateway",
+      label: "Delivers the reply",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.outboundDelivery.outboundGateway",
+      to: "novuApi.outboundDelivery.chatInstanceRegistry",
+      label: "Resolves the Chat adapter",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.outboundDelivery.chatInstanceRegistry",
+      to: "channelPlatforms",
+      label: "Posts via chat-adapter",
+    },
+    {
+      kind: "semantic",
+      from: "thalamus",
+      to: "novuApi.httpIngress.managedRuntimeController",
+      label: "Webhook POST /v1/agents/events",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.httpIngress.managedRuntimeController",
+      to: "novuApi.managedRuntime.managedAgentService",
+      label: "handleWebhook()",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.managedRuntime.managedAgentService",
+      to: "novuApi.managedRuntime.managedAgentEventHandler",
+      label: "onSessionEvents",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.managedRuntime.managedAgentEventHandler",
+      to: "novuApi.managedRuntime.streamPartMapper",
+      label: "Maps StreamPart → AgentEvent",
+    },
+    {
+      kind: "semantic",
+      from: "novuApi.managedRuntime.managedAgentEventHandler",
+      to: "novuApi.eventIngest.agentEventSink",
+      label: "ingestMany(source=managed)",
+    },
+    {
+      kind: "semantic",
+      from: "channelPlatforms",
+      to: "subscriber",
+      label: "Shows the delivered message",
+    },
+  ],
+});
