@@ -328,74 +328,26 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       /**
-       * A claimed routing override is the destination, so this channel sends exactly once — with or
-       * without stored device tokens, which the provider ignores in favour of that destination.
-       * Only the addressed tokens (empty for token/topic/condition) reach the message record; the
-       * subscriber's stored tokens were never targeted.
+       * A claimed routing override is the destination, so this channel sends once with a dummy
+       * target — stored device tokens are never addressed. Recorded tokens are only those the
+       * override actually targets (empty for token/topic/condition).
        */
       const destinationOverride = providersWithCredentialOverrides.find(
         (override) => override.providerId === channel.providerId
       );
+      const destination = destinationOverride
+        ? extractPushRoutingCredentials(destinationOverride.providerId, destinationOverride.overrides)
+        : undefined;
+      const targetDeviceTokens = destinationOverride ? [''] : target || [];
+      const recordedDeviceTokens = destinationOverride ? destination?.deviceTokens : target;
 
-      if (destinationOverride) {
-        const destination = extractPushRoutingCredentials(
-          destinationOverride.providerId,
-          destinationOverride.overrides
-        );
-
-        const message = await this.createMessage({
-          command,
-          integration,
-          title,
-          content,
-          deviceTokens: destination?.deviceTokens,
-          overrides,
-        });
-
-        const result = await this.sendMessage(
-          command,
-          message,
-          subscriber,
-          integration,
-
-          // credentials provided in the overrides
-          '',
-          title,
-          content,
-          overrides,
-          stepData
-        );
-
-        if (result.success) {
-          status = SendMessageStatus.SUCCESS;
-        } else {
-          const errorMessage = result.error.message || result.error.toString();
-          const logMethod = isSubscriberError(errorMessage) ? 'debug' : 'error';
-          Logger[logMethod](
-            { jobId: command.jobId },
-            `Error sending push notification for jobId ${command.jobId} ${errorMessage}`,
-            LOG_CONTEXT
-          );
-        }
-
-        this.messageRepository.update(
-          { _id: message._id, _environmentId: command.environmentId },
-          {
-            identifier: message._id,
-          }
-        );
-
-        continue;
-      }
-
-      const targetDeviceTokens = target || [];
       for (const deviceToken of targetDeviceTokens) {
         const message = await this.createMessage({
           command,
           integration,
           title,
           content,
-          deviceTokens: target,
+          deviceTokens: recordedDeviceTokens,
           overrides,
         });
 

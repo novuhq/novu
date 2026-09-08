@@ -473,6 +473,7 @@ describe('FcmPushProvider', () => {
         expect(spy).toHaveBeenCalledWith({
           tokens: [token],
           data: {
+            foo: 'bar',
             title: 'Test',
             body: 'Test push',
             message: 'Test push',
@@ -824,6 +825,44 @@ describe('FcmPushProvider', () => {
       android: { priority: 'high' },
       data: {
         key_1: 'val_1',
+        title: 'Test',
+        body: 'Test push',
+        message: 'Test push',
+      },
+    });
+    expect(sendSpy.mock.calls[0][0]).not.toHaveProperty('notification');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('should merge payload and override data on a data-only topic send', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/data-only-merged');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {
+          key_1: 'val_1',
+        },
+        overrides: {
+          type: 'data',
+          data: { foo: 'bar' },
+        },
+        subscriber,
+        step,
+      },
+      { topic: 'news' }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news',
+      data: {
+        key_1: 'val_1',
+        foo: 'bar',
         title: 'Test',
         body: 'Test push',
         message: 'Test push',

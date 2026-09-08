@@ -208,11 +208,7 @@ export default function FcmWebPushPage() {
   const [diagnostics, setDiagnostics] = useState<FcmSwDiagnostics | null>(null);
   const [swLogs, setSwLogs] = useState<FcmSwLogEntry[]>([]);
   const [testStatus, setTestStatus] = useState<ActionStatus>({ type: 'idle' });
-  const isBusy =
-    tokenStatus.type === 'loading' ||
-    registerStatus.type === 'loading' ||
-    topicStatus.type === 'loading' ||
-    triggerStatus.type === 'loading';
+  const isBusy = tokenStatus.type === 'loading' || registerStatus.type === 'loading' || topicStatus.type === 'loading';
 
   const missingEnv = useMemo(() => {
     const missing = getMissingFirebaseConfigKeys(getFirebaseWebConfig());
@@ -875,7 +871,12 @@ export default function FcmWebPushPage() {
           </p>
 
           <div className="mt-3">
-            <button type="button" className={buttonClass} onClick={handleTriggerWorkflow} disabled={isBusy}>
+            <button
+              type="button"
+              className={buttonClass}
+              onClick={handleTriggerWorkflow}
+              disabled={triggerStatus.type === 'loading'}
+            >
               Trigger push workflow
             </button>
           </div>

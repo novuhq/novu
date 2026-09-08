@@ -135,8 +135,8 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
   /**
    * Shapes the title/body of a message, shared by both send paths so a data-only message looks the
    * same whether it goes to `tokens`, a `token`, a `topic` or a `condition`. `type: 'data'` keeps
-   * FCM from rendering a notification itself: the payload and the copy ride inside `data` for the
-   * client to render. `notificationOverrides` only applies to the multicast path.
+   * FCM from rendering a notification itself: the payload, override `data`, and the copy ride
+   * inside `data` for the client to render. `notificationOverrides` only applies to the multicast path.
    */
   private buildContent(
     options: IPushOptions,
@@ -156,6 +156,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       return {
         data: {
           ...payload,
+          ...data,
           title: options.title,
           body: options.content,
           message: options.content,
