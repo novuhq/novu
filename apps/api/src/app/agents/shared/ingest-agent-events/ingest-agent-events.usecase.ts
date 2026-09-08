@@ -26,15 +26,20 @@ export class IngestAgentEvents {
   }
 
   async execute(command: IngestAgentEventsCommand): Promise<void> {
-    const invalidIndexes = command.events
-      .map((event, index) => (isAgentEventEnvelope(event) ? null : index))
-      .filter((index): index is number => index !== null);
+    const envelopes: AgentEventEnvelope[] = [];
+    const invalidIndexes: number[] = [];
+
+    for (const [index, event] of command.events.entries()) {
+      if (isAgentEventEnvelope(event)) {
+        envelopes.push(event);
+      } else {
+        invalidIndexes.push(index);
+      }
+    }
 
     if (invalidIndexes.length > 0) {
       throw new BadRequestException(`Invalid event envelopes at indexes: ${invalidIndexes.join(', ')}`);
     }
-
-    const envelopes = command.events.filter(isAgentEventEnvelope);
 
     // SDK outbox stamps one conversationId and one agentId per turn; a mixed batch is always a client error.
     const conversationIds = new Set(envelopes.map((envelope) => envelope.conversationId));
