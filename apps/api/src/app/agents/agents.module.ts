@@ -34,19 +34,11 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
-import { WebChatController } from './web-chat/web-chat.controller';
-import { WebChatAcceptIdempotencyService } from './web-chat/web-chat-accept-idempotency.service';
-import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
-import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
-import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
-import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
-import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
-import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
-import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { PhotonDeviceAuthBindingService } from './channels/photon-imessage/shared/photon-device-auth-binding.service';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
+import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -54,7 +46,7 @@ import { AgentConversationService } from './conversation-runtime/conversation/ag
 import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
-import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger.service';
+import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger';
 import { ConversationEventSequenceService } from './conversation-runtime/conversation/conversation-event-sequence.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
@@ -101,13 +93,21 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
-import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { AgentConversationEnabledGuard } from './shared/agent-conversation-enabled.guard';
 import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
 import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
+import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
+import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatAcceptIdempotencyService } from './web-chat/web-chat-accept-idempotency.service';
+import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
+import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
+import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
+import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
+import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
+import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
 
 @Module({
   imports: [

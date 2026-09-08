@@ -1,5 +1,5 @@
 import { iMessageAdapter } from '@photon-ai/chat-adapter-imessage';
-import type { AdapterPostableMessage, CardElement, RawMessage, WebhookOptions } from 'chat';
+import type { AdapterPostableMessage, RawMessage, WebhookOptions } from 'chat';
 import { ConsoleLogger } from 'chat';
 import { renderCardAsMarkdown } from './card-renderer.js';
 import type { PhotonImessageAdapterConfig } from './types.js';
@@ -52,9 +52,8 @@ export class PhotonImessageAdapterImpl extends iMessageAdapter {
    * spectrum app (gRPC channels, token renewal) on every registry eviction.
    */
   async disconnect(): Promise<void> {
-    const self = this as unknown as { app?: { stop(): Promise<void> } | null };
-    await self.app?.stop();
-    self.app = null;
+    await this.app?.stop();
+    this.app = null;
   }
 
   /**
@@ -101,16 +100,20 @@ export class PhotonImessageAdapterImpl extends iMessageAdapter {
       return message;
     }
 
-    const record = message as unknown as Record<string, unknown>;
-    const card = (record.card ?? (record.type === 'card' ? record : undefined)) as CardElement | undefined;
+    const card = 'card' in message ? message.card : undefined;
+    const bareCard = 'type' in message && message.type === 'card' ? message : undefined;
+    const resolvedCard = card ?? bareCard;
 
-    if (!card) {
+    if (!resolvedCard) {
       return message;
     }
 
-    const fallbackText = typeof record.fallbackText === 'string' ? record.fallbackText : undefined;
-    const files = Array.isArray(record.files) && record.files.length > 0 ? record.files : undefined;
+    const fallbackText = 'fallbackText' in message ? message.fallbackText : undefined;
+    const files = 'files' in message && message.files?.length ? message.files : undefined;
 
-    return { markdown: fallbackText ?? renderCardAsMarkdown(card), ...(files ? { files } : {}) } as AdapterPostableMessage;
+    return {
+      markdown: fallbackText ?? renderCardAsMarkdown(resolvedCard),
+      ...(files ? { files } : {}),
+    };
   }
 }

@@ -479,7 +479,7 @@ export function buildCredentialGroups({
   channelConnections = [],
   includeToolChannel = false,
 }: BuildCredentialGroupsArgs): ChannelGroup[] {
-  const storedChannels = (subscriber.channels ?? []) as unknown as StoredChannel[];
+  const storedChannels: StoredChannel[] = subscriber.channels ?? [];
   const email = subscriber.email ?? '';
   const phone = subscriber.phone ?? '';
 

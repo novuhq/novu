@@ -282,8 +282,20 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
       contents.push(primary);
     }
 
+    contents.push(...this.composeMediaContents(builders, overrides));
+
+    if (contents.length === 0) {
+      throw new Error('Photon iMessage send requires non-empty text, an attachment, or a voice note');
+    }
+
+    return contents;
+  }
+
+  private composeMediaContents(builders: SpectrumBuilders, overrides: IPhotonSendOverrides): unknown[] {
+    const contents: unknown[] = [];
     const attachments =
       typeof overrides.attachments === 'string' ? [overrides.attachments] : (overrides.attachments ?? []);
+
     for (const attachmentUrl of attachments) {
       if (typeof attachmentUrl === 'string' && attachmentUrl.length > 0) {
         contents.push(builders.attachment(attachmentUrl));
@@ -292,10 +304,6 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
 
     if (typeof overrides.voice === 'string' && overrides.voice.length > 0) {
       contents.push(builders.voice(overrides.voice));
-    }
-
-    if (contents.length === 0) {
-      throw new Error('Photon iMessage send requires non-empty text, an attachment, or a voice note');
     }
 
     return contents;

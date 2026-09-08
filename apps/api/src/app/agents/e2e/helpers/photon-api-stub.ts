@@ -33,8 +33,14 @@ let webhookIdCounter = 0;
 
 const succeed = (data: unknown) => ({ succeed: true, data });
 
-function buildResponse(method: string, path: string, payload: Record<string, unknown>): Record<string, unknown> {
-  // Spectrum Cloud control-plane surface (enveloped responses).
+type StubResponse = Record<string, unknown>;
+
+function buildResponse(method: string, path: string, payload: Record<string, unknown>): StubResponse {
+  return buildSpectrumResponse(method, path, payload) ?? buildDashboardResponse(method, path, payload) ?? succeed({});
+}
+
+// Spectrum Cloud control-plane surface (enveloped responses) + imessage-http REST transcoder.
+function buildSpectrumResponse(method: string, path: string, payload: Record<string, unknown>): StubResponse | null {
   const platformsMatch = path.match(/^\/projects\/([^/]+)\/platforms$/);
   if (platformsMatch && method === 'PATCH') {
     return succeed({ platform: payload.platform, enabled: payload.enabled });
@@ -100,7 +106,11 @@ function buildResponse(method: string, path: string, payload: Record<string, unk
     return { messageGuid: `stub-message-${Date.now()}` };
   }
 
-  // Photon Dashboard API surface (better-auth device flow + projects).
+  return null;
+}
+
+// Photon Dashboard API surface (better-auth device flow + projects).
+function buildDashboardResponse(method: string, path: string, payload: Record<string, unknown>): StubResponse | null {
   if (path === '/api/auth/device/code' && method === 'POST') {
     return {
       device_code: nextDeviceCode,
@@ -132,7 +142,7 @@ function buildResponse(method: string, path: string, payload: Record<string, unk
     return { id: path.split('/').pop(), projectSecret: 'stub-project-secret' };
   }
 
-  return succeed({});
+  return null;
 }
 
 async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {

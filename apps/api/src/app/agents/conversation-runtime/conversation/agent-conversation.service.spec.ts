@@ -8,7 +8,7 @@ import {
   getInboundActivityPreview,
   INBOUND_ATTACHMENT_ONLY_PREVIEW,
 } from './agent-conversation.service';
-import { ConversationActivityLedger } from './conversation-activity-ledger.service';
+import { ConversationActivityLedger } from './conversation-activity-ledger';
 
 describe('AgentConversationService', () => {
   function makeLogger() {

@@ -131,6 +131,13 @@ export function isSendblueDirectThreadId(platformThreadId: string): boolean {
  * chatGuid carries the iMessage `;-;` marker while group guids use `;+;`. Unrecognized
  * shapes fail closed so a group thread never receives a personally-addressed payload.
  */
+/** Direct-thread check for the iMessage vendors, which encode thread ids differently. */
+export function isImessageDirectThreadId(platform: AgentPlatformEnum, platformThreadId: string): boolean {
+  return platform === AgentPlatformEnum.SENDBLUE
+    ? isSendblueDirectThreadId(platformThreadId)
+    : isPhotonImessageDirectThreadId(platformThreadId);
+}
+
 export function isPhotonImessageDirectThreadId(platformThreadId: string): boolean {
   if (!platformThreadId.startsWith('imessage:')) {
     return false;

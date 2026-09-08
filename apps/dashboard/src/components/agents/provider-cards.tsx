@@ -106,6 +106,20 @@ type ProviderCardItem = {
  * flow keeps at most one iMessage vendor linked, every downstream status check
  * (selected/connected/in-setup) is correct against the active vendor alone.
  */
+/** Grid order of the channel cards; unlisted providers sort last. */
+const PROVIDER_CARD_RANK: Record<string, number> = {
+  [ChatProviderIdEnum.NovuWebChat]: 0,
+  [ChatProviderIdEnum.Slack]: 1,
+  [EmailProviderIdEnum.NovuAgent]: 2,
+  [ChatProviderIdEnum.WhatsAppBusiness]: 3,
+  [ChatProviderIdEnum.MsTeams]: 4,
+  [ChatProviderIdEnum.Discord]: 5,
+};
+
+function rankProviderCard(providerId: string): number {
+  return PROVIDER_CARD_RANK[providerId] ?? 6;
+}
+
 function mergeImessageCards(
   items: ProviderCardItem[],
   existingLinks: AgentIntegrationLink[] | undefined
@@ -535,20 +549,7 @@ export function ProviderCards({
       existingLinks
     );
 
-    return [...built].sort((left, right) => {
-      const rank = (providerId: string) => {
-        if (providerId === ChatProviderIdEnum.NovuWebChat) return 0;
-        if (providerId === ChatProviderIdEnum.Slack) return 1;
-        if (providerId === EmailProviderIdEnum.NovuAgent) return 2;
-        if (providerId === ChatProviderIdEnum.WhatsAppBusiness) return 3;
-        if (providerId === ChatProviderIdEnum.MsTeams) return 4;
-        if (providerId === ChatProviderIdEnum.Discord) return 5;
-
-        return 6;
-      };
-
-      return rank(left.providerId) - rank(right.providerId);
-    });
+    return [...built].sort((left, right) => rankProviderCard(left.providerId) - rankProviderCard(right.providerId));
   }, [conversationalProviders, integrations, existingLinks]);
 
   const linkedIntegrationIds = useMemo(
@@ -641,8 +642,7 @@ export function ProviderCards({
     }
 
     const integration =
-      integrations?.find((i) => i._id === existingLink.integration._id) ??
-      (existingLink.integration as unknown as IIntegration);
+      integrations?.find((i) => i._id === existingLink.integration._id) ?? (existingLink.integration as IIntegration);
     onSelect(item.providerId, integration);
 
     return true;

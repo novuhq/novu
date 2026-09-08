@@ -23,7 +23,7 @@ import {
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
 import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
-import { resolvePlanDeliveryMode } from './plan-live-delivery';
+import { isNativePlanAdapter, resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
 import {
@@ -269,9 +269,7 @@ export class OutboundGateway {
     let sequence: number | undefined;
     try {
       const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
-      const collected = await this.deliveryInfo.collect(() =>
-        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg)
-      );
+      const collected = await this.deliveryInfo.collect(() => thread.post(postArg));
       sent = collected.result;
       sequence = collected.info.sequence;
     } catch (err) {
@@ -368,10 +366,10 @@ export class OutboundGateway {
       return postArg;
     }
 
-    return {
-      ...(postArg as unknown as Record<string, unknown>),
-      messageId: preferredMessageId,
-    } as unknown as AdapterPostableMessage;
+    const base = typeof postArg === 'string' ? { raw: postArg } : postArg;
+    const withMessageId: AdapterPostableMessage & { messageId: string } = { ...base, messageId: preferredMessageId };
+
+    return withMessageId;
   }
 
   async startTypingInConversation(
@@ -658,9 +656,9 @@ export class OutboundGateway {
       return null;
     }
 
-    if (mode === 'native') {
+    if (isNativePlanAdapter(adapter)) {
       const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.postObject!(platformThreadId, 'plan', model)
+        adapter.postObject(platformThreadId, 'plan', model)
       ).catch(toDeliveryError);
 
       return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -696,9 +694,9 @@ export class OutboundGateway {
       return;
     }
 
-    if (mode === 'native') {
+    if (isNativePlanAdapter(adapter)) {
       await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.editObject!(platformThreadId, platformMessageId, 'plan', model)
+        adapter.editObject(platformThreadId, platformMessageId, 'plan', model)
       ).catch(toDeliveryError);
 
       return;
@@ -985,7 +983,7 @@ export class OutboundGateway {
   private async buildThreadPostArg(
     msg: OutboundMessage,
     actionTokenBinding?: AgentActionTokenBinding
-  ): Promise<unknown> {
+  ): Promise<AdapterPostableMessage> {
     if (!msg.card || !actionTokenBinding) {
       return this.toThreadPostArg(msg);
     }
@@ -1040,11 +1038,11 @@ export class OutboundGateway {
     return '';
   }
 
-  private toThreadPostArg(msg: OutboundMessage): unknown {
+  private toThreadPostArg(msg: OutboundMessage): AdapterPostableMessage {
     if (msg.markdown && !msg.card) {
       return msg.markdown;
     }
 
-    return msg.card ?? msg;
+    return msg.card ?? (msg as AdapterPostableMessage);
   }
 }

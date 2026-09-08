@@ -279,6 +279,7 @@ export function ManagedAgentRecap({
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing onboarding orchestrator; splitting it is tracked separately
 export function AgentSetupSteps({
   agent,
   onSetupComplete,
@@ -471,11 +472,7 @@ export function AgentSetupSteps({
   // user embeds useWebChat and sends a first message (Connected = first inbound, like Slack).
   const genericContinueGateProviders = useMemo(
     () =>
-      new Set<string>([
-        ChatProviderIdEnum.Sendblue,
-        ChatProviderIdEnum.PhotonImessage,
-        ChatProviderIdEnum.NovuWebChat,
-      ]),
+      new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.PhotonImessage, ChatProviderIdEnum.NovuWebChat]),
     []
   );
   const useGenericContinueGate =
