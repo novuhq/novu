@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { type AgentEventEnvelope, isAgentEventEnvelope } from '@novu/agent-event-protocol';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { isAgentEventEnvelope } from '@novu/agent-event-protocol';
+import { PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { resolveLifecycleChannel } from '../../conversation-runtime/conversation/run-lifecycle-activity';
 import { AgentEventContext, AgentEventSink } from '../agent-event-sink.service';
@@ -21,15 +20,12 @@ export class IngestAgentEvents {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationService: AgentConversationService,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: IngestAgentEventsCommand): Promise<void> {
-    await this.assertProtocolEnabled(command.organizationId, command.environmentId);
-
     const invalidIndexes = command.events
       .map((event, index) => (isAgentEventEnvelope(event) ? null : index))
       .filter((index): index is number => index !== null);
@@ -38,7 +34,7 @@ export class IngestAgentEvents {
       throw new BadRequestException(`Invalid event envelopes at indexes: ${invalidIndexes.join(', ')}`);
     }
 
-    const envelopes = command.events as unknown as AgentEventEnvelope[];
+    const envelopes = command.events.filter(isAgentEventEnvelope);
 
     // SDK outbox stamps one conversationId and one agentId per turn; a mixed batch is always a client error.
     const conversationIds = new Set(envelopes.map((envelope) => envelope.conversationId));
@@ -54,19 +50,6 @@ export class IngestAgentEvents {
     }
 
     await this.ingestBatch(envelopes, command);
-  }
-
-  private async assertProtocolEnabled(organizationId: string, environmentId: string): Promise<void> {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-      environment: { _id: environmentId },
-    });
-
-    if (!isEnabled) {
-      throw new NotFoundException();
-    }
   }
 
   private async ingestBatch(envelopes: AgentEventEnvelope[], command: IngestAgentEventsCommand): Promise<void> {
