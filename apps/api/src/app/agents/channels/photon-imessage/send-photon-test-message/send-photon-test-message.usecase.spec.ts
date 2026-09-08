@@ -119,7 +119,9 @@ describe('SendAgentPhotonTestMessage usecase', () => {
 
   it('classifies a recipient registration failure as invalid_recipient', async () => {
     sendMessageStub.rejects(
-      new Error('Photon could not register recipient +1415 on the shared iMessage line: bad number')
+      new Error(
+        'Photon could not register recipient +1415 on the shared iMessage line: phoneNumber must be a valid E.164 number'
+      )
     );
 
     const result = await buildUsecase().execute(buildCommand());
