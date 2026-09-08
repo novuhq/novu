@@ -5,6 +5,7 @@ import {
   FeatureFlagsKeysEnum,
   HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS,
   HumanInteractionKindEnum,
+  type HumanOptionInput,
 } from '@novu/shared';
 import { CreateConversationInteractionCommand } from '../../../human/usecases/create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../../../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
@@ -73,9 +74,8 @@ export class HandleNovuHuman {
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
           kind: parsed.kind,
-          prompt: parsed.prompt,
           requestId: buildNovuHumanRequestId(command.sessionId, command.toolUseId),
-          options: parsed.options,
+          card: parsed.card,
           from: parsed.from ?? command.agentIdentifier,
           ttlSeconds: parsed.ttlSeconds,
           ...(command.subscriberId ? { to: command.subscriberId } : {}),
@@ -128,16 +128,78 @@ export class HandleNovuHuman {
   }
 }
 
+type ParsedNovuHumanCard = {
+  title: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+};
+
 type ParsedNovuHumanInput =
   | {
       ok: true;
       kind: HumanInteractionKindEnum;
-      prompt: string;
-      options?: string[];
+      card: ParsedNovuHumanCard;
       from?: string;
       ttlSeconds?: number;
     }
   | { ok: false; code: string; message: string };
+
+function parseOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function parseHumanOptionInputs(value: unknown): HumanOptionInput[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item): HumanOptionInput[] => {
+    if (typeof item === 'string' && item.trim()) {
+      return [item.trim()];
+    }
+
+    if (item && typeof item === 'object') {
+      const id = parseOptionalString((item as { id?: unknown }).id);
+      const label = parseOptionalString((item as { label?: unknown }).label);
+      if (id && label) {
+        return [{ id, label }];
+      }
+    }
+
+    return [];
+  });
+}
+
+function parseNovuHumanCard(input: Record<string, unknown> | undefined): Omit<ParsedNovuHumanCard, 'title'> {
+  const raw = input?.card;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {};
+  }
+
+  const card = raw as Record<string, unknown>;
+  const icon = parseOptionalString(card.icon);
+  const subtitle = parseOptionalString(card.subtitle);
+  const body = parseOptionalString(card.body);
+  const approveLabel = parseOptionalString(card.approveLabel);
+  const denyLabel = parseOptionalString(card.denyLabel);
+  const extraActions = parseHumanOptionInputs(card.extraActions);
+  const options = parseHumanOptionInputs(card.options);
+
+  return {
+    ...(icon ? { icon } : {}),
+    ...(subtitle ? { subtitle } : {}),
+    ...(body ? { body } : {}),
+    ...(approveLabel ? { approveLabel } : {}),
+    ...(denyLabel ? { denyLabel } : {}),
+    ...(extraActions.length ? { extraActions } : {}),
+    ...(options.length ? { options } : {}),
+  };
+}
 
 function parseNovuHumanInput(input: Record<string, unknown> | undefined): ParsedNovuHumanInput {
   const kindRaw = typeof input?.kind === 'string' ? input.kind.trim() : '';
@@ -146,30 +208,33 @@ function parseNovuHumanInput(input: Record<string, unknown> | undefined): Parsed
   }
 
   const kind = kindRaw as HumanInteractionKindEnum;
-  const prompt = typeof input?.prompt === 'string' ? input.prompt.trim() : '';
-  if (!prompt) {
-    return { ok: false, code: 'invalid_prompt', message: 'prompt is required.' };
+  const title = parseOptionalString(
+    input?.card && typeof input.card === 'object' && !Array.isArray(input.card)
+      ? (input.card as { title?: unknown }).title
+      : undefined
+  );
+  if (!title) {
+    return { ok: false, code: 'invalid_title', message: 'card.title is required.' };
   }
 
-  const from = typeof input?.from === 'string' && input.from.trim() ? input.from.trim() : undefined;
+  const from = parseOptionalString(input?.from);
   const ttlSeconds =
     typeof input?.ttlSeconds === 'number' && Number.isFinite(input.ttlSeconds) ? input.ttlSeconds : undefined;
+  const card: ParsedNovuHumanCard = { title, ...parseNovuHumanCard(input) };
 
   if (kind !== HumanInteractionKindEnum.CHOOSE) {
-    return { ok: true, kind, prompt, from, ttlSeconds };
+    return { ok: true, kind, card, from, ttlSeconds };
   }
 
-  const options = Array.isArray(input?.options)
-    ? input.options.filter((option): option is string => typeof option === 'string' && option.trim().length > 0)
-    : [];
+  const options = card.options ?? [];
 
   if (options.length < 2 || options.length > HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS) {
     return {
       ok: false,
       code: 'invalid_options',
-      message: `choose requires between 2 and ${HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS} options.`,
+      message: `choose requires card.options with between 2 and ${HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS} options.`,
     };
   }
 
-  return { ok: true, kind, prompt, options, from, ttlSeconds };
+  return { ok: true, kind, card: { ...card, options }, from, ttlSeconds };
 }

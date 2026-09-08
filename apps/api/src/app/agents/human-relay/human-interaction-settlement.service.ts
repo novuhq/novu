@@ -1,10 +1,12 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
-import { HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
+import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import { HumanInteractionResponse, HumanInteractionStatusEnum, parseToolApprovalRequestId } from '@novu/shared';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
+import { editDeliveredHumanCards } from './edit-delivered-card';
 import { buildResolvedContent } from './human-card.builder';
+import { ResumeToolApprovalFromHitl } from './resume-tool-approval-from-hitl.usecase';
 
 /**
  * Owns the terminal transition of a human interaction: the atomic
@@ -20,6 +22,7 @@ export class HumanInteractionSettlementService {
     private readonly outboundGateway: OutboundGateway,
     @Inject(forwardRef(() => ResumeManagedHuman))
     private readonly resumeManagedHuman: ResumeManagedHuman,
+    private readonly resumeToolApprovalFromHitl: ResumeToolApprovalFromHitl,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -39,7 +42,7 @@ export class HumanInteractionSettlementService {
 
     if (settled) {
       await this.editDeliveredMessage(settled);
-      await this.resumeManagedIfNeeded(settled);
+      await this.resumeAfterSettlement(settled);
     } else {
       await this.expireIfOverdue(interaction);
     }
@@ -77,7 +80,7 @@ export class HumanInteractionSettlementService {
     }
 
     await this.editDeliveredMessage(expired);
-    await this.resumeManagedIfNeeded(expired);
+    await this.resumeAfterSettlement(expired);
 
     return expired;
   }
@@ -86,40 +89,22 @@ export class HumanInteractionSettlementService {
    * Fail-soft in-place edit of the delivered message to its resolved
    * rendering. Delivery problems must never undo a settlement — the DB row is
    * the source of truth the CLI is polling.
+   *
+   * Tool-approval cards are skipped here: their card lifecycle is owned by
+   * `ResumeToolApprovalFromHitl` (managed agents delete the card, self-hosted
+   * agents edit it in place), so editing here too would double-write and race
+   * the managed delete.
    */
   private async editDeliveredMessage(interaction: HumanInteractionEntity): Promise<void> {
-    const targets = this.deliveryEditTargets(interaction);
-    const content = buildResolvedContent(interaction);
-
-    for (const delivery of targets) {
-      try {
-        await this.outboundGateway.editInConversation(
-          interaction._agentId,
-          delivery.integrationIdentifier,
-          delivery.platform,
-          delivery.platformThreadId,
-          delivery.platformMessageId,
-          content
-        );
-      } catch (err) {
-        this.logger.warn(
-          {
-            err,
-            interactionIdentifier: interaction.identifier,
-            platform: delivery.platform,
-            platformMessageId: delivery.platformMessageId,
-          },
-          'Failed to edit delivered human-interaction message after settlement'
-        );
-      }
+    if (parseToolApprovalRequestId(interaction.requestId) !== null) {
+      return;
     }
+
+    await editDeliveredHumanCards(this.outboundGateway, this.logger, interaction, buildResolvedContent(interaction));
   }
 
-  private deliveryEditTargets(interaction: HumanInteractionEntity): HumanInteractionDelivery[] {
-    return interaction.deliveries ?? [];
-  }
-
-  private async resumeManagedIfNeeded(interaction: HumanInteractionEntity): Promise<void> {
+  private async resumeAfterSettlement(interaction: HumanInteractionEntity): Promise<void> {
     await this.resumeManagedHuman.execute(interaction);
+    await this.resumeToolApprovalFromHitl.execute(interaction);
   }
 }

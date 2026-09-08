@@ -9,6 +9,10 @@ export type {
   AgentEventEnvelope,
   AgentEventUsage,
   AgentFinishReason,
+  AgentHumanCard,
+  AgentHumanCardElement,
+  AgentHumanChromeCard,
+  AgentHumanOptionInput,
   AgentRunOutcome,
   AgentSignal,
 } from './agent-event.types';

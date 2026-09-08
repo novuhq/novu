@@ -10,11 +10,12 @@ import { buildConnectClaimUrl, buildKeylessHumanSignupCard } from '../../../keyl
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
-  assertHumanChooseOptions,
+  assertHumanCardActions,
   assertHumanPendingCap,
   buildPendingHumanInteraction,
   deliverToTargets,
   type HumanDeliveryTarget,
+  toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { CreateInteractionCommand } from './create-interaction.command';
@@ -39,7 +40,12 @@ export class CreateInteraction {
 
   @InstrumentUsecase()
   async execute(command: CreateInteractionCommand): Promise<InteractionResponseDto> {
-    assertHumanChooseOptions(command.kind, command.options);
+    const title = 'title' in command.card ? (command.card.title?.trim() ?? '') : '';
+    if (!title) {
+      throw new BadRequestException('`card.title` is required.');
+    }
+
+    assertHumanCardActions(command.kind, command.card);
 
     const isKeyless = isKeylessOrganization(command.organizationId);
 
@@ -72,8 +78,7 @@ export class CreateInteraction {
     const interaction = await this.humanInteractionRepository.create(
       buildPendingHumanInteraction({
         kind: command.kind,
-        prompt: command.prompt,
-        options: command.options,
+        content: toStoredContent(command.kind, { ...command.card, title }),
         from: command.from,
         subscriberIds,
         agentId: agent._id,
