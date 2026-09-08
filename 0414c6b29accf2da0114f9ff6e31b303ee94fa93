@@ -7,6 +7,11 @@ export default defineSoftwareMap({
       description:
         "Owns the customer agent handler. Calls AgentContext.reply() or posts /reply from a non-JS SDK.",
     },
+    chatSdkDeveloper: {
+      label: "Chat SDK developer",
+      description:
+        "Owns a Chat SDK scaffold (novu init / novu connect --runtime chat-sdk). Calls thread.post() and adapter methods, not AgentContext.",
+    },
     subscriber: {
       label: "Subscriber",
       description:
@@ -17,8 +22,117 @@ export default defineSoftwareMap({
     customerRuntime: {
       label: "Customer agent runtime",
       description:
-        "Self-hosted or customer-owned process that runs @novu/framework and writes conversation actions back to Novu.",
+        "Customer-owned process that writes conversation actions back to Novu. Two productized clients: @novu/framework (turn transport) and @novu/chat-sdk-adapter (Chat SDK scaffolds).",
       containers: {
+        chatSdkAdapter: {
+          label: "@novu/chat-sdk-adapter",
+          description:
+            "Published Chat SDK adapter. Inbound HMAC webhook caches a ThreadSnapshot; every outbound action POSTs AgentReplyPayload to a derived /reply URL. Never reads inbound replyUrl or eventsUrl.",
+          coverage: {
+            files: [
+              "packages/chat-adapter/src/adapter.ts",
+              "packages/chat-adapter/src/reply-client.ts",
+              "packages/chat-adapter/src/types.ts",
+              "packages/chat-adapter/src/index.ts",
+            ],
+          },
+          components: {
+            novuAdapterImpl: {
+              label: "NovuAdapterImpl",
+              description:
+                "Chat SDK adapter. handleWebhook verifies HMAC, dedupes deliveryId, caches a snapshot without deliveryId, then dispatches. Outbound post/edit/reaction/signal/resolve all call ReplyClient.send.",
+              coverage: {
+                files: [
+                  {
+                    path: "packages/chat-adapter/src/adapter.ts",
+                    ranges: [
+                      { fromLine: 88, toLine: 570 },
+                    ],
+                  },
+                ],
+              },
+              codeElements: {
+                handleWebhook: {
+                  label: "handleWebhook()",
+                  description:
+                    "Verifies the bridge, dedupes on deliveryId, caches the snapshot, and dispatches onMessage / onAction / onReaction.",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/adapter.ts",
+                      fromLine: 155,
+                      toLine: 213,
+                    },
+                  ],
+                },
+                cacheSnapshot: {
+                  label: "cacheSnapshot()",
+                  description:
+                    "Persists history, conversation, subscriber, platform. Does not store bridge.deliveryId on ThreadSnapshot.",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/adapter.ts",
+                      fromLine: 224,
+                      toLine: 242,
+                    },
+                    {
+                      file: "packages/chat-adapter/src/types.ts",
+                      fromLine: 271,
+                      toLine: 278,
+                    },
+                  ],
+                },
+                outboundWrites: {
+                  label: "postMessage / edit / reaction / signal / resolve",
+                  description:
+                    "Five outbound methods. Each builds AgentReplyPayload and POSTs via ReplyClient. postMessage returns the platform messageId from /reply.",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/adapter.ts",
+                      fromLine: 354,
+                      toLine: 434,
+                    },
+                  ],
+                },
+              },
+            },
+            replyClient: {
+              label: "ReplyClient",
+              description:
+                "Derives POST ${apiBaseUrl}/v1/agents/${id}/reply from config. Never uses inbound replyUrl (apiKey exfil guard). Also owns unused registerBridge PUT.",
+              coverage: {
+                files: [
+                  "packages/chat-adapter/src/reply-client.ts",
+                ],
+              },
+              codeElements: {
+                constructor: {
+                  label: "constructor()",
+                  description:
+                    "Strips trailing slash on apiBaseUrl and builds replyUrl + bridgeUrl. Ignores any URL from the bridge body.",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/reply-client.ts",
+                      fromLine: 18,
+                      toLine: 25,
+                    },
+                  ],
+                },
+                send: {
+                  label: "send()",
+                  description:
+                    "POSTs AgentReplyPayload with ApiKey auth. Returns SentMessageInfo (platform messageId) or null.",
+                  sourceRanges: [
+                    {
+                      file: "packages/chat-adapter/src/reply-client.ts",
+                      fromLine: 32,
+                      toLine: 56,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
         frameworkSdk: {
           label: "Framework turn transport",
           description:
@@ -563,6 +677,30 @@ export default defineSoftwareMap({
       label: "Calls reply()",
       description:
         "The handler writes conversation output through AgentContext, not by talking to Slack directly.",
+    },
+    {
+      kind: "semantic",
+      from: "chatSdkDeveloper",
+      to: "customerRuntime.chatSdkAdapter.novuAdapterImpl",
+      label: "Calls thread.post()",
+      description:
+        "Chat SDK handlers write through the adapter. They never POST /reply themselves.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.chatSdkAdapter.novuAdapterImpl",
+      to: "customerRuntime.chatSdkAdapter.replyClient",
+      label: "ReplyClient.send()",
+      description:
+        "postMessage, editMessage, addReaction, emitSignals, and emitResolve all share this HTTP client.",
+    },
+    {
+      kind: "semantic",
+      from: "customerRuntime.chatSdkAdapter.replyClient",
+      to: "novuApi.httpIngress.agentReplyController",
+      label: "POST derived /v1/agents/:id/reply",
+      description:
+        "Always derived from apiBaseUrl. Inbound replyUrl and eventsUrl are ignored.",
     },
     {
       kind: "semantic",
