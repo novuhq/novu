@@ -32,7 +32,13 @@ export function isFcmBroadcastRoutingOverride(overrides: Record<string, unknown>
   return 'topic' in routing || 'condition' in routing;
 }
 
-export function hasTokenlessRoutingOverride(
+/**
+ * True when the merged overrides claim one of the provider's exclusive routing keys
+ * (FCM: `token` / `tokens` / `topic` / `condition`). A claimed key *is* the destination —
+ * `FcmPushProvider.resolveSendPlan` ignores the subscriber targets — so such a send needs no stored
+ * device token and must not fan out over them.
+ */
+export function hasDestinationRoutingOverride(
   providerId: PushProviderIdEnum,
   overrides: Record<string, unknown> | null | undefined
 ): boolean {
@@ -111,7 +117,7 @@ export function upsertMergedRoutingOverrides(
       providerId
     );
 
-    if (!hasTokenlessRoutingOverride(providerId, mergedOverrides)) {
+    if (!hasDestinationRoutingOverride(providerId, mergedOverrides)) {
       continue;
     }
 

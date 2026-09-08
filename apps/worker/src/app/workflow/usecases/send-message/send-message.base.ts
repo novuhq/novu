@@ -27,6 +27,7 @@ import {
   ExecutionDetailsStatusEnum,
   getProviderOverrideConfig,
   ITenantDefine,
+  layerClaimsExclusiveGroup,
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
@@ -56,14 +57,15 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
   return undefined;
 }
 
-function layerHasGroupKey(layer: Record<string, unknown>, group: readonly string[]): boolean {
-  return group.some((key) => Object.prototype.hasOwnProperty.call(layer, key) && layer[key] !== undefined);
-}
-
 /**
- * For each exclusive key group, once a higher-precedence layer sets any key in the group, strip
- * every group key from lower layers so a deep-merge cannot leave a mixed destination (e.g. FCM
- * `topic` from bridge + `tokens` from trigger).
+ * For each exclusive key group, the highest-precedence layer that claims it — sets one of its keys
+ * to a value `resolveExclusiveRoutingKeys` can still use — keeps its group keys, and every other
+ * layer loses them. That stops a deep-merge from leaving a mixed destination (e.g. FCM `topic` from
+ * bridge + `tokens` from trigger).
+ *
+ * Group keys on non-claiming layers are dropped rather than merged, so an unusable value cannot
+ * silently take the destination away: lodash merges `topic: ''` over a dashboard `topic: 'orders'`,
+ * and the resolver would then discard the empty string and find no destination at all.
  *
  * `layers` is ordered low → high precedence. Returns shallow-cloned layers; originals are untouched.
  */
@@ -78,17 +80,18 @@ function applyExclusiveKeyGroups(
   const result = layers.map((layer) => ({ ...layer }));
 
   for (const group of exclusiveKeyGroups) {
-    let claimedByHigher = false;
+    let claimed = false;
 
     for (let i = result.length - 1; i >= 0; i -= 1) {
       const layer = result[i];
 
-      if (claimedByHigher) {
-        for (const key of group) {
-          delete layer[key];
-        }
-      } else if (layerHasGroupKey(layer, group)) {
-        claimedByHigher = true;
+      if (!claimed && layerClaimsExclusiveGroup(layer, group)) {
+        claimed = true;
+        continue;
+      }
+
+      for (const key of group) {
+        delete layer[key];
       }
     }
   }
@@ -104,8 +107,8 @@ function resolveExclusiveKeyGroups(integrationId: string): readonly (readonly st
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
  *
- * When the provider declares exclusive key groups (e.g. FCM routing destinations), a higher layer
- * that sets any key in a group evicts all group keys contributed by lower layers before merge.
+ * When the provider declares exclusive key groups (e.g. FCM routing destinations), the highest layer
+ * that sets a usable key in a group evicts all group keys contributed by the other layers before merge.
  */
 export function combineProviderOverrides(
   bridgeData: Record<string, any> | null | undefined,

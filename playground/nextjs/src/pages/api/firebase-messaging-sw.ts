@@ -44,13 +44,62 @@ self.addEventListener('message', (event) => {
 });
 
 function resolveNotificationContent(payload) {
-  const notification = (payload && payload.notification) || {};
+  const webpush = (payload && payload.webpush) || {};
+  const notification = (payload && payload.notification) || webpush.notification || {};
   const data = (payload && payload.data) || {};
+  const notificationData =
+    notification.data && typeof notification.data === 'object' && !Array.isArray(notification.data)
+      ? notification.data
+      : {};
+  const fcmOptions = (payload && payload.fcmOptions) || webpush.fcmOptions || {};
+  const link = fcmOptions.link || notification.click_action || data.link || '/fcm-web-push';
+  const tag =
+    notification.tag || data.__nvMessageId || (extractTopic(payload) ? 'novu-fcm-topic-' + extractTopic(payload) : 'novu-fcm');
+  const options = {
+    body: notification.body || data.body || data.message || '(empty body)',
+    icon: notification.icon || '/favicon.ico',
+    tag: tag,
+    data: Object.assign({}, data, notificationData, {
+      __novuLink: link,
+    }),
+  };
+
+  for (const key of ['badge', 'image', 'lang']) {
+    if (typeof notification[key] === 'string') {
+      options[key] = notification[key];
+    }
+  }
+
+  if (['auto', 'ltr', 'rtl'].includes(notification.dir)) {
+    options.dir = notification.dir;
+  }
+
+  for (const key of ['renotify', 'requireInteraction', 'silent']) {
+    if (typeof notification[key] === 'boolean') {
+      options[key] = notification[key];
+    }
+  }
+
+  if (typeof notification.timestamp === 'number') {
+    options.timestamp = notification.timestamp;
+  }
+
+  if (typeof notification.vibrate === 'number' || Array.isArray(notification.vibrate)) {
+    options.vibrate = notification.vibrate;
+  }
+
+  if (Array.isArray(notification.actions)) {
+    options.actions = notification.actions;
+  }
+
+  // Browsers reject a vibration pattern on an explicitly silent notification.
+  if (options.silent === true) {
+    delete options.vibrate;
+  }
 
   return {
     title: notification.title || data.title || 'Novu FCM (empty title)',
-    body: notification.body || data.body || data.message || '(empty body)',
-    icon: notification.icon || '/favicon.ico',
+    options: options,
   };
 }
 
@@ -107,14 +156,7 @@ async function handlePush(event) {
   });
 
   const content = resolveNotificationContent(payload);
-  const data = (payload && payload.data) || {};
-
-  await self.registration.showNotification(content.title, {
-    body: content.body,
-    icon: content.icon,
-    tag: data.__nvMessageId || (topic ? 'novu-fcm-topic-' + topic : 'novu-fcm'),
-    data: data,
-  });
+  await self.registration.showNotification(content.title, content.options);
 
   await log(
     'Push displayed. openTabs=' +
@@ -136,15 +178,19 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil((async () => {
+    const notificationData = event.notification.data || {};
+    const targetUrl = new URL(notificationData.__novuLink || '/fcm-web-push', self.location.origin).href;
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
 
     for (const client of clients) {
-      if ('focus' in client) {
-        return client.focus();
+      if (targetUrl.indexOf(self.location.origin) === 0 && 'navigate' in client) {
+        const navigatedClient = await client.navigate(targetUrl);
+
+        return navigatedClient ? navigatedClient.focus() : client.focus();
       }
     }
 
-    return self.clients.openWindow('/fcm-web-push');
+    return self.clients.openWindow(targetUrl);
   })());
 });
 

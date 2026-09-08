@@ -2,7 +2,7 @@ import { PushProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import {
   extractFcmRoutingCredentials,
-  hasTokenlessRoutingOverride,
+  hasDestinationRoutingOverride,
   isFcmBroadcastRoutingOverride,
 } from './fcm-routing-overrides';
 
@@ -41,33 +41,38 @@ describe('isFcmBroadcastRoutingOverride', () => {
   });
 });
 
-describe('hasTokenlessRoutingOverride', () => {
+describe('hasDestinationRoutingOverride', () => {
   it('detects a schematized routing key', () => {
-    expect(hasTokenlessRoutingOverride(PushProviderIdEnum.FCM, { topic: 'news_updates' })).to.equal(true);
+    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { topic: 'news_updates' })).to.equal(true);
   });
 
   it('detects a routing key set only in _passthrough.body', () => {
     expect(
-      hasTokenlessRoutingOverride(PushProviderIdEnum.FCM, { _passthrough: { body: { topic: 'news_updates' } } })
+      hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { _passthrough: { body: { topic: 'news_updates' } } })
     ).to.equal(true);
   });
 
   it('ignores content-only overrides', () => {
     expect(
-      hasTokenlessRoutingOverride(PushProviderIdEnum.FCM, {
+      hasDestinationRoutingOverride(PushProviderIdEnum.FCM, {
         notification: { title: 'hi' },
         _passthrough: { body: { android: { priority: 'high' } } },
       })
     ).to.equal(false);
   });
 
+  it('detects token and tokens, which choose the destination instead of the stored device tokens', () => {
+    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { token: 'abc' })).to.equal(true);
+    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { tokens: ['a', 'b'] })).to.equal(true);
+  });
+
   it('ignores routing keys with no usable value', () => {
-    expect(hasTokenlessRoutingOverride(PushProviderIdEnum.FCM, { topic: '' })).to.equal(false);
-    expect(hasTokenlessRoutingOverride(PushProviderIdEnum.FCM, { tokens: [] })).to.equal(false);
+    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { topic: '' })).to.equal(false);
+    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { tokens: [] })).to.equal(false);
   });
 
   it('returns false for providers without exclusive routing groups', () => {
-    expect(hasTokenlessRoutingOverride(PushProviderIdEnum.EXPO, { topic: 'news_updates' })).to.equal(false);
+    expect(hasDestinationRoutingOverride(PushProviderIdEnum.EXPO, { topic: 'news_updates' })).to.equal(false);
   });
 });
 

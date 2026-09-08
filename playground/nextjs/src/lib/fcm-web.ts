@@ -45,7 +45,7 @@ export const FCM_SW_SKIP_WAITING_TYPE = 'NOVU_FCM_SKIP_WAITING';
 export const FCM_SW_PING_TYPE = 'NOVU_FCM_PING';
 
 /** Bump when the generated service worker script changes. */
-export const FCM_SW_VERSION = '2026-08-09.1';
+export const FCM_SW_VERSION = '2026-09-07.1';
 
 const FIREBASE_COMPAT_VERSION = '11.10.0';
 const SW_URL = '/firebase-messaging-sw.js';
@@ -60,8 +60,19 @@ type FirebaseCompat = {
 
 export type PushPayload = {
   from?: string;
-  notification?: { title?: string; body?: string; icon?: string };
+  notification?: PushNotificationPayload;
   data?: Record<string, string>;
+  fcmOptions?: { link?: string };
+  webpush?: {
+    notification?: PushNotificationPayload;
+    fcmOptions?: { link?: string };
+  };
+};
+
+type PushNotificationPayload = {
+  title?: string;
+  body?: string;
+  icon?: string;
 };
 
 /**
@@ -133,8 +144,9 @@ export function resolveNotificationContent(payload: PushPayload): {
   title: string;
   body: string;
 } {
-  const title = payload.notification?.title || payload.data?.title || 'Novu FCM (empty title)';
-  const body = payload.notification?.body || payload.data?.body || payload.data?.message || '(empty body)';
+  const notification = payload.notification ?? payload.webpush?.notification;
+  const title = notification?.title || payload.data?.title || 'Novu FCM (empty title)';
+  const body = notification?.body || payload.data?.body || payload.data?.message || '(empty body)';
 
   return { title, body };
 }

@@ -246,6 +246,64 @@ describe('combineProviderOverrides', () => {
       });
     });
 
+    it('keeps bridge topic when the trigger sets an empty topic', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'orders' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { topic: '' } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ topic: 'orders' });
+    });
+
+    it('keeps bridge topic when the trigger sets an empty tokens array', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'orders' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: [] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ topic: 'orders' });
+    });
+
+    it('still evicts bridge topic when the trigger tokens are usable', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'orders' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ tokens: ['t1'] });
+    });
+
+    it('falls through an unusable step-scoped value to the workflow-global claim', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'bridge-topic' }),
+        triggerOverrides({
+          providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'] } },
+          steps: { step_1: { providers: { [FCM_PROVIDER_ID]: { topic: '' } } } },
+        }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ tokens: ['t1'] });
+    });
+
+    it('drops the group entirely when no layer has a usable routing value', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: '', notification: { body: 'x' } }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: [] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ notification: { body: 'x' } });
+    });
+
     it('keeps bridge topic when the trigger has no routing keys', () => {
       const combined = combineProviderOverrides(
         bridgeFor(FCM_PROVIDER_ID, { topic: 'a' }),

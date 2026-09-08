@@ -25,6 +25,13 @@ type ActionStatus =
   | { type: 'success'; message: string }
   | { type: 'error'; message: string };
 
+type TriggerResponse = {
+  data?: { transactionId?: string };
+  error?: string;
+  message?: string;
+};
+
+const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
 const cardClass = 'w-full max-w-2xl rounded-lg border border-border bg-card p-5 text-left shadow-sm';
 const buttonClass =
   'inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
@@ -34,6 +41,72 @@ const inputClass =
   'w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
 const monoClass = 'font-mono text-xs break-all whitespace-pre-wrap';
 const linkClass = 'underline underline-offset-2 hover:text-foreground';
+
+function createWebOverridePreset(): string {
+  return JSON.stringify(
+    {
+      data: {
+        customKey: 'custom value',
+        testCase: 'all-web-properties',
+      },
+      notification: {
+        title: 'FCM base notification title',
+        body: 'FCM base notification body',
+      },
+      webpush: {
+        headers: {
+          TTL: '300',
+          Urgency: 'high',
+        },
+        data: {
+          webpushKey: 'webpush value',
+        },
+        notification: {
+          title: 'FCM webpush override title',
+          body: 'Testing every browser-visible FCM override',
+          actions: [{ action: 'open-playground', title: 'Open playground' }],
+          badge: '/favicon.ico',
+          data: { source: 'webpush.notification.data' },
+          dir: 'ltr',
+          icon: '/favicon.ico',
+          image: '/favicon.ico',
+          lang: 'en',
+          renotify: true,
+          requireInteraction: true,
+          silent: false,
+          tag: 'novu-fcm-web-override-test',
+          timestamp: Date.now(),
+          vibrate: [100, 50, 100],
+        },
+        fcmOptions: {
+          link: '/fcm-web-push?source=fcm-notification',
+        },
+      },
+      fcmOptions: {
+        analyticsLabel: 'novu_fcm_playground',
+      },
+    },
+    null,
+    2
+  );
+}
+
+function parseFcmOverride(value: string): Record<string, unknown> {
+  const parsed = JSON.parse(value) as unknown;
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('FCM override must be a JSON object.');
+  }
+
+  const override = parsed as Record<string, unknown>;
+  const routingKeys = FCM_ROUTING_KEYS.filter((key) => override[key] !== undefined);
+
+  if (routingKeys.length > 1) {
+    throw new Error(`Use only one FCM routing key. Found: ${routingKeys.join(', ')}.`);
+  }
+
+  return override;
+}
 
 function ActionFeedback({ status }: { status: ActionStatus }) {
   if (status.type === 'loading') {
@@ -118,19 +191,28 @@ function MessageInboxList({
 export default function FcmWebPushPage() {
   const formId = useId();
   const subscriberIdFieldId = `${formId}-subscriber-id`;
+  const workflowIdFieldId = `${formId}-workflow-id`;
+  const overridesFieldId = `${formId}-overrides`;
   const [tokenStatus, setTokenStatus] = useState<ActionStatus>({ type: 'idle' });
   const [registerStatus, setRegisterStatus] = useState<ActionStatus>({ type: 'idle' });
   const [topicStatus, setTopicStatus] = useState<ActionStatus>({ type: 'idle' });
+  const [triggerStatus, setTriggerStatus] = useState<ActionStatus>({ type: 'idle' });
   const [token, setToken] = useState('');
   const [copied, setCopied] = useState(false);
   const [subscriberId, setSubscriberId] = useState(novuConfig.subscriberId);
+  const [workflowId, setWorkflowId] = useState('');
+  const [overrideJson, setOverrideJson] = useState(createWebOverridePreset);
   const [messages, setMessages] = useState<FcmPushMessage[]>([]);
   const [topicMessages, setTopicMessages] = useState<FcmPushMessage[]>([]);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default');
   const [diagnostics, setDiagnostics] = useState<FcmSwDiagnostics | null>(null);
   const [swLogs, setSwLogs] = useState<FcmSwLogEntry[]>([]);
   const [testStatus, setTestStatus] = useState<ActionStatus>({ type: 'idle' });
-  const isBusy = tokenStatus.type === 'loading' || registerStatus.type === 'loading' || topicStatus.type === 'loading';
+  const isBusy =
+    tokenStatus.type === 'loading' ||
+    registerStatus.type === 'loading' ||
+    topicStatus.type === 'loading' ||
+    triggerStatus.type === 'loading';
 
   const missingEnv = useMemo(() => {
     const missing = getMissingFirebaseConfigKeys(getFirebaseWebConfig());
@@ -359,6 +441,120 @@ export default function FcmWebPushPage() {
       setRegisterStatus({
         type: 'error',
         message: error instanceof Error ? error.message : 'Failed to register token with Novu',
+      });
+    }
+  }
+
+  function loadTopicPreset() {
+    setOverrideJson(
+      JSON.stringify(
+        {
+          topic: FCM_TOPIC_NEWS_UPDATES,
+          data: {
+            topic: FCM_TOPIC_NEWS_UPDATES,
+            testCase: 'topic-routing',
+          },
+          webpush: {
+            notification: {
+              title: 'Novu FCM topic test',
+              body: `Delivered through ${FCM_TOPIC_NEWS_UPDATES}`,
+              tag: `novu-fcm-topic-${FCM_TOPIC_NEWS_UPDATES}`,
+            },
+          },
+        },
+        null,
+        2
+      )
+    );
+    setTriggerStatus({ type: 'idle' });
+  }
+
+  function loadTokenPreset() {
+    if (!token) {
+      setTriggerStatus({ type: 'error', message: 'Get an FCM token before loading the direct-token preset.' });
+
+      return;
+    }
+
+    setOverrideJson(
+      JSON.stringify(
+        {
+          token,
+          data: { testCase: 'direct-token-routing' },
+          webpush: {
+            notification: {
+              title: 'Novu direct FCM token test',
+              body: 'The override routed this message directly to the browser token.',
+            },
+          },
+        },
+        null,
+        2
+      )
+    );
+    setTriggerStatus({ type: 'idle' });
+  }
+
+  async function handleTriggerWorkflow() {
+    if (!workflowId.trim()) {
+      setTriggerStatus({ type: 'error', message: 'Workflow ID is required.' });
+
+      return;
+    }
+
+    if (!subscriberId.trim()) {
+      setTriggerStatus({ type: 'error', message: 'Subscriber ID is required.' });
+
+      return;
+    }
+
+    let fcmOverride: Record<string, unknown>;
+
+    try {
+      fcmOverride = parseFcmOverride(overrideJson);
+    } catch (error) {
+      setTriggerStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'FCM override is not valid JSON.',
+      });
+
+      return;
+    }
+
+    setTriggerStatus({ type: 'loading', label: 'Triggering FCM workflow…' });
+
+    try {
+      const response = await fetch('/api/trigger-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: workflowId.trim(),
+          to: { subscriberId: subscriberId.trim() },
+          payload: {
+            source: 'fcm-web-push-playground',
+            triggeredAt: new Date().toISOString(),
+          },
+          overrides: {
+            providers: {
+              fcm: fcmOverride,
+            },
+          },
+        }),
+      });
+      const data = (await response.json()) as TriggerResponse;
+
+      if (!response.ok) {
+        throw new Error(data.message ?? data.error ?? `Trigger failed (${response.status}).`);
+      }
+
+      setTriggerStatus({
+        type: 'success',
+        message: `Workflow triggered. transactionId: ${data.data?.transactionId ?? '—'}`,
+      });
+    } catch (error) {
+      setTriggerStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to trigger workflow.',
       });
     }
   }
@@ -618,6 +814,73 @@ export default function FcmWebPushPage() {
           </div>
 
           <ActionFeedback status={registerStatus} />
+        </section>
+
+        <section className={cardClass}>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Trigger with FCM overrides
+          </h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Trigger a Push workflow with a provider override and inspect the received payload below. The web preset
+            covers every browser-visible <code className="text-xs">webpush</code> notification property.{' '}
+            <code className="text-xs">android</code> and <code className="text-xs">apns</code> properties require their
+            respective devices; top-level <code className="text-xs">fcmOptions.analyticsLabel</code> is accepted but
+            only observable in Firebase analytics.
+          </p>
+
+          <label className="mt-3 block text-sm font-medium" htmlFor={workflowIdFieldId}>
+            Push workflow ID
+          </label>
+          <input
+            id={workflowIdFieldId}
+            className={`${inputClass} mt-1`}
+            value={workflowId}
+            onChange={(event) => setWorkflowId(event.target.value)}
+            placeholder="workflow-id"
+          />
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={secondaryButtonClass}
+              onClick={() => {
+                setOverrideJson(createWebOverridePreset());
+                setTriggerStatus({ type: 'idle' });
+              }}
+            >
+              Load web properties
+            </button>
+            <button type="button" className={secondaryButtonClass} onClick={loadTopicPreset}>
+              Load topic routing
+            </button>
+            <button type="button" className={secondaryButtonClass} onClick={loadTokenPreset}>
+              Load direct token
+            </button>
+          </div>
+
+          <label className="mt-3 block text-sm font-medium" htmlFor={overridesFieldId}>
+            FCM provider override
+          </label>
+          <textarea
+            id={overridesFieldId}
+            className={`${inputClass} mt-1 min-h-96 font-mono text-xs`}
+            value={overrideJson}
+            onChange={(event) => setOverrideJson(event.target.value)}
+            spellCheck={false}
+          />
+          <p className="mt-2 text-xs text-muted-foreground">
+            Use at most one routing key: <code>token</code>, <code>tokens</code>, <code>topic</code>, or{' '}
+            <code>condition</code>. With no routing key, Novu uses the subscriber&apos;s registered device token. Custom{' '}
+            <code>data</code> values must be strings.
+          </p>
+
+          <div className="mt-3">
+            <button type="button" className={buttonClass} onClick={handleTriggerWorkflow} disabled={isBusy}>
+              Trigger push workflow
+            </button>
+          </div>
+
+          <ActionFeedback status={triggerStatus} />
         </section>
 
         <section className={cardClass}>

@@ -49,7 +49,7 @@ import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import {
   extractPushRoutingCredentials,
-  hasTokenlessRoutingOverride,
+  hasDestinationRoutingOverride,
   isFcmBroadcastRoutingOverride,
   type PushProviderOverride,
   upsertMergedRoutingOverrides,
@@ -193,10 +193,12 @@ export class SendMessagePush extends SendMessageBase {
      * are dropped and the send is skipped.
      *
      * Keep every subscriber channel (including multiple integrations for the same
-     * providerId). Token/tokens overrides only collapse empty-token channels they replace;
+     * providerId). Token/tokens overrides keep that channel fan-out but pick the destination
+     * themselves, so each channel sends once instead of once per stored device token;
      * FCM topic/condition overrides are broadcast and replace the entire provider fan-out.
      */
     const overrideProviderIds = new Set(channelsFromOverrides.map((channel) => channel.providerId));
+
     const broadcastOverrideProviderIds = new Set<string>(
       providersWithCredentialOverrides
         .filter((override) => isFcmBroadcastRoutingOverride(override.overrides))
@@ -326,15 +328,27 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       /**
-       * There are no targets available for the subscriber, but credentials provided in the overrides
+       * A claimed routing override is the destination, so this channel sends exactly once — with or
+       * without stored device tokens, which the provider ignores in favour of that destination.
+       * Only the addressed tokens (empty for token/topic/condition) reach the message record; the
+       * subscriber's stored tokens were never targeted.
        */
-      if (!target?.length && channelAllowsTokenlessRouting) {
+      const destinationOverride = providersWithCredentialOverrides.find(
+        (override) => override.providerId === channel.providerId
+      );
+
+      if (destinationOverride) {
+        const destination = extractPushRoutingCredentials(
+          destinationOverride.providerId,
+          destinationOverride.overrides
+        );
+
         const message = await this.createMessage({
           command,
           integration,
           title,
           content,
-          deviceTokens: target,
+          deviceTokens: destination?.deviceTokens,
           overrides,
         });
 
@@ -555,11 +569,13 @@ export class SendMessagePush extends SendMessageBase {
     return result;
   }
 
-  /** Keeps overrides that set a tokenless routing key (e.g. FCM topic/condition/token). */
+  /** Keeps overrides that claim the send destination (e.g. FCM topic/condition/token/tokens). */
   private filterProvidersWithCredentialOverrides(providerOverrides: PushProviderOverride[]): PushProviderOverride[] {
     if (!providerOverrides?.length) return [];
 
-    return providerOverrides.filter((override) => hasTokenlessRoutingOverride(override.providerId, override.overrides));
+    return providerOverrides.filter((override) =>
+      hasDestinationRoutingOverride(override.providerId, override.overrides)
+    );
   }
 
   private channelMissingDeviceTokens(channel: IChannelSettings): boolean {

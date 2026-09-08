@@ -55,6 +55,19 @@ function claimGroup(layer: Record<string, unknown>, group: readonly string[]): R
 }
 
 /**
+ * Whether this layer's own keys claim the group, under the same usability rules the resolver
+ * applies. `_passthrough` is not read here: it outranks top-level keys, but only once the layers are
+ * merged, which is `resolveExclusiveRoutingKeys`' job at send time.
+ *
+ * Callers merging layered overrides use this to decide which layer owns the destination: a key set
+ * to a value the resolver would discard — an empty string, an empty array, `{ $exists: true }`,
+ * null, a number — is not a routing choice and must not evict a usable value from a lower layer.
+ */
+export function layerClaimsExclusiveGroup(layer: Record<string, unknown>, group: readonly string[]): boolean {
+  return claimGroup(layer, group) !== undefined;
+}
+
+/**
  * Resolves the effective values of mutually exclusive routing keys, treating `_passthrough.body` as
  * the highest-precedence layer the same way `BaseProvider.transform` merges it last.
  *

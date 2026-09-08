@@ -791,6 +791,48 @@ describe('FcmPushProvider', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  test.each([
+    ['topic', { topic: 'news' }],
+    ['token', { token: 'device-token-abc' }],
+    ['condition', { condition: "'stocks' in topics && 'tech' in topics" }],
+  ])('should send a data-only message when type is data and routing is %s', async (_label, routing) => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/data-only');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {
+          key_1: 'val_1',
+        },
+        overrides: {
+          type: 'data',
+          android: { priority: 'high' },
+        },
+        subscriber,
+        step,
+      },
+      routing
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      ...routing,
+      android: { priority: 'high' },
+      data: {
+        key_1: 'val_1',
+        title: 'Test',
+        body: 'Test push',
+        message: 'Test push',
+      },
+    });
+    expect(sendSpy.mock.calls[0][0]).not.toHaveProperty('notification');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   test('should use multicast when bridgeProviderData has tokens alone', async () => {
     const sendSpy = vi
       // @ts-expect-error

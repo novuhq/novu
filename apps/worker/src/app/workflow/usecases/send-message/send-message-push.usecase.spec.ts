@@ -84,13 +84,17 @@ describe('SendMessagePush - provider content overrides', () => {
     sinon.restore();
   });
 
-  function buildUsecase() {
+  function buildMessageRepository() {
+    return {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+      update: sinon.stub().resolves(undefined),
+    };
+  }
+
+  function buildUsecase(messageRepository = buildMessageRepository()) {
     const usecase = new SendMessagePush(
       {} as never, // subscriberRepository
-      {
-        create: sinon.stub().resolves({ _id: 'message_1' }),
-        update: sinon.stub().resolves(undefined),
-      } as never,
+      messageRepository as never,
       { execute: sinon.stub().resolves(undefined) } as never, // createExecutionDetails
       {} as never, // compileTemplate
       { execute: sinon.stub().resolves(fcmIntegration) } as never, // selectIntegration
@@ -334,8 +338,73 @@ describe('SendMessagePush - provider content overrides', () => {
 
       expect(result.status).to.equal(SendMessageStatus.SUCCESS);
       sinon.assert.calledOnce(sendStub);
-      expect(sendStub.firstCall.args[0].target).to.deep.equal(['device-token-1']);
+      // The override tokens are the destination, so the stored token is never addressed.
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
       expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ tokens: ['routing-token-1'] });
+    });
+
+    it('sends once per channel when tokens override the destination of a multi-token subscriber', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+      const messageRepository = buildMessageRepository();
+
+      const result = await buildUsecase(messageRepository).execute(
+        buildCommand({
+          channels: [{ ...fcmChannelWithTokens, credentials: { deviceTokens: ['d1', 'd2'] } }],
+          providerOverrides: { tokens: ['override-token-1'] },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ tokens: ['override-token-1'] });
+      // The stored tokens were never addressed, so only the override destination is recorded.
+      expect(messageRepository.create.firstCall.args[0].deviceTokens).to.deep.equal(['override-token-1']);
+    });
+
+    it('sends once per channel when token overrides the destination of a multi-token subscriber', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+      const messageRepository = buildMessageRepository();
+
+      const result = await buildUsecase(messageRepository).execute(
+        buildCommand({
+          channels: [{ ...fcmChannelWithTokens, credentials: { deviceTokens: ['d1', 'd2'] } }],
+          providerOverrides: { token: 'override-token-1' },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ token: 'override-token-1' });
+      // The provider reads `token` from the overrides, so no device token is recorded.
+      expect(messageRepository.create.firstCall.args[0].deviceTokens).to.deep.equal([]);
+    });
+
+    it('keeps one send per integration when tokens override the destination', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const secondFcmChannel = {
+        _integrationId: '507f1f77bcf86cd799439022',
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: ['device-token-2', 'device-token-3'] },
+      };
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [fcmChannelWithTokens, secondFcmChannel],
+          providerOverrides: { tokens: ['override-token-1'] },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      // Two integrations, not three stored device tokens.
+      sinon.assert.calledTwice(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+      expect(sendStub.secondCall.args[0].target).to.deep.equal(['']);
     });
 
     it('collapses the subscriber fan-out to a single broadcast when the override has topic', async () => {

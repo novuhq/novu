@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveExclusiveRoutingKeys } from './exclusive-routing';
+import { layerClaimsExclusiveGroup, resolveExclusiveRoutingKeys } from './exclusive-routing';
 import { FCM_ROUTING_KEYS } from './fcm/keys';
 
 const GROUPS = [FCM_ROUTING_KEYS];
@@ -99,5 +99,36 @@ describe('resolveExclusiveRoutingKeys', () => {
     expect(resolveExclusiveRoutingKeys({ topic: 'orders', _passthrough: { body: 'nope' } }, GROUPS)).toEqual({
       topic: 'orders',
     });
+  });
+});
+
+describe('layerClaimsExclusiveGroup', () => {
+  it('claims on a usable routing value', () => {
+    expect(layerClaimsExclusiveGroup({ topic: 'orders' }, FCM_ROUTING_KEYS)).toBe(true);
+    expect(layerClaimsExclusiveGroup({ tokens: ['t1'] }, FCM_ROUTING_KEYS)).toBe(true);
+    expect(layerClaimsExclusiveGroup({ tokens: ['', 't1'] }, FCM_ROUTING_KEYS)).toBe(true);
+    expect(layerClaimsExclusiveGroup({ token: 'single', notification: { title: 'hi' } }, FCM_ROUTING_KEYS)).toBe(true);
+  });
+
+  it('does not claim on a value the resolver would discard', () => {
+    expect(layerClaimsExclusiveGroup({ topic: '' }, FCM_ROUTING_KEYS)).toBe(false);
+    expect(layerClaimsExclusiveGroup({ tokens: [] }, FCM_ROUTING_KEYS)).toBe(false);
+    expect(layerClaimsExclusiveGroup({ tokens: [{ $exists: true }, null, 1, ''] }, FCM_ROUTING_KEYS)).toBe(false);
+    expect(layerClaimsExclusiveGroup({ topic: null }, FCM_ROUTING_KEYS)).toBe(false);
+    expect(layerClaimsExclusiveGroup({ topic: undefined }, FCM_ROUTING_KEYS)).toBe(false);
+    expect(layerClaimsExclusiveGroup({ topic: 42 }, FCM_ROUTING_KEYS)).toBe(false);
+    expect(layerClaimsExclusiveGroup({ topic: { $exists: true } }, FCM_ROUTING_KEYS)).toBe(false);
+  });
+
+  it('does not claim without any of the group keys', () => {
+    expect(layerClaimsExclusiveGroup({}, FCM_ROUTING_KEYS)).toBe(false);
+    expect(layerClaimsExclusiveGroup({ notification: { title: 'hi' }, data: { k: 'v' } }, FCM_ROUTING_KEYS)).toBe(
+      false
+    );
+    expect(layerClaimsExclusiveGroup({ topic: 'orders' }, [])).toBe(false);
+  });
+
+  it('reads only the layer itself, leaving _passthrough precedence to the resolver', () => {
+    expect(layerClaimsExclusiveGroup({ _passthrough: { body: { topic: 'orders' } } }, FCM_ROUTING_KEYS)).toBe(false);
   });
 });

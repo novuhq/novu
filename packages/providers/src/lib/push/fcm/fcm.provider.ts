@@ -74,8 +74,6 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       webPush: { [key: string]: { [key: string]: string } | string };
     }) || {};
 
-    const payload = this.cleanPayload(options.payload);
-    const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
     // `_passthrough.body` may choose the destination, as the top of the override chain — the same
     // priority `transform` gives its content keys.
     const sendPlan = this.resolveSendPlan(this.readRouting(bridgeProviderData), options.target);
@@ -93,42 +91,17 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     if (sendPlan.kind === 'single') {
       const message = this.transform<TokenMessage | TopicMessage | ConditionMessage>(bridgeWithoutRouting, {
         ...sendPlan.target,
-        notification: {
-          title: options.title,
-          body: options.content,
-        },
-        data: { ...novuData, ...data },
+        ...this.buildContent(options, { type, data }),
         ...commonProps,
       }).body;
 
       res = await this.messaging.send(message);
     } else {
-      const multicastConfig: Partial<MulticastMessage> = {
+      const multicastMessage = this.transform<MulticastMessage>(bridgeWithoutRouting, {
         tokens: sendPlan.tokens,
+        ...this.buildContent(options, { type, data, notificationOverrides: overridesData }),
         ...commonProps,
-      };
-
-      // Add either data or notification based on type
-      if (type === 'data') {
-        multicastConfig.data = {
-          ...payload,
-          title: options.title,
-          body: options.content,
-          message: options.content,
-        };
-      } else {
-        multicastConfig.notification = {
-          title: options.title,
-          body: options.content,
-          ...overridesData,
-        };
-        multicastConfig.data = { ...novuData, ...data };
-      }
-
-      const multicastMessage = this.transform<MulticastMessage>(
-        bridgeWithoutRouting,
-        multicastConfig as Record<string, unknown>
-      ).body;
+      }).body;
 
       res = await this.messaging.sendEachForMulticast(multicastMessage);
     }
@@ -157,6 +130,49 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
   isTokenInvalid(errorMessage: string): boolean {
     return this.INVALID_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
+  }
+
+  /**
+   * Shapes the title/body of a message, shared by both send paths so a data-only message looks the
+   * same whether it goes to `tokens`, a `token`, a `topic` or a `condition`. `type: 'data'` keeps
+   * FCM from rendering a notification itself: the payload and the copy ride inside `data` for the
+   * client to render. `notificationOverrides` only applies to the multicast path.
+   */
+  private buildContent(
+    options: IPushOptions,
+    {
+      type,
+      data,
+      notificationOverrides,
+    }: {
+      type?: 'notification' | 'data';
+      data?: Record<string, string>;
+      notificationOverrides?: Record<string, unknown>;
+    }
+  ): Pick<MulticastMessage, 'notification' | 'data'> {
+    const payload = this.cleanPayload(options.payload);
+
+    if (type === 'data') {
+      return {
+        data: {
+          ...payload,
+          title: options.title,
+          body: options.content,
+          message: options.content,
+        },
+      };
+    }
+
+    const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
+
+    return {
+      notification: {
+        title: options.title,
+        body: options.content,
+        ...notificationOverrides,
+      },
+      data: { ...novuData, ...data },
+    };
   }
 
   /**

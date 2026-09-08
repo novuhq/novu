@@ -12,6 +12,7 @@ import {
 
 export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
 export {
+  layerClaimsExclusiveGroup,
   type ResolvedExclusiveRouting,
   type ResolvedRoutingValue,
   resolveExclusiveRoutingKeys,
