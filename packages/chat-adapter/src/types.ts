@@ -1,5 +1,9 @@
 import type { Adapter, CardElement, Emoji, Thread } from 'chat';
 
+/** JSON object on the bridge wire (metadata, subscriber data, signal payloads). */
+export type BridgeJsonObject = { [key: string]: BridgeJsonValue };
+export type BridgeJsonValue = string | number | boolean | null | BridgeJsonValue[] | BridgeJsonObject;
+
 // ---------------------------------------------------------------------------
 // Adapter configuration
 // ---------------------------------------------------------------------------
@@ -79,7 +83,7 @@ export interface AgentMessage {
 export interface AgentConversation {
   identifier: string;
   status: string;
-  metadata: Record<string, unknown>;
+  metadata: BridgeJsonObject;
   messageCount: number;
   createdAt: string;
   lastActivityAt: string;
@@ -93,16 +97,16 @@ export interface AgentSubscriber {
   phone?: string;
   avatar?: string;
   locale?: string;
-  data?: Record<string, unknown>;
+  data?: BridgeJsonObject;
 }
 
 export interface AgentHistoryEntry {
   role: string;
   type: string;
   content: string;
-  richContent?: Record<string, unknown>;
+  richContent?: BridgeJsonObject;
   senderName?: string;
-  signalData?: { type: string; payload?: Record<string, unknown> };
+  signalData?: { type: string; payload?: BridgeJsonObject };
   createdAt: string;
 }
 
@@ -205,7 +209,7 @@ export interface AddReactionPayload {
 }
 
 export type MetadataSignal =
-  | { type: 'metadata'; action: 'set'; key: string; value: unknown }
+  | { type: 'metadata'; action: 'set'; key: string; value: BridgeJsonValue }
   | { type: 'metadata'; action: 'delete'; key: string }
   | { type: 'metadata'; action: 'clear' };
 
@@ -213,7 +217,7 @@ export type TriggerSignal = {
   type: 'trigger';
   workflowId: string;
   to?: TriggerRecipientsPayload;
-  payload?: Record<string, unknown>;
+  payload?: BridgeJsonObject;
 };
 
 export type Signal = MetadataSignal | TriggerSignal;
@@ -250,8 +254,8 @@ export interface NovuThreadId {
 export interface NovuHistoryFields {
   role: string;
   type: string;
-  richContent?: Record<string, unknown>;
-  signalData?: { type: string; payload?: Record<string, unknown> };
+  richContent?: BridgeJsonObject;
+  signalData?: { type: string; payload?: BridgeJsonObject };
 }
 
 /** Platform-native raw message carried on `RawMessage.raw` / `platformContext.message`. */
@@ -311,12 +315,9 @@ export interface NovuContext {
   /** Read a key from the current `conversation.metadata` snapshot. */
   getMetadata(key: string): Promise<unknown>;
   /** Trigger a Novu workflow for this conversation's subscriber (or explicit recipients). */
-  trigger(
-    workflowId: string,
-    opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }
-  ): Promise<void>;
+  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: BridgeJsonObject }): Promise<void>;
   /** Persist a key/value into `conversation.metadata`. */
-  setMetadata(key: string, value: unknown): Promise<void>;
+  setMetadata(key: string, value: BridgeJsonValue): Promise<void>;
   /** Delete a key from `conversation.metadata`. */
   deleteMetadata(key: string): Promise<void>;
   /** Reset `conversation.metadata` to `{}`. */

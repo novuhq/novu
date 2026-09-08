@@ -115,10 +115,10 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     this.stringifyMarkdown = chatModule.stringifyMarkdown;
     this.getEmojiFn = chatModule.getEmoji;
     this.mapper.setChatModule({
-      Message: chatModule.Message as unknown as ChatModuleParts['Message'],
+      Message: asChatModulePart<ChatModuleParts['Message']>(chatModule.Message),
       parseMarkdown: chatModule.parseMarkdown,
       stringifyMarkdown: chatModule.stringifyMarkdown,
-      toCardElement: chatModule.toCardElement as unknown as ChatModuleParts['toCardElement'],
+      toCardElement: asChatModulePart<ChatModuleParts['toCardElement']>(chatModule.toCardElement),
       isCardElement: chatModule.isCardElement,
     });
   }
@@ -587,10 +587,15 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   }
 
   private emojiName(emoji: EmojiValue | string): string {
-    if (typeof emoji === 'string') {
-      return emoji;
+    const named = emoji as { name?: string };
+    if (named.name !== undefined) {
+      return named.name;
     }
 
-    return emoji?.name ?? String(emoji);
+    return String(emoji);
   }
+}
+
+function asChatModulePart<T>(value: unknown): T {
+  return value as T;
 }
