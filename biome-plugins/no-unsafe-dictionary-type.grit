@@ -1,10 +1,6 @@
 language js(typescript)
 
 or {
-  `Record<string, unknown>`,
-  `Record<number, unknown>`,
-  `Record<symbol, unknown>`,
-  `Record<PropertyKey, unknown>`,
   `Record<string, any>`,
   `Record<number, any>`,
   `Record<symbol, any>`,
