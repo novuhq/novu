@@ -1,4 +1,3 @@
-// biome-ignore-all lint: pre-existing anti-slop in this module; NV-8557 only removes LegacyPostTransport
 import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from '@novu/agent-event-protocol';
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
@@ -19,13 +18,16 @@ import type {
   AgentToolCall,
   DeleteMessagePayload,
   FileRef,
+  HumanApproveRenderArgs,
   HumanApproveRenderFn,
   HumanAskApproveOptions,
   HumanAskApproveRenderOptions,
   HumanAskOptions,
+  HumanAskRenderArgs,
   HumanAskRenderFn,
   HumanAskRenderOptions,
   HumanChooseOptions,
+  HumanChooseRenderArgs,
   HumanChooseRenderFn,
   HumanChooseRenderOptions,
   HumanChrome,
@@ -33,6 +35,7 @@ import type {
   HumanOptionInput,
   HumanSignalCard,
   HumanTellOptions,
+  HumanTellRenderArgs,
   HumanTellRenderFn,
   HumanTellRenderOptions,
   MessageContent,
@@ -74,12 +77,19 @@ type HumanQueuedOpts = {
 
 type HumanRenderFn = HumanAskRenderFn | HumanApproveRenderFn | HumanChooseRenderFn | HumanTellRenderFn;
 
-function humanChromeFactory(type: HumanChrome['type']) {
-  return (overrides?: Record<string, unknown>) => ({ type, ...overrides });
+type HumanRenderArg = HumanAskRenderArgs | HumanApproveRenderArgs | HumanChooseRenderArgs | HumanTellRenderArgs;
+
+function humanChromeFactory<T extends HumanChrome['type']>(type: T) {
+  return (overrides?: Omit<Extract<HumanChrome, { type: T }>, 'type'>) =>
+    ({ type, ...overrides }) as Extract<HumanChrome, { type: T }>;
 }
 
 /** Per-kind render context (`*Card()` factory + minted `actionIds`) passed to a `{ render }` fn. */
-function buildHumanRenderArg(kind: HumanInteractionKind, requestId: string): Record<string, unknown> {
+function buildHumanRenderArg(kind: 'ask', requestId: string): HumanAskRenderArgs;
+function buildHumanRenderArg(kind: 'approve', requestId: string): HumanApproveRenderArgs;
+function buildHumanRenderArg(kind: 'choose', requestId: string): HumanChooseRenderArgs;
+function buildHumanRenderArg(kind: 'tell', requestId: string): HumanTellRenderArgs;
+function buildHumanRenderArg(kind: HumanInteractionKind, requestId: string): HumanRenderArg {
   switch (kind) {
     case 'ask':
       return { requestId, askCard: humanChromeFactory('human-ask-card') };
@@ -489,7 +499,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   }
 
   asMessageContext(): AgentMessageContext {
-    return this as unknown as AgentMessageContext;
+    return this as AgentMessageContext;
   }
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
@@ -660,10 +670,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private queueRendered(kind: HumanInteractionKind, opts: HumanQueuedOpts | undefined, render: HumanRenderFn): string {
     const requestId = mint('hr');
     this._pendingHumanRenders.push(async () => {
-      const invoke = render as unknown as (
-        arg: Record<string, unknown>
-      ) => HumanChrome | ChatElement | Promise<HumanChrome | ChatElement>;
-      const rendered = await invoke(buildHumanRenderArg(kind, requestId));
+      const rendered = await this.invokeHumanRender(kind, requestId, render);
       if (isHumanChrome(rendered)) {
         this.pushRenderedChrome(kind, requestId, rendered, opts);
 
@@ -674,6 +681,28 @@ export class AgentContextImpl implements AgentRuntimeContext {
     });
 
     return requestId;
+  }
+
+  private invokeHumanRender(
+    kind: HumanInteractionKind,
+    requestId: string,
+    render: HumanRenderFn
+  ): Promise<HumanChrome | ChatElement> {
+    switch (kind) {
+      case 'ask':
+        return Promise.resolve((render as HumanAskRenderFn)(buildHumanRenderArg('ask', requestId)));
+      case 'approve':
+        return Promise.resolve((render as HumanApproveRenderFn)(buildHumanRenderArg('approve', requestId)));
+      case 'choose':
+        return Promise.resolve((render as HumanChooseRenderFn)(buildHumanRenderArg('choose', requestId)));
+      case 'tell':
+        return Promise.resolve((render as HumanTellRenderFn)(buildHumanRenderArg('tell', requestId)));
+      default: {
+        const exhaustive: never = kind;
+
+        return Promise.resolve(exhaustive);
+      }
+    }
   }
 
   private pushRenderedChrome(

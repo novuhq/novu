@@ -1,4 +1,3 @@
-// biome-ignore-all lint: pre-existing test helper typing; NV-8557 asserts eventsUrl is always set
 import { AgentEventEnum } from '@novu/framework/internal';
 import { expect } from 'chai';
 import sinon from 'sinon';

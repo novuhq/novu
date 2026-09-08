@@ -1,4 +1,3 @@
-// biome-ignore-all lint: pre-existing anti-slop in history mapping; NV-8557 always advertises eventsUrl
 import { isIP } from 'node:net';
 import { Injectable } from '@nestjs/common';
 import {
