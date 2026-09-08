@@ -434,9 +434,14 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.humanResponse = request.humanResponse ?? null;
 
     this._toolApprovalConfig = toolApprovalConfig;
+    const eventsUrl = request.eventsUrl;
+    if (!eventsUrl) {
+      throw new Error('AgentBridgeRequest.eventsUrl is required');
+    }
+
     this._transport = new EventOutboxTransport(
       new AgentEventOutbox({
-        eventsUrl: request.eventsUrl,
+        eventsUrl,
         secretKey,
         conversationId: request.conversationId,
         agentId: request.agentId,
@@ -503,17 +508,9 @@ export class AgentContextImpl implements AgentRuntimeContext {
   async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
     await this.materializePendingHumanRenders();
     const sideEffects = this._drainSideEffectsSnapshot();
-    const info = await this._transport.sendApprovalCard(card, sideEffects);
+    await this._transport.sendApprovalCard(card, sideEffects);
 
-    if (info === 'unaddressable') {
-      return new NoopReplyHandle();
-    }
-
-    if (!info) {
-      throw new Error('Agent approval card reply did not return a message handle');
-    }
-
-    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this._transport);
+    return new NoopReplyHandle();
   }
 
   /** @internal Build a handle to an already-posted message (used to resume an approval). */

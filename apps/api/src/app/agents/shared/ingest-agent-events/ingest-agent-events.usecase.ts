@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { isAgentEventEnvelope } from '@novu/agent-event-protocol';
+import { type AgentEventEnvelope, isAgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
