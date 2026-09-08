@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 if [ "$branch" = "next" ] && [ "${ALLOW_NEXT_COMMIT:-}" != "1" ]; then
