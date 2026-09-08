@@ -37,11 +37,9 @@
     "./biome-plugins/no-chained-type-assertions.grit",
     "./biome-plugins/no-conditional-empty-object-spread.grit",
     "./biome-plugins/no-known-value-widening.grit",
-    "./biome-plugins/no-module-mocking.grit",
     "./biome-plugins/no-object-parameters.grit",
     "./biome-plugins/no-reflect-apply.grit",
     "./biome-plugins/no-reflect-get.grit",
-    "./biome-plugins/no-runtime-typeof.grit",
     "./biome-plugins/no-shape-in-symbol-names.grit",
     "./biome-plugins/no-unknown-parameters.grit",
     "./biome-plugins/no-unknown-returns.grit",
@@ -419,6 +417,10 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.{ts,tsx,js,jsx}", "!**/*.test.{ts,tsx,js}", "!**/*.spec.{ts,tsx,js}", "!**/*.e2e.{ts,js}"],
+      "plugins": ["./biome-plugins/no-module-mocking.grit"]
     },
     {
       "includes": [
