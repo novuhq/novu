@@ -34,6 +34,7 @@
     "install:with-ee": "pnpm install && pnpm symlink:submodules",
     "jarvis": "node scripts/jarvis.js",
     "lint-staged": "lint-staged",
+    "prepare": "husky install",
     "lint": "biome lint --changed --since=origin/next --no-errors-on-unmatched",
     "lint:fix": "biome check --write .",
     "format": "biome format .",
@@ -149,11 +150,6 @@
       "enterprise/packages/*/*",
       "playground/*"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   },
   "engines": {
     "node": ">=22 <23",
