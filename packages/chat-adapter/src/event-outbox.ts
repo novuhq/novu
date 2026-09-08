@@ -104,9 +104,10 @@ export class AgentEventOutbox {
 
     const batch = this.buffer;
     this.buffer = [];
-    this.chain = this.chain.then(() => this.postBatchWithRetry(batch));
+    const posted = this.chain.then(() => this.postBatchWithRetry(batch));
+    this.chain = posted.catch(() => undefined);
 
-    return this.chain;
+    return posted;
   }
 
   async emit(event: AdapterAgentEvent): Promise<void> {
