@@ -6,11 +6,11 @@ import type { Adapter, CardElement, Emoji, Thread } from 'chat';
 
 export interface NovuAdapterConfig {
   /**
-   * Novu secret API key. Sent as `Authorization: ApiKey <apiKey>` on every reply
-   * POST to `apiBaseUrl/v1/agents/:id/reply`. Required.
+   * Novu secret API key. Sent as `Authorization: ApiKey <apiKey>` on every ingest
+   * POST to the derived events URL. Required.
    */
   apiKey: string;
-  /** Agent identifier the bridge requests target and replies are posted to. Required. */
+  /** Agent identifier stamped on every outbound envelope. Required. */
   agentIdentifier: string;
   /**
    * Shared secret used to verify the HMAC signature (`novu-signature` header) on
@@ -19,10 +19,10 @@ export interface NovuAdapterConfig {
    */
   bridgeSecret: string;
   /**
-   * Base URL of the Novu API. The reply URL is *derived* from this
-   * (`<apiBaseUrl>/v1/agents/<agentIdentifier>/reply`) — the inbound request's
-   * `replyUrl` is deliberately ignored so the apiKey can never be exfiltrated to
-   * an attacker-controlled URL even if HMAC verification is misconfigured.
+   * Base URL of the Novu API. The events ingest URL is *derived* from this
+   * (`<apiBaseUrl>/v1/agents/events/ingest`) — inbound `replyUrl` / `eventsUrl`
+   * are deliberately ignored so the apiKey can never be exfiltrated to an
+   * attacker-controlled URL even if HMAC verification is misconfigured.
    *
    * @default 'https://api.novu.co'
    */
@@ -275,6 +275,8 @@ export interface ThreadSnapshot {
   subscriber: AgentSubscriber | null;
   platform: string;
   platformContext: AgentPlatformContext;
+  /** Inbound `AgentBridgeRequest.deliveryId`. Used as outbox `turnId`. */
+  deliveryId?: string;
 }
 
 /** Opt-in, Novu-only context surfaced via `getNovuContext(thread)`. */

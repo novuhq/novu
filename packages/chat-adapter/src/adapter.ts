@@ -15,8 +15,9 @@ import type {
   WebhookOptions,
 } from 'chat';
 import { handleBridgeProbe } from './bridge-probe.js';
+import { toAgentFileRefs, toAgentMessageContent } from './event-mapper.js';
+import { AgentEventOutbox, deriveEventsUrl, mint } from './event-outbox.js';
 import { type ChatModuleParts, MessageMapper } from './message-mapper.js';
-import { ReplyClient } from './reply-client.js';
 import { patchSnapshotFromSignals, patchSnapshotResolved } from './snapshot-store.js';
 import { deliverBufferedStream, deliverStreamingWithEdits, shouldBufferStream } from './stream-delivery.js';
 import { channelIdFromThreadId, decodeThreadId, encodeThreadId, isDMThreadId } from './thread-id.js';
@@ -24,7 +25,6 @@ import {
   type AgentBridgeRequest,
   AgentEvent,
   type AgentMessageAuthor,
-  type AgentReplyPayload,
   type AgentSubscriber,
   type NovuAdapterConfig,
   type NovuRawMessage,
@@ -93,7 +93,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   private readonly config: NovuAdapterConfig;
   private readonly mapper = new MessageMapper();
   private readonly webhookHandler: WebhookHandler;
-  private readonly replyClient: ReplyClient;
+  private readonly outboxes = new Map<string, AgentEventOutbox>();
   private chat: ChatInstance | null = null;
   private stringifyMarkdown!: (ast: FormattedContent) => string;
   private getEmojiFn!: (name: string) => EmojiValue;
@@ -106,7 +106,6 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     this.config = config;
     this.userName = `novu-agent-${config.agentIdentifier}`;
     this.webhookHandler = new WebhookHandler(config.bridgeSecret, config.maxSignatureAgeMs);
-    this.replyClient = new ReplyClient(config);
   }
 
   async initialize(chat: ChatInstance): Promise<void> {
@@ -178,6 +177,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     const threadId = this.threadIdFor(bridge);
 
     await this.cacheSnapshot(threadId, bridge);
+    this.outboxes.delete(bridge.conversationId);
 
     // Pre-seed subscription from server truth so an ongoing conversation routes to
     // `onSubscribedMessage`. Novu persists inbound before building the bridge, so
@@ -228,6 +228,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       subscriber: bridge.subscriber,
       platform: bridge.platform,
       platformContext: bridge.platformContext,
+      deliveryId: bridge.deliveryId,
     };
     const state = this.state();
     const writes: Promise<void>[] = [this.saveSnapshot(threadId, snapshot)];
@@ -353,12 +354,16 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
 
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<NovuRawMessage>> {
     const decoded = decodeThreadId(threadId);
-    const info = await this.replyClient.send(
-      this.replyPayload(decoded, {
-        reply: await this.mapper.toReplyContent(message),
-      })
-    );
-    const messageId = info?.messageId ?? `novu-reply:${decoded.conversationId}`;
+    const reply = await this.mapper.toReplyContent(message);
+    const messageId = mint('msg');
+    const outbox = await this.outboxFor(threadId, decoded);
+    await outbox.emit({
+      type: 'message',
+      role: 'assistant',
+      messageId,
+      content: toAgentMessageContent(reply),
+      files: toAgentFileRefs(reply.files),
+    });
 
     return {
       id: messageId,
@@ -392,40 +397,49 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     message: AdapterPostableMessage
   ): Promise<RawMessage<NovuRawMessage>> {
     const decoded = decodeThreadId(threadId);
-    const info = await this.replyClient.send(
-      this.replyPayload(decoded, {
-        edit: { messageId, content: await this.mapper.toReplyContent(message) },
-      })
-    );
-    const resolvedId = info?.messageId ?? messageId;
+    const reply = await this.mapper.toReplyContent(message);
+    const outbox = await this.outboxFor(threadId, decoded);
+    await outbox.emit({
+      type: 'channel.edit',
+      messageId,
+      content: toAgentMessageContent(reply),
+      files: toAgentFileRefs(reply.files),
+    });
 
     return {
-      id: resolvedId,
-      raw: this.outboundRaw(decoded, resolvedId),
+      id: messageId,
+      raw: this.outboundRaw(decoded, messageId),
       threadId,
     };
   }
 
   async addReaction(threadId: string, messageId: string, emoji: EmojiValue | string): Promise<void> {
     const decoded = decodeThreadId(threadId);
-    await this.replyClient.send(
-      this.replyPayload(decoded, {
-        addReactions: [{ messageId, emojiName: this.emojiName(emoji) }],
-      })
-    );
+    const outbox = await this.outboxFor(threadId, decoded);
+    await outbox.emit({
+      type: 'channel.reaction',
+      messageId,
+      emoji: this.emojiName(emoji),
+      op: 'add',
+    });
   }
 
   /** Emit raw signals (used by `getNovuContext().trigger` / `.setMetadata`). */
   async emitSignals(threadId: string, signals: Signal[]): Promise<void> {
     const decoded = decodeThreadId(threadId);
-    await this.replyClient.send(this.replyPayload(decoded, { signals }));
+    const outbox = await this.outboxFor(threadId, decoded);
+    for (const signal of signals) {
+      outbox.enqueue({ type: 'signal', signal });
+    }
+    await outbox.flush();
     await this.patchSnapshotAfterSignals(threadId, signals);
   }
 
   /** Emit a resolve (used by `getNovuContext().resolve`). */
   async emitResolve(threadId: string, summary?: string): Promise<void> {
     const decoded = decodeThreadId(threadId);
-    await this.replyClient.send(this.replyPayload(decoded, { resolve: { summary } }));
+    const outbox = await this.outboxFor(threadId, decoded);
+    await outbox.emit({ type: 'resolve', summary });
 
     const snapshot = await this.getSnapshot(threadId);
     if (snapshot) {
@@ -535,12 +549,24 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     }
   }
 
-  private replyPayload(decoded: NovuThreadId, rest: Partial<AgentReplyPayload>): AgentReplyPayload {
-    return {
+  private async outboxFor(threadId: string, decoded: NovuThreadId): Promise<AgentEventOutbox> {
+    const existing = this.outboxes.get(decoded.conversationId);
+    if (existing) {
+      return existing;
+    }
+
+    const snapshot = await this.getSnapshot(threadId);
+    const outbox = new AgentEventOutbox({
+      eventsUrl: deriveEventsUrl(this.config.apiBaseUrl),
+      apiKey: this.config.apiKey,
       conversationId: decoded.conversationId,
-      integrationIdentifier: decoded.integrationIdentifier,
-      ...rest,
-    };
+      agentId: this.config.agentIdentifier,
+      turnId: snapshot?.deliveryId ?? mint('turn'),
+      fetchFn: this.config.fetch ?? globalThis.fetch,
+    });
+    this.outboxes.set(decoded.conversationId, outbox);
+
+    return outbox;
   }
 
   private outboundRaw(decoded: NovuThreadId, messageId: string): NovuRawMessage {

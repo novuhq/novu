@@ -81,10 +81,17 @@ describe('Novu adapter end-to-end', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchMock = vi.fn(
-      async () => new Response(JSON.stringify({ messageId: 'm-1', platformThreadId: 't-1' }), { status: 200 })
-    );
+    fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
   });
+
+  function lastEnvelope() {
+    const [, init] = fetchMock.mock.calls.at(-1)!;
+    const body = JSON.parse((init as RequestInit).body as string) as {
+      events: Array<{ event: Record<string, unknown>; turnId?: string }>;
+    };
+
+    return body.events[0]!;
+  }
 
   function buildChat() {
     const adapter = createNovuAdapter({
@@ -117,14 +124,21 @@ describe('Novu adapter end-to-end', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0]!;
-    // Reply went to the derived URL, NOT the attacker-controlled replyUrl in the request.
-    expect(url).toBe('https://api.novu.co/v1/agents/support-agent/reply');
+    // Ingest went to the derived URL, NOT the attacker-controlled replyUrl in the request.
+    expect(url).toBe('https://api.novu.co/v1/agents/events/ingest');
     expect((init.headers as Record<string, string>).authorization).toBe(`ApiKey ${API_KEY}`);
-    expect(JSON.parse(init.body as string)).toMatchObject({
+    const envelope = lastEnvelope();
+    expect(envelope).toMatchObject({
       conversationId: 'conv-1',
-      integrationIdentifier: 'slack-prod',
-      reply: { markdown: 'echo: hello' },
+      agentId: 'support-agent',
+      turnId: expect.any(String),
+      event: {
+        type: 'message',
+        role: 'assistant',
+        content: { markdown: 'echo: hello' },
+      },
     });
+    expect((envelope.event as { messageId: string }).messageId).toMatch(/^msg_/);
   });
 
   it('routes a brand-new channel conversation to onNewMention', async () => {
@@ -226,7 +240,7 @@ describe('Novu adapter end-to-end', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('normalizes a chat-sdk Card posted by a handler into reply.card', async () => {
+  it('normalizes a chat-sdk Card posted by a handler into event.content.card', async () => {
     const { adapter, chat } = buildChat();
     chat.onSubscribedMessage(async (thread) => {
       await thread.post(
@@ -252,15 +266,14 @@ describe('Novu adapter end-to-end', () => {
     await deliver(adapter, bridgeRequest());
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0];
-    const payload = JSON.parse(init.body as string);
-    expect(payload.reply.markdown).toBeUndefined();
-    expect(payload.reply.card).toMatchObject({
+    const event = lastEnvelope().event as { content: { markdown?: string; card: Record<string, unknown> } };
+    expect(event.content.markdown).toBeUndefined();
+    expect(event.content.card).toMatchObject({
       type: 'card',
       title: 'Card title',
       subtitle: 'Card subtitle',
     });
-    expect(payload.reply.card.children).toEqual(
+    expect(event.content.card.children).toEqual(
       expect.arrayContaining([expect.objectContaining({ type: 'text', content: 'Hello from a card' })])
     );
   });
@@ -434,12 +447,10 @@ describe('Novu adapter end-to-end', () => {
     });
 
     await novu.clearMetadata();
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        body: expect.stringContaining('"action":"clear"'),
-      })
-    );
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'signal',
+      signal: { type: 'metadata', action: 'clear' },
+    });
     expect(await novu.getMetadata('ticketId')).toBeUndefined();
     expect((await novu.getConversation())?.metadata).toEqual({});
   });
@@ -484,6 +495,7 @@ describe('Novu adapter end-to-end', () => {
 
     await deliver(adapter, bridgeRequest());
     expect(ctx).not.toBeNull();
+    expect(lastEnvelope().event).toMatchObject({ type: 'resolve', summary: 'done' });
   });
 
   it('preserves Novu history fields on fetchMessages', async () => {
@@ -528,7 +540,7 @@ describe('Novu adapter end-to-end', () => {
     });
   });
 
-  it('normalizes outbound files on markdown replies into reply.files', async () => {
+  it('normalizes outbound files on markdown replies into event.files', async () => {
     const { adapter, chat } = buildChat();
     chat.onSubscribedMessage(async (thread) => {
       await thread.post({
@@ -547,16 +559,62 @@ describe('Novu adapter end-to-end', () => {
     await deliver(adapter, bridgeRequest());
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0]!;
-    const payload = JSON.parse(init.body as string);
-    expect(payload.reply.markdown).toBe('See attached');
-    expect(payload.reply.files).toEqual([
-      expect.objectContaining({
-        filename: 'note.txt',
-        mimeType: 'text/plain',
-        data: Buffer.from('hello').toString('base64'),
-      }),
-    ]);
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'message',
+      content: { markdown: 'See attached' },
+      files: [
+        expect.objectContaining({
+          fileId: 'note.txt',
+          mediaType: 'text/plain',
+          data: Buffer.from('hello').toString('base64'),
+        }),
+      ],
+    });
+  });
+
+  it('editMessage after post uses the minted id on channel.edit', async () => {
+    const { adapter, chat } = buildChat();
+    let postedId = '';
+    chat.onSubscribedMessage(async (thread) => {
+      const posted = await thread.post('draft');
+      postedId = posted.id;
+      await adapter.editMessage(thread.id, posted.id, 'edited');
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest({ deliveryId: 'del-edit' }));
+
+    expect(postedId).toMatch(/^msg_/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const first = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string);
+    const second = JSON.parse((fetchMock.mock.calls[1]![1] as RequestInit).body as string);
+    expect(first.events[0].event).toMatchObject({ type: 'message', messageId: postedId, content: { markdown: 'draft' } });
+    expect(second.events[0].event).toMatchObject({
+      type: 'channel.edit',
+      messageId: postedId,
+      content: { markdown: 'edited' },
+    });
+    expect(first.events[0].turnId).toBe('del-edit');
+    expect(second.events[0].turnId).toBe('del-edit');
+    expect(second.events[0].sequence).toBe(2);
+  });
+
+  it('addReaction emits channel.reaction op add', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async (thread) => {
+      const posted = await thread.post('react to me');
+      await adapter.addReaction(thread.id, posted.id, 'thumbsup');
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'channel.reaction',
+      emoji: 'thumbsup',
+      op: 'add',
+    });
   });
 
   it('dedupes a replayed deliveryId (same delivery processed once)', async () => {
