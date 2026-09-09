@@ -1,4 +1,3 @@
-// biome-ignore-all lint: pre-existing anti-slop in this suite; NV-8557 retargets posts to ingest
 import { jsx } from 'chat/jsx-runtime';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,18 +15,41 @@ import { buildApprovalActionId } from './tool-approval/action-id';
 
 const EVENTS_URL = 'https://api.novu.co/v1/agents/events/ingest';
 
-type WireEvent = { type: string; [key: string]: any };
+type WireEvent = { type: string; [key: string]: unknown };
 type IngestBatch = { events?: Array<{ conversationId?: string; event: WireEvent }> };
 
-function ingestBatchesFromFetch(fetchMock: { mock: { calls: any[] } }): IngestBatch[] {
+type ProjectedIngestBody = {
+  conversationId?: string;
+  reply?: {
+    markdown?: string;
+    card?: unknown;
+    files?: unknown;
+    toolApprovalCard?: { type: 'tool-approval-card' };
+  };
+  toolApprovalRequest?: {
+    approvalId?: unknown;
+    toolCallId?: unknown;
+    name?: unknown;
+    input?: unknown;
+  };
+  signals?: unknown[];
+  edit?: { messageId?: unknown; content?: unknown };
+  deleteMessages?: Array<{ messageId: string }>;
+  addReactions?: Array<{ messageId: string; emojiName?: unknown }>;
+  typing?: 'stop' | { status?: unknown } | Record<string, never>;
+  error?: boolean;
+  resolve?: { summary?: unknown };
+};
+
+function ingestBatchesFromFetch(fetchMock: { mock: { calls: unknown[] } }): IngestBatch[] {
   return fetchMock.mock.calls
-    .filter((call: any[]) => call[0] === EVENTS_URL)
-    .map(([, init]: any[]) => JSON.parse(init.body) as IngestBatch);
+    .filter((call): call is [string, { body: string }] => Array.isArray(call) && call[0] === EVENTS_URL)
+    .map(([, init]) => JSON.parse(init.body) as IngestBatch);
 }
 
-function projectIngestBatch(batch: IngestBatch): Record<string, any> {
+function projectIngestBatch(batch: IngestBatch): ProjectedIngestBody {
   const events = batch.events ?? [];
-  const body: Record<string, any> = {};
+  const body: ProjectedIngestBody = {};
 
   if (events[0]?.conversationId) {
     body.conversationId = events[0].conversationId;
@@ -98,11 +120,11 @@ function projectIngestBatch(batch: IngestBatch): Record<string, any> {
   return body;
 }
 
-function asReplyBodiesFromFetch(fetchMock: { mock: { calls: any[] } }): Array<Record<string, any>> {
+function asReplyBodiesFromFetch(fetchMock: { mock: { calls: unknown[] } }): ProjectedIngestBody[] {
   return ingestBatchesFromFetch(fetchMock).map(projectIngestBatch);
 }
 
-function asReplyBodiesFromPosts(posts: Array<Record<string, unknown>>): Array<Record<string, any>> {
+function asReplyBodiesFromPosts(posts: Array<Record<string, unknown>>): ProjectedIngestBody[] {
   return posts.map((body) => projectIngestBatch(body as IngestBatch));
 }
 
@@ -214,11 +236,14 @@ describe('agent dispatch via NovuRequestHandler', () => {
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/events/ingest'
     );
     expect(replyCall).toBeDefined();
+    if (!replyCall) {
+      throw new Error('expected ingest fetch call');
+    }
     const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
-    expect(replyBody.reply.markdown).toBe('Echo: Hello bot!');
+    expect(replyBody.reply?.markdown).toBe('Echo: Hello bot!');
     expect(replyBody.conversationId).toBe('conv-456');
 
-    const replyHeaders = replyCall![1].headers;
+    const replyHeaders = replyCall[1].headers;
     expect(replyHeaders.Authorization).toBe('ApiKey test-secret-key');
   });
 
@@ -594,8 +619,8 @@ describe('agent dispatch via NovuRequestHandler', () => {
   it('should reject object-form HITL helpers without card.title', () => {
     const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
 
-    expect(() => ctx.approve({ card: { subtitle: 'no title' } as unknown as { title: string } })).toThrow('card.title');
-    expect(() => ctx.ask({ card: { body: 'no title' } as unknown as { title: string } })).toThrow('card.title');
+    expect(() => ctx.approve({ card: { subtitle: 'no title' } as { title: string } })).toThrow('card.title');
+    expect(() => ctx.ask({ card: { body: 'no title' } as { title: string } })).toThrow('card.title');
   });
 
   it('should queue renderApprove chrome with requestId action identifiers', async () => {
@@ -1738,7 +1763,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
     expect(getResult).toBe(42);
-    expect(currentSnapshot!).toEqual({});
+    expect(currentSnapshot).toEqual({});
   });
 
   it('should dispatch onAction event with action data on ctx', async () => {
@@ -2486,7 +2511,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
   });
 
   it('should log delivery errors without leaking the response body', async () => {
-    const longBody = '<!DOCTYPE html>' + '<p>error</p>'.repeat(500);
+    const longBody = `<!DOCTYPE html>${'<p>error</p>'.repeat(500)}`;
     fetchMock.mockResolvedValue({ ok: false, status: 502, text: () => Promise.resolve(longBody) });
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -3141,7 +3166,10 @@ describe('tool approval', () => {
       p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev')
     );
     expect(deletePost).toBeTruthy();
-    expect(replyBodies.indexOf(deletePost!)).toBe(1);
+    if (!deletePost) {
+      throw new Error('expected delete post');
+    }
+    expect(replyBodies.indexOf(deletePost)).toBe(1);
     expect(replyBodies.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
   });
 
