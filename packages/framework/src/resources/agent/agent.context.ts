@@ -1,6 +1,6 @@
+// biome-ignore-all lint: pre-existing anti-slop in this module; NV-8557 only removes LegacyPostTransport
 import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from '@novu/agent-event-protocol';
 import type { CardElement, ChatElement, Emoji } from 'chat';
-import { AgentDeliveryError } from './agent.errors';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
 import type {
   AddReactionPayload,
@@ -15,7 +15,6 @@ import type {
   AgentNotification,
   AgentPlatformContext,
   AgentReaction,
-  AgentReplyPayload,
   AgentSubscriber,
   AgentToolCall,
   DeleteMessagePayload,
@@ -191,58 +190,6 @@ interface SideEffectsSnapshot {
   resolve: { summary?: string } | null;
 }
 
-/**
- * A turn's delivery mechanism. Legacy bridges POST a single `AgentReplyPayload` per action;
- * SDK-native runs emit one or more `AgentEvent`s to the outbox. `AgentContextImpl` selects one
- * implementation per run and delegates to it, instead of branching on the mode at every call site.
- */
-interface TurnTransport {
-  sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null>;
-  /**
-   * Returns `'unaddressable'` when the card was rendered but there is no client-addressable
-   * message handle for it (event mode: the sink owns approval-card rendering, so there is no
-   * id it could later resolve an edit/delete against).
-   */
-  sendApprovalCard(
-    card: ToolApprovalCard,
-    sideEffects: SideEffectsSnapshot
-  ): Promise<SentMessageInfo | null | 'unaddressable'>;
-  editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null>;
-  deleteMessage(messageId: string): Promise<void>;
-  setTyping(op: TypingOp): Promise<void>;
-  flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void>;
-  emitCustom(name: string, data: unknown): Promise<void>;
-  queueRunStart(): void;
-  emitRunFinish(outcome: AgentRunOutcome): Promise<void>;
-  reportTurnError(message?: string): Promise<void>;
-}
-
-function applySideEffects(body: AgentReplyPayload, sideEffects: SideEffectsSnapshot): void {
-  if (sideEffects.toolApprovalRequest) {
-    body.toolApprovalRequest = sideEffects.toolApprovalRequest;
-  }
-
-  if (sideEffects.signals.length) {
-    body.signals = sideEffects.signals;
-  }
-
-  if (sideEffects.toolResults.length) {
-    body.toolResults = sideEffects.toolResults;
-  }
-
-  if (sideEffects.addReactions.length) {
-    body.addReactions = sideEffects.addReactions;
-  }
-
-  if (sideEffects.deleteMessages.length) {
-    body.deleteMessages = sideEffects.deleteMessages;
-  }
-
-  if (sideEffects.resolve) {
-    body.resolve = sideEffects.resolve;
-  }
-}
-
 function toSideEffectEvents(
   sideEffects: SideEffectsSnapshot,
   options?: { deliverApprovalCard?: boolean }
@@ -294,103 +241,8 @@ function toSideEffectEvents(
   return events;
 }
 
-/** Legacy transport: one POST per turn action against the bridge's `replyUrl`. */
-class LegacyPostTransport implements TurnTransport {
-  constructor(
-    private readonly replyUrl: string,
-    private readonly secretKey: string,
-    private readonly conversationId: string,
-    private readonly integrationIdentifier: string
-  ) {}
-
-  async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
-    const body = this._baseBody();
-    body.reply = reply;
-    applySideEffects(body, sideEffects);
-
-    return this._post(body);
-  }
-
-  async sendApprovalCard(card: ToolApprovalCard, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
-    const body = this._baseBody();
-    body.reply = { toolApprovalCard: card };
-    applySideEffects(body, sideEffects);
-
-    return this._post(body);
-  }
-
-  async editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null> {
-    return this._post({ ...this._baseBody(), edit: { messageId, content: reply } });
-  }
-
-  async deleteMessage(messageId: string): Promise<void> {
-    await this._post({ ...this._baseBody(), deleteMessages: [{ messageId }] });
-  }
-
-  async setTyping(op: TypingOp): Promise<void> {
-    await this._post({ ...this._baseBody(), typing: op });
-  }
-
-  async flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void> {
-    const body = this._baseBody();
-    applySideEffects(body, sideEffects);
-    await this._post(body);
-  }
-
-  // Custom events and run lifecycle hooks are SDK-native concepts; legacy bridges have no equivalent.
-  async emitCustom(): Promise<void> {}
-
-  queueRunStart(): void {}
-
-  async emitRunFinish(): Promise<void> {}
-
-  async reportTurnError(): Promise<void> {
-    await this._post({ ...this._baseBody(), error: true });
-  }
-
-  private _baseBody(): AgentReplyPayload {
-    return { conversationId: this.conversationId, integrationIdentifier: this.integrationIdentifier };
-  }
-
-  private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
-    const response = await fetch(this.replyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `ApiKey ${this.secretKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new AgentDeliveryError(response.status, text);
-    }
-
-    const raw = await response.text().catch(() => '');
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as { data?: Record<string, unknown> } | Record<string, unknown>;
-      const envelope = (parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed) as
-        | Record<string, unknown>
-        | undefined;
-
-      if (envelope && typeof envelope.messageId === 'string' && typeof envelope.platformThreadId === 'string') {
-        return { messageId: envelope.messageId, platformThreadId: envelope.platformThreadId };
-      }
-    } catch {
-      // flush-only responses return null or an empty body; tolerate and fall through.
-    }
-
-    return null;
-  }
-}
-
-/** SDK-native transport: batches `AgentEvent`s through the run's outbox. */
-class EventOutboxTransport implements TurnTransport {
+/** Maps handler delivery calls onto `AgentEvent`s and flushes them through the run outbox. */
+class EventOutboxTransport {
   constructor(private readonly outbox: AgentEventOutbox) {}
 
   async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
@@ -485,7 +337,7 @@ class ReplyHandleImpl implements ReplyHandle {
   constructor(
     messageId: string,
     platformThreadId: string,
-    private readonly transport: TurnTransport
+    private readonly transport: EventOutboxTransport
   ) {
     this.messageId = messageId;
     this.platformThreadId = platformThreadId;
@@ -564,7 +416,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
-  private readonly _transport: TurnTransport;
+  private readonly _transport: EventOutboxTransport;
   private _pendingHumanRenders: Array<() => Promise<void>> = [];
 
   constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
@@ -582,17 +434,20 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.humanResponse = request.humanResponse ?? null;
 
     this._toolApprovalConfig = toolApprovalConfig;
-    this._transport = request.eventsUrl
-      ? new EventOutboxTransport(
-          new AgentEventOutbox({
-            eventsUrl: request.eventsUrl,
-            secretKey,
-            conversationId: request.conversationId,
-            agentId: request.agentId,
-            turnId: request.deliveryId,
-          })
-        )
-      : new LegacyPostTransport(request.replyUrl, secretKey, request.conversationId, request.integrationIdentifier);
+    const eventsUrl = request.eventsUrl;
+    if (!eventsUrl) {
+      throw new Error('AgentBridgeRequest.eventsUrl is required');
+    }
+
+    this._transport = new EventOutboxTransport(
+      new AgentEventOutbox({
+        eventsUrl,
+        secretKey,
+        conversationId: request.conversationId,
+        agentId: request.agentId,
+        turnId: request.deliveryId,
+      })
+    );
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
 
@@ -653,17 +508,9 @@ export class AgentContextImpl implements AgentRuntimeContext {
   async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
     await this.materializePendingHumanRenders();
     const sideEffects = this._drainSideEffectsSnapshot();
-    const info = await this._transport.sendApprovalCard(card, sideEffects);
+    await this._transport.sendApprovalCard(card, sideEffects);
 
-    if (info === 'unaddressable') {
-      return new NoopReplyHandle();
-    }
-
-    if (!info) {
-      throw new Error('Agent approval card reply did not return a message handle');
-    }
-
-    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this._transport);
+    return new NoopReplyHandle();
   }
 
   /** @internal Build a handle to an already-posted message (used to resume an approval). */
