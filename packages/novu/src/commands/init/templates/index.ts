@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: pre-existing installTemplate pipeline; out of scope for the Chat SDK pin */
 import { getNovuScaffoldSdkTag } from '@novu/shared';
 import { Sema } from 'async-sema';
 import { async as glob } from 'fast-glob';
@@ -32,13 +33,13 @@ function resolveTemplatesDir(): string {
 
 const TEMPLATES_DIR = resolveTemplatesDir();
 
-function resolveCliPackageJson(): Record<string, any> | null {
+function resolveCliPackageJson(): { version?: string } | null {
   const distIndex = __dirname.lastIndexOf(`${path.sep}dist${path.sep}`);
   if (distIndex === -1) return null;
 
   const pkgRoot = __dirname.slice(0, distIndex);
   try {
-    return JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
+    return JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8')) as { version?: string };
   } catch {
     return null;
   }
@@ -164,18 +165,24 @@ export const installTemplate = async ({
   const isAiSdkTemplate = template === TemplateTypeEnum.APP_AGENT_AI_SDK;
   const isLangChainTemplate = template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
 
-  if (renameAgent && llmAuth && shouldWireLlmAuth(llmAuth) && (isAiSdkTemplate || isLangChainTemplate)) {
+  if (
+    renameAgent &&
+    agentIdentifier &&
+    llmAuth &&
+    shouldWireLlmAuth(llmAuth) &&
+    (isAiSdkTemplate || isLangChainTemplate)
+  ) {
     const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
     const agentFilePath = path.join(root, 'app', 'novu', 'agents', `${agentIdentifier}.tsx`);
     const source = generateSupportAgentSource({
       runtime,
-      agentIdentifier: agentIdentifier!,
+      agentIdentifier,
       llmAuth,
     });
 
     await fs.writeFile(agentFilePath, source);
 
-    if (!codegenSupportsTools({ runtime, agentIdentifier: agentIdentifier!, llmAuth })) {
+    if (!codegenSupportsTools({ runtime, agentIdentifier, llmAuth })) {
       const toolsDir = path.join(root, 'app', 'novu', 'agents', 'tools');
       await fs.rm(path.join(toolsDir, 'search-novu-docs.ts'), { force: true });
       await fs.rmdir(toolsDir).catch(() => undefined);
@@ -352,7 +359,19 @@ export const installTemplate = async ({
       `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"`;
   }
 
-  const packageJson: any = {
+  const packageJson: {
+    name: string;
+    version: string;
+    private: boolean;
+    scripts: Record<string, string>;
+    dependencies: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    pnpm?: {
+      peerDependencyRules: {
+        allowedVersions: Record<string, string>;
+      };
+    };
+  } = {
     name: appName,
     version: '0.1.0',
     private: true,
