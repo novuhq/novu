@@ -51,7 +51,19 @@ function Chat({ conversationId }: { conversationId?: string }) {
 
 Store the `conversationId` that `sendMessage` returns, or the `conversationId` field on the hook result. On the next visit, pass that id back in, or pick a row from [List](#list).
 
-To start another chat, remount the component without `conversationId`, or clear the prop.
+To start another chat without a `conversationId` prop, call `startNewConversation()` from the hook. It clears the current timeline and opens an empty chat in place, so the component does not remount. The next `sendMessage` creates the new server conversation.
+
+```tsx
+const { startNewConversation } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+<button type="button" onClick={() => startNewConversation()}>
+  New chat
+</button>
+```
+
+`startNewConversation()` is a no-op when you pass `conversationId` or a shared `conversation` runtime. In those cases, switch chats by changing the `conversationId` you pass in, or remount the component.
 
 `agentId` selects the agent. If the identifier changes, remount with the new `agentId`.
 

@@ -544,6 +544,14 @@ The Novu client provides real-time event handling through WebSocket connections.
 - `subscriptions.delete.pending`: Triggered when deleting a subscription start.
 - `subscriptions.delete.resolved`: Triggered when a subscription is deleted.
 
+#### Connection events
+
+The client also emits socket lifecycle events so you can surface real-time connection state (for example, a "reconnecting" banner). Each payload carries the `socketUrl` in its `args`.
+
+- `socket.connect.pending`: Triggered when the real-time socket starts connecting.
+- `socket.connect.resolved`: Triggered when the real-time socket connects or reconnects.
+- `socket.disconnect.resolved`: Triggered when the real-time socket drops or `disconnect()` is called. Use it to show a connection-lost state.
+
 ### Usage
 
 ```typescript
@@ -575,6 +583,14 @@ novu.on('subscriptions.create.resolved', ({ data: subscription }) => {
 
 novu.on('subscriptions.list.resolved', ({ data: subscriptions }) => {
   console.log('Loaded subscriptions:', subscriptions.length);
+});
+
+novu.on('socket.connect.resolved', ({ args }) => {
+  console.log('Real-time connection is live:', args.socketUrl);
+});
+
+novu.on('socket.disconnect.resolved', ({ args }) => {
+  console.log('Real-time connection dropped:', args.socketUrl);
 });
 
 ```
