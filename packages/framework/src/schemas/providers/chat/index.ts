@@ -1,6 +1,7 @@
 import { ChatProviderIdEnum } from '../../../shared';
 import type { JsonSchema } from '../../../types/schema.types';
 import { genericProviderSchemas } from '../generic.schema';
+import { photonImessageProviderSchemas } from './photon-imessage.schema';
 import { slackProviderSchemas } from './slack.schema';
 
 export const chatProviderSchemas = {
@@ -13,6 +14,7 @@ export const chatProviderSchemas = {
   msteams: genericProviderSchemas,
   'novu-slack': genericProviderSchemas,
   'novu-web-chat': genericProviderSchemas,
+  'photon-imessage': photonImessageProviderSchemas,
   'rocket-chat': genericProviderSchemas,
   ryver: genericProviderSchemas,
   sendblue: genericProviderSchemas,

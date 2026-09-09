@@ -6,15 +6,18 @@ interface PlanCapableAdapter {
   editMessage?: (threadId: string, messageId: string, message: unknown) => Promise<{ id: string; threadId: string }>;
 }
 
+type NativePlanAdapter = PlanCapableAdapter & Required<Pick<PlanCapableAdapter, 'postObject' | 'editObject'>>;
+
 export type PlanDeliveryMode = 'native' | 'markdown';
 
-const MARKDOWN_PLAN_PLATFORMS = new Set<AgentPlatformEnum>([
-  AgentPlatformEnum.TELEGRAM,
-  AgentPlatformEnum.TEAMS,
-]);
+const MARKDOWN_PLAN_PLATFORMS = new Set<AgentPlatformEnum>([AgentPlatformEnum.TELEGRAM, AgentPlatformEnum.TEAMS]);
+
+export function isNativePlanAdapter(adapter: PlanCapableAdapter): adapter is NativePlanAdapter {
+  return typeof adapter.postObject === 'function' && typeof adapter.editObject === 'function';
+}
 
 export function resolvePlanDeliveryMode(platform: string, adapter: PlanCapableAdapter): PlanDeliveryMode | null {
-  if (typeof adapter.postObject === 'function' && typeof adapter.editObject === 'function') {
+  if (isNativePlanAdapter(adapter)) {
     return 'native';
   }
 

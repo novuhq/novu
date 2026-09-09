@@ -59,14 +59,19 @@ export function getAutoProvisionEndpointConfig(platform: AutoProvisionPlatform):
   return AUTO_PROVISION_ENDPOINT_CONFIG[platform];
 }
 
-/** Email/WhatsApp/Sendblue open-access provision by identity field (no ChannelEndpoint). */
+/** Email/WhatsApp/Sendblue/Photon open-access provision by identity field (no ChannelEndpoint). */
 export function isOpenAccessIdentityPlatform(
   platform: AgentPlatformEnum
-): platform is AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE {
+): platform is
+  | AgentPlatformEnum.EMAIL
+  | AgentPlatformEnum.WHATSAPP
+  | AgentPlatformEnum.SENDBLUE
+  | AgentPlatformEnum.PHOTON_IMESSAGE {
   return (
     platform === AgentPlatformEnum.EMAIL ||
     platform === AgentPlatformEnum.WHATSAPP ||
-    platform === AgentPlatformEnum.SENDBLUE
+    platform === AgentPlatformEnum.SENDBLUE ||
+    platform === AgentPlatformEnum.PHOTON_IMESSAGE
   );
 }
 

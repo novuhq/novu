@@ -2,13 +2,13 @@ import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@
 import { type ReactNode } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { PhotonSetupGuide } from '@/components/agents/photon-setup-guide';
 import { SendblueSetupGuide } from '@/components/agents/sendblue-setup-guide';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { WebChatAgentIntegrationGuide } from './web-chat-agent-integration-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
@@ -16,6 +16,7 @@ import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide'
 import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
 import { TeamsAgentConnectedDetails } from './teams-agent-connected-details';
 import { TelegramAgentConnectedDetails } from './telegram-agent-connected-details';
+import { WebChatAgentIntegrationGuide } from './web-chat-agent-integration-guide';
 import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
@@ -171,6 +172,10 @@ export function ResolveAgentIntegrationGuide({
       setupGuide = <SendblueSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
       setupDisplayName = 'Sendblue';
       break;
+    case ChatProviderIdEnum.PhotonImessage:
+      setupGuide = <PhotonSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Photon';
+      break;
     default:
       setupGuide = null;
   }
@@ -240,8 +245,9 @@ export function ResolveAgentIntegrationGuide({
             justConnected={justConnected}
           />
         );
-      // No bespoke connected details for Sendblue yet — fall back to the generic guide.
+      // No bespoke connected details for Sendblue/Photon yet — fall back to the generic guide.
       case ChatProviderIdEnum.Sendblue:
+      case ChatProviderIdEnum.PhotonImessage:
         return (
           <GenericAgentIntegrationGuide
             embedded={embedded}

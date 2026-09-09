@@ -7,6 +7,7 @@ export * from './grafana-on-call/grafana-on-call.provider';
 export * from './line/line.provider';
 export * from './mattermost/mattermost.provider';
 export * from './msTeams/msTeams.provider';
+export * from './photon-imessage/photon-imessage.provider';
 export * from './rocket-chat/rocket-chat.provider';
 export * from './ryver/ryver.provider';
 export * from './sendblue/sendblue.provider';
