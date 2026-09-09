@@ -7,6 +7,7 @@ import os from 'os';
 import path from 'path';
 import { bold, cyan } from 'picocolors';
 import type { BridgeAdapterVariant } from '../../connect/pipeline/bridge-adapter/types';
+import { CHAT_SDK_VERSION } from '../../connect/pipeline/chat-sdk/versions';
 import { generateAgentNextConfigSource } from '../../connect/pipeline/llm-auth/codegen/generate-agent-next-config';
 import { generateSupportAgentSource } from '../../connect/pipeline/llm-auth/codegen/generate-support-agent';
 import { codegenSupportsTools } from '../../connect/pipeline/llm-auth/codegen/tool-support';
@@ -321,9 +322,9 @@ export const installTemplate = async ({
   }
 
   if (isChatSdkTemplate) {
-    baseDependencies.chat = '4.40.0';
+    baseDependencies.chat = CHAT_SDK_VERSION;
     baseDependencies['@novu/chat-sdk-adapter'] = 'latest';
-    baseDependencies['@chat-adapter/state-memory'] = '4.40.0';
+    baseDependencies['@chat-adapter/state-memory'] = CHAT_SDK_VERSION;
   }
 
   if (!isAgentTemplate && !isChatSdkTemplate) {
