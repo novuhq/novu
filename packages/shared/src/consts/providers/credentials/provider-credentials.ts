@@ -448,6 +448,47 @@ export const clickatellConfig: IConfigCredential[] = [
   },
 ];
 
+export const eightByEightSmsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'The API key generated in the 8x8 Connect portal, sent as a Bearer token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SubAccountId,
+    displayName: 'Sub-account ID',
+    description: 'The 8x8 sub-account that owns your SMS channel',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Sender ID',
+    description: 'Alphanumeric (max 11 chars) or numeric Sender ID shown as the SMS source. Optional.',
+    type: 'string',
+    required: false,
+  },
+];
+
+export const eightByEightWhatsAppConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'The API key generated in the 8x8 Connect portal, sent as a Bearer token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SubAccountId,
+    displayName: 'Sub-account ID',
+    description: 'The 8x8 sub-account that owns your WhatsApp channel',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const snsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,

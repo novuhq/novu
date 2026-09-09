@@ -12,6 +12,7 @@ import {
   clickSendConfig,
   cmTelecomConfig,
   eazySmsConfig,
+  eightByEightSmsConfig,
   firetextConfig,
   fortySixElksConfig,
   genericSmsConfig,
@@ -115,6 +116,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: gupshupConfig,
     docReference: `https://docs.novu.co/platform/integrations/sms/gupshup${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'gupshup.png', dark: 'gupshup.png' },
+  },
+  {
+    id: SmsProviderIdEnum.EightByEightSms,
+    displayName: '8x8',
+    channel: ChannelTypeEnum.SMS,
+    credentials: eightByEightSmsConfig,
+    docReference: 'https://developer.8x8.com/connect/reference/messages',
+    logoFileName: { light: '8x8.svg', dark: '8x8.svg' },
   },
   {
     id: SmsProviderIdEnum.Firetext,
