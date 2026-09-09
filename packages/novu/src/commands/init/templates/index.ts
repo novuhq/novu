@@ -321,9 +321,9 @@ export const installTemplate = async ({
   }
 
   if (isChatSdkTemplate) {
-    baseDependencies.chat = '4.31.0';
+    baseDependencies.chat = '4.40.0';
     baseDependencies['@novu/chat-sdk-adapter'] = 'latest';
-    baseDependencies['@chat-adapter/state-memory'] = '4.31.0';
+    baseDependencies['@chat-adapter/state-memory'] = '4.40.0';
   }
 
   if (!isAgentTemplate && !isChatSdkTemplate) {

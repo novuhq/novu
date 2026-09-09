@@ -5,9 +5,9 @@ import { hasDependency, readProjectPackageJson } from '../bridge/project-package
 
 export const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
 const CHAT_PACKAGE = 'chat';
-const CHAT_PACKAGE_SPEC = 'chat@4.31.0';
+const CHAT_PACKAGE_SPEC = 'chat@4.40.0';
 const STATE_ADAPTER_PREFIX = '@chat-adapter/state-';
-const DEFAULT_STATE_ADAPTER_SPEC = '@chat-adapter/state-memory@4.31.0';
+const DEFAULT_STATE_ADAPTER_SPEC = '@chat-adapter/state-memory@4.40.0';
 
 export type PackageInstallResult = {
   installed: boolean;
