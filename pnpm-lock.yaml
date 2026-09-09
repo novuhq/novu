@@ -376,20 +376,20 @@ importers:
         specifier: 3.996.0
         version: 3.996.0
       '@chat-adapter/slack':
-        specifier: 4.33.0
-        version: 4.33.0(zod@3.25.20)
+        specifier: 4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       '@chat-adapter/state-ioredis':
-        specifier: 4.33.0
-        version: 4.33.0(zod@3.25.20)
+        specifier: 4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       '@chat-adapter/teams':
-        specifier: 4.33.0
-        version: 4.33.0(zod@3.25.20)
+        specifier: 4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       '@chat-adapter/telegram':
-        specifier: 4.33.0
-        version: 4.33.0(zod@3.25.20)
+        specifier: 4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       '@chat-adapter/whatsapp':
-        specifier: 4.33.0
-        version: 4.33.0(zod@3.25.20)
+        specifier: 4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       '@godaddy/terminus':
         specifier: ^4.12.1
         version: 4.12.1
@@ -473,13 +473,13 @@ importers:
         version: 8.1.6
       '@sentry/nestjs':
         specifier: ^10.63.0
-        version: 10.63.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))
+        version: 10.63.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
       '@sentry/node':
         specifier: ^10.63.0
-        version: 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))
+        version: 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
       '@sentry/profiling-node':
         specifier: ^10.63.0
-        version: 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))
+        version: 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
       '@slack/types':
         specifier: 2.20.1
         version: 2.20.1
@@ -520,8 +520,8 @@ importers:
         specifier: ^4.2.1
         version: 4.10.4
       chat:
-        specifier: 4.33.0
-        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: 4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -599,7 +599,7 @@ importers:
         version: 3.3.18
       nest-raven:
         specifier: 10.1.0
-        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
+        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
         specifier: 13.19.2
         version: 13.19.2
@@ -1467,7 +1467,7 @@ importers:
         version: 4.18.1
       nest-raven:
         specifier: 10.1.0
-        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
+        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       newrelic:
         specifier: 13.19.2
         version: 13.19.2
@@ -1660,7 +1660,7 @@ importers:
         version: 11.5.1
       nest-raven:
         specifier: 10.1.0
-        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
+        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       newrelic:
         specifier: 13.19.2
         version: 13.19.2
@@ -1851,7 +1851,7 @@ importers:
         version: 4.18.1
       nest-raven:
         specifier: 10.1.0
-        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
+        version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       newrelic:
         specifier: 13.19.2
         version: 13.19.2
@@ -2130,7 +2130,7 @@ importers:
     dependencies:
       '@better-auth/sso':
         specifier: ^1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ca737710b014eb0560794e27afb75e45))(better-call@1.3.7(zod@4.3.6))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ca737710b014eb0560794e27afb75e45))(better-call@1.3.7(zod@4.4.3))
       '@clerk/backend':
         specifier: ^3.4.11
         version: 3.4.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2172,7 +2172,7 @@ importers:
         version: 1.6.23(ca737710b014eb0560794e27afb75e45)
       better-call:
         specifier: ^1.3.7
-        version: 1.3.7(zod@4.3.6)
+        version: 1.3.7(zod@4.4.3)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -2501,7 +2501,7 @@ importers:
         version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))
       agents:
         specifier: ^0.21.0
-        version: 0.21.0(@ai-sdk/react@3.0.51(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.0.0)(ai@7.0.31(zod@4.4.3))(chat@4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.4)(zod@4.4.3)
+        version: 0.21.0(@ai-sdk/react@3.0.51(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.0.0)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.4)(zod@4.4.3)
       eventsource-parser:
         specifier: ^3.0.8
         version: 3.1.0
@@ -3506,7 +3506,7 @@ importers:
         version: 4.33.0(zod@4.4.3)
       chat:
         specifier: ^4.33.0
-        version: 4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        version: 4.33.0(zod@4.4.3)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
         version: 19.2.3
@@ -3555,8 +3555,8 @@ importers:
         specifier: ^19.0.0
         version: 19.2.8
       chat:
-        specifier: ^4.33.0
-        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -3574,11 +3574,11 @@ importers:
     dependencies:
       chat-adapter-sendblue:
         specifier: ^0.2.0
-        version: 0.2.0(chat@4.33.0(zod@3.25.20))
+        version: 0.2.0(chat@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20))
     devDependencies:
       chat:
-        specifier: ^4.33.0
-        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3599,8 +3599,8 @@ importers:
         version: 3.3.18
     devDependencies:
       chat:
-        specifier: ^4.33.0
-        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3629,8 +3629,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       chat:
-        specifier: 4.33.0
-        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: 4.40.0
+        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       cross-fetch:
         specifier: ^4.0.0
         version: 4.0.0
@@ -5937,9 +5937,17 @@ packages:
     resolution: {integrity: sha512-VQ5/gTLFADkwue+FohVuCqlzFPUq4xSrX8jeZe+iwZuY6moliNC8xt86qPVNYdtbQfELDf2Nu6LI+demFPHGgw==}
     engines: {node: '>=0.8.0'}
 
+  '@azure/msal-common@16.13.0':
+    resolution: {integrity: sha512-rOAy0KUcyBbdwVJ+f3uPpthXatFLLZN+/KWAsTLzk1aB23Xl9DRmmXYwSvBFOZyXj4jUQQ5FKxxRkhAFW1fOow==}
+    engines: {node: '>=0.8.0'}
+
   '@azure/msal-node@3.8.10':
     resolution: {integrity: sha512-0Hz7Kx4hs70KZWep/Rd7aw/qOLUF92wUOhn7ZsOuB5xNR/06NL1E2RAI9+UKH1FtvN8nD6mFjH7UKSjv6vOWvQ==}
     engines: {node: '>=16'}
+
+  '@azure/msal-node@5.6.0':
+    resolution: {integrity: sha512-uFY9NxrWHw8PwZx7gAX6PDn+9vdfS05+levc/kwkx77IkjfaldnQbbcQzzDIZ5Hq5Zdr6/z92oAIoRWKp6MnOA==}
+    engines: {node: '>=20'}
 
   '@azure/storage-blob@12.13.0':
     resolution: {integrity: sha512-t3Q2lvBMJucgTjQcP5+hvEJMAsJSk0qmAnjDLie2td017IiduZbbC9BOcFfmwzR6y6cJdZOuewLCNFmEx9IrXA==}
@@ -7158,12 +7166,20 @@ packages:
     resolution: {integrity: sha512-PIafG7ySashbaGBBBnpDtufgXYiAEf8LIp2nu6iTXYe97KBgCK5qwFksONxEcvOkpMvLsn2Tx/Ui2dGLA0Xe6g==}
     engines: {node: '>=20'}
 
+  '@chat-adapter/shared@4.40.0':
+    resolution: {integrity: sha512-uTDl9p+PVkGtAw9dgvRdkydifvYVp98R26vGHhU4V5HuS7DBTedTdb1COUOh6vfP0SrC+xSozp4O/IyfbXZSKw==}
+    engines: {node: '>=20'}
+
   '@chat-adapter/slack@4.33.0':
     resolution: {integrity: sha512-G8uE6JiDhC5TecKY2deWE4VhP9KzT3XrL0jQcmheHHiPXIusMrSF4+riKX7JNukwgyknpaVCq8wcOXnkC8Z7lQ==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/state-ioredis@4.33.0':
-    resolution: {integrity: sha512-BOzuTAhzN7kS2xNnP2yTFhn5g11pES9KzaKFKY4tb6ZhMvsB9RF+8iuWjmLDU7VlIaX6sZGpb8DAi4FgKUjrCg==}
+  '@chat-adapter/slack@4.40.0':
+    resolution: {integrity: sha512-aEkJ8OdQPZpIICbxHO08TOPrFVnwvy9e1S1J+AIqB9S1Tf5lE5DtF9AZXWCglRVXFoNCeZ8QcdJYIglxgVIaTg==}
+    engines: {node: '>=20'}
+
+  '@chat-adapter/state-ioredis@4.40.0':
+    resolution: {integrity: sha512-BUqqexoV6i0XLx2mf8E0c7iK6W5AJbbOT7VkpHlNlddtbm6iIHd2GWTPrVjyVVJnKSWSuw5dKfRStcnFRRaaYg==}
     engines: {node: '>=20'}
 
   '@chat-adapter/state-memory@4.33.0':
@@ -7174,12 +7190,16 @@ packages:
     resolution: {integrity: sha512-Ejsy9MbzYJSVrrS8nOWFB3ttzmQSVJfq9YtbOxiJzuWYH7RT+Z0qKMcXw3c9Q3qa4d5QZSUVjY5QJfIdVgXhIA==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/telegram@4.33.0':
-    resolution: {integrity: sha512-Cy54W9BV5dIpyEKQhXiprm+dqGyyqHW5D24FiOP6IMJUGz5NxMRiHJ9WIFetq2RVI8on+4E4eNtfaWqTMXOriQ==}
+  '@chat-adapter/teams@4.40.0':
+    resolution: {integrity: sha512-WNZ2cAtPKCgix3k2caNlojDqF5G/hVyLaqWjZk190NrsRcG1pNnS/TZuZPTCIgi7pbOOc0iZW7zM/gxbJrIHOw==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/whatsapp@4.33.0':
-    resolution: {integrity: sha512-TY3670z7HyySPqrhTQJpTRhkm0EN7ulYkCAPQPuLdCq/zzbS50fdhbqx6pgzygwN0s4Uby8rYfSvk46uFOZy2A==}
+  '@chat-adapter/telegram@4.40.0':
+    resolution: {integrity: sha512-SbAjiGIMWEK+nR7tdMenmAvnaUDSNQM8cqXc7zFBSbc5lCWtkcBEDsfpMGueqVR3FSsEnwOpOdWFHCsGgseiCQ==}
+    engines: {node: '>=20'}
+
+  '@chat-adapter/whatsapp@4.40.0':
+    resolution: {integrity: sha512-gu8M7klCSNwU/oAGiKio8MokiIFBgZXDMjj5GvKnp5fgaXP/i5vdahru2H4vdE7uWrZf3UEwpBHBTPoxfXm+Lw==}
     engines: {node: '>=20'}
 
   '@chevrotain/types@11.1.2':
@@ -9144,24 +9164,48 @@ packages:
     resolution: {integrity: sha512-/QvOQkqSM73O9SrDLURyJZClnOAi6fJTX6qhhka/fPZbPU4ID4BIDvee7dSRbLx7lM+nSa370uLFzHHzXp5TWQ==}
     engines: {node: '>=20'}
 
+  '@microsoft/teams.api@2.0.16':
+    resolution: {integrity: sha512-ds2SK6JvAcDL1EfVYWJ1Cmvyytm3CIfdPZS7CxYPvsebhfnMNmvxQlDFuh0Hh0hmjLxIJtycqBddMVulZITs1w==}
+    engines: {node: '>=20'}
+
   '@microsoft/teams.apps@2.0.11':
     resolution: {integrity: sha512-DSk09njNbFi5pc8GOAd3/Auqy52ZmsBJqu0wRXV2VQp/L+M8e9L2SXhmyIs164jhnwD0w3DYXPOjjZKHdu1M2A==}
+    engines: {node: '>=20'}
+
+  '@microsoft/teams.apps@2.0.16':
+    resolution: {integrity: sha512-LwNy2MgP92ZZziGs/8f+17xttjgdzxgP2IYQCwNQ5ENoBFoQewRb53mARxeLEBhKtVfAtDG2yKHAqRuQvvltEg==}
     engines: {node: '>=20'}
 
   '@microsoft/teams.cards@2.0.11':
     resolution: {integrity: sha512-4ErBqR4A4abpKSXsiCssRh2ZTpE3jsYHcWXLwL+fKnJo96GzlfSUV1Zg78dl7xWxe388SlqQ3Z4r3m/v413Mew==}
     engines: {node: '>=20'}
 
+  '@microsoft/teams.cards@2.0.16':
+    resolution: {integrity: sha512-hOt+2m6oKI5LdASgsQmGB8yOMs/DTMlypgnQDf9dKWFlDiaZ6fkOy3zuNvVRdT3qZ70EOlq1MlhlT8AZxBbcRg==}
+    engines: {node: '>=20'}
+
   '@microsoft/teams.common@2.0.11':
     resolution: {integrity: sha512-XuGTRlYfLOQxJZuZI6IUhbTRQjgXZAgW59LlGnFJ/nb00G8GnJwdCrFbis+bQa+h7dP5SdLIi1ZybVGYomKgqA==}
+    engines: {node: '>=20'}
+
+  '@microsoft/teams.common@2.0.16':
+    resolution: {integrity: sha512-Z/D0RLTNzkcgGNOdfCzq591UUgtuWIaSu6bbieDxIrLERcu6qI3O6EeeMQLCu/+xkxJrjPJny97CtQEhfLwY8Q==}
     engines: {node: '>=20'}
 
   '@microsoft/teams.graph-endpoints@2.0.11':
     resolution: {integrity: sha512-liU5M9wrx05qFV5FrLwU+fQC7VVYnzHJFmBsgyp076GsZCuJYbLZiO7M0IUwzo0akmAh7QaiShBSiY4EB9m9AQ==}
     engines: {node: '>=20'}
 
+  '@microsoft/teams.graph-endpoints@2.0.16':
+    resolution: {integrity: sha512-yNqxdr/elYyzL0xcrGF5/muZniFLbel4QIQgGalwyropRzupasBuaWmIgFU4RVOG9i1dlvRAIq3sLj8E2OhVQQ==}
+    engines: {node: '>=20'}
+
   '@microsoft/teams.graph@2.0.11':
     resolution: {integrity: sha512-Txc0N6dENmEluOCwGzCerz+3G/uomfzCElla1OR7nUNICIcY8p1A2babcIAA8AZiuAKPSkck0U1w5RTu7jZgVQ==}
+    engines: {node: '>=20'}
+
+  '@microsoft/teams.graph@2.0.16':
+    resolution: {integrity: sha512-tEdVCj76gEdgvxoYkBH3li+mr8Tfe94pp1cSOUMQNwOnsuKYvretKMZfAnt9adJCgGzGH2MYZeDDtgwmOBufGQ==}
     engines: {node: '>=20'}
 
   '@microsoft/tsdoc@0.15.0':
@@ -18367,6 +18411,21 @@ packages:
       zod: ^3.0.0 || ^4.0.0
     peerDependenciesMeta:
       ai:
+        optional: true
+      zod:
+        optional: true
+
+  chat@4.40.0:
+    resolution: {integrity: sha512-slu3VDxItlelEZ8A5vqzlmtT2WErqj2YCGuhhcNx+Ev0+wHeBUqUDUA7hXkca+BfFtW1ZX7ECcySCTG2q2gefg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      ai: ^6.0.182 || ^7.0.0
+      workflow: ^5.0.0-beta.35
+      zod: ^3.0.0 || ^4.0.0
+    peerDependenciesMeta:
+      ai:
+        optional: true
+      workflow:
         optional: true
       zod:
         optional: true
@@ -30694,8 +30753,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -31035,11 +31094,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+  '@aws-sdk/client-sso-oidc@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -31078,7 +31137,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso@3.575.0':
@@ -31167,11 +31225,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sts@3.575.0':
+  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -31210,6 +31268,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/core@3.575.0':
@@ -31426,7 +31485,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -31761,7 +31820,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -32436,7 +32495,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -32786,11 +32845,18 @@ snapshots:
 
   '@azure/msal-common@15.17.0': {}
 
+  '@azure/msal-common@16.13.0': {}
+
   '@azure/msal-node@3.8.10':
     dependencies:
       '@azure/msal-common': 15.17.0
       jsonwebtoken: 9.0.3
       uuid: 11.1.1
+
+  '@azure/msal-node@5.6.0':
+    dependencies:
+      '@azure/msal-common': 16.13.0
+      jsonwebtoken: 9.0.3
 
   '@azure/storage-blob@12.13.0':
     dependencies:
@@ -34173,13 +34239,13 @@ snapshots:
       '@cloudflare/workers-types': 4.20260702.1
       '@opentelemetry/api': 1.9.1
 
-  '@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)':
+  '@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)':
     dependencies:
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.7(zod@4.3.6)
+      better-call: 1.3.7(zod@4.4.3)
       jose: 6.1.3
       kysely: 0.28.17
       nanostores: 1.2.0
@@ -34188,33 +34254,33 @@ snapshots:
       '@cloudflare/workers-types': 4.20260702.1
       '@opentelemetry/api': 1.9.1
 
-  '@better-auth/drizzle-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)':
+  '@better-auth/drizzle-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/kysely-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(kysely@0.28.17)':
+  '@better-auth/kysely-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(kysely@0.28.17)':
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
       kysely: 0.28.17
 
-  '@better-auth/memory-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)':
+  '@better-auth/memory-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/mongo-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))':
+  '@better-auth/mongo-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))':
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
       mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
 
-  '@better-auth/prisma-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)':
+  '@better-auth/prisma-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
 
   '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ca737710b014eb0560794e27afb75e45))(better-call@1.3.7(zod@4.3.5))':
@@ -34230,22 +34296,22 @@ snapshots:
       tldts: 6.1.86
       zod: 4.3.6
 
-  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ca737710b014eb0560794e27afb75e45))(better-call@1.3.7(zod@4.3.6))':
+  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ca737710b014eb0560794e27afb75e45))(better-call@1.3.7(zod@4.4.3))':
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
       better-auth: 1.6.23(ca737710b014eb0560794e27afb75e45)
-      better-call: 1.3.7(zod@4.3.6)
+      better-call: 1.3.7(zod@4.4.3)
       fast-xml-parser: 5.10.1
       jose: 6.1.3
       samlify: 2.13.1
       tldts: 6.1.86
       zod: 4.3.6
 
-  '@better-auth/telemetry@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)':
+  '@better-auth/telemetry@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)':
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
 
@@ -34311,34 +34377,21 @@ snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
 
-  '@chat-adapter/shared@4.33.0(zod@3.25.20)':
-    dependencies:
-      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
-    transitivePeerDependencies:
-      - ai
-      - supports-color
-      - zod
-
   '@chat-adapter/shared@4.33.0(zod@4.4.3)':
     dependencies:
-      chat: 4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.33.0(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - supports-color
       - zod
 
-  '@chat-adapter/slack@4.33.0(zod@3.25.20)':
+  '@chat-adapter/shared@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.33.0(zod@3.25.20)
-      '@slack/socket-mode': 2.0.7
-      '@slack/web-api': 7.17.0
-      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
-      - bufferutil
-      - debug
       - supports-color
-      - utf-8-validate
+      - workflow
       - zod
 
   '@chat-adapter/slack@4.33.0(zod@4.4.3)':
@@ -34346,7 +34399,7 @@ snapshots:
       '@chat-adapter/shared': 4.33.0(zod@4.4.3)
       '@slack/socket-mode': 2.0.7
       '@slack/web-api': 7.17.0
-      chat: 4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.33.0(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - bufferutil
@@ -34355,13 +34408,29 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@chat-adapter/state-ioredis@4.33.0(zod@3.25.20)':
+  '@chat-adapter/slack@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)':
     dependencies:
-      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@slack/socket-mode': 2.0.7
+      '@slack/web-api': 7.17.0
+      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+    transitivePeerDependencies:
+      - ai
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+      - workflow
+      - zod
+
+  '@chat-adapter/state-ioredis@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)':
+    dependencies:
+      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       ioredis: 5.11.1
     transitivePeerDependencies:
       - ai
       - supports-color
+      - workflow
       - zod
 
   '@chat-adapter/state-memory@4.33.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5)':
@@ -34374,23 +34443,9 @@ snapshots:
 
   '@chat-adapter/state-memory@4.33.0(zod@4.4.3)':
     dependencies:
-      chat: 4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.33.0(zod@4.4.3)
     transitivePeerDependencies:
       - ai
-      - supports-color
-      - zod
-
-  '@chat-adapter/teams@4.33.0(zod@3.25.20)':
-    dependencies:
-      '@chat-adapter/shared': 4.33.0(zod@3.25.20)
-      '@microsoft/teams.api': 2.0.11
-      '@microsoft/teams.apps': 2.0.11
-      '@microsoft/teams.cards': 2.0.11
-      '@microsoft/teams.graph-endpoints': 2.0.11
-      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
-    transitivePeerDependencies:
-      - ai
-      - debug
       - supports-color
       - zod
 
@@ -34401,29 +34456,46 @@ snapshots:
       '@microsoft/teams.apps': 2.0.11
       '@microsoft/teams.cards': 2.0.11
       '@microsoft/teams.graph-endpoints': 2.0.11
-      chat: 4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.33.0(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - debug
       - supports-color
       - zod
 
-  '@chat-adapter/telegram@4.33.0(zod@3.25.20)':
+  '@chat-adapter/teams@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.33.0(zod@3.25.20)
-      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@microsoft/teams.api': 2.0.16
+      '@microsoft/teams.apps': 2.0.16
+      '@microsoft/teams.cards': 2.0.16
+      '@microsoft/teams.graph-endpoints': 2.0.16
+      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
+      - debug
       - supports-color
+      - workflow
       - zod
 
-  '@chat-adapter/whatsapp@4.33.0(zod@3.25.20)':
+  '@chat-adapter/telegram@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.33.0(zod@3.25.20)
-      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - supports-color
+      - workflow
+      - zod
+
+  '@chat-adapter/whatsapp@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)':
+    dependencies:
+      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+    transitivePeerDependencies:
+      - ai
+      - supports-color
+      - workflow
       - zod
 
   '@chevrotain/types@11.1.2': {}
@@ -37250,6 +37322,16 @@ snapshots:
       - debug
       - supports-color
 
+  '@microsoft/teams.api@2.0.16':
+    dependencies:
+      '@microsoft/teams.cards': 2.0.16
+      '@microsoft/teams.common': 2.0.16
+      jwt-decode: 4.0.0
+      qs: 6.16.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@microsoft/teams.apps@2.0.11':
     dependencies:
       '@azure/msal-node': 3.8.10
@@ -37266,7 +37348,25 @@ snapshots:
       - debug
       - supports-color
 
+  '@microsoft/teams.apps@2.0.16':
+    dependencies:
+      '@azure/msal-node': 5.6.0
+      '@microsoft/teams.api': 2.0.16
+      '@microsoft/teams.common': 2.0.16
+      '@microsoft/teams.graph': 2.0.16
+      axios: 1.18.1
+      cors: 2.8.6
+      express: 5.2.1
+      jsonwebtoken: 9.0.3
+      jwks-rsa: 3.2.2
+      reflect-metadata: 0.2.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@microsoft/teams.cards@2.0.11': {}
+
+  '@microsoft/teams.cards@2.0.16': {}
 
   '@microsoft/teams.common@2.0.11':
     dependencies:
@@ -37275,11 +37375,28 @@ snapshots:
       - debug
       - supports-color
 
+  '@microsoft/teams.common@2.0.16':
+    dependencies:
+      axios: 1.18.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@microsoft/teams.graph-endpoints@2.0.11': {}
+
+  '@microsoft/teams.graph-endpoints@2.0.16': {}
 
   '@microsoft/teams.graph@2.0.11':
     dependencies:
       '@microsoft/teams.common': 2.0.11
+      qs: 6.16.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  '@microsoft/teams.graph@2.0.16':
+    dependencies:
+      '@microsoft/teams.common': 2.0.16
       qs: 6.16.0
     transitivePeerDependencies:
       - debug
@@ -38643,6 +38760,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.39.0
+    optional: true
 
   '@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -39144,6 +39262,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@opentelemetry/instrumentation@0.214.0(@opentelemetry/api@1.9.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/api-logs': 0.214.0
+      import-in-the-middle: 3.0.1
+      require-in-the-middle: 8.0.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@opentelemetry/instrumentation@0.214.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -39279,8 +39406,9 @@ snapshots:
   '@opentelemetry/resources@2.8.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.8.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.8.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.39.0
+    optional: true
 
   '@opentelemetry/sdk-logs@0.201.1(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -39379,8 +39507,8 @@ snapshots:
   '@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.8.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/resources': 2.8.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.8.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/resources': 2.8.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.39.0
 
   '@opentelemetry/sdk-trace-node@2.7.1(@opentelemetry/api@1.9.0)':
@@ -44124,6 +44252,20 @@ snapshots:
     dependencies:
       '@sentry/core': 10.63.0
 
+  '@sentry/nestjs@10.63.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))':
+    dependencies:
+      '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.27)(@nestjs/websockets@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
+      '@sentry/conventions': 0.12.0
+      '@sentry/core': 10.63.0
+      '@sentry/node': 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
+    transitivePeerDependencies:
+      - '@opentelemetry/core'
+      - '@opentelemetry/exporter-trace-otlp-http'
+      - supports-color
+
   '@sentry/nestjs@10.63.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))':
     dependencies:
       '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -44149,6 +44291,19 @@ snapshots:
       '@opentelemetry/core': 2.8.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/exporter-trace-otlp-http': 0.217.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace-base': 2.8.0(@opentelemetry/api@1.9.0)
+
+  '@sentry/node-core@10.63.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))':
+    dependencies:
+      '@sentry/conventions': 0.12.0
+      '@sentry/core': 10.63.0
+      '@sentry/opentelemetry': 10.63.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))
+      import-in-the-middle: 3.0.1
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/exporter-trace-otlp-http': 0.217.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.8.0(@opentelemetry/api@1.9.0)
 
   '@sentry/node-core@10.63.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))':
@@ -44186,6 +44341,23 @@ snapshots:
       - '@opentelemetry/exporter-trace-otlp-http'
       - supports-color
 
+  '@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 2.8.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/semantic-conventions': 1.41.1
+      '@sentry/conventions': 0.12.0
+      '@sentry/core': 10.63.0
+      '@sentry/node-core': 10.63.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))
+      '@sentry/opentelemetry': 10.63.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))
+      '@sentry/server-utils': 10.63.0
+      import-in-the-middle: 3.0.1
+    transitivePeerDependencies:
+      - '@opentelemetry/core'
+      - '@opentelemetry/exporter-trace-otlp-http'
+      - supports-color
+
   '@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -44211,6 +44383,14 @@ snapshots:
       '@sentry/conventions': 0.12.0
       '@sentry/core': 10.63.0
 
+  '@sentry/opentelemetry@10.63.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 2.8.0(@opentelemetry/api@1.9.0)
+      '@sentry/conventions': 0.12.0
+      '@sentry/core': 10.63.0
+
   '@sentry/opentelemetry@10.63.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -44218,6 +44398,16 @@ snapshots:
       '@opentelemetry/sdk-trace-base': 2.8.0(@opentelemetry/api@1.9.1)
       '@sentry/conventions': 0.12.0
       '@sentry/core': 10.63.0
+
+  '@sentry/profiling-node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))':
+    dependencies:
+      '@sentry/core': 10.63.0
+      '@sentry/node': 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
+      '@sentry/node-cpu-profiler': 2.4.2
+    transitivePeerDependencies:
+      - '@opentelemetry/core'
+      - '@opentelemetry/exporter-trace-otlp-http'
+      - supports-color
 
   '@sentry/profiling-node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))':
     dependencies:
@@ -48849,7 +49039,7 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  agents@0.21.0(@ai-sdk/react@3.0.51(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.0.0)(ai@7.0.31(zod@4.4.3))(chat@4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.4)(zod@4.4.3):
+  agents@0.21.0(@ai-sdk/react@3.0.51(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.0.0)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.4)(zod@4.4.3):
     dependencies:
       '@babel/plugin-proposal-decorators': 8.0.2(@babel/core@7.29.7)
       '@cfworker/json-schema': 4.1.1
@@ -48869,7 +49059,7 @@ snapshots:
     optionalDependencies:
       '@ai-sdk/react': 3.0.51(react@19.2.3)(zod@4.4.3)
       ai: 7.0.31(zod@4.4.3)
-      chat: 4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       react: 19.2.3
     transitivePeerDependencies:
       - '@babel/core'
@@ -49738,13 +49928,13 @@ snapshots:
 
   better-auth@1.6.23(ca737710b014eb0560794e27afb75e45):
     dependencies:
-      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
-      '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
-      '@better-auth/kysely-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(kysely@0.28.17)
-      '@better-auth/memory-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
-      '@better-auth/mongo-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))
-      '@better-auth/prisma-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
-      '@better-auth/telemetry': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)
+      '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
+      '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
+      '@better-auth/kysely-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(kysely@0.28.17)
+      '@better-auth/memory-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
+      '@better-auth/mongo-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))
+      '@better-auth/prisma-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
+      '@better-auth/telemetry': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
       '@noble/ciphers': 2.1.1
@@ -49785,6 +49975,15 @@ snapshots:
       set-cookie-parser: 3.1.0
     optionalDependencies:
       zod: 4.3.6
+
+  better-call@1.3.7(zod@4.4.3):
+    dependencies:
+      '@better-auth/utils': 0.4.2
+      '@better-fetch/fetch': 1.3.1
+      rou3: 0.7.12
+      set-cookie-parser: 3.1.0
+    optionalDependencies:
+      zod: 4.4.3
 
   better-path-resolve@1.0.0:
     dependencies:
@@ -50187,9 +50386,9 @@ snapshots:
 
   chardet@2.1.1: {}
 
-  chat-adapter-sendblue@0.2.0(chat@4.33.0(zod@3.25.20)):
+  chat-adapter-sendblue@0.2.0(chat@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)):
     dependencies:
-      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       sendblue: 3.10.1
 
   chat@4.33.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5):
@@ -50207,7 +50406,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  chat@4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20):
+  chat@4.33.0(zod@4.4.3):
+    dependencies:
+      '@workflow/serde': 4.1.0-beta.2
+      mdast-util-to-string: 4.0.0
+      remark-gfm: 4.0.1
+      remark-parse: 11.0.0
+      remark-stringify: 11.0.0
+      remend: 1.3.0
+      unified: 11.0.5
+    optionalDependencies:
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
+
+  chat@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20):
     dependencies:
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
@@ -50222,7 +50435,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  chat@4.33.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3):
+  chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3):
     dependencies:
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
@@ -50236,6 +50449,7 @@ snapshots:
       zod: 4.4.3
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   check-disk-space@3.4.0: {}
 
@@ -57784,7 +57998,25 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  nest-raven@10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0):
+  nest-raven@10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0):
+    dependencies:
+      '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@sentry/node': 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
+      rxjs: 7.8.2
+    optionalDependencies:
+      '@nestjs/graphql': 12.0.9(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(ts-morph@24.0.0)
+    transitivePeerDependencies:
+      - '@apollo/subgraph'
+      - '@nestjs/core'
+      - bufferutil
+      - class-transformer
+      - class-validator
+      - graphql
+      - reflect-metadata
+      - ts-morph
+      - utf-8-validate
+
+  nest-raven@10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2):
     dependencies:
       '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@sentry/node': 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.1))
