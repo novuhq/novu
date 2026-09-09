@@ -176,6 +176,29 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
         '@opentelemetry/instrumentation-dns': { enabled: false },
 
         /*
+         * Router:
+         * Disabled entirely. This instrumentation registers a `prependOnceListener('finish')`
+         * on the ServerResponse for every router layer a request traverses. Any request
+         * crossing more than Node's default maxListeners (10) triggers a
+         * MaxListenersExceededWarning on every single response. This is not a real memory
+         * leak — the listeners are attached per ServerResponse and released with it — but it
+         * produces a very large volume of useless log output on any deployment with
+         * ENABLE_OTEL=true (observed ~49% increase in total log volume).
+         *
+         * Unlike instrumentation-express/koa/egg, this package does not expose an
+         * `ignoreLayersType` (or any other) config option to suppress per-layer listener
+         * registration, so a partial/selective fix isn't possible — disabling it entirely
+         * is the only option this instrumentation supports.
+         *
+         * The `http.route` span attribute this instrumentation would add is redundant with
+         * what instrumentation-express already sets on the root span, so no meaningful
+         * tracing data is lost by disabling it.
+         *
+         * Upstream tracking: https://github.com/novuhq/novu/issues/12305
+         */
+        '@opentelemetry/instrumentation-router': { enabled: false },
+
+        /*
          * MongoDB driver — produces spans with net.peer.name, db.system, etc.
          * that observability tools use to build service maps and show
          * upstream/downstream dependencies. enhancedDatabaseReporting captures
