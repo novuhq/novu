@@ -15,6 +15,17 @@ Novu Framework operates in a GitOps model. This means that the source of truth f
 
 The Local environment only reflects what runs on your machine - it has no publish action. To make workflows available in Development or Production, deploy your Bridge application and run the [sync command](/framework/deployment/cli) against the deployed server from your CLI or CI pipeline.
 
+<Warning>
+  A Framework workflow cannot use the identifier of a workflow that was created in the Dashboard. Sync fails with
+  `Workflow <workflowId> was already created in Dashboard. Please use another workflowId.` It does not convert or
+  overwrite the Dashboard workflow.
+
+  To migrate, create the Framework workflow with a new identifier, sync and test it, then update your application to
+  trigger the new identifier. Deleting the Dashboard workflow first makes its identifier available, but introduces a
+  period when triggers cannot resolve the workflow. Subscriber preferences associated with the deleted workflow are
+  not transferred to the newly created Framework workflow.
+</Warning>
+
 The general workflow for pushing changes to Novu Cloud is as follows:
 
 ```mermaid

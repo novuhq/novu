@@ -131,7 +131,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
 
     expect(notificationTemplateRepository.findOne.called).to.equal(false);
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
-    expect(result).to.deep.equal({ outputs: {}, options: {} });
+    expect(result).to.deep.equal({ outputs: {}, options: {}, sourceControls: {} });
   });
 
   it('passes actor to the bridge event when provided in variables', async () => {
