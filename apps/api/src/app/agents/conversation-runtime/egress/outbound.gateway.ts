@@ -377,7 +377,7 @@ export class OutboundGateway {
     quoteMessageId?: string
   ): Promise<{ id: string; threadId: string }> {
     const messageId = quoteMessageId?.trim();
-    if (platform === AgentPlatformEnum.WHATSAPP && messageId && typeof thread.reply === 'function') {
+    if (platform === AgentPlatformEnum.WHATSAPP && messageId) {
       return thread.reply(messageId, postArg);
     }
 

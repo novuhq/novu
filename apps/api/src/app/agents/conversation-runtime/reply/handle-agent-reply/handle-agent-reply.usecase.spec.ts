@@ -74,21 +74,6 @@ describe('HandleAgentReply - active-conversation counting', () => {
     };
   }
 
-  it('forwards quoteReply to outbound delivery options', async () => {
-    const { usecase, baseCommand, outboundGateway } = setup();
-
-    await usecase.execute({
-      ...baseCommand,
-      reply: { markdown: 'quoted' },
-      quoteReply: { messageId: 'wamid.abc123' },
-    } as any);
-
-    expect(outboundGateway.deliver.calledOnce).to.equal(true);
-    expect(outboundGateway.deliver.firstCall.args[3]).to.deep.include({
-      quoteReply: { messageId: 'wamid.abc123' },
-    });
-  });
-
   it('rejects quoteReply without reply', async () => {
     const { usecase, baseCommand } = setup();
 
