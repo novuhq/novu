@@ -362,11 +362,9 @@ export class OutboundGateway {
       return postArg;
     }
 
-    if (typeof postArg === 'string') {
-      return { markdown: postArg, messageId: preferredMessageId } as AdapterPostableMessage;
-    }
+    const envelope = typeof postArg === 'string' ? { markdown: postArg } : postArg;
 
-    return { ...postArg, messageId: preferredMessageId } as AdapterPostableMessage;
+    return Object.assign({}, envelope, { messageId: preferredMessageId });
   }
 
   private deliverThreadMessage(
