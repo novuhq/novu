@@ -2,7 +2,13 @@ import { ConversationParticipantTypeEnum } from '@novu/dal';
 import { AgentReplyPolicyEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { countHumanParticipants, detectSmartThreadJoin, requiresExplicitMention } from './requires-explicit-mention';
+import {
+  countHumanParticipants,
+  detectSmartExclusiveThreadEnded,
+  followsNestedThreadWithoutMention,
+  messageMentionsOtherHuman,
+  requiresExplicitMention,
+} from './requires-explicit-mention';
 
 const nestedThread = { isDM: false, channelId: 'slack:C1' } as any;
 const nestedId = 'slack:C1:root-ts';
@@ -13,6 +19,7 @@ const follow = {
   platformThreadId: nestedId,
   humanParticipantCount: 1,
 };
+const noMentionMessage = { isMention: false, text: 'the deploy is still failing', author: { userId: 'U2' } } as any;
 
 describe('requiresExplicitMention', () => {
   it('lets DMs through without a mention', () => {
@@ -84,6 +91,17 @@ describe('requiresExplicitMention', () => {
     ).to.equal(true);
   });
 
+  it('makes smart require a mention after a teammate was @mentioned in a one-on-one thread', () => {
+    expect(
+      requiresExplicitMention(nestedThread, { isMention: false } as any, {
+        ...follow,
+        replyPolicy: AgentReplyPolicyEnum.SMART,
+        humanParticipantCount: 1,
+        smartMentionRequired: true,
+      })
+    ).to.equal(true);
+  });
+
   it('still requires a mention for Telegram groups even after a conversation exists', () => {
     expect(
       requiresExplicitMention({ isDM: false, channelId: '-100123' } as any, { isMention: false } as any, {
@@ -94,6 +112,18 @@ describe('requiresExplicitMention', () => {
         humanParticipantCount: 1,
       })
     ).to.equal(true);
+  });
+});
+
+describe('followsNestedThreadWithoutMention', () => {
+  it('stops smart auto-follow when the mention-required flag is set', () => {
+    expect(
+      followsNestedThreadWithoutMention({
+        ...follow,
+        replyPolicy: AgentReplyPolicyEnum.SMART,
+        smartMentionRequired: true,
+      })
+    ).to.equal(false);
   });
 });
 
@@ -127,7 +157,156 @@ describe('countHumanParticipants', () => {
   });
 });
 
-describe('detectSmartThreadJoin', () => {
+describe('messageMentionsOtherHuman', () => {
+  it('ignores Slack messages with no user mentions', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'the deploy is still failing', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('ignores a Slack self-mention', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'cc <@U1>', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('ignores a Slack bot-only mention', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: true, text: '<@UBOT> help', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('ignores a Slack bot-only mention even when the SDK mention flag is missing', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '<@UBOT> help', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('detects a Slack teammate mention', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'hey <@U99> take a look', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('detects Enterprise Grid and labeled Slack user mentions', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'cc <@W123ABC|alex>', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('prefers structured Slack user elements over display text', () => {
+    expect(
+      messageMentionsOtherHuman(
+        {
+          isMention: false,
+          text: 'Alex',
+          author: { userId: 'U1' },
+          raw: {
+            event: {
+              blocks: [
+                {
+                  type: 'rich_text',
+                  elements: [
+                    {
+                      type: 'rich_text_section',
+                      elements: [{ type: 'user', user_id: 'U99' }],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('detects a Slack teammate mention alongside the bot', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: true, text: '<@UBOT> cc <@U99>', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('reads Slack mentions from the raw event text', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, author: { userId: 'U1' }, raw: { event: { text: 'ping <@U99>' } } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('ignores Slack @here and user-group mentions', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '<!here> <!subteam^S123|@eng>', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('ignores a Teams bot-only mention', () => {
+    expect(
+      messageMentionsOtherHuman(
+        {
+          isMention: true,
+          author: { userId: '29:alice' },
+          raw: { entities: [{ type: 'mention', mentioned: { id: '28:bot' } }] },
+        } as any,
+        AgentPlatformEnum.TEAMS,
+        'bot'
+      )
+    ).to.equal(false);
+  });
+
+  it('detects a Teams teammate mention', () => {
+    expect(
+      messageMentionsOtherHuman(
+        {
+          isMention: false,
+          author: { userId: '29:alice' },
+          raw: { entities: [{ type: 'mention', mentioned: { id: '29:bob', name: 'Bob' } }] },
+        } as any,
+        AgentPlatformEnum.TEAMS,
+        'bot'
+      )
+    ).to.equal(true);
+  });
+});
+
+describe('detectSmartExclusiveThreadEnded', () => {
   const agent = { type: ConversationParticipantTypeEnum.AGENT, id: 'agent1' };
   const incumbent = { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub1' };
   const base = {
@@ -136,51 +315,73 @@ describe('detectSmartThreadJoin', () => {
     subscriberId: 'sub2',
     platform: AgentPlatformEnum.SLACK,
     platformUserId: 'U2',
+    botUserId: 'UBOT',
+    message: noMentionMessage,
   };
 
   it('fires when a different human speaks in a one-on-one thread', () => {
-    expect(detectSmartThreadJoin(base)).to.equal(true);
+    expect(detectSmartExclusiveThreadEnded(base)).to.equal('join');
   });
 
   it('stays quiet for the incumbent', () => {
-    expect(detectSmartThreadJoin({ ...base, subscriberId: 'sub1' })).to.equal(false);
+    expect(detectSmartExclusiveThreadEnded({ ...base, subscriberId: 'sub1' })).to.equal(null);
+  });
+
+  it('fires when the incumbent mentions a teammate', () => {
+    expect(
+      detectSmartExclusiveThreadEnded({
+        ...base,
+        subscriberId: 'sub1',
+        platformUserId: 'U1',
+        message: { isMention: false, text: 'hey <@U99> take a look', author: { userId: 'U1' } } as any,
+      })
+    ).to.equal('teammate_mention');
+  });
+
+  it('prefers join when a newcomer also mentions a teammate', () => {
+    expect(
+      detectSmartExclusiveThreadEnded({
+        ...base,
+        message: { isMention: false, text: 'hey <@U99>', author: { userId: 'U2' } } as any,
+      })
+    ).to.equal('join');
   });
 
   it('recognises the incumbent by their raw platform identity when they are not linked', () => {
     expect(
-      detectSmartThreadJoin({
+      detectSmartExclusiveThreadEnded({
         ...base,
         participantsSnapshot: [{ type: ConversationParticipantTypeEnum.PLATFORM_USER, id: 'slack:U2' }, agent],
         subscriberId: null,
       })
-    ).to.equal(false);
+    ).to.equal(null);
   });
 
   it('does not mistake a newly linked incumbent for a stranger', () => {
     expect(
-      detectSmartThreadJoin({
+      detectSmartExclusiveThreadEnded({
         ...base,
         participantsSnapshot: [{ type: ConversationParticipantTypeEnum.PLATFORM_USER, id: 'slack:U2' }, agent],
         subscriberId: 'sub2',
       })
-    ).to.equal(false);
+    ).to.equal(null);
   });
 
   it('stays quiet once the thread is already shared', () => {
     expect(
-      detectSmartThreadJoin({
+      detectSmartExclusiveThreadEnded({
         ...base,
         participantsSnapshot: [incumbent, { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub3' }, agent],
       })
-    ).to.equal(false);
+    ).to.equal(null);
   });
 
   it('stays quiet on a thread nobody has spoken in yet', () => {
-    expect(detectSmartThreadJoin({ ...base, participantsSnapshot: [agent] })).to.equal(false);
+    expect(detectSmartExclusiveThreadEnded({ ...base, participantsSnapshot: [agent] })).to.equal(null);
   });
 
   it('never fires for the other reply policies', () => {
-    expect(detectSmartThreadJoin({ ...base, replyPolicy: AgentReplyPolicyEnum.AUTO_REPLY })).to.equal(false);
-    expect(detectSmartThreadJoin({ ...base, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY })).to.equal(false);
+    expect(detectSmartExclusiveThreadEnded({ ...base, replyPolicy: AgentReplyPolicyEnum.AUTO_REPLY })).to.equal(null);
+    expect(detectSmartExclusiveThreadEnded({ ...base, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY })).to.equal(null);
   });
 });

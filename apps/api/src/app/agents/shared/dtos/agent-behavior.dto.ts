@@ -46,7 +46,7 @@ export class AgentBehaviorDto {
     description:
       'How the agent replies in shared rooms. "mention_only" requires an @mention in every shared room. ' +
       '"auto_reply" (default) replies to unmentioned follow-ups in a nested Slack or Teams thread after the agent has joined. ' +
-      '"smart" behaves like auto_reply while one person is talking to the agent in a thread, then requires an @mention there once someone else joins. ' +
+      '"smart" behaves like auto_reply while one person is talking to the agent in a thread, then requires an @mention there once someone else joins or the incumbent @mentions another teammate. ' +
       'DMs always reply without a mention. ' +
       'Optional on update (partial PATCH).',
     default: AgentReplyPolicyEnum.AUTO_REPLY,

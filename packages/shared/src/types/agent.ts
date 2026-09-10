@@ -26,8 +26,9 @@ export enum AgentSubscriberAccessEnum {
  * - `auto_reply` (default): after the agent joins a nested Slack/Teams thread,
  *   unmentioned follow-ups in that thread are dispatched.
  * - `smart`: `auto_reply` for as long as a single human is talking to the agent
- *   in the thread. Once a second person speaks the agent posts a one-off notice
- *   and reverts to requiring an @mention there.
+ *   in the thread. Once a second person speaks, or the incumbent @mentions
+ *   another teammate, the agent posts a one-off notice and reverts to requiring
+ *   an @mention there.
  */
 export enum AgentReplyPolicyEnum {
   MENTION_ONLY = 'mention_only',
@@ -72,6 +73,15 @@ export const AGENT_PLATFORM_PROVISION_SOURCE = 'agent-platform-provision' as con
 export const AGENT_AUTH_METADATA_KEYS = {
   authCardMessageId: '__novu:authCardMessageId',
   authLinkedCard: '__novu:authLinkedCard',
+} as const;
+
+/**
+ * Reserved `conversation.metadata` keys for Smart reply-policy state that is not
+ * represented by participant count alone (a teammate @mention does not add a
+ * speaker until they reply).
+ */
+export const AGENT_REPLY_METADATA_KEYS = {
+  smartMentionRequired: '__novu:smartMentionRequired',
 } as const;
 
 export interface NovuEmailAttachment {

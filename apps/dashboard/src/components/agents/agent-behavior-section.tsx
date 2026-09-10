@@ -59,7 +59,7 @@ const REPLY_POLICY_DESCRIPTIONS: Record<AgentReplyPolicy, string> = {
   mention_only: 'Replies only to messages that @mention the agent.',
   auto_reply: 'Once an @mention pulls the agent into a thread, it keeps replying there without further mentions.',
   smart:
-    'Replies without a mention while it is one-on-one, and asks to be @mentioned once someone else joins the thread.',
+    'Replies without a mention while it is one-on-one, and asks to be @mentioned once someone else joins or a teammate is @mentioned.',
 };
 
 const REPLY_POLICY_TOOLTIP = (

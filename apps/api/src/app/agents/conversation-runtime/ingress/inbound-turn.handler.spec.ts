@@ -1,4 +1,5 @@
 import {
+  AGENT_REPLY_METADATA_KEYS,
   AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
   buildDashboardWebChatSubscriberId,
@@ -128,6 +129,7 @@ describe('AgentInboundHandler', () => {
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      updateMetadata: sinon.stub().resolves(undefined),
       persistToolApprovalDecision: sinon.stub().resolves({ _id: 'decision-1' }),
       persistInboundActionAccept: sinon.stub().resolves(undefined),
       findSourceActivity: sinon
@@ -256,6 +258,9 @@ describe('AgentInboundHandler', () => {
       resolveForTurn: sinon.stub().resolves(null),
       hydrate: sinon.stub().resolves(null),
     };
+    const agentConfigResolver = {
+      resolveSlackInstallation: sinon.stub().resolves({ token: 'xoxb-test', botUserId: 'UBOT' }),
+    };
     const humanInteractionInbound = {
       tryHandleAction: sinon.stub().resolves({ outcome: 'ignored' }),
       tryHandleMessage: sinon.stub().resolves({ outcome: 'ignored' }),
@@ -284,7 +289,8 @@ describe('AgentInboundHandler', () => {
       connectionContextResolver as any,
       replyApprovalInterceptor as any,
       workflowOriginService as any,
-      humanConversationInbound
+      humanConversationInbound,
+      agentConfigResolver as any
     );
 
     return {
@@ -297,6 +303,7 @@ describe('AgentInboundHandler', () => {
       bridgeExecutor,
       conversationService,
       workflowOriginService,
+      agentConfigResolver,
       linkTelegramChatToSubscriber,
       subscriberResolver,
       startCodeService,
@@ -811,6 +818,104 @@ describe('AgentInboundHandler', () => {
         expect(thread.subscribe.called).to.equal(false);
         expect(thread.post.called).to.equal(false);
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('names nobody and stops answering when the incumbent mentions a teammate', async () => {
+        const { handler, conversationService, bridgeExecutor, agentConfigResolver } = makeHandler(
+          makeResolvedSubscriberOverrides('sub1')
+        );
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'hey <@U99> take a look',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
+        expect(thread.post.firstCall.args[0]).to.not.contain('Ada');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.firstCall.args[0].ops).to.deep.equal([
+          { action: 'set', key: AGENT_REPLY_METADATA_KEYS.smartMentionRequired, value: true },
+        ]);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(
+          agentConfigResolver.resolveSlackInstallation.calledOnceWith('env1', 'org1', 'slack-main', undefined)
+        ).to.equal(true);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('does not mistake a bot-only mention for a teammate when the SDK mention flag is false', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: '<@UBOT> help',
+            isMention: false,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.post.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('still answers when the incumbent mentions a teammate and the agent', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: '<@UBOT> cc <@U99>',
+            isMention: true,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('stays quiet on a later unmentioned follow-up after a teammate was mentioned', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.findByPlatformThread.resolves({
+          ...conversation,
+          metadata: { [AGENT_REPLY_METADATA_KEYS.smartMentionRequired]: true },
+        });
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({ author: { userId: 'U1', fullName: 'Ada', isBot: false } }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.post.called).to.equal(false);
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(bridgeExecutor.execute.called).to.equal(false);
       });
     });
 

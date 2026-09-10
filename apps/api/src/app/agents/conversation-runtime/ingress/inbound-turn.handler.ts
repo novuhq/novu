@@ -13,7 +13,12 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { AgentReplyPolicyEnum, ENDPOINT_TYPES, isDashboardWebChatSubscriberId } from '@novu/shared';
+import {
+  AGENT_REPLY_METADATA_KEYS,
+  AgentReplyPolicyEnum,
+  ENDPOINT_TYPES,
+  isDashboardWebChatSubscriberId,
+} from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -23,7 +28,7 @@ import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/l
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
-import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import {
   trackAgentInboundAction,
@@ -62,9 +67,11 @@ import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.se
 import { getActionPlatformThreadId, getInboundPlatformThreadId, isNestedSharedThread } from './platform-thread-id';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
 import {
+  conversationHasSmartMentionRequired,
   countHumanParticipants,
-  detectSmartThreadJoin,
+  detectSmartExclusiveThreadEnded,
   followsNestedThreadWithoutMention,
+  messageContainsUserMention,
   requiresExplicitMention,
 } from './requires-explicit-mention';
 import { seedSlackThreadHistory } from './seed-slack-thread-history';
@@ -258,7 +265,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectionContextResolver: InboundConnectionContextResolver,
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
     private readonly workflowOriginService: WorkflowOriginService,
-    private readonly humanConversationInbound: HumanConversationInboundInterceptor
+    private readonly humanConversationInbound: HumanConversationInboundInterceptor,
+    private readonly agentConfigResolver: AgentConfigResolver
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -299,6 +307,7 @@ export class AgentInboundHandler implements OnModuleInit {
       conversationExists: existingConversation != null,
       platformThreadId,
       humanParticipantCount: countHumanParticipants(existingConversation),
+      smartMentionRequired: conversationHasSmartMentionRequired(existingConversation),
     };
     const requiresMention = requiresExplicitMention(thread, message, mentionContext);
     const pendingAsk =
@@ -592,24 +601,38 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    if (
+    const mentionBotUserId =
       event === AgentEventEnum.ON_MESSAGE &&
-      detectSmartThreadJoin({
-        replyPolicy: mentionContext.replyPolicy,
-        participantsSnapshot,
-        subscriberId,
-        platform: config.platform,
-        platformUserId: message.author?.userId,
-      }) &&
-      isNestedSharedThread(config.platform, thread, platformThreadId)
-    ) {
+      mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
+      mentionContext.humanParticipantCount === 1 &&
+      messageContainsUserMention(message, config.platform)
+        ? await this.resolveMentionBotUserId(config, message)
+        : undefined;
+    const exclusiveThreadEnd =
+      event === AgentEventEnum.ON_MESSAGE
+        ? detectSmartExclusiveThreadEnded({
+            replyPolicy: mentionContext.replyPolicy,
+            participantsSnapshot,
+            subscriberId,
+            platform: config.platform,
+            platformUserId: message.author?.userId,
+            botUserId: mentionBotUserId,
+            message,
+          })
+        : null;
+
+    if (exclusiveThreadEnd != null && isNestedSharedThread(config.platform, thread, platformThreadId)) {
+      if (exclusiveThreadEnd === 'teammate_mention') {
+        await this.markSmartMentionRequired(config, conversation);
+      }
+
       await this.postMentionRequiredNotice(
         agentId,
         config,
         thread,
         platformThreadId,
         conversation,
-        message.author?.fullName
+        exclusiveThreadEnd === 'join' ? message.author?.fullName : undefined
       );
       await thread.unsubscribe();
 
@@ -983,6 +1006,70 @@ export class AgentInboundHandler implements OnModuleInit {
         operation: 'post-telegram-subscriber-link-reply',
         agentId,
       });
+    }
+  }
+
+  private async markSmartMentionRequired(config: ResolvedAgentConfig, conversation: ConversationEntity): Promise<void> {
+    if (conversationHasSmartMentionRequired(conversation)) {
+      return;
+    }
+
+    try {
+      await this.conversationService.updateMetadata({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        currentMetadata: conversation.metadata ?? {},
+        ops: [{ action: 'set', key: AGENT_REPLY_METADATA_KEYS.smartMentionRequired, value: true }],
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${config.agentId}] Failed to persist smart reply-policy mention-required flag`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'mark-smart-mention-required',
+        agentId: config.agentId,
+        platform: config.platform,
+      });
+    }
+  }
+
+  private async resolveMentionBotUserId(config: ResolvedAgentConfig, message: Message): Promise<string | undefined> {
+    switch (config.platform) {
+      case AgentPlatformEnum.SLACK: {
+        try {
+          const workspaceId = extractWorkspaceId(config.platform, message.raw) ?? undefined;
+          const installation = await this.agentConfigResolver.resolveSlackInstallation(
+            config.environmentId,
+            config.organizationId,
+            config.integrationIdentifier,
+            workspaceId
+          );
+
+          return installation?.botUserId;
+        } catch (err) {
+          this.logger.warn(
+            { err, agentId: config.agentId },
+            'Failed to resolve Slack bot user id for teammate-mention detection'
+          );
+
+          return undefined;
+        }
+      }
+      case AgentPlatformEnum.TEAMS:
+        return config.credentials.clientId;
+      case AgentPlatformEnum.WHATSAPP:
+      case AgentPlatformEnum.EMAIL:
+      case AgentPlatformEnum.TELEGRAM:
+      case AgentPlatformEnum.SENDBLUE:
+      case AgentPlatformEnum.WEB_CHAT:
+        return undefined;
+      default: {
+        const exhaustiveCheck: never = config.platform;
+
+        return exhaustiveCheck;
+      }
     }
   }
 
