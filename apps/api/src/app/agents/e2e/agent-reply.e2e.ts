@@ -81,23 +81,6 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(agentActivity!.content).to.equal('Hello from agent');
     });
 
-    it('should pass quoteReply through to outbound delivery', async () => {
-      const conversationId = await seedConversation(ctx);
-      const outboundGateway = testServer.getService(OutboundGateway);
-      const postStub = outboundGateway.postToConversation as sinon.SinonStub;
-
-      const res = await postReply({
-        conversationId,
-        integrationIdentifier: ctx.integrationIdentifier,
-        reply: { markdown: 'Quoted answer' },
-        quoteReply: { messageId: 'wamid.abc123' },
-      });
-
-      expect(res.status).to.equal(200);
-      expect(postStub.calledOnce).to.equal(true);
-      expect(postStub.firstCall.args[5]).to.deep.include({ quoteReply: { messageId: 'wamid.abc123' } });
-    });
-
     it('should return messageId/platformThreadId on successful reply', async () => {
       const conversationId = await seedConversation(ctx);
 

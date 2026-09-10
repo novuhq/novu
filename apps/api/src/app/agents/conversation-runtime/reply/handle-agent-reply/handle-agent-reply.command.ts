@@ -7,12 +7,18 @@ import {
   AddReactionPayloadDto,
   DeleteMessagePayloadDto,
   EditPayloadDto,
-  QuoteReplyContextDto,
   ReplyContentDto,
   ToolApprovalRequestPayloadDto,
 } from '../../../shared/dtos/agent-reply-payload.dto';
 import type { PlanPhase } from '../../egress/plan-phase';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
+
+/** Ingest-only quote-reply target. Not part of the deprecated `/reply` body. */
+export class QuoteReplyContextDto {
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+}
 
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()

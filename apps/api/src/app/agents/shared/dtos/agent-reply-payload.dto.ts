@@ -395,20 +395,6 @@ export class DeleteMessagePayloadDto {
 }
 
 /**
- * Quote-reply target. WhatsApp maps `messageId` to Cloud API `context.message_id`.
- * Requires `reply`. Ignored on platforms without native quote-reply.
- */
-export class QuoteReplyContextDto {
-  @ApiProperty({
-    description: 'Platform-native id of the message to quote-reply to. WhatsApp sends this as `context.message_id`.',
-    example: 'wamid.HBgNMTU1NTEyMzQ1NjcVAgARGBI4MjY4Q0E4QjY4NzY4NzY4NzYA',
-  })
-  @IsString()
-  @IsNotEmpty()
-  messageId: string;
-}
-
-/**
  * Reports the outcome of a tool call back to Novu so it's saved in the conversation history.
  */
 export class ToolResultDto {
@@ -470,7 +456,6 @@ export class TypingStatusDto {
   ToolResultDto,
   AddReactionPayloadDto,
   DeleteMessagePayloadDto,
-  QuoteReplyContextDto,
   TypingStatusDto
 )
 export class AgentReplyPayloadDto {
@@ -505,17 +490,6 @@ export class AgentReplyPayloadDto {
   @Validate(IsValidReplyContent)
   @Type(() => ReplyContentDto)
   reply?: MarkdownReplyContentDto | CardReplyContentDto | ToolApprovalCardReplyContentDto;
-
-  @ApiPropertyOptional({
-    type: QuoteReplyContextDto,
-    description:
-      'Quote-reply this outbound message onto an existing platform message. Requires `reply`. ' +
-      'WhatsApp maps `messageId` to Cloud API `context.message_id`. Other platforms ignore it for now.',
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => QuoteReplyContextDto)
-  quoteReply?: QuoteReplyContextDto;
 
   @ApiPropertyOptional({
     type: ToolApprovalRequestPayloadDto,

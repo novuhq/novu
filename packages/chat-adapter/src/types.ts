@@ -231,8 +231,6 @@ export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
   reply?: ReplyContent;
-  /** Quote-reply this outbound message onto an existing platform message. WhatsApp first. */
-  quoteReply?: QuoteReplyContext;
   edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];

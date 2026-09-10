@@ -33,17 +33,6 @@ export const AGENT_REPLY_BODY_EXAMPLES = {
       },
     },
   },
-  quoteReply: {
-    summary: 'Quote-reply (WhatsApp)',
-    description:
-      'Send a markdown reply that quotes an existing platform message. WhatsApp maps `quoteReply.messageId` to Cloud API `context.message_id`.',
-    value: {
-      conversationId: '64f5a1c2e8b7a3d9f0c1b2a3',
-      integrationIdentifier: 'whatsapp-support',
-      reply: { markdown: 'Yes — that order shipped this morning.' },
-      quoteReply: { messageId: 'wamid.HBgNMTU1NTEyMzQ1NjcVAgARGBI4MjY4Q0E4QjY4NzY4NzY4NzYA' },
-    },
-  },
   cardReply: {
     summary: 'Interactive card reply',
     description:
