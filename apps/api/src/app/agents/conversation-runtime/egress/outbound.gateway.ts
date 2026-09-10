@@ -76,6 +76,8 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
+  /** Quote-reply target. WhatsApp maps `messageId` to Cloud API `context.message_id`. */
+  quoteReply?: { messageId: string };
 };
 
 /**
@@ -342,7 +344,7 @@ export class OutboundGateway {
     );
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      thread.post(postArg)
+      this.deliverThreadMessage(thread, platform, postArg, options?.quoteReply?.messageId)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -367,6 +369,24 @@ export class OutboundGateway {
       ...(postArg as unknown as Record<string, unknown>),
       messageId: preferredMessageId,
     } as unknown as AdapterPostableMessage;
+  }
+
+  /**
+   * WhatsApp first: `thread.reply()` becomes Cloud API `context.message_id`.
+   * Other platforms keep `thread.post()` until they are wired (Telegram/Teams next).
+   */
+  private deliverThreadMessage(
+    thread: Thread,
+    platform: string,
+    postArg: AdapterPostableMessage,
+    quoteMessageId?: string
+  ): Promise<{ id: string; threadId: string }> {
+    const messageId = quoteMessageId?.trim();
+    if (platform === AgentPlatformEnum.WHATSAPP && messageId && typeof thread.reply === 'function') {
+      return thread.reply(messageId, postArg);
+    }
+
+    return thread.post(postArg);
   }
 
   async startTypingInConversation(

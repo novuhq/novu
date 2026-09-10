@@ -65,6 +65,27 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     return ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events });
   }
 
+  it('should pass quoteReply from a message envelope to outbound delivery', async () => {
+    const conversationId = await seedConversation(ctx);
+    const outboundGateway = testServer.getService(OutboundGateway);
+    const postStub = outboundGateway.postToConversation as sinon.SinonStub;
+    const messageId = `msg-quote-${Date.now()}`;
+
+    const res = await postIngest([
+      buildEnvelope(conversationId, {
+        type: 'message',
+        role: 'assistant',
+        messageId,
+        content: { markdown: 'Quoted answer' },
+        quoteReply: { messageId: 'wamid.abc123' },
+      }),
+    ]);
+
+    expect(res.status).to.equal(200);
+    expect(postStub.calledOnce).to.equal(true);
+    expect(postStub.firstCall.args[5]).to.deep.include({ quoteReply: { messageId: 'wamid.abc123' } });
+  });
+
   it('should accept a message envelope and persist the message activity', async () => {
     const conversationId = await seedConversation(ctx);
     const messageId = `msg-happy-${Date.now()}`;

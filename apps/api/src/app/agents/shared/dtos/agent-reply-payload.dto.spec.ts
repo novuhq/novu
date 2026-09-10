@@ -69,6 +69,36 @@ describe('IsValidReplyContent', () => {
   });
 });
 
+describe('AgentReplyPayloadDto quoteReply', () => {
+  async function validatePayload(body: Record<string, unknown>) {
+    const dto = plainToInstance(AgentReplyPayloadDto, body);
+
+    return validate(dto);
+  }
+
+  it('accepts quoteReply with a reply', async () => {
+    const errors = await validatePayload({
+      conversationId: '64f5a1c2e8b7a3d9f0c1b2a3',
+      integrationIdentifier: 'whatsapp-support',
+      reply: { markdown: 'Quoted answer' },
+      quoteReply: { messageId: 'wamid.abc123' },
+    });
+
+    expect(errors).to.have.length(0);
+  });
+
+  it('rejects quoteReply with an empty messageId', async () => {
+    const errors = await validatePayload({
+      conversationId: '64f5a1c2e8b7a3d9f0c1b2a3',
+      integrationIdentifier: 'whatsapp-support',
+      reply: { markdown: 'Quoted answer' },
+      quoteReply: { messageId: '' },
+    });
+
+    expect(errors).to.not.have.length(0);
+  });
+});
+
 describe('AgentReplyPayloadDto signals', () => {
   async function validateSignals(signals: unknown) {
     const dto = plainToInstance(AgentReplyPayloadDto, {

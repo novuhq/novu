@@ -7,6 +7,7 @@ import {
   AddReactionPayloadDto,
   DeleteMessagePayloadDto,
   EditPayloadDto,
+  QuoteReplyContextDto,
   ReplyContentDto,
   ToolApprovalRequestPayloadDto,
 } from '../../../shared/dtos/agent-reply-payload.dto';
@@ -30,6 +31,11 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => QuoteReplyContextDto)
+  quoteReply?: QuoteReplyContextDto;
 
   @IsOptional()
   @IsString()

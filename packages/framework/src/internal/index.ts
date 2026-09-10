@@ -11,6 +11,7 @@ export type {
   EditPayload,
   HumanSignal,
   MetadataSignal,
+  QuoteReplyContext,
   ReplyContent,
   SentMessageInfo,
   Signal,

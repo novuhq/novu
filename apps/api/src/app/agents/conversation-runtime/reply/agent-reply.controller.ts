@@ -19,6 +19,7 @@ import {
   MetadataClearSignalDto,
   MetadataDeleteSignalDto,
   MetadataSetSignalDto,
+  QuoteReplyContextDto,
   ReplyContentDto,
   ToolApprovalCardReplyContentDto,
   ToolApprovalRequestPayloadDto,
@@ -47,6 +48,7 @@ import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecas
   TriggerSignalDto,
   HumanSignalDto,
   DeleteMessagePayloadDto,
+  QuoteReplyContextDto,
   TypingStatusDto,
   SentMessageInfoDto
 )
@@ -106,6 +108,7 @@ export class AgentReplyController {
       '',
       '**Message actions**',
       '- `reply` — markdown, interactive card, or tool-approval card (optional `files`)',
+      '- `quoteReply` — quote an existing platform message (`{ messageId }`). WhatsApp: `context.message_id`',
       '- `edit` — update a previously delivered message in place',
       '- `deleteMessages` — remove rendered platform messages (history is kept)',
       '- `addReactions` — add emoji reactions to existing messages',
@@ -138,6 +141,7 @@ export class AgentReplyController {
         agentIdentifier: agentId,
         integrationIdentifier: body.integrationIdentifier,
         reply: body.reply,
+        quoteReply: body.quoteReply,
         toolApprovalRequest: body.toolApprovalRequest,
         edit: body.edit,
         resolve: body.resolve,

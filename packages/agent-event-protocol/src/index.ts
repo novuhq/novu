@@ -13,6 +13,7 @@ export type {
   AgentHumanCardElement,
   AgentHumanChromeCard,
   AgentHumanOptionInput,
+  AgentQuoteReplyContext,
   AgentRunOutcome,
   AgentSignal,
 } from './agent-event.types';

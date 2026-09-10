@@ -101,6 +101,9 @@ export class HandleAgentReply {
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }
+    if (command.quoteReply && !command.reply) {
+      throw new BadRequestException('quoteReply requires reply');
+    }
     if (
       command.edit &&
       (command.resolve ||
@@ -472,7 +475,7 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
-      { slackNative: resolved.slackNative }
+      { slackNative: resolved.slackNative, quoteReply: command.quoteReply }
     );
   }
 
