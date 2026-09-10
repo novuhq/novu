@@ -1,19 +1,15 @@
 import { HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
-import { IsArray, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Validate } from 'class-validator';
+import { IsEnum, IsInt, IsObject, IsOptional, IsString, Validate } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { IsValidHumanTo } from '../../validators/is-valid-human-to';
+import type { HumanInteractionCardInput } from '../create-conversation-interaction/create-conversation-interaction.command';
 
 export class CreateInteractionCommand extends EnvironmentWithUserCommand {
   @IsEnum(HumanInteractionKindEnum)
   kind: HumanInteractionKindEnum;
 
-  @IsString()
-  @IsNotEmpty()
-  prompt: string;
-
-  @IsOptional()
-  @IsArray()
-  options?: string[];
+  @IsObject()
+  card: HumanInteractionCardInput;
 
   @Validate(IsValidHumanTo)
   to: string | string[];

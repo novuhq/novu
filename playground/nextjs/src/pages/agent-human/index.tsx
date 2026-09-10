@@ -171,7 +171,10 @@ export default function AgentHumanPage() {
 
       const payload: Record<string, unknown> = {
         kind,
-        prompt,
+        card: {
+          title: prompt,
+          ...(kind === 'choose' ? { options: parseOptions(options) } : {}),
+        },
         to: subscriberTo,
         agentIdentifier: AGENT_IDENTIFIER,
         from,
@@ -180,10 +183,6 @@ export default function AgentHumanPage() {
 
       if (via) {
         payload.via = via;
-      }
-
-      if (kind === 'choose') {
-        payload.options = parseOptions(options);
       }
 
       const res = await fetch('/api/human-interaction', {
@@ -204,7 +203,7 @@ export default function AgentHumanPage() {
             kind: String(data.kind ?? kind),
             status: String(data.status ?? ''),
             platform: String(data.platform ?? ''),
-            to: Array.isArray(data.to) ? data.to.map(String) : String(data.to ?? to),
+            to: Array.isArray(data.to) ? data.to.map(String) : subscriberTo,
           },
         });
       }

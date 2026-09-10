@@ -7,7 +7,6 @@ import { createMockBridgeRequest } from './bridge-request.fixture';
 
 describe('event mode (AgentEvent protocol)', () => {
   const EVENTS_URL = 'https://api.novu.co/v1/agents/events';
-  const REPLY_URL = 'https://api.novu.co/v1/agents/test-bot/reply';
 
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -23,7 +22,6 @@ describe('event mode (AgentEvent protocol)', () => {
 
   function stubEventModeFetch() {
     const eventBatches: Array<{ sequence: number; event: { type: string; [key: string]: unknown } }[]> = [];
-    const replyPosts: Record<string, unknown>[] = [];
 
     vi.stubGlobal('crypto', {
       randomUUID: vi.fn(() => '00000000-0000-4000-8000-000000000001'),
@@ -33,25 +31,21 @@ describe('event mode (AgentEvent protocol)', () => {
       'fetch',
       vi.fn(async (url: string, init?: { body?: string }) => {
         if (url === EVENTS_URL) {
-          const body = JSON.parse(init!.body!);
+          const rawBody = init?.body;
+          if (!rawBody) {
+            throw new Error('expected ingest body');
+          }
+          const body = JSON.parse(rawBody);
           eventBatches.push(body.events);
 
           return new Response(JSON.stringify({ data: null }), { status: 200 });
-        }
-
-        if (url === REPLY_URL) {
-          replyPosts.push(JSON.parse(init!.body!));
-
-          return new Response(JSON.stringify({ data: { messageId: 'msg-legacy', platformThreadId: 'thread-1' } }), {
-            status: 200,
-          });
         }
 
         throw new Error(`Unexpected fetch URL: ${url}`);
       })
     );
 
-    return { eventBatches, replyPosts };
+    return { eventBatches };
   }
 
   it('reply emits message with minted id and returns handle exposing it', async () => {
@@ -201,26 +195,6 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
   });
 
-  it('legacy mode without eventsUrl still POSTs to replyUrl', async () => {
-    const { eventBatches, replyPosts } = stubEventModeFetch();
-
-    await dispatchAgentEvent({
-      agent: agent('test-bot', {
-        onMessage: async (_message, ctx) => {
-          await ctx.reply('Legacy reply');
-        },
-      }),
-      event: 'onMessage',
-      bridge: createMockBridgeRequest(),
-      secretKey: 'test-secret-key',
-    });
-
-    expect(eventBatches).toHaveLength(0);
-    expect(replyPosts).toHaveLength(2);
-    expect(replyPosts[0].reply).toEqual({ markdown: 'Legacy reply' });
-    expect(replyPosts[1].typing).toBe('stop');
-  });
-
   it('replyApprovalCard drains tool-approval-request without a message event', async () => {
     const { eventBatches } = stubEventModeFetch();
 
@@ -251,9 +225,37 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
   });
 
-  function flattenEventTypes(
-    eventBatches: Array<{ sequence: number; event: { type: string; [key: string]: unknown } }[]>
-  ) {
+  it('carries ttlSeconds/to/from onto the tool-approval-request event', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          await ctx.toolApproval.request(
+            { id: 'tc-2', name: 'doIt', input: { x: 1 } },
+            { ttlSeconds: 10, to: ['alice', 'bob'], from: 'deploy-bot' }
+          );
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0][1].event).toEqual({
+      type: 'tool-approval-request',
+      approvalId: 'tc-2',
+      toolUseId: 'tc-2',
+      toolName: 'doIt',
+      input: { x: 1 },
+      ttlSeconds: 10,
+      to: ['alice', 'bob'],
+      from: 'deploy-bot',
+      deliverCard: true,
+    });
+  });
+
+  function flattenEventTypes(eventBatches: Array<{ sequence: number; event: { type: string } }[]>) {
     return eventBatches.flat().map((envelope) => envelope.event);
   }
 
@@ -325,23 +327,5 @@ describe('event mode (AgentEvent protocol)', () => {
     ).toBe(true);
     expect(events.some((event) => event.type === 'run-finish' && event.outcome === 'completed')).toBe(true);
     expect(events.some((event) => event.type === 'run-error')).toBe(false);
-  });
-
-  it('legacy error path does not call events endpoint', async () => {
-    const { eventBatches, replyPosts } = stubEventModeFetch();
-
-    await dispatchAgentEvent({
-      agent: agent('test-bot', {
-        onMessage: async () => {
-          throw new Error('fail');
-        },
-      }),
-      event: 'onMessage',
-      bridge: createMockBridgeRequest(),
-      secretKey: 'test-secret-key',
-    });
-
-    expect(eventBatches).toHaveLength(0);
-    expect(replyPosts.some((body) => body.error === true)).toBe(true);
   });
 });

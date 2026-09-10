@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { type HumanInteractionEntity, primaryHumanInteractionDelivery } from '@novu/dal';
 import {
+  type HumanInteractionContent,
   HumanInteractionKindEnum,
-  HumanInteractionOption,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
   humanInteractionRecipientIds,
@@ -18,11 +18,8 @@ export class InteractionResponseDto {
   @ApiProperty({ enum: HumanInteractionStatusEnum })
   status: HumanInteractionStatusEnum;
 
-  @ApiProperty()
-  prompt: string;
-
-  @ApiPropertyOptional()
-  options?: HumanInteractionOption[];
+  @ApiProperty({ description: 'Markdown, chrome, or a posted chat card element.' })
+  content: HumanInteractionContent;
 
   @ApiPropertyOptional({ description: 'Attribution label of the calling agent.' })
   from?: string;
@@ -66,8 +63,7 @@ export function toInteractionResponse(
     id: entity.identifier,
     kind: entity.kind,
     status: entity.status,
-    prompt: entity.prompt,
-    options: entity.options,
+    content: entity.content,
     from: entity.fromLabel,
     to: humanInteractionRecipientIds(entity),
     integrationIdentifier: primary?.integrationIdentifier ?? '',

@@ -1869,6 +1869,23 @@ describe('AgentInboundHandler', () => {
       });
     });
 
+    it('should not double-record the verdict when a HITL tool-approval interaction settles the click', async () => {
+      const settled = {
+        identifier: 'hi_1',
+        requestId: 'tool_approval:apr_1',
+        kind: HumanInteractionKindEnum.APPROVE,
+        status: HumanInteractionStatusEnum.APPROVED,
+        response: { optionId: 'approve' },
+      };
+      const action = { id: 'tool-approval:approve:apr_1', value: undefined };
+      const { handler, conversationService, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.tryHandleAction.resolves({ outcome: 'settled', settled });
+
+      await handler.handleAction('agent1', config as any, makeActionThread() as any, action as any, 'user1');
+
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+    });
+
     it('should skip conversation HITL inbound for human_relay actions', async () => {
       const { handler, humanInteractionInbound, humanRelayRuntime, bridgeExecutor } = makeHandler({
         agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' }),

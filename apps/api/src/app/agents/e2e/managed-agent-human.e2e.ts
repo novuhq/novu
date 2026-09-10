@@ -5,7 +5,12 @@ import {
   type HumanInteractionEntity,
   HumanInteractionRepository,
 } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, HumanInteractionStatusEnum, IntegrationKindEnum } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  HumanInteractionStatusEnum,
+  IntegrationKindEnum,
+  resolveHumanInteractionCard,
+} from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -190,7 +195,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
     agentIdentifier: string;
     integrationId: string;
     kind: 'ask' | 'approve' | 'choose' | 'tell';
-    prompt: string;
+    title: string;
     options?: string[];
     toolUseId?: string;
     sessionId?: string;
@@ -222,8 +227,10 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
               toolName: 'novu_human',
               input: {
                 kind: params.kind,
-                prompt: params.prompt,
-                ...(params.options ? { options: params.options } : {}),
+                card: {
+                  title: params.title,
+                  ...(params.options ? { options: params.options } : {}),
+                },
               },
             },
           ],
@@ -244,12 +251,12 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
     const { interaction, conversation } = await dispatchNovuHuman({
       ...agent,
       kind: 'approve',
-      prompt: 'Delete these rows?',
+      title: 'Delete these rows?',
     });
 
     expect(interaction.kind).to.equal('approve');
     expect(interaction.status).to.equal(HumanInteractionStatusEnum.PENDING);
-    expect(interaction.prompt).to.equal('Delete these rows?');
+    expect(resolveHumanInteractionCard(interaction).title).to.equal('Delete these rows?');
     expect(sendToolResult.called).to.equal(false);
 
     const activities = await activityRepository.findByConversation(session.environment._id, conversation._id);
@@ -263,7 +270,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
     const { interaction, conversation, platformThreadId, toolUseId } = await dispatchNovuHuman({
       ...agent,
       kind: 'approve',
-      prompt: 'Deploy v2?',
+      title: 'Deploy v2?',
     });
 
     sendToolResult.resetHistory();
@@ -302,7 +309,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
     const { interaction, toolUseId } = await dispatchNovuHuman({
       ...agent,
       kind: 'approve',
-      prompt: 'Ship it?',
+      title: 'Ship it?',
     });
 
     sendToolResult.resetHistory();
@@ -324,7 +331,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
     const { interaction, toolUseId } = await dispatchNovuHuman({
       ...agent,
       kind: 'ask',
-      prompt: 'Which environment?',
+      title: 'Which environment?',
     });
 
     await humanInteractionRepository.update(
@@ -350,7 +357,7 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
     const { interaction } = await dispatchNovuHuman({
       ...agent,
       kind: 'tell',
-      prompt: 'Deploy finished.',
+      title: 'Deploy finished.',
     });
 
     expect(interaction.status).to.equal(HumanInteractionStatusEnum.DELIVERED);
