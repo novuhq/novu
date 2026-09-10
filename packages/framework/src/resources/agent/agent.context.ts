@@ -1,6 +1,5 @@
 import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from '@novu/agent-event-protocol';
-import type { Emoji } from 'chat';
-import { AgentDeliveryError } from './agent.errors';
+import type { CardElement, ChatElement, Emoji } from 'chat';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
 import type {
   AddReactionPayload,
@@ -15,14 +14,30 @@ import type {
   AgentNotification,
   AgentPlatformContext,
   AgentReaction,
-  AgentReplyPayload,
   AgentSubscriber,
   AgentToolCall,
   DeleteMessagePayload,
   FileRef,
+  HumanApproveRenderArgs,
+  HumanApproveRenderFn,
   HumanAskApproveOptions,
+  HumanAskApproveRenderOptions,
+  HumanAskOptions,
+  HumanAskRenderArgs,
+  HumanAskRenderFn,
+  HumanAskRenderOptions,
   HumanChooseOptions,
+  HumanChooseRenderArgs,
+  HumanChooseRenderFn,
+  HumanChooseRenderOptions,
+  HumanChrome,
+  HumanInteractionKind,
+  HumanOptionInput,
+  HumanSignalCard,
   HumanTellOptions,
+  HumanTellRenderArgs,
+  HumanTellRenderFn,
+  HumanTellRenderOptions,
   MessageContent,
   PendingApproval as PendingApprovalType,
   ReplyContent,
@@ -32,192 +47,116 @@ import type {
   ToolApprovalCard,
   ToolApprovalConfig,
   ToolApprovalControl,
+  ToolApprovalRequestOptions,
   ToolResult,
   TriggerRecipientsPayload,
   TypingControl,
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
+import { serializeContent } from './agent-content-serialization';
 import { AgentEventOutbox } from './agent-event-outbox';
+import { isCardElement, isHumanChrome } from './guards';
+import { buildHumanApproveActionId, buildHumanDenyActionId, buildHumanOptionActionId } from './human/action-id';
+import {
+  assertChooseOptions,
+  assertExtraActions,
+  assertHumanCardElement,
+  assertHumanChrome,
+  assertHumanTitle,
+} from './human/assert';
 import { normalizeHumanTo } from './human-to';
-import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
 
-const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
-const CHUNK_SIZE = 0x8000;
-const BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
+type HumanQueuedOpts = {
+  from?: string;
+  ttlSeconds?: number;
+  to?: string | string[];
+};
 
-function describeFile(file: FileRef, index: number): string {
-  return file.filename ? `"${file.filename}"` : `at index ${index}`;
+type HumanRenderFn = HumanAskRenderFn | HumanApproveRenderFn | HumanChooseRenderFn | HumanTellRenderFn;
+
+type HumanRenderArg = HumanAskRenderArgs | HumanApproveRenderArgs | HumanChooseRenderArgs | HumanTellRenderArgs;
+
+function humanChromeFactory<T extends HumanChrome['type']>(type: T) {
+  return (overrides?: Omit<Extract<HumanChrome, { type: T }>, 'type'>) =>
+    ({ type, ...overrides }) as Extract<HumanChrome, { type: T }>;
 }
 
-function getGlobalBuffer() {
-  return (
-    globalThis as typeof globalThis & {
-      Buffer?: {
-        isBuffer?: (value: unknown) => boolean;
-        from: (value: ArrayBuffer | Uint8Array) => { toString: (encoding: 'base64') => string };
+/** Per-kind render context (`*Card()` factory + minted `actionIds`) passed to a `{ render }` fn. */
+function buildHumanRenderArg(kind: 'ask', requestId: string): HumanAskRenderArgs;
+function buildHumanRenderArg(kind: 'approve', requestId: string): HumanApproveRenderArgs;
+function buildHumanRenderArg(kind: 'choose', requestId: string): HumanChooseRenderArgs;
+function buildHumanRenderArg(kind: 'tell', requestId: string): HumanTellRenderArgs;
+function buildHumanRenderArg(kind: HumanInteractionKind, requestId: string): HumanRenderArg {
+  switch (kind) {
+    case 'ask':
+      return { requestId, askCard: humanChromeFactory('human-ask-card') };
+    case 'approve':
+      return {
+        requestId,
+        actionIds: { approve: buildHumanApproveActionId(requestId), deny: buildHumanDenyActionId(requestId) },
+        approveCard: humanChromeFactory('human-approve-card'),
       };
+    case 'choose':
+      return {
+        requestId,
+        actionIds: { option: (optionId: string) => buildHumanOptionActionId(requestId, optionId) },
+        chooseCard: humanChromeFactory('human-choose-card'),
+      };
+    case 'tell':
+      return { requestId, tellCard: humanChromeFactory('human-tell-card') };
+    default: {
+      const exhaustive: never = kind;
+
+      return exhaustive;
     }
-  ).Buffer;
-}
-
-function isBuffer(value: unknown): value is Buffer {
-  return getGlobalBuffer()?.isBuffer?.(value) ?? false;
-}
-
-function isBlob(value: unknown): value is Blob {
-  return typeof Blob !== 'undefined' && value instanceof Blob;
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  const globalBuffer = getGlobalBuffer();
-  if (globalBuffer) {
-    return globalBuffer.from(bytes).toString('base64');
   }
-
-  if (typeof btoa !== 'function') {
-    throw new Error('Unable to encode file data: base64 encoding is not available in this runtime.');
-  }
-
-  let binary = '';
-  for (let offset = 0; offset < bytes.length; offset += CHUNK_SIZE) {
-    const chunk = bytes.subarray(offset, offset + CHUNK_SIZE);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
-}
-
-function decodedBase64Length(value: string): number | null {
-  const normalized = value.replace(/\s/g, '');
-  const remainder = normalized.length % 4;
-
-  if (!normalized || remainder === 1 || !BASE64_REGEX.test(normalized)) {
-    return null;
-  }
-
-  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
-
-  return Math.floor((normalized.length * 3) / 4) - padding;
-}
-
-function assertInlineFileSize(size: number, file: FileRef, index: number): void {
-  if (size > MAX_INLINE_FILE_BYTES) {
-    throw new Error(
-      `Invalid file ${describeFile(file, index)}: inline data must be 5 MB or smaller. ` +
-        'Use a publicly-accessible URL for larger files.'
-    );
-  }
-}
-
-async function encodeFileData(data: NonNullable<FileRef['data']>, file: FileRef, index: number): Promise<string> {
-  if (typeof data === 'string') {
-    const decodedLength = decodedBase64Length(data);
-    if (decodedLength === null) {
-      throw new Error(`Invalid file ${describeFile(file, index)}: data must be a base64-encoded string.`);
-    }
-
-    assertInlineFileSize(decodedLength, file, index);
-
-    return data;
-  }
-
-  if (isBuffer(data)) {
-    assertInlineFileSize(data.byteLength, file, index);
-
-    return data.toString('base64');
-  }
-
-  if (data instanceof Uint8Array) {
-    assertInlineFileSize(data.byteLength, file, index);
-
-    return bytesToBase64(data);
-  }
-
-  if (data instanceof ArrayBuffer) {
-    assertInlineFileSize(data.byteLength, file, index);
-
-    return bytesToBase64(new Uint8Array(data));
-  }
-
-  if (isBlob(data)) {
-    assertInlineFileSize(data.size, file, index);
-
-    return bytesToBase64(new Uint8Array(await data.arrayBuffer()));
-  }
-
-  throw new Error(
-    `Invalid file ${describeFile(file, index)}: data must be a base64 string, Buffer, Uint8Array, ArrayBuffer, or Blob.`
-  );
-}
-
-async function validateFiles(files?: FileRef[]): Promise<FileRef[] | undefined> {
-  if (!files?.length) {
-    return undefined;
-  }
-
-  const normalized: FileRef[] = [];
-  let inlineAggregateSize = 0;
-
-  for (const [index, file] of files.entries()) {
-    const data = (file as { data?: unknown }).data;
-    const url = (file as { url?: unknown }).url;
-    const hasData = data !== undefined && data !== null;
-    const hasUrl = url !== undefined && url !== null;
-
-    if (hasData === hasUrl) {
-      throw new Error(`Invalid file ${describeFile(file, index)}: provide exactly one of data or url.`);
-    }
-
-    if (hasData) {
-      const encodedData = await encodeFileData(data as NonNullable<FileRef['data']>, file, index);
-      const decodedLength = decodedBase64Length(encodedData);
-      inlineAggregateSize += decodedLength ?? 0;
-
-      if (inlineAggregateSize > MAX_INLINE_AGGREGATE_FILE_BYTES) {
-        throw new Error(
-          `Invalid files: total inline data must be 5 MB or smaller. Use publicly-accessible URLs for larger files.`
-        );
-      }
-
-      normalized.push({
-        ...file,
-        data: encodedData,
-      });
-
-      continue;
-    }
-
-    if (hasUrl && typeof url !== 'string') {
-      throw new Error(`Invalid file ${describeFile(file, index)}: url must be a string.`);
-    }
-
-    normalized.push(file);
-  }
-
-  return normalized;
-}
-
-async function serializeContent(content: MessageContent, files?: FileRef[]): Promise<ReplyContent> {
-  const validFiles = await validateFiles(files);
-
-  if (typeof content === 'string') {
-    return validFiles ? { markdown: content, files: validFiles } : { markdown: content };
-  }
-
-  const card = await resolveCardContent(content);
-  if (card) {
-    return validFiles ? { card, files: validFiles } : { card };
-  }
-
-  throw new Error('Invalid message content — expected string or CardElement');
 }
 
 function mint(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
+}
+
+function chromeToSignalCard(chrome: HumanChrome): HumanSignalCard {
+  const { type: _type, ...card } = chrome;
+
+  return card;
+}
+
+function readHumanSignalCard(
+  opts: HumanAskOptions | HumanAskApproveOptions | HumanChooseOptions | HumanTellOptions | undefined
+): HumanSignalCard | undefined {
+  if (!opts || !('card' in opts)) {
+    return undefined;
+  }
+
+  return opts.card;
+}
+
+function readHumanRender<T>(opts: object | undefined): T | undefined {
+  if (!opts || !('render' in opts)) {
+    return undefined;
+  }
+
+  return (opts as { render?: T }).render;
+}
+
+function asHumanContentCard(rendered: ChatElement): CardElement {
+  if (typeof rendered === 'object' && rendered !== null && isCardElement(rendered)) {
+    return rendered;
+  }
+
+  return { type: 'card', children: [rendered] } as CardElement;
+}
+
+function readHumanTtlSeconds(opts: HumanQueuedOpts | undefined): number | undefined {
+  if (!opts || !('ttlSeconds' in opts) || typeof opts.ttlSeconds !== 'number') {
+    return undefined;
+  }
+
+  return opts.ttlSeconds;
 }
 
 /**
@@ -261,58 +200,6 @@ interface SideEffectsSnapshot {
   resolve: { summary?: string } | null;
 }
 
-/**
- * A turn's delivery mechanism. Legacy bridges POST a single `AgentReplyPayload` per action;
- * SDK-native runs emit one or more `AgentEvent`s to the outbox. `AgentContextImpl` selects one
- * implementation per run and delegates to it, instead of branching on the mode at every call site.
- */
-interface TurnTransport {
-  sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null>;
-  /**
-   * Returns `'unaddressable'` when the card was rendered but there is no client-addressable
-   * message handle for it (event mode: the sink owns approval-card rendering, so there is no
-   * id it could later resolve an edit/delete against).
-   */
-  sendApprovalCard(
-    card: ToolApprovalCard,
-    sideEffects: SideEffectsSnapshot
-  ): Promise<SentMessageInfo | null | 'unaddressable'>;
-  editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null>;
-  deleteMessage(messageId: string): Promise<void>;
-  setTyping(op: TypingOp): Promise<void>;
-  flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void>;
-  emitCustom(name: string, data: unknown): Promise<void>;
-  queueRunStart(): void;
-  emitRunFinish(outcome: AgentRunOutcome): Promise<void>;
-  reportTurnError(message?: string): Promise<void>;
-}
-
-function applySideEffects(body: AgentReplyPayload, sideEffects: SideEffectsSnapshot): void {
-  if (sideEffects.toolApprovalRequest) {
-    body.toolApprovalRequest = sideEffects.toolApprovalRequest;
-  }
-
-  if (sideEffects.signals.length) {
-    body.signals = sideEffects.signals;
-  }
-
-  if (sideEffects.toolResults.length) {
-    body.toolResults = sideEffects.toolResults;
-  }
-
-  if (sideEffects.addReactions.length) {
-    body.addReactions = sideEffects.addReactions;
-  }
-
-  if (sideEffects.deleteMessages.length) {
-    body.deleteMessages = sideEffects.deleteMessages;
-  }
-
-  if (sideEffects.resolve) {
-    body.resolve = sideEffects.resolve;
-  }
-}
-
 function toSideEffectEvents(
   sideEffects: SideEffectsSnapshot,
   options?: { deliverApprovalCard?: boolean }
@@ -327,6 +214,9 @@ function toSideEffectEvents(
       toolUseId: request.toolCallId,
       toolName: request.name,
       input: request.input,
+      ...(request.ttlSeconds !== undefined ? { ttlSeconds: request.ttlSeconds } : {}),
+      ...(request.to !== undefined ? { to: request.to } : {}),
+      ...(request.from !== undefined ? { from: request.from } : {}),
       ...(options?.deliverApprovalCard ? { deliverCard: true } : {}),
     });
   }
@@ -361,103 +251,8 @@ function toSideEffectEvents(
   return events;
 }
 
-/** Legacy transport: one POST per turn action against the bridge's `replyUrl`. */
-class LegacyPostTransport implements TurnTransport {
-  constructor(
-    private readonly replyUrl: string,
-    private readonly secretKey: string,
-    private readonly conversationId: string,
-    private readonly integrationIdentifier: string
-  ) {}
-
-  async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
-    const body = this._baseBody();
-    body.reply = reply;
-    applySideEffects(body, sideEffects);
-
-    return this._post(body);
-  }
-
-  async sendApprovalCard(card: ToolApprovalCard, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
-    const body = this._baseBody();
-    body.reply = { toolApprovalCard: card };
-    applySideEffects(body, sideEffects);
-
-    return this._post(body);
-  }
-
-  async editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null> {
-    return this._post({ ...this._baseBody(), edit: { messageId, content: reply } });
-  }
-
-  async deleteMessage(messageId: string): Promise<void> {
-    await this._post({ ...this._baseBody(), deleteMessages: [{ messageId }] });
-  }
-
-  async setTyping(op: TypingOp): Promise<void> {
-    await this._post({ ...this._baseBody(), typing: op });
-  }
-
-  async flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void> {
-    const body = this._baseBody();
-    applySideEffects(body, sideEffects);
-    await this._post(body);
-  }
-
-  // Custom events and run lifecycle hooks are SDK-native concepts; legacy bridges have no equivalent.
-  async emitCustom(): Promise<void> {}
-
-  queueRunStart(): void {}
-
-  async emitRunFinish(): Promise<void> {}
-
-  async reportTurnError(): Promise<void> {
-    await this._post({ ...this._baseBody(), error: true });
-  }
-
-  private _baseBody(): AgentReplyPayload {
-    return { conversationId: this.conversationId, integrationIdentifier: this.integrationIdentifier };
-  }
-
-  private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
-    const response = await fetch(this.replyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `ApiKey ${this.secretKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new AgentDeliveryError(response.status, text);
-    }
-
-    const raw = await response.text().catch(() => '');
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as { data?: Record<string, unknown> } | Record<string, unknown>;
-      const envelope = (parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed) as
-        | Record<string, unknown>
-        | undefined;
-
-      if (envelope && typeof envelope.messageId === 'string' && typeof envelope.platformThreadId === 'string') {
-        return { messageId: envelope.messageId, platformThreadId: envelope.platformThreadId };
-      }
-    } catch {
-      // flush-only responses return null or an empty body; tolerate and fall through.
-    }
-
-    return null;
-  }
-}
-
-/** SDK-native transport: batches `AgentEvent`s through the run's outbox. */
-class EventOutboxTransport implements TurnTransport {
+/** Maps handler delivery calls onto `AgentEvent`s and flushes them through the run outbox. */
+class EventOutboxTransport {
   constructor(private readonly outbox: AgentEventOutbox) {}
 
   async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
@@ -552,7 +347,7 @@ class ReplyHandleImpl implements ReplyHandle {
   constructor(
     messageId: string,
     platformThreadId: string,
-    private readonly transport: TurnTransport
+    private readonly transport: EventOutboxTransport
   ) {
     this.messageId = messageId;
     this.platformThreadId = platformThreadId;
@@ -631,7 +426,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
-  private readonly _transport: TurnTransport;
+  private readonly _transport: EventOutboxTransport;
+  private _pendingHumanRenders: Array<() => Promise<void>> = [];
 
   constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
     this.event = request.event as AgentEventEnum;
@@ -648,17 +444,20 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.humanResponse = request.humanResponse ?? null;
 
     this._toolApprovalConfig = toolApprovalConfig;
-    this._transport = request.eventsUrl
-      ? new EventOutboxTransport(
-          new AgentEventOutbox({
-            eventsUrl: request.eventsUrl,
-            secretKey,
-            conversationId: request.conversationId,
-            agentId: request.agentId,
-            turnId: request.deliveryId,
-          })
-        )
-      : new LegacyPostTransport(request.replyUrl, secretKey, request.conversationId, request.integrationIdentifier);
+    const eventsUrl = request.eventsUrl;
+    if (!eventsUrl) {
+      throw new Error('AgentBridgeRequest.eventsUrl is required');
+    }
+
+    this._transport = new EventOutboxTransport(
+      new AgentEventOutbox({
+        eventsUrl,
+        secretKey,
+        conversationId: request.conversationId,
+        agentId: request.agentId,
+        turnId: request.deliveryId,
+      })
+    );
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
 
@@ -691,8 +490,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.typing = typing;
 
     this.toolApproval = {
-      request: async (toolCall: AgentToolCall): Promise<PendingApprovalType> => {
-        await postToolApprovalCard(this, toolCall, this._toolApprovalConfig);
+      request: async (toolCall: AgentToolCall, opts?: ToolApprovalRequestOptions): Promise<PendingApprovalType> => {
+        await postToolApprovalCard(this, toolCall, this._toolApprovalConfig, undefined, opts);
 
         return new PendingApproval();
       },
@@ -700,10 +499,11 @@ export class AgentContextImpl implements AgentRuntimeContext {
   }
 
   asMessageContext(): AgentMessageContext {
-    return this as unknown as AgentMessageContext;
+    return this as AgentMessageContext;
   }
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+    await this.materializePendingHumanRenders();
     const reply = await serializeContent(content, options?.files);
     const sideEffects = this._drainSideEffectsSnapshot();
     const info = await this._transport.sendReply(reply, sideEffects);
@@ -716,18 +516,11 @@ export class AgentContextImpl implements AgentRuntimeContext {
   }
 
   async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
+    await this.materializePendingHumanRenders();
     const sideEffects = this._drainSideEffectsSnapshot();
-    const info = await this._transport.sendApprovalCard(card, sideEffects);
+    await this._transport.sendApprovalCard(card, sideEffects);
 
-    if (info === 'unaddressable') {
-      return new NoopReplyHandle();
-    }
-
-    if (!info) {
-      throw new Error('Agent approval card reply did not return a message handle');
-    }
-
-    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this._transport);
+    return new NoopReplyHandle();
   }
 
   /** @internal Build a handle to an already-posted message (used to resume an approval). */
@@ -747,50 +540,221 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
   }
 
-  ask(question: string, opts?: HumanAskApproveOptions): string {
-    return this.queueHumanSignal('ask', question, opts);
-  }
-
-  approve(action: string, opts?: HumanAskApproveOptions): string {
-    return this.queueHumanSignal('approve', action, opts);
-  }
-
-  choose(question: string, options: string[], opts?: HumanChooseOptions): string {
-    if (options.length < 2 || options.length > 10) {
-      throw new Error('ctx.choose requires between 2 and 10 options');
+  ask(question: string, opts?: HumanAskOptions): string;
+  ask(opts: HumanAskOptions & { card: { title: string } }): string;
+  ask(opts: HumanAskRenderOptions): string;
+  ask(questionOrOpts: string | HumanAskOptions | HumanAskRenderOptions, opts?: HumanAskOptions): string {
+    const objectForm = typeof questionOrOpts !== 'string';
+    const resolvedOpts = objectForm ? questionOrOpts : opts;
+    const render = readHumanRender<HumanAskRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('ask', resolvedOpts, render);
     }
 
-    if (options.some((option) => typeof option !== 'string' || option.trim().length === 0)) {
-      throw new Error('ctx.choose options must be non-empty strings');
-    }
-
-    return this.queueHumanSignal('choose', question, opts, options);
+    return this.queueHumanSignal('ask', questionOrOpts, opts);
   }
 
-  tell(message: string, opts?: HumanTellOptions): string {
-    return this.queueHumanSignal('tell', message, opts);
+  approve(action: string, opts?: HumanAskApproveOptions): string;
+  approve(opts: HumanAskApproveOptions & { card: { title: string } }): string;
+  approve(opts: HumanAskApproveRenderOptions): string;
+  approve(
+    actionOrOpts: string | HumanAskApproveOptions | HumanAskApproveRenderOptions,
+    opts?: HumanAskApproveOptions
+  ): string {
+    const objectForm = typeof actionOrOpts !== 'string';
+    const resolvedOpts = objectForm ? actionOrOpts : opts;
+    const render = readHumanRender<HumanApproveRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('approve', resolvedOpts, render);
+    }
+
+    return this.queueHumanSignal('approve', actionOrOpts, opts);
+  }
+
+  choose(question: string, options: HumanOptionInput[], opts?: HumanChooseOptions): string;
+  choose(opts: HumanChooseOptions & { card: { title: string } }): string;
+  choose(opts: HumanChooseRenderOptions): string;
+  choose(
+    questionOrOpts: string | HumanChooseOptions | HumanChooseRenderOptions,
+    optionsOrOpts?: HumanOptionInput[] | HumanChooseOptions,
+    opts?: HumanChooseOptions
+  ): string {
+    const objectForm = typeof questionOrOpts !== 'string';
+    let resolvedOpts: HumanChooseOptions | HumanChooseRenderOptions | undefined;
+    let chooseOptions: HumanOptionInput[] | undefined;
+    if (objectForm) {
+      resolvedOpts = questionOrOpts;
+    } else if (Array.isArray(optionsOrOpts)) {
+      resolvedOpts = opts;
+      chooseOptions = optionsOrOpts;
+    } else {
+      resolvedOpts = optionsOrOpts;
+    }
+    const render = readHumanRender<HumanChooseRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('choose', resolvedOpts, render);
+    }
+
+    if (objectForm) {
+      return this.queueHumanSignal(
+        'choose',
+        questionOrOpts,
+        undefined,
+        'card' in questionOrOpts ? questionOrOpts.card?.options : undefined
+      );
+    }
+
+    return this.queueHumanSignal('choose', questionOrOpts, resolvedOpts, chooseOptions);
+  }
+
+  tell(message: string, opts?: HumanTellOptions): string;
+  tell(opts: HumanTellRenderOptions): string;
+  tell(messageOrOpts: string | HumanTellOptions | HumanTellRenderOptions, opts?: HumanTellOptions): string {
+    const objectForm = typeof messageOrOpts !== 'string';
+    const resolvedOpts = objectForm ? messageOrOpts : opts;
+    const render = readHumanRender<HumanTellRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('tell', resolvedOpts, render);
+    }
+
+    if (objectForm) {
+      throw new Error('ctx.tell requires a title (string argument) when render is omitted');
+    }
+
+    return this.queueHumanSignal('tell', messageOrOpts, opts);
   }
 
   private queueHumanSignal(
     kind: 'ask' | 'approve' | 'choose' | 'tell',
-    prompt: string,
-    opts?: HumanAskApproveOptions | HumanTellOptions,
-    options?: string[]
+    promptOrOpts: string | HumanAskOptions | HumanAskApproveOptions | HumanChooseOptions | HumanTellOptions,
+    opts?: HumanAskOptions | HumanAskApproveOptions | HumanChooseOptions | HumanTellOptions,
+    chooseOptions?: HumanOptionInput[]
   ): string {
+    const objectForm = typeof promptOrOpts !== 'string';
+    const stringArg = objectForm ? undefined : promptOrOpts;
+    const resolvedOpts = objectForm ? promptOrOpts : opts;
+    const card = readHumanSignalCard(resolvedOpts);
+    const title = assertHumanTitle(kind, stringArg?.trim() || card?.title);
+
+    if (kind === 'choose') {
+      const options = chooseOptions ?? card?.options;
+      assertChooseOptions(options);
+    }
+
+    if (kind === 'approve' && card?.extraActions) {
+      assertExtraActions(card.extraActions);
+    }
+
     const requestId = mint('hr');
-    const to = opts?.to !== undefined ? normalizeHumanTo(opts.to) : undefined;
+    const to = resolvedOpts?.to !== undefined ? normalizeHumanTo(resolvedOpts.to) : undefined;
+    const resolvedCard: HumanSignalCard = {
+      ...card,
+      title,
+      ...(kind === 'choose' && chooseOptions ? { options: chooseOptions } : {}),
+    };
+    const ttlSeconds = readHumanTtlSeconds(resolvedOpts);
+
     this._signals.push({
       type: 'human',
       kind,
-      prompt,
       requestId,
-      ...(options ? { options } : {}),
-      ...(opts?.from ? { from: opts.from } : {}),
-      ...(opts && 'ttlSeconds' in opts && opts.ttlSeconds !== undefined ? { ttlSeconds: opts.ttlSeconds } : {}),
+      card: resolvedCard,
+      ...(resolvedOpts?.from ? { from: resolvedOpts.from } : {}),
+      ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
       ...(to !== undefined ? { to } : {}),
     });
 
     return requestId;
+  }
+
+  private queueRendered(kind: HumanInteractionKind, opts: HumanQueuedOpts | undefined, render: HumanRenderFn): string {
+    const requestId = mint('hr');
+    this._pendingHumanRenders.push(async () => {
+      const rendered = await this.invokeHumanRender(kind, requestId, render);
+      if (isHumanChrome(rendered)) {
+        this.pushRenderedChrome(kind, requestId, rendered, opts);
+
+        return;
+      }
+
+      await this.pushRenderedContent(kind, requestId, rendered, opts);
+    });
+
+    return requestId;
+  }
+
+  private invokeHumanRender(
+    kind: HumanInteractionKind,
+    requestId: string,
+    render: HumanRenderFn
+  ): Promise<HumanChrome | ChatElement> {
+    switch (kind) {
+      case 'ask':
+        return Promise.resolve((render as HumanAskRenderFn)(buildHumanRenderArg('ask', requestId)));
+      case 'approve':
+        return Promise.resolve((render as HumanApproveRenderFn)(buildHumanRenderArg('approve', requestId)));
+      case 'choose':
+        return Promise.resolve((render as HumanChooseRenderFn)(buildHumanRenderArg('choose', requestId)));
+      case 'tell':
+        return Promise.resolve((render as HumanTellRenderFn)(buildHumanRenderArg('tell', requestId)));
+      default: {
+        const exhaustive: never = kind;
+
+        return Promise.resolve(exhaustive);
+      }
+    }
+  }
+
+  private pushRenderedChrome(
+    kind: HumanInteractionKind,
+    requestId: string,
+    chrome: HumanChrome,
+    opts: HumanQueuedOpts | undefined
+  ): void {
+    assertHumanChrome(kind, chrome);
+    const card = chromeToSignalCard(chrome);
+    const ttlSeconds = readHumanTtlSeconds(opts);
+    const to = opts?.to !== undefined ? normalizeHumanTo(opts.to) : undefined;
+    const usesRequestIdActions = kind === 'approve' || kind === 'choose';
+
+    this._signals.push({
+      type: 'human',
+      kind,
+      requestId,
+      ...(usesRequestIdActions ? { actionIdentifier: requestId } : {}),
+      card,
+      ...(opts?.from ? { from: opts.from } : {}),
+      ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+      ...(to !== undefined ? { to } : {}),
+    });
+  }
+
+  private async pushRenderedContent(
+    kind: HumanInteractionKind,
+    requestId: string,
+    rendered: ChatElement,
+    opts: HumanQueuedOpts | undefined
+  ): Promise<void> {
+    assertHumanCardElement(kind, rendered, requestId);
+    const serialized = await serializeContent(asHumanContentCard(rendered));
+    if (!serialized.card) {
+      throw new Error('human render must return chrome (*Card()), a Card, or a chat element — not a markdown string');
+    }
+
+    const ttlSeconds = readHumanTtlSeconds(opts);
+    const to = opts?.to !== undefined ? normalizeHumanTo(opts.to) : undefined;
+    const usesRequestIdActions = kind === 'approve' || kind === 'choose';
+
+    this._signals.push({
+      type: 'human',
+      kind,
+      requestId,
+      ...(usesRequestIdActions ? { actionIdentifier: requestId } : {}),
+      card: serialized.card,
+      ...(opts?.from ? { from: opts.from } : {}),
+      ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+      ...(to !== undefined ? { to } : {}),
+    });
   }
 
   /** @internal Queue a gated tool call for the ledger; flushed with the next reply. */
@@ -844,12 +808,20 @@ export class AgentContextImpl implements AgentRuntimeContext {
    * Called internally after onResolve returns.
    */
   async flush(): Promise<void> {
+    await this.materializePendingHumanRenders();
     if (!this._hasPendingSideEffects()) {
       return;
     }
 
     const sideEffects = this._drainSideEffectsSnapshot();
     await this._transport.flushSideEffects(sideEffects);
+  }
+
+  private async materializePendingHumanRenders(): Promise<void> {
+    const pending = this._pendingHumanRenders.splice(0);
+    for (const run of pending) {
+      await run();
+    }
   }
 
   private _hasPendingSideEffects(): boolean {

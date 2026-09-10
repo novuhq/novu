@@ -47,14 +47,19 @@ describe('resolveSkillHosts', () => {
 });
 
 describe('installHumanSkill', () => {
-  it('copies the bundled SKILL.md into every requested host directory', () => {
+  it('copies bundled SKILL.md files into every requested host directory', () => {
     const dir = makeProjectDir();
     const installed = installHumanSkill(dir, ['claude', 'cursor']);
 
-    expect(installed.map((entry) => entry.host).sort()).toEqual(['claude', 'cursor']);
+    expect(installed.map((entry) => `${entry.host}:${entry.skill}`).sort()).toEqual([
+      'claude:human-cli',
+      'claude:novu-human',
+      'cursor:human-cli',
+      'cursor:novu-human',
+    ]);
     for (const entry of installed) {
       const content = readFileSync(join(dir, entry.destination, 'SKILL.md'), 'utf8');
-      expect(content).toContain('name: human-cli');
+      expect(content).toContain(`name: ${entry.skill}`);
     }
   });
 

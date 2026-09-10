@@ -8,7 +8,7 @@ sidebarTitle: Emit
 
 Use `ctx.reply()` when the subscriber must see text or a card. Use `ctx.emit()` when your client needs structured data during the turn, for example progress or a machine-readable status.
 
-The call posts at once. It does not wait for `ctx.reply()`. If the bridge has no `eventsUrl`, the call is a no-op.
+The call posts at once. It does not wait for `ctx.reply()`. Custom-code agents need a `@novu/framework` version that sends `AgentEvent`s through the event outbox. The bridge always supplies `eventsUrl`.
 
 ## Channel support
 
@@ -40,7 +40,7 @@ Web Chat adds each event to the assistant message as `part.type === 'data'`. The
 
 Render the parts you support. Skip the rest. The part stays on the message.
 
-Client walk: [Custom data parts](/agents/channels/web-chat/chat-ui#custom-data-parts).
+Client walk: [Custom data](/agents/channels/web-chat/generative-ui#custom-data).
 
 ## Related
 
@@ -51,7 +51,7 @@ Client walk: [Custom data parts](/agents/channels/web-chat/chat-ui#custom-data-p
   <Card icon="signal" href="/agents/custom-code-agent/building-blocks/signals" title="Signals">
     Metadata, workflow triggers, and conversation resolution.
   </Card>
-  <Card icon="list" href="/agents/channels/web-chat/chat-ui#custom-data-parts" title="Web Chat data parts">
+  <Card icon="list" href="/agents/channels/web-chat/generative-ui#custom-data" title="Web Chat data parts">
     Render `part.type === 'data'` in your product UI.
   </Card>
 </Columns>

@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { cn } from '@/utils/ui';
 import {
   type ContentSource,
@@ -33,7 +34,10 @@ export function ContentSourceSelector({
   onSelectSource,
   onAddOverride,
 }: ContentSourceSelectorProps) {
-  const canAddOverrides = !!onAddOverride;
+  const { isReadOnly } = useStepEditor();
+  const supportsOverrides = !!onAddOverride;
+  // Existing overrides stay browsable in read-only environments; only creating new ones is blocked.
+  const canAddOverrides = supportsOverrides && !isReadOnly;
 
   return (
     <DropdownMenu>
@@ -66,16 +70,17 @@ export function ContentSourceSelector({
           <>
             <DropdownMenuSeparator className="my-1" />
             <div className="text-foreground-400 px-1.5 py-1 text-[11px] font-medium uppercase tracking-[0.22px]">
-              {canAddOverrides ? 'overrides' : 'providers'}
+              {supportsOverrides ? 'overrides' : 'providers'}
             </div>
             {providers.map((provider) => {
               const isSelected = selectedSource === provider.providerId;
               const isInvalid = invalidProviderIds?.has(provider.providerId);
-              const canSelectDirectly = !canAddOverrides || provider.hasOverride;
+              const canSelectDirectly = !supportsOverrides || provider.hasOverride;
 
               return (
                 <DropdownMenuItem
                   key={provider.providerId}
+                  disabled={!canSelectDirectly && !canAddOverrides}
                   className={cn(
                     'flex cursor-pointer items-center justify-between gap-2 rounded-md px-1.5 py-1',
                     isSelected && 'bg-neutral-alpha-50'
@@ -83,8 +88,8 @@ export function ContentSourceSelector({
                   onSelect={() => {
                     if (canSelectDirectly) {
                       onSelectSource(provider.providerId);
-                    } else if (onAddOverride) {
-                      onAddOverride(provider.providerId);
+                    } else if (canAddOverrides) {
+                      onAddOverride?.(provider.providerId);
                     }
                   }}
                 >
@@ -92,12 +97,12 @@ export function ContentSourceSelector({
                     <ProviderIcon
                       providerId={provider.providerId}
                       providerDisplayName={provider.displayName}
-                      className={cn('size-4', !provider.hasOverride && canAddOverrides && 'grayscale opacity-50')}
+                      className={cn('size-4', !provider.hasOverride && supportsOverrides && 'grayscale opacity-50')}
                     />
                     <span
                       className={cn(
                         'truncate text-xs font-medium',
-                        provider.hasOverride || !canAddOverrides ? 'text-foreground-950' : 'text-foreground-400'
+                        provider.hasOverride || !supportsOverrides ? 'text-foreground-950' : 'text-foreground-400'
                       )}
                     >
                       {provider.displayName}

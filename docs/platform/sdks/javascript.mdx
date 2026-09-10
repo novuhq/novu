@@ -544,6 +544,14 @@ The Novu client provides real-time event handling through WebSocket connections.
 - `subscriptions.delete.pending`: Triggered when deleting a subscription start.
 - `subscriptions.delete.resolved`: Triggered when a subscription is deleted.
 
+#### Connection events
+
+The client also emits socket lifecycle events so you can surface real-time connection state (for example, a "reconnecting" banner). Each payload carries the `socketUrl` in its `args`.
+
+- `socket.connect.pending`: Triggered when the real-time socket starts connecting.
+- `socket.connect.resolved`: Triggered when a connection attempt finishes, whether it succeeds or fails. On failure, the payload includes an `error`.
+- `socket.disconnect.resolved`: Triggered when the real-time socket drops or `disconnect()` is called. Use it to show a connection-lost state.
+
 ### Usage
 
 ```typescript
@@ -575,6 +583,18 @@ novu.on('subscriptions.create.resolved', ({ data: subscription }) => {
 
 novu.on('subscriptions.list.resolved', ({ data: subscriptions }) => {
   console.log('Loaded subscriptions:', subscriptions.length);
+});
+
+novu.on('socket.connect.resolved', ({ args, error }) => {
+  if (error) {
+    console.error('Real-time connection failed:', args.socketUrl, error);
+    return;
+  }
+  console.log('Real-time connection is live:', args.socketUrl);
+});
+
+novu.on('socket.disconnect.resolved', ({ args }) => {
+  console.log('Real-time connection dropped:', args.socketUrl);
 });
 
 ```
@@ -754,7 +774,7 @@ await subscription.delete();
 
 Two-way in-app chat with an agent. Call `loadWebChat(novu)` before `novu.webChat.conversation()`. React apps use [`useWebChat`](/platform/sdks/react/hooks/use-web-chat), which loads Web Chat automatically.
 
-See [Quickstart](/agents/channels/web-chat/quickstart).
+See [Web Chat](/agents/channels/web-chat).
 
 ### conversation()
 
@@ -823,7 +843,7 @@ conversation.dispose();
 | `isRecovering` / `catchUpError` | Reconnect recovery. The runtime reconnects on its own. |
 | `error` | Last load, send, retry, or action error. |
 
-See [Chat UI](/agents/channels/web-chat/chat-ui).
+See [Messages](/agents/channels/web-chat/messages).
 
 ## Types
 

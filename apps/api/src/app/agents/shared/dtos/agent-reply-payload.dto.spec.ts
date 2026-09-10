@@ -100,11 +100,60 @@ describe('AgentReplyPayloadDto signals', () => {
 
   it('accepts a mixed human and trigger array, validating each item as its own DTO', async () => {
     const errors = await validateSignals([
-      { type: 'human', kind: 'approve', prompt: 'Deploy v2?', requestId: 'hr_1', to: ['alice', 'bob'] },
+      {
+        type: 'human',
+        kind: 'approve',
+        prompt: 'Deploy v2?',
+        requestId: 'hr_1',
+        to: ['alice', 'bob'],
+        card: { title: 'Deploy v2?' },
+      },
       { type: 'trigger', workflowId: 'order-shipped', to: [{ type: 'Topic', topicKey: 'ops' }] },
     ]);
 
     expect(errors).to.have.length(0);
+  });
+
+  it('accepts a human signal with markdown card and no prompt', async () => {
+    const errors = await validateSignals([
+      {
+        type: 'human',
+        kind: 'approve',
+        requestId: 'hr_1',
+        card: { markdown: 'Please approve in the thread.' },
+      },
+    ]);
+
+    expect(errors).to.have.length(0);
+  });
+
+  it('accepts a human signal with a posted card element and no prompt', async () => {
+    const errors = await validateSignals([
+      {
+        type: 'human',
+        kind: 'approve',
+        requestId: 'hr_1',
+        actionIdentifier: 'hr_1',
+        card: { type: 'card', title: 'Refund $25?', children: [] },
+      },
+    ]);
+
+    expect(errors).to.have.length(0);
+  });
+
+  it('rejects a human signal card that is neither chrome nor a Card element', async () => {
+    const errors = await validateSignals([
+      {
+        type: 'human',
+        kind: 'approve',
+        requestId: 'hr_1',
+        card: { type: 'human-approve-card', title: 'Refund $25?' },
+      },
+    ]);
+
+    expect(constraintNames(errors).some((message) => message.includes('chrome') || message.includes('Card'))).to.equal(
+      true
+    );
   });
 
   it('rejects a human signal whose to uses a workflow topic recipient', async () => {
@@ -114,6 +163,7 @@ describe('AgentReplyPayloadDto signals', () => {
         kind: 'ask',
         prompt: 'Approve?',
         requestId: 'hr_1',
+        card: { title: 'Approve?' },
         to: { type: 'Topic', topicKey: 'ops' },
       },
     ]);

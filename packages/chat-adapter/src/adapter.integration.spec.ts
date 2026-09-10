@@ -3,6 +3,7 @@ import { createMemoryState } from '@chat-adapter/state-memory';
 import { Actions, Button, Card, CardText, Chat } from 'chat';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NovuAdapterImpl } from './adapter.js';
+import type { AgentEventEnvelope } from './event-protocol.js';
 import { createNovuAdapter, getNovuContext } from './index.js';
 import { encodeThreadId } from './thread-id.js';
 import type { AgentBridgeRequest, AgentSubscriber, NovuRawMessage } from './types.js';
@@ -63,6 +64,10 @@ function bridgeRequest(overrides: Partial<AgentBridgeRequest> = {}): AgentBridge
   };
 }
 
+function asFetch(fn: unknown): typeof fetch {
+  return fn as typeof fetch;
+}
+
 async function deliver(adapter: ReturnType<typeof createNovuAdapter>, req: AgentBridgeRequest): Promise<Response> {
   const body = JSON.stringify(req);
   const request = new Request('https://bridge.example.com/api/novu', {
@@ -81,17 +86,40 @@ describe('Novu adapter end-to-end', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchMock = vi.fn(
-      async () => new Response(JSON.stringify({ messageId: 'm-1', platformThreadId: 't-1' }), { status: 200 })
-    );
+    fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
   });
+
+  function ingestBody(index: number): { events: AgentEventEnvelope[] } {
+    const calls = fetchMock.mock.calls;
+    const resolvedIndex = index < 0 ? calls.length + index : index;
+    const call = calls[resolvedIndex];
+    if (call === undefined) {
+      throw new Error(`expected fetch call at index ${index}`);
+    }
+    const init = call[1] as RequestInit | undefined;
+    if (init === undefined) {
+      throw new Error('expected fetch RequestInit');
+    }
+
+    return JSON.parse(String(init.body)) as { events: AgentEventEnvelope[] };
+  }
+
+  function lastEnvelope(): AgentEventEnvelope {
+    const body = ingestBody(-1);
+    const envelope = body.events[0];
+    if (envelope === undefined) {
+      throw new Error('expected an ingest envelope');
+    }
+
+    return envelope;
+  }
 
   function buildChat() {
     const adapter = createNovuAdapter({
       apiKey: API_KEY,
       agentIdentifier: 'support-agent',
       bridgeSecret: BRIDGE_SECRET,
-      fetch: fetchMock as unknown as typeof fetch,
+      fetch: asFetch(fetchMock),
     });
     const chat = new Chat({
       userName: 'support',
@@ -116,15 +144,26 @@ describe('Novu adapter end-to-end', () => {
     expect(seen).toEqual(['hello']);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0]!;
-    // Reply went to the derived URL, NOT the attacker-controlled replyUrl in the request.
-    expect(url).toBe('https://api.novu.co/v1/agents/support-agent/reply');
-    expect((init.headers as Record<string, string>).authorization).toBe(`ApiKey ${API_KEY}`);
-    expect(JSON.parse(init.body as string)).toMatchObject({
+    const firstCall = fetchMock.mock.calls[0];
+    if (firstCall === undefined) {
+      throw new Error('expected a fetch call');
+    }
+    const [url, init] = firstCall;
+    // Ingest went to the derived URL, NOT the attacker-controlled replyUrl in the request.
+    expect(url).toBe('https://api.novu.co/v1/agents/events/ingest');
+    expect((init.headers as { authorization?: string }).authorization).toBe(`ApiKey ${API_KEY}`);
+    const envelope = lastEnvelope();
+    expect(envelope).toMatchObject({
       conversationId: 'conv-1',
-      integrationIdentifier: 'slack-prod',
-      reply: { markdown: 'echo: hello' },
+      agentId: 'support-agent',
+      turnId: expect.any(String),
+      event: {
+        type: 'message',
+        role: 'assistant',
+        content: { markdown: 'echo: hello' },
+      },
     });
+    expect((envelope.event as { messageId: string }).messageId).toMatch(/^msg_/);
   });
 
   it('routes a brand-new channel conversation to onNewMention', async () => {
@@ -226,7 +265,7 @@ describe('Novu adapter end-to-end', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('normalizes a chat-sdk Card posted by a handler into reply.card', async () => {
+  it('normalizes a chat-sdk Card posted by a handler into event.content.card', async () => {
     const { adapter, chat } = buildChat();
     chat.onSubscribedMessage(async (thread) => {
       await thread.post(
@@ -252,15 +291,16 @@ describe('Novu adapter end-to-end', () => {
     await deliver(adapter, bridgeRequest());
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0];
-    const payload = JSON.parse(init.body as string);
-    expect(payload.reply.markdown).toBeUndefined();
-    expect(payload.reply.card).toMatchObject({
+    const event = lastEnvelope().event as {
+      content: { markdown?: string; card: { type?: string; title?: string; subtitle?: string; children?: unknown[] } };
+    };
+    expect(event.content.markdown).toBeUndefined();
+    expect(event.content.card).toMatchObject({
       type: 'card',
       title: 'Card title',
       subtitle: 'Card subtitle',
     });
-    expect(payload.reply.card.children).toEqual(
+    expect(event.content.card.children).toEqual(
       expect.arrayContaining([expect.objectContaining({ type: 'text', content: 'Hello from a card' })])
     );
   });
@@ -407,7 +447,10 @@ describe('Novu adapter end-to-end', () => {
     );
 
     expect(ctx).not.toBeNull();
-    const novu = ctx!;
+    if (ctx === null) {
+      throw new Error('expected novu context');
+    }
+    const novu = ctx;
 
     expect(await novu.getConversation()).toMatchObject({
       identifier: 'conv-1',
@@ -434,12 +477,10 @@ describe('Novu adapter end-to-end', () => {
     });
 
     await novu.clearMetadata();
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        body: expect.stringContaining('"action":"clear"'),
-      })
-    );
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'signal',
+      signal: { type: 'metadata', action: 'clear' },
+    });
     expect(await novu.getMetadata('ticketId')).toBeUndefined();
     expect((await novu.getConversation())?.metadata).toEqual({});
   });
@@ -484,6 +525,7 @@ describe('Novu adapter end-to-end', () => {
 
     await deliver(adapter, bridgeRequest());
     expect(ctx).not.toBeNull();
+    expect(lastEnvelope().event).toMatchObject({ type: 'resolve', summary: 'done' });
   });
 
   it('preserves Novu history fields on fetchMessages', async () => {
@@ -516,7 +558,10 @@ describe('Novu adapter end-to-end', () => {
       isDM: false,
     });
     const { messages } = await adapter.fetchMessages(threadId);
-    const historyMsg = messages[0]!;
+    const historyMsg = messages[0];
+    if (historyMsg === undefined) {
+      throw new Error('expected a history message');
+    }
 
     expect(historyMsg.text).toBe('Card fallback text');
     expect((historyMsg.raw as NovuRawMessage).history).toMatchObject({
@@ -528,7 +573,7 @@ describe('Novu adapter end-to-end', () => {
     });
   });
 
-  it('normalizes outbound files on markdown replies into reply.files', async () => {
+  it('normalizes outbound files on markdown replies into event.files', async () => {
     const { adapter, chat } = buildChat();
     chat.onSubscribedMessage(async (thread) => {
       await thread.post({
@@ -547,16 +592,66 @@ describe('Novu adapter end-to-end', () => {
     await deliver(adapter, bridgeRequest());
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0]!;
-    const payload = JSON.parse(init.body as string);
-    expect(payload.reply.markdown).toBe('See attached');
-    expect(payload.reply.files).toEqual([
-      expect.objectContaining({
-        filename: 'note.txt',
-        mimeType: 'text/plain',
-        data: Buffer.from('hello').toString('base64'),
-      }),
-    ]);
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'message',
+      content: { markdown: 'See attached' },
+      files: [
+        expect.objectContaining({
+          fileId: 'note.txt',
+          mediaType: 'text/plain',
+          data: Buffer.from('hello').toString('base64'),
+        }),
+      ],
+    });
+  });
+
+  it('editMessage after post uses the minted id on channel.edit', async () => {
+    const { adapter, chat } = buildChat();
+    let postedId = '';
+    chat.onSubscribedMessage(async (thread) => {
+      const posted = await thread.post('draft');
+      postedId = posted.id;
+      await adapter.editMessage(thread.id, posted.id, 'edited');
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest({ deliveryId: 'del-edit' }));
+
+    expect(postedId).toMatch(/^msg_/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const first = ingestBody(0);
+    const second = ingestBody(1);
+    expect(first.events[0].event).toMatchObject({
+      type: 'message',
+      messageId: postedId,
+      content: { markdown: 'draft' },
+    });
+    expect(second.events[0].event).toMatchObject({
+      type: 'channel.edit',
+      messageId: postedId,
+      content: { markdown: 'edited' },
+    });
+    expect(first.events[0].turnId).toBe('del-edit');
+    expect(second.events[0].turnId).toBe('del-edit');
+    expect(second.events[0].sequence).toBe(2);
+  });
+
+  it('addReaction emits channel.reaction op add', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async (thread) => {
+      const posted = await thread.post('react to me');
+      await adapter.addReaction(thread.id, posted.id, 'thumbsup');
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'channel.reaction',
+      emoji: 'thumbsup',
+      op: 'add',
+    });
   });
 
   it('dedupes a replayed deliveryId (same delivery processed once)', async () => {
