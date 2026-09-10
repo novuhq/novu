@@ -26,7 +26,8 @@ export class UpdateAgent {
     const hasBehaviorFields =
       command.behavior?.acknowledgeOnReceived !== undefined ||
       command.behavior?.reactionOnResolved !== undefined ||
-      command.behavior?.subscriberAccess !== undefined;
+      command.behavior?.subscriberAccess !== undefined ||
+      command.behavior?.replyPolicy !== undefined;
 
     const hasGeneralFields =
       command.name !== undefined ||
@@ -105,6 +106,9 @@ export class UpdateAgent {
       }
       if (command.behavior!.subscriberAccess !== undefined) {
         $set['behavior.subscriberAccess'] = command.behavior!.subscriberAccess;
+      }
+      if (command.behavior!.replyPolicy !== undefined) {
+        $set['behavior.replyPolicy'] = command.behavior!.replyPolicy;
       }
     }
 
