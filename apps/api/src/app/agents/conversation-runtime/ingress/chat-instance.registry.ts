@@ -649,7 +649,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     chat.onReaction(async (event: ReactionEvent) => {
       try {
         if (event.message) {
-          rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), event.message);
+          rehydrateInboundAttachments(chat.getAdapter(cached.config.platform), event.message);
         }
 
         await callbacks.onReaction(agentId, cached.config, {
