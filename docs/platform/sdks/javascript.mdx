@@ -549,7 +549,7 @@ The Novu client provides real-time event handling through WebSocket connections.
 The client also emits socket lifecycle events so you can surface real-time connection state (for example, a "reconnecting" banner). Each payload carries the `socketUrl` in its `args`.
 
 - `socket.connect.pending`: Triggered when the real-time socket starts connecting.
-- `socket.connect.resolved`: Triggered when the real-time socket connects or reconnects.
+- `socket.connect.resolved`: Triggered when a connection attempt finishes, whether it succeeds or fails. On failure, the payload includes an `error`.
 - `socket.disconnect.resolved`: Triggered when the real-time socket drops or `disconnect()` is called. Use it to show a connection-lost state.
 
 ### Usage
@@ -585,7 +585,11 @@ novu.on('subscriptions.list.resolved', ({ data: subscriptions }) => {
   console.log('Loaded subscriptions:', subscriptions.length);
 });
 
-novu.on('socket.connect.resolved', ({ args }) => {
+novu.on('socket.connect.resolved', ({ args, error }) => {
+  if (error) {
+    console.error('Real-time connection failed:', args.socketUrl, error);
+    return;
+  }
   console.log('Real-time connection is live:', args.socketUrl);
 });
 
