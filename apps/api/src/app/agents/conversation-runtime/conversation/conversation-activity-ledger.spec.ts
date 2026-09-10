@@ -180,10 +180,9 @@ describe('ConversationActivityLedger', () => {
       expect(inserted.map((message) => message.platformMessageId)).to.deep.equal(['1', '2']);
       expect(importUserActivities.calledOnce).to.equal(true);
       expect(importUserActivities.firstCall.args[0].messages.map((message) => message.sequence)).to.deep.equal([4, 5]);
-      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.platformMessageId)).to.deep.equal([
-        '1',
-        '2',
-      ]);
+      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.platformMessageId)).to.deep.equal(
+        ['1', '2']
+      );
       expect(incrementMessageCount.calledOnceWithExactly('env-1', 'org-1', 'conv-1', 2, null)).to.equal(true);
     });
   });

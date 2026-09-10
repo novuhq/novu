@@ -11,8 +11,8 @@ import {
   ConversationRepository,
   isDuplicateKeyError,
 } from '@novu/dal';
-import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
+import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
@@ -202,9 +202,7 @@ export class ConversationActivityLedger {
       params.conversationId,
       params.messages.map((message) => message.platformMessageId)
     );
-    const messages = params.messages.filter(
-      (message) => !existingPlatformMessageIds.has(message.platformMessageId)
-    );
+    const messages = params.messages.filter((message) => !existingPlatformMessageIds.has(message.platformMessageId));
 
     if (messages.length === 0) {
       return [];

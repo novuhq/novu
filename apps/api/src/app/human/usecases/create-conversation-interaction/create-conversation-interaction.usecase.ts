@@ -100,16 +100,39 @@ export class CreateConversationInteraction {
       }
     );
 
-    if (command.conversation.isDirectMessage !== true) {
+    await this.subscribeThreadForReplies(command);
+
+    return delivered.interaction;
+  }
+
+  /**
+   * Subscribing keeps unmentioned replies in a shared room flowing back to the
+   * agent. The card is already delivered by this point, so a subscribe failure
+   * must never surface as a failed interaction — that would strand a pending
+   * row and tell the caller to continue without the human decision.
+   */
+  private async subscribeThreadForReplies(command: CreateConversationInteractionCommand): Promise<void> {
+    if (command.conversation.isDirectMessage === true) {
+      return;
+    }
+
+    try {
       await this.outboundGateway.setThreadSubscribed(
         command.conversation._agentId,
         command.integrationIdentifier,
         command.channel.platformThreadId,
         true
       );
+    } catch (err) {
+      this.logger.warn(
+        {
+          err,
+          conversationId: command.conversation._id,
+          platformThreadId: command.channel.platformThreadId,
+        },
+        'Failed to subscribe the thread after delivering a human interaction'
+      );
     }
-
-    return delivered.interaction;
   }
 
   private resolveRecipientIds(command: CreateConversationInteractionCommand): string[] {

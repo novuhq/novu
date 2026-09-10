@@ -16,7 +16,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { type AgentAnalyticsSource, AgentReplyPolicyEnum, AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  type AgentAnalyticsSource,
+  AgentReplyPolicyEnum,
+  AgentSubscriberAccessEnum,
+  EmailProviderIdEnum,
+} from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';

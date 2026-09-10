@@ -522,13 +522,7 @@ export class ConversationRepository extends BaseRepositoryV2<
     conversationId: string,
     minimum = 0
   ): Promise<number> {
-    const [sequence] = await this.allocateEventSequenceRange(
-      environmentId,
-      organizationId,
-      conversationId,
-      1,
-      minimum
-    );
+    const [sequence] = await this.allocateEventSequenceRange(environmentId, organizationId, conversationId, 1, minimum);
 
     return sequence;
   }

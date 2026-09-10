@@ -9,6 +9,12 @@ import { stripAgentReplyToken } from '@novu/shared';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
+import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { esmImport } from '../../shared/util/esm-import';
 import { WebChatAcceptIdempotencyService } from '../../web-chat/web-chat-accept-idempotency.service';
 import {
   type WebChatPlatformDeliveryContext,
@@ -16,12 +22,6 @@ import {
 } from '../../web-chat/web-chat-platform-delivery.service';
 import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
-import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
-import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
-import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
-import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import { esmImport } from '../../shared/util/esm-import';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';

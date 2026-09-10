@@ -153,9 +153,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       ['platformMessageId']
     );
 
-    return new Set(
-      activities.flatMap((activity) => (activity.platformMessageId ? [activity.platformMessageId] : []))
-    );
+    return new Set(activities.flatMap((activity) => (activity.platformMessageId ? [activity.platformMessageId] : [])));
   }
 
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {

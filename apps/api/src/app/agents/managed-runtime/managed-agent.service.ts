@@ -33,8 +33,8 @@ import {
   preserveMediaThroughThalamusPacking,
 } from './build-user-message-content';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
-import { formatUserMessageWithSenderName } from './format-user-message-with-sender-name';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { formatUserMessageWithSenderName } from './format-user-message-with-sender-name';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
 

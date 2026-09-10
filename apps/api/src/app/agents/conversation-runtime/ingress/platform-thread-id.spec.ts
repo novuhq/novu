@@ -65,11 +65,7 @@ describe('isNestedSharedThread', () => {
 
   it('is false for Telegram groups', () => {
     expect(
-      isNestedSharedThread(
-        AgentPlatformEnum.TELEGRAM,
-        { isDM: false, channelId: '-100123' } as any,
-        'telegram:-100123'
-      )
+      isNestedSharedThread(AgentPlatformEnum.TELEGRAM, { isDM: false, channelId: '-100123' } as any, 'telegram:-100123')
     ).to.equal(false);
   });
 });

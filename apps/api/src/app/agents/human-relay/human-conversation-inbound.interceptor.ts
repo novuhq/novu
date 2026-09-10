@@ -17,7 +17,6 @@ export class HumanConversationInboundInterceptor {
   constructor(private readonly inbound: HumanInteractionInboundService) {}
 
   async hasPendingAsk(environmentId: string, conversationId: string): Promise<boolean> {
-
     return this.inbound.hasPendingConversationAsk(environmentId, conversationId);
   }
 

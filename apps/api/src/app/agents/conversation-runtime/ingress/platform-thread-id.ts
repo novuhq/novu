@@ -44,11 +44,7 @@ export function getActionPlatformThreadId(platform: AgentPlatformEnum, thread: T
   return `${thread.id}${action.sourceMessageId}`;
 }
 
-export function isNestedSharedThread(
-  platform: AgentPlatformEnum,
-  thread: Thread,
-  platformThreadId: string
-): boolean {
+export function isNestedSharedThread(platform: AgentPlatformEnum, thread: Thread, platformThreadId: string): boolean {
   if (thread.isDM || !supportsNestedThreads(platform)) {
     return false;
   }
