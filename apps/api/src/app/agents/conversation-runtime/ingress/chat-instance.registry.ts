@@ -282,8 +282,23 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         logger: this.chatStateLogger(),
       }),
       logger: this.chatStateLogger(),
-      concurrency: { strategy: 'burst' },
+      concurrency: this.resolveConcurrency(platform),
     });
+  }
+
+  /**
+   * Burst folds a flurry of overlapping webhook messages into one turn, which is
+   * what messaging platforms (Slack/Teams/Telegram/WhatsApp/email) need. Web Chat's
+   * accept contract is different: `createConversation` awaits `chat.processMessage`
+   * synchronously before returning 201 with `messageId` (see
+   * `@novu/chat-adapter-web-chat`'s `handleMessageIngress`), so burst's built-in
+   * debounce wait — which applies even to a lone message on an idle thread — would
+   * add latency to every Web Chat send and can outlive the accept-claim TTL. Web
+   * Chat also never has genuinely overlapping inbound messages (one HTTP request
+   * per send), so it has nothing to fold. Keep it on the SDK default (`drop`).
+   */
+  private resolveConcurrency(platform: AgentPlatformEnum): { strategy: 'burst' } | undefined {
+    return platform === AgentPlatformEnum.WEB_CHAT ? undefined : { strategy: 'burst' };
   }
 
   // The Chat SDK's getLogger(prefix) returns this.logger.child(prefix) when a
