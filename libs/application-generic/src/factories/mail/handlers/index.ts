@@ -6,6 +6,7 @@ export * from './infobip.handler';
 export * from './mailersend.handler';
 export * from './mailgun.handler';
 export * from './mailjet.handler';
+export * from './mailkite.handler';
 export * from './mailtrap.handler';
 export * from './mandrill.handler';
 export * from './netcore.handler';

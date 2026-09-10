@@ -8,6 +8,7 @@ export * from './infobip/infobip.provider';
 export * from './mailersend/mailersend.provider';
 export * from './mailgun/mailgun.provider';
 export * from './mailjet/mailjet.provider';
+export * from './mailkite/mailkite.provider';
 export * from './mailtrap/mailtrap.provider';
 export * from './mandrill/mandrill.provider';
 export * from './netcore/netcore.provider';

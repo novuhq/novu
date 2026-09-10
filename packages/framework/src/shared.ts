@@ -105,6 +105,7 @@ export enum EmailProviderIdEnum {
   EmailJS = 'emailjs',
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
+  Mailkite = 'mailkite',
   Mandrill = 'mandrill',
   CustomSMTP = 'nodemailer',
   Postmark = 'postmark',
