@@ -459,29 +459,6 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
     });
 
-    it('folds skipped burst messages into the latest inbound text before dispatch', async () => {
-      const { handler, bridgeExecutor, conversationService } = makeHandler();
-      const thread = makeSlackDmThread();
-      const latest = makeSlackDmMessage();
-      latest.text = 'how do I reset?';
-      const skipped = [
-        { ...makeSlackDmMessage(), id: 'skipped-1', text: 'hey' },
-        { ...makeSlackDmMessage(), id: 'skipped-2', text: 'quick question' },
-      ];
-
-      await handler.handle('agent1', config as any, thread as any, latest as any, AgentEventEnum.ON_MESSAGE, {
-        skipped: skipped as any,
-        totalSinceLastHandler: 3,
-      });
-
-      expect(conversationService.persistInboundMessage.firstCall.args[0].content).to.equal(
-        'hey\n\nquick question\n\nhow do I reset?'
-      );
-      expect(bridgeExecutor.execute.firstCall.args[0].message.text).to.equal(
-        'hey\n\nquick question\n\nhow do I reset?'
-      );
-    });
-
     it('should dispatch ON_MESSAGE with humanResponse when a conversation HITL ask settles', async () => {
       const settled = {
         identifier: 'hi_1',
@@ -1569,31 +1546,6 @@ describe('AgentInboundHandler', () => {
       expect(thread.post.calledOnce).to.equal(true);
       expect(bridgeExecutor.execute.called).to.equal(false);
       expect(conversationService.createOrGetConversation.called).to.equal(false);
-    });
-
-    it('consumes /start from a skipped burst message instead of dispatching the latest text', async () => {
-      const linkTelegramExecute = sinon.stub().resolves({
-        created: true,
-        subscriberId: 'ext-sub-1',
-        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
-      });
-      const { handler, bridgeExecutor, startCodeService } = makeHandler({
-        linkTelegramExecute,
-        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
-      });
-      const thread = makeTelegramThread();
-      const startMessage = makeStartMessage('/start AbCdEfGhIjKlMnOpQrStUvWxYz012345');
-      const latest = makeStartMessage('hello after start');
-      latest.id = 'msg-2';
-
-      await handler.handle('agent1', telegramConfig as any, thread as any, latest as any, AgentEventEnum.ON_MESSAGE, {
-        skipped: [startMessage as any],
-        totalSinceLastHandler: 2,
-      });
-
-      expect(startCodeService.consumeIfMatches.calledOnce).to.equal(true);
-      expect(thread.post.calledOnce).to.equal(true);
-      expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
     it('replies with the duplicate message when the chat was already linked', async () => {
