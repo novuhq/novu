@@ -6,9 +6,16 @@ import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } 
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuWebChatAdapter } from '@novu/chat-adapter-web-chat';
 import { stripAgentReplyToken } from '@novu/shared';
-import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
+import { retryPolicies } from '@slack/web-api';
+import type { Adapter, Chat, Message, MessageContext, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
+import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { esmImport } from '../../shared/util/esm-import';
 import { WebChatAcceptIdempotencyService } from '../../web-chat/web-chat-accept-idempotency.service';
 import {
   type WebChatPlatformDeliveryContext,
@@ -16,12 +23,6 @@ import {
 } from '../../web-chat/web-chat-platform-delivery.service';
 import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
-import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
-import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
-import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
-import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import { esmImport } from '../../shared/util/esm-import';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
@@ -62,7 +63,13 @@ interface ChatStateLogger {
 }
 
 export interface InboundCallbacks {
-  onMessage: (agentId: string, config: ResolvedAgentConfig, thread: Thread, message: Message) => Promise<void>;
+  onMessage: (
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    context?: MessageContext
+  ) => Promise<void>;
   onAction: (
     agentId: string,
     config: ResolvedAgentConfig,
@@ -87,7 +94,7 @@ export interface InboundCallbacks {
  * the cached instance is dropped and rebuilt — see getOrCreate().
  */
 export interface CachedChat {
-  chat: ChatWithAdapters;
+  chat: ChatWithAdapters | null;
   config: ResolvedAgentConfig;
   adapterFingerprint: string;
 }
@@ -135,7 +142,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       max: MAX_CACHED_INSTANCES,
       ttl: INSTANCE_TTL_MS,
       dispose: (cached, key) => {
-        cached.chat.shutdown().catch((err) => {
+        cached.chat?.shutdown().catch((err) => {
           this.logger.error(err, `Failed to shut down evicted Chat instance ${key}`);
           captureAgentException(err, {
             component: 'chat-instance-registry',
@@ -160,13 +167,13 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     const freshFingerprint = this.adapterFingerprint(config);
     const existing = this.instances.get(instanceKey);
 
+    if (existing?.adapterFingerprint === freshFingerprint && existing.chat) {
+      existing.config = config;
+
+      return existing.chat;
+    }
+
     if (existing) {
-      if (existing.adapterFingerprint === freshFingerprint) {
-        existing.config = config;
-
-        return existing.chat;
-      }
-
       this.instances.delete(instanceKey);
     }
 
@@ -187,7 +194,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
   async onModuleDestroy() {
     const shutdowns = [...this.instances.entries()].map(async ([key, cached]) => {
       try {
-        await cached.chat.shutdown();
+        await cached.chat?.shutdown();
       } catch (err) {
         this.logger.error(err, `Failed to shut down Chat instance ${key}`);
         captureAgentException(err, {
@@ -210,7 +217,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     adapterFingerprint: string
   ): Promise<ChatWithAdapters> {
     const cached: CachedChat = {
-      chat: null as unknown as ChatWithAdapters,
+      chat: null,
       config,
       adapterFingerprint,
     };
@@ -275,6 +282,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         logger: this.chatStateLogger(),
       }),
       logger: this.chatStateLogger(),
+      concurrency: { strategy: 'burst' },
     });
   }
 
@@ -323,55 +331,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached: CachedChat
   ): Promise<Record<string, unknown>> {
     const config = cached.config;
-    const { credentials, connectionAccessToken } = config;
+    const { credentials } = config;
 
     switch (platform) {
-      case AgentPlatformEnum.SLACK: {
-        if (!credentials.signingSecret) {
-          throw new BadRequestException(
-            'Slack agent integration requires a signing secret. Complete Slack app setup for this integration.'
-          );
-        }
-
-        if (!connectionAccessToken) {
-          throw new BadRequestException(
-            'Slack agent integration requires a workspace bot token. Install the app to your Slack workspace via OAuth in the agent setup guide.'
-          );
-        }
-
-        const { createSlackAdapter } = await esmImport('@chat-adapter/slack');
-
-        /**
-         * Multi-workspace mode: a single Novu-hosted Slack app can be installed across many
-         * customer workspaces (the NovuCopilot distribution model), so the bot token must be
-         * resolved per workspace at event time rather than baked into the adapter. The adapter
-         * calls `getInstallation(team_id)` while processing each inbound webhook and binds the
-         * resolved token for the duration of that request (so `users.info` and any in-request
-         * reply use the right workspace token). Outbound calls made in a separate request bind
-         * their token explicitly via `OutboundGateway`.
-         *
-         * `connectionAccessToken` (the first installed workspace's token) is still required above
-         * as a fast-fail guard that at least one workspace is installed, and it keys the adapter
-         * fingerprint so a rebuild happens when installations change.
-         */
-        return {
-          slack: createSlackAdapter({
-            signingSecret: credentials.signingSecret,
-            installationProvider: {
-              getInstallation: async (installationId: string) => {
-                const installation = await this.agentConfigResolver.resolveSlackInstallation(
-                  config.environmentId,
-                  config.organizationId,
-                  config.integrationIdentifier,
-                  installationId
-                );
-
-                return installation ? { botToken: installation.token, botUserId: installation.botUserId } : null;
-              },
-            },
-          }),
-        };
-      }
+      case AgentPlatformEnum.SLACK:
+        return this.buildSlackAdapter(config);
       case AgentPlatformEnum.TEAMS: {
         if (!credentials.clientId || !credentials.secretKey || !credentials.tenantId) {
           throw new BadRequestException(
@@ -534,6 +498,59 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Multi-workspace mode: a single Novu-hosted Slack app can be installed across many
+   * customer workspaces (the NovuCopilot distribution model), so the bot token must be
+   * resolved per workspace at event time rather than baked into the adapter. The adapter
+   * calls `getInstallation(team_id)` while processing each inbound webhook and binds the
+   * resolved token for the duration of that request (so `users.info` and any in-request
+   * reply use the right workspace token). Outbound calls made in a separate request bind
+   * their token explicitly via `OutboundGateway`.
+   *
+   * `connectionAccessToken` (the first installed workspace's token) is still required
+   * as a fast-fail guard that at least one workspace is installed, and it keys the adapter
+   * fingerprint so a rebuild happens when installations change.
+   */
+  private async buildSlackAdapter(config: ResolvedAgentConfig): Promise<Record<string, unknown>> {
+    const { credentials, connectionAccessToken } = config;
+
+    if (!credentials.signingSecret) {
+      throw new BadRequestException(
+        'Slack agent integration requires a signing secret. Complete Slack app setup for this integration.'
+      );
+    }
+
+    if (!connectionAccessToken) {
+      throw new BadRequestException(
+        'Slack agent integration requires a workspace bot token. Install the app to your Slack workspace via OAuth in the agent setup guide.'
+      );
+    }
+
+    const { createSlackAdapter } = await esmImport('@chat-adapter/slack');
+
+    return {
+      slack: createSlackAdapter({
+        signingSecret: credentials.signingSecret,
+        webClientOptions: {
+          retryConfig: retryPolicies.fiveRetriesInFiveMinutes,
+          timeout: 15_000,
+        },
+        installationProvider: {
+          getInstallation: async (installationId: string) => {
+            const installation = await this.agentConfigResolver.resolveSlackInstallation(
+              config.environmentId,
+              config.organizationId,
+              config.integrationIdentifier,
+              installationId
+            );
+
+            return installation ? { botToken: installation.token, botUserId: installation.botUserId } : null;
+          },
+        },
+      }),
+    };
+  }
+
   private registerEventHandlers(agentId: string, cached: CachedChat) {
     if (!this.inboundCallbacks) {
       this.logger.warn(`[agent:${agentId}] No inbound callbacks registered, skipping event handler setup`);
@@ -542,12 +559,16 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     }
 
     const callbacks = this.inboundCallbacks;
+    const chat = cached.chat;
+    if (!chat) {
+      return;
+    }
 
-    cached.chat.onNewMention(async (thread: Thread, message: Message) => {
+    chat.onNewMention(async (thread: Thread, message: Message, context?: MessageContext) => {
       try {
         await thread.subscribe();
-        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
-        await callbacks.onMessage(agentId, cached.config, thread, message);
+        this.rehydrateBurstAttachments(cached, message, context);
+        await callbacks.onMessage(agentId, cached.config, thread, message, context);
       } catch (err) {
         this.rethrowWebChatInboundError(cached, err, {
           agentId,
@@ -557,10 +578,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       }
     });
 
-    cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
+    chat.onSubscribedMessage(async (thread: Thread, message: Message, context?: MessageContext) => {
       try {
-        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
-        await callbacks.onMessage(agentId, cached.config, thread, message);
+        this.rehydrateBurstAttachments(cached, message, context);
+        await callbacks.onMessage(agentId, cached.config, thread, message, context);
       } catch (err) {
         this.rethrowWebChatInboundError(cached, err, {
           agentId,
@@ -570,7 +591,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       }
     });
 
-    cached.chat.onSlashCommand(async (event: SlashCommandEvent) => {
+    chat.onSlashCommand(async (event: SlashCommandEvent) => {
       try {
         await this.redispatchTelegramCommandAsMessage(cached, event);
       } catch (err) {
@@ -584,7 +605,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       }
     });
 
-    cached.chat.onAction(async (event) => {
+    chat.onAction(async (event) => {
       try {
         if (!event.thread) {
           this.logger.warn(`[agent:${agentId}] Action received without thread context, skipping`);
@@ -625,7 +646,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       }
     });
 
-    cached.chat.onReaction(async (event: ReactionEvent) => {
+    chat.onReaction(async (event: ReactionEvent) => {
       try {
         if (event.message) {
           rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), event.message);
@@ -645,6 +666,17 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-reaction', agentId });
       }
     });
+  }
+
+  private rehydrateBurstAttachments(cached: CachedChat, message: Message, context?: MessageContext): void {
+    const adapter = cached.chat?.getAdapter(cached.config.platform);
+    if (!adapter) {
+      return;
+    }
+    rehydrateInboundAttachments(adapter, message);
+    for (const skipped of context?.skipped ?? []) {
+      rehydrateInboundAttachments(adapter, skipped);
+    }
   }
 
   /**
@@ -682,7 +714,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
    * including dedupe, thread locking, and DM/mention routing.
    */
   private async redispatchTelegramCommandAsMessage(cached: CachedChat, event: SlashCommandEvent): Promise<void> {
-    if (cached.config.platform !== AgentPlatformEnum.TELEGRAM) {
+    if (cached.config.platform !== AgentPlatformEnum.TELEGRAM || !cached.chat) {
       return;
     }
 
