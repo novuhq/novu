@@ -234,6 +234,7 @@ export interface AgentReplyPayload {
   resolve?: { summary?: string };
   signals?: Signal[];
   addReactions?: AddReactionPayload[];
+  quoteReply?: QuoteReplyContext;
 }
 
 /** Shape returned by `/agents/:id/reply` when a reply or edit was delivered. */

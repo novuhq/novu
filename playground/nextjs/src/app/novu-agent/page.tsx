@@ -119,6 +119,15 @@ export default function NovuAgentPlayground() {
           >
             🎴 Send a card reply
           </button>
+          <button
+            type="button"
+            onClick={() => run({ text: 'quote-reply', event: 'onMessage', ongoing: true })}
+            disabled={loading}
+            style={secondaryButtonStyle}
+            title="Uses thread.reply() and shows quoteReply.messageId in the ingest payload"
+          >
+            ↩️ Quote reply
+          </button>
         </div>
       </div>
 
