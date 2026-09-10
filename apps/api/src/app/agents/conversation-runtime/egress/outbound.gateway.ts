@@ -265,9 +265,7 @@ export class OutboundGateway {
     let sequence: number | undefined;
     try {
       const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
-      const collected = await this.deliveryInfo.collect(() =>
-        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg)
-      );
+      const collected = await this.deliveryInfo.collect(() => thread.post(postArg));
       sent = collected.result;
       sequence = collected.info.sequence;
     } catch (err) {
@@ -364,10 +362,11 @@ export class OutboundGateway {
       return postArg;
     }
 
-    return {
-      ...(postArg as unknown as Record<string, unknown>),
-      messageId: preferredMessageId,
-    } as unknown as AdapterPostableMessage;
+    if (typeof postArg === 'string') {
+      return { markdown: postArg, messageId: preferredMessageId } as AdapterPostableMessage;
+    }
+
+    return { ...postArg, messageId: preferredMessageId } as AdapterPostableMessage;
   }
 
   private deliverThreadMessage(
@@ -669,8 +668,13 @@ export class OutboundGateway {
     }
 
     if (mode === 'native') {
+      const { postObject } = adapter;
+      if (!postObject) {
+        return null;
+      }
+
       const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.postObject!(platformThreadId, 'plan', model)
+        postObject(platformThreadId, 'plan', model)
       ).catch(toDeliveryError);
 
       return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -707,8 +711,13 @@ export class OutboundGateway {
     }
 
     if (mode === 'native') {
+      const { editObject } = adapter;
+      if (!editObject) {
+        return;
+      }
+
       await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.editObject!(platformThreadId, platformMessageId, 'plan', model)
+        editObject(platformThreadId, platformMessageId, 'plan', model)
       ).catch(toDeliveryError);
 
       return;
@@ -995,7 +1004,7 @@ export class OutboundGateway {
   private async buildThreadPostArg(
     msg: OutboundMessage,
     actionTokenBinding?: AgentActionTokenBinding
-  ): Promise<unknown> {
+  ): Promise<AdapterPostableMessage> {
     if (!msg.card || !actionTokenBinding) {
       return this.toThreadPostArg(msg);
     }
@@ -1050,11 +1059,11 @@ export class OutboundGateway {
     return '';
   }
 
-  private toThreadPostArg(msg: OutboundMessage): unknown {
+  private toThreadPostArg(msg: OutboundMessage): AdapterPostableMessage {
     if (msg.markdown && !msg.card) {
       return msg.markdown;
     }
 
-    return msg.card ?? msg;
+    return (msg.card ?? msg) as AdapterPostableMessage;
   }
 }

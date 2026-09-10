@@ -39,7 +39,14 @@ import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
-import { dispatchTriggerSignals, hitlToolApprovalCard, normalizeMetadataOps } from './handle-agent-reply.helpers';
+import {
+  assertValidReplyCommand,
+  collectReplyAnalytics,
+  commandHasAny,
+  dispatchTriggerSignals,
+  hitlToolApprovalCard,
+  normalizeMetadataOps,
+} from './handle-agent-reply.helpers';
 
 const SELF_HOSTED_TURN_ERROR_MARKDOWN =
   '*Something went wrong while processing your message. Please try again in a moment.*';
@@ -77,73 +84,13 @@ export class HandleAgentReply {
   }
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
-    if (command.error) {
-      if (
-        command.reply ||
-        command.edit ||
-        command.resolve ||
-        command.signals?.length ||
-        command.toolResults?.length ||
-        command.toolApprovalRequest ||
-        command.addReactions?.length ||
-        command.deleteMessages?.length ||
-        command.plan ||
-        command.typing
-      ) {
-        throw new BadRequestException(
-          'error cannot be combined with reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing'
-        );
-      }
+    assertValidReplyCommand(command);
 
+    if (command.error) {
       return this.deliverSelfHostedTurnError(command);
     }
 
-    if (command.reply && command.edit) {
-      throw new BadRequestException('Only one of reply or edit can be provided');
-    }
-    if (command.quoteReply && !command.reply) {
-      throw new BadRequestException('quoteReply requires reply');
-    }
-    if (
-      command.edit &&
-      (command.resolve ||
-        command.signals?.length ||
-        command.toolResults?.length ||
-        command.toolApprovalRequest ||
-        command.addReactions?.length ||
-        command.deleteMessages?.length)
-    ) {
-      throw new BadRequestException(
-        'edit cannot be combined with resolve, signals, toolResults, toolApprovalRequest, addReactions, or deleteMessages'
-      );
-    }
-    if (
-      !command.reply &&
-      !command.edit &&
-      !command.resolve &&
-      !command.signals?.length &&
-      !command.toolResults?.length &&
-      !command.toolApprovalRequest &&
-      !command.addReactions?.length &&
-      !command.deleteMessages?.length &&
-      !command.plan &&
-      !command.typing &&
-      !command.error
-    ) {
-      throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, typing, or error must be provided'
-      );
-    }
-
-    const conversation = await this.conversationService.getConversation(
-      command.conversationId,
-      command.environmentId,
-      command.organizationId
-    );
-    if (!conversation) {
-      throw new NotFoundException('Conversation not found');
-    }
-
+    const conversation = await this.requireConversation(command);
     const channel = this.conversationService.getPrimaryChannel(conversation);
     const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
 
@@ -159,7 +106,29 @@ export class HandleAgentReply {
       return this.deliverPlan(command, conversation, channel, command.plan);
     }
 
-    const needsConfig = !!(command.reply || command.resolve || command.signals?.length || command.toolApprovalRequest);
+    return this.completeReplyTurn(command, conversation, channel, agentName);
+  }
+
+  private async requireConversation(command: HandleAgentReplyCommand): Promise<ConversationEntity> {
+    const conversation = await this.conversationService.getConversation(
+      command.conversationId,
+      command.environmentId,
+      command.organizationId
+    );
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    return conversation;
+  }
+
+  private async completeReplyTurn(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    agentName?: string
+  ): Promise<SentMessageInfo | null> {
+    const needsConfig = commandHasAny(command, ['reply', 'resolve', 'signals', 'toolApprovalRequest']);
     const config = needsConfig
       ? await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier)
       : null;
@@ -171,45 +140,84 @@ export class HandleAgentReply {
     }
 
     const toolApproval = await this.resolveToolApproval(command, conversation, channel, agentName);
-
-    let replyInfo: SentMessageInfo | undefined;
-    const reply = command.reply;
-    const hitlMessageId = toolApproval.interaction?.deliveries?.[0]?.platformMessageId;
-    const shouldDeliverReply = Boolean(reply) && !toolApproval.suppressReplyCard && !hitlMessageId;
-    if (reply && shouldDeliverReply) {
-      if (!toolApproval.outboundGated) {
-        await this.assertOutboundWithinLimitUnlessSystemGenerated(command, conversation, channel);
-      }
-
-      if (!this.isProtocolOnlyApprovalCard(channel.platform, command)) {
-        replyInfo = await this.deliverMessage(command, conversation, channel, reply, agentName);
-      }
-
-      if (toolApproval.activityId && replyInfo) {
-        await this.linkToolApprovalRequestCard(command, conversation, toolApproval.activityId, replyInfo.messageId);
-      }
-    } else if (toolApproval.activityId && hitlMessageId) {
-      await this.linkToolApprovalRequestCard(command, conversation, toolApproval.activityId, hitlMessageId);
-    }
+    const replyInfo = await this.deliverApprovedReply(command, conversation, channel, agentName, toolApproval);
 
     let postedHumanSignal = false;
     if (command.signals?.length) {
       postedHumanSignal = await this.executeSignals(command, conversation, channel, command.signals);
     }
 
-    if (shouldDeliverReply || toolApproval.interaction || (postedHumanSignal && !reply)) {
+    if (this.shouldRecordPostedOutbound(command, toolApproval, postedHumanSignal)) {
       await this.recordPostedOutbound(command, conversation, channel, config);
     }
 
+    await this.applyMessageMutations(command, conversation, channel, agentName, config);
+    this.trackProcessed(command);
+
+    return replyInfo ?? null;
+  }
+
+  private shouldRecordPostedOutbound(
+    command: HandleAgentReplyCommand,
+    toolApproval: ToolApprovalOutcome,
+    postedHumanSignal: boolean
+  ): boolean {
+    const hitlMessageId = toolApproval.interaction?.deliveries?.[0]?.platformMessageId;
+    const shouldDeliverReply = Boolean(command.reply) && !toolApproval.suppressReplyCard && !hitlMessageId;
+
+    return shouldDeliverReply || Boolean(toolApproval.interaction) || (postedHumanSignal && !command.reply);
+  }
+
+  private async deliverApprovedReply(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    agentName: string | undefined,
+    toolApproval: ToolApprovalOutcome
+  ): Promise<SentMessageInfo | undefined> {
+    const reply = command.reply;
+    const hitlMessageId = toolApproval.interaction?.deliveries?.[0]?.platformMessageId;
+    const shouldDeliverReply = Boolean(reply) && !toolApproval.suppressReplyCard && !hitlMessageId;
+
+    if (reply && shouldDeliverReply) {
+      if (!toolApproval.outboundGated) {
+        await this.assertOutboundWithinLimitUnlessSystemGenerated(command, conversation, channel);
+      }
+
+      const replyInfo = this.isProtocolOnlyApprovalCard(channel.platform, command)
+        ? undefined
+        : await this.deliverMessage(command, conversation, channel, reply, agentName);
+
+      if (toolApproval.activityId && replyInfo) {
+        await this.linkToolApprovalRequestCard(command, conversation, toolApproval.activityId, replyInfo.messageId);
+      }
+
+      return replyInfo;
+    }
+
+    if (toolApproval.activityId && hitlMessageId) {
+      await this.linkToolApprovalRequestCard(command, conversation, toolApproval.activityId, hitlMessageId);
+    }
+
+    return undefined;
+  }
+
+  private async applyMessageMutations(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    agentName: string | undefined,
+    config: ResolvedAgentConfig | null
+  ): Promise<void> {
     if (command.addReactions?.length) {
       await Promise.allSettled(
-        command.addReactions.map((r) =>
+        command.addReactions.map((reaction) =>
           this.outboundGateway.reactToMessage(
             conversation._agentId,
             command.integrationIdentifier,
             channel.platformThreadId,
-            r.messageId,
-            r.emojiName,
+            reaction.messageId,
+            reaction.emojiName,
             channel.workspace?.id
           )
         )
@@ -218,12 +226,12 @@ export class HandleAgentReply {
 
     if (command.deleteMessages?.length) {
       await Promise.allSettled(
-        command.deleteMessages.map((d) =>
+        command.deleteMessages.map((deletion) =>
           this.outboundGateway.deleteInConversation(
             conversation._agentId,
             command.integrationIdentifier,
             channel.platformThreadId,
-            d.messageId,
+            deletion.messageId,
             channel.workspace?.id,
             {
               conversationId: conversation._id,
@@ -238,27 +246,13 @@ export class HandleAgentReply {
       );
     }
 
-    if (command.resolve) {
-      await this.resolveConversation(command, config!, conversation, channel, command.resolve);
+    if (command.resolve && config) {
+      await this.resolveConversation(command, config, conversation, channel, command.resolve);
     }
+  }
 
-    const triggerSignalCount = (command.signals ?? []).filter((s) => s.type === 'trigger').length;
-    const metadataSignalCount = (command.signals ?? []).filter((s) => s.type === 'metadata').length;
-    const humanSignalCount = (command.signals ?? []).filter((s) => s.type === 'human').length;
-    const reactionCount = command.addReactions?.length ?? 0;
-    const deleteMessageCount = command.deleteMessages?.length ?? 0;
-    const actions: string[] = [];
-
-    if (command.reply) actions.push('reply');
-    if (command.edit) actions.push('edit');
-    if (command.resolve) actions.push('resolve');
-    if (command.toolApprovalRequest) actions.push('tool_approval_request');
-    if (triggerSignalCount > 0) actions.push('trigger_signals');
-    if (metadataSignalCount > 0) actions.push('metadata_signals');
-    if (humanSignalCount > 0) actions.push('human_signals');
-    if (reactionCount > 0) actions.push('add_reactions');
-    if (deleteMessageCount > 0) actions.push('delete_messages');
-    if (command.typing) actions.push('typing');
+  private trackProcessed(command: HandleAgentReplyCommand): void {
+    const analytics = collectReplyAnalytics(command);
 
     trackAgentReplyProcessed(this.analyticsService, {
       userId: command.userId,
@@ -267,14 +261,8 @@ export class HandleAgentReply {
       agentIdentifier: command.agentIdentifier,
       conversationId: command.conversationId,
       integrationIdentifier: command.integrationIdentifier,
-      actions,
-      triggerSignalCount,
-      metadataSignalCount,
-      humanSignalCount,
-      reactionCount,
+      ...analytics,
     });
-
-    return replyInfo ?? null;
   }
 
   private async deliverSelfHostedTurnError(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
