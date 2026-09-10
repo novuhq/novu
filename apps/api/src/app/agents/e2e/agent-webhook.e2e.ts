@@ -91,6 +91,7 @@ function mockThread(id: string, channelId = 'C_TEST') {
     isDM: false,
     startTyping: async () => {},
     subscribe: async () => {},
+    unsubscribe: async () => {},
     toJSON: () => ({ id, platform: 'slack', channelId, serialized: true }),
     createSentMessageFromMessage: () => mockSentMessage(),
   };
@@ -106,6 +107,7 @@ function mockMessage(opts: { id?: string; userId: string; text: string; fullName
       userName: 'testuser',
       isBot: false,
     },
+    isMention: true,
     metadata: { dateSent: new Date() },
   };
 }

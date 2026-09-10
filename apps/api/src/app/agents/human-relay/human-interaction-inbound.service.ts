@@ -51,6 +51,14 @@ export class HumanInteractionInboundService {
     this.logger.setContext(this.constructor.name);
   }
 
+  async hasPendingConversationAsk(environmentId: string, conversationId: string): Promise<boolean> {
+    const pending = await this.expireOverdue(
+      await this.humanInteractionRepository.findPendingAsksByConversation(environmentId, conversationId)
+    );
+
+    return pending.length > 0;
+  }
+
   async tryHandleAction(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
     const parsed = parseHumanActionId(turn.action?.id);
     if (!parsed) {

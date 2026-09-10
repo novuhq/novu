@@ -16,7 +16,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { type AgentAnalyticsSource, AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  type AgentAnalyticsSource,
+  AgentReplyPolicyEnum,
+  AgentSubscriberAccessEnum,
+  EmailProviderIdEnum,
+} from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
@@ -84,6 +89,7 @@ export interface ResolvedAgentConfig {
    * so inbound webhooks keep working until the backfill migration runs.
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  replyPolicy: AgentReplyPolicyEnum;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -326,6 +332,7 @@ export class AgentConfigResolver {
         this.logger
       ),
       subscriberAccess: agent.behavior?.subscriberAccess ?? AgentSubscriberAccessEnum.OPEN,
+      replyPolicy: agent.behavior?.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

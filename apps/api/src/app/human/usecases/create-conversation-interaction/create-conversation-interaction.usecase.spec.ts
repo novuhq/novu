@@ -23,6 +23,7 @@ describe('CreateConversationInteraction', () => {
     };
     const outboundGateway = {
       deliver: sinon.stub().resolves({ messageId: 'msg-1', platformThreadId: 'thread-1' }),
+      setThreadSubscribed: sinon.stub().resolves(undefined),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const usecase = new CreateConversationInteraction(
@@ -125,6 +126,9 @@ describe('CreateConversationInteraction', () => {
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
     expect(result.deliveries?.[0]?.platformMessageId).to.equal('msg-1');
     expect(result._conversationId).to.equal('conv1');
+    expect(
+      outboundGateway.setThreadSubscribed.calledOnceWithExactly('agent1', 'slack-main', 'thread-1', true)
+    ).to.equal(true);
   });
 
   it('marks tell interactions delivered after a successful send', async () => {
@@ -247,6 +251,27 @@ describe('CreateConversationInteraction', () => {
     } as any);
 
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['alice']);
+  });
+
+  it('does not subscribe a DM thread while an ask is pending', async () => {
+    const { usecase, command, outboundGateway } = setup();
+
+    await usecase.execute({
+      ...command,
+      conversation: { ...command.conversation, isDirectMessage: true },
+    } as any);
+
+    expect(outboundGateway.setThreadSubscribed.called).to.equal(false);
+  });
+
+  it('returns the delivered interaction when subscribing the thread fails', async () => {
+    const { usecase, command, outboundGateway } = setup();
+    outboundGateway.setThreadSubscribed.rejects(new Error('integration not found'));
+
+    const result = await usecase.execute(command as any);
+
+    expect(result.identifier).to.equal('hi_abc');
+    expect(outboundGateway.deliver.calledOnce).to.equal(true);
   });
 
   it('enforces the pending-cap against every listed recipient', async () => {

@@ -113,6 +113,64 @@ describe('Agents API - /agents #novu-v2', () => {
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });
 
+  it('should update and return replyPolicy behavior', async () => {
+    const identifier = `e2e-reply-policy-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Reply Policy Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+
+    const mentionOnlyRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { replyPolicy: 'mention_only' },
+    });
+
+    expect(mentionOnlyRes.status).to.equal(200);
+    expect(mentionOnlyRes.body.data.behavior.replyPolicy).to.equal('mention_only');
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.replyPolicy).to.equal('mention_only');
+
+    const autoReplyRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { replyPolicy: 'auto_reply' },
+    });
+
+    expect(autoReplyRes.status).to.equal(200);
+    expect(autoReplyRes.body.data.behavior.replyPolicy).to.equal('auto_reply');
+
+    const smartRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { replyPolicy: 'smart' },
+    });
+
+    expect(smartRes.status).to.equal(200);
+    expect(smartRes.body.data.behavior.replyPolicy).to.equal('smart');
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
+  it('should reject an invalid replyPolicy value', async () => {
+    const identifier = `e2e-reply-policy-invalid-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Reply Policy Invalid',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+
+    const badRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { replyPolicy: 'always' },
+    });
+
+    expect(badRes.status).to.equal(422);
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
   it('should update and return reactionOnResolved behavior', async () => {
     const identifier = `e2e-reactions-${Date.now()}`;
 

@@ -36,6 +36,9 @@ describe('ConversationActivityLedger', () => {
         overrides.createAgentActivity ?? sinon.stub().resolves({ _id: 'activity-1', identifier: 'act_generated' }),
       createToolActivity: overrides.createToolActivity ?? sinon.stub().resolves({ _id: 'tool-activity' }),
       createSignalActivity: overrides.createSignalActivity ?? sinon.stub().resolves({}),
+      findExistingPlatformMessageIds:
+        overrides.findExistingPlatformMessageIds ?? sinon.stub().resolves(new Set<string>()),
+      importUserActivities: overrides.importUserActivities ?? sinon.stub().resolves(0),
       findOne: overrides.findOne ?? sinon.stub().resolves(null),
       count: overrides.count ?? sinon.stub().resolves(0),
       withTransaction:
@@ -48,6 +51,7 @@ describe('ConversationActivityLedger', () => {
   function makeConversationRepository(overrides: Record<string, sinon.SinonStub> = {}) {
     return {
       touchActivity: overrides.touchActivity ?? sinon.stub().resolves(undefined),
+      incrementMessageCount: overrides.incrementMessageCount ?? sinon.stub().resolves(undefined),
       touchPreview: overrides.touchPreview ?? sinon.stub().resolves(undefined),
       ...overrides,
     };
@@ -126,6 +130,60 @@ describe('ConversationActivityLedger', () => {
       } catch (err) {
         expect((err as Error).message).to.equal('mongo down');
       }
+    });
+  });
+
+  describe('importInboundMessages', () => {
+    it('bulk imports one sequenced batch, returns the new rows, and increments messageCount', async () => {
+      const importUserActivities = sinon.stub().resolves(2);
+      const findExistingPlatformMessageIds = sinon.stub().resolves(new Set(['agent-reply']));
+      const activityRepository = makeActivityRepository({ findExistingPlatformMessageIds, importUserActivities });
+      const incrementMessageCount = sinon.stub().resolves(undefined);
+      const conversationRepository = makeConversationRepository({ incrementMessageCount });
+      const eventSequenceService = {
+        mintRange: sinon.stub().resolves([4, 5]),
+      } as unknown as ConversationEventSequenceService;
+      const ledger = makeLedger(activityRepository, eventSequenceService, undefined, conversationRepository);
+
+      const inserted = await ledger.importInboundMessages({
+        conversationId: 'conv-1',
+        platform: 'slack',
+        integrationId: 'int-1',
+        platformThreadId: 'thread-1',
+        messages: [
+          {
+            identifier: 'slack_hist_conv-1_1',
+            senderId: 'slack:U1',
+            senderName: 'Ada',
+            content: 'oldest',
+            platformMessageId: '1',
+          },
+          {
+            identifier: 'slack_hist_conv-1_2',
+            senderId: 'slack:U2',
+            senderName: 'Bob',
+            content: 'newest',
+            platformMessageId: '2',
+          },
+          {
+            identifier: 'slack_hist_conv-1_agent-reply',
+            senderId: 'slack:B1',
+            senderName: 'Agent',
+            content: 'already persisted outbound',
+            platformMessageId: 'agent-reply',
+          },
+        ],
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      });
+
+      expect(inserted.map((message) => message.platformMessageId)).to.deep.equal(['1', '2']);
+      expect(importUserActivities.calledOnce).to.equal(true);
+      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.sequence)).to.deep.equal([4, 5]);
+      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.platformMessageId)).to.deep.equal(
+        ['1', '2']
+      );
+      expect(incrementMessageCount.calledOnceWithExactly('env-1', 'org-1', 'conv-1', 2, null)).to.equal(true);
     });
   });
 

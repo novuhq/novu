@@ -1,6 +1,7 @@
 import type {
   AgentAnalyticsSource,
   AgentMcpServerEnablementDto,
+  AgentReplyPolicyEnum,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
   AgentSubscriberAccessEnum,
@@ -67,6 +68,8 @@ export type AgentIntegrationSummary = {
 
 export type AgentSubscriberAccess = `${AgentSubscriberAccessEnum}`;
 
+export type AgentReplyPolicy = `${AgentReplyPolicyEnum}`;
+
 export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
@@ -78,6 +81,10 @@ export type AgentBehavior = {
    * `restricted`. Always present on persisted agents.
    */
   subscriberAccess: AgentSubscriberAccess;
+  /**
+   * Shared-room reply policy. Absent on GET is treated as `auto_reply`.
+   */
+  replyPolicy?: AgentReplyPolicy;
 };
 
 export type ManagedRuntimeResponse = {

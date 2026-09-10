@@ -348,6 +348,26 @@ export class OutboundGateway {
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
 
+  async setThreadSubscribed(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string,
+    subscribed: boolean
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const thread = chat.thread(platformThreadId);
+
+    if (subscribed) {
+      await thread.subscribe();
+
+      return;
+    }
+
+    await thread.unsubscribe();
+  }
+
   /**
    * Adapters that declare `supportsClientMessageIds` accept a caller-supplied
    * idempotent message id embedded in the postable message (a capability, not

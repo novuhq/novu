@@ -130,6 +130,10 @@ export class ConversationActivityEntity {
 }
 
 export type ConversationActivityDBModel = ChangePropsValueType<
-  ConversationActivityEntity,
-  '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  ChangePropsValueType<
+    ConversationActivityEntity,
+    '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  >,
+  'createdAt',
+  Date
 >;

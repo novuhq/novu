@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
@@ -40,4 +40,18 @@ export class AgentBehaviorDto {
   @IsOptional()
   @IsEnum(AgentSubscriberAccessEnum)
   subscriberAccess?: AgentSubscriberAccessEnum;
+
+  @ApiPropertyOptional({
+    enum: AgentReplyPolicyEnum,
+    description:
+      'How the agent replies in shared rooms. "mention_only" requires an @mention in every shared room. ' +
+      '"auto_reply" (default) replies to unmentioned follow-ups in a nested Slack or Teams thread after the agent has joined. ' +
+      '"smart" behaves like auto_reply while one person is talking to the agent in a thread, then requires an @mention there once someone else joins or the incumbent @mentions another teammate. ' +
+      'DMs always reply without a mention. ' +
+      'Optional on update (partial PATCH).',
+    default: AgentReplyPolicyEnum.AUTO_REPLY,
+  })
+  @IsOptional()
+  @IsEnum(AgentReplyPolicyEnum)
+  replyPolicy?: AgentReplyPolicyEnum;
 }

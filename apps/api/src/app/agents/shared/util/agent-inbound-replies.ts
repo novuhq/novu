@@ -19,6 +19,18 @@ export const UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY =
  */
 export const UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY = buildEmailVerificationFailedReply(undefined);
 
+export function buildMentionRequiredNoticeReply(params: { joinerName?: string; agentName?: string }): string {
+  const handle = params.agentName?.trim();
+  const mentionHint = handle ? `@-mention me (${handle})` : '@-mention me';
+  const joiner = params.joinerName?.trim();
+
+  if (joiner) {
+    return `I see ${joiner} joined this thread. Now that more than one person is here, ${mentionHint} when you'd like me to reply.`;
+  }
+
+  return `There's more than one person in this thread, so ${mentionHint} when you'd like me to reply.`;
+}
+
 export function buildUnresolvedSubscriberAccessReply(params: {
   platform: AgentPlatformEnum;
   senderEmail?: string;
