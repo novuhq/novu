@@ -8,7 +8,7 @@ import type {
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 
-/** Target of an outbound quote-reply. WhatsApp maps `messageId` to `context.message_id`. */
+/** WhatsApp maps `messageId` to Cloud API `context.message_id`. */
 export interface AgentQuoteReplyContext {
   messageId: string;
 }
@@ -109,10 +109,6 @@ export type AgentEvent =
       role: AgentMessageRole;
       content: AgentMessageContent;
       files?: AgentFileRef[];
-      /**
-       * Quote-reply the outbound message onto an existing platform message.
-       * WhatsApp maps `messageId` to Cloud API `context.message_id`.
-       */
       quoteReply?: AgentQuoteReplyContext;
     }
   | { type: 'message-start'; messageId: string }

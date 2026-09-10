@@ -13,7 +13,7 @@ import {
 import type { PlanPhase } from '../../egress/plan-phase';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 
-/** Ingest-only quote-reply target. Not part of the deprecated `/reply` body. */
+/** Ingest-only. Not on the deprecated `/reply` body. */
 export class QuoteReplyContextDto {
   @IsString()
   @IsNotEmpty()

@@ -76,7 +76,6 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
-  /** Quote-reply target. WhatsApp maps `messageId` to Cloud API `context.message_id`. */
   quoteReply?: { messageId: string };
 };
 
@@ -371,10 +370,6 @@ export class OutboundGateway {
     } as unknown as AdapterPostableMessage;
   }
 
-  /**
-   * WhatsApp first: `thread.reply()` becomes Cloud API `context.message_id`.
-   * Other platforms keep `thread.post()` until they are wired (Telegram/Teams next).
-   */
   private deliverThreadMessage(
     thread: Thread,
     platform: string,

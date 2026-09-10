@@ -222,7 +222,7 @@ export type TriggerSignal = {
 
 export type Signal = MetadataSignal | TriggerSignal;
 
-/** Target of an outbound quote-reply. WhatsApp maps `messageId` to Cloud API `context.message_id`. */
+/** WhatsApp maps `messageId` to Cloud API `context.message_id`. */
 export interface QuoteReplyContext {
   messageId: string;
 }
