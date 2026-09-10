@@ -106,7 +106,9 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
   }
 
   const dependenciesChanged = ensureWebChatDependencies(resolved, input.apiUrl, input.region);
+  const toolchainBootstrapped = bootstrapTailwindToolchainIfAbsent(resolved);
   ensureWebChatNextConfig(resolved);
+  ensureWebChatMergeHostLayout(resolved);
   const componentsDir = path.join(resolved, 'components', 'web-chat');
   fs.mkdirSync(componentsDir, { recursive: true });
   copyTemplateComponents(componentsDir);
@@ -123,8 +125,48 @@ async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebCha
 
   appendEnvExample(resolved, input);
 
-  if (dependenciesChanged && (await getOnline())) {
+  if ((dependenciesChanged || toolchainBootstrapped) && (await getOnline())) {
     await install(resolvePackageManager(resolved), true, false, resolved);
+  }
+}
+
+/**
+ * A host with no Tailwind and no PostCSS pipeline cannot build the copied template —
+ * components/web-chat/globals.css imports tailwindcss and tw-animate-css, which only
+ * resolve through @tailwindcss/postcss. Bootstrapping is safe there because nothing
+ * exists to conflict with (this covers the bridge project connect scaffolds itself).
+ * Hosts with their own Tailwind setup are left untouched; warnHostTailwindSetup
+ * reports any gaps instead.
+ */
+function bootstrapTailwindToolchainIfAbsent(projectDir: string): boolean {
+  const packageJsonPath = path.join(projectDir, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const hasTailwind = Boolean(packageJson.dependencies?.tailwindcss ?? packageJson.devDependencies?.tailwindcss);
+
+  if (hasTailwind || findPostcssConfigPath(projectDir)) {
+    return false;
+  }
+
+  packageJson.devDependencies = { ...packageJson.devDependencies, ...WEB_CHAT_DEV_DEPENDENCIES };
+  fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(path.join(projectDir, 'postcss.config.mjs'), STANDALONE_POSTCSS_CONFIG, 'utf8');
+
+  return true;
+}
+
+/**
+ * Bridge scaffolds ship a layout with no --font-geist variables and import host
+ * globals after Web Chat CSS. A host `* { padding: 0 }` reset then strips Tailwind
+ * utilities (suggestion pills, composer). Align with the playground: Geist on
+ * <html>, web-chat globals only — do not import host CSS after the theme.
+ */
+function ensureWebChatMergeHostLayout(projectDir: string): void {
+  const layoutPath = path.join(projectDir, 'app', 'layout.tsx');
+  if (fs.existsSync(layoutPath)) {
+    fs.writeFileSync(layoutPath, MERGE_LAYOUT, 'utf8');
   }
 }
 
@@ -569,7 +611,6 @@ function renderChatPage(opts: { standalone: boolean; configImport: string }): st
 import { NovuProvider } from '@novu/react';
 import { WebChat } from '@/components/web-chat/web-chat';
 import { config } from '@/config';
-import '@/components/web-chat/globals.css';
 
 export default function Page() {
   return (
@@ -588,29 +629,25 @@ export default function Page() {
 
   return `'use client';
 
-import { Inter } from 'next/font/google';
 import { NovuProvider } from '@novu/react';
 import { WebChat } from '@/components/web-chat/web-chat';
-import '@/components/web-chat/globals.css';
-
-const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export default function WebChatPage() {
   const applicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
   const subscriberId = process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '';
-  const apiUrl = process.env.NEXT_PUBLIC_NOVU_BACKEND_URL;
+  const backendUrl = process.env.NEXT_PUBLIC_NOVU_BACKEND_URL;
   const socketUrl = process.env.NEXT_PUBLIC_NOVU_SOCKET_URL;
+  const socketType = process.env.NEXT_PUBLIC_NOVU_SOCKET_TYPE as 'cloud' | 'self-hosted' | undefined;
 
   return (
     <NovuProvider
       applicationIdentifier={applicationIdentifier}
       subscriberId={subscriberId}
-      {...(apiUrl ? { apiUrl } : {})}
+      {...(backendUrl ? { backendUrl } : {})}
       {...(socketUrl ? { socketUrl } : {})}
+      {...(socketType ? { socketOptions: { socketType } } : {})}
     >
-      <div className={inter.className}>
-        <WebChat />
-      </div>
+      <WebChat />
     </NovuProvider>
   );
 }
@@ -904,21 +941,61 @@ export function detectWebChatProjectKind(projectDir: string): 'empty' | 'project
   return detectBridgeProject(projectDir).kind;
 }
 
-const STANDALONE_LAYOUT = `import { Inter } from 'next/font/google';
+const STANDALONE_LAYOUT = `import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import '@/components/web-chat/globals.css';
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' });
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+});
 
-export const metadata = {
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+});
+
+export const metadata: Metadata = {
   title: 'Novu Web Chat',
   description: 'A standalone Web Chat example powered by Novu.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
-        {children}
-      </body>
+    <html lang="en" className={\`\${geist.variable} \${geistMono.variable}\`} suppressHydrationWarning>
+      <body suppressHydrationWarning>{children}</body>
+    </html>
+  );
+}
+`;
+
+const MERGE_LAYOUT = `import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import '@/components/web-chat/globals.css';
+
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+});
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+});
+
+export const metadata: Metadata = {
+  title: 'Novu Agent',
+  description: 'Conversational AI agent powered by Novu',
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className={\`\${geist.variable} \${geistMono.variable}\`}>
+      <body>{children}</body>
     </html>
   );
 }

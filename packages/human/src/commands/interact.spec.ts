@@ -11,8 +11,15 @@ vi.mock('../output', async (importOriginal) => {
   };
 });
 
-const { formatKeylessCapMessage, getKeylessCapDetails, handleError, parseDuration, parseHumanToOption, resolveTo } =
-  await import('./interact');
+const {
+  formatKeylessCapMessage,
+  getKeylessCapDetails,
+  handleError,
+  parseDuration,
+  parseHumanToOption,
+  parseIdLabelOption,
+  resolveTo,
+} = await import('./interact');
 const { HumanApiError } = await import('../api/client');
 const { exitCodeFor, EXIT_DENIED, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
 
@@ -72,6 +79,21 @@ describe('resolveTo', () => {
   });
 });
 
+describe('parseIdLabelOption', () => {
+  it('keeps a stable id when given id:label', () => {
+    expect(parseIdLabelOption('trust-tool:Always allow this tool')).toEqual({
+      id: 'trust-tool',
+      label: 'Always allow this tool',
+    });
+    expect(parseIdLabelOption('stg:Staging')).toEqual({ id: 'stg', label: 'Staging' });
+  });
+
+  it('treats a bare label as a string shorthand', () => {
+    expect(parseIdLabelOption('blue-green')).toBe('blue-green');
+    expect(parseIdLabelOption('all at once')).toBe('all at once');
+  });
+});
+
 describe('parseDuration', () => {
   it('parses plain seconds and suffixed durations', () => {
     expect(parseDuration('90')).toBe(90);
@@ -92,7 +114,7 @@ describe('exit code contract', () => {
   const base = {
     id: 'hi_x',
     kind: 'approve' as const,
-    prompt: 'p',
+    content: { cardChrome: { title: 'p' } },
     to: ['s'],
     integrationIdentifier: 'i',
     platform: 'telegram',
