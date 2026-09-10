@@ -222,6 +222,10 @@ export type TriggerSignal = {
 
 export type Signal = MetadataSignal | TriggerSignal;
 
+export interface QuoteReplyContext {
+  messageId: string;
+}
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;

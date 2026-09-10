@@ -8,6 +8,10 @@ import type {
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 
+export interface AgentQuoteReplyContext {
+  messageId: string;
+}
+
 export interface AgentEventUsage {
   inputTokens?: number;
   outputTokens?: number;
@@ -104,6 +108,7 @@ export type AgentEvent =
       role: AgentMessageRole;
       content: AgentMessageContent;
       files?: AgentFileRef[];
+      quoteReply?: AgentQuoteReplyContext;
     }
   | { type: 'message-start'; messageId: string }
   | { type: 'message-delta'; messageId: string; delta: string }
