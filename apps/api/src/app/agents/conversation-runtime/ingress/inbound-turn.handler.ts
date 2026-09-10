@@ -35,6 +35,7 @@ import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
+import { parseApprovalReplyVerdict } from '../../shared/tool-approval/reply-based-approval';
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
@@ -133,12 +134,37 @@ function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement 
   };
 }
 
+/**
+ * Chat SDK burst locks are scoped to the thread/channel, not the author (see
+ * `getLockKey`), so a burst can hold messages from different senders — multiple
+ * participants in a subscribed Slack/Teams thread, or anyone in a Telegram/WhatsApp
+ * group (channel-scoped lock by default). Subscriber resolution, tool-approval actor
+ * identity, and persistence all key off the latest message's author, so a different
+ * author's text/attachments must never be folded in — that would let one participant's
+ * message run under another's identity and permissions.
+ *
+ * A lone whole-message reply verdict (e.g. "yes") is also kept as-is rather than
+ * folded: `parseApprovalReplyVerdict` only recognizes an exact match, so combining it
+ * with adjacent text would silently drop a pending tool approval.
+ */
 function foldInboundBurst(message: Message, messageContext?: MessageContext): void {
   if (!messageContext?.skipped?.length) {
     return;
   }
 
-  const burst = [...messageContext.skipped, message];
+  const sameAuthor = messageContext.skipped.filter((item) => item.author.userId === message.author.userId);
+  if (sameAuthor.length === 0) {
+    return;
+  }
+
+  const burst = [...sameAuthor, message];
+  const verdict = burst.find((item) => parseApprovalReplyVerdict(item.text) !== null);
+  if (verdict) {
+    message.text = verdict.text;
+
+    return;
+  }
+
   message.text = burst
     .map((item) => item.text ?? '')
     .filter((text) => text.trim().length > 0)
