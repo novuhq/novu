@@ -8,7 +8,6 @@ import type {
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 
-/** WhatsApp maps `messageId` to Cloud API `context.message_id`. */
 export interface AgentQuoteReplyContext {
   messageId: string;
 }

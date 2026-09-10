@@ -222,7 +222,6 @@ export type TriggerSignal = {
 
 export type Signal = MetadataSignal | TriggerSignal;
 
-/** WhatsApp maps `messageId` to Cloud API `context.message_id`. */
 export interface QuoteReplyContext {
   messageId: string;
 }
