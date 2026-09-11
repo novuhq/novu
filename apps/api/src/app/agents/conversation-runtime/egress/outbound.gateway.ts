@@ -4,6 +4,7 @@ import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import { NotImplementedError } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -367,15 +368,23 @@ export class OutboundGateway {
     return Object.assign({}, envelope, { messageId: preferredMessageId });
   }
 
-  private deliverThreadMessage(
+  private async deliverThreadMessage(
     thread: Thread,
     platform: string,
     postArg: AdapterPostableMessage,
     quoteMessageId?: string
   ): Promise<{ id: string; threadId: string }> {
     const messageId = quoteMessageId?.trim();
-    if (platform === AgentPlatformEnum.WHATSAPP && messageId) {
-      return thread.reply(messageId, postArg);
+    if (messageId) {
+      try {
+        return await thread.reply(messageId, postArg);
+      } catch (err) {
+        if (err instanceof NotImplementedError) {
+          this.logger.debug({ platform }, 'quote-reply not supported by adapter; falling back to post');
+        } else {
+          throw err;
+        }
+      }
     }
 
     return thread.post(postArg);
