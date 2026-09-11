@@ -1,16 +1,7 @@
-import {
-  Accessor,
-  createContext,
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  ParentProps,
-  useContext,
-} from 'solid-js';
-import { NOTIFICATION_COUNT_SYNC_EVENTS } from '../../notifications/count-sync-events';
+import { Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, ParentProps, useContext } from 'solid-js';
+import { COUNT_MUTATION_RESOLVED_EVENTS } from '../../notifications/count-invalidation-events';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
-import { checkNotificationMatchesFilter } from '../../utils/notification-utils';
+import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
@@ -138,17 +129,11 @@ export const CountProvider = (props: ParentProps) => {
 
   createEffect(() => {
     const novu = novuAccessor();
-    const cleanups = NOTIFICATION_COUNT_SYNC_EVENTS.map((event) =>
-      novu.on(event, (payload) => {
-        if ('error' in payload && payload.error) {
-          return;
-        }
+    const cleanups = COUNT_MUTATION_RESOLVED_EVENTS.map((event) => novu.on(event, refreshCounts));
 
-        refreshCounts();
-      })
-    );
-
-    onCleanup(() => cleanups.forEach((cleanup) => cleanup()));
+    onCleanup(() => {
+      cleanups.forEach((cleanup) => cleanup());
+    });
   });
 
   useNovuEvent({
@@ -222,42 +207,47 @@ export const CountProvider = (props: ParentProps) => {
       if (currentTabs.length > 0) {
         for (const tab of currentTabs) {
           const tabTags = getTagsFromTab(tab);
-          const tabFilter: NotificationFilter = {
-            tags: tabTags,
-            read: false,
-            archived: false,
-            snoozed: false,
-            data: tab.filter?.data,
-            severity: tab.filter?.severity,
-          };
+          const tabDataFilterCriteria = tab.filter?.data;
+          const tabSeverityFilterCriteria = tab.filter?.severity;
 
-          if (!checkNotificationMatchesFilter(notification, tabFilter)) {
-            continue;
-          }
+          const matchesTagFilter = checkNotificationTagFilter(notification.tags, tabTags);
+          const matchesDataFilterCriteria = checkNotificationDataFilter(notification.data, tabDataFilterCriteria);
 
-          const filterKey = createKey({
-            tags: tabTags,
-            data: tab.filter?.data,
-            severity: tab.filter?.severity,
-          });
+          const matchesSeverityFilterCriteria =
+            !tabSeverityFilterCriteria ||
+            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.length === 0) ||
+            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.includes(notification.severity)) ||
+            (!Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria === notification.severity);
 
-          if (!processedFilters.has(filterKey)) {
-            processedFilters.add(filterKey);
-            updateNewNotificationCountsOrCache(
-              tab.label,
-              notification,
-              tabTags,
-              tab.filter?.data,
-              tab.filter?.severity
-            );
+          if (matchesTagFilter && matchesDataFilterCriteria && matchesSeverityFilterCriteria) {
+            const filterKey = createKey({
+              tags: tabTags,
+              data: tabDataFilterCriteria,
+              severity: tabSeverityFilterCriteria,
+            });
+
+            if (!processedFilters.has(filterKey)) {
+              processedFilters.add(filterKey);
+              updateNewNotificationCountsOrCache(
+                tab.label,
+                notification,
+                tabTags,
+                tabDataFilterCriteria,
+                tabSeverityFilterCriteria
+              );
+            }
           }
         }
       } else {
+        // No tabs are defined. Apply to default (no tags, no data) filter.
         updateNewNotificationCountsOrCache('', notification, [], undefined, undefined);
       }
-
-      await refreshCounts();
     },
+  });
+
+  useWebSocketEvent({
+    event: 'notifications.notification_received',
+    eventHandler: refreshCounts,
   });
 
   const resetNewNotificationCounts = (key: string) => {
