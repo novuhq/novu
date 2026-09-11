@@ -5,6 +5,8 @@ import type {
   Agent,
   AgentActionContext,
   AgentBridgeRequest,
+  AgentErrorResult,
+  AgentHandlerReply,
   AgentHistoryEntry,
   AgentMessageContext,
   AgentReactionContext,
@@ -13,7 +15,7 @@ import type {
   MessageContent,
   ToolApprovalDecision,
 } from './agent.types';
-import { AgentEventEnum, isAgentErrorSuppress, PendingApproval } from './agent.types';
+import { AgentEventEnum, isAgentErrorSuppress, isAgentHandlerReply, PendingApproval } from './agent.types';
 import { isCardElement } from './guards';
 import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
 
@@ -50,6 +52,47 @@ function parseToolApprovalHumanRequestId(requestId: string | undefined): string 
   const approvalId = requestId.slice(TOOL_APPROVAL_REQUEST_ID_PREFIX.length);
 
   return approvalId.length > 0 ? approvalId : null;
+}
+
+async function dispatchHandlerReply(ctx: AgentContextImpl, result: AgentHandlerReply): Promise<void> {
+  await ctx.reply(result.content, { files: result.files, quoteReply: result.quoteReply });
+}
+
+async function dispatchReplyResult(
+  ctx: AgentContextImpl,
+  result: MessageContent | AgentHandlerReply | PendingApproval | void | undefined
+): Promise<void> {
+  if (result instanceof PendingApproval || result === undefined) {
+    return;
+  }
+
+  if (isAgentHandlerReply(result)) {
+    await dispatchHandlerReply(ctx, result);
+
+    return;
+  }
+
+  await ctx.reply(result);
+}
+
+async function reportFromOnErrorResult(ctx: AgentContextImpl, result: AgentErrorResult | undefined): Promise<boolean> {
+  if (isAgentErrorSuppress(result)) {
+    return true;
+  }
+
+  if (isAgentHandlerReply(result)) {
+    await dispatchHandlerReply(ctx, result);
+
+    return true;
+  }
+
+  if (isMessageContent(result)) {
+    await ctx.reply(result);
+
+    return true;
+  }
+
+  return false;
 }
 
 function findApprovalInHistory(
@@ -98,13 +141,7 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
     if (agent.handlers.onError) {
       try {
         const result = await agent.handlers.onError(error, ctxForEvent(ctx, event));
-
-        if (isAgentErrorSuppress(result)) {
-          reported = true;
-        } else if (isMessageContent(result)) {
-          await ctx.reply(result);
-          reported = true;
-        }
+        reported = await reportFromOnErrorResult(ctx, result);
       } catch (onErrorErr) {
         logger?.error(`[agent:${agent.id}] onError failed:`, onErrorErr);
       }
@@ -128,67 +165,73 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
   }
 }
 
-async function runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-  const replyIfPresent = async (result: MessageContent | PendingApproval | undefined) => {
-    if (result instanceof PendingApproval || result === undefined) {
-      return;
+async function handleOnActionEvent(registeredAgent: Agent, ctx: AgentContextImpl): Promise<void> {
+  const hitlApprovalId = parseToolApprovalHumanRequestId(ctx.humanResponse?.requestId);
+  const parsed = parseApprovalActionId(ctx.action?.id);
+  const routedApprovalId = hitlApprovalId ?? parsed?.approvalId;
+  const routedApproved = hitlApprovalId
+    ? ctx.humanResponse?.status === 'approved' && !ctx.humanResponse.expired
+    : parsed?.approved;
+
+  if (routedApprovalId && routedApproved !== undefined && registeredAgent.handlers.onToolApproval) {
+    const approval = findApprovalInHistory(ctx.history, routedApprovalId);
+    const toolCall: AgentToolCall = approval
+      ? { id: approval.toolCallId, name: approval.name, input: approval.input }
+      : { id: routedApprovalId, name: '' };
+    // `ctx.action` is absent when the settlement arrives without a click —
+    // a HITL response routed via `humanResponse` (expiry, background/timeout
+    // settlement). Optional-chain the source message so those turns resume
+    // the gate instead of throwing on a null action.
+    const approvalMessage = ctx.createReplyHandle(ctx.action?.sourceMessageId ?? '');
+
+    const decision: ToolApprovalDecision = { toolCall, approved: routedApproved, approvalMessage };
+
+    if (registeredAgent.userOnToolApproval === false) {
+      await ctx.typing();
+
+      if (ctx.action?.sourceMessageId) {
+        await approvalMessage.delete();
+      }
     }
 
-    await ctx.reply(result);
-  };
+    const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
+    await dispatchReplyResult(ctx, result);
 
+    return;
+  }
+
+  const action = ctx.action;
+  if (action && registeredAgent.handlers.onAction) {
+    await dispatchReplyResult(ctx, await registeredAgent.handlers.onAction(action, ctx as AgentActionContext));
+  }
+}
+
+async function runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
   switch (event) {
     case AgentEventEnum.ON_MESSAGE: {
-      await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
+      const message = ctx.message;
+      if (message) {
+        await dispatchReplyResult(ctx, await registeredAgent.handlers.onMessage(message, ctx as AgentMessageContext));
+      }
       break;
     }
     case AgentEventEnum.ON_ACTION: {
-      const hitlApprovalId = parseToolApprovalHumanRequestId(ctx.humanResponse?.requestId);
-      const parsed = parseApprovalActionId(ctx.action?.id);
-      const routedApprovalId = hitlApprovalId ?? parsed?.approvalId;
-      const routedApproved = hitlApprovalId
-        ? ctx.humanResponse?.status === 'approved' && !ctx.humanResponse.expired
-        : parsed?.approved;
-
-      if (routedApprovalId && routedApproved !== undefined && registeredAgent.handlers.onToolApproval) {
-        const approval = findApprovalInHistory(ctx.history, routedApprovalId);
-        const toolCall: AgentToolCall = approval
-          ? { id: approval.toolCallId, name: approval.name, input: approval.input }
-          : { id: routedApprovalId, name: '' };
-        // `ctx.action` is absent when the settlement arrives without a click —
-        // a HITL response routed via `humanResponse` (expiry, background/timeout
-        // settlement). Optional-chain the source message so those turns resume
-        // the gate instead of throwing on a null action.
-        const approvalMessage = ctx.createReplyHandle(ctx.action?.sourceMessageId ?? '');
-
-        const decision: ToolApprovalDecision = { toolCall, approved: routedApproved, approvalMessage };
-
-        if (registeredAgent.userOnToolApproval === false) {
-          await ctx.typing();
-
-          if (ctx.action?.sourceMessageId) {
-            await approvalMessage.delete();
-          }
-        }
-
-        const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
-        await replyIfPresent(result);
-        break;
-      }
-
-      if (registeredAgent.handlers.onAction) {
-        await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
+      await handleOnActionEvent(registeredAgent, ctx);
+      break;
+    }
+    case AgentEventEnum.ON_REACTION: {
+      const reaction = ctx.reaction;
+      if (reaction && registeredAgent.handlers.onReaction) {
+        await dispatchReplyResult(
+          ctx,
+          await registeredAgent.handlers.onReaction(reaction, ctx as AgentReactionContext)
+        );
       }
       break;
     }
-    case AgentEventEnum.ON_REACTION:
-      if (registeredAgent.handlers.onReaction) {
-        await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));
-      }
-      break;
     case AgentEventEnum.ON_RESOLVE:
       if (registeredAgent.handlers.onResolve) {
-        await replyIfPresent(await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
+        await dispatchReplyResult(ctx, await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
       }
       break;
     default:

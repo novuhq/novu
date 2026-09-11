@@ -1,4 +1,10 @@
-import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from '@novu/agent-event-protocol';
+import type {
+  AgentEvent,
+  AgentFileRef,
+  AgentMessageContent,
+  AgentQuoteReplyContext,
+  AgentRunOutcome,
+} from '@novu/agent-event-protocol';
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
 import type {
@@ -14,6 +20,7 @@ import type {
   AgentNotification,
   AgentPlatformContext,
   AgentReaction,
+  AgentReplyOptions,
   AgentSubscriber,
   AgentToolCall,
   DeleteMessagePayload,
@@ -40,6 +47,7 @@ import type {
   HumanTellRenderOptions,
   MessageContent,
   PendingApproval as PendingApprovalType,
+  QuoteReplyTarget,
   ReplyContent,
   ReplyHandle,
   SentMessageInfo,
@@ -176,6 +184,16 @@ function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
   throw new Error('Invalid reply content — expected markdown or card');
 }
 
+function resolveQuoteReply(target: QuoteReplyTarget): AgentQuoteReplyContext {
+  const messageId = 'platformMessageId' in target ? target.platformMessageId.trim() : target.messageId.trim();
+
+  if (!messageId) {
+    throw new Error('quoteReply requires a non-empty platform message id');
+  }
+
+  return { messageId };
+}
+
 function toAgentFileRefs(files?: FileRef[]): AgentFileRef[] | undefined {
   if (!files?.length) {
     return undefined;
@@ -255,7 +273,11 @@ function toSideEffectEvents(
 class EventOutboxTransport {
   constructor(private readonly outbox: AgentEventOutbox) {}
 
-  async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
+  async sendReply(
+    reply: ReplyContent,
+    sideEffects: SideEffectsSnapshot,
+    quoteReply?: AgentQuoteReplyContext
+  ): Promise<SentMessageInfo | null> {
     const messageId = mint('msg');
     const events = toSideEffectEvents(sideEffects);
     events.push({
@@ -264,6 +286,7 @@ class EventOutboxTransport {
       messageId,
       content: toAgentMessageContent(reply),
       files: toAgentFileRefs(reply.files),
+      ...(quoteReply ? { quoteReply } : {}),
     });
     await this._emitAndFlush(events);
 
@@ -502,11 +525,12 @@ export class AgentContextImpl implements AgentRuntimeContext {
     return this as AgentMessageContext;
   }
 
-  async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+  async reply(content: MessageContent, options?: AgentReplyOptions): Promise<ReplyHandle> {
     await this.materializePendingHumanRenders();
     const reply = await serializeContent(content, options?.files);
     const sideEffects = this._drainSideEffectsSnapshot();
-    const info = await this._transport.sendReply(reply, sideEffects);
+    const quoteReply = options?.quoteReply ? resolveQuoteReply(options.quoteReply) : undefined;
+    const info = await this._transport.sendReply(reply, sideEffects, quoteReply);
 
     if (!info) {
       throw new Error('Agent reply did not return a message handle');
