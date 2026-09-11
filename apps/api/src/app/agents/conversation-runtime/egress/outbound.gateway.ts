@@ -4,7 +4,6 @@ import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
-import { NotImplementedError } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -379,7 +378,7 @@ export class OutboundGateway {
       try {
         return await thread.reply(messageId, postArg);
       } catch (err) {
-        if (err instanceof NotImplementedError) {
+        if (err instanceof Error && err.name === 'NotImplementedError') {
           this.logger.debug({ platform }, 'quote-reply not supported by adapter; falling back to post');
         } else {
           throw err;
