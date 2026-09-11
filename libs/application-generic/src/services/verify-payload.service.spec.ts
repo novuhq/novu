@@ -24,6 +24,21 @@ describe('VerifyPayloadService', () => {
       expect(after).to.equal(undefined);
     });
 
+    it('should return an ordinary object so the payload prototype is not null', () => {
+      const variables = [
+        {
+          name: 'user.firstName',
+          type: TemplateVariableTypeEnum.STRING,
+          defaultValue: 'John',
+          required: false,
+        },
+      ];
+
+      const result = service.fillDefaults(variables);
+
+      expect(Object.getPrototypeOf(result)).to.equal(Object.prototype);
+    });
+
     it('should not allow constructor pollution via default values', () => {
       const variables = [
         {
