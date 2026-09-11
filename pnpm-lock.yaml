@@ -178,7 +178,7 @@ overrides:
   react-router@>=6.0.0 <7.18.0: ^7.18.0
   js-cookie@<3.0.7: ^3.0.7
   degit@<2.8.6: ^2.8.6
-  liquidjs@<10.26.0: ^10.27.0
+  liquidjs@<10.27.2: ^10.27.2
   linkify-it@<5.0.2: ^5.0.2
   decode-uri-component@<0.5.0: ^0.5.0
   '@codemirror/state': 6.6.0
@@ -587,8 +587,8 @@ importers:
         specifier: 9.0.3
         version: 9.0.3
       liquidjs:
-        specifier: ^10.27.1
-        version: 10.27.1
+        specifier: ^10.27.2
+        version: 10.29.0
       lodash:
         specifier: ^4.18.0
         version: 4.18.1
@@ -1048,8 +1048,8 @@ importers:
         specifier: ^3.9.0
         version: 3.9.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       liquidjs:
-        specifier: ^10.27.1
-        version: 10.27.1
+        specifier: ^10.27.2
+        version: 10.29.0
       lodash.debounce:
         specifier: ^4.0.8
         version: 4.0.8
@@ -2443,8 +2443,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       liquidjs:
-        specifier: ^10.27.1
-        version: 10.27.1
+        specifier: ^10.27.2
+        version: 10.29.0
       mocha:
         specifier: ^8.1.1
         version: 8.4.0
@@ -2755,8 +2755,8 @@ importers:
         specifier: 9.0.3
         version: 9.0.3
       liquidjs:
-        specifier: ^10.27.1
-        version: 10.27.1
+        specifier: ^10.27.2
+        version: 10.29.0
       lodash:
         specifier: ^4.18.0
         version: 4.18.1
@@ -3642,8 +3642,8 @@ importers:
         specifier: ^3.13.1
         version: 3.13.1
       liquidjs:
-        specifier: ^10.27.1
-        version: 10.27.1
+        specifier: ^10.27.2
+        version: 10.29.0
       pluralize:
         specifier: ^8.0.0
         version: 8.0.0
@@ -23325,8 +23325,8 @@ packages:
     resolution: {integrity: sha512-EechC3DdFic/TdOPgj/RB3FicqE6932LTHCUm0Y2fsD9KGlLB+RwJl2q1IYBIvEsKzDOgn0D4gll+YxG5RsrKg==}
     hasBin: true
 
-  liquidjs@10.27.1:
-    resolution: {integrity: sha512-ylE+1q2kSef1UxAyxqbyuWM3FRWS1v48JK1Y3CoW3bD6TSNXZh0+GsVnihujEpKyR+Jejx2aRAFfC3AHm9rElg==}
+  liquidjs@10.29.0:
+    resolution: {integrity: sha512-pCVOhs6FLAR8su3ItJ07diN26t6W5dHQRnmTMy8HPyTFuv1+oSCVJIGp5pGjfQyOZfh50KswvKtMTp6p4JEIdw==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -56816,7 +56816,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  liquidjs@10.27.1:
+  liquidjs@10.29.0:
     dependencies:
       commander: 10.0.1
 

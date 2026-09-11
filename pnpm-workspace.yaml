@@ -239,7 +239,7 @@ overrides:
   # Transitive dev-only dep via hygen. Stay on the 2.x patch (^2.8.6) since
   # hygen pins the 2.x line; a 3.x jump would be unnecessary.
   degit@<2.8.6: ^2.8.6
-  liquidjs@<10.26.0: ^10.27.0
+  liquidjs@<10.27.2: ^10.27.2
   linkify-it@<5.0.2: ^5.0.2
   # GHSA-vcc3-ghjq-m6fr: decode-uri-component <=0.4.2 DoS via exponential
   # decoding of malformed percent-encoded input. Pulled transitively via
