@@ -206,7 +206,7 @@ overrides:
   # and copies data from outside the source tree. Patched in 0.16.8. Only
   # pulled transitively via eslint (dev-only tooling).
   '@humanfs/node@<0.16.8': ^0.16.8
-  sharp@<0.35.0: ^0.35.3
+  sharp@<0.35.4: ^0.35.4
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
   '@taskforcesh/bullmq-pro@6.11.0>uuid': 11.1.1
