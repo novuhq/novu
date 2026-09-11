@@ -1,0 +1,21 @@
+{
+  "name": "framework-py",
+  "sourceRoot": "packages/framework-py/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "packages/framework-py"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest",
+        "cwd": "packages/framework-py"
+      }
+    }
+  }
+}
