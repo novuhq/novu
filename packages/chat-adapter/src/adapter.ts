@@ -30,6 +30,7 @@ import {
   type NovuRawMessage,
   type NovuThreadId,
   type NovuTypedAdapter,
+  type QuoteReplyContext,
   type Signal,
   type ThreadSnapshot,
 } from './types.js';
@@ -353,6 +354,22 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   // -- Outbound --
 
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<NovuRawMessage>> {
+    return this.emitOutboundMessage(threadId, message);
+  }
+
+  async reply(
+    threadId: string,
+    messageId: string,
+    message: AdapterPostableMessage
+  ): Promise<RawMessage<NovuRawMessage>> {
+    return this.emitOutboundMessage(threadId, message, { messageId });
+  }
+
+  private async emitOutboundMessage(
+    threadId: string,
+    message: AdapterPostableMessage,
+    quoteReply?: QuoteReplyContext
+  ): Promise<RawMessage<NovuRawMessage>> {
     const decoded = decodeThreadId(threadId);
     const reply = await this.mapper.toReplyContent(message);
     const messageId = mint('msg');
@@ -363,6 +380,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       messageId,
       content: toAgentMessageContent(reply),
       files: toAgentFileRefs(reply.files),
+      ...(quoteReply ? { quoteReply } : {}),
     });
 
     return {
