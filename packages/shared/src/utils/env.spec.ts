@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { isOutboundSsrfProtectionEnabled } from './env';
+import { getEnvVariable, isOutboundSsrfProtectionEnabled } from './env';
 
 const NOVU_ENTERPRISE_KEY = 'NOVU_ENTERPRISE';
 const IS_SELF_HOSTED_KEY = 'IS_SELF_HOSTED';
@@ -66,5 +66,27 @@ describe('isOutboundSsrfProtectionEnabled', () => {
     withEnv({ [CI_EE_TEST_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'true' }, () => {
       expect(isOutboundSsrfProtectionEnabled()).toBe(false);
     });
+  });
+});
+
+describe('getEnvVariable', () => {
+  const KEY = 'NOVU_TEST_ENV_VARIABLE';
+
+  afterEach(() => {
+    delete process.env[KEY];
+  });
+
+  test('returns the value of a defined process.env variable', () => {
+    process.env[KEY] = 'the-value';
+    expect(getEnvVariable(KEY)).toBe('the-value');
+  });
+
+  test('returns an empty string for a missing variable', () => {
+    delete process.env[KEY];
+    expect(getEnvVariable(KEY)).toBe('');
+  });
+
+  test('reads a string value from the context object when passed', () => {
+    expect(getEnvVariable('FROM_CONTEXT', { FROM_CONTEXT: 'ctx-value' })).toBe('ctx-value');
   });
 });

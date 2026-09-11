@@ -26,7 +26,8 @@ Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills
 
 ## Prerequisites
 
-- A Novu Cloud account (to sign in with OAuth), or a [Novu API key](https://dashboard.novu.co/settings/api-keys)
+- A Novu Cloud account
+- OAuth access, or a [Novu Cloud API key](https://dashboard.novu.co/settings/api-keys)
 - An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, VS Code, Codex, or similar
 
 ## Endpoints
@@ -42,7 +43,7 @@ Use the URL that matches your dashboard region - `eu.dashboard.novu.co` pairs wi
 
 ## Connect your AI tool
 
-Connecting with **OAuth** is recommended - you don't copy or paste a key; your client signs you in and picks up your organization automatically. If your client doesn't support OAuth, or you're on self-hosted Novu, use an [API key](#api-key-fallback) instead.
+Connecting with **OAuth** is recommended - you don't copy or paste a key; your client signs you in and picks up your organization automatically. If your client doesn't support OAuth, use a [Novu Cloud API key](#api-key-fallback) instead.
 
 <Tabs>
   <Tab title="Cursor">
@@ -144,14 +145,14 @@ Any MCP client that supports remote OAuth can connect with just the URL and no h
 | --- | --- |
 | **URL** | `https://mcp.novu.co/` (US) or `https://eu.mcp.novu.co/` (EU) |
 | **Transport** | Streamable HTTP |
-| **Authentication** | OAuth (no header), or an [API key](#api-key-fallback) if your client doesn't support OAuth |
+| **Authentication** | OAuth (no header), or a [Novu Cloud API key](#api-key-fallback) if your client doesn't support OAuth |
 
   </Tab>
 </Tabs>
 
 ### API key (fallback)
 
-Use a Novu API key for clients without OAuth support, `mcp-remote` / stdio setups, autonomous agents, and **all self-hosted Novu** deployments. Copy your secret key from the [Novu Dashboard](https://dashboard.novu.co/settings/api-keys) and send it as a bearer token:
+Use a Novu Cloud API key for clients without OAuth support, `mcp-remote` / stdio setups, and autonomous agents. Copy your secret key from the [Novu Dashboard](https://dashboard.novu.co/settings/api-keys) and send it as a bearer token:
 
 ```json
 {
@@ -167,6 +168,13 @@ Use a Novu API key for clients without OAuth support, `mcp-remote` / stdio setup
 ```
 
 Presenting an API key skips the OAuth sign-in entirely. A key is bound to a single environment, so connect to the endpoint matching its region and there's nothing else to configure.
+
+<Warning>
+  The hosted Novu MCP endpoints connect to Novu Cloud only. They do not proxy requests to a self-hosted Novu API,
+  even when you provide an API key from that instance. Novu does not currently publish a self-hosted account MCP
+  server. Self-hosted users can still connect the separate read-only
+  [Novu documentation MCP server](https://docs.novu.co/mcp).
+</Warning>
 
 ## Environments
 
@@ -264,7 +272,7 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Integrations | `set_primary_integration` | Set an integration as primary for its channel |
 
 <Note>
-  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments). Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools are available on Novu Cloud and self-hosted Enterprise, not Community Edition.
+  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments). Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools on this MCP server require Novu Cloud. Self-hosted Enterprise can still use Conversations in the dashboard and API, but not through `mcp.novu.co`.
 </Note>
 
 ## Use multiple MCP servers
@@ -298,11 +306,16 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
   </Accordion>
 
   <Accordion title="Conversations return 404">
-    `get_conversations` and `get_conversation_activities` require Novu Cloud or self-hosted Enterprise with Conversations enabled. Community Edition and environments where the feature flag is off return `404`. Confirm you passed an agent **identifier** (slug) as `agentId`, not a Mongo `_id`.
+    `get_conversations` and `get_conversation_activities` on this MCP server require Novu Cloud with Conversations
+    enabled. They are not available through MCP on self-hosted deployments. Confirm you passed an agent
+    **identifier** (slug) as `agentId`, not a Mongo `_id`.
   </Accordion>
 
   <Accordion title="Self-hosted Novu">
-    OAuth isn't available on self-hosted deployments - connect with an [API key](#api-key-fallback) from your instance. See [API keys](/platform/developer/api-keys).
+    The account-management MCP server is not currently available for self-hosted Novu. `https://mcp.novu.co/` and
+    `https://eu.mcp.novu.co/` connect to Novu Cloud and do not accept a self-hosted API URL. Use the
+    [Agent Toolkit](/platform/build-with-ai/agent-toolkit) with `backendUrl` set to your API, or call the REST API
+    directly. You can still use the [Novu documentation MCP server](https://docs.novu.co/mcp) to search these docs.
   </Accordion>
 
   <Accordion title="Still not connecting">
@@ -315,7 +328,6 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
 - Prefer OAuth over long-lived API keys for interactive clients - OAuth tokens are short-lived and revocable.
 - The server never puts credentials in URLs, and holds no ambient credentials between sessions.
 - Rotate an API key from the Dashboard immediately if you suspect it's been exposed.
-- Self-hosted Novu always uses API keys; OAuth is available for Novu Cloud only.
 - Use caution when combining the Novu MCP server with other MCP servers or untrusted data in the same session, and review tool calls before approving actions that modify your data.
 
 ## Related topics
