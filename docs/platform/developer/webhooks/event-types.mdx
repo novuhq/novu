@@ -1,6 +1,6 @@
 ---
 title: 'Event types'
-description: "Reference of every event type Novu emits through webhooks, including message, subscriber, workflow, and delivery events with example payload structures."
+description: "Reference of every event type Novu emits through webhooks, including the shared envelope and the payload fields for email, message, preference, and workflow events."
 ---
 
 Novu supports the following webhook event types:
@@ -12,6 +12,36 @@ Novu supports the following webhook event types:
 
 Each event includes detailed information about the affected resource and the changes that occurred.
 
+<Note>
+  Every event payload is published in the [OpenAPI specification](https://api.novu.co/openapi.json) under `x-webhooks`. The **Event Catalog** on the [Webhooks](https://dashboard.novu.co/webhooks) page renders those schemas, so it always matches what Novu sends.
+</Note>
+
+## Event envelope
+
+Every webhook body uses the same envelope. The resource itself is under `data.object`.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Unique identifier of the webhook event, prefixed with `evt_` |
+| `type` | `string` | Event type, for example `message.sent` |
+| `object` | `string` | Resource type the event relates to: `message`, `workflow`, `preference`, or `email_inbound` |
+| `timestamp` | `string` | ISO timestamp of when the event occurred |
+| `environmentId` | `string` | Identifier of the environment the event belongs to |
+| `data` | `object` | Event payload. Always contains `object`, and `previousObject` on update events |
+
+```json
+{
+  "id": "evt_67f8a1b2c3d4e5f6a7b8c9d0",
+  "type": "message.sent",
+  "object": "message",
+  "timestamp": "2026-06-30T12:00:01.000Z",
+  "environmentId": "development",
+  "data": {
+    "object": {}
+  }
+}
+```
+
 ## Email events
 
 - `email.received`: Triggered when Novu receives an inbound email that matches an [Inbound Email](/platform/inbound-email/overview) **Webhook** route on a verified domain. The payload includes normalized mail content (from, to, subject, text, html, headers, attachments, threading fields) plus domain and route metadata. When the matched route address is only in the SMTP envelope (a **BCC** recipient not present in `to` or `cc`), it appears in `mail.bcc` and `to` is left unchanged; the field is omitted otherwise. Download files from each attachment's `url` before `expiresAt`. See [Attachments](/platform/inbound-email/overview#attachments).
@@ -20,7 +50,42 @@ Each event includes detailed information about the affected resource and the cha
   `email.received` is for **user mail** received on your domain. It is not the same as delivery or engagement events from your outbound email provider - see [Email Activity Tracking](/platform/integrations/email/activity-tracking) for those.
 </Note>
 
-Every webhook body uses the same envelope. `type` is the event type, `object` is the resource type as a string, and the resource itself is under `data.object`:
+### Inbound email payload
+
+`data.object` contains `domain`, `route`, and `mail`.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `domain.id` | `string` | Identifier of the domain that received the email |
+| `domain.name` | `string` | Domain name, for example `mail.yourcompany.com` |
+| `domain.data` | `Record<string, string>` | Custom data configured on the domain |
+| `route.address` | `string` | Local part of the receiving address, for example `support` |
+| `route.data` | `Record<string, string>` | Custom data configured on the route, for example a tenant identifier |
+| `mail.from` | `Array<{ address, name }>` | Sender addresses |
+| `mail.to` | `Array<{ address, name }>` | Recipient addresses |
+| `mail.cc` | `Array<{ address, name }>` | Carbon copy addresses, when the sender set any |
+| `mail.bcc` | `Array<{ address, name }>` | Matched SMTP envelope recipient when it is absent from `to` and `cc`. Omitted otherwise |
+| `mail.subject` | `string` | Email subject |
+| `mail.text` | `string` | Plain text body |
+| `mail.html` | `string` | HTML body |
+| `mail.messageId` | `string` | Value of the `Message-ID` header |
+| `mail.headers` | `Record<string, string \| string[]>` | Raw mail headers, keyed by lowercase header name |
+| `mail.date` | `string` | Timestamp taken from the `Date` header |
+| `mail.inReplyTo` | `string` | Value of the `In-Reply-To` header, set on replies |
+| `mail.references` | `string \| string[]` | Value of the `References` header, delivered as a single value or a list depending on the sender |
+| `mail.attachments` | `array` | Attachments found on the email. Empty array when there are none |
+
+Each attachment has the following fields.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `filename` | `string` | File name of the attachment |
+| `contentType` | `string` | MIME type of the attachment |
+| `size` | `number` | File size in bytes |
+| `url` | `string` | Presigned download URL. Absent on self-hosted deployments without S3, where `content` carries the bytes instead |
+| `expiresAt` | `string` | ISO timestamp when `url` stops being valid |
+| `content` | `object \| null` | Deprecated, use `url`. Raw bytes as `{ "type": "Buffer", "data": number[] }`, or `null` when rehydration failed |
+| `contentBytes` | `number` | Deprecated, use `size` |
 
 ```json
 {
@@ -69,6 +134,7 @@ Every webhook body uses the same envelope. `type` is the event type, `object` is
 ## Message events
 
 - `message.archived`: This webhook is triggered when a subscriber archives a message. The payload contains the details of the event.
+- `message.deleted`: This webhook is triggered when a message is deleted. The payload contains the details of the event.
 - `message.delivered`: This webhook is triggered when a message delivery provider acknowledged the message delivery to the end receiving client. The payload contains the details of the event.
 - `message.failed`: This webhook is triggered when Novu tries to send the message to the delivery provider and it got failed. The payload contains the details of the event.
 - `message.read`: This webhook is triggered when a message has been read by the subscriber. The payload contains the details of the event.
@@ -76,16 +142,251 @@ Every webhook body uses the same envelope. `type` is the event type, `object` is
 - `message.sent`: This webhook is triggered when Novu sends the message to the delivery provider. The payload contains the details of the event.
 - `message.snoozed`: This webhook is triggered when a message is snoozed by the subscriber. The payload contains the details of the event.
 - `message.unarchived`: This webhook is triggered when an archived message is unarchived. The payload contains the details of the event.
-- `message.unread`: This webhook is triggered when a message is unread or marked as unread by the subscriber. The payload contains the details of the event. 
+- `message.unread`: This webhook is triggered when a message is unread or marked as unread by the subscriber. The payload contains the details of the event.
 - `message.unsnoozed`: This webhook is triggered when a message is unsnoozed by a subscriber. The payload contains the details of the event.
+
+### Message payload
+
+All message events share the same `data.object` shape.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `_id` | `string` | Identifier of the message |
+| `_templateId` | `string` | Identifier of the workflow that produced the message |
+| `_environmentId` | `string` | Environment identifier |
+| `_organizationId` | `string` | Organization identifier |
+| `_notificationId` | `string` | Identifier of the notification |
+| `subscriberId` | `string` | Subscriber identifier supplied by the producer. Direct send and Inbox events use the external subscriber identifier |
+| `actorSubscriber` | `object` | Actor subscriber, when the message was triggered on behalf of another subscriber |
+| `templateIdentifier` | `string` | Workflow identifier used when triggering the workflow |
+| `workflowId` | `string` | Same as `templateIdentifier`. Included for correlation with workflow events |
+| `stepId` | `string` | Step identifier, used to correlate with workflow steps |
+| `transactionId` | `string` | Trigger transaction identifier |
+| `channel` | `string` | Channel the message was sent on |
+| `providerId` | `string` | Provider identifier that delivered the message |
+| `status` | `string` | Delivery status stored on the message: `sent`, `error`, or `warning` |
+| `seen` | `boolean` | Whether the message has been seen |
+| `read` | `boolean` | Whether the message has been read |
+| `archived` | `boolean` | Whether the message is archived |
+| `archivedAt` | `string` | Archive timestamp |
+| `snoozedUntil` | `string` | When set, the Inbox message is snoozed until this timestamp |
+| `deliveredAt` | `string[]` | Delivery timestamps recorded for the message |
+| `firstSeenDate` | `string` | First time the message was seen |
+| `lastSeenDate` | `string` | Last time the message was seen |
+| `lastReadDate` | `string` | Last time the message was read |
+| `createdAt` | `string` | Creation timestamp |
+| `updatedAt` | `string` | Last updated timestamp |
+| `errorId` | `string` | Provider or internal error identifier when delivery failed |
+| `errorText` | `string` | Provider or internal error text when delivery failed |
+| `contextKeys` | `string[]` | Context keys associated with the message |
+| `providerResponseId` | `string` | Provider response identifier for the send attempt |
+| `deviceToken` | `string` | Device token used for a push send |
+| `channelData` | `object` | Channel endpoint used for the send. Contains `type`, `identifier`, `endpoint`, and optionally `token`, `subscriberTenantId`, and `clientId` |
+| `webhookUrl` | `string` | Deprecated, use `channelData`. Chat webhook URL used for the send |
+
+`message.sent` and `message.failed` can also include an `error` object next to `object`. Chat providers report a send failure on `message.sent`, so treat `error` as meaningful on both events.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `error.message` | `string` | Error message from the provider or send attempt |
+| `error.push.reason` | `string` | Why a push send failed: `token_invalid` or `generic_error` |
+| `error.push.deviceToken` | `string` | Device token that failed |
+
+<Note>
+  Secrets on `channelData` such as `token` are redacted before delivery.
+</Note>
+
+```json
+{
+  "id": "evt_67f8a1b2c3d4e5f6a7b8c9d1",
+  "type": "message.failed",
+  "object": "message",
+  "timestamp": "2026-06-30T12:00:01.000Z",
+  "environmentId": "development",
+  "data": {
+    "object": {
+      "_id": "message_id",
+      "_templateId": "workflow_internal_id",
+      "_environmentId": "environment_id",
+      "_organizationId": "organization_id",
+      "_notificationId": "notification_id",
+      "subscriberId": "subscriber_123",
+      "templateIdentifier": "order-shipped",
+      "workflowId": "order-shipped",
+      "stepId": "send-push",
+      "transactionId": "transaction_id",
+      "channel": "push",
+      "providerId": "fcm",
+      "status": "error",
+      "seen": false,
+      "read": false,
+      "archived": false,
+      "createdAt": "2026-06-30T12:00:00.000Z",
+      "updatedAt": "2026-06-30T12:00:01.000Z",
+      "errorText": "Requested entity was not found."
+    },
+    "error": {
+      "message": "Requested entity was not found.",
+      "push": {
+        "reason": "token_invalid",
+        "deviceToken": "device_token"
+      }
+    }
+  }
+}
+```
 
 ## Preference event
 
 - `preference.updated`: This webhook is triggered when a subscriber preference is updated. The payload contains the details of the event.
 
+### Preference payload
+
+`data` contains the updated preference under `object`, plus the `subscriberId` it belongs to.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `subscriberId` | `string` | Identifier of the subscriber whose preference changed |
+| `object.level` | `string` | Whether this preference is `global` or `template` (workflow-specific) |
+| `object.enabled` | `boolean` | Whether notifications are enabled |
+| `object.channels` | `object` | Per-channel flags: `email`, `sms`, `in_app`, `chat`, `push`, and `tool` |
+| `object.subscriptionId` | `string` | Topic subscription identifier, on subscription preferences |
+| `object.workflow` | `object` | Workflow the preference applies to, on workflow-level preferences |
+| `object.schedule` | `object` | Delivery schedule, with `isEnabled` and an optional `weeklySchedule` |
+| `object.condition` | `object` | JsonLogic condition controlling whether this preference applies |
+
+The nested `workflow` object has the following fields.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Identifier of the workflow |
+| `identifier` | `string` | Workflow identifier used when triggering. May be absent for subscription preferences |
+| `name` | `string` | Name of the workflow |
+| `critical` | `boolean` | Whether the workflow ignores subscriber preferences |
+| `severity` | `string` | Workflow severity |
+| `tags` | `string[]` | Tags assigned to the workflow |
+| `data` | `object` | Custom workflow data |
+
+```json
+{
+  "id": "evt_67f8a1b2c3d4e5f6a7b8c9d2",
+  "type": "preference.updated",
+  "object": "preference",
+  "timestamp": "2026-06-30T12:00:01.000Z",
+  "environmentId": "development",
+  "data": {
+    "subscriberId": "subscriber_123",
+    "object": {
+      "level": "template",
+      "enabled": true,
+      "channels": {
+        "email": true,
+        "in_app": false
+      },
+      "workflow": {
+        "id": "workflow_internal_id",
+        "identifier": "order-shipped",
+        "name": "Order shipped",
+        "critical": false,
+        "severity": "none",
+        "tags": ["orders"]
+      }
+    }
+  }
+}
+```
+
 ## Workflow events
 
 - `workflow.created`: This webhook is triggered when a workflow is created. The payload contains the details of the event.
 - `workflow.deleted`: This webhook is triggered when a workflow is deleted. The payload contains the details of the event.
-- `workflow.published`: This webhook is triggered when a `workflow` event occurs, that is when a workflow is synced from dev to prod environment. The payload contains the details of the event. 
+- `workflow.published`: This webhook is triggered when a `workflow` event occurs, that is when a workflow is synced from dev to prod environment. The payload contains the details of the event.
 - `workflow.updated`: This webhook is triggered when a workflow is updated. The payload contains the details of the event.
+
+### Workflow payload
+
+Workflow events carry one of two shapes, so check the table below before parsing.
+
+| Event | `data.object` | `data.previousObject` |
+| --- | --- | --- |
+| `workflow.created` | Workflow response | Not sent |
+| `workflow.updated` | Workflow response | Stored workflow, as persisted before the update |
+| `workflow.published` | Workflow response | Workflow response, as published before this sync |
+| `workflow.deleted` | Stored workflow | Not sent |
+
+The **workflow response** is the same shape the [Workflows API](/api-reference/workflows/list-all-workflows) returns, including `workflowId`, `name`, `description`, `active`, `tags`, `steps`, `origin`, `status`, `severity`, `preferences`, `issues`, `createdAt`, and `updatedAt`.
+
+The **stored workflow** is the raw persisted document, so it uses internal field names rather than API names.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `_id` | `string` | Identifier of the workflow |
+| `name` | `string` | Name of the workflow |
+| `description` | `string` | Description of the workflow |
+| `active` | `boolean` | Whether the workflow is active |
+| `draft` | `boolean` | Whether the workflow is a draft |
+| `critical` | `boolean` | Whether the workflow ignores subscriber preferences |
+| `tags` | `string[]` | Tags assigned to the workflow |
+| `triggers` | `array` | Workflow triggers, each with `type`, `identifier`, and declared variables |
+| `steps` | `array` | Persisted workflow steps, including `stepId`, `_templateId`, `template`, `controls`, and `issues` |
+| `preferenceSettings` | `object` | Per-channel preference defaults stored on the workflow |
+| `issues` | `Record<string, array>` | Runtime issues recorded on the workflow |
+| `_environmentId` | `string` | Environment identifier |
+| `_organizationId` | `string` | Organization identifier |
+| `_notificationGroupId` | `string` | Notification group identifier |
+| `origin` | `string` | Workflow origin |
+| `status` | `string` | Workflow status |
+| `severity` | `string` | Workflow severity |
+| `payloadSchema` | `object` | Payload JSON Schema for the workflow |
+| `deleted` | `boolean` | Deletion state captured before the event is processed. `workflow.deleted` normally carries `false` here |
+| `createdAt` | `string` | Creation timestamp |
+| `updatedAt` | `string` | Last updated timestamp |
+
+<Note>
+  On `workflow.updated`, `previousObject` may also include `userPreferences` and `defaultPreferences` when the update went through a workflow patch. Treat both fields as optional.
+</Note>
+
+```json
+{
+  "id": "evt_67f8a1b2c3d4e5f6a7b8c9d3",
+  "type": "workflow.updated",
+  "object": "workflow",
+  "timestamp": "2026-06-30T12:00:01.000Z",
+  "environmentId": "development",
+  "data": {
+    "object": {
+      "_id": "workflow_internal_id",
+      "workflowId": "order-shipped",
+      "name": "Order shipped",
+      "active": true,
+      "tags": ["orders"],
+      "origin": "novu-cloud",
+      "status": "active",
+      "severity": "none",
+      "steps": [],
+      "createdAt": "2026-06-01T10:00:00.000Z",
+      "updatedAt": "2026-06-30T12:00:01.000Z"
+    },
+    "previousObject": {
+      "_id": "workflow_internal_id",
+      "name": "Order shipped",
+      "description": "",
+      "active": false,
+      "draft": false,
+      "critical": false,
+      "tags": [],
+      "triggers": [
+        {
+          "type": "event",
+          "identifier": "order-shipped",
+          "variables": []
+        }
+      ],
+      "steps": [],
+      "deleted": false,
+      "createdAt": "2026-06-01T10:00:00.000Z",
+      "updatedAt": "2026-06-29T09:00:00.000Z"
+    }
+  }
+}
+```

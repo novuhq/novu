@@ -21,5 +21,12 @@ export class ControlsMetadataDto {
   @ValidateNested()
   uiSchema?: UiSchema;
 
+  @ApiPropertyOptional({
+    description: 'Resolved control values for the step',
+    type: 'object',
+    additionalProperties: true,
+  })
+  values?: any;
+
   [key: string]: any;
 }

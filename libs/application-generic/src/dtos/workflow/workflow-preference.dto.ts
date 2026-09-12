@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 export class WorkflowPreferenceDto {
   @ApiProperty({
@@ -18,4 +18,12 @@ export class WorkflowPreferenceDto {
   })
   @IsBoolean()
   readOnly: boolean = false;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    description: 'JsonLogic condition controlling whether this preference applies',
+  })
+  @IsOptional()
+  condition?: Record<string, unknown>;
 }

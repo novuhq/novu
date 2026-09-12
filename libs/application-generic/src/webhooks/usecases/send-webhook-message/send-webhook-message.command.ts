@@ -13,8 +13,8 @@ export class SendWebhookMessageCommand extends EnvironmentCommand {
 
   @IsDefined()
   payload: {
-    object: Record<string, unknown>;
-    previousObject?: Record<string, unknown>;
+    object: object;
+    previousObject?: object;
     [key: string]: unknown;
   };
 
