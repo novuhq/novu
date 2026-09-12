@@ -15,8 +15,10 @@ import { configExists, loadConfig, resolveNgrokEnv } from './novu-dev-local.mjs'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const baseConfigPath = join(root, 'mprocs.yaml');
 
+// Injected into the CONFIG group at the end of mprocs.yaml — keep the same
+// two-space name indentation the grouped procs use.
 const PORTLESS_URLS_PROC = `
-  "PORTLESS URLS":
+  "  portless urls":
     shell: node scripts/portless-urls.mjs watch
 `;
 
