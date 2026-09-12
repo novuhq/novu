@@ -1,5 +1,6 @@
 export * from './africas-talking/africas-talking.provider';
 export * from './afro-sms/afro-sms.provider';
+export * from './aliyun/aliyun.provider';
 export * from './azure-sms/azure-sms.provider';
 export * from './bandwidth/bandwidth.provider';
 export * from './brevo-sms/brevo-sms.provider';
