@@ -295,9 +295,9 @@ export function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** Like {@link escapeHtml} but also escapes the double quote for use inside an attribute value. */
+/** Like {@link escapeHtml} but also escapes double and single quotes for use inside attribute values. */
 export function escapeHtmlAttribute(value: string): string {
-  return escapeHtml(value).replace(/"/g, '&quot;');
+  return escapeHtml(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /**

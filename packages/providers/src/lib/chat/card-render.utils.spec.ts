@@ -1,6 +1,6 @@
 import { CardElement } from '@novu/stateless';
 import { describe, expect, test } from 'vitest';
-import { cardToFallbackMarkdown, omitIncompleteLinkButtons } from './card-render.utils';
+import { cardToFallbackMarkdown, escapeHtml, escapeHtmlAttribute, omitIncompleteLinkButtons } from './card-render.utils';
 
 const baseCard: CardElement = {
   type: 'card',
@@ -184,5 +184,15 @@ describe('cardToFallbackMarkdown Chat SDK kit', () => {
     expect(cardToFallbackMarkdown(card)).toBe(
       ['**Details**\n\n**Env:** prod', 'Name | Status\napi | ok', 'Approve · [Docs](https://novu.co)'].join('\n\n')
     );
+  });
+});
+
+describe('escapeHtml and escapeHtmlAttribute', () => {
+  test('escapeHtml escapes &, <, >', () => {
+    expect(escapeHtml('foo & bar <baz>')).toBe('foo &amp; bar &lt;baz&gt;');
+  });
+
+  test('escapeHtmlAttribute escapes quotes and single quotes', () => {
+    expect(escapeHtmlAttribute('foo "bar" \'baz\' & <qux>')).toBe('foo &quot;bar&quot; &#39;baz&#39; &amp; &lt;qux&gt;');
   });
 });
