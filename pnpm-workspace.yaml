@@ -238,7 +238,12 @@ overrides:
   samlify@<2.13.0: ^2.13.0
   better-auth@<1.6.13: ^1.6.23
   '@better-auth/sso@<1.6.13': ^1.6.23
-  nodemailer@<9.0.1: ^9.0.1
+  # GHSA-2x7j-588g-ccc2 (high) and the related moderate advisories
+  # GHSA-8m3c-c648-2xjj, GHSA-wmmp-3585-3rmp, GHSA-cc9r-2j5m-2m83 are all
+  # patched in nodemailer 9.1.0. Widen the override so transitive 9.0.x
+  # resolutions via mailparser, mailtrap, smtp-server, and nextjs pick up
+  # the 9.1.x patch line.
+  nodemailer@<9.1.0: ^9.1.0
   shell-quote@<1.8.5: ^1.8.5
   piscina@<4.9.3: ^4.9.3
   vitest@<4.1.0: ^4.1.0
