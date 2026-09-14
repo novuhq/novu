@@ -158,7 +158,6 @@ export interface AgentAttachment {
   size?: number;
 }
 
-/** Reference to the platform message the user quoted when sending this message. */
 export interface AgentReplyToContext {
   messageId: string;
 }

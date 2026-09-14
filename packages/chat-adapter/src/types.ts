@@ -278,7 +278,6 @@ export interface NovuRawMessage {
   conversationId: string;
   integrationIdentifier: string;
   platform: string;
-  /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
   replyTo?: AgentReplyToContext;
   /** Set when this message was built from Novu conversation history. */
   history?: NovuHistoryFields;

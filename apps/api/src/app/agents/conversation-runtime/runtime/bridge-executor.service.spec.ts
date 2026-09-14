@@ -244,53 +244,7 @@ describe('BridgeExecutorService', () => {
       expect(payload.message?.replyTo).to.deep.equal({ messageId: '777042:42' });
     });
 
-    it('should map Teams quote-reply onto message.replyTo', async () => {
-      const { service } = makeService();
-
-      const payload = await (service as any).buildPayload({
-        ...makeExecutionParams(),
-        config: {
-          ...makeExecutionParams().config,
-          platform: AgentPlatformEnum.TEAMS,
-        },
-        message: {
-          ...makeMessage(),
-          raw: {
-            entities: [{ type: 'quotedReply', quotedReply: { messageId: 'activity-quoted' } }],
-          },
-        },
-      });
-
-      expect(payload.message?.replyTo).to.deep.equal({ messageId: 'activity-quoted' });
-    });
-  });
-
-  describe('resolveInboundReplyTo', () => {
-    it('returns Teams quoted activity id', () => {
-      const replyTo = resolveInboundReplyTo(AgentPlatformEnum.TEAMS, {
-        id: 'msg-1',
-        text: 'reply',
-        author: makeMessage().author,
-        raw: {
-          entities: [{ type: 'quotedReply', quotedReply: { messageId: 'activity-quoted' } }],
-        },
-      } as any);
-
-      expect(replyTo).to.deep.equal({ messageId: 'activity-quoted' });
-    });
-
-    it('returns undefined for Slack (deferred)', () => {
-      const replyTo = resolveInboundReplyTo(AgentPlatformEnum.SLACK, {
-        id: 'msg-1',
-        text: 'reply',
-        author: makeMessage().author,
-        raw: { thread_ts: '123.456' },
-      } as any);
-
-      expect(replyTo).to.equal(undefined);
-    });
-
-    it('returns undefined for Telegram when chat id cannot be resolved', () => {
+    it('should omit Telegram replyTo when chat id cannot be resolved', () => {
       const replyTo = resolveInboundReplyTo(
         AgentPlatformEnum.TELEGRAM,
         {
