@@ -71,14 +71,16 @@ export function IntegrationConditionsDrawer({
   const payloadVariables = useMemo(
     () =>
       (workflowsData?.workflows ?? []).flatMap((workflow) => {
-        if (!workflow.payloadSchema) {
+        const payloadSchema = (workflow as typeof workflow & { payloadSchema?: object }).payloadSchema;
+
+        if (!payloadSchema) {
           return [];
         }
 
         const schema: JSONSchema7 = {
           type: 'object',
           properties: {
-            payload: workflow.payloadSchema as JSONSchema7,
+            payload: payloadSchema as JSONSchema7,
           },
         };
 

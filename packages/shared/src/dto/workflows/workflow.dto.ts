@@ -44,7 +44,6 @@ export type WorkflowListResponseDto = Pick<
   | 'origin'
   | 'lastTriggeredAt'
   | 'isTranslationEnabled'
-  | 'payloadSchema'
 > & {
   stepTypeOverviews: StepTypeEnum[];
   steps: StepListResponseDto[];
@@ -109,7 +108,7 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   status: WorkflowStatusEnum;
   issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssue>;
   lastTriggeredAt?: string;
-  payloadSchema?: JSONSchemaDto;
+  payloadSchema?: Record<string, any>;
   payloadExample?: object;
 };
 
