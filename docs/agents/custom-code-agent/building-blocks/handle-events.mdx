@@ -224,6 +224,16 @@ export const myAgent = agent('my-agent', {
 });
 ```
 
+#### Quote-reply context
+
+When the user quote-replied to a prior message on WhatsApp, Microsoft Teams, or Telegram, Novu sets `message.replyTo.messageId` to the platform id of the quoted message. Use it with [`quoteReply`](/agents/custom-code-agent/building-blocks/reply#quote-reply) on outbound replies. Slack inbound quote context is not exposed yet.
+
+```typescript
+if (message.replyTo?.messageId) {
+  // User replied to a specific prior message — not just the thread
+}
+```
+
 ### onAction
 
 `onAction` fires when a user clicks a button or selects a value in an interactive card. The `action` payload carries `action.id` (the element's `id` prop), `action.value` (its `value` prop, if set), and `action.sourceMessageId`. See [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards).

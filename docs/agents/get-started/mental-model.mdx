@@ -61,7 +61,7 @@ Once identity is resolved later, they are upgraded to a full subscriber and futu
 
 ## Agent brain
 
-Novu calls your agent brain with the complete context: the message, conversation history, subscriber, and platform details. Your agent brain processes it with your LLM, business logic, or any system you choose and calls `ctx.reply()` in case of custom code agent or sends a reply message to the platform in case of managed agent.
+Novu calls your agent brain with the complete context: the message, conversation history, subscriber, and platform details. Your agent brain processes it with your LLM, business logic, or any system you choose and calls `ctx.reply()` in case of custom code agent or sends a reply message to the platform in case of managed agent. On self-hosted agents, you can opt in to [quote-reply](/agents/custom-code-agent/building-blocks/reply#quote-reply) on WhatsApp and Telegram when you want replies pinned to a specific inbound message.
 
 ## Next steps
 

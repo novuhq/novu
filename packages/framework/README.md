@@ -95,7 +95,7 @@ Bridge runtimes supported by `novu connect`: `ai-sdk`, `langchain`, `custom-code
 
 ### Quote reply
 
-Pin an outbound reply with `await ctx.reply('Your answer', { quoteReply: message })`. When the user quote-replied inbound, read `message.replyTo?.messageId` (WhatsApp, Telegram, Teams). Per-platform support: [chat-adapter quote-reply matrix](../chat-adapter/README.md#quote-reply).
+Pin an outbound reply with `await ctx.reply('Your answer', { quoteReply: message })`. When the user quote-replied inbound, read `message.replyTo?.messageId` (WhatsApp, Telegram, Teams). See [Reply — quote-reply](https://docs.novu.co/agents/custom-code-agent/building-blocks/reply#quote-reply) and the [channels overview](https://docs.novu.co/agents/channels/overview).
 
 ## Notification workflows
 
