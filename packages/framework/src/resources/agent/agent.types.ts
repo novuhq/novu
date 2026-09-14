@@ -158,6 +158,10 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 /** An incoming message from the user in the current conversation. */
 export interface AgentMessage {
   /** Plain-text content of the message. */
@@ -167,6 +171,8 @@ export interface AgentMessage {
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
+  replyTo?: AgentReplyToContext;
 }
 
 /** Live state of the current conversation thread. */
