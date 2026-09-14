@@ -1,8 +1,6 @@
 import type { InboxProps } from '../components/Inbox';
 import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
-  UseWebChatProps,
-  UseWebChatResult,
   UseCreateSubscriptionProps,
   UseCreateSubscriptionResult,
   UseNotificationsProps,
@@ -19,6 +17,8 @@ import type {
   UseSubscriptionsResult,
   UseUpdateSubscriptionProps,
   UseUpdateSubscriptionResult,
+  UseWebChatProps,
+  UseWebChatResult,
 } from '../hooks';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
@@ -36,6 +36,20 @@ export function Inbox(props: InboxProps) {
 export function InboxContent() {}
 
 export function Notifications() {}
+
+const NotificationItemStub = () => null;
+
+export const NotificationItem = Object.assign(NotificationItemStub, {
+  Avatar: NotificationItemStub,
+  Content: NotificationItemStub,
+  Text: NotificationItemStub,
+  Subject: NotificationItemStub,
+  Body: NotificationItemStub,
+  DefaultActions: NotificationItemStub,
+  CustomActions: NotificationItemStub,
+  Date: NotificationItemStub,
+  Dot: NotificationItemStub,
+});
 
 export function Preferences() {}
 
@@ -181,7 +195,7 @@ export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResu
 }
 
 export type * from '@novu/js';
-export { pendingActionKey, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { PreferenceLevel, pendingActionKey, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   AllLocalization,
@@ -218,14 +232,14 @@ export type {
 export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from '../components';
 
 export type {
-  UseWebChatProps,
-  UseWebChatResult,
   UseCountsProps,
   UseCountsResult,
   UseNotificationsProps,
   UseNotificationsResult,
   UsePreferencesResult,
   UseScheduleProps as UsePreferencesProps,
+  UseWebChatProps,
+  UseWebChatResult,
 } from '../hooks';
 
 export type {

@@ -136,13 +136,8 @@ export const SubscriptionPreferences = (props: {
         when={!props.renderPreferences}
         fallback={
           <ExternalElementRenderer
-            render={(el) => {
-              if (props.renderPreferences) {
-                return props.renderPreferences(el, props.subscription ?? undefined, props.loading);
-              }
-
-              return () => {};
-            }}
+            render={props.renderPreferences!}
+            args={[props.subscription ?? undefined, props.loading]}
           />
         }
       >
