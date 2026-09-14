@@ -160,6 +160,7 @@ export class ResolveChannelEndpoints {
     const { result } = evaluateRules(
       integration.rules as RulesLogic<AdditionalOperation>,
       {
+        payload: command.filterData?.payload,
         subscriber: command.filterData?.subscriber,
         context: command.filterData?.context,
       },

@@ -627,8 +627,13 @@ describe('ResolveChannelEndpoints - integration rules', () => {
   let integrationRepository: Record<string, sinon.SinonStub>;
   let usecase: ResolveChannelEndpoints;
 
+  interface TestIntegration {
+    identifier: string;
+    rules?: unknown;
+  }
+
   /** Mirrors a subscriber registered on both a Telegram and a chat-webhook integration. */
-  function givenIntegrations(integrations: Array<{ identifier: string; rules?: unknown }>) {
+  function givenIntegrations(integrations: TestIntegration[]) {
     integrationRepository.find.resolves(integrations);
     channelEndpointRepository.find.resolves(
       integrations.map(({ identifier }) =>
@@ -696,6 +701,17 @@ describe('ResolveChannelEndpoints - integration rules', () => {
     ]);
 
     const result = await usecase.execute(buildCommand({ filterData: { context: { tenant: { id: 'acme' } } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+  });
+
+  it('keeps only the integration whose rules match the workflow payload', async () => {
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'payload.region' }, 'us'] } },
+      { identifier: 'chat-webhook', rules: { '==': [{ var: 'payload.region' }, 'eu'] } },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { payload: { region: 'eu' } } }));
 
     expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
   });
