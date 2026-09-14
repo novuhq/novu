@@ -160,6 +160,63 @@ describe('Photon device-auth connect flow #novu-v2', () => {
     expect(decryptCredentials(untouched?.credentials ?? {}).apiKey).to.equal(undefined);
   });
 
+  it('rejects a device code when the integration was replaced under the same identifier', async () => {
+    const original = await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      identifier: integrationIdentifier,
+    });
+    if (!original) {
+      throw new Error('expected original Photon integration');
+    }
+    const deviceCode = await startFlow('stub-device-code');
+
+    await agentIntegrationRepository.delete({
+      _agentId: agentId,
+      _integrationId: original._id,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+    await integrationRepository.delete({
+      _id: original._id,
+      _organizationId: session.organization._id,
+    });
+
+    const replacement = await integrationRepository.create({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: ChatProviderIdEnum.PhotonImessage,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: encryptCredentials({}),
+      active: true,
+      name: 'Photon Device Auth Replacement Integration',
+      identifier: integrationIdentifier,
+      priority: 1,
+      primary: false,
+      deleted: false,
+    });
+    await agentIntegrationRepository.create({
+      _agentId: agentId,
+      _integrationId: replacement._id,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode });
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.status).to.equal('error');
+    expect(res.body.data.error.code).to.equal('unknown_device_code');
+    expect(photonApiStub.calls.find((call) => call.path === '/api/auth/device/token')).to.equal(undefined);
+
+    const replacementAfter = await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      identifier: integrationIdentifier,
+    });
+    expect(decryptCredentials(replacementAfter?.credentials ?? {}).apiKey).to.equal(undefined);
+  });
+
   it('provisions the project, stores credentials, and registers the webhook on approval', async () => {
     const deviceCode = await startFlow('stub-device-code');
     const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode });

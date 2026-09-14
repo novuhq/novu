@@ -39,7 +39,7 @@ export class StartPhotonDeviceAuth {
 
   @InstrumentUsecase()
   async execute(command: StartPhotonDeviceAuthCommand): Promise<StartPhotonDeviceAuthResult> {
-    await resolveAgentIntegrationForWebhook({
+    const { agent, integration } = await resolveAgentIntegrationForWebhook({
       agentRepository: this.agentRepository,
       integrationRepository: this.integrationRepository,
       agentIntegrationRepository: this.agentIntegrationRepository,
@@ -74,7 +74,9 @@ export class StartPhotonDeviceAuth {
           userId: command.userId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
+          agentId: agent._id,
           agentIdentifier: command.agentIdentifier,
+          integrationId: integration._id,
           integrationIdentifier: command.integrationIdentifier,
         },
         authorization.expiresIn

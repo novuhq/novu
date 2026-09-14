@@ -23,15 +23,19 @@ const POLL_LOCK_TTL_SECONDS = 300;
 /**
  * Who a pending device authorization belongs to. Stored when the flow starts,
  * enforced on every poll: a device code is only redeemable by the same user,
- * against the same agent integration, that initiated it. Without this, any
- * AGENT_WRITE caller holding a leaked code could redeem another tenant's
- * approved authorization into their own integration.
+ * against the same agent and integration documents that initiated it. Route
+ * identifiers alone are not enough — a deleted-and-recreated integration can
+ * reuse the same slug; `_id`s pin the documents. Without this, any AGENT_WRITE
+ * caller holding a leaked code could redeem another tenant's approved
+ * authorization into their own integration.
  */
 export interface PhotonDeviceAuthBinding {
   userId: string;
   environmentId: string;
   organizationId: string;
+  agentId: string;
   agentIdentifier: string;
+  integrationId: string;
   integrationIdentifier: string;
 }
 
@@ -137,7 +141,9 @@ export class PhotonDeviceAuthBindingService {
       stored.userId === expected.userId &&
       stored.environmentId === expected.environmentId &&
       stored.organizationId === expected.organizationId &&
+      stored.agentId === expected.agentId &&
       stored.agentIdentifier === expected.agentIdentifier &&
+      stored.integrationId === expected.integrationId &&
       stored.integrationIdentifier === expected.integrationIdentifier;
 
     return matches ? 'valid' : 'unknown';
