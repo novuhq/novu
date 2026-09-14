@@ -266,12 +266,12 @@ Map each legacy tenant use separately:
 | Tenant condition on a variant or step | A condition on the context identifier or data |
 | Tenant-specific content | Conditional steps, Liquid content logic, or separate workflows |
 | Tenant-specific workflow preferences | Recreate with the supported current preference model and verify per subscriber |
-| Tenant-specific provider selection | Use integration routing conditions based on the corresponding context. The first matching active integration is selected, with the primary integration as fallback where the channel supports it. |
+| Tenant-specific provider selection | [Integration conditions](/platform/integrations/integration-conditions) on the corresponding context |
 | Tenant branding | Context data for tenant values, plus layouts or Inbox appearance for presentation |
 
 Keep context data reusable and stable. Keep event-specific data in the payload. The current platform limits the number of contexts per trigger, so check [Limits](/platform/developer/limits) before mapping one legacy tenant into several context objects.
 
-Provider routing and workflow step conditions are separate controls. Recreate a tenant-based integration condition in **Integrations**, then recreate content or orchestration conditions on the workflow steps. Test the matching integration, the fallback integration, and a trigger with no tenant context.
+Provider routing and workflow step conditions are separate controls. Recreate tenant-based routing in **Integrations**. See [Integration conditions](/platform/integrations/integration-conditions). Recreate content or orchestration conditions on the workflow steps. Test a matching tenant, a non-matching tenant, and a trigger with no tenant context.
 
 See [Contexts](/platform/workflow/advanced-features/contexts).
 

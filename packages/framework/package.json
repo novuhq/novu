@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.13.1",
+  "version": "2.13.2",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -312,7 +312,7 @@
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@novu/agent-event-protocol": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@langchain/core": "^1.1.44",

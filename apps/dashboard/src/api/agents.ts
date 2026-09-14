@@ -1237,9 +1237,13 @@ export async function submitSlackSetupCredentials(
   return unwrapEnvelope(data) as SubmitSlackSetupCredentialsResult;
 }
 
-async function safeJson(response: Response): Promise<unknown> {
+type JsonBody = Record<string, unknown> | null;
+
+async function safeJson(response: Response): Promise<JsonBody> {
   try {
-    return await response.json();
+    const body = await response.json();
+
+    return body && typeof body === 'object' ? body : null;
   } catch {
     return null;
   }
@@ -1250,9 +1254,9 @@ async function safeJson(response: Response): Promise<unknown> {
  * Our authed `post`/`get` helpers go through `api.client` which unwraps it, but the
  * public mobile flow uses raw `fetch` and must unwrap manually.
  */
-function unwrapEnvelope(data: unknown): unknown {
-  if (data && typeof data === 'object' && 'data' in (data as Record<string, unknown>)) {
-    return (data as { data: unknown }).data;
+function unwrapEnvelope(data: JsonBody): JsonBody {
+  if (data && 'data' in data) {
+    return data.data as JsonBody;
   }
 
   return data;

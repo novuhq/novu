@@ -9,7 +9,6 @@ import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { WebChatAgentIntegrationGuide } from './web-chat-agent-integration-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
@@ -17,6 +16,7 @@ import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide'
 import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
 import { TeamsAgentConnectedDetails } from './teams-agent-connected-details';
 import { TelegramAgentConnectedDetails } from './telegram-agent-connected-details';
+import { WebChatAgentIntegrationGuide } from './web-chat-agent-integration-guide';
 import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 

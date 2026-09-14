@@ -49,6 +49,10 @@ How the primary integration behaves depends on the channel:
 
 If you disable an integration that is currently marked as "primary" for Email or SMS channels, then Novu automatically promotes another active integration to be the new primary. You can also manually set which active integration you want to be the primary one from the Integration Store.
 
+<Card title="Integration conditions" href="/platform/integrations/integration-conditions">
+  Route a send to a matching provider integration from subscriber or context data.
+</Card>
+
 ## Managing integrations across environments
 
 Each integration is scoped to a specific [environment](/platform/developer/environments). This means you must configure separate integrations for each environment, even if they point to the same provider.

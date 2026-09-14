@@ -51,7 +51,7 @@ Novu automatically sends the notification to the email address stored on the sub
 
 [Trigger the workflow](/api-reference/events/trigger-event) from your application code by sending an event to Novu. Novu automatically:
 1. Resolves the subscriber.
-2. Selects the correct provider.
+2. Selects the correct provider. See [Integration conditions](/platform/integrations/integration-conditions).
 3. Renders the email template. 
 4. Delivers the message through the configured email integration.
 </Step>
@@ -570,7 +570,7 @@ curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
 
 ### Targeting a specific provider
 
-By default, Novu uses your primary email provider. However, if you want to bypass this and force a specific, active integration for a trigger, use the `integrationIdentifier`.
+By default, Novu uses your primary email provider. To route automatically from subscriber or context data, see [Integration conditions](/platform/integrations/integration-conditions). To force a specific, active integration for a trigger, use the `integrationIdentifier`.
 
 This is useful if you have multiple active integrations for different purposes. For example, you might have one integration for transactional emails and one for marketing emails. You can find the `integrationIdentifier` for each provider in provider page in the **Integration Store**.
 

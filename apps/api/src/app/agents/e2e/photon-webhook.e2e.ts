@@ -184,7 +184,7 @@ describe('Photon agent webhook - inbound flow #novu-v2', () => {
     expect(call.config.platform).to.equal(AgentPlatformEnum.PHOTON_IMESSAGE);
     expect(call.config.integrationIdentifier).to.equal(integrationIdentifier);
     expect(call.message).to.exist;
-    expect(call.message!.text).to.equal('Hello agent from iMessage');
+    expect(call.message?.text).to.equal('Hello agent from iMessage');
     expect(call.platformContext.threadId).to.be.a('string');
     expect(call.platformContext.isDM).to.equal(true);
 
@@ -214,7 +214,7 @@ describe('Photon agent webhook - inbound flow #novu-v2', () => {
 
     const call = await pollFor(async () => bridgeCalls[0]);
     expect(call.subscriber).to.exist;
-    expect(call.subscriber!.subscriberId).to.equal(subscriber.subscriberId);
+    expect(call.subscriber?.subscriberId).to.equal(subscriber.subscriberId);
   });
 
   it('acknowledges outbound echoes without dispatching to the bridge', async () => {

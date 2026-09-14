@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Interaction } from './api/human';
+import { type Interaction, interactionOptions } from './api/human';
 
 /**
  * Exit-code contract (stable — agents branch on these):
@@ -50,8 +50,9 @@ export function describeInteraction(interaction: Interaction): string {
       if (interaction.response?.type === 'text') {
         return `${pc.green('Answered')}${by}${at}: ${interaction.response.text}`;
       }
+      const options = interactionOptions(interaction);
       const label =
-        interaction.options?.find((option) => option.id === interaction.response?.optionId)?.label ??
+        options?.find((option) => option.id === interaction.response?.optionId)?.label ??
         interaction.response?.optionId;
 
       return `${pc.green('Chose')} "${label}"${by}${at}.`;

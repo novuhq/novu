@@ -136,7 +136,6 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
       }
       case 'tool': {
         if (approvalByToolUseId.has(part.toolUseId)) break;
-        const running = part.state === 'input-streaming' || part.state === 'input-available';
         content.push({
           type: 'tool-call',
           toolCallId: part.toolUseId,
@@ -144,7 +143,6 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
           argsText: JSON.stringify(part.input ?? {}),
           result: part.output,
           isError: part.state === 'output-error',
-          status: running ? { type: 'running' } : { type: 'complete' },
         });
         break;
       }

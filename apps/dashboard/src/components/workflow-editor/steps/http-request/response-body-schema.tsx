@@ -12,7 +12,7 @@ import { SectionHeader } from './section-header';
 export function ResponseBodySchema() {
   const { getValues, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
-  const { step } = useStepEditor();
+  const { step, isReadOnly } = useStepEditor();
 
   const initialSchema = (getValues('responseBodySchema') as JSONSchema7) ?? { type: 'object', properties: {} };
 
@@ -43,6 +43,7 @@ export function ResponseBodySchema() {
         addProperty={addProperty}
         removeProperty={removeProperty}
         methods={methods}
+        readOnly={isReadOnly}
       />
 
       <Separator className="mt-1.5 mb-1.5 bg-neutral-50" />

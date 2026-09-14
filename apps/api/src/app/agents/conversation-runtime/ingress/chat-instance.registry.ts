@@ -9,6 +9,12 @@ import { stripAgentReplyToken } from '@novu/shared';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
+import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { esmImport } from '../../shared/util/esm-import';
 import { WebChatAcceptIdempotencyService } from '../../web-chat/web-chat-accept-idempotency.service';
 import {
   type WebChatPlatformDeliveryContext,
@@ -16,12 +22,6 @@ import {
 } from '../../web-chat/web-chat-platform-delivery.service';
 import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
-import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
-import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
-import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
-import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import { esmImport } from '../../shared/util/esm-import';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
@@ -226,11 +226,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     config: ResolvedAgentConfig,
     adapterFingerprint: string
   ): Promise<ChatWithAdapters> {
-    const cached: CachedChat = {
-      chat: null as unknown as ChatWithAdapters,
-      config,
-      adapterFingerprint,
-    };
+    // `chat` is attached right after construction; the adapters only read `cached.config`.
+    const cached = { config, adapterFingerprint } as CachedChat;
     const chat = await this.createChatInstance(instanceKey, agentId, platform, cached);
     await chat.initialize();
     cached.chat = chat;
@@ -238,6 +235,64 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     this.instances.set(instanceKey, cached);
 
     return chat;
+  }
+
+  private async buildSendblueAdapter(config: ResolvedAgentConfig): Promise<Record<string, unknown>> {
+    const { credentials } = config;
+
+    if (!credentials.apiKey || !credentials.secretKey || !credentials.from) {
+      throw new BadRequestException(
+        'Sendblue agent integration requires API Key, Secret Key, and From Number credentials'
+      );
+    }
+
+    if (!credentials.token) {
+      throw new BadRequestException(
+        'Sendblue agent integration requires a webhook secret. ' +
+          'Run the "Configure webhook" step to provision the receive webhook before this integration can receive messages.'
+      );
+    }
+
+    const { createSendblueAdapter } = await esmImport('@novu/chat-adapter-sendblue');
+
+    return {
+      // The underlying official Sendblue SDK reads `SENDBLUE_API_BASE_URL`
+      // itself; e2e tests point it at an in-process stub (see sendblue-api-stub.ts).
+      sendblue: createSendblueAdapter({
+        apiKey: credentials.apiKey,
+        secretKey: credentials.secretKey,
+        fromNumber: credentials.from,
+        webhookSecret: credentials.token,
+        userName: config.agentName,
+      }),
+    };
+  }
+
+  private async buildPhotonImessageAdapter(config: ResolvedAgentConfig): Promise<Record<string, unknown>> {
+    const { credentials } = config;
+
+    if (!credentials.apiKey || !credentials.secretKey) {
+      throw new BadRequestException('Photon agent integration requires Project ID and Project Secret credentials');
+    }
+
+    if (!credentials.token) {
+      throw new BadRequestException(
+        'Photon agent integration requires a webhook signing secret. ' +
+          'Run the "Configure webhook" step to register the webhook before this integration can receive messages.'
+      );
+    }
+
+    const { createPhotonImessageAdapter } = await esmImport('@novu/chat-adapter-photon-imessage');
+
+    return {
+      // Key must match the vendor thread-id prefix (`imessage:`) — see PlatformAdapters.
+      imessage: createPhotonImessageAdapter({
+        projectId: credentials.apiKey,
+        projectSecret: credentials.secretKey,
+        webhookSecret: credentials.token,
+        userName: config.agentName,
+      }),
+    };
   }
 
   private adapterFingerprint(config: ResolvedAgentConfig): string {
@@ -444,60 +499,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           }),
         };
       }
-      case AgentPlatformEnum.SENDBLUE: {
-        if (!credentials.apiKey || !credentials.secretKey || !credentials.from) {
-          throw new BadRequestException(
-            'Sendblue agent integration requires API Key, Secret Key, and From Number credentials'
-          );
-        }
-
-        if (!credentials.token) {
-          throw new BadRequestException(
-            'Sendblue agent integration requires a webhook secret. ' +
-              'Run the "Configure webhook" step to provision the receive webhook before this integration can receive messages.'
-          );
-        }
-
-        const { createSendblueAdapter } = await esmImport('@novu/chat-adapter-sendblue');
-
-        return {
-          // The underlying official Sendblue SDK reads `SENDBLUE_API_BASE_URL`
-          // itself; e2e tests point it at an in-process stub (see sendblue-api-stub.ts).
-          sendblue: createSendblueAdapter({
-            apiKey: credentials.apiKey,
-            secretKey: credentials.secretKey,
-            fromNumber: credentials.from,
-            webhookSecret: credentials.token,
-            userName: config.agentName,
-          }),
-        };
-      }
-      case AgentPlatformEnum.PHOTON_IMESSAGE: {
-        if (!credentials.apiKey || !credentials.secretKey) {
-          throw new BadRequestException(
-            'Photon agent integration requires Project ID and Project Secret credentials'
-          );
-        }
-
-        if (!credentials.token) {
-          throw new BadRequestException(
-            'Photon agent integration requires a webhook signing secret. ' +
-              'Run the "Configure webhook" step to register the webhook before this integration can receive messages.'
-          );
-        }
-
-        const { createPhotonImessageAdapter } = await esmImport('@novu/chat-adapter-photon-imessage');
-
-        return {
-          // Key must match the vendor thread-id prefix (`imessage:`) — see PlatformAdapters.
-          imessage: createPhotonImessageAdapter({
-            projectId: credentials.apiKey,
-            projectSecret: credentials.secretKey,
-            webhookSecret: credentials.token,
-            userName: config.agentName,
-          }),
-        };
-      }
+      case AgentPlatformEnum.SENDBLUE:
+        return this.buildSendblueAdapter(config);
+      case AgentPlatformEnum.PHOTON_IMESSAGE:
+        return this.buildPhotonImessageAdapter(config);
       case AgentPlatformEnum.EMAIL: {
         const { outboundIntegrationId } = credentials;
 
@@ -671,7 +676,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
         if (event.message) {
-          rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), event.message);
+          rehydrateInboundAttachments(
+            cached.chat.getAdapter(platformAdapterKey(cached.config.platform)),
+            event.message
+          );
         }
 
         await callbacks.onReaction(agentId, cached.config, {

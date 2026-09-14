@@ -35,6 +35,34 @@ export interface AgentApprovalRequest {
   trustServerActionId?: string;
 }
 
+export type AgentHumanOptionInput = string | { id: string; label: string };
+
+/** Chrome presentation built from the simple args or the `card` arg. */
+export type AgentHumanChromeCard = {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: AgentHumanOptionInput[];
+  options?: AgentHumanOptionInput[];
+};
+
+/**
+ * Posted `Card` element from `{ render }`. Structural only — this package cannot
+ * depend on the `chat` SDK's `CardElement`.
+ */
+export type AgentHumanCardElement = {
+  type: 'card';
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  children: unknown[];
+};
+
+export type AgentHumanCard = AgentHumanChromeCard | AgentHumanCardElement;
+
 export type AgentSignal =
   | { type: 'metadata'; action: 'set'; key: string; value: unknown }
   | { type: 'metadata'; action: 'delete'; key: string }
@@ -43,12 +71,16 @@ export type AgentSignal =
   | {
       type: 'human';
       kind: 'ask' | 'approve' | 'choose' | 'tell';
-      prompt: string;
       requestId: string;
-      options?: string[];
+      /**
+       * The only content carrier: chrome, or a posted Card element (`type: 'card'`).
+       * Title lives on `card.title`; choose options on `card.options` / option buttons.
+       */
+      card: AgentHumanCard;
       from?: string;
       ttlSeconds?: number;
       to?: string | string[];
+      actionIdentifier?: string;
     };
 
 export type AgentEvent =
@@ -104,6 +136,12 @@ export type AgentEvent =
       messageId?: string;
       /** When true, no companion message carries the approval UI. The consumer should render its default approval card. */
       deliverCard?: boolean;
+      /** HITL: seconds until the tool gate expires. Server defaults when omitted. */
+      ttlSeconds?: number;
+      /** HITL: Novu subscriberId(s) allowed to settle the gate. Defaults to the conversation subscriber. */
+      to?: string | string[];
+      /** HITL: attribution label shown on the approval card. */
+      from?: string;
     } & AgentApprovalRequest)
   | {
       type: 'tool-approval-response';

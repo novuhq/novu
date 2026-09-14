@@ -64,7 +64,7 @@ Set via the environment (the CLI writes these for you) or pass them to `createNo
 
 | Variable                | Description                                                                               |
 | ----------------------- | ----------------------------------------------------------------------------------------- |
-| `NOVU_SECRET_KEY`       | Novu API key — authorizes replies and verifies the inbound HMAC. Set automatically by `npx novu connect`. |
+| `NOVU_SECRET_KEY`       | Novu API key — authorizes ingest and verifies the inbound HMAC. Set automatically by `npx novu connect`. |
 | `NOVU_AGENT_IDENTIFIER` | Your bridge agent ID — set automatically by `npx novu connect`.              |
 | `NOVU_API_BASE_URL`     | API base URL. Defaults to `https://api.novu.co`.                                                          |
 

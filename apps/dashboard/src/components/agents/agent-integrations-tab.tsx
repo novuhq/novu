@@ -101,6 +101,24 @@ function formatLastUpdatedParts(timestamp: number | undefined): LastUpdatedParts
   return { prefix: 'Last updated ', emphasis };
 }
 
+function getLinkedRowStatus(link: AgentIntegrationLink) {
+  const isConnected = isAgentIntegrationConnected(link);
+  // Setup ("Action needed") takes precedence — the plan limit only
+  // becomes the blocking issue once the channel is actually connected.
+  const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
+  const showActionNeeded = !isConnected;
+
+  let statusLabel = 'Active';
+
+  if (exceedsPlan) {
+    statusLabel = 'Exceeds plan';
+  } else if (showActionNeeded) {
+    statusLabel = 'Action needed';
+  }
+
+  return { exceedsPlan, showActionNeeded, statusLabel };
+}
+
 function groupLinksByChannel(links: AgentIntegrationLink[]) {
   const map = new Map<ChannelTypeEnum, AgentIntegrationLink[]>();
 
@@ -237,7 +255,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       return;
     }
 
-    navigate(
+    void navigate(
       `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
@@ -248,7 +266,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
 
   const handleBackFromGuide = () => {
     clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
-    navigate(integrationsHubPath);
+    void navigate(integrationsHubPath);
   };
 
   const listQuery = useQuery({
@@ -293,7 +311,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       return;
     }
 
-    navigate(
+    void navigate(
       `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
@@ -460,7 +478,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
               ctaLabel="Switch to dev"
               onCtaClick={() => {
                 if (!oppositeEnvironment?.slug) return;
-                navigate(
+                void navigate(
                   buildRoute(agentRoutes.detailsTab, {
                     environmentSlug: oppositeEnvironment.slug,
                     agentIdentifier: encodeURIComponent(agent.identifier),
@@ -500,19 +518,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                         providerMeta?.displayName ?? int.name
                       );
                       const isSelected = integrationIdentifier === int.identifier;
-                      const isConnected = isAgentIntegrationConnected(link);
-                      // Setup ("Action needed") takes precedence — the plan limit only
-                      // becomes the blocking issue once the channel is actually connected.
-                      const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
-                      const showActionNeeded = !isConnected;
-
-                      let statusLabel = 'Active';
-
-                      if (exceedsPlan) {
-                        statusLabel = 'Exceeds plan';
-                      } else if (showActionNeeded) {
-                        statusLabel = 'Action needed';
-                      }
+                      const { exceedsPlan, showActionNeeded, statusLabel } = getLinkedRowStatus(link);
 
                       const row = (
                         <button

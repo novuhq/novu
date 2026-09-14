@@ -33,11 +33,22 @@ let webhookIdCounter = 0;
 
 const succeed = (data: unknown) => ({ succeed: true, data });
 
-function buildResponse(method: string, path: string, payload: Record<string, unknown>): Record<string, unknown> {
-  // Spectrum Cloud control-plane surface (enveloped responses).
+type StubResponse = Record<string, unknown>;
+
+function buildResponse(method: string, path: string, payload: Record<string, unknown>): StubResponse {
+  return buildSpectrumResponse(method, path, payload) ?? buildDashboardResponse(method, path, payload) ?? succeed({});
+}
+
+// Spectrum Cloud control-plane surface (enveloped responses) + imessage-http REST transcoder.
+function buildSpectrumResponse(method: string, path: string, payload: Record<string, unknown>): StubResponse | null {
   const platformsMatch = path.match(/^\/projects\/([^/]+)\/platforms$/);
   if (platformsMatch && method === 'PATCH') {
     return succeed({ platform: payload.platform, enabled: payload.enabled });
+  }
+
+  // spectrum-ts `Spectrum()` looks the project up before minting iMessage tokens.
+  if (path.match(/^\/projects\/[^/]+\/?$/) && method === 'GET') {
+    return succeed({ id: path.split('/').filter(Boolean).pop(), platforms: { imessage: true } });
   }
 
   const webhooksMatch = path.match(/^\/projects\/([^/]+)\/webhooks$/);
@@ -95,7 +106,11 @@ function buildResponse(method: string, path: string, payload: Record<string, unk
     return { messageGuid: `stub-message-${Date.now()}` };
   }
 
-  // Photon Dashboard API surface (better-auth device flow + projects).
+  return null;
+}
+
+// Photon Dashboard API surface (better-auth device flow + projects).
+function buildDashboardResponse(method: string, path: string, payload: Record<string, unknown>): StubResponse | null {
   if (path === '/api/auth/device/code' && method === 'POST') {
     return {
       device_code: nextDeviceCode,
@@ -127,7 +142,7 @@ function buildResponse(method: string, path: string, payload: Record<string, unk
     return { id: path.split('/').pop(), projectSecret: 'stub-project-secret' };
   }
 
-  return succeed({});
+  return null;
 }
 
 async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -149,7 +164,9 @@ async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknow
 /**
  * Boots a minimal in-process Photon API stub and publishes its base URL via
  * `PHOTON_SPECTRUM_URL` (read by both the `PhotonImessageChatProvider` and the
- * API-side photon-webhook-client as a base-URL override) and
+ * API-side photon-webhook-client as a base-URL override), `SPECTRUM_CLOUD_URL`
+ * (read by spectrum-ts inside the vendor iMessage adapter on `Spectrum()`
+ * startup: project lookup + iMessage token mint) and
  * `PHOTON_DASHBOARD_API_URL` (device flow + project provisioning). It fakes the
  * Spectrum Cloud REST control plane (platform enable, webhooks CRUD, shared
  * users — enveloped `{succeed, data}` responses). The spectrum-ts gRPC send
@@ -182,6 +199,8 @@ export async function startPhotonApiStub(): Promise<PhotonApiStub> {
   const { port } = server.address() as AddressInfo;
   const url = `http://127.0.0.1:${port}`;
   process.env.PHOTON_SPECTRUM_URL = url;
+  // spectrum-ts (vendor iMessage adapter) reads its own base-URL override.
+  process.env.SPECTRUM_CLOUD_URL = url;
   // Device flow + project provisioning (photon-account-client).
   process.env.PHOTON_DASHBOARD_API_URL = url;
 
@@ -202,6 +221,7 @@ export async function startPhotonApiStub(): Promise<PhotonApiStub> {
       });
       stub = undefined;
       delete process.env.PHOTON_SPECTRUM_URL;
+      delete process.env.SPECTRUM_CLOUD_URL;
       delete process.env.PHOTON_DASHBOARD_API_URL;
     },
   };
