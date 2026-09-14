@@ -26,6 +26,7 @@ export type {
   NovuRawMessage,
   NovuThreadId,
   NovuTypedAdapter,
+  QuoteReplyContext,
   ReplyContent,
   ReplyFileRef,
   Signal,

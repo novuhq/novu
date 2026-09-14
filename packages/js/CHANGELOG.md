@@ -1,3 +1,21 @@
+## v3.19.2 (2026-09-07)
+
+### 🚀 Features
+
+- **js:** emit socket disconnect events so consumers can show drops fixes NV-8747 ([#12536](https://github.com/novuhq/novu/pull/12536))
+- **js:** add listConversations so clients stop scraping the subscriber JWT fixes NV-8746 ([#12534](https://github.com/novuhq/novu/pull/12534))
+
+### 🩹 Fixes
+
+- **js:** carry sourceMessageId on card parts so sendAction can use the part alone fixes NV-8749 ([#12537](https://github.com/novuhq/novu/pull/12537))
+- **js:** type AgentCardPart.card as AgentCardElement fixes NV-8745 ([#12525](https://github.com/novuhq/novu/pull/12525))
+- **js:** stop MCP connect cards merging on history runId fixes NV-8752 ([#12521](https://github.com/novuhq/novu/pull/12521))
+- **js:** deliver run-error to web chat subscribers fixes NV-8741 ([#12519](https://github.com/novuhq/novu/pull/12519))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.19.1 (2026-08-31)
 
 ### 🚀 Features

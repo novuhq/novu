@@ -2,7 +2,6 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   type ContentOverrideProviderId,
-  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   UiComponentEnum,
   type UiSchema,
@@ -16,9 +15,7 @@ import {
 import { SlackBlockKitBuilderHint } from '@/components/workflow-editor/steps/shared/provider-overrides/slack-block-kit-builder-hint';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { StepEditorUnavailable } from '../step-editor-unavailable';
 
 type ChatEditorProps = { uiSchema: UiSchema };
 
@@ -64,15 +61,10 @@ function ChatOverrideEditor({
 }
 
 export const ChatEditor = (props: ChatEditorProps) => {
-  const { currentEnvironment } = useEnvironment();
   const { uiSchema } = props;
   const { body, editorType } = uiSchema?.properties ?? {};
   const areProviderOverridesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_PROVIDER_OVERRIDES_ENABLED);
   const isBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
-
-  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
-    return <StepEditorUnavailable />;
-  }
 
   const defaultContent = body ? getComponentByType({ component: body.component }) : null;
   const defaultContentActions = isBlockEditorEnabled ? (

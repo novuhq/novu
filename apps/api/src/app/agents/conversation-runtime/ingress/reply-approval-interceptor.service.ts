@@ -1,7 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationActivitySenderTypeEnum } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  ConversationActivitySenderTypeEnum,
+  HumanInteractionEntity,
+  HumanInteractionRepository,
+} from '@novu/dal';
 import { buildApprovalActionId } from '@novu/framework/internal';
+import { buildToolApprovalRequestId, HumanInteractionStatusEnum, humanInteractionRecipientIds } from '@novu/shared';
+import { HumanInteractionSettlementService } from '../../human-relay/human-interaction-settlement.service';
+import { toAgentHumanResponse } from '../../human-relay/to-agent-human-response';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { usesReplyBasedApprovals } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -62,6 +70,8 @@ export class ReplyApprovalInterceptor {
   constructor(
     private readonly conversationService: AgentConversationService,
     private readonly outboundGateway: OutboundGateway,
+    private readonly humanInteractionRepository: HumanInteractionRepository,
+    private readonly settlement: HumanInteractionSettlementService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -123,6 +133,21 @@ export class ReplyApprovalInterceptor {
       return false;
     }
 
+    const hitl = await this.findPendingHitl(turn, approvalId);
+    if (hitl) {
+      if (!this.isAllowedHitlResponder(turn, hitl)) {
+        return false;
+      }
+
+      return this.consumeHitlVerdict(turn, runtime, {
+        approvalId,
+        approved,
+        toolName: pending.toolData?.toolName,
+        source: 'reply',
+        interaction: hitl,
+      });
+    }
+
     if (!this.isFromExpectedApprover(turn, activities, pending)) {
       return false;
     }
@@ -171,6 +196,21 @@ export class ReplyApprovalInterceptor {
     const approvalId = pending.toolData?.approvalId;
     if (typeof approvalId !== 'string') {
       return false;
+    }
+
+    const hitl = await this.findPendingHitl(turn, approvalId);
+    if (hitl) {
+      if (!this.isAllowedHitlResponder(turn, hitl)) {
+        return false;
+      }
+
+      return this.consumeHitlVerdict(turn, runtime, {
+        approvalId,
+        approved: verdict,
+        toolName: pending.toolData?.toolName,
+        source: 'reaction',
+        interaction: hitl,
+      });
     }
 
     if (!this.isFromExpectedApprover(turn, activities, pending)) {
@@ -294,6 +334,109 @@ export class ReplyApprovalInterceptor {
     });
 
     return true;
+  }
+
+  private async consumeHitlVerdict(
+    turn: ConversationTurn,
+    runtime: AgentRuntime,
+    verdict: {
+      approvalId: string;
+      approved: boolean;
+      toolName: string | undefined;
+      source: 'reply' | 'reaction';
+      interaction: HumanInteractionEntity;
+    }
+  ): Promise<boolean> {
+    const { config, conversation } = turn;
+    const { approvalId, approved, toolName, source, interaction } = verdict;
+
+    this.logger.info(
+      { conversationId: conversation._id, approvalId, approved, platform: config.platform, source },
+      `[agent:${config.agentIdentifier}] Consuming inbound ${source} as HITL tool-approval verdict`
+    );
+
+    const settled = await this.settlement.settle(
+      interaction,
+      approved ? HumanInteractionStatusEnum.APPROVED : HumanInteractionStatusEnum.DENIED,
+      {
+        type: 'option',
+        optionId: approved ? 'approve' : 'deny',
+        respondedBy: turn.subscriber?.firstName?.trim() || turn.subscriber?.subscriberId,
+        respondedBySubscriberId: turn.subscriber?.subscriberId,
+        respondedAt: new Date().toISOString(),
+      }
+    );
+
+    if (!settled) {
+      return false;
+    }
+
+    await this.acknowledgeVerdict(turn, approved, toolName);
+
+    if (turn.agent.runtime === 'managed') {
+      return true;
+    }
+
+    const humanResponse = toAgentHumanResponse(settled);
+    await runtime.dispatch({
+      ...turn,
+      event: AgentEventEnum.ON_ACTION,
+      message: null,
+      reaction: undefined,
+      storedAttachments: undefined,
+      humanResponse,
+      action: { id: buildApprovalActionId(approved ? 'approve' : 'deny', approvalId) },
+    });
+
+    return true;
+  }
+
+  private async findPendingHitl(turn: ConversationTurn, approvalId: string): Promise<HumanInteractionEntity | null> {
+    try {
+      return await this.humanInteractionRepository.findPendingByRequestId(
+        turn.config.environmentId,
+        buildToolApprovalRequestId(approvalId)
+      );
+    } catch (err) {
+      this.logger.warn(err, `[agent:${turn.config.agentIdentifier}] Failed to load HITL tool-approval row`);
+      captureAgentWarning(err, {
+        component: 'reply-approval-interceptor',
+        operation: 'load-hitl-tool-approval',
+        agentIdentifier: turn.config.agentIdentifier,
+      });
+
+      return null;
+    }
+  }
+
+  /**
+   * A HITL row authorizes strictly by its recipient allow-list
+   * (`subscriberIds` — the `to` targets). When the inbound subscriber cannot be
+   * resolved we cannot prove membership, so fail closed — mirroring the generic
+   * HITL `isAddressedHuman` path.
+   *
+   * Never fall back to `isFromExpectedApprover` here: that is the single-control
+   * tool-approval check (only the participant who prompted the call may answer),
+   * and using it for a HITL gate would let the person who triggered the tool
+   * self-approve a request addressed to someone else — defeating dual-control.
+   */
+  private isAllowedHitlResponder(turn: ConversationTurn, interaction: HumanInteractionEntity): boolean {
+    const subscriberId = turn.subscriber?.subscriberId;
+    if (!subscriberId) {
+      this.logger.warn(
+        {
+          conversationId: turn.conversation._id,
+          interactionIdentifier: interaction.identifier,
+          platform: turn.config.platform,
+          responderResolution: turn.subscriberResolution?.outcome,
+        },
+        `[agent:${turn.config.agentIdentifier}] Ignoring reply-based HITL verdict — responder has no resolved subscriber to match the interaction recipient allow-list`
+      );
+
+      return false;
+    }
+
+    return humanInteractionRecipientIds(interaction).includes(subscriberId);
   }
 
   private async findOldestPendingApproval(turn: ConversationTurn): Promise<PendingApprovalWithHistory | null> {

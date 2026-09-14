@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
   buildNovuSignatureHeader,
-  FeatureFlagsService,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   PinoLogger,
@@ -26,7 +25,6 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -171,8 +169,7 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly conversationService: AgentConversationService,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -360,13 +357,6 @@ export class BridgeExecutorService {
     const apiOrigin = resolveAgentReplyApiOrigin();
     const replyUrl = `${apiOrigin}/v1/agents/${agentIdentifier}/reply`;
 
-    const isEventProtocolEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
-      defaultValue: false,
-      organization: { _id: config.organizationId },
-      environment: { _id: config.environmentId },
-    });
-
     const timestamp = new Date().toISOString();
 
     let deliveryId: string;
@@ -389,6 +379,7 @@ export class BridgeExecutorService {
       event,
       agentId: agentIdentifier,
       replyUrl,
+      eventsUrl: `${apiOrigin}/v1/agents/events/ingest`,
       conversationId: conversation._id,
       integrationIdentifier: config.integrationIdentifier,
       message: message
@@ -410,10 +401,6 @@ export class BridgeExecutorService {
       reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
       humanResponse: humanResponse ?? null,
     };
-
-    if (isEventProtocolEnabled) {
-      payload.eventsUrl = `${apiOrigin}/v1/agents/events/ingest`;
-    }
 
     return payload;
   }
