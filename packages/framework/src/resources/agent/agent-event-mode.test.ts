@@ -79,6 +79,76 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(handleMessageId).toBe('msg_00000000-0000-4000-8000-000000000001');
   });
 
+  it('reply with quoteReply emits message with quoteReply.messageId', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (message, ctx) => {
+          await ctx.reply('Quoted answer', { quoteReply: message });
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0][1].event).toEqual({
+      type: 'message',
+      role: 'assistant',
+      messageId: 'msg_00000000-0000-4000-8000-000000000001',
+      content: { markdown: 'Quoted answer' },
+      quoteReply: { messageId: 'msg-789' },
+    });
+  });
+
+  it('reply with explicit quoteReply.messageId emits message with quoteReply.messageId', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (message, ctx) => {
+          await ctx.reply('Quoted answer', { quoteReply: { messageId: message.platformMessageId } });
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0][1].event).toEqual({
+      type: 'message',
+      role: 'assistant',
+      messageId: 'msg_00000000-0000-4000-8000-000000000001',
+      content: { markdown: 'Quoted answer' },
+      quoteReply: { messageId: 'msg-789' },
+    });
+  });
+
+  it('handler return value with quoteReply emits message with quoteReply.messageId', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (message) => ({
+          content: 'Returned quote',
+          quoteReply: { messageId: message.platformMessageId },
+        }),
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0][1].event).toEqual({
+      type: 'message',
+      role: 'assistant',
+      messageId: 'msg_00000000-0000-4000-8000-000000000001',
+      content: { markdown: 'Returned quote' },
+      quoteReply: { messageId: 'msg-789' },
+    });
+  });
+
   it('reply with url file emits AgentFileRef including url', async () => {
     const { eventBatches } = stubEventModeFetch();
 
