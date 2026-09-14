@@ -206,6 +206,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       identifier: 'eu-provider',
       name: 'EU provider',
       primary: false,
+      priority: 1,
       providerId: EmailProviderIdEnum.EmailWebhook,
       matchedConditions: { '==': [{ var: 'payload.region' }, 'eu'] },
     };
