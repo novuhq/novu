@@ -30,9 +30,18 @@ export interface ConversationTurn {
   event: AgentEventEnum;
   thread: Thread;
   platformThreadId: string;
+  /** The acting user's platform identity (Slack userId, Telegram chatId). Set on message/action turns. */
+  platformUserId?: string;
   storedAttachments?: StoredAttachment[];
   action?: AgentAction;
   reaction?: BridgeReaction;
   workflowOrigin?: WorkflowOriginSnapshot | null;
   humanResponse?: AgentHumanResponse | null;
+  /**
+   * Set by the HITL inbound interceptor when a tool-approval click settled a
+   * `HumanInteraction` row. The settlement chain persists the
+   * `tool_approval_decision` itself, so the legacy `recordApprovalVerdict`
+   * writer must skip this click to avoid double-recording the verdict.
+   */
+  toolApprovalSettledByHitl?: boolean;
 }

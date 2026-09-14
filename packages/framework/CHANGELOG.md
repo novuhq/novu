@@ -1,3 +1,13 @@
+## v2.13.2 (2026-09-07)
+
+### 🩹 Fixes
+
+- **framework:** type outbound agent cards as protocol CardElement instead of Record fixes NV-8745 ([#12525](https://github.com/novuhq/novu/pull/12525))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v2.13.1 (2026-08-31)
 
 ### 🚀 Features

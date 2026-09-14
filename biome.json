@@ -3,7 +3,8 @@
   "vcs": {
     "enabled": true,
     "clientKind": "git",
-    "useIgnoreFile": true
+    "useIgnoreFile": true,
+    "defaultBranch": "origin/next"
   },
   "files": {
     "ignoreUnknown": false,
@@ -21,6 +22,7 @@
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
       "!playground",
+      "!packages/novu/src/commands/connect/templates/web-chat",
       "!libs/internal-sdk",
       "!.github",
       "!scripts",
@@ -31,6 +33,20 @@
       "!packages/add-inbox/vitest.config.js"
     ]
   },
+  "plugins": [
+    "./biome-plugins/no-chained-type-assertions.grit",
+    "./biome-plugins/no-conditional-empty-object-spread.grit",
+    "./biome-plugins/no-known-value-widening.grit",
+    "./biome-plugins/no-object-parameters.grit",
+    "./biome-plugins/no-reflect-apply.grit",
+    "./biome-plugins/no-reflect-get.grit",
+    "./biome-plugins/no-shape-in-symbol-names.grit",
+    "./biome-plugins/no-unknown-parameters.grit",
+    "./biome-plugins/no-unknown-returns.grit",
+    "./biome-plugins/no-unknown-type-aliases.grit",
+    "./biome-plugins/no-unsafe-dictionary-type.grit",
+    "./biome-plugins/no-widen-then-assert.grit"
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -61,7 +77,15 @@
         "useButtonType": "off"
       },
       "complexity": {
-        "noForEach": "warn"
+        "noBannedTypes": "error",
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": {
+            "maxAllowedComplexity": 20
+          }
+        },
+        "noForEach": "warn",
+        "noUselessTypeConstraint": "error"
       },
       "correctness": {
         "noEmptyCharacterClassInRegex": "warn",
@@ -77,6 +101,7 @@
         "noBlankTarget": "warn"
       },
       "style": {
+        "noNonNullAssertion": "error",
         "useArrayLiterals": "error",
         "useAsConstAssertion": "error",
         "noCommonJs": "warn",
@@ -106,7 +131,7 @@
         "noControlCharactersInRegex": "warn",
         "noDoubleEquals": "warn",
         "noDuplicateTestHooks": "warn",
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noExportsInTest": "warn",
         "noFallthroughSwitchClause": "warn",
         "noImplicitAnyLet": "warn",
@@ -392,6 +417,10 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.{ts,tsx,js,jsx}", "!**/*.test.{ts,tsx,js}", "!**/*.spec.{ts,tsx,js}", "!**/*.e2e.{ts,js}"],
+      "plugins": ["./biome-plugins/no-module-mocking.grit"]
     },
     {
       "includes": [

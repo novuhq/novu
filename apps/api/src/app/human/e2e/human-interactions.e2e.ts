@@ -96,11 +96,21 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   });
 
   async function createInteraction(body: Record<string, unknown>) {
+    const { prompt, options, card, ...rest } = body;
+    const title =
+      (card && typeof card === 'object' && 'title' in card && typeof card.title === 'string' && card.title) ||
+      (typeof prompt === 'string' ? prompt : undefined);
+
     return session.testAgent.post('/v1/human/interactions').send({
       to: subscriberId,
       via: 'telegram',
       agentIdentifier: relayAgentIdentifier,
-      ...body,
+      ...rest,
+      card: {
+        ...(card && typeof card === 'object' ? card : {}),
+        ...(title ? { title } : {}),
+        ...(Array.isArray(options) ? { options } : {}),
+      },
     });
   }
 
@@ -329,7 +339,8 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       });
       expect(createRes.status).to.equal(201, JSON.stringify(createRes.body));
       const interaction = createRes.body.data;
-      expect(interaction.options).to.have.length(2);
+      const options = interaction.content.cardChrome.options;
+      expect(options).to.have.length(2);
 
       // Full option text goes in the message body; buttons are just letters —
       // Telegram (and most chat UIs) render long button labels badly.
@@ -345,11 +356,11 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       };
       expect(markup.inline_keyboard[0].map((btn) => btn.text)).to.deep.equal(['A', 'B']);
 
-      await clickAction(`human:${interaction.id}:opt:${interaction.options[1].id}`);
+      await clickAction(`human:${interaction.id}:opt:${options[1].id}`);
 
       const getRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
       expect(getRes.body.data.status).to.equal(HumanInteractionStatusEnum.ANSWERED);
-      expect(getRes.body.data.response.optionId).to.equal(interaction.options[1].id);
+      expect(getRes.body.data.response.optionId).to.equal(options[1].id);
     });
 
     it('rejects choose without options', async () => {
@@ -543,7 +554,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
 
       const res = await session.testAgent.post('/v1/human/interactions').send({
         kind: 'tell',
-        prompt: 'hello',
+        card: { title: 'hello' },
         to: subscriberId,
         via: 'email',
         agentIdentifier: relayAgentIdentifier,

@@ -81,6 +81,9 @@ During **workflow triggers**, existing context `data` is **upserted** when you i
   <Card title="Conditional workflow logic" icon="git-branch" href="/platform/workflow/add-and-configure-steps/step-conditions">
     Branch workflow steps based on context values, such as sending enterprise-only emails when `context.tenant.data.plan` is `enterprise`.
   </Card>
+  <Card title="Provider routing" icon="plug-zap" href="/platform/integrations/integration-conditions">
+    Select a tenant-specific email, SMS, chat, or push integration with conditions on `context.tenant.id`.
+  </Card>
   <Card title="Topic subscriptions" icon="bell-ring" href="/platform/subscription/manage-topic-subscriptions#context-scoped-subscriptions">
     Scope topic subscriptions per tenant or app, match them to workflow triggers using the same Context keys, and filter delivery with payload-based JSON Logic conditions.
   </Card>

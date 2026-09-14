@@ -45,7 +45,7 @@ Novu automatically sends the notification to the phone number stored on the subs
 [Trigger the workflow](/api-reference/events/trigger-event) from your application code by sending an event to Novu.
 Novu automatically:
 - Resolves the subscriber.
-- Selects the correct provider.
+- Selects the correct provider. See [Integration conditions](/platform/integrations/integration-conditions).
 - Renders the SMS template.
 - Delivers the message through the configured SMS integration.
 </Step>
@@ -253,7 +253,7 @@ curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
 
 ## Target a specific provider
 
-By default, Novu uses your primary SMS provider. If you want to bypass this and force a specific, active integration for a trigger, then use the `integrationIdentifier`.
+By default, Novu uses your primary SMS provider. To route automatically from subscriber or context data, see [Integration conditions](/platform/integrations/integration-conditions). To force a specific, active integration for a trigger, then use the `integrationIdentifier`.
 
 This is useful if you have multiple active integrations for different purposes. For example, you might have one integration for transactional SMS and one for security SMS. You can find the `integrationIdentifier` in the **Integration Store** of the Novu dashboard.
 

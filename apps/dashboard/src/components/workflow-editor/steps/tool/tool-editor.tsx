@@ -1,10 +1,4 @@
-import {
-  ChannelTypeEnum,
-  type ContentOverrideProviderId,
-  EnvironmentTypeEnum,
-  ToolProviderIdEnum,
-  type UiSchema,
-} from '@novu/shared';
+import { ChannelTypeEnum, type ContentOverrideProviderId, ToolProviderIdEnum, type UiSchema } from '@novu/shared';
 import { useCallback } from 'react';
 import { RiLightbulbLine } from 'react-icons/ri';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
@@ -12,8 +6,6 @@ import {
   ContentOverridePanel,
   type ProviderOverrideEditorExtras,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
-import { useEnvironment } from '@/context/environment/hooks';
-import { StepEditorUnavailable } from '../step-editor-unavailable';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 import { annotateWebhookField, describeWebhookField } from './webhook-override-annotations';
 import { formatWebhookSchemaSourceLabel } from './webhook-payload-schema';
@@ -21,7 +13,6 @@ import { formatWebhookSchemaSourceLabel } from './webhook-payload-schema';
 type ToolEditorProps = { uiSchema: UiSchema };
 
 export const ToolEditor = (props: ToolEditorProps) => {
-  const { currentEnvironment } = useEnvironment();
   const { uiSchema } = props;
   const { body } = uiSchema?.properties ?? {};
   const { providerOptions, providerOverrides, webhookPayloadSchema, webhookRootSchema } =
@@ -57,10 +48,6 @@ export const ToolEditor = (props: ToolEditorProps) => {
     },
     [webhookPayloadSchema, webhookRootSchema]
   );
-
-  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
-    return <StepEditorUnavailable />;
-  }
 
   return (
     <ContentOverridePanel

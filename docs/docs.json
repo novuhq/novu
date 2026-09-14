@@ -189,6 +189,7 @@
             "group": "Integrate Channels Providers",
             "pages": [
               "platform/integrations",
+              "platform/integrations/integration-conditions",
               "platform/integrations/demo-integration",
               {
                 "group": "Chat",
@@ -198,7 +199,15 @@
                   "platform/integrations/chat/discord",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
-                  "platform/integrations/chat/ms-teams",
+                  {
+                    "group": "MS Teams",
+                    "pages": [
+                      "platform/integrations/chat/ms-teams",
+                      "platform/integrations/chat/ms-teams-azure-setup",
+                      "platform/integrations/chat/ms-teams-connect",
+                      "platform/integrations/chat/ms-teams-workflows"
+                    ]
+                  },
                   "platform/integrations/chat/slack",
                   "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/telegram",
@@ -471,7 +480,17 @@
                 "group": "Web Chat",
                 "tag": "Beta",
                 "root": "agents/channels/web-chat",
-                "pages": ["agents/channels/web-chat/quickstart", "agents/channels/web-chat/chat-ui"]
+                "pages": [
+                  "agents/channels/web-chat/messages",
+                  "agents/channels/web-chat/tools",
+                  "agents/channels/web-chat/generative-ui",
+                  "agents/channels/web-chat/conversations",
+                  {
+                    "group": "Recipes",
+                    "pages": ["agents/channels/web-chat/recipes/assistant-ui"]
+                  },
+                  "agents/channels/web-chat/security"
+                ]
               }
             ],
             "icon": "messages-square"
@@ -969,18 +988,17 @@
                       {
                         "group": "HTTP delivery",
                         "expanded": false,
-                        "pages": ["guides/webhook-connectors/polling-endpoint", "guides/webhook-connectors/fifo-endpoint"]
+                        "pages": [
+                          "guides/webhook-connectors/polling-endpoint",
+                          "guides/webhook-connectors/fifo-endpoint"
+                        ]
                       }
                     ]
                   },
                   {
                     "group": "Data sources",
                     "expanded": false,
-                    "pages": [
-                      "guides/analytics/segment",
-                      "guides/analytics/hightouch",
-                      "guides/analytics/databricks"
-                    ]
+                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch", "guides/analytics/databricks"]
                   },
                   {
                     "group": "Recipes",
@@ -991,6 +1009,16 @@
                     "group": "Framework",
                     "expanded": false,
                     "pages": ["guides/framework/using-translations"]
+                  },
+                  {
+                    "group": "Migration to New Dashboard",
+                    "expanded": false,
+                    "pages": [
+                      "guides/migration-to-new-dashboard/overview",
+                      "guides/migration-to-new-dashboard/feature-comparison",
+                      "guides/migration-to-new-dashboard/workflow-conversion",
+                      "guides/migration-to-new-dashboard/application-and-cutover"
+                    ]
                   },
                   {
                     "group": "Migrate to Novu",
@@ -1167,7 +1195,7 @@
     "socials": {
       "x": "https://x.com/novuhq",
       "github": "https://github.com/novuhq/novu",
-      "linkedin": "https://linkedin.com/company/novuhq"
+      "linkedin": "https://www.linkedin.com/company/novuco"
     },
     "links": [
       {
@@ -1799,12 +1827,17 @@
     },
     {
       "source": "/agents/agent-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
       "source": "/agents/web-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
@@ -1814,42 +1847,47 @@
     },
     {
       "source": "/agents/channels/agent-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/chat-ui",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/starter-ui",
+      "destination": "/agents/channels/web-chat/recipes/assistant-ui",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/rendering",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
       "source": "/agents/channels/web-chat/rendering",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/production",
-      "destination": "/agents/channels/web-chat",
+      "destination": "/agents/channels/web-chat/security",
       "permanent": true
     },
     {
       "source": "/agents/channels/web-chat/production",
-      "destination": "/agents/channels/web-chat",
+      "destination": "/agents/channels/web-chat/security",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/messages",
-      "destination": "/agents/channels/web-chat/chat-ui",
-      "permanent": true
-    },
-    {
-      "source": "/agents/channels/web-chat/messages",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
