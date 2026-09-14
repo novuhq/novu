@@ -357,6 +357,43 @@ curl -X POST "https://api.novu.co/v1/events/trigger" \
   To learn how contexts work and how to manage them, see the [Context documentation](/platform/workflow/advanced-features/contexts/contexts-in-workflows).
 </Note>
 
+## Broadcast a workflow to all subscribers
+
+To send a workflow to every subscriber in the current environment without listing them, call the broadcast endpoint. Broadcast is available only through the API and SDKs. The Novu dashboard does not have a "send to all" button; the dashboard's **Trigger workflow** action always requires an explicit subscriber.
+
+The broadcast request accepts the workflow identifier and an optional `payload`; you do not pass a `to` field.
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.triggerBroadcast({
+  workflowId: "workflow_identifier",
+  payload: { message: "Scheduled maintenance tonight at 22:00 UTC." },
+});
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger/broadcast' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -d '{
+    "name": "workflow_identifier",
+    "payload": { "message": "Scheduled maintenance tonight at 22:00 UTC." }
+  }'
+```
+  </Tab>
+</Tabs>
+
+Novu still bills each resolved subscriber as a separate workflow event, and each subscriber's channel preferences still apply. For targeted announcements to a defined audience, prefer [triggering to a topic](#trigger-a-workflow-to-a-topic).
+
+See the [Broadcast event to all](/api-reference/events/broadcast-event-to-all) API reference for the full request schema.
+
 ## Trigger a workflow to a topic
 
 Once you’ve created topics and added subscribers, you can trigger workflows to those subscribers in bulk. Triggering a workflow to a topic is Novu’s primary mechanism for broadcasting notifications to large audiences with a single API call.

@@ -608,6 +608,15 @@ The Dashboard container is served separately on its configured port (default **4
 ## FAQs
 
 <AccordionGroup>
+  <Accordion title="Dashboard loads but shows a blank page after install">
+    A blank dashboard after `docker compose up -d` usually means the browser cannot reach the API or WebSocket service. Check the browser's network tab for failed requests to `/v1/*` or the WebSocket URL, then confirm the following:
+
+    - **`HOST_NAME` is set to a host the browser can reach.** When accessing the dashboard from another machine, `HOST_NAME=http://localhost` will not work; set it to the VPS IP or domain (for example `HOST_NAME=http://198.51.100.10`) and restart with `docker compose up -d`.
+    - **Context paths match across services.** If you set `API_CONTEXT_PATH`, `WS_CONTEXT_PATH`, `WEBHOOK_CONTEXT_PATH`, or `FRONT_BASE_CONTEXT_PATH`, every service must use the same values. A mismatch causes API and socket requests to 404 silently and leaves the dashboard blank. See [Reverse-Proxy / Load Balancers](#reverse-proxy--load-balancers).
+    - **HTTPS and mixed content.** If the dashboard is served over HTTPS, the API and WebSocket URLs must also be HTTPS. Browsers block mixed HTTP content from an HTTPS page and the dashboard will not render data.
+    - **Custom environments error.** A `402 Payment Required` on `POST /v1/environments` is expected on Community self-hosted: custom environments are a Cloud-only feature, and self-hosted ships with the default Development and Production environments only. See [Self-Hosted and Novu Cloud](/community/self-hosted-and-novu-cloud).
+  </Accordion>
+
   <Accordion title="Local Tunnel and Self-Hosted Deployments">
     Novu uses a local tunnel as bridge url. It can be used as bridge url during local development (`npx novu dev`) and for testing purpose in development environment. It should not be used in production environment. It is recommended to use deployed application url as bridge url
   </Accordion>
