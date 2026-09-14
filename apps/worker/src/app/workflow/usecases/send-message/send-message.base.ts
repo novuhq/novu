@@ -179,20 +179,24 @@ export abstract class SendMessageBase extends SendMessageType {
     const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
 
     if (integration.matchedConditions) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.SUCCESS,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            integrationIdentifier: integration.identifier,
-            matchedConditions: integration.matchedConditions,
-          }),
-        })
-      );
+      try {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+            detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.SUCCESS,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              integrationIdentifier: integration.identifier,
+              matchedConditions: integration.matchedConditions,
+            }),
+          })
+        );
+      } catch (error) {
+        Logger.error(error, 'Failed to create integration conditions matched execution detail', SendMessageBase.name);
+      }
     }
 
     await this.createExecutionDetails.execute(

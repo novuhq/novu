@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { DetailEnum, MailFactory, type SelectedIntegration } from '@novu/application-generic';
 import type { JobEntity } from '@novu/dal';
 import {
@@ -222,6 +223,37 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       integrationIdentifier: 'eu-provider',
       matchedConditions: integration.matchedConditions,
     });
+  });
+
+  it('should continue when logging matched integration conditions fails', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase(false);
+    const command = buildCommand({ bridgeBody: renderedEmailBody });
+    const loggerError = sinon.stub(Logger, 'error');
+    const integration: SelectedIntegration = {
+      _id: 'integration_1',
+      _environmentId: 'env_1',
+      _organizationId: 'org_1',
+      active: true,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {},
+      deleted: false,
+      identifier: 'eu-provider',
+      name: 'EU provider',
+      primary: false,
+      priority: 1,
+      providerId: EmailProviderIdEnum.EmailWebhook,
+      matchedConditions: { '==': [{ var: 'payload.region' }, 'eu'] },
+    };
+
+    createExecutionDetails.execute.onFirstCall().rejects(new Error('activity log unavailable'));
+
+    await usecase.logSelectedIntegration(command.job, integration);
+
+    expect(createExecutionDetails.execute.callCount).to.equal(2);
+    expect(createExecutionDetails.execute.secondCall.args[0].detail).to.not.equal(
+      DetailEnum.INTEGRATION_CONDITIONS_MATCHED
+    );
+    expect(loggerError.calledOnce).to.equal(true);
   });
 });
 
