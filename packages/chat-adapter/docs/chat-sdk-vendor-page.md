@@ -197,7 +197,7 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 | Button actions (`onAction`)                              | ✅                             |
 | Inbound reactions (`onReaction`)                         | ✅                             |
 | Post message (markdown)                                  | ✅                             |
-| Quote reply (`thread.reply`)                             | ✅ WhatsApp, Telegram ([platform matrix](https://docs.novu.co/agents/channels/overview)) |
+| Quote reply (`thread.reply`)                             | ✅ WhatsApp, Telegram          |
 | Rich cards                                               | ✅                             |
 | File attachments (outbound)                              | ✅                             |
 | Edit message (in place)                                  | ✅                             |

@@ -23,52 +23,9 @@ To send a reply from your backend without going through the bridge handler, use 
 | Plain / rich text | Yes | Yes | Bold / italics | Yes | HTML |
 | Tap-to-respond buttons | Yes | Yes | Yes (up to 3) | Yes | Action links |
 | Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+| Quote reply | Plain post | Plain post | Native | Native | — |
 
 See [Channels overview](/agents/channels/overview) for the full matrix.
-
-## Quote reply
-
-Quote-reply links your outbound message to a specific prior message. WhatsApp and Telegram show the platform native quote UI. Other channels receive a normal post.
-
-### Outbound
-
-Pass `quoteReply` in the second argument to `ctx.reply()`, or return it from the handler:
-
-```typescript
-onMessage: async (message, ctx) => {
-  await ctx.reply('Your answer', { quoteReply: message });
-  // or: { quoteReply: { messageId: message.platformMessageId } }
-};
-
-// return value:
-return { content: 'Your answer', quoteReply: message };
-```
-
-### Inbound
-
-When the user quote-replied to a prior message, read `message.replyTo?.messageId` (WhatsApp, Microsoft Teams, Telegram):
-
-```typescript
-if (message.replyTo) {
-  await ctx.reply('Checking that message…', {
-    quoteReply: { messageId: message.replyTo.messageId },
-  });
-}
-```
-
-See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#quote-reply-context) for where inbound fields are documented.
-
-### Agent runtimes
-
-Quote-reply applies to self-hosted agents that run on your bridge endpoint. Managed agents do not support outbound quote-reply today.
-
-| Runtime | Outbound API | Inbound field |
-| --- | --- | --- |
-| Custom code agent (`@novu/framework`) | `ctx.reply(..., { quoteReply })` | `message.replyTo` |
-| Chat SDK bridge (`@novu/chat-sdk-adapter`) | `thread.reply(inboundMessage, text)` | `message.raw.replyTo` |
-| Managed agent | Not supported | Not exposed to handlers |
-
-For Chat SDK bridge agents, see the `@novu/chat-sdk-adapter` README on npm or GitHub.
 
 ## Reply types
 
@@ -96,6 +53,14 @@ Send formatted text by passing a markdown string to `ctx.reply()`:
 
 ```typescript
 await ctx.reply('**Report generated.** See the attached PDF.');
+```
+
+## Quote reply
+
+Pass `quoteReply` to pin the reply to a specific inbound message. WhatsApp and Telegram render a native quote. Other channels send a normal post.
+
+```typescript
+await ctx.reply('Your order shipped today.', { quoteReply: message });
 ```
 
 ## Sending attachments

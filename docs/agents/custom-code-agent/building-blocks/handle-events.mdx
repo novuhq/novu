@@ -226,12 +226,10 @@ export const myAgent = agent('my-agent', {
 
 #### Quote-reply context
 
-When the user quote-replied to a prior message on WhatsApp, Microsoft Teams, or Telegram, Novu sets `message.replyTo.messageId` to the platform id of the quoted message. Use it with [`quoteReply`](/agents/custom-code-agent/building-blocks/reply#quote-reply) on outbound replies. Slack inbound quote context is not exposed yet.
+When a user quote-replies to a prior message, Novu sets `message.replyTo` with that message's platform id. Supported on WhatsApp, Telegram, and Microsoft Teams.
 
 ```typescript
-if (message.replyTo?.messageId) {
-  // User replied to a specific prior message — not just the thread
-}
+const quotedMessageId = message.replyTo?.messageId;
 ```
 
 ### onAction

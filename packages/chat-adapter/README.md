@@ -197,7 +197,7 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 | Button actions (`onAction`)                              | ✅                             |
 | Inbound reactions (`onReaction`)                         | ✅                             |
 | Post message (markdown)                                  | ✅                             |
-| Quote reply (`thread.reply`)                             | ✅ WhatsApp, Telegram ([platform matrix](https://docs.novu.co/agents/channels/overview)) |
+| Quote reply (`thread.reply`)                             | ✅ WhatsApp, Telegram          |
 | Rich cards                                               | ✅                             |
 | File attachments (outbound)                              | ✅                             |
 | Edit message (in place)                                  | ✅                             |
@@ -217,12 +217,8 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 
 ### Quote reply
 
-Chat SDK bridge API for self-hosted agents using `@novu/chat-sdk-adapter`:
-
 ```typescript
 await thread.reply(inboundMessage, 'Your answer');
 ```
 
-When the user quote-replied inbound, read `message.raw.replyTo?.messageId` (WhatsApp, Telegram, Teams).
-
-Per-channel support (all agent runtimes): [Channels overview](https://docs.novu.co/agents/channels/overview). Custom code agents using `@novu/framework` use [`ctx.reply({ quoteReply })`](https://docs.novu.co/agents/custom-code-agent/building-blocks/reply#quote-reply) instead.
+When the user quote-replied, `message.raw.replyTo?.messageId` is set (WhatsApp, Telegram, Teams).

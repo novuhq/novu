@@ -93,10 +93,6 @@ npx novu@latest sync -b https://your-app.com/api/novu -s "$NOVU_SECRET_KEY"
 
 Bridge runtimes supported by `novu connect`: `ai-sdk`, `langchain`, `custom-code`, `chat-sdk`.
 
-### Quote reply
-
-Pin an outbound reply with `await ctx.reply('Your answer', { quoteReply: message })`. When the user quote-replied inbound, read `message.replyTo?.messageId` (WhatsApp, Telegram, Teams). See [Reply — quote-reply](https://docs.novu.co/agents/custom-code-agent/building-blocks/reply#quote-reply) and the [channels overview](https://docs.novu.co/agents/channels/overview).
-
 ## Notification workflows
 
 Write notification workflows as functions that execute business logic and use your preferred libraries for email, SMS, and chat generation. Use [React.Email](https://react.email/), [MJML](https://mjml.io/), or any other template generator.
