@@ -72,12 +72,17 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 export interface AgentMessage {
   text: string;
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  replyTo?: AgentReplyToContext;
 }
 
 export interface AgentConversation {
@@ -273,6 +278,8 @@ export interface NovuRawMessage {
   conversationId: string;
   integrationIdentifier: string;
   platform: string;
+  /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
+  replyTo?: AgentReplyToContext;
   /** Set when this message was built from Novu conversation history. */
   history?: NovuHistoryFields;
 }

@@ -103,6 +103,49 @@ export function extractTeamsQuotedActivityId(message: Message | null): string | 
   return typeof replyToId === 'string' && replyToId.length > 0 ? replyToId : null;
 }
 
+export interface InboundReplyTo {
+  messageId: string;
+}
+
+/** Resolve inbound quote-reply metadata for bridge `message.replyTo` (WhatsApp, Telegram, Teams). */
+export function resolveInboundReplyTo(
+  platform: AgentPlatformEnum,
+  message: Message | null,
+  platformThreadId?: string
+): InboundReplyTo | undefined {
+  if (!message) {
+    return undefined;
+  }
+
+  switch (platform) {
+    case AgentPlatformEnum.WHATSAPP: {
+      const messageId = extractWhatsAppQuotedWamid(message);
+
+      return messageId ? { messageId } : undefined;
+    }
+    case AgentPlatformEnum.TELEGRAM: {
+      const bareId = extractTelegramQuotedMessageId(message);
+      if (!bareId) {
+        return undefined;
+      }
+
+      const chatId = platformThreadId ? extractTelegramChatIdFromThreadId(platformThreadId) : null;
+      if (!chatId) {
+        return undefined;
+      }
+
+      return { messageId: `${chatId}:${bareId}` };
+    }
+    case AgentPlatformEnum.TEAMS: {
+      const messageId = extractTeamsQuotedActivityId(message);
+
+      return messageId ? { messageId } : undefined;
+    }
+    default:
+      return undefined;
+  }
+}
+
 /** Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}`. */
 export function extractTelegramChatIdFromThreadId(platformThreadId: string): string | null {
   if (!platformThreadId.startsWith('telegram:')) {

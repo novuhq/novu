@@ -1,6 +1,8 @@
 import { AgentEventEnum } from '@novu/framework/internal';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { resolveInboundReplyTo } from '../ingress/workflow-origin.helpers';
 import { BridgeExecutorService } from './bridge-executor.service';
 
 describe('BridgeExecutorService', () => {
@@ -196,6 +198,111 @@ describe('BridgeExecutorService', () => {
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
       expect(payload.notification).to.equal(null);
+    });
+
+    it('should map WhatsApp quote-reply onto message.replyTo', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.WHATSAPP,
+        },
+        platformThreadId: 'whatsapp:+15551234567',
+        message: {
+          ...makeMessage(),
+          raw: {
+            message: {
+              context: { id: 'wamid.quoted' },
+            },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: 'wamid.quoted' });
+    });
+
+    it('should map Telegram quote-reply with chat-scoped message id', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.TELEGRAM,
+        },
+        platformThreadId: 'telegram:777042',
+        message: {
+          ...makeMessage(),
+          raw: {
+            reply_to_message: { message_id: 42 },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: '777042:42' });
+    });
+
+    it('should map Teams quote-reply onto message.replyTo', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.TEAMS,
+        },
+        message: {
+          ...makeMessage(),
+          raw: {
+            entities: [{ type: 'quotedReply', quotedReply: { messageId: 'activity-quoted' } }],
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: 'activity-quoted' });
+    });
+  });
+
+  describe('resolveInboundReplyTo', () => {
+    it('returns Teams quoted activity id', () => {
+      const replyTo = resolveInboundReplyTo(AgentPlatformEnum.TEAMS, {
+        id: 'msg-1',
+        text: 'reply',
+        author: makeMessage().author,
+        raw: {
+          entities: [{ type: 'quotedReply', quotedReply: { messageId: 'activity-quoted' } }],
+        },
+      } as any);
+
+      expect(replyTo).to.deep.equal({ messageId: 'activity-quoted' });
+    });
+
+    it('returns undefined for Slack (deferred)', () => {
+      const replyTo = resolveInboundReplyTo(AgentPlatformEnum.SLACK, {
+        id: 'msg-1',
+        text: 'reply',
+        author: makeMessage().author,
+        raw: { thread_ts: '123.456' },
+      } as any);
+
+      expect(replyTo).to.equal(undefined);
+    });
+
+    it('returns undefined for Telegram when chat id cannot be resolved', () => {
+      const replyTo = resolveInboundReplyTo(
+        AgentPlatformEnum.TELEGRAM,
+        {
+          id: 'msg-1',
+          text: 'reply',
+          author: makeMessage().author,
+          raw: { reply_to_message: { message_id: 42 } },
+        } as any,
+        'whatsapp:+15551234567'
+      );
+
+      expect(replyTo).to.equal(undefined);
     });
   });
 
