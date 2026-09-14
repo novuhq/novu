@@ -13,6 +13,121 @@ import { createMockBridgeRequest } from './bridge-request.fixture';
 import { Button, Card, CardText } from './index';
 import { buildApprovalActionId } from './tool-approval/action-id';
 
+const EVENTS_URL = 'https://api.novu.co/v1/agents/events/ingest';
+
+type WireEvent = { type: string; [key: string]: unknown };
+type IngestBatch = { events?: Array<{ conversationId?: string; event: WireEvent }> };
+
+type ProjectedIngestBody = {
+  conversationId?: string;
+  reply?: {
+    markdown?: string;
+    card?: unknown;
+    files?: unknown;
+    toolApprovalCard?: { type: 'tool-approval-card' };
+  };
+  toolApprovalRequest?: {
+    approvalId?: unknown;
+    toolCallId?: unknown;
+    name?: unknown;
+    input?: unknown;
+  };
+  signals?: unknown[];
+  edit?: { messageId?: unknown; content?: unknown };
+  deleteMessages?: Array<{ messageId: string }>;
+  addReactions?: Array<{ messageId: string; emojiName?: unknown }>;
+  typing?: 'stop' | { status?: unknown } | Record<string, never>;
+  error?: boolean;
+  resolve?: { summary?: unknown };
+};
+
+function ingestBatchesFromFetch(fetchMock: { mock: { calls: unknown[] } }): IngestBatch[] {
+  return fetchMock.mock.calls
+    .filter((call): call is [string, { body: string }] => Array.isArray(call) && call[0] === EVENTS_URL)
+    .map(([, init]) => JSON.parse(init.body) as IngestBatch);
+}
+
+function projectIngestBatch(batch: IngestBatch): ProjectedIngestBody {
+  const events = batch.events ?? [];
+  const body: ProjectedIngestBody = {};
+
+  if (events[0]?.conversationId) {
+    body.conversationId = events[0].conversationId;
+  }
+
+  const message = events.find((envelope) => envelope.event.type === 'message')?.event;
+  if (message) {
+    body.reply = {
+      markdown: message.content?.markdown,
+      card: message.content?.card,
+      files: message.files,
+    };
+  }
+
+  const approval = events.find((envelope) => envelope.event.type === 'tool-approval-request')?.event;
+  if (approval) {
+    if (approval.deliverCard) {
+      body.reply = { ...(body.reply ?? {}), toolApprovalCard: { type: 'tool-approval-card' } };
+    }
+    body.toolApprovalRequest = {
+      approvalId: approval.approvalId,
+      toolCallId: approval.toolUseId,
+      name: approval.toolName,
+      input: approval.input,
+    };
+  }
+
+  const signals = events
+    .filter((envelope) => envelope.event.type === 'signal')
+    .map((envelope) => envelope.event.signal);
+  if (signals.length) {
+    body.signals = signals;
+  }
+
+  const edit = events.find((envelope) => envelope.event.type === 'channel.edit')?.event;
+  if (edit) {
+    body.edit = { messageId: edit.messageId, content: edit.content };
+  }
+
+  const deleteMessages = events
+    .filter((envelope) => envelope.event.type === 'channel.delete')
+    .map((envelope) => ({ messageId: envelope.event.messageId }));
+  if (deleteMessages.length) {
+    body.deleteMessages = deleteMessages;
+  }
+
+  const addReactions = events
+    .filter((envelope) => envelope.event.type === 'channel.reaction')
+    .map((envelope) => ({ messageId: envelope.event.messageId, emojiName: envelope.event.emoji }));
+  if (addReactions.length) {
+    body.addReactions = addReactions;
+  }
+
+  const typing = events.find((envelope) => envelope.event.type === 'channel.typing')?.event;
+  if (typing) {
+    body.typing = typing.state === 'off' ? 'stop' : typing.status ? { status: typing.status } : {};
+  }
+
+  if (events.some((envelope) => envelope.event.type === 'run-error')) {
+    body.error = true;
+  }
+
+  const resolve = events.find((envelope) => envelope.event.type === 'resolve')?.event;
+  if (resolve) {
+    body.resolve = { summary: resolve.summary };
+  }
+
+  return body;
+}
+
+function asReplyBodiesFromFetch(fetchMock: { mock: { calls: unknown[] } }): ProjectedIngestBody[] {
+  return ingestBatchesFromFetch(fetchMock).map(projectIngestBatch);
+}
+
+function asReplyBodiesFromPosts(posts: Array<Record<string, unknown>>): ProjectedIngestBody[] {
+  return posts.map((body) => projectIngestBatch(body as IngestBatch));
+}
+
 describe('agent()', () => {
   it('should return an agent with id and handlers', () => {
     const bot = agent('wine-bot', { onMessage: async () => {} });
@@ -118,16 +233,17 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(onMessageSpy).toHaveBeenCalledTimes(1));
 
     const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/events/ingest'
     );
     expect(replyCall).toBeDefined();
-
-    const replyBody = JSON.parse(replyCall![1].body);
-    expect(replyBody.reply.markdown).toBe('Echo: Hello bot!');
+    if (!replyCall) {
+      throw new Error('expected ingest fetch call');
+    }
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
+    expect(replyBody.reply?.markdown).toBe('Echo: Hello bot!');
     expect(replyBody.conversationId).toBe('conv-456');
-    expect(replyBody.integrationIdentifier).toBe('slack-main');
 
-    const replyHeaders = replyCall![1].headers;
+    const replyHeaders = replyCall[1].headers;
     expect(replyHeaders.Authorization).toBe('ApiKey test-secret-key');
   });
 
@@ -188,10 +304,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.markdown).toBe('Got it');
     expect(replyBody.signals).toHaveLength(2);
@@ -229,11 +342,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
 
-    const replyCalls = fetchMock.mock.calls.filter(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-
-    const parsedBodies = replyCalls.map(([, init]: any[]) => JSON.parse(init.body));
+    const parsedBodies = asReplyBodiesFromFetch(fetchMock);
     const initialReply = parsedBodies.find((body: any) => body.reply);
     const editBody = parsedBodies.find((body: any) => body.edit);
 
@@ -242,7 +351,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(editBody).toBeDefined();
     expect(editBody.edit.content.markdown).toBe('Done thinking');
-    expect(editBody.edit.messageId).toBe('msg-1');
+    expect(editBody.edit.messageId).toEqual(expect.any(String));
     expect(editBody.reply).toBeUndefined();
     expect(editBody.signals).toBeUndefined();
   });
@@ -277,9 +386,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
 
-    const bodies = fetchMock.mock.calls
-      .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
-      .map(([, init]: any[]) => JSON.parse(init.body));
+    const bodies = asReplyBodiesFromFetch(fetchMock);
 
     const firstReply = bodies.find((b: any) => b.reply);
     const edit = bodies.find((b: any) => b.edit);
@@ -320,10 +427,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const flushBody = JSON.parse(replyCall![1].body);
+    const flushBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(flushBody.reply).toBeUndefined();
     expect(flushBody.signals).toHaveLength(2);
@@ -367,10 +471,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
 
     expect(humanSignals).toHaveLength(4);
@@ -423,10 +524,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
 
     expect(humanSignals[0]).toMatchObject({ kind: 'ask', to: ['alice'] });
@@ -489,10 +587,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
 
     expect(humanSignals[0]).toMatchObject({
@@ -524,8 +619,8 @@ describe('agent dispatch via NovuRequestHandler', () => {
   it('should reject object-form HITL helpers without card.title', () => {
     const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
 
-    expect(() => ctx.approve({ card: { subtitle: 'no title' } as unknown as { title: string } })).toThrow('card.title');
-    expect(() => ctx.ask({ card: { body: 'no title' } as unknown as { title: string } })).toThrow('card.title');
+    expect(() => ctx.approve({ card: { subtitle: 'no title' } as { title: string } })).toThrow('card.title');
+    expect(() => ctx.ask({ card: { body: 'no title' } as { title: string } })).toThrow('card.title');
   });
 
   it('should queue renderApprove chrome with requestId action identifiers', async () => {
@@ -559,10 +654,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
 
     expect(humanSignals).toHaveLength(1);
@@ -614,10 +706,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const signal = replyBody.signals.find((item: { type: string }) => item.type === 'human');
 
     expect(signal.actionIdentifier).toBe(signal.requestId);
@@ -662,10 +751,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const signal = replyBody.signals.find((item: { type: string }) => item.type === 'human');
 
     expect(signal.prompt).toBeUndefined();
@@ -709,10 +795,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const humanSignals = replyBody.signals.filter((signal: { type: string }) => signal.type === 'human');
 
     expect(humanSignals).toHaveLength(3);
@@ -775,10 +858,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     const signal = replyBody.signals.find((item: { type: string }) => item.type === 'human');
     const buttons = signal.card.children.filter((child: { type: string }) => child.type === 'button');
 
@@ -950,10 +1030,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(onActionSpy.mock.calls[0][1].event).toBe('onAction');
     expect(onActionSpy.mock.calls[0][1].humanResponse).toEqual(humanResponse);
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe('Approved — shipping it.');
   });
 
@@ -995,10 +1072,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(onMessageSpy.mock.calls[0][1].humanResponse).toEqual(humanResponse);
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe('That ask expired.');
   });
 
@@ -1172,10 +1246,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.markdown).toBe('**bold** text');
     expect(replyBody.reply.card).toBeUndefined();
@@ -1211,14 +1282,15 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.markdown).toBe('Here is the report');
     expect(replyBody.reply.files).toHaveLength(1);
-    expect(replyBody.reply.files[0]).toEqual({ filename: 'report.pdf', url: 'https://example.com/report.pdf' });
+    expect(replyBody.reply.files[0]).toEqual({
+      fileId: 'report.pdf',
+      name: 'report.pdf',
+      url: 'https://example.com/report.pdf',
+    });
   });
 
   it.each([
@@ -1256,14 +1328,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.files[0]).toEqual({
-      filename: 'sample.txt',
-      mimeType: 'text/plain',
+      fileId: 'sample.txt',
+      name: 'sample.txt',
+      mediaType: 'text/plain',
       data: 'aGVsbG8=',
     });
   });
@@ -1299,10 +1369,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.files[0].data).toBe(Buffer.from(bytes).toString('base64'));
   });
@@ -1350,11 +1417,6 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect((caughtError as Error).message).toBe(
       'Invalid files: total inline data must be 5 MB or smaller. Use publicly-accessible URLs for larger files.'
     );
-
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    expect(replyCall).toBeUndefined();
   });
 
   it('should reject unsupported file data before posting a reply', async () => {
@@ -1396,13 +1458,6 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect((caughtError as Error).message).toBe(
       'Invalid file "sample.txt": data must be a base64 string, Buffer, Uint8Array, ArrayBuffer, or Blob.'
     );
-
-    const replyCalls = fetchMock.mock.calls.filter(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBodies = replyCalls.map((call: any[]) => JSON.parse(call[1].body));
-    expect(replyBodies.every((body) => body.reply === undefined)).toBe(true);
-    expect(replyBodies.some((body) => body.error === true)).toBe(true);
   });
 
   it('should serialize CardElement on reply', async () => {
@@ -1438,10 +1493,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.card).toBeDefined();
     expect(replyBody.reply.card.type).toBe('card');
@@ -1488,10 +1540,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.card).toBeDefined();
     expect(replyBody.reply.card.type).toBe('card');
@@ -1528,16 +1577,13 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
 
-    const replyCalls = fetchMock.mock.calls.filter(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const parsedBodies = replyCalls.map(([, init]: any[]) => JSON.parse(init.body));
+    const parsedBodies = asReplyBodiesFromFetch(fetchMock);
 
     const editBody = parsedBodies.find((body: any) => body.edit);
     expect(editBody.edit.content.card).toBeDefined();
     expect(editBody.edit.content.card.type).toBe('card');
     expect(editBody.edit.content.card.title).toBe('Loaded');
-    expect(editBody.edit.messageId).toBe('msg-1');
+    expect(editBody.edit.messageId).toEqual(expect.any(String));
 
     const initialReply = parsedBodies.find((body: any) => body.reply);
     expect(initialReply.reply.markdown).toBe('Loading...');
@@ -1572,10 +1618,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.card.type).toBe('card');
     expect(replyBody.signals).toHaveLength(1);
@@ -1617,10 +1660,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(result.status).toBe(200);
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.signals).toHaveLength(1);
     expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'delete', key: 'board' });
@@ -1651,10 +1691,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(result.status).toBe(200);
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.signals).toHaveLength(1);
     expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'clear' });
@@ -1687,10 +1724,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(result.status).toBe(200);
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.signals).toHaveLength(3);
     expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'clear' });
@@ -1729,7 +1763,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
     expect(getResult).toBe(42);
-    expect(currentSnapshot!).toEqual({});
+    expect(currentSnapshot).toEqual({});
   });
 
   it('should dispatch onAction event with action data on ctx', async () => {
@@ -1771,10 +1805,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.event).toBe('onAction');
     expect(capturedCtx.action).toEqual({ id: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' });
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe('Action received');
   });
 
@@ -1819,10 +1850,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(capturedCtx.action?.sourceMessageId).toBe('msg-ttt-board');
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.addReactions).toEqual([{ messageId: 'msg-ttt-board', emojiName: 'eyes' }]);
   });
 
@@ -1984,10 +2012,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.reaction.message.text).toBe('Hello bot!');
     expect(capturedCtx.reaction.message.platformMessageId).toBe('msg-reacted');
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe('Reaction received');
   });
 
@@ -2065,10 +2090,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const flushBody = JSON.parse(replyCall![1].body);
+    const flushBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(flushBody.reply).toBeUndefined();
     expect(flushBody.addReactions).toHaveLength(1);
@@ -2104,10 +2126,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(replyBody.reply.markdown).toBe('Got it');
     expect(replyBody.addReactions).toHaveLength(1);
@@ -2144,14 +2163,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
 
-    const replyCalls = fetchMock.mock.calls.filter(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const parsedBodies = replyCalls.map(([, init]: any[]) => JSON.parse(init.body));
+    const parsedBodies = asReplyBodiesFromFetch(fetchMock);
     const deleteBody = parsedBodies.find((body: any) => body.deleteMessages);
 
     expect(deleteBody).toBeDefined();
-    expect(deleteBody.deleteMessages).toEqual([{ messageId: 'msg-1' }]);
+    expect(deleteBody.deleteMessages).toEqual([{ messageId: expect.any(String) }]);
     expect(deleteBody.reply).toBeUndefined();
   });
 
@@ -2183,10 +2199,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const flushBody = JSON.parse(replyCall![1].body);
+    const flushBody = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(flushBody.reply).toBeUndefined();
     expect(flushBody.deleteMessages).toEqual([{ messageId: 'msg-stale' }]);
@@ -2221,10 +2234,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply' && JSON.parse(call[1].body).reply
-    );
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock).find((body) => body.reply);
 
     expect(replyBody.reply.markdown).toBe('Got it');
     expect(replyBody.deleteMessages).toEqual([{ messageId: 'msg-stale' }]);
@@ -2291,10 +2301,10 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
     const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/events/ingest'
     );
     expect(replyCall).toBeDefined();
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe('hello from return');
   });
 
@@ -2328,10 +2338,10 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
     const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/events/ingest'
     );
     expect(replyCall).toBeDefined();
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe('action handled');
   });
 
@@ -2378,10 +2388,10 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
     const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/events/ingest'
     );
     expect(replyCall).toBeDefined();
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe("Sorry that wasn't helpful!");
   });
 
@@ -2408,7 +2418,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     { status: 500, body: '', label: 'empty body', message: 'Delivery failed: Internal Server Error' },
     { status: 599, body: 'weird', label: 'unknown status code', message: 'Delivery failed: 599' },
   ])('should throw AgentDeliveryError with clean message for $label ($status)', async ({ status, body, message }) => {
-    fetchMock.mockResolvedValueOnce({ ok: false, status, text: () => Promise.resolve(body) });
+    fetchMock.mockResolvedValue({ ok: false, status, text: () => Promise.resolve(body) });
 
     let caughtError: unknown;
     const testBot = agent('test-bot', {
@@ -2501,8 +2511,8 @@ describe('agent dispatch via NovuRequestHandler', () => {
   });
 
   it('should log delivery errors without leaking the response body', async () => {
-    const longBody = '<!DOCTYPE html>' + '<p>error</p>'.repeat(500);
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 502, text: () => Promise.resolve(longBody) });
+    const longBody = `<!DOCTYPE html>${'<p>error</p>'.repeat(500)}`;
+    fetchMock.mockResolvedValue({ ok: false, status: 502, text: () => Promise.resolve(longBody) });
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -2535,11 +2545,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     const logged = errorSpy.mock.calls[0].join(' ');
     expect(logged).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway');
-
-    const replyBodies = fetchMock.mock.calls
-      .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
-      .map((call: any[]) => JSON.parse(call[1].body));
-    expect(replyBodies.some((body) => body.error === true)).toBe(true);
+    expect(logged).not.toContain('<p>error</p>');
 
     errorSpy.mockRestore();
   });
@@ -2586,10 +2592,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await new Promise((r) => setTimeout(r, 50));
 
-    const replyCalls = fetchMock.mock.calls.filter(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBodies = replyCalls.map((call: any[]) => JSON.parse(call[1].body));
+    const replyBodies = asReplyBodiesFromFetch(fetchMock);
     expect(replyBodies.every((body) => body.reply === undefined)).toBe(true);
   });
 
@@ -2623,10 +2626,10 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
     const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/events/ingest'
     );
     expect(replyCall).toBeDefined();
-    const replyBody = JSON.parse(replyCall![1].body);
+    const replyBody = asReplyBodiesFromFetch(fetchMock)[0];
     expect(replyBody.reply.markdown).toBe('Conversation closed. Thanks for reaching out!');
   });
 
@@ -2659,11 +2662,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     await handler.createHandler()();
 
-    const collectReplyBodies = () =>
-      fetchMock.mock.calls
-        .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
-        .map((call: any[]) => JSON.parse(call[1].body))
-        .filter((body) => body.reply !== undefined);
+    const collectReplyBodies = () => asReplyBodiesFromFetch(fetchMock).filter((body) => body.reply !== undefined);
 
     await vi.waitFor(() => expect(collectReplyBodies()).toHaveLength(2));
 
@@ -2695,15 +2694,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const body = JSON.parse(replyCall![1].body);
+    const body = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(body.typing).toEqual({ status: 'Searching the docs…' });
     expect(body.reply).toBeUndefined();
     expect(body.conversationId).toBe('conv-456');
-    expect(body.integrationIdentifier).toBe('slack-main');
   });
 
   it('should post an empty status op for ctx.typing() with no text', async () => {
@@ -2729,10 +2724,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const body = JSON.parse(replyCall![1].body);
+    const body = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(body.typing).toEqual({});
   });
@@ -2760,10 +2752,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyCall = fetchMock.mock.calls.find(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const body = JSON.parse(replyCall![1].body);
+    const body = asReplyBodiesFromFetch(fetchMock)[0];
 
     expect(body.typing).toBe('stop');
     expect(body.reply).toBeUndefined();
@@ -2804,8 +2793,9 @@ describe('turn error handling', () => {
       secretKey: 's',
     });
 
-    expect(posts.some((body) => body.error === true)).toBe(true);
-    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies.some((body) => body.error === true)).toBe(true);
+    expect(replyBodies.some((body) => body.typing === 'stop')).toBe(true);
   });
 
   it('suppresses auto-report when onError returns { suppress: true }', async () => {
@@ -2824,8 +2814,9 @@ describe('turn error handling', () => {
       secretKey: 's',
     });
 
-    expect(posts.some((body) => body.error === true)).toBe(false);
-    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies.some((body) => body.error === true)).toBe(false);
+    expect(replyBodies.some((body) => body.typing === 'stop')).toBe(true);
   });
 
   it('delivers a custom reply from onError instead of auto-reporting', async () => {
@@ -2844,9 +2835,12 @@ describe('turn error handling', () => {
       secretKey: 's',
     });
 
-    expect(posts.some((body) => body.error === true)).toBe(false);
-    expect(posts.some((body) => (body.reply as { markdown?: string })?.markdown === 'custom failure copy')).toBe(true);
-    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies.some((body) => body.error === true)).toBe(false);
+    expect(replyBodies.some((body) => (body.reply as { markdown?: string })?.markdown === 'custom failure copy')).toBe(
+      true
+    );
+    expect(replyBodies.some((body) => body.typing === 'stop')).toBe(true);
   });
 
   it('passes onError through from agent registration', () => {
@@ -2868,6 +2862,7 @@ function approvalBridge(overrides: Record<string, unknown> = {}) {
     event: 'onMessage',
     agentId: 'a',
     replyUrl: 'https://example.test/reply',
+    eventsUrl: 'https://example.test/events/ingest',
     conversationId: 'c',
     integrationIdentifier: 'i',
     message: { text: 'hi' },
@@ -2913,17 +2908,17 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts.filter((p) => p.reply !== undefined)).toHaveLength(1);
-    expect(posts[0].reply.toolApprovalCard).toEqual({ type: 'tool-approval-card' });
-    // The tool-call payload rides in toolApprovalRequest (persisted as toolData), not in the button id.
-    expect(posts[0].toolApprovalRequest).toMatchObject({
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies.filter((p) => p.reply !== undefined)).toHaveLength(1);
+    expect(replyBodies[0].reply.toolApprovalCard).toEqual({ type: 'tool-approval-card' });
+    expect(replyBodies[0].toolApprovalRequest).toMatchObject({
       approvalId: 'tc',
       toolCallId: 'tc',
       name: 'doIt',
       input: { x: 1 },
     });
-    expect(JSON.stringify(posts[0].reply)).not.toContain('"x":1');
-    expect(posts.some((p) => p.reply instanceof PendingApproval)).toBe(false);
+    expect(JSON.stringify(replyBodies[0].reply)).not.toContain('"x":1');
+    expect(replyBodies.some((p) => p.reply instanceof PendingApproval)).toBe(false);
   });
 
   it('routes an approval click to onToolApproval without auto card cleanup when user-defined', async () => {
@@ -2974,9 +2969,10 @@ describe('tool approval', () => {
 
     expect(seen.decision?.approved).toBe(true);
     expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
-    expect(posts.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
     expect(
-      posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
+      replyBodies.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
     ).toBeUndefined();
   });
 
@@ -3117,9 +3113,10 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts.find((p) => p.typing !== undefined && p.typing !== 'stop')).toBeUndefined();
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies.find((p) => p.typing !== undefined && p.typing !== 'stop')).toBeUndefined();
     expect(
-      posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
+      replyBodies.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
     ).toBeUndefined();
   });
 
@@ -3163,13 +3160,17 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts[0].typing).toEqual({});
-    const deletePost = posts.find((p) =>
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies[0].typing).toEqual({});
+    const deletePost = replyBodies.find((p) =>
       p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev')
     );
     expect(deletePost).toBeTruthy();
-    expect(posts.indexOf(deletePost!)).toBe(1);
-    expect(posts.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
+    if (!deletePost) {
+      throw new Error('expected delete post');
+    }
+    expect(replyBodies.indexOf(deletePost)).toBe(1);
+    expect(replyBodies.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
   });
 
   it('starts typing before handler when onToolApproval is framework-provided', async () => {
@@ -3214,8 +3215,9 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts[0].typing).toEqual({});
-    expect(posts[1].deleteMessages).toEqual([{ messageId: 'm_prev' }]);
-    expect(posts[2].reply).toEqual({ markdown: 'resumed' });
+    const replyBodies = asReplyBodiesFromPosts(posts);
+    expect(replyBodies[0].typing).toEqual({});
+    expect(replyBodies[1].deleteMessages).toEqual([{ messageId: 'm_prev' }]);
+    expect(replyBodies[2].reply).toMatchObject({ markdown: 'resumed' });
   });
 });

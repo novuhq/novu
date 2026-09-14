@@ -1,6 +1,11 @@
-import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from '@novu/agent-event-protocol';
+import type {
+  AgentEvent,
+  AgentFileRef,
+  AgentMessageContent,
+  AgentQuoteReplyContext,
+  AgentRunOutcome,
+} from '@novu/agent-event-protocol';
 import type { CardElement, ChatElement, Emoji } from 'chat';
-import { AgentDeliveryError } from './agent.errors';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
 import type {
   AddReactionPayload,
@@ -15,18 +20,21 @@ import type {
   AgentNotification,
   AgentPlatformContext,
   AgentReaction,
-  AgentReplyPayload,
+  AgentReplyOptions,
   AgentSubscriber,
   AgentToolCall,
   DeleteMessagePayload,
   FileRef,
+  HumanApproveRenderArgs,
   HumanApproveRenderFn,
   HumanAskApproveOptions,
   HumanAskApproveRenderOptions,
   HumanAskOptions,
+  HumanAskRenderArgs,
   HumanAskRenderFn,
   HumanAskRenderOptions,
   HumanChooseOptions,
+  HumanChooseRenderArgs,
   HumanChooseRenderFn,
   HumanChooseRenderOptions,
   HumanChrome,
@@ -34,10 +42,12 @@ import type {
   HumanOptionInput,
   HumanSignalCard,
   HumanTellOptions,
+  HumanTellRenderArgs,
   HumanTellRenderFn,
   HumanTellRenderOptions,
   MessageContent,
   PendingApproval as PendingApprovalType,
+  QuoteReplyTarget,
   ReplyContent,
   ReplyHandle,
   SentMessageInfo,
@@ -75,12 +85,19 @@ type HumanQueuedOpts = {
 
 type HumanRenderFn = HumanAskRenderFn | HumanApproveRenderFn | HumanChooseRenderFn | HumanTellRenderFn;
 
-function humanChromeFactory(type: HumanChrome['type']) {
-  return (overrides?: Record<string, unknown>) => ({ type, ...overrides });
+type HumanRenderArg = HumanAskRenderArgs | HumanApproveRenderArgs | HumanChooseRenderArgs | HumanTellRenderArgs;
+
+function humanChromeFactory<T extends HumanChrome['type']>(type: T) {
+  return (overrides?: Omit<Extract<HumanChrome, { type: T }>, 'type'>) =>
+    ({ type, ...overrides }) as Extract<HumanChrome, { type: T }>;
 }
 
 /** Per-kind render context (`*Card()` factory + minted `actionIds`) passed to a `{ render }` fn. */
-function buildHumanRenderArg(kind: HumanInteractionKind, requestId: string): Record<string, unknown> {
+function buildHumanRenderArg(kind: 'ask', requestId: string): HumanAskRenderArgs;
+function buildHumanRenderArg(kind: 'approve', requestId: string): HumanApproveRenderArgs;
+function buildHumanRenderArg(kind: 'choose', requestId: string): HumanChooseRenderArgs;
+function buildHumanRenderArg(kind: 'tell', requestId: string): HumanTellRenderArgs;
+function buildHumanRenderArg(kind: HumanInteractionKind, requestId: string): HumanRenderArg {
   switch (kind) {
     case 'ask':
       return { requestId, askCard: humanChromeFactory('human-ask-card') };
@@ -167,6 +184,16 @@ function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
   throw new Error('Invalid reply content — expected markdown or card');
 }
 
+function resolveQuoteReply(target: QuoteReplyTarget): AgentQuoteReplyContext {
+  const messageId = 'platformMessageId' in target ? target.platformMessageId.trim() : target.messageId.trim();
+
+  if (!messageId) {
+    throw new Error('quoteReply requires a non-empty platform message id');
+  }
+
+  return { messageId };
+}
+
 function toAgentFileRefs(files?: FileRef[]): AgentFileRef[] | undefined {
   if (!files?.length) {
     return undefined;
@@ -189,58 +216,6 @@ interface SideEffectsSnapshot {
   addReactions: AddReactionPayload[];
   deleteMessages: DeleteMessagePayload[];
   resolve: { summary?: string } | null;
-}
-
-/**
- * A turn's delivery mechanism. Legacy bridges POST a single `AgentReplyPayload` per action;
- * SDK-native runs emit one or more `AgentEvent`s to the outbox. `AgentContextImpl` selects one
- * implementation per run and delegates to it, instead of branching on the mode at every call site.
- */
-interface TurnTransport {
-  sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null>;
-  /**
-   * Returns `'unaddressable'` when the card was rendered but there is no client-addressable
-   * message handle for it (event mode: the sink owns approval-card rendering, so there is no
-   * id it could later resolve an edit/delete against).
-   */
-  sendApprovalCard(
-    card: ToolApprovalCard,
-    sideEffects: SideEffectsSnapshot
-  ): Promise<SentMessageInfo | null | 'unaddressable'>;
-  editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null>;
-  deleteMessage(messageId: string): Promise<void>;
-  setTyping(op: TypingOp): Promise<void>;
-  flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void>;
-  emitCustom(name: string, data: unknown): Promise<void>;
-  queueRunStart(): void;
-  emitRunFinish(outcome: AgentRunOutcome): Promise<void>;
-  reportTurnError(message?: string): Promise<void>;
-}
-
-function applySideEffects(body: AgentReplyPayload, sideEffects: SideEffectsSnapshot): void {
-  if (sideEffects.toolApprovalRequest) {
-    body.toolApprovalRequest = sideEffects.toolApprovalRequest;
-  }
-
-  if (sideEffects.signals.length) {
-    body.signals = sideEffects.signals;
-  }
-
-  if (sideEffects.toolResults.length) {
-    body.toolResults = sideEffects.toolResults;
-  }
-
-  if (sideEffects.addReactions.length) {
-    body.addReactions = sideEffects.addReactions;
-  }
-
-  if (sideEffects.deleteMessages.length) {
-    body.deleteMessages = sideEffects.deleteMessages;
-  }
-
-  if (sideEffects.resolve) {
-    body.resolve = sideEffects.resolve;
-  }
 }
 
 function toSideEffectEvents(
@@ -294,106 +269,15 @@ function toSideEffectEvents(
   return events;
 }
 
-/** Legacy transport: one POST per turn action against the bridge's `replyUrl`. */
-class LegacyPostTransport implements TurnTransport {
-  constructor(
-    private readonly replyUrl: string,
-    private readonly secretKey: string,
-    private readonly conversationId: string,
-    private readonly integrationIdentifier: string
-  ) {}
-
-  async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
-    const body = this._baseBody();
-    body.reply = reply;
-    applySideEffects(body, sideEffects);
-
-    return this._post(body);
-  }
-
-  async sendApprovalCard(card: ToolApprovalCard, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
-    const body = this._baseBody();
-    body.reply = { toolApprovalCard: card };
-    applySideEffects(body, sideEffects);
-
-    return this._post(body);
-  }
-
-  async editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null> {
-    return this._post({ ...this._baseBody(), edit: { messageId, content: reply } });
-  }
-
-  async deleteMessage(messageId: string): Promise<void> {
-    await this._post({ ...this._baseBody(), deleteMessages: [{ messageId }] });
-  }
-
-  async setTyping(op: TypingOp): Promise<void> {
-    await this._post({ ...this._baseBody(), typing: op });
-  }
-
-  async flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void> {
-    const body = this._baseBody();
-    applySideEffects(body, sideEffects);
-    await this._post(body);
-  }
-
-  // Custom events and run lifecycle hooks are SDK-native concepts; legacy bridges have no equivalent.
-  async emitCustom(): Promise<void> {}
-
-  queueRunStart(): void {}
-
-  async emitRunFinish(): Promise<void> {}
-
-  async reportTurnError(): Promise<void> {
-    await this._post({ ...this._baseBody(), error: true });
-  }
-
-  private _baseBody(): AgentReplyPayload {
-    return { conversationId: this.conversationId, integrationIdentifier: this.integrationIdentifier };
-  }
-
-  private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
-    const response = await fetch(this.replyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `ApiKey ${this.secretKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new AgentDeliveryError(response.status, text);
-    }
-
-    const raw = await response.text().catch(() => '');
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as { data?: Record<string, unknown> } | Record<string, unknown>;
-      const envelope = (parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed) as
-        | Record<string, unknown>
-        | undefined;
-
-      if (envelope && typeof envelope.messageId === 'string' && typeof envelope.platformThreadId === 'string') {
-        return { messageId: envelope.messageId, platformThreadId: envelope.platformThreadId };
-      }
-    } catch {
-      // flush-only responses return null or an empty body; tolerate and fall through.
-    }
-
-    return null;
-  }
-}
-
-/** SDK-native transport: batches `AgentEvent`s through the run's outbox. */
-class EventOutboxTransport implements TurnTransport {
+/** Maps handler delivery calls onto `AgentEvent`s and flushes them through the run outbox. */
+class EventOutboxTransport {
   constructor(private readonly outbox: AgentEventOutbox) {}
 
-  async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
+  async sendReply(
+    reply: ReplyContent,
+    sideEffects: SideEffectsSnapshot,
+    quoteReply?: AgentQuoteReplyContext
+  ): Promise<SentMessageInfo | null> {
     const messageId = mint('msg');
     const events = toSideEffectEvents(sideEffects);
     events.push({
@@ -402,6 +286,7 @@ class EventOutboxTransport implements TurnTransport {
       messageId,
       content: toAgentMessageContent(reply),
       files: toAgentFileRefs(reply.files),
+      ...(quoteReply ? { quoteReply } : {}),
     });
     await this._emitAndFlush(events);
 
@@ -485,7 +370,7 @@ class ReplyHandleImpl implements ReplyHandle {
   constructor(
     messageId: string,
     platformThreadId: string,
-    private readonly transport: TurnTransport
+    private readonly transport: EventOutboxTransport
   ) {
     this.messageId = messageId;
     this.platformThreadId = platformThreadId;
@@ -564,7 +449,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
-  private readonly _transport: TurnTransport;
+  private readonly _transport: EventOutboxTransport;
   private _pendingHumanRenders: Array<() => Promise<void>> = [];
 
   constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
@@ -582,17 +467,20 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.humanResponse = request.humanResponse ?? null;
 
     this._toolApprovalConfig = toolApprovalConfig;
-    this._transport = request.eventsUrl
-      ? new EventOutboxTransport(
-          new AgentEventOutbox({
-            eventsUrl: request.eventsUrl,
-            secretKey,
-            conversationId: request.conversationId,
-            agentId: request.agentId,
-            turnId: request.deliveryId,
-          })
-        )
-      : new LegacyPostTransport(request.replyUrl, secretKey, request.conversationId, request.integrationIdentifier);
+    const eventsUrl = request.eventsUrl;
+    if (!eventsUrl) {
+      throw new Error('AgentBridgeRequest.eventsUrl is required');
+    }
+
+    this._transport = new EventOutboxTransport(
+      new AgentEventOutbox({
+        eventsUrl,
+        secretKey,
+        conversationId: request.conversationId,
+        agentId: request.agentId,
+        turnId: request.deliveryId,
+      })
+    );
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
 
@@ -634,14 +522,15 @@ export class AgentContextImpl implements AgentRuntimeContext {
   }
 
   asMessageContext(): AgentMessageContext {
-    return this as unknown as AgentMessageContext;
+    return this as AgentMessageContext;
   }
 
-  async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+  async reply(content: MessageContent, options?: AgentReplyOptions): Promise<ReplyHandle> {
     await this.materializePendingHumanRenders();
     const reply = await serializeContent(content, options?.files);
     const sideEffects = this._drainSideEffectsSnapshot();
-    const info = await this._transport.sendReply(reply, sideEffects);
+    const quoteReply = options?.quoteReply ? resolveQuoteReply(options.quoteReply) : undefined;
+    const info = await this._transport.sendReply(reply, sideEffects, quoteReply);
 
     if (!info) {
       throw new Error('Agent reply did not return a message handle');
@@ -653,17 +542,9 @@ export class AgentContextImpl implements AgentRuntimeContext {
   async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
     await this.materializePendingHumanRenders();
     const sideEffects = this._drainSideEffectsSnapshot();
-    const info = await this._transport.sendApprovalCard(card, sideEffects);
+    await this._transport.sendApprovalCard(card, sideEffects);
 
-    if (info === 'unaddressable') {
-      return new NoopReplyHandle();
-    }
-
-    if (!info) {
-      throw new Error('Agent approval card reply did not return a message handle');
-    }
-
-    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this._transport);
+    return new NoopReplyHandle();
   }
 
   /** @internal Build a handle to an already-posted message (used to resume an approval). */
@@ -813,10 +694,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private queueRendered(kind: HumanInteractionKind, opts: HumanQueuedOpts | undefined, render: HumanRenderFn): string {
     const requestId = mint('hr');
     this._pendingHumanRenders.push(async () => {
-      const invoke = render as unknown as (
-        arg: Record<string, unknown>
-      ) => HumanChrome | ChatElement | Promise<HumanChrome | ChatElement>;
-      const rendered = await invoke(buildHumanRenderArg(kind, requestId));
+      const rendered = await this.invokeHumanRender(kind, requestId, render);
       if (isHumanChrome(rendered)) {
         this.pushRenderedChrome(kind, requestId, rendered, opts);
 
@@ -827,6 +705,28 @@ export class AgentContextImpl implements AgentRuntimeContext {
     });
 
     return requestId;
+  }
+
+  private invokeHumanRender(
+    kind: HumanInteractionKind,
+    requestId: string,
+    render: HumanRenderFn
+  ): Promise<HumanChrome | ChatElement> {
+    switch (kind) {
+      case 'ask':
+        return Promise.resolve((render as HumanAskRenderFn)(buildHumanRenderArg('ask', requestId)));
+      case 'approve':
+        return Promise.resolve((render as HumanApproveRenderFn)(buildHumanRenderArg('approve', requestId)));
+      case 'choose':
+        return Promise.resolve((render as HumanChooseRenderFn)(buildHumanRenderArg('choose', requestId)));
+      case 'tell':
+        return Promise.resolve((render as HumanTellRenderFn)(buildHumanRenderArg('tell', requestId)));
+      default: {
+        const exhaustive: never = kind;
+
+        return Promise.resolve(exhaustive);
+      }
+    }
   }
 
   private pushRenderedChrome(

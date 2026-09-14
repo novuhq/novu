@@ -14,7 +14,7 @@ import {
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
 import { ENDPOINT_TYPES, isDashboardWebChatSubscriberId } from '@novu/shared';
-import type { CardElement, EmojiValue, Message, Thread } from 'chat';
+import type { CardElement, EmojiValue, Message, MessageContext, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
@@ -35,6 +35,7 @@ import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
+import { parseApprovalReplyVerdict } from '../../shared/tool-approval/reply-based-approval';
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
@@ -131,6 +132,44 @@ function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement 
       },
     ],
   };
+}
+
+/**
+ * Chat SDK burst locks are scoped to the thread/channel, not the author (see
+ * `getLockKey`), so a burst can hold messages from different senders — multiple
+ * participants in a subscribed Slack/Teams thread, or anyone in a Telegram/WhatsApp
+ * group (channel-scoped lock by default). Subscriber resolution, tool-approval actor
+ * identity, and persistence all key off the latest message's author, so a different
+ * author's text/attachments must never be folded in — that would let one participant's
+ * message run under another's identity and permissions.
+ *
+ * A lone whole-message reply verdict (e.g. "yes") is also kept as-is rather than
+ * folded: `parseApprovalReplyVerdict` only recognizes an exact match, so combining it
+ * with adjacent text would silently drop a pending tool approval.
+ */
+function foldInboundBurst(message: Message, messageContext?: MessageContext): void {
+  if (!messageContext?.skipped?.length) {
+    return;
+  }
+
+  const sameAuthor = messageContext.skipped.filter((item) => item.author.userId === message.author.userId);
+  if (sameAuthor.length === 0) {
+    return;
+  }
+
+  const burst = [...sameAuthor, message];
+  const verdict = burst.find((item) => parseApprovalReplyVerdict(item.text) !== null);
+  if (verdict) {
+    message.text = verdict.text;
+
+    return;
+  }
+
+  message.text = burst
+    .map((item) => item.text ?? '')
+    .filter((text) => text.trim().length > 0)
+    .join('\n\n');
+  message.attachments = burst.flatMap((item) => item.attachments ?? []);
 }
 
 function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
@@ -281,8 +320,8 @@ export class AgentInboundHandler implements OnModuleInit {
 
   onModuleInit() {
     this.inboundDispatcher.registerInboundCallbacks({
-      onMessage: (agentId, config, thread, message) =>
-        this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE),
+      onMessage: (agentId, config, thread, message, messageContext) =>
+        this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE, messageContext),
       onAction: (agentId, config, thread, action, userId, rawEvent) =>
         this.handleAction(agentId, config, thread, action, userId, rawEvent),
       onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
@@ -294,109 +333,25 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     message: Message,
-    event: AgentEventEnum
+    event: AgentEventEnum,
+    messageContext?: MessageContext
   ): Promise<void> {
-    if (await this.consumeTelegramStartLink(agentId, config, thread, message)) {
+    if (await this.consumeTelegramStartLink(agentId, config, thread, message, messageContext)) {
       return;
     }
+
+    foldInboundBurst(message, messageContext);
 
     if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
       return;
     }
 
-    const emailAuthRaw = config.platform === AgentPlatformEnum.EMAIL ? asRecord(message.raw) : undefined;
-    const isVerifiedEmailSender =
-      config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
-
-    // Open-access agents may lookup-or-provision; restricted stay lookup-only.
-    // Keyless email demos stay lookup-only until tool approval.
-    const telegramChatId = config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined;
-    const canAutoProvision = shouldAutoProvisionInbound({
-      platform: config.platform,
-      subscriberAccess: config.subscriberAccess,
-      isManaged: config.isManaged,
-      isKeyless: config.isKeyless,
-      isTelegramDm: telegramChatId != null && telegramChatId === message.author.userId,
-    });
-
-    let resolution: SubscriberResolution;
-    try {
-      if (!isVerifiedEmailSender) {
-        this.logger.warn(
-          {
-            agentId,
-            organizationId: config.organizationId,
-            environmentId: config.environmentId,
-            fromAddress: message.author.userId,
-            dkim: emailAuthRaw?.dkim,
-            spf: emailAuthRaw?.spf,
-            messageId: message.id,
-            subscriberAccess: config.subscriberAccess,
-            isKeyless: config.isKeyless,
-            canAutoProvision,
-          },
-          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
-        );
-        resolution = { outcome: 'not_found' };
-      } else if (canAutoProvision) {
-        resolution = await this.subscriberResolver.resolveOrProvision({
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-          platform: config.platform,
-          platformUserId: message.author.userId,
-          integrationIdentifier: config.integrationIdentifier,
-          agentIdentifier: config.agentIdentifier,
-          authorFullName: message.author.fullName,
-          authorUserName: message.author.userName,
-          // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
-          authorIsBot: message.author.isBot === true,
-          // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
-          // records which (possibly external customer) tenant the user belongs to.
-          platformTenantId:
-            config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
-        });
-      } else {
-        resolution = await this.resolveSubscriber({
-          agentId,
-          config,
-          platformUserId: message.author.userId,
-          operation: 'resolve-subscriber',
-          authorIsBot: message.author.isBot === true,
-        });
-      }
-    } catch (err) {
-      if (err instanceof BotAuthorSkippedError) {
-        this.logger.debug(
-          `[agent:${agentId}] Inbound from bot author ${config.platform}:${message.author.userId} skipped without dispatch`
-        );
-
-        return;
-      }
-
-      if (err instanceof ConnectOrgSubscriberCapExceededError) {
-        this.logger.warn(
-          { agentId, organizationId: config.organizationId, count: err.count, limit: err.limit },
-          'Connect org at auto-provisioned subscriber cap — posting tier-upgrade card and skipping dispatch.'
-        );
-        await this.postCapacityReachedReply(agentId, config, thread, message);
-
-        return;
-      }
-
-      /**
-       * Only `resolveOrProvision` on open-access Slack / Teams / Telegram /
-       * email / WhatsApp / Sendblue can reach here - the `resolveSubscriber` read path
-       * maps its own failures to an `error` outcome internally and never throws.
-       * For auto-provision platforms an unknown error means we don't know the
-       * subscriber state, so we keep dispatch off and surface the failure rather
-       * than silently degrading to a PLATFORM_USER participant the
-       * removed-anonymous-state contract was meant to eliminate.
-       */
-      captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
-
-      throw err;
+    const inboundSubscriber = await this.resolveInboundSubscriber(agentId, config, thread, message);
+    if (!inboundSubscriber) {
+      return;
     }
 
+    const { resolution, isVerifiedEmailSender } = inboundSubscriber;
     const subscriberId = getResolvedSubscriberId(resolution);
     const isDashboardTester = isDashboardWebChatSubscriberId(subscriberId);
 
@@ -473,26 +428,206 @@ export class AgentInboundHandler implements OnModuleInit {
       resolution: workflowOriginResolution,
     });
 
-    if (config.isKeyless) {
-      const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
-
-      if (!aiEnabled) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation);
-
-        return;
-      }
-
-      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
-        return;
-      }
-
-      if (await this.isKeylessDemoCapReached(config, conversation._id)) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation);
-
-        return;
-      }
+    if (await this.maybeStopKeylessInbound(agentId, config, thread, conversation)) {
+      return;
     }
 
+    await this.dispatchInboundTurn({
+      agentId,
+      config,
+      thread,
+      message,
+      event,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      resolution,
+      isVerifiedEmailSender,
+      workflowOrigin,
+    });
+  }
+
+  /**
+   * Record `connectedAt` the first time a real user messages the agent on this
+   * integration. Gated on a genuine inbound message (the caller has already
+   * filtered bot-authored events via `BotAuthorSkippedError`) so the agent's own
+   * proactive messages — e.g. the post-install welcome DM, which Slack echoes
+   * back to our webhook — never mark the integration connected. The conditional
+   * `connectedAt: null` filter makes the write idempotent and fires the
+   * analytics event exactly once. Placeholder epoch timestamps are treated as
+   * unconnected so they can be self-healed on the next genuine inbound message.
+   * Fail-soft: connection bookkeeping must never crash the inbound webhook.
+   */
+  private async markIntegrationConnectedOnFirstMessage(agentId: string, config: ResolvedAgentConfig): Promise<void> {
+    try {
+      const connectedAt = new Date();
+      const { modified } = await this.agentIntegrationRepository.updateOne(
+        {
+          _environmentId: config.environmentId,
+          _organizationId: config.organizationId,
+          _agentId: agentId,
+          _integrationId: config.integrationId,
+          ...agentLinkAwaitingInboundConnectionFilter(),
+        },
+        { $set: { connectedAt } }
+      );
+
+      if (modified === 0) {
+        return;
+      }
+
+      trackAgentIntegrationFirstWebhook(this.analyticsService, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        agentId,
+        agentIdentifier: config.agentIdentifier,
+        integrationIdentifier: config.integrationIdentifier,
+        platform: config.platform,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to mark integration connected on first user message`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'mark-integration-connected',
+        agentId,
+      });
+    }
+  }
+
+  private async resolveInboundSubscriber(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<{ resolution: SubscriberResolution; isVerifiedEmailSender: boolean } | null> {
+    const emailAuthRaw = config.platform === AgentPlatformEnum.EMAIL ? asRecord(message.raw) : undefined;
+    const isVerifiedEmailSender =
+      config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
+
+    // Open-access agents may lookup-or-provision; restricted stay lookup-only.
+    // Keyless email demos stay lookup-only until tool approval.
+    const telegramChatId = config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined;
+    const canAutoProvision = shouldAutoProvisionInbound({
+      platform: config.platform,
+      subscriberAccess: config.subscriberAccess,
+      isManaged: config.isManaged,
+      isKeyless: config.isKeyless,
+      isTelegramDm: telegramChatId != null && telegramChatId === message.author.userId,
+    });
+
+    try {
+      if (!isVerifiedEmailSender) {
+        this.logger.warn(
+          {
+            agentId,
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            fromAddress: message.author.userId,
+            dkim: emailAuthRaw?.dkim,
+            spf: emailAuthRaw?.spf,
+            messageId: message.id,
+            subscriberAccess: config.subscriberAccess,
+            isKeyless: config.isKeyless,
+            canAutoProvision,
+          },
+          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+        );
+
+        return { resolution: { outcome: 'not_found' }, isVerifiedEmailSender };
+      }
+
+      if (canAutoProvision) {
+        return {
+          resolution: await this.subscriberResolver.resolveOrProvision({
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+            platform: config.platform,
+            platformUserId: message.author.userId,
+            integrationIdentifier: config.integrationIdentifier,
+            agentIdentifier: config.agentIdentifier,
+            authorFullName: message.author.fullName,
+            authorUserName: message.author.userName,
+            // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
+            authorIsBot: message.author.isBot === true,
+            // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
+            // records which (possibly external customer) tenant the user belongs to.
+            platformTenantId:
+              config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
+          }),
+          isVerifiedEmailSender,
+        };
+      }
+
+      return {
+        resolution: await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId: message.author.userId,
+          operation: 'resolve-subscriber',
+          authorIsBot: message.author.isBot === true,
+        }),
+        isVerifiedEmailSender,
+      };
+    } catch (err) {
+      if (err instanceof BotAuthorSkippedError) {
+        this.logger.debug(
+          `[agent:${agentId}] Inbound from bot author ${config.platform}:${message.author.userId} skipped without dispatch`
+        );
+
+        return null;
+      }
+
+      if (err instanceof ConnectOrgSubscriberCapExceededError) {
+        this.logger.warn(
+          { agentId, organizationId: config.organizationId, count: err.count, limit: err.limit },
+          'Connect org at auto-provisioned subscriber cap — posting tier-upgrade card and skipping dispatch.'
+        );
+        await this.postCapacityReachedReply(agentId, config, thread, message);
+
+        return null;
+      }
+
+      /**
+       * Only `resolveOrProvision` on open-access Slack / Teams / Telegram /
+       * email / WhatsApp / Sendblue can reach here - the `resolveSubscriber` read path
+       * maps its own failures to an `error` outcome internally and never throws.
+       * For auto-provision platforms an unknown error means we don't know the
+       * subscriber state, so we keep dispatch off and surface the failure rather
+       * than silently degrading to a PLATFORM_USER participant the
+       * removed-anonymous-state contract was meant to eliminate.
+       */
+      captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
+
+      throw err;
+    }
+  }
+
+  private async dispatchInboundTurn(args: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    thread: Thread;
+    message: Message;
+    event: AgentEventEnum;
+    conversation: ConversationEntity;
+    platformThreadId: string;
+    subscriberId: string | null;
+    resolution: SubscriberResolution;
+    isVerifiedEmailSender: boolean;
+    workflowOrigin: Awaited<ReturnType<WorkflowOriginService['resolveForTurn']>>;
+  }): Promise<void> {
+    const {
+      agentId,
+      config,
+      thread,
+      message,
+      event,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      isVerifiedEmailSender,
+      workflowOrigin,
+    } = args;
+    let { resolution } = args;
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
 
@@ -589,51 +724,35 @@ export class AgentInboundHandler implements OnModuleInit {
     await runtime.dispatch(turn);
   }
 
-  /**
-   * Record `connectedAt` the first time a real user messages the agent on this
-   * integration. Gated on a genuine inbound message (the caller has already
-   * filtered bot-authored events via `BotAuthorSkippedError`) so the agent's own
-   * proactive messages — e.g. the post-install welcome DM, which Slack echoes
-   * back to our webhook — never mark the integration connected. The conditional
-   * `connectedAt: null` filter makes the write idempotent and fires the
-   * analytics event exactly once. Placeholder epoch timestamps are treated as
-   * unconnected so they can be self-healed on the next genuine inbound message.
-   * Fail-soft: connection bookkeeping must never crash the inbound webhook.
-   */
-  private async markIntegrationConnectedOnFirstMessage(agentId: string, config: ResolvedAgentConfig): Promise<void> {
-    try {
-      const connectedAt = new Date();
-      const { modified } = await this.agentIntegrationRepository.updateOne(
-        {
-          _environmentId: config.environmentId,
-          _organizationId: config.organizationId,
-          _agentId: agentId,
-          _integrationId: config.integrationId,
-          ...agentLinkAwaitingInboundConnectionFilter(),
-        },
-        { $set: { connectedAt } }
-      );
-
-      if (modified === 0) {
-        return;
-      }
-
-      trackAgentIntegrationFirstWebhook(this.analyticsService, {
-        organizationId: config.organizationId,
-        environmentId: config.environmentId,
-        agentId,
-        agentIdentifier: config.agentIdentifier,
-        integrationIdentifier: config.integrationIdentifier,
-        platform: config.platform,
-      });
-    } catch (err) {
-      this.logger.warn(err, `[agent:${agentId}] Failed to mark integration connected on first user message`);
-      captureAgentWarning(err, {
-        component: 'agent-inbound-handler',
-        operation: 'mark-integration-connected',
-        agentId,
-      });
+  private async maybeStopKeylessInbound(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    conversation: ConversationEntity
+  ): Promise<boolean> {
+    if (!config.isKeyless) {
+      return false;
     }
+
+    const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
+
+    if (!aiEnabled) {
+      await this.postKeylessSignupCta(agentId, config, thread, conversation);
+
+      return true;
+    }
+
+    if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
+      return true;
+    }
+
+    if (await this.isKeylessDemoCapReached(config, conversation._id)) {
+      await this.postKeylessSignupCta(agentId, config, thread, conversation);
+
+      return true;
+    }
+
+    return false;
   }
 
   /** Telegram `/start <code>` is control input; when present it is always consumed here. */
@@ -641,18 +760,21 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    message: Message
+    message: Message,
+    messageContext?: MessageContext
   ): Promise<boolean> {
     if (config.platform !== AgentPlatformEnum.TELEGRAM) {
       return false;
     }
 
-    const startToken = extractTelegramStartToken(message.text);
-    if (!startToken) {
-      return false;
+    for (const inbound of [...(messageContext?.skipped ?? []), message]) {
+      const startToken = extractTelegramStartToken(inbound.text);
+      if (startToken) {
+        return this.handleTelegramSubscriberLink(agentId, config, thread, inbound, startToken);
+      }
     }
 
-    return this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
+    return false;
   }
 
   /**

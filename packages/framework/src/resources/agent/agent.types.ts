@@ -343,6 +343,30 @@ export interface FileRef {
  */
 export type MessageContent = string | ChatElement;
 
+/** Platform message id or an inbound message to quote in the outbound reply. */
+export type QuoteReplyTarget = { messageId: string } | Pick<AgentMessage, 'platformMessageId'>;
+
+export interface AgentReplyOptions {
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+/**
+ * Wrapper for handler return values that need delivery options beyond bare content.
+ *
+ * @example
+ *   return { content: 'Done', quoteReply: message };
+ */
+export interface AgentHandlerReply {
+  content: MessageContent;
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+export function isAgentHandlerReply(value: unknown): value is AgentHandlerReply {
+  return typeof value === 'object' && value !== null && 'content' in value && !('type' in value);
+}
+
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
   markdown?: string;
@@ -577,8 +601,11 @@ export interface AgentHandlerContext {
    *   await ctx.reply('Here is your report', {
    *     files: [{ filename: 'report.pdf', url: 'https://...' }],
    *   });
+   *
+   * @example quote-reply to the triggering inbound message
+   *   await ctx.reply('answer', { quoteReply: message });
    */
-  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  reply(content: MessageContent, options?: AgentReplyOptions): Promise<ReplyHandle>;
   /**
    * Gate tool calls that need user approval before they run.
    *
@@ -775,7 +802,7 @@ export interface AgentHandlers {
    * Return a string or JSX card to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
+  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user adds or removes an emoji reaction to a message.
    *
@@ -784,7 +811,10 @@ export interface AgentHandlers {
    *
    * Return a string or card to post a reply, or return nothing to silently acknowledge.
    */
-  onReaction?: (reaction: AgentReaction, ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
+  onReaction?: (
+    reaction: AgentReaction,
+    ctx: AgentReactionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user clicks a `<Button>` or other interactive element.
    *
@@ -794,7 +824,7 @@ export interface AgentHandlers {
    *
    * Return a string or card to reply, or return nothing to silently acknowledge the click.
    */
-  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires after `ctx.resolve()` is called and the conversation is marked resolved.
    * Use for post-resolution side-effects (e.g. triggering a follow-up workflow).
@@ -802,7 +832,7 @@ export interface AgentHandlers {
    * @param ctx - Conversation context. Access subscriber and conversation via
    *   `ctx.subscriber` and `ctx.conversation`.
    */
-  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user approves or denies a tool call you previously gated with
    * `ctx.toolApproval.request()`.
@@ -813,7 +843,10 @@ export interface AgentHandlers {
    * Run the tool (or skip it), then return a reply or call `ctx.reply()` directly.
    * Register this handler whenever you call `ctx.toolApproval.request()` in `onMessage`.
    */
-  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onToolApproval?: (
+    decision: ToolApprovalDecision,
+    ctx: AgentActionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Optional turn failure handler. Return `{ suppress: true }` to skip user notification,
    * return message content for a custom user reply, or return nothing to auto-report
@@ -830,7 +863,7 @@ export interface AgentHandlers {
 }
 
 export type AgentErrorSuppress = { suppress: true };
-export type AgentErrorResult = MessageContent | void | AgentErrorSuppress;
+export type AgentErrorResult = MessageContent | AgentHandlerReply | void | AgentErrorSuppress;
 
 export function isAgentErrorSuppress(result: AgentErrorResult | undefined): result is AgentErrorSuppress {
   return typeof result === 'object' && result !== null && 'suppress' in result && result.suppress === true;

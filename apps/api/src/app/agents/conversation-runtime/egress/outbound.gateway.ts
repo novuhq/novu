@@ -81,6 +81,7 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
+  quoteReply?: { messageId: string };
 };
 
 /**
@@ -345,7 +346,7 @@ export class OutboundGateway {
     );
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      thread.post(postArg)
+      this.deliverThreadMessage(thread, platform, postArg, options?.quoteReply?.messageId)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -366,10 +367,31 @@ export class OutboundGateway {
       return postArg;
     }
 
-    const base = typeof postArg === 'string' ? { raw: postArg } : postArg;
-    const withMessageId: AdapterPostableMessage & { messageId: string } = { ...base, messageId: preferredMessageId };
+    const envelope = typeof postArg === 'string' ? { markdown: postArg } : postArg;
 
-    return withMessageId;
+    return Object.assign({}, envelope, { messageId: preferredMessageId });
+  }
+
+  private async deliverThreadMessage(
+    thread: Thread,
+    platform: string,
+    postArg: AdapterPostableMessage,
+    quoteMessageId?: string
+  ): Promise<{ id: string; threadId: string }> {
+    const messageId = quoteMessageId?.trim();
+    if (messageId) {
+      try {
+        return await thread.reply(messageId, postArg);
+      } catch (err) {
+        if (err instanceof Error && err.name === 'NotImplementedError') {
+          this.logger.debug({ platform }, 'quote-reply not supported by adapter; falling back to post');
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    return thread.post(postArg);
   }
 
   async startTypingInConversation(
