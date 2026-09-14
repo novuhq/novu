@@ -46,14 +46,6 @@ import { StandardWorker } from './standard.worker';
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
 
-const mockFeatureFlagsService = {
-  getFlag: async () => false,
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
-} as unknown as CommunityOrganizationRepository;
-
 const mockSqsService = {
   getQueueUrl: () => undefined,
   getProducer: () => undefined,
@@ -136,8 +128,6 @@ describe('Standard Worker', () => {
     standardQueueService = new StandardQueueService(
       workflowInMemoryProviderService,
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger,
       mockSchedulerService
     );

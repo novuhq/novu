@@ -118,7 +118,7 @@ export class MarkMessageAsByMark {
       return;
     }
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: eventMessage,

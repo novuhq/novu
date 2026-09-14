@@ -1,9 +1,7 @@
 import { Test } from '@nestjs/testing';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { IWebSocketJobDto } from '../../dtos';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
 import { SqsService } from '../sqs';
@@ -26,14 +24,6 @@ const mockSqsService = {
   sendBulk: jest.fn(),
 } as unknown as SqsService;
 
-const mockFeatureFlagsService = {
-  getFlag: jest.fn(),
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: jest.fn(),
-} as unknown as CommunityOrganizationRepository;
-
 const mockLogger = {
   setContext: jest.fn(),
   debug: jest.fn(),
@@ -49,8 +39,6 @@ describe('WebSockets Queue service', () => {
         new WorkflowInMemoryProviderService(),
         mockSocketWorkerService,
         mockSqsService,
-        mockFeatureFlagsService,
-        mockOrganizationRepository,
         mockLogger
       );
       await webSocketsQueueService.queue.obliterate();
@@ -165,8 +153,6 @@ describe('WebSockets Queue service', () => {
         new WorkflowInMemoryProviderService(),
         mockSocketWorkerService,
         mockSqsService,
-        mockFeatureFlagsService,
-        mockOrganizationRepository,
         mockLogger
       );
       await webSocketsQueueService.queue.obliterate();

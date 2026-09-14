@@ -1,10 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
 import { SqsService } from '../sqs';
@@ -18,18 +16,9 @@ export class WebSocketsQueueService extends QueueBaseService {
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private socketWorkerService: SocketWorkerService,
     sqsService: SqsService,
-    featureFlagsService: FeatureFlagsService,
-    organizationRepository: CommunityOrganizationRepository,
     logger: PinoLogger
   ) {
-    super(
-      JobTopicNameEnum.WEB_SOCKETS,
-      new BullMqService(workflowInMemoryProviderService),
-      sqsService,
-      featureFlagsService,
-      organizationRepository,
-      logger
-    );
+    super(JobTopicNameEnum.WEB_SOCKETS, new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     Logger.log({ topic: this.topic }, 'Creating queue', LOG_CONTEXT);
 
@@ -37,7 +26,41 @@ export class WebSocketsQueueService extends QueueBaseService {
     this.logger.setContext(LOG_CONTEXT);
   }
 
-  public async add(data: IWebSocketJobDto) {
+  /** Logs and drops any failure from `operation`. */
+  private async bestEffort(operation: () => Promise<void>, context: Record<string, unknown>): Promise<void> {
+    try {
+      await operation();
+    } catch (error) {
+      Logger.warn(
+        { ...context, error: error instanceof Error ? error.message : String(error) },
+        'Failed to publish socket event, dropping it',
+        LOG_CONTEXT
+      );
+    }
+  }
+
+  /**
+   * Never rejects, unlike every other queue service's `add`.
+   *
+   * Socket events are a live refresh of state that is already persisted, and
+   * several callers fire them without awaiting, so neither the enqueue nor the
+   * direct socket-worker leg is worth failing a caller over. A dropped event
+   * costs a stale badge count until the next fetch; a rejection here would
+   * cost a failed request or an unhandled rejection.
+   */
+  public async add(data: IWebSocketJobDto): Promise<void> {
+    return await this.bestEffort(() => this.publish(data), {
+      event: data.data?.event,
+      userId: data.data?.userId,
+    });
+  }
+
+  /** Never rejects, for the same reason as {@link add}. */
+  public async addBulk(data: IWebSocketBulkJobDto[]): Promise<void> {
+    return await this.bestEffort(() => this.publishBulk(data), { count: data.length });
+  }
+
+  private async publish(data: IWebSocketJobDto): Promise<void> {
     const isSocketWorkerEnabled = await this.socketWorkerService.isEnabled(data.data?._environmentId);
 
     if (isSocketWorkerEnabled && data.data) {
@@ -68,7 +91,7 @@ export class WebSocketsQueueService extends QueueBaseService {
     return await super.add(data);
   }
 
-  public async addBulk(data: IWebSocketBulkJobDto[]): Promise<void> {
+  private async publishBulk(data: IWebSocketBulkJobDto[]): Promise<void> {
     const firstItem = data.find((item) => item.data);
     const isSocketWorkerEnabled = firstItem
       ? await this.socketWorkerService.isEnabled(firstItem.data?._environmentId)

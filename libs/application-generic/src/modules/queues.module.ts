@@ -1,6 +1,7 @@
 import { DynamicModule, Module, OnApplicationShutdown, Provider } from '@nestjs/common';
 import { CommunityOrganizationRepository, MessageRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
+import { hasMetricsBackend, isBullMqEnabled } from '../config';
 import { featureFlagsService } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
@@ -93,7 +94,19 @@ export class QueuesModule implements OnApplicationShutdown {
           DYNAMIC_PROVIDERS.push(SubscriberProcessQueueService, SubscriberProcessQueueHealthIndicator);
           break;
         case JobTopicNameEnum.ACTIVE_JOBS_METRIC:
-          healthIndicators.push(ActiveJobsMetricQueueServiceHealthIndicator);
+          // The gauges it records are BullMQ counters, so the topic follows BullMQ.
+          if (!isBullMqEnabled()) {
+            break;
+          }
+
+          /*
+           * Without a metrics backend `ActiveJobsMetricService` never creates a
+           * worker for this queue, so waiting on its health would gate startup
+           * on a queue nothing consumes.
+           */
+          if (hasMetricsBackend()) {
+            healthIndicators.push(ActiveJobsMetricQueueServiceHealthIndicator);
+          }
           tokenList.push(ActiveJobsMetricQueueService);
           DYNAMIC_PROVIDERS.push(
             ActiveJobsMetricQueueService,
@@ -101,8 +114,10 @@ export class QueuesModule implements OnApplicationShutdown {
             ActiveJobsMetricWorkerService
           );
           break;
-        default:
-          break;
+        default: {
+          const exhaustive: never = entity;
+          throw new Error(`Unhandled job topic in QueuesModule: ${exhaustive}`);
+        }
       }
     }
 
@@ -119,7 +134,13 @@ export class QueuesModule implements OnApplicationShutdown {
       useFactory: (...args: any[]) => {
         return args;
       },
-      inject: healthIndicators,
+      /*
+       * These indicators only assert that the BullMQ client is up. Handing them
+       * to readiness once BullMQ is retired would make
+       * `ReadinessService.enableWorkers` block startup on a backend the
+       * deployment no longer uses.
+       */
+      inject: isBullMqEnabled() ? healthIndicators : [],
     });
 
     return {

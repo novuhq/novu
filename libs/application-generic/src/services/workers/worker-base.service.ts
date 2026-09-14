@@ -1,5 +1,6 @@
 import { BadRequestException, HttpException, Logger, OnModuleDestroy } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
+import { isBullMqEnabled } from '../../config/queue-backend';
 import {
   getSqsDefaultBatchSize,
   getSqsDefaultConcurrency,
@@ -95,18 +96,29 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   }
 
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions, deferSqsStart = false): void {
+    /*
+     * The SQS consumer starts on queue-URL config alone, independently of
+     * QUEUE_BACKEND. That asymmetry is what makes a rollback safe: dropping
+     * back to `bullmq` leaves the consumer draining whatever SQS still holds
+     * and whatever EventBridge fires later.
+     */
+    if (isBullMqEnabled()) {
+      this.createWorker(processor, options);
+    }
+
     if (typeof processor === 'function') {
-      this.createWorker(this.wrapForBullMQ(processor), options);
       this.initSqsConsumer(processor, options);
 
       if (!deferSqsStart) {
         this.startSqsConsumer();
       }
-    } else {
-      this.createWorker(processor, options);
     }
 
-    Logger.log({ topic: this.topic, sqsEnabled: !!this.sqsConsumer }, 'Worker initialized', LOG_CONTEXT);
+    Logger.log(
+      { topic: this.topic, bullMqEnabled: isBullMqEnabled(), sqsEnabled: !!this.sqsConsumer },
+      'Worker initialized',
+      LOG_CONTEXT
+    );
   }
 
   /*
@@ -131,26 +143,6 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
    */
   public setSqsFailedHandler(handler: SqsFailedHandler): void {
     this.sqsFailedHandler = handler;
-  }
-
-  private shouldSkipProcessing(data: any, jobId: string): boolean {
-    if (data?.skipProcessing) {
-      Logger.debug({ topic: this.topic, jobId }, 'Skipping job - marked for skip during migration', LOG_CONTEXT);
-
-      return true;
-    }
-
-    return false;
-  }
-
-  private wrapForBullMQ(processor: Processor<any, unknown, string>): Processor<any, unknown, string> {
-    return async (job: any) => {
-      if (this.shouldSkipProcessing(job.data, job.id)) {
-        return;
-      }
-
-      return await processor(job);
-    };
   }
 
   public createWorker(processor: WorkerProcessor, options: WorkerOptions): void {
@@ -201,10 +193,6 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   private wrapForSqs(processor: Processor<any, unknown, string>): (data: any, meta: ISqsMessageMeta) => Promise<void> {
     return async (data: any, meta: ISqsMessageMeta): Promise<void> => {
       const jobId = data._id || data.identifier || 'unknown';
-      if (this.shouldSkipProcessing(data, jobId)) {
-        return;
-      }
-
       const jobMock = createSqsJobAdapter(data, meta, this.topic, jobId);
 
       try {
@@ -293,28 +281,38 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
     };
   }
 
-  public async isRunning(): Promise<boolean> {
-    const bullMqRunning = await this.bullMqService.isWorkerRunning();
+  /** True when a BullMQ worker exists; false once QUEUE_BACKEND retires it. */
+  private get hasBullMqWorker(): boolean {
+    return !!this.bullMqService.worker;
+  }
 
-    if (!this.sqsConsumer) {
-      return bullMqRunning;
+  private describeBackends(): string {
+    if (this.hasBullMqWorker) {
+      return this.sqsConsumer ? 'BullMQ and SQS' : 'BullMQ';
     }
 
-    const sqsRunning = this.sqsConsumer.getStatus().isRunning;
+    return this.sqsConsumer ? 'SQS' : 'none';
+  }
 
-    return bullMqRunning || sqsRunning;
+  public async isRunning(): Promise<boolean> {
+    const bullMqRunning = this.hasBullMqWorker && (await this.bullMqService.isWorkerRunning());
+
+    return bullMqRunning || (this.sqsConsumer?.getStatus().isRunning ?? false);
   }
 
   public async isPaused(): Promise<boolean> {
-    const bullMqPaused = await this.bullMqService.isWorkerPaused();
+    const backends: boolean[] = [];
 
-    if (!this.sqsConsumer) {
-      return bullMqPaused;
+    if (this.hasBullMqWorker) {
+      backends.push(await this.bullMqService.isWorkerPaused());
     }
 
-    const sqsPaused = this.sqsConsumer.getStatus().isPaused;
+    if (this.sqsConsumer) {
+      backends.push(this.sqsConsumer.getStatus().isPaused);
+    }
 
-    return bullMqPaused && sqsPaused;
+    // A worker with no backend is not "paused" - there is nothing to resume.
+    return backends.length > 0 && backends.every(Boolean);
   }
 
   public async pause(): Promise<void> {
@@ -324,25 +322,26 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
       await this.sqsConsumer.pause();
     }
 
-    const backends = this.sqsConsumer ? 'BullMQ and SQS' : 'BullMQ';
-    Logger.log({ topic: this.topic, backends }, 'Worker paused', LOG_CONTEXT);
+    Logger.log({ topic: this.topic, backends: this.describeBackends() }, 'Worker paused', LOG_CONTEXT);
   }
 
+  /**
+   * Cold start resumes what `pause` stopped. The SQS consumer is only resumed
+   * when it was actually paused: it starts eagerly from the worker constructor,
+   * so on a normal boot it is already running and a resume here would just warn.
+   */
   public async resume(): Promise<void> {
     await this.bullMqService.resumeWorker();
 
     if (process.env.NODE_ENV === 'test') {
-      Logger.debug({ topic: this.topic }, 'Worker waiting until ready', LOG_CONTEXT);
       await this.bullMqService.waitUntilWorkerIsReady();
-      Logger.debug({ topic: this.topic }, 'Worker is now ready to process jobs', LOG_CONTEXT);
     }
 
-    if (this.sqsConsumer) {
+    if (this.sqsConsumer?.getStatus().isPaused) {
       await this.sqsConsumer.resume();
     }
 
-    const backends = this.sqsConsumer ? 'BullMQ and SQS' : 'BullMQ';
-    Logger.log({ topic: this.topic, backends }, 'Worker resumed', LOG_CONTEXT);
+    Logger.log({ topic: this.topic, backends: this.describeBackends() }, 'Worker resumed', LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {

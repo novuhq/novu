@@ -6,6 +6,7 @@ import {
   InboundParseQueueService,
   PinoLogger,
   RequestLogRepository,
+  SqsService,
   TraceLogRepository,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
@@ -33,7 +34,12 @@ export class InboundMailService {
 
   constructor() {
     this.workflowInMemoryProviderService = new WorkflowInMemoryProviderService();
-    this.inboundParseQueueService = new InboundParseQueueService(this.workflowInMemoryProviderService);
+    /*
+     * Constructed by hand rather than injected - this process has no Nest
+     * container. `SqsService` is inert without a queue url, so `QUEUE_BACKEND`
+     * alone decides whether mail goes to SQS or stays on BullMQ.
+     */
+    this.inboundParseQueueService = new InboundParseQueueService(this.workflowInMemoryProviderService, new SqsService());
   }
 
   async start() {

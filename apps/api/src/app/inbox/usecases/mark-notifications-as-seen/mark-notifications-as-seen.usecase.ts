@@ -159,7 +159,7 @@ export class MarkNotificationsAsSeen {
       }),
     ]);
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: WebSocketEventEnum.UNSEEN,

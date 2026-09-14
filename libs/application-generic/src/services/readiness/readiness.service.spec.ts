@@ -1,4 +1,3 @@
-import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
@@ -6,7 +5,6 @@ import {
 } from '../../health';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
 import { EventBridgeSchedulerService } from '../scheduler';
@@ -19,14 +17,6 @@ let standardQueueService: StandardQueueService;
 let workflowQueueService: WorkflowQueueService;
 let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
-
-const mockFeatureFlagsService = {
-  getFlag: jest.fn(),
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: jest.fn(),
-} as unknown as CommunityOrganizationRepository;
 
 const mockSqsService = {
   getQueueUrl: jest.fn(),
@@ -56,23 +46,13 @@ describe('Readiness Service', () => {
     standardQueueService = new StandardQueueService(
       new WorkflowInMemoryProviderService(),
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger,
       mockSchedulerService
     );
-    workflowQueueService = new WorkflowQueueService(
-      new WorkflowInMemoryProviderService(),
-      mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
-      mockLogger
-    );
+    workflowQueueService = new WorkflowQueueService(new WorkflowInMemoryProviderService(), mockSqsService, mockLogger);
     subscriberProcessQueueService = new SubscriberProcessQueueService(
       new WorkflowInMemoryProviderService(),
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger
     );
 

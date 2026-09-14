@@ -86,7 +86,7 @@ export class MarkAllMessagesAs {
     const eventMessage = mapMarkMessageToWebSocketEvent(command.markAs);
 
     if (eventMessage !== undefined) {
-      this.webSocketsQueueService.add({
+      void this.webSocketsQueueService.add({
         name: 'sendMessage',
         data: {
           event: eventMessage,

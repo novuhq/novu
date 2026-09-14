@@ -197,13 +197,4 @@ describe('WorkerBaseService.wrapForSqs', () => {
     expect(processor).toHaveBeenCalledTimes(1);
     expect(completedHandler).toHaveBeenCalledTimes(1);
   });
-
-  it('skips processing entirely when data.skipProcessing is true', async () => {
-    const worker = new TestableWorker();
-    const processor = jest.fn();
-    const wrapped = worker.invokeWrapForSqs(processor);
-
-    await wrapped({ ...data, skipProcessing: true }, meta);
-    expect(processor).not.toHaveBeenCalled();
-  });
 });

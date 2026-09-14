@@ -1,7 +1,4 @@
-import { CommunityOrganizationRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, QueueBackendMode } from '@novu/shared';
 import { PinoLogger } from '../../logging';
-import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { EventBridgeSchedulerService } from '../scheduler';
 import { SqsService } from '../sqs';
@@ -10,14 +7,6 @@ import { StandardQueueService } from './standard-queue.service';
 let standardQueueService: StandardQueueService;
 
 const ORGANIZATION_ID = 'standard-organization-id';
-
-const mockFeatureFlagsService = {
-  getFlag: jest.fn().mockResolvedValue(QueueBackendMode.BULLMQ),
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: jest.fn().mockResolvedValue({ _id: ORGANIZATION_ID, apiServiceLevel: ApiServiceLevelEnum.FREE }),
-} as unknown as CommunityOrganizationRepository;
 
 const mockSqsService = {
   getQueueUrl: jest.fn(),
@@ -45,8 +34,6 @@ describe('Standard Queue service', () => {
       standardQueueService = new StandardQueueService(
         new WorkflowInMemoryProviderService(),
         mockSqsService,
-        mockFeatureFlagsService,
-        mockOrganizationRepository,
         mockLogger,
         mockSchedulerService
       );
@@ -214,8 +201,6 @@ describe('Standard Queue service', () => {
       standardQueueService = new StandardQueueService(
         new WorkflowInMemoryProviderService(),
         mockSqsService,
-        mockFeatureFlagsService,
-        mockOrganizationRepository,
         mockLogger,
         mockSchedulerService
       );

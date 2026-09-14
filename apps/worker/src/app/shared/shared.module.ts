@@ -22,6 +22,7 @@ import {
   HttpClientService,
   InboundMailRequestLogger,
   InMemoryLRUCacheService,
+  isBullMqEnabled,
   InvalidateCacheService,
   LoggerModule,
   MetricsModule,
@@ -142,7 +143,12 @@ const PROVIDERS = [
   CreateTenant,
   ProcessTenant,
   ...DAL_MODELS,
-  ActiveJobsMetricService,
+  /*
+   * Queue-depth metrics are read off BullMQ counters, so the collector only
+   * exists while BullMQ does. QueuesModule drops the ACTIVE_JOBS_METRIC
+   * providers it depends on under the same condition.
+   */
+  ...(isBullMqEnabled() ? [ActiveJobsMetricService] : []),
   ExecuteBridgeRequest,
   ExecuteFrameworkRequest,
   ExecuteStepResolverRequest,

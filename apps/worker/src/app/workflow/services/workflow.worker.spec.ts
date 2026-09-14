@@ -8,7 +8,6 @@ import {
   WorkflowInMemoryProviderService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 import { WorkflowModule } from '../workflow.module';
@@ -22,14 +21,6 @@ const mockSqsService = {
   send: async () => {},
   sendBulk: async () => {},
 } as unknown as SqsService;
-
-const mockFeatureFlagsService = {
-  getFlag: async () => false,
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
-} as unknown as CommunityOrganizationRepository;
 
 let workflowQueueService: WorkflowQueueService;
 let workflowWorker: WorkflowWorker;
@@ -60,8 +51,6 @@ describe('Workflow Worker', () => {
     workflowQueueService = new WorkflowQueueService(
       workflowInMemoryProviderService,
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       new PinoLogger({})
     );
     await workflowQueueService.queue.obliterate();

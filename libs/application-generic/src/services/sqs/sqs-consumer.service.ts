@@ -242,6 +242,30 @@ class ConcurrencyPool {
 }
 
 export class SqsConsumerService {
+  /**
+   * Every consumer alive in this process, so shutdown can ask "is anything
+   * still being processed?" without threading each consumer through DI.
+   * Consumers are created by `WorkerBaseService` with `new`, and the only
+   * caller that needs the aggregate is `ClickHouseBatchService`, which lives
+   * in a different module tree.
+   */
+  private static readonly liveConsumers = new Set<SqsConsumerService>();
+
+  /** Messages currently being processed across every SQS consumer. */
+  public static getTotalInFlightCount(): number {
+    let total = 0;
+
+    for (const consumer of SqsConsumerService.liveConsumers) {
+      total += consumer.pool.activeCount;
+    }
+
+    return total;
+  }
+
+  public static hasLiveConsumers(): boolean {
+    return SqsConsumerService.liveConsumers.size > 0;
+  }
+
   private consumer: Consumer;
   private pool: ConcurrencyPool;
   private queueUrl: string;
@@ -306,7 +330,11 @@ export class SqsConsumerService {
       },
     });
 
-    this.setupEventHandlers();
+    this.consumer.on('error', (err) => {
+      Logger.error({ error: err.message, topic: this.topic }, 'SQS consumer error', LOG_CONTEXT);
+    });
+
+    SqsConsumerService.liveConsumers.add(this);
 
     Logger.log({ topic: this.topic, batchSize, maxConcurrency }, 'SQS consumer initialized', LOG_CONTEXT);
   }
@@ -581,30 +609,6 @@ export class SqsConsumerService {
     await this.processor(data, meta);
   }
 
-  private setupEventHandlers(): void {
-    this.consumer.on('error', (err) => {
-      Logger.error({ error: err.message, topic: this.topic }, 'SQS consumer error', LOG_CONTEXT);
-    });
-
-    this.consumer.on('message_processed', (message) => {
-      this.logger?.debug(
-        {
-          messageId: message.MessageId,
-          topic: this.topic,
-        },
-        'SQS message dispatched to processing pool'
-      );
-    });
-
-    this.consumer.on('started', () => {
-      Logger.debug({ topic: this.topic }, 'SQS consumer started (event)', LOG_CONTEXT);
-    });
-
-    this.consumer.on('stopped', () => {
-      Logger.debug({ topic: this.topic }, 'SQS consumer stopped (event)', LOG_CONTEXT);
-    });
-  }
-
   public start(): void {
     if (this.isStarted) {
       Logger.warn({ topic: this.topic }, 'SQS consumer is already running', LOG_CONTEXT);
@@ -645,6 +649,7 @@ export class SqsConsumerService {
     if (!this.isStarted) {
       this.pool.close();
       await this.pool.drain(drainTimeoutMs);
+      SqsConsumerService.liveConsumers.delete(this);
 
       return;
     }
@@ -661,6 +666,9 @@ export class SqsConsumerService {
     );
 
     const drained = await this.pool.drain(drainTimeoutMs);
+    // Deregistered only once draining finishes, so a shutdown hook asking for
+    // the in-flight count while this is still running gets a truthful answer.
+    SqsConsumerService.liveConsumers.delete(this);
 
     if (drained) {
       Logger.log({ topic: this.topic }, 'SQS consumer fully drained and stopped', LOG_CONTEXT);

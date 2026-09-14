@@ -89,7 +89,7 @@ export class DeleteAllNotifications {
       contextKeys: command.contextKeys,
     });
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: WebSocketEventEnum.UNREAD,
