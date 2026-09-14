@@ -247,9 +247,16 @@ export class PollPhotonDeviceAuth {
   }
 
   private async buildProjectName(command: PollPhotonDeviceAuthCommand): Promise<string> {
+    /*
+     * The name is cosmetic and the device code is already consumed, so neither
+     * lookup may abort provisioning — a failure here would cost the user a
+     * full restart. Read the org from Mongo (`findOne`) rather than the auth
+     * provider (`findById`), so the name does not depend on Clerk being
+     * reachable; EE mirrors the Clerk org name onto the Mongo document.
+     */
     const [environment, organization] = await Promise.all([
-      this.environmentRepository.findOne({ _id: command.environmentId }),
-      this.organizationRepository.findById(command.organizationId),
+      this.environmentRepository.findOne({ _id: command.environmentId }).catch(() => null),
+      this.organizationRepository.findOne({ _id: command.organizationId }).catch(() => null),
     ]);
 
     const orgName = organization?.name?.trim() || 'Novu';
