@@ -428,7 +428,7 @@ jobSchema.index({ createdAt: 1 });
 
 jobSchema.index(
   {
-    subscriberId: 1,
+    _subscriberId: 1,
     _environmentId: 1,
     'digest.digestValue': 1,
     'digest.digestKey': 1,
