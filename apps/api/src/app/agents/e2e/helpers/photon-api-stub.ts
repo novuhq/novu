@@ -18,12 +18,18 @@ export interface PhotonApiStub {
    * tests choose the outcome here and run the full start → poll flow.
    */
   setNextDeviceCode(code: string): void;
+  /**
+   * Invoked immediately before the stub answers POST /api/projects. Tests use
+   * this to delete the bound integration mid-provisioning.
+   */
+  setBeforeProjectCreate(handler: (() => Promise<void>) | null): void;
   reset(): void;
   close(): Promise<void>;
 }
 
 const DEFAULT_DEVICE_CODE = 'stub-device-code';
 let nextDeviceCode = DEFAULT_DEVICE_CODE;
+let beforeProjectCreate: (() => Promise<void>) | null = null;
 
 let stub: PhotonApiStub | undefined;
 
@@ -184,6 +190,10 @@ export async function startPhotonApiStub(): Promise<PhotonApiStub> {
     const payload = await readJsonBody(req);
     calls.push({ method, path, payload, headers: req.headers });
 
+    if (method === 'POST' && path === '/api/projects' && beforeProjectCreate) {
+      await beforeProjectCreate();
+    }
+
     const { __status, ...body } = buildResponse(method, path, payload) as { __status?: number } & Record<
       string,
       unknown
@@ -210,10 +220,14 @@ export async function startPhotonApiStub(): Promise<PhotonApiStub> {
     setNextDeviceCode: (code: string) => {
       nextDeviceCode = code;
     },
+    setBeforeProjectCreate: (handler: (() => Promise<void>) | null) => {
+      beforeProjectCreate = handler;
+    },
     reset: () => {
       calls.length = 0;
       webhooksByProject.clear();
       nextDeviceCode = DEFAULT_DEVICE_CODE;
+      beforeProjectCreate = null;
     },
     close: async () => {
       await new Promise<void>((resolve, reject) => {

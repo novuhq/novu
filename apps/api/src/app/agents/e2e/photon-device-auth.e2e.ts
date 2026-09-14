@@ -217,6 +217,69 @@ describe('Photon device-auth connect flow #novu-v2', () => {
     expect(decryptCredentials(replacementAfter?.credentials ?? {}).apiKey).to.equal(undefined);
   });
 
+  it('does not complete or credential a same-identifier replacement when the bound integration is deleted mid-provision', async () => {
+    const original = await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      identifier: integrationIdentifier,
+    });
+    if (!original) {
+      throw new Error('expected original Photon integration');
+    }
+    const deviceCode = await startFlow('stub-device-code');
+
+    photonApiStub.setBeforeProjectCreate(async () => {
+      await agentIntegrationRepository.delete({
+        _agentId: agentId,
+        _integrationId: original._id,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+      await integrationRepository.delete({
+        _id: original._id,
+        _organizationId: session.organization._id,
+      });
+
+      const replacement = await integrationRepository.create({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        providerId: ChatProviderIdEnum.PhotonImessage,
+        channel: ChannelTypeEnum.CHAT,
+        credentials: encryptCredentials({}),
+        active: true,
+        name: 'Photon Device Auth Mid-Provision Replacement',
+        identifier: integrationIdentifier,
+        priority: 1,
+        primary: false,
+        deleted: false,
+      });
+      await agentIntegrationRepository.create({
+        _agentId: agentId,
+        _integrationId: replacement._id,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+    });
+
+    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode });
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.status).to.equal('error');
+    expect(res.body.data.error.code).to.equal('provisioning_failed');
+    expect(photonApiStub.calls.find((call) => call.path === '/api/projects')).to.not.equal(undefined);
+    expect(
+      photonApiStub.calls.find((call) => call.method === 'POST' && call.path === '/projects/stub-project-id/webhooks')
+    ).to.equal(undefined);
+
+    const replacementAfter = await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      identifier: integrationIdentifier,
+    });
+    expect(decryptCredentials(replacementAfter?.credentials ?? {}).apiKey).to.equal(undefined);
+    expect(decryptCredentials(replacementAfter?.credentials ?? {}).secretKey).to.equal(undefined);
+  });
+
   it('provisions the project, stores credentials, and registers the webhook on approval', async () => {
     const deviceCode = await startFlow('stub-device-code');
     const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode });

@@ -166,11 +166,26 @@ export class PollPhotonDeviceAuth {
      * device_code is already consumed, so the recovery is restarting connect.
      */
     try {
+      /*
+       * The integration was resolved before the token exchange. Recheck by
+       * `_id` (not identifier) so a delete-and-recreate under the same slug
+       * cannot receive this project's credentials. Fail before createPhoton
+       * when the bound document is already gone, so we do not mint an orphan.
+       */
+      const boundIntegration = await this.integrationRepository.findOne({
+        _id: integration._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      });
+      if (!boundIntegration) {
+        throw new Error('bound integration was deleted during connect');
+      }
+
       const projectName = await this.buildProjectName(command);
       const { projectId, warning: createWarning } = await createPhotonProject(poll.accessToken, projectName);
       const credentials = await getPhotonProjectCredentials(poll.accessToken, projectId);
 
-      await this.integrationRepository.update(
+      const { matched } = await this.integrationRepository.update(
         {
           _id: integration._id,
           _environmentId: command.environmentId,
@@ -183,6 +198,16 @@ export class PollPhotonDeviceAuth {
           },
         }
       );
+
+      /*
+       * Soft-delete (mongoose-delete overrideMethods: all) makes this update
+       * match nothing. Webhook setup re-resolves by identifier and would then
+       * run against a same-slug replacement with empty credentials — treat
+       * a missed write as provisioning failure instead of reporting complete.
+       */
+      if (matched === 0) {
+        throw new Error('bound integration was deleted during connect');
+      }
 
       // Enables the iMessage platform, registers the inbound webhook, and
       // stores the Photon-issued signing secret — same path as the manual
