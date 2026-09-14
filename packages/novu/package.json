@@ -69,7 +69,7 @@
     "nodemon": "^3.0.1",
     "ts-node": "~10.9.1",
     "typescript": "5.6.2",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.114",

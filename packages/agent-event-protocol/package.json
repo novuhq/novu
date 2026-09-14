@@ -33,7 +33,7 @@
   "devDependencies": {
     "tsup": "^8.0.2",
     "typescript": "5.6.2",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.11"
   },
   "nx": {
     "tags": [
