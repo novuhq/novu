@@ -1,5 +1,5 @@
 import { IMessageFilter } from '@novu/shared';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Control, UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { RiArrowRightSLine, RiGuideFill, RiInputField } from 'react-icons/ri';
 import { formatQuery, RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
@@ -11,14 +11,15 @@ import { Form, FormField } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
+import type { EnhancedLiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
   countLegacyIntegrationConditions,
   createEmptyConditionsQuery,
-  INTEGRATION_CONDITION_FIELDS,
   INTEGRATION_CONDITION_VARIABLES,
   isAllowedIntegrationConditionVariable,
 } from '../utils/integration-conditions';
@@ -63,6 +64,28 @@ export function IntegrationConditionsDrawer({
   const rules = useWatch({ control, name: 'rules' });
   const primary = useWatch({ control, name: 'primary' });
   const integrationName = useWatch({ control, name: 'name' });
+  const contextTypeVariables = useContextTypeVariables();
+  const integrationConditionVariables = useMemo(() => {
+    const existingNames = new Set(INTEGRATION_CONDITION_VARIABLES.map((variable) => variable.name));
+    const dynamicContextVariables: EnhancedLiquidVariable[] = contextTypeVariables
+      .filter((variable) => !existingNames.has(variable.name))
+      .map((variable) => ({
+        ...variable,
+        dataType: variable.name.endsWith('.data') ? 'object' : 'string',
+      }));
+
+    return [...INTEGRATION_CONDITION_VARIABLES, ...dynamicContextVariables];
+  }, [contextTypeVariables]);
+  const integrationConditionFields = useMemo(
+    () =>
+      integrationConditionVariables.map((variable) => ({
+        name: variable.name,
+        label: variable.displayLabel || variable.name,
+        value: variable.name,
+        dataType: variable.dataType,
+      })),
+    [integrationConditionVariables]
+  );
   const rulesRef = useDataRef(rules);
   const legacyConditionsCount = countLegacyIntegrationConditions(legacyConditions);
   const buildQuery = useCallback(() => {
@@ -158,9 +181,9 @@ export function IntegrationConditionsDrawer({
                       <ConditionsEditor
                         query={field.value}
                         onQueryChange={handleQueryChange}
-                        fields={INTEGRATION_CONDITION_FIELDS}
-                        variables={INTEGRATION_CONDITION_VARIABLES}
-                        enhancedVariables={INTEGRATION_CONDITION_VARIABLES}
+                        fields={integrationConditionFields}
+                        variables={integrationConditionVariables}
+                        enhancedVariables={integrationConditionVariables}
                         isAllowedVariable={isAllowedIntegrationConditionVariable}
                         valueInput={IntegrationConditionValueInput}
                         saveForm={() => undefined}

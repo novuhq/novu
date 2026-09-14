@@ -1,6 +1,5 @@
 import { IMessageFilter } from '@novu/shared';
 import { generateID, RuleGroupType } from 'react-querybuilder';
-import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
 import type { EnhancedLiquidVariable, FieldDataType, IsAllowedVariable } from '@/utils/parseStepVariables';
 
 const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDataType }> = [
@@ -13,13 +12,6 @@ const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDat
   { name: 'subscriber.locale', dataType: 'string' },
   { name: 'subscriber.data', dataType: 'object' },
 ];
-
-export const INTEGRATION_CONDITION_FIELDS: EnhancedField[] = INTEGRATION_CONDITION_FIELD_DEFS.map((field) => ({
-  name: field.name,
-  label: field.name,
-  value: field.name,
-  dataType: field.dataType,
-}));
 
 export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRATION_CONDITION_FIELD_DEFS.map(
   (field) => ({
