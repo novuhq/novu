@@ -7,6 +7,7 @@ import { LineHandler } from './handlers/line.handler';
 import { MattermostHandler } from './handlers/mattermost.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
 import { NovuSlackHandler } from './handlers/novu-slack.handler';
+import { PhotonImessageHandler } from './handlers/photon-imessage.handler';
 import { RocketChatHandler } from './handlers/rocket-chat.handler';
 import { RyverHandler } from './handlers/ryver.handler';
 import { SendblueHandler } from './handlers/sendblue.handler';
@@ -35,6 +36,7 @@ export class ChatFactory implements IChatFactory {
     new TelegramHandler(),
     new WebexMessagingHandler(),
     new SendblueHandler(),
+    new PhotonImessageHandler(),
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {
@@ -43,7 +45,7 @@ export class ChatFactory implements IChatFactory {
 
     if (!handler) return null;
 
-    handler.buildProvider(integration.credentials);
+    handler.buildProvider({ ...integration.credentials, ...integration.configurations });
 
     return handler;
   }
