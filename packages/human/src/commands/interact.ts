@@ -1,8 +1,10 @@
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
 import {
+  type CreateInteractionCard,
   type CreateInteractionInput,
   createInteraction,
   getInteraction,
+  type HumanOptionInput,
   type Interaction,
   type InteractionKind,
 } from '../api/human';
@@ -21,6 +23,12 @@ export interface InteractOptions {
   async?: boolean;
   json?: boolean;
   apiUrl?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraAction?: string[];
 }
 
 const POLL_INTERVAL_MS = 2000;
@@ -91,14 +99,26 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     // via and the API picks when only one channel is linked.
     const via = resolveVia(config, options.via);
 
+    const parsedOptions = options.option?.map(parseIdLabelOption);
+    const extraActions = options.extraAction?.map(parseIdLabelOption);
+    const card = buildInteractionCard({
+      title: prompt,
+      icon: options.icon,
+      subtitle: options.subtitle,
+      body: options.body,
+      approveLabel: options.approveLabel,
+      denyLabel: options.denyLabel,
+      extraActions,
+      options: parsedOptions,
+    });
+
     const input: CreateInteractionInput = {
       kind,
-      prompt,
+      card,
       to,
       ...(via ? { via } : {}),
       agentIdentifier: config.relayAgentIdentifier,
       ...(options.from ? { from: options.from } : {}),
-      ...(options.option?.length ? { options: options.option } : {}),
       ...(options.ttl ? { ttlSeconds: parseDuration(options.ttl) } : {}),
     };
 
@@ -160,6 +180,42 @@ export async function waitForResolution(
   return emitResult(current, Boolean(options.json));
 }
 
+/** `id:label` keeps a stable id; a bare label is minted as `opt_N` server-side. */
+export function parseIdLabelOption(raw: string): HumanOptionInput {
+  const colon = raw.indexOf(':');
+  if (colon > 0) {
+    const id = raw.slice(0, colon).trim();
+    const label = raw.slice(colon + 1).trim();
+    if (id && label && !/\s/.test(id)) {
+      return { id, label };
+    }
+  }
+
+  return raw;
+}
+
+function buildInteractionCard(params: {
+  title: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+}): CreateInteractionCard {
+  return {
+    title: params.title,
+    ...(params.icon ? { icon: params.icon } : {}),
+    ...(params.subtitle ? { subtitle: params.subtitle } : {}),
+    ...(params.body ? { body: params.body } : {}),
+    ...(params.approveLabel ? { approveLabel: params.approveLabel } : {}),
+    ...(params.denyLabel ? { denyLabel: params.denyLabel } : {}),
+    ...(params.extraActions?.length ? { extraActions: params.extraActions } : {}),
+    ...(params.options?.length ? { options: params.options } : {}),
+  };
+}
+
 /** Accepts `90`, `90s`, `10m`, `2h`, `1d`. Plain numbers are seconds. */
 export function parseDuration(value: string): number {
   const match = /^(\d+)([smhd]?)$/.exec(value.trim());
@@ -174,7 +230,64 @@ export function parseDuration(value: string): number {
   return amount * multiplier;
 }
 
+/** Matches the API's `KEYLESS_HUMAN_CAP_REACHED_CODE`. The CLI cannot import `apps/api`. */
+const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
+
+export interface KeylessCapDetails {
+  claimUrl?: string;
+  cap?: number;
+}
+
+/**
+ * The keyless demo cap: a 429 whose body carries `code: KEYLESS_HUMAN_CAP_REACHED`
+ * (falling back to the message wording for older APIs). The human already got
+ * the same claim link on their channel; the agent just needs to stop retrying.
+ */
+export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
+  if (!(err instanceof HumanApiError) || err.status !== 429) {
+    return null;
+  }
+
+  const body = (err.body && typeof err.body === 'object' ? err.body : {}) as {
+    code?: unknown;
+    claimUrl?: unknown;
+    cap?: unknown;
+  };
+
+  if (body.code !== KEYLESS_CAP_CODE && !/keyless demo/i.test(err.message)) {
+    return null;
+  }
+
+  return {
+    claimUrl: typeof body.claimUrl === 'string' ? body.claimUrl : undefined,
+    cap: typeof body.cap === 'number' ? body.cap : undefined,
+  };
+}
+
+export function formatKeylessCapMessage(details: KeylessCapDetails): string {
+  const count = details.cap ? `${details.cap} free messages` : 'free messages';
+  const lines = [`You've used the ${count} of this keyless demo.`];
+
+  if (details.claimUrl) {
+    lines.push(`Sign up to keep your channels and continue: ${details.claimUrl}`);
+  } else {
+    lines.push('Sign up for a free Novu account to keep your channels and continue.');
+  }
+
+  lines.push(
+    '(We also sent this link to you on your linked channel.)',
+    'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
+  );
+
+  return lines.join('\n');
+}
+
 export function handleError(err: unknown): never {
+  const keylessCap = getKeylessCapDetails(err);
+  if (keylessCap) {
+    fail(formatKeylessCapMessage(keylessCap));
+  }
+
   if (err instanceof HumanApiError) {
     fail(err.status ? `${err.message} (${err.status})` : err.message);
   }

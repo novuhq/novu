@@ -85,6 +85,10 @@ function isStorageKeyInScope(storageKey: string, scope: AgentAttachmentStorageSc
   return storageKey.startsWith(expectedPrefix);
 }
 
+function normalizeFetchData(data: Buffer | ArrayBuffer | Uint8Array): Buffer {
+  return Buffer.isBuffer(data) ? data : Buffer.from(data);
+}
+
 async function bufferFromAttachment(attachment: Attachment, allowUnknownSizeDownload = false): Promise<Buffer | null> {
   if (!attachment.data) {
     if (attachment.size == null && !allowUnknownSizeDownload) {
@@ -96,7 +100,7 @@ async function bufferFromAttachment(attachment: Attachment, allowUnknownSizeDown
     }
 
     if (typeof attachment.fetchData === 'function') {
-      return await attachment.fetchData();
+      return normalizeFetchData(await attachment.fetchData());
     }
 
     return null;

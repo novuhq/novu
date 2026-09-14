@@ -5,11 +5,27 @@
   "sourceRoot": "apps/api/src",
   "projectType": "application",
   "targets": {
-    "build": {
-      "cache": false,
+    "build-metadata": {
+      "executor": "nx:run-commands",
+      "cache": true,
       "dependsOn": ["^build"],
-      "inputs": ["default"],
-      "outputs": ["{projectRoot}/src/metadata.ts"]
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/src/metadata.ts"],
+      "options": {
+        "cwd": "apps/api",
+        "command": "pnpm run build:metadata"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["build-metadata", "^build"],
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "apps/api",
+        "command": "pnpm exec rimraf dist && pnpm exec nest build"
+      }
     },
     "lint": {
       "executor": "nx:run-commands",

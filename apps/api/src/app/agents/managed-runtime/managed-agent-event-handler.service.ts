@@ -1,22 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import { type ConversationChannel } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { type SessionEventContext, type StreamCallbacks, type StreamPart } from '@novu/thalamus';
+import { type SessionEventContext, type StreamCallbacks } from '@novu/thalamus';
 import { AgentEventContext, AgentEventSink } from '../shared/agent-event-sink.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { mapStreamPart, RunEventBuilder } from './stream-part-mapper';
 
 /**
- * Thin dual adapter: feature flag selects which Thalamus callback surface feeds
- * the shared AgentEventSink. SessionEventsFactory is sync, so the flag is
- * resolved once on the first event and cached for the rest of the turn.
+ * Maps Thalamus StreamParts onto the shared AgentEventSink.
+ * SessionEventsFactory is sync; handlers close over turn metadata resolved here.
  */
 @Injectable()
 export class ManagedAgentEventHandler {
   constructor(
     private readonly agentEventSink: AgentEventSink,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -54,105 +51,14 @@ export class ManagedAgentEventHandler {
       source: 'managed',
     };
 
-    let protocolEnabled: boolean | undefined;
-    const resolveProtocolEnabled = async (): Promise<boolean> => {
-      if (protocolEnabled === undefined) {
-        protocolEnabled = await this.isProtocolEnabled(metadata);
-      }
-
-      return protocolEnabled;
-    };
-
-    const ingestPart = async (part: StreamPart): Promise<void> => {
-      // One StreamPart can expand to multiple AgentEvents (e.g. finish →
-      // tool-approval-request* + run-finish). Ingest as a batch so paused
-      // finish can pair with those approval requests without a process Map.
-      await this.agentEventSink.ingestMany(builder.wrap(mapStreamPart(part)), agentEventContext);
-    };
-
     return {
       onPart: async (part) => {
-        if (!(await resolveProtocolEnabled())) {
-          return;
-        }
-
-        await ingestPart(part);
-      },
-
-      onToolUseStart: async (part) => {
-        if (await resolveProtocolEnabled()) {
-          return;
-        }
-
-        await ingestPart(part);
-      },
-
-      onToolUseDone: async (part) => {
-        if (await resolveProtocolEnabled()) {
-          return;
-        }
-
-        await ingestPart(part);
-      },
-
-      // TODO(agents): also persist a TOOL_RESULT activity once Thalamus sends the tool output
-      // (today this event only has { toolUseId, isError }), so the ledger holds the full tool trail.
-      onToolUseResult: async (part) => {
-        if (await resolveProtocolEnabled()) {
-          return;
-        }
-
-        await ingestPart(part);
-      },
-
-      onMessage: async (part) => {
-        if (await resolveProtocolEnabled()) {
-          return;
-        }
-
-        await ingestPart(part);
-      },
-
-      onFinish: async (part) => {
-        if (await resolveProtocolEnabled()) {
-          return;
-        }
-
-        await ingestPart(part);
-      },
-
-      onError: async (part) => {
-        if (await resolveProtocolEnabled()) {
-          return;
-        }
-
-        await ingestPart(part);
-      },
-
-      onMcpServerFailure: async (part) => {
-        if (await resolveProtocolEnabled()) {
-          return;
-        }
-
-        await ingestPart(part);
+        // One StreamPart can expand to multiple AgentEvents (e.g. finish →
+        // tool-approval-request* + run-finish). Ingest as a batch so paused
+        // finish can pair with those approval requests without a process Map.
+        await this.agentEventSink.ingestMany(builder.wrap(mapStreamPart(part)), agentEventContext);
       },
     };
-  }
-
-  private async isProtocolEnabled(metadata: Record<string, string>): Promise<boolean> {
-    const organizationId = metadata.organizationId;
-    const environmentId = metadata.environmentId;
-
-    if (!organizationId || !environmentId) {
-      return false;
-    }
-
-    return this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-      environment: { _id: environmentId },
-    });
   }
 }
 

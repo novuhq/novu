@@ -2,7 +2,12 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import type { IAgentRuntimeProvider, PendingToolApproval } from '@novu/application-generic';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationParticipant, ConversationRepository } from '@novu/dal';
-import { isNovuInternalToolName, isNovuResolveToolName, isNovuToolCatalogName } from '@novu/shared';
+import {
+  isNovuHumanToolName,
+  isNovuInternalToolName,
+  isNovuResolveToolName,
+  isNovuToolCatalogName,
+} from '@novu/shared';
 import { AgentSubscriberResolver } from '../../conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
@@ -13,6 +18,8 @@ import { captureAgentException, captureAgentWarning } from '../../shared/errors/
 import { mintManagedApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
+import { HandleNovuHumanCommand } from '../novu-human/handle-novu-human.command';
+import { HandleNovuHuman } from '../novu-human/handle-novu-human.usecase';
 import { HandleNovuResolveCommand } from '../novu-resolve/handle-novu-resolve.command';
 import { HandleNovuResolve } from '../novu-resolve/handle-novu-resolve.usecase';
 import { HandleNovuToolsCommand, NovuToolsActionEnum } from '../tool-connect/handle-novu-tools.command';
@@ -33,6 +40,7 @@ export class HandlePendingToolApprovals {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly handleNovuTools: HandleNovuTools,
     private readonly handleNovuResolve: HandleNovuResolve,
+    private readonly handleNovuHuman: HandleNovuHuman,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly logger: PinoLogger
@@ -256,6 +264,12 @@ export class HandlePendingToolApprovals {
         continue;
       }
 
+      if (isNovuHumanToolName(tool.toolName)) {
+        await this.dispatchHumanTool(command, tool, subscriberId);
+
+        continue;
+      }
+
       this.logger.warn(
         { toolName: tool.toolName, toolUseId: tool.toolUseId, sessionId: command.sessionId },
         'Unknown Novu internal tool; skipping'
@@ -305,6 +319,29 @@ export class HandlePendingToolApprovals {
         organizationId: command.organizationId,
         toolUseId: tool.toolUseId,
         summary: typeof tool.input?.summary === 'string' ? tool.input.summary : undefined,
+        conversationId: command.conversationId,
+        agentIdentifier: command.agentIdentifier,
+        integrationIdentifier: command.integrationIdentifier,
+        subscriberId,
+        platform: command.platform,
+        platformThreadId: command.platformThreadId,
+      })
+    );
+  }
+
+  private async dispatchHumanTool(
+    command: HandlePendingToolApprovalsCommand,
+    tool: PendingToolApproval,
+    subscriberId: string | undefined
+  ): Promise<void> {
+    await this.handleNovuHuman.execute(
+      HandleNovuHumanCommand.create({
+        userId: command.userId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        toolUseId: tool.toolUseId,
+        sessionId: command.sessionId,
+        input: tool.input,
         conversationId: command.conversationId,
         agentIdentifier: command.agentIdentifier,
         integrationIdentifier: command.integrationIdentifier,

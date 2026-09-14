@@ -567,7 +567,7 @@ describe('applyEnvelope', () => {
       })
     );
 
-    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card }]);
+    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card, sourceMessageId: 'm-card' }]);
   });
 
   it('folds exclusive durable content as markdown or card, not both', () => {

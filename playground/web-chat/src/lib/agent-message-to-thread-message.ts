@@ -97,6 +97,9 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
   const isStreaming = message.parts.some(
     (part) => (part.type === 'text' || part.type === 'thinking') && part.state === 'streaming'
   );
+  const hasPendingApproval = message.parts.some(
+    (part) => part.type === 'approval' && part.state === 'pending'
+  );
 
   for (const part of message.parts) {
     switch (part.type) {
@@ -153,7 +156,7 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         content.push({
           type: 'data',
           name: 'novu-card',
-          data: { card: part.card, sourceMessageId: message.id },
+          data: part,
         });
         break;
       }
@@ -176,11 +179,6 @@ export function agentMessageToThreadMessage(message: AgentMessage): ThreadMessag
         break;
     }
   }
-
-  const hasPendingApproval = message.parts.some(
-    (part): part is Extract<AgentMessage['parts'][number], { type: 'approval' }> =>
-      part.type === 'approval' && part.state === 'pending'
-  );
 
   if (message.role === 'user') {
     // Stable assistant-ui identity across optimistic opt_* → server msg_* reconciliation.

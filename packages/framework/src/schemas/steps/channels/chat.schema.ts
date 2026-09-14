@@ -60,6 +60,7 @@ const cardElementLinkButtonSchema = {
     url: { type: 'string' },
     style: { type: 'string', enum: ['primary', 'danger', 'default'] },
     id: { type: 'string' },
+    tooltip: { type: 'string' },
   },
   required: ['type', 'label', 'url'],
 } as const satisfies JsonSchema;
@@ -75,6 +76,7 @@ const cardElementButtonSchema = {
     callbackUrl: { type: 'string' },
     value: { type: 'string' },
     disabled: { type: 'boolean' },
+    tooltip: { type: 'string' },
   },
   required: ['type', 'id', 'label'],
 } as const satisfies JsonSchema;
@@ -167,8 +169,70 @@ const cardElementTableSchema = {
       type: 'array',
       items: { type: 'string', enum: ['left', 'center', 'right'] },
     },
+    caption: { type: 'string' },
+    pageSize: { type: 'number' },
   },
   required: ['type', 'headers', 'rows'],
+} as const satisfies JsonSchema;
+
+const cardElementChartSegmentSchema = {
+  type: 'object',
+  properties: {
+    label: { type: 'string' },
+    value: { type: 'number' },
+  },
+  required: ['label', 'value'],
+} as const satisfies JsonSchema;
+
+const cardElementChartDataPointSchema = {
+  type: 'object',
+  properties: {
+    label: { type: 'string' },
+    value: { type: 'number' },
+  },
+  required: ['label', 'value'],
+} as const satisfies JsonSchema;
+
+const cardElementChartSeriesSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    data: { type: 'array', items: cardElementChartDataPointSchema },
+  },
+  required: ['name', 'data'],
+} as const satisfies JsonSchema;
+
+const cardElementPieChartSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'pie' },
+    segments: { type: 'array', items: cardElementChartSegmentSchema },
+  },
+  required: ['type', 'segments'],
+} as const satisfies JsonSchema;
+
+const cardElementSeriesChartSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', enum: ['area', 'bar', 'line'] },
+    categories: { type: 'array', items: { type: 'string' } },
+    series: { type: 'array', items: cardElementChartSeriesSchema },
+    xLabel: { type: 'string' },
+    yLabel: { type: 'string' },
+  },
+  required: ['type', 'categories', 'series'],
+} as const satisfies JsonSchema;
+
+const cardElementChartSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'chart' },
+    title: { type: 'string' },
+    chart: {
+      anyOf: [cardElementPieChartSchema, cardElementSeriesChartSchema],
+    },
+  },
+  required: ['type', 'title', 'chart'],
 } as const satisfies JsonSchema;
 
 /**
@@ -183,6 +247,7 @@ const cardElementLeafChildSchemas = [
   cardElementActionsSchema,
   cardElementFieldsSchema,
   cardElementTableSchema,
+  cardElementChartSchema,
 ] as const;
 
 const cardElementSectionSchema = {
@@ -216,6 +281,7 @@ const cardElementSchema = {
     title: { type: 'string' },
     subtitle: { type: 'string' },
     imageUrl: { type: 'string' },
+    width: { type: 'string', enum: ['default', 'full'] },
     children: {
       type: 'array',
       items: {

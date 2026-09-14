@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Switch } from '@/components/primitives/switch';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 
 const fieldKey = 'disableOutputSanitization';
@@ -9,6 +10,7 @@ const fieldKey = 'disableOutputSanitization';
 export const BypassSanitizationSwitch = () => {
   const { control } = useFormContext();
   const { saveForm } = useSaveForm();
+  const { isReadOnly } = useStepEditor();
 
   return (
     <div className="flex items-center gap-1">
@@ -24,6 +26,7 @@ export const BypassSanitizationSwitch = () => {
                   field.onChange(e);
                   saveForm();
                 }}
+                disabled={isReadOnly}
               />
             </FormControl>
             <FormMessage />

@@ -45,7 +45,13 @@ export const getEnvVariable = (name: string, context?: unknown): string => {
 
   // Cloudflare workers
   try {
-    return globalThis[name as keyof typeof globalThis];
+    const globalValue = globalThis[name as keyof typeof globalThis];
+    // Only return a real string. A bare `return globalThis[name]` yields
+    // `undefined` for a missing name (property access does not throw in Node),
+    // which breaks the `: string` contract and the `return ''` fallback below.
+    if (typeof globalValue === 'string') {
+      return globalValue;
+    }
   } catch (_) {
     // This will raise an error in Cloudflare Pages
   }

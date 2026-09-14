@@ -5,7 +5,7 @@ import path from 'node:path';
  * Editors/agents that natively read the agentskills.io `SKILL.md` folder
  * spec. Mirrors the host list `novu init`/wizard use, minus the parts that
  * only make sense for a full skills catalog (git-fetched "official" skills) —
- * `@novu/human` ships exactly one first-party skill, bundled in this package.
+ * `@novu/human` ships first-party skills, bundled in this package.
  */
 export type SkillHost =
   | 'claude'
@@ -44,10 +44,11 @@ const SKILL_HOSTS: SkillHostConfig[] = [
 /** No editor marker detected → lay down the three most broadly useful targets. */
 const SAFE_DEFAULT_HOSTS: SkillHost[] = ['claude', 'cursor', 'agents'];
 
-const SKILL_NAME = 'human-cli';
+const BUNDLED_SKILLS = ['human-cli', 'novu-human'] as const;
 
 export interface InstalledSkill {
   host: SkillHost;
+  skill: string;
   destination: string;
 }
 
@@ -73,27 +74,33 @@ export function installHumanSkill(
   targetCwd: string,
   hosts: SkillHost[] = resolveSkillHosts(targetCwd)
 ): InstalledSkill[] {
-  const sourceDir = resolveBundledSkillDir();
-  if (!fs.existsSync(sourceDir)) {
-    throw new Error(`Bundled skill content is missing (expected at ${sourceDir}). Reinstall @novu/human.`);
-  }
-
   const activeHosts = SKILL_HOSTS.filter((config) => hosts.includes(config.host));
   const installed: InstalledSkill[] = [];
 
-  for (const hostConfig of activeHosts) {
-    const destinationDir = path.join(targetCwd, hostConfig.dir, SKILL_NAME);
-    copyDir(sourceDir, destinationDir);
-    installed.push({ host: hostConfig.host, destination: path.relative(targetCwd, destinationDir) });
+  for (const skillName of BUNDLED_SKILLS) {
+    const sourceDir = resolveBundledSkillDir(skillName);
+    if (!fs.existsSync(sourceDir)) {
+      throw new Error(`Bundled skill content is missing (expected at ${sourceDir}). Reinstall @novu/human.`);
+    }
+
+    for (const hostConfig of activeHosts) {
+      const destinationDir = path.join(targetCwd, hostConfig.dir, skillName);
+      copyDir(sourceDir, destinationDir);
+      installed.push({
+        host: hostConfig.host,
+        skill: skillName,
+        destination: path.relative(targetCwd, destinationDir),
+      });
+    }
   }
 
   return installed;
 }
 
-function resolveBundledSkillDir(): string {
+function resolveBundledSkillDir(skillName: string): string {
   const dir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
-  return path.join(dir, 'content', SKILL_NAME);
+  return path.join(dir, 'content', skillName);
 }
 
 function copyDir(source: string, destination: string): void {

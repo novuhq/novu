@@ -40,7 +40,7 @@ vi.mock('./interact', async (importOriginal) => {
   };
 });
 
-const { parseInviteHumanId, resolveInviteVia, runInvite } = await import('./invite');
+const { parseInviteHumanId, resolveInviteVia, runInvite, splitName } = await import('./invite');
 
 const operatorConfig: HumanCliConfig = {
   apiUrl: 'https://api.novu.co',
@@ -62,6 +62,19 @@ describe('parseInviteHumanId', () => {
     expect(parseInviteHumanId(' alice ')).toBe('alice');
     expect(() => parseInviteHumanId('  ')).toThrow('subscriberId');
     expect(() => parseInviteHumanId('alice,bob')).toThrow('one human at a time');
+  });
+});
+
+describe('splitName', () => {
+  it('splits on the first space and collapses whitespace', () => {
+    expect(splitName('Alice Chen')).toEqual({ firstName: 'Alice', lastName: 'Chen' });
+    expect(splitName('  Mary   Ann Smith ')).toEqual({ firstName: 'Mary', lastName: 'Ann Smith' });
+    expect(splitName('Alice')).toEqual({ firstName: 'Alice' });
+  });
+
+  it('returns undefined for blank input so no name is cleared', () => {
+    expect(splitName(undefined)).toBeUndefined();
+    expect(splitName('   ')).toBeUndefined();
   });
 });
 
@@ -151,5 +164,46 @@ describe('runInvite', () => {
 
     expect(result.via).toBe('telegram');
     expect(hasChannelEndpoint).toHaveBeenCalledWith(expect.anything(), 'tg-1', 'bob');
+  });
+
+  it('forwards --name to the relay setup for chat channels', async () => {
+    listAgentIntegrations.mockResolvedValue([telegramLink()]);
+    hasChannelEndpoint.mockResolvedValue(true);
+
+    await runInvite('alice', { via: 'telegram', name: 'Alice Chen' });
+
+    expect(setupHumanRelay).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'alice',
+      agentIdentifier: 'human-relay',
+      firstName: 'Alice',
+      lastName: 'Chen',
+    });
+  });
+
+  it('forwards --name alongside --email and labels an already-linked email human', async () => {
+    listAgentIntegrations.mockResolvedValue([
+      { integration: { identifier: 'email-1', providerId: 'novu-email-agent', active: true } },
+    ]);
+    getSubscriberEmail.mockResolvedValue(undefined);
+
+    await runInvite('carol', { via: 'email', email: 'carol@acme.com', name: 'Carol' });
+    expect(setupHumanRelay).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'carol',
+      agentIdentifier: 'human-relay',
+      email: 'carol@acme.com',
+      firstName: 'Carol',
+    });
+
+    setupHumanRelay.mockClear();
+    getSubscriberEmail.mockResolvedValue('carol@acme.com');
+
+    const result = await runInvite('carol', { via: 'email', name: 'Carol Diaz' });
+    expect(result.alreadyLinked).toBe(true);
+    expect(setupHumanRelay).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'carol',
+      agentIdentifier: 'human-relay',
+      firstName: 'Carol',
+      lastName: 'Diaz',
+    });
   });
 });

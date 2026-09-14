@@ -631,7 +631,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
 
   | Setup outcome | CLI output | Required action |
   |---|---|---|
-  | Existing project needs the chat UI | `NOVU_CONNECT_WEB_CHAT_EMBED_PROMPT_FILE=<absolute path>` then `✓ Web Chat connected` | **Read** the prompt file and follow it. Do not paste the file path. |
+  | Existing project needs the chat UI | `NOVU_CONNECT_WEB_CHAT_EMBED_PROMPT_FILE=<absolute path>` then `✓ Web Chat connected` | **Read** the prompt file and follow it. Do not paste the file path. The prompt defaults to assistant-ui unless the app already has a chat library. |
   | Existing project is already wired | `✓ Web Chat connected` without an embed prompt file | No UI changes. Run the printed `npm run dev:novu` command. |
   | Empty managed workspace | `✓ Web Chat app ready.` | Use the printed project directory and `npm run dev`. |
   | Empty bridge workspace | `✓ Agent app ready with Web Chat.` | Complete the bridge requirements file. Run the printed `npm run dev:novu` command. |

@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { version } from '../package.json';
 import { channelsCommand } from './commands/channels';
+import { contactsCommand } from './commands/contacts';
 import { runInteraction } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { cancelCommand, listCommand } from './commands/list';
@@ -30,6 +31,26 @@ program.addHelpText(
     'Precedence: CLI flags > environment variables > ~/.novu/human.json\n'
 );
 
+function collect(value: string, previous: string[]): string[] {
+  return [...previous, value];
+}
+
+function withCardOptions(command: Command, kind: 'ask' | 'approve' | 'choose' | 'tell'): Command {
+  command
+    .option('--icon <id-or-url>', 'Slack-only card icon: MCP catalog id (`stripe`) or https URL')
+    .option('--subtitle <text>', 'secondary line under the title')
+    .option('--body <text>', 'supporting body text');
+
+  if (kind === 'approve') {
+    command
+      .option('--approve-label <text>', 'Approve button label')
+      .option('--deny-label <text>', 'Deny button label')
+      .option('--extra-action <spec>', 'extra approve button (`id:label` or label). Repeatable', collect, []);
+  }
+
+  return command;
+}
+
 function withCommonOptions(command: Command): Command {
   return command
     .option(
@@ -48,33 +69,45 @@ function withCommonOptions(command: Command): Command {
     .option('--api-url <url>', 'Novu API URL override');
 }
 
-withCommonOptions(
-  program
-    .command('ask')
-    .argument('<question>', 'the question to ask')
-    .description('Ask the human a freeform question and block until they reply')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('ask')
+      .argument('<question>', 'the question to ask')
+      .description('Ask the human a freeform question and block until they reply')
+  ),
+  'ask'
 ).action((question, options) => runInteraction('ask', question, options));
 
-withCommonOptions(
-  program
-    .command('approve')
-    .argument('<action>', 'description of the action needing approval')
-    .description('Ask for approval (Approve/Deny buttons) and block until decided')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('approve')
+      .argument('<action>', 'description of the action needing approval')
+      .description('Ask for approval (Approve/Deny buttons) and block until decided')
+  ),
+  'approve'
 ).action((action, options) => runInteraction('approve', action, options));
 
-withCommonOptions(
-  program
-    .command('choose')
-    .argument('<question>', 'the question to ask')
-    .requiredOption('--option <label...>', 'a choice (repeat for each option, 2-10)')
-    .description('Ask the human to pick one of several options')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('choose')
+      .argument('<question>', 'the question to ask')
+      .requiredOption('--option <label...>', 'a choice (repeat for each option, 2-10). Also accepts id:label')
+      .description('Ask the human to pick one of several options')
+  ),
+  'choose'
 ).action((question, options) => runInteraction('choose', question, options));
 
-withCommonOptions(
-  program
-    .command('tell')
-    .argument('<message>', 'the message to deliver')
-    .description('Send a one-way notification (no waiting)')
+withCardOptions(
+  withCommonOptions(
+    program
+      .command('tell')
+      .argument('<message>', 'the message to deliver')
+      .description('Send a one-way notification (no waiting)')
+  ),
+  'tell'
 ).action((message, options) => runInteraction('tell', message, options));
 
 program
@@ -111,6 +144,7 @@ program
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
   .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
   .option('--email <address>', 'your email address for the email channel (skips the interactive prompt)')
+  .option('--name <name>', 'your name, shown to agents (skips the first-run prompt)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .option('--skill', 'also install the human-cli skill for coding agents (default: prompt on a TTY)')
   .option('--no-skill', 'skip the coding-agent skill install')
@@ -125,10 +159,20 @@ program
     'channel to link them on (telegram, slack, email). Required when several channels are linked.'
   )
   .option('--email <address>', 'their email address (required for --via email when not a TTY)')
+  .option('--name <name>', 'their display name, e.g. "Alice Chen" (shown in `human contacts`)')
   .option('--async', 'print the connect URL and exit instead of waiting for them to finish')
   .option('--api-url <url>', 'Novu API URL override')
   .description('Link another human to a channel (sends them a Slack/Telegram connect URL)')
   .action(inviteCommand);
+
+program
+  .command('contacts')
+  .option('--limit <n>', 'max contacts per page (default: 50, max: 100)')
+  .option('--after <cursor>', 'continue from the `next` cursor of a previous page')
+  .option('--json', 'print JSON ({ data, next }; rows carry `self: true` for you; pass `next` to --after)')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('List humans (subscribers) agents can reach with --to')
+  .action(contactsCommand);
 
 program
   .command('channels')

@@ -2,11 +2,9 @@ import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
   AgentConversationStatus,
   AgentConversationTyping,
-  AgentMcpConnectionAction,
   AgentMcpConnectionPart,
   AgentMessage,
   AgentPendingAction,
-  AgentToolApprovalAction,
   AgentToolApprovalDecision,
 } from './agent-message.types';
 
@@ -14,11 +12,9 @@ export type {
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
-  AgentMcpConnectionAction,
   AgentMcpConnectionPart,
   AgentMessage,
   AgentPendingAction,
-  AgentToolApprovalAction,
   AgentToolApprovalDecision,
 };
 
@@ -95,7 +91,7 @@ export type {
 
 export type RespondToActionArgs = AgentHashFields & {
   agentId: string;
-  actionId: string;
+  approvalId: string;
   decision: AgentToolApprovalDecision;
   conversationId?: string;
   /** @internal Session key for the local cache. */

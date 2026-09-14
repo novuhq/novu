@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { type InteractionStatus, listInteractions } from '../api/human';
+import { type InteractionStatus, interactionTitle, listInteractions } from '../api/human';
 import { clientFromConfig, handleError } from './interact';
 
 export async function listCommand(options: {
@@ -28,7 +28,8 @@ export async function listCommand(options: {
     for (const interaction of interactions) {
       const status = interaction.status === 'pending' ? pc.yellow(interaction.status) : pc.dim(interaction.status);
       const from = interaction.from ? pc.dim(` [${interaction.from}]`) : '';
-      const prompt = interaction.prompt.length > 60 ? `${interaction.prompt.slice(0, 59)}…` : interaction.prompt;
+      const title = interactionTitle(interaction);
+      const prompt = title.length > 60 ? `${title.slice(0, 59)}…` : title;
       process.stdout.write(`${interaction.id}  ${status.padEnd(18)} ${interaction.kind.padEnd(7)} ${prompt}${from}\n`);
     }
 
