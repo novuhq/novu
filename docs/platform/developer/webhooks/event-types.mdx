@@ -70,7 +70,7 @@ Every webhook body uses the same envelope. The resource itself is under `data.ob
 | `mail.html` | `string` | HTML body |
 | `mail.messageId` | `string` | Value of the `Message-ID` header |
 | `mail.headers` | `Record<string, string \| string[]>` | Raw mail headers, keyed by lowercase header name |
-| `mail.date` | `string` | Timestamp taken from the `Date` header |
+| `mail.date` | `string \| null` | Timestamp taken from the `Date` header, or `null` when the header is invalid |
 | `mail.inReplyTo` | `string` | Value of the `In-Reply-To` header, set on replies |
 | `mail.references` | `string \| string[]` | Value of the `References` header, delivered as a single value or a list depending on the sender |
 | `mail.attachments` | `array` | Attachments found on the email. Empty array when there are none |

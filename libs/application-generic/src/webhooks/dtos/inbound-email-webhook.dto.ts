@@ -1,7 +1,45 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { InboundEmailAttachment } from '@novu/shared';
 
-export class InboundEmailWebhookDomainDto {
+export interface InboundEmailWebhookAddress {
+  address: string;
+  name: string;
+}
+
+interface InboundEmailWebhookDomain {
+  id: string;
+  name: string;
+  data: Record<string, string>;
+}
+
+interface InboundEmailWebhookRoute {
+  address: string;
+  data: Record<string, string>;
+}
+
+interface InboundEmailWebhookMail {
+  from: InboundEmailWebhookAddress[];
+  to: InboundEmailWebhookAddress[];
+  subject: string;
+  html: string;
+  text: string;
+  messageId: string;
+  headers: Record<string, string | string[]>;
+  date: string | null;
+  attachments: InboundEmailAttachment[];
+  inReplyTo?: string;
+  references?: string | string[];
+  cc?: InboundEmailWebhookAddress[];
+  bcc?: InboundEmailWebhookAddress[];
+}
+
+export interface InboundEmailWebhookObject {
+  domain: InboundEmailWebhookDomain;
+  route: InboundEmailWebhookRoute;
+  mail: InboundEmailWebhookMail;
+}
+
+export class InboundEmailWebhookDomainDto implements InboundEmailWebhookDomain {
   @ApiProperty({ description: 'Database identifier of the domain that received the email' })
   id: string;
 
@@ -16,7 +54,7 @@ export class InboundEmailWebhookDomainDto {
   data: Record<string, string>;
 }
 
-export class InboundEmailWebhookRouteDto {
+export class InboundEmailWebhookRouteDto implements InboundEmailWebhookRoute {
   @ApiProperty({ description: 'Route address, meaning the local part of the receiving email address' })
   address: string;
 
@@ -28,7 +66,7 @@ export class InboundEmailWebhookRouteDto {
   data: Record<string, string>;
 }
 
-export class InboundEmailWebhookAddressDto {
+export class InboundEmailWebhookAddressDto implements InboundEmailWebhookAddress {
   @ApiProperty({ description: 'Email address' })
   address: string;
 
@@ -78,7 +116,7 @@ export class InboundEmailWebhookAttachmentDto implements InboundEmailAttachment 
   contentBytes?: number;
 }
 
-export class InboundEmailWebhookMailDto {
+export class InboundEmailWebhookMailDto implements InboundEmailWebhookMail {
   @ApiProperty({ type: [InboundEmailWebhookAddressDto], description: 'Sender addresses' })
   from: InboundEmailWebhookAddressDto[];
 
@@ -106,8 +144,13 @@ export class InboundEmailWebhookMailDto {
   })
   headers: Record<string, string | string[]>;
 
-  @ApiProperty({ type: 'string', format: 'date-time', description: 'Timestamp taken from the `Date` header' })
-  date: string;
+  @ApiProperty({
+    type: 'string',
+    format: 'date-time',
+    nullable: true,
+    description: 'Timestamp taken from the `Date` header, or `null` when the header is invalid',
+  })
+  date: string | null;
 
   @ApiPropertyOptional({ description: 'Value of the `In-Reply-To` header, set on replies' })
   inReplyTo?: string;
@@ -134,7 +177,7 @@ export class InboundEmailWebhookMailDto {
   attachments: InboundEmailWebhookAttachmentDto[];
 }
 
-export class InboundEmailWebhookObjectDto {
+export class InboundEmailWebhookObjectDto implements InboundEmailWebhookObject {
   @ApiProperty({ type: () => InboundEmailWebhookDomainDto })
   domain: InboundEmailWebhookDomainDto;
 

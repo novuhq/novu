@@ -13,13 +13,17 @@ import {
   sortOpenAPIDocument,
 } from './open.api.manipulation.component';
 
-export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
+type ApiKeySecurityScheme = SecuritySchemeObject & {
+  'x-speakeasy-example': string;
+};
+
+export const API_KEY_SECURITY_DEFINITIONS: ApiKeySecurityScheme = {
   type: 'apiKey',
   name: 'Authorization',
   in: 'header',
   description: 'API key authentication. Allowed headers-- "Authorization: ApiKey <novu_secret_key>".',
   'x-speakeasy-example': 'YOUR_SECRET_KEY_HERE',
-} as unknown as SecuritySchemeObject;
+};
 export const BEARER_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   type: 'http',
   scheme: 'bearer',
@@ -102,7 +106,7 @@ function buildOpenApiBaseDocument(internalSdkGeneration: boolean | undefined) {
   return options.build();
 }
 
-function buildFullDocumentWithPath(app: INestApplication<any>, baseDocument: Omit<OpenAPIObject, 'paths'>) {
+function buildFullDocumentWithPath(app: INestApplication, baseDocument: Omit<OpenAPIObject, 'paths'>) {
   // Define extraModels to ensure webhook payload DTOs are included in the schema definitions
   // Add other relevant payload DTOs here if more webhooks are defined
   const allWebhookPayloadDtos = [...new Set(webhookEvents.map((event) => event.payloadDto))];
@@ -119,7 +123,7 @@ function buildFullDocumentWithPath(app: INestApplication<any>, baseDocument: Omi
   return document;
 }
 
-function publishDeprecatedDocument(app: INestApplication<any>, document: OpenAPIObject) {
+function publishDeprecatedDocument(app: INestApplication, document: OpenAPIObject) {
   SwaggerModule.setup('api', app, {
     ...document,
     info: {
@@ -129,7 +133,7 @@ function publishDeprecatedDocument(app: INestApplication<any>, document: OpenAPI
   });
 }
 
-function publishLegacyOpenApiDoc(app: INestApplication<any>, document: OpenAPIObject) {
+function publishLegacyOpenApiDoc(app: INestApplication, document: OpenAPIObject) {
   SwaggerModule.setup('openapi', app, removeEndpointsWithoutApiKey(document), {
     jsonDocumentUrl: 'openapi.json',
     yamlDocumentUrl: 'openapi.yaml',

@@ -108,10 +108,4 @@ const webhookEventRecord = {
   },
 } as const satisfies WebhookEventRecord;
 
-// Helper function to ensure all enum values are present exactly once
-function createWebhookEvents<T extends WebhookEventRecord>(record: T): WebhookEventConfig[] {
-  return Object.values(record);
-}
-
-// Export the webhook events array created from the type-safe record
-export const webhookEvents = createWebhookEvents(webhookEventRecord);
+export const webhookEvents: WebhookEventConfig[] = Object.values(webhookEventRecord);

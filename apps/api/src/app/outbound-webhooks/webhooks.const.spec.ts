@@ -18,6 +18,9 @@ import { webhookEvents } from './webhooks.const';
 
 interface Schema {
   $ref?: string;
+  type?: string;
+  format?: string;
+  nullable?: boolean;
   properties?: Record<string, Schema>;
   required?: string[];
   enum?: string[];
@@ -169,19 +172,22 @@ describe('outbound webhook OpenAPI schemas', () => {
       '#/components/schemas/InboundEmailWebhookAddressDto'
     );
     expect(schemas.InboundEmailWebhookMailDto.required).to.include('attachments');
+    expect(schemas.InboundEmailWebhookMailDto.properties?.date).to.include({
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    });
   });
 
-  it('models workflow update previousObject as its two real persisted variants', () => {
+  it('models workflow update previousObject as one backward-compatible persisted shape', () => {
     const previousObject = schemas.WorkflowUpdatedWebhookPayloadDto.properties?.previousObject;
 
-    expect(previousObject?.oneOf?.map((schema) => schema.$ref)).to.have.members([
-      '#/components/schemas/PersistedWorkflowWebhookDto',
-      '#/components/schemas/PersistedWorkflowWithPreferencesWebhookDto',
-    ]);
+    expect(previousObject?.$ref).to.equal('#/components/schemas/PersistedWorkflowWebhookDto');
     expect(schemas.WorkflowDeletedWebhookPayloadDto.properties?.object?.$ref).to.equal(
       '#/components/schemas/PersistedWorkflowWebhookDto'
     );
-    expect(schemas.PersistedWorkflowWithPreferencesWebhookDto.required).to.include.members([
+    expect(schemas.PersistedWorkflowWebhookDto.properties).to.include.keys('userPreferences', 'defaultPreferences');
+    expect(schemas.PersistedWorkflowWebhookDto.required).not.to.include.members([
       'userPreferences',
       'defaultPreferences',
     ]);

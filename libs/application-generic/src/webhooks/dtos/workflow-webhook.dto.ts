@@ -294,16 +294,21 @@ export class PersistedWorkflowWebhookDto implements PersistedWorkflowContract {
   @ApiPropertyOptional({ type: () => UserResponseDto })
   lastPublishedBy?: NotificationTemplateEntity['lastPublishedBy'];
 
+  @ApiPropertyOptional({
+    type: () => WorkflowPreferencesDto,
+    nullable: true,
+    description: 'User-specific preferences included by workflow patch events',
+  })
+  userPreferences?: WorkflowPreferencesDto | null;
+
+  @ApiPropertyOptional({
+    type: () => WorkflowPreferencesDto,
+    description: 'Default preferences included by workflow patch events',
+  })
+  defaultPreferences?: WorkflowPreferencesDto;
+
   @ApiPropertyOptional({ enum: SeverityLevelEnum, enumName: 'SeverityLevelEnum', description: 'Workflow severity' })
   severity?: SeverityLevelEnum;
-}
-
-export class PersistedWorkflowWithPreferencesWebhookDto extends PersistedWorkflowWebhookDto {
-  @ApiProperty({ type: () => WorkflowPreferencesDto, nullable: true })
-  userPreferences: WorkflowPreferencesDto | null;
-
-  @ApiProperty({ type: () => WorkflowPreferencesDto })
-  defaultPreferences: WorkflowPreferencesDto;
 }
 
 export class WorkflowCreatedWebhookPayloadDto {
@@ -311,18 +316,12 @@ export class WorkflowCreatedWebhookPayloadDto {
   object: WorkflowResponseDto;
 }
 
-@ApiExtraModels(PersistedWorkflowWebhookDto, PersistedWorkflowWithPreferencesWebhookDto)
 export class WorkflowUpdatedWebhookPayloadDto {
   @ApiProperty({ type: () => WorkflowResponseDto })
   object: WorkflowResponseDto;
 
-  @ApiProperty({
-    oneOf: [
-      { $ref: getSchemaPath(PersistedWorkflowWebhookDto) },
-      { $ref: getSchemaPath(PersistedWorkflowWithPreferencesWebhookDto) },
-    ],
-  })
-  previousObject: PersistedWorkflowWebhookDto | PersistedWorkflowWithPreferencesWebhookDto;
+  @ApiProperty({ type: () => PersistedWorkflowWebhookDto })
+  previousObject: PersistedWorkflowWebhookDto;
 }
 
 export class WorkflowPublishedWebhookPayloadDto {

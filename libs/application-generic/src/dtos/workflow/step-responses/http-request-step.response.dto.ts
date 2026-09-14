@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { HttpRequestControlDto } from '../controls/http-request-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class HttpRequestControlsMetadataResponseDto extends ControlsMetadataDto {
+class HttpRequestControlsMetadataResponseDto extends ControlsMetadataDto<HttpRequestControlDto> {
   @ApiProperty({
     description: 'Control values specific to HTTP Request step',
     type: () => HttpRequestControlDto,

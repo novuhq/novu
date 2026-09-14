@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { type CustomDataType, type IPreferenceChannels, PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
+import { type IPreferenceChannels, PreferenceLevelEnum, type Schedule, SeverityLevelEnum } from '@novu/shared';
 import type { RulesLogic } from 'json-logic-js';
+import type { WebhookInboxPreference, WebhookInboxPreferenceWorkflow } from '../../types/inbox-preference.types';
 
 export class PreferenceChannelsDto implements IPreferenceChannels {
   @ApiPropertyOptional({ description: 'Whether email notifications are enabled' })
@@ -22,7 +23,7 @@ export class PreferenceChannelsDto implements IPreferenceChannels {
   tool?: boolean;
 }
 
-export class PreferenceWebhookWorkflowDto {
+export class PreferenceWebhookWorkflowDto implements WebhookInboxPreferenceWorkflow {
   @ApiProperty({ description: 'Database identifier of the workflow' })
   id: string;
 
@@ -44,7 +45,7 @@ export class PreferenceWebhookWorkflowDto {
   tags?: string[];
 
   @ApiPropertyOptional({ type: 'object', additionalProperties: true, description: 'Custom workflow data' })
-  data?: CustomDataType;
+  data?: WebhookInboxPreferenceWorkflow['data'];
 }
 
 export class PreferenceWebhookTimeRangeDto {
@@ -86,7 +87,7 @@ export class PreferenceWebhookWeeklyScheduleDto {
   sunday?: PreferenceWebhookDayScheduleDto;
 }
 
-export class PreferenceWebhookScheduleDto {
+export class PreferenceWebhookScheduleDto implements Schedule {
   @ApiProperty({ description: 'Whether the delivery schedule is enabled' })
   isEnabled: boolean;
 
@@ -94,7 +95,7 @@ export class PreferenceWebhookScheduleDto {
   weeklySchedule?: PreferenceWebhookWeeklyScheduleDto;
 }
 
-export class PreferenceWebhookObjectDto {
+export class PreferenceWebhookObjectDto implements WebhookInboxPreference {
   @ApiProperty({
     enum: PreferenceLevelEnum,
     enumName: 'PreferenceLevelEnum',
