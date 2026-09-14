@@ -99,6 +99,7 @@ export function hasChatContentOverride(providerId: string, overrides: Record<str
 const PHONE_BASED_CHAT_PROVIDERS: ChatProviderIdEnum[] = [
   ChatProviderIdEnum.WhatsAppBusiness,
   ChatProviderIdEnum.Sendblue,
+  ChatProviderIdEnum.PhotonImessage,
 ];
 
 type UnifiedChannel = {

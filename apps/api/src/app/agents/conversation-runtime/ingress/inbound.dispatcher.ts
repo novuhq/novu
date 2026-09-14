@@ -6,7 +6,7 @@ import { AgentConfigResolver, AgentConfigResolveSource } from '../../channels/ag
 import type { AgentEmailActionClaims } from '../../email/agent-email-action-token.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../../shared/util/express-to-web-request';
-import { ChatInstanceRegistry, InboundCallbacks } from './chat-instance.registry';
+import { ChatInstanceRegistry, InboundCallbacks, platformAdapterKey } from './chat-instance.registry';
 
 /**
  * Thrown by `InboundDispatcher.processEmailAction` when a failure is provably pre-dispatch —
@@ -55,7 +55,8 @@ export class InboundDispatcher {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
 
     const chat = await this.registry.getOrCreate(instanceKey, agentId, platform, config);
-    const handler = chat.webhooks[platform];
+    // Webhook handlers are keyed by adapter map key, not platform enum (Photon registers as `imessage`).
+    const handler = chat.webhooks[platformAdapterKey(platform)];
     if (!handler) {
       throw new BadRequestException(`Platform ${platform} not configured for agent ${agentId}`);
     }

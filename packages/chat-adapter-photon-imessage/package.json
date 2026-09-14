@@ -1,0 +1,39 @@
+{
+  "name": "@novu/chat-adapter-photon-imessage",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Photon (iMessage via Spectrum Cloud) adapter for Novu conversational agents (Chat SDK)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "afterinstall": "pnpm build",
+    "prebuild": "rimraf dist tsconfig.tsbuildinfo",
+    "build": "tsc -p tsconfig.json",
+    "watch:build": "tsc -p tsconfig.json -w",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@photon-ai/chat-adapter-imessage": "^3.2.0"
+  },
+  "peerDependencies": {
+    "chat": ">=4.33.0"
+  },
+  "devDependencies": {
+    "chat": "^4.33.0",
+    "rimraf": "~3.0.2",
+    "typescript": "5.6.2",
+    "vitest": "^4.1.0"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

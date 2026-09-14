@@ -131,6 +131,15 @@ async function resolveReaction(
   return value as WellKnownEmoji;
 }
 
+const WEBHOOK_SECRET_REJECTIONS: Partial<Record<AgentPlatformEnum, string>> = {
+  [AgentPlatformEnum.TELEGRAM]:
+    'Telegram inbound webhook rejected: secret_token not yet configured for this integration',
+  [AgentPlatformEnum.SENDBLUE]:
+    'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration',
+  [AgentPlatformEnum.PHOTON_IMESSAGE]:
+    'Photon inbound webhook rejected: webhook signing secret not yet configured for this integration',
+};
+
 @Injectable()
 export class AgentConfigResolver {
   constructor(
@@ -143,6 +152,67 @@ export class AgentConfigResolver {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  /**
+   * Defense in depth: reject inbound webhooks for platforms whose Configure step has not yet
+   * provisioned `credentials.token` (Telegram secret_token, Sendblue sb-signing-secret, Photon
+   * Spectrum v0 signing secret). Without it the adapter has nothing to verify inbound deliveries
+   * against (Telegram's handleWebhook is even fail-open). Throwing NotFoundException keeps this
+   * public endpoint indistinguishable from "unknown agent / unknown integration" so callers
+   * cannot fingerprint which integrations are mid-setup.
+   */
+  private rejectUnconfiguredWebhookSecret(
+    platform: AgentPlatformEnum,
+    credentials: ICredentialsEntity,
+    agentId: string,
+    integrationIdentifier: string
+  ): void {
+    const rejection = WEBHOOK_SECRET_REJECTIONS[platform];
+
+    if (!rejection || credentials.token) {
+      return;
+    }
+
+    this.logger.warn({ agentId, integrationIdentifier }, rejection);
+    throw new NotFoundException();
+  }
+
+  private async resolveConnectionAccessToken(
+    platform: AgentPlatformEnum,
+    credentials: ICredentialsEntity,
+    environmentId: string,
+    organizationId: string,
+    integrationIdentifier: string,
+    source: AgentConfigResolveSource | undefined
+  ): Promise<string | undefined> {
+    if (platform !== AgentPlatformEnum.SLACK) {
+      const connection = await this.channelConnectionRepository.findOne({
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        integrationIdentifier,
+      });
+
+      return connection ? decryptChannelConnectionAuth(connection.auth)?.accessToken : undefined;
+    }
+
+    const botToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);
+
+    if (source === 'webhook_message') {
+      if (!credentials.signingSecret) {
+        throw new UnprocessableEntityException(
+          'Slack signing secret is missing. Complete Slack app setup (quick setup or paste credentials) for this integration.'
+        );
+      }
+
+      if (!botToken) {
+        throw new UnprocessableEntityException(
+          'Slack workspace is not installed. Open the agent Slack setup guide and click Install to connect your workspace via OAuth.'
+        );
+      }
+    }
+
+    return botToken;
   }
 
   async resolve(
@@ -237,61 +307,16 @@ export class AgentConfigResolver {
 
     const credentials = decryptCredentials(integration.credentials);
 
-    // Defense in depth: reject Telegram inbound webhooks that have not completed
-    // the Configure step. ConfigureTelegramAgentWebhook is the only place that
-    // provisions credentials.token (the X-Telegram-Bot-Api-Secret-Token). Without
-    // it the @chat-adapter/telegram handleWebhook is fail-open and would accept
-    // every POST regardless of origin. Throwing NotFoundException here makes this
-    // public endpoint indistinguishable from "unknown agent / unknown integration"
-    // so callers cannot fingerprint which integrations are mid-setup.
-    if (platform === AgentPlatformEnum.TELEGRAM && !credentials.token) {
-      this.logger.warn(
-        { agentId, integrationIdentifier },
-        'Telegram inbound webhook rejected: secret_token not yet configured for this integration'
-      );
-      throw new NotFoundException();
-    }
+    this.rejectUnconfiguredWebhookSecret(platform, credentials, agentId, integrationIdentifier);
 
-    // Same defense-in-depth as Telegram: ConfigureSendblueWebhook is the only place that
-    // provisions credentials.token (the sb-signing-secret shared secret). Without it the
-    // adapter has no secret to verify inbound webhooks against, so reject early and keep the
-    // public endpoint indistinguishable from "unknown agent / unknown integration".
-    if (platform === AgentPlatformEnum.SENDBLUE && !credentials.token) {
-      this.logger.warn(
-        { agentId, integrationIdentifier },
-        'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration'
-      );
-      throw new NotFoundException();
-    }
-
-    let connectionAccessToken: string | undefined;
-    if (platform === AgentPlatformEnum.SLACK) {
-      connectionAccessToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);
-
-      if (options.source === 'webhook_message') {
-        if (!credentials.signingSecret) {
-          throw new UnprocessableEntityException(
-            'Slack signing secret is missing. Complete Slack app setup (quick setup or paste credentials) for this integration.'
-          );
-        }
-
-        if (!connectionAccessToken) {
-          throw new UnprocessableEntityException(
-            'Slack workspace is not installed. Open the agent Slack setup guide and click Install to connect your workspace via OAuth.'
-          );
-        }
-      }
-    } else {
-      const connection = await this.channelConnectionRepository.findOne({
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        integrationIdentifier,
-      });
-      if (connection) {
-        const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
-        connectionAccessToken = decryptedAuth?.accessToken;
-      }
-    }
+    const connectionAccessToken = await this.resolveConnectionAccessToken(
+      platform,
+      credentials,
+      environmentId,
+      organizationId,
+      integrationIdentifier,
+      options.source
+    );
 
     // NOTE: `connectedAt` is intentionally NOT written here. Marking the link
     // connected on any inbound webhook POST is too eager: every webhook event
