@@ -29,7 +29,7 @@ export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRA
   })
 );
 
-const ALLOWED_PREFIXES = ['context.', 'subscriber.'] as const;
+const ALLOWED_PREFIXES = ['context.', 'payload.', 'subscriber.'] as const;
 
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
   if (variable.name === 'subscriber.data') {
@@ -48,6 +48,5 @@ export function countLegacyIntegrationConditions(conditions?: IMessageFilter[]):
 }
 
 export function createEmptyConditionsQuery(): RuleGroupType {
-
   return { id: generateID(), combinator: 'and', rules: [] };
 }

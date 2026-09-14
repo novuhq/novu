@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ITenantDefine, ProvidersIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ITenantDefine, ITriggerPayload, ProvidersIdEnum } from '@novu/shared';
 import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 
 import { EnvironmentCommand } from '../../commands/project.command';
@@ -21,6 +21,7 @@ export class SelectIntegrationCommand extends EnvironmentCommand {
   @IsDefined()
   filterData: {
     tenant?: ITenantDefine | string;
+    payload?: ITriggerPayload;
     subscriber?: ICompileContext['subscriber'] | Record<string, unknown>;
     context?: ICompileContext['context'] | Record<string, unknown>;
   };

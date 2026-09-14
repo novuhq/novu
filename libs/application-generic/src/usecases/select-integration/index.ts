@@ -1,2 +1,2 @@
 export { SelectIntegrationCommand } from './select-integration.command';
-export { SelectIntegration } from './select-integration.usecase';
+export { type SelectedIntegration, SelectIntegration } from './select-integration.usecase';

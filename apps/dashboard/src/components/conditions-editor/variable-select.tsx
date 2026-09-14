@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, useMemo, useRef, useState } from 'react';
+import React, { HTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
 
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
@@ -53,6 +53,11 @@ export const VariableSelect = (props: VariableSelectProps) => {
   const [filterValue, setFilterValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const variablesListRef = useRef<VariableListRef>(null);
+  const selectedValueRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setInputValue(value ?? defaultValue ?? '');
+  }, [defaultValue, value]);
 
   const filteredOptions = useMemo(() => {
     if (!filterValue) {
@@ -88,10 +93,14 @@ export const VariableSelect = (props: VariableSelectProps) => {
   };
 
   const onSelect = (newValue: string) => {
+    selectedValueRef.current = newValue;
     setIsOpen(false);
     setFilterValue('');
     setInputValue(newValue);
     onChange(newValue);
+    queueMicrotask(() => {
+      selectedValueRef.current = null;
+    });
   };
 
   const onOpen = () => {
@@ -102,6 +111,14 @@ export const VariableSelect = (props: VariableSelectProps) => {
   const onClose = () => {
     setIsOpen(false);
     setFilterValue('');
+
+    if (selectedValueRef.current !== null) {
+      setInputValue(selectedValueRef.current);
+      selectedValueRef.current = null;
+
+      return;
+    }
+
     let newInputValue = '';
 
     if (inputValue !== '' || (inputValue === '' && isClearable)) {

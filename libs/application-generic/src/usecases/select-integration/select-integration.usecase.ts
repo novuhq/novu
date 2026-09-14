@@ -15,6 +15,10 @@ import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
 import { SelectIntegrationCommand } from './select-integration.command';
 
+export interface SelectedIntegration extends IntegrationEntity {
+  matchedConditions?: IntegrationEntity['rules'] | IntegrationEntity['conditions'];
+}
+
 @Injectable()
 export class SelectIntegration {
   constructor(
@@ -26,13 +30,14 @@ export class SelectIntegration {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: SelectIntegrationCommand): Promise<IntegrationEntity | undefined> {
+  async execute(command: SelectIntegrationCommand): Promise<SelectedIntegration | undefined> {
     const isCrossEnvironmentIntegrationEnabled = await this.isCrossEnvironmentIntegrationEnabled(command);
 
     let integration: IntegrationEntity | null = await this.getPrimaryIntegration(
       command,
       isCrossEnvironmentIntegrationEnabled
     );
+    let matchedConditions: SelectedIntegration['matchedConditions'];
 
     if (!command.identifier) {
       const integrations = await this.integrationRepository.find(
@@ -49,6 +54,9 @@ export class SelectIntegration {
 
           if (passed) {
             integration = currentIntegration;
+            matchedConditions = hasIntegrationRules(currentIntegration.rules)
+              ? currentIntegration.rules
+              : currentIntegration.conditions;
             break;
           }
         }
@@ -59,7 +67,9 @@ export class SelectIntegration {
       return;
     }
 
-    return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+    const decryptedIntegration = GetDecryptedIntegrations.getDecryptedCredentials(integration);
+
+    return matchedConditions ? { ...decryptedIntegration, matchedConditions } : decryptedIntegration;
   }
 
   private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {
@@ -94,6 +104,7 @@ export class SelectIntegration {
       const { result } = evaluateRules(
         currentIntegration.rules as RulesLogic<AdditionalOperation>,
         {
+          payload: command.filterData.payload,
           subscriber: command.filterData.subscriber,
           context: command.filterData.context,
         },

@@ -300,6 +300,37 @@ describe('select integration', () => {
     );
 
     expect(integration?.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual(matchingIntegration.rules);
+  });
+
+  it('should select an integration matching workflow payload conditions', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'payload-conditioned-integration',
+      identifier: 'payload-conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'payload.region' }, 'eu'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          payload: { region: 'eu' },
+        },
+      })
+    );
+
+    expect(integration?.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual(matchingIntegration.rules);
   });
 
   it('should not apply unsafe json-logic operators and fall back to primary', async () => {

@@ -7,6 +7,7 @@ import {
   DetailEnum,
   GetNovuProviderCredentials,
   Instrument,
+  type SelectedIntegration,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
@@ -55,12 +56,16 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
   return undefined;
 }
 
+type BridgeProviderOverrides = {
+  providers?: Record<string, Record<string, unknown>>;
+};
+
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
  */
 export function combineProviderOverrides(
-  bridgeData: Record<string, any> | null | undefined,
+  bridgeData: BridgeProviderOverrides | null | undefined,
   overrides: TriggerOverrides | undefined,
   stepId: string | undefined,
   integrationId: string
@@ -98,10 +103,11 @@ export abstract class SendMessageBase extends SendMessageType {
     recipientEmail?: string;
     filterData: {
       tenant?: ITenantDefine;
+      payload?: SendMessageChannelCommand['compileContext']['payload'];
       subscriber?: SendMessageChannelCommand['compileContext']['subscriber'];
       context?: SendMessageChannelCommand['compileContext']['context'];
     };
-  }): Promise<IntegrationEntity | undefined> {
+  }): Promise<SelectedIntegration | undefined> {
     const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
     if (!integration) {
@@ -129,6 +135,7 @@ export abstract class SendMessageBase extends SendMessageType {
   protected getIntegrationFilterData(command: SendMessageChannelCommand) {
     return {
       tenant: command.job.tenant,
+      payload: command.compileContext?.payload,
       subscriber: command.compileContext?.subscriber,
       context: command.compileContext?.context,
     };
@@ -174,8 +181,25 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @Instrument()
-  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
+  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: SelectedIntegration) {
     const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
+
+    if (integration.matchedConditions) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            integrationIdentifier: integration.identifier,
+            matchedConditions: integration.matchedConditions,
+          }),
+        })
+      );
+    }
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
