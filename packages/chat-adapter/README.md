@@ -197,7 +197,7 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 | Button actions (`onAction`)                              | ✅                             |
 | Inbound reactions (`onReaction`)                         | ✅                             |
 | Post message (markdown)                                  | ✅                             |
-| Quote reply (`thread.reply`)                             | ✅ WhatsApp first              |
+| Quote reply (`thread.reply`)                             | ✅ WhatsApp, Telegram (see below) |
 | Rich cards                                               | ✅                             |
 | File attachments (outbound)                              | ✅                             |
 | Edit message (in place)                                  | ✅                             |
@@ -214,3 +214,16 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 | Delete message                                           | ❌ Not in v1                   |
 | Outbound-initiated DM (`openDM`)                         | ❌ Not in v1                   |
 | Modals                                                   | ❌ Not in v1                   |
+
+### Quote reply
+
+Outbound (bridge): `await thread.reply(inboundMessage, 'Your answer')`. Inbound: `message.raw.replyTo?.messageId` when the user quote-replied (WhatsApp, Telegram, Teams). Other outbound channels get a plain post (debug log, no error).
+
+| Platform          | Outbound quote-reply | Inbound `replyTo` |
+| ----------------- | -------------------- | ----------------- |
+| WhatsApp          | ✅                    | ✅                 |
+| Telegram          | ✅                    | ✅                 |
+| Microsoft Teams   | — plain post         | ✅                 |
+| Slack             | — plain post         | — not supported    |
+| Web Chat          | —                    | —                 |
+| Email / Sendblue  | —                    | —                 |
