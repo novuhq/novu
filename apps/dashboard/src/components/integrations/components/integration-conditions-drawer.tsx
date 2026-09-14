@@ -1,4 +1,5 @@
 import { IMessageFilter } from '@novu/shared';
+import type { JSONSchema7 } from 'json-schema';
 import { useCallback, useMemo, useState } from 'react';
 import { Control, UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { RiArrowRightSLine, RiGuideFill, RiInputField } from 'react-icons/ri';
@@ -13,8 +14,9 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
-import type { EnhancedLiquidVariable } from '@/utils/parseStepVariables';
+import { type EnhancedLiquidVariable, parseStepVariables } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
@@ -65,6 +67,27 @@ export function IntegrationConditionsDrawer({
   const primary = useWatch({ control, name: 'primary' });
   const integrationName = useWatch({ control, name: 'name' });
   const contextTypeVariables = useContextTypeVariables();
+  const { data: workflowsData } = useFetchWorkflows({ limit: 100 });
+  const payloadVariables = useMemo(
+    () =>
+      (workflowsData?.workflows ?? []).flatMap((workflow) => {
+        if (!workflow.payloadSchema) {
+          return [];
+        }
+
+        const schema: JSONSchema7 = {
+          type: 'object',
+          properties: {
+            payload: workflow.payloadSchema as JSONSchema7,
+          },
+        };
+
+        return parseStepVariables(schema, { isPayloadSchemaEnabled: true }).enhancedVariables.filter((variable) =>
+          variable.name.startsWith('payload.')
+        );
+      }),
+    [workflowsData?.workflows]
+  );
   const integrationConditionVariables = useMemo(() => {
     const existingNames = new Set(INTEGRATION_CONDITION_VARIABLES.map((variable) => variable.name));
     const dynamicContextVariables: EnhancedLiquidVariable[] = contextTypeVariables
@@ -74,8 +97,17 @@ export function IntegrationConditionsDrawer({
         dataType: variable.name.endsWith('.data') ? 'object' : 'string',
       }));
 
-    return [...INTEGRATION_CONDITION_VARIABLES, ...dynamicContextVariables];
-  }, [contextTypeVariables]);
+    const variables = [...INTEGRATION_CONDITION_VARIABLES, ...dynamicContextVariables];
+
+    for (const variable of payloadVariables) {
+      if (!existingNames.has(variable.name)) {
+        existingNames.add(variable.name);
+        variables.push(variable);
+      }
+    }
+
+    return variables;
+  }, [contextTypeVariables, payloadVariables]);
   const integrationConditionFields = useMemo(
     () =>
       integrationConditionVariables.map((variable) => ({

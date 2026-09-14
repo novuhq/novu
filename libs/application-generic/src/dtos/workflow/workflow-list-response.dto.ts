@@ -117,6 +117,14 @@ export class WorkflowListResponseDto {
   isTranslationEnabled?: boolean;
 
   @ApiProperty({
+    description: 'JSON schema for the workflow payload',
+    type: Object,
+    required: false,
+  })
+  @IsOptional()
+  payloadSchema?: object;
+
+  @ApiProperty({
     description: 'Steps of the workflow',
     type: StepListResponseDto,
     isArray: true,
