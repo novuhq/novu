@@ -10,6 +10,7 @@ import {
   FeatureFlagsService,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  type IntegrationSelectionResult,
   InvalidateCacheService,
   IPushHandler,
   messageWebhookMapper,
@@ -93,6 +94,19 @@ interface IPushProviderOverride {
   overrides: Record<string, unknown>;
 }
 
+interface AndroidPushOverrides {
+  notification?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+interface ApnsPushOverrides {
+  payload?: {
+    aps?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
   channelType = ChannelTypeEnum.PUSH;
@@ -123,6 +137,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing channel orchestration is outside this change.
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Push',
@@ -239,9 +254,9 @@ export class SendMessagePush extends SendMessageBase {
         }
       }
 
-      let integration: IntegrationEntity | undefined;
+      let selection: IntegrationSelectionResult | undefined;
       try {
-        integration = await this.getSubscriberIntegration(channel, command);
+        selection = await this.getSubscriberIntegration(channel, command);
       } catch (error) {
         Logger.error(
           { jobId: command.jobId },
@@ -253,14 +268,15 @@ export class SendMessagePush extends SendMessageBase {
 
       const noDeviceTokensAndNoOverrides = !deviceTokens && !uniqueOverrideChannels?.length;
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
-      if (noDeviceTokensAndNoOverrides || !integration) {
+      if (noDeviceTokensAndNoOverrides || !selection) {
         continue;
       }
 
+      const { integration } = selection;
       let overrides: Record<string, unknown> = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
-      await this.sendSelectedIntegrationExecution(command.job, integration);
+      await this.sendSelectedIntegrationExecution(command.job, selection);
 
       const isPushUnreadCountEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_PUSH_UNREAD_COUNT_ENABLED,
@@ -428,8 +444,8 @@ export class SendMessagePush extends SendMessageBase {
       command.contextKeys
     );
 
-    const androidOverrides = (overrides.android as Record<string, any>) ?? {};
-    const apnsOverrides = (overrides.apns as Record<string, any>) ?? {};
+    const androidOverrides = (overrides.android as AndroidPushOverrides) ?? {};
+    const apnsOverrides = (overrides.apns as ApnsPushOverrides) ?? {};
 
     return {
       ...overrides,
@@ -539,8 +555,8 @@ export class SendMessagePush extends SendMessageBase {
   private async getSubscriberIntegration(
     channel: IChannelSettings,
     command: SendMessageChannelCommand
-  ): Promise<IntegrationEntity | undefined> {
-    const integration = await this.getIntegration({
+  ): Promise<IntegrationSelectionResult | undefined> {
+    const selection = await this.getIntegration({
       id: channel._integrationId,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -550,13 +566,13 @@ export class SendMessagePush extends SendMessageBase {
       filterData: this.getIntegrationFilterData(command),
     });
 
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, command.job);
 
       return undefined;
     }
 
-    return integration;
+    return selection;
   }
 
   private async createExecutionDetailsError(
@@ -583,6 +599,7 @@ export class SendMessagePush extends SendMessageBase {
     );
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing provider orchestration is outside this change.
   private async sendMessage(
     command: SendMessageChannelCommand,
     message: MessageEntity,
@@ -828,7 +845,7 @@ export class SendMessagePush extends SendMessageBase {
 
       if (!credentials) continue;
 
-      const integration = await this.selectIntegration.execute({
+      const selection = await this.selectIntegration.execute({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.PUSH,
@@ -837,10 +854,10 @@ export class SendMessagePush extends SendMessageBase {
         filterData: this.getIntegrationFilterData(command),
       });
 
-      if (!integration) continue;
+      if (!selection) continue;
 
       channelSettings.push({
-        _integrationId: integration._id,
+        _integrationId: selection.integration._id,
         providerId: providerOverride.providerId,
         credentials,
       });

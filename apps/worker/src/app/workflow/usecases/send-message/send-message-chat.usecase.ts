@@ -10,6 +10,7 @@ import {
   FeatureFlagsService,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  type IntegrationSelectionResult,
   messageWebhookMapper,
   SelectIntegration,
   SelectIntegrationCommand,
@@ -478,20 +479,24 @@ export class SendMessageChat extends SendMessageBase {
     assignedAgentId: string | null,
     card?: CardElement
   ): Promise<SendMessageResult> {
-    const { integration, error } = await this.getAndValidateIntegration(
+    const { selection, error } = await this.getAndValidateIntegration(
       command,
       integrationChannelData.providerId,
       undefined,
       integrationChannelData.integrationIdentifier
     );
     if (error) return error;
+    const { integration } = selection;
+    const resolvedSelection = integrationChannelData.matchedConditions
+      ? { ...selection, matchedConditions: integrationChannelData.matchedConditions }
+      : selection;
 
     const message = await this.createMessage(
       command,
       step,
       content,
       integrationChannelData.providerId,
-      integration,
+      resolvedSelection,
       {},
       integrationChannelData.channelData
     );
@@ -551,13 +556,14 @@ export class SendMessageChat extends SendMessageBase {
     const integrationId = isPhoneBased ? undefined : subscriberChannel._integrationId;
     const integrationIdentifier = isPhoneBased ? agentBoundIdentifier : undefined;
 
-    const { integration, error } = await this.getAndValidateIntegration(
+    const { selection, error } = await this.getAndValidateIntegration(
       command,
       subscriberChannel.providerId,
       integrationId,
       integrationIdentifier
     );
     if (error) return error;
+    const { integration } = selection;
 
     const combinedOverrides = combineProviderOverrides(
       command.bridgeData,
@@ -578,7 +584,7 @@ export class SendMessageChat extends SendMessageBase {
       step,
       content,
       subscriberChannel.providerId,
-      integration,
+      selection,
       {
         chatWebhookUrl,
         phone: phoneNumber,
@@ -971,7 +977,7 @@ export class SendMessageChat extends SendMessageBase {
     step: NotificationStepEntity,
     content: string,
     providerId: ProvidersIdEnum,
-    integration: IntegrationEntity,
+    selection: IntegrationSelectionResult,
     additionalFields: Partial<MessageEntity> = {},
     channelData?: ChannelData[]
   ): Promise<MessageEntity> {
@@ -997,7 +1003,7 @@ export class SendMessageChat extends SendMessageBase {
       ...additionalFields,
     });
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    await this.sendSelectedIntegrationExecution(command.job, selection);
 
     await this.createExecutionDetail(
       command,
@@ -1015,7 +1021,9 @@ export class SendMessageChat extends SendMessageBase {
     providerId: ProvidersIdEnum,
     integrationId?: string,
     integrationIdentifier?: string
-  ): Promise<{ integration: IntegrationEntity; error?: never } | { integration?: never; error: SendMessageResult }> {
+  ): Promise<
+    { selection: IntegrationSelectionResult; error?: never } | { selection?: never; error: SendMessageResult }
+  > {
     const getIntegrationParams = {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -1027,9 +1035,9 @@ export class SendMessageChat extends SendMessageBase {
       ...(integrationIdentifier && { identifier: integrationIdentifier }),
     };
 
-    const integration = await this.getIntegration(getIntegrationParams);
+    const selection = await this.getIntegration(getIntegrationParams);
 
-    if (!integration) {
+    if (!selection) {
       const reason = integrationIdentifier
         ? `Integration with integrationIdentifier: ${integrationIdentifier} is either deleted or not active`
         : integrationId
@@ -1066,7 +1074,7 @@ export class SendMessageChat extends SendMessageBase {
       };
     }
 
-    return { integration };
+    return { selection };
   }
 
   private async createExecutionDetail(

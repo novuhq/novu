@@ -58,12 +58,15 @@ import {
   TestHttpEndpointRequestDto,
   TestHttpEndpointResponseDto,
   UpdateWorkflowDto,
+  WorkflowPayloadSchemasResponseDto,
   WorkflowTestDataResponseDto,
 } from './dtos';
 import {
   BuildWorkflowTestDataUseCase,
   DuplicateWorkflowCommand,
   DuplicateWorkflowUseCase,
+  GetWorkflowPayloadSchemasCommand,
+  GetWorkflowPayloadSchemasUseCase,
   ListWorkflowsCommand,
   ListWorkflowsUseCase,
   SyncToEnvironmentCommand,
@@ -93,6 +96,7 @@ export class WorkflowController {
     private buildStepDataUsecase: BuildStepDataUsecase,
     private patchWorkflowUsecase: PatchWorkflowUsecase,
     private duplicateWorkflowUseCase: DuplicateWorkflowUseCase,
+    private getWorkflowPayloadSchemasUseCase: GetWorkflowPayloadSchemasUseCase,
     private testHttpEndpointUsecase: TestHttpEndpointUsecase
   ) {}
 
@@ -187,6 +191,20 @@ export class WorkflowController {
           ? ((step as { providerOverrides?: Record<string, Record<string, unknown>> | null }).providerOverrides ?? null)
           : undefined,
     }));
+  }
+
+  @Get('payload-schemas')
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  async getWorkflowPayloadSchemas(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData
+  ): Promise<WorkflowPayloadSchemasResponseDto> {
+    return this.getWorkflowPayloadSchemasUseCase.execute(
+      GetWorkflowPayloadSchemasCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
   }
 
   @Get(':workflowId')
