@@ -112,5 +112,7 @@ const MODULES = [
   ],
 })
 export class WorkflowModule implements NestModule {
-  configure(_consumer: MiddlewareConsumer): MiddlewareConsumer | undefined {}
+  configure(_consumer: MiddlewareConsumer): undefined {
+    return undefined;
+  }
 }

@@ -309,7 +309,7 @@ export class SendMessageSms extends SendMessageBase {
     overrides: SmsMessageOverrides = {}
   ): Promise<SendMessageResult> {
     try {
-      const bridgeBody = command.bridgeData?.outputs.body;
+      const bridgeBody = (command.bridgeData?.outputs as SmsOutput | undefined)?.body;
 
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));

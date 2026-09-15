@@ -93,7 +93,16 @@ interface IPushProviderOverride {
   overrides: Record<string, unknown>;
 }
 
-interface PushPlatformOverrides {
+interface AndroidPushOverrides {
+  notification?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+interface ApnsPushOverrides {
+  payload?: {
+    aps?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -433,8 +442,8 @@ export class SendMessagePush extends SendMessageBase {
       command.contextKeys
     );
 
-    const androidOverrides = (overrides.android as PushPlatformOverrides) ?? {};
-    const apnsOverrides = (overrides.apns as PushPlatformOverrides) ?? {};
+    const androidOverrides = (overrides.android as AndroidPushOverrides) ?? {};
+    const apnsOverrides = (overrides.apns as ApnsPushOverrides) ?? {};
 
     return {
       ...overrides,

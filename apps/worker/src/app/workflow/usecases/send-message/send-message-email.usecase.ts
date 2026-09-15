@@ -25,6 +25,7 @@ import {
   AgentRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  IEmailBlock,
   IntegrationEntity,
   LayoutRepository,
   MessageEntity,
@@ -180,8 +181,8 @@ export class SendMessageEmail extends SendMessageBase {
 
     let html = '';
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
-    let content = '';
-    let senderName = '';
+    let content: string | IEmailBlock[] = '';
+    let senderName: string | undefined;
     const bridgeEmailOutput = bridgeOutputs as EmailOutput | undefined;
     const bridgeFrom = bridgeEmailOutput?.from;
     const useProviderDefaults = bridgeEmailOutput?.useProviderDefaults === true;
