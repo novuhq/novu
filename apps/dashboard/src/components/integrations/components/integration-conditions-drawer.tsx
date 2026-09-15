@@ -16,7 +16,7 @@ import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
-import { type EnhancedLiquidVariable, parseStepVariables } from '@/utils/parseStepVariables';
+import { parseStepVariables } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
@@ -92,12 +92,7 @@ export function IntegrationConditionsDrawer({
   );
   const integrationConditionVariables = useMemo(() => {
     const existingNames = new Set(INTEGRATION_CONDITION_VARIABLES.map((variable) => variable.name));
-    const dynamicContextVariables: EnhancedLiquidVariable[] = contextTypeVariables
-      .filter((variable) => !existingNames.has(variable.name))
-      .map((variable) => ({
-        ...variable,
-        dataType: variable.name.endsWith('.data') ? 'object' : 'string',
-      }));
+    const dynamicContextVariables = contextTypeVariables.filter((variable) => !existingNames.has(variable.name));
 
     const variables = [...INTEGRATION_CONDITION_VARIABLES, ...dynamicContextVariables];
 

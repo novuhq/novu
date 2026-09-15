@@ -1,55 +1,82 @@
 import { useMemo } from 'react';
 import { useFetchContexts } from '@/hooks/use-fetch-contexts';
 import { isDangerousObjectKey } from '@/utils/context-variable-utils';
-import { LiquidVariable } from '@/utils/parseStepVariables';
+import { type EnhancedLiquidVariable, type FieldDataType } from '@/utils/parseStepVariables';
 
 const MAX_CONTEXT_DATA_DEPTH = 5;
 
-function collectDataPaths(obj: Record<string, unknown>, prefix: string, depth = 0): string[] {
-  const paths: string[] = [];
+type ContextVariableSource = {
+  type?: string;
+  data?: unknown;
+};
+
+function getDataType(value: unknown): FieldDataType {
+  if (Array.isArray(value)) {
+    return 'array';
+  }
+
+  switch (typeof value) {
+    case 'number':
+      return 'number';
+    case 'boolean':
+      return 'boolean';
+    case 'object':
+      return value === null ? 'string' : 'object';
+    default:
+      return 'string';
+  }
+}
+
+function collectDataVariables(obj: Record<string, unknown>, prefix: string, depth = 0): EnhancedLiquidVariable[] {
+  const variables: EnhancedLiquidVariable[] = [];
+
   for (const [key, value] of Object.entries(obj)) {
     if (isDangerousObjectKey(key)) continue;
 
-    const path = `${prefix}.${key}`;
-    paths.push(path);
+    const name = `${prefix}.${key}`;
+    variables.push({ name, dataType: getDataType(value) });
+
     if (depth < MAX_CONTEXT_DATA_DEPTH && value && typeof value === 'object' && !Array.isArray(value)) {
-      paths.push(...collectDataPaths(value as Record<string, unknown>, path, depth + 1));
+      variables.push(...collectDataVariables(value as Record<string, unknown>, name, depth + 1));
     }
   }
 
-  return paths;
+  return variables;
 }
 
-export function useContextTypeVariables(): LiquidVariable[] {
-  const { data: contextsData } = useFetchContexts({ limit: 50 }, { staleTime: 30_000 });
+export function buildContextTypeVariables(contexts: ContextVariableSource[]): EnhancedLiquidVariable[] {
+  const seenNames = new Set<string>();
+  const variables: EnhancedLiquidVariable[] = [];
 
-  return useMemo(() => {
-    const contexts = contextsData?.data;
-    if (!contexts || contexts.length === 0) return [];
+  const add = (variable: EnhancedLiquidVariable) => {
+    if (seenNames.has(variable.name)) return;
+    seenNames.add(variable.name);
+    variables.push(variable);
+  };
 
-    const seenNames = new Set<string>();
-    const variables: LiquidVariable[] = [];
+  for (const context of contexts) {
+    if (!context.type) continue;
 
-    const add = (name: string) => {
-      if (seenNames.has(name)) return;
-      seenNames.add(name);
-      variables.push({ name });
-    };
+    add({ name: `context.${context.type}.id`, dataType: 'string' });
+    add({ name: `context.${context.type}.data`, dataType: 'object' });
 
-    for (const ctx of contexts) {
-      if (!ctx.type) continue;
+    if (context.data && typeof context.data === 'object' && Object.keys(context.data).length > 0) {
+      const dataVariables = collectDataVariables(
+        context.data as Record<string, unknown>,
+        `context.${context.type}.data`
+      );
 
-      add(`context.${ctx.type}.id`);
-      add(`context.${ctx.type}.data`);
-
-      if (ctx.data && typeof ctx.data === 'object' && Object.keys(ctx.data).length > 0) {
-        const dataPaths = collectDataPaths(ctx.data as Record<string, unknown>, `context.${ctx.type}.data`);
-        for (const path of dataPaths) {
-          add(path);
-        }
+      for (const variable of dataVariables) {
+        add(variable);
       }
     }
+  }
 
-    return variables;
-  }, [contextsData]);
+  return variables;
+}
+
+export function useContextTypeVariables(): EnhancedLiquidVariable[] {
+  const { data: contextsData } = useFetchContexts({ limit: 50 }, { staleTime: 30_000 });
+
+  return useMemo(() => buildContextTypeVariables(contextsData?.data ?? []), [contextsData]);
 }
