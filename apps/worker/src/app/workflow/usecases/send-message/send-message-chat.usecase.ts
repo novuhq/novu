@@ -487,13 +487,16 @@ export class SendMessageChat extends SendMessageBase {
     );
     if (error) return error;
     const { integration } = selection;
+    const resolvedSelection = integrationChannelData.matchedConditions
+      ? { ...selection, matchedConditions: integrationChannelData.matchedConditions }
+      : selection;
 
     const message = await this.createMessage(
       command,
       step,
       content,
       integrationChannelData.providerId,
-      selection,
+      resolvedSelection,
       {},
       integrationChannelData.channelData
     );

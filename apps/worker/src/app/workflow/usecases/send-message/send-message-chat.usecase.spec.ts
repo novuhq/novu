@@ -190,10 +190,12 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     }
     const provider = handler.getProvider();
     // Fail here rather than silently letting the suite make a real request to slack.com.
-    expect(Reflect.has(provider, 'axiosInstance'), 'SlackProvider no longer exposes axiosInstance').to.equal(true);
+    if (!('axiosInstance' in provider)) {
+      throw new Error('SlackProvider no longer exposes axiosInstance');
+    }
 
     const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
-    Reflect.set(provider, 'axiosInstance', { post });
+    provider.axiosInstance = { post };
     sinon.stub(ChatFactory.prototype, 'getHandler').returns(handler);
 
     return post;
@@ -339,10 +341,12 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       throw new Error('Slack handler is unavailable');
     }
     const provider = handler.getProvider();
-    expect(Reflect.has(provider, 'axiosInstance'), 'SlackProvider no longer exposes axiosInstance').to.equal(true);
+    if (!('axiosInstance' in provider)) {
+      throw new Error('SlackProvider no longer exposes axiosInstance');
+    }
 
     const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
-    Reflect.set(provider, 'axiosInstance', { post });
+    provider.axiosInstance = { post };
 
     const resolveCardContent = sinon.stub(handler as never, 'resolveCardContent').resolves({
       content: 'card fallback text',

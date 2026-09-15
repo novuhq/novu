@@ -706,14 +706,16 @@ describe('ResolveChannelEndpoints - integration rules', () => {
   });
 
   it('keeps only the integration whose rules match the workflow payload', async () => {
+    const matchingRules = { '==': [{ var: 'payload.region' }, 'eu'] };
     givenIntegrations([
       { identifier: 'telegram-integration', rules: { '==': [{ var: 'payload.region' }, 'us'] } },
-      { identifier: 'chat-webhook', rules: { '==': [{ var: 'payload.region' }, 'eu'] } },
+      { identifier: 'chat-webhook', rules: matchingRules },
     ]);
 
     const result = await usecase.execute(buildCommand({ filterData: { payload: { region: 'eu' } } }));
 
     expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+    expect(result[0].matchedConditions).to.deep.equal({ type: 'rules', value: matchingRules });
   });
 
   it('still delivers through integrations without rules alongside a matching one', async () => {
