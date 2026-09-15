@@ -16,6 +16,7 @@ import { TelegramHandler } from './handlers/telegram.handler';
 import { WebexMessagingHandler } from './handlers/webex-messaging.handler';
 import { WhatsAppBusinessHandler } from './handlers/whatsapp-business.handler';
 import { ZulipHandler } from './handlers/zulip.handler';
+import { WeChatHandler } from './handlers/wechat.handler';
 import { IChatFactory, IChatHandler } from './interfaces';
 
 export class ChatFactory implements IChatFactory {
@@ -28,6 +29,7 @@ export class ChatFactory implements IChatFactory {
     new MattermostHandler(),
     new RyverHandler(),
     new ZulipHandler(),
+    new WeChatHandler(),
     new GrafanaOnCallHandler(),
     new GetstreamChatHandler(),
     new RocketChatHandler(),
