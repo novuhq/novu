@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   PinoLogger,
   QueryBuilder,
@@ -13,6 +13,7 @@ import { JobEntity, JobRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
+import { ActivityRetentionService } from '../../shared/activity-retention.service';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
@@ -81,6 +82,7 @@ export class GetWorkflowRun {
     private stepRunRepository: StepRunRepository,
     private traceLogRepository: TraceLogRepository,
     private jobRepository: JobRepository,
+    private activityRetentionService: ActivityRetentionService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -116,6 +118,13 @@ export class GetWorkflowRun {
       }
 
       const workflowRun = workflowRunResult.data;
+      const createdAtIso = new Date(`${workflowRun.created_at} UTC`).toISOString();
+      await this.activityRetentionService.validateRetentionLimitForTier(
+        command.organizationId,
+        createdAtIso,
+        createdAtIso
+      );
+
       const [stepRuns, overrides] = await Promise.all([
         this.getStepRunsForWorkflowRun(command, workflowRun),
         this.getOverridesByTransactionId(workflowRun.transaction_id, command),
@@ -124,6 +133,10 @@ export class GetWorkflowRun {
 
       return workflowRunDto;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       this.logger.error(
         {
           error: error.message,

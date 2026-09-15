@@ -622,4 +622,110 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     return result.data;
   }
+
+  async getGroupedStats(options: {
+    where: Where<WorkflowRun>;
+    groupBy?: WorkflowRunStatsGroupBy;
+    bucketLimit?: number;
+  }): Promise<{
+    total: number;
+    uniqueSubscribers: number;
+    buckets: Array<{ key: string; count: number; uniqueSubscribers: number }>;
+  }> {
+    const { where, groupBy, bucketLimit = 50 } = options;
+    const { clause, params } = this.buildWhereClause(where);
+
+    const totalsResult = await this.clickhouseService.query<{
+      total: string;
+      unique_subscribers: string;
+    }>({
+      query: `
+        SELECT
+          toInt64(count()) as total,
+          toInt64(uniqExact(external_subscriber_id)) as unique_subscribers
+        FROM ${this.table} FINAL
+        ${clause}
+      `,
+      params,
+    });
+
+    const total = parseInt(totalsResult.data[0]?.total || '0', 10);
+    const uniqueSubscribers = parseInt(totalsResult.data[0]?.unique_subscribers || '0', 10);
+
+    if (!groupBy) {
+      return { total, uniqueSubscribers, buckets: [] };
+    }
+
+    const limitedBucketCount = Math.min(Math.max(bucketLimit, 1), 50);
+    const groupExpression = resolveWorkflowRunGroupExpression(groupBy);
+    const arrayJoinClause =
+      groupBy === 'channel'
+        ? `ARRAY JOIN JSONExtract(ifNull(nullIf(channels, ''), '[]'), 'Array(String)') AS channel`
+        : '';
+
+    const bucketsResult = await this.clickhouseService.query<{
+      bucket_key: string;
+      count: string;
+      unique_subscribers: string;
+    }>({
+      query: `
+        SELECT
+          ${groupExpression} as bucket_key,
+          toInt64(count()) as count,
+          toInt64(uniqExact(external_subscriber_id)) as unique_subscribers
+        FROM ${this.table} FINAL
+        ${arrayJoinClause}
+        ${clause}
+        GROUP BY bucket_key
+        ORDER BY count DESC
+        LIMIT ${limitedBucketCount}
+      `,
+      params,
+    });
+
+    return {
+      total,
+      uniqueSubscribers,
+      buckets: bucketsResult.data.map((row) => ({
+        key: row.bucket_key ?? '',
+        count: parseInt(row.count || '0', 10),
+        uniqueSubscribers: parseInt(row.unique_subscribers || '0', 10),
+      })),
+    };
+  }
+}
+
+export type WorkflowRunStatsGroupBy =
+  | 'day'
+  | 'status'
+  | 'deliveryLifecycleStatus'
+  | 'deliveryLifecycleDetail'
+  | 'workflow'
+  | 'channel';
+
+function resolveWorkflowRunGroupExpression(groupBy: WorkflowRunStatsGroupBy): string {
+  switch (groupBy) {
+    case 'day':
+      return `toString(toDate(created_at))`;
+    case 'status':
+      return `CASE
+        WHEN status IN ('pending', 'processing') THEN 'processing'
+        WHEN status IN ('success', 'completed') THEN 'completed'
+        WHEN status = 'error' THEN 'error'
+        ELSE 'processing'
+      END`;
+    case 'deliveryLifecycleStatus':
+      return `delivery_lifecycle_status`;
+    case 'deliveryLifecycleDetail':
+      return `delivery_lifecycle_detail`;
+    case 'workflow':
+      return `workflow_id`;
+    case 'channel':
+      return `replaceAll(channel, '"', '')`;
+    default: {
+      const _exhaustive: never = groupBy;
+
+      throw new Error(`Unsupported workflow run stats groupBy: ${_exhaustive}`);
+    }
+  }
 }
