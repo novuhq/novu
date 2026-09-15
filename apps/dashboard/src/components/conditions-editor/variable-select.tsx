@@ -125,6 +125,14 @@ export const VariableSelect = (props: VariableSelectProps) => {
     variablesListRef.current?.focusFirst();
   };
 
+  const commitOnInteractOutside = ({ target }: { target: EventTarget | null }) => {
+    if (target instanceof Node && inputRef.current?.contains(target)) {
+      return;
+    }
+
+    commitInputValue();
+  };
+
   return (
     <div className={cn('flex w-40 flex-col gap-1', className)} {...rest}>
       <Popover
@@ -164,7 +172,8 @@ export const VariableSelect = (props: VariableSelectProps) => {
               // prevent the input from being blurred when the popover opens
               e.preventDefault();
             }}
-            onFocusOutside={commitInputValue}
+            onEscapeKeyDown={commitInputValue}
+            onInteractOutside={commitOnInteractOutside}
           >
             <VariableList
               ref={variablesListRef}
@@ -185,7 +194,8 @@ export const VariableSelect = (props: VariableSelectProps) => {
               // prevent the input from being blurred when the popover opens
               e.preventDefault();
             }}
-            onFocusOutside={commitInputValue}
+            onEscapeKeyDown={commitInputValue}
+            onInteractOutside={commitOnInteractOutside}
           >
             {emptyState}
           </PopoverContent>

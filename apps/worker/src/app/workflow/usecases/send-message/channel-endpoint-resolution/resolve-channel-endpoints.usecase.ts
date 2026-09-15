@@ -3,8 +3,7 @@ import {
   decryptChannelConnectionAuth,
   decryptChannelEndpoint,
   decryptCredentials,
-  evaluateRules,
-  getIntegrationRulesIssues,
+  evaluateIntegrationRules,
   hasIntegrationRules,
   InstrumentUsecase,
   type MatchedIntegrationConditions,
@@ -21,7 +20,6 @@ import {
 } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
-import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
 const LOG_CONTEXT = 'ResolveChannelEndpoints';
@@ -166,7 +164,12 @@ export class ResolveChannelEndpoints {
       return { deliverable: true };
     }
 
-    const issues = getIntegrationRulesIssues(integration.rules);
+    const evaluation = evaluateIntegrationRules(integration.rules, {
+      payload: command.filterData?.payload,
+      subscriber: command.filterData?.subscriber,
+      context: command.filterData?.context,
+    });
+    const { issues } = evaluation;
     if (issues.length > 0) {
       Logger.warn(
         {
@@ -181,19 +184,9 @@ export class ResolveChannelEndpoints {
       return { deliverable: false };
     }
 
-    const { result } = evaluateRules(
-      integration.rules as RulesLogic<AdditionalOperation>,
-      {
-        payload: command.filterData?.payload,
-        subscriber: command.filterData?.subscriber,
-        context: command.filterData?.context,
-      },
-      true
-    );
-
     return {
-      deliverable: result,
-      ...(result && { matchedConditions: { type: 'rules', value: integration.rules } }),
+      deliverable: evaluation.result,
+      ...(evaluation.result && { matchedConditions: { type: 'rules', value: integration.rules } }),
     };
   }
 

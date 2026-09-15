@@ -10,6 +10,7 @@ import {
   FeatureFlagsService,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  type IntegrationSelectionResult,
   InvalidateCacheService,
   IPushHandler,
   messageWebhookMapper,
@@ -253,9 +254,9 @@ export class SendMessagePush extends SendMessageBase {
         }
       }
 
-      let integration: IntegrationEntity | undefined;
+      let selection: IntegrationSelectionResult | undefined;
       try {
-        integration = await this.getSubscriberIntegration(channel, command);
+        selection = await this.getSubscriberIntegration(channel, command);
       } catch (error) {
         Logger.error(
           { jobId: command.jobId },
@@ -267,14 +268,15 @@ export class SendMessagePush extends SendMessageBase {
 
       const noDeviceTokensAndNoOverrides = !deviceTokens && !uniqueOverrideChannels?.length;
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
-      if (noDeviceTokensAndNoOverrides || !integration) {
+      if (noDeviceTokensAndNoOverrides || !selection) {
         continue;
       }
 
+      const { integration } = selection;
       let overrides: Record<string, unknown> = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
-      await this.sendSelectedIntegrationExecution(command.job, { integration });
+      await this.sendSelectedIntegrationExecution(command.job, selection);
 
       const isPushUnreadCountEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_PUSH_UNREAD_COUNT_ENABLED,
@@ -553,7 +555,7 @@ export class SendMessagePush extends SendMessageBase {
   private async getSubscriberIntegration(
     channel: IChannelSettings,
     command: SendMessageChannelCommand
-  ): Promise<IntegrationEntity | undefined> {
+  ): Promise<IntegrationSelectionResult | undefined> {
     const selection = await this.getIntegration({
       id: channel._integrationId,
       organizationId: command.organizationId,
@@ -570,7 +572,7 @@ export class SendMessagePush extends SendMessageBase {
       return undefined;
     }
 
-    return selection.integration;
+    return selection;
   }
 
   private async createExecutionDetailsError(

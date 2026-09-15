@@ -50,5 +50,6 @@ describe('mergeIntegrationConditionVariables', () => {
       { name: 'null', label: 'is null' },
       { name: 'notNull', label: 'is not null' },
     ]);
+    expect(getOperatorsForFieldType('unknown')).toEqual(getOperatorsForFieldType('mixed'));
   });
 });

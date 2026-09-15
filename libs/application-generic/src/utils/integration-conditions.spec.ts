@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getIntegrationRulesIssues, hasIntegrationRules } from './integration-conditions';
+import { evaluateIntegrationRules, getIntegrationRulesIssues, hasIntegrationRules } from './integration-conditions';
 
 describe('integration rules helpers', () => {
   it('detects non-empty JsonLogic', () => {
@@ -82,5 +82,17 @@ describe('integration rules helpers', () => {
     });
 
     expect(valid).to.deep.equal([]);
+  });
+
+  it('validates and evaluates integration rules through one boundary', () => {
+    const matching = evaluateIntegrationRules(
+      { '==': [{ var: 'payload.region' }, 'eu'] },
+      { payload: { region: 'eu' } }
+    );
+    const invalid = evaluateIntegrationRules({ log: { var: 'payload.region' } }, { payload: { region: 'eu' } });
+
+    expect(matching).to.deep.equal({ result: true, issues: [] });
+    expect(invalid.result).to.equal(false);
+    expect(invalid.issues).to.include('Unsupported integration conditions operator: log');
   });
 });

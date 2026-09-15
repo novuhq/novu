@@ -86,6 +86,10 @@ const FIELD_TYPE_OPERATORS: Record<ConditionFieldDataType, Operator[]> = {
     { name: 'null', label: 'is null' },
     { name: 'notNull', label: 'is not null' },
   ],
+  unknown: [
+    { name: 'null', label: 'is null' },
+    { name: 'notNull', label: 'is not null' },
+  ],
 };
 
 export function getOperatorsForFieldType(dataType: ConditionFieldDataType): Operator[] {

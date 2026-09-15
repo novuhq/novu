@@ -1,11 +1,23 @@
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import {
   COMPARISON_OPERATORS,
+  evaluateRules,
   isValidRule,
   LOGICAL_OPERATORS,
   QueryValidatorService,
   UNARY_STRING_OPERATORS,
 } from '../services/query-parser';
+
+export interface IntegrationRuleEvaluationData {
+  payload?: unknown;
+  subscriber?: unknown;
+  context?: unknown;
+}
+
+export interface IntegrationRuleEvaluationResult {
+  result: boolean;
+  issues: string[];
+}
 
 export const INTEGRATION_CONDITION_NAMESPACES = ['context.', 'payload.', 'subscriber.'];
 
@@ -130,4 +142,18 @@ export function getIntegrationRulesIssues(logic: Record<string, unknown>): strin
     .map((issue) => issue.message);
 
   return [...disallowedOperatorIssues, ...fieldAndStructureIssues];
+}
+
+export function evaluateIntegrationRules(
+  rules: Record<string, unknown>,
+  data: IntegrationRuleEvaluationData
+): IntegrationRuleEvaluationResult {
+  const issues = getIntegrationRulesIssues(rules);
+  if (issues.length > 0) {
+    return { result: false, issues };
+  }
+
+  const { result } = evaluateRules(rules as RulesLogic<AdditionalOperation>, data, true);
+
+  return { result, issues: [] };
 }

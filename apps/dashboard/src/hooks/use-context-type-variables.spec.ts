@@ -26,7 +26,11 @@ describe('buildContextTypeVariables', () => {
       { name: 'context.tenant.data.tags', dataType: 'array' },
       { name: 'context.tenant.data.settings', dataType: 'object' },
       { name: 'context.tenant.data.settings.threshold', dataType: 'number' },
-      { name: 'context.tenant.data.nullable', dataType: 'mixed' },
+      {
+        name: 'context.tenant.data.nullable',
+        displayLabel: 'context.tenant.data.nullable (unknown type)',
+        dataType: 'unknown',
+      },
     ]);
   });
 
@@ -36,6 +40,10 @@ describe('buildContextTypeVariables', () => {
       { type: 'tenant', data: { priority: 'high' } },
     ]);
 
-    expect(variables).toContainEqual({ name: 'context.tenant.data.priority', dataType: 'mixed' });
+    expect(variables).toContainEqual({
+      name: 'context.tenant.data.priority',
+      displayLabel: 'context.tenant.data.priority (mixed types)',
+      dataType: 'mixed',
+    });
   });
 });

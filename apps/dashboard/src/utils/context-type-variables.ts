@@ -19,7 +19,7 @@ function getDataType(value: unknown): ConditionFieldDataType {
     case 'boolean':
       return 'boolean';
     case 'object':
-      return value === null ? 'mixed' : 'object';
+      return value === null ? 'unknown' : 'object';
     default:
       return 'string';
   }
@@ -32,7 +32,12 @@ function collectDataVariables(obj: Record<string, unknown>, prefix: string, dept
     if (isDangerousObjectKey(key)) continue;
 
     const name = `${prefix}.${key}`;
-    variables.push({ name, dataType: getDataType(value) });
+    const dataType = getDataType(value);
+    variables.push({
+      name,
+      dataType,
+      ...(dataType === 'unknown' && { displayLabel: `${name} (unknown type)` }),
+    });
 
     if (depth < MAX_CONTEXT_DATA_DEPTH && value && typeof value === 'object' && !Array.isArray(value)) {
       variables.push(...collectDataVariables(value as Record<string, unknown>, name, depth + 1));
@@ -49,7 +54,11 @@ export function buildContextTypeVariables(contexts: ContextVariableSource[]): En
     const existingVariable = variablesByName.get(variable.name);
 
     if (existingVariable && existingVariable.dataType !== variable.dataType) {
-      variablesByName.set(variable.name, { ...existingVariable, dataType: 'mixed' });
+      variablesByName.set(variable.name, {
+        ...existingVariable,
+        dataType: 'mixed',
+        displayLabel: `${variable.name} (mixed types)`,
+      });
     } else if (!existingVariable) {
       variablesByName.set(variable.name, variable);
     }

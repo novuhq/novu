@@ -7,7 +7,7 @@ import type {
   LiquidVariable,
 } from '@/utils/parseStepVariables';
 
-export type ConditionFieldDataType = FieldDataType | 'mixed';
+export type ConditionFieldDataType = FieldDataType | 'mixed' | 'unknown';
 export type EnhancedConditionVariable = Omit<EnhancedLiquidVariable, 'dataType'> & {
   dataType: ConditionFieldDataType;
 };

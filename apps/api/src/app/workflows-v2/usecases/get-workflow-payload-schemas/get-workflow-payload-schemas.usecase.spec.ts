@@ -32,6 +32,7 @@ describe('GetWorkflowPayloadSchemasUseCase', () => {
         {
           _environmentId: 'environment-id',
           _organizationId: 'organization-id',
+          payloadSchema: { $exists: true, $ne: null },
         },
         'payloadSchema'
       )

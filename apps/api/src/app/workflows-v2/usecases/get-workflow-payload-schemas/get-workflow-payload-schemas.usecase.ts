@@ -15,6 +15,7 @@ export class GetWorkflowPayloadSchemasUseCase {
       {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
+        payloadSchema: { $exists: true, $ne: null },
       },
       'payloadSchema'
     );
