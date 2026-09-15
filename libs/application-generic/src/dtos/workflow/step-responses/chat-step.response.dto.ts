@@ -7,7 +7,7 @@ import { ChatControlDto } from '../chat-control.dto';
 import { PROVIDER_OVERRIDES_API_PROPERTY } from '../provider-overrides.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class ChatControlsMetadataResponseDto extends ControlsMetadataDto {
+class ChatControlsMetadataResponseDto extends ControlsMetadataDto<ChatControlDto> {
   @ApiProperty({
     description: 'Control values specific to Chat',
     type: () => ChatControlDto,
