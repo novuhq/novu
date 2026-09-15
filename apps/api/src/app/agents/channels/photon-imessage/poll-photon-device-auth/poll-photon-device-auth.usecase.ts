@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { encryptSecret, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import {
-  AgentIntegrationRepository,
-  AgentRepository,
-  EnvironmentRepository,
-  IntegrationRepository,
-  OrganizationRepository,
-} from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import type { AxiosError } from 'axios';
 
@@ -37,8 +31,6 @@ export class PollPhotonDeviceAuth {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly environmentRepository: EnvironmentRepository,
-    private readonly organizationRepository: OrganizationRepository,
     private readonly configurePhotonWebhookUsecase: ConfigurePhotonWebhook,
     private readonly deviceAuthBindingService: PhotonDeviceAuthBindingService,
     private readonly logger: PinoLogger
@@ -181,8 +173,17 @@ export class PollPhotonDeviceAuth {
         throw new Error('bound integration was deleted during connect');
       }
 
-      const projectName = await this.buildProjectName(command);
-      const { projectId, warning: createWarning } = await createPhotonProject(poll.accessToken, projectName);
+      /*
+       * The project name is a cosmetic label in the Photon dashboard, so it is
+       * built from the machine-generated environment id rather than the
+       * organization and environment names. Those reads go through Clerk under
+       * EE, which would put a rate-limited external call on the provisioning
+       * path — and fail it — for nothing but a prettier label.
+       */
+      const { projectId, warning: createWarning } = await createPhotonProject(
+        poll.accessToken,
+        `Novu – ${command.environmentId}`
+      );
       const credentials = await getPhotonProjectCredentials(poll.accessToken, projectId);
 
       const { matched } = await this.integrationRepository.update(
@@ -244,24 +245,5 @@ export class PollPhotonDeviceAuth {
         },
       };
     }
-  }
-
-  private async buildProjectName(command: PollPhotonDeviceAuthCommand): Promise<string> {
-    /*
-     * The name is cosmetic and the device code is already consumed, so neither
-     * lookup may abort provisioning — a failure here would cost the user a
-     * full restart. Read the org from Mongo (`findOne`) rather than the auth
-     * provider (`findById`), so the name does not depend on Clerk being
-     * reachable; EE mirrors the Clerk org name onto the Mongo document.
-     */
-    const [environment, organization] = await Promise.all([
-      this.environmentRepository.findOne({ _id: command.environmentId }).catch(() => null),
-      this.organizationRepository.findOne({ _id: command.organizationId }).catch(() => null),
-    ]);
-
-    const orgName = organization?.name?.trim() || 'Novu';
-    const envName = environment?.name?.trim();
-
-    return envName ? `Novu – ${orgName} (${envName})` : `Novu – ${orgName}`;
   }
 }
