@@ -455,6 +455,7 @@
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
               "agents/get-started/agents-and-providers",
+              "agents/workflow-agents",
               {
                 "group": "Quickstart",
                 "pages": [
