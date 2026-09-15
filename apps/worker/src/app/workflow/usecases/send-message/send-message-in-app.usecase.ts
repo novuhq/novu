@@ -98,6 +98,7 @@ export class SendMessageInApp extends SendMessageBase {
     }
 
     const { integration } = selection;
+    await this.sendSelectedIntegrationExecution(command.job, selection);
     const { step } = command;
     if (!step.template) throw new PlatformException('Template not found');
 

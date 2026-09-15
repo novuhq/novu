@@ -130,7 +130,7 @@ export class ResolveChannelEndpoints {
     const matchedConditionsByIdentifier = new Map<string, MatchedIntegrationConditions>();
 
     for (const integration of activeIntegrations) {
-      const evaluation = this.evaluateIntegrationRules(command, integration);
+      const evaluation = this.evaluateEndpointDeliveryRules(command, integration);
       if (!evaluation.deliverable) {
         continue;
       }
@@ -156,7 +156,7 @@ export class ResolveChannelEndpoints {
    * Only `rules` (JSONLogic) are evaluated — legacy `conditions` predate the endpoint model and are
    * left to `SelectIntegration`, matching the precedence rules take there.
    */
-  private evaluateIntegrationRules(
+  private evaluateEndpointDeliveryRules(
     command: ResolveChannelEndpointsCommand,
     integration: Pick<IntegrationEntity, 'identifier' | 'rules'>
   ): IntegrationRuleEvaluation {

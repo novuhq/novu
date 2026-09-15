@@ -88,6 +88,9 @@ export const VariableSelect = (props: VariableSelectProps) => {
       e.preventDefault();
     } else if (e.key === 'Enter') {
       variablesListRef.current?.select();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      commitInputValue();
     }
   };
 
@@ -107,7 +110,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
     inputRef.current?.focus();
   };
 
-  const commitInputValue = () => {
+  function commitInputValue() {
     let newInputValue = '';
 
     if (inputValue !== '' || (inputValue === '' && isClearable)) {
@@ -119,7 +122,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
     setInputValue(newInputValue);
     onChange(newInputValue);
     closePopover();
-  };
+  }
 
   const onFocusCapture = () => {
     variablesListRef.current?.focusFirst();
@@ -172,7 +175,6 @@ export const VariableSelect = (props: VariableSelectProps) => {
               // prevent the input from being blurred when the popover opens
               e.preventDefault();
             }}
-            onEscapeKeyDown={commitInputValue}
             onInteractOutside={commitOnInteractOutside}
           >
             <VariableList
@@ -194,7 +196,6 @@ export const VariableSelect = (props: VariableSelectProps) => {
               // prevent the input from being blurred when the popover opens
               e.preventDefault();
             }}
-            onEscapeKeyDown={commitInputValue}
             onInteractOutside={commitOnInteractOutside}
           >
             {emptyState}
