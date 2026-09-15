@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildContextTypeVariables } from './use-context-type-variables';
+import { buildContextTypeVariables } from '@/utils/context-type-variables';
 
 describe('buildContextTypeVariables', () => {
   it('preserves the runtime types of context data fields', () => {
