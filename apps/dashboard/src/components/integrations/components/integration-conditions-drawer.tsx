@@ -24,6 +24,7 @@ import {
   createEmptyConditionsQuery,
   INTEGRATION_CONDITION_VARIABLES,
   isAllowedIntegrationConditionVariable,
+  mergeIntegrationConditionVariables,
 } from '../utils/integration-conditions';
 import { IntegrationConditionValueInput } from './integration-condition-value-input';
 
@@ -92,19 +93,11 @@ export function IntegrationConditionsDrawer({
     [workflows]
   );
   const integrationConditionVariables = useMemo(() => {
-    const existingNames = new Set(INTEGRATION_CONDITION_VARIABLES.map((variable) => variable.name));
-    const dynamicContextVariables = contextTypeVariables.filter((variable) => !existingNames.has(variable.name));
-
-    const variables = [...INTEGRATION_CONDITION_VARIABLES, ...dynamicContextVariables];
-
-    for (const variable of payloadVariables) {
-      if (!existingNames.has(variable.name)) {
-        existingNames.add(variable.name);
-        variables.push(variable);
-      }
-    }
-
-    return variables;
+    return mergeIntegrationConditionVariables([
+      ...INTEGRATION_CONDITION_VARIABLES,
+      ...contextTypeVariables,
+      ...payloadVariables,
+    ]);
   }, [contextTypeVariables, payloadVariables]);
   const integrationConditionFields = useMemo(
     () =>

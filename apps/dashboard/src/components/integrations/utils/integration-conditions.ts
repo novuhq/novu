@@ -21,6 +21,32 @@ export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRA
   })
 );
 
+export function mergeIntegrationConditionVariables(variables: EnhancedLiquidVariable[]): EnhancedLiquidVariable[] {
+  const variablesByName = new Map<string, EnhancedLiquidVariable>();
+
+  for (const variable of variables) {
+    const existingVariable = variablesByName.get(variable.name);
+
+    if (!existingVariable) {
+      variablesByName.set(variable.name, variable);
+      continue;
+    }
+
+    if (existingVariable.dataType !== variable.dataType) {
+      variablesByName.set(variable.name, {
+        ...existingVariable,
+        displayLabel: `${variable.name} (mixed types)`,
+        // Restrict ambiguous fields to type-agnostic null checks instead of choosing either schema's value semantics.
+        dataType: 'object',
+        format: undefined,
+        inputType: undefined,
+      });
+    }
+  }
+
+  return Array.from(variablesByName.values());
+}
+
 const ALLOWED_PREFIXES = ['context.', 'payload.', 'subscriber.'] as const;
 
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
