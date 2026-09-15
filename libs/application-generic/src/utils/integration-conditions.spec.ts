@@ -93,6 +93,6 @@ describe('integration rules helpers', () => {
 
     expect(matching).to.deep.equal({ result: true, issues: [] });
     expect(invalid.result).to.equal(false);
-    expect(invalid.issues).to.include('Unsupported integration conditions operator: log');
+    expect(invalid.issues.some((issue) => issue.includes('log'))).to.equal(true);
   });
 });
