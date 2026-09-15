@@ -46,10 +46,10 @@ export function useFetchAllWorkflows(enabled = true) {
   const { fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage } = workflowsQuery;
 
   useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+    if (enabled && hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
       void fetchNextPage();
     }
-  }, [fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage]);
+  }, [enabled, fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage]);
 
   const workflows = useMemo(
     () => workflowsQuery.data?.pages.flatMap((page) => page.workflows) ?? [],
