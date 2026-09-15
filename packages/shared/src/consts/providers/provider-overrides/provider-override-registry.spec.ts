@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ChatProviderIdEnum, ToolProviderIdEnum } from '../../../types';
+import { ChatProviderIdEnum, PushProviderIdEnum, ToolProviderIdEnum } from '../../../types';
+import { FCM_ROUTING_KEYS } from './fcm/keys';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   CONTENT_OVERRIDE_PROVIDER_IDS,
+  expoOverrideJsonSchema,
   getProviderOverrideConfig,
   getProviderOverrideKeys,
   getProviderOverrideKeysOnlySchema,
@@ -19,7 +21,9 @@ import {
   PROVIDER_OVERRIDE_KEYS,
   PROVIDER_OVERRIDE_SCHEMAS,
   PROVIDER_PRIMARY_CONTENT_KEY,
+  PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
   pagerdutyOverrideJsonSchema,
+  supportsContentProviderOverrides,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   TOOL_PROVIDER_OVERRIDE_KEYS,
   TOOL_PROVIDER_OVERRIDE_SCHEMAS,
@@ -30,6 +34,36 @@ import {
 describe('provider override registry', () => {
   it('registers every chat provider so a new one cannot ship unconfigured', () => {
     expect([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(ChatProviderIdEnum).sort());
+  });
+
+  it('registers Expo as a schema-backed push provider with body as the primary content key', () => {
+    const config = getProviderOverrideConfig(PushProviderIdEnum.EXPO);
+    const keys = getProviderOverrideKeys(PushProviderIdEnum.EXPO) ?? [];
+
+    expect(config?.schema).toBeDefined();
+    expect(config?.primaryContentKey).toBe('body');
+    expect(keys).toEqual(expect.arrayContaining(['body', 'channelId', 'interruptionLevel', 'tag']));
+    expect(keys).not.toContain('to');
+  });
+
+  it('keeps schema-less push providers as escape hatches with no primary content key', () => {
+    expect([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(PushProviderIdEnum).sort());
+
+    for (const providerId of PUSH_CONTENT_OVERRIDE_PROVIDER_IDS) {
+      const config = getProviderOverrideConfig(providerId);
+      const isSchemaBacked = Boolean(config?.schema || config?.schemaSubpath);
+
+      if (isSchemaBacked) {
+        continue;
+      }
+
+      expect(config?.schema).toBeUndefined();
+      expect(config?.schemaSubpath).toBeUndefined();
+      expect(config?.keys).toBeUndefined();
+      expect(config?.primaryContentKey).toBeNull();
+    }
+
+    expect(supportsContentProviderOverrides('push')).toBe(true);
   });
 
   it('exposes every tool provider, including the schema-less webhook', () => {
@@ -47,18 +81,21 @@ describe('provider override registry', () => {
     }
   });
 
-  it('maps each tool provider to a strict object schema', () => {
+  it('maps each eager schema to a strict object schema', () => {
     expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.PagerDuty]).toBe(pagerdutyOverrideJsonSchema);
     expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Opsgenie]).toBe(opsgenieOverrideJsonSchema);
     expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Grafana]).toBe(grafanaOverrideJsonSchema);
-    expect(pagerdutyOverrideJsonSchema.additionalProperties).toBe(false);
-    expect(opsgenieOverrideJsonSchema.additionalProperties).toBe(false);
-    expect(grafanaOverrideJsonSchema.additionalProperties).toBe(false);
+    expect(PROVIDER_OVERRIDE_SCHEMAS[PushProviderIdEnum.EXPO]).toBe(expoOverrideJsonSchema);
+
+    for (const schema of Object.values(PROVIDER_OVERRIDE_SCHEMAS)) {
+      expect(schema.additionalProperties).toBe(false);
+    }
   });
 
   it('keeps documented free-form maps permissive', () => {
     expect(pagerdutyOverrideJsonSchema.properties.custom_details.additionalProperties).toBe(true);
     expect(opsgenieOverrideJsonSchema.properties.details.additionalProperties).toBe(true);
+    expect(expoOverrideJsonSchema.properties.data.additionalProperties).toBe(true);
   });
 
   it('documents the primary content fields for each tool provider', () => {
@@ -71,18 +108,14 @@ describe('provider override registry', () => {
   });
 
   it('exposes a key inventory that matches each eager schema property set', () => {
-    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]).toEqual(
-      Object.keys(pagerdutyOverrideJsonSchema.properties)
-    );
-    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie]).toEqual(
-      Object.keys(opsgenieOverrideJsonSchema.properties)
-    );
-    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Grafana]).toEqual(
-      Object.keys(grafanaOverrideJsonSchema.properties)
-    );
-    expect(getProviderOverrideKeys(ToolProviderIdEnum.PagerDuty)).toEqual(
-      PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]
-    );
+    for (const [providerId, schema] of Object.entries(PROVIDER_OVERRIDE_SCHEMAS)) {
+      expect(PROVIDER_OVERRIDE_KEYS[providerId as keyof typeof PROVIDER_OVERRIDE_KEYS]).toEqual(
+        Object.keys(schema.properties ?? {})
+      );
+      expect(getProviderOverrideKeys(providerId)).toEqual(
+        PROVIDER_OVERRIDE_KEYS[providerId as keyof typeof PROVIDER_OVERRIDE_KEYS]
+      );
+    }
   });
 
   it('derives keys-only schemas that are strict on names and permissive on values', () => {
@@ -178,12 +211,39 @@ describe('provider override registry', () => {
     expect(getProviderOverrideKeysOnlySchema(ChatProviderIdEnum.WhatsAppBusiness)?.properties?.template).toBe(true);
   });
 
-  it('pairs every eager schema with a liquid-tolerant twin', () => {
-    const config = getProviderOverrideConfig(ToolProviderIdEnum.PagerDuty);
+  it('exposes FCM keys eagerly while its schema stays behind a package subpath', () => {
+    const config = getProviderOverrideConfig(PushProviderIdEnum.FCM);
+    const keys = getProviderOverrideKeys(PushProviderIdEnum.FCM) ?? [];
 
-    expect(config?.schema).toBe(pagerdutyOverrideJsonSchema);
-    expect(config?.liquidTolerantSchema).toEqual(toLiquidTolerantSchema(pagerdutyOverrideJsonSchema));
-    expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Opsgenie]).toBe(opsgenieOverrideJsonSchema);
+    expect(config?.schema).toBeUndefined();
+    expect(config?.schemaSubpath).toBe('@novu/shared/provider-overrides/fcm');
+    expect(config?.primaryContentKey).toBe('notification.body');
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'notification',
+        'data',
+        'android',
+        'apns',
+        'webpush',
+        'fcmOptions',
+        'token',
+        'tokens',
+        'topic',
+        'condition',
+      ])
+    );
+    expect(config?.exclusiveKeyGroups).toEqual([FCM_ROUTING_KEYS]);
+    expect(getProviderOverrideKeysOnlySchema(PushProviderIdEnum.FCM)?.properties?.notification).toBe(true);
+    expect(getProviderOverrideKeysOnlySchema(PushProviderIdEnum.FCM)?.properties?.topic).toBe(true);
+  });
+
+  it('pairs every eager schema with a liquid-tolerant twin', () => {
+    for (const [providerId, schema] of Object.entries(PROVIDER_OVERRIDE_SCHEMAS)) {
+      const config = getProviderOverrideConfig(providerId);
+
+      expect(config?.schema).toBe(schema);
+      expect(config?.liquidTolerantSchema).toEqual(toLiquidTolerantSchema(schema));
+    }
   });
 
   it('keeps the deprecated tool-scoped names pointing at the same registry', () => {
