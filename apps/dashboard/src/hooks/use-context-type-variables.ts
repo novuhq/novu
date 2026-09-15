@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
+import type { ConditionFieldDataType, EnhancedConditionVariable } from '@/components/conditions-editor/types';
 import { useFetchContexts } from '@/hooks/use-fetch-contexts';
 import { isDangerousObjectKey } from '@/utils/context-variable-utils';
-import { type EnhancedLiquidVariable, type FieldDataType } from '@/utils/parseStepVariables';
 
 const MAX_CONTEXT_DATA_DEPTH = 5;
 
@@ -10,7 +10,7 @@ type ContextVariableSource = {
   data?: unknown;
 };
 
-function getDataType(value: unknown): FieldDataType {
+function getDataType(value: unknown): ConditionFieldDataType {
   if (Array.isArray(value)) {
     return 'array';
   }
@@ -21,14 +21,14 @@ function getDataType(value: unknown): FieldDataType {
     case 'boolean':
       return 'boolean';
     case 'object':
-      return value === null ? 'string' : 'object';
+      return value === null ? 'mixed' : 'object';
     default:
       return 'string';
   }
 }
 
-function collectDataVariables(obj: Record<string, unknown>, prefix: string, depth = 0): EnhancedLiquidVariable[] {
-  const variables: EnhancedLiquidVariable[] = [];
+function collectDataVariables(obj: Record<string, unknown>, prefix: string, depth = 0): EnhancedConditionVariable[] {
+  const variables: EnhancedConditionVariable[] = [];
 
   for (const [key, value] of Object.entries(obj)) {
     if (isDangerousObjectKey(key)) continue;
@@ -44,14 +44,17 @@ function collectDataVariables(obj: Record<string, unknown>, prefix: string, dept
   return variables;
 }
 
-export function buildContextTypeVariables(contexts: ContextVariableSource[]): EnhancedLiquidVariable[] {
-  const seenNames = new Set<string>();
-  const variables: EnhancedLiquidVariable[] = [];
+export function buildContextTypeVariables(contexts: ContextVariableSource[]): EnhancedConditionVariable[] {
+  const variablesByName = new Map<string, EnhancedConditionVariable>();
 
-  const add = (variable: EnhancedLiquidVariable) => {
-    if (seenNames.has(variable.name)) return;
-    seenNames.add(variable.name);
-    variables.push(variable);
+  const add = (variable: EnhancedConditionVariable) => {
+    const existingVariable = variablesByName.get(variable.name);
+
+    if (existingVariable && existingVariable.dataType !== variable.dataType) {
+      variablesByName.set(variable.name, { ...existingVariable, dataType: 'mixed' });
+    } else if (!existingVariable) {
+      variablesByName.set(variable.name, variable);
+    }
   };
 
   for (const context of contexts) {
@@ -72,10 +75,10 @@ export function buildContextTypeVariables(contexts: ContextVariableSource[]): En
     }
   }
 
-  return variables;
+  return Array.from(variablesByName.values());
 }
 
-export function useContextTypeVariables(): EnhancedLiquidVariable[] {
+export function useContextTypeVariables(): EnhancedConditionVariable[] {
   const { data: contextsData } = useFetchContexts({ limit: 50 }, { staleTime: 30_000 });
 
   return useMemo(() => buildContextTypeVariables(contextsData?.data ?? []), [contextsData]);

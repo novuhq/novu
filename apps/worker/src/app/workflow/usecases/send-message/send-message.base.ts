@@ -7,7 +7,8 @@ import {
   DetailEnum,
   GetNovuProviderCredentials,
   Instrument,
-  type SelectedIntegration,
+  type IntegrationFilterData,
+  type IntegrationSelectionResult,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
@@ -20,7 +21,6 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  ITenantDefine,
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
@@ -95,18 +95,15 @@ export abstract class SendMessageBase extends SendMessageType {
     channelType: ChannelTypeEnum;
     userId: string;
     recipientEmail?: string;
-    filterData: {
-      tenant?: ITenantDefine;
-      payload?: SendMessageChannelCommand['compileContext']['payload'];
-      subscriber?: SendMessageChannelCommand['compileContext']['subscriber'];
-      context?: SendMessageChannelCommand['compileContext']['context'];
-    };
-  }): Promise<SelectedIntegration | undefined> {
-    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
+    filterData: IntegrationFilterData;
+  }): Promise<IntegrationSelectionResult | undefined> {
+    const selection = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
-    if (!integration) {
+    if (!selection) {
       return;
     }
+
+    const { integration } = selection;
 
     if (
       integration.providerId === EmailProviderIdEnum.Novu ||
@@ -123,7 +120,7 @@ export abstract class SendMessageBase extends SendMessageType {
       });
     }
 
-    return integration;
+    return selection;
   }
 
   protected getIntegrationFilterData(command: SendMessageChannelCommand) {
@@ -175,31 +172,10 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @Instrument()
-  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: SelectedIntegration) {
-    const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
-
-    if (integration.matchedConditions) {
-      try {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-            detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.SUCCESS,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              integrationIdentifier: integration.identifier,
-              matchedConditions: integration.matchedConditions,
-            }),
-          })
-        );
-      } catch (error) {
-        Logger.error(error, 'Failed to create integration conditions matched execution detail', SendMessageBase.name);
-      }
-    }
-
-    await this.createExecutionDetails.execute(
+  protected async sendSelectedIntegrationExecution(job: JobEntity, selection: IntegrationSelectionResult) {
+    const { integration, matchedConditions } = selection;
+    const providerDisplayName = providers.find((el) => el.id === integration.providerId)?.displayName || 'Unknown';
+    const details = [
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: createProviderSelectedMessage(providerDisplayName) as DetailEnum,
@@ -208,14 +184,41 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({
-          providerId: integration?.providerId,
-          identifier: integration?.identifier,
-          name: integration?.name,
-          _environmentId: integration?._environmentId,
-          _id: integration?._id,
+          providerId: integration.providerId,
+          identifier: integration.identifier,
+          name: integration.name,
+          _environmentId: integration._environmentId,
+          _id: integration._id,
         }),
-      })
-    );
+      }),
+    ];
+
+    if (matchedConditions) {
+      details.unshift(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            integrationIdentifier: integration.identifier,
+            matchedConditions,
+          }),
+        })
+      );
+    }
+
+    await Promise.all(details.map((detail) => this.createExecutionDetailBestEffort(detail)));
+  }
+
+  private async createExecutionDetailBestEffort(command: CreateExecutionDetailsCommand): Promise<void> {
+    try {
+      await this.createExecutionDetails.execute(command);
+    } catch (error) {
+      Logger.error(error, `Failed to create "${command.detail}" execution detail`, SendMessageBase.name);
+    }
   }
 
   @Instrument()
@@ -271,7 +274,7 @@ export abstract class SendMessageBase extends SendMessageType {
           fallbackLng: defaultLocale || 'en',
           interpolation: {
             formatSeparator: ',',
-            format(value, formatting, lng) {
+            format(value, formatting, _lng) {
               if (value && formatting && !Number.isNaN(Date.parse(value))) {
                 return format(new Date(value), formatting);
               }

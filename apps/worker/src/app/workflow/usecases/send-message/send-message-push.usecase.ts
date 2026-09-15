@@ -93,6 +93,10 @@ interface IPushProviderOverride {
   overrides: Record<string, unknown>;
 }
 
+interface PushPlatformOverrides {
+  [key: string]: unknown;
+}
+
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
   channelType = ChannelTypeEnum.PUSH;
@@ -123,6 +127,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing channel orchestration is outside this change.
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Push',
@@ -260,7 +265,7 @@ export class SendMessagePush extends SendMessageBase {
       let overrides: Record<string, unknown> = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
-      await this.sendSelectedIntegrationExecution(command.job, integration);
+      await this.sendSelectedIntegrationExecution(command.job, { integration });
 
       const isPushUnreadCountEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_PUSH_UNREAD_COUNT_ENABLED,
@@ -428,8 +433,8 @@ export class SendMessagePush extends SendMessageBase {
       command.contextKeys
     );
 
-    const androidOverrides = (overrides.android as Record<string, any>) ?? {};
-    const apnsOverrides = (overrides.apns as Record<string, any>) ?? {};
+    const androidOverrides = (overrides.android as PushPlatformOverrides) ?? {};
+    const apnsOverrides = (overrides.apns as PushPlatformOverrides) ?? {};
 
     return {
       ...overrides,
@@ -540,7 +545,7 @@ export class SendMessagePush extends SendMessageBase {
     channel: IChannelSettings,
     command: SendMessageChannelCommand
   ): Promise<IntegrationEntity | undefined> {
-    const integration = await this.getIntegration({
+    const selection = await this.getIntegration({
       id: channel._integrationId,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -550,13 +555,13 @@ export class SendMessagePush extends SendMessageBase {
       filterData: this.getIntegrationFilterData(command),
     });
 
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, command.job);
 
       return undefined;
     }
 
-    return integration;
+    return selection.integration;
   }
 
   private async createExecutionDetailsError(
@@ -583,6 +588,7 @@ export class SendMessagePush extends SendMessageBase {
     );
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing provider orchestration is outside this change.
   private async sendMessage(
     command: SendMessageChannelCommand,
     message: MessageEntity,
@@ -828,7 +834,7 @@ export class SendMessagePush extends SendMessageBase {
 
       if (!credentials) continue;
 
-      const integration = await this.selectIntegration.execute({
+      const selection = await this.selectIntegration.execute({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.PUSH,
@@ -837,10 +843,10 @@ export class SendMessagePush extends SendMessageBase {
         filterData: this.getIntegrationFilterData(command),
       });
 
-      if (!integration) continue;
+      if (!selection) continue;
 
       channelSettings.push({
-        _integrationId: integration._id,
+        _integrationId: selection.integration._id,
         providerId: providerOverride.providerId,
         credentials,
       });

@@ -1,6 +1,7 @@
-import { IMessageFilter } from '@novu/shared';
+import { IMessageFilter, type JSONSchemaDto } from '@novu/shared';
 import { generateID, RuleGroupType } from 'react-querybuilder';
-import type { EnhancedLiquidVariable, FieldDataType, IsAllowedVariable } from '@/utils/parseStepVariables';
+import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
+import { type FieldDataType, type IsAllowedVariable, parseStepVariables } from '@/utils/parseStepVariables';
 
 const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDataType }> = [
   { name: 'context.tenant.id', dataType: 'string' },
@@ -13,7 +14,7 @@ const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDat
   { name: 'subscriber.data', dataType: 'object' },
 ];
 
-export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRATION_CONDITION_FIELD_DEFS.map(
+export const INTEGRATION_CONDITION_VARIABLES: EnhancedConditionVariable[] = INTEGRATION_CONDITION_FIELD_DEFS.map(
   (field) => ({
     name: field.name,
     displayLabel: field.name,
@@ -21,8 +22,10 @@ export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRA
   })
 );
 
-export function mergeIntegrationConditionVariables(variables: EnhancedLiquidVariable[]): EnhancedLiquidVariable[] {
-  const variablesByName = new Map<string, EnhancedLiquidVariable>();
+export function mergeIntegrationConditionVariables(
+  variables: EnhancedConditionVariable[]
+): EnhancedConditionVariable[] {
+  const variablesByName = new Map<string, EnhancedConditionVariable>();
 
   for (const variable of variables) {
     const existingVariable = variablesByName.get(variable.name);
@@ -36,8 +39,7 @@ export function mergeIntegrationConditionVariables(variables: EnhancedLiquidVari
       variablesByName.set(variable.name, {
         ...existingVariable,
         displayLabel: `${variable.name} (mixed types)`,
-        // Restrict ambiguous fields to type-agnostic null checks instead of choosing either schema's value semantics.
-        dataType: 'object',
+        dataType: 'mixed',
         format: undefined,
         inputType: undefined,
       });
@@ -45,6 +47,19 @@ export function mergeIntegrationConditionVariables(variables: EnhancedLiquidVari
   }
 
   return Array.from(variablesByName.values());
+}
+
+export function buildPayloadConditionVariables(payloadSchemas: JSONSchemaDto[]): EnhancedConditionVariable[] {
+  return payloadSchemas.flatMap((payloadSchema) => {
+    const schema: JSONSchemaDto = {
+      type: 'object',
+      properties: { payload: payloadSchema },
+    };
+
+    return parseStepVariables(schema, { isPayloadSchemaEnabled: true }).enhancedVariables.filter((variable) =>
+      variable.name.startsWith('payload.')
+    );
+  });
 }
 
 const ALLOWED_PREFIXES = ['context.', 'payload.', 'subscriber.'] as const;

@@ -1,5 +1,5 @@
-import { EnvironmentWithUserCommand, type ICompileContext } from '@novu/application-generic';
-import { ChannelTypeEnum, ITenantDefine, ITriggerPayload } from '@novu/shared';
+import { EnvironmentWithUserCommand, type IntegrationFilterData } from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
 import { IsArray, IsDefined, IsEnum, IsObject, IsString } from 'class-validator';
 
 export class ResolveChannelEndpointsCommand extends EnvironmentWithUserCommand {
@@ -21,10 +21,5 @@ export class ResolveChannelEndpointsCommand extends EnvironmentWithUserCommand {
    */
   @IsDefined()
   @IsObject()
-  filterData: {
-    tenant?: ITenantDefine | string;
-    payload?: ITriggerPayload;
-    subscriber?: ICompileContext['subscriber'] | Record<string, unknown>;
-    context?: ICompileContext['context'] | Record<string, unknown>;
-  };
+  filterData: IntegrationFilterData;
 }

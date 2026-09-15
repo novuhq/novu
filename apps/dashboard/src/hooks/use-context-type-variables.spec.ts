@@ -26,7 +26,16 @@ describe('buildContextTypeVariables', () => {
       { name: 'context.tenant.data.tags', dataType: 'array' },
       { name: 'context.tenant.data.settings', dataType: 'object' },
       { name: 'context.tenant.data.settings.threshold', dataType: 'number' },
-      { name: 'context.tenant.data.nullable', dataType: 'string' },
+      { name: 'context.tenant.data.nullable', dataType: 'mixed' },
     ]);
+  });
+
+  it('marks context fields with conflicting observed types as mixed', () => {
+    const variables = buildContextTypeVariables([
+      { type: 'tenant', data: { priority: 1 } },
+      { type: 'tenant', data: { priority: 'high' } },
+    ]);
+
+    expect(variables).toContainEqual({ name: 'context.tenant.data.priority', dataType: 'mixed' });
   });
 });

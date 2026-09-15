@@ -27,13 +27,8 @@ export class ListWorkflowsUseCase {
       return { workflows: [], totalCount: 0 };
     }
 
-    const workflows = toWorkflowsMinifiedDtos(res.data).map((workflow, index) => ({
-      ...workflow,
-      payloadSchema: res.data[index].payloadSchema,
-    }));
-
     return {
-      workflows,
+      workflows: toWorkflowsMinifiedDtos(res.data),
       totalCount: res.totalCount,
     };
   }

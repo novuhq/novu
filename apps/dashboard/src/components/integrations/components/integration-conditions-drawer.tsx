@@ -1,5 +1,4 @@
 import { IMessageFilter } from '@novu/shared';
-import type { JSONSchema7 } from 'json-schema';
 import { useCallback, useMemo, useState } from 'react';
 import { Control, UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { RiArrowRightSLine, RiGuideFill, RiInputField } from 'react-icons/ri';
@@ -14,12 +13,12 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
-import { useFetchAllWorkflows } from '@/hooks/use-fetch-all-workflows';
+import { useWorkflowPayloadSchemas } from '@/hooks/use-workflow-payload-schemas';
 import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
-import { parseStepVariables } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
+  buildPayloadConditionVariables,
   countLegacyIntegrationConditions,
   createEmptyConditionsQuery,
   INTEGRATION_CONDITION_VARIABLES,
@@ -69,28 +68,10 @@ export function IntegrationConditionsDrawer({
   const integrationName = useWatch({ control, name: 'name' });
   const [isOpen, setIsOpen] = useState(false);
   const contextTypeVariables = useContextTypeVariables();
-  const { workflows } = useFetchAllWorkflows(isOpen);
+  const { data: payloadSchemasData } = useWorkflowPayloadSchemas(isOpen);
   const payloadVariables = useMemo(
-    () =>
-      workflows.flatMap((workflow) => {
-        const payloadSchema = (workflow as typeof workflow & { payloadSchema?: object }).payloadSchema;
-
-        if (!payloadSchema) {
-          return [];
-        }
-
-        const schema: JSONSchema7 = {
-          type: 'object',
-          properties: {
-            payload: payloadSchema as JSONSchema7,
-          },
-        };
-
-        return parseStepVariables(schema, { isPayloadSchemaEnabled: true }).enhancedVariables.filter((variable) =>
-          variable.name.startsWith('payload.')
-        );
-      }),
-    [workflows]
+    () => buildPayloadConditionVariables(payloadSchemasData?.payloadSchemas ?? []),
+    [payloadSchemasData?.payloadSchemas]
   );
   const integrationConditionVariables = useMemo(() => {
     return mergeIntegrationConditionVariables([

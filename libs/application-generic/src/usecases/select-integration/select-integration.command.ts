@@ -4,6 +4,13 @@ import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 import { EnvironmentCommand } from '../../commands/project.command';
 import type { ICompileContext } from '../../types/compile-context';
 
+export interface IntegrationFilterData {
+  tenant?: ITenantDefine | string;
+  payload?: ITriggerPayload;
+  subscriber?: ICompileContext['subscriber'] | Record<string, unknown>;
+  context?: ICompileContext['context'] | Record<string, unknown>;
+}
+
 export class SelectIntegrationCommand extends EnvironmentCommand {
   @IsOptional()
   @IsMongoId()
@@ -19,12 +26,7 @@ export class SelectIntegrationCommand extends EnvironmentCommand {
   providerId?: ProvidersIdEnum;
 
   @IsDefined()
-  filterData: {
-    tenant?: ITenantDefine | string;
-    payload?: ITriggerPayload;
-    subscriber?: ICompileContext['subscriber'] | Record<string, unknown>;
-    context?: ICompileContext['context'] | Record<string, unknown>;
-  };
+  filterData: IntegrationFilterData;
 
   @IsOptional()
   userId?: string;

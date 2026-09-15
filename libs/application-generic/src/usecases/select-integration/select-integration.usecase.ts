@@ -15,8 +15,13 @@ import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
 import { SelectIntegrationCommand } from './select-integration.command';
 
-export interface SelectedIntegration extends IntegrationEntity {
-  matchedConditions?: IntegrationEntity['rules'] | IntegrationEntity['conditions'];
+export type MatchedIntegrationConditions =
+  | { type: 'rules'; value: IntegrationEntity['rules'] }
+  | { type: 'legacy'; value: IntegrationEntity['conditions'] };
+
+export interface IntegrationSelectionResult {
+  integration: IntegrationEntity;
+  matchedConditions?: MatchedIntegrationConditions;
 }
 
 @Injectable()
@@ -30,14 +35,14 @@ export class SelectIntegration {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: SelectIntegrationCommand): Promise<SelectedIntegration | undefined> {
+  async execute(command: SelectIntegrationCommand): Promise<IntegrationSelectionResult | undefined> {
     const isCrossEnvironmentIntegrationEnabled = await this.isCrossEnvironmentIntegrationEnabled(command);
 
     let integration: IntegrationEntity | null = await this.getPrimaryIntegration(
       command,
       isCrossEnvironmentIntegrationEnabled
     );
-    let matchedConditions: SelectedIntegration['matchedConditions'];
+    let matchedConditions: MatchedIntegrationConditions | undefined;
 
     if (!command.identifier) {
       const integrations = await this.integrationRepository.find(
@@ -55,8 +60,8 @@ export class SelectIntegration {
           if (passed) {
             integration = currentIntegration;
             matchedConditions = hasIntegrationRules(currentIntegration.rules)
-              ? currentIntegration.rules
-              : currentIntegration.conditions;
+              ? { type: 'rules', value: currentIntegration.rules }
+              : { type: 'legacy', value: currentIntegration.conditions };
             break;
           }
         }
@@ -69,7 +74,10 @@ export class SelectIntegration {
 
     const decryptedIntegration = GetDecryptedIntegrations.getDecryptedCredentials(integration);
 
-    return matchedConditions ? { ...decryptedIntegration, matchedConditions } : decryptedIntegration;
+    return {
+      integration: decryptedIntegration,
+      ...(matchedConditions && { matchedConditions }),
+    };
   }
 
   private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {

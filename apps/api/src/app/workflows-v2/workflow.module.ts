@@ -39,6 +39,7 @@ import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/
 
 import {
   BuildWorkflowTestDataUseCase,
+  GetWorkflowPayloadSchemasUseCase,
   ListWorkflowsUseCase,
   SyncToEnvironmentUseCase,
   TestHttpEndpointUsecase,
@@ -74,6 +75,7 @@ const MODULES = [
     UpsertWorkflowUseCase,
     UpsertWorkflow,
     ResolveAgentInboundAddresses,
+    GetWorkflowPayloadSchemasUseCase,
     ListWorkflowsUseCase,
     DeleteWorkflowUseCase,
     UpsertPreferences,
@@ -110,5 +112,5 @@ const MODULES = [
   ],
 })
 export class WorkflowModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {}
+  configure(_consumer: MiddlewareConsumer): MiddlewareConsumer | undefined {}
 }

@@ -71,6 +71,7 @@ export class SendMessageTool extends SendMessageBase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing channel orchestration is outside this change.
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Tool',
@@ -264,7 +265,7 @@ export class SendMessageTool extends SendMessageBase {
     toolFactory: ToolFactory,
     channelData: ChannelData | undefined
   ): Promise<SendMessageResult> {
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    await this.sendSelectedIntegrationExecution(command.job, { integration });
 
     const overrides = {
       ...(integration.channel ? command.overrides[integration.channel] || {} : {}),

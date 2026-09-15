@@ -53,7 +53,6 @@ export const VariableSelect = (props: VariableSelectProps) => {
   const [filterValue, setFilterValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const variablesListRef = useRef<VariableListRef>(null);
-  const selectedValueRef = useRef<string | null>(null);
 
   useEffect(() => {
     setInputValue(value ?? defaultValue ?? '');
@@ -92,15 +91,15 @@ export const VariableSelect = (props: VariableSelectProps) => {
     }
   };
 
-  const onSelect = (newValue: string) => {
-    selectedValueRef.current = newValue;
+  const closePopover = () => {
     setIsOpen(false);
     setFilterValue('');
+  };
+
+  const onSelect = (newValue: string) => {
     setInputValue(newValue);
     onChange(newValue);
-    queueMicrotask(() => {
-      selectedValueRef.current = null;
-    });
+    closePopover();
   };
 
   const onOpen = () => {
@@ -108,17 +107,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
     inputRef.current?.focus();
   };
 
-  const onClose = () => {
-    setIsOpen(false);
-    setFilterValue('');
-
-    if (selectedValueRef.current !== null) {
-      setInputValue(selectedValueRef.current);
-      selectedValueRef.current = null;
-
-      return;
-    }
-
+  const commitInputValue = () => {
     let newInputValue = '';
 
     if (inputValue !== '' || (inputValue === '' && isClearable)) {
@@ -129,6 +118,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
 
     setInputValue(newInputValue);
     onChange(newInputValue);
+    closePopover();
   };
 
   const onFocusCapture = () => {
@@ -140,9 +130,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
       <Popover
         open={isOpen}
         onOpenChange={(open) => {
-          if (!open) {
-            onClose();
-          }
+          open ? onOpen() : closePopover();
         }}
       >
         <PopoverAnchor asChild>
@@ -157,7 +145,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
                   onChange={onInputChangeHandler}
                   onFocusCapture={onFocusCapture}
                   // use blur only when there are no filtered options, otherwise it closes the popover on keyboard navigation
-                  onBlurCapture={filteredOptions.length === 0 ? onClose : undefined}
+                  onBlurCapture={filteredOptions.length === 0 ? commitInputValue : undefined}
                   placeholder={placeholder ?? 'Field'}
                   disabled={disabled}
                   onKeyDown={onInputKeyDown}
@@ -176,7 +164,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
               // prevent the input from being blurred when the popover opens
               e.preventDefault();
             }}
-            onFocusOutside={onClose}
+            onFocusOutside={commitInputValue}
           >
             <VariableList
               ref={variablesListRef}
@@ -197,7 +185,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
               // prevent the input from being blurred when the popover opens
               e.preventDefault();
             }}
-            onFocusOutside={onClose}
+            onFocusOutside={commitInputValue}
           >
             {emptyState}
           </PopoverContent>
