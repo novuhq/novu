@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
-import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
+import { useFetchAllWorkflows } from '@/hooks/use-fetch-all-workflows';
 import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
 import { parseStepVariables } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
@@ -66,11 +66,12 @@ export function IntegrationConditionsDrawer({
   const rules = useWatch({ control, name: 'rules' });
   const primary = useWatch({ control, name: 'primary' });
   const integrationName = useWatch({ control, name: 'name' });
+  const [isOpen, setIsOpen] = useState(false);
   const contextTypeVariables = useContextTypeVariables();
-  const { data: workflowsData } = useFetchWorkflows({ limit: 100 });
+  const { workflows } = useFetchAllWorkflows(isOpen);
   const payloadVariables = useMemo(
     () =>
-      (workflowsData?.workflows ?? []).flatMap((workflow) => {
+      workflows.flatMap((workflow) => {
         const payloadSchema = (workflow as typeof workflow & { payloadSchema?: object }).payloadSchema;
 
         if (!payloadSchema) {
@@ -88,7 +89,7 @@ export function IntegrationConditionsDrawer({
           variable.name.startsWith('payload.')
         );
       }),
-    [workflowsData?.workflows]
+    [workflows]
   );
   const integrationConditionVariables = useMemo(() => {
     const existingNames = new Set(INTEGRATION_CONDITION_VARIABLES.map((variable) => variable.name));
@@ -133,7 +134,6 @@ export function IntegrationConditionsDrawer({
       query: buildQuery(),
     },
   });
-  const [isOpen, setIsOpen] = useState(false);
   const [pendingQuery, setPendingQuery] = useState<RuleGroupType | null>(null);
 
   const query = form.watch('query');
