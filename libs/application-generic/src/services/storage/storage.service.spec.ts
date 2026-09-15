@@ -9,8 +9,9 @@ const azureExists = jest.fn(() => Promise.resolve(true));
 
 const gcsSave = jest.fn(() => Promise.resolve());
 const gcsDownload = jest.fn();
-const gcsDelete = jest.fn(() => Promise.resolve([{}]));
+const gcsDelete = jest.fn(() => Promise.resolve());
 const gcsExists = jest.fn(() => Promise.resolve([true]));
+const gcsGetSignedUrl = jest.fn();
 
 jest.mock('@azure/storage-blob', () => ({
   ...jest.requireActual('@azure/storage-blob'),
@@ -36,6 +37,7 @@ jest.mock('@google-cloud/storage', () => ({
         download: gcsDownload,
         delete: gcsDelete,
         exists: gcsExists,
+        getSignedUrl: gcsGetSignedUrl,
       })),
     })),
   })),
@@ -163,9 +165,63 @@ describe('GCSStorageService email attachment handoff', () => {
     await expect(service.getFile(key)).rejects.toEqual(bucketMissing);
   });
 
-  it('awaits object deletion after the email is sent', async () => {
-    await service.deleteFile(key);
+  it('does not finish deleting until the GCS delete resolves', async () => {
+    let resolveDelete: () => void = () => undefined;
+    gcsDelete.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        })
+    );
+
+    let settled = false;
+    const pending = service.deleteFile(key).then(() => {
+      settled = true;
+    });
 
     expect(gcsDelete).toHaveBeenCalledWith({ ignoreNotFound: true });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    resolveDelete();
+    await pending;
+
+    expect(settled).toBe(true);
+  });
+
+  describe('branding and profile public path', () => {
+    const signedWriteUrl = 'https://storage.googleapis.com/novu-test/org-id/logo.png?X-Goog-Signature=abc';
+
+    afterEach(() => {
+      delete process.env.GCS_DOMAIN;
+      delete process.env.CDN_URL;
+    });
+
+    it('uses GCS_DOMAIN for the durable public path', async () => {
+      process.env.GCS_DOMAIN = 'https://cdn.example.com';
+      gcsGetSignedUrl.mockResolvedValueOnce([signedWriteUrl]);
+
+      const result = await service.getSignedUrl('org-id/logo.png', 'image/png');
+
+      expect(result.signedUrl).toBe(signedWriteUrl);
+      expect(result.path).toBe('https://cdn.example.com/novu-test/org-id/logo.png');
+    });
+
+    it('prefers CDN_URL when set', async () => {
+      process.env.CDN_URL = 'https://assets.novu.co';
+      gcsGetSignedUrl.mockResolvedValueOnce([signedWriteUrl]);
+
+      const result = await service.getSignedUrl('org-id/logo.png', 'image/png');
+
+      expect(result.path).toBe('https://assets.novu.co/org-id/logo.png');
+    });
+
+    it('does not return an unsigned object URL when no public domain is configured', async () => {
+      gcsGetSignedUrl.mockResolvedValueOnce([signedWriteUrl]);
+
+      await expect(service.getSignedUrl('org-id/logo.png', 'image/png')).rejects.toThrow(
+        'GCS_DOMAIN or CDN_URL is required for public branding and profile upload paths'
+      );
+    });
   });
 });

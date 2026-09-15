@@ -249,11 +249,13 @@ export class GCSStorageService implements StorageService {
       });
 
     const parsedUrl = new URL(signedUrl);
-    let path = `${parsedUrl.origin}${parsedUrl.pathname}`;
+    let path: string;
     if (process.env.CDN_URL) {
       path = `${process.env.CDN_URL}/${key}`;
     } else if (process.env.GCS_DOMAIN) {
       path = `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`;
+    } else {
+      throw new Error('GCS_DOMAIN or CDN_URL is required for public branding and profile upload paths');
     }
 
     return { signedUrl, path };
