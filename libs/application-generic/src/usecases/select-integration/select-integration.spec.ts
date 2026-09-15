@@ -517,7 +517,7 @@ describe('select integration', () => {
       })
     );
 
-    expect(ignoredLegacy?.identifier).toEqual(testIntegration.identifier);
+    expect(ignoredLegacy?.integration.identifier).toEqual(testIntegration.identifier);
 
     const matchedRules = await useCase.execute(
       SelectIntegrationCommand.create({
@@ -531,6 +531,7 @@ describe('select integration', () => {
       })
     );
 
-    expect(matchedRules?.identifier).toEqual(dualFormatIntegration.identifier);
+    expect(matchedRules?.integration.identifier).toEqual(dualFormatIntegration.identifier);
+    expect(matchedRules?.matchedConditions).toEqual({ type: 'rules', value: dualFormatIntegration.rules });
   });
 });
