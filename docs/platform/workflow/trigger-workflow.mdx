@@ -200,7 +200,136 @@ curl -X POST 'https://api.novu.co/v1/events/trigger' \
 
 Once the event is received, Novu executes the workflow, evaluates step conditions, resolves variables, and delivers notifications across the configured channels.
 
-From here, you can extend event triggering by attaching context data or targeting multiple subscribers using topics.
+From here, you can extend event triggering by attaching context data, overriding the [workflow-assigned agent](/agents/workflow-agents), or targeting multiple subscribers using topics.
+
+## Override the assigned agent
+
+If the workflow has an agent assigned in **Configure workflow**, that agent is the default for every trigger. Pass `agentId` on the trigger to change that for a single execution:
+
+| `agentId` | Behavior |
+| --- | --- |
+| Omitted | Use the workflow-assigned agent |
+| Public agent identifier | Route this execution through that agent |
+| `null` | Disable agent routing for this execution |
+
+`agentId` is the public agent slug, not the Mongo `_id`. See [Workflow-assigned agents](/agents/workflow-agents#override-per-trigger).
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: [{ subscriberId: "string" }],
+  agentId: "support-agent",
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={"subscriber_id": "string"},
+        agent_id="support-agent",
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+agentID := "support-agent"
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "string",
+    }),
+    AgentID: &agentID,
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'string'),
+        agentId: 'support-agent',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateStr("string"),
+    AgentId = "support-agent",
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of("string"))
+        .agentId("support-agent")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.novu.co/v1/events/trigger" \
+  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
+  -H "Content-Type: application/json" \
+  -H 'Accept: application/json' \
+  -d '{
+    "name": "workflow_identifier",
+    "to": [{ "subscriberId": "string" }],
+    "agentId": "support-agent"
+  }'
+```
+  </Tab>
+</Tabs>
+
+To skip agent routing for one run while leaving the workflow assignment in place, pass `agentId: null`.
 
 ## Trigger a workflow with context
 
