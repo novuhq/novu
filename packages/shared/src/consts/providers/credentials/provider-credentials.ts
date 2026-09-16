@@ -263,6 +263,17 @@ export const plunkConfig: IConfigCredential[] = [
   ...mailConfigBase,
 ];
 
+export const mailkiteConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'Your MailKite API key (mk_live_…). Create one at https://mailkite.dev',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const sparkpostConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
