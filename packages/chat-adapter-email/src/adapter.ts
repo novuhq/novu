@@ -64,10 +64,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
     const chatModule = await import('chat');
     this.parseMarkdownFn = chatModule.parseMarkdown;
-    this.messageParser.setChatModule(
-      chatModule.Message as unknown as Parameters<MessageParser['setChatModule']>[0],
-      chatModule.parseMarkdown
-    );
+    this.messageParser.setChatModule(chatModule.Message, chatModule.parseMarkdown);
   }
 
   // -- Thread ID methods --
@@ -115,7 +112,6 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     ]);
 
     const message = this.parseMessage(this.toRawMessage(payload), threadId);
-
     this.chat.processMessage(this, threadId, message, options);
 
     return new Response(null, { status: 200 });
@@ -145,13 +141,6 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
   // -- Message parsing --
 
-  /**
-   * `threadId` is optional because the chat SDK's `Adapter.parseMessage(raw)` contract has no
-   * room for it, but inbound callers must pass it: the SDK's queued dispatch strategies
-   * (`burst`/`queue`/`debounce` — Novu runs email on `burst`) re-read the thread id from the
-   * message after the Redis round trip rather than reusing the one given to `processMessage`,
-   * and an empty id then fails `channelIdFromThreadId` and silently drops the turn.
-   */
   parseMessage(raw: NovuEmailRawMessage, threadId = ''): Message<NovuEmailRawMessage> {
     const agentAddress = raw.to[0] ?? '';
 
@@ -394,15 +383,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   }
 
   private segmentGraphemes(value: string): string[] {
-    const Segmenter = (
-      Intl as unknown as {
-        Segmenter?: new (
-          locale: string,
-          options: { granularity: 'grapheme' }
-        ) => { segment(input: string): Iterable<{ segment: string }> };
-      }
-    ).Segmenter;
-
+    const Segmenter = Intl.Segmenter;
     if (!Segmenter) {
       return Array.from(value);
     }

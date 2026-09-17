@@ -1,8 +1,8 @@
-import type { Message } from 'chat';
+import type { Message, MessageData } from 'chat';
 import type { NovuEmailRawMessage } from './types.js';
 import { extractDisplayName, parseEmailAddress, stripHtml } from './utils.js';
 
-type MessageConstructor = new (data: unknown) => Message<NovuEmailRawMessage>;
+type MessageConstructor = new (data: MessageData<NovuEmailRawMessage>) => Message<NovuEmailRawMessage>;
 type ParseMarkdownFn = (text: string) => import('chat').Root;
 
 /**
