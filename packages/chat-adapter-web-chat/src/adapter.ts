@@ -245,13 +245,16 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     }
 
     const messageId = clientMessageId || mintMessageId();
-    const message = this.parseMessage({
-      id: messageId,
-      text: kind.text,
-      subscriberId: session.subscriberId,
-      createdAt: new Date().toISOString(),
-      contextKeys: session.contextKeys ?? [],
-    });
+    const message = this.parseMessage(
+      {
+        id: messageId,
+        text: kind.text,
+        subscriberId: session.subscriberId,
+        createdAt: new Date().toISOString(),
+        contextKeys: session.contextKeys ?? [],
+      },
+      threadId
+    );
 
     try {
       await this.chat!.processMessage(this, threadId, message, options);
@@ -462,14 +465,22 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     return raw;
   }
 
-  parseMessage(raw: WebChatRawMessage): Message<WebChatRawMessage> {
+  /**
+   * `threadId` is optional because the chat SDK's `Adapter.parseMessage(raw)` contract has no
+   * room for it, but inbound callers must pass it: the SDK's queued dispatch strategies
+   * (`burst`/`queue`/`debounce`) re-read the thread id from the message after the Redis round
+   * trip rather than reusing the one given to `processMessage`, and an empty id then fails
+   * `channelIdFromThreadId` and silently drops the turn. Web Chat runs on `drop` today, which
+   * dispatches with the id passed to `processMessage`, so this only keeps it self-describing.
+   */
+  parseMessage(raw: WebChatRawMessage, threadId = ''): Message<WebChatRawMessage> {
     if (!this.MessageClass || !this.parseMarkdownFn) {
       throw new Error('Adapter not initialized. Call initialize() first.');
     }
 
     return new this.MessageClass({
       id: raw.id,
-      threadId: '',
+      threadId,
       text: raw.text,
       formatted: this.parseMarkdownFn(raw.text),
       raw,

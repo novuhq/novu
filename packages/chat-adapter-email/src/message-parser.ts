@@ -18,7 +18,7 @@ export class MessageParser {
     this.parseMarkdownFn = parseMarkdownFn;
   }
 
-  parse(raw: NovuEmailRawMessage, fromAddress: string): Message<NovuEmailRawMessage> {
+  parse(raw: NovuEmailRawMessage, fromAddress: string, threadId: string): Message<NovuEmailRawMessage> {
     if (!this.MessageClass || !this.parseMarkdownFn) {
       throw new Error('MessageParser not initialized — call setChatModule() first');
     }
@@ -68,7 +68,7 @@ export class MessageParser {
 
     return new this.MessageClass({
       id: raw.id,
-      threadId: '',
+      threadId,
       text,
       formatted: this.parseMarkdownFn(text),
       raw,

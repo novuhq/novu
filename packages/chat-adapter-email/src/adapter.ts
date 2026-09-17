@@ -114,7 +114,8 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       agentAddress ? this.threadResolver.trackAgentAddress(threadId, agentAddress) : Promise.resolve(),
     ]);
 
-    const message = this.parseMessage(this.toRawMessage(payload));
+    const message = this.parseMessage(this.toRawMessage(payload), threadId);
+
     this.chat.processMessage(this, threadId, message, options);
 
     return new Response(null, { status: 200 });
@@ -144,10 +145,17 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
   // -- Message parsing --
 
-  parseMessage(raw: NovuEmailRawMessage): Message<NovuEmailRawMessage> {
+  /**
+   * `threadId` is optional because the chat SDK's `Adapter.parseMessage(raw)` contract has no
+   * room for it, but inbound callers must pass it: the SDK's queued dispatch strategies
+   * (`burst`/`queue`/`debounce` — Novu runs email on `burst`) re-read the thread id from the
+   * message after the Redis round trip rather than reusing the one given to `processMessage`,
+   * and an empty id then fails `channelIdFromThreadId` and silently drops the turn.
+   */
+  parseMessage(raw: NovuEmailRawMessage, threadId = ''): Message<NovuEmailRawMessage> {
     const agentAddress = raw.to[0] ?? '';
 
-    return this.messageParser.parse(raw, agentAddress);
+    return this.messageParser.parse(raw, agentAddress, threadId);
   }
 
   // -- Outbound --
