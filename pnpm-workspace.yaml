@@ -274,6 +274,12 @@ overrides:
   # strings (DoS via CPU). Patched in 2.9.4. Only pulled transitively via
   # cssnano (postcss-colormin / postcss-minify-gradients) in packages/js.
   colord@<2.9.4: ^2.9.4
+  # GHSA-866g-f22w-33x8: @ai-sdk/provider-utils 4.0.0-beta.10 through 4.0.32
+  # is vulnerable to insecure JSON parsing that can cause a DoS. Patched in
+  # 4.0.33. Pulled transitively via ai / @ai-sdk/gateway / @ai-sdk/react /
+  # @ai-sdk/openai / @ai-sdk/anthropic in apps/dashboard, agent-evals, and
+  # enterprise packages. Bump within the 4.0.x line (patch bump).
+  '@ai-sdk/provider-utils@>=4.0.0 <4.0.33': ^4.0.33
 
 # allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
 # Values map package names to `true` (always allow scripts) or `false` (always deny).
