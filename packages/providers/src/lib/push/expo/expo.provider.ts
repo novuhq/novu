@@ -8,6 +8,9 @@ import { PushBaseProvider } from '../push.base-provider';
 export class ExpoPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.EXPO;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
+  protected override keyCaseObject: Record<string, string> = {
+    contentAvailable: '_contentAvailable',
+  };
   private readonly INVALID_TOKEN_ERRORS = ['not a valid Expo push token'];
 
   private expo: Expo;
