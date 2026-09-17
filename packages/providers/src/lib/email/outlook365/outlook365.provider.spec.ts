@@ -1,18 +1,24 @@
 import { CheckIntegrationResponseEnum, ICheckIntegrationResponse } from '@novu/stateless';
 import nodemailer from 'nodemailer';
-import { expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { Outlook365Provider } from './outlook365.provider';
 
-const sendMailMock = vi.fn().mockReturnValue(() => {
-  return {
-    messageId: 'message-id',
-  } as any;
+const sendMailMock = vi.fn().mockResolvedValue({
+  messageId: 'message-id',
 });
 
 vi.spyOn(nodemailer, 'createTransport').mockImplementation(() => {
   return {
     sendMail: sendMailMock,
   } as any;
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  sendMailMock.mockReset();
+  sendMailMock.mockResolvedValue({
+    messageId: 'message-id',
+  });
 });
 
 const mockConfig = {
@@ -130,4 +136,53 @@ test('should check provider integration correctly', async () => {
   expect(response.success).toBeTruthy();
   expect(response.message).toBe('test');
   expect(response.code).toBe(CheckIntegrationResponseEnum.SUCCESS);
+});
+
+test('retries ESOCKET CONN errors and succeeds on a later attempt', async () => {
+  vi.useFakeTimers();
+  const connectError = Object.assign(new Error('Connection failed'), {
+    code: 'ESOCKET',
+    command: 'CONN',
+  });
+  sendMailMock.mockRejectedValueOnce(connectError).mockResolvedValueOnce({
+    messageId: 'retried-id',
+  });
+
+  const provider = new Outlook365Provider(mockConfig);
+  const sendPromise = provider.sendMessage(mockNovuMessage);
+  await vi.runAllTimersAsync();
+  const response = await sendPromise;
+
+  expect(response.id).toBe('retried-id');
+  expect(sendMailMock).toHaveBeenCalledTimes(2);
+  vi.useRealTimers();
+});
+
+test('does not retry SMTP errors after the connect phase', async () => {
+  const authError = Object.assign(new Error('Invalid login'), {
+    code: 'EAUTH',
+    command: 'AUTH',
+  });
+  sendMailMock.mockRejectedValueOnce(authError);
+
+  const provider = new Outlook365Provider(mockConfig);
+
+  await expect(provider.sendMessage(mockNovuMessage)).rejects.toThrow('Invalid login');
+  expect(sendMailMock).toHaveBeenCalledTimes(1);
+});
+
+test('exhausts connect retries then throws the original error', async () => {
+  vi.useFakeTimers();
+  const connectError = Object.assign(new Error('Connection failed'), {
+    code: 'ESOCKET',
+    command: 'CONN',
+  });
+  sendMailMock.mockRejectedValue(connectError);
+
+  const provider = new Outlook365Provider(mockConfig);
+  const sendPromise = provider.sendMessage(mockNovuMessage);
+  const assertion = expect(sendPromise).rejects.toThrow('Connection failed');
+  await vi.runAllTimersAsync();
+  await assertion;
+  expect(sendMailMock).toHaveBeenCalledTimes(3);
 });
