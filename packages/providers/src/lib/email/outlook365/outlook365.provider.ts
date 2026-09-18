@@ -15,19 +15,13 @@ const SMTP_TIMEOUT_MS = 30_000;
 const SMTP_CONNECT_RETRY_LIMIT = 3;
 const SMTP_CONNECT_RETRY_DELAY_MS = 200;
 
-const RETRYABLE_SMTP_CONNECT_CODES = new Set([
-  'ESOCKET',
-  'ECONNECTION',
-  'ECONNRESET',
-  'ECONNREFUSED',
-  'ETIMEDOUT',
-  'EPIPE',
-  'ETLS',
-]);
+const RETRYABLE_HANDSHAKE_MESSAGES = new Set(['Connection timeout', 'Greeting never received']);
 
 interface SmtpConnectError {
   code?: string;
   command?: string;
+  syscall?: string;
+  message?: string;
 }
 
 function isRetryableOutlookConnectError(error: unknown): boolean {
@@ -35,13 +29,22 @@ function isRetryableOutlookConnectError(error: unknown): boolean {
     return false;
   }
 
-  const { code, command } = error as SmtpConnectError;
+  const { code, syscall, message } = error as SmtpConnectError;
+  const text = typeof message === 'string' ? message : '';
 
-  if (!code || !RETRYABLE_SMTP_CONNECT_CODES.has(code)) {
-    return false;
+  if (syscall === 'connect' || text.startsWith('connect ')) {
+    return true;
   }
 
-  return !command || command === 'CONN';
+  if (code === 'EDNS' || code === 'ETLS') {
+    return true;
+  }
+
+  return (
+    RETRYABLE_HANDSHAKE_MESSAGES.has(text) ||
+    text.startsWith('Invalid greeting') ||
+    text.startsWith('Error initiating TLS')
+  );
 }
 
 export class Outlook365Provider extends BaseProvider implements IEmailProvider {

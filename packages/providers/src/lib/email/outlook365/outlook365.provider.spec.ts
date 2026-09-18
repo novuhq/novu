@@ -154,11 +154,12 @@ test('should check provider integration correctly', async () => {
   expect(response.code).toBe(CheckIntegrationResponseEnum.SUCCESS);
 });
 
-test('retries ESOCKET CONN errors and succeeds on a later attempt', async () => {
+test('retries TCP handshake failures and succeeds on a later attempt', async () => {
   vi.useFakeTimers();
-  const connectError = Object.assign(new Error('Connection failed'), {
+  const connectError = Object.assign(new Error('connect ECONNRESET'), {
     code: 'ESOCKET',
     command: 'CONN',
+    syscall: 'connect',
   });
   sendMailMock.mockRejectedValueOnce(connectError).mockResolvedValueOnce({
     messageId: 'retried-id',
@@ -172,6 +173,20 @@ test('retries ESOCKET CONN errors and succeeds on a later attempt', async () => 
   expect(response.id).toBe('retried-id');
   expect(sendMailMock).toHaveBeenCalledTimes(2);
   vi.useRealTimers();
+});
+
+test('does not retry ESOCKET CONN after the SMTP session may have started', async () => {
+  const midSessionError = Object.assign(new Error('read ECONNRESET'), {
+    code: 'ESOCKET',
+    command: 'CONN',
+    syscall: 'read',
+  });
+  sendMailMock.mockRejectedValueOnce(midSessionError);
+
+  const provider = new Outlook365Provider(mockConfig);
+
+  await expect(provider.sendMessage(mockNovuMessage)).rejects.toThrow('read ECONNRESET');
+  expect(sendMailMock).toHaveBeenCalledTimes(1);
 });
 
 test('does not retry SMTP errors after the connect phase', async () => {
@@ -189,15 +204,15 @@ test('does not retry SMTP errors after the connect phase', async () => {
 
 test('exhausts connect retries then throws the original error', async () => {
   vi.useFakeTimers();
-  const connectError = Object.assign(new Error('Connection failed'), {
-    code: 'ESOCKET',
+  const connectError = Object.assign(new Error('Greeting never received'), {
+    code: 'ETIMEDOUT',
     command: 'CONN',
   });
   sendMailMock.mockRejectedValue(connectError);
 
   const provider = new Outlook365Provider(mockConfig);
   const sendPromise = provider.sendMessage(mockNovuMessage);
-  const assertion = expect(sendPromise).rejects.toThrow('Connection failed');
+  const assertion = expect(sendPromise).rejects.toThrow('Greeting never received');
   await vi.runAllTimersAsync();
   await assertion;
   expect(sendMailMock).toHaveBeenCalledTimes(3);
