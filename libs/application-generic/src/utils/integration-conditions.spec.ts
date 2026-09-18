@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getIntegrationRulesIssues, hasIntegrationRules } from './integration-conditions';
+import { evaluateIntegrationRules, getIntegrationRulesIssues, hasIntegrationRules } from './integration-conditions';
 
 describe('integration rules helpers', () => {
   it('detects non-empty JsonLogic', () => {
@@ -8,8 +8,8 @@ describe('integration rules helpers', () => {
     expect(hasIntegrationRules(null)).to.equal(false);
   });
 
-  it('rejects payload and deprecated tenant fields and accepts subscriber fields', () => {
-    const invalidPayload = getIntegrationRulesIssues({
+  it('accepts workflow payload and subscriber fields and rejects deprecated tenant fields', () => {
+    const validPayload = getIntegrationRulesIssues({
       '==': [{ var: 'payload.foo' }, 'bar'],
     });
     const invalidTenant = getIntegrationRulesIssues({
@@ -19,7 +19,7 @@ describe('integration rules helpers', () => {
       '==': [{ var: 'subscriber.locale' }, 'fr'],
     });
 
-    expect(invalidPayload.length).to.be.greaterThan(0);
+    expect(validPayload).to.deep.equal([]);
     expect(invalidTenant.length).to.be.greaterThan(0);
     expect(valid).to.deep.equal([]);
   });
@@ -57,7 +57,7 @@ describe('integration rules helpers', () => {
       and: [{ log: { var: 'subscriber.email' }, dummy: 'bypass' }],
     });
     const smuggledVarIssues = getIntegrationRulesIssues({
-      and: [{ var: 'payload.secret', dummy: 'bypass' }],
+      and: [{ var: 'actor.email', dummy: 'bypass' }],
     });
     const nestedUnderNegationIssues = getIntegrationRulesIssues({
       '!': { map: [[{ var: 'subscriber.data' }], { var: '' }], dummy: 'bypass' },
@@ -70,7 +70,7 @@ describe('integration rules helpers', () => {
 
   it('rejects vars nested under operators QueryValidatorService does not inspect', () => {
     const issues = getIntegrationRulesIssues({
-      null: [{ var: 'payload.foo' }],
+      null: [{ var: 'actor.email' }],
     });
 
     expect(issues.length).to.be.greaterThan(0);
@@ -82,5 +82,17 @@ describe('integration rules helpers', () => {
     });
 
     expect(valid).to.deep.equal([]);
+  });
+
+  it('validates and evaluates integration rules through one boundary', () => {
+    const matching = evaluateIntegrationRules(
+      { '==': [{ var: 'payload.region' }, 'eu'] },
+      { payload: { region: 'eu' } }
+    );
+    const invalid = evaluateIntegrationRules({ log: { var: 'payload.region' } }, { payload: { region: 'eu' } });
+
+    expect(matching).to.deep.equal({ result: true, issues: [] });
+    expect(invalid.result).to.equal(false);
+    expect(invalid.issues.some((issue) => issue.includes('log'))).to.equal(true);
   });
 });
