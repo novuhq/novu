@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { WorkflowRunService } from '@novu/application-generic';
 import { SharedModule } from '../shared/shared.module';
 import { ActivityController } from './activity.controller';
+import { ActivityRetentionService } from './shared/activity-retention.service';
 import { BuildActiveSubscribersChart } from './usecases/build-active-subscribers-chart/build-active-subscribers-chart.usecase';
 import { BuildActiveSubscribersTrendChart } from './usecases/build-active-subscribers-trend-chart/build-active-subscribers-trend-chart.usecase';
 import { BuildAvgMessagesPerSubscriberChart } from './usecases/build-avg-messages-per-subscriber-chart/build-avg-messages-per-subscriber-chart.usecase';
@@ -18,13 +19,16 @@ import { GetCharts } from './usecases/get-charts/get-charts.usecase';
 import { GetRequest } from './usecases/get-request/get-request.usecase';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
+import { GetWorkflowRunStats } from './usecases/get-workflow-run-stats/get-workflow-run-stats.usecase';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
 
 const USE_CASES = [
   GetRequests,
   GetWorkflowRuns,
   GetWorkflowRun,
+  GetWorkflowRunStats,
   GetCharts,
+  ActivityRetentionService,
   BuildDeliveryTrendChart,
   BuildInteractionTrendChart,
   BuildWorkflowByVolumeChart,
