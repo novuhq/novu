@@ -33,6 +33,22 @@ const mockNovuMessage = {
   html: '<div> Mail Content </div>',
 };
 
+test('keeps nodemailer socketTimeout default so large sends are not capped at handshake timeout', () => {
+  new Outlook365Provider(mockConfig);
+
+  expect(nodemailer.createTransport).toHaveBeenCalledWith(
+    expect.objectContaining({
+      connectionTimeout: 30_000,
+      greetingTimeout: 30_000,
+    })
+  );
+  expect(nodemailer.createTransport).not.toHaveBeenCalledWith(
+    expect.objectContaining({
+      socketTimeout: expect.anything(),
+    })
+  );
+});
+
 test('should trigger outlook365 library correctly', async () => {
   const provider = new Outlook365Provider(mockConfig);
 

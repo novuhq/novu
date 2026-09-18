@@ -64,7 +64,6 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
       requireTLS: true,
       connectionTimeout: SMTP_TIMEOUT_MS,
       greetingTimeout: SMTP_TIMEOUT_MS,
-      socketTimeout: SMTP_TIMEOUT_MS,
       auth: {
         user: this.config.from,
         pass: this.config.password,
