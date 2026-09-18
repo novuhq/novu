@@ -246,7 +246,14 @@ overrides:
   nodemailer@<9.1.0: ^9.1.0
   shell-quote@<1.8.5: ^1.8.5
   piscina@<4.9.3: ^4.9.3
-  vitest@<4.1.0: ^4.1.0
+  # GHSA-9crc-q9x8-hgqq: @vitest/mocker path-traversal / arbitrary file read
+  # via Redirect Mock; vitest re-exports the vulnerable code. Patched in
+  # 4.1.11 (patch bump within the 4.1.x line). Widen the pre-existing
+  # `vitest@<4.1.0` override so all transitive consumers land on the fix,
+  # and add a matching `@vitest/mocker` override in case a consumer pulls
+  # the mocker without the vitest CLI.
+  vitest@<4.1.11: ^4.1.11
+  '@vitest/mocker@<4.1.11': ^4.1.11
   react-router@>=6.0.0 <7.18.0: ^7.18.0
   js-cookie@<3.0.7: ^3.0.7
   # GHSA-77c7-pq4r-6mcq: degit command injection via unsanitised git repo name.
