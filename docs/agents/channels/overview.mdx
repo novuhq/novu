@@ -12,6 +12,8 @@ Novu normalizes inbound events and outbound replies, but each provider exposes a
 | --- | --- | --- | --- | --- | --- | --- |
 | Full context history | Yes | Yes | Yes | Yes | Yes | Yes |
 | Threaded replies | Yes | Yes | Yes | Yes | Yes | Yes |
+| Native quote reply | No | No | Yes | Yes | No | No |
+| Inbound quote-reply context (`message.replyTo`) | No | Yes | Yes | Yes | No | No |
 | Live typing indicator | Yes | Yes | Yes | Yes | No | Yes |
 | React with eyes on new message | Yes | Yes | Yes | Yes | Yes | No |
 | Plan card (chain of thought) | Yes (native) | Markdown edit-in-place | No | Markdown edit-in-place | No | Yes (thinking parts) |
@@ -27,6 +29,8 @@ Novu normalizes inbound events and outbound replies, but each provider exposes a
 | Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet | Yes (file parts) |
 
 Word-by-word streaming is not supported on Slack, Teams, WhatsApp, Telegram, or email. Web Chat updates text parts over the live socket while the turn runs.
+
+Native quote reply delivers your agent's reply as a native quote of an earlier message (see [`quoteReply`](/agents/custom-code-agent/building-blocks/reply#quote-reply)). On channels without native quote support, the reply is posted normally without a quote. Inbound quote-reply context ([`message.replyTo`](/agents/custom-code-agent/building-blocks/handle-events#quote-reply-context)) reports the message a user quoted.
 
 ## Channel pages
 

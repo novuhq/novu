@@ -12,7 +12,7 @@ Use replies when the agent needs to communicate something to the participant in 
 
 Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/building-blocks/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user. Use [`ctx.emit`](/agents/custom-code-agent/building-blocks/emit) when your client needs a named payload during the turn.
 
-The public API is `ctx.reply(content, options?)`. You can also return a string or JSX card from a handler instead of calling `ctx.reply()` directly.
+The public API is `ctx.reply(content, options?)`, where `options` can carry `files` and `quoteReply`. You can also return a string or JSX card from a handler instead of calling `ctx.reply()` directly, or return `{ content, files?, quoteReply? }` when you need delivery options with a handler return.
 
 To send a reply from your backend without going through the bridge handler, use the [Send an agent reply](/api-reference/agents/send-an-agent-reply) API.
 
@@ -23,6 +23,7 @@ To send a reply from your backend without going through the bridge handler, use 
 | Plain / rich text | Yes | Yes | Bold / italics | Yes | HTML |
 | Tap-to-respond buttons | Yes | Yes | Yes (up to 3) | Yes | Action links |
 | Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+| Native quote reply | No | No | Yes | Yes | No |
 
 See [Channels overview](/agents/channels/overview) for the full matrix.
 
@@ -99,6 +100,39 @@ await ctx.reply('CSV generated.', {
 });
 ```
 </CodeGroup>
+
+## Quote reply
+
+Pass `quoteReply` to send your reply as a native quoted reply that references an earlier message in the thread. This is delivered as a native quote on **WhatsApp** and **Telegram**. On other channels (Slack, Teams, email, Web Chat) the reply is posted normally without a quote — no error is thrown.
+
+You can quote the message that triggered the turn, or quote any message by its platform message ID:
+
+<CodeGroup>
+```typescript title="Quote the inbound message"
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    await ctx.reply('On it — looking into that now.', { quoteReply: message });
+  },
+});
+```
+```typescript title="Quote by platform message ID"
+await ctx.reply('Answer', { quoteReply: { messageId: message.platformMessageId } });
+```
+</CodeGroup>
+
+You can also set `quoteReply` on a handler return value instead of calling `ctx.reply()` directly:
+
+```typescript
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    return { content: 'Answer', quoteReply: message };
+  },
+});
+```
+
+<Note>
+  Quoting requires a reply body — sending `quoteReply` without content is rejected. To detect when a user quoted an earlier message on their side, read [`message.replyTo`](/agents/custom-code-agent/building-blocks/handle-events#quote-reply-context) in your handler.
+</Note>
 
 ## Interactive cards
 

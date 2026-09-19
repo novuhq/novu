@@ -225,6 +225,24 @@ export const myAgent = agent('my-agent', {
 });
 ```
 
+#### Quote-reply context
+
+When a user quote-replies to an earlier message, Novu sets `message.replyTo` on the inbound message with the platform message ID of the quoted message. This is available on **WhatsApp**, **Telegram**, and **Microsoft Teams**; it is `undefined` on channels that do not report a quoted message.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    if (message.replyTo) {
+      // message.replyTo.messageId: platform message ID the user quoted
+    }
+  },
+});
+```
+
+To send your own reply as a native quote, pass [`quoteReply`](/agents/custom-code-agent/building-blocks/reply#quote-reply) to `ctx.reply()`.
+
 ### onAction
 
 `onAction` fires when a user clicks a button or selects a value in an interactive card. The `action` payload carries `action.id` (the element's `id` prop), `action.value` (its `value` prop, if set), and `action.sourceMessageId`. See [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards).
