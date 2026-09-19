@@ -167,7 +167,9 @@ overrides:
   # via the Accept header. Patched in 2.70.2 (patch bump within the 2.x line).
   '@sveltejs/kit@<2.70.2': ^2.70.2
   langsmith@<0.6.0: ^0.6.3
-  devalue@<5.8.1: ^5.8.1
+  # GHSA-9rgm-9g3h-6x36: devalue DoS via malformed input. Patched in 5.9.1.
+  # Pulled transitively via @better-auth/sso > better-auth > @sveltejs/kit.
+  devalue@<5.9.1: ^5.9.1
   picomatch@<2.3.2: ^2.3.2
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
   yaml@>=1.0.0 <1.10.3: ^1.10.3
