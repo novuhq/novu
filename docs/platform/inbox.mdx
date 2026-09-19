@@ -1,11 +1,11 @@
 ---
-title: 'Novu Inbox - In-App Notification Component for React'
-description: "Integrate the Novu Inbox component for real-time in-app notifications in your application. Drop-in UI with bell icon, feed, and preferences."
+title: 'Novu Inbox - In-App Notification Component for React and Svelte'
+description: "Integrate the Novu Inbox component for real-time in-app notifications in React, Svelte, or JavaScript applications. Drop-in UI with bell icon, feed, and preferences."
 sidebarTitle: 'Introduction to Inbox'
 ---
 
 
-Add real-time in-app notifications to your application with the Novu Inbox component. Install a client SDK such as [`@novu/react`](/platform/sdks/react), render the [`<Inbox />`](/platform/inbox/setup-inbox) component with your application identifier and subscriber ID, and Novu handles delivery, unread counts, and preferences.
+Add real-time in-app notifications to your application with the Novu Inbox component. Install a client SDK such as [`@novu/react`](/platform/sdks/react) or [`@novu/svelte`](/platform/quickstart/svelte), render the [`<Inbox />`](/platform/inbox/setup-inbox) component with your application identifier and subscriber ID, and Novu handles delivery, unread counts, and preferences.
 
 The Novu Inbox is a prebuilt, ready-to-use, and fully customizable UI component for delivering real-time in-app notifications. It gives your subscribers a centralized place to view and manage notifications.
 
@@ -38,7 +38,7 @@ The Novu Inbox is built with a composable architecture. It is composed of other 
   </Card>
 </Columns>
 
-![Fully functional and customizable React Inbox component with bell, notification feed, and preference controls](/images/inbox/overview@2x.png)
+![Fully functional and customizable Inbox component with bell, notification feed, and preference controls](/images/inbox/overview@2x.png)
 
 By composing these individual components, you can create multiple popular inbox layouts that fit perfectly within your application's design.
 
@@ -73,7 +73,7 @@ This is the fastest way to integrate the Novu Inbox. The Inbox component, encaps
   </Tab>
   <Tab title="Build your own">
 
-For maximum flexibility and complete control over the look and feel, use the [@novu/react SDK](/platform/sdks/react) for react hooks or [@novu/js SDK](/platform/sdks/javascript) for framework agnostic javascript methods. 
+For maximum flexibility and complete control over the look and feel, use the [@novu/react SDK](/platform/sdks/react) for React hooks or the [@novu/js SDK](/platform/sdks/javascript) for framework-agnostic JavaScript methods.
 
 You get the power of Novu's notification engine while building a user interface that perfectly matches your application's design system.
 
@@ -84,10 +84,10 @@ You get the power of Novu's notification engine while building a user interface 
 
 <AccordionGroup>
   <Accordion title="How do I add the Inbox to my app?">
-    Follow a framework quickstart such as [Next.js](/platform/quickstart/nextjs) or [React](/platform/quickstart/react). Install the SDK, add the `<Inbox />` component with your application identifier and subscriber ID, then trigger a workflow from the Novu Dashboard.
+    Follow a framework quickstart such as [Next.js](/platform/quickstart/nextjs), [React](/platform/quickstart/react), or [Svelte](/platform/quickstart/svelte). Install the SDK, add the `<Inbox />` component with your application identifier and subscriber ID, then trigger a workflow from the Novu Dashboard.
   </Accordion>
   <Accordion title="Can I customize the Inbox UI?">
-    Yes. Override styles, replace sub-components, or use headless hooks from [`@novu/react`](/platform/sdks/react) or [`@novu/js`](/platform/sdks/javascript) to build a fully custom Inbox experience.
+    Yes. Use the appearance and component props from [`@novu/react`](/platform/sdks/react) or [`@novu/svelte`](/platform/quickstart/svelte), or use [`@novu/js`](/platform/sdks/javascript) to build a fully custom Inbox experience.
   </Accordion>
   <Accordion title="Does the Inbox support user notification preferences?">
     Yes. The Inbox includes built-in preference management so subscribers can control which workflows and channels they receive notifications through.

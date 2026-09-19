@@ -192,6 +192,7 @@ function StepCodeBlock({
 const FRAMEWORK_PACKAGES: Record<string, string> = {
   'Next.js': '@novu/nextjs',
   React: '@novu/react',
+  Svelte: '@novu/svelte',
   Remix: '@novu/react',
   Native: '@novu/react-native',
   Angular: '@novu/js',
@@ -202,6 +203,7 @@ const FRAMEWORK_PACKAGES: Record<string, string> = {
 const FRAMEWORK_DOCS: Record<string, string> = {
   'Next.js': 'https://docs.novu.co/platform/quickstart/nextjs',
   React: 'https://docs.novu.co/platform/quickstart/react',
+  Svelte: 'https://docs.novu.co/platform/quickstart/svelte',
   Remix: 'https://docs.novu.co/platform/quickstart/remix',
   Native: 'https://docs.novu.co/platform/sdks/react-native',
   Angular: 'https://docs.novu.co/platform/quickstart/angular',
@@ -238,6 +240,15 @@ export default function NotificationInbox() {
     />
   );
 }`;
+    case 'Svelte':
+      return `<script lang="ts">
+  import { Inbox } from '@novu/svelte';
+</script>
+
+<Inbox
+  applicationIdentifier="${applicationIdentifier}"
+  subscriber="${subscriberId}"
+/>`;
     default:
       return `import { Inbox } from '${FRAMEWORK_PACKAGES[frameworkName] ?? '@novu/js'}';
 
@@ -250,6 +261,9 @@ function buildCondensedPrompt(frameworkName: string, applicationIdentifier: stri
   const pkg = FRAMEWORK_PACKAGES[frameworkName] ?? '@novu/js';
   const docs = FRAMEWORK_DOCS[frameworkName] ?? 'https://docs.novu.co';
   const snippet = getFrameworkCodeSnippet(frameworkName, applicationIdentifier, subscriberId);
+  const codeLanguage = frameworkName === 'Svelte' ? 'svelte' : 'tsx';
+  const appearanceCodeLanguage = frameworkName === 'Svelte' ? 'svelte' : 'tsx';
+  const subscriberProp = frameworkName === 'Svelte' ? 'subscriber' : 'subscriberId';
 
   return `# Add Novu Inbox to ${frameworkName} App
 
@@ -265,19 +279,19 @@ npm install ${pkg}
 
 ## Component
 
-\`\`\`tsx
+\`\`\`${codeLanguage}
 ${snippet}
 \`\`\`
 
 ## Subscriber ID
 
-Use the app's existing auth system to get a unique user identifier for subscriberId. Check for Clerk, NextAuth, Firebase, Supabase, or custom auth. If no auth system exists, use the provided subscriberId "${subscriberId}".
+Use the app's existing auth system to get a unique user identifier for ${subscriberProp}. Check for Clerk, NextAuth, Firebase, Supabase, or custom auth. If no auth system exists, use the provided ${subscriberProp} "${subscriberId}".
 
 ## Appearance
 
 Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply via the appearance prop:
 
-\`\`\`tsx
+\`\`\`${appearanceCodeLanguage}
 <Inbox
   appearance={{
     variables: {
@@ -300,7 +314,7 @@ ALWAYS:
 - Place <Inbox /> inline in existing UI - no new pages or wrappers
 - Use TypeScript, no comments, no empty props
 - Follow ${frameworkName} conventions
-- Use the existing auth system to source subscriberId when available
+- Use the existing auth system to source ${subscriberProp} when available
 
 NEVER:
 
@@ -316,7 +330,7 @@ NEVER:
 2. Is <Inbox /> placed inline in existing UI?
 3. Are design tokens extracted and applied?
 4. Are all props non-empty and properly typed?
-5. Is subscriberId sourced from the auth system when available?
+5. Is ${subscriberProp} sourced from the auth system when available?
 
 If any fails, revise.`;
 }

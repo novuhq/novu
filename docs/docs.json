@@ -73,6 +73,7 @@
                 "pages": [
                   "platform/quickstart/nextjs",
                   "platform/quickstart/react",
+                  "platform/quickstart/svelte",
                   "platform/quickstart/remix",
                   "platform/quickstart/angular",
                   "platform/quickstart/vue",

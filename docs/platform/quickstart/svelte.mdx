@@ -1,0 +1,92 @@
+---
+title: Add Novu Inbox to a Svelte app
+sidebarTitle: Svelte
+description: Install the official Novu Svelte SDK and add the Inbox component to a Svelte or SvelteKit app.
+---
+
+The official `@novu/svelte` package provides a native Svelte 5 Inbox component. It uses the same Inbox renderer as the React and JavaScript SDKs.
+
+<Note>
+  You need an application identifier and a subscriber ID from your Novu environment. Replace the placeholders in the example with values from your Dashboard.
+</Note>
+
+## Install the Svelte SDK
+
+<Steps>
+  <Step title="Install the package">
+
+```bash
+npm install @novu/svelte
+```
+
+  </Step>
+
+  <Step title="Render the Inbox component">
+
+Create an `Inbox.svelte` component or add the component to an existing layout.
+
+```svelte
+<script lang="ts">
+  import { Inbox } from '@novu/svelte';
+</script>
+
+<Inbox
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriber="YOUR_SUBSCRIBER_ID"
+  appearance={{
+    variables: {
+      colorPrimary: '#00D1B2',
+      colorForeground: '#1A1A1A'
+    }
+  }}
+/>
+```
+
+  </Step>
+
+  <Step title="Add the component to your layout">
+
+Place `<Inbox />` where subscribers should see their notifications.
+
+```svelte
+<script lang="ts">
+  import Inbox from './Inbox.svelte';
+</script>
+
+<header>
+  <Inbox
+    applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+    subscriber="YOUR_SUBSCRIBER_ID"
+  />
+</header>
+```
+
+  </Step>
+</Steps>
+
+## Use SvelteKit
+
+The component starts the Novu client in the browser. You can import it from a SvelteKit page or layout without calling browser-only APIs in server code.
+
+If your app uses client-side routing, pass a `routerPush` function to control notification navigation.
+
+```svelte
+<script lang="ts">
+  import { goto } from '$app/navigation';
+  import { Inbox } from '@novu/svelte';
+</script>
+
+<Inbox
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriber="YOUR_SUBSCRIBER_ID"
+  routerPush={(path) => goto(path)}
+/>
+```
+
+## Customize Inbox
+
+Use the `appearance`, `localization`, `tabs`, and preference props to match your application. The Svelte component exposes the same core Inbox options as `@novu/react`.
+
+See [Inbox styling](/platform/inbox/configuration/styling), [Inbox tabs](/platform/inbox/configuration/tabs), and [Inbox preferences](/platform/inbox/configuration/preferences) for the available options.
+
+For a fully custom UI, use the [headless JavaScript SDK](/platform/inbox/headless-mode).

@@ -1,12 +1,13 @@
 ---
 title: 'Migrate to the New Inbox'
-description: "Migrate from the legacy Notification Center to Inbox for React, Angular, Vue, and Vanilla JS, including package, mount, and notification-object changes."
+description: "Migrate from the legacy Notification Center to Inbox for React, Svelte, Angular, Vue, and Vanilla JS, including package, mount, and notification-object changes."
 ---
 
 <Note>
   Use Inbox with workflows from the current Dashboard or [@novu/framework](/platform/workflow).
 
   - React: [@novu/react](/platform/sdks/react)
+  - Svelte: [@novu/svelte](/platform/quickstart/svelte)
   - Angular, Vue, Vanilla JS, and headless clients: [@novu/js](/platform/sdks/javascript)
 
   The legacy [@novu/notification-center](https://v0.x-docs.novu.co/notification-center/client/react/get-started) package, including its Angular, Vue, web component, iframe, and headless clients, is for legacy Dashboard workflows only.
@@ -14,18 +15,18 @@ description: "Migrate from the legacy Notification Center to Inbox for React, An
 
 Inbox replaces the legacy Notification Center. The notification object, action handlers, tabs, appearance, localization, and HMAC options are the same across hosts. The mount path differs by framework.
 
-Review the breaking changes, then use the React, Angular, Vue, or Vanilla JS section that matches your application.
+Review the breaking changes, then use the React, Svelte, Angular, Vue, or Vanilla JS section that matches your application.
 
 ## Why you should upgrade
 
 - Appearance and layout options that replace the legacy `styles` API
 - A notification object that includes archive, snooze, severity, and action methods
-- A smaller client surface: `@novu/react` for React, `@novu/js` for every other host
+- A smaller client surface: `@novu/react` for React, `@novu/svelte` for Svelte, and `@novu/js` for every other host
 - Compatibility with current Dashboard workflows and `@novu/framework`
 
 ## Breaking Changes
 
-These changes apply to every host. React uses component props. Angular, Vue, and Vanilla JS pass the same fields to `NovuUI` options and `mountComponent` props.
+These changes apply to every host. React and Svelte use component props. Angular, Vue, and Vanilla JS pass the same fields to `NovuUI` options and `mountComponent` props.
 
 ### Components
 
@@ -141,19 +142,26 @@ The `subscriberId` prop is deprecated. Pass `subscriber` with either a subscribe
 | Host | Uninstall | Install | Mount Inbox | Setup |
 | --- | --- | --- | --- | --- |
 | [React](#react) | `@novu/notification-center` | `@novu/react` | `<Inbox />` | [React quickstart](/platform/quickstart/react) |
+| [Svelte](#svelte) | Manual `@novu/js` Inbox mount | `@novu/svelte` | `<Inbox />` | [Svelte quickstart](/platform/quickstart/svelte) |
 | [Angular](#angular) | Angular Notification Center wrapper | `@novu/js` | `NovuUI` from `@novu/js/ui` | [Angular quickstart](/platform/quickstart/angular) |
 | [Vue](#vue) | Vue Notification Center wrapper | `@novu/js` | `NovuUI` from `@novu/js/ui` | [Vue quickstart](/platform/quickstart/vue) |
 | [Vanilla JS](#vanilla-js) | Web component, iframe script, or `@novu/headless` | `@novu/js` | `NovuUI` from `@novu/js/ui`, or `@novu/js` for a custom headless client | [Vanilla JS quickstart](/platform/quickstart/vanilla-js) |
 
-There is no native Angular or Vue Inbox package. Those applications mount the same UI through `@novu/js`. React Native uses [@novu/react-native](/platform/sdks/react-native).
+There is no native Angular or Vue Inbox package. Those applications mount the same UI through `@novu/js`. Svelte applications can use the native `@novu/svelte` component. React Native uses [@novu/react-native](/platform/sdks/react-native).
 
-The breaking changes, tabs, appearance, actions, and notification methods on this page apply to every host. React uses component props. Angular, Vue, and Vanilla JS pass the same fields to `NovuUI` options and `mountComponent` props.
+The breaking changes, tabs, appearance, actions, and notification methods on this page apply to every host. React and Svelte use component props. Angular, Vue, and Vanilla JS pass the same fields to `NovuUI` options and `mountComponent` props.
 
 ## React
 
 Uninstall `@novu/notification-center` and install `@novu/react`. Replace `NovuProvider`, `PopoverNotificationCenter`, and `NotificationBell` with `<Inbox />`.
 
 Use `subscriber`, not the deprecated `subscriberId` prop. The [React examples below](#basic-usage) map the remaining components, fields, and handlers. For HMAC, localization, and layout, follow the [React Inbox quickstart](/platform/quickstart/react).
+
+## Svelte
+
+If your Svelte 5 application mounts Inbox manually with `@novu/js`, replace that mount with `@novu/svelte` and render `<Inbox />` in the existing header, navbar, or sidebar. The Svelte component initializes the Novu client in the browser and is safe to import from a SvelteKit page or layout during SSR.
+
+Use `subscriber`, not the deprecated `subscriberId` prop. Follow the [Svelte Inbox quickstart](/platform/quickstart/svelte) for the install, layout, routing, and styling examples.
 
 ## Angular
 
@@ -181,7 +189,7 @@ For a custom feed without the prebuilt UI, replace `@novu/headless` with `@novu/
 
 ## Basic usage
 
-The examples below use `@novu/react`. For Angular, Vue, and Vanilla JS, pass the same options to `NovuUI` and the same handlers in `mountComponent` props.
+The examples below use `@novu/react` for the composable API. The native Svelte component is shown alongside the basic React implementation. For Angular, Vue, and Vanilla JS, pass the same options to `NovuUI` and the same handlers in `mountComponent` props.
 
 ### Legacy implementation with `@novu/notification-center`
 
@@ -216,6 +224,16 @@ function Novu() {
 }
 
 export default Novu;
+```
+
+### Current implementation with `@novu/svelte`
+
+```svelte
+<script lang="ts">
+  import { Inbox } from '@novu/svelte';
+</script>
+
+<Inbox applicationIdentifier="YOUR_APPLICATION_IDENTIFIER" subscriber="YOUR_SUBSCRIBER_ID" />
 ```
 
 ## Notification center without bell icon
@@ -733,9 +751,9 @@ const tabs = [
 
 function InboxWithTabs() {
   return (
-    <Inbox 
-      applicationIdentifier="YOUR_APP_ID" subscriber="YOUR_SUBSCRIBER_ID" 
-      tabs={tabs} 
+    <Inbox
+      applicationIdentifier="YOUR_APP_ID" subscriber="YOUR_SUBSCRIBER_ID"
+      tabs={tabs}
     />
   );
 }

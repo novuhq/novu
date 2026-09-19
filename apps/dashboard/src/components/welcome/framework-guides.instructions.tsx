@@ -1,4 +1,5 @@
 import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
+import { SiSvelte } from 'react-icons/si';
 import { API_HOSTNAME, IS_EU } from '@/config';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { Language } from '../primitives/code-block';
@@ -91,7 +92,7 @@ const customizationTip = {
 
 const commonInstallStep = (packageName: string): InstallationStep => ({
   title: 'Install the package',
-  description: `${packageName} is the package that powers the notification center.`,
+  description: `${packageName} is the package that powers the Inbox component.`,
   code: `npm install ${packageName}`,
   codeLanguage: 'shell',
   codeTitle: 'Terminal',
@@ -198,6 +199,40 @@ function Novu() {
         },
       ],
       'React',
+      applicationIdentifier,
+      subscriberId
+    ),
+  },
+  {
+    name: 'Svelte',
+    icon: <SiSvelte className="h-8 w-8 text-[#FF3E00]" />,
+    installSteps: stepsByMethod(
+      installationMethod,
+      [
+        commonInstallStep('@novu/svelte'),
+        {
+          title: 'Add the Inbox code to your Svelte app',
+          description: 'Use the Svelte Inbox component in your header, navbar, or sidebar.',
+          code: `<script lang="ts">
+  import { Inbox } from '@novu/svelte';
+</script>
+
+<Inbox
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriber="YOUR_SUBSCRIBER_ID"${optionalAttrProps('  ')}
+  appearance={{
+    variables: {
+      colorPrimary: "YOUR_PRIMARY_COLOR",
+      colorForeground: "YOUR_FOREGROUND_COLOR"
+    }
+  }}
+/>`,
+          codeLanguage: 'svelte',
+          codeTitle: 'Inbox.svelte',
+          tip: customizationTip,
+        },
+      ],
+      'Svelte',
       applicationIdentifier,
       subscriberId
     ),

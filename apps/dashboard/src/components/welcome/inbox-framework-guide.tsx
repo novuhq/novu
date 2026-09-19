@@ -13,7 +13,7 @@ import { updateFrameworkCode } from './inbox-framework-guide/helpers';
 import { InstructionsPanel } from './inbox-framework-guide/instructions-panel';
 import type { InstallationMethod } from './inbox-framework-guide/types';
 
-const FRAMEWORKS_WITH_MANUAL_ONLY = ['Remix', 'Native', 'Angular', 'JavaScript'];
+const FRAMEWORKS_WITH_MANUAL_ONLY = ['Remix', 'Native', 'Angular', 'JavaScript', 'Svelte'];
 const FRAMEWORKS_WITH_INSTALLATION_TABS = ['Next.js', 'React'];
 
 const CONTAINER_VARIANTS = {

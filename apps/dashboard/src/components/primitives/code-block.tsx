@@ -11,6 +11,7 @@ loadLanguage('tsx');
 loadLanguage('json');
 loadLanguage('shell');
 loadLanguage('typescript');
+loadLanguage('svelte');
 loadLanguage('php');
 loadLanguage('go');
 loadLanguage('python');
@@ -20,6 +21,7 @@ const languageMap = {
   tsx: langs.tsx,
   json: langs.json,
   shell: langs.shell,
+  svelte: langs.svelte,
   php: langs.php,
   go: langs.go,
   python: langs.python,
