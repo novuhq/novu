@@ -164,6 +164,7 @@ export enum SmsProviderIdEnum {
   Sinch = 'sinch',
   ISendProSms = 'isendpro-sms',
   RuachSms = 'ruach-sms',
+  EightByEightSms = '8x8-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -185,6 +186,7 @@ export enum ChatProviderIdEnum {
   Sendblue = 'sendblue',
   NovuWebChat = 'novu-web-chat',
   PhotonImessage = 'photon-imessage',
+  EightByEightWhatsApp = '8x8-whatsapp',
 }
 
 export enum PushProviderIdEnum {

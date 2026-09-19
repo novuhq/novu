@@ -70,6 +70,8 @@ export enum CredentialsKeyEnum {
   RoutingMode = 'routingMode',
   /** Email webhook: how the HMAC secret key value is interpreted when signing webhook calls. */
   HmacSecretKeyEncoding = 'hmacSecretKeyEncoding',
+  /** 8x8: sub-account that owns the messaging channel, part of the request path. */
+  SubAccountId = 'subAccountId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -142,6 +144,7 @@ export enum SmsProviderIdEnum {
   ISendProSms = 'isendpro-sms',
   CmTelecom = 'cm-telecom',
   RuachSms = 'ruach-sms',
+  EightByEightSms = '8x8-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -163,6 +166,7 @@ export enum ChatProviderIdEnum {
   Sendblue = 'sendblue',
   PhotonImessage = 'photon-imessage',
   NovuWebChat = 'novu-web-chat',
+  EightByEightWhatsApp = '8x8-whatsapp',
 }
 
 export enum PushProviderIdEnum {
