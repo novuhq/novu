@@ -29399,9 +29399,8 @@
   "components": {
     "securitySchemes": {
       "secretKey": {
-        "type": "apiKey",
-        "name": "Authorization",
-        "in": "header",
+        "type": "http",
+        "scheme": "ApiKey",
         "description": "API key authentication. Allowed headers-- \"Authorization: ApiKey <novu_secret_key>\"."
       },
       "bearerAuth": {
