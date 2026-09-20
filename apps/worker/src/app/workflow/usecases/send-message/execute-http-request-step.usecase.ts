@@ -69,6 +69,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing sequential guard pipeline; each stage reports its own execution detail before returning
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const workflow = await this.resolveWorkflow(command);
     const controlValues = await this.fetchControlValues(command, workflow);
@@ -483,9 +484,12 @@ function getSkipRules(controlValues: Record<string, unknown>): RulesLogic<Additi
   return skipRules;
 }
 
-function tryParseJson(text: string): unknown {
+/** A parsed JSON document, or the raw text when the response body is not JSON. */
+type HttpResponseBody = string | number | boolean | null | HttpResponseBody[] | { [key: string]: HttpResponseBody };
+
+function tryParseJson(text: string): HttpResponseBody {
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as HttpResponseBody;
   } catch {
     return text;
   }

@@ -1,9 +1,10 @@
-import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import { JsonSchemaTypeEnum, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { Client, providerSchemas } from '@novu/framework';
 import { Event, PostActionEnum, Workflow } from '@novu/framework/internal';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   ChatProviderIdEnum,
+  DeepPartial,
   ResourceOriginEnum,
   StepTypeEnum,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -43,14 +44,30 @@ type ConstructFrameworkWorkflowTestDouble = {
 
 const usecase = Object.create(ConstructFrameworkWorkflow.prototype) as ConstructFrameworkWorkflowTestDouble;
 
+/** Fixtures only carry the fields the step constructors read, so they are typed as deep partials. */
+function asStepEntity(step: DeepPartial<NotificationStepEntity>): NotificationStepEntity {
+  return step as NotificationStepEntity;
+}
+
+function asWorkflowEntity(workflow: DeepPartial<NotificationTemplateEntity>): NotificationTemplateEntity {
+  return workflow as NotificationTemplateEntity;
+}
+
+function asEvent(event: DeepPartial<Event>): Event {
+  return event as Event;
+}
+
 // Isolation: assert resolve/provider projection, not enterprise translation.
 usecase.controlsTranslationService = {
   processTranslations: async ({ controls }) => controls,
 };
 
-const staticStep = {
-  template: { type: StepTypeEnum.CHAT, controls: { schema: { type: 'object', properties: { body: {} } } } },
-} as unknown as NotificationStepEntity;
+const staticStep = asStepEntity({
+  template: {
+    type: StepTypeEnum.CHAT,
+    controls: { schema: { type: JsonSchemaTypeEnum.OBJECT, properties: { body: {} } } },
+  },
+});
 
 const dbWorkflow = {
   origin: ResourceOriginEnum.NOVU_CLOUD,
@@ -148,7 +165,7 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
   const IN_APP_STEP_ID = 'in-app-step';
   const WORKFLOW_ID = 'http-conditions-workflow';
 
-  const hydrationDbWorkflow = {
+  const hydrationDbWorkflow = asWorkflowEntity({
     _id: 'workflow-id',
     _environmentId: 'env-id',
     _organizationId: 'org-id',
@@ -162,8 +179,11 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
           type: StepTypeEnum.HTTP_REQUEST,
           controls: {
             schema: {
-              type: 'object',
-              properties: { url: { type: 'string' }, method: { type: 'string' } },
+              type: JsonSchemaTypeEnum.OBJECT,
+              properties: {
+                url: { type: JsonSchemaTypeEnum.STRING },
+                method: { type: JsonSchemaTypeEnum.STRING },
+              },
               additionalProperties: false,
             },
           },
@@ -175,15 +195,18 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
           type: StepTypeEnum.IN_APP,
           controls: {
             schema: {
-              type: 'object',
-              properties: { body: { type: 'string' }, skip: { type: 'object', additionalProperties: true } },
+              type: JsonSchemaTypeEnum.OBJECT,
+              properties: {
+                body: { type: JsonSchemaTypeEnum.STRING },
+                skip: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
+              },
               additionalProperties: false,
             },
           },
         },
       },
     ],
-  } as unknown as NotificationTemplateEntity;
+  });
 
   function buildHydrationWorkflow(): Workflow {
     const hydrationUsecase = Object.create(ConstructFrameworkWorkflow.prototype) as {
@@ -199,7 +222,7 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
   }
 
   function buildEvent(enrolmentCount: number): Event {
-    return {
+    return asEvent({
       action: PostActionEnum.EXECUTE,
       workflowId: WORKFLOW_ID,
       stepId: IN_APP_STEP_ID,
@@ -213,12 +236,12 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
         {
           stepId: HTTP_STEP_ID,
           outputs: { id: '123', message: { text: 'pawan' }, enrolmentCount },
-          state: { status: 'completed', error: false },
+          state: { status: 'completed' },
         },
       ],
       context: {},
       env: { name: 'Test', type: 'dev' },
-    } as unknown as Event;
+    });
   }
 
   async function executeInAppStep(enrolmentCount: number) {
