@@ -678,8 +678,8 @@ importers:
         version: 3.25.2(zod@3.25.20)
     devDependencies:
       '@faker-js/faker':
-        specifier: ^6.0.0
-        version: 6.3.1
+        specifier: ^10.5.0
+        version: 10.6.0
       '@nestjs/cli':
         specifier: 11.0.23
         version: 11.0.23(@swc/cli@0.3.12(@swc/core@1.7.26(@swc/helpers@0.5.23))(chokidar@4.0.3))(@swc/core@1.7.26(@swc/helpers@0.5.23))(@types/node@22.15.13)(prettier@3.3.3)
@@ -1193,8 +1193,8 @@ importers:
         specifier: ^2.0.31
         version: 2.0.31(@playwright/test@1.58.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@faker-js/faker':
-        specifier: ^9.5.0
-        version: 9.5.0
+        specifier: ^10.5.0
+        version: 10.6.0
       '@hookform/devtools':
         specifier: ^4.3.0
         version: 4.3.1(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1694,8 +1694,8 @@ importers:
         version: 11.1.1
     devDependencies:
       '@faker-js/faker':
-        specifier: ^6.0.0
-        version: 6.3.1
+        specifier: ^10.5.0
+        version: 10.6.0
       '@nestjs/cli':
         specifier: 11.0.23
         version: 11.0.23(@swc/cli@0.3.12(@swc/core@1.7.26(@swc/helpers@0.5.23))(chokidar@4.0.3))(@swc/core@1.7.26(@swc/helpers@0.5.23))(@types/node@22.15.13)(prettier@3.7.4)
@@ -2956,8 +2956,8 @@ importers:
         specifier: ^3.382.0
         version: 3.575.0
       '@faker-js/faker':
-        specifier: ^6.0.0
-        version: 6.3.1
+        specifier: ^10.5.0
+        version: 10.6.0
       '@nestjs/common':
         specifier: 11.1.27
         version: 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -3344,8 +3344,8 @@ importers:
         specifier: ^4.12.2
         version: 4.12.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@faker-js/faker':
-        specifier: ^6.0.0
-        version: 6.3.1
+        specifier: ^10.5.0
+        version: 10.6.0
       '@novu/dal':
         specifier: workspace:*
         version: link:../dal
@@ -8109,14 +8109,9 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@faker-js/faker@6.3.1':
-    resolution: {integrity: sha512-8YXBE2ZcU/pImVOHX7MWrSR/X5up7t6rPWZlk34RwZEcdr3ua6X+32pSd6XuOQRN+vbuvYNfA6iey8NbrjuMFQ==}
-    engines: {node: '>=14.0.0', npm: '>=6.0.0'}
-
-  '@faker-js/faker@9.5.0':
-    resolution: {integrity: sha512-3qbjLv+fzuuCg3umxc9/7YjrEXNaKwHgmig949nfyaTx8eL4FAsvFbu+1JcFUj1YAXofhaDn6JdEUBTYuk0Ssw==}
-    engines: {node: '>=18.0.0', npm: '>=9.0.0'}
-    deprecated: Please update to a newer version
+  '@faker-js/faker@10.6.0':
+    resolution: {integrity: sha512-3RQHgEtvL1Frl/d1cSreo7qhJ3Gk1OdNUai/CtZ8G+wYeRQnJih3s9xJ9/kgYekPQRdwgh0HXRPqMlzWGwivIQ==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@fastify/busboy@3.1.1':
     resolution: {integrity: sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==}
@@ -35762,9 +35757,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@faker-js/faker@6.3.1': {}
-
-  '@faker-js/faker@9.5.0': {}
+  '@faker-js/faker@10.6.0': {}
 
   '@fastify/busboy@3.1.1': {}
 

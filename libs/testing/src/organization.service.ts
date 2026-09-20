@@ -10,14 +10,14 @@ export class OrganizationService {
     if (options) {
       return await this.organizationRepository.create({
         logo: faker.image.avatar(),
-        name: faker.company.companyName(),
+        name: faker.company.name(),
         ...options,
       });
     }
 
     return await this.organizationRepository.create({
       logo: faker.image.avatar(),
-      name: faker.company.companyName(),
+      name: faker.company.name(),
     });
   }
 

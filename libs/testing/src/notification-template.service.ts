@@ -162,7 +162,7 @@ export class NotificationTemplateService {
     const data = {
       _notificationGroupId: override.noGroupId ? undefined : groups[0]._id,
       _environmentId: this.environmentId,
-      name: override.name ?? faker.name.jobTitle(),
+      name: override.name ?? faker.person.jobTitle(),
       _organizationId: this.organizationId,
       _creatorId: this.userId,
       active: true,
@@ -172,7 +172,7 @@ export class NotificationTemplateService {
       description: faker.commerce.productDescription().slice(0, 90),
       triggers: override.triggers ?? [
         {
-          identifier: `test-event-${faker.datatype.uuid()}`,
+          identifier: `test-event-${faker.string.uuid()}`,
           type: 'event',
           variables: [{ name: 'firstName' }, { name: 'lastName' }, { name: 'urlVariable' }],
         },
