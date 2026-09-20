@@ -76,6 +76,7 @@ export class GetSubscriberPreference {
       subscriberId: subscriber._id,
       workflowIds,
       preFetchedSubscriberGlobalPreference: command.subscriberGlobalPreference,
+      tenantId: command.tenantId,
     });
 
     const allWorkflowPreferences = [
@@ -253,6 +254,7 @@ export class GetSubscriberPreference {
     workflowIds,
     contextKeys,
     preFetchedSubscriberGlobalPreference,
+    tenantId,
   }: {
     environmentId: string;
     organizationId: string;
@@ -260,10 +262,12 @@ export class GetSubscriberPreference {
     workflowIds: string[];
     contextKeys?: string[];
     preFetchedSubscriberGlobalPreference?: PreferencesEntity | null;
+    tenantId?: string;
   }) {
     const baseQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
+      ...(tenantId ? { _tenantId: tenantId } : {}),
     };
 
     const readOptions = { readPreference: 'secondaryPreferred' as const };
@@ -307,6 +311,7 @@ export class GetSubscriberPreference {
         organizationId,
         workflowIds,
         readOptions,
+        tenantId,
       }),
       this.preferencesRepository.findForComputation(
         {
@@ -344,11 +349,13 @@ export class GetSubscriberPreference {
     organizationId,
     workflowIds,
     readOptions,
+    tenantId,
   }: {
     environmentId: string;
     organizationId: string;
     workflowIds: string[];
     readOptions: { readPreference: 'secondaryPreferred' | 'primary' };
+    tenantId?: string;
   }): Promise<{
     workflowResourcePreferences: PreferencesEntity[];
     workflowUserPreferences: PreferencesEntity[];
@@ -358,6 +365,7 @@ export class GetSubscriberPreference {
       organizationId,
       workflowIds,
       readOptions,
+      tenantId,
     });
 
     const workflowResourcePreferences: PreferencesEntity[] = [];
