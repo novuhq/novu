@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
+  buildWorkflowVariables,
   CreateStepConditionEvaluationDetail,
   emailControlSchema,
   evaluateRules,
@@ -179,7 +180,7 @@ export class ConstructFrameworkWorkflow {
       dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber, context, env }) => {
         const fullPayloadForRender: FullPayloadForRender = {
-          workflow: dbWorkflow as unknown as Record<string, unknown>,
+          workflow: buildWorkflowVariables(dbWorkflow),
           payload,
           subscriber,
           context,

@@ -3,6 +3,7 @@ import {
   assertSafeOutboundUrl,
   buildInvalidJsonBodyDetail,
   buildNovuSignatureHeader,
+  buildWorkflowVariables,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   CreateStepConditionEvaluationDetail,
@@ -21,7 +22,13 @@ import {
   shouldIncludeBody,
   toHeadersRecord,
 } from '@novu/application-generic';
-import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';
+import {
+  ControlValuesRepository,
+  JobRepository,
+  MessageRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { compileJsonControlValues, createLiquidEngine, repairJsonString } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
@@ -63,8 +70,9 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
-    const controlValues = await this.fetchControlValues(command);
-    const compileContext = await this.buildCompileContext(command);
+    const workflow = await this.resolveWorkflow(command);
+    const controlValues = await this.fetchControlValues(command, workflow);
+    const compileContext = await this.buildCompileContext(command, workflow);
     const skipRules = getSkipRules(controlValues);
     const shouldSkip = skipRules ? this.evaluateSkipCondition(skipRules, compileContext) : false;
 
@@ -368,7 +376,10 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     return compileJsonControlValues(values, context, this.liquidEngine);
   }
 
-  private async buildCompileContext(command: SendMessageChannelCommand): Promise<Record<string, unknown>> {
+  private async buildCompileContext(
+    command: SendMessageChannelCommand,
+    workflow: NotificationTemplateEntity | null | undefined
+  ): Promise<Record<string, unknown>> {
     const { compileContext } = command;
     const steps = await this.executeBridgeJob.buildStepsMap(command.job, command.environmentId);
 
@@ -382,6 +393,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       steps,
       webhook: compileContext.webhook ?? {},
       env: compileContext.env ?? {},
+      workflow: workflow ? buildWorkflowVariables(workflow) : {},
     };
   }
 
@@ -398,13 +410,24 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     return !result;
   }
 
-  private async fetchControlValues(command: SendMessageChannelCommand): Promise<Record<string, unknown>> {
-    const workflow =
-      command.workflow ??
-      (command._templateId
-        ? await this.notificationTemplateRepository.findById(command._templateId, command.environmentId)
-        : null);
+  private async resolveWorkflow(
+    command: SendMessageChannelCommand
+  ): Promise<NotificationTemplateEntity | null | undefined> {
+    if (command.workflow) {
+      return command.workflow;
+    }
 
+    if (!command._templateId) {
+      return null;
+    }
+
+    return this.notificationTemplateRepository.findById(command._templateId, command.environmentId);
+  }
+
+  private async fetchControlValues(
+    command: SendMessageChannelCommand,
+    workflow: NotificationTemplateEntity | null | undefined
+  ): Promise<Record<string, unknown>> {
     if (!workflow) {
       return {};
     }

@@ -3,6 +3,7 @@ export * from './base62';
 export * from './bridge';
 export * from './build-slug';
 export * from './build-variables';
+export * from './build-workflow-variables';
 export * from './build-zip';
 export * from './buildBridgeEndpointUrl';
 export * from './card-button-issues';

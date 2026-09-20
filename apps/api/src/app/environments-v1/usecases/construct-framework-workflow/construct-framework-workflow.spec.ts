@@ -240,4 +240,34 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
 
     expect(result.options?.skip).to.equal(true);
   });
+
+  it('runs the next step when a workflow.workflowId skip condition matches the trigger identifier', async () => {
+    const client = new Client({ secretKey: 'construct-framework-workflow-secret' });
+    await client.addWorkflows([buildHydrationWorkflow()]);
+
+    const result = await client.executeWorkflow({
+      ...buildEvent(1),
+      controls: {
+        body: 'Enrolled',
+        skip: { '==': [{ var: 'workflow.workflowId' }, WORKFLOW_ID] },
+      },
+    });
+
+    expect(result.options?.skip).to.equal(false);
+  });
+
+  it('skips the next step when a workflow.workflowId skip condition does not match', async () => {
+    const client = new Client({ secretKey: 'construct-framework-workflow-secret' });
+    await client.addWorkflows([buildHydrationWorkflow()]);
+
+    const result = await client.executeWorkflow({
+      ...buildEvent(1),
+      controls: {
+        body: 'Enrolled',
+        skip: { '==': [{ var: 'workflow.workflowId' }, 'other-workflow'] },
+      },
+    });
+
+    expect(result.options?.skip).to.equal(true);
+  });
 });
