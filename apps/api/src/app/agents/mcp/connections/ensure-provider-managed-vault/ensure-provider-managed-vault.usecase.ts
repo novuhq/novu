@@ -122,6 +122,14 @@ export class EnsureProviderManagedVault {
         externalVaultId: internal.externalVaultId,
         ...(internal.externalWorkspaceId ? { externalWorkspaceId: internal.externalWorkspaceId } : {}),
         ...(command.conversationId ? { conversationId: command.conversationId } : {}),
+        // Tool-call context so `CompleteProviderManagedRedirect` can resolve the
+        // parked `novu_tool_catalog` request_connect call when the user clicks
+        // the in-channel link (mirrors the OAuth callback resolving its tool call).
+        ...(command.toolUseId ? { toolUseId: command.toolUseId } : {}),
+        ...(command.agentIdentifier ? { agentIdentifier: command.agentIdentifier } : {}),
+        ...(command.integrationIdentifier ? { integrationIdentifier: command.integrationIdentifier } : {}),
+        ...(command.platform ? { platform: command.platform } : {}),
+        ...(command.platformThreadId ? { platformThreadId: command.platformThreadId } : {}),
         timestamp: Date.now(),
       },
       apiKey
@@ -157,6 +165,7 @@ export class EnsureProviderManagedVault {
     return environment.apiKeys[0].key;
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: exhaustive mapping over MCP servers
   private async executeInternal(
     command: EnsureProviderManagedVaultCommand,
     options: { markConnectedOnProvision: boolean }
