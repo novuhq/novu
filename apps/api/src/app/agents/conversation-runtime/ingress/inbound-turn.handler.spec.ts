@@ -170,6 +170,7 @@ describe('AgentInboundHandler', () => {
     const inboundAck = {
       showWorkingSignal: sinon.stub().resolves(undefined),
       showQueuedSignal: sinon.stub().resolves(undefined),
+      clearWorkingSignal: sinon.stub().resolves(undefined),
     };
     const expireSupersededApprovals = {
       expireOnNewMessage: sinon.stub().resolves(undefined),
@@ -1210,6 +1211,34 @@ describe('AgentInboundHandler', () => {
       expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.called).to.equal(false);
+    });
+
+    it('should start the Slack working signal before managed dispatch', async () => {
+      const slackConfig = {
+        ...config,
+        isManaged: true,
+        acknowledgeOnReceived: true,
+      };
+      const { handler, managedAgentService, inboundAck } = makeHandler({
+        ...makeResolvedSubscriberOverrides(),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      managedAgentService.dispatch.callsFake(async () => {
+        expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
+
+        return { status: 'active' };
+      });
+
+      await handler.handle(
+        'agent1',
+        slackConfig as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(inboundAck.showWorkingSignal.calledBefore(managedAgentService.dispatch)).to.equal(true);
     });
 
     it('should route an open-access WhatsApp agent through resolveOrProvision and dispatch', async () => {

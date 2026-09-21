@@ -101,6 +101,8 @@ export class InboundAckService {
       return;
     }
 
+    await this.clearWorkingSignal({ agentId, config, platformThreadId });
+
     await this.guard(agentId, 'queued-signal', () =>
       this.outboundGateway.reactToMessage(
         agentId,
@@ -109,6 +111,19 @@ export class InboundAckService {
         platformMessageId,
         INBOUND_ACK_EMOJI.queued
       )
+    );
+  }
+
+  /** Drop the platform typing/status indicator. Best-effort; never throws. */
+  async clearWorkingSignal(params: Pick<WorkingSignalParams, 'agentId' | 'config' | 'platformThreadId'>): Promise<void> {
+    const { agentId, config, platformThreadId } = params;
+
+    if (!config.acknowledgeOnReceived || !platformThreadId || !this.isTypingPlatform(config.platform)) {
+      return;
+    }
+
+    await this.guard(agentId, 'working-signal-clear', () =>
+      this.outboundGateway.stopTypingInConversation(agentId, config.integrationIdentifier, platformThreadId)
     );
   }
 
@@ -161,15 +176,26 @@ export class InboundAckService {
   }
 
   /**
-   * Turn complete (reply, error, or requires-action): clear any reactions we set.
-   * We can't tell from metadata whether the turn was queued or first-message, so
-   * we clear best-effort; `eyes` is skipped on typing platforms where it's never set.
+   * Turn complete (reply, error, or requires-action): clear typing and any
+   * reactions we set. Slack does not always drop `assistant.threads.setStatus`
+   * when the reply lands — Gemini in-process streams finish the reply before
+   * `send()` returns, so an uncleared status stays on after the answer.
    */
   async onManagedTurnComplete(metadata: Record<string, string>): Promise<void> {
     const target = this.resolveTarget(metadata);
 
     if (!target) {
       return;
+    }
+
+    if (this.isTypingPlatform(target.platform)) {
+      await this.guard(target.agentId, 'turn-complete-typing', () =>
+        this.outboundGateway.stopTypingInConversation(
+          target.agentId,
+          target.integrationIdentifier,
+          target.platformThreadId
+        )
+      );
     }
 
     await this.clearReaction(target, target.platformMessageId, INBOUND_ACK_EMOJI.queued, 'turn-complete-queued');
