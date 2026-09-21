@@ -15,12 +15,28 @@ type ConversationOverviewProps = {
   activities?: ConversationActivityDto[];
 };
 
-function MetaRow({ label, children, isLast }: { label: string; children: React.ReactNode; isLast?: boolean }) {
+function MetaRow({
+  label,
+  children,
+  isLast,
+  isStacked,
+}: {
+  label: string;
+  children: React.ReactNode;
+  isLast?: boolean;
+  isStacked?: boolean;
+}) {
   return (
     <div className={`flex flex-col items-start py-1 ${isLast ? '' : 'border-stroke-soft border-b'}`}>
-      <div className="flex h-6 w-full items-center justify-between overflow-hidden px-1.5">
+      <div
+        className={
+          isStacked
+            ? 'flex w-full flex-col items-start gap-1 px-1.5 py-0.5'
+            : 'flex h-6 w-full items-center justify-between overflow-hidden px-1.5'
+        }
+      >
         <span className="text-text-soft font-code text-xs font-medium tracking-tight">{label}</span>
-        <div className="text-text-sub font-code text-xs tracking-tight">{children}</div>
+        <div className={`text-text-sub font-code text-xs tracking-tight ${isStacked ? 'w-full' : ''}`}>{children}</div>
       </div>
     </div>
   );
@@ -106,10 +122,14 @@ export function ConversationOverview({ conversation, activities = [] }: Conversa
             <ConversationStatusBadge status={conversation.status} />
           </MetaRow>
           {hitlOverview && (
-            <MetaRow label="Human in the loop" isLast>
-              <span className="flex max-w-[220px] flex-col items-end text-right">
-                <span className="truncate font-medium">{hitlOverview.title}</span>
-                <span className="text-text-soft font-normal">{hitlOverview.detail}</span>
+            <MetaRow label="Human in the loop" isLast isStacked>
+              <span className="flex w-full flex-col gap-0.5">
+                <span className="text-text-sub font-medium wrap-break-word">{hitlOverview.title}</span>
+                <span
+                  className={hitlOverview.isPending ? 'text-warning-base font-normal' : 'text-text-soft font-normal'}
+                >
+                  {hitlOverview.detail}
+                </span>
               </span>
             </MetaRow>
           )}
