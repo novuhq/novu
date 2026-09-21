@@ -55,9 +55,39 @@ describe('conversation-hitl', () => {
     };
 
     expect(getHitlOverviewState([pending])).toEqual({
-      title: 'Tool approval required: issueRefund',
+      title: 'Tool approval: issueRefund',
       detail: 'Waiting for a human response',
       isPending: true,
+    });
+  });
+
+  it('keeps the subject and the outcome distinct once a card is settled', () => {
+    const request = {
+      ...base,
+      type: 'human_interaction_request' as const,
+      richContent: { humanInteraction: { interactionIdentifier: 'hitl_1', kind: 'ask', title: 'Which env?' } },
+    };
+    const response = {
+      ...base,
+      type: 'human_interaction_response' as const,
+      senderType: 'subscriber' as const,
+      senderId: 'sub-1',
+      senderName: 'Ada',
+      richContent: {
+        humanInteraction: {
+          interactionIdentifier: 'hitl_1',
+          kind: 'ask',
+          title: 'Which env?',
+          status: 'answered',
+          text: 'staging',
+        },
+      },
+    };
+
+    expect(getHitlOverviewState([request, response])).toEqual({
+      title: 'Which env?',
+      detail: 'Answered by Ada',
+      isPending: false,
     });
   });
 
@@ -69,7 +99,7 @@ describe('conversation-hitl', () => {
     };
 
     expect(getHitlOverviewState([pending], { hasCompleteHistory: false })).toEqual({
-      title: 'Tool approval required: issueRefund',
+      title: 'Tool approval: issueRefund',
       detail: 'Latest human-in-the-loop activity',
       isPending: false,
     });

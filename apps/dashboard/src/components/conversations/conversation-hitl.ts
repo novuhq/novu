@@ -90,6 +90,45 @@ export function getHitlTimelineLabel(activity: ConversationActivityDto): string 
   return activity.content;
 }
 
+/** What the human was asked about, without the state wording the overview keeps on its second line. */
+function getHitlSubject(activity: ConversationActivityDto): string {
+  const human = getHumanInteraction(activity);
+  if (human?.title) {
+    return human.title;
+  }
+
+  if (activity.toolData?.toolName) {
+    return `Tool approval: ${activity.toolData.toolName}`;
+  }
+
+  return activity.content;
+}
+
+function getHitlOutcome(activity: ConversationActivityDto): string {
+  const actor = activity.senderName ?? activity.senderId;
+
+  if (activity.type === 'tool_approval_decision') {
+    return activity.toolData?.approved ? `Approved by ${actor}` : `Denied by ${actor}`;
+  }
+
+  switch (getHumanInteraction(activity)?.status) {
+    case 'approved':
+      return `Approved by ${actor}`;
+    case 'denied':
+      return `Denied by ${actor}`;
+    case 'answered':
+      return `Answered by ${actor}`;
+    case 'expired':
+      return 'Expired without a response';
+    case 'canceled':
+      return 'Canceled';
+    case 'delivered':
+      return 'Delivered';
+    default:
+      return activity.content;
+  }
+}
+
 /**
  * The timeline loads one page of activities, oldest first. A request on that page can be settled by a
  * response on a page the dashboard never fetched, so pending is only claimed when the page holds the
@@ -108,7 +147,7 @@ export function getHitlOverviewState(
     const latest = hitlActivities[hitlActivities.length - 1];
 
     return {
-      title: getHitlTimelineLabel(latest),
+      title: getHitlSubject(latest),
       detail: 'Latest human-in-the-loop activity',
       isPending: false,
     };
@@ -144,7 +183,7 @@ export function getHitlOverviewState(
 
   if (pending) {
     return {
-      title: getHitlTimelineLabel(pending),
+      title: getHitlSubject(pending),
       detail: 'Waiting for a human response',
       isPending: true,
     };
@@ -157,8 +196,8 @@ export function getHitlOverviewState(
   }
 
   return {
-    title: getHitlTimelineLabel(latestResponse),
-    detail: latestResponse.senderName ?? latestResponse.senderId,
+    title: getHitlSubject(latestResponse),
+    detail: getHitlOutcome(latestResponse),
     isPending: false,
   };
 }
