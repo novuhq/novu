@@ -72,6 +72,7 @@ import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
+import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
 import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
 import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
@@ -176,6 +177,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanInteractionInboundService,
     HumanInteractionSettlementService,
     CreateConversationInteraction,
+    HumanInteractionActivityRecorder,
     HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
@@ -228,6 +230,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ConfirmLinkedAuthCards,
     ConversationActivityLedger,
     HumanInteractionSettlementService,
+    HumanInteractionActivityRecorder,
   ],
 })
 export class AgentsModule {}
