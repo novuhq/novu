@@ -1,13 +1,17 @@
 import { providers } from './parsers';
 import type { EnqueueParams, ObservationParams } from './types';
 
+function isEnqueueProvider(provider: string): boolean {
+  return Boolean(providers[provider]) || provider === 'google';
+}
+
 export function validateEnqueueParams(body: unknown): body is EnqueueParams {
   if (typeof body !== 'object' || body === null) return false;
   const obj = body as Record<string, unknown>;
   if (typeof obj.sessionId !== 'string' || obj.sessionId.length === 0) return false;
   if (typeof obj.runId !== 'string' || obj.runId.length === 0) return false;
   if (typeof obj.turnId !== 'string' || obj.turnId.length === 0) return false;
-  if (typeof obj.provider !== 'string' || !providers[obj.provider]) return false;
+  if (typeof obj.provider !== 'string' || !isEnqueueProvider(obj.provider)) return false;
   if (typeof obj.request !== 'object' || obj.request === null) return false;
   if (typeof obj.webhook !== 'object' || obj.webhook === null) return false;
   const webhook = obj.webhook as Record<string, unknown>;

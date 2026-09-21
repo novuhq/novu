@@ -2,9 +2,11 @@ import {
   AGENT_IDENTIFIER_MAX_LENGTH,
   AGENT_NAME_MAX_LENGTH,
   AgentRuntimeProviderIdEnum,
+  isGoogleAgentRuntimeProvider,
   SLUG_IDENTIFIER_REGEX,
   slugIdentifierFormatMessage,
 } from '@novu/shared';
+import { isManagedConnectorRuntime } from '@/components/agents/connectors/connector-options';
 import type { CreateAgentForm, CreateAgentFormErrors } from './types';
 
 export function validateManagedCredentialFields(fields: {
@@ -12,18 +14,23 @@ export function validateManagedCredentialFields(fields: {
   apiKey: string;
   region?: string;
   externalWorkspaceId?: string;
-}): Pick<CreateAgentFormErrors, 'apiKey' | 'region' | 'externalWorkspaceId'> {
+  projectName?: string;
+  instanceId?: string;
+}): Pick<CreateAgentFormErrors, 'apiKey' | 'region' | 'externalWorkspaceId' | 'projectName' | 'instanceId'> {
+  const isGoogle = fields.providerId != null && isGoogleAgentRuntimeProvider(fields.providerId);
   const errors = validateCreateAgentForm({
     name: 'x',
     identifier: 'x',
     description: '',
     instructions: '',
     apiKey: fields.apiKey,
-    runtime: 'claude',
+    runtime: isGoogle ? 'vertex' : 'claude',
     isExistingMode: false,
     providerId: fields.providerId,
     region: fields.region,
     externalWorkspaceId: fields.externalWorkspaceId,
+    projectName: fields.projectName,
+    instanceId: fields.instanceId,
     integrationName: 'x',
   });
 
@@ -31,6 +38,8 @@ export function validateManagedCredentialFields(fields: {
     apiKey: errors.apiKey,
     region: errors.region,
     externalWorkspaceId: errors.externalWorkspaceId,
+    projectName: errors.projectName,
+    instanceId: errors.instanceId,
   };
 }
 
@@ -38,6 +47,8 @@ export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormE
   const errors: CreateAgentFormErrors = {};
   const isExistingMode = form.runtime === 'claude' && form.isExistingMode;
   const isAwsProvider = form.providerId === AgentRuntimeProviderIdEnum.AnthropicAws;
+  const isGoogleProvider = form.providerId != null && isGoogleAgentRuntimeProvider(form.providerId);
+  const isManagedRuntime = isManagedConnectorRuntime(form.runtime);
 
   if (!isExistingMode) {
     const trimmedName = form.name.trim();
@@ -58,8 +69,16 @@ export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormE
     }
   }
 
-  if (form.runtime === 'claude' && !form.integrationId) {
-    if (isAwsProvider) {
+  if (isManagedRuntime && !form.integrationId) {
+    if (isGoogleProvider) {
+      if (!form.projectName?.trim()) {
+        errors.projectName = 'GCP Project ID is required.';
+      }
+
+      if (!form.instanceId?.trim()) {
+        errors.instanceId = 'Engine ID is required.';
+      }
+    } else if (isAwsProvider) {
       if (!form.region?.trim()) {
         errors.region = 'AWS region is required.';
       }
@@ -76,7 +95,7 @@ export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormE
     }
   }
 
-  if (form.runtime === 'claude' && !form.integrationId && !form.integrationName?.trim()) {
+  if (isManagedRuntime && !form.integrationId && !form.integrationName?.trim()) {
     errors.integrationName = 'Integration name is required.';
   }
 

@@ -3,10 +3,11 @@ import type { ReactNode } from 'react';
 import { RiFileCodeLine } from 'react-icons/ri';
 import { AiSdkIcon } from '@/components/icons/ai-sdk';
 import { AwsIcon } from '@/components/icons/aws';
+import { GeminiIcon } from '@/components/icons/gemini';
 import { LangChainIcon } from '@/components/icons/langchain';
 import { ClaudeIcon } from '../../icons/claude';
 
-export type ConnectorId = 'claude' | 'claude-aws' | 'bedrock' | 'ai-sdk' | 'langchain' | 'custom-code';
+export type ConnectorId = 'claude' | 'claude-aws' | 'gemini' | 'bedrock' | 'ai-sdk' | 'langchain' | 'custom-code';
 
 export type ConnectorGroup = 'external' | 'custom';
 
@@ -60,6 +61,12 @@ const AWS_AVATAR = (
   </div>
 );
 
+const GEMINI_AVATAR = (
+  <div className="bg-bg-weak flex size-4 items-center justify-center rounded-full">
+    <GeminiIcon className="size-3" />
+  </div>
+);
+
 export const CONNECTOR_OPTIONS: ConnectorOption[] = [
   {
     id: 'ai-sdk',
@@ -106,6 +113,16 @@ export const CONNECTOR_OPTIONS: ConnectorOption[] = [
     providerLabel: 'AWS Claude Platform',
   },
   {
+    id: 'gemini',
+    label: 'Gemini Enterprise',
+    group: 'external',
+    icon: GEMINI_AVATAR,
+    comingSoon: false,
+    runtime: 'vertex',
+    providerId: AgentRuntimeProviderIdEnum.Google,
+    providerLabel: 'Gemini Enterprise',
+  },
+  {
     id: 'bedrock',
     label: 'AWS Bedrock AgentCore',
     group: 'external',
@@ -136,4 +153,8 @@ export function getConnectorIdForProviderId(providerId: string): ConnectorId | u
   }
 
   return CONNECTOR_OPTIONS.find((option) => option.providerId === providerId)?.id;
+}
+
+export function isManagedConnectorRuntime(runtime: ConnectorOption['runtime'] | undefined): boolean {
+  return runtime === 'claude' || runtime === 'vertex';
 }

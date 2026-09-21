@@ -4,6 +4,7 @@ import {
   buildVerifyFingerprint,
   hasCompleteManagedCredentials,
   isAnthropicAwsProvider,
+  isGoogleAgentRuntimeProvider,
   type ManagedCredentialFields,
 } from '@novu/shared';
 
@@ -17,6 +18,15 @@ export function buildVerifyCredentialsPayload(
   providerId: AgentRuntimeProviderIdEnum,
   fields: ManagedCredentialFields
 ): VerifyManagedCredentialsBody {
+  if (isGoogleAgentRuntimeProvider(providerId)) {
+    return {
+      providerId,
+      projectName: fields.projectName?.trim(),
+      instanceId: fields.instanceId?.trim(),
+      region: fields.region?.trim(),
+    };
+  }
+
   const payload: VerifyManagedCredentialsBody = {
     providerId,
     apiKey: fields.apiKey.trim(),

@@ -3,6 +3,7 @@ import {
   type IAgentRuntimeProvider,
   PinoLogger,
   type ResolvedAwsAnthropicCredentials,
+  type ResolvedGeminiCredentials,
   resolveAgentRuntime,
   toThalamusAwsAnthropicCredentials,
 } from '@novu/application-generic';
@@ -64,20 +65,24 @@ export class ManagedAgentProviderFactory {
       throw new Error('Integration credentials are incomplete or invalid');
     }
 
-    const { credentials: creds, provider: runtimeProvider, awsCredentials, apiKey } = resolved;
+    const { credentials: creds, provider: runtimeProvider, awsCredentials, googleCredentials, apiKey } = resolved;
     const providerId = integration.providerId as AgentRuntimeProviderIdEnum;
 
-    if (!creds.externalEnvironmentId) {
+    if (!creds.externalEnvironmentId && googleCredentials == null) {
       throw new Error('Integration has no external environment id');
     }
 
-    const externalEnvironmentId = creds.externalEnvironmentId as string;
+    const externalEnvironmentId = (creds.externalEnvironmentId as string | undefined) ?? '';
     const agentId = agent.managedRuntime.externalAgentId;
 
-    const webhookProvider =
-      awsCredentials != null
-        ? this.createAwsProvider({ awsCredentials, agentId, environmentId: externalEnvironmentId })
-        : this.createCloudProvider(providerId, { apiKey, agentId, environmentId: externalEnvironmentId });
+    let webhookProvider: WebhookProvider;
+    if (googleCredentials != null) {
+      webhookProvider = this.createGoogleWebhookProvider({ googleCredentials, agentId });
+    } else if (awsCredentials != null) {
+      webhookProvider = this.createAwsProvider({ awsCredentials, agentId, environmentId: externalEnvironmentId });
+    } else {
+      webhookProvider = this.createCloudProvider(providerId, { apiKey, agentId, environmentId: externalEnvironmentId });
+    }
 
     const runtime: ResolvedRuntime = { provider: webhookProvider, runtimeProvider };
     this.providers.set(key, runtime);
@@ -171,6 +176,22 @@ export class ManagedAgentProviderFactory {
       environmentId: config.environmentId,
       durable,
       ...toThalamusAwsAnthropicCredentials(config.awsCredentials),
+    });
+  }
+
+  private createGoogleWebhookProvider(config: {
+    googleCredentials: ResolvedGeminiCredentials;
+    agentId: string;
+  }): WebhookProvider {
+    const durable = this.buildDurableBackend();
+
+    return thalamus.google({
+      projectId: config.googleCredentials.projectId,
+      location: config.googleCredentials.location,
+      engineId: config.googleCredentials.engineId,
+      assistantId: 'default_assistant',
+      quotaProjectId: config.googleCredentials.quotaProjectId,
+      durable,
     });
   }
 

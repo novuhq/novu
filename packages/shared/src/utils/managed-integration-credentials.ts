@@ -1,10 +1,12 @@
-import { AgentRuntimeProviderIdEnum } from '../types/providers';
 import { isAnthropicAwsProvider } from '../types/anthropic-aws';
+import { AgentRuntimeProviderIdEnum, isGoogleAgentRuntimeProvider } from '../types/providers';
 
 export type ManagedCredentialFields = {
   apiKey: string;
   region?: string;
   externalWorkspaceId?: string;
+  projectName?: string;
+  instanceId?: string;
 };
 
 export function buildManagedIntegrationCredentials(
@@ -14,12 +16,22 @@ export function buildManagedIntegrationCredentials(
   const apiKey = fields.apiKey.trim();
   const externalWorkspaceId = fields.externalWorkspaceId?.trim();
   const region = fields.region?.trim();
+  const projectName = fields.projectName?.trim();
+  const instanceId = fields.instanceId?.trim();
 
   if (isAnthropicAwsProvider(providerId)) {
     return {
       region: region ?? '',
       externalWorkspaceId: externalWorkspaceId ?? '',
       apiKey,
+    };
+  }
+
+  if (isGoogleAgentRuntimeProvider(providerId)) {
+    return {
+      projectName: projectName ?? '',
+      instanceId: instanceId ?? '',
+      ...(region ? { region } : {}),
     };
   }
 
@@ -40,6 +52,14 @@ export function buildVerifyFingerprint(
     return `${region}:${workspaceId}:${fields.apiKey.trim()}`;
   }
 
+  if (isGoogleAgentRuntimeProvider(providerId)) {
+    const projectName = fields.projectName?.trim() ?? '';
+    const instanceId = fields.instanceId?.trim() ?? '';
+    const location = fields.region?.trim() ?? '';
+
+    return `${projectName}:${instanceId}:${location}`;
+  }
+
   return fields.apiKey.trim();
 }
 
@@ -49,6 +69,10 @@ export function hasCompleteManagedCredentials(
 ): boolean {
   if (isAnthropicAwsProvider(providerId)) {
     return Boolean(fields.region?.trim() && fields.externalWorkspaceId?.trim() && fields.apiKey.trim());
+  }
+
+  if (isGoogleAgentRuntimeProvider(providerId)) {
+    return Boolean(fields.projectName?.trim() && fields.instanceId?.trim());
   }
 
   return Boolean(fields.apiKey.trim());

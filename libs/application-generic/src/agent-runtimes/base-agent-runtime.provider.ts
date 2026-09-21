@@ -58,18 +58,18 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
   }
 
   createVault(_input: CreateVaultInput): Promise<CreateVaultResult> {
-    throw new UnsupportedCapabilityError('tokenVault', this.providerId);
+    return Promise.reject(new UnsupportedCapabilityError('tokenVault', this.providerId));
   }
 
   upsertVaultCredential(_input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
-    throw new UnsupportedCapabilityError('tokenVault', this.providerId);
+    return Promise.reject(new UnsupportedCapabilityError('tokenVault', this.providerId));
   }
 
   deleteVaultCredential(_input: DeleteVaultCredentialInput): Promise<void> {
-    throw new UnsupportedCapabilityError('tokenVault', this.providerId);
+    return Promise.reject(new UnsupportedCapabilityError('tokenVault', this.providerId));
   }
 
   uploadSkill(_input: UploadSkillInput): Promise<UploadSkillResult> {
-    throw new UnsupportedCapabilityError('skills', this.providerId);
+    return Promise.reject(new UnsupportedCapabilityError('skills', this.providerId));
   }
 }

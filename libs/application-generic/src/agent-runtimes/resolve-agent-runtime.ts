@@ -4,10 +4,12 @@ import { decryptCredentials } from '../encryption/encrypt-provider';
 import { areNovuManagedClaudeCredentialsSet, getNovuManagedClaudeApiKey } from '../utils/novu-integrations';
 import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
 import {
+  type ResolvedAwsAnthropicCredentials,
   resolveAwsAnthropicCredentials,
   toValidateCredentialsInput,
-  type ResolvedAwsAnthropicCredentials,
 } from './anthropic/anthropic-aws-credentials';
+import { createGeminiProvider } from './google/gemini-agent-runtime.provider';
+import { type ResolvedGeminiCredentials, resolveGeminiCredentials } from './google/google-credentials';
 import type { IAgentRuntimeProvider, ValidateCredentialsInput } from './i-agent-runtime-provider';
 
 export type ResolvedAgentRuntime = {
@@ -16,6 +18,7 @@ export type ResolvedAgentRuntime = {
   provider: IAgentRuntimeProvider;
   validateCredentialsInput: ValidateCredentialsInput;
   awsCredentials?: ResolvedAwsAnthropicCredentials;
+  googleCredentials?: ResolvedGeminiCredentials;
 };
 
 export function resolveAgentRuntime(
@@ -55,6 +58,22 @@ export function resolveAgentRuntime(
       awsCredentials,
       provider: createAnthropicProvider(AgentRuntimeProviderIdEnum.AnthropicAws, { awsCredentials }),
       validateCredentialsInput,
+    };
+  }
+
+  if (providerId === AgentRuntimeProviderIdEnum.Google) {
+    const googleCredentials = resolveGeminiCredentials(decrypted as Record<string, unknown>);
+
+    if (!googleCredentials) {
+      return null;
+    }
+
+    return {
+      apiKey: '',
+      credentials: decrypted,
+      googleCredentials,
+      provider: createGeminiProvider(decrypted as Record<string, unknown>),
+      validateCredentialsInput: {},
     };
   }
 

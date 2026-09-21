@@ -315,9 +315,11 @@ export async function createAgent(
 
 export type VerifyManagedCredentialsBody = {
   providerId: AgentRuntimeProviderIdEnum;
-  apiKey: string;
+  apiKey?: string;
   externalWorkspaceId?: string;
   region?: string;
+  projectName?: string;
+  instanceId?: string;
 };
 
 export type VerifyManagedCredentialsResponse = { valid: true };

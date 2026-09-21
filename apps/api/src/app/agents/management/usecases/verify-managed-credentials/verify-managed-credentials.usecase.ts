@@ -21,6 +21,8 @@ export class VerifyManagedCredentials {
       apiKey: command.apiKey,
       region: command.region,
       externalWorkspaceId: command.externalWorkspaceId,
+      projectName: command.projectName,
+      instanceId: command.instanceId,
     });
 
     if (!resolved) {

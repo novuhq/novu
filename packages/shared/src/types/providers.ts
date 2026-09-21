@@ -183,6 +183,11 @@ export enum AgentRuntimeProviderIdEnum {
   Anthropic = 'anthropic',
   NovuAnthropic = 'novu-anthropic',
   AnthropicAws = 'anthropic-aws',
+  Google = 'google',
+}
+
+export function isGoogleAgentRuntimeProvider(providerId: string): boolean {
+  return providerId === AgentRuntimeProviderIdEnum.Google;
 }
 
 export enum ToolProviderIdEnum {

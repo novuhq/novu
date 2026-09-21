@@ -1659,6 +1659,34 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
   },
 ];
 
+export const geminiAgentConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ProjectName,
+    displayName: 'GCP Project ID',
+    description:
+      'Your Google Cloud project ID (e.g. gemini-enterprise-test-509310). Used as the billing/quota project.',
+    placeholder: 'my-gcp-project',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.InstanceId,
+    displayName: 'Engine ID',
+    description: 'Gemini Enterprise engine ID from the Discovery Engine console.',
+    placeholder: 'gemini-enterprise-...',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Location',
+    description: 'GCP location for the Gemini Enterprise engine (e.g. global, us-central1). Defaults to global.',
+    placeholder: 'global',
+    type: 'string',
+    required: false,
+  },
+];
+
 /**
  * PagerDuty is routed per subscriber — the routing key and region live on the
  * per-subscriber `ChannelConnection.auth`, provisioned via

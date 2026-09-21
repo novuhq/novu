@@ -6,7 +6,11 @@ import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
 } from '@/components/agents/connectors/connector-integration-dropdown';
-import { type ConnectorOption, getConnectorById } from '@/components/agents/connectors/connector-options';
+import {
+  type ConnectorOption,
+  getConnectorById,
+  isManagedConnectorRuntime,
+} from '@/components/agents/connectors/connector-options';
 import {
   type AgentTemplate,
   ConfigureCredentialsSection,
@@ -68,6 +72,8 @@ type ConnectAgentFormProps = {
   apiKey: string;
   externalWorkspaceId: string;
   region: string;
+  projectName?: string;
+  instanceId?: string;
 
   templateSelection: TemplateSelection;
   isExistingMode: boolean;
@@ -108,6 +114,8 @@ type ConnectAgentFormProps = {
   onApiKeyChange: (next: string) => void;
   onExternalWorkspaceIdChange: (next: string) => void;
   onRegionChange: (next: string) => void;
+  onProjectNameChange?: (next: string) => void;
+  onInstanceIdChange?: (next: string) => void;
   onNameChange: (next: string) => void;
   onIdentifierChange: (next: string) => void;
   onIdentifierTouched: () => void;
@@ -220,6 +228,8 @@ export function ConnectAgentForm({
   apiKey,
   externalWorkspaceId,
   region,
+  projectName = '',
+  instanceId = '',
   templateSelection,
   isExistingMode,
   isScratchMode,
@@ -248,6 +258,8 @@ export function ConnectAgentForm({
   onApiKeyChange,
   onExternalWorkspaceIdChange,
   onRegionChange,
+  onProjectNameChange,
+  onInstanceIdChange,
   onNameChange,
   onIdentifierChange,
   onIdentifierTouched,
@@ -309,7 +321,10 @@ export function ConnectAgentForm({
     );
   }
   const selectedConnector = getConnectorById(connectorId);
-  const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
+  const showCredentialsSection =
+    isManagedConnectorRuntime(selectedConnector?.runtime) &&
+    credentialsPanelVisible &&
+    Boolean(selectedConnector?.providerId);
   const usePromptUi = Boolean(aiGeneration);
   const aiMode = aiGeneration?.mode ?? 'prompt';
   const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
@@ -363,6 +378,8 @@ export function ConnectAgentForm({
                 apiKey={apiKey}
                 externalWorkspaceId={externalWorkspaceId}
                 region={region}
+                projectName={projectName}
+                instanceId={instanceId}
                 errors={errors}
                 disabled={disabled}
                 status={verifyStatus}
@@ -374,6 +391,8 @@ export function ConnectAgentForm({
                 onApiKeyChange={onApiKeyChange}
                 onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
                 onRegionChange={onRegionChange}
+                onProjectNameChange={onProjectNameChange}
+                onInstanceIdChange={onInstanceIdChange}
                 onVerify={onVerify}
                 onSave={onSaveIntegration}
               />

@@ -186,12 +186,16 @@ export function ConnectAgentStep({
     apiKey,
     externalWorkspaceId,
     region,
+    projectName,
+    instanceId,
     verifyStatus,
     verifyMessage,
     lastVerifiedKeyRef,
     setApiKey,
     setExternalWorkspaceId,
     setRegion,
+    setProjectName,
+    setInstanceId,
     setVerifyStatus,
     setVerifyMessage,
     resetCredentials,
@@ -320,6 +324,8 @@ export function ConnectAgentStep({
           externalEnvironmentId: externalEnvironmentId.trim(),
           externalWorkspaceId: externalWorkspaceId.trim() || undefined,
           region: region.trim() || undefined,
+          projectName: projectName.trim() || undefined,
+          instanceId: instanceId.trim() || undefined,
           integrationId: selectedIntegrationId,
           integrationName: integrationName.trim() || undefined,
           managedOverrides,
@@ -353,6 +359,8 @@ export function ConnectAgentStep({
       externalEnvironmentId,
       externalWorkspaceId,
       region,
+      projectName,
+      instanceId,
       selectedIntegrationId,
       integrationName,
       runtime,
@@ -697,11 +705,27 @@ export function ConnectAgentStep({
     [setRegion]
   );
 
+  const handleProjectNameChange = useCallback(
+    (next: string) => {
+      setProjectName(next);
+      setErrors((prev) => ({ ...prev, projectName: undefined }));
+    },
+    [setProjectName]
+  );
+
+  const handleInstanceIdChange = useCallback(
+    (next: string) => {
+      setInstanceId(next);
+      setErrors((prev) => ({ ...prev, instanceId: undefined }));
+    },
+    [setInstanceId]
+  );
+
   const handleVerify = useCallback(() => {
     if (!selectedConnector?.providerId) return;
     if (verifyMutation.isPending) return;
 
-    const fields = { apiKey, region, externalWorkspaceId };
+    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId };
     const verifyKey = buildVerifyFingerprint(selectedConnector.providerId, fields);
 
     if (lastVerifiedKeyRef.current === verifyKey && verifyStatus === 'valid') return;
@@ -715,7 +739,7 @@ export function ConnectAgentStep({
         if (lastVerifiedKeyRef.current !== verifyKey) return;
         setVerifyStatus('valid');
         setVerifyMessage(undefined);
-        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+        setErrors((prev) => ({ ...prev, apiKey: undefined, projectName: undefined, instanceId: undefined }));
       },
       onError: (err) => {
         if (lastVerifiedKeyRef.current !== verifyKey) return;
@@ -723,13 +747,22 @@ export function ConnectAgentStep({
         setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
       },
     });
-  }, [selectedConnector?.providerId, apiKey, externalWorkspaceId, region, verifyMutation, verifyStatus]);
+  }, [
+    selectedConnector?.providerId,
+    apiKey,
+    externalWorkspaceId,
+    region,
+    projectName,
+    instanceId,
+    verifyMutation,
+    verifyStatus,
+  ]);
 
   const handleSaveIntegration = useCallback(async () => {
     if (!selectedConnector?.providerId) return;
 
     const trimmedName = integrationName.trim();
-    const fields = { apiKey, region, externalWorkspaceId };
+    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId };
 
     if (!trimmedName || !hasCompleteManagedCredentials(selectedConnector.providerId, fields)) return;
 
@@ -771,6 +804,8 @@ export function ConnectAgentStep({
     integrationName,
     externalWorkspaceId,
     region,
+    projectName,
+    instanceId,
     createIntegration,
     currentEnvironment?._id,
     queryClient,
@@ -881,6 +916,8 @@ export function ConnectAgentStep({
       externalEnvironmentId,
       externalWorkspaceId,
       region,
+      projectName,
+      instanceId,
       integrationId: selectedIntegrationId,
       integrationName,
     };
@@ -951,6 +988,8 @@ export function ConnectAgentStep({
         externalEnvironmentId: externalEnvironmentId.trim(),
         externalWorkspaceId: externalWorkspaceId.trim() || undefined,
         region: region.trim() || undefined,
+        projectName: projectName.trim() || undefined,
+        instanceId: instanceId.trim() || undefined,
         integrationId: selectedIntegrationId,
         integrationName: integrationName.trim() || undefined,
         managedOverrides,
@@ -1038,6 +1077,8 @@ export function ConnectAgentStep({
         apiKey={apiKey}
         externalWorkspaceId={externalWorkspaceId}
         region={region}
+        projectName={projectName}
+        instanceId={instanceId}
         templateSelection={templateSelection}
         isExistingMode={isExistingMode}
         isScratchMode={isScratchMode}
@@ -1089,6 +1130,8 @@ export function ConnectAgentStep({
         onApiKeyChange={handleApiKeyChange}
         onExternalWorkspaceIdChange={handleExternalWorkspaceIdChange}
         onRegionChange={handleRegionChange}
+        onProjectNameChange={handleProjectNameChange}
+        onInstanceIdChange={handleInstanceIdChange}
         onNameChange={(next) => {
           setName(next);
           setErrors((prev) => ({ ...prev, name: undefined }));

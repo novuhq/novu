@@ -116,7 +116,7 @@ export class AgentRuntimeController {
   @ApiOperation({
     summary: 'Verify managed agent credentials',
     description:
-      'Perform a stateless, read-only validation of the supplied API key against the selected managed-runtime provider. ' +
+      'Perform a stateless, read-only validation of the supplied credentials against the selected managed-runtime provider. ' +
       'Used to confirm credentials before creating a runtime integration.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -134,6 +134,8 @@ export class AgentRuntimeController {
         apiKey: body.apiKey,
         externalWorkspaceId: body.externalWorkspaceId,
         region: body.region,
+        projectName: body.projectName,
+        instanceId: body.instanceId,
       })
     );
   }

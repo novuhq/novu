@@ -54,6 +54,8 @@ export type CreateAgentForm = {
    */
   externalWorkspaceId?: string;
   region?: string;
+  projectName?: string;
+  instanceId?: string;
   /**
    * Existing managed-runtime integration to attach the agent to. When present, `apiKey` is ignored
    * and a new integration is NOT created.
@@ -83,6 +85,8 @@ export type CreateAgentFormErrors = {
   identifier?: string;
   apiKey?: string;
   region?: string;
+  projectName?: string;
+  instanceId?: string;
   externalWorkspaceId?: string;
   externalAgentId?: string;
   externalEnvironmentId?: string;

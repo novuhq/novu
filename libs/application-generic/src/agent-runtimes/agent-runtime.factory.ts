@@ -1,5 +1,6 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
+import { createGeminiProvider } from './google/gemini-agent-runtime.provider';
 import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
 
 type ProviderFactory = (apiKey: string) => IAgentRuntimeProvider;
@@ -13,9 +14,15 @@ type ProviderFactory = (apiKey: string) => IAgentRuntimeProvider;
  * concrete class.
  */
 const PROVIDER_REGISTRY = new Map<AgentRuntimeProviderIdEnum, ProviderFactory>([
-  [AgentRuntimeProviderIdEnum.Anthropic, (apiKey) => createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey })],
-  [AgentRuntimeProviderIdEnum.NovuAnthropic, (apiKey) =>
-    createAnthropicProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, { apiKey })],
+  [
+    AgentRuntimeProviderIdEnum.Anthropic,
+    (apiKey) => createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey }),
+  ],
+  [
+    AgentRuntimeProviderIdEnum.NovuAnthropic,
+    (apiKey) => createAnthropicProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, { apiKey }),
+  ],
+  [AgentRuntimeProviderIdEnum.Google, (_apiKey) => createGeminiProvider()],
 ]);
 
 /**
