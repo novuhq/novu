@@ -1,16 +1,18 @@
 import { RiArrowRightUpLine, RiRobot2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { ConversationDto } from '@/api/conversations';
+import { ConversationActivityDto, ConversationDto } from '@/api/conversations';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { buildRoute } from '@/utils/routes';
+import { getHitlOverviewState } from './conversation-hitl';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationOverviewProps = {
   conversation: ConversationDto;
+  activities?: ConversationActivityDto[];
 };
 
 function MetaRow({ label, children, isLast }: { label: string; children: React.ReactNode; isLast?: boolean }) {
@@ -24,7 +26,7 @@ function MetaRow({ label, children, isLast }: { label: string; children: React.R
   );
 }
 
-export function ConversationOverview({ conversation }: ConversationOverviewProps) {
+export function ConversationOverview({ conversation, activities = [] }: ConversationOverviewProps) {
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
   const participants = conversation.participants ?? [];
@@ -40,6 +42,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
   const platforms = [...new Set(channels.map((c) => c.platform))];
 
   const sourceRequestId = (conversation.metadata?.sourceRequestId as string) ?? undefined;
+  const hitlOverview = getHitlOverviewState(activities);
 
   return (
     <div className="flex flex-col gap-3">
@@ -99,9 +102,17 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
               {platforms.length === 0 && <span className="text-text-soft text-xs">-</span>}
             </div>
           </MetaRow>
-          <MetaRow label="Status" isLast>
+          <MetaRow label="Status" isLast={!hitlOverview}>
             <ConversationStatusBadge status={conversation.status} />
           </MetaRow>
+          {hitlOverview && (
+            <MetaRow label="Human in the loop" isLast>
+              <span className="flex max-w-[220px] flex-col items-end text-right">
+                <span className="truncate font-medium">{hitlOverview.title}</span>
+                <span className="text-text-soft font-normal">{hitlOverview.detail}</span>
+              </span>
+            </MetaRow>
+          )}
         </div>
 
         <div className="px-[18px]">

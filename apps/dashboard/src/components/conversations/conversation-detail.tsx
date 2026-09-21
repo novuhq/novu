@@ -37,7 +37,7 @@ export function ConversationDetail({ conversationId, onClose }: ConversationDeta
           <OverviewSkeleton />
         ) : conversation ? (
           <div className="px-3 pb-2">
-            <ConversationOverview conversation={conversation} />
+            <ConversationOverview conversation={conversation} activities={activities} />
           </div>
         ) : null}
         <Separator />
