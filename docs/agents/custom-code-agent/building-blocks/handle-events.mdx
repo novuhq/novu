@@ -41,6 +41,7 @@ Each event handler receives a context object with the information needed to unde
 - The current conversation state and metadata
 - The resolved subscriber (when available)
 - Recent conversation history
+- The originating workflow notification (`ctx.notification`), when the conversation started from a [workflow-assigned agent](/agents/workflow-agents#reply-hydration) send
 - Provider information
 - Platform-specific details, such as thread or channel identifiers
 - Methods for replying, emitting custom events, updating metadata, triggering workflows, or resolving the conversation
