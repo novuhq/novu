@@ -90,10 +90,28 @@ export function getHitlTimelineLabel(activity: ConversationActivityDto): string 
   return activity.content;
 }
 
-export function getHitlOverviewState(activities: ConversationActivityDto[]): HitlOverviewState | null {
+/**
+ * The timeline loads one page of activities, oldest first. A request on that page can be settled by a
+ * response on a page the dashboard never fetched, so pending is only claimed when the page holds the
+ * whole conversation.
+ */
+export function getHitlOverviewState(
+  activities: ConversationActivityDto[],
+  options?: { hasCompleteHistory?: boolean }
+): HitlOverviewState | null {
   const hitlActivities = activities.filter(isHitlTimelineActivity);
   if (hitlActivities.length === 0) {
     return null;
+  }
+
+  if (options?.hasCompleteHistory === false) {
+    const latest = hitlActivities[hitlActivities.length - 1];
+
+    return {
+      title: getHitlTimelineLabel(latest),
+      detail: 'Latest human-in-the-loop activity',
+      isPending: false,
+    };
   }
 
   const decidedApprovalIds = new Set(

@@ -13,6 +13,7 @@ import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 type ConversationOverviewProps = {
   conversation: ConversationDto;
   activities?: ConversationActivityDto[];
+  hasCompleteActivityHistory?: boolean;
 };
 
 function MetaRow({
@@ -42,7 +43,11 @@ function MetaRow({
   );
 }
 
-export function ConversationOverview({ conversation, activities = [] }: ConversationOverviewProps) {
+export function ConversationOverview({
+  conversation,
+  activities = [],
+  hasCompleteActivityHistory = true,
+}: ConversationOverviewProps) {
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
   const participants = conversation.participants ?? [];
@@ -58,7 +63,7 @@ export function ConversationOverview({ conversation, activities = [] }: Conversa
   const platforms = [...new Set(channels.map((c) => c.platform))];
 
   const sourceRequestId = (conversation.metadata?.sourceRequestId as string) ?? undefined;
-  const hitlOverview = getHitlOverviewState(activities);
+  const hitlOverview = getHitlOverviewState(activities, { hasCompleteHistory: hasCompleteActivityHistory });
 
   return (
     <div className="flex flex-col gap-3">

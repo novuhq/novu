@@ -61,6 +61,20 @@ describe('conversation-hitl', () => {
     });
   });
 
+  it('does not claim a pending approval when later activity pages are missing', () => {
+    const pending = {
+      ...base,
+      type: 'tool_approval_request' as const,
+      toolData: { approvalId: 'apr_1', toolName: 'issueRefund' },
+    };
+
+    expect(getHitlOverviewState([pending], { hasCompleteHistory: false })).toEqual({
+      title: 'Tool approval required: issueRefund',
+      detail: 'Latest human-in-the-loop activity',
+      isPending: false,
+    });
+  });
+
   it('treats tool and HITL rows as hitl timeline activities', () => {
     expect(isHitlTimelineActivity({ ...base, type: 'tool_approval_request' })).toBe(true);
     expect(isHitlTimelineActivity({ ...base, type: 'human_interaction_request' })).toBe(true);
