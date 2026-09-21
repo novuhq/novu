@@ -371,6 +371,20 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
   </Tab>
 </Tabs>
 
+#### Mix subscribers and topics in the same trigger
+
+The `to` array accepts a mix of `Subscriber` and `Topic` entries in the same trigger. Novu fans out to every subscriber in each listed topic and adds the directly-listed subscribers, deduplicating across the combined recipient set. The overall cap is 100 recipient entries per `to` array.
+
+```ts
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: [
+    { type: "Subscriber", subscriberId: "SUBSCRIBER_ID" },
+    { type: "Topic", topicKey: "topic_key" },
+  ],
+});
+```
+
 ### Exclude actor
 
 When a workflow is triggered to a topic, notification is sent to all subscribers present in the topic. However, you can exclude a specific subscriber from receiving the notification by using the `actor` field. Here actor is the subscriberId of the subscriber you want to exclude.

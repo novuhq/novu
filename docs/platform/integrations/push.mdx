@@ -271,7 +271,9 @@ You can add device tokens for a subscriber using the [Update provider credential
 This method is useful when you manage device registration outside of your workflow triggers, for example, after a user logs in.
 
 <Note>
-  The update credentials endpoint sets the `deviceTokens` array to the value you send for the target provider (and `integrationIdentifier` when specified). To preserve existing tokens when registering a new one, first fetch the subscriber, then send the merged list. The same pattern applies to removing a single token, see [Remove a specific token](#remove-a-specific-token).
+  The update credentials endpoint (`PUT /v1/subscribers/{subscriberId}/credentials`) replaces the `deviceTokens` array with the value you send for the target provider (and `integrationIdentifier` when specified). To preserve existing tokens when registering a new one, first fetch the subscriber, then send the merged list. The same pattern applies to removing a single token, see [Remove a specific token](#remove-a-specific-token).
+
+  To append a new token without fetching and merging, use the [Upsert provider credentials API](/api-reference/subscribers/upsert-provider-credentials) (`PATCH /v1/subscribers/{subscriberId}/credentials`) instead. It adds the tokens you send to the existing `deviceTokens` array for the target provider, deduplicating on the server. Use `PUT` when you want the array to match exactly what you send; use `PATCH` when you only want to append.
 </Note>
 
 <Tabs>
