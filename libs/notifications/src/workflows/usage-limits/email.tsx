@@ -24,6 +24,7 @@ export function UsageLimitsEmail({
   previewText,
 }: IEmailProps) {
   const roundedPercentage = Math.round(percentage || 0);
+  const isBlocked = blocksAtLimit && roundedPercentage >= 100;
 
   return (
     <EmailLayout previewText={previewText}>
@@ -36,12 +37,20 @@ export function UsageLimitsEmail({
         {blocksAtLimit ? 'monthly limit' : 'monthly usage alert level'} on the {planName} plan.
       </Text>
 
-      {blocksAtLimit ? (
+      {isBlocked && (
+        <Text className="text-[14px] leading-[24px] text-black">
+          New notifications are blocked until you upgrade your plan or the next billing cycle begins.
+        </Text>
+      )}
+
+      {blocksAtLimit && !isBlocked && (
         <Text className="text-[14px] leading-[24px] text-black">
           To ensure uninterrupted service and access to additional features, we recommend upgrading your plan before
           reaching the limit.
         </Text>
-      ) : (
+      )}
+
+      {!blocksAtLimit && (
         <Text className="text-[14px] leading-[24px] text-black">
           Your notifications will keep sending. If this volume is unexpected, review your workflows and triggers, or
           reach out to us to discuss a plan that fits your usage.
@@ -57,7 +66,7 @@ export function UsageLimitsEmail({
         </Button>
       </Section>
 
-      {blocksAtLimit && (
+      {blocksAtLimit && !isBlocked && (
         <Text className="text-[12px] leading-[20px] text-gray-500">
           Note: Once you consume 100% of your monthly limit, notifications will be blocked until you upgrade or the next
           billing cycle begins.

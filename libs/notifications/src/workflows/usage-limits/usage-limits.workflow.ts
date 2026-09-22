@@ -37,13 +37,6 @@ export const usageLimitsWorkflow = workflow(
       };
     });
 
-    await step.digest('digest', async () => {
-      return {
-        amount: 5,
-        unit: 'minutes',
-      };
-    });
-
     await step.email(
       'email',
       async (controls) => {
