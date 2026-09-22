@@ -83,55 +83,16 @@ export class UpdateAgent {
       throw new ForbiddenException('System human-relay agents cannot be modified.');
     }
 
-    const $set: Record<string, string | boolean | null> = {};
+    const $set = this.buildUpdateSet(command);
 
-    if (command.name !== undefined) {
-      $set.name = command.name;
-    }
-
-    if (command.description !== undefined) {
-      $set.description = command.description;
-    }
-
-    if (command.active !== undefined) {
-      $set.active = command.active;
-    }
-
-    if (hasBehaviorFields) {
-      if (command.behavior!.acknowledgeOnReceived !== undefined) {
-        $set['behavior.acknowledgeOnReceived'] = command.behavior!.acknowledgeOnReceived;
-      }
-      if (command.behavior!.reactionOnResolved !== undefined) {
-        $set['behavior.reactionOnResolved'] = command.behavior!.reactionOnResolved;
-      }
-      if (command.behavior!.subscriberAccess !== undefined) {
-        $set['behavior.subscriberAccess'] = command.behavior!.subscriberAccess;
-      }
-      if (command.behavior!.replyPolicy !== undefined) {
-        $set['behavior.replyPolicy'] = command.behavior!.replyPolicy;
-      }
-    }
-
-    if (command.bridgeUrl !== undefined) {
-      $set.bridgeUrl = command.bridgeUrl;
-    }
-
-    if (command.devBridgeUrl !== undefined) {
-      $set.devBridgeUrl = command.devBridgeUrl;
-    }
-
-    if (command.devBridgeActive !== undefined) {
-      $set.devBridgeActive = command.devBridgeActive;
-    }
-
-    const nameChanged = command.name !== undefined && command.name !== existing.name;
+    const newName = command.name;
     const agentQuery = {
       _id: existing._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     };
 
-    if (nameChanged) {
+    if (newName !== undefined && newName !== existing.name) {
       await this.agentRepository.withTransaction(async (session) => {
         if (Object.keys($set).length > 0) {
           await this.agentRepository.update(agentQuery, { $set }, session ? { session } : {});
@@ -141,7 +102,7 @@ export class UpdateAgent {
           existing._id,
           command.environmentId,
           command.organizationId,
-          command.name!,
+          newName,
           session
         );
       });
@@ -165,6 +126,53 @@ export class UpdateAgent {
     const runtimeConfig = await this.loadRuntimeConfig(updated, command);
 
     return toAgentResponse(updated, undefined, runtimeConfig);
+  }
+
+  private buildUpdateSet(command: UpdateAgentCommand): Record<string, string | boolean | null> {
+    const $set: Record<string, string | boolean | null> = {};
+
+    if (command.name !== undefined) {
+      $set.name = command.name;
+    }
+
+    if (command.description !== undefined) {
+      $set.description = command.description;
+    }
+
+    if (command.active !== undefined) {
+      $set.active = command.active;
+    }
+
+    const behavior = command.behavior;
+
+    if (behavior) {
+      if (behavior.acknowledgeOnReceived !== undefined) {
+        $set['behavior.acknowledgeOnReceived'] = behavior.acknowledgeOnReceived;
+      }
+      if (behavior.reactionOnResolved !== undefined) {
+        $set['behavior.reactionOnResolved'] = behavior.reactionOnResolved;
+      }
+      if (behavior.subscriberAccess !== undefined) {
+        $set['behavior.subscriberAccess'] = behavior.subscriberAccess;
+      }
+      if (behavior.replyPolicy !== undefined) {
+        $set['behavior.replyPolicy'] = behavior.replyPolicy;
+      }
+    }
+
+    if (command.bridgeUrl !== undefined) {
+      $set.bridgeUrl = command.bridgeUrl;
+    }
+
+    if (command.devBridgeUrl !== undefined) {
+      $set.devBridgeUrl = command.devBridgeUrl;
+    }
+
+    if (command.devBridgeActive !== undefined) {
+      $set.devBridgeActive = command.devBridgeActive;
+    }
+
+    return $set;
   }
 
   private async loadRuntimeConfig(
@@ -231,7 +239,7 @@ export class UpdateAgent {
 
     await this.integrationRepository.update(
       {
-        _id: { $in: integrationIds } as unknown as string,
+        _id: { $in: integrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
         providerId: EmailProviderIdEnum.NovuAgent,

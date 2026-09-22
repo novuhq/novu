@@ -123,7 +123,7 @@ function useAgentEmoji() {
 
   const { data: emojiList = [] } = useQuery({
     queryKey: getAgentEmojiQueryKey(),
-    queryFn: ({ signal }) => listAgentEmoji(currentEnvironment!, signal),
+    queryFn: ({ signal }) => listAgentEmoji(requireEnvironment(currentEnvironment, 'No environment selected'), signal),
     enabled: !!currentEnvironment,
     staleTime: Infinity,
   });
