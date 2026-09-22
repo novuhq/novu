@@ -62,7 +62,7 @@ export const IntegrationChannel = ({
 
   return (
     <ChannelCellHolder data-test-id={testId}>
-      <IconStyled icon={CHANNEL_TYPE_TO_ICON_NAME[type ?? ''] as any} />
+      <IconStyled icon={(CHANNEL_TYPE_TO_ICON_NAME[type ?? ''] ?? 'bolt') as any} />
       <Text sameColor={sameColor}>{name}</Text>
     </ChannelCellHolder>
   );
