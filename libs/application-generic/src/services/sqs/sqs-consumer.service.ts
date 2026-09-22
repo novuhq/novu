@@ -648,8 +648,7 @@ export class SqsConsumerService {
 
     if (!this.isStarted) {
       this.pool.close();
-      await this.pool.drain(drainTimeoutMs);
-      SqsConsumerService.liveConsumers.delete(this);
+      this.deregisterWhenDrained(await this.pool.drain(drainTimeoutMs));
 
       return;
     }
@@ -666,9 +665,7 @@ export class SqsConsumerService {
     );
 
     const drained = await this.pool.drain(drainTimeoutMs);
-    // Deregistered only once draining finishes, so a shutdown hook asking for
-    // the in-flight count while this is still running gets a truthful answer.
-    SqsConsumerService.liveConsumers.delete(this);
+    this.deregisterWhenDrained(drained);
 
     if (drained) {
       Logger.log({ topic: this.topic }, 'SQS consumer fully drained and stopped', LOG_CONTEXT);
@@ -679,6 +676,31 @@ export class SqsConsumerService {
         LOG_CONTEXT
       );
     }
+  }
+
+  /**
+   * Deregister only once nothing is in flight, so a shutdown hook asking for the
+   * in-flight count always gets a truthful answer.
+   *
+   * A timed-out drain leaves processors running, and `ClickHouseBatchService`
+   * clears its buffers as soon as the count reaches zero - deregistering here
+   * would drop the rows those processors are still writing. Callers are not kept
+   * waiting: `stop` returns on the timeout and the rest happens in the
+   * background, bounded on the consumer side by the visibility timeout and on
+   * the shutdown side by the caller's own attempt limit.
+   */
+  private deregisterWhenDrained(drained: boolean): void {
+    if (drained) {
+      SqsConsumerService.liveConsumers.delete(this);
+
+      return;
+    }
+
+    void this.pool.drain().then(() => {
+      SqsConsumerService.liveConsumers.delete(this);
+
+      Logger.log({ topic: this.topic }, 'SQS consumer drained after its stop timeout', LOG_CONTEXT);
+    });
   }
 
   public getStatus(): { isRunning: boolean; isPaused: boolean; activeSlots: number; waitingSlots: number } {

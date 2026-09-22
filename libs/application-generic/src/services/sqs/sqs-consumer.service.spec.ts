@@ -188,4 +188,40 @@ describe('SqsConsumerService', () => {
       expect(commandCalls(DeleteMessageCommand)).toHaveLength(1);
     });
   });
+
+  describe('in-flight accounting on stop', () => {
+    it('should keep counting a timed-out consumer until its processor finishes', async () => {
+      jest.useFakeTimers();
+
+      let finishProcessing: () => void = () => {};
+      const processing = new Promise<void>((resolve) => {
+        finishProcessing = resolve;
+      });
+
+      // Consumers from earlier tests stay registered with work in flight, so
+      // assert on the delta rather than an absolute count.
+      const otherConsumersInFlight = SqsConsumerService.getTotalInFlightCount();
+
+      const consumer = createConsumer(async () => processing);
+      consumer.start();
+      await capturedConfig.handleMessage(buildMessage());
+      await flushMicrotasks();
+
+      expect(SqsConsumerService.getTotalInFlightCount()).toEqual(otherConsumersInFlight + 1);
+
+      const stopping = consumer.stop({ drainTimeoutMs: 1_000 });
+      jest.advanceTimersByTime(1_000);
+      await stopping;
+
+      // The drain timed out, but the processor is still running and may still be
+      // writing rows that the final ClickHouse flush has to wait for.
+      expect(SqsConsumerService.getTotalInFlightCount()).toEqual(otherConsumersInFlight + 1);
+
+      finishProcessing();
+      await flushMicrotasks();
+      await flushMicrotasks();
+
+      expect(SqsConsumerService.getTotalInFlightCount()).toEqual(otherConsumersInFlight);
+    });
+  });
 });
