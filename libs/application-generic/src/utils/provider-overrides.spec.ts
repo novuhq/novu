@@ -3,6 +3,7 @@ import {
   CONTENT_OVERRIDE_PROVIDER_IDS,
   ContentIssueEnum,
   getProviderOverrideConfig,
+  PushProviderIdEnum,
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
@@ -260,6 +261,107 @@ describe('processProviderOverridesIssues', () => {
     expect(issues.controls).toBeUndefined();
   });
 
+  it('accepts free-form objects for escape-hatch push providers', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.APNS]: {
+        aps: { alert: { body: '{{payload.body}}' } },
+        whatever: true,
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
+  it('validates FCM overrides against the generated BaseMessage schema', () => {
+    const valid = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        data: { orderId: '{{payload.orderId}}' },
+        android: { priority: 'high' },
+        fcmOptions: { analyticsLabel: 'orders' },
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalidKey = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        android: { priority: 'high' },
+        topíc: 'orders',
+      },
+    });
+
+    expect(invalidKey.controls?.['providerOverrides.fcm.topíc']).toEqual([
+      {
+        message: '"topíc" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.fcm.topíc',
+      },
+    ]);
+
+    const invalidData = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        data: { orderId: 123 },
+      },
+    });
+
+    expect(invalidData.controls?.['providerOverrides.fcm.data.orderId']).toBeDefined();
+  });
+
+  it.each([null, [], 'not-an-object'])('rejects malformed fcm override value %j', (override) => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: override,
+    } as never);
+
+    expect(issues.controls?.[`providerOverrides.${PushProviderIdEnum.FCM}`]).toBeDefined();
+  });
+
+  it.each([
+    { topic: 't', token: 'x' },
+    { topic: 'orders', condition: "'stock' in topics" },
+    { token: 'a', tokens: ['b'], topic: 'c' },
+  ])('reports a friendly mutual-exclusion message when FCM override sets multiple routing keys %j', (override) => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: override,
+    });
+
+    expect(issues.controls?.['providerOverrides.fcm']).toEqual([
+      {
+        message: 'Only one of token, topic, condition, tokens is allowed',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.fcm',
+      },
+    ]);
+  });
+
+  it('accepts a single FCM routing key with Liquid', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        topic: 'org-{{subscriber.data.orgId}}',
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
+  it('keeps unrelated FCM schema issues when routing keys conflict', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        topic: 'orders',
+        token: 'device-token',
+        data: { orderId: 123 },
+      },
+    });
+
+    expect(issues.controls?.['providerOverrides.fcm']).toEqual([
+      {
+        message: 'Only one of token, topic, condition, tokens is allowed',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.fcm',
+      },
+    ]);
+    expect(issues.controls?.['providerOverrides.fcm.data.orderId']).toBeDefined();
+  });
+
   it('validates Telegram overrides against the generated sendMessage schema', () => {
     const valid = processProviderOverridesIssues({
       [ChatProviderIdEnum.Telegram]: {
@@ -280,6 +382,33 @@ describe('processProviderOverridesIssues', () => {
         message: '"whatever" is not a supported property',
         issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.telegram.whatever',
+      },
+    ]);
+  });
+
+  it('validates Expo overrides against the schema', () => {
+    const valid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        channelId: 'orders',
+        interruptionLevel: 'time-sensitive',
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        chanelId: 'orders',
+      },
+    });
+
+    expect(invalid.controls?.['providerOverrides.expo.chanelId']).toEqual([
+      {
+        message: '"chanelId" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.expo.chanelId',
       },
     ]);
   });
