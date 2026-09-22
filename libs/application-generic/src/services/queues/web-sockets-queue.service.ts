@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
-import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
+import { IWebSocketBulkJobDto, IWebSocketDataDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
@@ -60,11 +60,14 @@ export class WebSocketsQueueService extends QueueBaseService {
     return await this.bestEffort(() => this.publishBulk(data), { count: data.length });
   }
 
-  private async publish(data: IWebSocketJobDto): Promise<void> {
-    const isSocketWorkerEnabled = await this.socketWorkerService.isEnabled(data.data?._environmentId);
+  /**
+   * Logs and drops any send failure rather than rejecting, so that a socket worker outage still
+   * leaves the legacy queue push below as a fallback. Returns whether the event was delivered.
+   */
+  private async sendToSocketWorker(data: IWebSocketDataDto): Promise<boolean> {
+    const { userId, event, _environmentId, _organizationId, subscriberId, payload, contextKeys } = data;
 
-    if (isSocketWorkerEnabled && data.data) {
-      const { userId, event, _environmentId, _organizationId, subscriberId, payload, contextKeys } = data.data;
+    try {
       await this.socketWorkerService.sendMessage({
         userId,
         event,
@@ -75,7 +78,28 @@ export class WebSocketsQueueService extends QueueBaseService {
         contextKeys,
       });
 
-      Logger.debug({ userId, event }, 'Sent message directly to socket worker', LOG_CONTEXT);
+      return true;
+    } catch (error) {
+      Logger.warn(
+        { userId, event, error: error instanceof Error ? error.message : String(error) },
+        'Failed to send message directly to socket worker',
+        LOG_CONTEXT
+      );
+
+      return false;
+    }
+  }
+
+  private async publish(data: IWebSocketJobDto): Promise<void> {
+    const isSocketWorkerEnabled = await this.socketWorkerService.isEnabled(data.data?._environmentId);
+
+    if (isSocketWorkerEnabled && data.data) {
+      const { userId, event } = data.data;
+      const isSent = await this.sendToSocketWorker(data.data);
+
+      if (isSent) {
+        Logger.debug({ userId, event }, 'Sent message directly to socket worker', LOG_CONTEXT);
+      }
 
       const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
         data.data._environmentId,
@@ -98,25 +122,15 @@ export class WebSocketsQueueService extends QueueBaseService {
       : false;
 
     if (isSocketWorkerEnabled) {
-      const promises = data.map(async (item) => {
-        if (item.data) {
-          const { userId, event, _environmentId, _organizationId, subscriberId, payload, contextKeys } = item.data;
+      const results = await Promise.all(
+        data.flatMap((item) => (item.data ? [this.sendToSocketWorker(item.data)] : []))
+      );
 
-          return this.socketWorkerService.sendMessage({
-            userId,
-            event,
-            data: payload,
-            organizationId: _organizationId,
-            environmentId: _environmentId,
-            subscriberId,
-            contextKeys,
-          });
-        }
-      });
-
-      await Promise.all(promises);
-
-      Logger.debug({ count: data.length }, 'Sent messages directly to socket worker', LOG_CONTEXT);
+      Logger.debug(
+        { sent: results.filter(Boolean).length, count: data.length },
+        'Sent messages directly to socket worker',
+        LOG_CONTEXT
+      );
 
       const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
         firstItem?.data?._environmentId,
