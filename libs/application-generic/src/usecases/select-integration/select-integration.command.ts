@@ -1,8 +1,15 @@
-import { ChannelTypeEnum, ITenantDefine, ProvidersIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ITenantDefine, ITriggerPayload, ProvidersIdEnum } from '@novu/shared';
 import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 
 import { EnvironmentCommand } from '../../commands/project.command';
 import type { ICompileContext } from '../../types/compile-context';
+
+export interface IntegrationFilterData {
+  tenant?: ITenantDefine | string;
+  payload?: ITriggerPayload;
+  subscriber?: ICompileContext['subscriber'] | Record<string, unknown>;
+  context?: ICompileContext['context'] | Record<string, unknown>;
+}
 
 export class SelectIntegrationCommand extends EnvironmentCommand {
   @IsOptional()
@@ -19,11 +26,7 @@ export class SelectIntegrationCommand extends EnvironmentCommand {
   providerId?: ProvidersIdEnum;
 
   @IsDefined()
-  filterData: {
-    tenant?: ITenantDefine | string;
-    subscriber?: ICompileContext['subscriber'] | Record<string, unknown>;
-    context?: ICompileContext['context'] | Record<string, unknown>;
-  };
+  filterData: IntegrationFilterData;
 
   @IsOptional()
   userId?: string;
