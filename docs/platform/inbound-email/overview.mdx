@@ -96,6 +96,12 @@ Each item in `data.object.mail.attachments` is metadata plus a time-limited down
 | `size` | `number` | File size in bytes |
 | `url` | `string` | Time-limited download URL. Issue an HTTP `GET` to this value |
 | `expiresAt` | `string` | ISO-8601 time when `url` stops being valid (six hours after delivery) |
+| `content` | `object \| null` | Deprecated, use `url`. Raw bytes as `{ "type": "Buffer", "data": number[] }`, or `null` when rehydration failed |
+| `contentBytes` | `number` | Deprecated, use `size` |
+
+<Note>
+  On self-hosted deployments without S3 configured, `url` is absent and the binary travels inline in the deprecated `content` field. Fall back to `content` when `url` is undefined.
+</Note>
 
 ```typescript
 for (const attachment of payload.data?.object?.mail?.attachments ?? []) {

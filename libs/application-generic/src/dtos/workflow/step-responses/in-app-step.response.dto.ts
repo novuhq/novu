@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { InAppControlDto } from '../controls/in-app-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class InAppControlsMetadataResponseDto extends ControlsMetadataDto {
+class InAppControlsMetadataResponseDto extends ControlsMetadataDto<InAppControlDto> {
   @ApiProperty({
     description: 'Control values specific to In-App',
     type: () => InAppControlDto,
