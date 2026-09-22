@@ -190,6 +190,9 @@ export class ManagedAgentProviderFactory {
       location: config.googleCredentials.location,
       engineId: config.googleCredentials.engineId,
       assistantId: 'default_assistant',
+      // Picked per-integration in the dashboard (Agent ID field). Omit to use
+      // the assistant's default behavior instead of a specific registered agent.
+      agentId: config.googleCredentials.agentId,
       quotaProjectId: config.googleCredentials.quotaProjectId,
       durable,
     });

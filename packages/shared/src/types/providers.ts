@@ -37,6 +37,7 @@ export enum CredentialsKeyEnum {
   AuthenticationTokenKey = 'authenticationTokenKey',
   AccessKey = 'accessKey',
   InstanceId = 'instanceId',
+  AgentId = 'agentId',
   ApiToken = 'apiToken',
   ApiURL = 'apiURL',
   AppID = 'appID',
