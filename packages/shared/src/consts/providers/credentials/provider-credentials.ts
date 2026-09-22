@@ -1687,11 +1687,11 @@ export const geminiAgentConfig: IConfigCredential[] = [
   },
   {
     key: CredentialsKeyEnum.AgentId,
-    value: 'deep_research',
     displayName: 'Agent ID (optional)',
     description:
-      'Registered agent within the engine (Discovery Engine console \u2192 App \u2192 Agents). ' +
-      'Leave blank to use the assistant\u2019s default behavior instead of a specific agent.',
+      'Registered agent within the engine (Discovery Engine console \u2192 App \u2192 Agents, ' +
+      'e.g. deep_research). Leave blank to use the assistant\u2019s default behavior instead ' +
+      'of a specific agent.',
     placeholder: 'deep_research',
     type: 'string',
     required: false,
