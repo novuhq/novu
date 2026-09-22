@@ -366,31 +366,18 @@ export class AgentInboundHandler implements OnModuleInit {
       humanParticipantCount: countHumanParticipants(existingConversation),
       smartMentionRequired: conversationHasSmartMentionRequired(existingConversation),
     };
-    const requiresMention = requiresExplicitMention(thread, message, mentionContext);
-    const pendingAsk =
-      requiresMention &&
-      existingConversation != null &&
-      (await this.humanConversationInbound.hasPendingAsk(config.environmentId, existingConversation._id));
-
-    if (requiresMention && !pendingAsk) {
-      if (
-        mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
-        mentionContext.humanParticipantCount >= 2 &&
-        isNestedSharedThread(config.platform, thread, platformThreadId)
-      ) {
-        await this.postMentionRequiredNotice(agentId, config, thread, platformThreadId, existingConversation);
-      }
-
-      await thread.unsubscribe();
-
-      return;
-    }
-
     if (
-      followsNestedThreadWithoutMention(mentionContext) &&
-      isNestedSharedThread(config.platform, thread, platformThreadId)
+      await this.applyPrePersistenceMentionGate({
+        agentId,
+        config,
+        thread,
+        message,
+        platformThreadId,
+        existingConversation,
+        mentionContext,
+      })
     ) {
-      await thread.subscribe();
+      return;
     }
 
     if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
@@ -483,6 +470,54 @@ export class AgentInboundHandler implements OnModuleInit {
       mentionContext,
       participantsSnapshot,
     });
+  }
+
+  /**
+   * Mention gating that runs before any conversation is persisted, so an
+   * unmentioned message in a shared room never creates a conversation. A thread
+   * with a pending ask is exempt — that reply is the answer we are waiting for.
+   * Also subscribes to threads this agent is allowed to follow unmentioned.
+   * Returns true when the message must be dropped.
+   */
+  private async applyPrePersistenceMentionGate(args: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    thread: Thread;
+    message: Message;
+    platformThreadId: string;
+    existingConversation: ConversationEntity | null;
+    mentionContext: ExplicitMentionContext;
+  }): Promise<boolean> {
+    const { agentId, config, thread, message, platformThreadId, existingConversation, mentionContext } = args;
+
+    const requiresMention = requiresExplicitMention(thread, message, mentionContext);
+    const pendingAsk =
+      requiresMention &&
+      existingConversation != null &&
+      (await this.humanConversationInbound.hasPendingAsk(config.environmentId, existingConversation._id));
+
+    if (requiresMention && !pendingAsk) {
+      if (
+        mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
+        mentionContext.humanParticipantCount >= 2 &&
+        isNestedSharedThread(config.platform, thread, platformThreadId)
+      ) {
+        await this.postMentionRequiredNotice(agentId, config, thread, platformThreadId, existingConversation);
+      }
+
+      await thread.unsubscribe();
+
+      return true;
+    }
+
+    if (
+      followsNestedThreadWithoutMention(mentionContext) &&
+      isNestedSharedThread(config.platform, thread, platformThreadId)
+    ) {
+      await thread.subscribe();
+    }
+
+    return false;
   }
 
   /**
@@ -759,48 +794,21 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    if (event === AgentEventEnum.ON_MESSAGE && requiresExplicitMention(thread, message, mentionContext)) {
-      return;
-    }
-
-    const mentionBotUserId =
-      event === AgentEventEnum.ON_MESSAGE &&
-      mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
-      mentionContext.humanParticipantCount === 1 &&
-      messageContainsUserMention(message, config.platform)
-        ? await this.resolveMentionBotUserId(config, message)
-        : undefined;
-    const exclusiveThreadEnd =
-      event === AgentEventEnum.ON_MESSAGE
-        ? detectSmartExclusiveThreadEnded({
-            replyPolicy: mentionContext.replyPolicy,
-            participantsSnapshot,
-            subscriberId,
-            platform: config.platform,
-            platformUserId: message.author?.userId,
-            botUserId: mentionBotUserId,
-            message,
-          })
-        : null;
-
-    if (exclusiveThreadEnd != null && isNestedSharedThread(config.platform, thread, platformThreadId)) {
-      if (exclusiveThreadEnd === 'teammate_mention') {
-        await this.markSmartMentionRequired(config, conversation);
-      }
-
-      await this.postMentionRequiredNotice(
+    if (
+      await this.maybeStopOnMentionGate({
         agentId,
         config,
         thread,
-        platformThreadId,
+        message,
+        event,
         conversation,
-        exclusiveThreadEnd === 'join' ? message.author?.fullName : undefined
-      );
-      await thread.unsubscribe();
-
-      if (message.isMention !== true) {
-        return;
-      }
+        platformThreadId,
+        subscriberId,
+        mentionContext,
+        participantsSnapshot,
+      })
+    ) {
+      return;
     }
 
     if (
@@ -826,6 +834,86 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     await runtime.dispatch(turn);
+  }
+
+  /**
+   * Mention gating that has to run *after* the HITL interceptor, so an
+   * unmentioned reply can still settle a pending ask. Under the SMART policy it
+   * also detects the moment an agent's exclusive thread stops being exclusive —
+   * a teammate joins, or the incumbent mentions someone else — and steps back
+   * out of the thread. Returns true when the turn must stop here.
+   */
+  private async maybeStopOnMentionGate(args: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    thread: Thread;
+    message: Message;
+    event: AgentEventEnum;
+    conversation: ConversationEntity;
+    platformThreadId: string;
+    subscriberId: string | null;
+    mentionContext: ExplicitMentionContext;
+    participantsSnapshot: ConversationParticipant[];
+  }): Promise<boolean> {
+    const {
+      agentId,
+      config,
+      thread,
+      message,
+      event,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      mentionContext,
+      participantsSnapshot,
+    } = args;
+
+    if (event !== AgentEventEnum.ON_MESSAGE) {
+      return false;
+    }
+
+    if (requiresExplicitMention(thread, message, mentionContext)) {
+      return true;
+    }
+
+    const mentionBotUserId =
+      mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
+      mentionContext.humanParticipantCount === 1 &&
+      messageContainsUserMention(message, config.platform)
+        ? await this.resolveMentionBotUserId(config, message)
+        : undefined;
+
+    const exclusiveThreadEnd = detectSmartExclusiveThreadEnded({
+      replyPolicy: mentionContext.replyPolicy,
+      participantsSnapshot,
+      subscriberId,
+      platform: config.platform,
+      platformUserId: message.author?.userId,
+      botUserId: mentionBotUserId,
+      message,
+    });
+
+    if (exclusiveThreadEnd == null || !isNestedSharedThread(config.platform, thread, platformThreadId)) {
+      return false;
+    }
+
+    if (exclusiveThreadEnd === 'teammate_mention') {
+      await this.markSmartMentionRequired(config, conversation);
+    }
+
+    await this.postMentionRequiredNotice(
+      agentId,
+      config,
+      thread,
+      platformThreadId,
+      conversation,
+      exclusiveThreadEnd === 'join' ? message.author?.fullName : undefined
+    );
+    await thread.unsubscribe();
+
+    // A message that did mention the agent still gets answered — the notice
+    // above just tells the room the agent now needs mentioning.
+    return message.isMention !== true;
   }
 
   private async maybeStopKeylessInbound(
