@@ -61,7 +61,8 @@ describe('GetSubscription #novu-v2', async () => {
     throw new Error('ee-billing does not exist');
   }
 
-  const { GetPlatformNotificationUsageCommand, GetSubscription, GetSubscriptionCommand } = eeBilling;
+  const { GetPlatformNotificationUsageCommand, GetStripeSubscription, GetSubscription, GetSubscriptionCommand } =
+    eeBilling;
 
   const communityOrganizationRepo = {
     findById: () =>
@@ -80,15 +81,15 @@ describe('GetSubscription #novu-v2', async () => {
         },
       ]),
   };
-  let getOrCreateCustomer = {
+  let getOrCreateCustomer: { execute: () => Promise<DeepPartial<Stripe.Customer>> } = {
     execute: () => Promise.resolve(mockedStripeCustomer),
   };
   let getPlatformNotificationUsageSpy: sinon.SinonSpy;
 
   const createUseCase = () => {
     const useCase = new GetSubscription(
-      getOrCreateCustomer as any,
-      getPlatformNotificationUsage as any,
+      new GetStripeSubscription(getOrCreateCustomer),
+      getPlatformNotificationUsage,
       communityOrganizationRepo
     );
 
@@ -177,7 +178,7 @@ describe('GetSubscription #novu-v2', async () => {
               },
             ],
           },
-        } as unknown as Stripe.Customer),
+        }),
     };
 
     try {
@@ -220,7 +221,7 @@ describe('GetSubscription #novu-v2', async () => {
               },
             ],
           },
-        } as unknown as Stripe.Customer),
+        }),
     };
 
     try {

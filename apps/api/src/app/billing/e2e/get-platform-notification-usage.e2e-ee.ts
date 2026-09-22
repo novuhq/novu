@@ -25,9 +25,9 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
     getFlag: sinon.stub().resolves(false),
   };
 
-  const mockCacheService = {
-    cacheEnabled: sinon.stub().returns(false),
-    get: sinon.stub().resolves(undefined),
+  const mockUsageCounterCache = {
+    get: sinon.stub().resolves(null),
+    set: sinon.stub().resolves(),
   };
 
   const createUseCase = () => {
@@ -37,7 +37,7 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
       notificationRepo,
       communityOrganizationRepo,
       mockFeatureFlagsService,
-      mockCacheService,
+      mockUsageCounterCache,
       new PinoLogger({})
     );
   };
@@ -82,7 +82,7 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
     const notificationCountPerIndex = 10;
     const orgCount = 10;
 
-    const organizations: any[] = [];
+    const organizations: Array<{ id: string; notificationsCount: number }> = [];
 
     for (let index = 0; index < orgCount; index += 1) {
       const orgSession = new UserSession();
