@@ -224,6 +224,47 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     return result.data;
   }
 
+  /**
+   * Same source and half-open range semantics as `getPlatformUsageByDateRange`, but one row per
+   * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
+   * `day` is the UTC calendar day as `YYYY-MM-DD`.
+   */
+  async getPlatformDailyUsageByDateRange(
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ organization_id: string; day: string; count: string }>> {
+    const startDay = startDate.toISOString().split('T')[0];
+    const endDayInclusive = new Date(endDate.getTime() - 1).toISOString().split('T')[0];
+
+    const query = `
+      SELECT
+        organization_id,
+        toString(date) as day,
+        sum(count) as count
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE
+        date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_status_processing'
+      GROUP BY organization_id, date
+      ORDER BY organization_id, date
+    `;
+
+    const result = await this.clickhouseService.query<{
+      organization_id: string;
+      day: string;
+      count: string;
+    }>({
+      query,
+      params: {
+        startDate: startDay,
+        endDate: endDayInclusive,
+      },
+    });
+
+    return result.data;
+  }
+
   async getActiveOrganizationIds(
     startDate: Date,
     endDate: Date,
