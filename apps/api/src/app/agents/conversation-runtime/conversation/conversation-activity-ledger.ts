@@ -3,6 +3,7 @@ import { PinoLogger, shortId } from '@novu/application-generic';
 import {
   ActivityView,
   ConversationActivityEntity,
+  // biome-ignore lint/style/noRestrictedImports: this class is the conversation activity ledger
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivitySignalData,
@@ -19,6 +20,7 @@ import type {
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
+  PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -28,6 +30,7 @@ import type {
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
 } from './agent-conversation.types';
+// biome-ignore lint/style/noRestrictedImports: sequence minting is owned by this ledger
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 import {
   describeRunLifecycleFromEvent,
@@ -323,9 +326,15 @@ export class ConversationActivityLedger {
       platformThreadId: params.channel.platformThreadId,
       senderType: params.actorType,
       senderId: params.actorId,
+      senderName: params.actorName,
       content: params.approved ? `Approved ${toolName}` : `Denied ${toolName}`,
       type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
-      toolData: { approvalId: params.approvalId, approved: params.approved, toolName: params.toolName },
+      toolData: {
+        approvalId: params.approvalId,
+        approved: params.approved,
+        toolName: params.toolName,
+        ...(params.optionId ? { optionId: params.optionId } : {}),
+      },
       sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
@@ -334,6 +343,26 @@ export class ConversationActivityLedger {
     await this.emitPersistedClientEvent(params, activity);
 
     return activity;
+  }
+
+  async persistHumanInteractionRequest(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.persistHumanInteractionActivity(
+      params,
+      ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+      'request'
+    );
+  }
+
+  async persistHumanInteractionResponse(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.persistHumanInteractionActivity(
+      params,
+      ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+      'response'
+    );
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
@@ -603,6 +632,73 @@ export class ConversationActivityLedger {
     return this.activityRepository.repointSubscriberSender(params);
   }
 
+  private async persistHumanInteractionActivity(
+    params: PersistHumanInteractionActivityParams,
+    type: ConversationActivityTypeEnum,
+    suffix: 'request' | 'response'
+  ): Promise<ConversationActivityEntity> {
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+    const identifier = `human:${params.interactionIdentifier}:${suffix}`;
+
+    try {
+      const activity = await this.activityRepository.createToolActivity({
+        identifier,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: params.channel.platformThreadId,
+        senderType: params.actorType,
+        senderId: params.actorId,
+        senderName: params.actorName,
+        content: humanInteractionActivityContent(params, suffix),
+        type,
+        toolData: {},
+        richContent: {
+          humanInteraction: {
+            interactionIdentifier: params.interactionIdentifier,
+            kind: params.kind,
+            title: params.title,
+            ...(params.requestId ? { requestId: params.requestId } : {}),
+            ...(params.subtitle ? { subtitle: params.subtitle } : {}),
+            ...(params.body ? { body: params.body } : {}),
+            ...(params.status ? { status: params.status } : {}),
+            ...(params.optionId ? { optionId: params.optionId } : {}),
+            ...(params.text ? { text: params.text } : {}),
+          },
+        },
+        sequence,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        ...(params.platformMessageId ? { platformMessageId: params.platformMessageId } : {}),
+      });
+
+      await this.emitPersistedClientEvent(params, activity);
+
+      return activity;
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        const existing = await this.activityRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _conversationId: params.conversationId,
+            identifier,
+          },
+          '*'
+        );
+
+        if (existing) {
+          return existing;
+        }
+      }
+
+      throw err;
+    }
+  }
+
   private async persistAndEmitClientEvent(
     context: ConversationActivityContext,
     params: PersistAgentActivityParams,
@@ -749,5 +845,47 @@ export class ConversationActivityLedger {
       agentIdentifier: params.agentIdentifier,
       activity,
     });
+  }
+}
+
+function humanInteractionActivityContent(
+  params: PersistHumanInteractionActivityParams,
+  suffix: 'request' | 'response'
+): string {
+  const title = params.title.trim() || params.kind;
+
+  if (suffix === 'request') {
+    switch (params.kind) {
+      case 'ask':
+        return `Waiting for answer: ${title}`;
+      case 'choose':
+        return `Choice required: ${title}`;
+      case 'tell':
+        return `Notice sent: ${title}`;
+      case 'approve':
+        return `Approval required: ${title}`;
+      default:
+        return `Human input required: ${title}`;
+    }
+  }
+
+  const actor = params.actorName?.trim() || params.actorId;
+  const status = params.status;
+
+  switch (status) {
+    case 'approved':
+      return `Approved by ${actor}: ${title}`;
+    case 'denied':
+      return `Denied by ${actor}: ${title}`;
+    case 'answered':
+      return params.text?.trim() ? `Answered by ${actor}: ${params.text.trim()}` : `Answered by ${actor}: ${title}`;
+    case 'expired':
+      return `Expired: ${title}`;
+    case 'canceled':
+      return `Canceled: ${title}`;
+    case 'delivered':
+      return `Delivered: ${title}`;
+    default:
+      return params.optionId ? `${actor} chose ${params.optionId}` : `Human response from ${actor}: ${title}`;
   }
 }

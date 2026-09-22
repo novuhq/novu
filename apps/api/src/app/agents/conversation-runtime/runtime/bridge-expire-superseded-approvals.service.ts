@@ -96,6 +96,7 @@ export class BridgeExpireSupersededApprovalsService {
         toolName: request.toolData?.toolName,
         actorType: ConversationActivitySenderTypeEnum.SYSTEM,
         actorId: config.agentIdentifier,
+        actorName: 'System',
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });
