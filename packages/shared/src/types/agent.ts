@@ -23,12 +23,13 @@ export enum AgentSubscriberAccessEnum {
  * DMs always reply without a mention regardless of this setting.
  *
  * - `mention_only`: shared rooms always require an explicit @mention.
- * - `auto_reply` (default): after the agent joins a nested Slack/Teams thread,
- *   unmentioned follow-ups in that thread are dispatched.
- * - `smart`: `auto_reply` for as long as a single human is talking to the agent
- *   in the thread. Once a second person speaks, another agent is in the thread,
- *   or the incumbent @mentions another teammate, the agent posts a one-off notice
- *   and reverts to requiring an @mention there.
+ * - `auto_reply`: after the agent joins a nested Slack/Teams thread,
+ *   unmentioned follow-ups in that thread are dispatched. Missing/legacy
+ *   `behavior.replyPolicy` still means auto_reply so existing agents do not flip.
+ * - `smart` (create default): `auto_reply` for as long as a single human is talking
+ *   to the agent in the thread. Once a second person speaks, another agent is in
+ *   the thread, or the incumbent @mentions another teammate, the agent posts a
+ *   one-off notice and reverts to requiring an @mention there.
  */
 export enum AgentReplyPolicyEnum {
   MENTION_ONLY = 'mention_only',

@@ -45,6 +45,7 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(createRes.body.data.managedRuntime).to.equal(undefined);
     expect(createRes.body.data.createdBy).to.equal(session.user._id);
     expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.replyPolicy).to.equal('smart');
 
     const listRes = await session.testAgent.get('/v1/agents');
 
@@ -122,6 +123,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior.replyPolicy).to.equal('smart');
 
     const mentionOnlyRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { replyPolicy: 'mention_only' },

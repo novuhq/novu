@@ -74,7 +74,8 @@ const REPLY_POLICY_TOOLTIP = (
       ))}
     </ul>
     <p className="opacity-80">
-      Direct messages always get a reply. Channel messages and group chats always need an @mention.
+      New agents start on Smart. Agents without a saved policy keep Auto-reply. Direct messages always get a reply.
+      Channel messages and group chats always need an @mention.
     </p>
   </div>
 );
