@@ -42,6 +42,36 @@ describe('buildManagedIntegrationCredentials', () => {
       apiKey: 'aws-key',
     });
   });
+
+  it('builds Google credentials without an agentId when the field is blank', () => {
+    expect(
+      buildManagedIntegrationCredentials(AgentRuntimeProviderIdEnum.Google, {
+        apiKey: '',
+        projectName: ' my-project ',
+        instanceId: ' engine-1 ',
+      })
+    ).toEqual({
+      projectName: 'my-project',
+      instanceId: 'engine-1',
+    });
+  });
+
+  it('carries the dashboard-picked Google agentId through, trimmed', () => {
+    expect(
+      buildManagedIntegrationCredentials(AgentRuntimeProviderIdEnum.Google, {
+        apiKey: '',
+        projectName: 'my-project',
+        instanceId: 'engine-1',
+        region: 'us-central1',
+        agentId: ' deep_research ',
+      })
+    ).toEqual({
+      projectName: 'my-project',
+      instanceId: 'engine-1',
+      region: 'us-central1',
+      agentId: 'deep_research',
+    });
+  });
 });
 
 describe('buildVerifyFingerprint', () => {

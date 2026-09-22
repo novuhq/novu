@@ -30,6 +30,7 @@ type ConfigureCredentialsSectionProps = {
   region?: string;
   projectName?: string;
   instanceId?: string;
+  agentId?: string;
   errors: CreateAgentFormErrors;
   disabled?: boolean;
   status: VerifyStatus;
@@ -45,6 +46,7 @@ type ConfigureCredentialsSectionProps = {
   onRegionChange?: (next: string) => void;
   onProjectNameChange?: (next: string) => void;
   onInstanceIdChange?: (next: string) => void;
+  onAgentIdChange?: (next: string) => void;
   onVerify: () => void;
   onSave: () => void;
   canVerify?: boolean;
@@ -100,6 +102,7 @@ export function ConfigureCredentialsSection({
   region = '',
   projectName = '',
   instanceId = '',
+  agentId = '',
   errors,
   disabled,
   status,
@@ -115,6 +118,7 @@ export function ConfigureCredentialsSection({
   onRegionChange,
   onProjectNameChange,
   onInstanceIdChange,
+  onAgentIdChange,
   onVerify,
   onSave,
   canVerify,
@@ -168,11 +172,13 @@ export function ConfigureCredentialsSection({
         projectName={projectName}
         instanceId={instanceId}
         region={region}
+        agentId={agentId}
         errors={errors}
         disabled={disabled}
         onProjectNameChange={onProjectNameChange ?? (() => undefined)}
         onInstanceIdChange={onInstanceIdChange ?? (() => undefined)}
         onRegionChange={onRegionChange ?? (() => undefined)}
+        onAgentIdChange={onAgentIdChange ?? (() => undefined)}
       />
     );
   } else if (isAwsProvider) {

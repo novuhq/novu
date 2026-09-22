@@ -195,6 +195,7 @@ export function CreateAgentDialog({
     region,
     projectName,
     instanceId,
+    agentId,
     verifyStatus,
     verifyMessage,
     lastVerifiedKeyRef,
@@ -203,6 +204,7 @@ export function CreateAgentDialog({
     setRegion,
     setProjectName,
     setInstanceId,
+    setAgentId,
     setVerifyStatus,
     setVerifyMessage,
     resetCredentials,
@@ -536,7 +538,7 @@ export function CreateAgentDialog({
     if (!selectedConnector?.providerId) return;
 
     const trimmedName = integrationName.trim();
-    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId };
+    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId, agentId };
 
     if (!trimmedName) return;
     if (!hasCompleteManagedCredentials(selectedConnector.providerId, fields)) return;
@@ -701,6 +703,7 @@ export function CreateAgentDialog({
         region: region.trim() || undefined,
         projectName: projectName.trim() || undefined,
         instanceId: instanceId.trim() || undefined,
+        agentId: agentId.trim() || undefined,
         integrationId: selectedIntegrationId,
         integrationName: integrationName.trim() || undefined,
         managedOverrides,
@@ -779,6 +782,7 @@ export function CreateAgentDialog({
                   region={region}
                   projectName={projectName}
                   instanceId={instanceId}
+                  agentId={agentId}
                   errors={errors}
                   disabled={isSubmitting}
                   status={verifyStatus}
@@ -809,6 +813,7 @@ export function CreateAgentDialog({
                     setInstanceId(next);
                     setErrors((prev) => ({ ...prev, instanceId: undefined }));
                   }}
+                  onAgentIdChange={setAgentId}
                   onVerify={handleVerify}
                   onSave={handleSaveIntegration}
                 />

@@ -7,6 +7,7 @@ export type ManagedCredentialFields = {
   externalWorkspaceId?: string;
   projectName?: string;
   instanceId?: string;
+  agentId?: string;
 };
 
 export function buildManagedIntegrationCredentials(
@@ -18,6 +19,7 @@ export function buildManagedIntegrationCredentials(
   const region = fields.region?.trim();
   const projectName = fields.projectName?.trim();
   const instanceId = fields.instanceId?.trim();
+  const agentId = fields.agentId?.trim();
 
   if (isAnthropicAwsProvider(providerId)) {
     return {
@@ -32,6 +34,7 @@ export function buildManagedIntegrationCredentials(
       projectName: projectName ?? '',
       instanceId: instanceId ?? '',
       ...(region ? { region } : {}),
+      ...(agentId ? { agentId } : {}),
     };
   }
 

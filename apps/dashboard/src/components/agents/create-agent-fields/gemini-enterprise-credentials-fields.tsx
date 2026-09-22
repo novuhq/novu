@@ -6,27 +6,32 @@ type GeminiEnterpriseCredentialsFieldsProps = {
   projectName: string;
   instanceId: string;
   region: string;
+  agentId: string;
   errors: CreateAgentFormErrors;
   disabled?: boolean;
   onProjectNameChange: (next: string) => void;
   onInstanceIdChange: (next: string) => void;
   onRegionChange: (next: string) => void;
+  onAgentIdChange: (next: string) => void;
 };
 
 export function GeminiEnterpriseCredentialsFields({
   projectName,
   instanceId,
   region,
+  agentId,
   errors,
   disabled,
   onProjectNameChange,
   onInstanceIdChange,
   onRegionChange,
+  onAgentIdChange,
 }: GeminiEnterpriseCredentialsFieldsProps) {
   const formId = useId();
   const projectNameId = `${formId}-project-name`;
   const instanceIdInputId = `${formId}-instance-id`;
   const regionId = `${formId}-region`;
+  const agentIdInputId = `${formId}-agent-id`;
 
   return (
     <div className="flex flex-col gap-3">
@@ -85,6 +90,25 @@ export function GeminiEnterpriseCredentialsFields({
           disabled={disabled}
           className="font-mono"
         />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor={agentIdInputId} className="text-text-sub text-label-xs font-medium">
+          Agent ID <span className="text-text-soft">(Optional)</span>
+        </label>
+        <Input
+          id={agentIdInputId}
+          size="xs"
+          value={agentId}
+          onChange={(e) => onAgentIdChange(e.target.value)}
+          placeholder="deep_research"
+          disabled={disabled}
+          className="font-mono"
+        />
+        <p className="text-text-soft text-label-xs">
+          Registered agent within the engine (Discovery Engine console → App → Agents). Leave blank to
+          use the assistant’s default behavior.
+        </p>
       </div>
     </div>
   );

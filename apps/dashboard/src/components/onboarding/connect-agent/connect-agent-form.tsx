@@ -74,6 +74,7 @@ type ConnectAgentFormProps = {
   region: string;
   projectName?: string;
   instanceId?: string;
+  agentId?: string;
 
   templateSelection: TemplateSelection;
   isExistingMode: boolean;
@@ -116,6 +117,7 @@ type ConnectAgentFormProps = {
   onRegionChange: (next: string) => void;
   onProjectNameChange?: (next: string) => void;
   onInstanceIdChange?: (next: string) => void;
+  onAgentIdChange?: (next: string) => void;
   onNameChange: (next: string) => void;
   onIdentifierChange: (next: string) => void;
   onIdentifierTouched: () => void;
@@ -230,6 +232,7 @@ export function ConnectAgentForm({
   region,
   projectName = '',
   instanceId = '',
+  agentId = '',
   templateSelection,
   isExistingMode,
   isScratchMode,
@@ -260,6 +263,7 @@ export function ConnectAgentForm({
   onRegionChange,
   onProjectNameChange,
   onInstanceIdChange,
+  onAgentIdChange,
   onNameChange,
   onIdentifierChange,
   onIdentifierTouched,
@@ -380,6 +384,7 @@ export function ConnectAgentForm({
                 region={region}
                 projectName={projectName}
                 instanceId={instanceId}
+                agentId={agentId}
                 errors={errors}
                 disabled={disabled}
                 status={verifyStatus}
@@ -393,6 +398,7 @@ export function ConnectAgentForm({
                 onRegionChange={onRegionChange}
                 onProjectNameChange={onProjectNameChange}
                 onInstanceIdChange={onInstanceIdChange}
+                onAgentIdChange={onAgentIdChange}
                 onVerify={onVerify}
                 onSave={onSaveIntegration}
               />

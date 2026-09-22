@@ -8,6 +8,7 @@ export function useManagedClaudeCredentialsFlow() {
   const [region, setRegionState] = useState('');
   const [projectName, setProjectNameState] = useState('');
   const [instanceId, setInstanceIdState] = useState('');
+  const [agentId, setAgentIdState] = useState('');
   const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>('idle');
   const [verifyMessage, setVerifyMessage] = useState<string | undefined>(undefined);
   const lastVerifiedKeyRef = useRef<string | null>(null);
@@ -24,6 +25,7 @@ export function useManagedClaudeCredentialsFlow() {
     setRegionState('');
     setProjectNameState('');
     setInstanceIdState('');
+    setAgentIdState('');
     invalidateVerify();
   }, [invalidateVerify]);
 
@@ -67,12 +69,19 @@ export function useManagedClaudeCredentialsFlow() {
     [invalidateVerify]
   );
 
+  // Agent ID doesn't affect credential verification (project + engine only), so changing it
+  // doesn't invalidate the verify status.
+  const setAgentId = useCallback((next: string) => {
+    setAgentIdState(next);
+  }, []);
+
   return {
     apiKey,
     externalWorkspaceId,
     region,
     projectName,
     instanceId,
+    agentId,
     verifyStatus,
     verifyMessage,
     lastVerifiedKeyRef,
@@ -81,6 +90,7 @@ export function useManagedClaudeCredentialsFlow() {
     setRegion,
     setProjectName,
     setInstanceId,
+    setAgentId,
     setVerifyStatus,
     setVerifyMessage,
     resetCredentials,

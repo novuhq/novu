@@ -188,6 +188,7 @@ export function ConnectAgentStep({
     region,
     projectName,
     instanceId,
+    agentId,
     verifyStatus,
     verifyMessage,
     lastVerifiedKeyRef,
@@ -196,6 +197,7 @@ export function ConnectAgentStep({
     setRegion,
     setProjectName,
     setInstanceId,
+    setAgentId,
     setVerifyStatus,
     setVerifyMessage,
     resetCredentials,
@@ -326,6 +328,7 @@ export function ConnectAgentStep({
           region: region.trim() || undefined,
           projectName: projectName.trim() || undefined,
           instanceId: instanceId.trim() || undefined,
+          agentId: agentId.trim() || undefined,
           integrationId: selectedIntegrationId,
           integrationName: integrationName.trim() || undefined,
           managedOverrides,
@@ -721,6 +724,13 @@ export function ConnectAgentStep({
     [setInstanceId]
   );
 
+  const handleAgentIdChange = useCallback(
+    (next: string) => {
+      setAgentId(next);
+    },
+    [setAgentId]
+  );
+
   const handleVerify = useCallback(() => {
     if (!selectedConnector?.providerId) return;
     if (verifyMutation.isPending) return;
@@ -762,7 +772,7 @@ export function ConnectAgentStep({
     if (!selectedConnector?.providerId) return;
 
     const trimmedName = integrationName.trim();
-    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId };
+    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId, agentId };
 
     if (!trimmedName || !hasCompleteManagedCredentials(selectedConnector.providerId, fields)) return;
 
@@ -806,6 +816,7 @@ export function ConnectAgentStep({
     region,
     projectName,
     instanceId,
+    agentId,
     createIntegration,
     currentEnvironment?._id,
     queryClient,
@@ -918,6 +929,7 @@ export function ConnectAgentStep({
       region,
       projectName,
       instanceId,
+      agentId,
       integrationId: selectedIntegrationId,
       integrationName,
     };
@@ -990,6 +1002,7 @@ export function ConnectAgentStep({
         region: region.trim() || undefined,
         projectName: projectName.trim() || undefined,
         instanceId: instanceId.trim() || undefined,
+        agentId: agentId.trim() || undefined,
         integrationId: selectedIntegrationId,
         integrationName: integrationName.trim() || undefined,
         managedOverrides,
@@ -1079,6 +1092,7 @@ export function ConnectAgentStep({
         region={region}
         projectName={projectName}
         instanceId={instanceId}
+        agentId={agentId}
         templateSelection={templateSelection}
         isExistingMode={isExistingMode}
         isScratchMode={isScratchMode}
@@ -1132,6 +1146,7 @@ export function ConnectAgentStep({
         onRegionChange={handleRegionChange}
         onProjectNameChange={handleProjectNameChange}
         onInstanceIdChange={handleInstanceIdChange}
+        onAgentIdChange={handleAgentIdChange}
         onNameChange={(next) => {
           setName(next);
           setErrors((prev) => ({ ...prev, name: undefined }));
