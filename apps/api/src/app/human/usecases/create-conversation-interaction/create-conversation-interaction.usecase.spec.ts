@@ -25,10 +25,12 @@ describe('CreateConversationInteraction', () => {
       deliver: sinon.stub().resolves({ messageId: 'msg-1', platformThreadId: 'thread-1' }),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+    const activityRecorder = { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() };
     const usecase = new CreateConversationInteraction(
       humanInteractionRepository as any,
       outboundGateway as any,
-      logger as any
+      logger as any,
+      activityRecorder as any
     );
     const conversation = {
       _id: 'conv1',

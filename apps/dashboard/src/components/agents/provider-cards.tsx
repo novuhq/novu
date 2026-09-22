@@ -49,7 +49,7 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [ChatProviderIdEnum.PhotonImessage]: '~ 2 minutes',
   [ChatProviderIdEnum.NovuWebChat]: '~ 30 seconds',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
-  'google-chat': '~ 2 minutes',
+  [ChatProviderIdEnum.GoogleChat]: '~ 2 minutes',
   linear: '~ 2 minutes',
   zoom: '~ 2 minutes',
 };
