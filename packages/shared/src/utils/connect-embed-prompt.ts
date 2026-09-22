@@ -116,9 +116,9 @@ export function resolveConnectEmbedDocLinks(input: {
   }
 
   links.push(
-    { label: 'Web Chat UI', url: 'https://docs.novu.co/agents/channels/web-chat/quickstart.md' },
+    { label: 'Web Chat UI', url: 'https://docs.novu.co/agents/channels/web-chat.md' },
     { label: 'useWebChat hook', url: 'https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md' },
-    { label: 'Starter UI', url: 'https://docs.novu.co/agents/channels/web-chat/starter-ui.md' },
+    { label: 'assistant-ui', url: 'https://docs.novu.co/agents/channels/web-chat/recipes/assistant-ui.md' },
     { label: 'assistant-ui primitives', url: 'https://www.assistant-ui.com/docs/primitives.md' }
   );
 
@@ -299,8 +299,8 @@ Default UI is **assistant-ui** driven by \`useWebChat\`. The connect template is
 
 Follow these docs (fetch as \`.md\`). **Skip** dashboard channel-setup steps.
 
-- https://docs.novu.co/agents/channels/web-chat/quickstart.md — hook + first message
-- https://docs.novu.co/agents/channels/web-chat/starter-ui.md — assistant-ui mapping + connect template
+- https://docs.novu.co/agents/channels/web-chat.md — hook + first message
+- https://docs.novu.co/agents/channels/web-chat/recipes/assistant-ui.md — assistant-ui mapping + connect template
 - https://docs.novu.co/platform/sdks/react/hooks/use-web-chat.md — hook reference
 - https://www.assistant-ui.com/docs/primitives.md — primitives stay unstyled; you own the look
 - https://www.assistant-ui.com/docs/tools/generative-ui.md — remap CSS variables (\`--primary\`, \`--background\`, \`--radius\`, …) to this app

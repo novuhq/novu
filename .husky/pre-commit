@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+
+[ "${HUSKY:-}" = "0" ] && exit 0
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 if [ "$branch" = "next" ] && [ "${ALLOW_NEXT_COMMIT:-}" != "1" ]; then

@@ -143,6 +143,7 @@ function collectMentionedUserIds(message: Message, platform: AgentPlatformEnum):
     case AgentPlatformEnum.EMAIL:
     case AgentPlatformEnum.TELEGRAM:
     case AgentPlatformEnum.SENDBLUE:
+    case AgentPlatformEnum.PHOTON_IMESSAGE:
     case AgentPlatformEnum.WEB_CHAT:
       return [];
     default: {

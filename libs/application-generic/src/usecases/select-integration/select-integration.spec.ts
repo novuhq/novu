@@ -138,7 +138,7 @@ describe('select integration', () => {
     );
 
     expect(integration).not.toBeNull();
-    expect(integration?.identifier).toEqual(testIntegration.identifier);
+    expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
   });
 
   it('should return the novu integration', async () => {
@@ -155,7 +155,7 @@ describe('select integration', () => {
     );
 
     expect(integration).not.toBeNull();
-    expect(integration?.providerId).toEqual(EmailProviderIdEnum.Novu);
+    expect(integration?.integration.providerId).toEqual(EmailProviderIdEnum.Novu);
   });
 
   it.each`
@@ -176,7 +176,7 @@ describe('select integration', () => {
         channel,
       }));
 
-      const integration = await useCase.execute(
+      await useCase.execute(
         SelectIntegrationCommand.create({
           channelType: channel,
           environmentId,
@@ -270,7 +270,7 @@ describe('select integration', () => {
       { query: { sort: { createdAt: -1 } } }
     );
     expect(integration).not.toBeUndefined();
-    expect(integration?.identifier).toEqual(identifier);
+    expect(integration?.integration.identifier).toEqual(identifier);
   });
 
   it('should select the first integration matching JsonLogic conditions', async () => {
@@ -299,7 +299,38 @@ describe('select integration', () => {
       })
     );
 
-    expect(integration?.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.integration.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
+  });
+
+  it('should select an integration matching workflow payload conditions', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'payload-conditioned-integration',
+      identifier: 'payload-conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'payload.region' }, 'eu'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          payload: { region: 'eu' },
+        },
+      })
+    );
+
+    expect(integration?.integration.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
   });
 
   it('should not apply unsafe json-logic operators and fall back to primary', async () => {
@@ -328,7 +359,7 @@ describe('select integration', () => {
       })
     );
 
-    expect(integration?.identifier).toEqual(testIntegration.identifier);
+    expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
   });
 
   it('should fall back to primary when JsonLogic conditions do not match', async () => {
@@ -357,7 +388,7 @@ describe('select integration', () => {
       })
     );
 
-    expect(integration?.identifier).toEqual(testIntegration.identifier);
+    expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
   });
 
   it('queries only conditioned integrations when no identifier is provided', async () => {
@@ -444,7 +475,7 @@ describe('select integration', () => {
       '',
       { sort: { priority: -1, createdAt: -1 } }
     );
-    expect(integration?.identifier).toEqual(firstMatch.identifier);
+    expect(integration?.integration.identifier).toEqual(firstMatch.identifier);
   });
 
   it('prefers rules over contradictory legacy conditions', async () => {
@@ -486,7 +517,7 @@ describe('select integration', () => {
       })
     );
 
-    expect(ignoredLegacy?.identifier).toEqual(testIntegration.identifier);
+    expect(ignoredLegacy?.integration.identifier).toEqual(testIntegration.identifier);
 
     const matchedRules = await useCase.execute(
       SelectIntegrationCommand.create({
@@ -500,6 +531,7 @@ describe('select integration', () => {
       })
     );
 
-    expect(matchedRules?.identifier).toEqual(dualFormatIntegration.identifier);
+    expect(matchedRules?.integration.identifier).toEqual(dualFormatIntegration.identifier);
+    expect(matchedRules?.matchedConditions).toEqual({ type: 'rules', value: dualFormatIntegration.rules });
   });
 });

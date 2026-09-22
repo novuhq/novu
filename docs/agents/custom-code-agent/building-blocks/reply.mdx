@@ -23,6 +23,7 @@ To send a reply from your backend without going through the bridge handler, use 
 | Plain / rich text | Yes | Yes | Bold / italics | Yes | HTML |
 | Tap-to-respond buttons | Yes | Yes | Yes (up to 3) | Yes | Action links |
 | Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+| Quote reply | Plain post | Plain post | Native | Native | — |
 
 See [Channels overview](/agents/channels/overview) for the full matrix.
 
@@ -52,6 +53,14 @@ Send formatted text by passing a markdown string to `ctx.reply()`:
 
 ```typescript
 await ctx.reply('**Report generated.** See the attached PDF.');
+```
+
+## Quote reply
+
+Pass `quoteReply` to pin the reply to a specific inbound message. WhatsApp and Telegram render a native quote. Other channels send a normal post.
+
+```typescript
+await ctx.reply('Your order shipped today.', { quoteReply: message });
 ```
 
 ## Sending attachments
@@ -167,7 +176,7 @@ await ctx.reply(
   </Tab>
 </Tabs>
 
-When a user clicks a button or selects a dropdown value, `onAction` fires with `action.id` and `action.value`. See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#onaction). On [Web Chat](/agents/channels/web-chat/chat-ui#cards), the same tree arrives as a `card` part. The web UI draws it and calls `sendAction`.
+When a user clicks a button or selects a dropdown value, `onAction` fires with `action.id` and `action.value`. See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#onaction). On [Web Chat](/agents/channels/web-chat/generative-ui#cards), the same tree arrives as a `card` part. The web UI draws it and calls `sendAction`.
 
 ### Available card components
 
@@ -202,7 +211,7 @@ The following table lists the card components you can use in replies:
   <Card icon="code" href="/api-reference/agents/send-an-agent-reply" title="Send an agent reply API">
     Send replies from your backend without a bridge handler.
   </Card>
-  <Card icon="message-circle" href="/agents/channels/web-chat/chat-ui#cards" title="Web Chat cards">
+  <Card icon="message-circle" href="/agents/channels/web-chat/generative-ui#cards" title="Web Chat cards">
     Render `part.type === 'card'` in your product UI and call `sendAction`.
   </Card>
 </Columns>

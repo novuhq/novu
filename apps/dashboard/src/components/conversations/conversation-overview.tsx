@@ -1,30 +1,53 @@
 import { RiArrowRightUpLine, RiRobot2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { ConversationDto } from '@/api/conversations';
+import { ConversationActivityDto, ConversationDto } from '@/api/conversations';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { buildRoute } from '@/utils/routes';
+import { getHitlOverviewState } from './conversation-hitl';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationOverviewProps = {
   conversation: ConversationDto;
+  activities?: ConversationActivityDto[];
+  hasCompleteActivityHistory?: boolean;
 };
 
-function MetaRow({ label, children, isLast }: { label: string; children: React.ReactNode; isLast?: boolean }) {
+function MetaRow({
+  label,
+  children,
+  isLast,
+  isStacked,
+}: {
+  label: string;
+  children: React.ReactNode;
+  isLast?: boolean;
+  isStacked?: boolean;
+}) {
   return (
     <div className={`flex flex-col items-start py-1 ${isLast ? '' : 'border-stroke-soft border-b'}`}>
-      <div className="flex h-6 w-full items-center justify-between overflow-hidden px-1.5">
+      <div
+        className={
+          isStacked
+            ? 'flex w-full flex-col items-start gap-1 px-1.5 py-0.5'
+            : 'flex h-6 w-full items-center justify-between overflow-hidden px-1.5'
+        }
+      >
         <span className="text-text-soft font-code text-xs font-medium tracking-tight">{label}</span>
-        <div className="text-text-sub font-code text-xs tracking-tight">{children}</div>
+        <div className={`text-text-sub font-code text-xs tracking-tight ${isStacked ? 'w-full' : ''}`}>{children}</div>
       </div>
     </div>
   );
 }
 
-export function ConversationOverview({ conversation }: ConversationOverviewProps) {
+export function ConversationOverview({
+  conversation,
+  activities = [],
+  hasCompleteActivityHistory = true,
+}: ConversationOverviewProps) {
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
   const participants = conversation.participants ?? [];
@@ -40,6 +63,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
   const platforms = [...new Set(channels.map((c) => c.platform))];
 
   const sourceRequestId = (conversation.metadata?.sourceRequestId as string) ?? undefined;
+  const hitlOverview = getHitlOverviewState(activities, { hasCompleteHistory: hasCompleteActivityHistory });
 
   return (
     <div className="flex flex-col gap-3">
@@ -99,9 +123,21 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
               {platforms.length === 0 && <span className="text-text-soft text-xs">-</span>}
             </div>
           </MetaRow>
-          <MetaRow label="Status" isLast>
+          <MetaRow label="Status" isLast={!hitlOverview}>
             <ConversationStatusBadge status={conversation.status} />
           </MetaRow>
+          {hitlOverview && (
+            <MetaRow label="Human in the loop" isLast isStacked>
+              <span className="flex w-full flex-col gap-0.5">
+                <span className="text-text-sub font-medium wrap-break-word">{hitlOverview.title}</span>
+                <span
+                  className={hitlOverview.isPending ? 'text-warning-base font-normal' : 'text-text-soft font-normal'}
+                >
+                  {hitlOverview.detail}
+                </span>
+              </span>
+            </MetaRow>
+          )}
         </div>
 
         <div className="px-[18px]">

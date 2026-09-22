@@ -64,10 +64,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
     const chatModule = await import('chat');
     this.parseMarkdownFn = chatModule.parseMarkdown;
-    this.messageParser.setChatModule(
-      chatModule.Message as unknown as Parameters<MessageParser['setChatModule']>[0],
-      chatModule.parseMarkdown
-    );
+    this.messageParser.setChatModule(chatModule.Message, chatModule.parseMarkdown);
   }
 
   // -- Thread ID methods --
@@ -114,7 +111,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       agentAddress ? this.threadResolver.trackAgentAddress(threadId, agentAddress) : Promise.resolve(),
     ]);
 
-    const message = this.parseMessage(this.toRawMessage(payload));
+    const message = this.parseMessage(this.toRawMessage(payload), threadId);
     this.chat.processMessage(this, threadId, message, options);
 
     return new Response(null, { status: 200 });
@@ -144,10 +141,10 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
   // -- Message parsing --
 
-  parseMessage(raw: NovuEmailRawMessage): Message<NovuEmailRawMessage> {
+  parseMessage(raw: NovuEmailRawMessage, threadId = ''): Message<NovuEmailRawMessage> {
     const agentAddress = raw.to[0] ?? '';
 
-    return this.messageParser.parse(raw, agentAddress);
+    return this.messageParser.parse(raw, agentAddress, threadId);
   }
 
   // -- Outbound --
@@ -386,15 +383,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   }
 
   private segmentGraphemes(value: string): string[] {
-    const Segmenter = (
-      Intl as unknown as {
-        Segmenter?: new (
-          locale: string,
-          options: { granularity: 'grapheme' }
-        ) => { segment(input: string): Iterable<{ segment: string }> };
-      }
-    ).Segmenter;
-
+    const Segmenter = Intl.Segmenter;
     if (!Segmenter) {
       return Array.from(value);
     }
