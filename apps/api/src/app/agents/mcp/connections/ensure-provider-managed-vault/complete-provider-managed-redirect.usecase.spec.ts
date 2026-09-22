@@ -99,13 +99,16 @@ describe('CompleteProviderManagedRedirect', () => {
     const update = mcpConnectionRepository.update.firstCall.args[1] as { $set: { status: string } };
     expect(update.$set.status).to.equal(McpConnectionStatusEnum.Connected);
 
-    // Tool result resolves the parked call but does NOT announce success.
+    // One tool result carries the full guidance. No follow-up user message,
+    // which would start a second turn and make the agent repeat itself.
     const toolResult = managedAgentService.sendToolResult.firstCall.args[0] as {
       content: string;
-      followUpMessage: string;
+      followUpMessage?: string;
     };
-    expect(toolResult.content).to.not.match(/connected/i);
-    expect(toolResult.followUpMessage).to.match(/do not tell the user it is already connected/i);
+    expect(toolResult.followUpMessage).to.equal(undefined);
+    expect(toolResult.content).to.match(/start a new conversation/i);
+    expect(toolResult.content).to.match(/do not say it is already connected/i);
+    expect(toolResult.content).to.match(/do not attempt any MCP tools this turn/i);
   });
 
   it('skips the card edit when no connect-card id was stored but still resumes the session', async () => {

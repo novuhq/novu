@@ -111,10 +111,7 @@ export class CompleteProviderManagedRedirect {
     connection: Pick<McpConnectionEntity, '_id' | 'oauthState'>
   ): Promise<void> {
     const mcpName = resolveMcpName(payload.mcpId);
-
-    // Edit the card first — it reads `connection.oauthState`, which the update
-    // below clears.
-    await this.markConnectCardFinalizing(payload, connection.oauthState, mcpName);
+    const connectCardState = connection.oauthState;
 
     await this.mcpConnectionRepository.update(
       {
@@ -143,19 +140,30 @@ export class CompleteProviderManagedRedirect {
         integrationIdentifier: payload.integrationIdentifier ?? '',
         subscriberId: payload.subscriberId,
         toolUseId: payload.toolUseId,
-        content: `Setup link opened. Do not attempt any MCP tools this turn.`,
+        // One instruction, one reply. `sendToolResult` posts `content` as the
+        // tool result (which unparks the turn) and, if set, `followUpMessage`
+        // as a second user message that starts another turn. Sending both made
+        // the agent say the same thing twice — once from the vague tool result
+        // ("come back here") and again from the follow-up. Put the full
+        // guidance here and omit the follow-up.
+        //
         // Deliberately non-committal — OAuth may not be finished in Claude yet,
-        // and there is no completion signal we can trust at this point. The
-        // running session also won't pick up the new credential (Thalamus binds
-        // vault_ids at session creation), so the user must start a new session.
-        followUpMessage:
-          `${mcpName} setup is being finalized in Claude. Do not tell the user it is already connected. ` +
-          `Ask them to approve access in the Claude tab that just opened, then start a new conversation — ` +
-          `the tools become available in a new session once approval completes.`,
+        // and there is no completion signal we can trust. The running session
+        // also won't pick up the new credential (Thalamus binds vault_ids at
+        // session creation), so the user must start a new conversation.
+        content:
+          `${mcpName} setup link opened. Do not attempt any MCP tools this turn. ` +
+          `Reply to the user once: approve access in the Claude tab that just opened, then start a new conversation — ` +
+          `the tools become available in a new session once approval completes. ` +
+          `Do not say it is already connected.`,
         platform: payload.platform as AgentPlatformEnum,
         platformThreadId: payload.platformThreadId,
       });
     }
+
+    // Best-effort UI cleanup — runs after the agent is already unparked and
+    // swallows its own failures, so a slow channel edit can't stall the turn.
+    await this.markConnectCardFinalizing(payload, connectCardState, mcpName);
   }
 
   /**
