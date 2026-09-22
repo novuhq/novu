@@ -701,6 +701,7 @@ describe('AgentInboundHandler', () => {
           toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
           startTyping: sinon.stub().resolves(undefined),
           post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+          postEphemeral: sinon.stub().resolves({ id: 'notice', threadId: 'slack:C1:root-ts' }),
           subscribe: sinon.stub().resolves(undefined),
           unsubscribe: sinon.stub().resolves(undefined),
         };
@@ -737,7 +738,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.called).to.equal(false);
+        expect(thread.postEphemeral.called).to.equal(false);
         expect(thread.unsubscribe.called).to.equal(false);
         expect(thread.subscribe.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
@@ -756,9 +757,12 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
-        expect(thread.post.firstCall.args[0]).to.contain('Grace');
-        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U2');
+        expect(thread.postEphemeral.firstCall.args[2]).to.deep.equal({ fallbackToDM: false });
+        expect(thread.post.called).to.equal(false);
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Grace');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
         expect(bridgeExecutor.execute.called).to.equal(false);
@@ -776,8 +780,8 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
-        expect(thread.post.firstCall.args[0]).to.contain('Grace');
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Grace');
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
@@ -795,9 +799,10 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
-        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
-        expect(thread.post.firstCall.args[0]).to.not.contain('Grace');
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U2');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.not.contain('Grace');
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.updateMetadata.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.called).to.equal(false);
@@ -808,8 +813,8 @@ describe('AgentInboundHandler', () => {
         const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
         conversationService.findByPlatformThread.resolves(sharedConversation);
         const thread = makeNestedThread();
-        thread.post.onFirstCall().rejects(new Error('slack_rate_limited'));
-        thread.post.onSecondCall().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' });
+        thread.postEphemeral.onFirstCall().rejects(new Error('slack_rate_limited'));
+        thread.postEphemeral.onSecondCall().resolves({ id: 'notice', threadId: 'slack:C1:root-ts' });
 
         await handler.handle(
           'agent1',
@@ -819,7 +824,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
         expect(conversationService.updateMetadata.called).to.equal(false);
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.called).to.equal(false);
@@ -833,7 +838,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledTwice).to.equal(true);
+        expect(thread.postEphemeral.calledTwice).to.equal(true);
         expect(conversationService.updateMetadata.calledOnce).to.equal(true);
         expect(thread.unsubscribe.calledTwice).to.equal(true);
       });
@@ -851,9 +856,10 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
-        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
-        expect(thread.post.firstCall.args[0]).to.not.contain('Ada');
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U1');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.not.contain('Ada');
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.called).to.equal(false);
         expect(bridgeExecutor.execute.called).to.equal(false);
@@ -875,8 +881,8 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
-        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.updateMetadata.calledOnce).to.equal(true);
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
@@ -925,7 +931,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.called).to.equal(false);
+        expect(thread.postEphemeral.called).to.equal(false);
         expect(conversationService.updateMetadata.called).to.equal(false);
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
@@ -944,7 +950,7 @@ describe('AgentInboundHandler', () => {
         );
 
         expect(thread.subscribe.called).to.equal(false);
-        expect(thread.post.called).to.equal(false);
+        expect(thread.postEphemeral.called).to.equal(false);
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
 
@@ -965,9 +971,10 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
-        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
-        expect(thread.post.firstCall.args[0]).to.not.contain('Ada');
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U1');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.not.contain('Ada');
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.updateMetadata.calledOnce).to.equal(true);
         expect(conversationService.updateMetadata.firstCall.args[0].ops).to.deep.equal([
@@ -996,7 +1003,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
         expect(conversationService.updateMetadata.calledOnce).to.equal(true);
         expect(thread.unsubscribe.called).to.equal(false);
         expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
@@ -1006,7 +1013,7 @@ describe('AgentInboundHandler', () => {
       it('keeps following when the mention notice cannot be posted', async () => {
         const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
         const thread = makeNestedThread();
-        thread.post.rejects(new Error('slack_rate_limited'));
+        thread.postEphemeral.rejects(new Error('slack_rate_limited'));
 
         await handler.handle(
           'agent1',
@@ -1019,7 +1026,31 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('keeps following when native ephemeral delivery is unavailable', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+        thread.postEphemeral.resolves(null);
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'hey <@U99> take a look',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[2]).to.deep.equal({ fallbackToDM: false });
         expect(conversationService.updateMetadata.called).to.equal(false);
         expect(thread.unsubscribe.called).to.equal(false);
         expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
@@ -1042,7 +1073,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.called).to.equal(false);
+        expect(thread.postEphemeral.called).to.equal(false);
         expect(thread.unsubscribe.called).to.equal(false);
         expect(conversationService.updateMetadata.called).to.equal(false);
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
@@ -1064,7 +1095,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.updateMetadata.calledOnce).to.equal(true);
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
@@ -1086,7 +1117,7 @@ describe('AgentInboundHandler', () => {
           AgentEventEnum.ON_MESSAGE
         );
 
-        expect(thread.post.called).to.equal(false);
+        expect(thread.postEphemeral.called).to.equal(false);
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.called).to.equal(false);
         expect(bridgeExecutor.execute.called).to.equal(false);

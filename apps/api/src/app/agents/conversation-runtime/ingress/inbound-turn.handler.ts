@@ -517,6 +517,7 @@ export class AgentInboundHandler implements OnModuleInit {
           thread,
           platformThreadId,
           conversation: existingConversation,
+          triggeringUserId: message.author.userId,
         });
       }
 
@@ -927,6 +928,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       conversation,
+      triggeringUserId: message.author.userId,
       joinerName: exclusiveThreadEnd === 'join' ? message.author?.fullName : undefined,
     });
 
@@ -1274,12 +1276,13 @@ export class AgentInboundHandler implements OnModuleInit {
   }
 
   /**
-   * Tells the room the agent now needs @-mentioning. Announced once per
+   * Privately tells the triggering user the agent now needs @-mentioning.
+   * Announced once per
    * conversation — the thread keeps producing the same "no longer exclusive"
    * verdict on every later message, and repeating the notice each time (even
    * on messages that did mention the agent) is noise. The flag is saved only
-   * after the notice posts, so a Slack/Teams reject stays retryable instead of
-   * silencing the room. Returns false when the notice could not be posted or
+   * after the ephemeral notice posts, so a Slack/Teams reject stays retryable.
+   * Returns false when the notice could not be posted or
    * the transition could not be saved.
    */
   private async announceMentionRequired(args: {
@@ -1288,9 +1291,10 @@ export class AgentInboundHandler implements OnModuleInit {
     thread: Thread;
     platformThreadId: string;
     conversation: ConversationEntity | null;
+    triggeringUserId: string;
     joinerName?: string;
   }): Promise<boolean> {
-    const { agentId, config, thread, platformThreadId, conversation, joinerName } = args;
+    const { agentId, config, thread, platformThreadId, conversation, triggeringUserId, joinerName } = args;
 
     if (conversationHasSmartMentionRequired(conversation)) {
       return true;
@@ -1301,7 +1305,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       thread,
       platformThreadId,
-      conversation,
+      triggeringUserId,
       joinerName
     );
 
@@ -1432,33 +1436,18 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     platformThreadId: string,
-    conversation: ConversationEntity | null,
+    triggeringUserId: string,
     joinerName?: string
   ): Promise<boolean> {
     const markdown = buildMentionRequiredNoticeReply({ joinerName, agentName: config.agentName });
 
     try {
       applyPlatformThreadIdToThread(thread, platformThreadId);
-      await this.outboundGateway.replyOnThread(
-        thread,
-        { markdown },
-        conversation
-          ? {
-              persist: {
-                conversationId: conversation._id,
-                channel: this.conversationService.getPrimaryChannel(conversation),
-                agentIdentifier: config.agentIdentifier,
-                content: markdown,
-                environmentId: config.environmentId,
-                organizationId: config.organizationId,
-              },
-            }
-          : undefined
-      );
+      const sent = await thread.postEphemeral(triggeringUserId, { markdown }, { fallbackToDM: false });
 
-      return true;
+      return sent !== null;
     } catch (err) {
-      this.logger.warn(err, `[agent:${agentId}] Failed to post smart reply-policy mention notice`);
+      this.logger.warn(err, `[agent:${agentId}] Failed to post ephemeral smart reply-policy mention notice`);
       captureAgentWarning(err, {
         component: 'agent-inbound-handler',
         operation: 'post-mention-required-notice',

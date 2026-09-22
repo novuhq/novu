@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import { AgentEntity, AgentRepository } from '@novu/dal';
 import { AGENT_NAME_MAX_LENGTH, AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
+import type { ClientSession } from 'mongoose';
 import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
@@ -192,7 +193,7 @@ export class CreateAgent {
     agentId: string,
     managedRuntime: NonNullable<CreateAgentCommand['managedRuntime']>,
     isAdoptMode: boolean,
-    session: unknown
+    session: ClientSession | null
   ): Promise<void> {
     const provisionResult = await this.provisionManagedAgentUsecase.execute(
       Object.assign(new ProvisionManagedAgentCommand(), {
