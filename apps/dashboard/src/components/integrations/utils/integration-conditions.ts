@@ -1,7 +1,7 @@
-import { IMessageFilter } from '@novu/shared';
+import { IMessageFilter, type JSONSchemaDto } from '@novu/shared';
 import { generateID, RuleGroupType } from 'react-querybuilder';
-import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
-import type { EnhancedLiquidVariable, FieldDataType, IsAllowedVariable } from '@/utils/parseStepVariables';
+import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
+import { type FieldDataType, type IsAllowedVariable, parseStepVariables } from '@/utils/parseStepVariables';
 
 const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDataType }> = [
   { name: 'context.tenant.id', dataType: 'string' },
@@ -14,14 +14,7 @@ const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDat
   { name: 'subscriber.data', dataType: 'object' },
 ];
 
-export const INTEGRATION_CONDITION_FIELDS: EnhancedField[] = INTEGRATION_CONDITION_FIELD_DEFS.map((field) => ({
-  name: field.name,
-  label: field.name,
-  value: field.name,
-  dataType: field.dataType,
-}));
-
-export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRATION_CONDITION_FIELD_DEFS.map(
+export const INTEGRATION_CONDITION_VARIABLES: EnhancedConditionVariable[] = INTEGRATION_CONDITION_FIELD_DEFS.map(
   (field) => ({
     name: field.name,
     displayLabel: field.name,
@@ -29,7 +22,47 @@ export const INTEGRATION_CONDITION_VARIABLES: EnhancedLiquidVariable[] = INTEGRA
   })
 );
 
-const ALLOWED_PREFIXES = ['context.', 'subscriber.'] as const;
+export function mergeIntegrationConditionVariables(
+  variables: EnhancedConditionVariable[]
+): EnhancedConditionVariable[] {
+  const variablesByName = new Map<string, EnhancedConditionVariable>();
+
+  for (const variable of variables) {
+    const existingVariable = variablesByName.get(variable.name);
+
+    if (!existingVariable) {
+      variablesByName.set(variable.name, variable);
+      continue;
+    }
+
+    if (existingVariable.dataType !== variable.dataType) {
+      variablesByName.set(variable.name, {
+        ...existingVariable,
+        displayLabel: `${variable.name} (mixed types)`,
+        dataType: 'mixed',
+        format: undefined,
+        inputType: undefined,
+      });
+    }
+  }
+
+  return Array.from(variablesByName.values());
+}
+
+export function buildPayloadConditionVariables(payloadSchemas: JSONSchemaDto[]): EnhancedConditionVariable[] {
+  return payloadSchemas.flatMap((payloadSchema) => {
+    const schema: JSONSchemaDto = {
+      type: 'object',
+      properties: { payload: payloadSchema },
+    };
+
+    return parseStepVariables(schema, { isPayloadSchemaEnabled: true }).enhancedVariables.filter((variable) =>
+      variable.name.startsWith('payload.')
+    );
+  });
+}
+
+const ALLOWED_PREFIXES = ['context.', 'payload.', 'subscriber.'] as const;
 
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
   if (variable.name === 'subscriber.data') {
@@ -48,6 +81,5 @@ export function countLegacyIntegrationConditions(conditions?: IMessageFilter[]):
 }
 
 export function createEmptyConditionsQuery(): RuleGroupType {
-
   return { id: generateID(), combinator: 'and', rules: [] };
 }

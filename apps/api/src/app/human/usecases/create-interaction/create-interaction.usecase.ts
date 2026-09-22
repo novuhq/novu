@@ -1,7 +1,8 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentEntity, AgentRepository, HumanInteractionRepository } from '@novu/dal';
-import { normalizeHumanTo } from '@novu/shared';
+import { HumanInteractionStatusEnum, normalizeHumanTo } from '@novu/shared';
+import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
 import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-payload.dto';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { resolveKeylessHumanInteractionCap } from '../../../keyless/keyless-abuse.constants';
@@ -33,7 +34,8 @@ export class CreateInteraction {
     private readonly agentRepository: AgentRepository,
     private readonly deliveryService: HumanDeliveryService,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly activityRecorder: HumanInteractionActivityRecorder
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -98,6 +100,12 @@ export class CreateInteraction {
     const delivered = await deliverToTargets(this.humanInteractionRepository, this.logger, interaction, targets, {
       logMessage: 'Human interaction delivery failed for one recipient',
     });
+
+    await this.activityRecorder.recordRequest(delivered.interaction);
+
+    if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
+      await this.activityRecorder.recordResponse(delivered.interaction);
+    }
 
     return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds);
   }

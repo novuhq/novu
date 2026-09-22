@@ -7,7 +7,7 @@ import { PROVIDER_OVERRIDES_API_PROPERTY } from '../provider-overrides.dto';
 import { StepResponseDto } from '../step.response.dto';
 import { ToolControlDto } from '../tool-control.dto';
 
-class ToolControlsMetadataResponseDto extends ControlsMetadataDto {
+class ToolControlsMetadataResponseDto extends ControlsMetadataDto<ToolControlDto> {
   @ApiProperty({
     description: 'Control values specific to Tool',
     type: () => ToolControlDto,
