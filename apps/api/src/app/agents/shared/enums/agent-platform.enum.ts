@@ -5,6 +5,7 @@ export enum AgentPlatformEnum {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
   SENDBLUE = 'sendblue',
+  PHOTON_IMESSAGE = 'photon_imessage',
   WEB_CHAT = 'web_chat',
 }
 
@@ -14,6 +15,7 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TEAMS,
   AgentPlatformEnum.TELEGRAM,
   AgentPlatformEnum.SENDBLUE,
+  AgentPlatformEnum.PHOTON_IMESSAGE,
   AgentPlatformEnum.WEB_CHAT,
 ]);
 
@@ -48,6 +50,12 @@ const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapa
   // iMessage/SMS delivery is plain text — no markdown links or buttons of any kind.
   [AgentPlatformEnum.SENDBLUE]: {
     markdownLinks: false,
+    nativeUrlButtons: false,
+    interactiveButtons: false,
+  },
+  // iMessage renders native styled text for markdown, but has no buttons of any kind.
+  [AgentPlatformEnum.PHOTON_IMESSAGE]: {
+    markdownLinks: true,
     nativeUrlButtons: false,
     interactiveButtons: false,
   },

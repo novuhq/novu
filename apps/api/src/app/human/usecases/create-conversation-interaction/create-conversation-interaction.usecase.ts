@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { ConversationParticipantTypeEnum, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
-import { isHumanCardElement, normalizeHumanTo } from '@novu/shared';
+import { HumanInteractionStatusEnum, isHumanCardElement, normalizeHumanTo } from '@novu/shared';
 import { OutboundGateway } from '../../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../../agents/human-relay/human-card.builder';
+import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
 import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-payload.dto';
 import {
   assertHumanCardActions,
@@ -40,7 +41,8 @@ export class CreateConversationInteraction {
   constructor(
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly outboundGateway: OutboundGateway,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly activityRecorder: HumanInteractionActivityRecorder
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -86,6 +88,8 @@ export class CreateConversationInteraction {
     );
 
     if (command.skipDelivery) {
+      await this.activityRecorder.recordRequest(interaction);
+
       return interaction;
     }
 
@@ -132,6 +136,12 @@ export class CreateConversationInteraction {
         logContext: { conversationId: command.conversation._id },
       }
     );
+
+    await this.activityRecorder.recordRequest(delivered.interaction);
+
+    if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
+      await this.activityRecorder.recordResponse(delivered.interaction);
+    }
 
     return delivered.interaction;
   }
