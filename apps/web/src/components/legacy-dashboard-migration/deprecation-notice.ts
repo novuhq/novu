@@ -28,11 +28,7 @@ export function parseDeprecationDate(dateString: string): Date {
   return startOfDay(new Date(2026, 5, 30));
 }
 
-export function getDaysUntilDeprecation(deprecationDate: Date): number {
-  return Math.max(0, differenceInDays(deprecationDate, startOfDay(new Date())));
-}
-
-export function getDeprecationTimePhrase(daysLeft: number): string {
+function getTimePhrase(daysLeft: number): string {
   if (daysLeft === 0) {
     return 'today';
   }
@@ -40,8 +36,21 @@ export function getDeprecationTimePhrase(daysLeft: number): string {
   return `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
 }
 
-export function formatDeprecationDateLabel(deprecationDate: Date): string {
-  return format(deprecationDate, 'do MMMM');
+export function getDeprecationMessage(deprecationDate: Date): string {
+  const daysLeft = differenceInDays(deprecationDate, startOfDay(new Date()));
+  const dateLabel = format(deprecationDate, 'do MMMM');
+
+  if (daysLeft < 0) {
+    return (
+      `⚠️ This dashboard is deprecated. As of ${dateLabel} it is no longer covered by the support SLA. ` +
+      `Please migrate to the new dashboard as soon as possible to avoid disruption.`
+    );
+  }
+
+  return (
+    `⚠️ This dashboard will be deprecated ${getTimePhrase(daysLeft)}. After ${dateLabel} you will lose the ` +
+    `support SLA for this dashboard. To avoid disruption, please migrate to the new dashboard in advance.`
+  );
 }
 
 export function buildMigrationGuideUrl(
