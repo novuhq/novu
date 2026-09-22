@@ -26,9 +26,9 @@ export enum AgentSubscriberAccessEnum {
  * - `auto_reply` (default): after the agent joins a nested Slack/Teams thread,
  *   unmentioned follow-ups in that thread are dispatched.
  * - `smart`: `auto_reply` for as long as a single human is talking to the agent
- *   in the thread. Once a second person speaks, or the incumbent @mentions
- *   another teammate, the agent posts a one-off notice and reverts to requiring
- *   an @mention there.
+ *   in the thread. Once a second person speaks, another agent is in the thread,
+ *   or the incumbent @mentions another teammate, the agent posts a one-off notice
+ *   and reverts to requiring an @mention there.
  */
 export enum AgentReplyPolicyEnum {
   MENTION_ONLY = 'mention_only',

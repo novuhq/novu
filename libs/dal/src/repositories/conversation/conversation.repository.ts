@@ -68,6 +68,24 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * How many other agents already have a conversation on this platform thread.
+   * Used by Smart reply-policy so a second Novu agent counts like a second speaker.
+   */
+  async countOtherAgentsOnPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string,
+    agentId: string
+  ): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _agentId: { $ne: agentId },
+      'channels.platformThreadId': platformThreadId,
+    });
+  }
+
   async findByAgentIntegrationParticipant(
     environmentId: string,
     organizationId: string,

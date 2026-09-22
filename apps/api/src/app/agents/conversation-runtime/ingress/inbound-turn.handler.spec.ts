@@ -128,6 +128,7 @@ describe('AgentInboundHandler', () => {
       persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
+      countOtherAgentsOnPlatformThread: sinon.stub().resolves(0),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
       updateMetadata: sinon.stub().resolves(undefined),
       persistToolApprovalDecision: sinon.stub().resolves({ _id: 'decision-1' }),
@@ -800,6 +801,50 @@ describe('AgentInboundHandler', () => {
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.called).to.equal(false);
         expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('stops answering unmentioned follow-ups when another agent is already in the thread', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({ author: { userId: 'U1', fullName: 'Ada', isBot: false } }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
+        expect(thread.post.firstCall.args[0]).to.not.contain('Ada');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('answers a mention when another agent is in the thread, alongside the notice', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            isMention: true,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.post.calledOnce).to.equal(true);
+        expect(thread.post.firstCall.args[0]).to.contain('Support Bot');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
 
       it('answers a mention in a shared thread without re-subscribing or re-explaining', async () => {

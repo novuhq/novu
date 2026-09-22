@@ -11,6 +11,12 @@ export interface ExplicitMentionContext {
   conversationExists: boolean;
   platformThreadId: string;
   humanParticipantCount: number;
+  /**
+   * Other Novu agents already present on this platform thread (not this agent).
+   * Smart treats them like a second speaker: auto-follow stops and an @mention
+   * is required.
+   */
+  otherAgentCount?: number;
   smartMentionRequired?: boolean;
 }
 
@@ -27,6 +33,19 @@ export function conversationHasSmartMentionRequired(conversation: ConversationEn
   return conversation?.metadata?.[AGENT_REPLY_METADATA_KEYS.smartMentionRequired] === true;
 }
 
+export function countOtherAgentParticipants(
+  conversation: ConversationEntity | null | undefined,
+  agentId: string
+): number {
+  if (!conversation) {
+    return 0;
+  }
+
+  return conversation.participants.filter(
+    (participant) => participant.type === ConversationParticipantTypeEnum.AGENT && participant.id !== agentId
+  ).length;
+}
+
 export function followsNestedThreadWithoutMention(context: ExplicitMentionContext): boolean {
   switch (context.replyPolicy) {
     case AgentReplyPolicyEnum.MENTION_ONLY:
@@ -34,7 +53,11 @@ export function followsNestedThreadWithoutMention(context: ExplicitMentionContex
     case AgentReplyPolicyEnum.AUTO_REPLY:
       return true;
     case AgentReplyPolicyEnum.SMART:
-      return context.humanParticipantCount <= 1 && context.smartMentionRequired !== true;
+      return (
+        context.humanParticipantCount <= 1 &&
+        (context.otherAgentCount ?? 0) === 0 &&
+        context.smartMentionRequired !== true
+      );
     default: {
       const exhaustiveCheck: never = context.replyPolicy;
 
@@ -63,7 +86,7 @@ export function requiresExplicitMention(thread: Thread, message: Message, contex
   return true;
 }
 
-export type SmartExclusiveThreadEndReason = 'join' | 'teammate_mention';
+export type SmartExclusiveThreadEndReason = 'join' | 'teammate_mention' | 'other_agent';
 
 export interface SmartExclusiveThreadEndedParams {
   replyPolicy: AgentReplyPolicyEnum;
@@ -73,6 +96,7 @@ export interface SmartExclusiveThreadEndedParams {
   platformUserId: string | undefined;
   botUserId: string | undefined;
   message: Message;
+  otherAgentCount?: number;
 }
 
 export function detectSmartExclusiveThreadEnded(
@@ -85,6 +109,10 @@ export function detectSmartExclusiveThreadEnded(
   const humans = params.participantsSnapshot.filter(
     (participant) => participant.type !== ConversationParticipantTypeEnum.AGENT
   );
+
+  if ((params.otherAgentCount ?? 0) > 0 && humans.length <= 1) {
+    return 'other_agent';
+  }
 
   if (humans.length !== 1) {
     return null;

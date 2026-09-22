@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import {
   countHumanParticipants,
+  countOtherAgentParticipants,
   detectSmartExclusiveThreadEnded,
   followsNestedThreadWithoutMention,
   messageMentionsOtherHuman,
@@ -91,6 +92,17 @@ describe('requiresExplicitMention', () => {
     ).to.equal(true);
   });
 
+  it('makes smart require a mention once another agent is in the thread', () => {
+    expect(
+      requiresExplicitMention(nestedThread, { isMention: false } as any, {
+        ...follow,
+        replyPolicy: AgentReplyPolicyEnum.SMART,
+        humanParticipantCount: 1,
+        otherAgentCount: 1,
+      })
+    ).to.equal(true);
+  });
+
   it('makes smart require a mention after a teammate was @mentioned in a one-on-one thread', () => {
     expect(
       requiresExplicitMention(nestedThread, { isMention: false } as any, {
@@ -125,6 +137,16 @@ describe('followsNestedThreadWithoutMention', () => {
       })
     ).to.equal(false);
   });
+
+  it('stops smart auto-follow when another agent is in the thread', () => {
+    expect(
+      followsNestedThreadWithoutMention({
+        ...follow,
+        replyPolicy: AgentReplyPolicyEnum.SMART,
+        otherAgentCount: 1,
+      })
+    ).to.equal(false);
+  });
 });
 
 describe('countHumanParticipants', () => {
@@ -154,6 +176,36 @@ describe('countHumanParticipants', () => {
     } as any;
 
     expect(countHumanParticipants(conversation)).to.equal(2);
+  });
+});
+
+describe('countOtherAgentParticipants', () => {
+  it('treats a missing conversation as no other agents', () => {
+    expect(countOtherAgentParticipants(null, 'agent1')).to.equal(0);
+    expect(countOtherAgentParticipants(undefined, 'agent1')).to.equal(0);
+  });
+
+  it('excludes the current agent', () => {
+    const conversation = {
+      participants: [
+        { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub1' },
+        { type: ConversationParticipantTypeEnum.AGENT, id: 'agent1' },
+      ],
+    } as any;
+
+    expect(countOtherAgentParticipants(conversation, 'agent1')).to.equal(0);
+  });
+
+  it('counts a second agent on the same conversation', () => {
+    const conversation = {
+      participants: [
+        { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub1' },
+        { type: ConversationParticipantTypeEnum.AGENT, id: 'agent1' },
+        { type: ConversationParticipantTypeEnum.AGENT, id: 'agent2' },
+      ],
+    } as any;
+
+    expect(countOtherAgentParticipants(conversation, 'agent1')).to.equal(1);
   });
 });
 
@@ -372,6 +424,28 @@ describe('detectSmartExclusiveThreadEnded', () => {
       detectSmartExclusiveThreadEnded({
         ...base,
         participantsSnapshot: [incumbent, { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub3' }, agent],
+      })
+    ).to.equal(null);
+  });
+
+  it('fires when another agent is already in a one-on-one thread', () => {
+    expect(detectSmartExclusiveThreadEnded({ ...base, subscriberId: 'sub1', otherAgentCount: 1 })).to.equal(
+      'other_agent'
+    );
+  });
+
+  it('fires when this agent is joining a thread that already has another agent', () => {
+    expect(detectSmartExclusiveThreadEnded({ ...base, participantsSnapshot: [agent], otherAgentCount: 1 })).to.equal(
+      'other_agent'
+    );
+  });
+
+  it('stays quiet once the thread is already shared even if another agent is present', () => {
+    expect(
+      detectSmartExclusiveThreadEnded({
+        ...base,
+        participantsSnapshot: [incumbent, { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub3' }, agent],
+        otherAgentCount: 1,
       })
     ).to.equal(null);
   });

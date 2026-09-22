@@ -210,6 +210,20 @@ export class AgentConversationService {
     );
   }
 
+  async countOtherAgentsOnPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string,
+    agentId: string
+  ): Promise<number> {
+    return this.conversationRepository.countOtherAgentsOnPlatformThread(
+      environmentId,
+      organizationId,
+      platformThreadId,
+      agentId
+    );
+  }
+
   async findByPublicIdentifier(
     environmentId: string,
     organizationId: string,

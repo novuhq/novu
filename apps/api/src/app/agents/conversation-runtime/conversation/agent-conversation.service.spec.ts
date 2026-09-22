@@ -302,6 +302,20 @@ describe('AgentConversationService', () => {
     expect(findByPlatformThread.calledOnceWithExactly('e', 'o', 'agent-x', 'int-x', 'thread-z')).to.equal(true);
   });
 
+  it('delegates countOtherAgentsOnPlatformThread to the repository', async () => {
+    const countOtherAgentsOnPlatformThread = sinon.stub().resolves(1);
+    const conversationRepository = {
+      countOtherAgentsOnPlatformThread,
+    } as unknown as ConversationRepository;
+
+    const service = makeService(conversationRepository);
+
+    expect(await service.countOtherAgentsOnPlatformThread('e', 'o', 'slack:C1:root-ts', 'agent-x')).to.equal(1);
+    expect(countOtherAgentsOnPlatformThread.calledOnceWithExactly('e', 'o', 'slack:C1:root-ts', 'agent-x')).to.equal(
+      true
+    );
+  });
+
   it('orchestrates resolveConversation across repository and ledger', async () => {
     const updateStatus = sinon.stub().resolves(undefined);
     const markBillingResolved = sinon.stub().resolves(undefined);

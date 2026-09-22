@@ -71,6 +71,7 @@ import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
 import {
   conversationHasSmartMentionRequired,
   countHumanParticipants,
+  countOtherAgentParticipants,
   detectSmartExclusiveThreadEnded,
   type ExplicitMentionContext,
   followsNestedThreadWithoutMention,
@@ -189,12 +190,6 @@ function foldInboundBurst(message: Message, messageContext?: MessageContext): vo
     .filter((text) => text.trim().length > 0)
     .join('\n\n');
   message.attachments = burst.flatMap((item) => item.attachments ?? []);
-}
-
-function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
-  const raw = asRecord(message.raw);
-
-  return asRecord(raw?.event) ?? raw;
 }
 
 function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Message): string {
@@ -358,12 +353,23 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId
     );
     const participantsSnapshot = existingConversation ? [...existingConversation.participants] : [];
+    const replyPolicy = config.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY;
+    const otherAgentsOnThread =
+      replyPolicy === AgentReplyPolicyEnum.SMART && isNestedSharedThread(config.platform, thread, platformThreadId)
+        ? await this.conversationService.countOtherAgentsOnPlatformThread(
+            config.environmentId,
+            config.organizationId,
+            platformThreadId,
+            agentId
+          )
+        : 0;
     const mentionContext = {
-      replyPolicy: config.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY,
+      replyPolicy,
       platform: config.platform,
       conversationExists: existingConversation != null,
       platformThreadId,
       humanParticipantCount: countHumanParticipants(existingConversation),
+      otherAgentCount: countOtherAgentParticipants(existingConversation, agentId) + otherAgentsOnThread,
       smartMentionRequired: conversationHasSmartMentionRequired(existingConversation),
     };
     if (
@@ -499,7 +505,7 @@ export class AgentInboundHandler implements OnModuleInit {
     if (requiresMention && !pendingAsk) {
       if (
         mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
-        mentionContext.humanParticipantCount >= 2 &&
+        (mentionContext.humanParticipantCount >= 2 || (mentionContext.otherAgentCount ?? 0) > 0) &&
         isNestedSharedThread(config.platform, thread, platformThreadId)
       ) {
         await this.postMentionRequiredNotice(agentId, config, thread, platformThreadId, existingConversation);
@@ -840,8 +846,9 @@ export class AgentInboundHandler implements OnModuleInit {
    * Mention gating that has to run *after* the HITL interceptor, so an
    * unmentioned reply can still settle a pending ask. Under the SMART policy it
    * also detects the moment an agent's exclusive thread stops being exclusive —
-   * a teammate joins, or the incumbent mentions someone else — and steps back
-   * out of the thread. Returns true when the turn must stop here.
+   * a teammate joins, another agent is already in the thread, or the incumbent
+   * mentions someone else — and steps back out of the thread. Returns true when
+   * the turn must stop here.
    */
   private async maybeStopOnMentionGate(args: {
     agentId: string;
@@ -879,6 +886,7 @@ export class AgentInboundHandler implements OnModuleInit {
     const mentionBotUserId =
       mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
       mentionContext.humanParticipantCount === 1 &&
+      (mentionContext.otherAgentCount ?? 0) === 0 &&
       messageContainsUserMention(message, config.platform)
         ? await this.resolveMentionBotUserId(config, message)
         : undefined;
@@ -891,13 +899,14 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId: message.author?.userId,
       botUserId: mentionBotUserId,
       message,
+      otherAgentCount: mentionContext.otherAgentCount,
     });
 
     if (exclusiveThreadEnd == null || !isNestedSharedThread(config.platform, thread, platformThreadId)) {
       return false;
     }
 
-    if (exclusiveThreadEnd === 'teammate_mention') {
+    if (exclusiveThreadEnd === 'teammate_mention' || exclusiveThreadEnd === 'other_agent') {
       await this.markSmartMentionRequired(config, conversation);
     }
 
