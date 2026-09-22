@@ -1,32 +1,18 @@
-import { PinoLogger } from '../../logging';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
-import { EventBridgeSchedulerService } from '../scheduler';
-import { SqsService } from '../sqs';
+import {
+  createPinoLoggerMock,
+  createSchedulerServiceMock,
+  createSqsServiceMock,
+} from '../queue-service-mocks.test-helpers';
 import { StandardQueueService } from './standard-queue.service';
 
 let standardQueueService: StandardQueueService;
 
 const ORGANIZATION_ID = 'standard-organization-id';
 
-const mockSqsService = {
-  getQueueUrl: jest.fn(),
-  getProducer: jest.fn(),
-  getClient: jest.fn(),
-} as unknown as SqsService;
-
-const mockLogger = {
-  setContext: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-} as unknown as PinoLogger;
-
-const mockSchedulerService = {
-  isConfigured: jest.fn(() => false),
-  createDelayedFire: jest.fn(),
-  deleteSchedule: jest.fn(),
-} as unknown as EventBridgeSchedulerService;
+const mockSqsService = createSqsServiceMock();
+const mockLogger = createPinoLoggerMock();
+const mockSchedulerService = createSchedulerServiceMock();
 
 describe('Standard Queue service', () => {
   describe('General', () => {

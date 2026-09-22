@@ -1,7 +1,6 @@
 import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
 
 import { restoreQueueBackendEnv } from '../../config/queue-backend.test-helpers';
-import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
 import { DeferReasonEnum, EventBridgeSchedulerService } from '../scheduler';
 import { SqsPartialSendError, SqsService } from '../sqs';
@@ -25,11 +24,7 @@ type Harness = {
  * of the test - the predicates read it on every call, so one harness per test.
  */
 function buildHarnessOnBackend(
-  options: {
-    sqsConfigured?: boolean;
-    schedulerConfigured?: boolean;
-    backend?: QueueBackend;
-  } = {}
+  options: { sqsConfigured?: boolean; schedulerConfigured?: boolean; backend?: QueueBackend } = {}
 ): Harness {
   const { sqsConfigured = true, schedulerConfigured = true, backend = QueueBackend.SQS_BULLMQ } = options;
 
@@ -43,12 +38,20 @@ function buildHarnessOnBackend(
     deleteSchedule: jest.fn(),
   };
 
+  /*
+   * The backends hold private state, so the stubs can never be one of them.
+   * `Partial<T>` still checks each stubbed method against the real signature.
+   */
+  const bullMqStub: Partial<BullMqService> = bullMq;
+  const sqsStub: Partial<SqsService> = sqs;
+  const schedulerStub: Partial<EventBridgeSchedulerService> = scheduler;
+
   const service = new QueueBaseService(
     JobTopicNameEnum.STANDARD,
-    bullMq as unknown as BullMqService,
-    sqs as unknown as SqsService,
-    undefined as unknown as PinoLogger,
-    scheduler as unknown as EventBridgeSchedulerService
+    bullMqStub as BullMqService,
+    sqsStub as SqsService,
+    undefined,
+    schedulerStub as EventBridgeSchedulerService
   );
 
   return { service, bullMq, sqs, scheduler };
@@ -375,10 +378,7 @@ describe('QueueBaseService', () => {
       await service.addBulk([shortJob('a'), shortJob('b'), shortJob('c')] as never);
 
       expect(bullMq.addBulk).toHaveBeenCalledTimes(1);
-      expect(bullMq.addBulk.mock.calls[0][0].map((job: { data: { _id: string } }) => job.data._id)).toEqual([
-        'a',
-        'c',
-      ]);
+      expect(bullMq.addBulk.mock.calls[0][0].map((job: { data: { _id: string } }) => job.data._id)).toEqual(['a', 'c']);
     });
 
     it('should re-queue every job when the failure does not identify the undelivered ones', async () => {

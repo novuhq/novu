@@ -35,6 +35,4 @@ export const UNIQUE_WORKER_DEPENDENCIES = [
 
 const ACTIVE_WORKER_TOPICS = workersToProcess.length > 0 ? workersToProcess : ALL_WORKER_TOPICS;
 
-export const ACTIVE_WORKERS: Provider[] = ACTIVE_WORKER_TOPICS.flatMap(
-  (topic) => WORKER_CLASS_BY_TOPIC[topic] ?? []
-);
+export const ACTIVE_WORKERS: Provider[] = ACTIVE_WORKER_TOPICS.flatMap((topic) => WORKER_CLASS_BY_TOPIC[topic] ?? []);

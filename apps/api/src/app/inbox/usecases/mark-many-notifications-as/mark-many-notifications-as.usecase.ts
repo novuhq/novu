@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  buildFeedKey,
   buildMessageCountKey,
   EventType,
   InvalidateCacheService,

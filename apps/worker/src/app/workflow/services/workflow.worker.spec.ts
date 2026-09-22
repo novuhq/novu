@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import {
-  BullMqService,
   FeatureFlagsService,
   PinoLogger,
   SqsService,
@@ -13,14 +12,19 @@ import { setTimeout } from 'timers/promises';
 import { WorkflowModule } from '../workflow.module';
 import { WorkflowWorker } from './workflow.worker';
 
-const mockSqsService = {
+/*
+ * SQS stays inert for this suite. `SqsService` holds private state, so the
+ * stub can never be one; `Partial<T>` still checks it against the real API.
+ */
+const sqsServiceStub: Partial<SqsService> = {
   getQueueUrl: () => undefined,
   getProducer: () => undefined,
-  getClient: () => ({}) as any,
   isConfigured: () => false,
   send: async () => {},
   sendBulk: async () => {},
-} as unknown as SqsService;
+};
+
+const mockSqsService = sqsServiceStub as SqsService;
 
 let workflowQueueService: WorkflowQueueService;
 let workflowWorker: WorkflowWorker;

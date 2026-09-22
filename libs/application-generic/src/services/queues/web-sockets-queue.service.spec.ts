@@ -1,36 +1,16 @@
-import { Test } from '@nestjs/testing';
-import { IWebSocketJobDto } from '../../dtos';
-import { PinoLogger } from '../../logging';
-import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
-import { SocketWorkerService } from '../socket-worker';
-import { SqsService } from '../sqs';
+import {
+  createPinoLoggerMock,
+  createSocketWorkerServiceMock,
+  createSqsServiceMock,
+} from '../queue-service-mocks.test-helpers';
 import { WebSocketsQueueService } from './web-sockets-queue.service';
 
 let webSocketsQueueService: WebSocketsQueueService;
 
-const mockSocketWorkerService = {
-  isEnabled: jest.fn().mockResolvedValue(false),
-  isLegacyWsDisabled: jest.fn().mockResolvedValue(false),
-  sendMessage: jest.fn().mockResolvedValue(undefined),
-} as any;
-
-const mockSqsService = {
-  getQueueUrl: jest.fn(() => undefined),
-  getProducer: jest.fn(() => undefined),
-  getClient: jest.fn(() => ({})),
-  isConfigured: jest.fn(() => false),
-  send: jest.fn(),
-  sendBulk: jest.fn(),
-} as unknown as SqsService;
-
-const mockLogger = {
-  setContext: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-} as unknown as PinoLogger;
+const mockSocketWorkerService = createSocketWorkerServiceMock();
+const mockSqsService = createSqsServiceMock();
+const mockLogger = createPinoLoggerMock();
 
 describe('WebSockets Queue service', () => {
   describe('General', () => {

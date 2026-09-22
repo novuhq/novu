@@ -1,4 +1,4 @@
-import { SQSClient } from '@aws-sdk/client-sqs';
+import { SQSClient, SQSClientConfig } from '@aws-sdk/client-sqs';
 import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Producer } from 'sqs-producer';
@@ -123,7 +123,7 @@ export class SqsService {
     const region = process.env.AWS_REGION || process.env.NOVU_REGION || 'us-east-1';
     const endpoint = process.env.SQS_ENDPOINT;
 
-    const clientConfig: any = {
+    const clientConfig: SQSClientConfig = {
       region,
     };
 

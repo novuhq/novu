@@ -44,7 +44,7 @@ export class MarkNotificationsAsSeen {
   }
 
   async execute(command: MarkNotificationsAsSeenCommand): Promise<void> {
-    const { notificationIds, tags, data, contextKeys } = command;
+    const { notificationIds, contextKeys } = command;
 
     // Return early if notificationIds is an empty array
     if (notificationIds && notificationIds.length === 0) {
@@ -70,83 +70,20 @@ export class MarkNotificationsAsSeen {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
-    const updatedMessages: MessageEntity[] = [];
     // If notificationIds are provided, use them; otherwise use filters
     if (notificationIds && notificationIds.length > 0) {
-      const BATCH_SIZE = 50;
-      const notificationIdChunks = this.chunkArray(notificationIds, BATCH_SIZE);
-
-      for (const idChunk of notificationIdChunks) {
-        const batchResults = await this.messageRepository.updateMessagesStatusByIds({
-          environmentId: command.environmentId,
-          subscriberId: subscriber._id,
-          contextKeys,
-          ids: idChunk,
-          seen: true,
-        });
-        updatedMessages.push(...batchResults);
-      }
-
-      this.processWebhooksInBatches(updatedMessages, command, subscriber.subscriberId, environment);
-
-      await this.logTraces({
-        messages: updatedMessages,
+      await this.markByIds({
         command,
+        notificationIds,
+        environment,
         subscriberId: subscriber.subscriberId,
         _subscriberId: subscriber._id,
-      });
-
-      this.analyticsService.track(AnalyticsEventsEnum.MARK_NOTIFICATIONS_AS_SEEN, '', {
-        _organization: command.organizationId,
-        _subscriberId: subscriber._id,
-        method: 'by_ids',
-        count: notificationIds.length,
       });
     } else {
-      // Use filter-based approach
-      let parsedData: unknown;
-      if (data) {
-        try {
-          parsedData = JSON.parse(data);
-          validateDataStructure(parsedData);
-        } catch (error) {
-          if (error instanceof BadRequestException) {
-            throw error;
-          }
-          throw new BadRequestException('Invalid JSON format for data parameter');
-        }
-      }
-
-      const fromFilters: Record<string, unknown> = {};
-      if (tags) {
-        fromFilters.tagGroups = normalizeTagGroups(tags);
-      }
-      if (parsedData) {
-        fromFilters.data = parsedData;
-      }
-
-      const updatedMessages = await this.messageRepository.updateMessagesFromToStatus({
-        environmentId: command.environmentId,
-        subscriberId: subscriber._id,
-        contextKeys,
-        from: fromFilters,
-        to: {
-          seen: true,
-        },
-      });
-
-      await this.logTraces({
-        messages: updatedMessages,
+      await this.markByFilters({
         command,
         subscriberId: subscriber.subscriberId,
         _subscriberId: subscriber._id,
-      });
-
-      this.analyticsService.track(AnalyticsEventsEnum.MARK_NOTIFICATIONS_AS_SEEN, '', {
-        _organization: command.organizationId,
-        _subscriberId: subscriber._id,
-        method: 'by_filters',
-        filters: fromFilters,
       });
     }
 
@@ -169,6 +106,114 @@ export class MarkNotificationsAsSeen {
       },
       groupId: subscriber._organizationId,
     });
+  }
+
+  private async markByIds({
+    command,
+    notificationIds,
+    environment,
+    subscriberId,
+    _subscriberId,
+  }: {
+    command: MarkNotificationsAsSeenCommand;
+    notificationIds: string[];
+    environment: EnvironmentEntity;
+    subscriberId: string;
+    _subscriberId: string;
+  }): Promise<void> {
+    const BATCH_SIZE = 50;
+    const updatedMessages: MessageEntity[] = [];
+
+    for (const idChunk of this.chunkArray(notificationIds, BATCH_SIZE)) {
+      const batchResults = await this.messageRepository.updateMessagesStatusByIds({
+        environmentId: command.environmentId,
+        subscriberId: _subscriberId,
+        contextKeys: command.contextKeys,
+        ids: idChunk,
+        seen: true,
+      });
+      updatedMessages.push(...batchResults);
+    }
+
+    await this.processWebhooksInBatches(updatedMessages, command, subscriberId, environment);
+
+    await this.logTraces({
+      messages: updatedMessages,
+      command,
+      subscriberId,
+      _subscriberId,
+    });
+
+    this.analyticsService.track(AnalyticsEventsEnum.MARK_NOTIFICATIONS_AS_SEEN, '', {
+      _organization: command.organizationId,
+      _subscriberId,
+      method: 'by_ids',
+      count: notificationIds.length,
+    });
+  }
+
+  private async markByFilters({
+    command,
+    subscriberId,
+    _subscriberId,
+  }: {
+    command: MarkNotificationsAsSeenCommand;
+    subscriberId: string;
+    _subscriberId: string;
+  }): Promise<void> {
+    const fromFilters: Record<string, unknown> = {};
+
+    if (command.tags) {
+      fromFilters.tagGroups = normalizeTagGroups(command.tags);
+    }
+
+    const parsedData = this.parseData(command.data);
+    if (parsedData) {
+      fromFilters.data = parsedData;
+    }
+
+    const updatedMessages = await this.messageRepository.updateMessagesFromToStatus({
+      environmentId: command.environmentId,
+      subscriberId: _subscriberId,
+      contextKeys: command.contextKeys,
+      from: fromFilters,
+      to: {
+        seen: true,
+      },
+    });
+
+    await this.logTraces({
+      messages: updatedMessages,
+      command,
+      subscriberId,
+      _subscriberId,
+    });
+
+    this.analyticsService.track(AnalyticsEventsEnum.MARK_NOTIFICATIONS_AS_SEEN, '', {
+      _organization: command.organizationId,
+      _subscriberId,
+      method: 'by_filters',
+      filters: fromFilters,
+    });
+  }
+
+  private parseData(data?: string): unknown {
+    if (!data) {
+      return undefined;
+    }
+
+    try {
+      const parsedData = JSON.parse(data);
+      validateDataStructure(parsedData);
+
+      return parsedData;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new BadRequestException('Invalid JSON format for data parameter');
+    }
   }
 
   private async processWebhooksInBatches(

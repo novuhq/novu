@@ -1,7 +1,6 @@
-import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
   messageWebhookMapper,

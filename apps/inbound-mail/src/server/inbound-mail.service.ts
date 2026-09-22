@@ -39,7 +39,10 @@ export class InboundMailService {
      * container. `SqsService` is inert without a queue url, so `QUEUE_BACKEND`
      * alone decides whether mail goes to SQS or stays on BullMQ.
      */
-    this.inboundParseQueueService = new InboundParseQueueService(this.workflowInMemoryProviderService, new SqsService());
+    this.inboundParseQueueService = new InboundParseQueueService(
+      this.workflowInMemoryProviderService,
+      new SqsService()
+    );
   }
 
   async start() {

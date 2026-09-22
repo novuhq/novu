@@ -20,6 +20,7 @@ import {
   SQS_DEFAULT_VISIBILITY_TIMEOUT,
   SQS_DEFAULT_WAIT_TIME_SECONDS,
   SqsConsumerService,
+  SqsMessageProcessor,
   SqsRetryError,
   SqsService,
 } from '../sqs';
@@ -53,9 +54,19 @@ export function isPermanentClientError(error: unknown): boolean {
   return false;
 }
 
-export type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
+/**
+ * BullMQ's `Job` is invariant in its data type, so a processor written for a
+ * concrete payload is not assignable to one declared over a supertype. Every
+ * worker owns a different payload, so the shared base has to stay open here -
+ * the concrete shape is declared by each worker on its own processor and
+ * handlers.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: see above - narrowing this makes the base unusable by any worker
+type JobPayload = any;
 
-export type SqsCompletedHandler = (job: Job<any, unknown, string>) => Promise<void>;
+export type WorkerProcessor = string | Processor<JobPayload, unknown, string> | undefined;
+
+export type SqsCompletedHandler = (job: Job<JobPayload, unknown, string>) => Promise<void>;
 
 /**
  * How long to wait before the message becomes visible again. Lets a worker
@@ -70,7 +81,10 @@ export interface ISqsFailureOutcome {
  * Returning a bare boolean keeps the original contract - only workers that
  * want a custom retry cadence need the object form.
  */
-export type SqsFailedHandler = (job: Job<any, unknown, string>, error: Error) => Promise<boolean | ISqsFailureOutcome>;
+export type SqsFailedHandler = (
+  job: Job<JobPayload, unknown, string>,
+  error: Error
+) => Promise<boolean | ISqsFailureOutcome>;
 
 export { WorkerOptions };
 
@@ -149,7 +163,7 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
     this.bullMqService.createWorker(this.topic, processor, options);
   }
 
-  private initSqsConsumer(processor: Processor<any, unknown, string>, options?: WorkerOptions): void {
+  private initSqsConsumer(processor: Processor<JobPayload, unknown, string>, options?: WorkerOptions): void {
     if (!this.sqsService?.isConfigured(this.topic)) {
       return;
     }
@@ -190,95 +204,124 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
     }
   }
 
-  private wrapForSqs(processor: Processor<any, unknown, string>): (data: any, meta: ISqsMessageMeta) => Promise<void> {
-    return async (data: any, meta: ISqsMessageMeta): Promise<void> => {
+  private wrapForSqs(processor: Processor<JobPayload, unknown, string>): SqsMessageProcessor<JobPayload> {
+    return async (data: JobPayload, meta: ISqsMessageMeta): Promise<void> => {
       const jobId = data._id || data.identifier || 'unknown';
       const jobMock = createSqsJobAdapter(data, meta, this.topic, jobId);
 
       try {
         await processor(jobMock);
-
-        if (this.sqsCompletedHandler) {
-          try {
-            await this.sqsCompletedHandler(jobMock);
-          } catch (handlerError) {
-            Logger.error(
-              {
-                error: handlerError instanceof Error ? handlerError.message : String(handlerError),
-                jobId,
-                topic: this.topic,
-              },
-              'SQS completed handler failed',
-              LOG_CONTEXT
-            );
-          }
-        }
+        await this.notifyCompleted(jobMock, jobId);
       } catch (error) {
-        let shouldRetry = true;
-        let retryDelayMs: number | undefined;
-
-        if (this.sqsFailedHandler) {
-          try {
-            const outcome = await this.sqsFailedHandler(jobMock, error as Error);
-
-            if (typeof outcome === 'boolean') {
-              shouldRetry = outcome;
-            } else {
-              shouldRetry = outcome.retry;
-              retryDelayMs = outcome.retryDelayMs;
-            }
-          } catch (handlerError) {
-            Logger.error(
-              {
-                error: handlerError instanceof Error ? handlerError.message : String(handlerError),
-                jobId,
-                topic: this.topic,
-              },
-              'SQS failed handler error, defaulting to retry',
-              LOG_CONTEXT
-            );
-            shouldRetry = true;
-          }
-        } else if (isPermanentClientError(error)) {
-          /*
-           * Defensive fallback for any SQS-backed worker that has not
-           * registered its own `sqsFailedHandler`. 4xx errors cannot
-           * succeed on retry, so ack the message instead of letting SQS
-           * redeliver it every visibility timeout until it hits the DLQ.
-           * The four production SQS workers (workflow, subscriber-
-           * process, ws, standard) all register explicit handlers; this
-           * branch protects future additions that forget to.
-           */
-          Logger.warn(
-            {
-              error: error instanceof Error ? error.message : String(error),
-              jobId,
-              topic: this.topic,
-              attemptsMade: meta.receiveCount,
-            },
-            'SQS message has permanent client error, acking without retry',
-            LOG_CONTEXT
-          );
-
-          return;
-        }
-
-        if (shouldRetry) {
-          /*
-           * Wrapping preserves the original error for logging while telling
-           * the consumer to shorten this message's visibility instead of
-           * leaving it on the flat consumer-wide timeout. A delay of 0 is a
-           * real request to retry immediately - randomised backoffs round down
-           * to it - so only an absent delay falls through to the flat timeout.
-           */
-          if (retryDelayMs !== undefined) {
-            throw new SqsRetryError(error as Error, retryDelayMs);
-          }
-
-          throw error;
-        }
+        await this.handleProcessingFailure(error, jobMock, jobId, meta);
       }
     };
+  }
+
+  /**
+   * The message was processed, so a handler failure must not undo that: it is
+   * logged and swallowed rather than sent back to SQS for redelivery.
+   */
+  private async notifyCompleted(job: Job<JobPayload, unknown, string>, jobId: string): Promise<void> {
+    if (!this.sqsCompletedHandler) {
+      return;
+    }
+
+    try {
+      await this.sqsCompletedHandler(job);
+    } catch (handlerError) {
+      Logger.error(
+        {
+          error: handlerError instanceof Error ? handlerError.message : String(handlerError),
+          jobId,
+          topic: this.topic,
+        },
+        'SQS completed handler failed',
+        LOG_CONTEXT
+      );
+    }
+  }
+
+  /** Retrying is the safe default whenever the worker's handler cannot answer. */
+  private async resolveFailureOutcome(
+    job: Job<JobPayload, unknown, string>,
+    error: Error,
+    jobId: string
+  ): Promise<ISqsFailureOutcome> {
+    if (!this.sqsFailedHandler) {
+      return { retry: true };
+    }
+
+    try {
+      const outcome = await this.sqsFailedHandler(job, error);
+
+      if (typeof outcome === 'boolean') {
+        return { retry: outcome };
+      }
+
+      return outcome;
+    } catch (handlerError) {
+      Logger.error(
+        {
+          error: handlerError instanceof Error ? handlerError.message : String(handlerError),
+          jobId,
+          topic: this.topic,
+        },
+        'SQS failed handler error, defaulting to retry',
+        LOG_CONTEXT
+      );
+
+      return { retry: true };
+    }
+  }
+
+  private async handleProcessingFailure(
+    error: unknown,
+    job: Job<JobPayload, unknown, string>,
+    jobId: string,
+    meta: ISqsMessageMeta
+  ): Promise<void> {
+    /*
+     * Defensive fallback for any SQS-backed worker that has not registered its
+     * own `sqsFailedHandler`. 4xx errors cannot succeed on retry, so ack the
+     * message instead of letting SQS redeliver it every visibility timeout
+     * until it hits the DLQ. The four production SQS workers (workflow,
+     * subscriber-process, ws, standard) all register explicit handlers; this
+     * branch protects future additions that forget to.
+     */
+    if (!this.sqsFailedHandler && isPermanentClientError(error)) {
+      Logger.warn(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          jobId,
+          topic: this.topic,
+          attemptsMade: meta.receiveCount,
+        },
+        'SQS message has permanent client error, acking without retry',
+        LOG_CONTEXT
+      );
+
+      return;
+    }
+
+    const { retry, retryDelayMs } = await this.resolveFailureOutcome(job, error as Error, jobId);
+
+    if (!retry) {
+      return;
+    }
+
+    /*
+     * Wrapping preserves the original error for logging while telling the
+     * consumer to shorten this message's visibility instead of leaving it on
+     * the flat consumer-wide timeout. A delay of 0 is a real request to retry
+     * immediately - randomised backoffs round down to it - so only an absent
+     * delay falls through to the flat timeout.
+     */
+    if (retryDelayMs !== undefined) {
+      throw new SqsRetryError(error as Error, retryDelayMs);
+    }
+
+    throw error;
   }
 
   /** True when a BullMQ worker exists; false once QUEUE_BACKEND retires it. */

@@ -22,8 +22,8 @@ import {
   HttpClientService,
   InboundMailRequestLogger,
   InMemoryLRUCacheService,
-  isBullMqEnabled,
   InvalidateCacheService,
+  isBullMqEnabled,
   LoggerModule,
   MetricsModule,
   NotificationPayloadService,
@@ -94,8 +94,13 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
+    const mongoUrl = process.env.MONGO_URL;
 
-    await service.connect(process.env.MONGO_URL!);
+    if (!mongoUrl) {
+      throw new Error('MONGO_URL is required to connect the worker to MongoDB');
+    }
+
+    await service.connect(mongoUrl);
 
     return service;
   },

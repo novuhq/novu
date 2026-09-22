@@ -1,15 +1,22 @@
-import { ChangeMessageVisibilityCommand, DeleteMessageCommand, type Message } from '@aws-sdk/client-sqs';
+import { ChangeMessageVisibilityCommand, DeleteMessageCommand, type Message, SQSClient } from '@aws-sdk/client-sqs';
 import { JobTopicNameEnum } from '@novu/shared';
 import { SqsService } from './sqs.service';
 import { SqsConsumerService, SqsMessageProcessor } from './sqs-consumer.service';
-import { SQS_LARGE_PAYLOAD_MARKER } from './sqs-payload-offload.service';
+import { SQS_LARGE_PAYLOAD_MARKER, SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import { SqsRetryError } from './sqs-retry.error';
 
 type ConsumerConfig = {
   handleMessage: (message: Message) => Promise<Message>;
 };
 
-let capturedConfig: ConsumerConfig;
+/** Stands in before `Consumer.create` runs so a missed capture fails loudly. */
+const UNCAPTURED_CONFIG: ConsumerConfig = {
+  handleMessage: () => {
+    throw new Error('Consumer.create was never called, so no handler was captured');
+  },
+};
+
+let capturedConfig: ConsumerConfig = UNCAPTURED_CONFIG;
 
 jest.mock('sqs-consumer', () => ({
   Consumer: {
@@ -38,11 +45,20 @@ function buildMessage(overrides: Partial<Message> = {}): Message {
 }
 
 function buildSqsService(withOffload: boolean): SqsService {
-  return {
+  const client: Partial<SQSClient> = { send: mockClientSend };
+  const offload: Partial<SqsPayloadOffloadService> = { maybeResolve: mockMaybeResolve };
+
+  /*
+   * These AWS-backed services keep private state, so the stubs can never be
+   * one of them; `Partial<T>` still checks each stub against the real API.
+   */
+  const stub: Partial<SqsService> = {
     getQueueUrl: () => 'https://sqs.eu-west-1.amazonaws.com/1/standard',
-    getClient: () => ({ send: mockClientSend }),
-    getPayloadOffloadService: () => (withOffload ? { maybeResolve: mockMaybeResolve } : undefined),
-  } as unknown as SqsService;
+    getClient: () => client as SQSClient,
+    getPayloadOffloadService: () => (withOffload ? (offload as SqsPayloadOffloadService) : undefined),
+  };
+
+  return stub as SqsService;
 }
 
 function createConsumer(processor: SqsMessageProcessor, withOffload = false): SqsConsumerService {
@@ -70,7 +86,7 @@ describe('SqsConsumerService', () => {
     jest.clearAllMocks();
     // Reset so a failed createConsumer cannot leave the previous test's handler
     // in place and make the next one pass for the wrong reason.
-    capturedConfig = undefined as unknown as ConsumerConfig;
+    capturedConfig = UNCAPTURED_CONFIG;
     mockClientSend.mockResolvedValue({});
     mockMaybeResolve.mockImplementation(async (body: string) => body);
   });

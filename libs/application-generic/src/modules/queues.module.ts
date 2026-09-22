@@ -5,6 +5,7 @@ import { hasMetricsBackend, isBullMqEnabled } from '../config';
 import { featureFlagsService } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
+  IHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
@@ -21,6 +22,7 @@ import {
 import {
   ActiveJobsMetricQueueService,
   InboundParseQueueService,
+  QueueBaseService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
@@ -123,16 +125,16 @@ export class QueuesModule implements OnApplicationShutdown {
 
     DYNAMIC_PROVIDERS.push({
       provide: 'BULLMQ_LIST',
-      useFactory: (...args: any[]) => {
-        return args;
+      useFactory: (...queueServices: QueueBaseService[]) => {
+        return queueServices;
       },
       inject: tokenList,
     });
 
     DYNAMIC_PROVIDERS.push({
       provide: 'QUEUE_HEALTH_INDICATORS',
-      useFactory: (...args: any[]) => {
-        return args;
+      useFactory: (...indicators: IHealthIndicator[]) => {
+        return indicators;
       },
       /*
        * These indicators only assert that the BullMQ client is up. Handing them
