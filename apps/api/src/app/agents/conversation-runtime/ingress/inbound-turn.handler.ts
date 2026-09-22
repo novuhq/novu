@@ -76,6 +76,7 @@ import {
   type ExplicitMentionContext,
   followsNestedThreadWithoutMention,
   messageContainsUserMention,
+  messageMentionsAgent,
   requiresExplicitMention,
 } from './requires-explicit-mention';
 import { seedSlackThreadHistory } from './seed-slack-thread-history';
@@ -338,6 +339,7 @@ export class AgentInboundHandler implements OnModuleInit {
     // Fold before mention detection so a mention that arrived in an earlier
     // message of the same burst still gates this turn.
     foldInboundBurst(message, messageContext);
+    const mentionBotUserId = await this.restoreMissingMentionFlag(config, thread, message);
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
 
@@ -474,6 +476,7 @@ export class AgentInboundHandler implements OnModuleInit {
       isVerifiedEmailSender,
       workflowOrigin,
       mentionContext,
+      mentionBotUserId,
       participantsSnapshot,
     });
   }
@@ -508,7 +511,13 @@ export class AgentInboundHandler implements OnModuleInit {
         (mentionContext.humanParticipantCount >= 2 || (mentionContext.otherAgentCount ?? 0) > 0) &&
         isNestedSharedThread(config.platform, thread, platformThreadId)
       ) {
-        await this.postMentionRequiredNotice(agentId, config, thread, platformThreadId, existingConversation);
+        await this.announceMentionRequired({
+          agentId,
+          config,
+          thread,
+          platformThreadId,
+          conversation: existingConversation,
+        });
       }
 
       await thread.unsubscribe();
@@ -694,6 +703,8 @@ export class AgentInboundHandler implements OnModuleInit {
     isVerifiedEmailSender: boolean;
     workflowOrigin: Awaited<ReturnType<WorkflowOriginService['resolveForTurn']>>;
     mentionContext: ExplicitMentionContext;
+    /** This agent's bot user id, when the mention-flag repair already resolved it. */
+    mentionBotUserId?: string;
     /**
      * Participants as they were *before* `createOrGetConversation` added this
      * sender, so smart-policy join detection can still tell a newcomer from the
@@ -713,6 +724,7 @@ export class AgentInboundHandler implements OnModuleInit {
       isVerifiedEmailSender,
       workflowOrigin,
       mentionContext,
+      mentionBotUserId,
       participantsSnapshot,
     } = args;
     let { resolution } = args;
@@ -811,6 +823,7 @@ export class AgentInboundHandler implements OnModuleInit {
         platformThreadId,
         subscriberId,
         mentionContext,
+        mentionBotUserId,
         participantsSnapshot,
       })
     ) {
@@ -860,6 +873,7 @@ export class AgentInboundHandler implements OnModuleInit {
     platformThreadId: string;
     subscriberId: string | null;
     mentionContext: ExplicitMentionContext;
+    mentionBotUserId?: string;
     participantsSnapshot: ConversationParticipant[];
   }): Promise<boolean> {
     const {
@@ -883,13 +897,14 @@ export class AgentInboundHandler implements OnModuleInit {
       return true;
     }
 
-    const mentionBotUserId =
-      mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
+    const botUserId =
+      args.mentionBotUserId ??
+      (mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
       mentionContext.humanParticipantCount === 1 &&
       (mentionContext.otherAgentCount ?? 0) === 0 &&
       messageContainsUserMention(message, config.platform)
         ? await this.resolveMentionBotUserId(config, message)
-        : undefined;
+        : undefined);
 
     const exclusiveThreadEnd = detectSmartExclusiveThreadEnded({
       replyPolicy: mentionContext.replyPolicy,
@@ -897,7 +912,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       platform: config.platform,
       platformUserId: message.author?.userId,
-      botUserId: mentionBotUserId,
+      botUserId,
       message,
       otherAgentCount: mentionContext.otherAgentCount,
     });
@@ -906,18 +921,21 @@ export class AgentInboundHandler implements OnModuleInit {
       return false;
     }
 
-    if (exclusiveThreadEnd === 'teammate_mention' || exclusiveThreadEnd === 'other_agent') {
-      await this.markSmartMentionRequired(config, conversation);
-    }
-
-    await this.postMentionRequiredNotice(
+    const announced = await this.announceMentionRequired({
       agentId,
       config,
       thread,
       platformThreadId,
       conversation,
-      exclusiveThreadEnd === 'join' ? message.author?.fullName : undefined
-    );
+      joinerName: exclusiveThreadEnd === 'join' ? message.author?.fullName : undefined,
+    });
+
+    if (!announced) {
+      // The transition was not recorded, so a later mention would resubscribe
+      // and auto-follow again. Keep following until it can be saved.
+      return false;
+    }
+
     await thread.unsubscribe();
 
     // A message that did mention the agent still gets answered — the notice
@@ -1255,9 +1273,43 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
-  private async markSmartMentionRequired(config: ResolvedAgentConfig, conversation: ConversationEntity): Promise<void> {
+  /**
+   * Tells the room the agent now needs @-mentioning. Announced once per
+   * conversation — the thread keeps producing the same "no longer exclusive"
+   * verdict on every later message, and repeating the notice each time (even
+   * on messages that did mention the agent) is noise. The flag is saved before
+   * the notice is posted so the room is never told about a transition that was
+   * not recorded. Returns false when the transition could not be saved.
+   */
+  private async announceMentionRequired(args: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    thread: Thread;
+    platformThreadId: string;
+    conversation: ConversationEntity | null;
+    joinerName?: string;
+  }): Promise<boolean> {
+    const { agentId, config, thread, platformThreadId, conversation, joinerName } = args;
+
     if (conversationHasSmartMentionRequired(conversation)) {
-      return;
+      return true;
+    }
+
+    if (conversation && !(await this.markSmartMentionRequired(config, conversation))) {
+      return false;
+    }
+
+    await this.postMentionRequiredNotice(agentId, config, thread, platformThreadId, conversation, joinerName);
+
+    return true;
+  }
+
+  private async markSmartMentionRequired(
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity
+  ): Promise<boolean> {
+    if (conversationHasSmartMentionRequired(conversation)) {
+      return true;
     }
 
     try {
@@ -1270,6 +1322,8 @@ export class AgentInboundHandler implements OnModuleInit {
         currentMetadata: conversation.metadata ?? {},
         ops: [{ action: 'set', key: AGENT_REPLY_METADATA_KEYS.smartMentionRequired, value: true }],
       });
+
+      return true;
     } catch (err) {
       this.logger.warn(err, `[agent:${config.agentId}] Failed to persist smart reply-policy mention-required flag`);
       captureAgentWarning(err, {
@@ -1278,7 +1332,48 @@ export class AgentInboundHandler implements OnModuleInit {
         agentId: config.agentId,
         platform: config.platform,
       });
+
+      return false;
     }
+  }
+
+  /**
+   * The chat SDK only flags a Slack mention when the agent's bot user id is on
+   * the adapter's per-event request context. A multi-workspace app resolves that
+   * id per event, so a miss makes a message that did @-mention the agent look
+   * unmentioned — the reply-policy gate then answers with the "@-mention me"
+   * notice and drops the turn instead of replying. Resolve the id directly
+   * (outside the adapter's request scope) and re-check the raw payload before
+   * any gate reads the flag. Returns the bot user id when it was looked up, so
+   * the later teammate-mention check can reuse it.
+   */
+  private async restoreMissingMentionFlag(
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<string | undefined> {
+    const mentionGatedPolicy =
+      config.replyPolicy === AgentReplyPolicyEnum.SMART || config.replyPolicy === AgentReplyPolicyEnum.MENTION_ONLY;
+
+    if (
+      message.isMention === true ||
+      thread.isDM ||
+      !mentionGatedPolicy ||
+      !messageContainsUserMention(message, config.platform)
+    ) {
+      return undefined;
+    }
+
+    const botUserId = await this.resolveMentionBotUserId(config, message);
+
+    if (messageMentionsAgent(message, config.platform, botUserId)) {
+      message.isMention = true;
+      this.logger.debug(
+        `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} @-mentions this agent but arrived without the mention flag; treating it as a mention`
+      );
+    }
+
+    return botUserId;
   }
 
   private async resolveMentionBotUserId(config: ResolvedAgentConfig, message: Message): Promise<string | undefined> {

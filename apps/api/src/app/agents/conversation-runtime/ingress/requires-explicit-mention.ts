@@ -137,6 +137,19 @@ export function messageContainsUserMention(message: Message, platform: AgentPlat
   return collectMentionedUserIds(message, platform).length > 0;
 }
 
+/** Whether the raw payload @-mentions this agent's own bot user. */
+export function messageMentionsAgent(
+  message: Message,
+  platform: AgentPlatformEnum,
+  botUserId: string | undefined
+): boolean {
+  if (!botUserId) {
+    return false;
+  }
+
+  return collectMentionedUserIds(message, platform).some((id) => isBotUserId(id, botUserId));
+}
+
 export function messageMentionsOtherHuman(
   message: Message,
   platform: AgentPlatformEnum,

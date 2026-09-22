@@ -847,6 +847,54 @@ describe('AgentInboundHandler', () => {
         expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
 
+      it('answers a mention the adapter failed to flag in a multi-agent thread', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: '<@UBOT> what is the status?',
+            isMention: false,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('answers later mentions in a multi-agent thread without repeating the notice', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const announcedConversation = {
+          ...conversation,
+          metadata: { [AGENT_REPLY_METADATA_KEYS.smartMentionRequired]: true },
+        };
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        conversationService.findByPlatformThread.resolves(announcedConversation);
+        conversationService.createOrGetConversation.resolves(announcedConversation);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            isMention: true,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.post.called).to.equal(false);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
       it('answers a mention in a shared thread without re-subscribing or re-explaining', async () => {
         const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
         conversationService.findByPlatformThread.resolves(sharedConversation);
@@ -895,6 +943,29 @@ describe('AgentInboundHandler', () => {
           agentConfigResolver.resolveSlackInstallation.calledOnceWith('env1', 'org1', 'slack-main', undefined)
         ).to.equal(true);
         expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('keeps following when the smart mention-required flag cannot be persisted', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.updateMetadata.rejects(new Error('metadata write failed'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'hey <@U99> take a look',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(thread.post.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
 
       it('does not mistake a bot-only mention for a teammate when the SDK mention flag is false', async () => {
