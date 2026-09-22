@@ -1415,7 +1415,15 @@ export class AgentInboundHandler implements OnModuleInit {
     // row persists the decision through its resume chain, so writing here too
     // would double-record the verdict.
     if (!turn.toolApprovalSettledByHitl) {
-      await this.recordApprovalVerdict(conversation, config, action, actorType, participantId, identifier);
+      await this.recordApprovalVerdict(
+        conversation,
+        config,
+        action,
+        actorType,
+        participantId,
+        subscriber?.firstName?.trim() || subscriber?.subscriberId || participantId,
+        identifier
+      );
     }
 
     await runtime.dispatch(turn);
@@ -1496,6 +1504,7 @@ export class AgentInboundHandler implements OnModuleInit {
     action: AgentAction,
     actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER | ConversationActivitySenderTypeEnum.PLATFORM_USER,
     actorId: string,
+    actorName: string,
     identifier?: string
   ): Promise<void> {
     const verdict = this.parseApprovalVerdict(action.id);
@@ -1513,6 +1522,7 @@ export class AgentInboundHandler implements OnModuleInit {
         toolName: verdict.toolName,
         actorType,
         actorId,
+        actorName,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
         ...(identifier ? { identifier } : {}),

@@ -15,6 +15,8 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { isHitlTimelineActivity } from './conversation-hitl';
+import { HitlTimelineRow } from './conversation-hitl-row';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { getTimelineLabel, groupActivitiesForTimeline } from './conversation-timeline-grouping';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
@@ -249,6 +251,18 @@ function ResolvedFooter({ totalCount }: { totalCount: number }) {
   );
 }
 
+function TimelineActivity({ activity }: { activity: ConversationActivityDto }) {
+  if (activity.type === 'message') {
+    return <MessageCard activity={activity} />;
+  }
+
+  if (isHitlTimelineActivity(activity)) {
+    return <HitlTimelineRow activity={activity} formatTimestamp={formatActivityTimestamp} />;
+  }
+
+  return <InlineLogRow activity={activity} />;
+}
+
 export function ConversationTimeline({
   activities,
   isLoading,
@@ -296,7 +310,7 @@ export function ConversationTimeline({
         {groupActivitiesForTimeline(activities).map((activity, index) => (
           <Fragment key={activity._id}>
             {index > 0 && <TimelineDivider />}
-            {activity.type === 'message' ? <MessageCard activity={activity} /> : <InlineLogRow activity={activity} />}
+            <TimelineActivity activity={activity} />
           </Fragment>
         ))}
 

@@ -35,7 +35,7 @@ export class InitializeSession {
       throw new BadRequestException('Please provide a valid app identifier');
     }
 
-    const inAppIntegration = await this.selectIntegration.execute(
+    const selection = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
@@ -45,9 +45,10 @@ export class InitializeSession {
       })
     );
 
-    if (!inAppIntegration) {
+    if (!selection) {
       throw new NotFoundException('In app integration could not be found');
     }
+    const { integration: inAppIntegration } = selection;
 
     if (inAppIntegration.credentials.hmac) {
       validateNotificationCenterEncryption(environment, command);

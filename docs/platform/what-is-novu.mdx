@@ -94,7 +94,7 @@ From an agent thread, your handler can call `ctx.trigger()` to start any existin
 
 ### Workflow to conversation
 
-Workflows can send messages on behalf of an agent across email, chat, and other channels. When a user replies to that message, Novu can open a new agent conversation and continue the thread in context.
+Workflows can send messages on behalf of an agent across email, chat, and other channels. Assign the agent on the workflow (or override it per trigger). When a subscriber replies, Novu opens an agent conversation and hydrates the original notification onto the turn. See [Workflow-assigned agents](/agents/workflow-agents).
 
 ### One platform for both patterns
 
@@ -102,7 +102,7 @@ Workflows can send messages on behalf of an agent across email, chat, and other 
 - Digest or notification replies that hand off to an agent for follow-up.
 - Shared subscriber identity across notifications and agent threads.
 
-Learn more in [Conversations and workflows](/agents/custom-code-agent/concepts#conversations-and-workflows) and [Signals](/agents/custom-code-agent/building-blocks/signals).
+Learn more in [Workflow-assigned agents](/agents/workflow-agents), [Conversations and workflows](/agents/custom-code-agent/concepts#conversations-and-workflows), and [Signals](/agents/custom-code-agent/building-blocks/signals).
 
 ## Common Use Cases
 

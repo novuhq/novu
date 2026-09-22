@@ -97,6 +97,7 @@ const MESSAGE_ROLE_BY_SENDER = {
   [ConversationActivitySenderTypeEnum.SUBSCRIBER]: 'user',
 } as const;
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: exhaustive mapping over conversation activity types
 function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | null {
   switch (activity.type) {
     case ConversationActivityTypeEnum.MESSAGE: {
@@ -233,6 +234,10 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         data: custom.data,
       };
     }
+
+    case ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST:
+    case ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE:
+      return null;
 
     default: {
       const _exhaustive: never = activity.type;

@@ -1394,6 +1394,31 @@ export const sendblueConfig: IConfigCredential[] = [
   },
 ];
 
+export const photonImessageConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Project ID',
+    description: 'Your Photon project ID from app.photon.codes',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Project Secret',
+    description: 'Your Photon project secret from app.photon.codes',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Webhook Signing Secret',
+    description:
+      'Issued by Photon when the inbound webhook is registered — filled in automatically by "Configure webhook", or paste it here after adding the webhook manually in the Photon dashboard',
+    type: 'string',
+    required: false,
+  },
+];
+
 export const lineConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
