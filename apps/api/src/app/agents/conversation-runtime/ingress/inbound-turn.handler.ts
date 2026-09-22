@@ -1277,9 +1277,10 @@ export class AgentInboundHandler implements OnModuleInit {
    * Tells the room the agent now needs @-mentioning. Announced once per
    * conversation — the thread keeps producing the same "no longer exclusive"
    * verdict on every later message, and repeating the notice each time (even
-   * on messages that did mention the agent) is noise. The flag is saved before
-   * the notice is posted so the room is never told about a transition that was
-   * not recorded. Returns false when the transition could not be saved.
+   * on messages that did mention the agent) is noise. The flag is saved only
+   * after the notice posts, so a Slack/Teams reject stays retryable instead of
+   * silencing the room. Returns false when the notice could not be posted or
+   * the transition could not be saved.
    */
   private async announceMentionRequired(args: {
     agentId: string;
@@ -1295,11 +1296,22 @@ export class AgentInboundHandler implements OnModuleInit {
       return true;
     }
 
-    if (conversation && !(await this.markSmartMentionRequired(config, conversation))) {
+    const posted = await this.postMentionRequiredNotice(
+      agentId,
+      config,
+      thread,
+      platformThreadId,
+      conversation,
+      joinerName
+    );
+
+    if (!posted) {
       return false;
     }
 
-    await this.postMentionRequiredNotice(agentId, config, thread, platformThreadId, conversation, joinerName);
+    if (conversation && !(await this.markSmartMentionRequired(config, conversation))) {
+      return false;
+    }
 
     return true;
   }
@@ -1422,7 +1434,7 @@ export class AgentInboundHandler implements OnModuleInit {
     platformThreadId: string,
     conversation: ConversationEntity | null,
     joinerName?: string
-  ): Promise<void> {
+  ): Promise<boolean> {
     const markdown = buildMentionRequiredNoticeReply({ joinerName, agentName: config.agentName });
 
     try {
@@ -1443,6 +1455,8 @@ export class AgentInboundHandler implements OnModuleInit {
             }
           : undefined
       );
+
+      return true;
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post smart reply-policy mention notice`);
       captureAgentWarning(err, {
@@ -1451,6 +1465,8 @@ export class AgentInboundHandler implements OnModuleInit {
         agentId,
         platform: config.platform,
       });
+
+      return false;
     }
   }
 
