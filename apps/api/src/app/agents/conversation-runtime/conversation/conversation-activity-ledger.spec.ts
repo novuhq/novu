@@ -4,6 +4,12 @@ import sinon from 'sinon';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
+/** Only the repository surface a given test exercises; widened once at the constructor boundary. */
+type ConversationRepositoryDouble = Partial<ConversationRepository>;
+
+/** Tests stub either `mint` or `mintRange` depending on which path the ledger takes. */
+type EventSequenceServiceDouble = Partial<Pick<ConversationEventSequenceService, 'mint' | 'mintRange'>>;
+
 describe('ConversationActivityLedger', () => {
   const lifecycleParams = {
     conversationId: 'conv-1',
@@ -59,16 +65,16 @@ describe('ConversationActivityLedger', () => {
 
   function makeLedger(
     activityRepository = makeActivityRepository(),
-    eventSequenceService = { mint: sinon.stub().resolves(7) } as unknown as ConversationEventSequenceService,
+    eventSequenceService: EventSequenceServiceDouble = { mint: sinon.stub().resolves(7) },
     publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) },
-    conversationRepository = makeConversationRepository(),
+    conversationRepository: ConversationRepositoryDouble = makeConversationRepository(),
     logger = makeLogger()
   ) {
     return new ConversationActivityLedger(
       activityRepository as any,
-      eventSequenceService,
+      eventSequenceService as ConversationEventSequenceService,
       publisher as any,
-      conversationRepository as unknown as ConversationRepository,
+      conversationRepository as ConversationRepository,
       logger as any
     );
   }
@@ -142,7 +148,7 @@ describe('ConversationActivityLedger', () => {
       const conversationRepository = makeConversationRepository({ incrementMessageCount });
       const eventSequenceService = {
         mintRange: sinon.stub().resolves([4, 5]),
-      } as unknown as ConversationEventSequenceService;
+      };
       const ledger = makeLedger(activityRepository, eventSequenceService, undefined, conversationRepository);
 
       const inserted = await ledger.importInboundMessages({
@@ -227,7 +233,7 @@ describe('ConversationActivityLedger', () => {
       const logger = makeLogger();
       const ledger = makeLedger(
         activityRepository,
-        { mint: sinon.stub().resolves(7) } as unknown as ConversationEventSequenceService,
+        { mint: sinon.stub().resolves(7) },
         undefined,
         conversationRepository,
         logger
@@ -398,7 +404,7 @@ describe('ConversationActivityLedger', () => {
       }));
       const mint = sinon.stub().onFirstCall().resolves(10).onSecondCall().resolves(11);
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
-      const ledger = makeLedger(activityRepository, { mint } as unknown as ConversationEventSequenceService, publisher);
+      const ledger = makeLedger(activityRepository, { mint }, publisher);
       const context = {
         ...basePersistParams(),
         channel: {
@@ -459,12 +465,7 @@ describe('ConversationActivityLedger', () => {
       const mint = sinon.stub().resolves(12);
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
       const conversationRepository = makeConversationRepository();
-      const ledger = makeLedger(
-        activityRepository,
-        { mint } as unknown as ConversationEventSequenceService,
-        publisher,
-        conversationRepository
-      );
+      const ledger = makeLedger(activityRepository, { mint }, publisher, conversationRepository);
       const context = {
         conversationId: 'conv-1',
         channel: {
@@ -507,7 +508,7 @@ describe('ConversationActivityLedger', () => {
       const activityRepository = makeActivityRepository();
       const mint = sinon.stub().resolves(4);
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
-      const ledger = makeLedger(activityRepository, { mint } as unknown as ConversationEventSequenceService, publisher);
+      const ledger = makeLedger(activityRepository, { mint }, publisher);
 
       await ledger.persistToolResult({
         conversationId: 'conv-1',
