@@ -4,8 +4,7 @@ import { DeprecationDashboardNoticeContent } from './DeprecationDashboardNoticeC
 import { useLegacyDashboardMigrationNotice } from './useLegacyDashboardMigrationNotice';
 
 export function DeprecationBanner() {
-  const { isEnabled, isLoading, daysLeft, timePhrase, deprecationDateLabel, migrationGuideUrl } =
-    useLegacyDashboardMigrationNotice('deprecation_banner');
+  const { isEnabled, isLoading, message, migrationGuideUrl } = useLegacyDashboardMigrationNotice('deprecation_banner');
 
   if (isLoading || !isEnabled) {
     return null;
@@ -25,13 +24,7 @@ export function DeprecationBanner() {
       data-test-id="deprecation-banner"
     >
       <Group spacing={8} noWrap style={{ justifyContent: 'center', width: '100%', maxWidth: 1200 }}>
-        <DeprecationDashboardNoticeContent
-          migrationGuideUrl={migrationGuideUrl}
-          daysLeft={daysLeft}
-          timePhrase={timePhrase}
-          deprecationDateLabel={deprecationDateLabel}
-          variant="banner"
-        />
+        <DeprecationDashboardNoticeContent migrationGuideUrl={migrationGuideUrl} message={message} variant="banner" />
       </Group>
     </div>
   );

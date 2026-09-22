@@ -25,8 +25,7 @@ function persistDismissed(): void {
 
 export function DeprecationNoticeModal() {
   const theme = useMantineTheme();
-  const { isEnabled, isLoading, daysLeft, timePhrase, deprecationDateLabel, migrationGuideUrl } =
-    useLegacyDashboardMigrationNotice('deprecation_modal');
+  const { isEnabled, isLoading, message, migrationGuideUrl } = useLegacyDashboardMigrationNotice('deprecation_modal');
   const [opened, setOpened] = useState(false);
 
   useEffect(() => {
@@ -74,13 +73,7 @@ export function DeprecationNoticeModal() {
         },
       }}
     >
-      <DeprecationDashboardNoticeContent
-        migrationGuideUrl={migrationGuideUrl}
-        daysLeft={daysLeft}
-        timePhrase={timePhrase}
-        deprecationDateLabel={deprecationDateLabel}
-        variant="modal"
-      />
+      <DeprecationDashboardNoticeContent migrationGuideUrl={migrationGuideUrl} message={message} variant="modal" />
       <Group position="right" mt={32}>
         <Button size="md" onClick={handleDismiss} data-autofocus>
           Acknowledge & Close

@@ -34,6 +34,16 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.PUSH]: 'Push',
 };
 
+/**
+ * The API can return channels that were introduced after this app was frozen (e.g. `tool`),
+ * so unknown channels fall back to their raw value instead of rendering `undefined`.
+ */
+export function getChannelLabel(channel?: string): string {
+  if (!channel) return '';
+
+  return CHANNEL_TYPE_TO_STRING[channel as ChannelTypeEnum] ?? channel;
+}
+
 export const channels: IChannelDefinition[] = [
   {
     tabKey: StepTypeEnum.IN_APP,

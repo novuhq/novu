@@ -6,9 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import {
   buildMigrationGuideUrl,
   DEFAULT_LEGACY_DASHBOARD_DEPRECATION_DATE,
-  formatDeprecationDateLabel,
-  getDaysUntilDeprecation,
-  getDeprecationTimePhrase,
+  getDeprecationMessage,
   LEGACY_DASHBOARD_DEPRECATION_DATE_FLAG,
   LEGACY_DASHBOARD_DEPRECATION_NOTICE_ENABLED_DEFAULT,
   LEGACY_DASHBOARD_DEPRECATION_NOTICE_ENABLED_FLAG,
@@ -66,17 +64,13 @@ export function useLegacyDashboardMigrationNotice(utmMedium: MigrationNoticeUtmM
   );
 
   const deprecationDate = parseDeprecationDate(deprecationDateString);
-  const daysLeft = getDaysUntilDeprecation(deprecationDate);
-  const timePhrase = getDeprecationTimePhrase(daysLeft);
-  const deprecationDateLabel = formatDeprecationDateLabel(deprecationDate);
+  const message = getDeprecationMessage(deprecationDate);
   const migrationGuideUrl = buildMigrationGuideUrl(apiServiceLevel, currentOrganization, utmMedium);
 
   return {
     isEnabled,
     isLoading,
-    daysLeft,
-    timePhrase,
-    deprecationDateLabel,
+    message,
     migrationGuideUrl,
   };
 }

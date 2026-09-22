@@ -2,7 +2,7 @@ import { IEnvironment, providers } from '@novu/shared';
 
 import type { IntegrationEntity, ITableIntegration } from './types';
 import { CONTEXT_PATH } from '../../config';
-import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
+import { getChannelLabel } from '../../utils/channels';
 
 export const mapToTableIntegration = (
   integration: IntegrationEntity,
@@ -22,7 +22,7 @@ export const mapToTableIntegration = (
     integrationId: integration._id ?? '',
     identifier: integration.identifier,
     provider: provider?.displayName ?? '',
-    channel: CHANNEL_TYPE_TO_STRING[integration.channel],
+    channel: getChannelLabel(integration.channel),
     channelType: integration.channel,
     environment: environment?.name ?? '',
     active: integration.active,
