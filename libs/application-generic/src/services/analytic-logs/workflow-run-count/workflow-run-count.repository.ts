@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
+import { toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
 import {
   WORKFLOW_RUN_COUNT_ORDER_BY,
@@ -187,8 +188,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     organizationId?: string
   ): Promise<Array<{ organization_id: string; count: string }>> {
     const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
-    const startDay = startDate.toISOString().split('T')[0];
-    const endDayInclusive = new Date(endDate.getTime() - 1).toISOString().split('T')[0];
+    const { start, end } = toInclusiveUtcDays(startDate, endDate);
 
     const query = `
       SELECT
@@ -205,8 +205,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     `;
 
     const params: Record<string, unknown> = {
-      startDate: startDay,
-      endDate: endDayInclusive,
+      startDate: start,
+      endDate: end,
     };
 
     if (organizationId) {
@@ -233,8 +233,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     startDate: Date,
     endDate: Date
   ): Promise<Array<{ organization_id: string; day: string; count: string }>> {
-    const startDay = startDate.toISOString().split('T')[0];
-    const endDayInclusive = new Date(endDate.getTime() - 1).toISOString().split('T')[0];
+    const { start, end } = toInclusiveUtcDays(startDate, endDate);
 
     const query = `
       SELECT
@@ -257,8 +256,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     }>({
       query,
       params: {
-        startDate: startDay,
-        endDate: endDayInclusive,
+        startDate: start,
+        endDate: end,
       },
     });
 
