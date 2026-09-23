@@ -12,7 +12,6 @@ import { GetRequestResponseDto } from './dtos/get-request.response.dto';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
 import { GetWorkflowRunResponseDto } from './dtos/workflow-run-response.dto';
-import { GetWorkflowRunStatsRequestDto, GetWorkflowRunStatsResponseDto } from './dtos/workflow-run-stats.dto';
 import { GetWorkflowRunsRequestDto } from './dtos/workflow-runs-request.dto';
 import { GetWorkflowRunsResponseDto } from './dtos/workflow-runs-response.dto';
 import { GetChartsCommand } from './usecases/get-charts/get-charts.command';
@@ -23,8 +22,6 @@ import { GetRequestsCommand } from './usecases/get-requests/get-requests.command
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-run.command';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
-import { GetWorkflowRunStatsCommand } from './usecases/get-workflow-run-stats/get-workflow-run-stats.command';
-import { GetWorkflowRunStats } from './usecases/get-workflow-run-stats/get-workflow-run-stats.usecase';
 import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
 
@@ -40,7 +37,6 @@ export class ActivityController {
     private getRequestsUsecase: GetRequests,
     private getWorkflowRunsUsecase: GetWorkflowRuns,
     private getWorkflowRunUsecase: GetWorkflowRun,
-    private getWorkflowRunStatsUsecase: GetWorkflowRunStats,
     private getRequestUsecase: GetRequest,
     private getChartsUsecase: GetCharts
   ) {}
@@ -98,32 +94,6 @@ export class ActivityController {
   ): Promise<GetWorkflowRunsResponseDto> {
     return this.getWorkflowRunsUsecase.execute(
       GetWorkflowRunsCommand.create({
-        ...query,
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-        contextKeys: query.contextKeys,
-      })
-    );
-  }
-
-  @Get('workflow-runs/stats')
-  @OAuthAccessible()
-  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
-  @SdkGroupName('Activity.WorkflowRuns')
-  @SdkMethodName('stats')
-  @ApiOperation({
-    summary: 'Retrieve workflow run stats',
-    description:
-      'Retrieve aggregated workflow run counts and unique subscriber counts. Supports the same filters as the workflow-runs list plus an optional groupBy dimension.',
-  })
-  @ApiResponse(GetWorkflowRunStatsResponseDto)
-  async getWorkflowRunStats(
-    @UserSession() user: UserSessionData,
-    @Query() query: GetWorkflowRunStatsRequestDto
-  ): Promise<GetWorkflowRunStatsResponseDto> {
-    return this.getWorkflowRunStatsUsecase.execute(
-      GetWorkflowRunStatsCommand.create({
         ...query,
         organizationId: user.organizationId,
         environmentId: user.environmentId,

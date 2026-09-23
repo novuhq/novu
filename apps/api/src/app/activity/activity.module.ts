@@ -19,14 +19,12 @@ import { GetCharts } from './usecases/get-charts/get-charts.usecase';
 import { GetRequest } from './usecases/get-request/get-request.usecase';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
-import { GetWorkflowRunStats } from './usecases/get-workflow-run-stats/get-workflow-run-stats.usecase';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
 
 const USE_CASES = [
   GetRequests,
   GetWorkflowRuns,
   GetWorkflowRun,
-  GetWorkflowRunStats,
   GetCharts,
   ActivityRetentionService,
   BuildDeliveryTrendChart,
