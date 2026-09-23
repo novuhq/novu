@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { renderUsageLimitsEmail } from './email';
 import { usageLimitsAlertStateSchema } from './schemas';
 
-/** Triggered at most once per organization, billing period and threshold; the caller owns deduplication. */
+/**
+ * Deduplication is owned by the caller: one alert per organization, billing period and threshold,
+ * except `blocked`, which the caller re-sends every few days while the organization stays blocked.
+ */
 export const usageLimitsPayloadSchema = z.object({
   organizationName: z.string(),
   /** The threshold crossed (75, 90 or 100), as a percentage of `allowance`. */

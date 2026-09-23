@@ -4,7 +4,7 @@ import { EmailLayout } from '../../templates/layout';
 import { UsageLimitsAlertState } from './schemas';
 
 interface IEmailProps {
-  alertState?: UsageLimitsAlertState;
+  alertState: UsageLimitsAlertState;
   percentage?: number;
   organizationName?: string;
   usage?: number;
@@ -104,6 +104,9 @@ export interface IEmailControls {
   previewText?: string;
 }
 
+// The framework passes a partial payload (e.g. step previews), so the alert state needs a fallback.
 export async function renderUsageLimitsEmail(payload: IRenderEmailPayload, controls: IEmailControls) {
-  return renderAsync(<UsageLimitsEmail {...payload} {...controls} />);
+  return renderAsync(
+    <UsageLimitsEmail {...payload} alertState={payload.alertState ?? 'approaching_limit'} {...controls} />
+  );
 }
