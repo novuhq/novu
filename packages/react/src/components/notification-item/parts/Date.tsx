@@ -48,13 +48,9 @@ export const Date = ({ className, children }: NotificationItemDateProps) => {
   const snoozedUntil = notification.snoozedUntil
     ? formatSnoozedUntil({ untilDate: new globalThis.Date(notification.snoozedUntil), locale })
     : null;
-  const deliveredAt = useMemo(
-    () =>
-      Array.isArray(notification.deliveredAt)
-        ? notification.deliveredAt.map((date) => formatToRelativeTime({ fromDate: new globalThis.Date(date), locale }))
-        : null,
-    [notification.deliveredAt, locale]
-  );
+  const deliveredAt = Array.isArray(notification.deliveredAt)
+    ? notification.deliveredAt.map((date) => formatToRelativeTime({ fromDate: new globalThis.Date(date), locale }))
+    : null;
 
   let content: ReactNode = createdAt;
   if (children !== undefined) {
