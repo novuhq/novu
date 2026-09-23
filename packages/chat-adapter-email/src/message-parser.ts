@@ -1,8 +1,8 @@
-import type { Message } from 'chat';
+import type { Message, MessageData } from 'chat';
 import type { NovuEmailRawMessage } from './types.js';
 import { extractDisplayName, parseEmailAddress, stripHtml } from './utils.js';
 
-type MessageConstructor = new (data: unknown) => Message<NovuEmailRawMessage>;
+type MessageConstructor = new (data: MessageData<NovuEmailRawMessage>) => Message<NovuEmailRawMessage>;
 type ParseMarkdownFn = (text: string) => import('chat').Root;
 
 /**
@@ -18,7 +18,7 @@ export class MessageParser {
     this.parseMarkdownFn = parseMarkdownFn;
   }
 
-  parse(raw: NovuEmailRawMessage, fromAddress: string): Message<NovuEmailRawMessage> {
+  parse(raw: NovuEmailRawMessage, fromAddress: string, threadId: string): Message<NovuEmailRawMessage> {
     if (!this.MessageClass || !this.parseMarkdownFn) {
       throw new Error('MessageParser not initialized — call setChatModule() first');
     }
@@ -68,7 +68,7 @@ export class MessageParser {
 
     return new this.MessageClass({
       id: raw.id,
-      threadId: '',
+      threadId,
       text,
       formatted: this.parseMarkdownFn(text),
       raw,

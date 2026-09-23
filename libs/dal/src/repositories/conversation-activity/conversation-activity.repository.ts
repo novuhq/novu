@@ -294,12 +294,15 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     platformThreadId: string;
     senderType: ConversationActivitySenderTypeEnum;
     senderId: string;
+    senderName?: string;
     content: string;
     type: ConversationActivityTypeEnum;
     toolData: ConversationActivityToolData;
+    richContent?: Record<string, unknown>;
     sequence?: number;
     environmentId: string;
     organizationId: string;
+    platformMessageId?: string;
   }): Promise<ConversationActivityEntity> {
     return this.create({
       identifier: params.identifier,
@@ -310,8 +313,11 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       platformThreadId: params.platformThreadId,
       senderType: params.senderType,
       senderId: params.senderId,
+      senderName: params.senderName,
       content: params.content,
       toolData: params.toolData,
+      ...(params.richContent !== undefined ? { richContent: params.richContent } : {}),
+      ...(params.platformMessageId !== undefined ? { platformMessageId: params.platformMessageId } : {}),
       ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,

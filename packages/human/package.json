@@ -1,6 +1,6 @@
 {
   "name": "@novu/human",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The human API for agents — ask, approve, choose, tell. Agents reach a human on Telegram/Slack and block until the human answers.",
   "main": "dist/src/index.js",
   "publishConfig": {

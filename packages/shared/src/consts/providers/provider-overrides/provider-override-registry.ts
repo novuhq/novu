@@ -132,6 +132,7 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   // schema: the demo integration is not the place to surface Block Kit validation.
   [ChatProviderIdEnum.Novu]: escapeHatch('text'),
   [ChatProviderIdEnum.Discord]: escapeHatch('content'),
+  [ChatProviderIdEnum.GoogleChat]: escapeHatch('text'),
   [ChatProviderIdEnum.MsTeams]: escapeHatch('text'),
   [ChatProviderIdEnum.WebexMessaging]: escapeHatch('text'),
   [ChatProviderIdEnum.Mattermost]: escapeHatch('text'),
@@ -162,6 +163,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
     primaryContentKey: TELEGRAM_PRIMARY_CONTENT_KEY,
   },
   [ChatProviderIdEnum.Sendblue]: escapeHatch('content'),
+  // Photon's provider reads `text` as its body override key (see photon-imessage.schema.ts).
+  [ChatProviderIdEnum.PhotonImessage]: escapeHatch('text'),
   // Web Chat has no stable override schema yet — free-form passthrough keyed like Discord.
   [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;

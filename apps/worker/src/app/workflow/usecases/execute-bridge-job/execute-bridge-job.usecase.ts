@@ -49,6 +49,10 @@ import {
 } from '@novu/shared';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
+export interface ExecuteBridgeJobResult extends ExecuteOutput {
+  sourceControls: Record<string, unknown>;
+}
+
 @Injectable()
 export class ExecuteBridgeJob {
   constructor(
@@ -67,7 +71,7 @@ export class ExecuteBridgeJob {
   }
 
   @InstrumentUsecase()
-  async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {
+  async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteBridgeJobResult | null> {
     const stepId = command.job.step.stepId || command.job.step.uuid;
 
     const isStateful = !command.job.step.bridgeUrl;
@@ -159,7 +163,10 @@ export class ExecuteBridgeJob {
       },
     });
 
-    return bridgeResponse;
+    return {
+      ...bridgeResponse,
+      sourceControls: variablesStores ?? {},
+    };
   }
 
   private async findControlValues(

@@ -1,5 +1,5 @@
 import { IMessageFilter } from '@novu/shared';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Control, UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { RiArrowRightSLine, RiGuideFill, RiInputField } from 'react-icons/ri';
 import { formatQuery, RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
@@ -11,16 +11,19 @@ import { Form, FormField } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { useWorkflowPayloadSchemas } from '@/hooks/use-workflow-payload-schemas';
 import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
 import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
+  buildPayloadConditionVariables,
   countLegacyIntegrationConditions,
   createEmptyConditionsQuery,
-  INTEGRATION_CONDITION_FIELDS,
   INTEGRATION_CONDITION_VARIABLES,
   isAllowedIntegrationConditionVariable,
+  mergeIntegrationConditionVariables,
 } from '../utils/integration-conditions';
 import { IntegrationConditionValueInput } from './integration-condition-value-input';
 
@@ -63,6 +66,30 @@ export function IntegrationConditionsDrawer({
   const rules = useWatch({ control, name: 'rules' });
   const primary = useWatch({ control, name: 'primary' });
   const integrationName = useWatch({ control, name: 'name' });
+  const [isOpen, setIsOpen] = useState(false);
+  const contextTypeVariables = useContextTypeVariables();
+  const { data: payloadSchemasData } = useWorkflowPayloadSchemas(isOpen);
+  const payloadVariables = useMemo(
+    () => buildPayloadConditionVariables(payloadSchemasData?.payloadSchemas ?? []),
+    [payloadSchemasData?.payloadSchemas]
+  );
+  const integrationConditionVariables = useMemo(() => {
+    return mergeIntegrationConditionVariables([
+      ...INTEGRATION_CONDITION_VARIABLES,
+      ...contextTypeVariables,
+      ...payloadVariables,
+    ]);
+  }, [contextTypeVariables, payloadVariables]);
+  const integrationConditionFields = useMemo(
+    () =>
+      integrationConditionVariables.map((variable) => ({
+        name: variable.name,
+        label: variable.displayLabel || variable.name,
+        value: variable.name,
+        dataType: variable.dataType,
+      })),
+    [integrationConditionVariables]
+  );
   const rulesRef = useDataRef(rules);
   const legacyConditionsCount = countLegacyIntegrationConditions(legacyConditions);
   const buildQuery = useCallback(() => {
@@ -81,7 +108,6 @@ export function IntegrationConditionsDrawer({
       query: buildQuery(),
     },
   });
-  const [isOpen, setIsOpen] = useState(false);
   const [pendingQuery, setPendingQuery] = useState<RuleGroupType | null>(null);
 
   const query = form.watch('query');
@@ -158,9 +184,9 @@ export function IntegrationConditionsDrawer({
                       <ConditionsEditor
                         query={field.value}
                         onQueryChange={handleQueryChange}
-                        fields={INTEGRATION_CONDITION_FIELDS}
-                        variables={INTEGRATION_CONDITION_VARIABLES}
-                        enhancedVariables={INTEGRATION_CONDITION_VARIABLES}
+                        fields={integrationConditionFields}
+                        variables={integrationConditionVariables}
+                        enhancedVariables={integrationConditionVariables}
                         isAllowedVariable={isAllowedIntegrationConditionVariable}
                         valueInput={IntegrationConditionValueInput}
                         saveForm={() => undefined}

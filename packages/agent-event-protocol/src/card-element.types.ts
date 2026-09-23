@@ -43,6 +43,8 @@ export type CardElementLinkButtonElement = {
   style?: 'primary' | 'danger' | 'default';
   /** Optional author-provided id; platform serializers use it (e.g. Slack `action_id`). */
   id?: string;
+  /** Hover text; Teams renders it; other platforms ignore it. */
+  tooltip?: string;
 };
 
 /** Interactive action button (Chat SDK `Button`). Drives `sendAction` in web chat. */
@@ -55,6 +57,8 @@ export type CardElementButtonElement = {
   callbackUrl?: string;
   value?: string;
   disabled?: boolean;
+  /** Hover text; Teams renders it; other platforms ignore it. */
+  tooltip?: string;
 };
 
 export type CardElementSelectOptionElement = {
@@ -111,6 +115,45 @@ export type CardElementTableElement = {
   headers: string[];
   rows: string[][];
   align?: Array<'left' | 'center' | 'right'>;
+  caption?: string;
+  pageSize?: number;
+};
+
+export type CardElementChartSegment = {
+  label: string;
+  value: number;
+};
+
+export type CardElementChartDataPoint = {
+  label: string;
+  value: number;
+};
+
+export type CardElementChartSeries = {
+  name: string;
+  data: CardElementChartDataPoint[];
+};
+
+export type CardElementPieChartDefinition = {
+  type: 'pie';
+  segments: CardElementChartSegment[];
+};
+
+export type CardElementSeriesChartDefinition = {
+  type: 'area' | 'bar' | 'line';
+  categories: string[];
+  series: CardElementChartSeries[];
+  xLabel?: string;
+  yLabel?: string;
+};
+
+export type CardElementChartDefinition = CardElementPieChartDefinition | CardElementSeriesChartDefinition;
+
+/** Chat SDK `Chart`. */
+export type CardElementChartElement = {
+  type: 'chart';
+  title: string;
+  chart: CardElementChartDefinition;
 };
 
 export type CardElementSectionElement = {
@@ -128,7 +171,8 @@ export type CardElementChild =
   | CardElementActionsElement
   | CardElementSectionElement
   | CardElementFieldsElement
-  | CardElementTableElement;
+  | CardElementTableElement
+  | CardElementChartElement;
 
 export type CardElement = {
   type: 'card';
@@ -136,4 +180,6 @@ export type CardElement = {
   subtitle?: string;
   imageUrl?: string;
   children: CardElementChild[];
+  /** Width hint for Teams full-width cards; other platforms ignore it. */
+  width?: 'default' | 'full';
 };

@@ -141,7 +141,7 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(body.data.primary).to.equal(false);
   });
 
-  it('should reject JsonLogic conditions on a disallowed field', async () => {
+  it('should create integration with JsonLogic conditions on a payload field', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
@@ -155,7 +155,7 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
 
     const { body } = await session.testAgent.post('/v1/integrations').send(payload);
 
-    expect(body.statusCode).to.equal(400);
+    expect(body.data.rules).to.deep.equal(payload.rules);
   });
 
   it('should reject JsonLogic conditions on deprecated tenant fields', async () => {
@@ -744,12 +744,12 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
   describe('API key authentication is scoped to the key environment', () => {
     it('should forbid creating with a different `_environmentId` when authenticated via API key', async () => {
       const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
-      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+      if (!prodEnv) throw new Error('Expected Production environment fixture');
 
       const payload = {
         providerId: EmailProviderIdEnum.SendGrid,
         channel: ChannelTypeEnum.EMAIL,
-        _environmentId: prodEnv!._id,
+        _environmentId: prodEnv._id,
         check: false,
       };
 

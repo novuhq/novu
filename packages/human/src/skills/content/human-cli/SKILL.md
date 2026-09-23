@@ -56,6 +56,18 @@ reachable (chat, PR description, logs) rather than silently giving up or
 looping. Never attempt to configure it on the human's behalf — you don't have
 their Telegram/Slack/email credentials, and setup is interactive by design.
 
+The no-account (keyless) setup is a free demo with a small message allowance.
+When it runs out, commands exit 1 with a message containing a sign-up link:
+
+```
+You've used the 5 free messages of this keyless demo.
+Sign up to keep your channels and continue: https://dashboard.novu.co/connect/claim?token=...
+```
+
+The human already received that link on their channel. Stop retrying, surface
+the link where the human will see it, and wait — the human signs up and then
+re-points the CLI with `human setup --secret-key <key>` (or `NOVU_SECRET_KEY`).
+
 In sandboxes and containers with no config file, the CLI is fully operational
 when `NOVU_SECRET_KEY` and `HUMAN_TO` are set in the environment
 (optionally `HUMAN_VIA` for the channel). `--to`/`--via` flags still
@@ -177,6 +189,24 @@ other useful work to do while you wait.
 - `--ttl 2h` — how long the request stays answerable before it expires
   (default 24h, max 72h). Shorten this for anything time-sensitive so a
   stale approval can't be actioned days later.
+- `--icon` — Slack only; MCP catalog id (`stripe`, `github`) or https URL (32×32). Ignored on other channels.
+- `--subtitle`, `--body` — optional card chrome on every channel.
+- Approve only: `--approve-label`, `--deny-label`, repeatable
+  `--extra-action trust-tool:"Always allow this tool"`.
+- Choose `--option` also accepts `id:label` (`--option stg:Staging`).
+
+```bash
+human approve "Should we deploy to staging?" \
+  --icon stripe \
+  --subtitle "issue_refund: ORD-42" \
+  --body "Refund $25.00" \
+  --extra-action trust-tool:"Always allow this tool"
+
+human choose "Which environment?" \
+  --option stg:Staging \
+  --option prd:Production \
+  --subtitle "This cannot be undone"
+```
 
 ## Checking in without asking something new
 

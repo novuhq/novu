@@ -9,4 +9,5 @@ export * from './patch-workflow.dto';
 export * from './sync-workflow.dto';
 export * from './test-http-endpoint.dto';
 export * from './update-workflow.dto';
+export * from './workflow-payload-schemas.dto';
 export * from './workflow-test-data.dto';

@@ -134,6 +134,25 @@ Example:
 
 <video autoPlay loop muted playsInline src="/images/platform/workflow/translations/translations_variable_use_in_step_editor.mp4" />
 
+### Translation keys in digest loops
+
+A translation key inside a digest loop does not inherit the loop's current event. For example, `{{t.digestItem}}`
+cannot interpolate `event.payload.documentName` for each item in
+`steps.digest-step.events`. A `payload.*` reference inside that translation resolves against the payload from the
+first event that started the digest, so repeating the key can render the same value for every item.
+
+Render event-specific values directly inside the loop:
+
+```liquid
+{% for event in steps.digest-step.events %}
+  <p>{{ event.payload.documentName }}</p>
+{% endfor %}
+```
+
+If the repeated sentence itself must be translated, put the complete loop in the translation value so the loop
+variable is declared within the same translation template. Passing a loop-local event as a parameter to `{{t.*}}` is
+not supported.
+
 ## Testing translations
 
 Use the Preview Context to:
