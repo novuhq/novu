@@ -39,6 +39,16 @@ export function usageLimitsDedupKey({
   return `${organizationId}:${periodStart}:${percentage}`;
 }
 
+export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {
+  return {
+    type: 'fixed',
+    amount: DEDUP_WINDOW_HOURS[payload.alertState],
+    unit: 'hours',
+    threshold: 1,
+    throttleKey: usageLimitsDedupKey(payload),
+  } as const;
+}
+
 /**
  * The caller's claim decides whether to trigger at all: once per organization, billing period and threshold,
  * with `blocked` re-sent every few days. The `dedup` step guarantees at most one delivery per subscriber,
@@ -48,15 +58,7 @@ export function usageLimitsDedupKey({
 export const usageLimitsWorkflow = workflow(
   'usage-limits',
   async ({ step, payload }) => {
-    await step.throttle('dedup', async () => {
-      return {
-        type: 'fixed',
-        amount: DEDUP_WINDOW_HOURS[payload.alertState],
-        unit: 'hours',
-        threshold: 1,
-        throttleKey: usageLimitsDedupKey(payload),
-      };
-    });
+    await step.throttle('dedup', async () => usageLimitsDedupThrottle(payload));
 
     await step.email(
       'email',
