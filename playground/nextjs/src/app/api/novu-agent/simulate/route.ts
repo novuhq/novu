@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { createMemoryState } from '@chat-adapter/state-memory';
 import { type AgentBridgeRequest, createNovuAdapter } from '@novu/chat-sdk-adapter';
-import { type Adapter, Chat, type StateAdapter } from 'chat';
+import { Chat } from 'chat';
 import { registerHandlers } from '../agent';
 
 export const runtime = 'nodejs';
@@ -103,8 +103,8 @@ export async function POST(req: Request): Promise<Response> {
   });
   const chat = new Chat({
     userName: 'novu-playground-sim',
-    adapters: { novu: novu as unknown as Adapter },
-    state: createMemoryState() as unknown as StateAdapter,
+    adapters: { novu },
+    state: createMemoryState(),
   });
   registerHandlers(chat);
   await chat.initialize();
