@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { renderUsageLimitsEmail } from './email';
 
 const BLOCKED_REMINDER_WINDOW_DAYS = 4;
-/** Longer than any monthly billing period; with the period-scoped throttle key this means once per period. */
+/** Covers a monthly billing period; the period-scoped throttle key resets alerts for the next period. */
 const ONCE_PER_PERIOD_WINDOW_DAYS = 31;
 
 export const usageLimitsPayloadSchema = z.object({
