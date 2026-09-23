@@ -31,6 +31,8 @@ Tags can be used to:
 - Filter and search for workflows in the dashboard.
 - [Retrieve](/api-reference/workflows/retrieve-a-workflow) or [list workflows](/api-reference/workflows/list-all-workflows) via the Novu API.
 
+Novu copies the workflow's tags onto each notification when that notification is created. Adding or removing a workflow tag does not update historical notifications. Inbox filters use the snapshotted `notification.tags` field. `notification.workflow.tags` reflects the current workflow, not the tags stored on the message.
+
 ### Add a workflow tag
 1. In the workflow editor, find the Tags field.
 2. Type tag name, If tag already exists, it will be suggested.
@@ -74,6 +76,18 @@ Severity levels affect how notifications appear in the Novu [`<Inbox />`](/platf
 - **None**: Default styling
 
 These default styles are [customizable](/platform/inbox/configuration/styling#style-notifications-by-severity).
+
+## Send & reply via agent
+
+Assign an agent so this workflow's chat and email steps send through the agent's connected channels. Replies from the subscriber continue as an agent conversation, with the original notification payload attached to the turn.
+
+![Send and reply via agent setting in the workflow editor](/images/workflows/configure-workflow/send-and-reply-via-agent.png)
+
+1. In the workflow editor, open **Configure workflow**.
+2. Select **Send & reply via agent**.
+3. Choose an agent from the **Agent** list, or clear it to remove the assignment.
+
+The assignment is workflow-wide. There is no per-step agent picker. You can still override the agent on a single trigger with `agentId`. See [Workflow-assigned agents](/agents/workflow-agents).
 
 ## Payload schema
 

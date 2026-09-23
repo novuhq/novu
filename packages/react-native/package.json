@@ -38,7 +38,7 @@
     "release:preview": "pnpx pkg-pr-new publish"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@types/node": "^22.0.0",
     "@types/react": "*",
     "@types/react-dom": "*",

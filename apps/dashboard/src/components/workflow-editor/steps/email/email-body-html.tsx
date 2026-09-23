@@ -6,6 +6,7 @@ import { HtmlEditor } from '@/components/html-editor';
 import { FormField } from '@/components/primitives/form/form';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
@@ -26,6 +27,7 @@ export const EmailBodyHtml = () => {
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const { saveForm } = useSaveForm();
+  const { isReadOnly } = useStepEditor();
 
   const onChange = useCallback(
     (value: string) => {
@@ -72,6 +74,7 @@ export const EmailBodyHtml = () => {
     resourceId,
     resourceType,
     isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
+    isReadOnly,
   });
 
   const { isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
@@ -114,6 +117,7 @@ export const EmailBodyHtml = () => {
             skipContainerClick={isTranslationPopoverOpen}
             onManageSchemaClick={openSchemaDrawer}
             onCreateNewVariable={handleCreateNewVariable}
+            readOnly={isReadOnly}
             className="max-h-[calc(100%-124px)]"
           >
             <EditorOverlays

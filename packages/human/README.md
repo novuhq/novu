@@ -53,10 +53,16 @@ human contacts --json
 - `--json` — full interaction object for programmatic parsing.
 - `--to <humanId>` — address a human who is already linked (`human contacts` to find them, `human invite` to add them), or comma-separated humans (`alice,bob`, max 50) so any listed person can settle.
 - `--via <platform>` — deliver on a specific linked channel instead of the default.
+- `--icon` — Slack-only card icon: MCP catalog id (`stripe`) or https URL (32×32). Ignored on other channels.
+- `--subtitle`, `--body` — optional card chrome on ask / approve / choose / tell.
+- `--approve-label`, `--deny-label`, `--extra-action <id:label>` — approve-only button chrome (repeat `--extra-action`).
+- `--option <id:label>` — choose options can keep a stable id (`stg:Staging`); a bare label still works.
 
 ## Auth & headless use
 
 `setup` stores credentials in `~/.novu/human.json`. Alternatively set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment.
+
+The keyless environment `setup` creates is a free demo with a small message allowance. Once it's used up, the next command exits `1` with a sign-up link (the same link is sent to you on your linked channel) instead of delivering the message. Sign up, claim the demo — your channels and relay move into your own Development environment — then point the CLI at it: `human setup --secret-key <key>` or `NOVU_SECRET_KEY`.
 
 In containers, sandboxes, and CI — anywhere no config file exists — the CLI is fully operational from environment variables alone:
 

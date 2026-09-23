@@ -14,6 +14,7 @@ import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-set
 type StepEditorContextType = {
   workflow: WorkflowResponseDto;
   step: StepResponseDto;
+  isReadOnly: boolean;
   controlValues: Record<string, unknown>;
   editorValue: string;
   setEditorValue: (value: string) => Error | null;
@@ -35,9 +36,10 @@ type StepEditorProviderProps = {
   children: ReactNode;
   workflow: WorkflowResponseDto;
   step: StepResponseDto;
+  isReadOnly: boolean;
 };
 
-export function StepEditorProvider({ children, workflow, step }: StepEditorProviderProps) {
+export function StepEditorProvider({ children, workflow, step, isReadOnly }: StepEditorProviderProps) {
   const form = useFormContext();
   const controlValues = form.watch();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
@@ -79,6 +81,7 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     () => ({
       workflow,
       step,
+      isReadOnly,
       controlValues,
       editorValue,
       setEditorValue,
@@ -96,6 +99,7 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     [
       workflow,
       step,
+      isReadOnly,
       controlValues,
       editorValue,
       setEditorValue,

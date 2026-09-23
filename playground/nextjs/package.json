@@ -13,9 +13,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.0",
-    "@ai-sdk/react": "^3.0.0",
-    "@chat-adapter/state-memory": "4.33.0",
+    "@ai-sdk/openai": "4.0.34",
+    "@ai-sdk/react": "4.0.34",
+    "@chat-adapter/state-memory": "4.40.0",
     "@clerk/react": "^6.6.6",
     "@langchain/anthropic": "1.3.13",
     "@langchain/core": "^1.1.48",
@@ -52,9 +52,9 @@
     "@streamdown/math": "^1.0.1",
     "@streamdown/mermaid": "^1.0.1",
     "@xyflow/react": "^12.3.2",
-    "ai": "^6.0.50",
+    "ai": "7.0.31",
     "ansi-to-react": "^6.2.6",
-    "chat": "4.33.0",
+    "chat": "4.40.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
@@ -63,7 +63,7 @@
     "media-chrome": "^4.17.2",
     "motion": "^11.18.2",
     "nanoid": "^5.1.16",
-    "next": "15.5.21",
+    "next": "15.5.24",
     "nodemailer": "^9.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -76,7 +76,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tokenlens": "^1.3.1",
     "use-stick-to-bottom": "^1.1.2",
-    "zod": "^4.0.0"
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.12",

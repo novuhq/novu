@@ -1,8 +1,8 @@
-import { FeatureFlagsService } from '@novu/application-generic';
 import { AgentEventEnum } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { resolveInboundReplyTo } from '../ingress/workflow-origin.helpers';
 import { BridgeExecutorService } from './bridge-executor.service';
 
 describe('BridgeExecutorService', () => {
@@ -16,35 +16,19 @@ describe('BridgeExecutorService', () => {
     };
   }
 
-  function makeFeatureFlagsService(isEventProtocolEnabled = false) {
-    return {
-      getFlag: sinon.stub().callsFake(async ({ key }: { key: string }) => {
-        if (key === FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED) {
-          return isEventProtocolEnabled;
-        }
-
-        return false;
-      }),
-    };
-  }
-
-  function makeService(
-    overrides: { isEventProtocolEnabled?: boolean; attachmentStorage?: Record<string, unknown> } = {}
-  ) {
+  function makeService(overrides: { attachmentStorage?: Record<string, unknown> } = {}) {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
     const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
-    const featureFlagsService = makeFeatureFlagsService(overrides.isEventProtocolEnabled);
 
     const service = new BridgeExecutorService(
       {} as any,
       logger as any,
       attachmentStorage as any,
-      conversationService as any,
-      featureFlagsService as unknown as FeatureFlagsService
+      conversationService as any
     );
 
-    return { service, logger, attachmentStorage, conversationService, featureFlagsService };
+    return { service, logger, attachmentStorage, conversationService };
   }
 
   function makeExecutionParams() {
@@ -164,26 +148,16 @@ describe('BridgeExecutorService', () => {
   });
 
   describe('buildPayload', () => {
-    it('should include eventsUrl when the agent event protocol flag is enabled', async () => {
-      const { service, featureFlagsService } = makeService({ isEventProtocolEnabled: true });
+    it('should include eventsUrl on every bridge payload', async () => {
+      const { service } = makeService();
 
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
       expect(payload.eventsUrl).to.match(/\/v1\/agents\/events\/ingest$/);
       expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
-      expect(payload.eventsUrl?.replace(/\/v1\/agents\/events\/ingest$/, '')).to.equal(
+      expect(payload.eventsUrl.replace(/\/v1\/agents\/events\/ingest$/, '')).to.equal(
         payload.replyUrl.replace(/\/v1\/agents\/agent-1\/reply$/, '')
       );
-      expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
-    });
-
-    it('should omit eventsUrl when the agent event protocol flag is disabled', async () => {
-      const { service } = makeService({ isEventProtocolEnabled: false });
-
-      const payload = await (service as any).buildPayload(makeExecutionParams());
-
-      expect(payload).to.not.have.property('eventsUrl');
-      expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
     });
 
     it('should map workflowOrigin onto notification for the bridge wire', async () => {
@@ -224,6 +198,65 @@ describe('BridgeExecutorService', () => {
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
       expect(payload.notification).to.equal(null);
+    });
+
+    it('should map WhatsApp quote-reply onto message.replyTo', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.WHATSAPP,
+        },
+        platformThreadId: 'whatsapp:+15551234567',
+        message: {
+          ...makeMessage(),
+          raw: {
+            message: {
+              context: { id: 'wamid.quoted' },
+            },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: 'wamid.quoted' });
+    });
+
+    it('should map Telegram quote-reply with chat-scoped message id', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.TELEGRAM,
+        },
+        platformThreadId: 'telegram:777042',
+        message: {
+          ...makeMessage(),
+          raw: {
+            reply_to_message: { message_id: 42 },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: '777042:42' });
+    });
+
+    it('should omit Telegram replyTo when chat id cannot be resolved', () => {
+      const replyTo = resolveInboundReplyTo(
+        AgentPlatformEnum.TELEGRAM,
+        {
+          id: 'msg-1',
+          text: 'reply',
+          author: makeMessage().author,
+          raw: { reply_to_message: { message_id: 42 } },
+        } as any,
+        'whatsapp:+15551234567'
+      );
+
+      expect(replyTo).to.equal(undefined);
     });
   });
 

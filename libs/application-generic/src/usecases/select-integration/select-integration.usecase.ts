@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationQuery, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
-import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
-import { evaluateRules } from '../../services/query-parser';
 import {
-  getIntegrationRulesIssues,
+  evaluateIntegrationRules,
   hasIntegrationRules,
   hasLegacyIntegrationConditions,
 } from '../../utils/integration-conditions';
@@ -14,6 +12,15 @@ import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter'
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
 import { SelectIntegrationCommand } from './select-integration.command';
+
+export type MatchedIntegrationConditions =
+  | { type: 'rules'; value: IntegrationEntity['rules'] }
+  | { type: 'legacy'; value: IntegrationEntity['conditions'] };
+
+export interface IntegrationSelectionResult {
+  integration: IntegrationEntity;
+  matchedConditions?: MatchedIntegrationConditions;
+}
 
 @Injectable()
 export class SelectIntegration {
@@ -26,13 +33,14 @@ export class SelectIntegration {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: SelectIntegrationCommand): Promise<IntegrationEntity | undefined> {
+  async execute(command: SelectIntegrationCommand): Promise<IntegrationSelectionResult | undefined> {
     const isCrossEnvironmentIntegrationEnabled = await this.isCrossEnvironmentIntegrationEnabled(command);
 
     let integration: IntegrationEntity | null = await this.getPrimaryIntegration(
       command,
       isCrossEnvironmentIntegrationEnabled
     );
+    let matchedConditions: MatchedIntegrationConditions | undefined;
 
     if (!command.identifier) {
       const integrations = await this.integrationRepository.find(
@@ -49,6 +57,9 @@ export class SelectIntegration {
 
           if (passed) {
             integration = currentIntegration;
+            matchedConditions = hasIntegrationRules(currentIntegration.rules)
+              ? { type: 'rules', value: currentIntegration.rules }
+              : { type: 'legacy', value: currentIntegration.conditions };
             break;
           }
         }
@@ -59,7 +70,12 @@ export class SelectIntegration {
       return;
     }
 
-    return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+    const decryptedIntegration = GetDecryptedIntegrations.getDecryptedCredentials(integration);
+
+    return {
+      integration: decryptedIntegration,
+      ...(matchedConditions && { matchedConditions }),
+    };
   }
 
   private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {
@@ -87,18 +103,11 @@ export class SelectIntegration {
     tenant: TenantEntity | null
   ): Promise<boolean> {
     if (hasIntegrationRules(currentIntegration.rules)) {
-      if (getIntegrationRulesIssues(currentIntegration.rules).length > 0) {
-        return false;
-      }
-
-      const { result } = evaluateRules(
-        currentIntegration.rules as RulesLogic<AdditionalOperation>,
-        {
-          subscriber: command.filterData.subscriber,
-          context: command.filterData.context,
-        },
-        true
-      );
+      const { result } = evaluateIntegrationRules(currentIntegration.rules, {
+        payload: command.filterData.payload,
+        subscriber: command.filterData.subscriber,
+        context: command.filterData.context,
+      });
 
       return result;
     }

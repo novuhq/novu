@@ -1,13 +1,8 @@
-import { EnvironmentTypeEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { RiInstanceLine } from 'react-icons/ri';
-import { Notification5Fill } from '@/components/icons';
 import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
-import { useEnvironment } from '@/context/environment/hooks';
-
-import { cn } from '../../../../utils/ui';
-import { StepEditorUnavailable } from '../step-editor-unavailable';
 
 const avatarKey = 'avatar';
 const subjectKey = 'subject';
@@ -19,8 +14,6 @@ const disableOutputSanitizationKey = 'disableOutputSanitization';
 const dataObjectKey = 'data';
 
 export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
-  const { currentEnvironment } = useEnvironment();
-
   if (uiSchema.group !== UiSchemaGroupEnum.IN_APP) {
     return null;
   }
@@ -35,10 +28,6 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
     [disableOutputSanitizationKey]: disableOutputSanitization,
     [dataObjectKey]: dataObject,
   } = uiSchema.properties ?? {};
-
-  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
-    return <StepEditorUnavailable />;
-  }
 
   return (
     <div className="flex flex-col">

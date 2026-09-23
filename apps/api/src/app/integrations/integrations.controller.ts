@@ -403,6 +403,7 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/set-primary')
+  @HttpCode(HttpStatus.OK)
   @OAuthAccessible()
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
