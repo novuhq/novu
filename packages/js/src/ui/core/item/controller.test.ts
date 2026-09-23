@@ -1,22 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
+import { createFakeNotification } from '../../testing/fakes';
 import { createNotificationItemController, isInsideIsland } from './controller';
 
 const createNotification = (overrides: Partial<Notification> = {}) =>
-  ({
-    id: '1',
-    isRead: false,
+  createFakeNotification({
     redirect: { url: 'https://example.com', target: '_blank' },
-    primaryAction: { label: 'Approve', redirect: { url: '/approved' } },
-    read: vi.fn(async () => ({})),
-    completePrimary: vi.fn(async () => ({})),
-    completeSecondary: vi.fn(async () => ({})),
+    primaryAction: { label: 'Approve', isCompleted: false, redirect: { url: '/approved' } },
     ...overrides,
-  }) as unknown as Notification;
+  });
 
-const createEvent = (target: EventTarget | null = document.createElement('a')) =>
-  ({ target, stopPropagation: vi.fn(), preventDefault: vi.fn() }) as unknown as MouseEvent;
+const createEvent = (target: EventTarget | null = document.createElement('a')) => {
+  const event: Partial<MouseEvent> = { target, stopPropagation: vi.fn(), preventDefault: vi.fn() };
+
+  return event as MouseEvent;
+};
 
 describe('notification item controller', () => {
   it('marks the notification read, calls the handler, and follows the redirect on click', async () => {

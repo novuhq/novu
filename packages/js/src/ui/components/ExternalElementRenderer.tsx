@@ -12,11 +12,16 @@ type ExternalElementRendererProps<TArgs extends unknown[]> = Omit<JSX.HTMLAttrib
 const toHandle = <TArgs extends unknown[]>(cleanup: OutletCleanup<TArgs>): OutletHandle<TArgs> =>
   typeof cleanup === 'function' ? { unmount: cleanup } : cleanup;
 
+const sameArgs = (a: unknown[] | undefined, b: unknown[]) =>
+  a !== undefined && a.length === b.length && a.every((value, index) => Object.is(value, b[index]));
+
 /**
  * An outlet: a DOM node the engine hands to the host so the host can render its own content into it.
  *
  * The outlet is mounted once. Later data changes reach the host through `update` when its renderer returned an
  * {@link OutletHandle}; a renderer that returned a bare cleanup function is unmounted and mounted again instead.
+ * Data that is identical to what the host already has is not pushed at all: the list re-evaluates every row when
+ * any row changes, and snapshots are immutable, so identical references mean nothing changed.
  */
 export const ExternalElementRenderer = <TArgs extends unknown[]>(props: ExternalElementRendererProps<TArgs>) => {
   let ref!: HTMLDivElement;
@@ -24,11 +29,13 @@ export const ExternalElementRenderer = <TArgs extends unknown[]>(props: External
   const outletId = `nv-outlet-${generateRandomString(8)}`;
   let handle: OutletHandle<TArgs> | undefined;
   let mountedRender: ExternalElementRendererProps<TArgs>['render'] | undefined;
+  let mountedArgs: TArgs | undefined;
 
   const unmount = () => {
     handle?.unmount();
     handle = undefined;
     mountedRender = undefined;
+    mountedArgs = undefined;
   };
 
   createEffect(() => {
@@ -37,7 +44,10 @@ export const ExternalElementRenderer = <TArgs extends unknown[]>(props: External
 
     untrack(() => {
       if (handle?.update && mountedRender === render) {
-        handle.update(...args);
+        if (!sameArgs(mountedArgs, args)) {
+          mountedArgs = args;
+          handle.update(...args);
+        }
 
         return;
       }
@@ -45,6 +55,7 @@ export const ExternalElementRenderer = <TArgs extends unknown[]>(props: External
       unmount();
       handle = toHandle(render(ref, ...args));
       mountedRender = render;
+      mountedArgs = args;
     });
   });
 

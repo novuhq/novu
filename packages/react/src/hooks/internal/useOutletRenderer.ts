@@ -1,6 +1,7 @@
 import type { OutletHandle } from '@novu/js/ui';
-import { type ReactNode, useMemo, useRef } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { useOutlets } from '../../context/NovuUIContext';
+import { useDataRef } from './useDataRef';
 import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
 
 export type OutletRenderer<TArgs extends unknown[]> = (el: HTMLDivElement, ...args: TArgs) => OutletHandle<TArgs>;
@@ -16,8 +17,7 @@ export function useOutletRenderer<TArgs extends unknown[]>(
   renderProp: ((...args: TArgs) => ReactNode) | undefined
 ): OutletRenderer<TArgs> | undefined {
   const outlets = useOutlets();
-  const latest = useRef(renderProp);
-  latest.current = renderProp;
+  const latest = useDataRef(renderProp);
   const hasRenderer = !!renderProp;
 
   useIsomorphicLayoutEffect(() => {
@@ -33,5 +33,5 @@ export function useOutletRenderer<TArgs extends unknown[]>(
 
     return (el: HTMLDivElement, ...args: TArgs) =>
       outlets.mount<TArgs>(el, (...renderArgs: TArgs) => latest.current?.(...renderArgs), args);
-  }, [outlets, hasRenderer]);
+  }, [latest, outlets, hasRenderer]);
 }

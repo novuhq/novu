@@ -38,7 +38,7 @@ export const NotificationCustomActions = (props: NotificationCustomActionsProps)
           >[0],
         })}
       >
-        <Show when={props.notification.primaryAction} keyed>
+        <Show when={props.notification.primaryAction}>
           {(primaryAction) => (
             <Button
               appearanceKey={notificationItemStyles.customActions.primaryKey}
@@ -46,11 +46,11 @@ export const NotificationCustomActions = (props: NotificationCustomActionsProps)
               onClick={(e) => controller.handleActionClick(ActionTypeEnum.PRIMARY, e)}
               context={{ notification: props.notification }}
             >
-              {primaryAction.label}
+              {primaryAction().label}
             </Button>
           )}
         </Show>
-        <Show when={props.notification.secondaryAction} keyed>
+        <Show when={props.notification.secondaryAction}>
           {(secondaryAction) => (
             <Button
               appearanceKey={notificationItemStyles.customActions.secondaryKey}
@@ -58,7 +58,7 @@ export const NotificationCustomActions = (props: NotificationCustomActionsProps)
               onClick={(e) => controller.handleActionClick(ActionTypeEnum.SECONDARY, e)}
               context={{ notification: props.notification }}
             >
-              {secondaryAction.label}
+              {secondaryAction().label}
             </Button>
           )}
         </Show>

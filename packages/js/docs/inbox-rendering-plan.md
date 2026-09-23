@@ -183,6 +183,8 @@ Done when:
 
 Implementation notes: the handlers given to `Inbox`, `Notifications` or `InboxContent` reach a `NotificationItem` rendered inside their `renderNotification` through a React context that `useNotificationOutlets` wraps around the render prop's output, so the engine does not carry host handlers; the React `NovuUI` component also puts the host's own `appearance.icons` into its context so the date part renders a custom clock icon natively. The engine's `DefaultNotification` renders the same `NotificationDefaultActions` and `NotificationCustomActions` components it exposes as islands.
 
+The action group was also the source of a long-standing blink: it was built by a plain function that returned fresh DOM on every snapshot, so a click on "Mark as read" rebuilt the read, snooze and archive buttons twice (optimistic update, then the resolved response) and killed the open tooltip. `NotificationDefaultActions` now renders a `Switch` over the snoozed, archived and normal states with buttons that read the notification reactively, and read and unread are one `ToggleReadButton` whose icon, appearance key and tooltip text flip in place, so the button node and its open tooltip survive the click. Outlets stop pushing `update` when the data reference is unchanged, because the list re-evaluates every row when any row changes.
+
 Engine:
 
 - `src/ui/components/Notification/NotificationDefaultActions.tsx` and `NotificationCustomActions.tsx`: mountable components registered in `novuComponents` under `NotificationDefaultActions` and `NotificationCustomActions`, taking `{ notification, onPrimaryActionClick?, onSecondaryActionClick? }`, extracted from `DefaultNotification.tsx`. The Solid item renders them in place.

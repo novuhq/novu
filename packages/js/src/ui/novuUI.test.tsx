@@ -1,18 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Novu } from '../novu';
 import { NovuUI } from './novuUI';
-
-const createFakeNovu = () =>
-  ({
-    applicationIdentifier: 'app',
-    subscriberId: 'subscriber',
-    contextKey: undefined,
-    on: vi.fn(() => () => {}),
-    notifications: {
-      count: vi.fn(async () => ({ data: { counts: [] } })),
-      cache: { has: () => false, getAll: () => undefined, update: () => {} },
-    },
-  }) as unknown as Novu;
+import { createFakeNovu } from './testing/fakes';
 
 const createEngine = () =>
   new NovuUI({ options: { applicationIdentifier: 'app', subscriberId: 'subscriber' }, novu: createFakeNovu() });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createFakeNotification } from '../../testing/fakes';
 import { resolveStyle } from './resolveStyle';
 
 describe('resolveStyle', () => {
@@ -28,7 +29,7 @@ describe('resolveStyle', () => {
 
   it('calls an appearance callback with the context', () => {
     const className = resolveStyle(
-      { key: 'notification', context: { notification: { isRead: true } } },
+      { key: 'notification', context: { notification: createFakeNotification({ isRead: true }) } },
       {
         elements: {
           notification: ({ notification }: { notification: { isRead: boolean } }) =>

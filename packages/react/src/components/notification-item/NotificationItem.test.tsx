@@ -32,8 +32,8 @@ const createEngine = () => {
   return { novuUI: novuUI as never, mountComponent, navigate };
 };
 
-const createNotification = (overrides: Partial<Notification> = {}) =>
-  ({
+const createNotification = (overrides: Partial<Notification> = {}) => {
+  const notification: Partial<Notification> = {
     id: '1',
     subject: 'Deploy **finished**',
     body: 'Build 42 is live',
@@ -42,7 +42,10 @@ const createNotification = (overrides: Partial<Notification> = {}) =>
     redirect: { url: '/deploys/42' },
     read: vi.fn(async () => ({})),
     ...overrides,
-  }) as unknown as Notification;
+  };
+
+  return notification as Notification;
+};
 
 const renderItem = (ui: React.ReactElement, engine = createEngine(), inherited: Record<string, unknown> = {}) => {
   const view = render(

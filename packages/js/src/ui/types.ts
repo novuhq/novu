@@ -407,6 +407,12 @@ export type AllAppearanceCallbackFunction<K extends AllAppearanceCallbackKeys> =
         : K extends ChannelConnectButtonAppearanceCallbackKeys
           ? ChannelConnectButtonAppearanceCallbackFunction<K>
           : never;
+/** The argument an appearance callback receives; every callback key declares its own context. */
+export type AllAppearanceCallbackContext = {
+  [K in AllAppearanceCallbackKeys]: AllAppearanceCallbackFunction<K> extends (context: infer TContext) => string
+    ? TContext
+    : never;
+}[AllAppearanceCallbackKeys];
 export type AllAppearanceKey =
   | CommonAppearanceKey
   | InboxAppearanceKey

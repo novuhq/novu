@@ -1,35 +1,27 @@
 import { createRoot } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
 import type { Novu } from '../../../novu';
+import { SeverityLevelEnum } from '../../../types';
+import { createFakeCount, createFakeNotificationsApi, createFakeNovu } from '../../testing/fakes';
 import { createCountsStore } from './counts';
 import { createInboxStore } from './inbox';
 
-const createFakeNovu = () => {
-  const offs: Array<() => void> = [];
-  const novu = {
-    applicationIdentifier: 'app',
-    subscriberId: 'sub',
-    contextKey: undefined,
-    on: vi.fn(() => {
-      const off = vi.fn();
-      offs.push(off);
+const createFakeNovuWithListeners = () => {
+  const offs: Array<ReturnType<typeof vi.fn>> = [];
+  const on = vi.fn(() => {
+    const off = vi.fn();
+    offs.push(off);
 
-      return off;
-    }),
-    notifications: {
-      count: vi.fn(async () => ({
-        data: {
-          counts: [
-            { filter: { severity: 'high' }, count: 2 },
-            { filter: { severity: 'none' }, count: 3 },
-          ],
-        },
-      })),
-      cache: { has: () => false, getAll: () => undefined, update: () => {} },
-    },
-  } as unknown as Novu;
+    return off;
+  });
+  const notifications = createFakeNotificationsApi({
+    count: createFakeCount([
+      { filter: { severity: SeverityLevelEnum.HIGH }, count: 2 },
+      { filter: { severity: SeverityLevelEnum.NONE }, count: 3 },
+    ]),
+  });
 
-  return { novu, offs };
+  return { novu: createFakeNovu({ on: on as Novu['on'], notifications }), offs };
 };
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -52,7 +44,7 @@ const createStores = (novu: Novu) =>
 
 describe('counts store', () => {
   it('does nothing until the first subscriber activates it, then fetches and listens', async () => {
-    const { novu } = createFakeNovu();
+    const { novu } = createFakeNovuWithListeners();
     const { store, dispose } = createStores(novu);
     const countCallsBeforeActivation = (novu.notifications.count as ReturnType<typeof vi.fn>).mock.calls.length;
     const subscriptionsBeforeActivation = (novu.on as ReturnType<typeof vi.fn>).mock.calls.length;
@@ -73,7 +65,7 @@ describe('counts store', () => {
   });
 
   it('stops listening when the last subscriber releases, and not before', () => {
-    const { novu, offs } = createFakeNovu();
+    const { novu, offs } = createFakeNovuWithListeners();
     const { store, dispose } = createStores(novu);
     const listenersBeforeActivation = offs.length;
 

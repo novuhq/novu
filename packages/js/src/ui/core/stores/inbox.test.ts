@@ -1,20 +1,22 @@
 import { createRoot, createSignal } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
 import type { Novu } from '../../../novu';
+import { createFakeNovu } from '../../testing/fakes';
 import { NotificationStatus, type Tab } from '../../types';
 import { createInboxStore } from './inbox';
 
-const createFakeNovu = () => {
+const createFakeNovuWithEmitter = () => {
   const handlers = new Map<string, (payload: unknown) => void>();
-  const novu = {
-    on: vi.fn((event: string, handler: (payload: unknown) => void) => {
-      handlers.set(event, handler);
+  const on = vi.fn((event: string, handler: (payload: unknown) => void) => {
+    handlers.set(event, handler);
 
-      return () => handlers.delete(event);
-    }),
-  } as unknown as Novu;
+    return () => handlers.delete(event);
+  });
 
-  return { novu, emit: (event: string, payload: unknown) => handlers.get(event)?.(payload) };
+  return {
+    novu: createFakeNovu({ on: on as Novu['on'] }),
+    emit: (event: string, payload: unknown) => handlers.get(event)?.(payload),
+  };
 };
 
 /**
@@ -22,7 +24,7 @@ const createFakeNovu = () => {
  * root and every interaction happens outside of it, the way the engine uses it.
  */
 const createStore = (tabs: Tab[] = [], applicationIdentifier?: string) => {
-  const fake = createFakeNovu();
+  const fake = createFakeNovuWithEmitter();
   const [tabsSignal, setTabs] = createSignal(tabs);
   const { store, dispose } = createRoot((dispose) => ({
     dispose,

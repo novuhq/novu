@@ -1,12 +1,13 @@
 import { appearanceKeys } from '../../config/appearanceKeys';
-import type { AllAppearanceKey, AllElements, AllIconKey } from '../../types';
+import type { AllAppearanceCallbackContext, AllAppearanceKey, AllElements, AllIconKey } from '../../types';
 import { cn, publicFacingTwMerge } from './cn';
 
 export type ResolveStyleArgs = {
   key: AllAppearanceKey;
   className?: string;
   iconKey?: AllIconKey;
-  context?: any;
+  /** Handed to the host's appearance callback for this key; each callback key declares the context it expects. */
+  context?: AllAppearanceCallbackContext;
 };
 
 export type StyleSource = {
@@ -40,7 +41,7 @@ export const resolveStyle = ({ key, className, iconKey, context }: ResolveStyleA
   // Find appearance keys in the className and utilize them as well.
   const classes = className?.split(/\s+/).map((className) => className.replace(/^nv-/, '')) || [];
   const appearanceKeysInClasses = classes.filter((className) =>
-    (appearanceKeys as unknown as string[]).includes(className)
+    (appearanceKeys as readonly string[]).includes(className)
   );
 
   // Remove duplicates
@@ -68,7 +69,8 @@ export const resolveStyle = ({ key, className, iconKey, context }: ResolveStyleA
     if (typeof elementStyles === 'string') {
       appearanceClassnames.push(elementStyles);
     } else if (typeof elementStyles === 'function') {
-      appearanceClassnames.push(elementStyles(context));
+      // The callbacks form a union over every key's context; the caller passes the context its key declares.
+      appearanceClassnames.push((elementStyles as (context?: AllAppearanceCallbackContext) => string)(context));
     }
   }
 

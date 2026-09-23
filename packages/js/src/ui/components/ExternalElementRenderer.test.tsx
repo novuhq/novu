@@ -49,6 +49,28 @@ describe('ExternalElementRenderer (outlet)', () => {
     expect(unmount).toHaveBeenCalledTimes(1);
   });
 
+  it('does not push an update when the data it already has is handed over again', () => {
+    const update = vi.fn();
+    const item: Item = { id: '1', isRead: false };
+    const [current, setCurrent] = createSignal(item);
+    const [tick, setTick] = createSignal(0);
+    // the row accessor depends on `tick` as well, the way a list row depends on the whole list signal
+    const row = () => {
+      tick();
+
+      return current();
+    };
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    render(() => <ExternalElementRenderer render={() => ({ update, unmount: vi.fn() })} args={[row()]} />, container);
+
+    setTick(1);
+    expect(update).not.toHaveBeenCalled();
+
+    setCurrent({ id: '1', isRead: true });
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps remounting on every change for a renderer that returns a bare cleanup function', () => {
     const mount = vi.fn();
     const cleanup = vi.fn();
