@@ -644,12 +644,10 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     }
   });
 
-  it('should allow listing workflow runs with an API key', async () => {
-    const { body } = await session.testAgent
+  it('should reject listing workflow runs with an API key', async () => {
+    await session.testAgent
       .get('/v1/activity/workflow-runs')
       .set('authorization', `ApiKey ${session.apiKey}`)
-      .expect(200);
-
-    expect(body.data).to.be.an('array');
+      .expect(401);
   });
 });

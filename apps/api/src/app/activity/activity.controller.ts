@@ -1,6 +1,6 @@
 import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, OAuthAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
+import { OAuthAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
@@ -83,7 +83,6 @@ export class ActivityController {
   }
 
   @Get('workflow-runs')
-  @ExternalApiAccessible()
   @OAuthAccessible()
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.WorkflowRuns')
@@ -109,7 +108,6 @@ export class ActivityController {
   }
 
   @Get('workflow-runs/stats')
-  @ExternalApiAccessible()
   @OAuthAccessible()
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.WorkflowRuns')
@@ -136,7 +134,6 @@ export class ActivityController {
   }
 
   @Get('workflow-runs/:workflowRunId')
-  @ExternalApiAccessible()
   @OAuthAccessible()
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.WorkflowRuns')

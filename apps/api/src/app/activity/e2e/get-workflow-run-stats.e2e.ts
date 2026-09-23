@@ -175,13 +175,11 @@ describe('Workflow Run Stats - GET /v1/activity/workflow-runs/stats #novu-v2', (
     expect(body.message).to.include("plan's retention period");
   });
 
-  it('should allow stats with an API key', async () => {
-    const { body } = await session.testAgent
+  it('should reject stats with an API key', async () => {
+    await session.testAgent
       .get('/v1/activity/workflow-runs/stats')
       .set('authorization', `ApiKey ${session.apiKey}`)
-      .expect(200);
-
-    expect(unwrapStats(body).total).to.be.a('number');
+      .expect(401);
   });
 
   it('should deny stats without notification read permission', async () => {
