@@ -153,10 +153,22 @@ describe('CacheService TTL', () => {
     expect(clientSet.args).toEqual([['key', 'value', 'EX', 1000]]);
   });
 
+  it('should set the exact default ttl when jitter is disabled without a ttl', async () => {
+    await cacheService.set('key', 'value', { jitter: false });
+
+    expect(clientSet.args).toEqual([['key', 'value', 'EX', 7200]]);
+  });
+
   it('should set if not exist with the exact ttl when jitter is disabled', async () => {
     await cacheService.setIfNotExist('key', 'value', { ttl: 1000, jitter: false });
 
     expect(clientSet.args).toEqual([['key', 'value', 'EX', 1000, 'NX']]);
+  });
+
+  it('should round a fractional exact ttl up to whole seconds', async () => {
+    await cacheService.set('key', 'value', { ttl: 1000.2, jitter: false });
+
+    expect(clientSet.args).toEqual([['key', 'value', 'EX', 1001]]);
   });
 
   it('should jitter the ttl by default', async () => {

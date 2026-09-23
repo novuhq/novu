@@ -192,14 +192,9 @@ export class CacheService implements ICacheService {
 
   private getTtlInSeconds(options?: CachingConfig): number {
     const seconds = options?.ttl || this.cacheTtl;
+    const ttl = options?.jitter === false ? seconds : addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
 
-    if (options?.jitter === false) {
-      return seconds;
-    }
-
-    const number = addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
-
-    return number;
+    return Math.ceil(ttl);
   }
 
   public async sadd(key: string, ...members: (string | number | Buffer)[]): Promise<number> {
