@@ -23,7 +23,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
   async function createMultipleWorkflowRunsByDb(options: {
     count: number;
     subscriberId: string[];
-    payloadTemplate?: (index: number) => Record<string, any>;
+    payloadTemplate?: (index: number) => Record<string, string | number>;
     transactionId?: string;
     status?: WorkflowRunStatusEnum;
     channels?: StepTypeEnum[];
@@ -197,7 +197,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     // Go forward through all pages and store detailed page information
     do {
-      const query: any = { limit: 2 };
+      const query: { limit: number; cursor?: string } = { limit: 2 };
       if (cursor) {
         query.cursor = cursor;
       }

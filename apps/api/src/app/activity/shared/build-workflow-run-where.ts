@@ -45,6 +45,56 @@ function mapStatusesToStoredValues(statuses: WorkflowRunStatusDtoEnum[]): string
   });
 }
 
+function applySeverityFilter(queryBuilder: QueryBuilder<WorkflowRun>, severity: SeverityLevelEnum[]): void {
+  const orConditions: Array<FieldCondition<WorkflowRun, keyof WorkflowRun, ClickhouseOperator>> = [];
+  if (severity.includes(SeverityLevelEnum.NONE)) {
+    orConditions.push({
+      field: 'severity',
+      operator: 'IS NULL',
+    });
+    orConditions.push({
+      field: 'severity',
+      operator: '=',
+      value: SeverityLevelEnum.NONE,
+    });
+  }
+  const severityWithoutNone = severity.filter((level) => level !== SeverityLevelEnum.NONE);
+  for (const level of severityWithoutNone) {
+    orConditions.push({
+      field: 'severity',
+      operator: '=',
+      value: level.toString(),
+    });
+  }
+  queryBuilder.orWhere(orConditions);
+}
+
+async function applySubscriptionFilter(
+  queryBuilder: QueryBuilder<WorkflowRun>,
+  environmentId: string,
+  subscriptionId: string,
+  topicSubscribersRepository: TopicSubscribersRepository
+): Promise<void> {
+  const subscription = await topicSubscribersRepository.findOne({
+    _environmentId: environmentId,
+    identifier: subscriptionId,
+  });
+
+  if (subscription) {
+    queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
+    queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
+    queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
+  }
+}
+
+function applyContextKeysFilter(queryBuilder: QueryBuilder<WorkflowRun>, contextKeys: string[]): void {
+  if (contextKeys.length === 0) {
+    queryBuilder.whereEquals('context_keys', []);
+  } else {
+    queryBuilder.whereHasAll('context_keys', contextKeys);
+  }
+}
+
 export async function applyWorkflowRunFilters(
   queryBuilder: QueryBuilder<WorkflowRun>,
   command: WorkflowRunFilterFields,
@@ -84,29 +134,8 @@ export async function applyWorkflowRunFilters(
     );
   }
 
-  const severity = command.severity ?? [];
-  if (severity.length) {
-    const orConditions: Array<FieldCondition<WorkflowRun, keyof WorkflowRun, ClickhouseOperator>> = [];
-    if (severity.includes(SeverityLevelEnum.NONE)) {
-      orConditions.push({
-        field: 'severity',
-        operator: 'IS NULL',
-      });
-      orConditions.push({
-        field: 'severity',
-        operator: '=',
-        value: SeverityLevelEnum.NONE,
-      });
-    }
-    const severityWithoutNone = severity.filter((level) => level !== SeverityLevelEnum.NONE);
-    for (const level of severityWithoutNone) {
-      orConditions.push({
-        field: 'severity',
-        operator: '=',
-        value: level.toString(),
-      });
-    }
-    queryBuilder.orWhere(orConditions);
+  if (command.severity?.length) {
+    applySeverityFilter(queryBuilder, command.severity);
   }
 
   if (command.topicKey) {
@@ -114,24 +143,16 @@ export async function applyWorkflowRunFilters(
   }
 
   if (command.subscriptionId) {
-    const subscription = await topicSubscribersRepository.findOne({
-      _environmentId: command.environmentId,
-      identifier: command.subscriptionId,
-    });
-
-    if (subscription) {
-      queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
-      queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
-      queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
-    }
+    await applySubscriptionFilter(
+      queryBuilder,
+      command.environmentId,
+      command.subscriptionId,
+      topicSubscribersRepository
+    );
   }
 
   if (command.contextKeys !== undefined) {
-    if (command.contextKeys.length === 0) {
-      queryBuilder.whereEquals('context_keys', []);
-    } else {
-      queryBuilder.whereHasAll('context_keys', command.contextKeys);
-    }
+    applyContextKeysFilter(queryBuilder, command.contextKeys);
   }
 
   if (command.deliveryLifecycleStatus?.length) {

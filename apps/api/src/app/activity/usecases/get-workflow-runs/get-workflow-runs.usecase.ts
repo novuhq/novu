@@ -115,7 +115,7 @@ export class GetWorkflowRuns {
             },
             'Using compound cursor pagination'
           );
-        } catch (error) {
+        } catch {
           throw new BadRequestException('Invalid cursor format');
         }
       }
@@ -149,8 +149,8 @@ export class GetWorkflowRuns {
 
       // Generate previous cursor if we're not on the first page
       let previousCursor: string | null = null;
-      if (command.cursor && workflowRuns.length > 0) {
-        previousCursor = await this.generatePreviousCursor(safeWhere, cursor!, command.limit);
+      if (cursor && workflowRuns.length > 0) {
+        previousCursor = await this.generatePreviousCursor(safeWhere, cursor, command.limit);
       }
 
       // Fetch step runs for all workflow runs efficiently

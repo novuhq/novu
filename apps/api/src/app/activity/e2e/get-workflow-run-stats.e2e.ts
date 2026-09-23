@@ -198,7 +198,7 @@ describe('Workflow Run Stats - GET /v1/activity/workflow-runs/stats #novu-v2', (
     if (originalRbac === undefined) {
       delete (process.env as Record<string, string | undefined>).IS_RBAC_ENABLED;
     } else {
-      process.env.IS_RBAC_ENABLED = originalRbac;
+      (process.env as Record<string, string>).IS_RBAC_ENABLED = originalRbac;
     }
   });
 

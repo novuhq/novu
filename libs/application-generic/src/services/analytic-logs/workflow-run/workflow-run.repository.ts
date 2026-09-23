@@ -308,7 +308,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     rows: number;
   }> {
     const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false, select } = options;
-    const isBoundaryCase = cursor?.workflow_run_id === '1';
 
     if (limit < 0 || limit > 1000) {
       throw new Error('Limit must be between 0 and 1000');
@@ -322,33 +321,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     // Add compound cursor conditions if cursor is provided
     if (cursor) {
-      const cursorTimestamp = new Date(cursor.created_at);
-      const cursorId = cursor.workflow_run_id;
-
-      const timestampParam = 'cursor_timestamp';
-      const timestampEqualParam = 'cursor_timestamp_eq';
-      const idParam = 'cursor_id';
-
-      const timeOperator = orderDirection === 'DESC' ? '<' : '>';
-      const idOperator = orderDirection === 'DESC' ? '<' : '>';
-
-      if (!isBoundaryCase) {
-        params[timestampParam] = cursorTimestamp;
-        params[timestampEqualParam] = cursorTimestamp;
-        params[idParam] = cursorId;
-      } else {
-        params[timestampParam] = timeOperator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
-        params[timestampEqualParam] = timeOperator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
-        params[idParam] = timeOperator === '>' ? '1' : '9999999999999999999999999999999999999999';
-      }
-
-      const cursorCondition = `
-        (created_at ${timeOperator} {${timestampParam}:DateTime64(3, 'UTC')})
-        OR (
-          created_at = {${timestampEqualParam}:DateTime64(3, 'UTC')} 
-          AND workflow_run_id ${idOperator} {${idParam}:String}
-        )
-      `;
+      const cursorCondition = this.applyCompoundCursorParams(cursor, orderDirection, params);
 
       if (whereClause && whereClause !== 'WHERE 1=1') {
         whereClause = `${whereClause} AND (${cursorCondition})`;
@@ -390,6 +363,37 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       data: WorkflowRun[] | SelectedWorkflowRun<T extends readonly WorkflowRunColumns[] ? T : never>[];
       rows: number;
     };
+  }
+
+  private applyCompoundCursorParams(
+    cursor: { created_at: string; workflow_run_id: string },
+    orderDirection: 'ASC' | 'DESC',
+    params: Record<string, unknown>
+  ): string {
+    const timestampParam = 'cursor_timestamp';
+    const timestampEqualParam = 'cursor_timestamp_eq';
+    const idParam = 'cursor_id';
+
+    const operator = orderDirection === 'DESC' ? '<' : '>';
+
+    if (cursor.workflow_run_id !== '1') {
+      const cursorTimestamp = new Date(cursor.created_at);
+      params[timestampParam] = cursorTimestamp;
+      params[timestampEqualParam] = cursorTimestamp;
+      params[idParam] = cursor.workflow_run_id;
+    } else {
+      params[timestampParam] = operator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
+      params[timestampEqualParam] = operator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
+      params[idParam] = operator === '>' ? '1' : '9999999999999999999999999999999999999999';
+    }
+
+    return `
+        (created_at ${operator} {${timestampParam}:DateTime64(3, 'UTC')})
+        OR (
+          created_at = {${timestampEqualParam}:DateTime64(3, 'UTC')} 
+          AND workflow_run_id ${operator} {${idParam}:String}
+        )
+      `;
   }
 
   private mapNotificationToWorkflowRun(
