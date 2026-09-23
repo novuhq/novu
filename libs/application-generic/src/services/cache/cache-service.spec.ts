@@ -1,5 +1,5 @@
 import sinon from 'sinon';
-import { CacheInMemoryProviderService } from '../in-memory-provider';
+import { CacheInMemoryProviderService, Redis } from '../in-memory-provider';
 import { CacheService, CachingConfig, ICacheService, splitKey } from './cache.service';
 import { MockCacheService } from './cache-service.mock';
 
@@ -121,6 +121,48 @@ describe('Cache Service - Cluster Mode', () => {
     expect(result).toBe(1);
     const value = await cacheService.get(compoundKey);
     expect(value).toBe(null);
+  });
+});
+
+describe('CacheService TTL', () => {
+  let cacheService: CacheService;
+  let clientSet: sinon.SinonStub;
+
+  beforeEach(async () => {
+    const client: Redis = Object.create(Redis.prototype);
+    clientSet = sinon.stub(client, 'set').resolves('OK');
+    const cacheInMemoryProviderService: CacheInMemoryProviderService = Object.create(
+      CacheInMemoryProviderService.prototype
+    );
+    sinon.stub(cacheInMemoryProviderService, 'initialize').resolves();
+    sinon.stub(cacheInMemoryProviderService, 'getTtl').returns(7200);
+    sinon.stub(cacheInMemoryProviderService, 'getClient').returns(client);
+
+    cacheService = new CacheService(cacheInMemoryProviderService);
+    await cacheService.initialize();
+    sinon.stub(Math, 'random').returns(0);
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('should set the exact ttl when jitter is disabled', async () => {
+    await cacheService.set('key', 'value', { ttl: 1000, jitter: false });
+
+    expect(clientSet.args).toEqual([['key', 'value', 'EX', 1000]]);
+  });
+
+  it('should set if not exist with the exact ttl when jitter is disabled', async () => {
+    await cacheService.setIfNotExist('key', 'value', { ttl: 1000, jitter: false });
+
+    expect(clientSet.args).toEqual([['key', 'value', 'EX', 1000, 'NX']]);
+  });
+
+  it('should jitter the ttl by default', async () => {
+    await cacheService.set('key', 'value', { ttl: 1000 });
+
+    expect(clientSet.args).toEqual([['key', 'value', 'EX', 950]]);
   });
 });
 

@@ -26,6 +26,7 @@ export interface ICacheService {
 
 export type CachingConfig = {
   ttl?: number;
+  jitter?: boolean;
 };
 
 export class CacheService implements ICacheService {
@@ -191,6 +192,11 @@ export class CacheService implements ICacheService {
 
   private getTtlInSeconds(options?: CachingConfig): number {
     const seconds = options?.ttl || this.cacheTtl;
+
+    if (options?.jitter === false) {
+      return seconds;
+    }
+
     const number = addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
 
     return number;
