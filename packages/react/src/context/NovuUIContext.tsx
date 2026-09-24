@@ -26,6 +26,9 @@ const OutletScopeContext = React.createContext<OutletStore | undefined>(undefine
 OutletScopeContext.displayName = 'OutletScopeContext';
 const OutletScopeProvider = OutletScopeContext.Provider;
 
+/** The nearest scope, or `undefined` outside any; for code that only registers with a scope when there is one. */
+const useOutletScope = () => React.useContext(OutletScopeContext);
+
 const useOutlets = () => {
   const outlets = React.useContext(OutletScopeContext);
   assertContextExists(
@@ -42,4 +45,5 @@ export {
   NovuUIProvider,
   OutletScopeProvider,
   useOutlets,
+  useOutletScope,
 };
