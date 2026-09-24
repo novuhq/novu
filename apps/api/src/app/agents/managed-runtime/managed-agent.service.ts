@@ -196,7 +196,7 @@ export class ManagedAgentService implements OnModuleInit {
     pendingPlatformMessageId: string;
     agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
   }): Promise<ManagedAgentDispatchResult | null> {
-    const activity = await this.conversationService.findByPlatformMessageId(
+    const activity = await this.conversationService.resolveCurrentMessage(
       params.config.environmentId,
       String(params.conversation._id),
       params.pendingPlatformMessageId

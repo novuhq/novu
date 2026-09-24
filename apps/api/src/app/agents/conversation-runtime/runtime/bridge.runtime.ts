@@ -68,6 +68,7 @@ export class BridgeRuntime implements AgentRuntime {
       workflowOrigin: turn.workflowOrigin ?? null,
       bridgeUrlOverride: turn.bridgeUrlOverride,
       message: turn.message,
+      previousMessage: turn.previousMessage,
       platformContext: buildAgentPlatformContext({
         platformThreadId: turn.platformThreadId,
         channelId: turn.thread.channelId,

@@ -4,7 +4,12 @@ import { type ClientSession, FilterQuery } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { ActivityView, compileActivityViewMatch, viewUsesSequencePagination } from './activity-views';
+import {
+  ActivityView,
+  compileActivityViewMatch,
+  viewFoldsRevisions,
+  viewUsesSequencePagination,
+} from './activity-views';
 import {
   ConversationActivityDBModel,
   ConversationActivityEntity,
@@ -15,6 +20,7 @@ import {
   type RunLifecycleActivityType,
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
+import { foldMessageRevisions } from './message-revisions';
 
 const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
 type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
@@ -116,7 +122,49 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       }
     );
 
-    return { data, hasMore: false };
+    if (!viewFoldsRevisions(params.view)) {
+      return { data, hasMore: false };
+    }
+
+    return { data: await this.foldViewPage(params, data), hasMore: false };
+  }
+
+  async findMessageRevisions(
+    environmentId: string,
+    conversationId: string,
+    platformMessageIds: string[]
+  ): Promise<ConversationActivityEntity[]> {
+    const ids = [...new Set(platformMessageIds.filter(Boolean))];
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        platformMessageId: { $in: ids },
+        type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
+      },
+      '*'
+    );
+  }
+
+  private async foldViewPage(
+    params: { environmentId: string; conversationId: string },
+    data: ConversationActivityEntity[]
+  ): Promise<ConversationActivityEntity[]> {
+    const revisions = await this.findMessageRevisions(
+      params.environmentId,
+      params.conversationId,
+      data.map((row) => row.platformMessageId).filter((id): id is string => Boolean(id))
+    );
+
+    if (revisions.length === 0) {
+      return data;
+    }
+
+    return foldMessageRevisions(data, revisions);
   }
 
   /** Resolves the activity for a specific platform-native message id (e.g. the message a reaction targets). */
@@ -130,6 +178,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _environmentId: environmentId,
         _conversationId: conversationId,
         platformMessageId,
+        type: ConversationActivityTypeEnum.MESSAGE,
       },
       '*'
     );
@@ -191,13 +240,14 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     platformMessageId?: string;
     senderName?: string;
     sequence?: number;
+    type?: ConversationActivityTypeEnum;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
     return this.create({
       identifier: params.identifier,
       _conversationId: params.conversationId,
-      type: ConversationActivityTypeEnum.MESSAGE,
+      type: params.type ?? ConversationActivityTypeEnum.MESSAGE,
       platform: params.platform,
       _integrationId: params.integrationId,
       platformThreadId: params.platformThreadId,

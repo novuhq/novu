@@ -14,7 +14,7 @@ import {
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
 import { ENDPOINT_TYPES, isDashboardWebChatSubscriberId } from '@novu/shared';
-import type { CardElement, EmojiValue, Message, MessageContext, Thread } from 'chat';
+import type { CardElement, EmojiValue, Message, MessageContext, MessageDeletedEvent, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
@@ -325,6 +325,9 @@ export class AgentInboundHandler implements OnModuleInit {
       onAction: (agentId, config, thread, action, userId, rawEvent) =>
         this.handleAction(agentId, config, thread, action, userId, rawEvent),
       onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
+      onMessageUpdated: (agentId, config, thread, message, previousMessage) =>
+        this.handleMessageUpdated(agentId, config, thread, message, previousMessage),
+      onMessageDeleted: (agentId, config, event) => this.handleMessageDeleted(agentId, config, event),
     });
   }
 
@@ -1139,6 +1142,133 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  async handleMessageUpdated(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    previousMessage?: Message
+  ): Promise<void> {
+    const conversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      config.agentId,
+      config.integrationId,
+      thread.id
+    );
+    if (!conversation) {
+      return;
+    }
+
+    const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
+    const richContent = storedAttachments?.length
+      ? {
+          attachments: storedAttachments.map(({ type, name, mimeType, size, storageKey }) => ({
+            type,
+            name,
+            mimeType,
+            size,
+            storageKey,
+          })),
+        }
+      : undefined;
+
+    if (message.id) {
+      await this.conversationService.updateInboundMessage({
+        conversationId: conversation._id,
+        platformMessageId: message.id,
+        content: message.text,
+        richContent,
+        hasPlatformAttachments: Boolean(message.attachments?.length),
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    }
+
+    trackAgentInboundMessage(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      agentEvent: AgentEventEnum.ON_MESSAGE_UPDATED,
+      isFirstMessageInThread: false,
+    });
+
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread,
+      platformThreadId: thread.id,
+      message,
+      previousMessage: previousMessage ?? null,
+      event: AgentEventEnum.ON_MESSAGE_UPDATED,
+      operation: 'resolve-subscriber-message-updated',
+      platformUserId: message.author?.userId,
+      raw: message.raw,
+      storedAttachments,
+    });
+  }
+
+  async handleMessageDeleted(agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent): Promise<void> {
+    const threadId = event.threadId;
+    if (!threadId) {
+      return;
+    }
+
+    const conversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      config.agentId,
+      config.integrationId,
+      threadId
+    );
+    if (!conversation) {
+      return;
+    }
+
+    const existing = event.messageId
+      ? await this.conversationService.deleteInboundMessage({
+          conversationId: conversation._id,
+          platformMessageId: event.messageId,
+          content: event.previousMessage?.text,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        })
+      : null;
+
+    const message = stubDeletedMessage(event, existing);
+
+    trackAgentInboundMessage(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      agentEvent: AgentEventEnum.ON_MESSAGE_DELETED,
+      isFirstMessageInThread: false,
+    });
+
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread: eventToThread(event),
+      platformThreadId: threadId,
+      message,
+      previousMessage: null,
+      event: AgentEventEnum.ON_MESSAGE_DELETED,
+      operation: 'resolve-subscriber-message-deleted',
+      platformUserId: event.previousMessage?.author?.userId ?? existing?.senderId,
+      raw: event.raw,
+    });
+  }
+
   async handleReaction(agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent): Promise<void> {
     const threadId = event.thread?.id;
     if (!threadId) {
@@ -1169,30 +1299,11 @@ export class AgentInboundHandler implements OnModuleInit {
       conversationId: conversation._id,
     });
 
-    const platformUserId = event.user?.userId;
-
-    const reactionResolution = platformUserId
-      ? await this.resolveSubscriber({
-          agentId,
-          config,
-          platformUserId,
-          operation: 'resolve-subscriber-reaction',
-          authorIsBot: false,
-        })
-      : undefined;
-    const subscriberId = getResolvedSubscriberId(reactionResolution);
-
-    const [subscriber, sourceActivity, agent] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
-      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
-        '_id',
-        'runtime',
-        'managedRuntime',
-      ]),
-    ]);
+    const sourceActivity = await this.conversationService.findSourceActivity(
+      config.environmentId,
+      conversation._id,
+      event.messageId
+    );
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
 
@@ -1206,37 +1317,90 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
 
-    const reactionPayload: BridgeReaction = {
-      emoji: event.emoji.name,
-      added: event.added,
-      messageId: event.messageId,
-      sourceMessage: event.message,
-      sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
-        ? sourceMessageStoredAttachments
-        : undefined,
-    };
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
+      platformThreadId: threadId,
+      message: event.message ?? null,
+      turnMessage: null,
+      event: AgentEventEnum.ON_REACTION,
+      operation: 'resolve-subscriber-reaction',
+      platformUserId: event.user?.userId,
+      raw: event.raw,
+      reaction: {
+        emoji: event.emoji.name,
+        added: event.added,
+        messageId: event.messageId,
+        sourceMessage: event.message,
+        sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
+          ? sourceMessageStoredAttachments
+          : undefined,
+      },
+    });
+  }
+
+  private async dispatchExistingConversationTurn(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    thread: Thread;
+    platformThreadId: string;
+    message: Message | null;
+    turnMessage?: Message | null;
+    previousMessage?: Message | null;
+    event: AgentEventEnum;
+    operation: string;
+    platformUserId?: string;
+    raw?: unknown;
+    storedAttachments?: StoredAttachment[];
+    reaction?: BridgeReaction;
+  }): Promise<void> {
+    const { agentId, config, conversation, thread, platformThreadId, message, event } = params;
+
+    const resolution = params.platformUserId
+      ? await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId: params.platformUserId,
+          operation: params.operation,
+          authorIsBot: false,
+        })
+      : undefined;
+    const subscriberId = getResolvedSubscriberId(resolution);
+
+    const [subscriber, agent] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]),
+    ]);
 
     const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
       config,
-      event.raw,
-      platformUserId
+      params.raw,
+      params.platformUserId
     );
     const runtime = this.runtimeResolver.resolve(agent);
-
     const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
-      platformThreadId: threadId,
+      platformThreadId,
       subscriberId,
-      message: event.message ?? null,
+      message,
       existingConversation: conversation,
-      isDirectMessage: event.thread?.isDM,
+      isDirectMessage: thread.isDM,
     });
     const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
       conversation,
-      platformThreadId: threadId,
+      platformThreadId,
       subscriberId,
       resolution: workflowOriginResolution,
     });
@@ -1249,19 +1413,22 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
-      subscriberResolution: reactionResolution,
-      message: null,
-      event: AgentEventEnum.ON_REACTION,
-      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
-      platformThreadId: threadId,
-      reaction: reactionPayload,
+      subscriberResolution: resolution,
+      message: params.turnMessage !== undefined ? params.turnMessage : message,
+      previousMessage: params.previousMessage,
+      event,
+      thread,
+      platformThreadId,
+      platformUserId: params.platformUserId,
+      storedAttachments: params.storedAttachments,
+      reaction: params.reaction,
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
-    // On buttonless platforms (iMessage/SMS) a pending tool approval can be
-    // answered with a 👍 / 👎 reaction on the approval-request card — a matching
-    // reaction is consumed as the verdict instead of forwarding as ON_REACTION.
-    if (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime)) {
+    if (
+      event === AgentEventEnum.ON_REACTION &&
+      (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime))
+    ) {
       return;
     }
 
@@ -1538,4 +1705,26 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
   }
+}
+
+function eventToThread(event: MessageDeletedEvent): Thread {
+  return { id: event.threadId, channelId: event.channelId, isDM: false } as Thread;
+}
+
+function stubDeletedMessage(event: MessageDeletedEvent, existing: ConversationActivityEntity | null): Message {
+  if (event.previousMessage) {
+    return event.previousMessage;
+  }
+
+  return {
+    id: event.messageId,
+    text: existing?.content ?? '',
+    author: {
+      userId: existing?.senderId ?? '',
+      fullName: existing?.senderName ?? '',
+      userName: existing?.senderName ?? '',
+      isBot: false,
+    },
+    metadata: { dateSent: existing?.createdAt ? new Date(existing.createdAt) : (event.deletedAt ?? new Date()) },
+  } as Message;
 }

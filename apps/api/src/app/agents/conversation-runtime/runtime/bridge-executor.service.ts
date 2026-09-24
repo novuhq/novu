@@ -144,6 +144,7 @@ export interface AgentExecutionParams {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   message: Message | null;
+  previousMessage?: Message | null;
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
@@ -391,6 +392,15 @@ export class BridgeExecutorService {
       integrationIdentifier: config.integrationIdentifier,
       message: message
         ? await this.mapMessage(message, params.storedAttachments, {
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
+          })
+        : null,
+      previousMessage: params.previousMessage
+        ? await this.mapMessage(params.previousMessage, undefined, {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,

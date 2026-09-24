@@ -121,6 +121,8 @@ describe('AgentInboundHandler', () => {
       createOrGetConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
+      updateInboundMessage: sinon.stub().resolves({ _id: 'activity1', content: 'updated' }),
+      deleteInboundMessage: sinon.stub().resolves({ _id: 'activity1', content: 'gone' }),
       persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
       persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
@@ -2103,6 +2105,79 @@ describe('AgentInboundHandler', () => {
       const params = bridgeExecutor.execute.firstCall.args[0];
       expect(params.event).to.equal(AgentEventEnum.ON_REACTION);
       expect(params.workflowOrigin).to.deep.equal(snapshot);
+    });
+  });
+
+  describe('handleMessageUpdated', () => {
+    it('appends an edit and dispatches ON_MESSAGE_UPDATED with previousMessage', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const previousMessage = {
+        id: 'msg-1',
+        text: 'where is order 1234?',
+        author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+      };
+      const message = {
+        ...previousMessage,
+        text: 'where is order 4321?',
+        raw: {},
+      };
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        config as any,
+        { id: 'thread1' } as any,
+        message as any,
+        previousMessage as any
+      );
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.updateInboundMessage.firstCall.args[0]).to.include({
+        conversationId: conversation._id,
+        platformMessageId: 'msg-1',
+        content: 'where is order 4321?',
+      });
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.event).to.equal(AgentEventEnum.ON_MESSAGE_UPDATED);
+      expect(params.message.text).to.equal('where is order 4321?');
+      expect(params.previousMessage.text).to.equal('where is order 1234?');
+    });
+  });
+
+  describe('handleMessageDeleted', () => {
+    it('appends a delete tombstone and dispatches ON_MESSAGE_DELETED', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler({
+        history: [
+          { platformMessageId: 'msg-1', content: 'where is order 1234?', senderId: 'user1', senderName: 'Ada' },
+        ],
+      });
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        config as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'thread1',
+          channelId: 'C1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'where is order 1234?',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.deleteInboundMessage.firstCall.args[0]).to.include({
+        conversationId: conversation._id,
+        platformMessageId: 'msg-1',
+        content: 'where is order 1234?',
+      });
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
+      expect(params.message.id).to.equal('msg-1');
+      expect(params.message.text).to.equal('where is order 1234?');
     });
   });
 });

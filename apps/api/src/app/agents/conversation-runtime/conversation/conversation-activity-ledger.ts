@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
@@ -10,6 +11,7 @@ import {
   ConversationActivityToolData,
   ConversationActivityTypeEnum,
   ConversationRepository,
+  resolveCurrentMessage as foldCurrentMessage,
   isDuplicateKeyError,
 } from '@novu/dal';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
@@ -17,6 +19,7 @@ import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activ
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
+  DeleteInboundMessageParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
@@ -29,6 +32,7 @@ import type {
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
+  UpdateInboundMessageParams,
 } from './agent-conversation.types';
 // biome-ignore lint/style/noRestrictedImports: sequence minting is owned by this ledger
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
@@ -191,6 +195,21 @@ export class ConversationActivityLedger {
 
       throw err;
     }
+  }
+
+  async updateInboundMessage(params: UpdateInboundMessageParams): Promise<ConversationActivityEntity | null> {
+    return this.appendInboundRevision({
+      ...params,
+      type: ConversationActivityTypeEnum.EDIT,
+      content: params.content ?? '',
+    });
+  }
+
+  async deleteInboundMessage(params: DeleteInboundMessageParams): Promise<ConversationActivityEntity | null> {
+    return this.appendInboundRevision({
+      ...params,
+      type: ConversationActivityTypeEnum.DELETE,
+    });
   }
 
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {
@@ -535,6 +554,30 @@ export class ConversationActivityLedger {
     return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
   }
 
+  async resolveCurrentMessage(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    const existing = await this.activityRepository.findByPlatformMessageId(
+      environmentId,
+      conversationId,
+      platformMessageId
+    );
+    if (!existing?.platformMessageId) {
+      return existing;
+    }
+
+    const revisions = await this.activityRepository.findMessageRevisions(environmentId, conversationId, [
+      existing.platformMessageId,
+    ]);
+    if (revisions.length === 0) {
+      return existing;
+    }
+
+    return foldCurrentMessage(existing, revisions);
+  }
+
   async findSourceActivity(
     environmentId: string,
     conversationId: string,
@@ -786,6 +829,105 @@ export class ConversationActivityLedger {
         if (existing) {
           return { activity: existing, created: false };
         }
+      }
+
+      throw err;
+    }
+  }
+
+  private async appendInboundRevision(params: {
+    conversationId: string;
+    environmentId: string;
+    organizationId: string;
+    platformMessageId: string;
+    type: ConversationActivityTypeEnum.EDIT | ConversationActivityTypeEnum.DELETE;
+    content?: string;
+    richContent?: Record<string, unknown>;
+    hasPlatformAttachments?: boolean;
+    editedAt?: string;
+  }): Promise<ConversationActivityEntity | null> {
+    const existing = await this.activityRepository.findByPlatformMessageId(
+      params.environmentId,
+      params.conversationId,
+      params.platformMessageId
+    );
+    if (!existing) {
+      return null;
+    }
+
+    const content = params.content ?? existing.content ?? '';
+    const richContent = params.richContent ?? existing.richContent;
+
+    if (params.type === ConversationActivityTypeEnum.EDIT) {
+      const preview = getInboundActivityPreview(content, {
+        richContent,
+        hasPlatformAttachments: params.hasPlatformAttachments,
+      });
+
+      await Promise.all([
+        this.conversationRepository.touchPreview(
+          params.environmentId,
+          params.organizationId,
+          params.conversationId,
+          preview
+        ),
+        this.insertInboundRevision(existing, params, content, params.richContent),
+      ]);
+    } else {
+      await this.insertInboundRevision(existing, params, content, richContent);
+    }
+
+    return {
+      ...existing,
+      content,
+      richContent,
+    };
+  }
+
+  private async insertInboundRevision(
+    existing: ConversationActivityEntity,
+    params: {
+      conversationId: string;
+      environmentId: string;
+      organizationId: string;
+      platformMessageId: string;
+      type: ConversationActivityTypeEnum.EDIT | ConversationActivityTypeEnum.DELETE;
+      editedAt?: string;
+    },
+    content: string,
+    richContent?: Record<string, unknown>
+  ): Promise<void> {
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+    const identifier =
+      params.type === ConversationActivityTypeEnum.DELETE
+        ? `inbound-delete:${params.conversationId}:${params.platformMessageId}`
+        : `inbound-edit:${params.conversationId}:${params.platformMessageId}:${params.editedAt ?? createHash('sha1').update(content).digest('hex').slice(0, 12)}`;
+
+    try {
+      await this.activityRepository.createUserActivity({
+        identifier,
+        conversationId: params.conversationId,
+        platform: existing.platform,
+        integrationId: existing._integrationId,
+        platformThreadId: existing.platformThreadId,
+        senderType: existing.senderType,
+        senderId: existing.senderId,
+        senderName: existing.senderName,
+        content,
+        richContent,
+        platformMessageId: params.platformMessageId,
+        type: params.type,
+        sequence,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        return;
       }
 
       throw err;

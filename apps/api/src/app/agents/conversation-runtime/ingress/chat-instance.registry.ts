@@ -7,7 +7,16 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuWebChatAdapter } from '@novu/chat-adapter-web-chat';
 import { stripAgentReplyToken } from '@novu/shared';
 import { retryPolicies } from '@slack/web-api';
-import type { Adapter, Chat, Message, MessageContext, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
+import type {
+  Adapter,
+  Chat,
+  Message,
+  MessageContext,
+  MessageDeletedEvent,
+  ReactionEvent,
+  SlashCommandEvent,
+  Thread,
+} from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
@@ -96,6 +105,14 @@ export interface InboundCallbacks {
     rawEvent: unknown
   ) => Promise<void>;
   onReaction: (agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent) => Promise<void>;
+  onMessageUpdated: (
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    previousMessage?: Message
+  ) => Promise<void>;
+  onMessageDeleted: (agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent) => Promise<void>;
 }
 
 /**
@@ -653,6 +670,43 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           agentId,
           operation: 'on-subscribed-message',
           logMessage: `[agent:${agentId}] Error handling subscribed message`,
+        });
+      }
+    });
+
+    chat.onMessageUpdated(async (thread: Thread, message: Message, previousMessage?: Message) => {
+      try {
+        const adapter = cached.chat?.getAdapter(platformAdapterKey(cached.config.platform));
+        if (adapter) {
+          rehydrateInboundAttachments(adapter, message);
+          if (previousMessage) {
+            rehydrateInboundAttachments(adapter, previousMessage);
+          }
+        }
+        await callbacks.onMessageUpdated(agentId, cached.config, thread, message, previousMessage);
+      } catch (err) {
+        this.rethrowWebChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-message-updated',
+          logMessage: `[agent:${agentId}] Error handling message update`,
+        });
+      }
+    });
+
+    chat.onMessageDeleted(async (event: MessageDeletedEvent) => {
+      try {
+        if (event.previousMessage) {
+          const adapter = cached.chat?.getAdapter(platformAdapterKey(cached.config.platform));
+          if (adapter) {
+            rehydrateInboundAttachments(adapter, event.previousMessage);
+          }
+        }
+        await callbacks.onMessageDeleted(agentId, cached.config, event);
+      } catch (err) {
+        this.rethrowWebChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-message-deleted',
+          logMessage: `[agent:${agentId}] Error handling message delete`,
         });
       }
     });

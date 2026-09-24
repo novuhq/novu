@@ -27,6 +27,8 @@ export interface ConversationTurn {
    */
   subscriberResolution?: SubscriberResolution;
   message: Message | null;
+  /** The message as it read before an inbound edit. */
+  previousMessage?: Message | null;
   event: AgentEventEnum;
   thread: Thread;
   platformThreadId: string;
