@@ -14,7 +14,7 @@ test('should trigger apns library correctly', async () => {
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -75,7 +75,7 @@ test('should set apns-collapse-id from messageId when collapseId is not in overr
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -127,7 +127,7 @@ test('should not override collapseId from overrides when messageId is set', asyn
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -181,7 +181,7 @@ test('should trigger apns library correctly with _passthrough', async () => {
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -257,7 +257,7 @@ const sendMessageOptions = {
 };
 
 test('should throw Apple rejection using response.reason', async () => {
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: vi.fn().mockResolvedValue({
         sent: [],
@@ -279,7 +279,7 @@ test('should throw Apple rejection using response.reason', async () => {
 });
 
 test('should throw connection error when APNs response is missing', async () => {
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: vi.fn().mockResolvedValue({
         sent: [],

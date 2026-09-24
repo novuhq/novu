@@ -47,7 +47,7 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
     options: IPushOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    delete (options.overrides as any)?.notificationIdentifiers;
+    delete (options.overrides as { notificationIdentifiers?: unknown } | undefined)?.notificationIdentifiers;
     const transformedBody = this.transform(bridgeProviderData, {
       body: options.content,
       title: options.title,
