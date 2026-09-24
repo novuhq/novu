@@ -14,8 +14,15 @@ import {
   SelectIntegrationCommand,
   SelectVariant,
   SelectVariantCommand,
+  type WorkflowJobMetadata,
 } from '@novu/application-generic';
-import { JobEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  JobEntity,
+  MessageRepository,
+  MessageTemplateEntity,
+  NotificationStepEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -53,6 +60,10 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
 
 type BridgeProviderOverrides = {
   providers?: Record<string, Record<string, unknown>>;
+};
+
+type JobStepWithWorkflowMetadata = NotificationStepEntity & {
+  workflowMetadata?: WorkflowJobMetadata;
 };
 
 /**
@@ -132,6 +143,7 @@ export abstract class SendMessageBase extends SendMessageType {
       context: command.compileContext?.context,
       workflow: buildWorkflowVariablesForJob({
         workflow: command.workflow,
+        workflowMetadata: (command.job.step as JobStepWithWorkflowMetadata).workflowMetadata,
         identifier: command.identifier,
         tags: command.tags,
         severity: command.severity,

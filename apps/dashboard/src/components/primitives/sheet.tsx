@@ -77,6 +77,44 @@ interface NonModalSheetContentProps extends SheetContentProps {
   onOverlayClick?: () => void;
 }
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+/**
+ * Invisible tab stop at the edge of a non-modal sheet. Not `aria-hidden`, because a focusable
+ * `aria-hidden` element is itself an accessibility violation.
+ */
+const SheetFocusGuard = ({ onFocus }: { onFocus: () => void }) => (
+  // biome-ignore lint/a11y/noStaticElementInteractions: a focus sentinel only exists to observe focus, so it must not be a real control
+  <span
+    data-sheet-focus-guard=""
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: the tab stop is the entire purpose of the sentinel
+    tabIndex={0}
+    onFocus={onFocus}
+    style={{ outline: 'none', opacity: 0, position: 'fixed', pointerEvents: 'none' }}
+  />
+);
+
+function focusSheetEdge(container: HTMLElement | null, edge: 'first' | 'last') {
+  if (!container) {
+    return;
+  }
+
+  const candidates = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (element) => !element.hasAttribute('data-sheet-focus-guard') && element.getClientRects().length > 0
+  );
+  const target = edge === 'first' ? candidates.at(0) : candidates.at(-1);
+
+  // Radix gives the content `tabIndex={-1}`, so an empty sheet still has somewhere to land.
+  (target ?? container).focus();
+}
+
 /**
  * Content for a `<Sheet modal={false}>`.
  *
@@ -88,39 +126,64 @@ interface NonModalSheetContentProps extends SheetContentProps {
  * Radix renders `Dialog.Overlay` for modal dialogs only, so the dimming overlay is hand-rolled
  * here. Dismissing on outside interaction is delegated to that overlay: the portaled dropdowns sit
  * above it and are therefore never mistaken for an outside click.
+ *
+ * A non-modal sheet also gets no focus trap, so the guards below keep Tab from walking behind an
+ * overlay that reads as modal. They deliberately do not use Radix's `FocusScope`: its
+ * `focusScopesStack` is module-scoped, and `react-focus-scope` is duplicated across the Radix
+ * packages here, so a scope added at this level could never be paused by a portaled `Select` and
+ * would fight it for focus. Guards only fire at this sheet's own tab boundary, which leaves the
+ * portaled dropdowns — driven by arrow keys, not Tab — free to manage their own focus.
  */
 const NonModalSheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   NonModalSheetContentProps
->(({ side = 'right', className, children, open, onOverlayClick, ...props }, ref) => (
-  <SheetPortal>
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 bg-black/20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={onOverlayClick}
-        />
-      )}
-    </AnimatePresence>
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      {...props}
-      onInteractOutside={(event) => event.preventDefault()}
-    >
-      <SheetPrimitive.Close className="absolute right-3.5 top-3.5" asChild>
-        <CompactButton size="md" variant="ghost" icon={RiCloseLine} data-close-button>
-          <span className="sr-only">Close</span>
-        </CompactButton>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-));
+>(({ side = 'right', className, children, open, onOverlayClick, ...props }, ref) => {
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const setContentRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      contentRef.current = node;
+
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref) {
+        ref.current = node;
+      }
+    },
+    [ref]
+  );
+
+  return (
+    <SheetPortal>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onOverlayClick}
+          />
+        )}
+      </AnimatePresence>
+      <SheetPrimitive.Content
+        ref={setContentRef}
+        className={cn(sheetVariants({ side }), className)}
+        {...props}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
+        <SheetFocusGuard onFocus={() => focusSheetEdge(contentRef.current, 'last')} />
+        <SheetPrimitive.Close className="absolute right-3.5 top-3.5" asChild>
+          <CompactButton size="md" variant="ghost" icon={RiCloseLine} data-close-button>
+            <span className="sr-only">Close</span>
+          </CompactButton>
+        </SheetPrimitive.Close>
+        {children}
+        <SheetFocusGuard onFocus={() => focusSheetEdge(contentRef.current, 'first')} />
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+});
 NonModalSheetContent.displayName = 'NonModalSheetContent';
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

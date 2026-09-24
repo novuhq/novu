@@ -165,16 +165,23 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     });
   });
 
-  it('builds workflow condition data from the command when no persisted workflow is available', () => {
+  it('builds workflow condition data from discovered metadata when no persisted workflow is available', () => {
     const { usecase } = buildUsecase();
     const command = buildCommand({});
     command.tags = ['bridge'];
     command.severity = SeverityLevelEnum.MEDIUM;
+    command.job.step = {
+      ...command.job.step,
+      workflowMetadata: {
+        name: 'Order confirmation',
+        description: 'Sent after an order is placed',
+      },
+    } as never;
 
     expect(usecase.integrationFilterData(command).workflow).to.deep.equal({
       workflowId: 'wf-identifier',
-      name: 'wf-identifier',
-      description: undefined,
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
       tags: ['bridge'],
       severity: 'medium',
     });

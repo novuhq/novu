@@ -65,19 +65,32 @@ describe('buildWorkflowVariablesForJob', () => {
     });
   });
 
-  it('maps the trigger identifier when no persisted workflow is available', () => {
+  it('uses discovered metadata when no persisted workflow is available', () => {
     const variables = buildWorkflowVariablesForJob({
       identifier: 'wf-identifier',
+      workflowMetadata: {
+        name: 'Order confirmation',
+        description: 'Sent after an order is placed',
+      },
       tags: ['bridge'],
       severity: SeverityLevelEnum.MEDIUM,
     });
 
     expect(variables).to.deep.equal({
       workflowId: 'wf-identifier',
-      name: 'wf-identifier',
-      description: undefined,
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
       tags: ['bridge'],
       severity: SeverityLevelEnum.MEDIUM,
     });
+  });
+
+  it('falls back to the trigger identifier when discovered metadata has no name', () => {
+    const variables = buildWorkflowVariablesForJob({
+      identifier: 'wf-identifier',
+    });
+
+    expect(variables.name).to.equal('wf-identifier');
+    expect(variables.workflowId).to.equal('wf-identifier');
   });
 });

@@ -26,6 +26,7 @@ import {
 import { LogRepository } from '../../services/analytic-logs/log.repository';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { type LeanNotificationStep, toLeanStep } from '../../services/step-template-hydration.service';
+import type { WorkflowJobMetadata } from '../../utils/build-workflow-variables';
 import { PlatformException } from '../../utils/exceptions';
 import { getNestedValue } from '../../utils/object';
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
@@ -35,6 +36,9 @@ const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 type NotificationStepWithTemplate = NotificationStepEntity & {
   template: NonNullable<NotificationStepEntity['template']>;
+};
+type JobNotificationStep = NotificationStepEntity & {
+  workflowMetadata?: WorkflowJobMetadata;
 };
 
 @Injectable()
@@ -289,24 +293,33 @@ export class CreateNotificationJobs {
     step: NotificationStepEntity,
     command: CreateNotificationJobsCommand,
     isJobStepDedupEnabled: boolean
-  ): NotificationStepEntity {
+  ): JobNotificationStep {
+    const workflowMetadata = command.bridgeUrl
+      ? {
+          name: command.template.name,
+          description: command.template.description,
+        }
+      : undefined;
+
     if (!isJobStepDedupEnabled) {
       return {
         ...step,
         ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+        ...(workflowMetadata ? { workflowMetadata } : {}),
       };
     }
 
-    const leanStep: LeanNotificationStep = {
+    const leanStep: LeanNotificationStep & { workflowMetadata?: WorkflowJobMetadata } = {
       ...toLeanStep(step),
       ...(step.variants ? { variants: step.variants.map(toLeanStep) } : {}),
       ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+      ...(workflowMetadata ? { workflowMetadata } : {}),
     };
 
     // `job.step` is a Mongo Mixed field; under job-step-dedup we intentionally
     // persist this lean projection and rehydrate the full template at execution
     // time (StepTemplateHydrationService).
-    return leanStep as unknown as NotificationStepEntity;
+    return leanStep as JobNotificationStep;
   }
 
   private createATriggerJobIfMissing(

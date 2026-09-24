@@ -16,6 +16,8 @@ export type WorkflowVariables = {
   severity?: SeverityLevelEnum;
 };
 
+export type WorkflowJobMetadata = Pick<WorkflowVariables, 'name' | 'description'>;
+
 /**
  * The `workflow` namespace exposed to Liquid templates and json-logic step conditions.
  * Only the fields advertised by the dashboard variable schema (`buildWorkflowSchema`) are
@@ -35,11 +37,12 @@ export function buildWorkflowVariables(workflow: IWorkflowForVariables): Workflo
 
 /**
  * Integration-condition evaluation data for a send job.
- * When the persisted workflow is missing (stateless / bridge-only jobs), name and workflowId
- * both fall back to the trigger identifier rather than inventing a template entity.
+ * Stateless / bridge-only jobs carry the code-first discovery metadata on the job step because
+ * they have no persisted workflow entity to resolve at send time.
  */
 export function buildWorkflowVariablesForJob(job: {
   workflow?: IWorkflowForVariables;
+  workflowMetadata?: WorkflowJobMetadata;
   identifier: string;
   tags?: string[];
   severity?: SeverityLevelEnum;
@@ -49,7 +52,8 @@ export function buildWorkflowVariablesForJob(job: {
   }
 
   return buildWorkflowVariables({
-    name: job.identifier,
+    name: job.workflowMetadata?.name ?? job.identifier,
+    description: job.workflowMetadata?.description,
     triggers: [{ identifier: job.identifier }],
     tags: job.tags,
     severity: job.severity,
