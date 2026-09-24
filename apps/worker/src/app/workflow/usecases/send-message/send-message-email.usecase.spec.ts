@@ -6,6 +6,7 @@ import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   ExecutionDetailsStatusEnum,
+  SeverityLevelEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -16,6 +17,10 @@ import { SendMessageStatus } from './send-message-type.usecase';
 class TestSendMessageEmail extends SendMessageEmail {
   public logSelectedIntegration(job: JobEntity, selection: IntegrationSelectionResult): Promise<void> {
     return this.sendSelectedIntegrationExecution(job, selection);
+  }
+
+  public integrationFilterData(command: SendMessageChannelCommand) {
+    return this.getIntegrationFilterData(command);
   }
 }
 
@@ -140,6 +145,48 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     sinon.restore();
   });
 
+  it('includes the supported workflow metadata in integration condition data', () => {
+    const { usecase } = buildUsecase();
+    const command = buildCommand({});
+    command.workflow = {
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['transactional'],
+      severity: 'high',
+      triggers: [{ identifier: 'order-confirmation' }],
+    } as never;
+
+    expect(usecase.integrationFilterData(command).workflow).to.deep.equal({
+      workflowId: 'order-confirmation',
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['transactional'],
+      severity: 'high',
+    });
+  });
+
+  it('builds workflow condition data from discovered metadata when no persisted workflow is available', () => {
+    const { usecase } = buildUsecase();
+    const command = buildCommand({});
+    command.tags = ['bridge'];
+    command.severity = SeverityLevelEnum.MEDIUM;
+    command.job.step = {
+      ...command.job.step,
+      workflowMetadata: {
+        name: 'Order confirmation',
+        description: 'Sent after an order is placed',
+      },
+    } as never;
+
+    expect(usecase.integrationFilterData(command).workflow).to.deep.equal({
+      workflowId: 'wf-identifier',
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['bridge'],
+      severity: 'medium',
+    });
+  });
+
   it('should populate payloadDetails.content with rendered bridge body for v2 workflows', async () => {
     const { usecase } = buildUsecase();
     const command = buildCommand({ bridgeBody: renderedEmailBody });
@@ -213,7 +260,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
         priority: 1,
         providerId: EmailProviderIdEnum.EmailWebhook,
       },
-      matchedConditions: { type: 'rules', value: { '==': [{ var: 'payload.region' }, 'eu'] } },
+      matchedConditions: { type: 'rules', value: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
     };
 
     await usecase.logSelectedIntegration(command.job, selection);
@@ -248,7 +295,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
         priority: 1,
         providerId: EmailProviderIdEnum.EmailWebhook,
       },
-      matchedConditions: { type: 'rules', value: { '==': [{ var: 'payload.region' }, 'eu'] } },
+      matchedConditions: { type: 'rules', value: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
     };
 
     createExecutionDetails.execute.onFirstCall().rejects(new Error('activity log unavailable'));

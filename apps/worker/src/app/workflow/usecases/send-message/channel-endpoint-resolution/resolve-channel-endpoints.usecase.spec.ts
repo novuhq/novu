@@ -705,7 +705,7 @@ describe('ResolveChannelEndpoints - integration rules', () => {
     expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
   });
 
-  it('keeps only the integration whose rules match the workflow payload', async () => {
+  it('keeps only the integration whose saved payload rules match the trigger payload', async () => {
     const matchingRules = { '==': [{ var: 'payload.region' }, 'eu'] };
     givenIntegrations([
       { identifier: 'telegram-integration', rules: { '==': [{ var: 'payload.region' }, 'us'] } },
@@ -713,6 +713,28 @@ describe('ResolveChannelEndpoints - integration rules', () => {
     ]);
 
     const result = await usecase.execute(buildCommand({ filterData: { payload: { region: 'eu' } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+    expect(result[0].matchedConditions).to.deep.equal({ type: 'rules', value: matchingRules });
+  });
+
+  it('keeps only the integration whose rules match workflow metadata', async () => {
+    const matchingRules = { containsAny: [{ var: 'workflow.tags' }, ['transactional']] };
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'workflow.name' }, 'Digest'] } },
+      { identifier: 'chat-webhook', rules: matchingRules },
+    ]);
+
+    const result = await usecase.execute(
+      buildCommand({
+        filterData: {
+          workflow: {
+            name: 'Order confirmation',
+            tags: ['transactional'],
+          },
+        },
+      })
+    );
 
     expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
     expect(result[0].matchedConditions).to.deep.equal({ type: 'rules', value: matchingRules });

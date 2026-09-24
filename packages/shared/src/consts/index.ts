@@ -5,6 +5,7 @@ export * from './data-retention';
 export * from './feature-tiers-constants';
 export * from './filters';
 export * from './handlebar-helpers';
+export * from './integration-conditions';
 export * from './inviteTeamMemberNudge';
 export * from './layouts';
 export * from './notification-item-buttons';

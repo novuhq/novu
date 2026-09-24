@@ -9,16 +9,14 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Button } from '@/components/primitives/button';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { NonModalSheet, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
-import { useWorkflowPayloadSchemas } from '@/hooks/use-workflow-payload-schemas';
 import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
 import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
-  buildPayloadConditionVariables,
   countLegacyIntegrationConditions,
   createEmptyConditionsQuery,
   INTEGRATION_CONDITION_VARIABLES,
@@ -68,18 +66,9 @@ export function IntegrationConditionsDrawer({
   const integrationName = useWatch({ control, name: 'name' });
   const [isOpen, setIsOpen] = useState(false);
   const contextTypeVariables = useContextTypeVariables();
-  const { data: payloadSchemasData } = useWorkflowPayloadSchemas(isOpen);
-  const payloadVariables = useMemo(
-    () => buildPayloadConditionVariables(payloadSchemasData?.payloadSchemas ?? []),
-    [payloadSchemasData?.payloadSchemas]
-  );
   const integrationConditionVariables = useMemo(() => {
-    return mergeIntegrationConditionVariables([
-      ...INTEGRATION_CONDITION_VARIABLES,
-      ...contextTypeVariables,
-      ...payloadVariables,
-    ]);
-  }, [contextTypeVariables, payloadVariables]);
+    return mergeIntegrationConditionVariables([...INTEGRATION_CONDITION_VARIABLES, ...contextTypeVariables]);
+  }, [contextTypeVariables]);
   const integrationConditionFields = useMemo(
     () =>
       integrationConditionVariables.map((variable) => ({
@@ -157,65 +146,63 @@ export function IntegrationConditionsDrawer({
         <span className="text-text-soft ml-auto">{conditionsCount > 0 ? conditionsCount : ''}</span>
       </Button>
 
-      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-        <SheetContent className="w-full sm:max-w-[600px]">
-          <header className="flex h-12 w-full shrink-0 items-center gap-2.5 border-b py-4 pl-3 pr-12">
-            <RiGuideFill className="size-4" />
-            <SheetTitle className="text-sm font-medium">Integration conditions</SheetTitle>
-          </header>
-          <VisuallyHidden>
-            <SheetDescription>
-              Conditions that decide when this integration is selected to deliver a notification.
-            </SheetDescription>
-          </VisuallyHidden>
+      <NonModalSheet open={isOpen} onOpenChange={handleOpenChange} className="w-full sm:max-w-[600px]">
+        <header className="flex h-12 w-full shrink-0 items-center gap-2.5 border-b py-4 pl-3 pr-12">
+          <RiGuideFill className="size-4" />
+          <SheetTitle className="text-sm font-medium">Integration conditions</SheetTitle>
+        </header>
+        <VisuallyHidden>
+          <SheetDescription>
+            Conditions that decide when this integration is selected to deliver a notification.
+          </SheetDescription>
+        </VisuallyHidden>
 
-          <Form {...form}>
-            <div className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-5">
-              <Panel className="overflow-initial">
-                <PanelHeader>
-                  <RiInputField className="text-feature size-4" />
-                  <span className="text-neutral-950">Conditions for {integrationName || 'this integration'}</span>
-                </PanelHeader>
-                <PanelContent className="flex flex-col gap-2 border-solid">
-                  <FormField
-                    control={form.control}
-                    name="query"
-                    render={({ field }) => (
-                      <ConditionsEditor
-                        query={field.value}
-                        onQueryChange={handleQueryChange}
-                        fields={integrationConditionFields}
-                        variables={integrationConditionVariables}
-                        enhancedVariables={integrationConditionVariables}
-                        isAllowedVariable={isAllowedIntegrationConditionVariable}
-                        valueInput={IntegrationConditionValueInput}
-                        saveForm={() => undefined}
-                        disabled={isReadOnly}
-                      />
-                    )}
-                  />
-                </PanelContent>
-              </Panel>
-              <p className="text-foreground-400 text-xs">
-                When a notification is sent, the first active integration whose conditions match is used. If none match,
-                the primary integration is used.
+        <Form {...form}>
+          <div className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-5">
+            <Panel className="overflow-initial">
+              <PanelHeader>
+                <RiInputField className="text-feature size-4" />
+                <span className="text-neutral-950">Conditions for {integrationName || 'this integration'}</span>
+              </PanelHeader>
+              <PanelContent className="flex flex-col gap-2 border-solid">
+                <FormField
+                  control={form.control}
+                  name="query"
+                  render={({ field }) => (
+                    <ConditionsEditor
+                      query={field.value}
+                      onQueryChange={handleQueryChange}
+                      fields={integrationConditionFields}
+                      variables={integrationConditionVariables}
+                      enhancedVariables={integrationConditionVariables}
+                      isAllowedVariable={isAllowedIntegrationConditionVariable}
+                      valueInput={IntegrationConditionValueInput}
+                      saveForm={() => undefined}
+                      disabled={isReadOnly}
+                    />
+                  )}
+                />
+              </PanelContent>
+            </Panel>
+            <p className="text-foreground-400 text-xs">
+              When a notification is sent, the first active integration whose conditions match is used. If none match,
+              the primary integration is used.
+            </p>
+            {!rules && legacyConditionsCount > 0 && (
+              <p className="text-warning-base text-xs">
+                This integration still uses {legacyConditionsCount} legacy condition
+                {legacyConditionsCount === 1 ? '' : 's'} at send time. Saving new conditions here replaces them.
               </p>
-              {!rules && legacyConditionsCount > 0 && (
-                <p className="text-warning-base text-xs">
-                  This integration still uses {legacyConditionsCount} legacy condition
-                  {legacyConditionsCount === 1 ? '' : 's'} at send time. Saving new conditions here replaces them.
-                </p>
-              )}
-            </div>
-          </Form>
-
-          <div className="bg-background flex shrink-0 justify-end border-t p-3">
-            <Button type="button" onClick={() => setIsOpen(false)}>
-              Done
-            </Button>
+            )}
           </div>
-        </SheetContent>
-      </Sheet>
+        </Form>
+
+        <div className="bg-background flex shrink-0 justify-end border-t p-3">
+          <Button type="button" onClick={() => setIsOpen(false)}>
+            Done
+          </Button>
+        </div>
+      </NonModalSheet>
 
       <ConfirmationModal
         open={pendingQuery !== null}

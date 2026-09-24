@@ -107,6 +107,7 @@ export class SelectIntegration {
         payload: command.filterData.payload,
         subscriber: command.filterData.subscriber,
         context: command.filterData.context,
+        workflow: command.filterData.workflow,
       });
 
       return result;

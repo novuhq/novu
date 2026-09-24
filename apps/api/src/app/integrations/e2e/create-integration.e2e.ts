@@ -141,7 +141,7 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(body.data.primary).to.equal(false);
   });
 
-  it('should create integration with JsonLogic conditions on a payload field', async () => {
+  it('should reject JsonLogic conditions on a payload field', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
@@ -155,7 +155,41 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
 
     const { body } = await session.testAgent.post('/v1/integrations').send(payload);
 
+    expect(body.statusCode).to.equal(400);
+  });
+
+  it('should create integration with JsonLogic conditions on a workflow field', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-workflow',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'workflow.name' }, 'Order confirmation'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
     expect(body.data.rules).to.deep.equal(payload.rules);
+  });
+
+  it('should reject JsonLogic conditions on unsupported workflow fields', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-workflow-invalid',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'workflow.identifier' }, 'order-confirmation'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
   });
 
   it('should reject JsonLogic conditions on deprecated tenant fields', async () => {
