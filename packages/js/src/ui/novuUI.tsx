@@ -1,5 +1,5 @@
 import { Accessor, ComponentProps, createSignal, Setter } from 'solid-js';
-import { MountableElement, render } from 'solid-js/web';
+import { isServer, MountableElement, render } from 'solid-js/web';
 import { Novu } from '../novu';
 import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
@@ -85,6 +85,10 @@ export class NovuUI {
   }
 
   #getContainerElement(container?: Node | string | null): Node | null | undefined {
+    if (isServer) {
+      return null;
+    }
+
     if (container === null || container === undefined) {
       return container;
     }
@@ -97,6 +101,12 @@ export class NovuUI {
   }
 
   #mountComponentRenderer(): void {
+    // Constructing NovuUI can happen during SSR (e.g. Next.js/Meteor server rendering).
+    // document/window aren't available there, so skip mounting until we're on the client.
+    if (isServer) {
+      return;
+    }
+
     if (this.#dispose !== null) {
       return;
     }
