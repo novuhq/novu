@@ -47,7 +47,7 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
     options: IPushOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    delete (options.overrides as any)?.notificationIdentifiers;
+    delete (options.overrides as { notificationIdentifiers?: unknown } | undefined)?.notificationIdentifiers;
     const transformedBody = this.transform(bridgeProviderData, {
       body: options.content,
       title: options.title,
@@ -69,7 +69,12 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
 
     if (res.failed.length > 0) {
       throw new Error(
-        res.failed.map((failed) => `${failed.device} failed for reason: ${failed.response.reason}`).join(',')
+        res.failed
+          .map(
+            (failed) =>
+              `${failed.device} failed for reason: ${failed.response?.reason ?? failed.error?.message ?? 'unknown'}`
+          )
+          .join(',')
       );
     }
 
