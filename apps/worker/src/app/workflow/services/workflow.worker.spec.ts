@@ -4,6 +4,7 @@ import {
   FeatureFlagsService,
   PinoLogger,
   SqsService,
+  TriggerAttachmentsService,
   TriggerEvent,
   WorkflowInMemoryProviderService,
   WorkflowQueueService,
@@ -54,7 +55,8 @@ describe('Workflow Worker', () => {
       workflowInMemoryProviderService,
       mockSqsService,
       new PinoLogger({}),
-      featureFlagsService
+      featureFlagsService,
+      moduleRef.get<TriggerAttachmentsService>(TriggerAttachmentsService)
     );
 
     workflowQueueService = new WorkflowQueueService(

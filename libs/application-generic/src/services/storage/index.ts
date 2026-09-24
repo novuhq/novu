@@ -1,6 +1,7 @@
 import { AzureBlobStorageService, GCSStorageService, S3StorageService, StorageService } from './storage.service';
 
 export * from './storage-helper.service';
+export * from './trigger-attachments.service';
 
 export function resolveStorageServiceClass(service?: string) {
   switch ((service || '').toUpperCase()) {

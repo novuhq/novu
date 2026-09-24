@@ -18,6 +18,7 @@ import {
   PinoLogger,
   SubscriberTopicPreference,
   TraceLogRepository,
+  TriggerAttachmentsService,
 } from '@novu/application-generic';
 import {
   ContextRepository,
@@ -72,13 +73,32 @@ export class SubscriberJobBound {
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private contextRepository: ContextRepository
+    private contextRepository: ContextRepository,
+    private triggerAttachmentsService: TriggerAttachmentsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
   async execute(command: SubscriberJobBoundCommand) {
+    const progress = { hasStartedStoringChain: false };
+
+    try {
+      await this.bindSubscriberJobs(command, progress);
+    } finally {
+      /*
+       * Subscriber jobs are not retried, so any exit before the chain is stored
+       * (early return or throw) is final and gives back the reference the
+       * fan-out took for this subscriber. Once storing starts, a chain may exist
+       * and will release it itself.
+       */
+      if (!progress.hasStartedStoringChain) {
+        await this.releaseAttachments(command);
+      }
+    }
+  }
+
+  private async bindSubscriberJobs(command: SubscriberJobBoundCommand, progress: { hasStartedStoringChain: boolean }) {
     this.logger.assign({
       transactionId: command.transactionId,
       environmentId: command.environmentId,
@@ -246,12 +266,24 @@ export class SubscriberJobBound {
       CreateNotificationJobsCommand.create(createNotificationJobsCommand)
     );
 
+    progress.hasStartedStoringChain = true;
     await this.storeSubscriberJobs.execute(
       StoreSubscriberJobsCommand.create({
         environmentId: command.environmentId,
         jobs: notificationJobs,
         organizationId: command.organizationId,
       })
+    );
+  }
+
+  private async releaseAttachments(command: SubscriberJobBoundCommand): Promise<void> {
+    await this.triggerAttachmentsService.releaseSubscriber(
+      {
+        environmentId: command.environmentId,
+        transactionId: command.transactionId,
+        attachments: command.payload?.attachments,
+      },
+      command.subscriber?.subscriberId
     );
   }
 

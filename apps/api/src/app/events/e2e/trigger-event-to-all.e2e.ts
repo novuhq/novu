@@ -3,6 +3,7 @@ import {
   IProcessSubscriberBulkJobDto,
   mapSubscribersToJobs,
   SubscriberProcessQueueService,
+  TriggerAttachmentsService,
   TriggerMulticast,
   TriggerMulticastCommand,
 } from '@novu/application-generic';
@@ -104,6 +105,7 @@ describe('TriggerMulticast #novu-v2', () => {
       imports: [SharedModule, EventsModule, PreferencesModule],
       providers: [
         TriggerMulticast,
+        TriggerAttachmentsService,
         {
           provide: SubscriberProcessQueueService,
           useClass: MockSubscriberProcessQueueService,

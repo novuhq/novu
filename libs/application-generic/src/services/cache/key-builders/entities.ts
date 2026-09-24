@@ -132,6 +132,21 @@ export const buildSubscriptionKey = ({ organizationId }: { organizationId: strin
     organizationId,
   });
 
+export const buildTriggerAttachmentsKey = ({
+  transactionId,
+  _environmentId,
+}: {
+  transactionId: string;
+  _environmentId: string;
+}): string =>
+  buildEnvironmentScopedKeyById({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.TRIGGER_ATTACHMENTS,
+    environmentId: _environmentId,
+    identifierPrefix: IdentifierPrefixEnum.TRANSACTION_ID,
+    identifier: transactionId,
+  });
+
 export const buildSubscriberTopicsKey = ({
   subscriberId,
   _environmentId,

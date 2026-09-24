@@ -10,6 +10,7 @@ import {
   Store,
   SubscriberProcessWorkerService,
   storage,
+  TriggerAttachmentsService,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
@@ -38,7 +39,8 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
     private organizationRepository: CommunityOrganizationRepository,
     sqsService: SqsService,
     logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private triggerAttachmentsService: TriggerAttachmentsService
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
@@ -94,6 +96,14 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
 
       if (isKillSwitchEnabled) {
         Logger.log(`Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
+        await this.triggerAttachmentsService.releaseSubscriber(
+          {
+            environmentId: data.environmentId,
+            transactionId: data.transactionId,
+            attachments: data.payload?.attachments,
+          },
+          data.subscriber?.subscriberId
+        );
 
         return;
       }

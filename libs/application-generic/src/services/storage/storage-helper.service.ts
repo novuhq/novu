@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { IAttachmentOptionsExtended } from '@novu/stateless';
 import { Instrument } from '../../instrumentation';
 import { NonExistingFileError } from './non-existing-file.error';
 import { StorageService } from './storage.service';
+
+const LOG_CONTEXT = 'StorageHelperService';
 
 @Injectable()
 export class StorageHelperService {
@@ -36,6 +38,10 @@ export class StorageHelperService {
         attachment.file = await this.storageService.getFile(attachment.storagePath);
       } catch (error: any) {
         if (error instanceof NonExistingFileError || error.name === 'NonExistingFileError') {
+          Logger.warn(
+            `Attachment ${attachment.name} is missing from storage at ${attachment.storagePath}, it will be sent empty`,
+            LOG_CONTEXT
+          );
           attachment.file = null;
         } else {
           throw error;

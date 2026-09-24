@@ -3,10 +3,12 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  getEffectiveJobPayload,
   InstrumentUsecase,
   PinoLogger,
+  TriggerAttachmentsService,
 } from '@novu/application-generic';
-import { JobEntity, JobRepository } from '@novu/dal';
+import { JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
@@ -18,6 +20,8 @@ export class HandleLastFailedJob {
     private createExecutionDetails: CreateExecutionDetails,
     private queueNextJob: QueueNextJob,
     private jobRepository: JobRepository,
+    private notificationRepository: NotificationRepository,
+    private triggerAttachmentsService: TriggerAttachmentsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -52,15 +56,40 @@ export class HandleLastFailedJob {
       })
     );
 
-    if (!shouldHaltOnStepFailure(job)) {
-      await this.queueNextJob.execute(
-        QueueNextJobCommand.create({
-          parentId: job?._id,
-          environmentId: job?._environmentId,
-          organizationId: job?._organizationId,
-          userId: job?._userId,
-          subscriberId: job?._subscriberId,
-        })
+    const nextJob = shouldHaltOnStepFailure(job)
+      ? undefined
+      : await this.queueNextJob.execute(
+          QueueNextJobCommand.create({
+            parentId: job?._id,
+            environmentId: job?._environmentId,
+            organizationId: job?._organizationId,
+            userId: job?._userId,
+            subscriberId: job?._subscriberId,
+          })
+        );
+
+    if (!nextJob) {
+      await this.releaseChainAttachments(job);
+    }
+  }
+
+  /** The retries are exhausted and no step follows, so the chain ends with this job. */
+  private async releaseChainAttachments(job: JobEntity): Promise<void> {
+    try {
+      const notification = await this.notificationRepository.findOne(
+        { _id: job._notificationId, _environmentId: job._environmentId },
+        'payload'
+      );
+      const payload: JobEntity['payload'] = getEffectiveJobPayload(job, notification);
+
+      await this.triggerAttachmentsService.releaseOnce(
+        { environmentId: job._environmentId, transactionId: job.transactionId, attachments: payload?.attachments },
+        job._id
+      );
+    } catch (error: unknown) {
+      this.logger.warn(
+        { err: error, nv: { jobId: job._id, transactionId: job.transactionId } },
+        'Failed to release the attachments of a failed workflow chain'
       );
     }
   }
