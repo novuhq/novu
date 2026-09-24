@@ -199,6 +199,19 @@ describe('TriggerAttachmentsService', () => {
     expect(deleteFile).toHaveBeenCalledTimes(1);
   });
 
+  it('releases a redelivered subscriber work item only once', async () => {
+    await service.acquireFanOutHold(ref);
+    await service.retain(ref, 2);
+    await service.releaseFanOutHold(ref);
+
+    await service.releaseSubscriber(ref, 'subscriber-a');
+    await service.releaseSubscriber(ref, 'subscriber-a');
+    expect(deleteFile).not.toHaveBeenCalled();
+
+    await service.releaseSubscriber(ref, 'subscriber-b');
+    expect(deleteFile).toHaveBeenCalledTimes(1);
+  });
+
   it('deletes the files of a discarded trigger', async () => {
     await service.discard(ref);
 

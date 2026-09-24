@@ -228,6 +228,16 @@ export class TriggerAttachmentsService {
     await this.release(ref);
   }
 
+  /**
+   * Gives back the reference the fan-out took for a subscriber that starts no
+   * chain. The fan-out enqueues each subscriber of a trigger once, so the
+   * subscriber id identifies the work item across redeliveries. Subscribers
+   * without an id share one release, which can only keep the files longer.
+   */
+  async releaseSubscriber(ref: TriggerAttachmentsRef, subscriberId: string | undefined): Promise<void> {
+    await this.releaseOnce(ref, `subscriber:${subscriberId ?? 'unknown'}`);
+  }
+
   private async increment(script: string, ref: TriggerAttachmentsRef, count: number): Promise<void> {
     if (!hasStoredAttachments(ref)) {
       return;

@@ -277,11 +277,14 @@ export class SubscriberJobBound {
   }
 
   private async releaseAttachments(command: SubscriberJobBoundCommand): Promise<void> {
-    await this.triggerAttachmentsService.release({
-      environmentId: command.environmentId,
-      transactionId: command.transactionId,
-      attachments: command.payload?.attachments,
-    });
+    await this.triggerAttachmentsService.releaseSubscriber(
+      {
+        environmentId: command.environmentId,
+        transactionId: command.transactionId,
+        attachments: command.payload?.attachments,
+      },
+      command.subscriber?.subscriberId
+    );
   }
 
   private async getCodeFirstWorkflow(command: SubscriberJobBoundCommand): Promise<NotificationTemplateEntity | null> {
