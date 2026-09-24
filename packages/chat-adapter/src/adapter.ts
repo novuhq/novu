@@ -464,7 +464,10 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       return deliverBufferedStream(threadId, textStream, deps);
     }
 
-    return deliverStreamingWithEdits(threadId, textStream, deps, options);
+    return deliverStreamingWithEdits(threadId, textStream, deps, options, {
+      platform: decoded.platform,
+      isDM: decoded.isDM,
+    });
   }
 
   async editMessage(

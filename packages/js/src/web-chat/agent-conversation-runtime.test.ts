@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { WebChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import type { AgentConversationSnapshot } from './conversation-runtime.types';
@@ -6,20 +7,20 @@ import { WebChat } from './web-chat';
 describe('AgentConversationRuntime', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
-  let sendMessage: jest.Mock;
-  let getEvents: jest.Mock;
-  let connect: jest.Mock;
+  let sendMessage: Mock;
+  let getEvents: Mock;
+  let connect: Mock;
   let webChat: WebChat;
 
   beforeEach(() => {
     emitter = new NovuEventEmitter();
-    sendMessage = jest.fn();
-    getEvents = jest.fn();
-    connect = jest.fn().mockResolvedValue({ data: undefined });
+    sendMessage = vi.fn();
+    getEvents = vi.fn();
+    connect = vi.fn().mockResolvedValue({ data: undefined });
     const webChatService = {
       sendMessage,
-      respondToAction: jest.fn(),
-      sendAction: jest.fn(),
+      respondToAction: vi.fn(),
+      sendAction: vi.fn(),
       getEvents,
     } as unknown as WebChatService;
     webChat = new WebChat({

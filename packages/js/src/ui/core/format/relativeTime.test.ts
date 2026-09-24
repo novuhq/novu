@@ -1,4 +1,5 @@
-import { formatSnoozedUntil, formatToRelativeTime } from './formatToRelativeTime';
+import { describe, expect, it } from 'vitest';
+import { formatSnoozedUntil, formatToRelativeTime } from './relativeTime';
 
 const SECONDS = {
   inMinute: 60,

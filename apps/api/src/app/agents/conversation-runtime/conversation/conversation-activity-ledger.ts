@@ -19,6 +19,8 @@ import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversa
 import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
@@ -208,6 +210,55 @@ export class ConversationActivityLedger {
     return this.appendInboundRevision({
       ...params,
       type: ConversationActivityTypeEnum.DELETE,
+    });
+  }
+
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+    if (params.messages.length === 0) {
+      return [];
+    }
+
+    const existingPlatformMessageIds = await this.activityRepository.findExistingPlatformMessageIds(
+      params.environmentId,
+      params.conversationId,
+      params.messages.map((message) => message.platformMessageId)
+    );
+    const messages = params.messages.filter((message) => !existingPlatformMessageIds.has(message.platformMessageId));
+
+    if (messages.length === 0) {
+      return [];
+    }
+
+    const sequences = await this.eventSequenceService.mintRange(
+      {
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        conversationId: params.conversationId,
+      },
+      messages.length
+    );
+
+    return this.activityRepository.withTransaction(async (session) => {
+      const insertedCount = await this.activityRepository.importUserActivities(
+        {
+          ...params,
+          messages: messages.map((message, index) => ({
+            ...message,
+            sequence: sequences[index],
+          })),
+        },
+        session
+      );
+
+      await this.conversationRepository.incrementMessageCount(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        insertedCount,
+        session
+      );
+
+      return messages;
     });
   }
 

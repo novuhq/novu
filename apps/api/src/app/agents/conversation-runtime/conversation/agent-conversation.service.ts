@@ -13,6 +13,8 @@ import { getConversationTitle } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
@@ -42,6 +44,8 @@ export {
 
 export type {
   ConversationActivityContext,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   MetadataOp,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
@@ -208,6 +212,20 @@ export class AgentConversationService {
     );
   }
 
+  async countOtherAgentsOnPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string,
+    agentId: string
+  ): Promise<number> {
+    return this.conversationRepository.countOtherAgentsOnPlatformThread(
+      environmentId,
+      organizationId,
+      platformThreadId,
+      agentId
+    );
+  }
+
   async findByPublicIdentifier(
     environmentId: string,
     organizationId: string,
@@ -338,6 +356,10 @@ export class AgentConversationService {
 
   async deleteInboundMessage(params: DeleteInboundMessageParams): Promise<ConversationActivityEntity | null> {
     return this.ledger.deleteInboundMessage(params);
+  }
+
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+    return this.ledger.importInboundMessages(params);
   }
 
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {

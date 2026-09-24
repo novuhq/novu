@@ -18,7 +18,7 @@ describe('ConversationEventSequenceService', () => {
     it('initializes the high-watermark above existing history rows', async () => {
       const conversationRepository = {
         findOne: sinon.stub().resolves({ _id: 'conv-1', eventSequence: 0 }),
-        allocateEventSequence: sinon.stub().resolves(3),
+        allocateEventSequenceRange: sinon.stub().resolves([3]),
       };
       const activityRepository = {
         countActivities: sinon.stub().resolves(2),
@@ -33,10 +33,11 @@ describe('ConversationEventSequenceService', () => {
 
       expect(sequence).to.equal(3);
       expect(
-        (conversationRepository.allocateEventSequence as sinon.SinonStub).calledOnceWithExactly(
+        (conversationRepository.allocateEventSequenceRange as sinon.SinonStub).calledOnceWithExactly(
           'env-1',
           'org-1',
           'conv-1',
+          1,
           2
         )
       ).to.equal(true);
@@ -45,7 +46,7 @@ describe('ConversationEventSequenceService', () => {
     it('skips the legacy bootstrap count when the high-watermark is already set', async () => {
       const conversationRepository = {
         findOne: sinon.stub().resolves({ _id: 'conv-1', eventSequence: 3 }),
-        allocateEventSequence: sinon.stub().resolves(4),
+        allocateEventSequenceRange: sinon.stub().resolves([4]),
       };
       const activityRepository = {
         countActivities: sinon.stub(),
@@ -60,6 +61,34 @@ describe('ConversationEventSequenceService', () => {
 
       expect(sequence).to.equal(4);
       expect((activityRepository.countActivities as sinon.SinonStub).called).to.equal(false);
+    });
+
+    it('allocates a contiguous range with one repository call', async () => {
+      const conversationRepository = {
+        findOne: sinon.stub().resolves({ _id: 'conv-1', eventSequence: 3 }),
+        allocateEventSequenceRange: sinon.stub().resolves([4, 5, 6]),
+      };
+      const service = makeService(conversationRepository);
+
+      const sequences = await service.mintRange(
+        {
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+          conversationId: 'conv-1',
+        },
+        3
+      );
+
+      expect(sequences).to.deep.equal([4, 5, 6]);
+      expect(
+        (conversationRepository.allocateEventSequenceRange as sinon.SinonStub).calledOnceWithExactly(
+          'env-1',
+          'org-1',
+          'conv-1',
+          3,
+          0
+        )
+      ).to.equal(true);
     });
   });
 });

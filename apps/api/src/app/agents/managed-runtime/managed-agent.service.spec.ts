@@ -140,6 +140,34 @@ describe('ManagedAgentService workflow-origin', () => {
 
       expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'where is my order?' }]);
     });
+
+    it('prefixes USER history and the current turn with senderName', async () => {
+      const listForView = sinon.stub().resolves({
+        data: [
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'where is my order?',
+            senderName: 'Ada',
+          },
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'the package is late',
+            senderName: 'Bob',
+          },
+        ],
+        hasMore: false,
+      });
+      const { service } = makeService({ listForView });
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: undefined, senderName: 'Ada' })
+      );
+
+      expect(String(messages[0].content)).to.include('Bob: the package is late');
+      expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'Ada: where is my order?' });
+    });
   });
 
   describe('replayParkedInboundTurn', () => {

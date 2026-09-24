@@ -51,7 +51,7 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
     'approval_activities',
   ],
   'message.agent': ['llm_transcript', 'agent_handoff', 'client_events', 'operator_timeline'],
-  'message.platform_user': ['agent_handoff', 'operator_timeline', 'approval_activities'],
+  'message.platform_user': ['llm_transcript', 'agent_handoff', 'operator_timeline', 'approval_activities'],
   'message.system': ['agent_handoff', 'operator_timeline'],
   edit: ['client_events', 'operator_timeline'],
   delete: ['client_events', 'operator_timeline'],
