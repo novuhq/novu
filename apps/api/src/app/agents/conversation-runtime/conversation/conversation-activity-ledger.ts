@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
@@ -905,7 +904,7 @@ export class ConversationActivityLedger {
     const identifier =
       params.type === ConversationActivityTypeEnum.DELETE
         ? `inbound-delete:${params.conversationId}:${params.platformMessageId}`
-        : `inbound-edit:${params.conversationId}:${params.platformMessageId}:${params.editedAt ?? createHash('sha1').update(content).digest('hex').slice(0, 12)}`;
+        : `inbound-edit:${params.conversationId}:${params.platformMessageId}:${params.editedAt ?? new Date().toISOString()}`;
 
     try {
       await this.activityRepository.createUserActivity({

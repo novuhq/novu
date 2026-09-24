@@ -126,7 +126,25 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       return { data, hasMore: false };
     }
 
-    return { data: await this.foldViewPage(params, data), hasMore: false };
+    let folded = await this.foldViewPage(params, data);
+    if (folded.length < params.limit && data.length === params.limit) {
+      const refill = await this.find(
+        {
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+          _conversationId: params.conversationId,
+          ...viewMatch,
+        },
+        '*',
+        {
+          sort: { createdAt: -1 },
+          limit: params.limit * 2,
+        }
+      );
+      folded = (await this.foldViewPage(params, refill)).slice(0, params.limit);
+    }
+
+    return { data: folded, hasMore: false };
   }
 
   async findMessageRevisions(

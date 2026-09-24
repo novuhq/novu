@@ -475,6 +475,7 @@ describe('ConversationActivityLedger', () => {
         conversationId: 'conv-1',
         platformMessageId: 'msg-1',
         content: 'where is order 4321?',
+        editedAt: '1710000000.000200',
         environmentId: 'env-1',
         organizationId: 'org-1',
       });
@@ -486,7 +487,7 @@ describe('ConversationActivityLedger', () => {
         platformMessageId: 'msg-1',
         senderId: 'ada',
       });
-      expect(createUserActivity.firstCall.args[0].identifier).to.match(/^inbound-edit:conv-1:msg-1:/);
+      expect(createUserActivity.firstCall.args[0].identifier).to.equal('inbound-edit:conv-1:msg-1:1710000000.000200');
       expect(touchPreview.calledOnce).to.equal(true);
     });
   });

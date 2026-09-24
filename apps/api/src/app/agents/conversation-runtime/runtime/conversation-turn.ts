@@ -35,6 +35,8 @@ export interface ConversationTurn {
   /** The acting user's platform identity (Slack userId, Telegram chatId). Set on message/action turns. */
   platformUserId?: string;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
   workflowOrigin?: WorkflowOriginSnapshot | null;

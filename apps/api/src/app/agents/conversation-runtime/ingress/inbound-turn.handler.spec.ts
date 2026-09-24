@@ -136,6 +136,12 @@ describe('AgentInboundHandler', () => {
           async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
             (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
         ),
+      resolveCurrentMessage: sinon
+        .stub()
+        .callsFake(
+          async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
+            (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
+        ),
       countAgentMessages: sinon.stub().resolves(0),
     };
     const bridgeExecutor = {
@@ -306,6 +312,7 @@ describe('AgentInboundHandler', () => {
       subscriberRepository,
       outboundGateway,
       inboundAck,
+      planLimitGate,
     };
   }
 
@@ -2141,6 +2148,26 @@ describe('AgentInboundHandler', () => {
       expect(params.event).to.equal(AgentEventEnum.ON_MESSAGE_UPDATED);
       expect(params.message.text).to.equal('where is order 4321?');
       expect(params.previousMessage.text).to.equal('where is order 1234?');
+    });
+
+    it('persists an edit but skips dispatch when the plan gate blocks', async () => {
+      const { handler, conversationService, bridgeExecutor, planLimitGate } = makeHandler();
+      planLimitGate.maybeBlock.resolves(true);
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        config as any,
+        { id: 'thread1' } as any,
+        {
+          id: 'msg-1',
+          text: 'where is order 4321?',
+          author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
     });
   });
 

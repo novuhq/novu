@@ -1161,9 +1161,9 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
-    const richContent = storedAttachments?.length
+    const richContent = Array.isArray(message.attachments)
       ? {
-          attachments: storedAttachments.map(({ type, name, mimeType, size, storageKey }) => ({
+          attachments: (storedAttachments ?? []).map(({ type, name, mimeType, size, storageKey }) => ({
             type,
             name,
             mimeType,
@@ -1172,6 +1172,7 @@ export class AgentInboundHandler implements OnModuleInit {
           })),
         }
       : undefined;
+    const editedAt = readPlatformEditedAt(message) ?? new Date().toISOString();
 
     if (message.id) {
       await this.conversationService.updateInboundMessage({
@@ -1180,6 +1181,7 @@ export class AgentInboundHandler implements OnModuleInit {
         content: message.text,
         richContent,
         hasPlatformAttachments: Boolean(message.attachments?.length),
+        editedAt,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });
@@ -1197,6 +1199,14 @@ export class AgentInboundHandler implements OnModuleInit {
       isFirstMessageInThread: false,
     });
 
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
+      return;
+    }
+
+    if (await this.maybeStopKeylessInbound(agentId, config, thread, conversation)) {
+      return;
+    }
+
     await this.dispatchExistingConversationTurn({
       agentId,
       config,
@@ -1208,8 +1218,10 @@ export class AgentInboundHandler implements OnModuleInit {
       event: AgentEventEnum.ON_MESSAGE_UPDATED,
       operation: 'resolve-subscriber-message-updated',
       platformUserId: message.author?.userId,
+      authorIsBot: message.author?.isBot === true,
       raw: message.raw,
       storedAttachments,
+      deliveryRevision: editedAt,
     });
   }
 
@@ -1230,17 +1242,20 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    const current = event.messageId
+      ? await this.conversationService.resolveCurrentMessage(config.environmentId, conversation._id, event.messageId)
+      : null;
     const existing = event.messageId
       ? await this.conversationService.deleteInboundMessage({
           conversationId: conversation._id,
           platformMessageId: event.messageId,
-          content: event.previousMessage?.text,
+          content: event.previousMessage?.text ?? current?.content,
           environmentId: config.environmentId,
           organizationId: config.organizationId,
         })
       : null;
 
-    const message = stubDeletedMessage(event, existing);
+    const message = stubDeletedMessage(event, current ?? existing);
 
     trackAgentInboundMessage(this.analyticsService, {
       organizationId: config.organizationId,
@@ -1265,7 +1280,9 @@ export class AgentInboundHandler implements OnModuleInit {
       event: AgentEventEnum.ON_MESSAGE_DELETED,
       operation: 'resolve-subscriber-message-deleted',
       platformUserId: event.previousMessage?.author?.userId ?? existing?.senderId,
+      authorIsBot: event.previousMessage?.author?.isBot === true,
       raw: event.raw,
+      deliveryRevision: 'deleted',
     });
   }
 
@@ -1353,8 +1370,10 @@ export class AgentInboundHandler implements OnModuleInit {
     event: AgentEventEnum;
     operation: string;
     platformUserId?: string;
+    authorIsBot?: boolean;
     raw?: unknown;
     storedAttachments?: StoredAttachment[];
+    deliveryRevision?: string;
     reaction?: BridgeReaction;
   }): Promise<void> {
     const { agentId, config, conversation, thread, platformThreadId, message, event } = params;
@@ -1365,7 +1384,7 @@ export class AgentInboundHandler implements OnModuleInit {
           config,
           platformUserId: params.platformUserId,
           operation: params.operation,
-          authorIsBot: false,
+          authorIsBot: params.authorIsBot === true,
         })
       : undefined;
     const subscriberId = getResolvedSubscriberId(resolution);
@@ -1421,6 +1440,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       platformUserId: params.platformUserId,
       storedAttachments: params.storedAttachments,
+      deliveryRevision: params.deliveryRevision,
       reaction: params.reaction,
       workflowOrigin: workflowOrigin ?? undefined,
     };
@@ -1428,6 +1448,19 @@ export class AgentInboundHandler implements OnModuleInit {
     if (
       event === AgentEventEnum.ON_REACTION &&
       (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime))
+    ) {
+      return;
+    }
+
+    if (
+      event === AgentEventEnum.ON_MESSAGE_UPDATED &&
+      (await maybeReplyUnresolvedSubscriberAccess({
+        turn,
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: false,
+      }))
     ) {
       return;
     }
@@ -1705,6 +1738,17 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
   }
+}
+
+function readPlatformEditedAt(message: Message): string | undefined {
+  const raw = message.raw;
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+
+  const editedTs = (raw as { edited?: { ts?: unknown } }).edited?.ts;
+
+  return typeof editedTs === 'string' && editedTs.length > 0 ? editedTs : undefined;
 }
 
 function eventToThread(event: MessageDeletedEvent): Thread {

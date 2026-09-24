@@ -159,6 +159,8 @@ export interface AgentExecutionParams {
   reaction?: BridgeReaction;
   humanResponse?: AgentHumanResponse | null;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
   platformThreadId?: string;
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
@@ -368,8 +370,10 @@ export class BridgeExecutorService {
     const timestamp = new Date().toISOString();
 
     let deliveryId: string;
-    if (message?.id) {
+    if (message?.id && event === AgentEventEnum.ON_MESSAGE) {
       deliveryId = `${conversation._id}:${message.id}`;
+    } else if (message?.id) {
+      deliveryId = `${conversation._id}:${event}:${message.id}:${params.deliveryRevision ?? timestamp}`;
     } else if (action) {
       deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {

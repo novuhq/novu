@@ -81,6 +81,7 @@ export class BridgeRuntime implements AgentRuntime {
         }),
       }),
       storedAttachments: turn.storedAttachments,
+      deliveryRevision: turn.deliveryRevision,
       platformThreadId: turn.platformThreadId,
       action: turn.action,
       reaction: turn.reaction,
