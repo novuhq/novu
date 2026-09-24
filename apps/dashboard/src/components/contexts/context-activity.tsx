@@ -14,7 +14,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 
 const getInitialFilters = (contextKey: string, dateRange?: string): ActivityFiltersData => ({
   ...defaultActivityFilters,
-  dateRange: dateRange || '24h',
+  dateRange: dateRange || defaultActivityFilters.dateRange,
   contextKeys: [contextKey],
 });
 

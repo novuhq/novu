@@ -3,6 +3,8 @@ import { ActivityFilters } from '@/api/activity';
 
 export type ActivityFiltersData = {
   dateRange: string;
+  after?: string;
+  before?: string;
   channels: ChannelTypeEnum[];
   workflows: string[];
   transactionId: string;

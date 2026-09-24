@@ -1,18 +1,13 @@
 import { useOrganization } from '@clerk/react';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum, SeverityLevelEnum } from '@novu/shared';
-import { CalendarIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
-import { Badge } from '@/components/primitives/badge';
-import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useDebouncedForm } from '@/hooks/use-debounced-form';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
-import { buildActivityDateFilters } from '@/utils/activityFilters';
+import { buildActivityDateFilters, getActivityFeedRetentionStart } from '@/utils/activityFilters';
 import { isChannelVisibleInUi } from '@/utils/channels';
-import { ROUTES } from '@/utils/routes';
 import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
 import { IS_CLOUD } from '../../config';
@@ -21,6 +16,7 @@ import { ContextFilter } from '../contexts/context-filter';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
+import { ActivityDateRangeFilter } from './activity-date-range-filter';
 import { CHANNEL_OPTIONS } from './constants';
 
 type Fields =
@@ -44,26 +40,6 @@ export type ActivityFilters = {
   defaultContextOnClear?: boolean;
 };
 
-const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={ROUTES.SETTINGS_BILLING + '?utm_source=activity-feed-retention'}
-          className="block flex items-center justify-center transition-all duration-200 hover:scale-105"
-        >
-          <Badge color="purple" size="sm" variant="lighter">
-            Upgrade
-          </Badge>
-        </Link>
-      </TooltipTrigger>
-      <TooltipPortal>
-        <TooltipContent>Upgrade your plan to unlock extended retention periods</TooltipContent>
-      </TooltipPortal>
-    </Tooltip>
-  );
-};
-
 export function ActivityFilters({
   onFiltersChange,
   filters,
@@ -85,6 +61,22 @@ export function ActivityFilters({
     () => CHANNEL_OPTIONS.filter((option) => isChannelVisibleInUi(option.value, isToolChannelEnabled)),
     [isToolChannelEnabled]
   );
+  const dateFilterConfig = useMemo(() => {
+    if (!organization || (!subscription && IS_CLOUD)) {
+      return { options: [], retentionStart: undefined };
+    }
+
+    return {
+      options: buildActivityDateFilters({
+        organization,
+        apiServiceLevel: subscription?.apiServiceLevel,
+      }),
+      retentionStart: getActivityFeedRetentionStart({
+        organization,
+        apiServiceLevel: subscription?.apiServiceLevel,
+      }),
+    };
+  }, [organization, subscription]);
 
   const form = useForm<ActivityFiltersData>({
     values: filters,
@@ -93,22 +85,6 @@ export function ActivityFilters({
   const { watch, setValue } = form;
 
   useDebouncedForm(watch, onFiltersChange, 400);
-
-  const maxActivityFeedRetentionOptions = useMemo(() => {
-    const missingSubscription = !subscription && IS_CLOUD;
-
-    if (!organization || missingSubscription) {
-      return [];
-    }
-
-    return buildActivityDateFilters({
-      organization,
-      apiServiceLevel: subscription?.apiServiceLevel,
-    }).map((option) => ({
-      ...option,
-      icon: option.disabled ? UpgradeCtaIcon : undefined,
-    }));
-  }, [organization, subscription]);
 
   const handleReset = () => {
     if (onReset) {
@@ -120,25 +96,11 @@ export function ActivityFilters({
     <Form {...form}>
       <FormRoot className={cn('w-full flex flex-wrap items-center gap-2 pb-2.5', className)}>
         {!hide.includes('dateRange') && (
-          <FormField
-            control={form.control}
-            name="dateRange"
-            render={({ field }) => (
-              <FormItem>
-                <FacetedFormFilter
-                  size="small"
-                  type="single"
-                  hideClear
-                  hideSearch
-                  hideTitle
-                  title="Time period"
-                  options={maxActivityFeedRetentionOptions}
-                  selected={[field.value]}
-                  onSelect={(values) => setValue('dateRange', values[0])}
-                  icon={CalendarIcon}
-                />
-              </FormItem>
-            )}
+          <ActivityDateRangeFilter
+            filters={filters}
+            onChange={onFiltersChange}
+            presetOptions={dateFilterConfig.options}
+            retentionStart={dateFilterConfig.retentionStart}
           />
         )}
 

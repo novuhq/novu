@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   ClickhouseOperator,
   FieldCondition,
@@ -11,8 +11,9 @@ import {
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-import { TopicSubscribersRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, TopicSubscribersRepository } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
+import { validateActivityRetentionRange } from '../../../shared/helpers/activity-retention';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
@@ -66,6 +67,7 @@ export class GetWorkflowRuns {
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
+    private organizationRepository: CommunityOrganizationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -83,6 +85,8 @@ export class GetWorkflowRuns {
     );
 
     try {
+      await this.applyRetentionRange(command);
+
       const queryBuilder = new QueryBuilder<WorkflowRun>({
         environmentId: command.environmentId,
       });
@@ -263,6 +267,21 @@ export class GetWorkflowRuns {
 
       throw error;
     }
+  }
+
+  private async applyRetentionRange(command: GetWorkflowRunsCommand) {
+    const organization = await this.organizationRepository.findById(command.organizationId);
+    if (!organization) {
+      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    const retentionRange = validateActivityRetentionRange({
+      organization,
+      after: command.createdGte,
+      before: command.createdLte,
+    });
+    command.createdGte = retentionRange.after;
+    command.createdLte = retentionRange.before;
   }
 
   /**

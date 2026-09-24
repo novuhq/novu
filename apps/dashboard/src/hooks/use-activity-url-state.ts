@@ -50,6 +50,15 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
   const dateRange = searchParams.get('dateRange');
   result.dateRange = dateRange || DEFAULT_DATE_RANGE;
 
+  const after = searchParams.get('after');
+  const before = searchParams.get('before');
+  if (after) {
+    result.after = after;
+  }
+  if (before) {
+    result.before = before;
+  }
+
   const severity = searchParams.get('severity')?.split(',').filter(Boolean);
   if (severity?.length) {
     result.severity = severity as SeverityLevelEnum[];
@@ -69,6 +78,8 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
 
   return {
     dateRange: searchParams.get('dateRange') || DEFAULT_DATE_RANGE,
+    after: searchParams.get('after') || undefined,
+    before: searchParams.get('before') || undefined,
     channels: (searchParams.get('channels')?.split(',').filter(Boolean) as ChannelTypeEnum[]) || [],
     workflows: searchParams.get('workflows')?.split(',').filter(Boolean) || [],
     transactionId: transactionIds.length > 0 ? transactionIds.join(', ') : '',
@@ -80,12 +91,56 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
   };
 }
 
+function appendTransactionIds(searchParams: URLSearchParams, transactionId: string) {
+  const transactionIds = transactionId
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  if (transactionIds.length > 1) {
+    for (const id of transactionIds) {
+      searchParams.append('transactionId', id);
+    }
+
+    return;
+  }
+
+  searchParams.set('transactionId', transactionId);
+}
+
+function buildFilterSearchParams(data: ActivityFiltersData, activityItemId: string | null, page: string | null) {
+  const searchParams = new URLSearchParams();
+
+  if (activityItemId) searchParams.set('activityItemId', activityItemId);
+  if (data.channels.length) searchParams.set('channels', data.channels.join(','));
+  if (data.workflows.length) searchParams.set('workflows', data.workflows.join(','));
+  if (data.transactionId) appendTransactionIds(searchParams, data.transactionId);
+  if (data.subscriberId) searchParams.set('subscriberId', data.subscriberId);
+  if (data.topicKey) searchParams.set('topicKey', data.topicKey);
+  if (data.subscriptionId) searchParams.set('subscriptionId', data.subscriptionId);
+  if (data.dateRange !== DEFAULT_DATE_RANGE) searchParams.set('dateRange', data.dateRange);
+
+  if (data.dateRange === 'custom' && data.after && data.before) {
+    searchParams.set('after', data.after);
+    searchParams.set('before', data.before);
+  }
+
+  if (page) searchParams.set('page', page);
+  if (data.severity.length) searchParams.set('severity', data.severity.join(','));
+  for (const contextKey of data.contextKeys) {
+    searchParams.append('contextKeys', contextKey);
+  }
+
+  return searchParams;
+}
+
 export function useActivityUrlState(): ActivityUrlState & {
   handleActivitySelect: (activityItemId: string) => void;
   handleFiltersChange: (data: ActivityFiltersData) => void;
 } {
   const [searchParams, setSearchParams] = useSearchParams();
   const activityItemId = searchParams.get('activityItemId');
+  const page = searchParams.get('page');
 
   const handleActivitySelect = useCallback(
     (newActivityItemId: string) => {
@@ -104,71 +159,9 @@ export function useActivityUrlState(): ActivityUrlState & {
 
   const handleFiltersChange = useCallback(
     (data: ActivityFiltersData) => {
-      const newParams = new URLSearchParams();
-
-      // First, preserve the activity selection if it exists
-      if (activityItemId) {
-        newParams.set('activityItemId', activityItemId);
-      }
-
-      // Then set the filter values
-      if (data.channels?.length) {
-        newParams.set('channels', data.channels.join(','));
-      }
-
-      if (data.workflows?.length) {
-        newParams.set('workflows', data.workflows.join(','));
-      }
-
-      if (data.transactionId) {
-        // Parse comma-delimited string into array for backend
-        const transactionIds = data.transactionId
-          .split(',')
-          .map((id) => id.trim())
-          .filter(Boolean);
-
-        if (transactionIds.length > 1) {
-          for (const id of transactionIds) {
-            newParams.append('transactionId', id);
-          }
-        } else {
-          newParams.set('transactionId', data.transactionId);
-        }
-      }
-
-      if (data.subscriberId) {
-        newParams.set('subscriberId', data.subscriberId);
-      }
-
-      if (data.topicKey) {
-        newParams.set('topicKey', data.topicKey);
-      }
-
-      if (data.subscriptionId) {
-        newParams.set('subscriptionId', data.subscriptionId);
-      }
-
-      if (data.dateRange && data.dateRange !== DEFAULT_DATE_RANGE) {
-        newParams.set('dateRange', data.dateRange);
-      }
-
-      if (searchParams.get('page')) {
-        newParams.set('page', searchParams.get('page') || '0');
-      }
-
-      if (data.severity?.length) {
-        newParams.set('severity', data.severity.join(','));
-      }
-
-      if (data.contextKeys?.length) {
-        for (const contextKey of data.contextKeys) {
-          newParams.append('contextKeys', contextKey);
-        }
-      }
-
-      setSearchParams(newParams, { replace: true });
+      setSearchParams(buildFilterSearchParams(data, activityItemId, page), { replace: true });
     },
-    [activityItemId, setSearchParams]
+    [activityItemId, page, setSearchParams]
   );
 
   const filters = useMemo(() => parseFilters(searchParams), [searchParams]);

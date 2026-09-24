@@ -17,7 +17,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 
 const getInitialFilters = (topicKey: string, dateRange: string): ActivityFiltersData => ({
   channels: [],
-  dateRange: dateRange || '24h',
+  dateRange: dateRange || defaultActivityFilters.dateRange,
   subscriberId: '',
   transactionId: '',
   workflows: [],

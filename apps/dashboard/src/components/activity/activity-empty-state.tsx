@@ -7,6 +7,7 @@ import { ActivityFilters } from '@/api/activity';
 import { defaultActivityFilters } from '@/components/activity/constants';
 import { Button } from '@/components/primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
+import { ACTIVITY_DATE_RANGE_OPTIONS } from '@/utils/activityFilters';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
@@ -43,7 +44,13 @@ export function ActivityEmptyState({
   const handleTriggerWorkflow = onTriggerWorkflow || handleNavigateToWorkflows;
 
   const emptyFiltersTitle = useMemo(() => {
-    return `No activity in the past ${filters?.dateRange}`;
+    if (filters.dateRange === 'custom') {
+      return 'No activity in the selected date range';
+    }
+
+    const label = ACTIVITY_DATE_RANGE_OPTIONS.find((option) => option.value === filters.dateRange)?.label;
+
+    return `No activity for ${label?.toLowerCase() ?? 'the selected period'}`;
   }, [filters]);
 
   return (

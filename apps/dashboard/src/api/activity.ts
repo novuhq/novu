@@ -1,4 +1,5 @@
-import { getDateRangeInMs, type IActivity, type IEnvironment, SeverityLevelEnum } from '@novu/shared';
+import { type IActivity, type IEnvironment, SeverityLevelEnum } from '@novu/shared';
+import { resolveActivityDateRange } from '@/utils/activityFilters';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -8,6 +9,8 @@ export type ActivityFilters = {
   subscriberId?: string;
   transactionId?: string;
   dateRange?: string;
+  after?: string;
+  before?: string;
   topicKey?: string;
   subscriptionId?: string;
   severity?: SeverityLevelEnum[];
@@ -252,8 +255,13 @@ export function getActivityList({
   }
 
   if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
-    searchParams.append('after', after.toISOString());
+    const { after, before } = resolveActivityDateRange(filters.dateRange, filters.after, filters.before);
+    if (after) {
+      searchParams.append('after', after);
+    }
+    if (before) {
+      searchParams.append('before', before);
+    }
   }
 
   return get<ActivityResponse>(`/notifications?${searchParams.toString()}`, {
@@ -345,8 +353,13 @@ export async function getWorkflowRunsList({
   }
 
   if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
-    searchParams.append('createdGte', after.toISOString());
+    const { after, before } = resolveActivityDateRange(filters.dateRange, filters.after, filters.before);
+    if (after) {
+      searchParams.append('createdGte', after);
+    }
+    if (before) {
+      searchParams.append('createdLte', before);
+    }
   }
 
   if (filters?.severity?.length) {
@@ -444,8 +457,9 @@ export async function getWorkflowRunsCount({
     createdAtGte = period.start;
     createdAtLte = period.end;
   } else if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
-    createdAtGte = after.toISOString();
+    const { after, before } = resolveActivityDateRange(filters.dateRange, filters.after, filters.before);
+    createdAtGte = after;
+    createdAtLte = before;
   }
 
   const response = await getCharts({

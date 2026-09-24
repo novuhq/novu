@@ -12,18 +12,11 @@ import {
   ExecutionDetailFeedItem,
   NotificationFeedItemEntity,
   NotificationRepository,
-  OrganizationEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import {
-  ApiServiceLevelEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
-  FeatureNameEnum,
-  getFeatureForTierAsNumber,
-} from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
+import { validateActivityRetentionRange } from '../../../shared/helpers/activity-retention';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
@@ -97,104 +90,7 @@ export class GetActivityFeed {
       throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    const maxRetentionMs = this.getMaxRetentionPeriodByOrganization(organization);
-
-    // For unlimited retention (self-hosted), skip retention validation
-    if (maxRetentionMs === Number.MAX_SAFE_INTEGER) {
-      const effectiveAfterDate = after ? this.parseAndValidateDate(after, 'after') : undefined;
-      const effectiveBeforeDate = before ? this.parseAndValidateDate(before, 'before') : undefined;
-
-      // Basic validation for date range if both dates are provided
-      if (effectiveAfterDate && effectiveBeforeDate && effectiveAfterDate > effectiveBeforeDate) {
-        throw new HttpException(
-          'Invalid date range: start date (after) must be earlier than end date (before)',
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      return {
-        after: effectiveAfterDate?.toISOString(),
-        before: effectiveBeforeDate?.toISOString(),
-      };
-    }
-
-    const earliestAllowedDate = new Date(Date.now() - maxRetentionMs);
-
-    // If no after date is provided, default to the earliest allowed date
-    const effectiveAfterDate = after ? this.parseAndValidateDate(after, 'after') : earliestAllowedDate;
-    const effectiveBeforeDate = before ? this.parseAndValidateDate(before, 'before') : new Date();
-
-    this.validateDateRange(earliestAllowedDate, effectiveAfterDate, effectiveBeforeDate);
-
-    return {
-      after: effectiveAfterDate.toISOString(),
-      before: effectiveBeforeDate.toISOString(),
-    };
-  }
-
-  private parseAndValidateDate(dateString: string, parameterName: string): Date {
-    const parsedDate = new Date(dateString);
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      throw new HttpException(
-        `Invalid date format for parameter '${parameterName}': ${dateString}. Please provide a valid ISO 8601 date string.`,
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    return parsedDate;
-  }
-
-  private validateDateRange(earliestAllowedDate: Date, afterDate: Date, beforeDate: Date) {
-    if (afterDate > beforeDate) {
-      throw new HttpException(
-        'Invalid date range: start date (after) must be earlier than end date (before)',
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    // add buffer to account for time delay in execution
-    const buffer = 1 * 60 * 60 * 1000; // 1 hour
-    const bufferedEarliestAllowedDate = new Date(earliestAllowedDate.getTime() - buffer);
-
-    if (
-      process.env.NODE_ENV !== 'local' &&
-      (afterDate < bufferedEarliestAllowedDate || beforeDate < bufferedEarliestAllowedDate)
-    ) {
-      throw new HttpException(
-        `Requested date range exceeds your plan's retention period. ` +
-          `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +
-          `Please upgrade your plan to access older activities.`,
-        HttpStatus.PAYMENT_REQUIRED
-      );
-    }
-  }
-
-  /**
-   * Notifications are automatically deleted after a certain period of time
-   * by a background job.
-   *
-   * @see https://github.com/novuhq/cloud-infra/blob/main/scripts/expiredNotification.js#L93
-   */
-  private getMaxRetentionPeriodByOrganization(organization: OrganizationEntity) {
-    // 1. Self-hosted: effectively unlimited, use a large but safe finite window (100 years)
-    if (process.env.IS_SELF_HOSTED === 'true') {
-      return 100 * 365 * 24 * 60 * 60 * 1000; // ~100 years in ms, safe for Date math
-    }
-
-    const { apiServiceLevel, createdAt } = organization;
-
-    // 2. Special case: Free tier orgs created before Feb 28, 2025 get 30 days
-    if (apiServiceLevel === ApiServiceLevelEnum.FREE && new Date(createdAt) < new Date('2025-02-28')) {
-      return 30 * 24 * 60 * 60 * 1000;
-    }
-
-    // 3. Otherwise, use tier-based retention from feature flags
-    return getFeatureForTierAsNumber(
-      FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-      apiServiceLevel ?? ApiServiceLevelEnum.FREE,
-      true
-    );
+    return validateActivityRetentionRange({ organization, after, before });
   }
 
   @Instrument()
