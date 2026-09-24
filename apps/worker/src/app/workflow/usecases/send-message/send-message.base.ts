@@ -15,12 +15,7 @@ import {
   SelectVariant,
   SelectVariantCommand,
 } from '@novu/application-generic';
-import {
-  JobEntity,
-  MessageRepository,
-  MessageTemplateEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { JobEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,

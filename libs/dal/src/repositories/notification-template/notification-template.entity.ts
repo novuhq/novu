@@ -86,8 +86,10 @@ export class NotificationTemplateEntity {
 
   origin?: ResourceOriginEnum;
 
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, consumers narrow per workflow origin
   rawData?: any;
 
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, consumers narrow to their JSON Schema type
   payloadSchema?: any;
 
   validatePayload?: boolean;
