@@ -13,18 +13,22 @@ import {
   linkSlackUserAppearanceKeys,
   subscriptionAppearanceKeys,
 } from './config';
-import { AllLocalization } from './context/LocalizationContext';
+import type { AllLocalization } from './core/stores/localization';
 
 export type NotificationClickHandler = (notification: Notification) => void;
 export type NotificationActionClickHandler = (notification: Notification) => void;
 
-export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type AvatarRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type SubjectRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type BodyRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type DefaultActionsRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type CustomActionsRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type BellRenderer = (el: HTMLDivElement, unreadCount: UnreadCount) => () => void;
+export type { MountHandle, OutletCleanup, OutletHandle } from './core/bridge/types';
+
+import type { OutletCleanup } from './core/bridge/types';
+
+export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => OutletCleanup<[Notification]>;
+export type AvatarRenderer = (el: HTMLDivElement, notification: Notification) => OutletCleanup<[Notification]>;
+export type SubjectRenderer = (el: HTMLDivElement, notification: Notification) => OutletCleanup<[Notification]>;
+export type BodyRenderer = (el: HTMLDivElement, notification: Notification) => OutletCleanup<[Notification]>;
+export type DefaultActionsRenderer = (el: HTMLDivElement, notification: Notification) => OutletCleanup<[Notification]>;
+export type CustomActionsRenderer = (el: HTMLDivElement, notification: Notification) => OutletCleanup<[Notification]>;
+export type BellRenderer = (el: HTMLDivElement, unreadCount: UnreadCount) => OutletCleanup<[UnreadCount]>;
 export type RouterPush = (path: string) => void;
 
 export type Tab = {
@@ -64,7 +68,7 @@ export type Variables = {
 
 export type CommonIconKey = 'cogs' | 'check' | 'arrowDown' | 'nodeTree';
 export type CommonAppearanceKey = (typeof commonAppearanceKeys)[number];
-export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
+export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => OutletCleanup<[{ class?: string }]>;
 
 // INBOX APPEARANCE
 export type InboxAppearanceCallback = {
@@ -403,6 +407,12 @@ export type AllAppearanceCallbackFunction<K extends AllAppearanceCallbackKeys> =
         : K extends ChannelConnectButtonAppearanceCallbackKeys
           ? ChannelConnectButtonAppearanceCallbackFunction<K>
           : never;
+/** The argument an appearance callback receives; every callback key declares its own context. */
+export type AllAppearanceCallbackContext = {
+  [K in AllAppearanceCallbackKeys]: AllAppearanceCallbackFunction<K> extends (context: infer TContext) => string
+    ? TContext
+    : never;
+}[AllAppearanceCallbackKeys];
 export type AllAppearanceKey =
   | CommonAppearanceKey
   | InboxAppearanceKey
@@ -485,4 +495,4 @@ export {
   InboxLocalizationKey,
   SubscriptionLocalization,
   SubscriptionLocalizationKey,
-} from './context/LocalizationContext';
+} from './core/stores/localization';
