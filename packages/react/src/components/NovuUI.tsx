@@ -13,7 +13,7 @@ import type {
   ReactInboxAppearance,
   ReactSubscriptionAppearance,
 } from '../utils/types';
-import { OutletHost } from './OutletHost';
+import { OutletScope } from './OutletScope';
 import { ShadowRootDetector } from './ShadowRootDetector';
 
 export type NovuUIOptions = Omit<JsNovuUIOptions, 'appearance'> & {
@@ -52,8 +52,9 @@ const findParentShadowRoot = (child?: HTMLDivElement | null): Node | null => {
 };
 
 /**
- * Owns one engine instance and the outlet store that goes with it. Everything rendered below, portals into
- * outlets included, can reach both through `useNovuUI()`.
+ * Owns one engine instance and renders the outermost outlet scope. The store is created here because the icon
+ * overrides are adapted into engine renderers during this render; the scope hosts them and the outlets of whatever
+ * is rendered directly beneath, such as `DefaultInbox`.
  */
 export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
   const shadowRootDetector = useRef<HTMLDivElement>(null);
@@ -114,8 +115,8 @@ export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
 
   const icons = options.appearance?.icons;
   const contextValue = useMemo(
-    () => (novuUI ? { novuUI, outlets, icons: (icons ?? {}) as ReactAllIconOverrides } : undefined),
-    [novuUI, outlets, icons]
+    () => (novuUI ? { novuUI, icons: (icons ?? {}) as ReactAllIconOverrides } : undefined),
+    [novuUI, icons]
   );
 
   return (
@@ -123,9 +124,7 @@ export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
       <ShadowRootDetector ref={shadowRootDetector} />
       {contextValue && (
         <NovuUIProvider value={contextValue}>
-          {children}
-          {/* after the children on purpose: their render props update refs during render, the outlets read them */}
-          <OutletHost store={outlets} />
+          <OutletScope store={outlets}>{children}</OutletScope>
         </NovuUIProvider>
       )}
     </>
