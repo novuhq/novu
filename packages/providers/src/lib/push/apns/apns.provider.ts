@@ -69,7 +69,12 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
 
     if (res.failed.length > 0) {
       throw new Error(
-        res.failed.map((failed) => `${failed.device} failed for reason: ${failed.response.reason}`).join(',')
+        res.failed
+          .map(
+            (failed) =>
+              `${failed.device} failed for reason: ${failed.response?.reason ?? failed.error?.message ?? 'unknown'}`
+          )
+          .join(',')
       );
     }
 
