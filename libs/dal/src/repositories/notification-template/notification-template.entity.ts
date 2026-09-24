@@ -16,6 +16,7 @@ import {
   SeverityLevelEnum,
   StepIssues,
   TriggerTypeEnum,
+  WorkflowJobMetadata,
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { Types } from 'mongoose';
@@ -172,6 +173,8 @@ export class NotificationStepData {
   shouldStopOnFail?: boolean;
 
   bridgeUrl?: string;
+
+  workflowMetadata?: WorkflowJobMetadata;
   /*
    * controlVariables exists
    * only on none production environment in order to provide stateless control variables on fly

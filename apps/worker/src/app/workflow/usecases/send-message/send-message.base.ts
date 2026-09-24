@@ -14,13 +14,11 @@ import {
   SelectIntegrationCommand,
   SelectVariant,
   SelectVariantCommand,
-  type WorkflowJobMetadata,
 } from '@novu/application-generic';
 import {
   JobEntity,
   MessageRepository,
   MessageTemplateEntity,
-  NotificationStepEntity,
   SubscriberRepository,
 } from '@novu/dal';
 import {
@@ -60,10 +58,6 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
 
 type BridgeProviderOverrides = {
   providers?: Record<string, Record<string, unknown>>;
-};
-
-type JobStepWithWorkflowMetadata = NotificationStepEntity & {
-  workflowMetadata?: WorkflowJobMetadata;
 };
 
 /**
@@ -138,12 +132,11 @@ export abstract class SendMessageBase extends SendMessageType {
   protected getIntegrationFilterData(command: SendMessageChannelCommand) {
     return {
       tenant: command.job.tenant,
-      payload: command.compileContext?.payload,
       subscriber: command.compileContext?.subscriber,
       context: command.compileContext?.context,
       workflow: buildWorkflowVariablesForJob({
         workflow: command.workflow,
-        workflowMetadata: (command.job.step as JobStepWithWorkflowMetadata).workflowMetadata,
+        workflowMetadata: command.job.step.workflowMetadata,
         identifier: command.identifier,
         tags: command.tags,
         severity: command.severity,

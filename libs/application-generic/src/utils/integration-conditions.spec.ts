@@ -8,8 +8,8 @@ describe('integration rules helpers', () => {
     expect(hasIntegrationRules(null)).to.equal(false);
   });
 
-  it('accepts workflow payload and subscriber fields and rejects deprecated tenant fields', () => {
-    const validPayload = getIntegrationRulesIssues({
+  it('accepts workflow and subscriber fields and rejects payload and deprecated tenant fields', () => {
+    const invalidPayload = getIntegrationRulesIssues({
       '==': [{ var: 'payload.foo' }, 'bar'],
     });
     const invalidTenant = getIntegrationRulesIssues({
@@ -19,7 +19,7 @@ describe('integration rules helpers', () => {
       '==': [{ var: 'subscriber.locale' }, 'fr'],
     });
 
-    expect(validPayload).to.deep.equal([]);
+    expect(invalidPayload.length).to.be.greaterThan(0);
     expect(invalidTenant.length).to.be.greaterThan(0);
     expect(valid).to.deep.equal([]);
   });
@@ -106,10 +106,13 @@ describe('integration rules helpers', () => {
 
   it('validates and evaluates integration rules through one boundary', () => {
     const matching = evaluateIntegrationRules(
-      { '==': [{ var: 'payload.region' }, 'eu'] },
-      { payload: { region: 'eu' } }
+      { '==': [{ var: 'context.tenant.data.region' }, 'eu'] },
+      { context: { tenant: { data: { region: 'eu' } } } }
     );
-    const invalid = evaluateIntegrationRules({ log: { var: 'payload.region' } }, { payload: { region: 'eu' } });
+    const invalid = evaluateIntegrationRules(
+      { log: { var: 'context.tenant.data.region' } },
+      { context: { tenant: { data: { region: 'eu' } } } }
+    );
 
     expect(matching).to.deep.equal({ result: true, issues: [] });
     expect(invalid.result).to.equal(false);

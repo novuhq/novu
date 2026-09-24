@@ -1,4 +1,6 @@
-import { SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum, type WorkflowJobMetadata } from '@novu/shared';
+
+export type { WorkflowJobMetadata };
 
 export interface IWorkflowForVariables {
   name?: string;
@@ -15,8 +17,6 @@ export type WorkflowVariables = {
   tags?: string[];
   severity?: SeverityLevelEnum;
 };
-
-export type WorkflowJobMetadata = Pick<WorkflowVariables, 'name' | 'description'>;
 
 /**
  * The `workflow` namespace exposed to Liquid templates and json-logic step conditions.

@@ -1,6 +1,6 @@
 ---
 title: 'Integration conditions'
-description: 'Route notifications to the right provider integration using dashboard conditions on subscriber, context, payload, and workflow data.'
+description: 'Route notifications to the right provider integration using dashboard conditions on subscriber, context, and workflow data.'
 ---
 
 Integration conditions decide **which provider integration sends a notification**. They do not skip workflow steps. To skip a step, use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) instead.
@@ -48,7 +48,7 @@ Pinning `integrationIdentifier` on the trigger skips the email and SMS condition
 
 ## Data available in conditions
 
-Integration conditions can read **subscriber**, **context**, **payload**, and **workflow** values. They cannot read previous step results. Use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) to skip a step based on earlier step output.
+Integration conditions can read **subscriber**, **context**, and **workflow** values. They cannot read trigger payload or previous step results. Use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) when conditions depend on workflow-specific payload fields or earlier step output.
 
 The dashboard field picker includes:
 
@@ -60,14 +60,13 @@ The dashboard field picker includes:
 | `subscriber.firstName`, `subscriber.lastName` | Match on profile name |
 | `subscriber.locale` | Route by language or region |
 | `subscriber.data` | Match custom subscriber attributes such as `subscriber.data.plan` |
-| `payload.*` | Route from trigger payload fields that exist on workflow payload schemas |
 | `workflow.workflowId` | Route by the workflow trigger identifier |
 | `workflow.name` | Route by the workflow display name |
 | `workflow.description` | Route by the workflow description |
 | `workflow.tags` | Route by workflow tags (array operators such as contains any of) |
 | `workflow.severity` | Route by workflow severity |
 
-You can also reference other `context.*`, `subscriber.*`, and `payload.*` paths, for example `context.tenant.data.plan`, `subscriber.data.region`, or `payload.region`. Custom `workflow.*` paths outside the table are rejected.
+You can also reference other `context.*` and `subscriber.*` paths, for example `context.tenant.data.plan` or `subscriber.data.region`. Payload paths and custom `workflow.*` paths outside the table are rejected.
 
 To populate `context.tenant.id`, pass a tenant context on the trigger:
 
@@ -103,7 +102,7 @@ The dashboard stores conditions as JSON Logic on the integration `rules` field. 
 }
 ```
 
-Allowed variables are the same `context.*`, `subscriber.*`, `payload.*`, and listed `workflow.*` fields as in the dashboard. Unknown `workflow.*` paths are rejected.
+Allowed variables are the same `context.*`, `subscriber.*`, and listed `workflow.*` fields as in the dashboard. Payload paths and unknown `workflow.*` paths are rejected.
 
 ## Related
 

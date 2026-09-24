@@ -303,8 +303,8 @@ describe('select integration', () => {
     expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
   });
 
-  it('should select an integration matching workflow payload conditions', async () => {
-    const matchingIntegration: IntegrationEntity = {
+  it('should ignore integrations conditioned on payload fields', async () => {
+    const payloadConditionedIntegration: IntegrationEntity = {
       ...testIntegration,
       _id: 'payload-conditioned-integration',
       identifier: 'payload-conditioned-integration-identifier',
@@ -315,7 +315,7 @@ describe('select integration', () => {
     };
 
     findOneMock.mockReturnValue(testIntegration);
-    findMock.mockReturnValue([matchingIntegration]);
+    findMock.mockReturnValue([payloadConditionedIntegration]);
 
     const integration = await useCase.execute(
       SelectIntegrationCommand.create({
@@ -323,14 +323,12 @@ describe('select integration', () => {
         environmentId: 'environmentId',
         organizationId: 'organizationId',
         userId: 'userId',
-        filterData: {
-          payload: { region: 'eu' },
-        },
+        filterData: {},
       })
     );
 
-    expect(integration?.integration.identifier).toEqual(matchingIntegration.identifier);
-    expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
+    expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
+    expect(integration?.matchedConditions).toBeUndefined();
   });
 
   it('should select an integration matching workflow metadata conditions', async () => {

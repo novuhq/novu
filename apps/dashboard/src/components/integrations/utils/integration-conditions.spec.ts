@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
 import {
-  buildPayloadConditionVariables,
   INTEGRATION_CONDITION_VARIABLES,
   isAllowedIntegrationConditionVariable,
   mergeIntegrationConditionVariables,
@@ -21,45 +20,34 @@ describe('workflow condition variables', () => {
   });
 });
 
-describe('buildPayloadConditionVariables', () => {
-  it('extracts typed payload fields from workflow schemas', () => {
-    const variables = buildPayloadConditionVariables([
-      {
-        type: 'object',
-        properties: {
-          region: { type: 'string' },
-          retries: { type: 'number' },
-        },
-      },
-    ]);
-
-    expect(variables).toEqual([
-      expect.objectContaining({ name: 'payload.region', dataType: 'string' }),
-      expect.objectContaining({ name: 'payload.retries', dataType: 'number' }),
-    ]);
+describe('integration condition variable boundaries', () => {
+  it('allows context and subscriber fields but rejects payload fields', () => {
+    expect(isAllowedIntegrationConditionVariable({ name: 'context.tenant.data.plan' })).toBe(true);
+    expect(isAllowedIntegrationConditionVariable({ name: 'subscriber.data.region' })).toBe(true);
+    expect(isAllowedIntegrationConditionVariable({ name: 'payload.region' })).toBe(false);
   });
 });
 
 describe('mergeIntegrationConditionVariables', () => {
-  it('deduplicates matching payload variable types', () => {
+  it('deduplicates matching variable types', () => {
     const variables = mergeIntegrationConditionVariables([
-      { name: 'payload.region', dataType: 'string' },
-      { name: 'payload.region', dataType: 'string' },
+      { name: 'context.tenant.data.region', dataType: 'string' },
+      { name: 'context.tenant.data.region', dataType: 'string' },
     ]);
 
-    expect(variables).toEqual([{ name: 'payload.region', dataType: 'string' }]);
+    expect(variables).toEqual([{ name: 'context.tenant.data.region', dataType: 'string' }]);
   });
 
-  it('marks conflicting payload variable types as mixed', () => {
+  it('marks conflicting variable types as mixed', () => {
     const variables = mergeIntegrationConditionVariables([
-      { name: 'payload.priority', dataType: 'number', inputType: 'number' },
-      { name: 'payload.priority', dataType: 'string', inputType: 'text' },
+      { name: 'context.tenant.data.priority', dataType: 'number', inputType: 'number' },
+      { name: 'context.tenant.data.priority', dataType: 'string', inputType: 'text' },
     ]);
 
     expect(variables).toEqual([
       {
-        name: 'payload.priority',
-        displayLabel: 'payload.priority (mixed types)',
+        name: 'context.tenant.data.priority',
+        displayLabel: 'context.tenant.data.priority (mixed types)',
         dataType: 'mixed',
         format: undefined,
         inputType: undefined,

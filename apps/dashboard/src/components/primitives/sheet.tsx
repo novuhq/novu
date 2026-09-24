@@ -75,7 +75,14 @@ interface NonModalSheetContentProps extends SheetContentProps {
   /** Mirrors the `open` prop of the parent `Sheet`, to drive the hand-rolled overlay. */
   open: boolean;
   onOverlayClick?: () => void;
+  hideCloseButton?: boolean;
+  overlayClassName?: string;
+  overlayTransition?: React.ComponentProps<typeof motion.div>['transition'];
 }
+
+type NonModalSheetProps = Omit<NonModalSheetContentProps, 'onOverlayClick'> & {
+  onOpenChange: (open: boolean) => void;
+};
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -115,6 +122,21 @@ function focusSheetEdge(container: HTMLElement | null, edge: 'first' | 'last') {
   (target ?? container).focus();
 }
 
+function injectSheetFocusGuards(
+  child: React.ReactElement<{ children?: React.ReactNode }>,
+  containerRef: React.RefObject<HTMLDivElement | null>
+) {
+  return React.cloneElement(
+    child,
+    undefined,
+    <>
+      <SheetFocusGuard onFocus={() => focusSheetEdge(containerRef.current, 'last')} />
+      {child.props.children}
+      <SheetFocusGuard onFocus={() => focusSheetEdge(containerRef.current, 'first')} />
+    </>
+  );
+}
+
 /**
  * Content for a `<Sheet modal={false}>`.
  *
@@ -137,54 +159,97 @@ function focusSheetEdge(container: HTMLElement | null, edge: 'first' | 'last') {
 const NonModalSheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   NonModalSheetContentProps
->(({ side = 'right', className, children, open, onOverlayClick, ...props }, ref) => {
-  const contentRef = React.useRef<HTMLDivElement | null>(null);
-  const setContentRef = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      contentRef.current = node;
-
-      if (typeof ref === 'function') {
-        ref(node);
-      } else if (ref) {
-        ref.current = node;
-      }
+>(
+  (
+    {
+      side = 'right',
+      className,
+      children,
+      open,
+      onOverlayClick,
+      hideCloseButton = false,
+      overlayClassName,
+      overlayTransition,
+      asChild,
+      ...props
     },
-    [ref]
-  );
+    ref
+  ) => {
+    const contentRef = React.useRef<HTMLDivElement | null>(null);
+    const setContentRef = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        contentRef.current = node;
 
-  return (
-    <SheetPortal>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="fixed inset-0 z-50 bg-black/20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onOverlayClick}
-          />
-        )}
-      </AnimatePresence>
-      <SheetPrimitive.Content
-        ref={setContentRef}
-        className={cn(sheetVariants({ side }), className)}
-        {...props}
-        onInteractOutside={(event) => event.preventDefault()}
-      >
-        <SheetFocusGuard onFocus={() => focusSheetEdge(contentRef.current, 'last')} />
-        <SheetPrimitive.Close className="absolute right-3.5 top-3.5" asChild>
-          <CompactButton size="md" variant="ghost" icon={RiCloseLine} data-close-button>
-            <span className="sr-only">Close</span>
-          </CompactButton>
-        </SheetPrimitive.Close>
-        {children}
-        <SheetFocusGuard onFocus={() => focusSheetEdge(contentRef.current, 'first')} />
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  );
-});
+        if (typeof ref === 'function') {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
+        }
+      },
+      [ref]
+    );
+
+    const guardedChildren =
+      asChild && React.isValidElement<{ children?: React.ReactNode }>(children)
+        ? injectSheetFocusGuards(children, contentRef)
+        : children;
+
+    return (
+      <SheetPortal>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              className={cn('fixed inset-0 z-50 bg-black/20', overlayClassName)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={overlayTransition ?? { duration: 0.2 }}
+              onClick={onOverlayClick}
+            />
+          )}
+        </AnimatePresence>
+        <SheetPrimitive.Content
+          ref={setContentRef}
+          asChild={asChild}
+          className={asChild ? className : cn(sheetVariants({ side }), className)}
+          {...props}
+          onInteractOutside={(event) => event.preventDefault()}
+        >
+          {asChild ? (
+            guardedChildren
+          ) : (
+            <>
+              <SheetFocusGuard onFocus={() => focusSheetEdge(contentRef.current, 'last')} />
+              {!hideCloseButton && (
+                <SheetPrimitive.Close className="absolute right-3.5 top-3.5" asChild>
+                  <CompactButton size="md" variant="ghost" icon={RiCloseLine} data-close-button>
+                    <span className="sr-only">Close</span>
+                  </CompactButton>
+                </SheetPrimitive.Close>
+              )}
+              {children}
+              <SheetFocusGuard onFocus={() => focusSheetEdge(contentRef.current, 'first')} />
+            </>
+          )}
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  }
+);
 NonModalSheetContent.displayName = 'NonModalSheetContent';
+
+/**
+ * Owns `modal={false}`, the dimming overlay, outside-click dismiss, and the keyboard focus
+ * boundary. Callers should not wrap this in another `<Sheet>`.
+ */
+const NonModalSheet = ({ open, onOpenChange, children, ...props }: NonModalSheetProps) => (
+  <Sheet modal={false} open={open} onOpenChange={onOpenChange}>
+    <NonModalSheetContent open={open} onOverlayClick={() => onOpenChange(false)} {...props}>
+      {children}
+    </NonModalSheetContent>
+  </Sheet>
+);
+NonModalSheet.displayName = 'NonModalSheet';
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn('flex flex-col space-y-2 p-6 text-center sm:text-left', className)} {...props} />
@@ -218,7 +283,7 @@ const SheetMain = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>
 SheetMain.displayName = 'SheetMain';
 
 export {
-  NonModalSheetContent,
+  NonModalSheet,
   Sheet,
   SheetClose,
   SheetContent,

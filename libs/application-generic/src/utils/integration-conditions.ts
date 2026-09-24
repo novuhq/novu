@@ -1,3 +1,4 @@
+import { INTEGRATION_CONDITION_NAMESPACES, INTEGRATION_CONDITION_VARIABLES } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import {
   COMPARISON_OPERATORS,
@@ -10,7 +11,6 @@ import {
 import type { WorkflowVariables } from './build-workflow-variables';
 
 export interface IntegrationRuleEvaluationData {
-  payload?: unknown;
   subscriber?: unknown;
   context?: unknown;
   workflow?: WorkflowVariables;
@@ -21,23 +21,7 @@ export interface IntegrationRuleEvaluationResult {
   issues: string[];
 }
 
-export const INTEGRATION_CONDITION_NAMESPACES = ['context.', 'payload.', 'subscriber.'];
-
-export const INTEGRATION_CONDITION_VARIABLES = [
-  'context.tenant.id',
-  'subscriber.subscriberId',
-  'subscriber.email',
-  'subscriber.phone',
-  'subscriber.firstName',
-  'subscriber.lastName',
-  'subscriber.locale',
-  'subscriber.data',
-  'workflow.workflowId',
-  'workflow.name',
-  'workflow.description',
-  'workflow.tags',
-  'workflow.severity',
-];
+export { INTEGRATION_CONDITION_NAMESPACES, INTEGRATION_CONDITION_VARIABLES };
 
 /**
  * Operators the conditions editor and QueryValidatorService actually inspect.
@@ -128,7 +112,7 @@ function isAllowedIntegrationVar(fieldValue: string): boolean {
     (prefix) => fieldValue.startsWith(prefix) && fieldValue.length > prefix.length
   );
 
-  return isWithinAllowedPrefixes || INTEGRATION_CONDITION_VARIABLES.includes(fieldValue);
+  return isWithinAllowedPrefixes || (INTEGRATION_CONDITION_VARIABLES as readonly string[]).includes(fieldValue);
 }
 
 export function getIntegrationRulesIssues(logic: Record<string, unknown>): string[] {
@@ -140,8 +124,8 @@ export function getIntegrationRulesIssues(logic: Record<string, unknown>): strin
   collectDisallowedOperatorIssues(logic, disallowedOperatorIssues);
 
   const queryValidatorService = new QueryValidatorService(
-    INTEGRATION_CONDITION_VARIABLES,
-    INTEGRATION_CONDITION_NAMESPACES
+    [...INTEGRATION_CONDITION_VARIABLES],
+    [...INTEGRATION_CONDITION_NAMESPACES]
   );
 
   const fieldAndStructureIssues = queryValidatorService

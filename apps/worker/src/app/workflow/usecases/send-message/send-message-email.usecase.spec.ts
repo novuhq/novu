@@ -260,7 +260,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
         priority: 1,
         providerId: EmailProviderIdEnum.EmailWebhook,
       },
-      matchedConditions: { type: 'rules', value: { '==': [{ var: 'payload.region' }, 'eu'] } },
+      matchedConditions: { type: 'rules', value: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
     };
 
     await usecase.logSelectedIntegration(command.job, selection);
@@ -295,7 +295,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
         priority: 1,
         providerId: EmailProviderIdEnum.EmailWebhook,
       },
-      matchedConditions: { type: 'rules', value: { '==': [{ var: 'payload.region' }, 'eu'] } },
+      matchedConditions: { type: 'rules', value: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
     };
 
     createExecutionDetails.execute.onFirstCall().rejects(new Error('activity log unavailable'));
