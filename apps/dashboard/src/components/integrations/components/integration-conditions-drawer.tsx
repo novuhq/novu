@@ -9,7 +9,7 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Button } from '@/components/primitives/button';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { NonModalSheetContent, Sheet, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
@@ -157,8 +157,13 @@ export function IntegrationConditionsDrawer({
         <span className="text-text-soft ml-auto">{conditionsCount > 0 ? conditionsCount : ''}</span>
       </Button>
 
-      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-        <SheetContent className="w-full sm:max-w-[600px]">
+      {/* Non-modal so the field and operator dropdowns, which portal outside this sheet, stay clickable. */}
+      <Sheet modal={false} open={isOpen} onOpenChange={handleOpenChange}>
+        <NonModalSheetContent
+          open={isOpen}
+          onOverlayClick={() => handleOpenChange(false)}
+          className="w-full sm:max-w-[600px]"
+        >
           <header className="flex h-12 w-full shrink-0 items-center gap-2.5 border-b py-4 pl-3 pr-12">
             <RiGuideFill className="size-4" />
             <SheetTitle className="text-sm font-medium">Integration conditions</SheetTitle>
@@ -214,7 +219,7 @@ export function IntegrationConditionsDrawer({
               Done
             </Button>
           </div>
-        </SheetContent>
+        </NonModalSheetContent>
       </Sheet>
 
       <ConfirmationModal

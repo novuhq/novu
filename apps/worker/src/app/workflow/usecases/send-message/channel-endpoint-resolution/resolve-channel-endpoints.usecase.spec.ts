@@ -718,6 +718,28 @@ describe('ResolveChannelEndpoints - integration rules', () => {
     expect(result[0].matchedConditions).to.deep.equal({ type: 'rules', value: matchingRules });
   });
 
+  it('keeps only the integration whose rules match workflow metadata', async () => {
+    const matchingRules = { containsAny: [{ var: 'workflow.tags' }, ['transactional']] };
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'workflow.name' }, 'Digest'] } },
+      { identifier: 'chat-webhook', rules: matchingRules },
+    ]);
+
+    const result = await usecase.execute(
+      buildCommand({
+        filterData: {
+          workflow: {
+            name: 'Order confirmation',
+            tags: ['transactional'],
+          },
+        },
+      })
+    );
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+    expect(result[0].matchedConditions).to.deep.equal({ type: 'rules', value: matchingRules });
+  });
+
   it('still delivers through integrations without rules alongside a matching one', async () => {
     givenIntegrations([
       { identifier: 'telegram-integration', rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },

@@ -1,6 +1,6 @@
 import { IProviderConfig } from '@novu/shared';
 import { ReactNode } from 'react';
-import { Sheet, SheetContent } from '@/components/primitives/sheet';
+import { NonModalSheetContent, Sheet } from '@/components/primitives/sheet';
 import { IntegrationSheetHeader } from './integration-sheet-header';
 
 type IntegrationSheetProps = {
@@ -21,11 +21,12 @@ export function IntegrationSheet({ isOpened, onClose, provider, mode, step, onBa
   };
 
   return (
-    <Sheet open={isOpened} onOpenChange={handleOpenChange}>
-      <SheetContent className={`w-auto min-w-[460px] flex-col`}>
+    // Non-modal so the integration conditions editor nested below can use portaled dropdowns.
+    <Sheet modal={false} open={isOpened} onOpenChange={handleOpenChange}>
+      <NonModalSheetContent open={isOpened} onOverlayClick={onClose} className="w-auto min-w-[460px] flex-col">
         <IntegrationSheetHeader provider={provider} mode={mode} step={step} onBack={onBack} />
         {children}
-      </SheetContent>
+      </NonModalSheetContent>
     </Sheet>
   );
 }

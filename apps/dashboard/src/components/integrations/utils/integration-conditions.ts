@@ -12,6 +12,11 @@ const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDat
   { name: 'subscriber.lastName', dataType: 'string' },
   { name: 'subscriber.locale', dataType: 'string' },
   { name: 'subscriber.data', dataType: 'object' },
+  { name: 'workflow.workflowId', dataType: 'string' },
+  { name: 'workflow.name', dataType: 'string' },
+  { name: 'workflow.description', dataType: 'string' },
+  { name: 'workflow.tags', dataType: 'array' },
+  { name: 'workflow.severity', dataType: 'string' },
 ];
 
 export const INTEGRATION_CONDITION_VARIABLES: EnhancedConditionVariable[] = INTEGRATION_CONDITION_FIELD_DEFS.map(
@@ -65,7 +70,7 @@ export function buildPayloadConditionVariables(payloadSchemas: JSONSchemaDto[]):
 const ALLOWED_PREFIXES = ['context.', 'payload.', 'subscriber.'] as const;
 
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
-  if (variable.name === 'subscriber.data') {
+  if (INTEGRATION_CONDITION_VARIABLES.some((conditionVariable) => conditionVariable.name === variable.name)) {
     return true;
   }
 

@@ -1,6 +1,6 @@
 import { SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { buildWorkflowVariables } from './build-workflow-variables';
+import { buildWorkflowVariables, buildWorkflowVariablesForJob } from './build-workflow-variables';
 
 describe('buildWorkflowVariables', () => {
   it('maps the trigger identifier to workflowId and preserves advertised workflow fields', () => {
@@ -39,5 +39,45 @@ describe('buildWorkflowVariables', () => {
 
     expect(variables.workflowId).to.equal(undefined);
     expect(variables.name).to.equal('Nameless trigger');
+  });
+});
+
+describe('buildWorkflowVariablesForJob', () => {
+  it('uses the persisted workflow when present', () => {
+    const variables = buildWorkflowVariablesForJob({
+      identifier: 'trigger-id',
+      tags: ['bridge'],
+      workflow: {
+        name: 'Order confirmation',
+        description: 'Sent after an order is placed',
+        tags: ['transactional'],
+        severity: SeverityLevelEnum.HIGH,
+        triggers: [{ identifier: 'order-confirmation' }],
+      },
+    });
+
+    expect(variables).to.deep.equal({
+      workflowId: 'order-confirmation',
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['transactional'],
+      severity: SeverityLevelEnum.HIGH,
+    });
+  });
+
+  it('maps the trigger identifier when no persisted workflow is available', () => {
+    const variables = buildWorkflowVariablesForJob({
+      identifier: 'wf-identifier',
+      tags: ['bridge'],
+      severity: SeverityLevelEnum.MEDIUM,
+    });
+
+    expect(variables).to.deep.equal({
+      workflowId: 'wf-identifier',
+      name: 'wf-identifier',
+      description: undefined,
+      tags: ['bridge'],
+      severity: SeverityLevelEnum.MEDIUM,
+    });
   });
 });

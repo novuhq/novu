@@ -6,6 +6,7 @@ import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   ExecutionDetailsStatusEnum,
+  SeverityLevelEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -16,6 +17,10 @@ import { SendMessageStatus } from './send-message-type.usecase';
 class TestSendMessageEmail extends SendMessageEmail {
   public logSelectedIntegration(job: JobEntity, selection: IntegrationSelectionResult): Promise<void> {
     return this.sendSelectedIntegrationExecution(job, selection);
+  }
+
+  public integrationFilterData(command: SendMessageChannelCommand) {
+    return this.getIntegrationFilterData(command);
   }
 }
 
@@ -138,6 +143,41 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
 
   afterEach(() => {
     sinon.restore();
+  });
+
+  it('includes the supported workflow metadata in integration condition data', () => {
+    const { usecase } = buildUsecase();
+    const command = buildCommand({});
+    command.workflow = {
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['transactional'],
+      severity: 'high',
+      triggers: [{ identifier: 'order-confirmation' }],
+    } as never;
+
+    expect(usecase.integrationFilterData(command).workflow).to.deep.equal({
+      workflowId: 'order-confirmation',
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['transactional'],
+      severity: 'high',
+    });
+  });
+
+  it('builds workflow condition data from the command when no persisted workflow is available', () => {
+    const { usecase } = buildUsecase();
+    const command = buildCommand({});
+    command.tags = ['bridge'];
+    command.severity = SeverityLevelEnum.MEDIUM;
+
+    expect(usecase.integrationFilterData(command).workflow).to.deep.equal({
+      workflowId: 'wf-identifier',
+      name: 'wf-identifier',
+      description: undefined,
+      tags: ['bridge'],
+      severity: 'medium',
+    });
   });
 
   it('should populate payloadDetails.content with rendered bridge body for v2 workflows', async () => {

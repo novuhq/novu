@@ -333,6 +333,39 @@ describe('select integration', () => {
     expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
   });
 
+  it('should select an integration matching workflow metadata conditions', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'workflow-conditioned-integration',
+      identifier: 'workflow-conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'workflow.name' }, 'Order confirmation'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          workflow: {
+            name: 'Order confirmation',
+            tags: ['transactional'],
+          },
+        },
+      })
+    );
+
+    expect(integration?.integration.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
+  });
+
   it('should not apply unsafe json-logic operators and fall back to primary', async () => {
     const unsafeIntegration: IntegrationEntity = {
       ...testIntegration,

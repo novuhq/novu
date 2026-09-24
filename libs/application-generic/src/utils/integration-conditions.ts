@@ -7,11 +7,13 @@ import {
   QueryValidatorService,
   UNARY_STRING_OPERATORS,
 } from '../services/query-parser';
+import type { WorkflowVariables } from './build-workflow-variables';
 
 export interface IntegrationRuleEvaluationData {
   payload?: unknown;
   subscriber?: unknown;
   context?: unknown;
+  workflow?: WorkflowVariables;
 }
 
 export interface IntegrationRuleEvaluationResult {
@@ -30,6 +32,11 @@ export const INTEGRATION_CONDITION_VARIABLES = [
   'subscriber.lastName',
   'subscriber.locale',
   'subscriber.data',
+  'workflow.workflowId',
+  'workflow.name',
+  'workflow.description',
+  'workflow.tags',
+  'workflow.severity',
 ];
 
 /**

@@ -32,6 +32,26 @@ describe('integration rules helpers', () => {
     expect(valid).to.deep.equal([]);
   });
 
+  it('accepts and evaluates workflow fields', () => {
+    const result = evaluateIntegrationRules(
+      {
+        and: [
+          { '==': [{ var: 'workflow.name' }, 'Order confirmation'] },
+          { containsAny: [{ var: 'workflow.tags' }, ['transactional']] },
+        ],
+      },
+      {
+        workflow: {
+          name: 'Order confirmation',
+          tags: ['transactional'],
+        },
+      }
+    );
+
+    expect(result).to.deep.equal({ result: true, issues: [] });
+    expect(getIntegrationRulesIssues({ '==': [{ var: 'workflow.internalField' }, 'secret'] })).not.to.deep.equal([]);
+  });
+
   it('rejects json-logic operators that skip QueryValidatorService', () => {
     const logIssues = getIntegrationRulesIssues({
       log: { var: 'subscriber.email' },

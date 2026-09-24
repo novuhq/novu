@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
-import { buildPayloadConditionVariables, mergeIntegrationConditionVariables } from './integration-conditions';
+import {
+  buildPayloadConditionVariables,
+  INTEGRATION_CONDITION_VARIABLES,
+  isAllowedIntegrationConditionVariable,
+  mergeIntegrationConditionVariables,
+} from './integration-conditions';
+
+describe('workflow condition variables', () => {
+  it('exposes the workflow fields supported at delivery time', () => {
+    expect(INTEGRATION_CONDITION_VARIABLES.filter((variable) => variable.name.startsWith('workflow.'))).toEqual([
+      expect.objectContaining({ name: 'workflow.workflowId', dataType: 'string' }),
+      expect.objectContaining({ name: 'workflow.name', dataType: 'string' }),
+      expect.objectContaining({ name: 'workflow.description', dataType: 'string' }),
+      expect.objectContaining({ name: 'workflow.tags', dataType: 'array' }),
+      expect.objectContaining({ name: 'workflow.severity', dataType: 'string' }),
+    ]);
+    expect(isAllowedIntegrationConditionVariable({ name: 'workflow.name' })).toBe(true);
+    expect(isAllowedIntegrationConditionVariable({ name: 'workflow.internalField' })).toBe(false);
+  });
+});
 
 describe('buildPayloadConditionVariables', () => {
   it('extracts typed payload fields from workflow schemas', () => {
