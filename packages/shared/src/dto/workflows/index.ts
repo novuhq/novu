@@ -8,5 +8,6 @@ export * from './step.dto';
 export * from './update-workflow-deprecated.dto';
 export * from './workflow.dto';
 export * from './workflow-deprecated.dto';
+export * from './workflow-payload-schemas.dto';
 export * from './workflow-status-enum';
 export * from './workflow-test-data-response-dto';

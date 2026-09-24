@@ -1,10 +1,12 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionStatusEnum } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { EnsureProviderManagedVaultCommand } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
+import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { McpConnectRedirectService } from '../../mcp/connections/mcp-connect-redirect.service';
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
@@ -21,6 +23,7 @@ export class HandleNovuTools {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly mcpConnectRedirect: McpConnectRedirectService,
     private readonly agentConversationService: AgentConversationService,
     private readonly handleAgentReply: HandleAgentReply,
@@ -32,19 +35,49 @@ export class HandleNovuTools {
   }
 
   async execute(command: HandleNovuToolsCommand): Promise<void> {
-    switch (command.action) {
-      case NovuToolsActionEnum.ListAvailable:
-        await this.handleListAvailable(command);
-        break;
-      case NovuToolsActionEnum.RequestConnect:
-        await this.handleRequestConnect(command);
-        break;
-      default: {
-        const _exhaustive: never = command.action;
-        await this.sendToolResult(command, {
-          error: `Unknown action: ${_exhaustive}`,
-        });
+    try {
+      switch (command.action) {
+        case NovuToolsActionEnum.ListAvailable:
+          await this.handleListAvailable(command);
+          break;
+        case NovuToolsActionEnum.RequestConnect:
+          await this.handleRequestConnect(command);
+          break;
+        default: {
+          const _exhaustive: never = command.action;
+          await this.sendToolResult(command, {
+            error: `Unknown action: ${_exhaustive}`,
+          });
+        }
       }
+    } catch (err) {
+      // A managed session is parked on `requires_action` until this custom tool
+      // call is answered. If dispatch throws (e.g. a provider-managed vault or
+      // OAuth discovery failure) and we never post a result, the session hangs
+      // on "Thinking…" forever. Always resolve the tool call with an error so
+      // the turn can end and the agent can tell the user.
+      this.logger.error(
+        {
+          err: err instanceof Error ? err.message : String(err),
+          action: command.action,
+          mcpId: command.mcpId,
+          toolUseId: command.toolUseId,
+          conversationId: command.conversationId,
+        },
+        'novu_tool_catalog dispatch failed; posting error tool result to unpark the session'
+      );
+
+      await this.sendToolResult(command, {
+        error: 'Could not complete this request right now. Please try again.',
+      }).catch((resultErr) =>
+        this.logger.error(
+          {
+            err: resultErr instanceof Error ? resultErr.message : String(resultErr),
+            toolUseId: command.toolUseId,
+          },
+          'Failed to post error tool result after novu_tool_catalog dispatch failure'
+        )
+      );
     }
   }
 
@@ -96,25 +129,13 @@ export class HandleNovuTools {
       return;
     }
 
-    const oauthCommand = GenerateMcpOAuthUrlCommand.create({
-      userId: command.organizationId,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      agentIdentifier: command.agentIdentifier,
-      mcpId: command.mcpId,
-      subscriberId: command.subscriberId,
-      conversationId: command.conversationId,
-      source: 'user_chat',
-      toolUseId: command.toolUseId,
-      integrationIdentifier: command.integrationIdentifier,
-      platform: command.platform,
-      platformThreadId: command.platformThreadId,
-    });
-
-    const oauthUrls = await this.generateMcpOAuthUrl.executeForSetupCard(oauthCommand);
-
     const mcp = MCP_SERVERS.find((s) => s.id === command.mcpId);
     const mcpName = mcp?.name ?? command.mcpId;
+    const { authorizeUrl, authorizeUrlWithAutoApprove } = await this.resolveConnectUrls(
+      command,
+      command.mcpId,
+      mcp?.oauth?.mode
+    );
 
     if (command.platform === AgentPlatformEnum.WEB_CHAT) {
       const conversation = await this.agentConversationService.getConversation(
@@ -135,8 +156,8 @@ export class HandleNovuTools {
         actionId: command.toolUseId,
         mcpId: command.mcpId,
         displayName: mcpName,
-        authorizeUrl: oauthUrls.authorizeUrl,
-        authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
+        authorizeUrl,
+        authorizeUrlWithAutoApprove,
       });
 
       return;
@@ -147,8 +168,8 @@ export class HandleNovuTools {
         platform: command.platform,
         mcpId: command.mcpId,
         mcpName,
-        authorizeUrl: oauthUrls.authorizeUrl,
-        authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
+        authorizeUrl,
+        authorizeUrlWithAutoApprove,
       },
       { connectRedirect: this.mcpConnectRedirect }
     );
@@ -171,6 +192,67 @@ export class HandleNovuTools {
         this.logger.warn(err, 'Failed to persist connect card message ID')
       );
     }
+  }
+
+  /**
+   * Resolve the Connect (and optional auto-approve) URLs for the setup card,
+   * branching on the catalog auth mode:
+   *
+   * - `provider-managed` (Slack, Google Calendar, …): Novu never speaks OAuth
+   *   for these — Claude owns the credential in its vault. Provision (or reuse)
+   *   the provider vault and hand back the signed "Connect from provider" link,
+   *   which flips the row to `connected` and resolves the parked tool call when
+   *   the user clicks it. No auto-approve variant exists for this mode.
+   * - everything else (`dcr` / `novu-app`, or an unknown id): Novu-brokered
+   *   OAuth. Unknown ids fall through here and surface as a discovery error,
+   *   which `execute` turns into an error tool result instead of a hang.
+   */
+  private async resolveConnectUrls(
+    command: HandleNovuToolsCommand,
+    mcpId: string,
+    mode: McpConnectionAuthModeEnum | undefined
+  ): Promise<{ authorizeUrl: string; authorizeUrlWithAutoApprove?: string }> {
+    if (mode === McpConnectionAuthModeEnum.ProviderManaged) {
+      const { vaultUrl } = await this.ensureProviderManagedVault.executeForSetupCard(
+        EnsureProviderManagedVaultCommand.create({
+          userId: command.organizationId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentIdentifier: command.agentIdentifier,
+          mcpId,
+          subscriberId: command.subscriberId,
+          conversationId: command.conversationId,
+          toolUseId: command.toolUseId,
+          integrationIdentifier: command.integrationIdentifier,
+          platform: command.platform,
+          platformThreadId: command.platformThreadId,
+        })
+      );
+
+      return { authorizeUrl: vaultUrl };
+    }
+
+    const oauthUrls = await this.generateMcpOAuthUrl.executeForSetupCard(
+      GenerateMcpOAuthUrlCommand.create({
+        userId: command.organizationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentIdentifier: command.agentIdentifier,
+        mcpId,
+        subscriberId: command.subscriberId,
+        conversationId: command.conversationId,
+        source: 'user_chat',
+        toolUseId: command.toolUseId,
+        integrationIdentifier: command.integrationIdentifier,
+        platform: command.platform,
+        platformThreadId: command.platformThreadId,
+      })
+    );
+
+    return {
+      authorizeUrl: oauthUrls.authorizeUrl,
+      authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
+    };
   }
 
   private async persistConnectCardId(command: HandleNovuToolsCommand, cardMessageId: string): Promise<void> {

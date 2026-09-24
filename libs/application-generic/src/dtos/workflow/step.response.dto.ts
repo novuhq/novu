@@ -15,7 +15,7 @@ export class StepResponseDto<T = Record<string, unknown>> {
   })
   @ValidateNested()
   @Type(() => ControlsMetadataDto)
-  controls: ControlsMetadataDto;
+  controls: ControlsMetadataDto<T>;
 
   @ApiPropertyOptional({
     description: 'Control values for the step (alias for controls.values)',

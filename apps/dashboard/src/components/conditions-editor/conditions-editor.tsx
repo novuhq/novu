@@ -18,22 +18,19 @@ import { getOperatorsForFieldType } from '@/components/conditions-editor/field-t
 import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
 import {
+  type ConditionFieldDataType,
   type ConditionsValueInput,
   DEFAULT_MAX_CONDITIONS_PER_GROUP,
+  type EnhancedConditionVariable,
   normalizeMaxConditionsPerGroup,
 } from '@/components/conditions-editor/types';
 import { ValueEditor } from '@/components/conditions-editor/value-editor';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useNumericFeatureFlag } from '@/hooks/use-feature-flag';
-import {
-  EnhancedLiquidVariable,
-  type FieldDataType,
-  IsAllowedVariable,
-  LiquidVariable,
-} from '@/utils/parseStepVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 export interface EnhancedField extends Field {
-  dataType: FieldDataType;
+  dataType: ConditionFieldDataType;
   inputType?: string;
   format?: string;
 }
@@ -94,7 +91,7 @@ function InternalConditionsEditor({
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
   saveForm: () => void;
-  enhancedVariables?: EnhancedLiquidVariable[];
+  enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
   valueInput?: ConditionsValueInput;
 }) {
@@ -265,7 +262,7 @@ export function ConditionsEditor({
   saveForm: () => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
-  enhancedVariables?: EnhancedLiquidVariable[];
+  enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
   valueInput?: ConditionsValueInput;
 }) {

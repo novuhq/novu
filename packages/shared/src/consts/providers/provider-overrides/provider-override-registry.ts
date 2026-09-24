@@ -132,6 +132,7 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   // schema: the demo integration is not the place to surface Block Kit validation.
   [ChatProviderIdEnum.Novu]: escapeHatch('text'),
   [ChatProviderIdEnum.Discord]: escapeHatch('content'),
+  [ChatProviderIdEnum.GoogleChat]: escapeHatch('text'),
   [ChatProviderIdEnum.MsTeams]: escapeHatch('text'),
   [ChatProviderIdEnum.WebexMessaging]: escapeHatch('text'),
   [ChatProviderIdEnum.Mattermost]: escapeHatch('text'),
