@@ -4,18 +4,22 @@ import { useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
-import { Calendar } from '@/components/primitives/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import type { ActivityFiltersData } from '@/types/activity';
-import { ACTIVITY_DATE_RANGE_OPTIONS, resolveActivityDateRange } from '@/utils/activityFilters';
+import {
+  ACTIVITY_DATE_RANGE_OPTIONS,
+  type ActivityDateRange,
+  type ActivityDateRangePreset,
+  resolveActivityDateRange,
+} from '@/utils/activityFilters';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { ActivityCalendar } from './activity-calendar';
 
 type ActivityDateRangeFilterProps = {
-  filters: ActivityFiltersData;
-  onChange: (filters: ActivityFiltersData) => void;
-  presetOptions: Array<{ value: string; label: string; disabled: boolean }>;
+  value: ActivityDateRange;
+  onChange: (value: ActivityDateRange) => void;
+  presetOptions: Array<{ value: ActivityDateRangePreset; label: string; disabled: boolean }>;
   retentionStart?: Date;
 };
 
@@ -44,8 +48,8 @@ function applyTime(date: Date, value: string) {
   return setMinutes(setHours(startOfDay(date), time.hours), time.minutes);
 }
 
-function toRange(filters: ActivityFiltersData): DateRange | undefined {
-  const resolved = resolveActivityDateRange(filters.dateRange, filters.after, filters.before);
+function toRange(value: ActivityDateRange): DateRange | undefined {
+  const resolved = resolveActivityDateRange(value);
   const from = resolved.after ? new Date(resolved.after) : undefined;
   const to = resolved.before ? new Date(resolved.before) : undefined;
 
@@ -56,13 +60,13 @@ function toRange(filters: ActivityFiltersData): DateRange | undefined {
   return { from, to: to && isValid(to) ? to : undefined };
 }
 
-function formatTrigger(filters: ActivityFiltersData) {
-  if (filters.dateRange !== 'custom') {
-    return ACTIVITY_DATE_RANGE_OPTIONS.find((option) => option.value === filters.dateRange)?.label ?? 'Today';
+function formatTrigger(value: ActivityDateRange) {
+  if (value.kind === 'preset') {
+    return ACTIVITY_DATE_RANGE_OPTIONS.find((option) => option.value === value.preset)?.label ?? 'Today';
   }
 
-  const after = filters.after ? new Date(filters.after) : undefined;
-  const before = filters.before ? new Date(filters.before) : undefined;
+  const after = new Date(value.after);
+  const before = new Date(value.before);
   if (!after || !before || !isValid(after) || !isValid(before)) {
     return 'Custom';
   }
@@ -71,27 +75,27 @@ function formatTrigger(filters: ActivityFiltersData) {
 }
 
 export function ActivityDateRangeFilter({
-  filters,
+  value,
   onChange,
   presetOptions,
   retentionStart,
 }: ActivityDateRangeFilterProps) {
   const [open, setOpen] = useState(false);
-  const [draftRange, setDraftRange] = useState<DateRange | undefined>(() => toRange(filters));
+  const [draftRange, setDraftRange] = useState<DateRange | undefined>(() => toRange(value));
   const [startTime, setStartTime] = useState(() => {
-    const range = toRange(filters);
+    const range = toRange(value);
 
     return range?.from ? format(range.from, 'HH:mm') : '00:00';
   });
   const [endTime, setEndTime] = useState(() => {
-    const range = toRange(filters);
+    const range = toRange(value);
 
     return range?.to ? format(range.to, 'HH:mm') : '23:59';
   });
   const timeZoneLabel = useMemo(() => getTimeZoneLabel(), []);
 
   const resetDraft = () => {
-    const nextRange = toRange(filters);
+    const nextRange = toRange(value);
     setDraftRange(nextRange);
     setStartTime(nextRange?.from ? format(nextRange.from, 'HH:mm') : '00:00');
     setEndTime(nextRange?.to ? format(nextRange.to, 'HH:mm') : '23:59');
@@ -104,13 +108,8 @@ export function ActivityDateRangeFilter({
     setOpen(nextOpen);
   };
 
-  const handlePresetSelect = (value: string) => {
-    onChange({
-      ...filters,
-      dateRange: value,
-      after: undefined,
-      before: undefined,
-    });
+  const handlePresetSelect = (preset: ActivityDateRangePreset) => {
+    onChange({ kind: 'preset', preset });
     setOpen(false);
   };
 
@@ -139,12 +138,7 @@ export function ActivityDateRangeFilter({
       return;
     }
 
-    onChange({
-      ...filters,
-      dateRange: 'custom',
-      after: after.toISOString(),
-      before: before.toISOString(),
-    });
+    onChange({ kind: 'custom', after: after.toISOString(), before: before.toISOString() });
     setOpen(false);
   };
 
@@ -158,7 +152,7 @@ export function ActivityDateRangeFilter({
           className="h-7 max-w-[260px] border-neutral-200 bg-white px-1.5 text-neutral-600 ring-0"
         >
           <CalendarIcon className="size-4 shrink-0" />
-          <span className="truncate text-xs font-normal">{formatTrigger(filters)}</span>
+          <span className="truncate text-xs font-normal">{formatTrigger(value)}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -168,7 +162,7 @@ export function ActivityDateRangeFilter({
         <div className="w-[150px] shrink-0 border-r border-stroke-soft bg-bg-white p-2">
           <div className="flex flex-col gap-2">
             {presetOptions.map((option) => {
-              const isSelected = filters.dateRange === option.value;
+              const isSelected = value.kind === 'preset' && value.preset === option.value;
               const rowClassName = cn(
                 'flex h-8 w-full items-center gap-2 rounded-lg px-3 text-left text-label-xs font-medium',
                 isSelected ? 'bg-bg-weak text-text-strong' : 'text-text-sub hover:bg-bg-weak',
@@ -209,7 +203,7 @@ export function ActivityDateRangeFilter({
         </div>
 
         <div className="min-w-0 flex-1 bg-bg-white">
-          <Calendar
+          <ActivityCalendar
             mode="range"
             numberOfMonths={2}
             defaultMonth={subMonths(startOfMonth(new Date()), 1)}

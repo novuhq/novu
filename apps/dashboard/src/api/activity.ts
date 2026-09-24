@@ -9,7 +9,7 @@ import {
   StepTypeEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
-import { resolveActivityDateRange } from '@/utils/activityFilters';
+import { type ActivityDateRange, parseActivityTransactionIds, resolveActivityDateRange } from '@/utils/activityFilters';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -18,9 +18,7 @@ export type ActivityFilters = {
   email?: string;
   subscriberId?: string;
   transactionId?: string;
-  dateRange?: string;
-  after?: string;
-  before?: string;
+  dateRange?: ActivityDateRange;
   topicKey?: string;
   subscriptionId?: string;
   severity?: SeverityLevelEnum[];
@@ -203,28 +201,12 @@ function appendIfPresent(searchParams: URLSearchParams, key: string, value?: str
   }
 }
 
-/** A single transaction id is forwarded verbatim; a comma-delimited list is split into repeated params. */
-function appendTransactionIds(
-  searchParams: URLSearchParams,
-  transactionId: string | undefined,
-  keys: { single: string; multiple: string }
-) {
+function appendTransactionIds(searchParams: URLSearchParams, key: string, transactionId?: string) {
   if (!transactionId) {
     return;
   }
 
-  const transactionIds = transactionId
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-
-  if (transactionIds.length > 1) {
-    appendEach(searchParams, keys.multiple, transactionIds);
-
-    return;
-  }
-
-  searchParams.append(keys.single, transactionId);
+  appendEach(searchParams, key, parseActivityTransactionIds(transactionId));
 }
 
 function appendDateRange(
@@ -236,7 +218,7 @@ function appendDateRange(
     return;
   }
 
-  const { after, before } = resolveActivityDateRange(filters.dateRange, filters.after, filters.before);
+  const { after, before } = resolveActivityDateRange(filters.dateRange);
 
   appendIfPresent(searchParams, keys.after, after);
   appendIfPresent(searchParams, keys.before, before);
@@ -264,7 +246,7 @@ export function getActivityList({
   appendEach(searchParams, 'templates', filters?.workflows);
   appendIfPresent(searchParams, 'emails', filters?.email);
   appendIfPresent(searchParams, 'subscriberIds', filters?.subscriberId);
-  appendTransactionIds(searchParams, filters?.transactionId, { single: 'transactionId', multiple: 'transactionId' });
+  appendTransactionIds(searchParams, 'transactionId', filters?.transactionId);
   appendIfPresent(searchParams, 'topicKey', filters?.topicKey);
   appendIfPresent(searchParams, 'subscriptionId', filters?.subscriptionId);
   appendEach(searchParams, 'contextKeys', filters?.contextKeys);
@@ -337,7 +319,7 @@ export async function getWorkflowRunsList({
 
   appendEach(searchParams, 'workflowIds', filters?.workflows);
   appendIfPresent(searchParams, 'subscriberIds', filters?.subscriberId);
-  appendTransactionIds(searchParams, filters?.transactionId, { single: 'transactionIds', multiple: 'transactionId' });
+  appendTransactionIds(searchParams, 'transactionIds', filters?.transactionId);
   appendDateRange(searchParams, filters, { after: 'createdGte', before: 'createdLte' });
   appendEach(searchParams, 'severity', filters?.severity);
   appendEach(searchParams, 'contextKeys', filters?.contextKeys);
@@ -415,17 +397,14 @@ export async function getWorkflowRunsCount({
   }
 
   if (filters?.transactionId) {
-    transactionIds = filters.transactionId
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean);
+    transactionIds = parseActivityTransactionIds(filters.transactionId);
   }
 
   if (period) {
     createdAtGte = period.start;
     createdAtLte = period.end;
   } else if (filters?.dateRange) {
-    const { after, before } = resolveActivityDateRange(filters.dateRange, filters.after, filters.before);
+    const { after, before } = resolveActivityDateRange(filters.dateRange);
     createdAtGte = after;
     createdAtLte = before;
   }

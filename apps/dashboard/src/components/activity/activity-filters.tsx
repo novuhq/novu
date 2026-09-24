@@ -96,11 +96,19 @@ export function ActivityFilters({
     <Form {...form}>
       <FormRoot className={cn('w-full flex flex-wrap items-center gap-2 pb-2.5', className)}>
         {!hide.includes('dateRange') && (
-          <ActivityDateRangeFilter
-            filters={filters}
-            onChange={onFiltersChange}
-            presetOptions={dateFilterConfig.options}
-            retentionStart={dateFilterConfig.retentionStart}
+          <FormField
+            control={form.control}
+            name="dateRange"
+            render={({ field }) => (
+              <FormItem>
+                <ActivityDateRangeFilter
+                  value={field.value}
+                  onChange={field.onChange}
+                  presetOptions={dateFilterConfig.options}
+                  retentionStart={dateFilterConfig.retentionStart}
+                />
+              </FormItem>
+            )}
           />
         )}
 

@@ -92,7 +92,7 @@ export const CHANNEL_OPTIONS = [
 ];
 
 export const defaultActivityFilters: ActivityFiltersData = {
-  dateRange: DEFAULT_DATE_RANGE,
+  dateRange: { kind: 'preset', preset: DEFAULT_DATE_RANGE },
   channels: [],
   workflows: [],
   transactionId: '',

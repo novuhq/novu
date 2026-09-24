@@ -7,42 +7,76 @@ type OrganizationLike = { createdAt: Date };
 export const DEFAULT_ACTIVITY_FEED_RANGE = 'today';
 
 export const ACTIVITY_DATE_RANGE_OPTIONS = [
-  { value: DEFAULT_ACTIVITY_FEED_RANGE, label: 'Today', ms: 24 * 60 * 60 * 1000 },
-  { value: '7d', label: 'Last 7 days', ms: 7 * 24 * 60 * 60 * 1000 },
-  { value: '30d', label: 'Last 30 days', ms: 30 * 24 * 60 * 60 * 1000 },
-  { value: '3M', label: 'Last 3 months', ms: 90 * 24 * 60 * 60 * 1000 },
-  { value: '12M', label: 'Last 12 months', ms: 365 * 24 * 60 * 60 * 1000 },
-  { value: 'mtd', label: 'Month to date', ms: 31 * 24 * 60 * 60 * 1000 },
-  { value: 'ytd', label: 'Year to date', ms: 366 * 24 * 60 * 60 * 1000 },
-  { value: 'all', label: 'All time', ms: Number.POSITIVE_INFINITY },
+  { value: DEFAULT_ACTIVITY_FEED_RANGE, label: 'Today' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '3M', label: 'Last 3 months' },
+  { value: '12M', label: 'Last 12 months' },
+  { value: 'mtd', label: 'Month to date' },
+  { value: 'ytd', label: 'Year to date' },
+  { value: 'all', label: 'All time' },
 ] as const;
 
 export type ActivityDateRangePreset = (typeof ACTIVITY_DATE_RANGE_OPTIONS)[number]['value'];
+
+export type ActivityDateRange =
+  | { kind: 'preset'; preset: ActivityDateRangePreset }
+  | { kind: 'custom'; after: string; before: string };
 
 export type ResolvedActivityDateRange = {
   after?: string;
   before?: string;
 };
 
-function getMaxRetentionMs({
+export function parseActivityTransactionIds(value: string): string[] {
+  return value
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
+export function areActivityDateRangesEqual(left: ActivityDateRange, right: ActivityDateRange): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+
+  if (left.kind === 'preset' && right.kind === 'preset') {
+    return left.preset === right.preset;
+  }
+
+  return (
+    left.kind === 'custom' && right.kind === 'custom' && left.after === right.after && left.before === right.before
+  );
+}
+
+type ActivityRetentionPolicy = { kind: 'unlimited' } | { kind: 'limited'; durationMs: number };
+
+function getActivityRetentionPolicy({
   organization,
   apiServiceLevel,
 }: {
   organization: OrganizationLike;
   apiServiceLevel?: ApiServiceLevelEnum;
-}) {
+}): ActivityRetentionPolicy {
+  if (IS_SELF_HOSTED) {
+    return { kind: 'unlimited' };
+  }
+
   const isLegacyFreeTier =
     apiServiceLevel === ApiServiceLevelEnum.FREE && organization.createdAt < new Date('2025-02-28');
 
   if (isLegacyFreeTier) {
-    return 30 * 24 * 60 * 60 * 1000;
+    return { kind: 'limited', durationMs: 30 * 24 * 60 * 60 * 1000 };
   }
 
-  return getFeatureForTierAsNumber(
-    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-    IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : apiServiceLevel || ApiServiceLevelEnum.FREE,
-    true
-  );
+  return {
+    kind: 'limited',
+    durationMs: getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
+      apiServiceLevel || ApiServiceLevelEnum.FREE,
+      true
+    ),
+  };
 }
 
 export function getActivityFeedRetentionStart({
@@ -54,25 +88,31 @@ export function getActivityFeedRetentionStart({
   apiServiceLevel?: ApiServiceLevelEnum;
   now?: Date;
 }) {
-  const maxRetentionMs = getMaxRetentionMs({ organization, apiServiceLevel });
+  const policy = getActivityRetentionPolicy({ organization, apiServiceLevel });
 
-  return maxRetentionMs === Number.MAX_SAFE_INTEGER ? undefined : new Date(now.getTime() - maxRetentionMs);
+  return policy.kind === 'unlimited' ? undefined : new Date(now.getTime() - policy.durationMs);
+}
+
+export function parseActivityDateRange(value?: string, after?: string, before?: string): ActivityDateRange {
+  if (value === 'custom' && after && before) {
+    return { kind: 'custom', after, before };
+  }
+
+  const preset = value === '24h' ? DEFAULT_ACTIVITY_FEED_RANGE : value === '90d' ? '3M' : value;
+  const option = ACTIVITY_DATE_RANGE_OPTIONS.find((candidate) => candidate.value === preset);
+
+  return { kind: 'preset', preset: option?.value ?? DEFAULT_ACTIVITY_FEED_RANGE };
 }
 
 export function resolveActivityDateRange(
-  dateRange?: string,
-  customAfter?: string,
-  customBefore?: string,
+  dateRange: ActivityDateRange = { kind: 'preset', preset: DEFAULT_ACTIVITY_FEED_RANGE },
   now = new Date()
 ): ResolvedActivityDateRange {
-  if (dateRange === 'custom') {
-    return {
-      after: customAfter,
-      before: customBefore,
-    };
+  if (dateRange.kind === 'custom') {
+    return { after: dateRange.after, before: dateRange.before };
   }
 
-  switch (dateRange || DEFAULT_ACTIVITY_FEED_RANGE) {
+  switch (dateRange.preset) {
     case 'today':
       return { after: startOfDay(now).toISOString(), before: now.toISOString() };
     case '7d':
@@ -80,7 +120,6 @@ export function resolveActivityDateRange(
     case '30d':
       return { after: subDays(now, 30).toISOString(), before: now.toISOString() };
     case '3M':
-    case '90d':
       return { after: subDays(now, 90).toISOString(), before: now.toISOString() };
     case '12M':
       return { after: subMonths(now, 12).toISOString(), before: now.toISOString() };
@@ -90,25 +129,35 @@ export function resolveActivityDateRange(
       return { after: startOfYear(now).toISOString(), before: now.toISOString() };
     case 'all':
       return {};
-    case '24h':
-      return { after: subDays(now, 1).toISOString(), before: now.toISOString() };
-    default:
-      return { after: startOfDay(now).toISOString(), before: now.toISOString() };
+    default: {
+      const exhaustivePreset: never = dateRange.preset;
+
+      throw new Error(`Unsupported activity date range: ${exhaustivePreset}`);
+    }
   }
 }
 
 export function buildActivityDateFilters({
   organization,
   apiServiceLevel,
+  now = new Date(),
 }: {
   organization: OrganizationLike;
   apiServiceLevel?: ApiServiceLevelEnum;
+  now?: Date;
 }) {
-  const maxRetentionMs = getMaxRetentionMs({ organization, apiServiceLevel });
+  const policy = getActivityRetentionPolicy({ organization, apiServiceLevel });
+  const retentionStart = policy.kind === 'limited' ? now.getTime() - policy.durationMs : undefined;
 
   return ACTIVITY_DATE_RANGE_OPTIONS.map((option) => {
+    const resolvedRange = resolveActivityDateRange({ kind: 'preset', preset: option.value }, now);
+    const startsBeforeRetention =
+      retentionStart !== undefined && resolvedRange.after
+        ? new Date(resolvedRange.after).getTime() < retentionStart
+        : false;
+
     return {
-      disabled: option.value === 'all' ? maxRetentionMs !== Number.MAX_SAFE_INTEGER : option.ms > maxRetentionMs,
+      disabled: policy.kind === 'limited' && (option.value === 'all' || startsBeforeRetention),
       label: option.label,
       value: option.value,
     };
@@ -126,16 +175,20 @@ export function getMaxAvailableActivityFeedDateRange({
     return DEFAULT_ACTIVITY_FEED_RANGE;
   }
 
+  const now = new Date();
   const lastAvailableActivityFeedFilter = buildActivityDateFilters({
     organization,
     apiServiceLevel: subscription.apiServiceLevel,
+    now,
   })
     .filter((option) => !option.disabled)
     .sort((left, right) => {
-      const leftMs = ACTIVITY_DATE_RANGE_OPTIONS.find((option) => option.value === left.value)?.ms ?? 0;
-      const rightMs = ACTIVITY_DATE_RANGE_OPTIONS.find((option) => option.value === right.value)?.ms ?? 0;
+      const leftAfter = resolveActivityDateRange({ kind: 'preset', preset: left.value }, now).after;
+      const rightAfter = resolveActivityDateRange({ kind: 'preset', preset: right.value }, now).after;
+      const leftSpan = leftAfter ? now.getTime() - new Date(leftAfter).getTime() : Number.POSITIVE_INFINITY;
+      const rightSpan = rightAfter ? now.getTime() - new Date(rightAfter).getTime() : Number.POSITIVE_INFINITY;
 
-      return leftMs - rightMs;
+      return leftSpan - rightSpan;
     })
     .at(-1);
 

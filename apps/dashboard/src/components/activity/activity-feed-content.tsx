@@ -18,6 +18,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
+import { areActivityDateRangesEqual } from '@/utils/activityFilters';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '../../utils/ui';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
@@ -107,7 +108,7 @@ export function ActivityFeedContent({
   const hasChanges = useMemo(() => {
     const baseFilters = { ...defaultActivityFilters, ...initialFilters };
     return (
-      mergedFilterValues.dateRange !== baseFilters.dateRange ||
+      !areActivityDateRangesEqual(mergedFilterValues.dateRange, baseFilters.dateRange) ||
       mergedFilterValues.channels.length > 0 ||
       mergedFilterValues.workflows.length > (baseFilters.workflows?.length || 0) ||
       mergedFilterValues.transactionId !== (baseFilters.transactionId || '') ||

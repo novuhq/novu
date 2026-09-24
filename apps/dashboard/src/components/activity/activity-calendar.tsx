@@ -6,11 +6,8 @@ import {
   type MonthCaptionProps,
   useDayPicker,
 } from 'react-day-picker';
+import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
-
-type CalendarProps = DayPickerProps & {
-  buttonVariant?: 'primary' | 'secondary';
-};
 
 function NavButton({
   direction,
@@ -21,6 +18,8 @@ function NavButton({
   target: Date | undefined;
   onNavigate: (month: Date) => void;
 }) {
+  const Icon = direction === 'previous' ? RiArrowLeftSLine : RiArrowRightSLine;
+
   return (
     <button
       type="button"
@@ -29,12 +28,11 @@ function NavButton({
       onClick={() => target && onNavigate(target)}
       className="flex items-center justify-center rounded-md bg-bg-white p-px shadow-xs disabled:opacity-40"
     >
-      <img src={`/images/activity/arrow-${direction === 'previous' ? 'left' : 'right'}-s-line.svg`} alt="" />
+      <Icon className="size-[18px]" />
     </button>
   );
 }
 
-/** Keeps the month label optically centred on the side that has no nav button. */
 function NavSpacer() {
   return <span aria-hidden className="size-5 shrink-0" />;
 }
@@ -61,7 +59,13 @@ function CalendarMonthCaption({ calendarMonth, displayIndex }: MonthCaptionProps
   );
 }
 
-export function Calendar({ className, classNames, showOutsideDays = true, components, ...props }: CalendarProps) {
+export function ActivityCalendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  components,
+  ...props
+}: DayPickerProps) {
   const defaultClassNames = getDefaultClassNames();
 
   return (

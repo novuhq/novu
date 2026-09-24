@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   ClickhouseOperator,
   FieldCondition,
@@ -11,9 +11,9 @@ import {
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, TopicSubscribersRepository } from '@novu/dal';
+import { TopicSubscribersRepository } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
-import { validateActivityRetentionRange } from '../../../shared/helpers/activity-retention';
+import { ActivityRetentionRange, ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
@@ -67,7 +67,7 @@ export class GetWorkflowRuns {
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private organizationRepository: CommunityOrganizationRepository,
+    private activityRetentionService: ActivityRetentionService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -85,9 +85,12 @@ export class GetWorkflowRuns {
     );
 
     try {
-      await this.applyRetentionRange(command);
-
-      const safeWhere = await this.buildWorkflowRunsWhere(command);
+      const retentionRange = await this.activityRetentionService.resolve({
+        organizationId: command.organizationId,
+        after: command.createdGte,
+        before: command.createdLte,
+      });
+      const safeWhere = await this.buildWorkflowRunsWhere(command, retentionRange);
       const cursor = this.parseCursor(command.cursor);
 
       const result = (await this.workflowRunRepository.findWithCursor({
@@ -151,7 +154,10 @@ export class GetWorkflowRuns {
     }
   }
 
-  private async buildWorkflowRunsWhere(command: GetWorkflowRunsCommand): Promise<Where<WorkflowRun>> {
+  private async buildWorkflowRunsWhere(
+    command: GetWorkflowRunsCommand,
+    retentionRange: ActivityRetentionRange
+  ): Promise<Where<WorkflowRun>> {
     const queryBuilder = new QueryBuilder<WorkflowRun>({
       environmentId: command.environmentId,
     });
@@ -170,12 +176,12 @@ export class GetWorkflowRuns {
 
     this.applyStatusFilter(queryBuilder, command.statuses);
 
-    if (command.createdGte) {
-      queryBuilder.whereGreaterThanOrEqual('created_at', new Date(command.createdGte));
+    if (retentionRange.after) {
+      queryBuilder.whereGreaterThanOrEqual('created_at', new Date(retentionRange.after));
     }
 
-    if (command.createdLte) {
-      queryBuilder.whereLessThanOrEqual('created_at', new Date(command.createdLte));
+    if (retentionRange.before) {
+      queryBuilder.whereLessThanOrEqual('created_at', new Date(retentionRange.before));
     }
 
     if (command.channels?.length) {
@@ -304,21 +310,6 @@ export class GetWorkflowRuns {
     );
 
     return cursor;
-  }
-
-  private async applyRetentionRange(command: GetWorkflowRunsCommand) {
-    const organization = await this.organizationRepository.findById(command.organizationId);
-    if (!organization) {
-      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    const retentionRange = validateActivityRetentionRange({
-      organization,
-      after: command.createdGte,
-      before: command.createdLte,
-    });
-    command.createdGte = retentionRange.after;
-    command.createdLte = retentionRange.before;
   }
 
   /**

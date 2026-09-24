@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ActivityFilters } from '@/api/activity';
 import { DEFAULT_DATE_RANGE } from '@/components/activity/constants';
 import { ActivityFiltersData, ActivityUrlState } from '@/types/activity';
+import { parseActivityDateRange, parseActivityTransactionIds } from '@/utils/activityFilters';
 
 function parseFilters(searchParams: URLSearchParams): ActivityFilters {
   const result: ActivityFilters = {};
@@ -47,17 +48,11 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
     result.subscriptionId = subscriptionId;
   }
 
-  const dateRange = searchParams.get('dateRange');
-  result.dateRange = dateRange || DEFAULT_DATE_RANGE;
-
-  const after = searchParams.get('after');
-  const before = searchParams.get('before');
-  if (after) {
-    result.after = after;
-  }
-  if (before) {
-    result.before = before;
-  }
+  result.dateRange = parseActivityDateRange(
+    searchParams.get('dateRange') ?? undefined,
+    searchParams.get('after') ?? undefined,
+    searchParams.get('before') ?? undefined
+  );
 
   const severity = searchParams.get('severity')?.split(',').filter(Boolean);
   if (severity?.length) {
@@ -77,9 +72,11 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
   const transactionIds = searchParams.getAll('transactionId');
 
   return {
-    dateRange: searchParams.get('dateRange') || DEFAULT_DATE_RANGE,
-    after: searchParams.get('after') || undefined,
-    before: searchParams.get('before') || undefined,
+    dateRange: parseActivityDateRange(
+      searchParams.get('dateRange') ?? undefined,
+      searchParams.get('after') ?? undefined,
+      searchParams.get('before') ?? undefined
+    ),
     channels: (searchParams.get('channels')?.split(',').filter(Boolean) as ChannelTypeEnum[]) || [],
     workflows: searchParams.get('workflows')?.split(',').filter(Boolean) || [],
     transactionId: transactionIds.length > 0 ? transactionIds.join(', ') : '',
@@ -92,20 +89,9 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
 }
 
 function appendTransactionIds(searchParams: URLSearchParams, transactionId: string) {
-  const transactionIds = transactionId
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-
-  if (transactionIds.length > 1) {
-    for (const id of transactionIds) {
-      searchParams.append('transactionId', id);
-    }
-
-    return;
+  for (const id of parseActivityTransactionIds(transactionId)) {
+    searchParams.append('transactionId', id);
   }
-
-  searchParams.set('transactionId', transactionId);
 }
 
 function buildFilterSearchParams(data: ActivityFiltersData, activityItemId: string | null, page: string | null) {
@@ -118,11 +104,12 @@ function buildFilterSearchParams(data: ActivityFiltersData, activityItemId: stri
   if (data.subscriberId) searchParams.set('subscriberId', data.subscriberId);
   if (data.topicKey) searchParams.set('topicKey', data.topicKey);
   if (data.subscriptionId) searchParams.set('subscriptionId', data.subscriptionId);
-  if (data.dateRange !== DEFAULT_DATE_RANGE) searchParams.set('dateRange', data.dateRange);
-
-  if (data.dateRange === 'custom' && data.after && data.before) {
-    searchParams.set('after', data.after);
-    searchParams.set('before', data.before);
+  if (data.dateRange.kind === 'custom') {
+    searchParams.set('dateRange', 'custom');
+    searchParams.set('after', data.dateRange.after);
+    searchParams.set('before', data.dateRange.before);
+  } else if (data.dateRange.preset !== DEFAULT_DATE_RANGE) {
+    searchParams.set('dateRange', data.dateRange.preset);
   }
 
   if (page) searchParams.set('page', page);

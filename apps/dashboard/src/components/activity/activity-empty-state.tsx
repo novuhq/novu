@@ -44,11 +44,12 @@ export function ActivityEmptyState({
   const handleTriggerWorkflow = onTriggerWorkflow || handleNavigateToWorkflows;
 
   const emptyFiltersTitle = useMemo(() => {
-    if (filters.dateRange === 'custom') {
+    const dateRange = filters.dateRange;
+    if (dateRange?.kind === 'custom') {
       return 'No activity in the selected date range';
     }
 
-    const label = ACTIVITY_DATE_RANGE_OPTIONS.find((option) => option.value === filters.dateRange)?.label;
+    const label = ACTIVITY_DATE_RANGE_OPTIONS.find((option) => option.value === dateRange?.preset)?.label;
 
     return `No activity for ${label?.toLowerCase() ?? 'the selected period'}`;
   }, [filters]);

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   FeatureFlagsService,
   Instrument,
@@ -8,7 +8,6 @@ import {
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
-  CommunityOrganizationRepository,
   ExecutionDetailFeedItem,
   NotificationFeedItemEntity,
   NotificationRepository,
@@ -16,7 +15,7 @@ import {
 } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
-import { validateActivityRetentionRange } from '../../../shared/helpers/activity-retention';
+import { ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
@@ -31,7 +30,7 @@ export class GetActivityFeed {
   constructor(
     private subscribersRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
-    private organizationRepository: CommunityOrganizationRepository,
+    private activityRetentionService: ActivityRetentionService,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -42,14 +41,12 @@ export class GetActivityFeed {
   async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
     let subscriberIds: string[] | undefined;
 
-    const { after, before } = await this.validateRetentionLimitForTier(
-      command.organizationId,
-      command.after,
-      command.before
-    );
-
-    command.after = after;
-    command.before = before;
+    const retentionRange = await this.activityRetentionService.resolve({
+      organizationId: command.organizationId,
+      after: command.after,
+      before: command.before,
+    });
+    const validatedCommand = { ...command, ...retentionRange };
 
     if (command.search || command.emails?.length || command.subscriberIds?.length) {
       subscriberIds = await this.findSubscribers(command);
@@ -64,7 +61,10 @@ export class GetActivityFeed {
       };
     }
 
-    const notifications: NotificationFeedItemEntity[] = await this.getFeedNotifications(command, subscriberIds);
+    const notifications: NotificationFeedItemEntity[] = await this.getFeedNotifications(
+      validatedCommand,
+      subscriberIds
+    );
 
     const data = notifications.reduce<ActivityNotificationResponseDto[]>((memo, notification) => {
       // TODO: Identify why mongo returns an array of undefined or null values. Is it a data issue?
@@ -81,16 +81,6 @@ export class GetActivityFeed {
       pageSize: command.limit,
       data,
     };
-  }
-
-  private async validateRetentionLimitForTier(organizationId: string, after?: string, before?: string) {
-    const organization = await this.organizationRepository.findById(organizationId);
-
-    if (!organization) {
-      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    return validateActivityRetentionRange({ organization, after, before });
   }
 
   @Instrument()
