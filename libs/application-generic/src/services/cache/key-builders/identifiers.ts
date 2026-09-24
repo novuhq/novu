@@ -27,6 +27,7 @@ export enum CacheKeyPrefixEnum {
   SUBSCRIBER_DEDUP = 'subscriber_deduplication',
   SUBSCRIBER_TOPICS = 'subscriber_topics',
   SUBSCRIPTION = 'subscription',
+  TRIGGER_ATTACHMENTS = 'trigger_attachments',
   USAGE = 'usage',
   USER = 'user',
   WORKFLOW_VARIABLES = 'workflow_variables',
@@ -53,6 +54,7 @@ export enum IdentifierPrefixEnum {
   API_RATE_LIMIT_CATEGORY = 'a_r_l_c',
   SERVICE_CONFIG = 's_c',
   RESOURCE_TYPE = 'r_t',
+  TRANSACTION_ID = 't_id',
 }
 
 /**

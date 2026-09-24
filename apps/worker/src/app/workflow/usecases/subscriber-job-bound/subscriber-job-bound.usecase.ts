@@ -18,6 +18,7 @@ import {
   PinoLogger,
   SubscriberTopicPreference,
   TraceLogRepository,
+  TriggerAttachmentsService,
 } from '@novu/application-generic';
 import {
   ContextRepository,
@@ -72,7 +73,8 @@ export class SubscriberJobBound {
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private contextRepository: ContextRepository
+    private contextRepository: ContextRepository,
+    private triggerAttachmentsService: TriggerAttachmentsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -175,6 +177,7 @@ export class SubscriberJobBound {
         'warning',
         `Subscriber ${subscriber.subscriberId} was not processed, workflow run execution halted.`
       );
+      await this.releaseAttachments(command);
 
       return;
     }
@@ -183,6 +186,8 @@ export class SubscriberJobBound {
       const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id, subscriberProcessed);
 
       if (evaluatedTopics === null) {
+        await this.releaseAttachments(command);
+
         return;
       }
 
@@ -253,6 +258,15 @@ export class SubscriberJobBound {
         organizationId: command.organizationId,
       })
     );
+  }
+
+  /** This subscriber starts no job chain, so it gives back the reference the fan-out took for it. */
+  private async releaseAttachments(command: SubscriberJobBoundCommand): Promise<void> {
+    await this.triggerAttachmentsService.release({
+      environmentId: command.environmentId,
+      transactionId: command.transactionId,
+      attachments: command.payload?.attachments,
+    });
   }
 
   private async getCodeFirstWorkflow(command: SubscriberJobBoundCommand): Promise<NotificationTemplateEntity | null> {

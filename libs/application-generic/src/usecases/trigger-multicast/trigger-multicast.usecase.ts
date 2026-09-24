@@ -18,6 +18,7 @@ import type { EventType } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { RequestTraceInput } from '../../services/analytic-logs/trace-log';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { TriggerAttachmentsService } from '../../services/storage/trigger-attachments.service';
 import { TriggerBase } from '../trigger-base';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
 
@@ -36,9 +37,10 @@ export class TriggerMulticast extends TriggerBase {
     protected cacheService: CacheService,
     protected featureFlagsService: FeatureFlagsService,
     protected logger: PinoLogger,
-    private traceLogRepository: TraceLogRepository
+    private traceLogRepository: TraceLogRepository,
+    triggerAttachmentsService: TriggerAttachmentsService
   ) {
-    super(subscriberProcessQueueService, cacheService, logger, QUEUE_CHUNK_SIZE);
+    super(subscriberProcessQueueService, cacheService, triggerAttachmentsService, logger, QUEUE_CHUNK_SIZE);
     this.logger.setContext(this.constructor.name);
   }
 

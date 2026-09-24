@@ -19,6 +19,7 @@ import {
   StepTemplateHydrationService,
   StepTemplateHydrationStatus,
   StorageHelperService,
+  TriggerAttachmentsService,
   type WorkflowForTrace,
   WorkflowRunService,
   WorkflowRunStatusEnum,
@@ -84,7 +85,8 @@ export class RunJob {
     private featureFlagsService: FeatureFlagsService,
     private executeBridgeJob: ExecuteBridgeJob,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private notificationPayloadService: NotificationPayloadService
+    private notificationPayloadService: NotificationPayloadService,
+    private triggerAttachmentsService: TriggerAttachmentsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -781,27 +783,21 @@ export class RunJob {
   }
 
   /**
-   * Deletes the trigger attachments of a finished workflow chain. Under
-   * payload-dedup the payload lives on the parent notification when the job
-   * carries none.
-   *
-   * Best-effort by design: the job and the workflow run are already marked
-   * completed by the time this runs, so a storage failure must not escape and
-   * push the chain down a failure path that would rewrite that state.
+   * Releases this finished chain's reference on the trigger attachments. The
+   * files are shared by every subscriber chain of the trigger, so they are only
+   * deleted once the last reference is released. Under payload-dedup the
+   * payload lives on the parent notification when the job carries none.
    */
   private async deleteChainAttachments(job: JobEntity, notification?: PartialNotificationEntity | null): Promise<void> {
     // Left as a local: writing it back would put a payload on a job that
     // payload-dedup deliberately persists without one.
     const payload: JobEntity['payload'] = getEffectiveJobPayload(job, notification);
 
-    try {
-      await this.storageHelperService.deleteAttachments(payload?.attachments);
-    } catch (error: unknown) {
-      this.logger.warn(
-        { err: error, nv: { jobId: job._id, transactionId: job.transactionId } },
-        'Failed to delete the attachments of a finished workflow chain'
-      );
-    }
+    await this.triggerAttachmentsService.release({
+      environmentId: job._environmentId,
+      transactionId: job.transactionId,
+      attachments: payload?.attachments,
+    });
   }
 
   private async createCanceledExecutionDetails(cancelledJobs: JobEntity[]): Promise<void> {

@@ -1,7 +1,10 @@
 import {
+  CacheService,
   getEffectiveJobPayload,
+  PinoLogger,
   StorageHelperService,
   StorageService,
+  TriggerAttachmentsService,
   WEBHOOK_FILTER_REQUEST_FAILED_DATA,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
@@ -30,7 +33,7 @@ type RunJobTestDouble = {
   };
   addJobUsecase: { execute: sinon.SinonStub };
   setJobAsFailed: { execute: sinon.SinonStub };
-  storageHelperService: StorageHelperService;
+  triggerAttachmentsService: TriggerAttachmentsService;
   workflowRunService: { updateDeliveryLifecycle: sinon.SinonStub };
   stepRunRepository: { create: sinon.SinonStub; createMany: sinon.SinonStub };
   createExecutionDetails: { execute: sinon.SinonStub };
@@ -63,9 +66,9 @@ function buildStoredAttachment() {
   return { storagePath: ATTACHMENT_STORAGE_PATH, mime: 'application/pdf', name: 'attachment.pdf' };
 }
 
-function buildNotification(): PartialNotificationEntity {
+function buildNotification(id = 'notification-id'): PartialNotificationEntity {
   return {
-    _id: 'notification-id',
+    _id: id,
     payload: { attachments: [buildStoredAttachment()] },
   } as unknown as PartialNotificationEntity;
 }
@@ -91,16 +94,24 @@ function buildJob(overrides: Partial<JobEntity> = {}): JobEntity {
 describe('RunJob - attachment cleanup ordering', () => {
   let sandbox: sinon.SinonSandbox;
   let usecase: RunJobTestDouble;
-  let deleteAttachments: sinon.SinonStub;
+  let release: sinon.SinonStub;
   let notification: PartialNotificationEntity;
   let triggerJob: JobEntity;
+
+  function expectReleased() {
+    sinon.assert.calledOnceWithExactly(release, {
+      environmentId: 'environment-id',
+      transactionId: 'transaction-id',
+      attachments: notification.payload.attachments,
+    });
+  }
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
 
     usecase = buildUsecase(sandbox);
-    deleteAttachments = sandbox.stub().resolves();
-    usecase.storageHelperService = { deleteAttachments } as unknown as StorageHelperService;
+    release = sandbox.stub().resolves();
+    usecase.triggerAttachmentsService = { release } as unknown as TriggerAttachmentsService;
 
     notification = buildNotification();
     // Payload-dedup: the executed job shares the notification's payload object,
@@ -113,7 +124,7 @@ describe('RunJob - attachment cleanup ordering', () => {
     sandbox.restore();
   });
 
-  it('keeps the attachments in storage while a next job is still queued', async () => {
+  it('keeps the attachments while a next job is still queued', async () => {
     const emailJob = buildJob({ _id: 'email-job-id', type: StepTypeEnum.EMAIL, payload: undefined });
     usecase.jobRepository.claimNextChildAsQueued.resolves(emailJob);
     usecase.addJobUsecase.execute.resolves({
@@ -123,15 +134,15 @@ describe('RunJob - attachment cleanup ordering', () => {
 
     await usecase.tryQueueNextJobs(triggerJob, notification);
 
-    sinon.assert.notCalled(deleteAttachments);
+    sinon.assert.notCalled(release);
   });
 
-  it('deletes the attachments once the chain has no next job', async () => {
+  it('releases the attachments once the chain has no next job', async () => {
     usecase.jobRepository.claimNextChildAsQueued.resolves(null);
 
     await usecase.tryQueueNextJobs(triggerJob, notification);
 
-    sinon.assert.calledOnceWithExactly(deleteAttachments, notification.payload.attachments);
+    expectReleased();
   });
 
   it('keeps the attachments when the finished job errored, so its retries still find them', async () => {
@@ -139,18 +150,7 @@ describe('RunJob - attachment cleanup ordering', () => {
 
     await usecase.tryQueueNextJobs(triggerJob, notification, true);
 
-    sinon.assert.notCalled(deleteAttachments);
-  });
-
-  it('leaves the completed state untouched when the attachment cleanup fails', async () => {
-    usecase.jobRepository.claimNextChildAsQueued.resolves(null);
-    deleteAttachments.rejects(new Error('storage is unavailable'));
-
-    await usecase.tryQueueNextJobs(triggerJob, notification);
-
-    // A second call would emit a duplicate completion trace for the same run.
-    sinon.assert.calledOnce(usecase.workflowRunService.updateDeliveryLifecycle);
-    sinon.assert.calledOnce(usecase.logger.warn);
+    sinon.assert.notCalled(release);
   });
 
   it('does not write the resolved payload back onto a payload-dedup job', async () => {
@@ -159,11 +159,11 @@ describe('RunJob - attachment cleanup ordering', () => {
 
     await usecase.tryQueueNextJobs(dedupJob, notification);
 
-    sinon.assert.calledOnceWithExactly(deleteAttachments, notification.payload.attachments);
+    expectReleased();
     expect(dedupJob.payload).to.equal(undefined);
   });
 
-  it('deletes the attachments when a failing child halts the workflow', async () => {
+  it('releases the attachments when a failing child halts the workflow', async () => {
     const haltingJob = buildJob({
       _id: 'email-job-id',
       type: StepTypeEnum.EMAIL,
@@ -176,7 +176,7 @@ describe('RunJob - attachment cleanup ordering', () => {
     await usecase.tryQueueNextJobs(triggerJob, notification);
 
     sinon.assert.calledOnce(usecase.jobRepository.cancelPendingJobs);
-    sinon.assert.calledOnceWithExactly(deleteAttachments, notification.payload.attachments);
+    expectReleased();
   });
 
   it('keeps the attachments when a failing child will be retried', async () => {
@@ -192,10 +192,10 @@ describe('RunJob - attachment cleanup ordering', () => {
     await usecase.tryQueueNextJobs(triggerJob, notification);
 
     sinon.assert.notCalled(usecase.jobRepository.cancelPendingJobs);
-    sinon.assert.notCalled(deleteAttachments);
+    sinon.assert.notCalled(release);
   });
 
-  it('deletes the executed job attachments when the chain ends on a skipped step', async () => {
+  it('releases the executed job attachments when the chain ends on a skipped step', async () => {
     const skippedJob = buildJob({ _id: 'digest-job-id', type: StepTypeEnum.DIGEST, payload: undefined });
     usecase.jobRepository.claimNextChildAsQueued.onFirstCall().resolves(skippedJob).onSecondCall().resolves(null);
     usecase.addJobUsecase.execute.resolves({
@@ -206,7 +206,7 @@ describe('RunJob - attachment cleanup ordering', () => {
 
     await usecase.tryQueueNextJobs(triggerJob, notification);
 
-    sinon.assert.calledOnceWithExactly(deleteAttachments, notification.payload.attachments);
+    expectReleased();
   });
 });
 
@@ -239,25 +239,60 @@ class InMemoryStorageService {
   }
 }
 
-describe('RunJob - attachment lifecycle across a trigger -> email chain', () => {
-  it('leaves the file in storage for the email step and removes it when the chain ends', async () => {
-    const sandbox = sinon.createSandbox();
-    const storage = new InMemoryStorageService();
-    await storage.uploadFile(ATTACHMENT_STORAGE_PATH, PDF_BYTES);
+/** In-memory stand-in for the Redis reference counter scripts. */
+class InMemoryCounterCacheService {
+  private readonly counters = new Map<string, number>();
 
-    const storageHelperService = new StorageHelperService(storage as unknown as StorageService);
-    const usecase = buildUsecase(sandbox);
-    usecase.storageHelperService = storageHelperService;
+  async eval(script: string, keys: string[], args: (string | number)[]): Promise<number | null> {
+    const [key] = keys;
+    const current = this.counters.get(key);
+    const isRelease = script.includes('decrby');
+    const requiresExistingCounter = isRelease || script.includes("'exists'");
 
-    const notification = buildNotification();
-    const triggerJob = buildJob({ payload: undefined });
-    const emailJob = buildJob({ _id: 'email-job-id', type: StepTypeEnum.EMAIL, payload: undefined });
+    if (requiresExistingCounter && current === undefined) {
+      return null;
+    }
 
-    // Trigger step runs: resolves its payload from the notification and hydrates the file.
+    if (!isRelease) {
+      const count = (current ?? 0) + Number(args[0]);
+      this.counters.set(key, count);
+
+      return count;
+    }
+
+    const count = (current ?? 0) - Number(args[0]);
+    if (count <= 0) {
+      this.counters.delete(key);
+    } else {
+      this.counters.set(key, count);
+    }
+
+    return count;
+  }
+}
+
+describe('RunJob - attachment lifecycle across subscriber chains', () => {
+  let sandbox: sinon.SinonSandbox;
+  let storage: InMemoryStorageService;
+  let storageHelperService: StorageHelperService;
+  let triggerAttachmentsService: TriggerAttachmentsService;
+  let usecase: RunJobTestDouble;
+
+  const triggerRef = {
+    environmentId: 'environment-id',
+    transactionId: 'transaction-id',
+    attachments: [buildStoredAttachment()],
+  };
+
+  /** Replays one subscriber's trigger -> email chain and returns what its email step read. */
+  async function runSubscriberChain(subscriberId: string): Promise<Buffer | null | undefined> {
+    const notification = buildNotification(`notification-${subscriberId}`);
+    const jobDefaults = { _subscriberId: subscriberId, _notificationId: notification._id, payload: undefined };
+    const triggerJob = buildJob({ ...jobDefaults, _id: `trigger-${subscriberId}` });
+    const emailJob = buildJob({ ...jobDefaults, _id: `email-${subscriberId}`, type: StepTypeEnum.EMAIL });
+
     triggerJob.payload = getEffectiveJobPayload(triggerJob, notification);
     await storageHelperService.getAttachments(triggerJob.payload.attachments);
-
-    // ...then queues the email step.
     usecase.jobRepository.claimNextChildAsQueued.resolves(emailJob);
     usecase.addJobUsecase.execute.resolves({
       workflowStatus: WorkflowRunStatusEnum.PROCESSING,
@@ -265,19 +300,66 @@ describe('RunJob - attachment lifecycle across a trigger -> email chain', () => 
     });
     await usecase.tryQueueNextJobs(triggerJob, notification);
 
-    expect(storage.has(ATTACHMENT_STORAGE_PATH)).to.equal(true);
-
-    // Email step runs and still finds the file it is supposed to send.
     emailJob.payload = getEffectiveJobPayload(emailJob, notification);
     await storageHelperService.getAttachments(emailJob.payload.attachments);
-    expect(emailJob.payload.attachments[0].file).to.deep.equal(PDF_BYTES);
+    const sentFile = emailJob.payload.attachments[0].file;
 
-    // Email step has no child, so the chain ends and the file is cleaned up.
     usecase.jobRepository.claimNextChildAsQueued.resolves(null);
     await usecase.tryQueueNextJobs(emailJob, notification);
 
-    expect(storage.has(ATTACHMENT_STORAGE_PATH)).to.equal(false);
+    return sentFile;
+  }
 
+  beforeEach(async () => {
+    sandbox = sinon.createSandbox();
+    storage = new InMemoryStorageService();
+    await storage.uploadFile(ATTACHMENT_STORAGE_PATH, PDF_BYTES);
+
+    storageHelperService = new StorageHelperService(storage as unknown as StorageService);
+    triggerAttachmentsService = new TriggerAttachmentsService(
+      new InMemoryCounterCacheService() as unknown as CacheService,
+      storage as unknown as StorageService,
+      { setContext: sandbox.stub(), warn: sandbox.stub() } as unknown as PinoLogger
+    );
+    usecase = buildUsecase(sandbox);
+    usecase.triggerAttachmentsService = triggerAttachmentsService;
+  });
+
+  afterEach(() => {
     sandbox.restore();
+  });
+
+  it('keeps the file for the email step of a single subscriber and removes it when the chain ends', async () => {
+    await triggerAttachmentsService.acquireFanOutHold(triggerRef);
+    await triggerAttachmentsService.retain(triggerRef, 1);
+    await triggerAttachmentsService.releaseFanOutHold(triggerRef);
+
+    expect(await runSubscriberChain('subscriber-a')).to.deep.equal(PDF_BYTES);
+    expect(storage.has(ATTACHMENT_STORAGE_PATH)).to.equal(false);
+  });
+
+  it('delivers the shared file to every subscriber of a topic and removes it after the last chain', async () => {
+    await triggerAttachmentsService.acquireFanOutHold(triggerRef);
+    await triggerAttachmentsService.retain(triggerRef, 2);
+    await triggerAttachmentsService.releaseFanOutHold(triggerRef);
+
+    expect(await runSubscriberChain('subscriber-a')).to.deep.equal(PDF_BYTES);
+    expect(storage.has(ATTACHMENT_STORAGE_PATH)).to.equal(true);
+
+    expect(await runSubscriberChain('subscriber-b')).to.deep.equal(PDF_BYTES);
+    expect(storage.has(ATTACHMENT_STORAGE_PATH)).to.equal(false);
+  });
+
+  it('keeps the file for subscribers enqueued after an earlier chain already finished', async () => {
+    await triggerAttachmentsService.acquireFanOutHold(triggerRef);
+    await triggerAttachmentsService.retain(triggerRef, 1);
+
+    expect(await runSubscriberChain('subscriber-a')).to.deep.equal(PDF_BYTES);
+
+    await triggerAttachmentsService.retain(triggerRef, 1);
+    await triggerAttachmentsService.releaseFanOutHold(triggerRef);
+
+    expect(await runSubscriberChain('subscriber-b')).to.deep.equal(PDF_BYTES);
+    expect(storage.has(ATTACHMENT_STORAGE_PATH)).to.equal(false);
   });
 });

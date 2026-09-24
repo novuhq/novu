@@ -17,6 +17,7 @@ import { PinoLogger } from '../../logging';
 import { CacheService } from '../../services';
 import { buildUsageKey } from '../../services/cache/key-builders';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { TriggerAttachmentsService } from '../../services/storage/trigger-attachments.service';
 import { mapSubscribersToJobs } from '../../utils';
 
 export type BaseTriggerCommand = {
@@ -46,6 +47,7 @@ export abstract class TriggerBase {
   constructor(
     protected subscriberProcessQueueService: SubscriberProcessQueueService,
     protected cacheService: CacheService,
+    protected triggerAttachmentsService: TriggerAttachmentsService,
     protected logger: PinoLogger,
     protected queueChunkSize: number = 100
   ) {}
@@ -89,6 +91,17 @@ export abstract class TriggerBase {
     }
 
     const jobs = mapSubscribersToJobs(subscriberSource, subscribers, command);
+
+    // Retained before enqueueing: a subscriber's chain may finish and release
+    // its reference before this call returns.
+    await this.triggerAttachmentsService.retain(
+      {
+        environmentId: command.environmentId,
+        transactionId: command.transactionId,
+        attachments: command.payload?.attachments,
+      },
+      jobs.length
+    );
 
     return await this.subscriberProcessQueueAddBulk(jobs);
   }

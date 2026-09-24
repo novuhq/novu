@@ -22,6 +22,7 @@ import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../se
 import { AnalyticsService } from '../../services/analytics.service';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { InMemoryLRUCacheService, InMemoryLRUCacheStore } from '../../services/in-memory-lru-cache';
+import { TriggerAttachmentsService } from '../../services/storage/trigger-attachments.service';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { ResolveTriggerContexts, ResolveTriggerContextsCommand } from '../resolve-trigger-contexts';
@@ -50,13 +51,32 @@ export class TriggerEvent {
     private resolveTriggerContexts: ResolveTriggerContexts,
     private verifyPayload: VerifyPayload,
     private featureFlagsService: FeatureFlagsService,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private triggerAttachmentsService: TriggerAttachmentsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
+    const attachmentsRef = {
+      environmentId: command.environmentId,
+      transactionId: command.transactionId,
+      attachments: command.payload?.attachments,
+    };
+
+    // Held for the whole fan-out so early-finishing subscriber chains cannot
+    // drop the count to zero while later subscribers are still being enqueued.
+    await this.triggerAttachmentsService.acquireFanOutHold(attachmentsRef);
+
+    try {
+      await this.triggerSubscribers(command);
+    } finally {
+      await this.triggerAttachmentsService.releaseFanOutHold(attachmentsRef);
+    }
+  }
+
+  private async triggerSubscribers(command: TriggerEventCommand) {
     let storedWorkflow: NotificationTemplateEntity | null = null;
 
     try {

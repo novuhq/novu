@@ -9,6 +9,7 @@ import { CacheService } from '../../services';
 import type { EventType, RequestTraceInput } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { TriggerAttachmentsService } from '../../services/storage/trigger-attachments.service';
 import { TriggerBase } from '../trigger-base';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
 
@@ -21,9 +22,10 @@ export class TriggerBroadcast extends TriggerBase {
     protected subscriberProcessQueueService: SubscriberProcessQueueService,
     protected cacheService: CacheService,
     protected logger: PinoLogger,
-    private traceLogRepository: TraceLogRepository
+    private traceLogRepository: TraceLogRepository,
+    triggerAttachmentsService: TriggerAttachmentsService
   ) {
-    super(subscriberProcessQueueService, cacheService, logger, QUEUE_CHUNK_SIZE);
+    super(subscriberProcessQueueService, cacheService, triggerAttachmentsService, logger, QUEUE_CHUNK_SIZE);
     this.logger.setContext(this.constructor.name);
   }
 
