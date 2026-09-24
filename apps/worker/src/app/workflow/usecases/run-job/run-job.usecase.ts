@@ -117,6 +117,8 @@ export class RunJob {
       // Update workflow run delivery lifecycle after job cancellation
       await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, undefined, null);
 
+      await this.releaseCanceledChainAttachments(job);
+
       return;
     }
 
@@ -286,6 +288,11 @@ export class RunJob {
       }
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
+      await this.triggerAttachmentsService.refresh({
+        environmentId: job._environmentId,
+        transactionId: job.transactionId,
+        attachments: job.payload?.attachments,
+      });
 
       if (this.isUnsnoozeJob(job)) {
         await this.processUnsnoozeJob.execute(
@@ -444,22 +451,28 @@ export class RunJob {
       clearInterval(claimHeartbeat);
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
         await this.tryQueueNextJobs(job, notification, !!error);
-      } else if (!isJobExtendedToSubscriberSchedule && !error) {
-        // Update workflow run status based on step runs when halting on step failure.
-        // Skip when an unexpected exception was thrown — the Bull worker's setJobAsFailed
-        // will handle the final status to avoid duplicate traces.
-        await this.workflowRunService.updateDeliveryLifecycle({
-          workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-          notificationId: job._notificationId,
-          environmentId: job._environmentId,
-          organizationId: job._organizationId,
-          _subscriberId: job._subscriberId,
-          notification,
-          currentJob: { type: job.type, _id: job._id },
-          workflow: this.buildStatelessWorkflowForRuns(job),
-        });
-        // Remove the attachments if the job should not be queued
-        await this.deleteChainAttachments(job, notification);
+      } else if (!isJobExtendedToSubscriberSchedule) {
+        if (!error) {
+          // Update workflow run status based on step runs when halting on step failure.
+          // Skip when an unexpected exception was thrown — the Bull worker's setJobAsFailed
+          // will handle the final status to avoid duplicate traces.
+          await this.workflowRunService.updateDeliveryLifecycle({
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+            notificationId: job._notificationId,
+            environmentId: job._environmentId,
+            organizationId: job._organizationId,
+            _subscriberId: job._subscriberId,
+            notification,
+            currentJob: { type: job.type, _id: job._id },
+            workflow: this.buildStatelessWorkflowForRuns(job),
+          });
+        }
+
+        // The chain halts here. Retryable errors keep the attachments for the
+        // retry; HandleLastFailedJob releases them if the last retry fails.
+        if (!error || !this.shouldBackoff(error)) {
+          await this.deleteChainAttachments(job, notification);
+        }
       }
     }
   }
@@ -636,16 +649,16 @@ export class RunJob {
               notification,
               currentJob: { type: currentJob.type, _id: currentJob._id },
             });
-
-            /*
-             * The chain is finished, so no later step needs the stored
-             * attachments anymore. Cleaned up from the executed job rather than
-             * the chain cursor, which may be a skipped tail step whose payload
-             * was never hydrated. Skipped when the current job errored, so its
-             * retries still find the files.
-             */
-            await this.deleteChainAttachments(job, notification);
           }
+
+          /*
+           * The chain is finished, so no later step needs the stored
+           * attachments anymore. Also when the current job errored: retryable
+           * errors never reach this point, so that error is final. Released from
+           * the executed job rather than the chain cursor, which may be a
+           * skipped tail step whose payload was never hydrated.
+           */
+          await this.deleteChainAttachments(job, notification);
 
           return;
         }
@@ -788,16 +801,44 @@ export class RunJob {
    * deleted once the last reference is released. Under payload-dedup the
    * payload lives on the parent notification when the job carries none.
    */
-  private async deleteChainAttachments(job: JobEntity, notification?: PartialNotificationEntity | null): Promise<void> {
+  private async deleteChainAttachments(
+    job: JobEntity,
+    notification?: PartialNotificationEntity | null,
+    { once = false }: { once?: boolean } = {}
+  ): Promise<void> {
     // Left as a local: writing it back would put a payload on a job that
     // payload-dedup deliberately persists without one.
     const payload: JobEntity['payload'] = getEffectiveJobPayload(job, notification);
-
-    await this.triggerAttachmentsService.release({
+    const ref = {
       environmentId: job._environmentId,
       transactionId: job.transactionId,
       attachments: payload?.attachments,
-    });
+    };
+
+    if (once) {
+      await this.triggerAttachmentsService.releaseOnce(ref, job._id);
+
+      return;
+    }
+
+    await this.triggerAttachmentsService.release(ref);
+  }
+
+  /** No claim guards the canceled exit, so a redelivered message must not release twice. */
+  private async releaseCanceledChainAttachments(job: JobEntity): Promise<void> {
+    let notification: PartialNotificationEntity | null;
+    try {
+      notification = await this.findNotification(job);
+    } catch (error: unknown) {
+      this.logger.warn(
+        { err: error, nv: { jobId: job._id, transactionId: job.transactionId } },
+        'Failed to load the notification of a canceled job, its attachments will be kept in storage'
+      );
+
+      return;
+    }
+
+    await this.deleteChainAttachments(job, notification, { once: true });
   }
 
   private async createCanceledExecutionDetails(cancelledJobs: JobEntity[]): Promise<void> {

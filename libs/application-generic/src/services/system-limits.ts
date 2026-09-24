@@ -1,0 +1,16 @@
+export const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+/* The absolute maximum values allowed by the system */
+export const SYSTEM_LIMITS = {
+  WORKFLOWS: 100,
+  LAYOUTS: 100,
+  STEPS_PER_WORKFLOW: 20,
+  DEFER_DURATION_MS: 180 * DAY_IN_MS,
+  ENVIRONMENTS: 10,
+  SUBSCRIBER_DEVICE_TOKENS: 100,
+  ENVIRONMENT_VARIABLES: 10,
+  STEP_RESOLVERS: 1000,
+  DOMAINS: 10,
+  AGENTS: 100,
+  CUSTOM_EMAIL_DOMAINS: 50,
+} as const;

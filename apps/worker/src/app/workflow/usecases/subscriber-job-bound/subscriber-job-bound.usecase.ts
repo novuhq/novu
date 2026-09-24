@@ -81,6 +81,24 @@ export class SubscriberJobBound {
 
   @InstrumentUsecase()
   async execute(command: SubscriberJobBoundCommand) {
+    const progress = { hasStartedStoringChain: false };
+
+    try {
+      await this.bindSubscriberJobs(command, progress);
+    } finally {
+      /*
+       * Subscriber jobs are not retried, so any exit before the chain is stored
+       * (early return or throw) is final and gives back the reference the
+       * fan-out took for this subscriber. Once storing starts, a chain may exist
+       * and will release it itself.
+       */
+      if (!progress.hasStartedStoringChain) {
+        await this.releaseAttachments(command);
+      }
+    }
+  }
+
+  private async bindSubscriberJobs(command: SubscriberJobBoundCommand, progress: { hasStartedStoringChain: boolean }) {
     this.logger.assign({
       transactionId: command.transactionId,
       environmentId: command.environmentId,
@@ -177,7 +195,6 @@ export class SubscriberJobBound {
         'warning',
         `Subscriber ${subscriber.subscriberId} was not processed, workflow run execution halted.`
       );
-      await this.releaseAttachments(command);
 
       return;
     }
@@ -186,8 +203,6 @@ export class SubscriberJobBound {
       const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id, subscriberProcessed);
 
       if (evaluatedTopics === null) {
-        await this.releaseAttachments(command);
-
         return;
       }
 
@@ -251,6 +266,7 @@ export class SubscriberJobBound {
       CreateNotificationJobsCommand.create(createNotificationJobsCommand)
     );
 
+    progress.hasStartedStoringChain = true;
     await this.storeSubscriberJobs.execute(
       StoreSubscriberJobsCommand.create({
         environmentId: command.environmentId,
@@ -260,7 +276,6 @@ export class SubscriberJobBound {
     );
   }
 
-  /** This subscriber starts no job chain, so it gives back the reference the fan-out took for it. */
   private async releaseAttachments(command: SubscriberJobBoundCommand): Promise<void> {
     await this.triggerAttachmentsService.release({
       environmentId: command.environmentId,

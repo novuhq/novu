@@ -16,7 +16,7 @@ const LOG_CONTEXT = 'QueueService';
  * re-queue exactly those. Without it a mid-batch failure forces the caller to
  * re-send everything, double-delivering whatever SQS already accepted.
  */
-class PartialDispatchError extends Error {
+export class PartialDispatchError extends Error {
   constructor(
     public readonly unsentJobs: (IJobParams | IBulkJobParams)[],
     public readonly cause: unknown
@@ -417,7 +417,12 @@ export class QueueBaseService implements OnModuleDestroy {
       return;
     }
 
-    await this.addJobsToBullMQ(fallbackJobs);
+    try {
+      await this.addJobsToBullMQ(fallbackJobs);
+    } catch (bullmqError) {
+      // SQS may already hold the rest, so callers must learn exactly which jobs went nowhere.
+      throw new PartialDispatchError(fallbackJobs, bullmqError);
+    }
   }
 
   private toBulkJobParams(jobs: (IJobParams | IBulkJobParams)[]): IBulkJobParams[] {

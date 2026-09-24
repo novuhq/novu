@@ -145,12 +145,13 @@ describe('RunJob - attachment cleanup ordering', () => {
     expectReleased();
   });
 
-  it('keeps the attachments when the finished job errored, so its retries still find them', async () => {
+  it('releases the attachments when the chain ends on a job whose error is final', async () => {
     usecase.jobRepository.claimNextChildAsQueued.resolves(null);
 
     await usecase.tryQueueNextJobs(triggerJob, notification, true);
 
-    sinon.assert.notCalled(release);
+    expectReleased();
+    sinon.assert.notCalled(usecase.workflowRunService.updateDeliveryLifecycle);
   });
 
   it('does not write the resolved payload back onto a payload-dedup job', async () => {
@@ -251,6 +252,10 @@ class InMemoryCounterCacheService {
 
     if (requiresExistingCounter && current === undefined) {
       return null;
+    }
+
+    if (!isRelease && !script.includes('incrby')) {
+      return current === undefined ? 0 : 1;
     }
 
     if (!isRelease) {

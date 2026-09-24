@@ -22,8 +22,10 @@ import {
 import { NotificationStep } from '../value-objects/notification.step';
 import { FeatureFlagsService } from './feature-flags';
 import { resolveTierLimit, throwPlanLimitExceeded } from './plan-limits';
+import { DAY_IN_MS, SYSTEM_LIMITS } from './system-limits';
 
-export const DAY_IN_MS = 24 * 60 * 60 * 1000;
+export { DAY_IN_MS, SYSTEM_LIMITS };
+
 const DEMO_WORKFLOWS_IDENTIFIER = [
   'demo-apartment-review',
   'a-new-member-joining-the-team',
@@ -32,21 +34,6 @@ const DEMO_WORKFLOWS_IDENTIFIER = [
   'demo-recent-login',
   'demo-comment-on-task',
 ];
-
-/* The absolute maximum values allowed by the system */
-export const SYSTEM_LIMITS = {
-  WORKFLOWS: 100,
-  LAYOUTS: 100,
-  STEPS_PER_WORKFLOW: 20,
-  DEFER_DURATION_MS: 180 * DAY_IN_MS,
-  ENVIRONMENTS: 10,
-  SUBSCRIBER_DEVICE_TOKENS: 100,
-  ENVIRONMENT_VARIABLES: 10,
-  STEP_RESOLVERS: 1000,
-  DOMAINS: 10,
-  AGENTS: 100,
-  CUSTOM_EMAIL_DOMAINS: 50,
-} as const;
 
 /* The threshold below which validation is skipped */
 export const MIN_VALIDATION_LIMITS = {

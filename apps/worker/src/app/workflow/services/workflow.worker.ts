@@ -9,6 +9,7 @@ import {
   SqsService,
   Store,
   storage,
+  TriggerAttachmentsService,
   TriggerEvent,
   WorkerOptions,
   WorkerProcessor,
@@ -28,7 +29,8 @@ export class WorkflowWorker extends WorkflowWorkerService {
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     sqsService: SqsService,
     protected logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private triggerAttachmentsService: TriggerAttachmentsService
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
     this.logger.setContext(this.constructor.name);
@@ -86,6 +88,11 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
       if (isKillSwitchEnabled) {
         this.logger.warn(`Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`);
+        await this.triggerAttachmentsService.discard({
+          environmentId: data.environmentId,
+          transactionId: data.transactionId,
+          attachments: data.payload?.attachments,
+        });
 
         return;
       }
