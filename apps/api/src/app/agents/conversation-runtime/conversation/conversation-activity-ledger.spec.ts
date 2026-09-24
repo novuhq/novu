@@ -1,5 +1,4 @@
-// biome-ignore-all lint: mocha stubs use assertion casts
-import { ConversationActivityTypeEnum, ConversationRepository } from '@novu/dal';
+import { ConversationActivityRepository, ConversationActivityTypeEnum, ConversationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
@@ -48,26 +47,37 @@ describe('ConversationActivityLedger', () => {
     };
   }
 
-  function makeConversationRepository(overrides: Record<string, sinon.SinonStub> = {}) {
+  function makeConversationRepository() {
+    const repository = new ConversationRepository();
+
     return {
-      touchActivity: overrides.touchActivity ?? sinon.stub().resolves(undefined),
-      touchPreview: overrides.touchPreview ?? sinon.stub().resolves(undefined),
-      ...overrides,
+      repository,
+      touchActivity: sinon.stub(repository, 'touchActivity').resolves(),
+      touchPreview: sinon.stub(repository, 'touchPreview').resolves(),
     };
+  }
+
+  function makeEventSequenceService() {
+    const service = new ConversationEventSequenceService(
+      new ConversationRepository(),
+      new ConversationActivityRepository()
+    );
+
+    return { service, mint: sinon.stub(service, 'mint').resolves(7) };
   }
 
   function makeLedger(
     activityRepository = makeActivityRepository(),
-    eventSequenceService = { mint: sinon.stub().resolves(7) } as unknown as ConversationEventSequenceService,
+    eventSequenceService = makeEventSequenceService(),
     publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) },
     conversationRepository = makeConversationRepository(),
     logger = makeLogger()
   ) {
     return new ConversationActivityLedger(
       activityRepository as any,
-      eventSequenceService,
+      eventSequenceService.service,
       publisher as any,
-      conversationRepository as unknown as ConversationRepository,
+      conversationRepository.repository,
       logger as any
     );
   }
@@ -172,7 +182,7 @@ describe('ConversationActivityLedger', () => {
       const logger = makeLogger();
       const ledger = makeLedger(
         activityRepository,
-        { mint: sinon.stub().resolves(7) } as unknown as ConversationEventSequenceService,
+        makeEventSequenceService(),
         undefined,
         conversationRepository,
         logger
@@ -190,13 +200,12 @@ describe('ConversationActivityLedger', () => {
     });
 
     it('pairs touchActivity with agent message persist', async () => {
-      const touchActivity = sinon.stub().resolves(undefined);
-      const conversationRepository = makeConversationRepository({ touchActivity });
+      const conversationRepository = makeConversationRepository();
       const ledger = makeLedger(makeActivityRepository(), undefined, undefined, conversationRepository);
 
       await ledger.persistAgentMessage(basePersistParams());
 
-      expect(touchActivity.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.calledOnce).to.equal(true);
     });
   });
 
@@ -341,9 +350,10 @@ describe('ConversationActivityLedger', () => {
         _id: `activity-${activityRepository.createAgentActivity.callCount}`,
         ...params,
       }));
-      const mint = sinon.stub().onFirstCall().resolves(10).onSecondCall().resolves(11);
+      const eventSequenceService = makeEventSequenceService();
+      eventSequenceService.mint.onFirstCall().resolves(10).onSecondCall().resolves(11);
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
-      const ledger = makeLedger(activityRepository, { mint } as unknown as ConversationEventSequenceService, publisher);
+      const ledger = makeLedger(activityRepository, eventSequenceService, publisher);
       const context = {
         ...basePersistParams(),
         channel: {
@@ -401,15 +411,11 @@ describe('ConversationActivityLedger', () => {
   describe('custom activities', () => {
     it('persists an append-only custom row and publishes it on the durable path', async () => {
       const activityRepository = makeActivityRepository();
-      const mint = sinon.stub().resolves(12);
+      const eventSequenceService = makeEventSequenceService();
+      eventSequenceService.mint.resolves(12);
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
       const conversationRepository = makeConversationRepository();
-      const ledger = makeLedger(
-        activityRepository,
-        { mint } as unknown as ConversationEventSequenceService,
-        publisher,
-        conversationRepository
-      );
+      const ledger = makeLedger(activityRepository, eventSequenceService, publisher, conversationRepository);
       const context = {
         conversationId: 'conv-1',
         channel: {
@@ -451,7 +457,7 @@ describe('ConversationActivityLedger', () => {
     it('leaves the message row unchanged and appends an edit activity', async () => {
       const update = sinon.stub().resolves(undefined);
       const createUserActivity = sinon.stub().resolves({ _id: 'edit-1' });
-      const touchPreview = sinon.stub().resolves(undefined);
+      const conversationRepository = makeConversationRepository();
       const ledger = makeLedger(
         makeActivityRepository({
           findByPlatformMessageId: sinon.stub().resolves({
@@ -468,7 +474,7 @@ describe('ConversationActivityLedger', () => {
         }),
         undefined,
         undefined,
-        makeConversationRepository({ touchPreview })
+        conversationRepository
       );
 
       await ledger.updateInboundMessage({
@@ -488,7 +494,7 @@ describe('ConversationActivityLedger', () => {
         senderId: 'ada',
       });
       expect(createUserActivity.firstCall.args[0].identifier).to.equal('inbound-edit:conv-1:msg-1:1710000000.000200');
-      expect(touchPreview.calledOnce).to.equal(true);
+      expect(conversationRepository.touchPreview.calledOnce).to.equal(true);
     });
   });
 
@@ -531,9 +537,10 @@ describe('ConversationActivityLedger', () => {
   describe('event sequencing', () => {
     it('allocates a sequence for durable tool activities on any channel', async () => {
       const activityRepository = makeActivityRepository();
-      const mint = sinon.stub().resolves(4);
+      const eventSequenceService = makeEventSequenceService();
+      eventSequenceService.mint.resolves(4);
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
-      const ledger = makeLedger(activityRepository, { mint } as unknown as ConversationEventSequenceService, publisher);
+      const ledger = makeLedger(activityRepository, eventSequenceService, publisher);
 
       await ledger.persistToolResult({
         conversationId: 'conv-1',
@@ -551,7 +558,7 @@ describe('ConversationActivityLedger', () => {
 
       expect(activityRepository.createToolActivity.firstCall.args[0].sequence).to.equal(4);
       expect(
-        mint.calledOnceWithExactly({
+        eventSequenceService.mint.calledOnceWithExactly({
           environmentId: 'env-1',
           organizationId: 'org-1',
           conversationId: 'conv-1',
