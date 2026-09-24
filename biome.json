@@ -21,7 +21,7 @@
       "!**/*.generated.ts",
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
-      "!playground",
+      "!playground/**/*",
       "!packages/novu/src/commands/connect/templates/web-chat",
       "!libs/internal-sdk",
       "!.github",
@@ -410,12 +410,7 @@
     {
       "includes": ["**/*.test.{ts,tsx,js}", "**/*.spec.{ts,tsx,js}", "**/*.e2e.{ts,js}"],
       "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off",
-            "noImplicitAnyLet": "off"
-          }
-        }
+        "enabled": false
       }
     },
     {

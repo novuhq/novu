@@ -16,29 +16,29 @@ export type StringLocalizationKey = {
 }[AllLocalizationKey];
 
 export type AllLocalization = {
-  [K in AllLocalizationKey]?: (typeof defaultLocalization)[K] extends (...args: infer P) => any
-    ? ((...args: P) => ReturnType<(typeof defaultLocalization)[K]>) | string
+  [K in AllLocalizationKey]?: (typeof defaultLocalization)[K] extends (...args: infer P) => infer R
+    ? ((...args: P) => R) | string
     : string;
 } & {
   dynamic?: Record<string, string>;
 };
 export type InboxLocalization = {
-  [K in InboxLocalizationKey]?: (typeof defaultInboxLocalization)[K] extends (...args: infer P) => any
-    ? ((...args: P) => ReturnType<(typeof defaultInboxLocalization)[K]>) | string
+  [K in InboxLocalizationKey]?: (typeof defaultInboxLocalization)[K] extends (...args: infer P) => infer R
+    ? ((...args: P) => R) | string
     : string;
 } & {
   dynamic?: Record<string, string>;
 };
 export type SubscriptionLocalization = {
-  [K in SubscriptionLocalizationKey]?: (typeof defaultSubscriptionLocalization)[K] extends (...args: infer P) => any
-    ? ((...args: P) => ReturnType<(typeof defaultSubscriptionLocalization)[K]>) | string
+  [K in SubscriptionLocalizationKey]?: (typeof defaultSubscriptionLocalization)[K] extends (...args: infer P) => infer R
+    ? ((...args: P) => R) | string
     : string;
 } & {
   dynamic?: Record<string, string>;
 };
 
 type TranslateFunctionArg<K extends AllLocalizationKey> = K extends keyof typeof defaultLocalization
-  ? (typeof defaultLocalization)[K] extends (arg: infer A) => any
+  ? (typeof defaultLocalization)[K] extends (arg: infer A) => unknown
     ? A
     : undefined
   : undefined;
@@ -50,16 +50,19 @@ export type TranslateFunction = <K extends AllLocalizationKey>(
     : [TranslateFunctionArg<K>] // A single argument is required if TranslateFunctionArg<K> is defined
 ) => string;
 
+/** What a key resolves to once merged: a string, or a function that builds one from the argument `t` receives. */
+export type LocalizationValue = string | ((...args: never[]) => string);
+
 export type LocalizationStore = {
   t: TranslateFunction;
   locale: Accessor<string>;
   /** The merged dictionary `t` reads from; hosts subscribe to it to re-render when any string changes. */
-  dictionary: Accessor<Record<string, string | Function>>;
+  dictionary: Accessor<Record<string, LocalizationValue>>;
 };
 
 /** Merges the defaults, the dynamic strings received from the API and the host's overrides into one dictionary. */
 export const createLocalizationStore = (localization: Accessor<AllLocalization | undefined>): LocalizationStore => {
-  const dictionary = createMemo<Record<string, string | Function>>(() => {
+  const dictionary = createMemo<Record<string, LocalizationValue>>(() => {
     const { dynamic, ...localizationObject } = localization() || {};
 
     return {
@@ -73,7 +76,10 @@ export const createLocalizationStore = (localization: Accessor<AllLocalization |
   const t: TranslateFunction = (key, ...args) => {
     const value = dictionary()[key];
     if (typeof value === 'function') {
-      return value(args[0]);
+      // the dictionary erases each function's argument type; `TranslateFunction` re-establishes it per key
+      const translate = value as (argument: (typeof args)[0]) => string;
+
+      return translate(args[0]);
     }
 
     return value as string;

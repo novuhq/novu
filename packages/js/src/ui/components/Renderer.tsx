@@ -1,4 +1,4 @@
-import { createMemo, For, onMount, Show } from 'solid-js';
+import { Component, createMemo, For, onMount, Show } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
 import {
@@ -75,7 +75,8 @@ const CHANNEL_COMPONENTS = [
   'TelegramConnectButton',
 ];
 
-export type NovuComponent = { name: NovuComponentName; props?: any; bare?: boolean };
+/** A mounted component. Its props stay opaque here: `mountComponent` typed them against the component on the way in. */
+export type NovuComponent = { name: NovuComponentName; props?: unknown; bare?: boolean };
 
 export type NovuMounterProps = NovuComponent & { element: MountableElement };
 
@@ -101,16 +102,30 @@ const applyIslandStyles = (node: MountableElement, portalDivElement?: HTMLDivEle
   }
 };
 
+/** The one place that hands opaque mount props back to a component, so the signature is erased here and nowhere else. */
+type MountableComponent = Component<Record<string, unknown>>;
+
 const MountedComponent = (props: { component: NovuComponent }) => {
-  const Component = novuComponents[props.component.name];
+  const Mounted = novuComponents[props.component.name] as MountableComponent;
+  const mountProps = () => (props.component.props ?? {}) as Record<string, unknown>;
 
   return (
-    <Show when={!props.component.bare} fallback={<Component {...props.component.props} />}>
+    <Show when={!props.component.bare} fallback={<Mounted {...mountProps()} />}>
       <Root>
-        <Component {...props.component.props} />
+        <Mounted {...mountProps()} />
       </Root>
     </Show>
   );
+};
+
+/** `elements` is derived from `nodes`, so every rendered element has its entry; a miss is a renderer bug. */
+const componentFor = (nodes: Map<MountableElement, NovuComponent>, node: MountableElement): NovuComponent => {
+  const component = nodes.get(node);
+  if (!component) {
+    throw new Error('Novu: no component is registered for the mounted element');
+  }
+
+  return component;
 };
 
 const InboxComponentsRenderer = (props: {
@@ -123,7 +138,7 @@ const InboxComponentsRenderer = (props: {
       <CountProvider store={props.counts}>
         <For each={props.elements}>
           {(node) => {
-            const novuComponent = () => props.nodes.get(node)!;
+            const novuComponent = () => componentFor(props.nodes, node);
             let portalDivElement: HTMLDivElement | undefined;
 
             onMount(() => {
@@ -174,7 +189,7 @@ const SimpleComponentsRenderer = (props: {
     <Show when={props.elements.length > 0}>
       <For each={props.elements}>
         {(node) => {
-          const novuComponent = () => props.nodes.get(node)!;
+          const novuComponent = () => componentFor(props.nodes, node);
           let portalDivElement: HTMLDivElement | undefined;
 
           onMount(() => {

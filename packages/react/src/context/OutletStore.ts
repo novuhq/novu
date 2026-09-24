@@ -1,7 +1,7 @@
 import type { OutletHandle } from '@novu/js/ui';
 import type { ReactNode } from 'react';
 
-export type OutletRender = (...args: any[]) => ReactNode;
+export type OutletRender = (...args: unknown[]) => ReactNode;
 
 export type OutletEntry = {
   id: string;

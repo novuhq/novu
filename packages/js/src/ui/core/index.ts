@@ -42,6 +42,7 @@ export {
   type InboxLocalization,
   type InboxLocalizationKey,
   type LocalizationStore,
+  type LocalizationValue,
   type StringLocalizationKey,
   type SubscriptionLocalization,
   type SubscriptionLocalizationKey,
