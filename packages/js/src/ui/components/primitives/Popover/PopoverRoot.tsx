@@ -1,6 +1,7 @@
 import { autoUpdate, flip, OffsetOptions, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createMemo, createSignal, JSX, Setter, useContext } from 'solid-js';
+import { type FloatingAlign, type FloatingSide, getAlign, getSide, transformOrigin } from '../floating';
 
 type PopoverRootProps = {
   open?: boolean;
@@ -19,7 +20,11 @@ type PopoverContextValue = {
   setFloating: Setter<HTMLElement | null>;
   onToggle: () => void;
   onClose: () => void;
-  floatingStyles: () => Record<any, any>;
+  floatingStyles: () => JSX.CSSProperties;
+  /** The side and alignment the content ended up on after `flip`, and its transform origin (the trigger). */
+  side: Accessor<FloatingSide>;
+  align: Accessor<FloatingAlign>;
+  origin: Accessor<string | undefined>;
 };
 
 const PopoverContext = createContext<PopoverContextValue | undefined>(undefined);
@@ -43,6 +48,7 @@ export function PopoverRoot(props: PopoverRootProps) {
         crossAxis: false, // Prevent horizontal shifting that causes layout gaps
         mainAxis: true, // Allow vertical shifting only
       }),
+      transformOrigin(),
     ],
   });
   const floatingStyles = createMemo(() => ({
@@ -50,6 +56,11 @@ export function PopoverRoot(props: PopoverRootProps) {
     top: `${position.y ?? 0}px`,
     left: `${position.x ?? 0}px`,
   }));
+
+  const placement = () => position.placement ?? props.placement ?? 'bottom';
+  const side = createMemo(() => getSide(placement()));
+  const align = createMemo(() => getAlign(placement()));
+  const origin = () => position.middlewareData.transformOrigin?.value as string | undefined;
 
   const onClose = () => {
     if (props.onOpenChange) {
@@ -80,6 +91,9 @@ export function PopoverRoot(props: PopoverRootProps) {
         setFloating,
         open,
         floatingStyles,
+        side,
+        align,
+        origin,
       }}
     >
       {props.children}

@@ -2,6 +2,7 @@ import {
   Accessor,
   createContext,
   createEffect,
+  createMemo,
   createSignal,
   JSX,
   ParentProps,
@@ -22,8 +23,12 @@ type TabsRootProps = Omit<JSX.IntrinsicElements['div'], 'onChange'> &
     onChange?: (value: string) => void;
   };
 
+export type TabsDirection = 'forward' | 'backward';
+
 type TabsContextValue = {
   activeTab: Accessor<string>;
+  /** Where the last switch went, in tab order; unset until the first switch, so the initial tab doesn't animate. */
+  direction: Accessor<TabsDirection | undefined>;
   setActiveTab: Setter<string>;
   visibleTabs: Accessor<string[]>;
   setVisibleTabs: Setter<string[]>;
@@ -51,6 +56,25 @@ export const TabsRoot = (props: TabsRootProps) => {
 
   useKeyboardNavigation({ tabsContainer, activeTab, setActiveTab });
 
+  const tabIndex = (value: string) =>
+    Array.from(tabsContainer()?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []).findIndex(
+      (tab) => tab.id === value
+    );
+  let previousTab = activeTab();
+  const direction = createMemo<TabsDirection | undefined>((current) => {
+    const next = activeTab();
+    const previous = previousTab;
+    previousTab = next;
+    if (!previous || !next || next === previous) {
+      return current;
+    }
+    const from = tabIndex(previous);
+    const to = tabIndex(next);
+
+    // A tab picked from the overflow menu has no trigger in the row; the menu sits at its end.
+    return to === -1 || (from !== -1 && to > from) ? 'forward' : 'backward';
+  });
+
   createEffect(() => {
     if (local.value) {
       setActiveTab(local.value);
@@ -62,7 +86,7 @@ export const TabsRoot = (props: TabsRootProps) => {
   });
 
   return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab, visibleTabs, setVisibleTabs }}>
+    <TabsContext.Provider value={{ activeTab, direction, setActiveTab, visibleTabs, setVisibleTabs }}>
       <div
         ref={setTabsContainer}
         class={style({

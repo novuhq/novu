@@ -72,8 +72,9 @@ export const notificationItemStyles = {
   },
   defaultActions: {
     key: 'notificationDefaultActions',
+    // `nt-motion-reveal` shows it on hover, on focus and while one of its menus is open (see `index.css`).
     className:
-      'nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5',
+      'nt-absolute nt-gap-0.5 nt-flex nt-shrink-0 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5 nt-motion-reveal',
   },
   customActions: {
     key: 'notificationCustomActions',
@@ -101,7 +102,8 @@ export const notificationItemStyles = {
   },
   dot: {
     key: 'notificationDot',
-    className: 'nt-size-1.5 nt-bg-primary nt-rounded-full',
+    // Rendered through presence with `data-state`, so it scales out when read and back in when unread.
+    className: 'nt-size-1.5 nt-bg-primary nt-rounded-full nt-motion-pop',
   },
 } as const satisfies Record<string, Record<string, unknown>>;
 

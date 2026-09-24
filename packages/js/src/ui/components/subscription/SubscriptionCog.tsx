@@ -1,11 +1,12 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
 import { createMemo, Show } from 'solid-js';
-import { Motion, Presence } from 'solid-motionone';
+import { Presence } from 'solid-motionone';
 import { TopicSubscription } from '../../../subscriptions';
 import { useStyle } from '../../helpers/useStyle';
 import { Cogs } from '../../icons';
 import { SubscriptionAppearanceCallback } from '../../types';
-import { Button, Popover } from '../primitives';
+import { Button, Motion, Popover } from '../primitives';
+import type { PopoverTriggerChildProps } from '../primitives/Popover/PopoverTrigger';
 import { SubscriptionPreferencesRenderer, UIPreference } from './Subscription';
 import { SubscriptionPreferences } from './SubscriptionPreferences';
 
@@ -67,7 +68,7 @@ export const SubscriptionCog = (props: {
     })
   );
 
-  const renderTrigger = (triggerProps: { ref: (el: HTMLElement) => void; onClick: (e: MouseEvent) => void }) => (
+  const renderTrigger = (triggerProps: PopoverTriggerChildProps) => (
     <Presence exitBeforeEnter>
       <Show when={hasSubscription() && hasPreferences()}>
         <Motion.span

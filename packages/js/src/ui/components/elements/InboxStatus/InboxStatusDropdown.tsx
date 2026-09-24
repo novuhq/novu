@@ -12,7 +12,8 @@ export const StatusDropdown = () => {
   const { t } = useLocalization();
   const arrowDropDownIconClass = style({
     key: 'inboxStatus__dropdownItemRight__icon',
-    className: 'nt-text-foreground-alpha-600 nt-size-4',
+    className:
+      'nt-text-foreground-alpha-600 nt-size-4 nt-transition-transform nt-duration-base group-data-[open=true]/trigger:nt-rotate-180',
     iconKey: 'arrowDropDown',
   });
 
@@ -21,7 +22,7 @@ export const StatusDropdown = () => {
       <Dropdown.Trigger
         class={style({
           key: 'inboxStatus__dropdownTrigger',
-          className: cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'nt-gap-0.5'),
+          className: cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'nt-gap-0.5 nt-group/trigger'),
         })}
         asChild={(triggerProps) => (
           <Button variant="unstyled" size="none" {...triggerProps}>

@@ -6,7 +6,7 @@ import { cn, useStyle } from '../../helpers';
 type RootProps = JSX.IntrinsicElements['div'];
 export const Root = (props: RootProps) => {
   const [_, rest] = splitProps(props, ['class']);
-  const { id } = useAppearance();
+  const { id, motionMode } = useAppearance();
   const style = useStyle();
   const { hideBranding } = useInboxContext();
 
@@ -19,6 +19,7 @@ export const Root = (props: RootProps) => {
           key: 'root',
           className: cn('novu', id(), 'nt-text-foreground nt-h-full [interpolate-size:allow-keywords]'),
         })}
+        data-nv-motion={motionMode()}
         {...rest}
       />
     </>

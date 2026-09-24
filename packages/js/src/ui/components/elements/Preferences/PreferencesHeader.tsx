@@ -14,7 +14,7 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
   const { t } = useLocalization();
   const arrowLeftIconClass = style({
     key: 'preferencesHeader__back__button__icon',
-    className: 'nt-size-4',
+    className: 'nt-size-4 nt-transition-transform nt-duration-base motion-full:group-hover/back:-nt-translate-x-0.5',
     iconKey: 'arrowLeft',
   });
 
@@ -30,7 +30,7 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
         {(navigateToNotifications) => (
           <Button
             appearanceKey="preferencesHeader__back__button"
-            class="nt-text-foreground-alpha-600"
+            class="nt-text-foreground-alpha-600 nt-group/back"
             variant="unstyled"
             size="none"
             onClick={navigateToNotifications()}

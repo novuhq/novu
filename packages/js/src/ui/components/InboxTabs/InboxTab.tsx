@@ -1,25 +1,34 @@
-import { ComponentProps, createMemo, JSX, Show } from 'solid-js';
+import { ComponentProps, createMemo, createSignal, JSX, Show } from 'solid-js';
 import { useFilteredUnreadCount, useInboxContext } from '../../context';
-import { ClassName, cn, getTagsFromTab, useStyle } from '../../helpers';
+import { ClassName, cn, createPresence, getTagsFromTab, useStyle } from '../../helpers';
 import { NotificationStatus, Tab } from '../../types';
 import { Dropdown, dropdownItemVariants, Tabs } from '../primitives';
 import { tabsTriggerVariants } from '../primitives/Tabs/TabsTrigger';
 
 const getDisplayCount = (count: number) => (count > 99 ? '99+' : String(count));
 
-export const InboxTabUnreadNotificationsCount = (props: { count: number }) => {
+/** The unread badge of a tab. It pops in and out with `show`, keeping its last count while it leaves. */
+export const InboxTabUnreadNotificationsCount = (props: { show: boolean; count: number }) => {
   const style = useStyle();
-  const displayCount = createMemo(() => getDisplayCount(props.count));
+  const [element, setElement] = createSignal<HTMLSpanElement>();
+  const presence = createPresence({ present: () => props.show, element, appear: false });
+  const shownCount = createMemo<number>((previous) => (props.show && props.count) || previous, props.count);
+  const displayCount = createMemo(() => getDisplayCount(shownCount()));
 
   return (
-    <span
-      class={style({
-        key: 'notificationsTabsTriggerCount',
-        className: 'nt-rounded-full nt-bg-counter nt-px-[6px] nt-text-counter-foreground nt-text-sm',
-      })}
-    >
-      {displayCount()}
-    </span>
+    <Show when={presence.isMounted()}>
+      <span
+        ref={setElement}
+        data-state={presence.state()}
+        class={style({
+          key: 'notificationsTabsTriggerCount',
+          className:
+            'nt-rounded-full nt-bg-counter nt-px-[6px] nt-text-counter-foreground nt-text-sm nt-motion-pop [--nv-motion-pop-scale:0.75]',
+        })}
+      >
+        {displayCount()}
+      </span>
+    </Show>
   );
 };
 
@@ -46,9 +55,10 @@ export const InboxTab = (props: Tab & { class?: ClassName }) => {
       >
         {props.label}
       </span>
-      <Show when={status() !== NotificationStatus.ARCHIVED && unreadCount()}>
-        <InboxTabUnreadNotificationsCount count={unreadCount()} />
-      </Show>
+      <InboxTabUnreadNotificationsCount
+        show={status() !== NotificationStatus.ARCHIVED && unreadCount() > 0}
+        count={unreadCount()}
+      />
     </Tabs.Trigger>
   );
 };
@@ -81,9 +91,10 @@ export const InboxDropdownTab = (props: InboxDropdownTabProps) => {
         {props.label}
       </span>
       {props.rightIcon}
-      <Show when={status() !== NotificationStatus.ARCHIVED && unreadCount()}>
-        <InboxTabUnreadNotificationsCount count={unreadCount()} />
-      </Show>
+      <InboxTabUnreadNotificationsCount
+        show={status() !== NotificationStatus.ARCHIVED && unreadCount() > 0}
+        count={unreadCount()}
+      />
     </Dropdown.Item>
   );
 };

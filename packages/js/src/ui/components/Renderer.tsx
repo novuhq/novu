@@ -17,6 +17,7 @@ import { MsTeamsConnectButton } from './msteams-connect-button/MsTeamsConnectBut
 import { MsTeamsLinkUser } from './msteams-link-user/MsTeamsLinkUser';
 import { NotificationCustomActions } from './Notification/NotificationCustomActions';
 import { NotificationDefaultActions } from './Notification/NotificationDefaultActions';
+import { TooltipGroupProvider } from './primitives/Tooltip';
 import { SlackConnectButton } from './slack-connect-button/SlackConnectButton';
 import { SlackLinkUser } from './slack-link-user/SlackLinkUser';
 import { Subscription } from './subscription/Subscription';
@@ -242,11 +243,13 @@ export const Renderer = (props: RendererProps) => {
       <LocalizationProvider store={stores.localization}>
         <AppearanceProvider store={stores.appearance}>
           <FocusManagerProvider>
-            <InboxProvider store={stores.inbox}>
-              <InboxComponentsRenderer elements={inboxComponents()} nodes={props.nodes} counts={stores.counts} />
-              <SimpleComponentsRenderer elements={subscriptionComponents()} nodes={props.nodes} />
-              <SimpleComponentsRenderer elements={channelComponents()} nodes={props.nodes} />
-            </InboxProvider>
+            <TooltipGroupProvider>
+              <InboxProvider store={stores.inbox}>
+                <InboxComponentsRenderer elements={inboxComponents()} nodes={props.nodes} counts={stores.counts} />
+                <SimpleComponentsRenderer elements={subscriptionComponents()} nodes={props.nodes} />
+                <SimpleComponentsRenderer elements={channelComponents()} nodes={props.nodes} />
+              </InboxProvider>
+            </TooltipGroupProvider>
           </FocusManagerProvider>
         </AppearanceProvider>
       </LocalizationProvider>

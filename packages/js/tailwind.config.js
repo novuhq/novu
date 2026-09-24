@@ -1,3 +1,5 @@
+const plugin = require('tailwindcss/plugin');
+
 function defaultColor(baseName) {
   return `var(--${baseName})`;
 }
@@ -17,6 +19,14 @@ function generateColorShades(baseName) {
     900: `var(--${baseName}-900)`,
   };
 }
+
+/**
+ * Engine motion runs on the `--nv-motion-*` tokens declared on `.novu` in `src/ui/index.css`, so a host can retune it
+ * and the `reduced`/`off` motion modes can shorten or zero it in one place. The fallbacks cover markup rendered
+ * outside a `.novu` root.
+ */
+const motionDuration = (token, fallback) => `var(--nv-motion-duration-${token}, ${fallback})`;
+const motionEase = (token, fallback) => `var(--nv-motion-ease-${token}, ${fallback})`;
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -86,6 +96,18 @@ module.exports = {
         'dev-stripes-gradient':
           'repeating-linear-gradient(135deg, oklch(from var(--nv-color-stripes) l c h / 0.1) 25%, oklch(from var(--nv-color-stripes) l c h / 0.1) 50%, oklch(from var(--nv-color-stripes) l c h / 0.2) 50%, oklch(from var(--nv-color-stripes) l c h / 0.2) 75%)',
       },
+      transitionDuration: {
+        DEFAULT: motionDuration('base', '160ms'),
+        fast: motionDuration('fast', '120ms'),
+        base: motionDuration('base', '160ms'),
+        slow: motionDuration('slow', '220ms'),
+      },
+      transitionTimingFunction: {
+        DEFAULT: motionEase('standard', 'cubic-bezier(0.2, 0, 0, 1)'),
+        standard: motionEase('standard', 'cubic-bezier(0.2, 0, 0, 1)'),
+        enter: motionEase('enter', 'cubic-bezier(0.16, 1, 0.3, 1)'),
+        exit: motionEase('exit', 'cubic-bezier(0.4, 0, 1, 1)'),
+      },
       animation: {
         stripes: 'stripes 1s linear infinite paused',
         shimmer: 'shimmer 1.5s ease-in-out infinite',
@@ -103,5 +125,12 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    // Decorative transforms that must not exist at all in the `reduced` motion mode. Attribute selectors only: a class
+    // inside a variant format would get the `nt-` prefix.
+    plugin(({ addVariant }) => {
+      addVariant('motion-full', ':where([data-nv-motion="full"]) &');
+    }),
+  ],
 };

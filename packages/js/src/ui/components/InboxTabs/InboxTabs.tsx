@@ -74,7 +74,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
 
   const moreTabsIconClass = style({
     key: 'moreTabs__icon',
-    className: 'nt-size-5',
+    className: 'nt-size-5 nt-transition-transform nt-duration-base group-data-[open=true]/trigger:nt-rotate-180',
     iconKey: 'arrowDown',
   });
 
@@ -113,7 +113,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
                     {...triggerProps}
                     class={cn(
                       tabsDropdownTriggerVariants(),
-                      'nt-ml-auto',
+                      'nt-ml-auto nt-group/trigger',
                       isTabsDropdownActive()
                         ? 'after:nt-border-b-primary'
                         : 'after:nt-border-b-transparent nt-text-foreground-alpha-700'
@@ -124,9 +124,10 @@ export const InboxTabs = (props: InboxTabsProps) => {
                       class={moreTabsIconClass}
                       fallback={<DefaultArrowDown class={moreTabsIconClass} />}
                     />
-                    <Show when={status() !== NotificationStatus.ARCHIVED && dropdownTabsUnreadSum()}>
-                      <InboxTabUnreadNotificationsCount count={dropdownTabsUnreadSum()} />
-                    </Show>
+                    <InboxTabUnreadNotificationsCount
+                      show={status() !== NotificationStatus.ARCHIVED && dropdownTabsUnreadSum() > 0}
+                      count={dropdownTabsUnreadSum()}
+                    />
                   </Button>
                 )}
               />
