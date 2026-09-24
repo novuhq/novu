@@ -4,6 +4,7 @@ import {
   type AgentEventEnvelope,
   type AgentMessageContent,
 } from '@novu/agent-event-protocol';
+import { describe, expect, it } from 'vitest';
 import { type AgentMessage, createInitialAgentConversationState } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 

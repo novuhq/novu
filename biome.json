@@ -21,7 +21,7 @@
       "!**/*.generated.ts",
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
-      "!playground",
+      "!playground/**/*",
       "!packages/novu/src/commands/connect/templates/web-chat",
       "!libs/internal-sdk",
       "!.github",
@@ -410,12 +410,7 @@
     {
       "includes": ["**/*.test.{ts,tsx,js}", "**/*.spec.{ts,tsx,js}", "**/*.e2e.{ts,js}"],
       "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off",
-            "noImplicitAnyLet": "off"
-          }
-        }
+        "enabled": false
       }
     },
     {
@@ -441,6 +436,29 @@
     {
       "includes": ["**/*.command.ts"],
       "plugins": ["./biome-plugins/command-session-exclusion.grit"]
+    },
+    {
+      "includes": ["packages/js/src/ui/core/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "solid-js/web": "The core never renders: it may use solid-js reactivity but not solid-js/web. Rendering belongs to the engine (src/ui/components) or a host wrapper."
+                },
+                "patterns": [
+                  {
+                    "group": ["**/components/**", "**/components"],
+                    "message": "The core must not depend on engine components; move the shared logic into the core instead."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {
