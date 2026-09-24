@@ -3068,28 +3068,11 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('dispatches a delete without a previous message when the stored row exists in a mention-only room', async () => {
+    it('skips a delete without a previous message in a mention-only room even when the stored row exists', async () => {
       const { handler, conversationService, bridgeExecutor } = makeHandler({
         history: [{ platformMessageId: 'msg-1', content: '@bot deploy is at 3pm', senderId: 'user1' }],
       });
       conversationService.findByPlatformThread.resolves({ ...conversation, isDirectMessage: false });
-      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
-
-      await handler.handleMessageDeleted(
-        'agent1',
-        mentionOnlyConfig as any,
-        { messageId: 'msg-1', threadId: 'slack:C1:root-ts', channelId: 'slack:C1', raw: {} } as any
-      );
-
-      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
-      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
-    });
-
-    it('skips a delete without a previous message or stored row in a mention-only room', async () => {
-      const { handler, conversationService, bridgeExecutor } = makeHandler();
-      conversationService.findByPlatformThread.resolves({ ...conversation, isDirectMessage: false });
-      conversationService.resolveCurrentMessage.resolves(null);
-      conversationService.deleteInboundMessage.resolves(null);
       const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
 
       await handler.handleMessageDeleted(

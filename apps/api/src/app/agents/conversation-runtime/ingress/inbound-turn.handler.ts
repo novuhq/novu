@@ -1695,8 +1695,6 @@ export class AgentInboundHandler implements OnModuleInit {
       operation: 'resolve-subscriber-message-deleted',
       platformUserId: event.previousMessage?.author?.userId ?? existing?.senderId,
       authorIsBot: event.previousMessage?.author?.isBot === true,
-      // A message rebuilt from the stored row has no mention state, but a stored row means the agent already saw it.
-      skipMentionGate: !event.previousMessage && (current ?? existing) != null,
       raw: event.raw,
       deliveryRevision: 'deleted',
     });
@@ -1787,7 +1785,6 @@ export class AgentInboundHandler implements OnModuleInit {
     operation: string;
     platformUserId?: string;
     authorIsBot?: boolean;
-    skipMentionGate?: boolean;
     raw?: unknown;
     storedAttachments?: StoredAttachment[];
     deliveryRevision?: string;
@@ -1904,7 +1901,6 @@ export class AgentInboundHandler implements OnModuleInit {
     platformThreadId: string;
     message: Message | null;
     authorIsBot?: boolean;
-    skipMentionGate?: boolean;
   }): Promise<boolean> {
     const { agentId, config, conversation, thread, platformThreadId, message } = params;
 
@@ -1912,7 +1908,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return true;
     }
 
-    if (message && !params.skipMentionGate) {
+    if (message) {
       await this.restoreMissingMentionFlag(config, thread, message);
       const mentionContext = await this.buildMentionContext(agentId, config, thread, platformThreadId, conversation);
 
