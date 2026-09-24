@@ -81,7 +81,7 @@ export function resolveActivityDateRange(
       return { after: subDays(now, 30).toISOString(), before: now.toISOString() };
     case '3M':
     case '90d':
-      return { after: subMonths(now, 3).toISOString(), before: now.toISOString() };
+      return { after: subDays(now, 90).toISOString(), before: now.toISOString() };
     case '12M':
       return { after: subMonths(now, 12).toISOString(), before: now.toISOString() };
     case 'mtd':

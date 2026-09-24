@@ -1,4 +1,4 @@
-import { format, isValid, setHours, setMinutes, startOfDay, startOfMonth, subMonths } from 'date-fns';
+import { endOfMinute, format, isValid, setHours, setMinutes, startOfDay, startOfMonth, subMonths } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
@@ -124,7 +124,9 @@ export function ActivityDateRangeFilter({
   };
 
   const after = draftRange?.from ? applyTime(draftRange.from, startTime) : undefined;
-  const before = draftRange?.to ? applyTime(draftRange.to, endTime) : undefined;
+  const selectedEnd = draftRange?.to ? applyTime(draftRange.to, endTime) : undefined;
+  /** The end input has minute precision, so the inclusive upper bound has to cover the whole selected minute. */
+  const before = selectedEnd ? endOfMinute(selectedEnd) : undefined;
   const bufferedRetentionStart = retentionStart ? new Date(retentionStart.getTime() - 60 * 60 * 1000) : undefined;
   const isRangeValid =
     after !== undefined &&
