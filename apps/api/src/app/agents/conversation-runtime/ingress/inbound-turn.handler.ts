@@ -358,25 +358,13 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId
     );
     const participantsSnapshot = existingConversation ? [...existingConversation.participants] : [];
-    const replyPolicy = config.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY;
-    const otherAgentsOnThread =
-      replyPolicy === AgentReplyPolicyEnum.SMART && isNestedSharedThread(config.platform, thread, platformThreadId)
-        ? await this.conversationService.countOtherAgentsOnPlatformThread(
-            config.environmentId,
-            config.organizationId,
-            platformThreadId,
-            agentId
-          )
-        : 0;
-    const mentionContext = {
-      replyPolicy,
-      platform: config.platform,
-      conversationExists: existingConversation != null,
+    const mentionContext = await this.buildMentionContext(
+      agentId,
+      config,
+      thread,
       platformThreadId,
-      humanParticipantCount: countHumanParticipants(existingConversation),
-      otherAgentCount: countOtherAgentParticipants(existingConversation, agentId) + otherAgentsOnThread,
-      smartMentionRequired: conversationHasSmartMentionRequired(existingConversation),
-    };
+      existingConversation
+    );
     if (
       await this.applyPrePersistenceMentionGate({
         agentId,
@@ -482,6 +470,35 @@ export class AgentInboundHandler implements OnModuleInit {
       mentionBotUserId,
       participantsSnapshot,
     });
+  }
+
+  private async buildMentionContext(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    platformThreadId: string,
+    conversation: ConversationEntity | null
+  ): Promise<ExplicitMentionContext> {
+    const replyPolicy = config.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY;
+    const otherAgentsOnThread =
+      replyPolicy === AgentReplyPolicyEnum.SMART && isNestedSharedThread(config.platform, thread, platformThreadId)
+        ? await this.conversationService.countOtherAgentsOnPlatformThread(
+            config.environmentId,
+            config.organizationId,
+            platformThreadId,
+            agentId
+          )
+        : 0;
+
+    return {
+      replyPolicy,
+      platform: config.platform,
+      conversationExists: conversation != null,
+      platformThreadId,
+      humanParticipantCount: countHumanParticipants(conversation),
+      otherAgentCount: countOtherAgentParticipants(conversation, agentId) + otherAgentsOnThread,
+      smartMentionRequired: conversationHasSmartMentionRequired(conversation),
+    };
   }
 
   /**
@@ -1604,14 +1621,6 @@ export class AgentInboundHandler implements OnModuleInit {
       isFirstMessageInThread: false,
     });
 
-    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
-      return;
-    }
-
-    if (await this.maybeStopKeylessInbound(agentId, config, thread, conversation)) {
-      return;
-    }
-
     await this.dispatchExistingConversationTurn({
       agentId,
       config,
@@ -1678,7 +1687,7 @@ export class AgentInboundHandler implements OnModuleInit {
       agentId,
       config,
       conversation,
-      thread: eventToThread(event),
+      thread: eventToThread(event, conversation),
       platformThreadId: threadId,
       message,
       previousMessage: null,
@@ -1783,6 +1792,13 @@ export class AgentInboundHandler implements OnModuleInit {
   }): Promise<void> {
     const { agentId, config, conversation, thread, platformThreadId, message, event } = params;
 
+    if (
+      (event === AgentEventEnum.ON_MESSAGE_UPDATED || event === AgentEventEnum.ON_MESSAGE_DELETED) &&
+      (await this.shouldSkipRevisionDispatch(params))
+    ) {
+      return;
+    }
+
     const resolution = params.platformUserId
       ? await this.resolveSubscriber({
           agentId,
@@ -1871,6 +1887,41 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     await runtime.dispatch(turn);
+  }
+
+  /**
+   * Edits and deletes reach the agent only when a new message in the same
+   * thread would. The caller has already written the ledger revision.
+   */
+  private async shouldSkipRevisionDispatch(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    thread: Thread;
+    platformThreadId: string;
+    message: Message | null;
+    authorIsBot?: boolean;
+  }): Promise<boolean> {
+    const { agentId, config, conversation, thread, platformThreadId, message } = params;
+
+    if (params.authorIsBot) {
+      return true;
+    }
+
+    if (message) {
+      await this.restoreMissingMentionFlag(config, thread, message);
+      const mentionContext = await this.buildMentionContext(agentId, config, thread, platformThreadId, conversation);
+
+      if (requiresExplicitMention(thread, message, mentionContext)) {
+        return true;
+      }
+    }
+
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
+      return true;
+    }
+
+    return this.maybeStopKeylessInbound(agentId, config, thread, conversation);
   }
 
   async handleAction(
@@ -2156,8 +2207,9 @@ function readPlatformEditedAt(message: Message): string | undefined {
   return typeof editedTs === 'string' && editedTs.length > 0 ? editedTs : undefined;
 }
 
-function eventToThread(event: MessageDeletedEvent): Thread {
-  return { id: event.threadId, channelId: event.channelId, isDM: false } as Thread;
+function eventToThread(event: MessageDeletedEvent, conversation: ConversationEntity): Thread {
+  // Conversations created before `isDirectMessage` was recorded count as DMs so the reply-policy gate fails open.
+  return { id: event.threadId, channelId: event.channelId, isDM: conversation.isDirectMessage !== false } as Thread;
 }
 
 function stubDeletedMessage(event: MessageDeletedEvent, existing: ConversationActivityEntity | null): Message {

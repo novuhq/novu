@@ -2878,6 +2878,16 @@ describe('AgentInboundHandler', () => {
       expect(params.event).to.equal(AgentEventEnum.ON_REACTION);
       expect(params.workflowOrigin).to.deep.equal(snapshot);
     });
+
+    it('dispatches reactions in a mention-only room without applying the reply-policy gate', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleReaction('agent1', mentionOnlyConfig as any, makeReactionEvent() as any);
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_REACTION);
+    });
   });
 
   describe('handleMessageUpdated', () => {
@@ -2897,7 +2907,7 @@ describe('AgentInboundHandler', () => {
       await handler.handleMessageUpdated(
         'agent1',
         config as any,
-        { id: 'thread1' } as any,
+        { id: 'thread1', isDM: true } as any,
         message as any,
         previousMessage as any
       );
@@ -2922,11 +2932,72 @@ describe('AgentInboundHandler', () => {
       await handler.handleMessageUpdated(
         'agent1',
         config as any,
-        { id: 'thread1' } as any,
+        { id: 'thread1', isDM: true } as any,
         {
           id: 'msg-1',
           text: 'where is order 4321?',
           author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('persists an unmentioned edit in a mention-only room but skips dispatch', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        mentionOnlyConfig as any,
+        { id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false } as any,
+        {
+          id: 'msg-1',
+          text: 'deploy is at 5pm',
+          author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          isMention: false,
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('dispatches an edit that mentions the agent in a mention-only room', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        mentionOnlyConfig as any,
+        { id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false } as any,
+        {
+          id: 'msg-1',
+          text: '@bot deploy is at 5pm',
+          author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          isMention: true,
+          raw: {},
+        } as any
+      );
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_UPDATED);
+    });
+
+    it('persists an edit of a bot-authored message but skips dispatch without throwing', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        config as any,
+        { id: 'thread1', isDM: true } as any,
+        {
+          id: 'msg-1',
+          text: 'streamed reply',
+          author: { userId: 'bot1', fullName: 'Bot', userName: 'bot', isBot: true },
           raw: {},
         } as any
       );
@@ -2970,6 +3041,56 @@ describe('AgentInboundHandler', () => {
       expect(params.event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
       expect(params.message.id).to.equal('msg-1');
       expect(params.message.text).to.equal('where is order 1234?');
+    });
+
+    it('persists a delete in a mention-only shared room but skips dispatch', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      conversationService.findByPlatformThread.resolves({ ...conversation, isDirectMessage: false });
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        mentionOnlyConfig as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'slack:C1:root-ts',
+          channelId: 'slack:C1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'deploy is at 3pm',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('dispatches a delete in a mention-only direct message', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      conversationService.findByPlatformThread.resolves({ ...conversation, isDirectMessage: true });
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        mentionOnlyConfig as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'slack:D1:',
+          channelId: 'slack:D1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'deploy is at 3pm',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
     });
   });
 });
