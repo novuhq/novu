@@ -132,6 +132,7 @@ export abstract class SendMessageBase extends SendMessageType {
   protected getIntegrationFilterData(command: SendMessageChannelCommand) {
     return {
       tenant: command.job.tenant,
+      payload: command.compileContext?.payload,
       subscriber: command.compileContext?.subscriber,
       context: command.compileContext?.context,
       workflow: buildWorkflowVariablesForJob({

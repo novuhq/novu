@@ -48,7 +48,7 @@ Pinning `integrationIdentifier` on the trigger skips the email and SMS condition
 
 ## Data available in conditions
 
-Integration conditions can read **subscriber**, **context**, and **workflow** values. They cannot read trigger payload or previous step results. Use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) when conditions depend on workflow-specific payload fields or earlier step output.
+Integration conditions can read **subscriber**, **context**, and **workflow** values. Conditions cannot use payload variables or previous step results. Use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) when conditions depend on workflow-specific payload fields or earlier step output. Existing integrations that already stored `payload.*` rules still evaluate those rules at send time.
 
 The dashboard field picker includes:
 
@@ -102,7 +102,7 @@ The dashboard stores conditions as JSON Logic on the integration `rules` field. 
 }
 ```
 
-Allowed variables are the same `context.*`, `subscriber.*`, and listed `workflow.*` fields as in the dashboard. Payload paths and unknown `workflow.*` paths are rejected.
+Create and update accept the same `context.*`, `subscriber.*`, and listed `workflow.*` fields as the dashboard. Payload paths and unknown `workflow.*` paths are rejected on write. Already-saved `payload.*` rules still evaluate at send time.
 
 ## Related
 

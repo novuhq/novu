@@ -24,6 +24,15 @@ describe('integration rules helpers', () => {
     expect(valid).to.deep.equal([]);
   });
 
+  it('still evaluates already-saved payload rules at send time', () => {
+    const matching = evaluateIntegrationRules(
+      { '==': [{ var: 'payload.region' }, 'eu'] },
+      { payload: { region: 'eu' } }
+    );
+
+    expect(matching).to.deep.equal({ result: true, issues: [] });
+  });
+
   it('accepts context.tenant.id', () => {
     const valid = getIntegrationRulesIssues({
       '==': [{ var: 'context.tenant.id' }, 'acme'],

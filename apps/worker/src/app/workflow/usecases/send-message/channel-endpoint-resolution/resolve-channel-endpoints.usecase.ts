@@ -165,6 +165,7 @@ export class ResolveChannelEndpoints {
     }
 
     const evaluation = evaluateIntegrationRules(integration.rules, {
+      payload: command.filterData?.payload,
       subscriber: command.filterData?.subscriber,
       context: command.filterData?.context,
       workflow: command.filterData?.workflow,
