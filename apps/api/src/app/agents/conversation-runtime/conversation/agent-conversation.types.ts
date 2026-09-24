@@ -21,6 +21,24 @@ export interface PersistInboundMessageParams {
   organizationId: string;
 }
 
+export interface ImportInboundMessage {
+  identifier: string;
+  senderId: string;
+  senderName?: string;
+  content: string;
+  platformMessageId: string;
+}
+
+export interface ImportInboundMessagesParams {
+  conversationId: string;
+  platform: string;
+  integrationId: string;
+  platformThreadId: string;
+  messages: ImportInboundMessage[];
+  environmentId: string;
+  organizationId: string;
+}
+
 export interface ConversationActivityContext {
   conversationId: string;
   channel: ConversationChannel;

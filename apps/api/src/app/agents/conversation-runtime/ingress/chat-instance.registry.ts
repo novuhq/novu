@@ -632,7 +632,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     chat.onNewMention(async (thread: Thread, message: Message, context?: MessageContext) => {
       try {
-        await thread.subscribe();
+        // Shared rooms stay unsubscribed until the mention gate in the inbound
+        // handler decides this agent should follow the thread.
+        if (thread.isDM) {
+          await thread.subscribe();
+        }
         this.rehydrateBurstAttachments(cached, message, context);
         await callbacks.onMessage(agentId, cached.config, thread, message, context);
       } catch (err) {
