@@ -1,7 +1,15 @@
 export class DurationUtils {
   static isISO8601(value: string): boolean {
-    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
-    if (!iso8601Regex.test(value)) {
+    const iso8601Regex = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
+    const match = iso8601Regex.exec(value);
+    if (!match) {
+      return false;
+    }
+
+    // `new Date()` rolls impossible days over (2025-02-30 becomes March 2), so check the calendar date
+    const [, year, month, day] = match.map(Number);
+    const calendarDate = new Date(Date.UTC(year, month - 1, day));
+    if (calendarDate.getUTCMonth() !== month - 1 || calendarDate.getUTCDate() !== day) {
       return false;
     }
 

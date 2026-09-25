@@ -11,6 +11,13 @@ describe('DurationUtils', () => {
       expect(DurationUtils.isISO8601('2025-06-15T08:30:00')).toBe(true);
     });
 
+    it('should validate ISO-8601 timestamps with a UTC offset', () => {
+      expect(DurationUtils.isISO8601('2025-06-15T08:30:00+02:00')).toBe(true);
+      expect(DurationUtils.isISO8601('2025-06-15T08:30:00-05:00')).toBe(true);
+      expect(DurationUtils.isISO8601('2025-06-15T08:30:00+00:00')).toBe(true);
+      expect(DurationUtils.isISO8601('2025-06-15T08:30:00.123456+00:00')).toBe(true);
+    });
+
     it('should reject invalid ISO-8601 formats', () => {
       expect(DurationUtils.isISO8601('2025-01-01')).toBe(false);
       expect(DurationUtils.isISO8601('12:00:00')).toBe(false);
