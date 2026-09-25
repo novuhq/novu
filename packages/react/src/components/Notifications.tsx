@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useNotificationOutlets } from '../hooks/internal/useNotificationOutlets';
 import { NoRendererProps, NotificationRendererProps, SubjectBodyRendererProps } from '../utils/types';
 import { Mounter } from './Mounter';
+import { OutletScope } from './OutletScope';
 
 export type NotificationProps = {
   onNotificationClick?: NotificationClickHandler;
@@ -10,7 +11,7 @@ export type NotificationProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
 } & (NotificationRendererProps | SubjectBodyRendererProps | NoRendererProps);
 
-export const Notifications = React.memo((props: NotificationProps) => {
+const NotificationsMount = (props: NotificationProps) => {
   const { onNotificationClick, onPrimaryActionClick, onSecondaryActionClick } = props;
   const outlets = useNotificationOutlets(props);
 
@@ -20,6 +21,12 @@ export const Notifications = React.memo((props: NotificationProps) => {
   );
 
   return <Mounter name="Notifications" props={mountProps} />;
-});
+};
+
+export const Notifications = React.memo((props: NotificationProps) => (
+  <OutletScope>
+    <NotificationsMount {...props} />
+  </OutletScope>
+));
 
 Notifications.displayName = 'Notifications';

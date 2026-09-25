@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { NovuUIProvider } from '../context/NovuUIContext';
+import { OutletScopeProvider } from '../context/NovuUIContext';
 import { OutletStore } from '../context/OutletStore';
 import { useOutletRenderer } from '../hooks/internal/useOutletRenderer';
 import { OutletHost } from './OutletHost';
@@ -86,10 +86,10 @@ describe('OutletHost', () => {
     };
 
     const Tree = ({ suffix }: { suffix: string }) => (
-      <NovuUIProvider value={{ novuUI: {} as never, outlets: store, icons: {} }}>
+      <OutletScopeProvider value={store}>
         <OutletHost store={store} />
         <Host suffix={suffix} />
-      </NovuUIProvider>
+      </OutletScopeProvider>
     );
 
     const { rerender } = render(<Tree suffix="!" />);

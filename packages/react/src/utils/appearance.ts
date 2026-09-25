@@ -1,4 +1,5 @@
 import type { AllAppearance, AllIconKey, AllIconOverrides } from '@novu/js/ui';
+import { outletScopeFor } from '../context/mountPointScopes';
 import type { OutletStore } from '../context/OutletStore';
 import type { ReactAllAppearance, ReactIconRenderer, ReactInboxAppearance, ReactSubscriptionAppearance } from './types';
 
@@ -22,7 +23,8 @@ export function adaptAppearanceForJs(
 
       if (reactRenderer) {
         jsIcons[iconKey] = (el: HTMLDivElement, props: { class?: string }) => {
-          return outlets.mount(el, reactRenderer, [props]);
+          // hosted by the scope of the mount point the engine renders this icon into, not by the store it was built on
+          return outletScopeFor(el, outlets).mount(el, reactRenderer, [props]);
         };
       }
     }

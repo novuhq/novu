@@ -2,7 +2,6 @@ import { render } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { NovuUIProvider } from '../context/NovuUIContext';
-import { OutletStore } from '../context/OutletStore';
 import { Mounter, type MounterProps } from './Mounter';
 
 type MountCall = { name: string; element: HTMLElement; props: unknown; bare?: boolean };
@@ -16,7 +15,7 @@ const createFakeEngine = () => {
 
 const renderMounter = (engine: ReturnType<typeof createFakeEngine>, props: MounterProps) =>
   render(
-    <NovuUIProvider value={{ novuUI: engine.novuUI, outlets: new OutletStore(), icons: {} }}>
+    <NovuUIProvider value={{ novuUI: engine.novuUI, icons: {} }}>
       <Mounter {...props} />
     </NovuUIProvider>
   );
@@ -36,7 +35,7 @@ describe('Mounter', () => {
     expect(mountArgs.element.isConnected).toBe(true);
 
     view.rerender(
-      <NovuUIProvider value={{ novuUI: engine.novuUI, outlets: new OutletStore(), icons: {} }}>
+      <NovuUIProvider value={{ novuUI: engine.novuUI, icons: {} }}>
         <Mounter name="Bell" props={second} />
       </NovuUIProvider>
     );

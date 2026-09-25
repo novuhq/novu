@@ -1,6 +1,7 @@
 import type { MountHandle, NovuUI } from '@novu/js/ui';
 import { useRef } from 'react';
-import { useNovuUI } from '../context/NovuUIContext';
+import { registerMountPoint } from '../context/mountPointScopes';
+import { useNovuUI, useOutletScope } from '../context/NovuUIContext';
 import { useIsomorphicLayoutEffect } from '../hooks/internal/useIsomorphicLayoutEffect';
 
 type MountComponentParams = Parameters<NovuUI['mountComponent']>[0];
@@ -20,10 +21,21 @@ export type MounterProps = {
  */
 export function Mounter({ name, props, bare }: MounterProps) {
   const { novuUI } = useNovuUI();
+  const scope = useOutletScope();
   const ref = useRef<HTMLDivElement>(null);
   const handleRef = useRef<MountHandle<MountComponentParams['props']> | null>(null);
   const latestProps = useRef(props);
   latestProps.current = props;
+
+  // Before the mount below: the engine opens outlets synchronously while mounting, and those look the scope up.
+  useIsomorphicLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || !scope) {
+      return;
+    }
+
+    return registerMountPoint(element, scope);
+  }, [scope]);
 
   useIsomorphicLayoutEffect(() => {
     const element = ref.current;
