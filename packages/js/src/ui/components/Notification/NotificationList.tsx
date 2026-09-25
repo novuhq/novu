@@ -1,4 +1,4 @@
-import { type Accessor, createEffect, createMemo, For, JSX, onCleanup, Show } from 'solid-js';
+import { type Accessor, createEffect, createMemo, For, JSX, onCleanup, onMount, Show } from 'solid-js';
 import type { Notification as NotificationType } from '../../../notifications';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
@@ -9,6 +9,7 @@ import {
   animateItemEnter,
   animateItemExit,
   fadeInList,
+  fadeOutList,
   isItemOnScreen,
   moveFocusOutOf,
 } from '../../helpers/listMotion';
@@ -56,6 +57,19 @@ export const NotificationList = (props: NotificationListProps) => {
   const { observeNotification, unobserveNotification } = useNotificationVisibility();
   let notificationListElement: HTMLDivElement | undefined;
 
+  // Items that are there before the list was first painted (from the cache) appear with whatever brought the list in,
+  // such as the Inbox opening or a tab panel fading in. Fading the list as well would play a second fade over it.
+  let hasPainted = typeof requestAnimationFrame !== 'function';
+  onMount(() => {
+    if (hasPainted) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      hasPainted = true;
+    });
+    onCleanup(() => cancelAnimationFrame(frame));
+  });
+
   // Removed items stay rendered (inert) while they animate out, so the list doesn't jump and a host-rendered item
   // keeps its content until it is gone; items inserted at the top expand in.
   const presence = createListPresence<string>({
@@ -70,7 +84,21 @@ export const NotificationList = (props: NotificationListProps) => {
       unobserveNotification(item);
     },
     onRestore: (id, item) => observeNotification(item, id),
-    onSettle: () => fadeInList(notificationListElement),
+    // A filter change or a refetch: the items fade out, then the new content fades in from its top.
+    exitList: (mode) => {
+      const animation = fadeOutList(notificationListElement, mode);
+      animation?.finished.then(
+        () => notificationListElement?.scrollTo({ top: 0 }),
+        () => {}
+      );
+
+      return animation;
+    },
+    enterList: (kind) => {
+      if (kind !== 'load' || hasPainted) {
+        fadeInList(notificationListElement, motion());
+      }
+    },
   });
 
   createEffect(() => {
@@ -116,6 +144,9 @@ export const NotificationList = (props: NotificationListProps) => {
 
               return (
                 <div
+                  // An item that collapses (`overflow: hidden`) would otherwise shrink to nothing at once in a list that
+                  // overflows, instead of animating its height.
+                  class="nt-shrink-0"
                   ref={(el) => {
                     presence.register(id, el);
                     // Start observing this notification for visibility tracking

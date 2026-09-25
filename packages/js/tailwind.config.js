@@ -131,6 +131,15 @@ module.exports = {
     // inside a variant format would get the `nt-` prefix.
     plugin(({ addVariant }) => {
       addVariant('motion-full', ':where([data-nv-motion="full"]) &');
+      // State variants that add no specificity, so a host's class or `appearance.elements` style on the element still
+      // overrides what they set, as it would a plain utility. Attribute selectors only, for the same reason as above.
+      addVariant('is-open', '&:where([data-open="true"])');
+      addVariant('is-pressed', '&:where(:active)');
+      addVariant('is-highlighted', '&:where(:hover, :focus-visible)');
+      // Inside an open popover trigger, including an icon a host renders into an outlet.
+      addVariant('in-expanded', ':where([aria-expanded="true"]) &');
+      // The direct child of a hovered element, such as the default icon of a button.
+      addVariant('in-hover', ':where(:hover) > &');
     }),
   ],
 };

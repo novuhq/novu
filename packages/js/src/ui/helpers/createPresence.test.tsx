@@ -1,4 +1,4 @@
-import { createRoot, createSignal } from 'solid-js';
+import { createEffect, createRoot, createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { stubRunningExitAnimation } from '../testing/fakes';
 import { createPresence } from './createPresence';
@@ -32,6 +32,20 @@ describe('createPresence', () => {
     setPresent(false);
     expect(presence.state()).toBe('closed');
     expect(presence.isMounted()).toBe(false);
+    dispose();
+  });
+
+  it('mounts when `present` turns true before its effects first run', () => {
+    const [present, setPresent] = createSignal(false);
+    const { presence, dispose } = createRoot((dispose) => {
+      const presence = createPresence({ present, element: () => undefined });
+      // A parent that sets the initial value in an effect, such as tabs that pick up their `value`.
+      createEffect(() => setPresent(true));
+
+      return { presence, dispose };
+    });
+
+    expect(presence.isMounted()).toBe(true);
     dispose();
   });
 

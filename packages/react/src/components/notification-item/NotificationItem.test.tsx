@@ -142,9 +142,8 @@ describe('NotificationItem', () => {
 
   it('lets the dot play its exit before removing it, without animating it on mount', async () => {
     const engine = createEngine();
-    const outlets = new OutletStore();
     const tree = (notification: Notification) => (
-      <NovuUIProvider value={{ novuUI: engine.novuUI, outlets, icons: {} }}>
+      <NovuUIProvider value={{ novuUI: engine.novuUI, icons: {} }}>
         <NotificationHandlersProvider value={{}}>
           <NotificationItem notification={notification} />
         </NotificationHandlersProvider>

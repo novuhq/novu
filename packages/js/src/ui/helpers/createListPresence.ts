@@ -3,12 +3,14 @@ import type { MotionMode } from '../core/motion/mode';
 
 /**
  * - `reset`: the list is loading again (a filter or tab change, a refetch); render the new keys, no motion.
+ * - `swap`: the list starts loading other content while it shows items. They stay, inert, while the whole list fades
+ *   out; then it renders what it has by then (its placeholder, or the new items) and fades back in.
  * - `load`: the first keys after a (re)load.
- * - `bulk`: many keys went at once (read all, archive all).
  * - `replace`: the keys were swapped wholesale.
- * - `update`: the usual case; removed keys leave with an exit, keys inserted at the top enter.
+ * - `update`: the usual case; removed keys leave with an exit, keys inserted at the top enter. Keys removed together,
+ *   as by read all or archive all, leave one after another.
  */
-export type ListChangeKind = 'reset' | 'load' | 'bulk' | 'replace' | 'update';
+export type ListChangeKind = 'reset' | 'swap' | 'load' | 'replace' | 'update';
 
 export type ListPlan<K> = {
   kind: ListChangeKind;
@@ -18,8 +20,6 @@ export type ListPlan<K> = {
   entering: readonly K[];
 };
 
-/** More keys than this removed in one change is a bulk action: no per-item exit. */
-export const BULK_REMOVAL_THRESHOLD = 5;
 /** Up to this many keys inserted at the top of the list animate in; more is a new page of data. */
 export const MAX_ANIMATED_INSERTS = 3;
 
@@ -78,6 +78,10 @@ type ListChangeInput<K> = {
   ready: boolean;
   wasReady: boolean;
   motion: MotionMode;
+  /** The list can fade out as a whole when it starts loading other content (see `swap`). */
+  canSwap?: boolean;
+  /** A swap runs: the items it holds stay until it ends, whatever the keys do meanwhile. */
+  swapping?: boolean;
 };
 
 /** Decides how the list moves from what it renders now to `next`. Pure, so every case can be tested on its own. */
@@ -88,9 +92,20 @@ export const planListChange = <K>(input: ListChangeInput<K>): ListPlan<K> => {
     leaving: new Set(),
     entering: [],
   });
+  const swap = (): ListPlan<K> => ({
+    kind: 'swap',
+    rendered: input.rendered,
+    leaving: new Set(input.rendered),
+    entering: [],
+  });
 
+  if (input.swapping) {
+    return swap();
+  }
   if (!input.ready) {
-    return settle('reset');
+    const showsItems = input.rendered.length > input.leaving.size;
+
+    return input.canSwap && input.wasReady && input.motion !== 'off' && showsItems ? swap() : settle('reset');
   }
   if (!input.wasReady) {
     return settle('load');
@@ -102,11 +117,6 @@ export const planListChange = <K>(input: ListChangeInput<K>): ListPlan<K> => {
   const nextKeys = new Set(input.next);
   const renderedKeys = new Set(input.rendered);
   const removed = input.rendered.filter((key) => !nextKeys.has(key));
-  const newlyRemoved = removed.filter((key) => !input.leaving.has(key));
-  if (newlyRemoved.length > BULK_REMOVAL_THRESHOLD) {
-    return settle('bulk');
-  }
-
   const added = input.next.filter((key) => !renderedKeys.has(key));
   const settledCount = input.rendered.length - input.leaving.size;
   const firstKept = input.next.findIndex((key) => renderedKeys.has(key));
@@ -129,6 +139,11 @@ export const planListChange = <K>(input: ListChangeInput<K>): ListPlan<K> => {
   };
 };
 
+/** Items that leave in one change go one after another, top first, this far apart. */
+export const EXIT_STAGGER_MS = 30;
+/** Items past this many leave with the last delay, so a long bulk action doesn't drag on. */
+const MAX_STAGGER_STEPS = 4;
+
 const sameKeys = <K>(a: readonly K[], b: readonly K[]) =>
   a.length === b.length && a.every((key, index) => key === b[index]);
 
@@ -141,15 +156,23 @@ export type ListPresenceOptions<K> = {
   motion: Accessor<MotionMode>;
   /** Whether an item is visible in the list; items outside it are added and removed without motion. */
   isOnScreen: (item: HTMLElement) => boolean;
-  /** Starts the exit of an item and returns it; `undefined` removes the item at once. */
-  exit: (item: HTMLElement, motion: MotionMode) => Animation | undefined;
+  /** Starts the exit of an item after `delay` ms and returns it; `undefined` removes the item at once. */
+  exit: (item: HTMLElement, motion: MotionMode, delay: number) => Animation | undefined;
   enter: (item: HTMLElement, motion: MotionMode) => void;
   /** An item starts leaving, right before it turns inert: move focus out of it, stop tracking it. */
   onLeave?: (key: K, item: HTMLElement) => void;
   /** A leaving item came back before its exit ended. */
   onRestore?: (key: K, item: HTMLElement) => void;
-  /** The list was swapped without per-item motion (`load`, `bulk`, `replace`) and has items. */
-  onSettle?: (kind: ListChangeKind) => void;
+  /**
+   * Fades the whole list out when it starts loading other content, holding the last frame until it is cancelled.
+   * Without it, or when it returns `undefined`, the list shows its placeholder at once.
+   */
+  exitList?: (motion: MotionMode) => Animation | undefined;
+  /**
+   * Fades the whole list in: when new items replace others without per-item motion (`load`, `replace`), when a swap
+   * ends, whatever the list shows then, and when the last item has left, for the empty state.
+   */
+  enterList?: (kind: ListChangeKind) => void;
 };
 
 const markLeaving = (item: HTMLElement) => {
@@ -172,6 +195,7 @@ const restoreItem = (item: HTMLElement) => {
 
 /**
  * Keeps removed items of a keyed list rendered while they animate out, and animates items inserted at the top in.
+ * When the list starts loading other content (a filter change, a refetch), its items fade out together first.
  *
  * Render `rendered()` with a keyed `For` and pass every item element to `register`. The rendered keys are derived
  * in the same reactive pass as `keys`: if `For` saw a key disappear even once it would dispose the item, and with
@@ -201,9 +225,12 @@ export const createListPresence = <K>(options: ListPresenceOptions<K>) => {
           ready,
           wasReady: previous.wasReady,
           motion: options.motion(),
+          canSwap: options.exitList !== undefined,
+          swapping: previous.plan.kind === 'swap' && rendered.length > 0,
         });
 
-        return { plan, wasReady: ready };
+        // The list counts as loading until a swap ends, so the content it shows then arrives as a fresh `load`.
+        return { plan, wasReady: plan.kind === 'swap' ? false : ready };
       });
     },
     { plan: initialPlan, wasReady: false }
@@ -217,7 +244,7 @@ export const createListPresence = <K>(options: ListPresenceOptions<K>) => {
     setDropTick((tick) => tick + 1);
   };
 
-  // An exit ends early when its key came back, or when a reset or a bulk change flushed it.
+  // An exit ends early when its key came back, or when a reset flushed it.
   const endStaleExits = (plan: ListPlan<K>) => {
     for (const [key, animation] of exits) {
       if (plan.leaving.has(key)) {
@@ -233,21 +260,22 @@ export const createListPresence = <K>(options: ListPresenceOptions<K>) => {
     }
   };
 
-  const startExit = (key: K, motion: MotionMode) => {
+  /** Returns whether the item animates out; one that is off screen, or can't animate, goes at once. */
+  const startExit = (key: K, motion: MotionMode, delay: number): boolean => {
     const item = elements.get(key);
     if (!item || motion === 'off' || !options.isOnScreen(item)) {
       drop(key);
 
-      return;
+      return false;
     }
     // Focus leaves first: once the item is inert, focus inside it would drop to the document.
     options.onLeave?.(key, item);
     markLeaving(item);
-    const animation = options.exit(item, motion);
+    const animation = options.exit(item, motion, delay);
     if (!animation) {
       drop(key);
 
-      return;
+      return false;
     }
     exits.set(key, animation);
     animation.finished.then(
@@ -259,28 +287,109 @@ export const createListPresence = <K>(options: ListPresenceOptions<K>) => {
       },
       () => {}
     );
+
+    return true;
+  };
+
+  let swapExit: Animation | undefined;
+  let lastKind: ListChangeKind = initialPlan.kind;
+  let lastCount = 0;
+
+  // Every item the swap held goes at once; the ones the new content has too come back in `restoreSwapped`.
+  const endSwap = () => {
+    // Drops the held last frame. The list fades back in with its new content right after, before the next paint.
+    swapExit?.cancel();
+    swapExit = undefined;
+    for (const key of untrack(rendered)) {
+      finished.add(key);
+    }
+    setDropTick((tick) => tick + 1);
+  };
+
+  const startSwap = (plan: ListPlan<K>, motion: MotionMode) => {
+    if (swapExit) {
+      return;
+    }
+    for (const key of plan.rendered) {
+      const item = elements.get(key);
+      if (item && !exits.has(key)) {
+        options.onLeave?.(key, item);
+        markLeaving(item);
+      }
+    }
+    const animation = options.exitList?.(motion);
+    if (!animation) {
+      endSwap();
+
+      return;
+    }
+    swapExit = animation;
+    animation.finished.then(
+      () => {
+        if (swapExit === animation) {
+          endSwap();
+        }
+      },
+      () => {}
+    );
+  };
+
+  // `For` keeps the element of a key that the new content has too, so it has to become live again.
+  const restoreSwapped = (plan: ListPlan<K>) => {
+    for (const key of plan.rendered) {
+      const item = elements.get(key);
+      if (item?.hasAttribute('data-leaving') && !exits.has(key)) {
+        restoreItem(item);
+        options.onRestore?.(key, item);
+      }
+    }
+  };
+
+  onCleanup(() => swapExit?.cancel());
+
+  const moveItems = (plan: ListPlan<K>, motion: MotionMode) => {
+    // `leaving` follows the list order, so a bulk action sweeps the visible items out from the top. `reduced` motion
+    // fades them together.
+    let step = 0;
+    for (const key of plan.leaving) {
+      if (!exits.has(key)) {
+        const delay = motion === 'full' ? Math.min(step, MAX_STAGGER_STEPS) * EXIT_STAGGER_MS : 0;
+        if (startExit(key, motion, delay)) {
+          step += 1;
+        }
+      }
+    }
+
+    for (const key of plan.entering) {
+      const item = elements.get(key);
+      if (item && options.isOnScreen(item)) {
+        options.enter(item, motion);
+      }
+    }
   };
 
   createEffect(
     on(state, ({ plan }) => {
       const motion = untrack(options.motion);
+      const afterSwap = lastKind === 'swap' && plan.kind !== 'swap';
+      const emptied = lastCount > 0 && plan.rendered.length === 0;
+      lastKind = plan.kind;
+      lastCount = plan.rendered.length;
       endStaleExits(plan);
 
-      for (const key of plan.leaving) {
-        if (!exits.has(key)) {
-          startExit(key, motion);
-        }
-      }
+      if (plan.kind === 'swap') {
+        startSwap(plan, motion);
 
-      for (const key of plan.entering) {
-        const item = elements.get(key);
-        if (item && options.isOnScreen(item)) {
-          options.enter(item, motion);
-        }
+        return;
       }
+      if (afterSwap) {
+        restoreSwapped(plan);
+      }
+      moveItems(plan, motion);
 
-      if (plan.kind !== 'update' && plan.kind !== 'reset' && plan.rendered.length > 0) {
-        options.onSettle?.(plan.kind);
+      const isFresh = plan.kind === 'load' || plan.kind === 'replace';
+      if (afterSwap || (isFresh && plan.rendered.length > 0) || (emptied && plan.kind === 'update')) {
+        options.enterList?.(plan.kind);
       }
     })
   );

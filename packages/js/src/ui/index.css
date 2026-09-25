@@ -413,12 +413,6 @@
   }
 }
 
-@keyframes nv-tab-indicator {
-  from {
-    transform: scaleX(0);
-  }
-}
-
 /* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
 @tailwind components;
 /* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
@@ -426,9 +420,15 @@
 
 /*
  * Motion recipes. A presence-driven element renders `data-state="open"` or `"closed"` (see `createPresence`):
- * `open` plays `enter`, `closed` plays `exit` and keeps its last frame until the element is removed, and no state
- * means no animation. Each recipe sets every `--tw-enter/exit-*` variable it uses, so nested recipes don't inherit
- * them; don't combine a recipe with the `nt-animate-in/out` utilities, which reset those variables.
+ * `open` plays `nv-enter`, `closed` plays `nv-exit` and keeps its last frame until the element is removed, and no
+ * state means no animation. Each recipe sets every `--tw-enter/exit-*` variable it uses, so nested recipes don't
+ * inherit them; don't combine a recipe with the `nt-animate-in/out` utilities, which reset those variables.
+ *
+ * No selector weighs more than a single class: states, sides and ancestors sit inside `:where()`. A host's class or
+ * `appearance.elements` style on the same element therefore overrides the motion (`animation: none`), because the
+ * host's styles load after these. Among the rules below, a later one wins over an earlier one, so order matters.
+ * The one exception is the hover reveal, which keeps the weight of the `group-hover` utilities it replaced.
+ * `recipes.test.ts` holds this line.
  */
 /* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
 @layer components {
@@ -438,7 +438,8 @@
   .nt-motion-pop,
   .nt-motion-pill,
   .nt-motion-fade,
-  .nt-motion-page {
+  .nt-motion-page,
+  .nt-motion-roll {
     --tw-enter-opacity: 0;
     --tw-enter-scale: 1;
     --tw-enter-rotate: 0;
@@ -449,30 +450,6 @@
     --tw-exit-rotate: 0;
     --tw-exit-translate-x: 0;
     --tw-exit-translate-y: 0;
-  }
-
-  :is(
-      .nt-motion-panel,
-      .nt-motion-menu,
-      .nt-motion-tooltip,
-      .nt-motion-pop,
-      .nt-motion-pill,
-      .nt-motion-fade
-    )[data-state="open"] {
-    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
-  }
-
-  :is(
-      .nt-motion-panel,
-      .nt-motion-menu,
-      .nt-motion-tooltip,
-      .nt-motion-pop,
-      .nt-motion-pill,
-      .nt-motion-fade,
-      .nt-motion-page
-    )[data-state="closed"] {
-    animation: nv-exit var(--nv-motion-duration-fast) var(--nv-motion-ease-exit) forwards;
-    pointer-events: none;
   }
 
   /* Floating layers grow out of their trigger and shrink back into it. */
@@ -495,47 +472,24 @@
     --nv-motion-offset: 2px;
   }
 
-  .nt-motion-panel[data-state="open"] {
-    animation-duration: var(--nv-motion-duration-slow);
-  }
-
-  .nt-motion-tooltip[data-state="open"] {
-    animation-duration: var(--nv-motion-duration-fast);
-  }
-
-  :is(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="bottom"] {
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="bottom"] {
     --tw-enter-translate-y: calc(-1 * var(--nv-motion-offset));
     --tw-exit-translate-y: calc(-1 * var(--nv-motion-offset));
   }
 
-  :is(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="top"] {
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="top"] {
     --tw-enter-translate-y: var(--nv-motion-offset);
     --tw-exit-translate-y: var(--nv-motion-offset);
   }
 
-  :is(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="left"] {
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="left"] {
     --tw-enter-translate-x: var(--nv-motion-offset);
     --tw-exit-translate-x: var(--nv-motion-offset);
   }
 
-  :is(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="right"] {
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="right"] {
     --tw-enter-translate-x: calc(-1 * var(--nv-motion-offset));
     --tw-exit-translate-x: calc(-1 * var(--nv-motion-offset));
-  }
-
-  /* Content that fades in when it replaces other content (a tab panel) marks itself with `data-animate`. */
-  .nt-motion-fade[data-animate] {
-    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
-  }
-
-  /* A list whose items fade in together when they replace a placeholder. */
-  .nt-motion-fade-children[data-animate] > * {
-    --tw-enter-opacity: 0;
-    --tw-enter-scale: 1;
-    --tw-enter-rotate: 0;
-    --tw-enter-translate-x: 0;
-    --tw-enter-translate-y: 0;
-    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
   }
 
   /* Dots, badges and swapped icons scale in from nothing (or from `--nv-motion-pop-scale`). */
@@ -549,23 +503,108 @@
     --tw-exit-translate-y: calc(-1 * var(--nv-motion-distance-sm));
   }
 
-  /* Notifications <-> Preferences: the pages share one grid cell; the new one slides in from the side it came from. */
+  /*
+   * Notifications <-> Preferences, and tab panels, fade through: the old one fades out as it shifts away, then the new
+   * one fades in from the side it came from. They share one grid cell but are never visible together, so two lists
+   * never blend into each other. A tab panel says `active`/`inactive` where a page says `open`/`closed`.
+   */
   .nt-motion-page {
-    --tw-enter-translate-x: var(--nv-motion-distance-lg);
-    --tw-exit-translate-x: calc(-1 * var(--nv-motion-distance-lg));
+    --tw-enter-translate-x: var(--nv-motion-distance-md);
+    --tw-exit-translate-x: calc(-1 * var(--nv-motion-distance-sm));
   }
 
-  .nt-motion-page[data-direction="backward"] {
-    --tw-enter-translate-x: calc(-1 * var(--nv-motion-distance-lg));
-    --tw-exit-translate-x: var(--nv-motion-distance-lg);
+  :where(.nt-motion-page)[data-direction="backward"] {
+    --tw-enter-translate-x: calc(-1 * var(--nv-motion-distance-md));
+    --tw-exit-translate-x: var(--nv-motion-distance-sm);
   }
 
-  .nt-motion-page[data-state="open"][data-direction] {
+  /*
+   * Text that rolls to a new value, like an odometer: the new value comes in from below (`up`) or from above (`down`)
+   * while the old one leaves the other way, on top of it and out of the flow. `RollingText` clips them.
+   */
+  .nt-motion-roll {
+    --tw-enter-translate-y: 100%;
+    --tw-exit-translate-y: -100%;
+  }
+
+  :where(.nt-motion-roll)[data-direction="down"] {
+    --tw-enter-translate-y: -100%;
+    --tw-exit-translate-y: 100%;
+  }
+
+  /* Presence states. */
+  :where(
+      .nt-motion-panel,
+      .nt-motion-menu,
+      .nt-motion-tooltip,
+      .nt-motion-pop,
+      .nt-motion-pill,
+      .nt-motion-fade,
+      .nt-motion-roll
+    )[data-state="open"] {
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
+  }
+
+  :where(.nt-motion-panel)[data-state="open"] {
+    animation-duration: var(--nv-motion-duration-slow);
+  }
+
+  :where(.nt-motion-tooltip)[data-state="open"] {
+    animation-duration: var(--nv-motion-duration-fast);
+  }
+
+  /*
+   * The new page or panel waits, invisible, until the old one has faded out (the exit below takes `fast`). The first
+   * one has no direction yet and appears with the Inbox instead.
+   */
+  :where(.nt-motion-page[data-direction])[data-state="open"],
+  :where(.nt-motion-page[data-direction])[data-state="active"] {
     z-index: 1;
-    animation: nv-enter var(--nv-motion-duration-slow) var(--nv-motion-ease-enter);
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter) var(--nv-motion-duration-fast)
+      backwards;
   }
 
-  /* The default actions of an item: revealed on hover, on focus, and while one of their menus is open. */
+  :where(
+      .nt-motion-panel,
+      .nt-motion-menu,
+      .nt-motion-tooltip,
+      .nt-motion-pop,
+      .nt-motion-pill,
+      .nt-motion-fade,
+      .nt-motion-page,
+      .nt-motion-roll
+    )[data-state="closed"],
+  :where(.nt-motion-page)[data-state="inactive"] {
+    animation: nv-exit var(--nv-motion-duration-fast) var(--nv-motion-ease-exit) forwards;
+    pointer-events: none;
+  }
+
+  /* Both values of a roll move together, as one strip. */
+  :where(.nt-motion-roll)[data-state] {
+    animation-duration: var(--nv-motion-duration-slow);
+    animation-timing-function: var(--nv-motion-ease-standard);
+  }
+
+  /* Content that fades in when it replaces other content (a calendar month) marks itself with `data-animate`. */
+  :where(.nt-motion-fade)[data-animate] {
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
+  }
+
+  /* A list whose items fade in together when they replace a placeholder. */
+  :where(.nt-motion-fade-children)[data-animate] > * {
+    --tw-enter-opacity: 0;
+    --tw-enter-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
+  }
+
+  /*
+   * The default actions of an item: revealed on hover, on keyboard focus, and while one of their menus is open. Not on
+   * `:focus-within`: a clicked button keeps the focus, which would pin the actions to that item after the pointer left.
+   * `:has()` sits inside the forgiving `:is()`, so a browser without it still keeps the other selectors.
+   */
   .nt-motion-reveal {
     opacity: 0;
     transform: translateX(var(--nv-motion-distance-sm));
@@ -582,22 +621,12 @@
   }
 
   .nt-group:hover .nt-motion-reveal,
-  .nt-group:focus-within .nt-motion-reveal,
-  .nt-motion-reveal:has([data-open="true"]) {
+  .nt-group:is(:focus-visible, :has(:focus-visible)) .nt-motion-reveal,
+  .nt-motion-reveal:is(:has([data-open="true"])) {
     opacity: 1;
     transform: none;
     pointer-events: auto;
     transition-duration: var(--nv-motion-duration-base);
     transition-delay: 0s;
-  }
-
-  /* The active tab's underline grows from the side the selection came from. */
-  [data-nv-motion="full"] .nt-motion-tab-indicator[data-state="active"][data-direction]::after {
-    transform-origin: left;
-    animation: nv-tab-indicator var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
-  }
-
-  [data-nv-motion="full"] .nt-motion-tab-indicator[data-state="active"][data-direction="backward"]::after {
-    transform-origin: right;
   }
 }

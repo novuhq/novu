@@ -12,6 +12,17 @@ export const getAlign = (placement: Placement): FloatingAlign =>
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 /**
+ * Rounds a coordinate of a floating element to whole device pixels. At a fractional position the browser draws the
+ * element's text slightly off while it animates and redraws it in place when the animation ends, so the content
+ * visibly twitches once it has appeared.
+ */
+export const roundToDevicePixel = (value: number): number => {
+  const ratio = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+
+  return Math.round(value * ratio) / ratio;
+};
+
+/**
  * Points the floating element's transform origin at the centre of its trigger, so it grows out of the trigger and
  * shrinks back into it. Read the result from `middlewareData.transformOrigin.value`. Place it last: it needs the
  * position that `flip` and `shift` settled on.

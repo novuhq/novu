@@ -1,5 +1,5 @@
-import { JSX, ParentProps, Show, splitProps } from 'solid-js';
-import { cn, useStyle } from '../../../helpers';
+import { createSignal, JSX, ParentProps, Show, splitProps } from 'solid-js';
+import { cn, createPresence, useStyle } from '../../../helpers';
 import type { AllAppearanceKey } from '../../../types';
 import { useTabsContext } from './TabsRoot';
 
@@ -14,20 +14,27 @@ export const TabsContent = (props: TabsContentProps) => {
   const [local, rest] = splitProps(props, ['value', 'class', 'appearanceKey', 'children']);
   const style = useStyle();
   const { activeTab, direction } = useTabsContext();
+  const isActive = () => activeTab() === local.value;
+  const [element, setElement] = createSignal<HTMLDivElement>();
+  // The panel of the previous tab stays, inert, while it slides out under the new one (both sit in the second row of
+  // the root's grid).
+  const presence = createPresence({ present: isActive, element, appear: false });
 
   return (
-    <Show when={activeTab() === local.value}>
+    <Show when={presence.isMounted()}>
       <div
+        ref={setElement}
         class={style({
           key: local.appearanceKey || 'tabsContent',
-          className: cn(local.class, 'nt-motion-fade', activeTab() === local.value ? 'nt-block' : 'nt-hidden'),
+          className: cn(local.class, 'nt-motion-page nt-row-start-2 nt-col-start-1'),
         })}
         id={`tabpanel-${local.value}`}
         role="tabpanel"
         aria-labelledby={local.value}
-        data-state={activeTab() === local.value ? 'active' : 'inactive'}
-        // Fades in when the user switches to it; the tab shown on mount appears with the Inbox.
-        data-animate={direction() ? '' : undefined}
+        data-state={isActive() ? 'active' : 'inactive'}
+        // Unset until the first switch, so the tab shown on mount appears with the Inbox instead of sliding in.
+        data-direction={direction()}
+        inert={!isActive()}
         {...rest}
       >
         {local.children}

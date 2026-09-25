@@ -31,6 +31,9 @@ const cases = [
   },
 ] satisfies { status: NotificationStatus; iconKey: AllIconKey; icon: () => JSX.Element }[];
 
+/** Where a status sits in the menu, from the top. */
+export const statusRank = (status: NotificationStatus) => cases.findIndex((option) => option.status === status);
+
 export const StatusOptions = (props: {
   setStatus: (status: NotificationStatus) => void;
   status: NotificationStatus;

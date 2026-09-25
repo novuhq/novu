@@ -13,7 +13,7 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
   const style = useStyle();
   const cogsIconClass = style({
     key: 'icon',
-    className: 'nt-size-5 nt-transition-transform nt-duration-slow motion-full:group-hover/cog:nt-rotate-45',
+    className: 'nt-size-5 nt-transition-transform nt-duration-slow motion-full:in-hover:nt-rotate-45',
     iconKey: 'cogs',
   });
 
@@ -27,13 +27,7 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
       <MoreActionsDropdown />
       <Show when={props.showPreferences}>
         {(showPreferences) => (
-          <Button
-            appearanceKey="preferences__button"
-            class="nt-group/cog"
-            variant="ghost"
-            size="iconSm"
-            onClick={showPreferences()}
-          >
+          <Button appearanceKey="preferences__button" variant="ghost" size="iconSm" onClick={showPreferences()}>
             <IconRendererWrapper
               iconKey="cogs"
               class={cogsIconClass}

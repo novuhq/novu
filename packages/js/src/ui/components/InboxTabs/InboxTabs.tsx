@@ -74,14 +74,14 @@ export const InboxTabs = (props: InboxTabsProps) => {
 
   const moreTabsIconClass = style({
     key: 'moreTabs__icon',
-    className: 'nt-size-5 nt-transition-transform nt-duration-base group-data-[open=true]/trigger:nt-rotate-180',
+    className: 'nt-size-5 nt-transition-transform nt-duration-base in-expanded:nt-rotate-180',
     iconKey: 'arrowDown',
   });
 
   return (
     <Tabs.Root
       appearanceKey="notificationsTabs__tabsRoot"
-      class="nt-flex nt-flex-col nt-flex-1 nt-min-h-0"
+      class="nt-flex-1 nt-min-h-0"
       value={activeTab()}
       onChange={setActiveTab}
     >
@@ -110,10 +110,12 @@ export const InboxTabs = (props: InboxTabsProps) => {
                     variant="unstyled"
                     size="iconSm"
                     appearanceKey="moreTabs__button"
+                    // Draws the underline of the tab picked from the menu, so the underline slides to it too.
+                    data-tabs-overflow=""
                     {...triggerProps}
                     class={cn(
                       tabsDropdownTriggerVariants(),
-                      'nt-ml-auto nt-group/trigger',
+                      'nt-ml-auto',
                       isTabsDropdownActive()
                         ? 'after:nt-border-b-primary'
                         : 'after:nt-border-b-transparent nt-text-foreground-alpha-700'
@@ -146,10 +148,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
           value={tab.label}
           class={style({
             key: 'notificationsTabs__tabsContent',
-            className: cn(
-              activeTab() === tab.label ? 'nt-block' : 'nt-hidden',
-              'nt-overflow-auto nt-flex-1 nt-flex nt-flex-col nt-min-h-0'
-            ),
+            className: 'nt-overflow-auto nt-flex nt-flex-col nt-min-h-0',
           })}
         >
           <NotificationList

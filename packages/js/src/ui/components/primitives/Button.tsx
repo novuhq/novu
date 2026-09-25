@@ -17,14 +17,14 @@ export const buttonVariants = cva(
         secondary:
           'nt-bg-secondary nt-text-secondary-foreground nt-shadow-[0_0_0_0.5px_var(--nv-color-secondary-600)] nt-relative before:nt-absolute before:nt-inset-0 before:nt-border before:nt-border-secondary-foreground-alpha-100 after:nt-absolute after:nt-inset-0 after:nt-opacity-0 hover:after:nt-opacity-100 after:nt-transition-opacity after:nt-bg-gradient-to-b after:nt-from-secondary-foreground-alpha-50 after:nt-to-transparent',
         ghost:
-          'hover:nt-bg-neutral-alpha-100 nt-text-foreground-alpha-600 hover:nt-text-foreground-alpha-800 data-[open=true]:nt-bg-neutral-alpha-100 data-[open=true]:nt-text-foreground-alpha-800',
+          'hover:nt-bg-neutral-alpha-100 nt-text-foreground-alpha-600 hover:nt-text-foreground-alpha-800 is-open:nt-bg-neutral-alpha-100 is-open:nt-text-foreground-alpha-800',
         unstyled: '',
       },
       size: {
         none: '',
         iconSm:
-          'nt-p-1 nt-rounded-md after:nt-rounded-md before:nt-rounded-md focus-visible:nt-rounded-md nt-transition-[color,background-color,border-color,transform] motion-full:active:nt-scale-95',
-        icon: 'nt-p-2.5 nt-rounded-xl before:nt-rounded-xl after:nt-rounded-xl focus-visible:nt-rounded-xl nt-transition-[color,background-color,border-color,transform] motion-full:active:nt-scale-95',
+          'nt-p-1 nt-rounded-md after:nt-rounded-md before:nt-rounded-md focus-visible:nt-rounded-md nt-transition-[color,background-color,border-color,transform] motion-full:is-pressed:nt-scale-95',
+        icon: 'nt-p-2.5 nt-rounded-xl before:nt-rounded-xl after:nt-rounded-xl focus-visible:nt-rounded-xl nt-transition-[color,background-color,border-color,transform] motion-full:is-pressed:nt-scale-95',
         default:
           'nt-h-6 nt-px-2 nt-py-1 nt-rounded-md focus-visible:nt-rounded-md before:nt-rounded-md after:nt-rounded-md',
         sm: 'nt-px-1 nt-py-px nt-rounded-md nt-text-xs nt-px-1 before:nt-rounded-md focus-visible:nt-rounded-md after:nt-rounded-md',

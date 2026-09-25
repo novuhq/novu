@@ -2,12 +2,15 @@ import { ComponentProps, createMemo, createSignal, JSX, Show } from 'solid-js';
 import { useFilteredUnreadCount, useInboxContext } from '../../context';
 import { ClassName, cn, createPresence, getTagsFromTab, useStyle } from '../../helpers';
 import { NotificationStatus, Tab } from '../../types';
-import { Dropdown, dropdownItemVariants, Tabs } from '../primitives';
+import { Dropdown, dropdownItemVariants, RollingText, Tabs } from '../primitives';
 import { tabsTriggerVariants } from '../primitives/Tabs/TabsTrigger';
 
 const getDisplayCount = (count: number) => (count > 99 ? '99+' : String(count));
 
-/** The unread badge of a tab. It pops in and out with `show`, keeping its last count while it leaves. */
+/**
+ * The unread badge of a tab. It pops in and out with `show`, keeping its last count while it leaves, and its count rolls
+ * up or down when it changes. Tabular digits keep its width, and the tabs next to it, still while it counts.
+ */
 export const InboxTabUnreadNotificationsCount = (props: { show: boolean; count: number }) => {
   const style = useStyle();
   const [element, setElement] = createSignal<HTMLSpanElement>();
@@ -23,10 +26,10 @@ export const InboxTabUnreadNotificationsCount = (props: { show: boolean; count: 
         class={style({
           key: 'notificationsTabsTriggerCount',
           className:
-            'nt-rounded-full nt-bg-counter nt-px-[6px] nt-text-counter-foreground nt-text-sm nt-motion-pop [--nv-motion-pop-scale:0.75]',
+            'nt-rounded-full nt-bg-counter nt-px-[6px] nt-text-counter-foreground nt-text-sm nt-tabular-nums nt-motion-pop [--nv-motion-pop-scale:0.75]',
         })}
       >
-        {displayCount()}
+        <RollingText value={displayCount()} rank={shownCount()} />
       </span>
     </Show>
   );

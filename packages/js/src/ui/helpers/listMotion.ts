@@ -39,9 +39,10 @@ export const isItemOnScreen = (item: HTMLElement, scroller: HTMLElement | undefi
 
 /**
  * Fades the item out while sliding it 8px toward the inline start, then collapses it so the items below move up.
- * `reduced` motion only fades it. Returns `undefined` when there is nothing to animate.
+ * `reduced` motion only fades it. `delay` staggers items that leave together. Returns `undefined` when there is
+ * nothing to animate.
  */
-export const animateItemExit = (item: HTMLElement, motion: MotionMode): Animation | undefined => {
+export const animateItemExit = (item: HTMLElement, motion: MotionMode, delay = 0): Animation | undefined => {
   if (!canAnimate(item)) {
     return undefined;
   }
@@ -55,7 +56,7 @@ export const animateItemExit = (item: HTMLElement, motion: MotionMode): Animatio
     const duration = readMotionDurationMs(item, 'fast');
 
     return duration > 0
-      ? item.animate([{ opacity: 1 }, { opacity: 0 }], { duration, easing: 'linear', fill: 'forwards' })
+      ? item.animate([{ opacity: 1 }, { opacity: 0 }], { duration, delay, easing: 'linear', fill: 'both' })
       : undefined;
   }
 
@@ -88,7 +89,8 @@ export const animateItemExit = (item: HTMLElement, motion: MotionMode): Animatio
       },
       { height: '0px', opacity: 0, transform: `translateX(${shift}px)`, marginBottom: `${-gap}px` },
     ],
-    { duration, easing: 'linear', fill: 'forwards' }
+    // `both`: the item keeps its measured height while it waits for its turn.
+    { duration, delay, easing: 'linear', fill: 'both' }
   );
 };
 
@@ -152,15 +154,41 @@ export const animateItemEnter = (item: HTMLElement, motion: MotionMode) => {
   });
 };
 
-/** Fades a whole list in, for changes that swap its items without per-item motion. */
-export const fadeInList = (list: HTMLElement | undefined) => {
-  if (!list || !canAnimate(list)) {
+/**
+ * Fades a whole list out before it shows other content, and holds the last frame until the animation is cancelled.
+ * Returns `undefined` when there is nothing to animate, such as a list that isn't rendered.
+ */
+export const fadeOutList = (list: HTMLElement | undefined, motion: MotionMode): Animation | undefined => {
+  if (!list || !canAnimate(list) || motion === 'off' || list.getClientRects().length === 0) {
+    return undefined;
+  }
+  const duration = readMotionDurationMs(list, 'fast');
+
+  return duration > 0
+    ? list.animate([{ opacity: 1 }, { opacity: 0 }], { duration, easing: MOTION_EASING.exit, fill: 'forwards' })
+    : undefined;
+};
+
+/**
+ * Fades a whole list in, for changes that swap its items without per-item motion. It also rises 8px, except in the
+ * `reduced` motion mode.
+ */
+export const fadeInList = (list: HTMLElement | undefined, motion: MotionMode) => {
+  if (!list || !canAnimate(list) || motion === 'off') {
     return;
   }
-  const duration = readMotionDurationMs(list, 'base');
-  if (duration > 0) {
-    list.animate([{ opacity: 0 }, { opacity: 1 }], { duration, easing: MOTION_EASING.standard });
+  const duration = readMotionDurationMs(list, 'slow');
+  if (duration <= 0) {
+    return;
   }
+  const keyframes: Keyframe[] =
+    motion === 'reduced'
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [
+          { opacity: 0, transform: `translateY(${MOTION_DISTANCE_PX.md}px)` },
+          { opacity: 1, transform: 'none' },
+        ];
+  list.animate(keyframes, { duration, easing: MOTION_EASING.enter });
 };
 
 const FOCUSABLE = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';

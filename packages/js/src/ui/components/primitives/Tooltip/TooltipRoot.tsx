@@ -11,7 +11,7 @@ import {
   Setter,
   useContext,
 } from 'solid-js';
-import { type FloatingSide, getSide, transformOrigin } from '../floating';
+import { type FloatingSide, getSide, roundToDevicePixel, transformOrigin } from '../floating';
 
 /** How long the pointer rests on a trigger before its tooltip opens. */
 export const TOOLTIP_OPEN_DELAY_MS = 400;
@@ -160,8 +160,8 @@ export function TooltipRoot(props: TooltipRootProps) {
         setOpen,
         floatingStyles: () => ({
           position: position.strategy,
-          top: `${position.y ?? 0}px`,
-          left: `${position.x ?? 0}px`,
+          top: `${roundToDevicePixel(position.y ?? 0)}px`,
+          left: `${roundToDevicePixel(position.x ?? 0)}px`,
         }),
         side: () => getSide(position.placement ?? props.placement ?? 'top'),
         origin: () => position.middlewareData.transformOrigin?.value as string | undefined,

@@ -72,9 +72,11 @@ export const notificationItemStyles = {
   },
   defaultActions: {
     key: 'notificationDefaultActions',
-    // `nt-motion-reveal` shows it on hover, on focus and while one of its menus is open (see `index.css`).
+    // `nt-motion-reveal` shows it on hover, on keyboard focus and while one of its menus is open (see `index.css`).
+    // It covers the unread dot under its last button: an opaque background (Tailwind's `/90` modifier generates nothing
+    // for a `var()` colour, so the alpha shade), and a z-index, as the dot comes later and paints over it while it scales.
     className:
-      'nt-absolute nt-gap-0.5 nt-flex nt-shrink-0 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5 nt-motion-reveal',
+      'nt-absolute nt-z-[1] nt-gap-0.5 nt-flex nt-shrink-0 nt-justify-center nt-items-center nt-bg-background-alpha-900 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5 nt-motion-reveal',
   },
   customActions: {
     key: 'notificationCustomActions',

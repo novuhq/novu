@@ -40,28 +40,29 @@ export const createPresence = (options: CreatePresenceOptions) => {
     return present ? 'open' : 'closed';
   });
 
+  // Not deferred: `present` can already have changed by the time effects first run (a parent effect that sets the
+  // initial value), and that change must not be lost.
   createEffect(
-    on(
-      options.present,
-      (present) => {
-        cancelExit?.();
+    on(options.present, (present) => {
+      cancelExit?.();
+      cancelExit = undefined;
+
+      if (present) {
+        setIsMounted(true);
+
+        return;
+      }
+      if (!untrack(isMounted)) {
+        return;
+      }
+
+      cancelExit = whenExitAnimationEnds(untrack(options.element), () => {
         cancelExit = undefined;
-
-        if (present) {
-          setIsMounted(true);
-
-          return;
+        if (!untrack(options.present)) {
+          setIsMounted(false);
         }
-
-        cancelExit = whenExitAnimationEnds(untrack(options.element), () => {
-          cancelExit = undefined;
-          if (!untrack(options.present)) {
-            setIsMounted(false);
-          }
-        });
-      },
-      { defer: true }
-    )
+      });
+    })
   );
 
   onCleanup(() => cancelExit?.());
