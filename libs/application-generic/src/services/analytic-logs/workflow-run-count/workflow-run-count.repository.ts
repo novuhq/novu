@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
+import { toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
 import {
   WORKFLOW_RUN_COUNT_ORDER_BY,
@@ -187,8 +188,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     organizationId?: string
   ): Promise<Array<{ organization_id: string; count: string }>> {
     const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
-    const startDay = startDate.toISOString().split('T')[0];
-    const endDayInclusive = new Date(endDate.getTime() - 1).toISOString().split('T')[0];
+    const { start, end } = toInclusiveUtcDays(startDate, endDate);
 
     const query = `
       SELECT
@@ -205,8 +205,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     `;
 
     const params: Record<string, unknown> = {
-      startDate: startDay,
-      endDate: endDayInclusive,
+      startDate: start,
+      endDate: end,
     };
 
     if (organizationId) {
@@ -219,6 +219,46 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     }>({
       query,
       params,
+    });
+
+    return result.data;
+  }
+
+  /**
+   * Same source and half-open range semantics as `getPlatformUsageByDateRange`, but one row per
+   * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
+   * `day` is the UTC calendar day as `YYYY-MM-DD`.
+   */
+  async getPlatformDailyUsageByDateRange(
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ organization_id: string; day: string; count: string }>> {
+    const { start, end } = toInclusiveUtcDays(startDate, endDate);
+
+    const query = `
+      SELECT
+        organization_id,
+        toString(date) as day,
+        sum(count) as count
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE
+        date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_status_processing'
+      GROUP BY organization_id, date
+      ORDER BY organization_id, date
+    `;
+
+    const result = await this.clickhouseService.query<{
+      organization_id: string;
+      day: string;
+      count: string;
+    }>({
+      query,
+      params: {
+        startDate: start,
+        endDate: end,
+      },
     });
 
     return result.data;

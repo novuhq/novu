@@ -19,6 +19,7 @@ const cronJobsFromWorkers: Partial<Record<JobTopicNameEnum, Array<JobCronNameEnu
     JobCronNameEnum.CREATE_BILLING_USAGE_RECORDS,
     JobCronNameEnum.SEND_CRON_METRICS,
     JobCronNameEnum.SEND_USAGE_REPORT,
+    JobCronNameEnum.EVALUATE_USAGE_ALERTS,
   ],
 };
 
@@ -26,6 +27,7 @@ export const cronService = {
   provide: CronService,
   useFactory: async (metricsService: MetricsService, activeCronJobs: JobCronNameEnum[], dalService: DalService) => {
     const pulse = new Pulse({
+      // biome-ignore lint/suspicious/noExplicitAny: Pulse bundles its own mongodb `Db` type, incompatible with mongoose's driver
       mongo: dalService.connection.getClient().db() as any,
       /**
        * Sets the hostname for the Job. Used to debug last host to run the job via
