@@ -162,7 +162,7 @@ describe('seedSlackThreadHistory', () => {
       const importInboundMessages = sinon.stub();
       const message = slackMessage('message', 'hello');
 
-      await seedSlackThreadHistory({
+      const unseen = await seedSlackThreadHistory({
         agentId: 'agent1',
         config: config as any,
         conversation: { _id: 'conv1' } as any,
@@ -174,6 +174,26 @@ describe('seedSlackThreadHistory', () => {
       });
 
       expect(importInboundMessages.called).to.equal(false);
+      expect(unseen).to.deep.equal([]);
+    });
+
+    it('does nothing for non-Slack platforms even when isMention is set', async () => {
+      const importInboundMessages = sinon.stub();
+      const mention = slackMessage('mention', '@bot help', undefined, { isMention: true });
+
+      const unseen = await seedSlackThreadHistory({
+        agentId: 'agent1',
+        config: { ...config, platform: AgentPlatformEnum.EMAIL } as any,
+        conversation: { _id: 'conv1' } as any,
+        thread: { isDM: false, messages: asyncMessages([mention]) } as any,
+        message: mention as any,
+        platformThreadId: 'email:thread1',
+        conversationService: { importInboundMessages },
+        logger: { warn: sinon.stub() },
+      });
+
+      expect(importInboundMessages.called).to.equal(false);
+      expect(unseen).to.deep.equal([]);
     });
 
     it('returns the newly imported human messages for the model, oldest first', async () => {
@@ -208,23 +228,6 @@ describe('seedSlackThreadHistory', () => {
         { senderName: 'Nikita', content: 'what about hermitage ?' },
         { senderName: 'Nikita', content: 'and la chapelle ?' },
       ]);
-    });
-
-    it('returns nothing when the gate skips seeding', async () => {
-      const message = slackMessage('message', 'hello');
-
-      const unseen = await seedSlackThreadHistory({
-        agentId: 'agent1',
-        config: config as any,
-        conversation: { _id: 'conv1' } as any,
-        thread: { isDM: false, messages: asyncMessages([message]) } as any,
-        message: message as any,
-        platformThreadId: 'slack:C1:1.0',
-        conversationService: { importInboundMessages: sinon.stub() },
-        logger: { warn: sinon.stub() },
-      });
-
-      expect(unseen).to.deep.equal([]);
     });
 
     it('does nothing for Slack DMs even when isMention is set', async () => {

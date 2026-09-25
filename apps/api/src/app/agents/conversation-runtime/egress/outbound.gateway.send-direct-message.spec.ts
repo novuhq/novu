@@ -59,9 +59,6 @@ describe('OutboundGateway sendDirectMessage', () => {
     const fileMaterializer = {
       prepareContentForDelivery: sinon.stub().callsFake(async (content: unknown) => content),
     };
-    const actionTokenService = {
-      applyActionTokens: sinon.stub().callsFake(async (content: unknown) => content),
-    };
     const logger = {
       setContext: sinon.stub(),
       warn: sinon.stub(),
@@ -73,7 +70,7 @@ describe('OutboundGateway sendDirectMessage', () => {
       {} as any,
       agentConfigResolver as any,
       fileMaterializer as any,
-      actionTokenService as any,
+      {} as any,
       new OutboundDeliveryInfo(),
       logger as any
     );

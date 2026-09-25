@@ -240,14 +240,21 @@ describe('messageMentionsOtherHuman', () => {
     ).to.equal(false);
   });
 
-  it('ignores a Slack bot-only mention even when the SDK mention flag is missing', () => {
+  it('falls back to the SDK mention flag when the Slack bot user id is unknown', () => {
     expect(
       messageMentionsOtherHuman(
-        { isMention: false, text: '<@UBOT> help', author: { userId: 'U1' } } as any,
+        { isMention: true, text: '<@UBOT> help', author: { userId: 'U1' } } as any,
         AgentPlatformEnum.SLACK,
-        'UBOT'
+        undefined
       )
     ).to.equal(false);
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: true, text: '<@UBOT> cc <@U99>', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        undefined
+      )
+    ).to.equal(true);
   });
 
   it('detects a Slack teammate mention', () => {
