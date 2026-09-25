@@ -25,6 +25,7 @@ export const ACTIVITY_KINDS = [
   'message.system',
   'edit',
   'delete',
+  'reaction',
   'signal.tool_use',
   'signal.other',
   'tool_approval_request',
@@ -55,6 +56,7 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   'message.system': ['agent_handoff', 'operator_timeline'],
   edit: ['client_events', 'operator_timeline'],
   delete: ['client_events', 'operator_timeline'],
+  reaction: ['client_events', 'operator_timeline'],
   'signal.tool_use': ['agent_handoff'],
   'signal.other': ['agent_handoff', 'operator_timeline'],
   tool_approval_request: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
@@ -115,6 +117,9 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'delete':
       return { type: ConversationActivityTypeEnum.DELETE };
+
+    case 'reaction':
+      return { type: ConversationActivityTypeEnum.REACTION };
 
     case 'signal.tool_use':
       return {

@@ -43,6 +43,17 @@ export interface DeleteInboundMessageParams {
   organizationId: string;
 }
 
+export interface PersistInboundReactionParams {
+  target: ConversationActivityEntity;
+  emoji: string;
+  added: boolean;
+  senderType: ConversationActivitySenderTypeEnum;
+  senderId: string;
+  senderName?: string;
+  environmentId: string;
+  organizationId: string;
+}
+
 export interface ImportInboundMessage {
   identifier: string;
   senderId: string;

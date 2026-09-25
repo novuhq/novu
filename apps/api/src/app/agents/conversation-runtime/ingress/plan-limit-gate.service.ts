@@ -136,14 +136,14 @@ export class PlanLimitGateService {
 
   /**
    * Returns `true` when inbound processing must stop because the agent or its
-   * channel is over the plan limit. Posts the upgrade card unless the trigger
-   * is a link-button action (see class docs).
+   * channel is over the plan limit. Posts the upgrade card unless `postCard`
+   * is false or the trigger is a link-button action (see class docs).
    */
   async maybeBlock(
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    action?: AgentAction
+    { action, postCard = true }: { action?: AgentAction; postCard?: boolean } = {}
   ): Promise<boolean> {
     if (config.isKeyless) {
       return false;
@@ -155,7 +155,7 @@ export class PlanLimitGateService {
       return false;
     }
 
-    if (this.shouldPostUpgradeCard(config) && !isLinkButtonActionId(action?.id)) {
+    if (postCard && this.shouldPostUpgradeCard(config) && !isLinkButtonActionId(action?.id)) {
       await this.postUpgradeRequiredReply(agentId, config, thread, reason);
     }
 

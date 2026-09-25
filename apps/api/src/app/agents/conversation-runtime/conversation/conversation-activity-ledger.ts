@@ -26,6 +26,7 @@ import type {
   PersistCustomParams,
   PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
+  PersistInboundReactionParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
@@ -210,6 +211,33 @@ export class ConversationActivityLedger {
     return this.appendInboundRevision({
       ...params,
       type: ConversationActivityTypeEnum.DELETE,
+    });
+  }
+
+  async persistInboundReaction(params: PersistInboundReactionParams): Promise<ConversationActivityEntity> {
+    const { target } = params;
+    const sequence = await this.resolveEventSequence(
+      target._conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+
+    return this.activityRepository.createUserActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: target._conversationId,
+      platform: target.platform,
+      integrationId: target._integrationId,
+      platformThreadId: target.platformThreadId,
+      senderType: params.senderType,
+      senderId: params.senderId,
+      senderName: params.senderName,
+      content: params.emoji,
+      richContent: { reaction: { emoji: params.emoji, added: params.added } },
+      platformMessageId: target.platformMessageId,
+      type: ConversationActivityTypeEnum.REACTION,
+      sequence,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
     });
   }
 

@@ -54,7 +54,6 @@ import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/a
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import {
   AgentSubscriberResolver,
-  BotAuthorSkippedError,
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
@@ -279,7 +278,7 @@ export interface InboundReactionEvent {
   messageId: string;
   message?: Message;
   thread?: Thread;
-  user?: { userId: string; fullName?: string; userName?: string };
+  user?: { userId: string; fullName?: string; userName?: string; isBot?: boolean | 'unknown' };
   /** Raw platform payload, used to resolve the connect-time context (e.g. Slack `team_id`). */
   raw?: unknown;
 }
@@ -339,6 +338,10 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    if (this.skipBotAuthor(agentId, config, message.author)) {
+      return;
+    }
+
     // Fold before mention detection so a mention that arrived in an earlier
     // message of the same burst still gates this turn.
     foldInboundBurst(message, messageContext);
@@ -392,8 +395,8 @@ export class AgentInboundHandler implements OnModuleInit {
     const subscriberId = getResolvedSubscriberId(resolution);
     const isDashboardTester = isDashboardWebChatSubscriberId(subscriberId);
 
-    // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
-    // `BotAuthorSkippedError` above). This — not the raw webhook POST — is what
+    // A genuine, non-bot user has messaged the agent (bot-authored echoes were
+    // dropped by `skipBotAuthor` above). This — not the raw webhook POST — is what
     // marks the agent–integration link connected and completes onboarding.
     // The dashboard Web Chat tester uses a reserved subscriber the install
     // prompt never copies, so those turns must not stamp Connected.
@@ -559,7 +562,7 @@ export class AgentInboundHandler implements OnModuleInit {
   /**
    * Record `connectedAt` the first time a real user messages the agent on this
    * integration. Gated on a genuine inbound message (the caller has already
-   * filtered bot-authored events via `BotAuthorSkippedError`) so the agent's own
+   * filtered bot-authored events via `skipBotAuthor`) so the agent's own
    * proactive messages — e.g. the post-install welcome DM, which Slack echoes
    * back to our webhook — never mark the integration connected. The conditional
    * `connectedAt: null` filter makes the write idempotent and fires the
@@ -656,8 +659,6 @@ export class AgentInboundHandler implements OnModuleInit {
             agentIdentifier: config.agentIdentifier,
             authorFullName: message.author.fullName,
             authorUserName: message.author.userName,
-            // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
-            authorIsBot: message.author.isBot === true,
             // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
             // records which (possibly external customer) tenant the user belongs to.
             platformTenantId:
@@ -673,19 +674,10 @@ export class AgentInboundHandler implements OnModuleInit {
           config,
           platformUserId: message.author.userId,
           operation: 'resolve-subscriber',
-          authorIsBot: message.author.isBot === true,
         }),
         isVerifiedEmailSender,
       };
     } catch (err) {
-      if (err instanceof BotAuthorSkippedError) {
-        this.logger.debug(
-          `[agent:${agentId}] Inbound from bot author ${config.platform}:${message.author.userId} skipped without dispatch`
-        );
-
-        return null;
-      }
-
       if (err instanceof ConnectOrgSubscriberCapExceededError) {
         this.logger.warn(
           { agentId, organizationId: config.organizationId, count: err.count, limit: err.limit },
@@ -969,7 +961,8 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    conversation: ConversationEntity
+    conversation: ConversationEntity,
+    { postCard = true }: { postCard?: boolean } = {}
   ): Promise<boolean> {
     if (!config.isKeyless) {
       return false;
@@ -978,7 +971,9 @@ export class AgentInboundHandler implements OnModuleInit {
     const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
 
     if (!aiEnabled) {
-      await this.postKeylessSignupCta(agentId, config, thread, conversation);
+      if (postCard) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
+      }
 
       return true;
     }
@@ -988,7 +983,9 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     if (await this.isKeylessDemoCapReached(config, conversation._id)) {
-      await this.postKeylessSignupCta(agentId, config, thread, conversation);
+      if (postCard) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
+      }
 
       return true;
     }
@@ -1154,25 +1151,12 @@ export class AgentInboundHandler implements OnModuleInit {
     config,
     platformUserId,
     operation,
-    authorIsBot,
   }: {
     agentId: string;
     config: ResolvedAgentConfig;
     platformUserId: string;
     operation: string;
-    authorIsBot: boolean;
   }): Promise<SubscriberResolution> {
-    if (authorIsBot) {
-      this.analyticsService.track('[Agent Platform] - Bot author inbound skipped', config.organizationId, {
-        _organization: config.organizationId,
-        environmentId: config.environmentId,
-        platform: config.platform,
-        agentIdentifier: config.agentIdentifier,
-      });
-
-      throw new BotAuthorSkippedError(config.platform, platformUserId);
-    }
-
     try {
       return await this.subscriberResolver.resolveSubscriber({
         environmentId: config.environmentId,
@@ -1187,6 +1171,29 @@ export class AgentInboundHandler implements OnModuleInit {
 
       return { outcome: 'error', err };
     }
+  }
+
+  /** chat-sdk types `isBot` as `boolean | 'unknown'`; anything except `true` is treated as a non-bot author. */
+  private skipBotAuthor(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    author: { userId?: string; isBot?: boolean | 'unknown' } | undefined
+  ): boolean {
+    if (author?.isBot !== true) {
+      return false;
+    }
+
+    this.analyticsService.track('[Agent Platform] - Bot author inbound skipped', config.organizationId, {
+      _organization: config.organizationId,
+      environmentId: config.environmentId,
+      platform: config.platform,
+      agentIdentifier: config.agentIdentifier,
+    });
+    this.logger.debug(
+      `[agent:${agentId}] Inbound from bot author ${config.platform}:${author.userId ?? '<unknown>'} skipped without dispatch`
+    );
+
+    return true;
   }
 
   /**
@@ -1571,6 +1578,11 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message,
     previousMessage?: Message
   ): Promise<void> {
+    const platformUserId = message.author?.userId;
+    if (this.skipBotAuthor(agentId, config, message.author)) {
+      return;
+    }
+
     const conversation = await this.conversationService.findByPlatformThread(
       config.environmentId,
       config.organizationId,
@@ -1581,6 +1593,8 @@ export class AgentInboundHandler implements OnModuleInit {
     if (!conversation) {
       return;
     }
+
+    const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-updated');
 
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const richContent = Array.isArray(message.attachments)
@@ -1609,6 +1623,20 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
 
+    if (
+      await this.isExistingConversationEventBlocked({
+        agentId,
+        config,
+        conversation,
+        thread,
+        platformThreadId: thread.id,
+        mentionMessage: message,
+        postCard: true,
+      })
+    ) {
+      return;
+    }
+
     trackAgentInboundMessage(this.analyticsService, {
       organizationId: config.organizationId,
       environmentId: config.environmentId,
@@ -1630,9 +1658,8 @@ export class AgentInboundHandler implements OnModuleInit {
       message,
       previousMessage: previousMessage ?? null,
       event: AgentEventEnum.ON_MESSAGE_UPDATED,
-      operation: 'resolve-subscriber-message-updated',
-      platformUserId: message.author?.userId,
-      authorIsBot: message.author?.isBot === true,
+      resolution,
+      platformUserId,
       raw: message.raw,
       storedAttachments,
       deliveryRevision: editedAt,
@@ -1642,6 +1669,11 @@ export class AgentInboundHandler implements OnModuleInit {
   async handleMessageDeleted(agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent): Promise<void> {
     const threadId = event.threadId;
     if (!threadId) {
+      return;
+    }
+
+    const previousAuthor = event.previousMessage?.author;
+    if (this.skipBotAuthor(agentId, config, previousAuthor)) {
       return;
     }
 
@@ -1659,17 +1691,35 @@ export class AgentInboundHandler implements OnModuleInit {
     const current = event.messageId
       ? await this.conversationService.resolveCurrentMessage(config.environmentId, conversation._id, event.messageId)
       : null;
-    const existing = event.messageId
-      ? await this.conversationService.deleteInboundMessage({
-          conversationId: conversation._id,
-          platformMessageId: event.messageId,
-          content: event.previousMessage?.text ?? current?.content,
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-        })
-      : null;
+    const message = stubDeletedMessage(event, current);
+    const thread = eventToThread(event, conversation);
 
-    const message = stubDeletedMessage(event, current ?? existing);
+    const platformUserId = previousAuthor?.userId ?? current?.senderId;
+    const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
+
+    if (event.messageId) {
+      await this.conversationService.deleteInboundMessage({
+        conversationId: conversation._id,
+        platformMessageId: event.messageId,
+        content: event.previousMessage?.text ?? current?.content,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    }
+
+    if (
+      await this.isExistingConversationEventBlocked({
+        agentId,
+        config,
+        conversation,
+        thread,
+        platformThreadId: threadId,
+        mentionMessage: message,
+        postCard: false,
+      })
+    ) {
+      return;
+    }
 
     trackAgentInboundMessage(this.analyticsService, {
       organizationId: config.organizationId,
@@ -1687,14 +1737,13 @@ export class AgentInboundHandler implements OnModuleInit {
       agentId,
       config,
       conversation,
-      thread: eventToThread(event, conversation),
+      thread,
       platformThreadId: threadId,
       message,
       previousMessage: null,
       event: AgentEventEnum.ON_MESSAGE_DELETED,
-      operation: 'resolve-subscriber-message-deleted',
-      platformUserId: event.previousMessage?.author?.userId ?? existing?.senderId,
-      authorIsBot: event.previousMessage?.author?.isBot === true,
+      resolution,
+      platformUserId,
       raw: event.raw,
       deliveryRevision: 'deleted',
     });
@@ -1705,6 +1754,11 @@ export class AgentInboundHandler implements OnModuleInit {
     if (!threadId) {
       this.logger.warn(`[agent:${agentId}] Reaction received without thread context, skipping`);
 
+      return;
+    }
+
+    const platformUserId = event.user?.userId;
+    if (this.skipBotAuthor(agentId, config, event.user)) {
       return;
     }
 
@@ -1720,6 +1774,25 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    const thread = event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread);
+
+    const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'reaction');
+    const reaction = await this.recordInboundReaction(config, conversation, event, resolution);
+
+    if (
+      await this.isExistingConversationEventBlocked({
+        agentId,
+        config,
+        conversation,
+        thread,
+        platformThreadId: threadId,
+        mentionMessage: null,
+        postCard: false,
+      })
+    ) {
+      return;
+    }
+
     trackAgentInboundReaction(this.analyticsService, {
       organizationId: config.organizationId,
       environmentId: config.environmentId,
@@ -1730,11 +1803,50 @@ export class AgentInboundHandler implements OnModuleInit {
       conversationId: conversation._id,
     });
 
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread,
+      platformThreadId: threadId,
+      message: event.message ?? null,
+      turnMessage: null,
+      event: AgentEventEnum.ON_REACTION,
+      resolution,
+      platformUserId,
+      raw: event.raw,
+      reaction,
+    });
+  }
+
+  private async recordInboundReaction(
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    event: InboundReactionEvent,
+    resolution: SubscriberResolution | undefined
+  ): Promise<BridgeReaction> {
     const sourceActivity = await this.conversationService.findSourceActivity(
       config.environmentId,
       conversation._id,
       event.messageId
     );
+
+    if (sourceActivity) {
+      const subscriberId = getResolvedSubscriberId(resolution);
+
+      await this.conversationService.persistInboundReaction({
+        target: sourceActivity,
+        emoji: event.emoji.name,
+        added: event.added,
+        senderType: subscriberId
+          ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+          : ConversationActivitySenderTypeEnum.PLATFORM_USER,
+        senderId: subscriberId ?? `${config.platform}:${event.user?.userId ?? 'unknown'}`,
+        senderName: event.user?.fullName,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    }
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
 
@@ -1748,28 +1860,57 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
 
-    await this.dispatchExistingConversationTurn({
-      agentId,
-      config,
-      conversation,
-      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
-      platformThreadId: threadId,
-      message: event.message ?? null,
-      turnMessage: null,
-      event: AgentEventEnum.ON_REACTION,
-      operation: 'resolve-subscriber-reaction',
-      platformUserId: event.user?.userId,
-      raw: event.raw,
-      reaction: {
-        emoji: event.emoji.name,
-        added: event.added,
-        messageId: event.messageId,
-        sourceMessage: event.message,
-        sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
-          ? sourceMessageStoredAttachments
-          : undefined,
-      },
-    });
+    return {
+      emoji: event.emoji.name,
+      added: event.added,
+      messageId: event.messageId,
+      sourceMessage: event.message,
+      sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
+        ? sourceMessageStoredAttachments
+        : undefined,
+    };
+  }
+
+  /** Same gate order as `handle`, which runs keyless after it creates the conversation. */
+  private async isExistingConversationEventBlocked(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    thread: Thread;
+    platformThreadId: string;
+    /** `null` skips the mention gate. */
+    mentionMessage: Message | null;
+    postCard: boolean;
+  }): Promise<boolean> {
+    const { agentId, config, conversation, thread, platformThreadId, mentionMessage, postCard } = params;
+
+    if (mentionMessage) {
+      await this.restoreMissingMentionFlag(config, thread, mentionMessage);
+      const mentionContext = await this.buildMentionContext(agentId, config, thread, platformThreadId, conversation);
+
+      if (requiresExplicitMention(thread, mentionMessage, mentionContext)) {
+        return true;
+      }
+    }
+
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread, { postCard })) {
+      return true;
+    }
+
+    return this.maybeStopKeylessInbound(agentId, config, thread, conversation, { postCard });
+  }
+
+  private async resolveEventSubscriber(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    platformUserId: string | undefined,
+    operation: string
+  ): Promise<SubscriberResolution | undefined> {
+    if (!platformUserId) {
+      return undefined;
+    }
+
+    return this.resolveSubscriber({ agentId, config, platformUserId, operation: `resolve-subscriber-${operation}` });
   }
 
   private async dispatchExistingConversationTurn(params: {
@@ -1782,32 +1923,14 @@ export class AgentInboundHandler implements OnModuleInit {
     turnMessage?: Message | null;
     previousMessage?: Message | null;
     event: AgentEventEnum;
-    operation: string;
+    resolution: SubscriberResolution | undefined;
     platformUserId?: string;
-    authorIsBot?: boolean;
     raw?: unknown;
     storedAttachments?: StoredAttachment[];
     deliveryRevision?: string;
     reaction?: BridgeReaction;
   }): Promise<void> {
-    const { agentId, config, conversation, thread, platformThreadId, message, event } = params;
-
-    if (
-      (event === AgentEventEnum.ON_MESSAGE_UPDATED || event === AgentEventEnum.ON_MESSAGE_DELETED) &&
-      (await this.shouldSkipRevisionDispatch(params))
-    ) {
-      return;
-    }
-
-    const resolution = params.platformUserId
-      ? await this.resolveSubscriber({
-          agentId,
-          config,
-          platformUserId: params.platformUserId,
-          operation: params.operation,
-          authorIsBot: params.authorIsBot === true,
-        })
-      : undefined;
+    const { agentId, config, conversation, thread, platformThreadId, message, event, resolution } = params;
     const subscriberId = getResolvedSubscriberId(resolution);
 
     const [subscriber, agent] = await Promise.all([
@@ -1889,41 +2012,6 @@ export class AgentInboundHandler implements OnModuleInit {
     await runtime.dispatch(turn);
   }
 
-  /**
-   * Edits and deletes reach the agent only when a new message in the same
-   * thread would. The caller has already written the ledger revision.
-   */
-  private async shouldSkipRevisionDispatch(params: {
-    agentId: string;
-    config: ResolvedAgentConfig;
-    conversation: ConversationEntity;
-    thread: Thread;
-    platformThreadId: string;
-    message: Message | null;
-    authorIsBot?: boolean;
-  }): Promise<boolean> {
-    const { agentId, config, conversation, thread, platformThreadId, message } = params;
-
-    if (params.authorIsBot) {
-      return true;
-    }
-
-    if (message) {
-      await this.restoreMissingMentionFlag(config, thread, message);
-      const mentionContext = await this.buildMentionContext(agentId, config, thread, platformThreadId, conversation);
-
-      if (requiresExplicitMention(thread, message, mentionContext)) {
-        return true;
-      }
-    }
-
-    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
-      return true;
-    }
-
-    return this.maybeStopKeylessInbound(agentId, config, thread, conversation);
-  }
-
   async handleAction(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -1934,7 +2022,7 @@ export class AgentInboundHandler implements OnModuleInit {
   ): Promise<void> {
     // The gate suppresses its reply for link-button actions (e.g. the upgrade
     // card's own CTA) so a blocked click can never spawn another card.
-    if (await this.planLimitGate.maybeBlock(agentId, config, thread, action)) {
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread, { action })) {
       return;
     }
 
@@ -1943,7 +2031,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       platformUserId: userId,
       operation: 'resolve-subscriber-action',
-      authorIsBot: false,
     });
     const subscriberId = getResolvedSubscriberId(actionResolution);
 
