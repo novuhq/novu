@@ -106,15 +106,17 @@ function usesDraft2020Schema(schema: AnySchema): boolean {
 /** Single AJV configuration for every control-value schema check, so issues stay consistent. */
 export const createSchemaValidationAjv = ({
   verbose = false,
+  useDefaults = false,
   schema,
 }: {
   verbose?: boolean;
+  useDefaults?: boolean;
   schema?: AnySchema;
 } = {}): Ajv => {
   const ajv =
     schema && usesDraft2020Schema(schema)
-      ? new Ajv2020({ allErrors: true, strict: false, verbose })
-      : new Ajv({ allErrors: true, strict: false, verbose });
+      ? new Ajv2020({ allErrors: true, strict: false, verbose, useDefaults })
+      : new Ajv({ allErrors: true, strict: false, verbose, useDefaults });
 
   addFormats(ajv);
 
