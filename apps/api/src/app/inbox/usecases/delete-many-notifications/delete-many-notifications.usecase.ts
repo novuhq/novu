@@ -76,7 +76,7 @@ export class DeleteManyNotifications {
 
     await this.processWebhooksInBatches([WebhookEventEnum.MESSAGE_DELETED], deletedMessages, command, environment);
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: WebSocketEventEnum.UNREAD,

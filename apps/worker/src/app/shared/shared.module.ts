@@ -23,6 +23,7 @@ import {
   InboundMailRequestLogger,
   InMemoryLRUCacheService,
   InvalidateCacheService,
+  isBullMqEnabled,
   LoggerModule,
   MetricsModule,
   NotificationPayloadService,
@@ -93,8 +94,13 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
+    const mongoUrl = process.env.MONGO_URL;
 
-    await service.connect(process.env.MONGO_URL!);
+    if (!mongoUrl) {
+      throw new Error('MONGO_URL is required to connect the worker to MongoDB');
+    }
+
+    await service.connect(mongoUrl);
 
     return service;
   },
@@ -142,7 +148,12 @@ const PROVIDERS = [
   CreateTenant,
   ProcessTenant,
   ...DAL_MODELS,
-  ActiveJobsMetricService,
+  /*
+   * Queue-depth metrics are read off BullMQ counters, so the collector only
+   * exists while BullMQ does. QueuesModule drops the ACTIVE_JOBS_METRIC
+   * providers it depends on under the same condition.
+   */
+  ...(isBullMqEnabled() ? [ActiveJobsMetricService] : []),
   ExecuteBridgeRequest,
   ExecuteFrameworkRequest,
   ExecuteStepResolverRequest,

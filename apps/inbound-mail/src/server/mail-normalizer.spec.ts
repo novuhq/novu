@@ -87,6 +87,22 @@ describe('normalizeParsedMail', () => {
     expect(mail.references).to.equal(undefined);
   });
 
+  it('keeps the parsed date when the header is present', async () => {
+    const mail = await parseAndNormalize(plainTextEmail);
+
+    expect(mail.date).to.deep.equal(new Date('Mon, 1 Jan 2024 10:00:00 +0000'));
+  });
+
+  it('falls back to receipt time when the message carries no Date header', async () => {
+    const before = Date.now();
+    const mail = await parseAndNormalize(
+      ['From: alice@example.com', 'To: bob@example.com', 'Subject: SMTP probe', '', 'Body', ''].join('\r\n')
+    );
+
+    expect(mail.date).to.be.an.instanceOf(Date);
+    expect(mail.date.getTime()).to.be.within(before, Date.now());
+  });
+
   it('normalizes attachments to the slim Buffer shape consumed by the uploader', async () => {
     const content = Buffer.from('hello attachment').toString('base64');
     const multipartEmail = [
