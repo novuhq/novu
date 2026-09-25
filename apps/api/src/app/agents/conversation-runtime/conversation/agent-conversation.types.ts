@@ -21,6 +21,28 @@ export interface PersistInboundMessageParams {
   organizationId: string;
 }
 
+export interface UpdateInboundMessageParams {
+  conversationId: string;
+  platformMessageId: string;
+  content: string;
+  richContent?: Record<string, unknown>;
+  hasPlatformAttachments?: boolean;
+  /** Platform edit timestamp when the channel provides one (Slack `edited.ts`). */
+  editedAt?: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface DeleteInboundMessageParams {
+  conversationId: string;
+  platformMessageId: string;
+  /** Last-known body from the channel. Falls back to the stored message row. */
+  content?: string;
+  richContent?: Record<string, unknown>;
+  environmentId: string;
+  organizationId: string;
+}
+
 export interface ImportInboundMessage {
   identifier: string;
   senderId: string;

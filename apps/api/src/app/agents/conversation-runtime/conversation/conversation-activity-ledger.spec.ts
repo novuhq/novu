@@ -46,6 +46,8 @@ describe('ConversationActivityLedger', () => {
         overrides.findExistingPlatformMessageIds ?? sinon.stub().resolves(new Set<string>()),
       importUserActivities: overrides.importUserActivities ?? sinon.stub().resolves(0),
       findOne: overrides.findOne ?? sinon.stub().resolves(null),
+      createUserActivity: overrides.createUserActivity ?? sinon.stub().resolves({ _id: 'user-activity' }),
+      findMessageRevisions: overrides.findMessageRevisions ?? sinon.stub().resolves([]),
       count: overrides.count ?? sinon.stub().resolves(0),
       withTransaction:
         overrides.withTransaction ??
@@ -500,6 +502,87 @@ describe('ConversationActivityLedger', () => {
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
       expect(conversationRepository.touchActivity.called).to.equal(false);
       expect(conversationRepository.touchPreview.called).to.equal(false);
+    });
+  });
+
+  describe('updateInboundMessage', () => {
+    it('leaves the message row unchanged and appends an edit activity', async () => {
+      const update = sinon.stub().resolves(undefined);
+      const createUserActivity = sinon.stub().resolves({ _id: 'edit-1' });
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(
+        makeActivityRepository({
+          findByPlatformMessageId: sinon.stub().resolves({
+            _id: 'activity-1',
+            content: 'where is order 1234?',
+            platform: 'slack',
+            _integrationId: 'int-1',
+            platformThreadId: 'thread-1',
+            senderType: 'subscriber',
+            senderId: 'ada',
+          }),
+          update,
+          createUserActivity,
+        }),
+        undefined,
+        undefined,
+        conversationRepository
+      );
+
+      await ledger.updateInboundMessage({
+        conversationId: 'conv-1',
+        platformMessageId: 'msg-1',
+        content: 'where is order 4321?',
+        editedAt: '1710000000.000200',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      });
+
+      expect(update.called).to.equal(false);
+      expect(createUserActivity.firstCall.args[0]).to.include({
+        type: ConversationActivityTypeEnum.EDIT,
+        content: 'where is order 4321?',
+        platformMessageId: 'msg-1',
+        senderId: 'ada',
+      });
+      expect(createUserActivity.firstCall.args[0].identifier).to.equal('inbound-edit:conv-1:msg-1:1710000000.000200');
+      expect(conversationRepository.touchPreview.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('deleteInboundMessage', () => {
+    it('keeps the message row and appends a delete tombstone', async () => {
+      const findOneAndDelete = sinon.stub().resolves({ _id: 'activity-1' });
+      const createUserActivity = sinon.stub().resolves({ _id: 'delete-1' });
+      const activityRepository = makeActivityRepository({
+        findByPlatformMessageId: sinon.stub().resolves({
+          _id: 'activity-1',
+          content: 'where is order 4321?',
+          platform: 'slack',
+          _integrationId: 'int-1',
+          platformThreadId: 'thread-1',
+          senderType: 'subscriber',
+          senderId: 'ada',
+        }),
+        findOneAndDelete,
+        createUserActivity,
+      });
+
+      await makeLedger(activityRepository).deleteInboundMessage({
+        conversationId: 'conv-1',
+        platformMessageId: 'msg-1',
+        content: 'where is order 4321?',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      });
+
+      expect(findOneAndDelete.called).to.equal(false);
+      expect(createUserActivity.firstCall.args[0]).to.include({
+        type: ConversationActivityTypeEnum.DELETE,
+        content: 'where is order 4321?',
+        platformMessageId: 'msg-1',
+        senderId: 'ada',
+      });
     });
   });
 

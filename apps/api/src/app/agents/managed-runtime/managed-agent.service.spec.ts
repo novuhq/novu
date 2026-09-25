@@ -37,14 +37,14 @@ describe('ManagedAgentService workflow-origin', () => {
   function makeService(
     overrides: {
       listForView?: sinon.SinonStub;
-      findByPlatformMessageId?: sinon.SinonStub;
+      resolveCurrentMessage?: sinon.SinonStub;
       resolveForTurn?: sinon.SinonStub;
       dispatch?: sinon.SinonStub;
     } = {}
   ) {
     const conversationService = {
       listForView: overrides.listForView ?? sinon.stub().resolves({ data: [], hasMore: false }),
-      findByPlatformMessageId: overrides.findByPlatformMessageId ?? sinon.stub().resolves(null),
+      resolveCurrentMessage: overrides.resolveCurrentMessage ?? sinon.stub().resolves(null),
     };
     const workflowOriginService = {
       resolveForTurn: overrides.resolveForTurn ?? sinon.stub().resolves(null),
@@ -172,7 +172,7 @@ describe('ManagedAgentService workflow-origin', () => {
 
   describe('replayParkedInboundTurn', () => {
     it('loads the parked activity and forwards the re-derived origin snapshot into dispatch', async () => {
-      const findByPlatformMessageId = sinon.stub().resolves({
+      const resolveCurrentMessage = sinon.stub().resolves({
         content: 'parked hello',
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
@@ -180,7 +180,7 @@ describe('ManagedAgentService workflow-origin', () => {
       const resolveForTurn = sinon.stub().resolves(existingSnapshot);
       const dispatch = sinon.stub().resolves({ status: 'active' });
       const { service, workflowOriginService } = makeService({
-        findByPlatformMessageId,
+        resolveCurrentMessage,
         resolveForTurn,
         dispatch,
       });
@@ -230,7 +230,7 @@ describe('ManagedAgentService workflow-origin', () => {
       });
 
       expect(result).to.equal(null);
-      expect(conversationService.findByPlatformMessageId.calledOnce).to.equal(true);
+      expect(conversationService.resolveCurrentMessage.calledOnce).to.equal(true);
       expect(workflowOriginService.resolveForTurn.called).to.equal(false);
     });
   });

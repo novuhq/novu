@@ -28,12 +28,16 @@ export interface ConversationTurn {
    */
   subscriberResolution?: SubscriberResolution;
   message: Message | null;
+  /** The message as it read before an inbound edit. */
+  previousMessage?: Message | null;
   event: AgentEventEnum;
   thread: Thread;
   platformThreadId: string;
   /** The acting user's platform identity (Slack userId, Telegram chatId). Set on message/action turns. */
   platformUserId?: string;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
   workflowOrigin?: WorkflowOriginSnapshot | null;

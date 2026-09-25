@@ -34,8 +34,9 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    // Managed agents otherwise only act on inbound messages (reactions are bridge-only today).
-    if (turn.event !== AgentEventEnum.ON_MESSAGE) {
+    // Managed agents act on new and edited inbound messages. Other lifecycle
+    // events (reactions, deletes) stay bridge-only today.
+    if (turn.event !== AgentEventEnum.ON_MESSAGE && turn.event !== AgentEventEnum.ON_MESSAGE_UPDATED) {
       return;
     }
 

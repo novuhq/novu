@@ -20,7 +20,7 @@ import {
   ENDPOINT_TYPES,
   isDashboardWebChatSubscriberId,
 } from '@novu/shared';
-import type { CardElement, EmojiValue, Message, MessageContext, Thread } from 'chat';
+import type { CardElement, EmojiValue, Message, MessageContext, MessageDeletedEvent, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
@@ -321,6 +321,9 @@ export class AgentInboundHandler implements OnModuleInit {
       onAction: (agentId, config, thread, action, userId, rawEvent) =>
         this.handleAction(agentId, config, thread, action, userId, rawEvent),
       onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
+      onMessageUpdated: (agentId, config, thread, message, previousMessage) =>
+        this.handleMessageUpdated(agentId, config, thread, message, previousMessage),
+      onMessageDeleted: (agentId, config, event) => this.handleMessageDeleted(agentId, config, event),
     });
   }
 
@@ -355,25 +358,13 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId
     );
     const participantsSnapshot = existingConversation ? [...existingConversation.participants] : [];
-    const replyPolicy = config.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY;
-    const otherAgentsOnThread =
-      replyPolicy === AgentReplyPolicyEnum.SMART && isNestedSharedThread(config.platform, thread, platformThreadId)
-        ? await this.conversationService.countOtherAgentsOnPlatformThread(
-            config.environmentId,
-            config.organizationId,
-            platformThreadId,
-            agentId
-          )
-        : 0;
-    const mentionContext = {
-      replyPolicy,
-      platform: config.platform,
-      conversationExists: existingConversation != null,
+    const mentionContext = await this.buildMentionContext(
+      agentId,
+      config,
+      thread,
       platformThreadId,
-      humanParticipantCount: countHumanParticipants(existingConversation),
-      otherAgentCount: countOtherAgentParticipants(existingConversation, agentId) + otherAgentsOnThread,
-      smartMentionRequired: conversationHasSmartMentionRequired(existingConversation),
-    };
+      existingConversation
+    );
     if (
       await this.applyPrePersistenceMentionGate({
         agentId,
@@ -479,6 +470,35 @@ export class AgentInboundHandler implements OnModuleInit {
       mentionBotUserId,
       participantsSnapshot,
     });
+  }
+
+  private async buildMentionContext(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    platformThreadId: string,
+    conversation: ConversationEntity | null
+  ): Promise<ExplicitMentionContext> {
+    const replyPolicy = config.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY;
+    const otherAgentsOnThread =
+      replyPolicy === AgentReplyPolicyEnum.SMART && isNestedSharedThread(config.platform, thread, platformThreadId)
+        ? await this.conversationService.countOtherAgentsOnPlatformThread(
+            config.environmentId,
+            config.organizationId,
+            platformThreadId,
+            agentId
+          )
+        : 0;
+
+    return {
+      replyPolicy,
+      platform: config.platform,
+      conversationExists: conversation != null,
+      platformThreadId,
+      humanParticipantCount: countHumanParticipants(conversation),
+      otherAgentCount: countOtherAgentParticipants(conversation, agentId) + otherAgentsOnThread,
+      smartMentionRequired: conversationHasSmartMentionRequired(conversation),
+    };
   }
 
   /**
@@ -1544,6 +1564,142 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  async handleMessageUpdated(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    previousMessage?: Message
+  ): Promise<void> {
+    const conversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      config.agentId,
+      config.integrationId,
+      thread.id
+    );
+    if (!conversation) {
+      return;
+    }
+
+    const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
+    const richContent = Array.isArray(message.attachments)
+      ? {
+          attachments: (storedAttachments ?? []).map(({ type, name, mimeType, size, storageKey }) => ({
+            type,
+            name,
+            mimeType,
+            size,
+            storageKey,
+          })),
+        }
+      : undefined;
+    const editedAt = readPlatformEditedAt(message) ?? new Date().toISOString();
+
+    if (message.id) {
+      await this.conversationService.updateInboundMessage({
+        conversationId: conversation._id,
+        platformMessageId: message.id,
+        content: message.text,
+        richContent,
+        hasPlatformAttachments: Boolean(message.attachments?.length),
+        editedAt,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    }
+
+    trackAgentInboundMessage(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      agentEvent: AgentEventEnum.ON_MESSAGE_UPDATED,
+      isFirstMessageInThread: false,
+    });
+
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread,
+      platformThreadId: thread.id,
+      message,
+      previousMessage: previousMessage ?? null,
+      event: AgentEventEnum.ON_MESSAGE_UPDATED,
+      operation: 'resolve-subscriber-message-updated',
+      platformUserId: message.author?.userId,
+      authorIsBot: message.author?.isBot === true,
+      raw: message.raw,
+      storedAttachments,
+      deliveryRevision: editedAt,
+    });
+  }
+
+  async handleMessageDeleted(agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent): Promise<void> {
+    const threadId = event.threadId;
+    if (!threadId) {
+      return;
+    }
+
+    const conversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      config.agentId,
+      config.integrationId,
+      threadId
+    );
+    if (!conversation) {
+      return;
+    }
+
+    const current = event.messageId
+      ? await this.conversationService.resolveCurrentMessage(config.environmentId, conversation._id, event.messageId)
+      : null;
+    const existing = event.messageId
+      ? await this.conversationService.deleteInboundMessage({
+          conversationId: conversation._id,
+          platformMessageId: event.messageId,
+          content: event.previousMessage?.text ?? current?.content,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        })
+      : null;
+
+    const message = stubDeletedMessage(event, current ?? existing);
+
+    trackAgentInboundMessage(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      agentEvent: AgentEventEnum.ON_MESSAGE_DELETED,
+      isFirstMessageInThread: false,
+    });
+
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread: eventToThread(event, conversation),
+      platformThreadId: threadId,
+      message,
+      previousMessage: null,
+      event: AgentEventEnum.ON_MESSAGE_DELETED,
+      operation: 'resolve-subscriber-message-deleted',
+      platformUserId: event.previousMessage?.author?.userId ?? existing?.senderId,
+      authorIsBot: event.previousMessage?.author?.isBot === true,
+      raw: event.raw,
+      deliveryRevision: 'deleted',
+    });
+  }
+
   async handleReaction(agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent): Promise<void> {
     const threadId = event.thread?.id;
     if (!threadId) {
@@ -1574,30 +1730,11 @@ export class AgentInboundHandler implements OnModuleInit {
       conversationId: conversation._id,
     });
 
-    const platformUserId = event.user?.userId;
-
-    const reactionResolution = platformUserId
-      ? await this.resolveSubscriber({
-          agentId,
-          config,
-          platformUserId,
-          operation: 'resolve-subscriber-reaction',
-          authorIsBot: false,
-        })
-      : undefined;
-    const subscriberId = getResolvedSubscriberId(reactionResolution);
-
-    const [subscriber, sourceActivity, agent] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
-      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
-        '_id',
-        'runtime',
-        'managedRuntime',
-      ]),
-    ]);
+    const sourceActivity = await this.conversationService.findSourceActivity(
+      config.environmentId,
+      conversation._id,
+      event.messageId
+    );
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
 
@@ -1611,37 +1748,99 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
 
-    const reactionPayload: BridgeReaction = {
-      emoji: event.emoji.name,
-      added: event.added,
-      messageId: event.messageId,
-      sourceMessage: event.message,
-      sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
-        ? sourceMessageStoredAttachments
-        : undefined,
-    };
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
+      platformThreadId: threadId,
+      message: event.message ?? null,
+      turnMessage: null,
+      event: AgentEventEnum.ON_REACTION,
+      operation: 'resolve-subscriber-reaction',
+      platformUserId: event.user?.userId,
+      raw: event.raw,
+      reaction: {
+        emoji: event.emoji.name,
+        added: event.added,
+        messageId: event.messageId,
+        sourceMessage: event.message,
+        sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
+          ? sourceMessageStoredAttachments
+          : undefined,
+      },
+    });
+  }
+
+  private async dispatchExistingConversationTurn(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    thread: Thread;
+    platformThreadId: string;
+    message: Message | null;
+    turnMessage?: Message | null;
+    previousMessage?: Message | null;
+    event: AgentEventEnum;
+    operation: string;
+    platformUserId?: string;
+    authorIsBot?: boolean;
+    raw?: unknown;
+    storedAttachments?: StoredAttachment[];
+    deliveryRevision?: string;
+    reaction?: BridgeReaction;
+  }): Promise<void> {
+    const { agentId, config, conversation, thread, platformThreadId, message, event } = params;
+
+    if (
+      (event === AgentEventEnum.ON_MESSAGE_UPDATED || event === AgentEventEnum.ON_MESSAGE_DELETED) &&
+      (await this.shouldSkipRevisionDispatch(params))
+    ) {
+      return;
+    }
+
+    const resolution = params.platformUserId
+      ? await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId: params.platformUserId,
+          operation: params.operation,
+          authorIsBot: params.authorIsBot === true,
+        })
+      : undefined;
+    const subscriberId = getResolvedSubscriberId(resolution);
+
+    const [subscriber, agent] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]),
+    ]);
 
     const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
       config,
-      event.raw,
-      platformUserId
+      params.raw,
+      params.platformUserId
     );
     const runtime = this.runtimeResolver.resolve(agent);
-
     const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
-      platformThreadId: threadId,
+      platformThreadId,
       subscriberId,
-      message: event.message ?? null,
+      message,
       existingConversation: conversation,
-      isDirectMessage: event.thread?.isDM,
+      isDirectMessage: thread.isDM,
     });
     const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
       conversation,
-      platformThreadId: threadId,
+      platformThreadId,
       subscriberId,
       resolution: workflowOriginResolution,
     });
@@ -1654,23 +1853,75 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
-      subscriberResolution: reactionResolution,
-      message: null,
-      event: AgentEventEnum.ON_REACTION,
-      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
-      platformThreadId: threadId,
-      reaction: reactionPayload,
+      subscriberResolution: resolution,
+      message: params.turnMessage !== undefined ? params.turnMessage : message,
+      previousMessage: params.previousMessage,
+      event,
+      thread,
+      platformThreadId,
+      platformUserId: params.platformUserId,
+      storedAttachments: params.storedAttachments,
+      deliveryRevision: params.deliveryRevision,
+      reaction: params.reaction,
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
-    // On buttonless platforms (iMessage/SMS) a pending tool approval can be
-    // answered with a 👍 / 👎 reaction on the approval-request card — a matching
-    // reaction is consumed as the verdict instead of forwarding as ON_REACTION.
-    if (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime)) {
+    if (
+      event === AgentEventEnum.ON_REACTION &&
+      (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime))
+    ) {
+      return;
+    }
+
+    if (
+      event === AgentEventEnum.ON_MESSAGE_UPDATED &&
+      (await maybeReplyUnresolvedSubscriberAccess({
+        turn,
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: false,
+      }))
+    ) {
       return;
     }
 
     await runtime.dispatch(turn);
+  }
+
+  /**
+   * Edits and deletes reach the agent only when a new message in the same
+   * thread would. The caller has already written the ledger revision.
+   */
+  private async shouldSkipRevisionDispatch(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    thread: Thread;
+    platformThreadId: string;
+    message: Message | null;
+    authorIsBot?: boolean;
+  }): Promise<boolean> {
+    const { agentId, config, conversation, thread, platformThreadId, message } = params;
+
+    if (params.authorIsBot) {
+      return true;
+    }
+
+    if (message) {
+      await this.restoreMissingMentionFlag(config, thread, message);
+      const mentionContext = await this.buildMentionContext(agentId, config, thread, platformThreadId, conversation);
+
+      if (requiresExplicitMention(thread, message, mentionContext)) {
+        return true;
+      }
+    }
+
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
+      return true;
+    }
+
+    return this.maybeStopKeylessInbound(agentId, config, thread, conversation);
   }
 
   async handleAction(
@@ -1943,4 +2194,38 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
   }
+}
+
+function readPlatformEditedAt(message: Message): string | undefined {
+  const raw = message.raw;
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+
+  const editedTs = (raw as { edited?: { ts?: unknown } }).edited?.ts;
+
+  return typeof editedTs === 'string' && editedTs.length > 0 ? editedTs : undefined;
+}
+
+function eventToThread(event: MessageDeletedEvent, conversation: ConversationEntity): Thread {
+  // Conversations created before `isDirectMessage` was recorded count as DMs so the reply-policy gate fails open.
+  return { id: event.threadId, channelId: event.channelId, isDM: conversation.isDirectMessage !== false } as Thread;
+}
+
+function stubDeletedMessage(event: MessageDeletedEvent, existing: ConversationActivityEntity | null): Message {
+  if (event.previousMessage) {
+    return event.previousMessage;
+  }
+
+  return {
+    id: event.messageId,
+    text: existing?.content ?? '',
+    author: {
+      userId: existing?.senderId ?? '',
+      fullName: existing?.senderName ?? '',
+      userName: existing?.senderName ?? '',
+      isBot: false,
+    },
+    metadata: { dateSent: existing?.createdAt ? new Date(existing.createdAt) : (event.deletedAt ?? new Date()) },
+  } as Message;
 }
