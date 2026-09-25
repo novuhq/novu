@@ -4,6 +4,7 @@ import {
   ChannelEndpointRepository,
   ContextRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
   MessageRepository,
@@ -785,7 +786,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(sourceMessage.author.fullName).to.equal('Jane Doe');
     });
 
-    it('should not persist conversation activity for reactions', async () => {
+    it('should persist a reaction activity against the source message', async () => {
       const threadId = `T_REACT_NOACT_${Date.now()}`;
       const msg = mockMessage({ userId: 'U_REACT2', text: 'Activity test' });
 
@@ -820,7 +821,15 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         ctx.session.environment._id,
         conversation._id
       );
-      expect(activitiesAfter.length).to.equal(activitiesBefore.length);
+      expect(activitiesAfter.length).to.equal(activitiesBefore.length + 1);
+
+      const reactionActivity = must(
+        activitiesAfter.find((activity) => activity.type === ConversationActivityTypeEnum.REACTION),
+        'reaction activity'
+      );
+      expect(reactionActivity.content).to.equal('heart');
+      expect(reactionActivity.platformMessageId).to.equal(msg.id);
+      expect((reactionActivity.richContent as any)?.reaction).to.deep.equal({ emoji: 'heart', added: true });
     });
   });
 
