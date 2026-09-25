@@ -20,6 +20,7 @@ import type {
   PersistCustomParams,
   PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
+  PersistInboundReactionParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
@@ -356,6 +357,10 @@ export class AgentConversationService {
 
   async deleteInboundMessage(params: DeleteInboundMessageParams): Promise<ConversationActivityEntity | null> {
     return this.ledger.deleteInboundMessage(params);
+  }
+
+  async persistInboundReaction(params: PersistInboundReactionParams): Promise<ConversationActivityEntity> {
+    return this.ledger.persistInboundReaction(params);
   }
 
   async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {

@@ -126,6 +126,7 @@ describe('AgentInboundHandler', () => {
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
       updateInboundMessage: sinon.stub().resolves({ _id: 'activity1', content: 'updated' }),
       deleteInboundMessage: sinon.stub().resolves({ _id: 'activity1', content: 'gone' }),
+      persistInboundReaction: sinon.stub().resolves({ _id: 'reaction-activity1' }),
       persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
       persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
@@ -2987,7 +2988,7 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_UPDATED);
     });
 
-    it('persists an edit of a bot-authored message but skips dispatch without throwing', async () => {
+    it('skips persisting and dispatching an edit of a bot-authored message without throwing', async () => {
       const { handler, conversationService, bridgeExecutor } = makeHandler();
 
       await handler.handleMessageUpdated(
@@ -3002,7 +3003,7 @@ describe('AgentInboundHandler', () => {
         } as any
       );
 
-      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
   });
