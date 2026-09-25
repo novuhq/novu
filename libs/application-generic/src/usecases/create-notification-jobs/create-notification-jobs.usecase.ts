@@ -290,23 +290,33 @@ export class CreateNotificationJobs {
     command: CreateNotificationJobsCommand,
     isJobStepDedupEnabled: boolean
   ): NotificationStepEntity {
+    const stepExtras: Pick<NotificationStepEntity, 'bridgeUrl' | 'workflowMetadata'> = command.bridgeUrl
+      ? {
+          bridgeUrl: command.bridgeUrl,
+          workflowMetadata: {
+            name: command.template.name,
+            description: command.template.description,
+          },
+        }
+      : {};
+
     if (!isJobStepDedupEnabled) {
       return {
         ...step,
-        ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+        ...stepExtras,
       };
     }
 
     const leanStep: LeanNotificationStep = {
       ...toLeanStep(step),
       ...(step.variants ? { variants: step.variants.map(toLeanStep) } : {}),
-      ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+      ...stepExtras,
     };
 
     // `job.step` is a Mongo Mixed field; under job-step-dedup we intentionally
     // persist this lean projection and rehydrate the full template at execution
     // time (StepTemplateHydrationService).
-    return leanStep as unknown as NotificationStepEntity;
+    return leanStep as NotificationStepEntity;
   }
 
   private createATriggerJobIfMissing(

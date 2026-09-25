@@ -8,13 +8,19 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationEntity,
+  type ConversationParticipant,
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { ENDPOINT_TYPES, isDashboardWebChatSubscriberId } from '@novu/shared';
-import type { CardElement, EmojiValue, Message, MessageContext, Thread } from 'chat';
+import {
+  AGENT_REPLY_METADATA_KEYS,
+  AgentReplyPolicyEnum,
+  ENDPOINT_TYPES,
+  isDashboardWebChatSubscriberId,
+} from '@novu/shared';
+import type { CardElement, EmojiValue, Message, MessageContext, MessageDeletedEvent, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
@@ -23,7 +29,7 @@ import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/l
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
-import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import {
   trackAgentInboundAction,
@@ -38,6 +44,7 @@ import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id'
 import { parseApprovalReplyVerdict } from '../../shared/tool-approval/reply-based-approval';
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
+import { buildMentionRequiredNoticeReply } from '../../shared/util/agent-inbound-replies';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
 import { asRecord } from '../../shared/util/raw-record';
@@ -54,11 +61,25 @@ import { OutboundGateway } from '../egress/outbound.gateway';
 import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
+import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
+import { getActionPlatformThreadId, getInboundPlatformThreadId, isNestedSharedThread } from './platform-thread-id';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
+import {
+  conversationHasSmartMentionRequired,
+  countHumanParticipants,
+  countOtherAgentParticipants,
+  detectSmartExclusiveThreadEnded,
+  type ExplicitMentionContext,
+  followsNestedThreadWithoutMention,
+  messageContainsUserMention,
+  messageMentionsAgent,
+  requiresExplicitMention,
+} from './requires-explicit-mention';
+import { seedSlackThreadHistory } from './seed-slack-thread-history';
 import { WorkflowOriginService } from './workflow-origin.service';
 
 /**
@@ -172,12 +193,6 @@ function foldInboundBurst(message: Message, messageContext?: MessageContext): vo
   message.attachments = burst.flatMap((item) => item.attachments ?? []);
 }
 
-function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
-  const raw = asRecord(message.raw);
-
-  return asRecord(raw?.event) ?? raw;
-}
-
 function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Message): string {
   const preview = getInboundActivityPreview(message.text, {
     hasPlatformAttachments: Boolean(message.attachments?.length),
@@ -210,26 +225,6 @@ function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Me
  */
 function isInboundEmailSenderVerified(raw: Record<string, unknown> | undefined): boolean {
   return raw?.dkim === 'pass' && raw?.spf === 'pass';
-}
-
-function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
-  const rawEvent = getMessageRawEvent(message);
-  const rawThreadTs = rawEvent?.thread_ts;
-  const threadRoot = typeof rawThreadTs === 'string' && rawThreadTs.length > 0 ? rawThreadTs : message.id;
-
-  if (platform !== AgentPlatformEnum.SLACK || !thread.isDM || !threadRoot || !thread.id.endsWith(':')) {
-    return thread.id;
-  }
-
-  return `${thread.id}${threadRoot}`;
-}
-
-function getActionPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, action: AgentAction): string {
-  if (platform !== AgentPlatformEnum.SLACK || !action.sourceMessageId || !thread.id.endsWith(':')) {
-    return thread.id;
-  }
-
-  return `${thread.id}${action.sourceMessageId}`;
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -313,7 +308,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectionContextResolver: InboundConnectionContextResolver,
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
     private readonly workflowOriginService: WorkflowOriginService,
-    private readonly humanConversationInbound: HumanConversationInboundInterceptor
+    private readonly humanConversationInbound: HumanConversationInboundInterceptor,
+    private readonly agentConfigResolver: AgentConfigResolver
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -325,6 +321,9 @@ export class AgentInboundHandler implements OnModuleInit {
       onAction: (agentId, config, thread, action, userId, rawEvent) =>
         this.handleAction(agentId, config, thread, action, userId, rawEvent),
       onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
+      onMessageUpdated: (agentId, config, thread, message, previousMessage) =>
+        this.handleMessageUpdated(agentId, config, thread, message, previousMessage),
+      onMessageDeleted: (agentId, config, event) => this.handleMessageDeleted(agentId, config, event),
     });
   }
 
@@ -340,7 +339,45 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    // Fold before mention detection so a mention that arrived in an earlier
+    // message of the same burst still gates this turn.
     foldInboundBurst(message, messageContext);
+    const mentionBotUserId = await this.restoreMissingMentionFlag(config, thread, message);
+
+    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
+
+    // Resolve whether this thread already has a conversation *before* creating
+    // one. The mention gate and the free-tier active-conversations gate both run
+    // before persistence, so a gated brand-new thread never leaves an orphaned
+    // Conversation and participants.
+    const existingConversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      config.integrationId,
+      platformThreadId
+    );
+    const participantsSnapshot = existingConversation ? [...existingConversation.participants] : [];
+    const mentionContext = await this.buildMentionContext(
+      agentId,
+      config,
+      thread,
+      platformThreadId,
+      existingConversation
+    );
+    if (
+      await this.applyPrePersistenceMentionGate({
+        agentId,
+        config,
+        thread,
+        message,
+        platformThreadId,
+        existingConversation,
+        mentionContext,
+      })
+    ) {
+      return;
+    }
 
     if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
       return;
@@ -363,21 +400,6 @@ export class AgentInboundHandler implements OnModuleInit {
     if (!isDashboardTester) {
       await this.markIntegrationConnectedOnFirstMessage(agentId, config);
     }
-
-    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
-
-    // Resolve whether this thread already has a conversation *before* creating
-    // one. The free-tier active-conversations gate must run before persistence
-    // so a blocked brand-new thread never leaves an orphaned Conversation and
-    // participants. Existing threads pass their entity so reopen / new-cycle
-    // activations are still gated (and they carry no orphan risk).
-    const existingConversation = await this.conversationService.findByPlatformThread(
-      config.environmentId,
-      config.organizationId,
-      agentId,
-      config.integrationId,
-      platformThreadId
-    );
 
     // Free-tier active-conversations short-circuit: block engagements that would
     // start a *new* active conversation once the included limit is reached.
@@ -444,7 +466,94 @@ export class AgentInboundHandler implements OnModuleInit {
       resolution,
       isVerifiedEmailSender,
       workflowOrigin,
+      mentionContext,
+      mentionBotUserId,
+      participantsSnapshot,
     });
+  }
+
+  private async buildMentionContext(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    platformThreadId: string,
+    conversation: ConversationEntity | null
+  ): Promise<ExplicitMentionContext> {
+    const replyPolicy = config.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY;
+    const otherAgentsOnThread =
+      replyPolicy === AgentReplyPolicyEnum.SMART && isNestedSharedThread(config.platform, thread, platformThreadId)
+        ? await this.conversationService.countOtherAgentsOnPlatformThread(
+            config.environmentId,
+            config.organizationId,
+            platformThreadId,
+            agentId
+          )
+        : 0;
+
+    return {
+      replyPolicy,
+      platform: config.platform,
+      conversationExists: conversation != null,
+      platformThreadId,
+      humanParticipantCount: countHumanParticipants(conversation),
+      otherAgentCount: countOtherAgentParticipants(conversation, agentId) + otherAgentsOnThread,
+      smartMentionRequired: conversationHasSmartMentionRequired(conversation),
+    };
+  }
+
+  /**
+   * Mention gating that runs before any conversation is persisted, so an
+   * unmentioned message in a shared room never creates a conversation. A thread
+   * with a pending ask is exempt — that reply is the answer we are waiting for.
+   * Also subscribes to threads this agent is allowed to follow unmentioned.
+   * Returns true when the message must be dropped.
+   */
+  private async applyPrePersistenceMentionGate(args: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    thread: Thread;
+    message: Message;
+    platformThreadId: string;
+    existingConversation: ConversationEntity | null;
+    mentionContext: ExplicitMentionContext;
+  }): Promise<boolean> {
+    const { agentId, config, thread, message, platformThreadId, existingConversation, mentionContext } = args;
+
+    const requiresMention = requiresExplicitMention(thread, message, mentionContext);
+    const pendingAsk =
+      requiresMention &&
+      existingConversation != null &&
+      (await this.humanConversationInbound.hasPendingAsk(config.environmentId, existingConversation._id));
+
+    if (requiresMention && !pendingAsk) {
+      if (
+        mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
+        (mentionContext.humanParticipantCount >= 2 || (mentionContext.otherAgentCount ?? 0) > 0) &&
+        isNestedSharedThread(config.platform, thread, platformThreadId)
+      ) {
+        await this.announceMentionRequired({
+          agentId,
+          config,
+          thread,
+          platformThreadId,
+          conversation: existingConversation,
+          triggeringUserId: message.author.userId,
+        });
+      }
+
+      await thread.unsubscribe();
+
+      return true;
+    }
+
+    if (
+      followsNestedThreadWithoutMention(mentionContext) &&
+      isNestedSharedThread(config.platform, thread, platformThreadId)
+    ) {
+      await thread.subscribe();
+    }
+
+    return false;
   }
 
   /**
@@ -614,6 +723,15 @@ export class AgentInboundHandler implements OnModuleInit {
     resolution: SubscriberResolution;
     isVerifiedEmailSender: boolean;
     workflowOrigin: Awaited<ReturnType<WorkflowOriginService['resolveForTurn']>>;
+    mentionContext: ExplicitMentionContext;
+    /** This agent's bot user id, when the mention-flag repair already resolved it. */
+    mentionBotUserId?: string;
+    /**
+     * Participants as they were *before* `createOrGetConversation` added this
+     * sender, so smart-policy join detection can still tell a newcomer from the
+     * thread's incumbent human.
+     */
+    participantsSnapshot: ConversationParticipant[];
   }): Promise<void> {
     const {
       agentId,
@@ -626,10 +744,25 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       isVerifiedEmailSender,
       workflowOrigin,
+      mentionContext,
+      mentionBotUserId,
+      participantsSnapshot,
     } = args;
     let { resolution } = args;
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
+
+    const unseenThreadMessages = await seedSlackThreadHistory({
+      agentId,
+      config,
+      conversation,
+      thread,
+      message,
+      platformThreadId,
+      workflowOrigin,
+      conversationService: this.conversationService,
+      logger: this.logger,
+    });
 
     await this.recordInboundMessage(agentId, config, conversation, message, {
       subscriberId,
@@ -683,6 +816,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId: message.author.userId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
       workflowOrigin: workflowOrigin ?? undefined,
+      unseenThreadMessages,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
@@ -696,6 +830,24 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     if (event === AgentEventEnum.ON_MESSAGE && (await this.humanConversationInbound.tryHandleMessage(turn))) {
+      return;
+    }
+
+    if (
+      await this.maybeStopOnMentionGate({
+        agentId,
+        config,
+        thread,
+        message,
+        event,
+        conversation,
+        platformThreadId,
+        subscriberId,
+        mentionContext,
+        mentionBotUserId,
+        participantsSnapshot,
+      })
+    ) {
       return;
     }
 
@@ -722,6 +874,95 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     await runtime.dispatch(turn);
+  }
+
+  /**
+   * Mention gating that has to run *after* the HITL interceptor, so an
+   * unmentioned reply can still settle a pending ask. Under the SMART policy it
+   * also detects the moment an agent's exclusive thread stops being exclusive —
+   * a teammate joins, another agent is already in the thread, or the incumbent
+   * mentions someone else — and steps back out of the thread. Returns true when
+   * the turn must stop here.
+   */
+  private async maybeStopOnMentionGate(args: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    thread: Thread;
+    message: Message;
+    event: AgentEventEnum;
+    conversation: ConversationEntity;
+    platformThreadId: string;
+    subscriberId: string | null;
+    mentionContext: ExplicitMentionContext;
+    mentionBotUserId?: string;
+    participantsSnapshot: ConversationParticipant[];
+  }): Promise<boolean> {
+    const {
+      agentId,
+      config,
+      thread,
+      message,
+      event,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      mentionContext,
+      participantsSnapshot,
+    } = args;
+
+    if (event !== AgentEventEnum.ON_MESSAGE) {
+      return false;
+    }
+
+    if (requiresExplicitMention(thread, message, mentionContext)) {
+      return true;
+    }
+
+    const botUserId =
+      args.mentionBotUserId ??
+      (mentionContext.replyPolicy === AgentReplyPolicyEnum.SMART &&
+      mentionContext.humanParticipantCount === 1 &&
+      (mentionContext.otherAgentCount ?? 0) === 0 &&
+      messageContainsUserMention(message, config.platform)
+        ? await this.resolveMentionBotUserId(config, message)
+        : undefined);
+
+    const exclusiveThreadEnd = detectSmartExclusiveThreadEnded({
+      replyPolicy: mentionContext.replyPolicy,
+      participantsSnapshot,
+      subscriberId,
+      platform: config.platform,
+      platformUserId: message.author?.userId,
+      botUserId,
+      message,
+      otherAgentCount: mentionContext.otherAgentCount,
+    });
+
+    if (exclusiveThreadEnd == null || !isNestedSharedThread(config.platform, thread, platformThreadId)) {
+      return false;
+    }
+
+    const announced = await this.announceMentionRequired({
+      agentId,
+      config,
+      thread,
+      platformThreadId,
+      conversation,
+      triggeringUserId: message.author.userId,
+      joinerName: exclusiveThreadEnd === 'join' ? message.author?.fullName : undefined,
+    });
+
+    if (!announced) {
+      // The transition was not recorded, so a later mention would resubscribe
+      // and auto-follow again. Keep following until it can be saved.
+      return false;
+    }
+
+    await thread.unsubscribe();
+
+    // A message that did mention the agent still gets answered — the notice
+    // above just tells the room the agent now needs mentioning.
+    return message.isMention !== true;
   }
 
   private async maybeStopKeylessInbound(
@@ -1055,6 +1296,190 @@ export class AgentInboundHandler implements OnModuleInit {
   }
 
   /**
+   * Privately tells the triggering user the agent now needs @-mentioning.
+   * Announced once per
+   * conversation — the thread keeps producing the same "no longer exclusive"
+   * verdict on every later message, and repeating the notice each time (even
+   * on messages that did mention the agent) is noise. The flag is saved only
+   * after the ephemeral notice posts, so a Slack/Teams reject stays retryable.
+   * Returns false when the notice could not be posted or
+   * the transition could not be saved.
+   */
+  private async announceMentionRequired(args: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    thread: Thread;
+    platformThreadId: string;
+    conversation: ConversationEntity | null;
+    triggeringUserId: string;
+    joinerName?: string;
+  }): Promise<boolean> {
+    const { agentId, config, thread, platformThreadId, conversation, triggeringUserId, joinerName } = args;
+
+    if (conversationHasSmartMentionRequired(conversation)) {
+      return true;
+    }
+
+    const posted = await this.postMentionRequiredNotice(
+      agentId,
+      config,
+      thread,
+      platformThreadId,
+      triggeringUserId,
+      joinerName
+    );
+
+    if (!posted) {
+      return false;
+    }
+
+    if (conversation && !(await this.markSmartMentionRequired(config, conversation))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private async markSmartMentionRequired(
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity
+  ): Promise<boolean> {
+    if (conversationHasSmartMentionRequired(conversation)) {
+      return true;
+    }
+
+    try {
+      await this.conversationService.updateMetadata({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        currentMetadata: conversation.metadata ?? {},
+        ops: [{ action: 'set', key: AGENT_REPLY_METADATA_KEYS.smartMentionRequired, value: true }],
+      });
+
+      return true;
+    } catch (err) {
+      this.logger.warn(err, `[agent:${config.agentId}] Failed to persist smart reply-policy mention-required flag`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'mark-smart-mention-required',
+        agentId: config.agentId,
+        platform: config.platform,
+      });
+
+      return false;
+    }
+  }
+
+  /**
+   * The chat SDK only flags a Slack mention when the agent's bot user id is on
+   * the adapter's per-event request context. A multi-workspace app resolves that
+   * id per event, so a miss makes a message that did @-mention the agent look
+   * unmentioned — the reply-policy gate then answers with the "@-mention me"
+   * notice and drops the turn instead of replying. Resolve the id directly
+   * (outside the adapter's request scope) and re-check the raw payload before
+   * any gate reads the flag. Returns the bot user id when it was looked up, so
+   * the later teammate-mention check can reuse it.
+   */
+  private async restoreMissingMentionFlag(
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<string | undefined> {
+    const mentionGatedPolicy =
+      config.replyPolicy === AgentReplyPolicyEnum.SMART || config.replyPolicy === AgentReplyPolicyEnum.MENTION_ONLY;
+
+    if (
+      message.isMention === true ||
+      thread.isDM ||
+      !mentionGatedPolicy ||
+      !messageContainsUserMention(message, config.platform)
+    ) {
+      return undefined;
+    }
+
+    const botUserId = await this.resolveMentionBotUserId(config, message);
+
+    if (messageMentionsAgent(message, config.platform, botUserId)) {
+      message.isMention = true;
+      this.logger.debug(
+        `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} @-mentions this agent but arrived without the mention flag; treating it as a mention`
+      );
+    }
+
+    return botUserId;
+  }
+
+  private async resolveMentionBotUserId(config: ResolvedAgentConfig, message: Message): Promise<string | undefined> {
+    switch (config.platform) {
+      case AgentPlatformEnum.SLACK: {
+        try {
+          const workspaceId = extractWorkspaceId(config.platform, message.raw) ?? undefined;
+          const installation = await this.agentConfigResolver.resolveSlackInstallation(
+            config.environmentId,
+            config.organizationId,
+            config.integrationIdentifier,
+            workspaceId
+          );
+
+          return installation?.botUserId;
+        } catch (err) {
+          this.logger.warn(
+            { err, agentId: config.agentId },
+            'Failed to resolve Slack bot user id for teammate-mention detection'
+          );
+
+          return undefined;
+        }
+      }
+      case AgentPlatformEnum.TEAMS:
+        return config.credentials.clientId;
+      case AgentPlatformEnum.WHATSAPP:
+      case AgentPlatformEnum.EMAIL:
+      case AgentPlatformEnum.TELEGRAM:
+      case AgentPlatformEnum.SENDBLUE:
+      case AgentPlatformEnum.PHOTON_IMESSAGE:
+      case AgentPlatformEnum.WEB_CHAT:
+        return undefined;
+      default: {
+        const exhaustiveCheck: never = config.platform;
+
+        return exhaustiveCheck;
+      }
+    }
+  }
+
+  private async postMentionRequiredNotice(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    platformThreadId: string,
+    triggeringUserId: string,
+    joinerName?: string
+  ): Promise<boolean> {
+    const markdown = buildMentionRequiredNoticeReply({ joinerName, agentName: config.agentName });
+
+    try {
+      applyPlatformThreadIdToThread(thread, platformThreadId);
+      const sent = await thread.postEphemeral(triggeringUserId, { markdown }, { fallbackToDM: false });
+
+      return sent !== null;
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to post ephemeral smart reply-policy mention notice`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-mention-required-notice',
+        agentId,
+        platform: config.platform,
+      });
+
+      return false;
+    }
+  }
+
+  /**
    * Surface the tier-upgrade prompt when the Connect-org auto-provisioned
    * subscriber cap is hit. Posted on the live inbound thread via the outbound
    * gateway (mirrors `safePostInboundReply`). Errors are logged but swallowed —
@@ -1139,6 +1564,142 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  async handleMessageUpdated(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    previousMessage?: Message
+  ): Promise<void> {
+    const conversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      config.agentId,
+      config.integrationId,
+      thread.id
+    );
+    if (!conversation) {
+      return;
+    }
+
+    const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
+    const richContent = Array.isArray(message.attachments)
+      ? {
+          attachments: (storedAttachments ?? []).map(({ type, name, mimeType, size, storageKey }) => ({
+            type,
+            name,
+            mimeType,
+            size,
+            storageKey,
+          })),
+        }
+      : undefined;
+    const editedAt = readPlatformEditedAt(message) ?? new Date().toISOString();
+
+    if (message.id) {
+      await this.conversationService.updateInboundMessage({
+        conversationId: conversation._id,
+        platformMessageId: message.id,
+        content: message.text,
+        richContent,
+        hasPlatformAttachments: Boolean(message.attachments?.length),
+        editedAt,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    }
+
+    trackAgentInboundMessage(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      agentEvent: AgentEventEnum.ON_MESSAGE_UPDATED,
+      isFirstMessageInThread: false,
+    });
+
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread,
+      platformThreadId: thread.id,
+      message,
+      previousMessage: previousMessage ?? null,
+      event: AgentEventEnum.ON_MESSAGE_UPDATED,
+      operation: 'resolve-subscriber-message-updated',
+      platformUserId: message.author?.userId,
+      authorIsBot: message.author?.isBot === true,
+      raw: message.raw,
+      storedAttachments,
+      deliveryRevision: editedAt,
+    });
+  }
+
+  async handleMessageDeleted(agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent): Promise<void> {
+    const threadId = event.threadId;
+    if (!threadId) {
+      return;
+    }
+
+    const conversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      config.agentId,
+      config.integrationId,
+      threadId
+    );
+    if (!conversation) {
+      return;
+    }
+
+    const current = event.messageId
+      ? await this.conversationService.resolveCurrentMessage(config.environmentId, conversation._id, event.messageId)
+      : null;
+    const existing = event.messageId
+      ? await this.conversationService.deleteInboundMessage({
+          conversationId: conversation._id,
+          platformMessageId: event.messageId,
+          content: event.previousMessage?.text ?? current?.content,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        })
+      : null;
+
+    const message = stubDeletedMessage(event, current ?? existing);
+
+    trackAgentInboundMessage(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      agentEvent: AgentEventEnum.ON_MESSAGE_DELETED,
+      isFirstMessageInThread: false,
+    });
+
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread: eventToThread(event, conversation),
+      platformThreadId: threadId,
+      message,
+      previousMessage: null,
+      event: AgentEventEnum.ON_MESSAGE_DELETED,
+      operation: 'resolve-subscriber-message-deleted',
+      platformUserId: event.previousMessage?.author?.userId ?? existing?.senderId,
+      authorIsBot: event.previousMessage?.author?.isBot === true,
+      raw: event.raw,
+      deliveryRevision: 'deleted',
+    });
+  }
+
   async handleReaction(agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent): Promise<void> {
     const threadId = event.thread?.id;
     if (!threadId) {
@@ -1169,30 +1730,11 @@ export class AgentInboundHandler implements OnModuleInit {
       conversationId: conversation._id,
     });
 
-    const platformUserId = event.user?.userId;
-
-    const reactionResolution = platformUserId
-      ? await this.resolveSubscriber({
-          agentId,
-          config,
-          platformUserId,
-          operation: 'resolve-subscriber-reaction',
-          authorIsBot: false,
-        })
-      : undefined;
-    const subscriberId = getResolvedSubscriberId(reactionResolution);
-
-    const [subscriber, sourceActivity, agent] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
-      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
-        '_id',
-        'runtime',
-        'managedRuntime',
-      ]),
-    ]);
+    const sourceActivity = await this.conversationService.findSourceActivity(
+      config.environmentId,
+      conversation._id,
+      event.messageId
+    );
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
 
@@ -1206,37 +1748,99 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
 
-    const reactionPayload: BridgeReaction = {
-      emoji: event.emoji.name,
-      added: event.added,
-      messageId: event.messageId,
-      sourceMessage: event.message,
-      sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
-        ? sourceMessageStoredAttachments
-        : undefined,
-    };
+    await this.dispatchExistingConversationTurn({
+      agentId,
+      config,
+      conversation,
+      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
+      platformThreadId: threadId,
+      message: event.message ?? null,
+      turnMessage: null,
+      event: AgentEventEnum.ON_REACTION,
+      operation: 'resolve-subscriber-reaction',
+      platformUserId: event.user?.userId,
+      raw: event.raw,
+      reaction: {
+        emoji: event.emoji.name,
+        added: event.added,
+        messageId: event.messageId,
+        sourceMessage: event.message,
+        sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
+          ? sourceMessageStoredAttachments
+          : undefined,
+      },
+    });
+  }
+
+  private async dispatchExistingConversationTurn(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    thread: Thread;
+    platformThreadId: string;
+    message: Message | null;
+    turnMessage?: Message | null;
+    previousMessage?: Message | null;
+    event: AgentEventEnum;
+    operation: string;
+    platformUserId?: string;
+    authorIsBot?: boolean;
+    raw?: unknown;
+    storedAttachments?: StoredAttachment[];
+    deliveryRevision?: string;
+    reaction?: BridgeReaction;
+  }): Promise<void> {
+    const { agentId, config, conversation, thread, platformThreadId, message, event } = params;
+
+    if (
+      (event === AgentEventEnum.ON_MESSAGE_UPDATED || event === AgentEventEnum.ON_MESSAGE_DELETED) &&
+      (await this.shouldSkipRevisionDispatch(params))
+    ) {
+      return;
+    }
+
+    const resolution = params.platformUserId
+      ? await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId: params.platformUserId,
+          operation: params.operation,
+          authorIsBot: params.authorIsBot === true,
+        })
+      : undefined;
+    const subscriberId = getResolvedSubscriberId(resolution);
+
+    const [subscriber, agent] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]),
+    ]);
 
     const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
       config,
-      event.raw,
-      platformUserId
+      params.raw,
+      params.platformUserId
     );
     const runtime = this.runtimeResolver.resolve(agent);
-
     const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
-      platformThreadId: threadId,
+      platformThreadId,
       subscriberId,
-      message: event.message ?? null,
+      message,
       existingConversation: conversation,
-      isDirectMessage: event.thread?.isDM,
+      isDirectMessage: thread.isDM,
     });
     const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
       conversation,
-      platformThreadId: threadId,
+      platformThreadId,
       subscriberId,
       resolution: workflowOriginResolution,
     });
@@ -1249,23 +1853,75 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
-      subscriberResolution: reactionResolution,
-      message: null,
-      event: AgentEventEnum.ON_REACTION,
-      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
-      platformThreadId: threadId,
-      reaction: reactionPayload,
+      subscriberResolution: resolution,
+      message: params.turnMessage !== undefined ? params.turnMessage : message,
+      previousMessage: params.previousMessage,
+      event,
+      thread,
+      platformThreadId,
+      platformUserId: params.platformUserId,
+      storedAttachments: params.storedAttachments,
+      deliveryRevision: params.deliveryRevision,
+      reaction: params.reaction,
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
-    // On buttonless platforms (iMessage/SMS) a pending tool approval can be
-    // answered with a 👍 / 👎 reaction on the approval-request card — a matching
-    // reaction is consumed as the verdict instead of forwarding as ON_REACTION.
-    if (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime)) {
+    if (
+      event === AgentEventEnum.ON_REACTION &&
+      (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime))
+    ) {
+      return;
+    }
+
+    if (
+      event === AgentEventEnum.ON_MESSAGE_UPDATED &&
+      (await maybeReplyUnresolvedSubscriberAccess({
+        turn,
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: false,
+      }))
+    ) {
       return;
     }
 
     await runtime.dispatch(turn);
+  }
+
+  /**
+   * Edits and deletes reach the agent only when a new message in the same
+   * thread would. The caller has already written the ledger revision.
+   */
+  private async shouldSkipRevisionDispatch(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    thread: Thread;
+    platformThreadId: string;
+    message: Message | null;
+    authorIsBot?: boolean;
+  }): Promise<boolean> {
+    const { agentId, config, conversation, thread, platformThreadId, message } = params;
+
+    if (params.authorIsBot) {
+      return true;
+    }
+
+    if (message) {
+      await this.restoreMissingMentionFlag(config, thread, message);
+      const mentionContext = await this.buildMentionContext(agentId, config, thread, platformThreadId, conversation);
+
+      if (requiresExplicitMention(thread, message, mentionContext)) {
+        return true;
+      }
+    }
+
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
+      return true;
+    }
+
+    return this.maybeStopKeylessInbound(agentId, config, thread, conversation);
   }
 
   async handleAction(
@@ -1538,4 +2194,38 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
   }
+}
+
+function readPlatformEditedAt(message: Message): string | undefined {
+  const raw = message.raw;
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+
+  const editedTs = (raw as { edited?: { ts?: unknown } }).edited?.ts;
+
+  return typeof editedTs === 'string' && editedTs.length > 0 ? editedTs : undefined;
+}
+
+function eventToThread(event: MessageDeletedEvent, conversation: ConversationEntity): Thread {
+  // Conversations created before `isDirectMessage` was recorded count as DMs so the reply-policy gate fails open.
+  return { id: event.threadId, channelId: event.channelId, isDM: conversation.isDirectMessage !== false } as Thread;
+}
+
+function stubDeletedMessage(event: MessageDeletedEvent, existing: ConversationActivityEntity | null): Message {
+  if (event.previousMessage) {
+    return event.previousMessage;
+  }
+
+  return {
+    id: event.messageId,
+    text: existing?.content ?? '',
+    author: {
+      userId: existing?.senderId ?? '',
+      fullName: existing?.senderName ?? '',
+      userName: existing?.senderName ?? '',
+      isBot: false,
+    },
+    metadata: { dateSent: existing?.createdAt ? new Date(existing.createdAt) : (event.deletedAt ?? new Date()) },
+  } as Message;
 }

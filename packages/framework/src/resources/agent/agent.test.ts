@@ -1920,6 +1920,106 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(JSON.parse(result.body).status).toBe('ack');
   });
 
+  it('should dispatch onMessageUpdated with previousMessage on ctx', async () => {
+    let capturedText = '';
+    let capturedPrevious = '';
+    let capturedEvent = '';
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onMessageUpdated: async (message, ctx) => {
+        capturedText = message.text;
+        capturedPrevious = ctx.previousMessage?.text ?? '';
+        capturedEvent = ctx.event;
+        await ctx.reply(`updated to ${message.text}`);
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onMessageUpdated',
+          previousMessage: {
+            text: 'where is order 1234?',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+          },
+          message: {
+            text: 'where is order 4321?',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+          },
+        });
+        const url = new URL(
+          `http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessageUpdated`
+        );
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    expect(capturedEvent).toBe('onMessageUpdated');
+    expect(capturedText).toBe('where is order 4321?');
+    expect(capturedPrevious).toBe('where is order 1234?');
+  });
+
+  it('should dispatch onMessageDeleted with the removed message', async () => {
+    let capturedId = '';
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onMessageDeleted: async (message, ctx) => {
+        capturedId = message.platformMessageId;
+        await ctx.reply('cancelled');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onMessageDeleted',
+          message: {
+            text: 'where is order 1234?',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+          },
+        });
+        const url = new URL(
+          `http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessageDeleted`
+        );
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    expect(capturedId).toBe('msg-789');
+  });
+
   it('should silently skip onReaction when no handler registered', async () => {
     const testBot = agent('test-bot', {
       onMessage: async () => {},

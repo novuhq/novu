@@ -17,7 +17,7 @@ Paths are relative to the repository root. `react/` stands for `packages/react/s
 | Client | `@novu/js` | `Novu` (HTTP client, session, event emitter, socket), the `Notifications` module and its cache, `Notification` snapshots |
 | Core | `@novu/js/ui-core` | the stores `appearance`, `localization`, `inbox`, `counts`; `resolveStyle` and the style tables; the item controller and `isInsideIsland`; the bridge types `MountHandle`, `OutletHandle`, `OutletCleanup`; `subscribeAccessor` |
 | Engine | `@novu/js/ui` | the `NovuUI` class; `Renderer` with `InboxComponentsRenderer`, `MountedComponent` and `Root`; the Solid `Inbox`, `NotificationList`, `Notification`, `DefaultNotification`, `ExternalElementRenderer`; the islands `NotificationDefaultActions` and `NotificationCustomActions` |
-| Host | `@novu/react` | `NovuProvider`, `Inbox`, the React `NovuUI` component, `DefaultInbox`, `Mounter`, `OutletStore` and `OutletHost`, `useOutletRenderer` and `useNotificationOutlets`, `NotificationItem` and its parts, `useEngineStores` and `useStyle` |
+| Host | `@novu/react` | `NovuProvider`, `Inbox`, the React `NovuUI` component, `DefaultInbox`, `Mounter`, `OutletStore`, `OutletScope` and `OutletHost`, `useOutletRenderer` and `useNotificationOutlets`, `NotificationItem` and its parts, `useEngineStores` and `useStyle` |
 
 Two rules explain most of what follows:
 
@@ -28,8 +28,9 @@ Two rules explain most of what follows:
 flowchart TB
   subgraph host["Host: React tree"]
     RInbox["Inbox"] --> RNovuUI["NovuUI component"]
-    RNovuUI --> DefaultInbox --> Mounter["Mounter: mount point div"]
-    RNovuUI --> OutletHost["OutletHost: one portal per outlet"]
+    RNovuUI --> Scope["OutletScope: the outermost outlet store"]
+    Scope --> DefaultInbox --> Mounter["Mounter: mount point div"]
+    Scope --> OutletHost["OutletHost: one portal per outlet"]
     OutletHost --> Item["NotificationItem and its parts"]
     Item --> IslandMounter["Mounter, bare: island mount point"]
   end
@@ -81,7 +82,7 @@ sequenceDiagram
     EN->>SE: render Renderer into div novu-ui-ID
     RN->>RN: setNovuUI, synchronous re-render
     note over RI,RN: React render pass 2
-    RN->>RN: children first, then OutletHost, still empty
+    RN->>RN: OutletScope renders the children first, then its OutletHost, still empty
     RN->>EN: Mounter layout effect, mountComponent Inbox
     EN->>SE: mounted elements map changes
     SE->>Core: CountProvider activates the counts store
@@ -116,7 +117,7 @@ sequenceDiagram
 
 **React render pass 2.**
 
-7. `NovuUI` now provides `{ novuUI, outlets, icons }` and renders its children first and `OutletHost` after them, so any render prop registered by a child is current when the outlets render.
+7. `NovuUI` now provides `{ novuUI, icons }` and renders the outermost `OutletScope` (`react/components/OutletScope.tsx`) around its children, on the store it created for the icon overrides. A scope renders its children first and an `OutletHost` after them, so any render prop registered during the render is current when the outlets render. `DefaultInbox` uses that outermost scope, since nothing from the host app can wrap it. An icon override is adapted once, so it cannot know its owner: at mount time it looks up the scope of the nearest mount point around its outlet (`react/context/mountPointScopes.ts`, registered by `Mounter`), which puts an icon inside `<Bell />` under the bell's scope, and falls back to the outermost scope inside the engine's popover. The components a host can wrap in children mode, `Bell`, `Notifications` and `InboxContent`, each render a nested scope of their own, because React events from portal content propagate along the React tree, not the DOM: with every portal under `NovuUI`, a custom bell rendered inside a host's popover trigger sat outside the trigger's React subtree and its clicks never reached the trigger.
 8. `DefaultInbox` runs `useNotificationOutlets(props)`. With no render props every outlet renderer is `undefined`. It builds the mount props and renders `<Mounter name="Inbox" props={mountProps} />`, a plain `<div ref>` because the mount is not bare.
 9. `OutletHost` subscribes to the outlet store with `useSyncExternalStore`. The map is empty, so it renders nothing.
 
@@ -364,7 +365,7 @@ sequenceDiagram
 4. The Solid `Notification` (`js/ui/components/Notification/Notification.tsx`) checks `props.renderNotification`. When set, it renders `<ExternalElementRenderer render={renderNotification()} args={[notification]} />` instead of `DefaultNotification`.
 5. `ExternalElementRenderer` (`js/ui/components/ExternalElementRenderer.tsx`) renders `<div data-novu-outlet="nv-outlet-N" style="display: contents">`. Its `createEffect` calls `render(ref, notification)` and normalizes the result with `toHandle`: an `OutletHandle` with `update` is kept for in-place updates, a bare cleanup function is wrapped so the row remounts on every change. The effect unmounts on cleanup.
 6. `OutletStore.mount` (`react/context/OutletStore.ts`) reads the id from `el.dataset.novuOutlet`, replaces its immutable map, bumps the version and notifies subscribers. It returns the handle whose `update` replaces the entry's args and whose `unmount` removes the entry.
-7. `OutletHost` (`react/components/OutletHost.tsx`) re-renders through `useSyncExternalStore` and renders `createPortal(<OutletContent entry />, entry.el, entry.id)` for each entry. `OutletContent` calls `entry.render(...entry.args)`. In the React tree the item lives under `NovuUI` next to `DefaultInbox`, so `useNovuUI()` and any host providers above `<Inbox>` are visible to it. In the DOM it lives inside the engine's row.
+7. `OutletHost` (`react/components/OutletHost.tsx`) re-renders through `useSyncExternalStore` and renders `createPortal(<OutletContent entry />, entry.el, entry.id)` for each entry. `OutletContent` calls `entry.render(...entry.args)`. In the React tree the item lives under the outermost `OutletScope`, next to `DefaultInbox`, so `useNovuUI()`, the handlers context and any host providers above `<Inbox>` are visible to it, and its React events bubble to whatever wraps `<Inbox>`. In the DOM it lives inside the engine's row.
 
 **Inside the item: blocks on the core.**
 

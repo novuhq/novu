@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useCallback, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageMeta } from '@/components/page-meta';
-import { Sheet, SheetContentBase, SheetDescription, SheetPortal, SheetTitle } from '@/components/primitives/sheet';
+import { NonModalSheet, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
@@ -45,57 +45,42 @@ export const StepDrawer = ({
   return (
     <>
       <PageMeta title={title} />
-      <Sheet modal={false} open>
+      <NonModalSheet
+        open
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleCloseSheet();
+          }
+        }}
+        asChild
+        hideCloseButton
+        overlayClassName="h-screen w-screen"
+        overlayTransition={transitionSetting}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+      >
         <motion.div
           initial={{
-            opacity: 0,
+            x: '100%',
           }}
           animate={{
-            opacity: 1,
+            x: 0,
           }}
           exit={{
-            opacity: 0,
+            x: '100%',
           }}
-          className="fixed inset-0 z-50 h-screen w-screen bg-black/20"
           transition={transitionSetting}
-          onClick={handleCloseSheet}
-        />
-        <SheetPortal>
-          <SheetContentBase
-            asChild
-            onInteractOutside={(e) => {
-              // IMPORTANT DO NOT REMOVE
-              // we don’t want to close the sheet if interacting outside,
-              // happens on the dropdowns, elements that are rendered outside the component tree
-              // for example maily variable list, the conditions operators
-              e.preventDefault();
-            }}
-          >
-            <motion.div
-              initial={{
-                x: '100%',
-              }}
-              animate={{
-                x: 0,
-              }}
-              exit={{
-                x: '100%',
-              }}
-              transition={transitionSetting}
-              className={cn(
-                'bg-background fixed inset-y-0 right-0 z-50 flex h-full w-3/4 flex-col border-l shadow-lg outline-hidden sm:max-w-[600px]',
-                maxWidth || stepTypeToClassname[step.type]
-              )}
-            >
-              <VisuallyHidden>
-                <SheetTitle />
-                <SheetDescription />
-              </VisuallyHidden>
-              {children}
-            </motion.div>
-          </SheetContentBase>
-        </SheetPortal>
-      </Sheet>
+          className={cn(
+            'bg-background fixed inset-y-0 right-0 z-50 flex h-full w-3/4 flex-col border-l shadow-lg outline-hidden sm:max-w-[600px]',
+            maxWidth || stepTypeToClassname[step.type]
+          )}
+        >
+          <VisuallyHidden>
+            <SheetTitle />
+            <SheetDescription />
+          </VisuallyHidden>
+          {children}
+        </motion.div>
+      </NonModalSheet>
     </>
   );
 };

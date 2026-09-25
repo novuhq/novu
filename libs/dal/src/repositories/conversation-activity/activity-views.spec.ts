@@ -60,6 +60,11 @@ describe('activity-views', () => {
     expect(getKindsForView('approval_activities')).to.include.members(['message.subscriber', 'message.platform_user']);
   });
 
+  it('keeps edit and delete off agent_handoff so the page is current-state rows', () => {
+    expect(getKindsForView('agent_handoff')).to.not.include.members(['edit', 'delete']);
+    expect(getKindsForView('operator_timeline')).to.include.members(['edit', 'delete']);
+  });
+
   it('matches every kind in the view and nothing else', () => {
     const match = compileActivityViewMatch('llm_transcript');
 
@@ -71,6 +76,10 @@ describe('activity-views', () => {
       {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.AGENT,
+      },
+      {
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
       },
     ]);
   });

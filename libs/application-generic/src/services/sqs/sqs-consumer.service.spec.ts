@@ -1,15 +1,22 @@
-import { ChangeMessageVisibilityCommand, DeleteMessageCommand, type Message } from '@aws-sdk/client-sqs';
+import { ChangeMessageVisibilityCommand, DeleteMessageCommand, type Message, SQSClient } from '@aws-sdk/client-sqs';
 import { JobTopicNameEnum } from '@novu/shared';
 import { SqsService } from './sqs.service';
 import { SqsConsumerService, SqsMessageProcessor } from './sqs-consumer.service';
-import { SQS_LARGE_PAYLOAD_MARKER } from './sqs-payload-offload.service';
+import { SQS_LARGE_PAYLOAD_MARKER, SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import { SqsRetryError } from './sqs-retry.error';
 
 type ConsumerConfig = {
   handleMessage: (message: Message) => Promise<Message>;
 };
 
-let capturedConfig: ConsumerConfig;
+/** Stands in before `Consumer.create` runs so a missed capture fails loudly. */
+const UNCAPTURED_CONFIG: ConsumerConfig = {
+  handleMessage: () => {
+    throw new Error('Consumer.create was never called, so no handler was captured');
+  },
+};
+
+let capturedConfig: ConsumerConfig = UNCAPTURED_CONFIG;
 
 jest.mock('sqs-consumer', () => ({
   Consumer: {
@@ -38,11 +45,20 @@ function buildMessage(overrides: Partial<Message> = {}): Message {
 }
 
 function buildSqsService(withOffload: boolean): SqsService {
-  return {
+  const client: Partial<SQSClient> = { send: mockClientSend };
+  const offload: Partial<SqsPayloadOffloadService> = { maybeResolve: mockMaybeResolve };
+
+  /*
+   * These AWS-backed services keep private state, so the stubs can never be
+   * one of them; `Partial<T>` still checks each stub against the real API.
+   */
+  const stub: Partial<SqsService> = {
     getQueueUrl: () => 'https://sqs.eu-west-1.amazonaws.com/1/standard',
-    getClient: () => ({ send: mockClientSend }),
-    getPayloadOffloadService: () => (withOffload ? { maybeResolve: mockMaybeResolve } : undefined),
-  } as unknown as SqsService;
+    getClient: () => client as SQSClient,
+    getPayloadOffloadService: () => (withOffload ? (offload as SqsPayloadOffloadService) : undefined),
+  };
+
+  return stub as SqsService;
 }
 
 function createConsumer(processor: SqsMessageProcessor, withOffload = false): SqsConsumerService {
@@ -70,7 +86,7 @@ describe('SqsConsumerService', () => {
     jest.clearAllMocks();
     // Reset so a failed createConsumer cannot leave the previous test's handler
     // in place and make the next one pass for the wrong reason.
-    capturedConfig = undefined as unknown as ConsumerConfig;
+    capturedConfig = UNCAPTURED_CONFIG;
     mockClientSend.mockResolvedValue({});
     mockMaybeResolve.mockImplementation(async (body: string) => body);
   });
@@ -186,6 +202,42 @@ describe('SqsConsumerService', () => {
 
       expect(processor).toHaveBeenCalledWith({ _id: 'job-1' }, { messageId: 'msg-1', receiveCount: 1 });
       expect(commandCalls(DeleteMessageCommand)).toHaveLength(1);
+    });
+  });
+
+  describe('in-flight accounting on stop', () => {
+    it('should keep counting a timed-out consumer until its processor finishes', async () => {
+      jest.useFakeTimers();
+
+      let finishProcessing: () => void = () => {};
+      const processing = new Promise<void>((resolve) => {
+        finishProcessing = resolve;
+      });
+
+      // Consumers from earlier tests stay registered with work in flight, so
+      // assert on the delta rather than an absolute count.
+      const otherConsumersInFlight = SqsConsumerService.getTotalInFlightCount();
+
+      const consumer = createConsumer(async () => processing);
+      consumer.start();
+      await capturedConfig.handleMessage(buildMessage());
+      await flushMicrotasks();
+
+      expect(SqsConsumerService.getTotalInFlightCount()).toEqual(otherConsumersInFlight + 1);
+
+      const stopping = consumer.stop({ drainTimeoutMs: 1_000 });
+      jest.advanceTimersByTime(1_000);
+      await stopping;
+
+      // The drain timed out, but the processor is still running and may still be
+      // writing rows that the final ClickHouse flush has to wait for.
+      expect(SqsConsumerService.getTotalInFlightCount()).toEqual(otherConsumersInFlight + 1);
+
+      finishProcessing();
+      await flushMicrotasks();
+      await flushMicrotasks();
+
+      expect(SqsConsumerService.getTotalInFlightCount()).toEqual(otherConsumersInFlight);
     });
   });
 });

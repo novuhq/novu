@@ -51,10 +51,10 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
     'approval_activities',
   ],
   'message.agent': ['llm_transcript', 'agent_handoff', 'client_events', 'operator_timeline'],
-  'message.platform_user': ['agent_handoff', 'operator_timeline', 'approval_activities'],
+  'message.platform_user': ['llm_transcript', 'agent_handoff', 'operator_timeline', 'approval_activities'],
   'message.system': ['agent_handoff', 'operator_timeline'],
-  edit: ['agent_handoff', 'client_events', 'operator_timeline'],
-  delete: ['agent_handoff', 'client_events', 'operator_timeline'],
+  edit: ['client_events', 'operator_timeline'],
+  delete: ['client_events', 'operator_timeline'],
   'signal.tool_use': ['agent_handoff'],
   'signal.other': ['agent_handoff', 'operator_timeline'],
   tool_approval_request: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
@@ -77,6 +77,11 @@ export function getKindsForView(view: ActivityView): ActivityKind[] {
 /** `client_events` is sequence-paged; other views sort by createdAt. */
 export function viewUsesSequencePagination(view: ActivityView): boolean {
   return view === 'client_events';
+}
+
+/** Model-facing views: fold `edit`/`delete` onto `message` rows at read time. */
+export function viewFoldsRevisions(view: ActivityView): boolean {
+  return view === 'llm_transcript' || view === 'agent_handoff';
 }
 
 function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBModel> {

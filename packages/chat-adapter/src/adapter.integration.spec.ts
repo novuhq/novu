@@ -719,4 +719,61 @@ describe('Novu adapter end-to-end', () => {
     expect(secondPage.messages.map((message) => message.text)).toEqual(['msg-1', 'msg-2']);
     expect(secondPage.nextCursor).toBe('1');
   });
+
+  it('dispatches onMessageUpdated to chat.onMessageUpdated', async () => {
+    const { adapter, chat } = buildChat();
+    const seen: string[] = [];
+    chat.onMessageUpdated(async (thread, message, previousMessage) => {
+      seen.push(`${previousMessage?.text ?? ''}->${message.text}`);
+      await thread.post(`got ${message.text}`);
+    });
+    await chat.initialize();
+
+    const res = await deliver(
+      adapter,
+      bridgeRequest({
+        event: 'onMessageUpdated',
+        previousMessage: {
+          text: 'where is order 1234?',
+          platformMessageId: 'pm-1',
+          author: { userId: 'u1', userName: 'alice', fullName: 'Alice', isBot: false },
+          timestamp: new Date().toISOString(),
+        },
+        message: {
+          text: 'where is order 4321?',
+          platformMessageId: 'pm-1',
+          author: { userId: 'u1', userName: 'alice', fullName: 'Alice', isBot: false },
+          timestamp: new Date().toISOString(),
+        },
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(seen).toEqual(['where is order 1234?->where is order 4321?']);
+  });
+
+  it('dispatches onMessageDeleted to chat.onMessageDeleted', async () => {
+    const { adapter, chat } = buildChat();
+    const seen: string[] = [];
+    chat.onMessageDeleted(async (event) => {
+      seen.push(event.messageId);
+    });
+    await chat.initialize();
+
+    const res = await deliver(
+      adapter,
+      bridgeRequest({
+        event: 'onMessageDeleted',
+        message: {
+          text: 'where is order 1234?',
+          platformMessageId: 'pm-1',
+          author: { userId: 'u1', userName: 'alice', fullName: 'Alice', isBot: false },
+          timestamp: new Date().toISOString(),
+        },
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(seen).toEqual(['pm-1']);
+  });
 });

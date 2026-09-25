@@ -14,7 +14,7 @@ test('should trigger apns library correctly', async () => {
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -75,7 +75,7 @@ test('should set apns-collapse-id from messageId when collapseId is not in overr
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -127,7 +127,7 @@ test('should not override collapseId from overrides when messageId is set', asyn
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -181,7 +181,7 @@ test('should trigger apns library correctly with _passthrough', async () => {
     };
   });
 
-  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
@@ -238,5 +238,66 @@ test('should trigger apns library correctly with _passthrough', async () => {
       'url-args': ['target'],
     },
     ['target']
+  );
+});
+
+const sendMessageOptions = {
+  target: ['target'],
+  title: 'title',
+  content: 'content',
+  payload: {
+    data: 'data',
+  },
+  step: {
+    digest: false,
+    events: undefined,
+    total_count: undefined,
+  },
+  subscriber: {},
+};
+
+test('should throw Apple rejection using response.reason', async () => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
+    return {
+      send: vi.fn().mockResolvedValue({
+        sent: [],
+        failed: [{ device: 'device-1', status: 400, response: { reason: 'BadDeviceToken' } }],
+      }),
+      shutdown: () => {},
+    };
+  });
+
+  const provider = new APNSPushProvider({
+    key: 'key',
+    keyId: 'keyId',
+    teamId: 'teamId',
+    bundleId: 'bundleId',
+    production: true,
+  });
+
+  await expect(provider.sendMessage(sendMessageOptions)).rejects.toThrow('device-1 failed for reason: BadDeviceToken');
+});
+
+test('should throw connection error when APNs response is missing', async () => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
+    return {
+      send: vi.fn().mockResolvedValue({
+        sent: [],
+        failed: [{ device: 'device-1', error: new Error('apn write aborted') }],
+      }),
+      shutdown: () => {},
+    };
+  });
+
+  const provider = new APNSPushProvider({
+    key: 'key',
+    keyId: 'keyId',
+    teamId: 'teamId',
+    bundleId: 'bundleId',
+    production: true,
+  });
+
+  await expect(provider.sendMessage(sendMessageOptions)).rejects.toThrow(
+    'device-1 failed for reason: apn write aborted'
   );
 });

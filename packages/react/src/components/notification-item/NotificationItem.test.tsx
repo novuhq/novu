@@ -3,7 +3,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { NovuUIProvider } from '../../context/NovuUIContext';
-import { OutletStore } from '../../context/OutletStore';
 import { NotificationHandlersProvider } from './context';
 import { NotificationItem } from './NotificationItem';
 
@@ -49,7 +48,7 @@ const createNotification = (overrides: Partial<Notification> = {}) => {
 
 const renderItem = (ui: React.ReactElement, engine = createEngine(), inherited: Record<string, unknown> = {}) => {
   const view = render(
-    <NovuUIProvider value={{ novuUI: engine.novuUI, outlets: new OutletStore(), icons: {} }}>
+    <NovuUIProvider value={{ novuUI: engine.novuUI, icons: {} }}>
       <NotificationHandlersProvider value={inherited}>{ui}</NotificationHandlersProvider>
     </NovuUIProvider>
   );

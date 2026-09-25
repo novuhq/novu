@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { type ClientSession, FilterQuery } from 'mongoose';
+import { type ClientSession, FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { ActivityView, compileActivityViewMatch, viewUsesSequencePagination } from './activity-views';
+import {
+  ActivityView,
+  compileActivityViewMatch,
+  viewFoldsRevisions,
+  viewUsesSequencePagination,
+} from './activity-views';
 import {
   ConversationActivityDBModel,
   ConversationActivityEntity,
@@ -15,6 +20,7 @@ import {
   type RunLifecycleActivityType,
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
+import { foldMessageRevisions } from './message-revisions';
 
 const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
 type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
@@ -116,7 +122,67 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       }
     );
 
-    return { data, hasMore: false };
+    if (!viewFoldsRevisions(params.view)) {
+      return { data, hasMore: false };
+    }
+
+    let folded = await this.foldViewPage(params, data);
+    if (folded.length < params.limit && data.length === params.limit) {
+      const refill = await this.find(
+        {
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+          _conversationId: params.conversationId,
+          ...viewMatch,
+        },
+        '*',
+        {
+          sort: { createdAt: -1 },
+          limit: params.limit * 2,
+        }
+      );
+      folded = (await this.foldViewPage(params, refill)).slice(0, params.limit);
+    }
+
+    return { data: folded, hasMore: false };
+  }
+
+  async findMessageRevisions(
+    environmentId: string,
+    conversationId: string,
+    platformMessageIds: string[]
+  ): Promise<ConversationActivityEntity[]> {
+    const ids = [...new Set(platformMessageIds.filter(Boolean))];
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        platformMessageId: { $in: ids },
+        type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
+      },
+      '*'
+    );
+  }
+
+  private async foldViewPage(
+    params: { environmentId: string; conversationId: string },
+    data: ConversationActivityEntity[]
+  ): Promise<ConversationActivityEntity[]> {
+    const revisions = await this.findMessageRevisions(
+      params.environmentId,
+      params.conversationId,
+      data.map((row) => row.platformMessageId).filter((id): id is string => Boolean(id))
+    );
+
+    if (revisions.length === 0) {
+      return data;
+    }
+
+    return foldMessageRevisions(data, revisions);
   }
 
   /** Resolves the activity for a specific platform-native message id (e.g. the message a reaction targets). */
@@ -130,9 +196,31 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _environmentId: environmentId,
         _conversationId: conversationId,
         platformMessageId,
+        type: ConversationActivityTypeEnum.MESSAGE,
       },
       '*'
     );
+  }
+
+  async findExistingPlatformMessageIds(
+    environmentId: string,
+    conversationId: string,
+    platformMessageIds: string[]
+  ): Promise<Set<string>> {
+    if (platformMessageIds.length === 0) {
+      return new Set();
+    }
+
+    const activities = await this.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        platformMessageId: { $in: platformMessageIds },
+      },
+      ['platformMessageId']
+    );
+
+    return new Set(activities.flatMap((activity) => (activity.platformMessageId ? [activity.platformMessageId] : [])));
   }
 
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
@@ -191,13 +279,14 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     platformMessageId?: string;
     senderName?: string;
     sequence?: number;
+    type?: ConversationActivityTypeEnum;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
     return this.create({
       identifier: params.identifier,
       _conversationId: params.conversationId,
-      type: ConversationActivityTypeEnum.MESSAGE,
+      type: params.type ?? ConversationActivityTypeEnum.MESSAGE,
       platform: params.platform,
       _integrationId: params.integrationId,
       platformThreadId: params.platformThreadId,
@@ -211,6 +300,67 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
+  }
+
+  async importUserActivities(
+    params: {
+      conversationId: string;
+      platform: string;
+      integrationId: string;
+      platformThreadId: string;
+      messages: Array<{
+        identifier: string;
+        senderId: string;
+        senderName?: string;
+        content: string;
+        platformMessageId: string;
+        sequence: number;
+      }>;
+      environmentId: string;
+      organizationId: string;
+    },
+    session?: ClientSession | null
+  ): Promise<number> {
+    const firstCreatedAt = Date.now() - params.messages.length;
+    const conversationId = new Types.ObjectId(params.conversationId);
+    const integrationId = new Types.ObjectId(params.integrationId);
+    const environmentId = new Types.ObjectId(params.environmentId);
+    const organizationId = new Types.ObjectId(params.organizationId);
+    const operations = params.messages.map((message, index) => ({
+      updateOne: {
+        filter: {
+          _environmentId: environmentId,
+          identifier: message.identifier,
+        },
+        update: {
+          $setOnInsert: {
+            identifier: message.identifier,
+            _conversationId: conversationId,
+            type: ConversationActivityTypeEnum.MESSAGE,
+            platform: params.platform,
+            _integrationId: integrationId,
+            platformThreadId: params.platformThreadId,
+            senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
+            senderId: message.senderId,
+            senderName: message.senderName,
+            content: message.content,
+            platformMessageId: message.platformMessageId,
+            sequence: message.sequence,
+            _environmentId: environmentId,
+            _organizationId: organizationId,
+            createdAt: new Date(firstCreatedAt + index),
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    const result = await this.MongooseModel.bulkWrite(operations, {
+      ordered: true,
+      ...(session ? { session } : {}),
+    });
+
+    return result.upsertedCount;
   }
 
   async createAgentActivity(params: {
