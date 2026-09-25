@@ -100,7 +100,8 @@ describe('AgentMcpSessionService', () => {
     it('returns [] when no OAuth-capable MCPs are enabled and no vault exists', async () => {
       const repo = makeMcpConnectionRepo();
       // No OAuth enablement at all → `findOAuthEnablementsForAgent` returns [] → null.
-      const service = makeService(repo, makeAgentMcpServerRepo([]));
+      const enablementRepo = makeAgentMcpServerRepo([]);
+      const service = makeSessionService(repo, enablementRepo);
       const runtimeProvider = makeRuntimeProvider();
 
       const result = await service.resolveVaultIds({
@@ -112,12 +113,14 @@ describe('AgentMcpSessionService', () => {
       });
 
       expect(result).to.deep.equal([]);
+      expect(enablementRepo.findOAuthEnablementsForAgent.calledOnce).to.equal(true);
       expect(runtimeProvider.createVault.called).to.equal(false);
     });
 
     it('returns [] when the runtime provider lacks tokenVault capability', async () => {
       const repo = makeMcpConnectionRepo();
-      const service = makeService(repo, makeAgentMcpServerRepo([{ _id: 'ams_1', mcpId: 'linear' }]));
+      const enablementRepo = makeAgentMcpServerRepo([{ _id: 'ams_1', mcpId: 'linear' }]);
+      const service = makeSessionService(repo, enablementRepo);
       const runtimeProvider = makeRuntimeProvider({});
       runtimeProvider.capabilities = { tokenVault: false } as any;
 
@@ -130,6 +133,7 @@ describe('AgentMcpSessionService', () => {
       });
 
       expect(result).to.deep.equal([]);
+      expect(enablementRepo.findOAuthEnablementsForAgent.called).to.equal(false);
       expect(runtimeProvider.createVault.called).to.equal(false);
     });
 

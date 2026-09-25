@@ -83,8 +83,10 @@ describe('ConfigureSendblueWebhook usecase', () => {
 
   afterEach(() => {
     restore();
-    process.env.API_ROOT_URL = originalApiRootUrl;
-    process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
+    if (originalApiRootUrl === undefined) delete process.env.API_ROOT_URL;
+    else process.env.API_ROOT_URL = originalApiRootUrl;
+    if (originalAgentApiHostname === undefined) delete process.env.AGENT_API_HOSTNAME;
+    else process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
   });
 
   it('returns missing_credentials when Sendblue credentials are incomplete', async () => {

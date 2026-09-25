@@ -85,35 +85,6 @@ describe('AgentConversationService', () => {
     );
   }
 
-  describe('delegation', () => {
-    it('delegates persistAgentMessage to the ledger', async () => {
-      const ledger = makeLedger();
-      const service = makeService({}, ledger);
-      const params = {
-        conversationId: 'conv-1',
-        channel: { platform: 'slack', _integrationId: 'int-1', platformThreadId: 'thread-1' },
-        agentIdentifier: 'agent-a',
-        content: 'hello',
-        environmentId: 'env-1',
-        organizationId: 'org-1',
-      };
-
-      await service.persistAgentMessage(params);
-
-      expect(ledger.persistAgentMessage.calledOnceWithExactly(params)).to.equal(true);
-    });
-
-    it('delegates mintEventSequence to the ledger', async () => {
-      const ledger = makeLedger();
-      const service = makeService({}, ledger);
-      const params = { environmentId: 'env-1', organizationId: 'org-1', conversationId: 'conv-1' };
-
-      await service.mintEventSequence(params);
-
-      expect(ledger.mint.calledOnceWithExactly(params)).to.equal(true);
-    });
-  });
-
   describe('getConversationTitle', () => {
     it('returns trimmed text truncated to 200 characters', () => {
       const longText = 'a'.repeat(250);

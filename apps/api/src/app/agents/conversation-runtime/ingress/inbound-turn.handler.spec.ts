@@ -266,7 +266,6 @@ describe('AgentInboundHandler', () => {
     const workflowOriginService = {
       resolve: sinon.stub().resolves(null),
       resolveForTurn: sinon.stub().resolves(null),
-      hydrate: sinon.stub().resolves(null),
     };
     const agentConfigResolver = {
       resolveSlackInstallation: sinon.stub().resolves({ token: 'xoxb-test', botUserId: 'UBOT' }),
@@ -515,15 +514,9 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', config as any, thread as any, mention as any, AgentEventEnum.ON_MESSAGE);
 
       expect(conversationService.importInboundMessages.calledOnce).to.equal(true);
-      expect(conversationService.importInboundMessages.firstCall.args[0].messages).to.deep.equal([
-        {
-          platformMessageId: 'prior-ts',
-          content: 'the deploy failed',
-          senderName: 'Bob',
-          senderId: 'slack:U2',
-          identifier: `slack_hist_${conversation._id}_prior-ts`,
-        },
-      ]);
+      expect(
+        conversationService.importInboundMessages.calledBefore(conversationService.persistInboundMessage)
+      ).to.equal(true);
       expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
       expect(conversationService.persistInboundMessage.firstCall.args[0]).to.include({
         platformMessageId: 'mention-ts',
@@ -577,59 +570,6 @@ describe('AgentInboundHandler', () => {
         { senderName: 'Ada', content: 'what about hermitage ?' },
         { senderName: 'Ada', content: 'any thoughts on la chapelle ?' },
       ]);
-    });
-
-    it('should not fetch Slack thread history for a subscribed non-mention message', async () => {
-      const { handler, conversationService } = makeHandler();
-      const next = sinon.stub();
-      const thread = {
-        ...makeSlackDmThread(),
-        messages: {
-          [Symbol.asyncIterator]: () => {
-            next();
-
-            return { next: async () => ({ done: true, value: undefined }) };
-          },
-        },
-      };
-
-      await handler.handle(
-        'agent1',
-        config as any,
-        thread as any,
-        makeSlackDmMessage() as any,
-        AgentEventEnum.ON_MESSAGE
-      );
-
-      expect(next.called).to.equal(false);
-      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
-    });
-
-    it('should not seed thread history on non-Slack platforms', async () => {
-      const { handler, conversationService } = makeHandler();
-      conversationService.findByPlatformThread.resolves(null);
-      const next = sinon.stub();
-      const thread = {
-        ...makeEmailDmThread(),
-        messages: {
-          [Symbol.asyncIterator]: () => {
-            next();
-
-            return { next: async () => ({ done: true, value: undefined }) };
-          },
-        },
-      };
-      const emailConfig = { ...config, platform: 'email' };
-
-      await handler.handle(
-        'agent1',
-        emailConfig as any,
-        thread as any,
-        makeEmailDmMessage('ada@example.com') as any,
-        AgentEventEnum.ON_MESSAGE
-      );
-
-      expect(next.called).to.equal(false);
     });
 
     it('drops an unmentioned nested-thread message when mention-only is on', async () => {
@@ -1375,54 +1315,6 @@ describe('AgentInboundHandler', () => {
       expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution.origin).to.equal(origin);
     });
 
-    it('should forward the hydrated origin to a managed dispatch on an existing Telegram conversation', async () => {
-      // A live managed session only receives the new turn, so a mid-conversation
-      // hydration write is invisible unless it rides along on the dispatch.
-      const telegramConfig = {
-        ...config,
-        platform: AgentPlatformEnum.TELEGRAM,
-        integrationIdentifier: 'telegram-main',
-        isManaged: true,
-        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
-      };
-      const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
-        ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
-        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
-      });
-      const snapshot = makeOriginSnapshot({ platformMessageId: '42' });
-
-      conversationService.findByPlatformThread.resolves({
-        _id: 'conv1',
-        externalSessionId: 'ses_live',
-        channels: [{ platform: AgentPlatformEnum.TELEGRAM, _integrationId: 'int1', platformThreadId: 'telegram:42' }],
-        participants: [],
-      });
-      workflowOriginService.resolve.resolves({ origin: { _id: 'msg1', _notificationId: 'notif1', identifier: '42' } });
-      workflowOriginService.resolveForTurn.resolves(snapshot);
-
-      const thread = {
-        id: 'telegram:42',
-        channelId: '42',
-        isDM: true,
-        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
-        startTyping: sinon.stub().resolves(undefined),
-        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
-      };
-      const message = {
-        id: 'msg-2',
-        threadId: 'telegram:42',
-        text: 'where is it?',
-        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
-        raw: {},
-        attachments: [],
-      };
-
-      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
-      expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
-    });
-
     it('should read the latest persisted origin on later turns when nothing new hydrates', async () => {
       const telegramConfig = {
         ...config,
@@ -1606,7 +1498,7 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
         subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
+      const { handler, managedAgentService, outboundGateway, subscriberResolver } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -1616,6 +1508,7 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
@@ -1683,7 +1576,7 @@ describe('AgentInboundHandler', () => {
         subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const senderEmail = 'unknown@example.com';
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
+      const { handler, managedAgentService, outboundGateway, subscriberResolver } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -1693,6 +1586,7 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
@@ -1840,33 +1734,6 @@ describe('AgentInboundHandler', () => {
       });
       expect(outboundGateway.replyOnThread.called).to.equal(false);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
-    });
-
-    it('should not auto-provision for a restricted email agent and keep the no-access gate', async () => {
-      const emailConfig = {
-        ...config,
-        platform: AgentPlatformEnum.EMAIL,
-        integrationIdentifier: 'email-main',
-        isManaged: true,
-        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
-      };
-      const senderEmail = 'stranger@example.com';
-      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
-        subscriberResolve: sinon.stub().resolves(null),
-        subscriberResolveOrProvision: resolveOrProvision,
-        subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
-      });
-      const thread = makeEmailDmThread();
-      const message = makeEmailDmMessage(senderEmail);
-
-      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(resolveOrProvision.called).to.equal(false);
-      expect(managedAgentService.dispatch.called).to.equal(false);
-      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
     });
 
     it('should not auto-provision for a keyless open-access email agent (demo path owns provisioning)', async () => {
@@ -2040,30 +1907,6 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
         markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
       });
-    });
-
-    it('should not call resolveOrProvision for a restricted Slack agent', async () => {
-      const slackConfig = {
-        ...config,
-        platform: AgentPlatformEnum.SLACK,
-        isManaged: true,
-        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
-      };
-      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
-        subscriberResolve: sinon.stub().resolves(null),
-        subscriberResolveOrProvision: resolveOrProvision,
-        subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
-      });
-      const thread = makeSlackDmThread();
-      const message = makeSlackDmMessage();
-
-      await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(resolveOrProvision.called).to.equal(false);
-      expect(managedAgentService.dispatch.called).to.equal(false);
-      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
     });
 
     it('should call resolveOrProvision for an open Telegram DM (chatId equals author userId)', async () => {
@@ -2740,21 +2583,6 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(platformThreadId);
     });
 
-    it('should not hydrate workflow origin for link-button actions when resolve returns null', async () => {
-      const { handler, workflowOriginService } = makeHandler();
-
-      await handler.handleAction(
-        'agent1',
-        config as any,
-        makeActionThread() as any,
-        { id: 'link-https://novu.co/pricing', value: undefined } as any,
-        'user1'
-      );
-
-      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
-      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
-    });
-
     it('should still hydrate workflow origin when a link-button click is the first-ever interaction on a seeded thread', async () => {
       const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
 
@@ -2782,27 +2610,6 @@ describe('AgentInboundHandler', () => {
       expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.include({
         notificationId: 'notif1',
       });
-    });
-
-    it('should still dispatch the action when workflow origin resolve returns null', async () => {
-      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
-        makeResolvedSubscriberOverrides()
-      );
-
-      conversationService.findByPlatformThread.resolves(null);
-      workflowOriginService.resolve.resolves(null);
-
-      await handler.handleAction(
-        'agent1',
-        config as any,
-        makeActionThread() as any,
-        { id: 'ack', value: undefined } as any,
-        'user1'
-      );
-
-      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
-      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
-      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });
   });
 

@@ -1,12 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import {
-  buildMcpConnectRedirectUrl,
-  MCP_CONNECT_REDIRECT_PATH,
-  MCP_CONNECT_REDIRECT_TTL_SECONDS,
-  McpConnectRedirectService,
-} from './mcp-connect-redirect.service';
+import { MCP_CONNECT_REDIRECT_TTL_SECONDS, McpConnectRedirectService } from './mcp-connect-redirect.service';
 
 describe('McpConnectRedirectService', () => {
   const originalApiRootUrl = process.env.API_ROOT_URL;
@@ -52,9 +47,7 @@ describe('McpConnectRedirectService', () => {
 
     const redirectUrl = await service.issue(authorizeUrl);
 
-    expect(redirectUrl).to.match(
-      new RegExp(`^https://api\\.example\\.com${MCP_CONNECT_REDIRECT_PATH.replace(/\//g, '\\/')}/[A-Za-z0-9_-]+$`)
-    );
+    expect(redirectUrl).to.match(/^https:\/\/api\.example\.com\/v1\/agents\/mcp\/r\/[A-Za-z0-9_-]+$/);
 
     const token = redirectUrl.split('/').pop()!;
     expect(cacheStore.get(`mcp-connect-redirect:${token}`)).to.equal(authorizeUrl);
@@ -116,11 +109,5 @@ describe('McpConnectRedirectService', () => {
 
     expect(redirectUrl).to.equal(authorizeUrl);
     expect(cacheService.set.called).to.equal(false);
-  });
-
-  it('buildMcpConnectRedirectUrl encodes the token in the public path', () => {
-    process.env.API_ROOT_URL = 'https://api.example.com/';
-
-    expect(buildMcpConnectRedirectUrl('abc123')).to.equal(`https://api.example.com${MCP_CONNECT_REDIRECT_PATH}/abc123`);
   });
 });

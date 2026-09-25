@@ -125,16 +125,17 @@ describe('McpNovuAppCredentialsService', () => {
   });
 
   it('does not leak the resolved client_secret in the thrown message', () => {
-    process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID = 'set';
+    delete process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID;
     process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET = 'super-secret-do-not-log';
 
-    // Tripped error: unknown mcpId returns the generic missing-mapping error.
     // The thrown message MUST NOT contain the resolved client secret value
     // — only env-var NAMES are safe to surface.
     try {
-      usecase.execute('this-mcp-has-no-mapping');
+      usecase.execute('github');
       expect.fail('expected throw');
     } catch (err) {
+      expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
+      expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_novu_app_credentials_missing');
       expect((err as Error).message).not.to.contain('super-secret-do-not-log');
     }
   });

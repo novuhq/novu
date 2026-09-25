@@ -22,7 +22,6 @@ import {
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import type { UnseenThreadMessage } from '../conversation-runtime/ingress/seed-slack-thread-history';
 import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
-import { WorkflowOriginService } from '../conversation-runtime/ingress/workflow-origin.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
@@ -91,7 +90,6 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly inboundAck: InboundAckService,
     private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly workflowOriginService: WorkflowOriginService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -189,57 +187,6 @@ export class ManagedAgentService implements OnModuleInit {
     );
 
     return { status: sendResult.status };
-  }
-
-  /**
-   * Re-dispatch a user turn that was parked while managed-agent setup completed.
-   * Loads the persisted inbound activity and forwards only its body to dispatch.
-   */
-  async replayParkedInboundTurn(params: {
-    conversation: ConversationEntity;
-    config: ResolvedAgentConfig;
-    subscriber: SubscriberEntity;
-    pendingPlatformMessageId: string;
-    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
-  }): Promise<ManagedAgentDispatchResult | null> {
-    const activity = await this.conversationService.resolveCurrentMessage(
-      params.config.environmentId,
-      String(params.conversation._id),
-      params.pendingPlatformMessageId
-    );
-
-    if (!activity) {
-      this.logger.warn(
-        { conversationId: params.conversation._id, pendingPlatformMessageId: params.pendingPlatformMessageId },
-        'Managed agent setup completed but parked message was not found'
-      );
-
-      return null;
-    }
-
-    const platformThreadId = params.conversation.channels?.[0]?.platformThreadId ?? '';
-    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
-      agentId: params.agent._id,
-      config: params.config,
-      conversation: params.conversation,
-      platformThreadId,
-      subscriberId: params.subscriber.subscriberId,
-      resolution: null,
-    });
-
-    return this.dispatch(
-      {
-        config: params.config,
-        conversation: params.conversation,
-        subscriber: params.subscriber,
-        userMessageText: activity.content,
-        senderName: activity.senderName,
-        workflowOrigin,
-        platformThreadId,
-        platformMessageId: params.pendingPlatformMessageId,
-      },
-      params.agent
-    );
   }
 
   /**

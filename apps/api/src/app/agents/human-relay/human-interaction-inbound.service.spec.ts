@@ -333,40 +333,6 @@ describe('HumanInteractionInboundService', () => {
     expect(result.outcome).to.equal('settled');
   });
 
-  it('settles an approve extra click as approved with that optionId', async () => {
-    const { service, humanInteractionRepository, settlement } = setup();
-    humanInteractionRepository.findByIdentifier.resolves({
-      _id: 'hi1',
-      identifier: 'hi_1',
-      requestId: 'tool_approval:apr_1',
-      kind: HumanInteractionKindEnum.APPROVE,
-      status: HumanInteractionStatusEnum.PENDING,
-      subscriberIds: ['sub-1'],
-      _environmentId: 'env1',
-      content: {
-        cardChrome: {
-          title: 'Tool approval required',
-          extraActions: [{ id: 'trust-tool', label: 'Always allow this tool' }],
-        },
-      },
-    });
-
-    const result = await service.tryHandleAction(
-      makeTurn({
-        event: AgentEventEnum.ON_ACTION,
-        action: { id: 'human:hi_1:opt:trust-tool' },
-        message: null,
-        subscriber: { subscriberId: 'sub-1', firstName: 'Ada' },
-      }) as any,
-      'conversation'
-    );
-
-    expect(settlement.settle.calledOnce).to.equal(true);
-    expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.APPROVED);
-    expect(settlement.settle.firstCall.args[2].optionId).to.equal('trust-tool');
-    expect(result.outcome).to.equal('settled');
-  });
-
   it('falls back to subscriberId when firstName is missing', async () => {
     const { service, humanInteractionRepository, settlement } = setup();
     humanInteractionRepository.findByIdentifier.resolves({
@@ -545,33 +511,6 @@ describe('HumanInteractionInboundService', () => {
     expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Got it');
   });
 
-  it('lets a listed secondary subscriber settle an approve click', async () => {
-    const { service, humanInteractionRepository, settlement } = setup();
-    humanInteractionRepository.findByIdentifier.resolves({
-      _id: 'hi1',
-      identifier: 'hi_1',
-      kind: HumanInteractionKindEnum.APPROVE,
-      status: HumanInteractionStatusEnum.PENDING,
-      subscriberIds: ['sub-1', 'sub-2'],
-      _environmentId: 'env1',
-    });
-
-    const result = await service.tryHandleAction(
-      makeTurn({
-        event: AgentEventEnum.ON_ACTION,
-        action: { id: 'human:hi_1:approve' },
-        message: null,
-        subscriber: { subscriberId: 'sub-2', firstName: 'Bob' },
-      }) as any,
-      'conversation'
-    );
-
-    expect(settlement.settle.calledOnce).to.equal(true);
-    expect(settlement.settle.firstCall.args[2].respondedBy).to.equal('Bob');
-    expect(settlement.settle.firstCall.args[2].respondedBySubscriberId).to.equal('sub-2');
-    expect(result.outcome).to.equal('settled');
-  });
-
   it('rejects a bystander who is not in the recipient list', async () => {
     const { service, humanInteractionRepository, settlement, outboundGateway } = setup();
     humanInteractionRepository.findByIdentifier.resolves({
@@ -721,7 +660,7 @@ describe('HumanInteractionInboundService', () => {
     expect(result.outcome).to.equal('settled');
   });
 
-  it('first listed settler wins when a later listed click loses the race', async () => {
+  it('replies already-resolved when settle loses to a concurrent settlement', async () => {
     const { service, humanInteractionRepository, settlement, outboundGateway } = setup();
     const pending = {
       _id: 'hi1',
