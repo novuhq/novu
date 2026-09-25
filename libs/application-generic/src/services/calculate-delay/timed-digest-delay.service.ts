@@ -85,7 +85,7 @@ export class TimedDigestDelayService {
 
     const rule = new RRule({
       dtstart: dateStartTz,
-      until: TimedDigestDelayService.getUntilDate(dateStartTz, unit, amount, timezone),
+      until: TimedDigestDelayService.getUntilDate(dateStartTz, unit, amount),
       freq: UNIT_TO_RRULE_FREQUENCY[unit],
       interval: amount,
       bysetpos,
@@ -144,7 +144,7 @@ export class TimedDigestDelayService {
     }
   }
 
-  private static getUntilDate(dateStart: Date, unit: DigestUnitEnum, amount: number, timezone?: string): Date {
+  private static getUntilDate(dateStart: Date, unit: DigestUnitEnum, amount: number): Date {
     let untilDate: Date;
 
     switch (unit) {
@@ -168,6 +168,7 @@ export class TimedDigestDelayService {
         break;
     }
 
-    return timezone ? fromZonedTime(untilDate, timezone) : untilDate;
+    // dtstart is in the subscriber's wall-clock time, so until must stay in that frame too
+    return untilDate;
   }
 }
