@@ -33,7 +33,9 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
     };
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId: ChatProviderIdEnum }) => {
-        return activePhoneProviders.includes(command.providerId) ? { providerId: command.providerId } : null;
+        return activePhoneProviders.includes(command.providerId)
+          ? { integration: { providerId: command.providerId } }
+          : null;
       }),
     };
 
@@ -183,9 +185,14 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
   function stubSlackTransport() {
     const handler = new ChatFactory().getHandler(slackIntegration as never);
-    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
+    if (!handler) {
+      throw new Error('Slack handler is unavailable');
+    }
+    const provider = handler.getProvider();
     // Fail here rather than silently letting the suite make a real request to slack.com.
-    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+    if (!('axiosInstance' in provider)) {
+      throw new Error('SlackProvider no longer exposes axiosInstance');
+    }
 
     const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
     provider.axiosInstance = { post };
@@ -199,7 +206,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       {} as never, // subscriberRepository
       { create: sinon.stub().resolves({ _id: 'message_1' }) } as never,
       {} as never, // compileTemplate
-      { execute: sinon.stub().resolves(slackIntegration) } as never,
+      { execute: sinon.stub().resolves({ integration: slackIntegration }) } as never,
       {} as never, // getNovuProviderCredentials
       { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
       { execute: sinon.stub().resolves(undefined) } as never,
@@ -226,10 +233,14 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     return usecase;
   }
 
+  interface TestTriggerOverrides extends TriggerOverrides {
+    steps?: Record<string, { providers?: Record<string, Record<string, unknown>> }>;
+  }
+
   function buildCommand(
     options: {
       providerOverrides?: Record<string, unknown>;
-      overrides?: TriggerOverrides;
+      overrides?: TestTriggerOverrides;
       card?: Record<string, unknown>;
     } = {}
   ) {
@@ -307,7 +318,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
         providerOverrides: { blocks: persistedBlocks },
         overrides: {
           steps: { step_1: { providers: { [ChatProviderIdEnum.Slack]: { blocks: triggerBlocks } } } },
-        } as unknown as TriggerOverrides,
+        },
       })
     );
 
@@ -326,8 +337,13 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
   function stubSlackHandlerWithCardResolve(nativePayload: Record<string, unknown>) {
     const handler = new ChatFactory().getHandler(slackIntegration as never);
-    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
-    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+    if (!handler) {
+      throw new Error('Slack handler is unavailable');
+    }
+    const provider = handler.getProvider();
+    if (!('axiosInstance' in provider)) {
+      throw new Error('SlackProvider no longer exposes axiosInstance');
+    }
 
     const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
     provider.axiosInstance = { post };
@@ -489,7 +505,7 @@ describe('SendMessageChat - agent assigned path', () => {
       update: updateMessage,
     };
     const selectIntegration = {
-      execute: sinon.stub().resolves(integration),
+      execute: sinon.stub().resolves({ integration }),
     };
     const featureFlagsService = {
       getFlag: sinon.stub().resolves(false),
@@ -813,7 +829,7 @@ describe('SendMessageChat - agent assigned path', () => {
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
         if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-          return whatsappIntegration;
+          return { integration: whatsappIntegration };
         }
 
         return null;
@@ -888,10 +904,12 @@ describe('SendMessageChat - agent assigned path', () => {
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
         if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-          return whatsappIntegration;
+          return { integration: whatsappIntegration };
         }
         if (command.providerId === ChatProviderIdEnum.Sendblue) {
-          return { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue };
+          return {
+            integration: { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue },
+          };
         }
 
         return null;
@@ -977,10 +995,10 @@ describe('SendMessageChat - agent assigned path', () => {
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId?: string; identifier?: string }) => {
         if (command.identifier === 'whatsapp-linked') {
-          return linkedIntegration;
+          return { integration: linkedIntegration };
         }
         if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-          return otherActiveIntegration;
+          return { integration: otherActiveIntegration };
         }
 
         return null;

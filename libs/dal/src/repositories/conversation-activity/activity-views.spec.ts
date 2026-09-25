@@ -33,6 +33,8 @@ describe('activity-views', () => {
       'tool_approval_decision',
       'mcp_connection_request',
       'mcp_connection_result',
+      'human_interaction_request',
+      'human_interaction_response',
       'custom',
     ]);
   });
@@ -69,6 +71,10 @@ describe('activity-views', () => {
       {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.AGENT,
+      },
+      {
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
       },
     ]);
   });

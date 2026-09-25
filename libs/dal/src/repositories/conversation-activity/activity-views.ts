@@ -32,6 +32,8 @@ export const ACTIVITY_KINDS = [
   'tool_result',
   'mcp_connection_request',
   'mcp_connection_result',
+  'human_interaction_request',
+  'human_interaction_response',
   'run_start',
   'run_finish',
   'run_error',
@@ -49,7 +51,7 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
     'approval_activities',
   ],
   'message.agent': ['llm_transcript', 'agent_handoff', 'client_events', 'operator_timeline'],
-  'message.platform_user': ['agent_handoff', 'operator_timeline', 'approval_activities'],
+  'message.platform_user': ['llm_transcript', 'agent_handoff', 'operator_timeline', 'approval_activities'],
   'message.system': ['agent_handoff', 'operator_timeline'],
   edit: ['agent_handoff', 'client_events', 'operator_timeline'],
   delete: ['agent_handoff', 'client_events', 'operator_timeline'],
@@ -60,6 +62,8 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   tool_result: ['agent_handoff', 'client_events', 'approval_activities'],
   mcp_connection_request: ['client_events', 'operator_timeline'],
   mcp_connection_result: ['client_events', 'operator_timeline'],
+  human_interaction_request: ['agent_handoff', 'operator_timeline'],
+  human_interaction_response: ['agent_handoff', 'operator_timeline'],
   run_start: ['client_events'],
   run_finish: ['client_events'],
   run_error: ['client_events'],
@@ -133,6 +137,12 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'mcp_connection_result':
       return { type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT };
+
+    case 'human_interaction_request':
+      return { type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST };
+
+    case 'human_interaction_response':
+      return { type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE };
 
     case 'run_start':
       return { type: ConversationActivityTypeEnum.RUN_START };

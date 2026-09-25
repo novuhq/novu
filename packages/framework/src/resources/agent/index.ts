@@ -36,6 +36,7 @@ export type {
   AgentReaction,
   AgentReactionContext,
   AgentReplyOptions,
+  AgentReplyToContext,
   AgentResolveContext,
   AgentSubscriber,
   AgentSubscriberAccess,

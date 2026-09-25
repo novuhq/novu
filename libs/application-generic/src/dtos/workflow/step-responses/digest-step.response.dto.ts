@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { DigestControlDto } from '../controls/digest-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class DigestControlsMetadataResponseDto extends ControlsMetadataDto {
+class DigestControlsMetadataResponseDto extends ControlsMetadataDto<DigestControlDto> {
   @ApiProperty({
     description: 'Control values specific to Digest',
     type: () => DigestControlDto,

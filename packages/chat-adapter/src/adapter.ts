@@ -246,11 +246,14 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   private async dispatchMessage(threadId: string, bridge: AgentBridgeRequest, options?: WebhookOptions): Promise<void> {
     if (!bridge.message || !this.chat) return;
 
-    const raw = this.mapper.toRawMessage(bridge.message, {
-      conversationId: bridge.conversationId,
-      integrationIdentifier: bridge.integrationIdentifier,
-      platform: bridge.platform,
-    });
+    const raw = {
+      ...this.mapper.toRawMessage(bridge.message, {
+        conversationId: bridge.conversationId,
+        integrationIdentifier: bridge.integrationIdentifier,
+        platform: bridge.platform,
+      }),
+      ...(bridge.message.replyTo ? { replyTo: bridge.message.replyTo } : {}),
+    };
     const message = this.mapper.buildMessage(raw, threadId, this.humanAuthor(bridge));
     await this.chat.processMessage(this, threadId, message, options);
   }
@@ -281,11 +284,14 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
 
     const reactedMessage = bridge.reaction.message
       ? this.mapper.buildMessage(
-          this.mapper.toRawMessage(bridge.reaction.message, {
-            conversationId: bridge.conversationId,
-            integrationIdentifier: bridge.integrationIdentifier,
-            platform: bridge.platform,
-          }),
+          {
+            ...this.mapper.toRawMessage(bridge.reaction.message, {
+              conversationId: bridge.conversationId,
+              integrationIdentifier: bridge.integrationIdentifier,
+              platform: bridge.platform,
+            }),
+            ...(bridge.reaction.message.replyTo ? { replyTo: bridge.reaction.message.replyTo } : {}),
+          },
           threadId
         )
       : undefined;
@@ -406,7 +412,10 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       return deliverBufferedStream(threadId, textStream, deps);
     }
 
-    return deliverStreamingWithEdits(threadId, textStream, deps, options);
+    return deliverStreamingWithEdits(threadId, textStream, deps, options, {
+      platform: decoded.platform,
+      isDM: decoded.isDM,
+    });
   }
 
   async editMessage(

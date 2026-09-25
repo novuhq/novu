@@ -24,6 +24,10 @@ export enum ConversationActivityTypeEnum {
   MCP_CONNECTION_REQUEST = 'mcp_connection_request',
   /** Outcome of a previously requested MCP OAuth connection. */
   MCP_CONNECTION_RESULT = 'mcp_connection_result',
+  /** Agent posted a human-in-the-loop card (`ask` / `approve` / `choose` / `tell`). Details in `richContent.humanInteraction`. */
+  HUMAN_INTERACTION_REQUEST = 'human_interaction_request',
+  /** Human settled a HITL card, or the row expired/canceled/delivered. Details in `richContent.humanInteraction`. */
+  HUMAN_INTERACTION_RESPONSE = 'human_interaction_response',
   /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
   RUN_START = 'run_start',
   /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
@@ -65,6 +69,8 @@ export interface ConversationActivityToolData {
   input?: Record<string, unknown>;
   /** Approve/deny verdict (decision). */
   approved?: boolean;
+  /** HITL option id when the decision came from a card click (`approve`, `deny`, `trust-tool`, …). */
+  optionId?: string;
   /** Executed tool output, or the `execution-denied` marker (result). */
   output?: unknown;
   /** Server-minted action id for approve (request). Echoed by headless / card UIs. */
@@ -130,6 +136,10 @@ export class ConversationActivityEntity {
 }
 
 export type ConversationActivityDBModel = ChangePropsValueType<
-  ConversationActivityEntity,
-  '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  ChangePropsValueType<
+    ConversationActivityEntity,
+    '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  >,
+  'createdAt',
+  Date
 >;

@@ -25,7 +25,9 @@ You can learn more about it in the signature verification section.
 
 The core value of webhooks is to notify users when events happen, so it's extremely important to understand what events are available and their payload schemas.
 
-Novu webhooks allow you to receive notifications when specific events occur in your Novu account. These events include workflow updates, subscriber changes, message delivery status updates, and inbound email received on your verified domains.
+Novu webhooks allow you to receive notifications when specific events occur in your Novu account. These events include workflow updates, subscriber preference changes, message delivery status updates, and inbound email received on your verified domains.
+
+Every payload is defined in the [OpenAPI specification](https://api.novu.co/openapi.json) under `x-webhooks`, and the **Event Catalog** on the [Webhooks](https://dashboard.novu.co/webhooks) page renders those schemas with example bodies. See [Event types](/platform/developer/webhooks/event-types) for the field-level reference.
 
 ### Supported event types
 
@@ -40,7 +42,7 @@ Each event includes detailed information about the affected resource and the cha
 
 #### Email Events
 
-- **email.received**: Triggered when Novu receives inbound mail matching an Inbound Email webhook route. See [Event types - Email events](/platform/developer/webhooks/event-types#email-events) for the payload schema and [Inbound Email](/platform/inbound-email/overview) for setup.
+- **email.received**: Triggered when Novu receives inbound mail matching an Inbound Email webhook route. See [Email events](/platform/developer/webhooks/event-types#email-events) for the payload schema and [Inbound Email](/platform/inbound-email/overview) for setup.
 
 #### Workflow Events
 
@@ -49,22 +51,27 @@ Each event includes detailed information about the affected resource and the cha
 - **workflow.deleted**: Triggered when a workflow is deleted
 - **workflow.published**: Triggered when a workflow is synced from dev to prod environment
 
+See [Workflow events](/platform/developer/webhooks/event-types#workflow-events) for the payload schema.
+
 #### Message Events
 
-- **messages.archived**: Triggered when a message is archived.
-- **messages.unarchived**: Triggered when a message is unarchived.
-- **messages.read**: Triggered when a message is read.
-- **messages.unread**: Triggered when a message is unread.
-- **messages.seen**: Triggered when a message is seen.
-- **messages.snoozed**: Triggered when a message is snoozed.
-- **messages.unsnoozed**: Triggered when a message is unsnoozed.
-- **messages.sent**: Triggered when Novu sends the message to the delivery provider.
-- **messages.delivered**: Triggered when a message delivery provider acknowledged the message delivery to the end receiving client.
-- **messages.failed**: Triggered when Novu tried to send the message to the delivery provider and it got failed.
+- **message.sent**: Triggered when Novu sends the message to the delivery provider.
+- **message.delivered**: Triggered when a message delivery provider acknowledged the message delivery to the end receiving client.
+- **message.failed**: Triggered when Novu tried to send the message to the delivery provider and it got failed.
+- **message.seen**: Triggered when a message is seen.
+- **message.read**: Triggered when a message is read.
+- **message.unread**: Triggered when a message is unread.
+- **message.archived**: Triggered when a message is archived.
+- **message.unarchived**: Triggered when a message is unarchived.
+- **message.snoozed**: Triggered when a message is snoozed.
+- **message.unsnoozed**: Triggered when a message is unsnoozed.
+- **message.deleted**: Triggered when a message is deleted.
+
+See [Message events](/platform/developer/webhooks/event-types#message-events) for the payload schema.
 
 #### Preference Events
 
-- **preference.updated**: Triggered when subscriber preference is updated.
+- **preference.updated**: Triggered when subscriber preference is updated. See [Preference event](/platform/developer/webhooks/event-types#preference-event) for the payload schema.
 
 ## How to add an endpoint
 

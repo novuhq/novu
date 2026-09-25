@@ -31,7 +31,11 @@ import { captureAgentException, captureAgentWarning } from '../../shared/errors/
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import type { WorkflowOriginData, WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
+import {
+  resolveInboundReplyTo,
+  type WorkflowOriginData,
+  type WorkflowOriginSnapshot,
+} from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
 
@@ -101,6 +105,8 @@ interface AttachmentSigningContext {
   organizationId: string;
   environmentId: string;
   conversationId: string;
+  platform?: ResolvedAgentConfig['platform'];
+  platformThreadId?: string;
 }
 
 async function mapWithConcurrency<T, R>(
@@ -152,6 +158,7 @@ export interface AgentExecutionParams {
   reaction?: BridgeReaction;
   humanResponse?: AgentHumanResponse | null;
   storedAttachments?: StoredAttachment[];
+  platformThreadId?: string;
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
 }
@@ -387,6 +394,8 @@ export class BridgeExecutorService {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
           })
         : null,
       conversation: this.mapConversation(conversation),
@@ -398,7 +407,7 @@ export class BridgeExecutorService {
       platform: config.platform,
       platformContext,
       action: action ?? null,
-      reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
+      reaction: reaction ? await this.mapReaction(reaction, config, conversation, params.platformThreadId) : null,
       humanResponse: humanResponse ?? null,
     };
 
@@ -449,6 +458,13 @@ export class BridgeExecutorService {
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
+
+    if (signingContext?.platform) {
+      const replyTo = resolveInboundReplyTo(signingContext.platform, message, signingContext.platformThreadId);
+      if (replyTo) {
+        mapped.replyTo = replyTo;
+      }
+    }
 
     if (storedAttachments !== undefined) {
       mapped.attachments = signingContext
@@ -502,7 +518,8 @@ export class BridgeExecutorService {
   private async mapReaction(
     reaction: BridgeReaction,
     config: ResolvedAgentConfig,
-    conversation: ConversationEntity
+    conversation: ConversationEntity,
+    platformThreadId?: string
   ): Promise<AgentReaction> {
     return {
       messageId: reaction.messageId,
@@ -513,6 +530,8 @@ export class BridgeExecutorService {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId,
           })
         : null,
     };

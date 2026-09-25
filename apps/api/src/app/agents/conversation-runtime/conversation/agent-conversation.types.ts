@@ -21,6 +21,24 @@ export interface PersistInboundMessageParams {
   organizationId: string;
 }
 
+export interface ImportInboundMessage {
+  identifier: string;
+  senderId: string;
+  senderName?: string;
+  content: string;
+  platformMessageId: string;
+}
+
+export interface ImportInboundMessagesParams {
+  conversationId: string;
+  platform: string;
+  integrationId: string;
+  platformThreadId: string;
+  messages: ImportInboundMessage[];
+  environmentId: string;
+  organizationId: string;
+}
+
 export interface ConversationActivityContext {
   conversationId: string;
   channel: ConversationChannel;
@@ -92,6 +110,8 @@ export interface PersistToolApprovalDecisionParams extends ConversationActivityC
   approvalId: string;
   approved: boolean;
   toolName?: string;
+  /** HITL / card option id (`approve`, `deny`, `trust-tool`, …). */
+  optionId?: string;
   /** Client `idem_*` when the click came from Web Chat. Reused as the activity identifier. */
   identifier?: string;
   actorType:
@@ -99,6 +119,27 @@ export interface PersistToolApprovalDecisionParams extends ConversationActivityC
     | ConversationActivitySenderTypeEnum.PLATFORM_USER
     | ConversationActivitySenderTypeEnum.SYSTEM;
   actorId: string;
+  actorName?: string;
+}
+
+export interface PersistHumanInteractionActivityParams extends ConversationActivityContext {
+  interactionIdentifier: string;
+  requestId?: string;
+  kind: string;
+  title: string;
+  subtitle?: string;
+  body?: string;
+  platformMessageId?: string;
+  status?: string;
+  optionId?: string;
+  text?: string;
+  actorType:
+    | ConversationActivitySenderTypeEnum.SUBSCRIBER
+    | ConversationActivitySenderTypeEnum.PLATFORM_USER
+    | ConversationActivitySenderTypeEnum.SYSTEM
+    | ConversationActivitySenderTypeEnum.AGENT;
+  actorId: string;
+  actorName?: string;
 }
 
 export interface PersistToolResultParams extends ConversationActivityContext {

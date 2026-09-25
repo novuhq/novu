@@ -131,7 +131,7 @@ export const envValidators = {
   // GCS validators
   ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'GCS' && {
     GCS_BUCKET_NAME: str(),
-    GCS_DOMAIN: str(),
+    GCS_DOMAIN: str({ default: undefined }),
   }),
 
   // AWS validators

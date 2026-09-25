@@ -12,9 +12,12 @@ import {
 import { getConversationTitle } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
+  PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -39,10 +42,13 @@ export {
 
 export type {
   ConversationActivityContext,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   MetadataOp,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
+  PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -204,6 +210,20 @@ export class AgentConversationService {
     );
   }
 
+  async countOtherAgentsOnPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string,
+    agentId: string
+  ): Promise<number> {
+    return this.conversationRepository.countOtherAgentsOnPlatformThread(
+      environmentId,
+      organizationId,
+      platformThreadId,
+      agentId
+    );
+  }
+
   async findByPublicIdentifier(
     environmentId: string,
     organizationId: string,
@@ -328,6 +348,10 @@ export class AgentConversationService {
     return this.ledger.persistInboundMessage(params);
   }
 
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+    return this.ledger.importInboundMessages(params);
+  }
+
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {
     return this.ledger.persistAgentMessage(params);
   }
@@ -409,6 +433,18 @@ export class AgentConversationService {
 
   async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<ConversationActivityEntity> {
     return this.ledger.persistToolApprovalDecision(params);
+  }
+
+  async persistHumanInteractionRequest(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.ledger.persistHumanInteractionRequest(params);
+  }
+
+  async persistHumanInteractionResponse(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.ledger.persistHumanInteractionResponse(params);
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {

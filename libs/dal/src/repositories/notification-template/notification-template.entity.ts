@@ -16,6 +16,7 @@ import {
   SeverityLevelEnum,
   StepIssues,
   TriggerTypeEnum,
+  WorkflowJobMetadata,
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { Types } from 'mongoose';
@@ -85,8 +86,10 @@ export class NotificationTemplateEntity {
 
   origin?: ResourceOriginEnum;
 
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, consumers narrow per workflow origin
   rawData?: any;
 
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, consumers narrow to their JSON Schema type
   payloadSchema?: any;
 
   validatePayload?: boolean;
@@ -172,6 +175,8 @@ export class NotificationStepData {
   shouldStopOnFail?: boolean;
 
   bridgeUrl?: string;
+
+  workflowMetadata?: WorkflowJobMetadata;
   /*
    * controlVariables exists
    * only on none production environment in order to provide stateless control variables on fly

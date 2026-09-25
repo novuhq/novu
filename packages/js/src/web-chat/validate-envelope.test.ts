@@ -1,4 +1,5 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { describe, expect, it, vi } from 'vitest';
 import { parseAgentEventEnvelope, validateHistoryPageResponse } from './validate-envelope';
 
 const BASE_IDS = {
@@ -78,7 +79,7 @@ describe('validateHistoryPageResponse', () => {
   });
 
   it('skips invalid envelopes and returns the valid ones', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const known = envelope(1, { type: 'run-start' });
     const invalid = { version: AGENT_EVENT_PROTOCOL_VERSION, event: { type: 'run-start' } };
     const result = validateHistoryPageResponse({ events: [known, invalid], olderCursor: null });

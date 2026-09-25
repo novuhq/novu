@@ -1,9 +1,15 @@
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { InboxService } from './api';
 import { BaseModule } from './base-module';
 import { NovuEventEmitter } from './event-emitter';
+import { NovuError } from './utils/errors';
 
-beforeAll(() => jest.spyOn(global, 'fetch'));
-afterAll(() => jest.restoreAllMocks());
+beforeAll(() => {
+  vi.spyOn(global, 'fetch');
+});
+afterAll(() => {
+  vi.restoreAllMocks();
+});
 
 describe('callWithSession(fn)', () => {
   test('should invoke callback function immediately if session is initialized', async () => {
@@ -15,7 +21,7 @@ describe('callWithSession(fn)', () => {
       eventEmitterInstance: emitter,
     });
 
-    const cb = jest.fn();
+    const cb = vi.fn();
     bm.callWithSession(cb);
     expect(cb).toHaveBeenCalled();
   });
@@ -27,7 +33,7 @@ describe('callWithSession(fn)', () => {
       eventEmitterInstance: emitter,
     });
 
-    const cb = jest.fn();
+    const cb = vi.fn();
 
     bm.callWithSession(cb);
     expect(cb).not.toHaveBeenCalled();
@@ -77,10 +83,9 @@ describe('callWithSession(fn)', () => {
       error: new Error('Failed to initialize session'),
     });
 
-    const cb = jest.fn();
+    const cb = vi.fn();
     const result = await bm.callWithSession(cb);
-    expect(result).toEqual({
-      error: new Error('Failed to initialize session, please contact the support'),
-    });
+    expect(result.error).toBeInstanceOf(NovuError);
+    expect(result.error?.message).toBe('Failed to initialize session, please contact the support');
   });
 });
