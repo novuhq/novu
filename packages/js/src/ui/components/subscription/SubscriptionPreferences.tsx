@@ -1,5 +1,5 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
-import { TopicSubscription } from '../../../subscriptions';
+import type { TopicSubscription, WorkflowIdentifierOrId } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
@@ -10,10 +10,90 @@ import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Footer } from '../elements';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRenderer } from '../shared/IconRendererWrapper';
-import { SubscriptionPreferencesRenderer, UIPreference } from './Subscription';
+import type { GroupPreference, SubscriptionPreferencesRenderer, UIPreference } from './Subscription';
 import { SubscriptionPreferenceGroupRow } from './SubscriptionPreferenceGroupRow';
 import { SubscriptionPreferenceRow } from './SubscriptionPreferenceRow';
 import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallback';
+
+type PreferenceEntry = { label: string; preference: SubscriptionPreference };
+type PreferenceGroup = { label: string; group: Array<PreferenceEntry> };
+
+const matchesWorkflow = (preference: SubscriptionPreference, workflowId?: WorkflowIdentifierOrId) =>
+  preference.workflow?.id === workflowId || preference.workflow?.identifier === workflowId;
+
+const findByWorkflow = (preferences: Array<SubscriptionPreference>, workflowId?: WorkflowIdentifierOrId) =>
+  preferences.find((preference) => matchesWorkflow(preference, workflowId));
+
+/** The preferences a group lists one by one, labelled by the group's own entries. */
+const collectByWorkflows = (
+  preferences: Array<SubscriptionPreference>,
+  workflows: NonNullable<GroupPreference['filter']['workflows']>
+): Array<PreferenceEntry> =>
+  preferences
+    .filter((preference) => workflows.some((workflow) => matchesWorkflow(preference, workflow.workflowId)))
+    .map((preference) => ({
+      label:
+        workflows.find((workflow) => matchesWorkflow(preference, workflow.workflowId))?.label ??
+        preference.workflow.name,
+      preference,
+    }));
+
+/** The preferences a group selects by workflow ids or tags, labelled by their workflow names. */
+const collectByIdsOrTags = (
+  preferences: Array<SubscriptionPreference>,
+  filter: Pick<GroupPreference['filter'], 'workflowIds' | 'tags'>
+): Array<PreferenceEntry> =>
+  preferences
+    .filter(
+      (preference) =>
+        filter.workflowIds?.includes(preference.workflow?.id ?? '') ||
+        filter.workflowIds?.includes(preference.workflow?.identifier ?? '') ||
+        filter.tags?.some((tag) => preference.workflow?.tags?.includes(tag))
+    )
+    .map((preference) => ({ label: preference.workflow.name, preference }));
+
+const resolveGroup = (preferences: Array<SubscriptionPreference>, group: GroupPreference): PreferenceGroup => {
+  const { filter } = group;
+  if (typeof filter !== 'object') {
+    return { label: group.label, group: [] };
+  }
+  if ('workflows' in filter) {
+    return { label: group.label, group: collectByWorkflows(preferences, filter.workflows ?? []) };
+  }
+  if ('workflowIds' in filter || 'tags' in filter) {
+    return { label: group.label, group: collectByIdsOrTags(preferences, filter) };
+  }
+
+  return { label: group.label, group: [] };
+};
+
+const isGroupPreference = (preference: Exclude<UIPreference, string>): preference is GroupPreference =>
+  'filter' in preference;
+
+const asGroup = (entry: PreferenceEntry | PreferenceGroup): PreferenceGroup | undefined =>
+  'group' in entry ? entry : undefined;
+
+/** Resolves one entry of the `preferences` prop against the subscription; `undefined` when nothing matches it. */
+const resolvePreference = (
+  preferences: Array<SubscriptionPreference>,
+  preferenceFilter: UIPreference
+): PreferenceEntry | PreferenceGroup | undefined => {
+  if (typeof preferenceFilter === 'string') {
+    const found = findByWorkflow(preferences, preferenceFilter);
+
+    return found ? { label: found.workflow.name, preference: found } : undefined;
+  }
+  if (typeof preferenceFilter === 'object' && 'workflowId' in preferenceFilter) {
+    const found = findByWorkflow(preferences, preferenceFilter.workflowId);
+
+    return found ? { label: preferenceFilter.label ?? found.workflow.name, preference: found } : undefined;
+  }
+  if (typeof preferenceFilter === 'object' && isGroupPreference(preferenceFilter)) {
+    return resolveGroup(preferences, preferenceFilter);
+  }
+
+  return undefined;
+};
 
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
@@ -29,77 +109,9 @@ export const SubscriptionPreferences = (props: {
   const groupedPreferences = createMemo(() => {
     const subscriptionPreferences = props.subscription?.preferences ?? [];
 
-    return (
-      props.preferences
-        ?.map((preferenceFilter) => {
-          if (typeof preferenceFilter === 'string') {
-            const foundPreference = subscriptionPreferences.find(
-              (el) => el.workflow?.id === preferenceFilter || el.workflow?.identifier === preferenceFilter
-            );
-            if (foundPreference) {
-              return { label: foundPreference.workflow.name, preference: foundPreference };
-            }
-          }
-
-          if (typeof preferenceFilter === 'object' && 'workflowId' in preferenceFilter) {
-            const foundPreference = subscriptionPreferences.find(
-              (pref) =>
-                pref.workflow?.id === preferenceFilter.workflowId ||
-                pref.workflow?.identifier === preferenceFilter.workflowId
-            );
-            if (foundPreference) {
-              return { label: preferenceFilter.label ?? foundPreference.workflow.name, preference: foundPreference };
-            }
-          }
-
-          if (typeof preferenceFilter === 'object' && 'filter' in preferenceFilter) {
-            let foundPreferences: Array<{
-              label: string;
-              preference: SubscriptionPreference;
-            }> = [];
-
-            if (typeof preferenceFilter.filter === 'object' && 'workflows' in preferenceFilter.filter) {
-              const { workflows } = preferenceFilter.filter;
-              foundPreferences = subscriptionPreferences
-                .filter((pref) => {
-                  return workflows?.some(
-                    (workflow) =>
-                      workflow.workflowId === pref.workflow?.id || workflow.workflowId === pref.workflow?.identifier
-                  );
-                })
-                .map((pref) => {
-                  const workflow = workflows?.find(
-                    (workflow) =>
-                      workflow.workflowId === pref.workflow?.id || workflow.workflowId === pref.workflow?.identifier
-                  );
-                  return {
-                    label: workflow?.label ?? pref.workflow.name,
-                    preference: pref,
-                  };
-                });
-            } else if (
-              typeof preferenceFilter.filter === 'object' &&
-              ('workflowIds' in preferenceFilter.filter || 'tags' in preferenceFilter.filter)
-            ) {
-              const { workflowIds, tags } = preferenceFilter.filter;
-              foundPreferences = subscriptionPreferences
-                .filter((pref) => {
-                  return (
-                    workflowIds?.includes(pref.workflow?.id ?? '') ||
-                    workflowIds?.includes(pref.workflow?.identifier ?? '') ||
-                    tags?.some((tag) => pref.workflow?.tags?.includes(tag))
-                  );
-                })
-                .map((pref) => ({ label: pref.workflow.name, preference: pref }));
-            }
-
-            return { label: preferenceFilter.label, group: foundPreferences };
-          }
-
-          return undefined;
-        })
-        .filter((el) => el !== undefined) ?? []
-    );
+    return (props.preferences ?? [])
+      .map((preferenceFilter) => resolvePreference(subscriptionPreferences, preferenceFilter))
+      .filter((entry) => entry !== undefined);
   });
 
   createEffect(() => {
@@ -135,15 +147,14 @@ export const SubscriptionPreferences = (props: {
       <Show
         when={!props.renderPreferences}
         fallback={
-          <ExternalElementRenderer
-            render={(el) => {
-              if (props.renderPreferences) {
-                return props.renderPreferences(el, props.subscription ?? undefined, props.loading);
-              }
-
-              return () => {};
-            }}
-          />
+          <Show when={props.renderPreferences}>
+            {(renderPreferences) => (
+              <ExternalElementRenderer
+                render={renderPreferences()}
+                args={[props.subscription ?? undefined, props.loading]}
+              />
+            )}
+          </Show>
         }
       >
         <div
@@ -217,26 +228,19 @@ export const SubscriptionPreferences = (props: {
               })}
             >
               <Index each={groupedPreferences()}>
-                {(preference) => (
+                {(entry) => (
                   <Show
-                    when={preference().group}
-                    fallback={
-                      <SubscriptionPreferenceRow
-                        preference={preference() as { label: string; preference: SubscriptionPreference }}
-                      />
-                    }
+                    when={asGroup(entry())}
+                    fallback={<SubscriptionPreferenceRow preference={entry() as PreferenceEntry} />}
                   >
-                    <Show when={preference().group?.length}>
-                      <SubscriptionPreferenceGroupRow
-                        group={
-                          preference() as {
-                            label: string;
-                            group: Array<{ label: string; preference: SubscriptionPreference }>;
-                          }
-                        }
-                        subscription={props.subscription as TopicSubscription}
-                      />
-                    </Show>
+                    {(group) => (
+                      <Show when={group().group.length > 0}>
+                        <SubscriptionPreferenceGroupRow
+                          group={group()}
+                          subscription={props.subscription as TopicSubscription}
+                        />
+                      </Show>
+                    )}
                   </Show>
                 )}
               </Index>

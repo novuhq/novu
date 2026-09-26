@@ -6,6 +6,7 @@ import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
 import { editDeliveredHumanCards } from './edit-delivered-card';
 import { buildResolvedContent } from './human-card.builder';
+import { HumanInteractionActivityRecorder } from './human-interaction-activity.recorder';
 import { ResumeToolApprovalFromHitl } from './resume-tool-approval-from-hitl.usecase';
 
 /**
@@ -23,7 +24,8 @@ export class HumanInteractionSettlementService {
     @Inject(forwardRef(() => ResumeManagedHuman))
     private readonly resumeManagedHuman: ResumeManagedHuman,
     private readonly resumeToolApprovalFromHitl: ResumeToolApprovalFromHitl,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly activityRecorder: HumanInteractionActivityRecorder
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -104,6 +106,7 @@ export class HumanInteractionSettlementService {
   }
 
   private async resumeAfterSettlement(interaction: HumanInteractionEntity): Promise<void> {
+    await this.activityRecorder.recordResponse(interaction);
     await this.resumeManagedHuman.execute(interaction);
     await this.resumeToolApprovalFromHitl.execute(interaction);
   }

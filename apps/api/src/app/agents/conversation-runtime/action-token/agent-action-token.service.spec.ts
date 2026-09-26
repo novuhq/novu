@@ -75,11 +75,12 @@ describe('AgentActionTokenService', () => {
   });
 
   it('returns null when token is missing from cache', async () => {
-    const { service } = makeService();
+    const { service, cacheService } = makeService();
 
-    const resolved = await service.resolveActionToken(`${AGENT_ACTION_TOKEN_PREFIX}missing`, binding);
+    const resolved = await service.resolveActionToken(`${AGENT_ACTION_TOKEN_PREFIX}${'A'.repeat(22)}`, binding);
 
     expect(resolved).to.equal(null);
+    expect(cacheService.get.calledOnce).to.equal(true);
   });
 
   it('returns null on full binding mismatch including environment and organization', async () => {
@@ -282,9 +283,11 @@ describe('AgentActionTokenService', () => {
       id: 'repeatable:refresh',
     });
 
-    await service.resolveActionToken(token, binding);
-    await service.resolveActionToken(token, binding);
+    const first = await service.resolveActionToken(token, binding);
+    const second = await service.resolveActionToken(token, binding);
 
+    expect(first).to.deep.equal({ id: 'repeatable:refresh', value: undefined });
+    expect(second).to.deep.equal({ id: 'repeatable:refresh', value: undefined });
     expect(cacheService.set.callCount).to.equal(1);
     expect(cacheService.get.callCount).to.equal(2);
   });

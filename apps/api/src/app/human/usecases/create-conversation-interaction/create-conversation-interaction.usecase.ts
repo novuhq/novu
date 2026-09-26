@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { ConversationParticipantTypeEnum, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
-import { isHumanCardElement, normalizeHumanTo } from '@novu/shared';
+import { HumanInteractionStatusEnum, isHumanCardElement, normalizeHumanTo } from '@novu/shared';
 import { OutboundGateway } from '../../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../../agents/human-relay/human-card.builder';
+import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
 import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-payload.dto';
 import {
   assertHumanCardActions,
@@ -40,7 +41,8 @@ export class CreateConversationInteraction {
   constructor(
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly outboundGateway: OutboundGateway,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly activityRecorder: HumanInteractionActivityRecorder
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -86,6 +88,8 @@ export class CreateConversationInteraction {
     );
 
     if (command.skipDelivery) {
+      await this.activityRecorder.recordRequest(interaction);
+
       return interaction;
     }
 
@@ -133,7 +137,45 @@ export class CreateConversationInteraction {
       }
     );
 
+    await this.subscribeThreadForReplies(command);
+
+    await this.activityRecorder.recordRequest(delivered.interaction);
+
+    if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
+      await this.activityRecorder.recordResponse(delivered.interaction);
+    }
+
     return delivered.interaction;
+  }
+
+  /**
+   * Subscribing keeps unmentioned replies in a shared room flowing back to the
+   * agent. The card is already delivered by this point, so a subscribe failure
+   * must never surface as a failed interaction — that would strand a pending
+   * row and tell the caller to continue without the human decision.
+   */
+  private async subscribeThreadForReplies(command: CreateConversationInteractionCommand): Promise<void> {
+    if (command.conversation.isDirectMessage === true) {
+      return;
+    }
+
+    try {
+      await this.outboundGateway.setThreadSubscribed(
+        command.conversation._agentId,
+        command.integrationIdentifier,
+        command.channel.platformThreadId,
+        true
+      );
+    } catch (err) {
+      this.logger.warn(
+        {
+          err,
+          conversationId: command.conversation._id,
+          platformThreadId: command.channel.platformThreadId,
+        },
+        'Failed to subscribe the thread after delivering a human interaction'
+      );
+    }
   }
 
   private resolveRecipientIds(command: CreateConversationInteractionCommand): string[] {

@@ -1,15 +1,33 @@
-import { MailFactory } from '@novu/application-generic';
-import { buildAgentReplyToAddress, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { Logger } from '@nestjs/common';
+import { DetailEnum, type IntegrationSelectionResult, MailFactory } from '@novu/application-generic';
+import type { JobEntity } from '@novu/dal';
+import {
+  buildAgentReplyToAddress,
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ExecutionDetailsStatusEnum,
+  SeverityLevelEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageStatus } from './send-message-type.usecase';
 
+class TestSendMessageEmail extends SendMessageEmail {
+  public logSelectedIntegration(job: JobEntity, selection: IntegrationSelectionResult): Promise<void> {
+    return this.sendSelectedIntegrationExecution(job, selection);
+  }
+
+  public integrationFilterData(command: SendMessageChannelCommand) {
+    return this.getIntegrationFilterData(command);
+  }
+}
+
 describe('SendMessageEmail - email-webhook payloadDetails', () => {
   const renderedEmailBody = '<html><body><p>Hello Ada from email webhook test</p></body></html>';
 
-  function buildUsecase() {
+  function buildUsecase(stubSelectionExecution = true) {
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const messageRepository = {
       create: sinon.stub().resolves({ _id: 'msg_1' }),
@@ -21,7 +39,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       getFlag: sinon.stub().resolves(true),
     };
 
-    const usecase = new SendMessageEmail(
+    const usecase = new TestSendMessageEmail(
       {} as never,
       {} as never,
       messageRepository as never,
@@ -40,22 +58,26 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
-      _id: 'integration_1',
-      providerId: EmailProviderIdEnum.EmailWebhook,
-      credentials: {
-        from: 'no-reply@test.com',
-        webhookUrl: 'http://127.0.0.1:9999/email-webhook',
-        secretKey: 'test-secret',
+      integration: {
+        _id: 'integration_1',
+        providerId: EmailProviderIdEnum.EmailWebhook,
+        credentials: {
+          from: 'no-reply@test.com',
+          webhookUrl: 'http://127.0.0.1:9999/email-webhook',
+          secretKey: 'test-secret',
+        },
       },
     });
     sinon.stub(usecase as never, 'processVariants').resolves(undefined);
     sinon.stub(usecase as never, 'getOverrideLayoutId').resolves(undefined);
-    sinon.stub(usecase as never, 'sendSelectedIntegrationExecution').resolves(undefined);
+    if (stubSelectionExecution) {
+      sinon.stub(usecase as never, 'sendSelectedIntegrationExecution').resolves(undefined);
+    }
     sinon.stub(usecase as never, 'initiateTranslations').resolves(undefined);
     sinon.stub(usecase as never, 'storeContent').returns(false);
     sinon.stub(usecase as never, 'buildEmailProviderOverrides').returns({});
 
-    return { usecase, compileEmailTemplateUsecase };
+    return { usecase, compileEmailTemplateUsecase, createExecutionDetails };
   }
 
   function buildCommand({
@@ -123,6 +145,48 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     sinon.restore();
   });
 
+  it('includes the supported workflow metadata in integration condition data', () => {
+    const { usecase } = buildUsecase();
+    const command = buildCommand({});
+    command.workflow = {
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['transactional'],
+      severity: 'high',
+      triggers: [{ identifier: 'order-confirmation' }],
+    } as never;
+
+    expect(usecase.integrationFilterData(command).workflow).to.deep.equal({
+      workflowId: 'order-confirmation',
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['transactional'],
+      severity: 'high',
+    });
+  });
+
+  it('builds workflow condition data from discovered metadata when no persisted workflow is available', () => {
+    const { usecase } = buildUsecase();
+    const command = buildCommand({});
+    command.tags = ['bridge'];
+    command.severity = SeverityLevelEnum.MEDIUM;
+    command.job.step = {
+      ...command.job.step,
+      workflowMetadata: {
+        name: 'Order confirmation',
+        description: 'Sent after an order is placed',
+      },
+    } as never;
+
+    expect(usecase.integrationFilterData(command).workflow).to.deep.equal({
+      workflowId: 'wf-identifier',
+      name: 'Order confirmation',
+      description: 'Sent after an order is placed',
+      tags: ['bridge'],
+      severity: 'medium',
+    });
+  });
+
   it('should populate payloadDetails.content with rendered bridge body for v2 workflows', async () => {
     const { usecase } = buildUsecase();
     const command = buildCommand({ bridgeBody: renderedEmailBody });
@@ -177,6 +241,102 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     expect(mailData.payloadDetails.content).to.equal(templateContent);
     expect(mailData.payloadDetails.subject).to.equal(templateSubject);
   });
+
+  it('should log the matched integration conditions in the activity feed', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase(false);
+    const command = buildCommand({ bridgeBody: renderedEmailBody });
+    const selection: IntegrationSelectionResult = {
+      integration: {
+        _id: 'integration_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        active: true,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: {},
+        deleted: false,
+        identifier: 'eu-provider',
+        name: 'EU provider',
+        primary: false,
+        priority: 1,
+        providerId: EmailProviderIdEnum.EmailWebhook,
+      },
+      matchedConditions: { type: 'rules', value: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+    };
+
+    await usecase.logSelectedIntegration(command.job, selection);
+
+    expect(createExecutionDetails.execute.callCount).to.equal(2);
+    const matchedConditionLog = createExecutionDetails.execute.firstCall.args[0];
+
+    expect(matchedConditionLog.detail).to.equal(DetailEnum.INTEGRATION_CONDITIONS_MATCHED);
+    expect(matchedConditionLog.status).to.equal(ExecutionDetailsStatusEnum.SUCCESS);
+    expect(JSON.parse(matchedConditionLog.raw)).to.deep.equal({
+      integrationIdentifier: 'eu-provider',
+      matchedConditions: selection.matchedConditions,
+    });
+  });
+
+  it('should continue when logging matched integration conditions fails', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase(false);
+    const command = buildCommand({ bridgeBody: renderedEmailBody });
+    const loggerError = sinon.stub(Logger, 'error');
+    const selection: IntegrationSelectionResult = {
+      integration: {
+        _id: 'integration_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        active: true,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: {},
+        deleted: false,
+        identifier: 'eu-provider',
+        name: 'EU provider',
+        primary: false,
+        priority: 1,
+        providerId: EmailProviderIdEnum.EmailWebhook,
+      },
+      matchedConditions: { type: 'rules', value: { '==': [{ var: 'subscriber.locale' }, 'fr'] } },
+    };
+
+    createExecutionDetails.execute.onFirstCall().rejects(new Error('activity log unavailable'));
+
+    await usecase.logSelectedIntegration(command.job, selection);
+
+    expect(createExecutionDetails.execute.callCount).to.equal(2);
+    expect(createExecutionDetails.execute.secondCall.args[0].detail).to.not.equal(
+      DetailEnum.INTEGRATION_CONDITIONS_MATCHED
+    );
+    expect(loggerError.calledOnce).to.equal(true);
+  });
+
+  it('should continue when logging the selected provider fails', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase(false);
+    const command = buildCommand({ bridgeBody: renderedEmailBody });
+    const loggerError = sinon.stub(Logger, 'error');
+    const selection: IntegrationSelectionResult = {
+      integration: {
+        _id: 'integration_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        active: true,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: {},
+        deleted: false,
+        identifier: 'email-provider',
+        name: 'Email provider',
+        primary: true,
+        priority: 1,
+        providerId: EmailProviderIdEnum.EmailWebhook,
+      },
+    };
+
+    createExecutionDetails.execute.rejects(new Error('activity log unavailable'));
+
+    await usecase.logSelectedIntegration(command.job, selection);
+
+    expect(createExecutionDetails.execute.calledOnce).to.equal(true);
+    expect(loggerError.calledOnce).to.equal(true);
+  });
 });
 
 describe('SendMessageEmail - agent sender / reply-to precedence', () => {
@@ -222,11 +382,13 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
-      _id: 'integration_1',
-      providerId: EmailProviderIdEnum.SendGrid,
-      credentials: {
-        from: 'integration@test.com',
-        senderName: 'Integration Name',
+      integration: {
+        _id: 'integration_1',
+        providerId: EmailProviderIdEnum.SendGrid,
+        credentials: {
+          from: 'integration@test.com',
+          senderName: 'Integration Name',
+        },
       },
     });
     sinon.stub(usecase as never, 'processVariants').resolves(undefined);

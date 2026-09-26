@@ -1,5 +1,6 @@
 import type {
   AgentAnalyticsSource,
+  AgentReplyPolicyEnum,
   AgentRuntime,
   AgentSubscriberAccessEnum,
   AgentVisibility,
@@ -19,6 +20,10 @@ export interface AgentBehavior {
    * create defaults to restricted. Always persisted (backfilled for legacy rows).
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  /**
+   * Shared-room reply policy. Absent on legacy rows is treated as `auto_reply`.
+   */
+  replyPolicy?: AgentReplyPolicyEnum;
 }
 
 export interface ManagedRuntimeConfig {

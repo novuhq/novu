@@ -10,6 +10,7 @@ describe('HumanConversationInboundInterceptor', () => {
       agent: { _id: 'agent1', ...(runtime ? { runtime } : {}) },
       event: AgentEventEnum.ON_MESSAGE,
       humanResponse: undefined,
+      toolApprovalSettledByHitl: undefined as boolean | undefined,
     };
   }
 
@@ -63,6 +64,7 @@ describe('HumanConversationInboundInterceptor', () => {
 
     expect(await interceptor.tryHandleAction(turn as any)).to.equal(true);
     expect(turn.humanResponse).to.include({ requestId: 'tool_approval:apr_1', interactionId: 'hi_1' });
+    expect(turn.toolApprovalSettledByHitl).to.equal(true);
   });
 
   it('lets a bridge tool-gate HITL settlement dispatch with humanResponse', async () => {
@@ -82,6 +84,7 @@ describe('HumanConversationInboundInterceptor', () => {
 
     expect(await interceptor.tryHandleAction(turn as any)).to.equal(false);
     expect(turn.humanResponse).to.include({ requestId: 'tool_approval:apr_1' });
+    expect(turn.toolApprovalSettledByHitl).to.equal(true);
   });
 
   it('consumes the turn when a managed novu_human interaction settles', async () => {

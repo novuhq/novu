@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import { useNovu } from '../../hooks/NovuProvider';
 import { NovuUI, NovuUIOptions } from '../NovuUI';
-import { withRenderer } from '../Renderer';
 import { DefaultMsTeamsLinkUser, DefaultMsTeamsLinkUserProps } from './DefaultMsTeamsLinkUser';
 
 export type MsTeamsLinkUserProps = DefaultMsTeamsLinkUserProps & Pick<NovuUIOptions, 'container' | 'appearance'>;
 
-const MsTeamsLinkUserInternal = withRenderer<MsTeamsLinkUserProps>((props) => {
+const MsTeamsLinkUserInternal = (props: MsTeamsLinkUserProps) => {
   const { container, appearance, ...defaultProps } = props;
   const novu = useNovu();
 
@@ -23,7 +22,7 @@ const MsTeamsLinkUserInternal = withRenderer<MsTeamsLinkUserProps>((props) => {
       <DefaultMsTeamsLinkUser {...defaultProps} />
     </NovuUI>
   );
-});
+};
 
 MsTeamsLinkUserInternal.displayName = 'MsTeamsLinkUserInternal';
 

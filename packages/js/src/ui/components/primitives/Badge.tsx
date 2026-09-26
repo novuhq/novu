@@ -1,16 +1,17 @@
 import { cva, VariantProps } from 'class-variance-authority';
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
+import { badgeStyles } from '../../core/style/tables';
 import { cn, useStyle } from '../../helpers';
 import type { AllAppearanceKey } from '../../types';
 
-export const badgeVariants = cva(cn('nt-inline-flex nt-flex-row nt-gap-1 nt-items-center'), {
+export const badgeVariants = cva(cn(badgeStyles.base), {
   variants: {
     variant: {
-      secondary: 'nt-bg-neutral-alpha-50',
+      secondary: badgeStyles.variants.secondary,
     },
     size: {
-      default: 'nt-px-1 nt-py-px nt-rounded-sm nt-text-xs nt-px-1',
+      default: badgeStyles.sizes.default,
     },
   },
   defaultVariants: {
@@ -32,7 +33,7 @@ export const Badge = (props: BadgeProps) => {
       data-variant={props.variant}
       data-size={props.size}
       class={style({
-        key: local.appearanceKey || 'badge',
+        key: local.appearanceKey || badgeStyles.key,
         className: cn(badgeVariants({ variant: props.variant, size: props.size }), local.class),
         context: local.context,
       })}

@@ -1,31 +1,27 @@
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  buildWorkflowVariablesForJob,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   createProviderSelectedMessage,
   DetailEnum,
   GetNovuProviderCredentials,
   Instrument,
+  type IntegrationFilterData,
+  type IntegrationSelectionResult,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
   SelectVariantCommand,
 } from '@novu/application-generic';
-import {
-  IntegrationEntity,
-  JobEntity,
-  MessageRepository,
-  MessageTemplateEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { JobEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  ITenantDefine,
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
@@ -55,12 +51,16 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
   return undefined;
 }
 
+type BridgeProviderOverrides = {
+  providers?: Record<string, Record<string, unknown>>;
+};
+
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
  */
 export function combineProviderOverrides(
-  bridgeData: Record<string, any> | null | undefined,
+  bridgeData: BridgeProviderOverrides | null | undefined,
   overrides: TriggerOverrides | undefined,
   stepId: string | undefined,
   integrationId: string
@@ -96,17 +96,15 @@ export abstract class SendMessageBase extends SendMessageType {
     channelType: ChannelTypeEnum;
     userId: string;
     recipientEmail?: string;
-    filterData: {
-      tenant?: ITenantDefine;
-      subscriber?: SendMessageChannelCommand['compileContext']['subscriber'];
-      context?: SendMessageChannelCommand['compileContext']['context'];
-    };
-  }): Promise<IntegrationEntity | undefined> {
-    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
+    filterData: IntegrationFilterData;
+  }): Promise<IntegrationSelectionResult | undefined> {
+    const selection = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
-    if (!integration) {
+    if (!selection) {
       return;
     }
+
+    const { integration } = selection;
 
     if (
       integration.providerId === EmailProviderIdEnum.Novu ||
@@ -123,14 +121,22 @@ export abstract class SendMessageBase extends SendMessageType {
       });
     }
 
-    return integration;
+    return selection;
   }
 
   protected getIntegrationFilterData(command: SendMessageChannelCommand) {
     return {
       tenant: command.job.tenant,
+      payload: command.compileContext?.payload,
       subscriber: command.compileContext?.subscriber,
       context: command.compileContext?.context,
+      workflow: buildWorkflowVariablesForJob({
+        workflow: command.workflow,
+        workflowMetadata: command.job.step.workflowMetadata,
+        identifier: command.identifier,
+        tags: command.tags,
+        severity: command.severity,
+      }),
     };
   }
 
@@ -174,10 +180,10 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @Instrument()
-  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
-
-    await this.createExecutionDetails.execute(
+  protected async sendSelectedIntegrationExecution(job: JobEntity, selection: IntegrationSelectionResult) {
+    const { integration, matchedConditions } = selection;
+    const providerDisplayName = providers.find((el) => el.id === integration.providerId)?.displayName || 'Unknown';
+    const details = [
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: createProviderSelectedMessage(providerDisplayName) as DetailEnum,
@@ -186,14 +192,41 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({
-          providerId: integration?.providerId,
-          identifier: integration?.identifier,
-          name: integration?.name,
-          _environmentId: integration?._environmentId,
-          _id: integration?._id,
+          providerId: integration.providerId,
+          identifier: integration.identifier,
+          name: integration.name,
+          _environmentId: integration._environmentId,
+          _id: integration._id,
         }),
-      })
-    );
+      }),
+    ];
+
+    if (matchedConditions) {
+      details.unshift(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            integrationIdentifier: integration.identifier,
+            matchedConditions,
+          }),
+        })
+      );
+    }
+
+    await Promise.all(details.map((detail) => this.createExecutionDetailBestEffort(detail)));
+  }
+
+  private async createExecutionDetailBestEffort(command: CreateExecutionDetailsCommand): Promise<void> {
+    try {
+      await this.createExecutionDetails.execute(command);
+    } catch (error) {
+      Logger.error(error, `Failed to create "${command.detail}" execution detail`, SendMessageBase.name);
+    }
   }
 
   @Instrument()
@@ -249,7 +282,7 @@ export abstract class SendMessageBase extends SendMessageType {
           fallbackLng: defaultLocale || 'en',
           interpolation: {
             formatSeparator: ',',
-            format(value, formatting, lng) {
+            format(value, formatting, _lng) {
               if (value && formatting && !Number.isNaN(Date.parse(value))) {
                 return format(new Date(value), formatting);
               }

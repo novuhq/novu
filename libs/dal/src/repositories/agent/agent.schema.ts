@@ -1,4 +1,4 @@
-import { AGENT_ANALYTICS_SOURCES, AgentSubscriberAccessEnum } from '@novu/shared';
+import { AGENT_ANALYTICS_SOURCES, AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -26,6 +26,10 @@ const agentSchema = new Schema<AgentDBModel>(
         type: Schema.Types.String,
         enum: Object.values(AgentSubscriberAccessEnum),
         required: true,
+      },
+      replyPolicy: {
+        type: Schema.Types.String,
+        enum: Object.values(AgentReplyPolicyEnum),
       },
     },
     bridgeUrl: Schema.Types.String,

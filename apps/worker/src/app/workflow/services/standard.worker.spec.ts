@@ -7,6 +7,7 @@ import {
   PinoLogger,
   SqsService,
   StandardQueueService,
+  StepRunRepository,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
@@ -46,36 +47,37 @@ import { StandardWorker } from './standard.worker';
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
 
-const mockFeatureFlagsService = {
-  getFlag: async () => false,
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
-} as unknown as CommunityOrganizationRepository;
-
-const mockSqsService = {
+/*
+ * The queue collaborators only have to stay inert here - these suites assert
+ * on job state, not on SQS. They all hold private state, so the stubs can
+ * never be one of them; `Partial<T>` still checks each stub against the real
+ * API.
+ */
+const sqsServiceStub: Partial<SqsService> = {
   getQueueUrl: () => undefined,
   getProducer: () => undefined,
-  getClient: () => ({}) as any,
   isConfigured: () => false,
   send: async () => {},
   sendBulk: async () => {},
-} as unknown as SqsService;
+};
 
-const mockLogger = {
+const loggerStub: Partial<PinoLogger> = {
   setContext: () => {},
   debug: () => {},
   info: () => {},
   warn: () => {},
   error: () => {},
-} as unknown as PinoLogger;
+};
 
-const mockSchedulerService = {
+const schedulerServiceStub: Partial<EventBridgeSchedulerService> = {
   isConfigured: () => false,
   createDelayedFire: async () => {},
   deleteSchedule: async () => {},
-} as unknown as EventBridgeSchedulerService;
+};
+
+const mockSqsService = sqsServiceStub as SqsService;
+const mockLogger = loggerStub as PinoLogger;
+const mockSchedulerService = schedulerServiceStub as EventBridgeSchedulerService;
 
 describe('Standard Worker', () => {
   let jobRepository: JobRepository;
@@ -88,6 +90,7 @@ describe('Standard Worker', () => {
   let template: NotificationTemplateEntity;
   let jobsService: JobsService;
   let runJob: RunJob;
+  let stepRunRepository: StepRunRepository;
 
   before(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -136,8 +139,6 @@ describe('Standard Worker', () => {
     standardQueueService = new StandardQueueService(
       workflowInMemoryProviderService,
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger,
       mockSchedulerService
     );
@@ -158,6 +159,8 @@ describe('Standard Worker', () => {
     );
     const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
     const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
+    // Same singleton RunJob was injected with, so stubbing it here reaches the use case.
+    stepRunRepository = moduleRef.get<StepRunRepository>(StepRunRepository);
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
@@ -557,9 +560,6 @@ describe('Standard Worker', () => {
       }) as typeof originalClearInterval;
 
       // Force the first post-claim operation of RunJob.execute to fail.
-      const stepRunRepository = Reflect.get(runJob, 'stepRunRepository') as {
-        create: (...createArgs: unknown[]) => Promise<unknown>;
-      };
       const originalCreate = stepRunRepository.create;
       stepRunRepository.create = async () => {
         throw new Error('step run persistence failure');

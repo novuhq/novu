@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import {
-  BullMqService,
   FeatureFlagsService,
   PinoLogger,
   SqsService,
@@ -8,28 +7,24 @@ import {
   WorkflowInMemoryProviderService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 import { WorkflowModule } from '../workflow.module';
 import { WorkflowWorker } from './workflow.worker';
 
-const mockSqsService = {
+/*
+ * SQS stays inert for this suite. `SqsService` holds private state, so the
+ * stub can never be one; `Partial<T>` still checks it against the real API.
+ */
+const sqsServiceStub: Partial<SqsService> = {
   getQueueUrl: () => undefined,
   getProducer: () => undefined,
-  getClient: () => ({}) as any,
   isConfigured: () => false,
   send: async () => {},
   sendBulk: async () => {},
-} as unknown as SqsService;
+};
 
-const mockFeatureFlagsService = {
-  getFlag: async () => false,
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
-} as unknown as CommunityOrganizationRepository;
+const mockSqsService = sqsServiceStub as SqsService;
 
 let workflowQueueService: WorkflowQueueService;
 let workflowWorker: WorkflowWorker;
@@ -60,8 +55,6 @@ describe('Workflow Worker', () => {
     workflowQueueService = new WorkflowQueueService(
       workflowInMemoryProviderService,
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       new PinoLogger({})
     );
     await workflowQueueService.queue.obliterate();

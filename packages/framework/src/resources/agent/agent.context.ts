@@ -421,6 +421,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   readonly event: AgentEventEnum;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
+  readonly previousMessage: AgentMessage | null;
   readonly reaction: AgentReaction | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
@@ -456,6 +457,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.event = request.event as AgentEventEnum;
     this.action = request.action ?? null;
     this.message = request.message;
+    this.previousMessage = request.previousMessage ?? null;
     this.reaction = request.reaction;
     this.conversation = request.conversation;
     this.subscriber = request.subscriber;

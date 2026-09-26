@@ -13,6 +13,22 @@ export enum JobTopicNameEnum {
   PROCESS_SUBSCRIBER = 'process-subscriber',
 }
 
+/**
+ * Which queue backend a deployment produces to, and whether it still runs a
+ * BullMQ worker.
+ *
+ * `SQS_BULLMQ` is the migration state: producers write to SQS, BullMQ absorbs
+ * sends SQS rejects, and the BullMQ worker keeps running so jobs delayed before
+ * the switch still fire. Moving to `SQS` retires BullMQ entirely, so it is only
+ * safe once no delayed BullMQ jobs remain — deferral is capped at 180 days, and
+ * a job left in the delayed set when BullMQ stops is never delivered.
+ */
+export enum QueueBackend {
+  BULLMQ = 'bullmq',
+  SQS_BULLMQ = 'sqs_bullmq',
+  SQS = 'sqs',
+}
+
 export enum ObservabilityBackgroundTransactionEnum {
   JOB_PROCESSING_QUEUE = 'job-processing-queue',
   SUBSCRIBER_PROCESSING_QUEUE = 'subscriber-processing-queue',
