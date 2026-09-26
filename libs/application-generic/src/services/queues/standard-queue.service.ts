@@ -1,10 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { IStandardBulkJobDto, IStandardJobDto } from '../../dtos';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { EventBridgeSchedulerService } from '../scheduler';
 import { SqsService } from '../sqs';
@@ -17,8 +15,6 @@ export class StandardQueueService extends QueueBaseService {
   constructor(
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     sqsService: SqsService,
-    featureFlagsService: FeatureFlagsService,
-    organizationRepository: CommunityOrganizationRepository,
     logger: PinoLogger,
     schedulerService: EventBridgeSchedulerService
   ) {
@@ -26,8 +22,6 @@ export class StandardQueueService extends QueueBaseService {
       JobTopicNameEnum.STANDARD,
       new BullMqService(workflowInMemoryProviderService),
       sqsService,
-      featureFlagsService,
-      organizationRepository,
       logger,
       // Standard is the only topic that ever carries a delay.
       schedulerService

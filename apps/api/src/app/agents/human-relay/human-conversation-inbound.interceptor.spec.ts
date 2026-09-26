@@ -10,6 +10,7 @@ describe('HumanConversationInboundInterceptor', () => {
       agent: { _id: 'agent1', ...(runtime ? { runtime } : {}) },
       event: AgentEventEnum.ON_MESSAGE,
       humanResponse: undefined,
+      toolApprovalSettledByHitl: undefined as boolean | undefined,
     };
   }
 
@@ -44,6 +45,65 @@ describe('HumanConversationInboundInterceptor', () => {
 
     expect(await interceptor.tryHandleMessage(turn as any)).to.equal(false);
     expect(turn.humanResponse).to.include({ requestId: 'hr_1', interactionId: 'hi_1' });
+  });
+
+  it('consumes the turn when a managed tool-gate HITL interaction settles', async () => {
+    const inbound = {
+      tryHandleAction: sinon.stub().resolves({
+        outcome: 'settled',
+        settled: {
+          identifier: 'hi_1',
+          requestId: 'tool_approval:apr_1',
+          kind: HumanInteractionKindEnum.APPROVE,
+          status: HumanInteractionStatusEnum.APPROVED,
+        },
+      }),
+    };
+    const interceptor = new HumanConversationInboundInterceptor(inbound as any);
+    const turn = makeTurn('managed');
+
+    expect(await interceptor.tryHandleAction(turn as any)).to.equal(true);
+    expect(turn.humanResponse).to.include({ requestId: 'tool_approval:apr_1', interactionId: 'hi_1' });
+    expect(turn.toolApprovalSettledByHitl).to.equal(true);
+  });
+
+  it('lets a bridge tool-gate HITL settlement dispatch with humanResponse', async () => {
+    const inbound = {
+      tryHandleAction: sinon.stub().resolves({
+        outcome: 'settled',
+        settled: {
+          identifier: 'hi_1',
+          requestId: 'tool_approval:apr_1',
+          kind: HumanInteractionKindEnum.APPROVE,
+          status: HumanInteractionStatusEnum.APPROVED,
+        },
+      }),
+    };
+    const interceptor = new HumanConversationInboundInterceptor(inbound as any);
+    const turn = makeTurn();
+
+    expect(await interceptor.tryHandleAction(turn as any)).to.equal(false);
+    expect(turn.humanResponse).to.include({ requestId: 'tool_approval:apr_1' });
+    expect(turn.toolApprovalSettledByHitl).to.equal(true);
+  });
+
+  it('consumes the turn when a managed novu_human interaction settles', async () => {
+    const inbound = {
+      tryHandleMessage: sinon.stub().resolves({
+        outcome: 'settled',
+        settled: {
+          identifier: 'hi_1',
+          requestId: 'novu_human:ses_1:sevt_1',
+          kind: HumanInteractionKindEnum.APPROVE,
+          status: HumanInteractionStatusEnum.APPROVED,
+        },
+      }),
+    };
+    const interceptor = new HumanConversationInboundInterceptor(inbound as any);
+    const turn = makeTurn('managed');
+
+    expect(await interceptor.tryHandleMessage(turn as any)).to.equal(true);
+    expect(turn.humanResponse).to.include({ requestId: 'novu_human:ses_1:sevt_1', interactionId: 'hi_1' });
   });
 
   it('consumes the turn when inbound handled it without a settlement', async () => {

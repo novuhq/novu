@@ -97,6 +97,7 @@ const MESSAGE_ROLE_BY_SENDER = {
   [ConversationActivitySenderTypeEnum.SUBSCRIBER]: 'user',
 } as const;
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: exhaustive mapping over conversation activity types
 function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | null {
   switch (activity.type) {
     case ConversationActivityTypeEnum.MESSAGE: {
@@ -213,6 +214,20 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         messageId: activity.platformMessageId ?? activity.identifier,
       };
 
+    case ConversationActivityTypeEnum.REACTION: {
+      const reaction = activity.richContent?.reaction as { emoji?: unknown; added?: unknown } | undefined;
+      if (!activity.platformMessageId || typeof reaction?.emoji !== 'string') {
+        return null;
+      }
+
+      return {
+        type: 'channel.reaction',
+        messageId: activity.platformMessageId,
+        emoji: reaction.emoji,
+        op: reaction.added === false ? 'remove' : 'add',
+      };
+    }
+
     case ConversationActivityTypeEnum.RUN_START:
     case ConversationActivityTypeEnum.RUN_FINISH:
     case ConversationActivityTypeEnum.RUN_ERROR:
@@ -233,6 +248,10 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         data: custom.data,
       };
     }
+
+    case ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST:
+    case ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE:
+      return null;
 
     default: {
       const _exhaustive: never = activity.type;

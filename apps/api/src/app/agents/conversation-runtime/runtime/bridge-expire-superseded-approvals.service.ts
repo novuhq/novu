@@ -5,7 +5,10 @@ import {
   ConversationActivitySenderTypeEnum,
   ConversationChannel,
   ConversationEntity,
+  HumanInteractionRepository,
 } from '@novu/dal';
+import { buildToolApprovalRequestId, HumanInteractionStatusEnum } from '@novu/shared';
+import { HumanInteractionSettlementService } from '../../human-relay/human-interaction-settlement.service';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import {
   findOrphanedApprovedToolApprovalRequests,
@@ -28,6 +31,8 @@ export class BridgeExpireSupersededApprovalsService {
   constructor(
     private readonly conversationService: AgentConversationService,
     private readonly outboundGateway: OutboundGateway,
+    private readonly humanInteractionRepository: HumanInteractionRepository,
+    private readonly settlement: HumanInteractionSettlementService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -76,6 +81,11 @@ export class BridgeExpireSupersededApprovalsService {
       return;
     }
 
+    const hitlCanceled = await this.cancelHitlIfPending(turn, approvalId);
+    if (hitlCanceled) {
+      return;
+    }
+
     try {
       await this.conversationService.persistToolApprovalDecision({
         conversationId: conversation._id,
@@ -86,6 +96,7 @@ export class BridgeExpireSupersededApprovalsService {
         toolName: request.toolData?.toolName,
         actorType: ConversationActivitySenderTypeEnum.SYSTEM,
         actorId: config.agentIdentifier,
+        actorName: 'System',
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });
@@ -130,6 +141,34 @@ export class BridgeExpireSupersededApprovalsService {
         agentIdentifier: config.agentIdentifier,
         extra: { approvalId, platformMessageId },
       });
+    }
+  }
+
+  private async cancelHitlIfPending(turn: ConversationTurn, approvalId: string): Promise<boolean> {
+    const { config } = turn;
+
+    try {
+      const pending = await this.humanInteractionRepository.findPendingByRequestId(
+        config.environmentId,
+        buildToolApprovalRequestId(approvalId)
+      );
+      if (!pending) {
+        return false;
+      }
+
+      const settled = await this.settlement.settle(pending, HumanInteractionStatusEnum.CANCELED);
+
+      return settled !== null || pending.status !== HumanInteractionStatusEnum.PENDING;
+    } catch (err) {
+      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to cancel HITL tool-approval on new message`);
+      captureAgentWarning(err, {
+        component: 'bridge-expire-superseded-approvals',
+        operation: 'cancel-hitl-tool-approval',
+        agentIdentifier: config.agentIdentifier,
+        extra: { approvalId },
+      });
+
+      return false;
     }
   }
 }

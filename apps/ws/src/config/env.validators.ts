@@ -1,8 +1,15 @@
-import { StringifyEnv } from '@novu/shared';
+import { assertQueueBackendConfig } from '@novu/application-generic';
+import { JobTopicNameEnum, QueueBackend, StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  return cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators);
+
+  // Sockets are the only topic this service touches, and they never carry a
+  // delay, so no scheduler config is required here.
+  assertQueueBackendConfig({ topics: [JobTopicNameEnum.WEB_SOCKETS] });
+
+  return env;
 }
 
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
@@ -19,6 +26,13 @@ export const envValidators = {
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   REDIS_TLS: json({ default: undefined }),
+  IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
+  REDIS_CLUSTER_SERVICE_HOST: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORTS: str({ default: undefined }),
+  REDIS_CLUSTER_USERNAME: str({ default: undefined }),
+  REDIS_CLUSTER_PASSWORD: str({ default: undefined }),
+  REDIS_CLUSTER_TLS: str({ default: undefined }),
   REDIS_MASTER_HOST: str({ default: '' }),
   REDIS_MASTER_PORT: str({ default: '' }),
   REDIS_SLAVE_HOST: str({ default: '' }),
@@ -32,10 +46,11 @@ export const envValidators = {
   SQS_DEFAULT_VISIBILITY_TIMEOUT: num({ default: undefined }),
   SQS_DEFAULT_BATCH_SIZE: num({ default: undefined }),
   SQS_DEFAULT_WAIT_TIME_SECONDS: num({ default: undefined }),
-  // SQS queue backend (optional - when unset, the WS service runs BullMQ-only)
-  SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
-  SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
-  SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
+  /*
+   * Which backend this service consumes sockets from. `bullmq` and `sqs_bullmq`
+   * both run the BullMQ worker; `sqs` drops it.
+   */
+  QUEUE_BACKEND: str({ choices: Object.values(QueueBackend), default: QueueBackend.BULLMQ }),
   SQS_QUEUE_URL_WEB_SOCKETS: str({ default: undefined }),
   SQS_ENDPOINT: str({ default: undefined }),
   SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),

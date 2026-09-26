@@ -3,10 +3,17 @@ import type { NovuUIOptions as JsNovuUIOptions } from '@novu/js/ui';
 import { NovuUI as NovuUIClass } from '@novu/js/ui';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NovuUIProvider } from '../context/NovuUIContext';
-import { useRenderer } from '../context/RendererContext';
+import { OutletStore } from '../context/OutletStore';
 import { useDataRef } from '../hooks/internal/useDataRef';
+import { useIsomorphicLayoutEffect } from '../hooks/internal/useIsomorphicLayoutEffect';
 import { adaptAppearanceForJs } from '../utils/appearance';
-import type { ReactAllAppearance, ReactInboxAppearance, ReactSubscriptionAppearance } from '../utils/types';
+import type {
+  ReactAllAppearance,
+  ReactAllIconOverrides,
+  ReactInboxAppearance,
+  ReactSubscriptionAppearance,
+} from '../utils/types';
+import { OutletScope } from './OutletScope';
 import { ShadowRootDetector } from './ShadowRootDetector';
 
 export type NovuUIOptions = Omit<JsNovuUIOptions, 'appearance'> & {
@@ -44,13 +51,18 @@ const findParentShadowRoot = (child?: HTMLDivElement | null): Node | null => {
   return null;
 };
 
+/**
+ * Owns one engine instance and renders the outermost outlet scope. The store is created here because the icon
+ * overrides are adapted into engine renderers during this render; the scope hosts them and the outlets of whatever
+ * is rendered directly beneath, such as `DefaultInbox`.
+ */
 export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
   const shadowRootDetector = useRef<HTMLDivElement>(null);
-  const { mountElement } = useRenderer();
+  const outlets = useMemo(() => new OutletStore(), []);
 
   const adaptedAppearanceForUpdate = useMemo(
-    () => adaptAppearanceForJs(options.appearance || {}, mountElement),
-    [options.appearance, mountElement]
+    () => adaptAppearanceForJs(options.appearance || {}, outlets),
+    [options.appearance, outlets]
   );
 
   const adaptedOptions = useMemo(() => {
@@ -64,7 +76,7 @@ export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
   const optionsRef = useDataRef(adaptedOptions);
   const [novuUI, setNovuUI] = useState<NovuUIClass | undefined>();
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const parentShadowRoot = findParentShadowRoot(shadowRootDetector.current);
     const instance = new NovuUIClass({
       ...optionsRef.current,
@@ -101,10 +113,20 @@ export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
     novu,
   ]);
 
+  const icons = options.appearance?.icons;
+  const contextValue = useMemo(
+    () => (novuUI ? { novuUI, icons: (icons ?? {}) as ReactAllIconOverrides } : undefined),
+    [novuUI, icons]
+  );
+
   return (
     <>
       <ShadowRootDetector ref={shadowRootDetector} />
-      {novuUI && <NovuUIProvider value={{ novuUI }}>{children}</NovuUIProvider>}
+      {contextValue && (
+        <NovuUIProvider value={contextValue}>
+          <OutletScope store={outlets}>{children}</OutletScope>
+        </NovuUIProvider>
+      )}
     </>
   );
 };

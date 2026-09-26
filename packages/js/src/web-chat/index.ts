@@ -9,7 +9,6 @@ export type {
   AgentConversationTyping,
   AgentDataPart,
   AgentFilePart,
-  AgentMcpConnectionAction,
   AgentMcpConnectionPart,
   AgentMcpConnectionPartState,
   AgentMessage,
@@ -21,7 +20,6 @@ export type {
   AgentTextPart,
   AgentTextPartState,
   AgentThinkingPart,
-  AgentToolApprovalAction,
   AgentToolApprovalDecision,
   AgentToolPart,
   AgentToolPartState,
@@ -49,6 +47,7 @@ export type {
   WebChatPagination,
   WebChatPaginationStatus,
 } from './types';
+export { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 export { WebChat } from './web-chat';
 export type {
   AgentToolDefinition,

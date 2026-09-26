@@ -1,8 +1,32 @@
-import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { assertQueueBackendConfig, INBOUND_PARSE_RETRY_POLICY } from '@novu/application-generic';
+import {
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
+  FeatureFlagsKeysEnum,
+  JobTopicNameEnum,
+  QueueBackend,
+  StringifyEnv,
+} from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, makeValidator, num, port, str, url, ValidatorSpec } from 'envalid';
+import { getRequiredWorkerTopics } from './worker-topics';
 
 export function validateEnv() {
-  return cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators);
+
+  const topics = getRequiredWorkerTopics();
+
+  /*
+   * Scheduler config is demanded here and not in ws or inbound-mail because
+   * the standard queue is the only topic that ever carries a delay. Payload
+   * offload is only mandatory for a worker that parses inbound mail, whose
+   * attachments can exceed the SQS message limit.
+   */
+  assertQueueBackendConfig({
+    topics,
+    requiresScheduler: topics.includes(JobTopicNameEnum.STANDARD),
+    requiresPayloadOffload: topics.includes(JobTopicNameEnum.INBOUND_PARSE_MAIL),
+  });
+
+  return env;
 }
 
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
@@ -69,6 +93,13 @@ export const envValidators = {
   REDIS_MASTER_PORT: str({ default: '' }),
   REDIS_SLAVE_HOST: str({ default: '' }),
   REDIS_SLAVE_PORT: str({ default: '' }),
+  IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
+  REDIS_CLUSTER_SERVICE_HOST: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),
+  REDIS_CLUSTER_SERVICE_PORTS: str({ default: undefined }),
+  REDIS_CLUSTER_USERNAME: str({ default: undefined }),
+  REDIS_CLUSTER_PASSWORD: str({ default: undefined }),
+  REDIS_CLUSTER_TLS: str({ default: undefined }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
   MONGO_MAX_POOL_SIZE: num({ default: 50 }),
@@ -89,16 +120,27 @@ export const envValidators = {
   SQS_DEFAULT_VISIBILITY_TIMEOUT: num({ default: undefined }),
   SQS_DEFAULT_BATCH_SIZE: num({ default: undefined }),
   SQS_DEFAULT_WAIT_TIME_SECONDS: num({ default: undefined }),
-  // SQS queue backend (optional - when unset, the worker runs BullMQ-only)
+  /*
+   * Which backend the worker produces to, and whether it still runs BullMQ
+   * workers. `sqs_bullmq` keeps BullMQ alive to drain jobs delayed before the
+   * switch; `sqs` retires it. See assertQueueBackendConfig in
+   * @novu/application-generic for the per-mode required env.
+   */
+  QUEUE_BACKEND: str({ choices: Object.values(QueueBackend), default: QueueBackend.BULLMQ }),
   SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
   SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
   SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
   SQS_QUEUE_URL_WEB_SOCKETS: str({ default: undefined }),
+  SQS_QUEUE_URL_INBOUND_PARSE_MAIL: str({ default: undefined }),
   SQS_ENDPOINT: str({ default: undefined }),
   SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
   SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
-  // EventBridge Scheduler for delays beyond the SQS 900s cap (optional - when
-  // unset, long delays keep going to BullMQ)
+  // Must match the inbound-parse queue's redrive policy: it is what tells the
+  // worker which SQS attempt is the last one, so the terminal trace is written
+  // once instead of on every redelivery.
+  SQS_INBOUND_PARSE_MAX_RECEIVE_COUNT: num({ default: INBOUND_PARSE_RETRY_POLICY.attempts }),
+  // EventBridge Scheduler for delays beyond the SQS 900s cap. Required once
+  // QUEUE_BACKEND=sqs, since long delays then have no BullMQ fallback.
   EVENTBRIDGE_SCHEDULER_GROUP_PREFIX: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_ROLE_ARN: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_DLQ_ARN: str({ default: undefined }),
@@ -114,7 +156,7 @@ export const envValidators = {
   ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
-  ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AZURE' && {
     AZURE_ACCOUNT_NAME: str(),
     AZURE_ACCOUNT_KEY: str(),
     AZURE_HOST_NAME: str({ default: `https://${processEnv.AZURE_ACCOUNT_NAME}.blob.core.windows.net` }),
@@ -122,13 +164,13 @@ export const envValidators = {
   }),
 
   // GCS validators
-  ...(processEnv.STORAGE_SERVICE === 'GCS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'GCS' && {
     GCS_BUCKET_NAME: str(),
-    GCS_DOMAIN: str(),
+    GCS_DOMAIN: str({ default: undefined }),
   }),
 
   // AWS validators
-  ...(processEnv.STORAGE_SERVICE === 'AWS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AWS' && {
     S3_LOCAL_STACK: str({ default: '' }),
     S3_BUCKET_NAME: str(),
     S3_REGION: str(),

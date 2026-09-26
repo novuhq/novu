@@ -3,15 +3,12 @@ import { BadGatewayException, BadRequestException, HttpException, HttpStatus } f
 const CLIENT_ADAPTER_ERROR_NAMES = new Set(['ValidationError']);
 const CLIENT_ADAPTER_ERROR_CODES = new Set(['VALIDATION_ERROR']);
 
-function getErrorResponseBody(err: unknown): unknown {
+function getDeliveryErrorDetail(err: unknown): string | undefined {
   if (!err || typeof err !== 'object') {
     return undefined;
   }
 
-  return (err as { response?: { body?: unknown } }).response?.body;
-}
-
-function getDeliveryErrorDetail(body: unknown): string | undefined {
+  const body = (err as { response?: { body?: unknown } }).response?.body;
   if (!body || typeof body !== 'object') {
     return undefined;
   }
@@ -62,7 +59,7 @@ function isAdapterValidationError(err: unknown): boolean {
   return typeof record.code === 'string' && CLIENT_ADAPTER_ERROR_CODES.has(record.code);
 }
 
-export function resolveDeliveryHttpStatus(err: unknown): number {
+function resolveDeliveryHttpStatus(err: unknown): number {
   const upstreamStatus = getUpstreamHttpStatus(err);
 
   if (upstreamStatus !== undefined) {
@@ -94,9 +91,9 @@ function getErrorMessage(err: unknown): string {
   return String(err);
 }
 
-export function formatDeliveryErrorMessage(err: unknown): string {
+function formatDeliveryErrorMessage(err: unknown): string {
   const base = getErrorMessage(err);
-  const detail = getDeliveryErrorDetail(getErrorResponseBody(err));
+  const detail = getDeliveryErrorDetail(err);
 
   return detail ? `${base}: ${detail}` : base;
 }

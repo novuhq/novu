@@ -106,8 +106,6 @@ export enum FeatureFlagsKeysEnum {
   IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
   /** Enable Novu-managed demo Claude provider auto-provisioned on dev environments. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_DEMO_MANAGED_CLAUDE_ENABLED` when self-hosted. */
   IS_DEMO_MANAGED_CLAUDE_ENABLED = 'IS_DEMO_MANAGED_CLAUDE_ENABLED',
-  /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
-  IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
   /**
    * Enable framework `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` human
    * interactions delivered into the agent conversation. Create the boolean in
@@ -178,14 +176,15 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
   /**
-   * Emit a "step conditions matched" execution detail when a step's conditions
-   * pass and the step executes (v2 skip conditions, HTTP Request steps, and
-   * legacy v1 filters including webhook filters). When off, condition results
-   * are only persisted when a step is skipped. Create the boolean in
-   * LaunchDarkly for cloud, or set `IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED`
-   * when self-hosted.
+   * Trace step condition evaluation in the activity feed regardless of outcome:
+   * a "step conditions matched" detail when conditions pass, and a "step was
+   * skipped based on steps conditions" detail when they do not (v2 skip
+   * conditions, HTTP Request steps, and legacy v1 filters including webhook
+   * filters). Legacy v1 skipped steps still persist their skip detail when
+   * this flag is off. Create the boolean in LaunchDarkly for cloud, or set
+   * `IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED` when self-hosted.
    */
-  IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED = 'IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED',
+  IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED = 'IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED',
   /**
    * Stop embedding the fully populated workflow step (message template
    * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
@@ -219,16 +218,7 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
-  /**
-   * Route job delays longer than the SQS 900s per-message cap through
-   * EventBridge Scheduler instead of BullMQ. Only consulted once
-   * `QUEUE_BACKEND_MODE` has SQS as the primary backend; when false (default)
-   * long delays keep going to BullMQ.
-   */
-  IS_EVENTBRIDGE_SCHEDULER_ENABLED = 'IS_EVENTBRIDGE_SCHEDULER_ENABLED',
-
   // String flags
-  QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
   USAGE_REPORT_OVERRIDE_EMAIL = 'USAGE_REPORT_OVERRIDE_EMAIL',
 
@@ -256,13 +246,6 @@ export enum FeatureFlagsKeysEnum {
   MAX_CUSTOM_EMAIL_DOMAINS_NUMBER = 'MAX_CUSTOM_EMAIL_DOMAINS_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
-}
-
-export enum QueueBackendMode {
-  BULLMQ = 'bullmq',
-  SHADOW = 'shadow',
-  LIVE = 'live',
-  COMPLETE = 'complete',
 }
 
 export type FeatureFlags = {

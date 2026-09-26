@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
   messageWebhookMapper,
@@ -91,7 +90,7 @@ export class UpdateAllNotifications {
       contextKeys: command.contextKeys,
     });
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: WebSocketEventEnum.UNREAD,

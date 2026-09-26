@@ -23,12 +23,15 @@ describe('CreateConversationInteraction', () => {
     };
     const outboundGateway = {
       deliver: sinon.stub().resolves({ messageId: 'msg-1', platformThreadId: 'thread-1' }),
+      setThreadSubscribed: sinon.stub().resolves(undefined),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+    const activityRecorder = { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() };
     const usecase = new CreateConversationInteraction(
       humanInteractionRepository as any,
       outboundGateway as any,
-      logger as any
+      logger as any,
+      activityRecorder as any
     );
     const conversation = {
       _id: 'conv1',
@@ -45,12 +48,61 @@ describe('CreateConversationInteraction', () => {
       agentIdentifier: 'human-hitl',
       integrationIdentifier: 'slack-main',
       kind: HumanInteractionKindEnum.APPROVE,
-      prompt: 'Deploy?',
+      card: { title: 'Deploy?' },
       requestId: 'hr_1',
     };
 
     return { usecase, command, humanInteractionRepository, outboundGateway };
   }
+
+  it('persists and delivers a posted card on card', async () => {
+    const { usecase, command, humanInteractionRepository, outboundGateway } = setup();
+    const card = { type: 'card' as const, title: 'Refund $25?', children: [] };
+
+    await usecase.execute({ ...command, card } as any);
+
+    expect(humanInteractionRepository.create.firstCall.args[0].content).to.deep.equal({ card });
+    expect(outboundGateway.deliver.firstCall.args[1]).to.deep.equal({ card });
+  });
+
+  it('persists a posted choose card without requiring chrome options', async () => {
+    const { usecase, command, humanInteractionRepository } = setup();
+    const card = {
+      type: 'card' as const,
+      title: 'Which region?',
+      children: [
+        { type: 'button', id: 'human:hr_1:opt:us-east', label: 'US' },
+        { type: 'button', id: 'human:hr_1:opt:eu-west', label: 'EU' },
+      ],
+    };
+
+    await usecase.execute({ ...command, kind: HumanInteractionKindEnum.CHOOSE, card } as any);
+
+    expect(humanInteractionRepository.create.firstCall.args[0].content).to.deep.equal({ card });
+  });
+
+  it('mints pending chrome buttons from actionIdentifier', async () => {
+    const { usecase, command, outboundGateway } = setup();
+
+    await usecase.execute({ ...command, actionIdentifier: 'hr_1' } as any);
+
+    const delivered = outboundGateway.deliver.firstCall.args[1];
+    const buttons = delivered.card.children
+      .filter((child: { type: string }) => child.type === 'actions')
+      .flatMap((child: { children: Array<{ id: string }> }) => child.children);
+    expect(buttons.map((button: { id: string }) => button.id)).to.deep.equal(['human:hr_1:deny', 'human:hr_1:approve']);
+  });
+
+  it('rejects chrome without a title', async () => {
+    const { usecase, command } = setup();
+
+    try {
+      await usecase.execute({ ...command, card: { subtitle: 'no title' } } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
+  });
 
   it('creates, delivers, and stamps the conversation on the interaction', async () => {
     const { usecase, command, humanInteractionRepository, outboundGateway } = setup();
@@ -76,6 +128,9 @@ describe('CreateConversationInteraction', () => {
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
     expect(result.deliveries?.[0]?.platformMessageId).to.equal('msg-1');
     expect(result._conversationId).to.equal('conv1');
+    expect(
+      outboundGateway.setThreadSubscribed.calledOnceWithExactly('agent1', 'slack-main', 'thread-1', true)
+    ).to.equal(true);
   });
 
   it('marks tell interactions delivered after a successful send', async () => {
@@ -115,7 +170,48 @@ describe('CreateConversationInteraction', () => {
       await usecase.execute({
         ...command,
         kind: HumanInteractionKindEnum.CHOOSE,
-        options: ['only-one'],
+        card: { title: 'Deploy?', options: ['only-one'] },
+      } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
+  });
+
+  it('rejects a posted choose card without option buttons', async () => {
+    const { usecase, command } = setup();
+
+    try {
+      await usecase.execute({
+        ...command,
+        kind: HumanInteractionKindEnum.CHOOSE,
+        card: { type: 'card', title: 'Which region?', children: [] },
+      } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
+  });
+
+  it('rejects a posted approve card with more than four extra actions', async () => {
+    const { usecase, command } = setup();
+
+    try {
+      await usecase.execute({
+        ...command,
+        card: {
+          type: 'card',
+          title: 'Deploy?',
+          children: [
+            { type: 'button', id: 'human:hr_1:approve', label: 'Approve' },
+            { type: 'button', id: 'human:hr_1:deny', label: 'Deny' },
+            { type: 'button', id: 'human:hr_1:opt:a', label: 'A' },
+            { type: 'button', id: 'human:hr_1:opt:b', label: 'B' },
+            { type: 'button', id: 'human:hr_1:opt:c', label: 'C' },
+            { type: 'button', id: 'human:hr_1:opt:d', label: 'D' },
+            { type: 'button', id: 'human:hr_1:opt:e', label: 'E' },
+          ],
+        },
       } as any);
       expect.fail('should have thrown');
     } catch (err) {
@@ -157,6 +253,27 @@ describe('CreateConversationInteraction', () => {
     } as any);
 
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['alice']);
+  });
+
+  it('does not subscribe a DM thread while an ask is pending', async () => {
+    const { usecase, command, outboundGateway } = setup();
+
+    await usecase.execute({
+      ...command,
+      conversation: { ...command.conversation, isDirectMessage: true },
+    } as any);
+
+    expect(outboundGateway.setThreadSubscribed.called).to.equal(false);
+  });
+
+  it('returns the delivered interaction when subscribing the thread fails', async () => {
+    const { usecase, command, outboundGateway } = setup();
+    outboundGateway.setThreadSubscribed.rejects(new Error('integration not found'));
+
+    const result = await usecase.execute(command as any);
+
+    expect(result.identifier).to.equal('hi_abc');
+    expect(outboundGateway.deliver.calledOnce).to.equal(true);
   });
 
   it('enforces the pending-cap against every listed recipient', async () => {

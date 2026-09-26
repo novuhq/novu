@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { AgentEntity, AgentRepository, SubscriberRepository } from '@novu/dal';
+import { AgentEntity, AgentRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
@@ -71,6 +71,8 @@ export class SetupHumanRelay {
 
   private async ensureSubscriber(command: SetupHumanRelayCommand): Promise<void> {
     const email = command.email?.trim().toLowerCase();
+    const firstName = command.firstName?.trim() || undefined;
+    const lastName = command.lastName?.trim() || undefined;
 
     const existing = await this.subscriberRepository.findOne({
       subscriberId: command.subscriberId,
@@ -80,10 +82,17 @@ export class SetupHumanRelay {
     if (existing) {
       // Email identity powers the email channel (delivery target + inbound
       // reply resolution live on Subscriber.email — no ChannelEndpoint).
-      if (email && existing.email !== email) {
+      // Names are only ever set or replaced, never cleared: an invite that
+      // omits `--name` must not wipe a name captured earlier.
+      const updates: Partial<Pick<SubscriberEntity, 'email' | 'firstName' | 'lastName'>> = {};
+      if (email && existing.email !== email) updates.email = email;
+      if (firstName && existing.firstName !== firstName) updates.firstName = firstName;
+      if (lastName && existing.lastName !== lastName) updates.lastName = lastName;
+
+      if (Object.keys(updates).length > 0) {
         await this.subscriberRepository.update(
           { subscriberId: command.subscriberId, _environmentId: command.environmentId },
-          { $set: { email } }
+          { $set: updates }
         );
       }
 
@@ -95,6 +104,8 @@ export class SetupHumanRelay {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       ...(email ? { email } : {}),
+      ...(firstName ? { firstName } : {}),
+      ...(lastName ? { lastName } : {}),
     });
   }
 }

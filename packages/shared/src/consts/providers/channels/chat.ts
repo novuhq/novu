@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
+import { photonImessageGroupConfigurations } from '../configurations/provider-configuration';
 import {
   chatWebhookConfig,
   getstreamConfig,
@@ -7,6 +8,7 @@ import {
   lineConfig,
   msTeamsConfig,
   novuWebChatConfig,
+  photonImessageConfig,
   rocketChatConfig,
   sendblueConfig,
   slackConfigLegacy,
@@ -40,6 +42,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredential[],
     docReference: `https://docs.novu.co/platform/integrations/chat/discord${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.GoogleChat,
+    displayName: 'Google Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredential[],
+    docReference: `https://docs.novu.co/platform/integrations/chat/google-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'google-chat.svg', dark: 'google-chat.svg' },
   },
   {
     id: ChatProviderIdEnum.GrafanaOnCall,
@@ -150,6 +160,15 @@ export const chatProviders: IProviderConfig[] = [
     credentials: sendblueConfig,
     docReference: 'https://docs.sendblue.com',
     logoFileName: { light: 'sendblue.svg', dark: 'sendblue.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.PhotonImessage,
+    displayName: 'Photon (iMessage)',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: photonImessageConfig,
+    configurations: photonImessageGroupConfigurations,
+    docReference: 'https://docs.photon.codes',
+    logoFileName: { light: 'photon.svg', dark: 'photon.svg' },
   },
   {
     id: ChatProviderIdEnum.NovuWebChat,

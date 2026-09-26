@@ -113,10 +113,10 @@ export type UseWebChatResult = {
     error?: NovuError | WebChatPlanLimitError;
   }>;
   /**
-   * Resolve a pending `tool-approval`. Pass `action.id` from `pendingActions`.
+   * Resolve a pending `approval`. Pass `approvalId` from `pendingActions` or message parts.
    * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
    */
-  respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
+  respondToAction: (args: { approvalId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
     error?: NovuError | WebChatPlanLimitError;
   }>;
@@ -493,7 +493,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     [callRuntime]
   );
   const respondToAction = useCallback(
-    (args: { actionId: string; decision: AgentToolApprovalDecision }) =>
+    (args: { approvalId: string; decision: AgentToolApprovalDecision }) =>
       callRuntime((target) => target.respondToAction(args)),
     [callRuntime]
   );

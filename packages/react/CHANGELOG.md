@@ -1,3 +1,17 @@
+## v3.19.2 (2026-09-07)
+
+### 🚀 Features
+
+- **react:** add startNewConversation to useWebChat so new chats do not remount fixes NV-8744 ([#12535](https://github.com/novuhq/novu/pull/12535))
+
+### 🩹 Fixes
+
+- **react:** create web chat runtime in useEffect not during render fixes NV-8743 ([#12524](https://github.com/novuhq/novu/pull/12524))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.19.1 (2026-08-31)
 
 ### 🚀 Features

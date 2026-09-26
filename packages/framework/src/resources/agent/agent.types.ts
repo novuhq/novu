@@ -7,6 +7,8 @@ export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
+  ON_MESSAGE_UPDATED = 'onMessageUpdated',
+  ON_MESSAGE_DELETED = 'onMessageDeleted',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
@@ -14,7 +16,52 @@ export enum AgentEventEnum {
 
 export type HumanInteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
-export type HumanAskApproveOptions = {
+export type HumanOption = { id: string; label: string };
+export type HumanOptionInput = string | HumanOption;
+
+export type HumanCardPresentation = {
+  title?: string;
+  /**
+   * Slack only. MCP catalog id (`stripe`, `github`), catalog display name,
+   * or an `https://` URL (32×32). Ignored on Telegram, Teams, WhatsApp,
+   * email, and web chat. Do not pass emoji names.
+   */
+  icon?: string;
+  /** Secondary line under the title. Shown on every channel. */
+  subtitle?: string;
+  /** Optional details under the subtitle. Shown on every channel. */
+  body?: string;
+};
+
+export type HumanApproveCard = HumanCardPresentation & {
+  /** Approve button label. Defaults to `Approve`. */
+  approveLabel?: string;
+  /** Deny button label. Defaults to `Deny`. */
+  denyLabel?: string;
+  /**
+   * Extra buttons after Approve / Deny (max 4). Do not invent
+   * `trust-tool` / `trust-server` — Novu injects those on parked tool cards.
+   */
+  extraActions?: HumanOptionInput[];
+};
+
+export type HumanChooseCard = HumanCardPresentation & {
+  /** Choose options (2–10). String label or `{ id, label }`. */
+  options?: HumanOptionInput[];
+};
+
+/** Chrome descriptor returned by `askCard()` from `ctx.ask({ render })`. */
+export type HumanAskChrome = HumanCardPresentation & { type: 'human-ask-card' };
+/** Chrome descriptor returned by `approveCard()` from `ctx.approve({ render })`. */
+export type HumanApproveChrome = HumanApproveCard & { type: 'human-approve-card' };
+/** Chrome descriptor returned by `chooseCard()` from `ctx.choose({ render })`. */
+export type HumanChooseChrome = HumanChooseCard & { type: 'human-choose-card' };
+/** Chrome descriptor returned by `tellCard()` from `ctx.tell({ render })`. */
+export type HumanTellChrome = HumanCardPresentation & { type: 'human-tell-card' };
+
+export type HumanChrome = HumanAskChrome | HumanApproveChrome | HumanChooseChrome | HumanTellChrome;
+
+type HumanThreadOptions = {
   /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
   from?: string;
   /** Time until the request expires, in seconds (max 72h; default 24h). */
@@ -27,7 +74,32 @@ export type HumanAskApproveOptions = {
   to?: string | string[];
 };
 
-export type HumanChooseOptions = HumanAskApproveOptions;
+export type HumanAskOptions = HumanThreadOptions & {
+  card?: HumanCardPresentation;
+};
+
+/** `ctx.ask({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanAskRenderOptions = HumanThreadOptions & {
+  render: HumanAskRenderFn;
+};
+
+export type HumanAskApproveOptions = HumanThreadOptions & {
+  card?: HumanApproveCard;
+};
+
+/** `ctx.approve({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanAskApproveRenderOptions = HumanThreadOptions & {
+  render: HumanApproveRenderFn;
+};
+
+export type HumanChooseOptions = HumanThreadOptions & {
+  card?: HumanChooseCard;
+};
+
+/** `ctx.choose({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanChooseRenderOptions = HumanThreadOptions & {
+  render: HumanChooseRenderFn;
+};
 
 export type HumanTellOptions = {
   /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
@@ -37,6 +109,11 @@ export type HumanTellOptions = {
    * still posts one card on the current conversation.
    */
   to?: string | string[];
+};
+
+/** `ctx.tell({ render })` — `render` builds the posted message. */
+export type HumanTellRenderOptions = HumanTellOptions & {
+  render: HumanTellRenderFn;
 };
 
 /**
@@ -83,6 +160,10 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 /** An incoming message from the user in the current conversation. */
 export interface AgentMessage {
   /** Plain-text content of the message. */
@@ -92,6 +173,8 @@ export interface AgentMessage {
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
+  replyTo?: AgentReplyToContext;
 }
 
 /** Live state of the current conversation thread. */
@@ -268,6 +351,30 @@ export interface FileRef {
  */
 export type MessageContent = string | ChatElement;
 
+/** Platform message id or an inbound message to quote in the outbound reply. */
+export type QuoteReplyTarget = { messageId: string } | Pick<AgentMessage, 'platformMessageId'>;
+
+export interface AgentReplyOptions {
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+/**
+ * Wrapper for handler return values that need delivery options beyond bare content.
+ *
+ * @example
+ *   return { content: 'Done', quoteReply: message };
+ */
+export interface AgentHandlerReply {
+  content: MessageContent;
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+export function isAgentHandlerReply(value: unknown): value is AgentHandlerReply {
+  return typeof value === 'object' && value !== null && 'content' in value && !('type' in value);
+}
+
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
   markdown?: string;
@@ -337,6 +444,37 @@ export class PendingApproval {
   readonly __novuPendingApproval = true as const;
 }
 
+/** Arguments passed to `ctx.ask({ render })`. */
+export interface HumanAskRenderArgs {
+  requestId: string;
+  askCard: (overrides?: Omit<HumanAskChrome, 'type'>) => HumanAskChrome;
+}
+
+/** Arguments passed to `ctx.approve({ render })`. */
+export interface HumanApproveRenderArgs {
+  requestId: string;
+  actionIds: { approve: string; deny: string };
+  approveCard: (overrides?: Omit<HumanApproveChrome, 'type'>) => HumanApproveChrome;
+}
+
+/** Arguments passed to `ctx.choose({ render })`. */
+export interface HumanChooseRenderArgs {
+  requestId: string;
+  actionIds: { option: (optionId: string) => string };
+  chooseCard: (overrides?: Omit<HumanChooseChrome, 'type'>) => HumanChooseChrome;
+}
+
+/** Arguments passed to `ctx.tell({ render })`. */
+export interface HumanTellRenderArgs {
+  requestId: string;
+  tellCard: (overrides?: Omit<HumanTellChrome, 'type'>) => HumanTellChrome;
+}
+
+export type HumanAskRenderFn = (args: HumanAskRenderArgs) => Awaitable<ChatElement | HumanAskChrome>;
+export type HumanApproveRenderFn = (args: HumanApproveRenderArgs) => Awaitable<ChatElement | HumanApproveChrome>;
+export type HumanChooseRenderFn = (args: HumanChooseRenderArgs) => Awaitable<ChatElement | HumanChooseChrome>;
+export type HumanTellRenderFn = (args: HumanTellRenderArgs) => Awaitable<ChatElement | HumanTellChrome>;
+
 /** Optional customization for tool approval messages. */
 export interface ToolApprovalConfig {
   /**
@@ -377,13 +515,19 @@ export interface ToolApprovalDecision {
 }
 
 /** Controls on `ctx.toolApproval` for gating tool calls. */
+export type ToolApprovalRequestOptions = {
+  from?: string;
+  ttlSeconds?: number;
+  to?: string | string[];
+};
+
 export interface ToolApprovalControl {
   /**
    * Post an approval message and pause the turn.
    * Return the result (`return ctx.toolApproval.request(...)`) from `onMessage`
    * to end the turn until the user decides.
    */
-  request(toolCall: AgentToolCall): Promise<PendingApproval>;
+  request(toolCall: AgentToolCall, opts?: ToolApprovalRequestOptions): Promise<PendingApproval>;
 }
 
 // ---------------------------------------------------------------------------
@@ -465,8 +609,11 @@ export interface AgentHandlerContext {
    *   await ctx.reply('Here is your report', {
    *     files: [{ filename: 'report.pdf', url: 'https://...' }],
    *   });
+   *
+   * @example quote-reply to the triggering inbound message
+   *   await ctx.reply('answer', { quoteReply: message });
    */
-  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  reply(content: MessageContent, options?: AgentReplyOptions): Promise<ReplyHandle>;
   /**
    * Gate tool calls that need user approval before they run.
    *
@@ -529,8 +676,12 @@ export interface AgentHandlerContext {
    * @example
    *   ctx.ask('What environment should we deploy to?');
    *   ctx.ask('Which environment?', { to: 'alice' });
+   *   ctx.ask({ render: ({ askCard }) => askCard({ title: 'What environment?' }) });
+   *   // `card` cannot be passed alongside `render` — return askCard(...) or a Card.
    */
-  ask(question: string, opts?: HumanAskApproveOptions): string;
+  ask(question: string, opts?: HumanAskOptions | HumanAskRenderOptions): string;
+  ask(opts: HumanAskOptions & { card: HumanCardPresentation & { title: string } }): string;
+  ask(opts: HumanAskRenderOptions): string;
   /**
    * Ask the conversation subscriber to approve or deny an action.
    * The verdict arrives later on `onAction` with `ctx.humanResponse` set.
@@ -541,8 +692,15 @@ export interface AgentHandlerContext {
    * @example
    *   ctx.approve('Deploy v2.4.1 to production?');
    *   ctx.approve('Deploy v2.4.1?', { to: ['alice', 'bob'] });
+   *   ctx.approve({
+   *     render: ({ actionIds, approveCard }) =>
+   *       approveCard({ title: 'Refund $25?', extraActions: ['Escalate'] }),
+   *   });
+   *   // `card` cannot be passed alongside `render` — return approveCard(...) or a Card.
    */
-  approve(action: string, opts?: HumanAskApproveOptions): string;
+  approve(action: string, opts?: HumanAskApproveOptions | HumanAskApproveRenderOptions): string;
+  approve(opts: HumanAskApproveOptions & { card: HumanApproveCard & { title: string } }): string;
+  approve(opts: HumanAskApproveRenderOptions): string;
   /**
    * Ask the conversation subscriber to pick one of several options (2–10).
    * The pick arrives later on `onAction` with `ctx.humanResponse` set.
@@ -552,16 +710,26 @@ export interface AgentHandlerContext {
    *
    * @example
    *   ctx.choose('Which region?', ['us-east', 'eu-west', 'ap-south']);
+   *   ctx.choose({
+   *     render: ({ chooseCard }) =>
+   *       chooseCard({ title: 'Which region?', options: ['us-east', 'eu-west'] }),
+   *   });
+   *   // `card` cannot be passed alongside `render` — return chooseCard(...) or a Card.
    */
-  choose(question: string, options: string[], opts?: HumanChooseOptions): string;
+  choose(question: string, options: HumanOptionInput[], opts?: HumanChooseOptions | HumanChooseRenderOptions): string;
+  choose(opts: HumanChooseOptions & { card: HumanChooseCard & { title: string } }): string;
+  choose(opts: HumanChooseRenderOptions): string;
   /**
    * Send a one-way notification to the conversation subscriber. Nothing to wait
    * on — `tell` never sets `ctx.humanResponse`.
    *
    * @example
    *   ctx.tell('Deploy finished. v2.4.1 is live.');
+   *   ctx.tell({ render: ({ tellCard }) => tellCard({ title: 'Deploy finished.' }) });
+   *   // `card` cannot be passed alongside `render` — return tellCard(...) or a Card.
    */
-  tell(message: string, opts?: HumanTellOptions): string;
+  tell(message: string, opts?: HumanTellOptions | HumanTellRenderOptions): string;
+  tell(opts: HumanTellRenderOptions): string;
   /**
    * Add an emoji reaction to any platform message.
    * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
@@ -610,6 +778,18 @@ export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
+/** Context passed to the `onMessageUpdated` handler. */
+export interface AgentMessageUpdatedContext extends AgentHandlerContext {
+  readonly event: 'onMessageUpdated';
+  /** The message as it read before this edit. `null` when the channel does not send the old body. */
+  readonly previousMessage: AgentMessage | null;
+}
+
+/** Context passed to the `onMessageDeleted` handler. */
+export interface AgentMessageDeletedContext extends AgentHandlerContext {
+  readonly event: 'onMessageDeleted';
+}
+
 /** Context passed to the `onAction` handler. */
 export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
@@ -629,7 +809,13 @@ export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
-export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+export type AgentContext =
+  | AgentMessageContext
+  | AgentMessageUpdatedContext
+  | AgentMessageDeletedContext
+  | AgentActionContext
+  | AgentReactionContext
+  | AgentResolveContext;
 
 /** Event handlers for a conversational agent. */
 export interface AgentHandlers {
@@ -642,7 +828,27 @@ export interface AgentHandlers {
    * Return a string or JSX card to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
+  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires when the user edits a previously sent message. Does not re-run `onMessage`.
+   *
+   * @param message - The message after the edit (same `platformMessageId`).
+   * @param ctx - `ctx.previousMessage` is the body before this edit, when the channel sent it.
+   */
+  onMessageUpdated?: (
+    message: AgentMessage,
+    ctx: AgentMessageUpdatedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires when the user deletes a message. Does not re-run `onMessage`.
+   *
+   * @param message - The removed message. `text` is the last known body and may be empty
+   *   when the channel did not send a snapshot.
+   */
+  onMessageDeleted?: (
+    message: AgentMessage,
+    ctx: AgentMessageDeletedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user adds or removes an emoji reaction to a message.
    *
@@ -651,7 +857,10 @@ export interface AgentHandlers {
    *
    * Return a string or card to post a reply, or return nothing to silently acknowledge.
    */
-  onReaction?: (reaction: AgentReaction, ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
+  onReaction?: (
+    reaction: AgentReaction,
+    ctx: AgentReactionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user clicks a `<Button>` or other interactive element.
    *
@@ -661,7 +870,7 @@ export interface AgentHandlers {
    *
    * Return a string or card to reply, or return nothing to silently acknowledge the click.
    */
-  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires after `ctx.resolve()` is called and the conversation is marked resolved.
    * Use for post-resolution side-effects (e.g. triggering a follow-up workflow).
@@ -669,7 +878,7 @@ export interface AgentHandlers {
    * @param ctx - Conversation context. Access subscriber and conversation via
    *   `ctx.subscriber` and `ctx.conversation`.
    */
-  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user approves or denies a tool call you previously gated with
    * `ctx.toolApproval.request()`.
@@ -680,7 +889,10 @@ export interface AgentHandlers {
    * Run the tool (or skip it), then return a reply or call `ctx.reply()` directly.
    * Register this handler whenever you call `ctx.toolApproval.request()` in `onMessage`.
    */
-  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onToolApproval?: (
+    decision: ToolApprovalDecision,
+    ctx: AgentActionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Optional turn failure handler. Return `{ suppress: true }` to skip user notification,
    * return message content for a custom user reply, or return nothing to auto-report
@@ -688,7 +900,13 @@ export interface AgentHandlers {
    */
   onError?: (
     error: AgentError,
-    ctx: AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext
+    ctx:
+      | AgentMessageContext
+      | AgentMessageUpdatedContext
+      | AgentMessageDeletedContext
+      | AgentActionContext
+      | AgentReactionContext
+      | AgentResolveContext
   ) => Awaitable<AgentErrorResult>;
   /**
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
@@ -697,7 +915,7 @@ export interface AgentHandlers {
 }
 
 export type AgentErrorSuppress = { suppress: true };
-export type AgentErrorResult = MessageContent | void | AgentErrorSuppress;
+export type AgentErrorResult = MessageContent | AgentHandlerReply | void | AgentErrorSuppress;
 
 export function isAgentErrorSuppress(result: AgentErrorResult | undefined): result is AgentErrorSuppress {
   return typeof result === 'object' && result !== null && 'suppress' in result && result.suppress === true;
@@ -731,6 +949,11 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  /**
+   * The message as it read before an `onMessageUpdated` edit. Optional on the wire
+   * for backward compatibility; absent → `ctx.previousMessage` is `null`.
+   */
+  previousMessage?: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
@@ -789,12 +1012,32 @@ export type TriggerSignal = {
  * Queued by `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` — instructs
  * Novu to create a human interaction in the current conversation thread.
  */
+export type HumanSignalCard = {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+};
+
 export type HumanSignal = {
   type: 'human';
   kind: HumanInteractionKind;
-  prompt: string;
   requestId: string;
-  options?: string[];
+  /**
+   * When set, Novu mints `human:{actionIdentifier}:…` button ids (the
+   * `requestId` when a HITL `render*` helper is used). Omitted = public `hi_…`.
+   */
+  actionIdentifier?: string;
+  /**
+   * The only content carrier: chrome presentation (built from the simple args or
+   * the `card` arg) or a posted `Card` element (`type: 'card'`) from `{ render }`.
+   * Title lives on `card.title`; choose options on `card.options` / option buttons.
+   */
+  card: HumanSignalCard | CardElement;
   from?: string;
   ttlSeconds?: number;
   /** Novu subscriberId(s) allowed to settle. Omitted = conversation subscriber. */

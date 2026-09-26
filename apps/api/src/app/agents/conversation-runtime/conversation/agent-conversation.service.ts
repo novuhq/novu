@@ -12,10 +12,15 @@ import {
 import { getConversationTitle } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
+  DeleteInboundMessageParams,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
+  PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
+  PersistInboundReactionParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
@@ -24,6 +29,7 @@ import type {
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
   ResolveConversationParams,
+  UpdateInboundMessageParams,
   UpdateMetadataParams,
 } from './agent-conversation.types';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
@@ -39,10 +45,13 @@ export {
 
 export type {
   ConversationActivityContext,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   MetadataOp,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
+  PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -204,6 +213,20 @@ export class AgentConversationService {
     );
   }
 
+  async countOtherAgentsOnPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string,
+    agentId: string
+  ): Promise<number> {
+    return this.conversationRepository.countOtherAgentsOnPlatformThread(
+      environmentId,
+      organizationId,
+      platformThreadId,
+      agentId
+    );
+  }
+
   async findByPublicIdentifier(
     environmentId: string,
     organizationId: string,
@@ -328,6 +351,22 @@ export class AgentConversationService {
     return this.ledger.persistInboundMessage(params);
   }
 
+  async updateInboundMessage(params: UpdateInboundMessageParams): Promise<ConversationActivityEntity | null> {
+    return this.ledger.updateInboundMessage(params);
+  }
+
+  async deleteInboundMessage(params: DeleteInboundMessageParams): Promise<ConversationActivityEntity | null> {
+    return this.ledger.deleteInboundMessage(params);
+  }
+
+  async persistInboundReaction(params: PersistInboundReactionParams): Promise<ConversationActivityEntity> {
+    return this.ledger.persistInboundReaction(params);
+  }
+
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+    return this.ledger.importInboundMessages(params);
+  }
+
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {
     return this.ledger.persistAgentMessage(params);
   }
@@ -411,6 +450,18 @@ export class AgentConversationService {
     return this.ledger.persistToolApprovalDecision(params);
   }
 
+  async persistHumanInteractionRequest(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.ledger.persistHumanInteractionRequest(params);
+  }
+
+  async persistHumanInteractionResponse(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.ledger.persistHumanInteractionResponse(params);
+  }
+
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
     return this.ledger.persistToolResult(params);
   }
@@ -443,6 +494,14 @@ export class AgentConversationService {
     platformMessageId: string
   ): Promise<ConversationActivityEntity | null> {
     return this.ledger.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
+  }
+
+  async resolveCurrentMessage(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.ledger.resolveCurrentMessage(environmentId, conversationId, platformMessageId);
   }
 
   async findSourceActivity(

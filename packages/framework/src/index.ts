@@ -17,6 +17,8 @@ export type {
   AgentMessage,
   AgentMessageAuthor,
   AgentMessageContext,
+  AgentMessageDeletedContext,
+  AgentMessageUpdatedContext,
   AgentNotification,
   AgentPlatformContext,
   AgentReaction,

@@ -1,29 +1,31 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { WebChatPlanLimitError, WebChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { NovuError } from '../utils/errors';
-import { WebChat } from './web-chat';
 import { derivePendingActions } from './agent-message.types';
+import { pendingActionKey } from './derive-pending-actions';
 import { createActionIdempotencyKeyForScope } from './idempotency';
 import type { WebChatChange } from './types';
+import { WebChat } from './web-chat';
 
 describe('WebChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
-  let sendMessage: jest.Mock;
-  let respondToAction: jest.Mock;
-  let sendAction: jest.Mock;
-  let getEvents: jest.Mock;
-  let connect: jest.Mock;
+  let sendMessage: Mock;
+  let respondToAction: Mock;
+  let sendAction: Mock;
+  let getEvents: Mock;
+  let connect: Mock;
   let webChat: WebChat;
 
   beforeEach(() => {
     emitter = new NovuEventEmitter();
-    sendMessage = jest.fn();
-    respondToAction = jest.fn();
-    sendAction = jest.fn();
-    getEvents = jest.fn();
-    connect = jest.fn().mockResolvedValue({ data: undefined });
+    sendMessage = vi.fn();
+    respondToAction = vi.fn();
+    sendAction = vi.fn();
+    getEvents = vi.fn();
+    connect = vi.fn().mockResolvedValue({ data: undefined });
     const webChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as WebChatService;
     webChat = new WebChat({
       inboxServiceInstance,
@@ -1233,7 +1235,7 @@ describe('WebChat', () => {
 
   it('drops malformed web_chat.agent_event envelopes without folding them', async () => {
     await openClaimedConversation();
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     emitter.emit('web_chat.agent_event', { result: { invalid: true } as any });
 
@@ -2079,12 +2081,12 @@ describe('WebChat', () => {
 
     expect(derivePendingActions(snapshot?.messages ?? [])).toEqual([
       {
-        type: 'tool-approval',
-        id: 'approval_000001',
+        type: 'approval',
         approvalId: 'approval_000001',
         toolUseId: 'tu_0000001',
         toolName: 'deleteOrder',
         input: { orderId: '123' },
+        state: 'pending',
         approveActionId: 'tool-approval:approve:approval_000001',
         denyActionId: 'tool-approval:deny:approval_000001',
       },
@@ -2105,7 +2107,7 @@ describe('WebChat', () => {
     const result = await webChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      actionId: 'approval_000001',
+      approvalId: 'approval_000001',
       decision: 'approved',
     });
 
@@ -2123,7 +2125,7 @@ describe('WebChat', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(derivePendingActions(snapshot?.messages ?? [])[0]?.type).toBe('tool-approval');
+    expect(derivePendingActions(snapshot?.messages ?? [])[0]?.type).toBe('approval');
   });
 
   it('respondToAction POSTs trust-server action id when decision is trust-server', async () => {
@@ -2150,7 +2152,7 @@ describe('WebChat', () => {
     const result = await webChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      actionId: 'approval_000001',
+      approvalId: 'approval_000001',
       decision: 'trust-server',
     });
 
@@ -2179,7 +2181,7 @@ describe('WebChat', () => {
     await webChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      actionId: 'approval_000001',
+      approvalId: 'approval_000001',
       decision: 'approved',
     });
 
@@ -2223,7 +2225,7 @@ describe('WebChat', () => {
     const result = await webChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      actionId: 'approval_missing',
+      approvalId: 'approval_missing',
       decision: 'denied',
     });
 
@@ -2250,7 +2252,7 @@ describe('WebChat', () => {
     const result = await webChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      actionId: 'approval_000001',
+      approvalId: 'approval_000001',
       decision: 'denied',
     });
 
@@ -2499,7 +2501,7 @@ describe('WebChat', () => {
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
-    expect(changes[0]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
+    expect(changes[0]?.newActions.map(pendingActionKey)).toEqual(['approval_000001']);
     expect(changes[1]?.newActions).toEqual([]);
   });
 
@@ -2530,7 +2532,7 @@ describe('WebChat', () => {
     expect(changes[0]?.newActions).toEqual([]);
     expect(changes[1]?.kind).toBe('live');
     expect(changes[1]?.addedMessages).toEqual([]);
-    expect(changes[1]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
+    expect(changes[1]?.newActions.map(pendingActionKey)).toEqual(['approval_000001']);
   });
 
   it('stays silent for an approval discovered by paging backwards', async () => {
@@ -2544,7 +2546,7 @@ describe('WebChat', () => {
     await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
     const snapshot = webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-    expect(derivePendingActions(snapshot?.messages ?? []).map((action) => action.id)).toEqual(['approval_000001']);
+    expect(derivePendingActions(snapshot?.messages ?? []).map(pendingActionKey)).toEqual(['approval_000001']);
     const historyChange = changes.find((change) => change.kind === 'history');
     expect(historyChange?.newActions).toEqual([]);
   });
@@ -2897,13 +2899,13 @@ describe('WebChat', () => {
       await webChat.respondToAction({
         agentId: 'agent_1',
         conversationId: 'conv_abcdefghijkl',
-        actionId: 'approval_000001',
+        approvalId: 'approval_000001',
         decision: 'approved',
       });
       await webChat.respondToAction({
         agentId: 'agent_1',
         conversationId: 'conv_abcdefghijkl',
-        actionId: 'approval_000001',
+        approvalId: 'approval_000001',
         decision: 'approved',
       });
 
@@ -2924,13 +2926,13 @@ describe('WebChat', () => {
       await webChat.respondToAction({
         agentId: 'agent_1',
         conversationId: 'conv_aaaaaaaaaaaa',
-        actionId: 'approval_000001',
+        approvalId: 'approval_000001',
         decision: 'approved',
       });
       await webChat.respondToAction({
         agentId: 'agent_1',
         conversationId: 'conv_bbbbbbbbbbbb',
-        actionId: 'approval_000001',
+        approvalId: 'approval_000001',
         decision: 'approved',
       });
 
@@ -2950,13 +2952,13 @@ describe('WebChat', () => {
       const failed = await webChat.respondToAction({
         agentId: 'agent_1',
         conversationId: 'conv_abcdefghijkl',
-        actionId: 'approval_000001',
+        approvalId: 'approval_000001',
         decision: 'approved',
       });
       const retried = await webChat.respondToAction({
         agentId: 'agent_1',
         conversationId: 'conv_abcdefghijkl',
-        actionId: 'approval_000001',
+        approvalId: 'approval_000001',
         decision: 'approved',
       });
 

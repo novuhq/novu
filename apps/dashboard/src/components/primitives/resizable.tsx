@@ -52,7 +52,7 @@ const ResizablePanel = Panel;
 const ResizableHandle = ({ withHandle, className, ...props }: SeparatorProps & { withHandle?: boolean }) => (
   <Separator
     className={cn(
-      'group relative flex w-px items-center justify-center bg-neutral-200',
+      'group relative flex w-px cursor-col-resize items-center justify-center bg-neutral-200',
       'after:absolute after:inset-y-0 after:left-1/2 after:w-4 after:-translate-x-1/2',
       'hover:after:bg-transparent focus-visible:outline-hidden z-50',
       className

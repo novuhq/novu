@@ -1,8 +1,7 @@
 import type { InboxProps } from '../components/Inbox';
+import type { NotificationItem as ClientNotificationItem } from '../components/notification-item/NotificationItem';
 import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
-  UseWebChatProps,
-  UseWebChatResult,
   UseCreateSubscriptionProps,
   UseCreateSubscriptionResult,
   UseNotificationsProps,
@@ -19,6 +18,8 @@ import type {
   UseSubscriptionsResult,
   UseUpdateSubscriptionProps,
   UseUpdateSubscriptionResult,
+  UseWebChatProps,
+  UseWebChatResult,
 } from '../hooks';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
@@ -36,6 +37,30 @@ export function Inbox(props: InboxProps) {
 export function InboxContent() {}
 
 export function Notifications() {}
+
+/** The server stand-in for a client component: it takes exactly the client's props and renders nothing. */
+type ServerStub<TComponent> = TComponent extends (...args: infer TArgs) => unknown ? (...args: TArgs) => null : never;
+
+/** A stubbed component together with the stubs of its static parts, so a part missing here fails to compile. */
+type ServerCounterpart<TComponent> = ServerStub<TComponent> & {
+  [TPart in keyof TComponent as TComponent[TPart] extends (...args: never) => unknown ? TPart : never]: ServerStub<
+    TComponent[TPart]
+  >;
+};
+
+const createStub = () => () => null;
+
+export const NotificationItem: ServerCounterpart<typeof ClientNotificationItem> = Object.assign(createStub(), {
+  Avatar: createStub(),
+  Content: createStub(),
+  Text: createStub(),
+  Subject: createStub(),
+  Body: createStub(),
+  DefaultActions: createStub(),
+  CustomActions: createStub(),
+  Date: createStub(),
+  Dot: createStub(),
+});
 
 export function Preferences() {}
 
@@ -181,7 +206,7 @@ export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResu
 }
 
 export type * from '@novu/js';
-export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { PreferenceLevel, pendingActionKey, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   AllLocalization,
@@ -215,17 +240,24 @@ export type {
   Variables,
 } from '@novu/js/ui';
 
-export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from '../components';
+export type {
+  BellProps,
+  InboxContentProps,
+  InboxProps,
+  NotificationItemProps,
+  NotificationProps,
+  NovuProviderProps,
+} from '../components';
 
 export type {
-  UseWebChatProps,
-  UseWebChatResult,
   UseCountsProps,
   UseCountsResult,
   UseNotificationsProps,
   UseNotificationsResult,
   UsePreferencesResult,
   UseScheduleProps as UsePreferencesProps,
+  UseWebChatProps,
+  UseWebChatResult,
 } from '../hooks';
 
 export type {

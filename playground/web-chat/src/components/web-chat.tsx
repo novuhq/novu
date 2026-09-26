@@ -119,7 +119,7 @@ export function WebChat({
     conversationId: activeConversationId,
     isRunning,
     conversationStatus,
-    pendingApprovalCount: pendingActions.filter((action) => action.type === 'tool-approval').length,
+    pendingApprovalCount: pendingActions.filter((action) => action.type === 'approval').length,
     runOrigin: runOrigin(isRunning, lastTransition),
     lastRunTransition: lastTransition,
   };

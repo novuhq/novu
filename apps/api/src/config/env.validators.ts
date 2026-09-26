@@ -1,8 +1,31 @@
-import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { assertQueueBackendConfig } from '@novu/application-generic';
+import {
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
+  FeatureFlagsKeysEnum,
+  JobTopicNameEnum,
+  QueueBackend,
+  StringifyEnv,
+} from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  return cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators);
+
+  /*
+   * The API only produces, and only to these three - inbound parse is enqueued
+   * by the SMTP service and process-subscriber by the worker, so demanding
+   * their queue urls here would block boot on config the API never reads.
+   *
+   * It needs the scheduler once BullMQ is gone because snooze puts a delayed
+   * job on the standard queue, and a snooze beyond 900s can then only be
+   * delivered by EventBridge.
+   */
+  assertQueueBackendConfig({
+    topics: [JobTopicNameEnum.STANDARD, JobTopicNameEnum.WORKFLOW, JobTopicNameEnum.WEB_SOCKETS],
+    requiresScheduler: true,
+  });
+
+  return env;
 }
 
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
@@ -68,11 +91,22 @@ export const envValidators = {
   REDIS_CACHE_SERVICE_PORT: str({ default: '' }),
   REDIS_CACHE_SERVICE_TLS: json({ default: undefined }),
   REDIS_CLUSTER_SERVICE_HOST: str({ default: '' }),
+  REDIS_CLUSTER_SERVICE_PORT: str({ default: '' }),
   REDIS_CLUSTER_SERVICE_PORTS: str({ default: '' }),
+  REDIS_CLUSTER_USERNAME: str({ default: undefined }),
+  REDIS_CLUSTER_PASSWORD: str({ default: undefined }),
+  REDIS_CLUSTER_TLS: str({ default: undefined }),
+  IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
   STORE_NOTIFICATION_CONTENT: bool({ default: false }),
+  STORAGE_SERVICE: str({ default: undefined }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
-  // SQS queue backend (optional - when unset, jobs are produced to BullMQ only)
+  /*
+   * Which backend the API produces to. `sqs_bullmq` still falls back to BullMQ
+   * when a send fails; `sqs` lets the failure surface instead. See
+   * assertQueueBackendConfig in @novu/application-generic for required env.
+   */
+  QUEUE_BACKEND: str({ choices: Object.values(QueueBackend), default: QueueBackend.BULLMQ }),
   SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
   SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
   SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
@@ -80,8 +114,8 @@ export const envValidators = {
   SQS_ENDPOINT: str({ default: undefined }),
   SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
   SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
-  // EventBridge Scheduler for delays beyond the SQS 900s cap (optional - when
-  // unset, long delays keep going to BullMQ)
+  // EventBridge Scheduler for delays beyond the SQS 900s cap. Required once
+  // QUEUE_BACKEND=sqs, since long delays then have no BullMQ fallback.
   EVENTBRIDGE_SCHEDULER_GROUP_PREFIX: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_ROLE_ARN: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_DLQ_ARN: str({ default: undefined }),
@@ -171,7 +205,7 @@ export const envValidators = {
   ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
-  ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AZURE' && {
     AZURE_ACCOUNT_NAME: str(),
     AZURE_ACCOUNT_KEY: str(),
     AZURE_HOST_NAME: str({ default: `https://${processEnv.AZURE_ACCOUNT_NAME}.blob.core.windows.net` }),
@@ -179,13 +213,13 @@ export const envValidators = {
   }),
 
   // GCS validators
-  ...(processEnv.STORAGE_SERVICE === 'GCS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'GCS' && {
     GCS_BUCKET_NAME: str(),
     GCS_DOMAIN: str(),
   }),
 
   // AWS validators
-  ...(processEnv.STORAGE_SERVICE === 'AWS' && {
+  ...((processEnv.STORAGE_SERVICE || '').toUpperCase() === 'AWS' && {
     S3_LOCAL_STACK: str({ default: '' }),
     S3_BUCKET_NAME: str(),
     S3_REGION: str(),

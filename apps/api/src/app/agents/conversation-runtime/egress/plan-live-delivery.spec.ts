@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { resolvePlanDeliveryMode, supportsLivePlanDelivery } from './plan-live-delivery';
+import { resolvePlanDeliveryMode } from './plan-live-delivery';
 
-describe('supportsLivePlanDelivery', () => {
+describe('resolvePlanDeliveryMode', () => {
   const nativeAdapter = {
     postObject: async () => ({ id: '1', threadId: 't' }),
     editObject: async () => undefined,
@@ -10,21 +10,21 @@ describe('supportsLivePlanDelivery', () => {
   const markdownAdapter = { editMessage: async () => ({ id: '1', threadId: 't' }) };
 
   it('allows Slack native plan objects', () => {
-    expect(supportsLivePlanDelivery(AgentPlatformEnum.SLACK, nativeAdapter)).to.equal(true);
+    expect(resolvePlanDeliveryMode(AgentPlatformEnum.SLACK, nativeAdapter)).to.equal('native');
   });
 
   it('allows Telegram and Teams markdown plan edits', () => {
-    expect(supportsLivePlanDelivery(AgentPlatformEnum.TELEGRAM, markdownAdapter)).to.equal(true);
-    expect(supportsLivePlanDelivery(AgentPlatformEnum.TEAMS, markdownAdapter)).to.equal(true);
+    expect(resolvePlanDeliveryMode(AgentPlatformEnum.TELEGRAM, markdownAdapter)).to.equal('markdown');
+    expect(resolvePlanDeliveryMode(AgentPlatformEnum.TEAMS, markdownAdapter)).to.equal('markdown');
   });
 
   it('disallows WhatsApp and email even when editMessage exists', () => {
-    expect(supportsLivePlanDelivery(AgentPlatformEnum.WHATSAPP, markdownAdapter)).to.equal(false);
-    expect(supportsLivePlanDelivery(AgentPlatformEnum.EMAIL, markdownAdapter)).to.equal(false);
+    expect(resolvePlanDeliveryMode(AgentPlatformEnum.WHATSAPP, markdownAdapter)).to.equal(null);
+    expect(resolvePlanDeliveryMode(AgentPlatformEnum.EMAIL, markdownAdapter)).to.equal(null);
   });
 
   it('disallows platforms without post or edit capability', () => {
-    expect(supportsLivePlanDelivery(AgentPlatformEnum.TELEGRAM, {})).to.equal(false);
+    expect(resolvePlanDeliveryMode(AgentPlatformEnum.TELEGRAM, {})).to.equal(null);
   });
 
   it('uses markdown when only postObject is present without editObject', () => {

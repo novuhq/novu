@@ -63,7 +63,7 @@ You can store or update these credentials using the Novu dashboard, API, or SDKs
 Trigger the workflow using your application code. Novu automatically:
 - Resolves the subscriber.
 - Retrieves the correct credentials, for example, the `webhookUrl`.
-- Selects the appropriate provider.
+- Selects the appropriate providers. See [Integration conditions](/platform/integrations/integration-conditions).
 - Renders the message.
 - Delivers it to the chat platform.
 
@@ -291,6 +291,7 @@ Here are the chat providers that are currently supported by Novu. Select any pro
 
 <Columns cols={2}>
 <Card title="Discord" href="/platform/integrations/chat/discord"> Learn how to use the Discord provider to send chat notifications using Novu. </Card>
+<Card title="Google Chat" href="/platform/integrations/chat/google-chat"> Learn how to use the Google Chat provider to send chat notifications using Novu.</Card>
 <Card title="LINE" href="/platform/integrations/chat/line"> Learn how to use the LINE Messaging API provider to send chat notifications using Novu.</Card>
 <Card title="Mattermost" href="/platform/integrations/chat/mattermost"> Learn how to use the Mattermost provider to send chat notifications using Novu.</Card> 
 <Card title="Microsoft Teams" href="/platform/integrations/chat/ms-teams"> Learn how to use the Microsoft Teams provider to send chat notifications using Novu.</Card>

@@ -11,6 +11,42 @@ import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
+const SMTP_TIMEOUT_MS = 30_000;
+const SMTP_CONNECT_RETRY_LIMIT = 3;
+const SMTP_CONNECT_RETRY_DELAY_MS = 200;
+
+const RETRYABLE_HANDSHAKE_MESSAGES = new Set(['Connection timeout', 'Greeting never received']);
+
+interface SmtpConnectError {
+  code?: string;
+  command?: string;
+  syscall?: string;
+  message?: string;
+}
+
+function isRetryableOutlookConnectError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const { code, syscall, message } = error as SmtpConnectError;
+  const text = typeof message === 'string' ? message : '';
+
+  if (syscall === 'connect' || text.startsWith('connect ')) {
+    return true;
+  }
+
+  if (code === 'EDNS' || code === 'ETLS') {
+    return true;
+  }
+
+  return (
+    RETRYABLE_HANDSHAKE_MESSAGES.has(text) ||
+    text.startsWith('Invalid greeting') ||
+    text.startsWith('Error initiating TLS')
+  );
+}
+
 export class Outlook365Provider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Outlook365;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
@@ -29,7 +65,8 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
       host: 'smtp.office365.com',
       port: 587,
       requireTLS: true,
-      connectionTimeout: 30000,
+      connectionTimeout: SMTP_TIMEOUT_MS,
+      greetingTimeout: SMTP_TIMEOUT_MS,
       auth: {
         user: this.config.from,
         pass: this.config.password,
@@ -46,7 +83,7 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const merged = this.transform(bridgeProviderData, mailData);
-    const info = await this.transports.sendMail(merged.body);
+    const info = await this.sendMailWithConnectRetry(merged.body);
 
     return {
       id: info?.messageId,
@@ -57,7 +94,7 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);
-      await this.transports.sendMail(mailData);
+      await this.sendMailWithConnectRetry(mailData);
 
       return {
         success: true,
@@ -73,6 +110,24 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
     }
   }
 
+  private async sendMailWithConnectRetry(mailData: SendMailOptions) {
+    const lastAttemptIndex = SMTP_CONNECT_RETRY_LIMIT - 1;
+
+    for (let attempt = 0; attempt < SMTP_CONNECT_RETRY_LIMIT; attempt += 1) {
+      try {
+        return await this.transports.sendMail(mailData);
+      } catch (error) {
+        if (!isRetryableOutlookConnectError(error) || attempt === lastAttemptIndex) {
+          throw error;
+        }
+
+        await wait(SMTP_CONNECT_RETRY_DELAY_MS * 2 ** attempt);
+      }
+    }
+
+    throw new Error('Outlook365 SMTP connect retry failed');
+  }
+
   private createMailData(options: IEmailOptions): SendMailOptions {
     const sendMailOptions: SendMailOptions = {
       from: {
@@ -83,6 +138,8 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
       subject: options.subject,
       html: options.html,
       text: options.text,
+      ...(options.cc?.length ? { cc: options.cc } : {}),
+      ...(options.bcc?.length ? { bcc: options.bcc } : {}),
       ...(options.alternatives?.length ? { alternatives: options.alternatives } : {}),
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment.name,
@@ -104,4 +161,10 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
 
     return sendMailOptions;
   }
+}
+
+async function wait(ms: number): Promise<void> {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }

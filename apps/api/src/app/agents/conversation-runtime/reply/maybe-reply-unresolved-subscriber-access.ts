@@ -20,7 +20,7 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
 }): Promise<boolean> {
   const { turn, logger, outboundGateway, conversationService, emailSenderUnverified } = params;
 
-  if (turn.event !== AgentEventEnum.ON_MESSAGE) {
+  if (turn.event !== AgentEventEnum.ON_MESSAGE && turn.event !== AgentEventEnum.ON_MESSAGE_UPDATED) {
     return false;
   }
 

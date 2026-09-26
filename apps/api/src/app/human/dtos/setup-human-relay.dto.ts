@@ -21,6 +21,20 @@ export class SetupHumanRelayRequestDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @ApiPropertyOptional({
+    description: 'The human’s first name (display name shown to agents and in reply attribution).',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  firstName?: string;
+
+  @ApiPropertyOptional({ description: 'The human’s last name.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  lastName?: string;
 }
 
 export class SetupHumanRelayResponseDto {

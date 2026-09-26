@@ -43,6 +43,7 @@ export enum DetailEnum {
   LAYOUT_SELECTED = 'Layout selected',
   LAYOUT_NOT_FOUND = 'Layout not found ',
   INTEGRATION_INSTANCE_SELECTED = 'Integration instance selected',
+  INTEGRATION_CONDITIONS_MATCHED = 'Integration conditions matched',
   TENANT_CONTEXT_SELECTED = 'Tenant context selected',
   TENANT_NOT_FOUND = 'Tenant identifier not found',
   LIMIT_PASSED_NOVU_INTEGRATION = "Novu's provider limit has been reached",

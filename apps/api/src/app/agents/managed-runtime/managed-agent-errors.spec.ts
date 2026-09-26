@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import {
   buildErrorMessage,
-  extractErrorMessage,
   isMissingReadToolForSkillsError,
   MISSING_READ_TOOL_FOR_SKILLS_REPLY,
 } from './managed-agent-errors';
@@ -28,13 +27,6 @@ describe('managed-agent-errors', () => {
       expect(isMissingReadToolForSkillsError(new Error('rate limited'))).to.equal(false);
       expect(isMissingReadToolForSkillsError({ message: 123 })).to.equal(false);
       expect(isMissingReadToolForSkillsError(null)).to.equal(false);
-    });
-  });
-
-  describe('extractErrorMessage', () => {
-    it('reads message from Error and plain objects', () => {
-      expect(extractErrorMessage(new Error('boom'))).to.equal('boom');
-      expect(extractErrorMessage({ message: 'plain' })).to.equal('plain');
     });
   });
 

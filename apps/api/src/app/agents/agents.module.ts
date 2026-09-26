@@ -34,18 +34,11 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
-import { WebChatController } from './web-chat/web-chat.controller';
-import { WebChatAcceptIdempotencyService } from './web-chat/web-chat-accept-idempotency.service';
-import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
-import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
-import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
-import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
-import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
-import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
-import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
+import { PhotonDeviceAuthBindingService } from './channels/photon-imessage/shared/photon-device-auth-binding.service';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
+import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -79,6 +72,7 @@ import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
+import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
 import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
 import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
@@ -89,6 +83,7 @@ import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
 import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
+import { EnsureNovuHumanSkill } from './managed-runtime/novu-human/ensure-novu-human-skill.service';
 import { ToolTrustService } from './managed-runtime/tool-approval/tool-trust.service';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
@@ -99,13 +94,21 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
-import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { AgentConversationEnabledGuard } from './shared/agent-conversation-enabled.guard';
 import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
 import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
+import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
+import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatAcceptIdempotencyService } from './web-chat/web-chat-accept-idempotency.service';
+import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
+import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
+import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
+import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
+import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
+import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
 
 @Module({
   imports: [
@@ -161,6 +164,7 @@ import { USE_CASES } from './usecases';
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
+    PhotonDeviceAuthBindingService,
     AgentInboundHandler,
     WorkflowOriginService,
     ReplyApprovalInterceptor,
@@ -173,6 +177,7 @@ import { USE_CASES } from './usecases';
     HumanInteractionInboundService,
     HumanInteractionSettlementService,
     CreateConversationInteraction,
+    HumanInteractionActivityRecorder,
     HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
@@ -185,6 +190,7 @@ import { USE_CASES } from './usecases';
     McpConnectRedirectService,
     AgentMcpDefinitionService,
     AgentRuntimeDefinitionService,
+    EnsureNovuHumanSkill,
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
@@ -224,6 +230,7 @@ import { USE_CASES } from './usecases';
     ConfirmLinkedAuthCards,
     ConversationActivityLedger,
     HumanInteractionSettlementService,
+    HumanInteractionActivityRecorder,
   ],
 })
 export class AgentsModule {}

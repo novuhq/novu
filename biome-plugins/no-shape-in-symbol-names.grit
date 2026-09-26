@@ -1,0 +1,15 @@
+language js(typescript)
+
+or {
+  `const $name = $value`,
+  `let $name = $value`,
+  `var $name = $value`,
+  `function $name($params) { $body }`,
+  `class $name { $body }`,
+  `type $name = $value`,
+  `interface $name { $body }`,
+  `import $name from $source`
+} where {
+  $name <: r"(?i).*shape.*",
+  register_diagnostic(span=$name, message="Rename this symbol for its domain role; `shape` describes structure rather than ownership.", severity="error")
+}

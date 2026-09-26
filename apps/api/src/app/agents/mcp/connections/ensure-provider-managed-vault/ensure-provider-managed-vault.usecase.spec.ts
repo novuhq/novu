@@ -112,6 +112,7 @@ describe('EnsureProviderManagedVault', () => {
     agentMcpServerRepository.findByAgentAndMcpId.resolves({
       _id: ENABLEMENT_ID,
       mcpId: 'slack',
+      enabled: true,
       defaultAuthMode: McpConnectionAuthModeEnum.ProviderManaged,
     } as never);
     mcpConnectionRepository.findSubscriberExternalVaultId.resolves(null);
@@ -246,8 +247,9 @@ describe('EnsureProviderManagedVault', () => {
 
   it('reuses a vault id already stored on a concurrent-winner connection row', async () => {
     mcpConnectionRepository.findSubscriberConnection.onFirstCall().resolves(null);
+    mcpConnectionRepository.findSubscriberConnection.onSecondCall().resolves(null);
     mcpConnectionRepository.create.rejects(new Error('duplicate key'));
-    mcpConnectionRepository.findSubscriberConnection.onSecondCall().resolves({
+    mcpConnectionRepository.findSubscriberConnection.onThirdCall().resolves({
       _id: 'conn_winner',
       auth: { externalVaultId: 'vlt_winner' },
     } as never);
@@ -255,6 +257,7 @@ describe('EnsureProviderManagedVault', () => {
     const result = await useCase.execute(makeCommand());
 
     expect(result.externalVaultId).to.equal('vlt_winner');
+    expect(mcpConnectionRepository.create.calledOnce).to.equal(true);
     expect(mcpConnectionVaultService.ensureConnectionVault.called).to.equal(false);
   });
 
@@ -302,6 +305,28 @@ describe('EnsureProviderManagedVault', () => {
       // Side-effect bug fix: must not promote the row to `connected` during
       // card construction; promotion happens via the redirect endpoint.
       expect(mcpConnectionRepository.update.called).to.equal(false);
+      // Security: a model-driven subscriber turn must not enable agent-wide MCP
+      // config — it may only provision a vault for an already-enabled MCP.
+      expect(enableAgentMcpServer.execute.called).to.equal(false);
+    });
+
+    it('refuses to provision a vault for an MCP the agent has not enabled', async () => {
+      agentMcpServerRepository.findByAgentAndMcpId.resolves({
+        _id: ENABLEMENT_ID,
+        mcpId: 'slack',
+        enabled: false,
+        defaultAuthMode: McpConnectionAuthModeEnum.ProviderManaged,
+      } as never);
+
+      try {
+        await useCase.executeForSetupCard(makeCommand({ subscriberId: CHANNEL_SUBSCRIBER_ID }));
+        expect.fail('Expected UnprocessableEntityException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(UnprocessableEntityException);
+      }
+
+      expect(enableAgentMcpServer.execute.called).to.equal(false);
+      expect(mcpConnectionVaultService.ensureConnectionVault.called).to.equal(false);
     });
 
     it('throws NotFoundException when the channel subscriber cannot be found', async () => {
