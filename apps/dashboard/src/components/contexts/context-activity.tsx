@@ -12,9 +12,8 @@ import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { ActivityFiltersData } from '@/types/activity';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
-const getInitialFilters = (contextKey: string, dateRange?: string): ActivityFiltersData => ({
+const getInitialFilters = (contextKey: string): ActivityFiltersData => ({
   ...defaultActivityFilters,
-  dateRange: dateRange || '24h',
   contextKeys: [contextKey],
 });
 

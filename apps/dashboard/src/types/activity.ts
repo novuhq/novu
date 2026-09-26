@@ -1,8 +1,9 @@
 import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { ActivityFilters } from '@/api/activity';
+import type { ActivityDateRange } from '@/utils/activityFilters';
 
 export type ActivityFiltersData = {
-  dateRange: string;
+  dateRange: ActivityDateRange;
   channels: ChannelTypeEnum[];
   workflows: string[];
   transactionId: string;

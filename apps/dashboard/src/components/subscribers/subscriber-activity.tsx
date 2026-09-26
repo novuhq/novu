@@ -12,12 +12,12 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
-import { getMaxAvailableActivityFeedDateRange } from '@/utils/activityFilters';
+import { type ActivityDateRangePreset, getMaxAvailableActivityFeedDateRange } from '@/utils/activityFilters';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
-const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFiltersData => ({
+const getInitialFilters = (subscriberId: string, dateRange: ActivityDateRangePreset): ActivityFiltersData => ({
   channels: [],
-  dateRange: dateRange || '24h',
+  dateRange: { kind: 'preset', preset: dateRange },
   subscriberId,
   transactionId: '',
   workflows: [],
