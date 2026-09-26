@@ -1,5 +1,5 @@
 import type { Notification } from '@novu/js';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { NovuUIProvider } from '../../context/NovuUIContext';
@@ -138,5 +138,38 @@ describe('NotificationItem', () => {
     const { container } = renderItem(<NotificationItem notification={createNotification({ isRead: true })} />);
 
     expect(container.querySelector('.nv-notificationDot')).toBeNull();
+  });
+
+  it('lets the dot play its exit before removing it, without animating it on mount', async () => {
+    const engine = createEngine();
+    const tree = (notification: Notification) => (
+      <NovuUIProvider value={{ novuUI: engine.novuUI, icons: {} }}>
+        <NotificationHandlersProvider value={{}}>
+          <NotificationItem notification={notification} />
+        </NotificationHandlersProvider>
+      </NovuUIProvider>
+    );
+    const view = render(tree(createNotification()));
+    const dot = view.container.querySelector('.nv-notificationDot') as HTMLElement;
+    expect(dot.getAttribute('data-state')).toBeNull();
+
+    // Make the dot look like it plays its CSS exit animation, which jsdom can't run.
+    let finish = () => {};
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    Object.assign(dot.style, {
+      animationName: 'nv-exit',
+      animationDuration: '0.12s',
+      animationDelay: '0s',
+      animationIterationCount: '1',
+    });
+    Object.assign(dot, { getAnimations: () => [{ playState: 'running', finished }] });
+
+    view.rerender(tree(createNotification({ isRead: true })));
+    expect(view.container.querySelector('.nv-notificationDot')?.getAttribute('data-state')).toBe('closed');
+
+    finish();
+    await waitFor(() => expect(view.container.querySelector('.nv-notificationDot')).toBeNull());
   });
 });

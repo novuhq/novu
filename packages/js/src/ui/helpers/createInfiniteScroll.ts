@@ -4,7 +4,7 @@ export function createInfiniteScroll<T>(
   fetcher: (after: string | undefined) => Promise<{ data: T[]; hasMore: boolean }>,
   options: {
     paginationField: string;
-    dependency?: Accessor<any>;
+    dependency?: Accessor<unknown>;
   }
 ): [
   data: Accessor<T[]>,
@@ -129,9 +129,12 @@ export function createInfiniteScroll<T>(
   };
 
   const reset = async () => {
-    setData([]);
-    setInitialLoading(true);
-    setEnd(false);
+    // One batch, so the list sees "loading again" together with the cleared data instead of every item leaving.
+    batch(() => {
+      setData([]);
+      setInitialLoading(true);
+      setEnd(false);
+    });
 
     if (after() !== undefined) {
       setAfter(undefined);

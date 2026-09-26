@@ -91,6 +91,7 @@ export const inboxAppearanceKeys = [
 
   // Inbox
   'inboxContent',
+  'inboxPage',
   'inbox__popoverTrigger',
   'inbox__popoverContent',
 

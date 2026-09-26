@@ -1,10 +1,10 @@
 import { useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
-import { Button, buttonVariants, Dropdown } from '../../primitives';
+import { Button, buttonVariants, Dropdown, RollingText } from '../../primitives';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 import { inboxFilterLocalizationKeys } from './constants';
-import { StatusOptions } from './InboxStatusOptions';
+import { StatusOptions, statusRank } from './InboxStatusOptions';
 
 export const StatusDropdown = () => {
   const style = useStyle();
@@ -12,7 +12,8 @@ export const StatusDropdown = () => {
   const { t } = useLocalization();
   const arrowDropDownIconClass = style({
     key: 'inboxStatus__dropdownItemRight__icon',
-    className: 'nt-text-foreground-alpha-600 nt-size-4',
+    className:
+      'nt-text-foreground-alpha-600 nt-size-4 nt-transition-transform nt-duration-base in-expanded:nt-rotate-180',
     iconKey: 'arrowDropDown',
   });
 
@@ -32,7 +33,8 @@ export const StatusDropdown = () => {
                 className: 'nt-text-base',
               })}
             >
-              {t(inboxFilterLocalizationKeys[status()])}
+              {/* Rolls up to a status lower in the menu and down to one above it. */}
+              <RollingText value={t(inboxFilterLocalizationKeys[status()])} rank={statusRank(status())} align="start" />
             </span>
             <IconRendererWrapper
               iconKey="arrowDropDown"

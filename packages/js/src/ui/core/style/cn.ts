@@ -3,6 +3,13 @@ import { type ClassNameValue, extendTailwindMerge } from 'tailwind-merge';
 
 const twMerge = extendTailwindMerge({
   prefix: 'nt-',
+  extend: {
+    // The motion tokens from `tailwind.config.js`, so `nt-duration-fast` and `nt-duration-200` override each other.
+    classGroups: {
+      duration: [{ duration: ['fast', 'base', 'slow'] }],
+      ease: [{ ease: ['standard', 'enter', 'exit'] }],
+    },
+  },
 });
 
 export const publicFacingTwMerge = extendTailwindMerge({});

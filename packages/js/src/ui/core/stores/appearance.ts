@@ -1,6 +1,7 @@
 import { Accessor, createMemo } from 'solid-js';
 import { defaultVariables } from '../../config/defaultVariables';
 import type { AllAppearance, AllElements, AllIconOverrides, Variables } from '../../types';
+import { createPrefersReducedMotion, type MotionMode, resolveMotionMode } from '../motion/mode';
 import { parseElements, parseVariables } from '../style/css';
 import { createAppearanceStylesheet, injectDefaultCss } from '../style/inject';
 
@@ -10,6 +11,8 @@ export type AppearanceStore = {
   variables: Accessor<Variables>;
   elements: Accessor<AllElements>;
   animations: Accessor<boolean>;
+  /** `animations` combined with the OS reduced-motion preference; rendered as `data-nv-motion` on every root. */
+  motionMode: Accessor<MotionMode>;
   icons: Accessor<AllIconOverrides>;
   /** Appearance key to the generated class carrying that key's css-in-js styles. */
   appearanceKeyToCssInJsClass: Accessor<Record<string, string>>;
@@ -41,6 +44,8 @@ export const createAppearanceStore = ({
 
   const variables = createMemo(() => appearance()?.variables ?? EMPTY_VARIABLES);
   const animations = createMemo(() => appearance()?.animations ?? true);
+  const prefersReducedMotion = createPrefersReducedMotion();
+  const motionMode = createMemo(() => resolveMotionMode(animations(), prefersReducedMotion()));
   const icons = createMemo(() => appearance()?.icons ?? EMPTY_ICONS);
   const elements = createMemo(() => {
     const baseElements = themes().reduce<AllElements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
@@ -78,6 +83,7 @@ export const createAppearanceStore = ({
     variables,
     elements,
     animations,
+    motionMode,
     icons,
     appearanceKeyToCssInJsClass,
   };

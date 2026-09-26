@@ -35,7 +35,7 @@ export function CopyToClipboard(props: CopyToClipboardProps) {
   }
 
   return (
-    <Tooltip.Root open={isCopied()} placement="top" animationDuration={0.15}>
+    <Tooltip.Root open={isCopied()} placement="top">
       <Tooltip.Trigger
         asChild={(triggerProps) => (
           <button
