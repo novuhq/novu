@@ -54,6 +54,21 @@ export class ZodValidator implements Validator<ZodSchema> {
   }
 
   async transformToJsonSchema(schema: ZodSchema): Promise<JsonSchema> {
+    if ('_zod' in schema) {
+      // Zod v4 schemas store their internals under `_zod` and are not supported
+      // by zod-to-json-schema, which walks v3 internals only.
+      const { toJSONSchema } = await import('zod/v4/core');
+
+      // `io: 'input'` converts the input side of the schema so that schemas
+      // with transforms/pipes describe what clients send (and don't throw,
+      // as transforms cannot be represented in JSON Schema on the output
+      // side) — the same side zod-to-json-schema converts for v3.
+      return toJSONSchema(schema as unknown as Parameters<typeof toJSONSchema>[0], {
+        target: 'draft-7',
+        io: 'input',
+      }) as JsonSchema;
+    }
+
     const { zodToJsonSchema } = await import('zod-to-json-schema');
 
     // TODO: zod-to-json-schema is not using JSONSchema7
