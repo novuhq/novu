@@ -47,6 +47,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { AwsIcon } from '../icons/aws';
 import { ClaudeIcon } from '../icons/claude';
+import { GeminiIcon } from '../icons/gemini';
 
 type AgentsTableProps = {
   agents: AgentResponse[];
@@ -102,6 +103,8 @@ function AgentIcon({ agent }: { agent: AgentResponse }) {
 
   if (managedProviderId === AgentRuntimeProviderIdEnum.AnthropicAws) {
     icon = <AwsIcon className="size-3.5" aria-hidden />;
+  } else if (managedProviderId === AgentRuntimeProviderIdEnum.Google) {
+    icon = <GeminiIcon className="size-3.5" aria-hidden />;
   } else if (
     managedProviderId === AgentRuntimeProviderIdEnum.Anthropic ||
     managedProviderId === AgentRuntimeProviderIdEnum.NovuAnthropic

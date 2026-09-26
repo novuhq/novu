@@ -37,6 +37,7 @@ export enum CredentialsKeyEnum {
   AuthenticationTokenKey = 'authenticationTokenKey',
   AccessKey = 'accessKey',
   InstanceId = 'instanceId',
+  AgentId = 'agentId',
   ApiToken = 'apiToken',
   ApiURL = 'apiURL',
   AppID = 'appID',
@@ -185,6 +186,11 @@ export enum AgentRuntimeProviderIdEnum {
   Anthropic = 'anthropic',
   NovuAnthropic = 'novu-anthropic',
   AnthropicAws = 'anthropic-aws',
+  Google = 'google',
+}
+
+export function isGoogleAgentRuntimeProvider(providerId: string): boolean {
+  return providerId === AgentRuntimeProviderIdEnum.Google;
 }
 
 export enum ToolProviderIdEnum {

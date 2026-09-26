@@ -24,6 +24,7 @@ const CLAUDE_MANAGED_PROVIDER_IDS: ReadonlySet<string> = new Set([
   AgentRuntimeProviderIdEnum.NovuAnthropic,
   AgentRuntimeProviderIdEnum.Anthropic,
   AgentRuntimeProviderIdEnum.AnthropicAws,
+  AgentRuntimeProviderIdEnum.Google,
 ]);
 
 export function isClaudeManagedAgentIntegration(
@@ -114,6 +115,10 @@ export function resolveClaudeManagedProviderId(integration: IIntegration | undef
 
   if (integration?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
     return AgentRuntimeProviderIdEnum.AnthropicAws;
+  }
+
+  if (integration?.providerId === AgentRuntimeProviderIdEnum.Google) {
+    return AgentRuntimeProviderIdEnum.Google;
   }
 
   return AgentRuntimeProviderIdEnum.Anthropic;

@@ -4,6 +4,7 @@ import {
   CLAUDE_BUILTIN_TOOLS,
   type IIntegration,
   IntegrationKindEnum,
+  isGoogleAgentRuntimeProvider,
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
@@ -55,6 +56,8 @@ export function useCreateAgentMutation() {
         externalEnvironmentId,
         externalWorkspaceId,
         region,
+        projectName,
+        instanceId,
         providerId: formProviderId,
         runtime,
         isExistingMode,
@@ -90,11 +93,13 @@ export function useCreateAgentMutation() {
           }
         }
 
-        if (runtime === 'claude') {
+        if (runtime === 'claude' || runtime === 'vertex') {
           const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
           let integrationId: string;
-          let managedProviderId = formProviderId ?? AgentRuntimeProviderIdEnum.Anthropic;
+          let managedProviderId =
+            formProviderId ??
+            (runtime === 'vertex' ? AgentRuntimeProviderIdEnum.Google : AgentRuntimeProviderIdEnum.Anthropic);
           // Tracks whether THIS submission provisioned the integration, so we only roll back our own.
           let createdIntegrationInThisSubmit = false;
 
@@ -116,6 +121,8 @@ export function useCreateAgentMutation() {
                   apiKey,
                   region,
                   externalWorkspaceId,
+                  projectName,
+                  instanceId,
                 }),
                 name: integrationName?.trim() || name,
               });
@@ -133,38 +140,52 @@ export function useCreateAgentMutation() {
           // When adopting an existing Claude agent the backend resolves the name and identifier
           // from the provider, so we deliberately omit `name`, `identifier`, and `description`
           // from the request and only send the `managedRuntime` pointer.
-          const request: CreateAgentBody = isExistingMode
-            ? {
-                runtime: 'managed',
-                managedRuntime: {
-                  integrationId,
-                  providerId: managedProviderId,
-                  externalAgentId,
-                  externalEnvironmentId,
-                },
-              }
-            : {
-                name,
-                identifier,
-                description,
-                runtime: 'managed',
-                managedRuntime: {
-                  integrationId,
-                  providerId: managedProviderId,
-                  model: 'claude-sonnet-4-6',
-                  systemPrompt: managedOverrides?.systemPrompt ?? instructions ?? undefined,
-                  tools: managedOverrides?.tools ?? CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
-                  ...(managedOverrides?.mcpServers ? { mcpServers: managedOverrides.mcpServers } : {}),
-                  ...(managedOverrides?.skills
-                    ? {
-                        skills: managedOverrides.skills.map((skill) => ({
-                          type: 'anthropic' as const,
-                          skillId: skill.skillId,
-                        })),
-                      }
-                    : {}),
-                },
-              };
+          let request: CreateAgentBody;
+          if (isExistingMode) {
+            request = {
+              runtime: 'managed',
+              managedRuntime: {
+                integrationId,
+                providerId: managedProviderId,
+                externalAgentId,
+                externalEnvironmentId,
+              },
+            };
+          } else if (isGoogleAgentRuntimeProvider(managedProviderId)) {
+            request = {
+              name,
+              identifier,
+              description,
+              runtime: 'managed',
+              managedRuntime: {
+                integrationId,
+                providerId: managedProviderId,
+              },
+            };
+          } else {
+            request = {
+              name,
+              identifier,
+              description,
+              runtime: 'managed',
+              managedRuntime: {
+                integrationId,
+                providerId: managedProviderId,
+                model: 'claude-sonnet-4-6',
+                systemPrompt: managedOverrides?.systemPrompt ?? instructions ?? undefined,
+                tools: managedOverrides?.tools ?? CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
+                ...(managedOverrides?.mcpServers ? { mcpServers: managedOverrides.mcpServers } : {}),
+                ...(managedOverrides?.skills
+                  ? {
+                      skills: managedOverrides.skills.map((skill) => ({
+                        type: 'anthropic' as const,
+                        skillId: skill.skillId,
+                      })),
+                    }
+                  : {}),
+              },
+            };
+          }
 
           try {
             const created = await createAgentMutation.mutateAsync({

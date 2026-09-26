@@ -13,6 +13,7 @@ import {
 import { AiSdkIcon } from '@/components/icons/ai-sdk';
 import { AwsIcon } from '@/components/icons/aws';
 import { ClaudeIcon } from '@/components/icons/claude';
+import { GeminiIcon } from '@/components/icons/gemini';
 import { LangChainIcon } from '@/components/icons/langchain';
 import { NovuIcon } from '@/components/icons/novu-icon';
 import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
@@ -26,6 +27,7 @@ const CARD_LABELS: Record<ConnectorId, string> = {
   'custom-code': 'Custom code',
   claude: 'Claude Managed',
   'claude-aws': 'AWS Claude Managed',
+  gemini: 'Gemini Enterprise',
   bedrock: 'AWS Bedrock',
 };
 
@@ -64,6 +66,8 @@ function ConnectorCardIcon({ connectorId }: { connectorId: ConnectorId }) {
     case 'claude-aws':
     case 'bedrock':
       return <AwsIcon className="size-6" />;
+    case 'gemini':
+      return <GeminiIcon className="size-5" />;
     default: {
       const _exhaustive: never = connectorId;
 

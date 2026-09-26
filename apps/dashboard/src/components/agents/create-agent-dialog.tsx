@@ -50,6 +50,7 @@ import {
   type ConnectorOption,
   getConnectorById,
   getConnectorIdForProviderId,
+  isManagedConnectorRuntime,
   pickInitialConnector,
 } from './connectors/connector-options';
 import {
@@ -192,12 +193,18 @@ export function CreateAgentDialog({
     apiKey,
     externalWorkspaceId,
     region,
+    projectName,
+    instanceId,
+    agentId,
     verifyStatus,
     verifyMessage,
     lastVerifiedKeyRef,
     setApiKey,
     setExternalWorkspaceId,
     setRegion,
+    setProjectName,
+    setInstanceId,
+    setAgentId,
     setVerifyStatus,
     setVerifyMessage,
     resetCredentials,
@@ -226,6 +233,7 @@ export function CreateAgentDialog({
 
   const selectedConnector = getConnectorById(connectorId);
   const isManagedClaudeConnector = selectedConnector?.runtime === 'claude';
+  const isManagedConnector = isManagedConnectorRuntime(selectedConnector?.runtime);
   const runtime = selectedConnector?.runtime ?? 'scratch';
   // The "Generate from prompt" surface is reserved for managed Claude (when the managed-runtime
   // flag is on). The Custom Scaffold flow always renders the manual ScratchAgentFields form, so
@@ -475,6 +483,8 @@ export function CreateAgentDialog({
       integrationName: undefined,
       region: undefined,
       externalWorkspaceId: undefined,
+      projectName: undefined,
+      instanceId: undefined,
     }));
   };
 
@@ -493,7 +503,7 @@ export function CreateAgentDialog({
     if (!selectedConnector?.providerId) return;
     if (verifyMutation.isPending) return;
 
-    const fields = { apiKey, region, externalWorkspaceId };
+    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId };
     const verifyKey = buildVerifyFingerprint(selectedConnector.providerId, fields);
 
     if (lastVerifiedKeyRef.current === verifyKey && verifyStatus === 'valid') return;
@@ -507,7 +517,7 @@ export function CreateAgentDialog({
         if (lastVerifiedKeyRef.current !== verifyKey) return;
         setVerifyStatus('valid');
         setVerifyMessage(undefined);
-        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+        setErrors((prev) => ({ ...prev, apiKey: undefined, projectName: undefined, instanceId: undefined }));
       },
       onError: (err) => {
         if (lastVerifiedKeyRef.current !== verifyKey) return;
@@ -528,7 +538,7 @@ export function CreateAgentDialog({
     if (!selectedConnector?.providerId) return;
 
     const trimmedName = integrationName.trim();
-    const fields = { apiKey, region, externalWorkspaceId };
+    const fields = { apiKey, region, externalWorkspaceId, projectName, instanceId, agentId };
 
     if (!trimmedName) return;
     if (!hasCompleteManagedCredentials(selectedConnector.providerId, fields)) return;
@@ -596,9 +606,17 @@ export function CreateAgentDialog({
           apiKey,
           region,
           externalWorkspaceId,
+          projectName,
+          instanceId,
         });
 
-        if (credentialErrors.apiKey || credentialErrors.region || credentialErrors.externalWorkspaceId) {
+        if (
+          credentialErrors.apiKey ||
+          credentialErrors.region ||
+          credentialErrors.externalWorkspaceId ||
+          credentialErrors.projectName ||
+          credentialErrors.instanceId
+        ) {
           setErrors((prev) => ({ ...prev, ...credentialErrors }));
 
           return;
@@ -649,6 +667,8 @@ export function CreateAgentDialog({
       externalEnvironmentId,
       externalWorkspaceId,
       region,
+      projectName,
+      instanceId,
       integrationId: selectedIntegrationId,
       integrationName,
     });
@@ -681,6 +701,9 @@ export function CreateAgentDialog({
         externalEnvironmentId: externalEnvironmentId.trim(),
         externalWorkspaceId: externalWorkspaceId.trim() || undefined,
         region: region.trim() || undefined,
+        projectName: projectName.trim() || undefined,
+        instanceId: instanceId.trim() || undefined,
+        agentId: agentId.trim() || undefined,
         integrationId: selectedIntegrationId,
         integrationName: integrationName.trim() || undefined,
         managedOverrides,
@@ -694,7 +717,7 @@ export function CreateAgentDialog({
   };
 
   const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
-  const showCredentialsSection = isManagedClaudeConnector && credentialsPanelVisible;
+  const showCredentialsSection = isManagedConnector && credentialsPanelVisible;
   const isSubmitBusy = isSubmitting || isGenerating || isSubmitInFlight;
   const promptHeader = generationMode === 'existing' ? null : PROMPT_HEADER[generationMode];
 
@@ -757,6 +780,9 @@ export function CreateAgentDialog({
                   apiKey={apiKey}
                   externalWorkspaceId={externalWorkspaceId}
                   region={region}
+                  projectName={projectName}
+                  instanceId={instanceId}
+                  agentId={agentId}
                   errors={errors}
                   disabled={isSubmitting}
                   status={verifyStatus}
@@ -779,6 +805,15 @@ export function CreateAgentDialog({
                     setRegion(next);
                     setErrors((prev) => ({ ...prev, region: undefined }));
                   }}
+                  onProjectNameChange={(next) => {
+                    setProjectName(next);
+                    setErrors((prev) => ({ ...prev, projectName: undefined }));
+                  }}
+                  onInstanceIdChange={(next) => {
+                    setInstanceId(next);
+                    setErrors((prev) => ({ ...prev, instanceId: undefined }));
+                  }}
+                  onAgentIdChange={setAgentId}
                   onVerify={handleVerify}
                   onSave={handleSaveIntegration}
                 />

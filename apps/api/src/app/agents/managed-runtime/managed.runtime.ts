@@ -56,7 +56,24 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
+    const ackParams = {
+      agentId: turn.agentId,
+      config: turn.config,
+      platformThreadId: turn.platformThreadId,
+      platformMessageId: turn.message?.id,
+    };
+    const channel = this.conversationService.getPrimaryChannel(turn.conversation);
+    const isFirstMessage = !!turn.message?.id && channel.firstPlatformMessageId === turn.message.id;
+
     try {
+      // Gemini streamAssist is consumed in-process, so provider.send() resolves
+      // after the reply is already posted. Start the working signal first or
+      // Slack shows "Thinking…" only after the answer and never clears it.
+      await this.inboundAck.showWorkingSignal({
+        ...ackParams,
+        isFirstMessage,
+      });
+
       const { status } = await this.managedAgentService.dispatch(
         {
           config: turn.config,
@@ -73,25 +90,12 @@ export class ManagedRuntime implements AgentRuntime {
         turn.agent
       );
 
-      const ackParams = {
-        agentId: turn.agentId,
-        config: turn.config,
-        platformThreadId: turn.platformThreadId,
-        platformMessageId: turn.message?.id,
-      };
-
-      if (status === 'active') {
-        const channel = this.conversationService.getPrimaryChannel(turn.conversation);
-        const isFirstMessage = !!turn.message?.id && channel.firstPlatformMessageId === turn.message.id;
-
-        await this.inboundAck.showWorkingSignal({
-          ...ackParams,
-          isFirstMessage,
-        });
-      } else if (status === 'queued') {
+      if (status === 'queued') {
         await this.inboundAck.showQueuedSignal(ackParams);
       }
     } catch (err) {
+      await this.inboundAck.clearWorkingSignal(ackParams);
+
       if (err instanceof DemoQuotaExhaustedError) {
         await this.replyOnThread(turn, DEMO_QUOTA_EXHAUSTED_REPLY);
 

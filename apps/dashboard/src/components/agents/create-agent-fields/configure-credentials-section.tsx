@@ -1,4 +1,4 @@
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, isGoogleAgentRuntimeProvider } from '@novu/shared';
 import { useId, useState } from 'react';
 import {
   RiAlertLine,
@@ -16,6 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Input } from '@/components/primitives/input';
 import { cn } from '@/utils/ui';
 import { AwsClaudeCredentialsFields } from './aws-claude-credentials-fields';
+import { GeminiEnterpriseCredentialsFields } from './gemini-enterprise-credentials-fields';
 import { type CreateAgentFormErrors } from './types';
 
 export type VerifyStatus = 'idle' | 'verifying' | 'valid' | 'invalid';
@@ -27,6 +28,9 @@ type ConfigureCredentialsSectionProps = {
   apiKey: string;
   externalWorkspaceId?: string;
   region?: string;
+  projectName?: string;
+  instanceId?: string;
+  agentId?: string;
   errors: CreateAgentFormErrors;
   disabled?: boolean;
   status: VerifyStatus;
@@ -40,6 +44,9 @@ type ConfigureCredentialsSectionProps = {
   onApiKeyChange: (next: string) => void;
   onExternalWorkspaceIdChange: (next: string) => void;
   onRegionChange?: (next: string) => void;
+  onProjectNameChange?: (next: string) => void;
+  onInstanceIdChange?: (next: string) => void;
+  onAgentIdChange?: (next: string) => void;
   onVerify: () => void;
   onSave: () => void;
   canVerify?: boolean;
@@ -93,6 +100,9 @@ export function ConfigureCredentialsSection({
   apiKey,
   externalWorkspaceId,
   region = '',
+  projectName = '',
+  instanceId = '',
+  agentId = '',
   errors,
   disabled,
   status,
@@ -106,6 +116,9 @@ export function ConfigureCredentialsSection({
   onApiKeyChange,
   onExternalWorkspaceIdChange,
   onRegionChange,
+  onProjectNameChange,
+  onInstanceIdChange,
+  onAgentIdChange,
   onVerify,
   onSave,
   canVerify,
@@ -115,20 +128,73 @@ export function ConfigureCredentialsSection({
   const integrationNameId = `${fieldId}-integration-name`;
   const contentId = `${fieldId}-content`;
   const isAwsProvider = providerId === AgentRuntimeProviderIdEnum.AnthropicAws;
+  const isGoogleProvider = isGoogleAgentRuntimeProvider(providerId);
 
-  const defaultCanSave = isAwsProvider
-    ? integrationName.trim().length > 0 &&
+  let defaultCanSave = integrationName.trim().length > 0 && apiKey.trim().length > 0;
+  if (isGoogleProvider) {
+    defaultCanSave = integrationName.trim().length > 0 && projectName.trim().length > 0 && instanceId.trim().length > 0;
+  } else if (isAwsProvider) {
+    defaultCanSave =
+      integrationName.trim().length > 0 &&
       region.trim().length > 0 &&
       Boolean(externalWorkspaceId?.trim()) &&
-      apiKey.trim().length > 0
-    : integrationName.trim().length > 0 && apiKey.trim().length > 0;
+      apiKey.trim().length > 0;
+  }
 
   const canSave = canSaveOverride ?? defaultCanSave;
-  const defaultCanVerify = isAwsProvider
-    ? Boolean(region.trim()) && Boolean(externalWorkspaceId?.trim()) && apiKey.trim().length > 0
-    : apiKey.trim().length > 0;
+  let defaultCanVerify = apiKey.trim().length > 0;
+  if (isGoogleProvider) {
+    defaultCanVerify = projectName.trim().length > 0 && instanceId.trim().length > 0;
+  } else if (isAwsProvider) {
+    defaultCanVerify = Boolean(region.trim()) && Boolean(externalWorkspaceId?.trim()) && apiKey.trim().length > 0;
+  }
 
   const verifyEnabled = canVerify ?? defaultCanVerify;
+
+  let credentialFields = (
+    <ClaudeCloudCredentialFields
+      providerLabel={providerLabel}
+      apiKey={apiKey}
+      externalWorkspaceId={externalWorkspaceId}
+      errors={errors}
+      disabled={disabled}
+      status={status}
+      statusMessage={statusMessage}
+      verifyEnabled={verifyEnabled}
+      onApiKeyChange={onApiKeyChange}
+      onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+      onVerify={onVerify}
+    />
+  );
+  if (isGoogleProvider) {
+    credentialFields = (
+      <GeminiEnterpriseCredentialsFields
+        projectName={projectName}
+        instanceId={instanceId}
+        region={region}
+        agentId={agentId}
+        errors={errors}
+        disabled={disabled}
+        onProjectNameChange={onProjectNameChange ?? (() => undefined)}
+        onInstanceIdChange={onInstanceIdChange ?? (() => undefined)}
+        onRegionChange={onRegionChange ?? (() => undefined)}
+        onAgentIdChange={onAgentIdChange ?? (() => undefined)}
+      />
+    );
+  } else if (isAwsProvider) {
+    credentialFields = (
+      <AwsClaudeCredentialsFields
+        region={region}
+        externalWorkspaceId={externalWorkspaceId ?? ''}
+        apiKey={apiKey}
+        errors={errors}
+        disabled={disabled}
+        onRegionChange={onRegionChange ?? (() => undefined)}
+        onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+        onApiKeyChange={onApiKeyChange}
+      />
+    );
+  }
 
   return (
     <Collapsible
@@ -194,34 +260,9 @@ export function ConfigureCredentialsSection({
             ) : null}
           </div>
 
-          {isAwsProvider ? (
-            <AwsClaudeCredentialsFields
-              region={region}
-              externalWorkspaceId={externalWorkspaceId ?? ''}
-              apiKey={apiKey}
-              errors={errors}
-              disabled={disabled}
-              onRegionChange={onRegionChange ?? (() => undefined)}
-              onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
-              onApiKeyChange={onApiKeyChange}
-            />
-          ) : (
-            <ClaudeCloudCredentialFields
-              providerLabel={providerLabel}
-              apiKey={apiKey}
-              externalWorkspaceId={externalWorkspaceId}
-              errors={errors}
-              disabled={disabled}
-              status={status}
-              statusMessage={statusMessage}
-              verifyEnabled={verifyEnabled}
-              onApiKeyChange={onApiKeyChange}
-              onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
-              onVerify={onVerify}
-            />
-          )}
+          {credentialFields}
 
-          {isAwsProvider ? (
+          {isAwsProvider || isGoogleProvider ? (
             <div className="flex items-center gap-1.5 overflow-hidden pt-1">
               <StatusRow status={status} message={statusMessage} />
               <span className="text-text-soft text-label-xs leading-4" aria-hidden>
@@ -278,71 +319,71 @@ function ClaudeCloudCredentialFields({
 
   return (
     <>
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-px">
-              <label htmlFor={apiKeyId} className="text-text-sub text-label-xs font-medium">
-                {providerLabel} API key
-              </label>
-            </div>
-            <Input
-              id={apiKeyId}
-              size="xs"
-              type={showSecret ? 'text' : 'password'}
-              value={apiKey}
-              onChange={(e) => onApiKeyChange(e.target.value)}
-              placeholder={`Paste the ${providerLabel} API key here…`}
-              hasError={Boolean(errors.apiKey)}
-              disabled={disabled}
-              className="font-mono"
-              inlineTrailingNode={
-                <button
-                  type="button"
-                  onClick={() => setShowSecret((prev) => !prev)}
-                  aria-label={showSecret ? 'Hide API key' : 'Show API key'}
-                >
-                  {showSecret ? <RiEyeOffLine className="text-text-sub" /> : <RiEyeLine className="text-text-sub" />}
-                </button>
-              }
-            />
-            {errors.apiKey ? (
-              <p className="text-error-base text-label-xs" role="alert">
-                {errors.apiKey}
-              </p>
-            ) : null}
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-px">
+          <label htmlFor={apiKeyId} className="text-text-sub text-label-xs font-medium">
+            {providerLabel} API key
+          </label>
+        </div>
+        <Input
+          id={apiKeyId}
+          size="xs"
+          type={showSecret ? 'text' : 'password'}
+          value={apiKey}
+          onChange={(e) => onApiKeyChange(e.target.value)}
+          placeholder={`Paste the ${providerLabel} API key here…`}
+          hasError={Boolean(errors.apiKey)}
+          disabled={disabled}
+          className="font-mono"
+          inlineTrailingNode={
+            <button
+              type="button"
+              onClick={() => setShowSecret((prev) => !prev)}
+              aria-label={showSecret ? 'Hide API key' : 'Show API key'}
+            >
+              {showSecret ? <RiEyeOffLine className="text-text-sub" /> : <RiEyeLine className="text-text-sub" />}
+            </button>
+          }
+        />
+        {errors.apiKey ? (
+          <p className="text-error-base text-label-xs" role="alert">
+            {errors.apiKey}
+          </p>
+        ) : null}
 
-            <div className="flex items-center gap-1.5 overflow-hidden pt-1">
-              <StatusRow status={status} message={statusMessage} />
-              <span className="text-text-soft text-label-xs leading-4" aria-hidden>
-                ·
-              </span>
-              <button
-                type="button"
-                disabled={disabled || !verifyEnabled}
-                onClick={onVerify}
-                className={cn(
-                  'text-text-soft hover:text-text-sub inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 disabled:opacity-60'
-                )}
-              >
-                Verify connection
-                <RiRefreshLine className="min-w-3.5 size-3.5" aria-hidden />
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-1.5 overflow-hidden pt-1">
+          <StatusRow status={status} message={statusMessage} />
+          <span className="text-text-soft text-label-xs leading-4" aria-hidden>
+            ·
+          </span>
+          <button
+            type="button"
+            disabled={disabled || !verifyEnabled}
+            onClick={onVerify}
+            className={cn(
+              'text-text-soft hover:text-text-sub inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 disabled:opacity-60'
+            )}
+          >
+            Verify connection
+            <RiRefreshLine className="min-w-3.5 size-3.5" aria-hidden />
+          </button>
+        </div>
+      </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor={workspaceIdInputId} className="text-text-sub text-label-xs font-medium">
-              Workspace ID <span className="text-text-soft">(Optional)</span>
-            </label>
-            <Input
-              id={workspaceIdInputId}
-              size="xs"
-              value={externalWorkspaceId ?? ''}
-              onChange={(e) => onExternalWorkspaceIdChange(e.target.value)}
-              placeholder="default"
-              className="font-mono"
-              disabled={disabled}
-            />
-          </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={workspaceIdInputId} className="text-text-sub text-label-xs font-medium">
+          Workspace ID <span className="text-text-soft">(Optional)</span>
+        </label>
+        <Input
+          id={workspaceIdInputId}
+          size="xs"
+          value={externalWorkspaceId ?? ''}
+          onChange={(e) => onExternalWorkspaceIdChange(e.target.value)}
+          placeholder="default"
+          className="font-mono"
+          disabled={disabled}
+        />
+      </div>
     </>
   );
 }

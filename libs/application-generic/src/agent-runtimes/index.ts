@@ -3,6 +3,8 @@ export * from './anthropic/anthropic-agent-runtime.provider';
 export * from './anthropic/anthropic-aws-credentials';
 export * from './base-agent-runtime.provider';
 export * from './errors';
+export * from './google/gemini-agent-runtime.provider';
+export * from './google/google-credentials';
 export * from './i-agent-runtime-provider';
 export * from './resolve-agent-runtime';
 export * from './resolve-agent-runtime-api-key';

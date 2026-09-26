@@ -1,7 +1,7 @@
 import { AgentRuntimeProviderIdEnum } from '../../types/providers';
 import { CLAUDE_ANTHROPIC_SKILLS, type ClaudeAnthropicSkill } from './claude-skills';
 import { CLAUDE_BUILTIN_TOOLS, type ClaudeBuiltinTool } from './claude-tools';
-import { anthropicAgentConfig, anthropicAwsAgentConfig } from './credentials';
+import { anthropicAgentConfig, anthropicAwsAgentConfig, geminiAgentConfig } from './credentials';
 import type { IConfigCredential, ILogoFileName } from './provider.interface';
 
 export { AgentRuntimeProviderIdEnum };
@@ -100,6 +100,22 @@ export const AGENT_RUNTIME_PROVIDERS: AgentRuntimeProvider[] = [
     },
     availableTools: CLAUDE_BUILTIN_TOOLS,
     availableSkills: CLAUDE_ANTHROPIC_SKILLS,
+  },
+  {
+    providerId: AgentRuntimeProviderIdEnum.Google,
+    displayName: 'Gemini Enterprise',
+    docsUrl: 'https://cloud.google.com/gemini/docs',
+    statusUrl: 'https://status.cloud.google.com',
+    logoFileName: { light: 'google.svg', dark: 'google.svg' },
+    credentials: geminiAgentConfig,
+    capabilities: {
+      mcpServers: false,
+      tools: false,
+      model: false,
+      systemPrompt: false,
+      skills: false,
+      tokenVault: false,
+    },
   },
 ];
 
