@@ -1,5 +1,6 @@
 export * from './africas-talking.handler';
 export * from './afro-sms.handler';
+export * from './aliyun.handler';
 export * from './azure-sms.handler';
 export * from './bandwidth.handler';
 export * from './brevo-sms.handler';
