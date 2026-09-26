@@ -406,5 +406,35 @@ describe('TimedDigestDelayService', () => {
         });
       });
     });
+
+    describe('subscriber timezone', () => {
+      it('delay timeout for next day in a timezone ahead of UTC', () => {
+        // 2023-05-04T12:00:00Z is 21:00 in Tokyo, so the next 20:00 is tomorrow
+        const result = TimedDigestDelayService.calculate({
+          unit: DigestUnitEnum.DAYS,
+          amount: 1,
+          timeConfig: {
+            atTime: '20:00:00',
+          },
+          timezone: 'Asia/Tokyo',
+        });
+
+        expect(result).toEqual(differenceInMilliseconds(new Date('2023-05-05T11:00:00.000Z'), new Date()));
+      });
+
+      it('delay timeout for next day in a timezone behind UTC', () => {
+        // 2023-05-04T12:00:00Z is 08:00 in New York, so the next 07:00 is tomorrow
+        const result = TimedDigestDelayService.calculate({
+          unit: DigestUnitEnum.DAYS,
+          amount: 1,
+          timeConfig: {
+            atTime: '07:00:00',
+          },
+          timezone: 'America/New_York',
+        });
+
+        expect(result).toEqual(differenceInMilliseconds(new Date('2023-05-05T11:00:00.000Z'), new Date()));
+      });
+    });
   });
 });
