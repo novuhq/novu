@@ -12,6 +12,14 @@ export class WorkflowListResponseDto {
   name: string;
 
   @ApiProperty({
+    description: 'Description of the workflow',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({
     description: 'Tags associated with the workflow',
     type: 'array',
     items: { type: 'string' },
