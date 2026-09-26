@@ -11,7 +11,7 @@ const STATUS_BADGE_ROOT_NAME = 'StatusBadgeRoot';
 const STATUS_BADGE_ICON_NAME = 'StatusBadgeIcon';
 const STATUS_BADGE_DOT_NAME = 'StatusBadgeDot';
 
-export const statusBadgeVariants = tv({
+const statusBadgeVariants = tv({
   slots: {
     root: [
       'inline-flex h-6 items-center justify-center gap-2 whitespace-nowrap rounded-md px-2 text-label-xs',
@@ -151,7 +151,6 @@ StatusBadgeDot.displayName = STATUS_BADGE_DOT_NAME;
 
 export {
   StatusBadgeDot as Dot,
-  StatusBadgeRoot as Root,
   StatusBadgeRoot as StatusBadge,
   StatusBadgeIcon,
   type StatusBadgeRootProps as StatusBadgeProps,
