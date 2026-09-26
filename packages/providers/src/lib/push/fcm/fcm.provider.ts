@@ -13,6 +13,16 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
   private readonly INVALID_TOKEN_ERRORS = ['Requested entity was not found'];
 
+  /**
+   * Keys FCM reserves inside `data`. A message that contains one of them is
+   * rejected in full, so they are dropped from the trigger payload.
+   *
+   * @see https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages
+   */
+  private readonly RESERVED_DATA_KEYS = ['from', 'message_type'];
+
+  private readonly RESERVED_DATA_KEY_PREFIXES = ['google', 'gcm'];
+
   private appName: string;
   private messaging: Messaging;
   constructor(
@@ -58,6 +68,11 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     const payload = this.cleanPayload(options.payload);
     const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
+    /**
+     * A notification message carries the trigger payload in `data` as well, otherwise the
+     * payload never reaches the device. Explicit `data` overrides keep precedence over it.
+     */
+    const notificationData = { ...this.toDataPayload(payload), ...novuData, ...data };
     const transformedBase = this.transform<MulticastMessage | TopicMessage>(bridgeProviderData, {});
 
     const commonProps: Partial<MulticastMessage & TopicMessage> = {
@@ -76,7 +91,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           title: options.title,
           body: options.content,
         },
-        data: { ...novuData, ...data },
+        data: notificationData,
         ...commonProps,
       }).body;
 
@@ -101,7 +116,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           body: options.content,
           ...overridesData,
         };
-        multicastConfig.data = { ...novuData, ...data };
+        multicastConfig.data = notificationData;
       }
 
       const multicastMessage = this.transform<MulticastMessage>(
@@ -136,6 +151,25 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
   isTokenInvalid(errorMessage: string): boolean {
     return this.INVALID_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
+  }
+
+  /**
+   * Drops the keys FCM will not accept inside `data` from an already cleaned payload.
+   */
+  private toDataPayload(payload: Record<string, string>): Record<string, string> {
+    const dataPayload: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(payload)) {
+      const isReserved =
+        this.RESERVED_DATA_KEYS.includes(key) ||
+        this.RESERVED_DATA_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
+
+      if (!isReserved && value !== undefined) {
+        dataPayload[key] = value;
+      }
+    }
+
+    return dataPayload;
   }
 
   private cleanPayload(payload: object): Record<string, string> {
