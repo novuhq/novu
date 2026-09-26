@@ -166,7 +166,7 @@
     "@clerk/backend": "^3.4.11",
     "@clerk/shared": "^4.23.0",
     "@clerk/testing": "^2.0.31",
-    "@faker-js/faker": "^9.5.0",
+    "@faker-js/faker": "^10.5.0",
     "@hookform/devtools": "^4.3.0",
     "@novu/dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
