@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { WorkflowRunService } from '@novu/application-generic';
 import { SharedModule } from '../shared/shared.module';
 import { ActivityController } from './activity.controller';
+import { ActivityRetentionService } from './shared/activity-retention.service';
 import { BuildActiveSubscribersChart } from './usecases/build-active-subscribers-chart/build-active-subscribers-chart.usecase';
 import { BuildActiveSubscribersTrendChart } from './usecases/build-active-subscribers-trend-chart/build-active-subscribers-trend-chart.usecase';
 import { BuildAvgMessagesPerSubscriberChart } from './usecases/build-avg-messages-per-subscriber-chart/build-avg-messages-per-subscriber-chart.usecase';
@@ -25,6 +26,7 @@ const USE_CASES = [
   GetWorkflowRuns,
   GetWorkflowRun,
   GetCharts,
+  ActivityRetentionService,
   BuildDeliveryTrendChart,
   BuildInteractionTrendChart,
   BuildWorkflowByVolumeChart,
