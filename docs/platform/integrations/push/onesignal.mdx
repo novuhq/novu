@@ -504,3 +504,7 @@ By default, Novu uses player IDs to send notifications. If your OneSignal integr
 <video autoPlay loop muted playsInline src="/images/channels-and-providers/push/onesignal/select-external-id-option.mp4" />
 
 Once enabled, the `deviceTokens` stored in subscriber credentials are treated as external user IDs instead of player IDs.
+
+## Managing stale tokens
+
+Novu's [automatic removal of stale device tokens](/platform/integrations/push#automatic-removal-of-stale-device-tokens) is supported for FCM and Expo, but not for OneSignal. For OneSignal, remove tokens yourself when they are no longer valid, for example on user logout or when OneSignal reports an unsubscribed player. Use the [Update provider credentials API](/api-reference/subscribers/update-provider-credentials) with the remaining `deviceTokens`, or the [Delete provider credentials API](/api-reference/subscribers/delete-provider-credentials) to remove the OneSignal credentials for a subscriber.
