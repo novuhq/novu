@@ -3,6 +3,7 @@ import sinon from 'sinon';
 
 import {
   InvalidTelegramMobileTokenError,
+  TELEGRAM_MOBILE_LINK_MAX_LIFETIME_SECONDS,
   TELEGRAM_MOBILE_LINK_TTL_SECONDS,
   TelegramMobileLinkCacheUnavailableError,
   TelegramMobileLinkTokenService,
@@ -80,6 +81,44 @@ describe('TelegramMobileLinkTokenService', () => {
     keyTtls.delete(usedKey);
   }
 
+  function runExtendScript(
+    cacheStore: Map<string, string>,
+    keyTtls: Map<string, number>,
+    keys: string[],
+    args: (string | number | Buffer)[]
+  ) {
+    const storageKey = keys[0];
+    const now = Number(args[0]);
+    const ttl = Number(args[1]);
+    const maxLifetime = Number(args[2]);
+    const baseTtl = Number(args[3]);
+    const expectedKind = String(args[4] ?? '');
+    const raw = cacheStore.get(storageKey) ?? null;
+
+    if (!raw) {
+      return '';
+    }
+
+    const parsed = JSON.parse(raw) as { expiresAt: number; mintedAt?: number; payload: { kind?: string } };
+    if (expectedKind !== '' && parsed.payload.kind !== expectedKind) {
+      return 'K';
+    }
+
+    const mintedAt = typeof parsed.mintedAt === 'number' ? parsed.mintedAt : parsed.expiresAt - baseTtl;
+    const target = Math.min(now + ttl, mintedAt + maxLifetime);
+    if (target <= parsed.expiresAt) {
+      return `S${raw}`;
+    }
+
+    parsed.expiresAt = target;
+    parsed.mintedAt = mintedAt;
+    const encoded = JSON.stringify(parsed);
+    cacheStore.set(storageKey, encoded);
+    keyTtls.set(storageKey, target - now);
+
+    return `M${encoded}`;
+  }
+
   function makeService() {
     const cacheStore = new Map<string, string>();
     const keyTtls = new Map<string, number>();
@@ -106,6 +145,10 @@ describe('TelegramMobileLinkTokenService', () => {
           runReleaseScript(cacheStore, keyTtls, keys, args);
 
           return null;
+        }
+
+        if (script.includes('parsed.mintedAt')) {
+          return runExtendScript(cacheStore, keyTtls, keys, args);
         }
 
         return runClaimScript(cacheStore, keyTtls, keys, args);
@@ -274,6 +317,154 @@ describe('TelegramMobileLinkTokenService', () => {
 
     const payload = await service.verifyIntegrationStore(token);
     expect(payload.kind).to.equal('integration-store');
+  });
+
+  describe('extendAgentSetup (sliding expiry)', () => {
+    const issueParams = {
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      agentIdentifier: 'agent-1',
+      integrationId: 'int-1',
+    };
+
+    function agentPayloadFields() {
+      return { env: 'env-1', org: 'org-1', aid: 'agent-1', iid: 'int-1' };
+    }
+
+    it('re-arms an agent token for another base TTL while it is active', async () => {
+      const { service, cacheStore, keyTtls } = makeService();
+      const { token } = await service.issue(issueParams);
+      const storageKey = `telegram_mobile_link:{${token}}`;
+      const now = Math.floor(Date.now() / 1000);
+      // Simulate a page that opened 4 minutes in: 60s left on the clock.
+      cacheStore.set(
+        storageKey,
+        JSON.stringify({
+          payload: { kind: 'agent', ...agentPayloadFields() },
+          expiresAt: now + 60,
+          mintedAt: now - 240,
+        })
+      );
+
+      await service.extendAgentSetup(token);
+
+      const stored = JSON.parse(cacheStore.get(storageKey) as string);
+      expect(stored.expiresAt).to.be.within(
+        now + TELEGRAM_MOBILE_LINK_TTL_SECONDS - 1,
+        now + TELEGRAM_MOBILE_LINK_TTL_SECONDS + 1
+      );
+      expect(keyTtls.get(storageKey)).to.be.within(
+        TELEGRAM_MOBILE_LINK_TTL_SECONDS - 1,
+        TELEGRAM_MOBILE_LINK_TTL_SECONDS + 1
+      );
+
+      const payload = await service.verify(token);
+      expect(payload.kind).to.equal('agent');
+    });
+
+    it('never pushes an agent token past the 30 minute lifetime cap', async () => {
+      const { service, cacheStore } = makeService();
+      const { token } = await service.issue(issueParams);
+      const storageKey = `telegram_mobile_link:{${token}}`;
+      const now = Math.floor(Date.now() / 1000);
+      const mintedAt = now - (TELEGRAM_MOBILE_LINK_MAX_LIFETIME_SECONDS - 30);
+      cacheStore.set(
+        storageKey,
+        JSON.stringify({ payload: { kind: 'agent', ...agentPayloadFields() }, expiresAt: now + 10, mintedAt })
+      );
+
+      await service.extendAgentSetup(token);
+
+      const stored = JSON.parse(cacheStore.get(storageKey) as string);
+      expect(stored.expiresAt).to.equal(mintedAt + TELEGRAM_MOBILE_LINK_MAX_LIFETIME_SECONDS);
+    });
+
+    it('is a no-op for consumed tokens so a status poll cannot revive them', async () => {
+      const { service, cacheStore } = makeService();
+      const { token } = await service.issue(issueParams);
+      await service.claim(token, 'agent');
+
+      await service.extendAgentSetup(token);
+
+      expect(cacheStore.has(`telegram_mobile_link:{${token}}`)).to.equal(false);
+      try {
+        await service.verify(token);
+        expect.fail('expected verify after claim to fail');
+      } catch (err) {
+        expect((err as InvalidTelegramMobileTokenError).reason).to.equal('used');
+      }
+    });
+
+    it('leaves integration-store tokens untouched', async () => {
+      const { service, keyTtls } = makeService();
+      const { token } = await service.issueForIntegrationStore({ environmentId: 'env-1', organizationId: 'org-1' });
+      const storageKey = `telegram_mobile_link:{${token}}`;
+      const ttlBefore = keyTtls.get(storageKey);
+
+      await service.extendAgentSetup(token);
+
+      expect(keyTtls.get(storageKey)).to.equal(ttlBefore);
+    });
+  });
+
+  describe('extendSlackAgentSetup (sliding expiry)', () => {
+    const issueParams = {
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      agentIdentifier: 'agent-1',
+      integrationId: 'int-1',
+      subscriberId: 'sub-1',
+    };
+
+    it('re-arms a slack-agent-setup token and keeps the subscriber id', async () => {
+      const { service, cacheStore } = makeService();
+      const { token } = await service.issueForSlackAgentSetup(issueParams);
+      const storageKey = `telegram_mobile_link:{${token}}`;
+      const now = Math.floor(Date.now() / 1000);
+      cacheStore.set(
+        storageKey,
+        JSON.stringify({
+          payload: {
+            kind: 'slack-agent-setup',
+            env: 'env-1',
+            org: 'org-1',
+            aid: 'agent-1',
+            iid: 'int-1',
+            sid: 'sub-1',
+          },
+          expiresAt: now + 60,
+          mintedAt: now - 240,
+        })
+      );
+
+      await service.extendSlackAgentSetup(token);
+
+      const stored = JSON.parse(cacheStore.get(storageKey) as string);
+      expect(stored.expiresAt).to.be.within(
+        now + TELEGRAM_MOBILE_LINK_TTL_SECONDS - 1,
+        now + TELEGRAM_MOBILE_LINK_TTL_SECONDS + 1
+      );
+      expect(stored.payload.sid).to.equal('sub-1');
+
+      const payload = await service.verifySlackAgentSetup(token);
+      expect(payload.sid).to.equal('sub-1');
+    });
+
+    it('leaves telegram agent tokens untouched', async () => {
+      const { service, keyTtls } = makeService();
+      const { token } = await service.issue({
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        agentIdentifier: 'agent-1',
+        integrationId: 'int-1',
+      });
+      const storageKey = `telegram_mobile_link:{${token}}`;
+      const ttlBefore = keyTtls.get(storageKey);
+
+      await service.extendSlackAgentSetup(token);
+
+      expect(keyTtls.get(storageKey)).to.equal(ttlBefore);
+    });
   });
 
   it('surfaces cache failures from isTokenUsed', async () => {

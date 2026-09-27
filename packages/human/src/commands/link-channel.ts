@@ -2,9 +2,13 @@ import { type HumanApiClient, HumanApiError } from '../api/client';
 import {
   type AgentIntegrationLink,
   generateConnectOauthUrl,
+  getSlackSetupLinkStatus,
+  getTelegramMobileLinkStatus,
   hasChannelEndpoint,
   issueTelegramSubscriberLink,
+  type TelegramMobileLink,
 } from '../api/setup';
+import { DEFAULT_API_URL, HUMAN_SETUP_PAGE_ORIGIN } from '../config';
 import { pollUntil, sleep } from '../poll';
 
 export const HUMAN_CHANNELS = ['telegram', 'slack', 'email'] as const;
@@ -12,7 +16,16 @@ export type HumanChannel = (typeof HUMAN_CHANNELS)[number];
 
 export const CHANNEL_POLL_INTERVAL_MS = 2_000;
 export const CHANNEL_POLL_TIMEOUT_MS = 5 * 60_000;
+/**
+ * How long we wait for the human to finish on the credential landing page.
+ * Creating a Telegram bot or a Slack app routinely takes longer than the 5
+ * minutes we allow for a `/start` tap or an OAuth install, and the server keeps
+ * the setup token alive while the page is open (sliding expiry, 30 min cap).
+ */
+export const SETUP_PAGE_POLL_TIMEOUT_MS = 30 * 60_000;
 export const CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
+
+export type SetupPageOutcome = 'saved' | 'expired' | 'invalid' | 'timeout';
 
 export function isHumanChannel(value: string): value is HumanChannel {
   return (HUMAN_CHANNELS as readonly string[]).includes(value);
@@ -113,6 +126,89 @@ export function isMissingSlackCredentialsError(err: unknown): boolean {
   return err instanceof HumanApiError && err.status === 404 && /missing credentials/i.test(err.message);
 }
 
+/** The Telegram integration exists but has no BotFather token saved yet. */
+export function isMissingBotTokenError(err: unknown): boolean {
+  return err instanceof HumanApiError && err.status === 422 && /bot token is missing/i.test(err.message);
+}
+
+/**
+ * Where to send the human to paste credentials.
+ *
+ * Against Novu Cloud we use the human.md landing page with the token in the
+ * URL fragment (never sent to the server, so it stays out of access logs and
+ * Referer headers). Any other API URL means self-hosted or local dev, where the
+ * gethuman.md page could not reach the API anyway (CORS, mixed content), so we
+ * hand back the URL the server minted — that deployment's own dashboard page.
+ */
+export function buildSetupPageUrl(apiUrl: string, pagePath: string, token: string, fallbackUrl: string): string {
+  const normalizedApiUrl = apiUrl.replace(/\/$/, '');
+  if (normalizedApiUrl !== DEFAULT_API_URL) {
+    return fallbackUrl;
+  }
+
+  const path = pagePath.startsWith('/') ? pagePath : `/${pagePath}`;
+
+  return `${HUMAN_SETUP_PAGE_ORIGIN}${path}#${token}`;
+}
+
+export function buildTelegramSetupPageUrl(
+  apiUrl: string,
+  mobileLink: Pick<TelegramMobileLink, 'token' | 'url'>
+): string {
+  return buildSetupPageUrl(apiUrl, '/connect', mobileLink.token, mobileLink.url);
+}
+
+type SetupLinkStatus = { valid: boolean; reason?: 'expired' | 'used' | 'invalid' };
+
+/**
+ * Blocks until the landing page consumes the setup token (status flips to
+ * `used`), or until the token dies / the wait runs out.
+ */
+async function waitForSetupPage(
+  readStatus: () => Promise<SetupLinkStatus>,
+  options: { intervalMs?: number; timeoutMs?: number } = {}
+): Promise<SetupPageOutcome> {
+  let failure: Extract<SetupPageOutcome, 'expired' | 'invalid'> | undefined;
+
+  const saved = await pollUntil(
+    async () => {
+      const status = await readStatus();
+      if (status.valid) return 'pending';
+      if (status.reason === 'used') return 'done';
+
+      failure = status.reason === 'expired' ? 'expired' : 'invalid';
+
+      return 'failed';
+    },
+    {
+      intervalMs: options.intervalMs ?? CHANNEL_POLL_INTERVAL_MS,
+      timeoutMs: options.timeoutMs ?? SETUP_PAGE_POLL_TIMEOUT_MS,
+    }
+  );
+
+  if (saved) {
+    return 'saved';
+  }
+
+  return failure ?? 'timeout';
+}
+
+export function waitForTelegramSetupPage(
+  client: HumanApiClient,
+  token: string,
+  options: { intervalMs?: number; timeoutMs?: number } = {}
+): Promise<SetupPageOutcome> {
+  return waitForSetupPage(() => getTelegramMobileLinkStatus(client, token), options);
+}
+
+export function waitForSlackSetupPage(
+  client: HumanApiClient,
+  token: string,
+  options: { intervalMs?: number; timeoutMs?: number } = {}
+): Promise<SetupPageOutcome> {
+  return waitForSetupPage(() => getSlackSetupLinkStatus(client, token), options);
+}
+
 export async function waitForEndpoint(
   client: HumanApiClient,
   integrationIdentifier: string,
@@ -143,8 +239,7 @@ export async function issueTelegramSubscriberLinkWithRetry(
     try {
       return await issueTelegramSubscriberLink(client, integrationIdentifier, subscriberId);
     } catch (err) {
-      const retryable = err instanceof HumanApiError && err.status === 422 && /bot token is missing/i.test(err.message);
-      if (!retryable || Date.now() >= deadline) {
+      if (!isMissingBotTokenError(err) || Date.now() >= deadline) {
         throw err;
       }
 

@@ -10,11 +10,11 @@ import {
   createSlackIntegration,
   createTelegramIntegration,
   generateConnectOauthUrl,
-  getSlackSetupLinkStatus,
   hasChannelEndpoint,
   type IntegrationRecord,
   issueSlackSetupLink,
   issueTelegramMobileLink,
+  issueTelegramSubscriberLink,
   linkAgentIntegration,
   listAgentIntegrations,
   listIntegrations,
@@ -29,24 +29,28 @@ import {
   loadConfig,
   saveConfig,
 } from '../config';
-import { pollUntil, sleep } from '../poll';
+import { SetupStillPendingError } from '../output';
+import { sleep } from '../poll';
 import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
 import { handleError } from './interact';
 import { splitName } from './invite';
 import {
-  CHANNEL_POLL_INTERVAL_MS,
-  CHANNEL_POLL_TIMEOUT_MS,
+  buildSetupPageUrl,
+  buildTelegramSetupPageUrl,
   CREDENTIAL_PROPAGATION_TIMEOUT_MS,
   HUMAN_CHANNELS,
   type HumanChannel,
+  isMissingBotTokenError,
   isMissingSlackCredentialsError,
   issueTelegramSubscriberLinkWithRetry,
   parseEmailAddress,
+  SETUP_PAGE_POLL_TIMEOUT_MS,
+  type SetupPageOutcome,
   waitForEndpoint,
+  waitForSlackSetupPage,
+  waitForTelegramSetupPage,
 } from './link-channel';
-
-const BOTFATHER_URL = 'https://t.me/botfather';
 
 /**
  * `--name` always wins. Otherwise ask once — only on the very first setup
@@ -246,11 +250,46 @@ async function resolveChannelChoice(channelArg: string | undefined): Promise<Hum
 
 // --- Telegram -------------------------------------------------------------
 
-async function connectTelegram(
+/** Terminal/browser side effects, injectable so the flow is unit-testable. */
+export interface TelegramSetupIo {
+  isTTY: boolean;
+  write: (text: string) => void;
+  openInBrowser: (url: string) => void;
+}
+
+interface SetupPageHandoff {
+  channelLabel: string;
+  rerunCommand: string;
+  intro: string;
+  waiting: string;
+  savedMessage: string;
+  pageUrl: string;
+  poll: () => Promise<SetupPageOutcome>;
+  io: TelegramSetupIo;
+}
+
+const defaultTelegramSetupIo: TelegramSetupIo = {
+  isTTY: Boolean(process.stdin.isTTY),
+  write: (text) => process.stdout.write(text),
+  openInBrowser,
+};
+
+/**
+ * Links Telegram for the human, resuming at whatever step is still missing:
+ *
+ *   1. channel endpoint exists            → already connected
+ *   2. bot token saved, no `/start` yet    → show the deep link, wait
+ *   3. no bot token                        → hand off to the landing page, then 2.
+ *
+ * The bot token itself never passes through this terminal (unless the caller
+ * explicitly provides `--telegram-bot-token` for automation).
+ */
+export async function connectTelegram(
   client: HumanApiClient,
   agentIdentifier: string,
   subscriberId: string,
-  options: SetupOptions
+  options: Pick<SetupOptions, 'telegramBotToken'>,
+  io: TelegramSetupIo = defaultTelegramSetupIo
 ): Promise<string> {
   const integrationIdentifier = await resolveLinkedIntegration(client, agentIdentifier, 'telegram', () =>
     createTelegramIntegration(client, 'Human')
@@ -262,22 +301,120 @@ async function connectTelegram(
     return integrationIdentifier;
   }
 
-  // The integration needs a BotFather token before subscriber links can be minted.
-  const botToken = options.telegramBotToken?.trim() ?? (await promptForBotToken());
-  const mobileLink = await issueTelegramMobileLink(client, integrationIdentifier, subscriberId);
-  await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
+  const subscriberLink = await resolveTelegramSubscriberLink(client, integrationIdentifier, subscriberId, options, io);
 
-  const subscriberLink = await issueTelegramSubscriberLinkWithRetry(client, integrationIdentifier, subscriberId);
-
-  process.stdout.write(
-    `\nScan this QR (or open the link) and tap ${pc.bold('Start')} in Telegram:\n\n` +
-      `${renderQR(subscriberLink.deepLinkUrl)}\n\n  ${pc.underline(subscriberLink.deepLinkUrl)}\n\n`
+  io.write(
+    `\nOpen @${pc.bold(subscriberLink.botUsername)} in Telegram and tap ${pc.bold('Start')}` +
+      (io.isTTY ? ` (scan the QR or use the link):\n\n${renderQR(subscriberLink.deepLinkUrl)}\n\n` : ':\n\n') +
+      `  ${pc.underline(subscriberLink.deepLinkUrl)}\n\n`
   );
 
   await waitForEndpoint(client, integrationIdentifier, subscriberId, `your /start on @${subscriberLink.botUsername}`);
   info('Telegram connected.');
 
   return integrationIdentifier;
+}
+
+/**
+ * Produces the `/start` deep link, first making sure the integration has a bot
+ * token: saved directly from `--telegram-bot-token`, or collected via the
+ * landing page. Minting the deep link doubles as the credentials probe — it only
+ * fails with "bot token is missing" when the landing-page step is outstanding.
+ * Right after a save, credentials can take a moment to become readable, so
+ * those paths use the retrying variant instead of bouncing back to the page.
+ */
+async function resolveTelegramSubscriberLink(
+  client: HumanApiClient,
+  integrationIdentifier: string,
+  subscriberId: string,
+  options: Pick<SetupOptions, 'telegramBotToken'>,
+  io: TelegramSetupIo
+): Promise<{ deepLinkUrl: string; botUsername: string }> {
+  const botToken = options.telegramBotToken?.trim();
+  if (botToken) {
+    const mobileLink = await issueTelegramMobileLink(client, integrationIdentifier, subscriberId);
+    await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
+
+    return issueTelegramSubscriberLinkWithRetry(client, integrationIdentifier, subscriberId);
+  }
+
+  try {
+    return await issueTelegramSubscriberLink(client, integrationIdentifier, subscriberId);
+  } catch (err) {
+    if (!isMissingBotTokenError(err)) throw err;
+  }
+
+  await handOffToTelegramSetupPage(client, integrationIdentifier, subscriberId, io);
+
+  return issueTelegramSubscriberLinkWithRetry(client, integrationIdentifier, subscriberId);
+}
+
+/**
+ * Sends the human to the credential landing page and blocks until the page has
+ * saved the credentials. Prints a single handoff (QR on a TTY, always the URL)
+ * and otherwise stays quiet — the page owns the rest of the chain.
+ */
+async function handOffToSetupPage(handoff: SetupPageHandoff): Promise<void> {
+  const { io, pageUrl } = handoff;
+
+  io.write(
+    `\n${handoff.intro} Finish that on this page` +
+      (io.isTTY ? ` (scan with your phone, or use the link):\n\n${renderQR(pageUrl)}\n\n` : ':\n\n') +
+      `  ${pc.underline(pageUrl)}\n\n` +
+      `${pc.dim(handoff.waiting)}\n`
+  );
+
+  if (io.isTTY) {
+    io.openInBrowser(pageUrl);
+  }
+
+  const outcome = await handoff.poll();
+
+  switch (outcome) {
+    case 'saved':
+      info(handoff.savedMessage);
+
+      return;
+    case 'expired':
+      throw new SetupStillPendingError(
+        `The ${handoff.channelLabel} setup link expired before it was completed. Re-run \`${handoff.rerunCommand}\` for a fresh link.`
+      );
+    case 'invalid':
+      throw new Error(
+        `The ${handoff.channelLabel} setup link is no longer valid. Re-run \`${handoff.rerunCommand}\` for a fresh link.`
+      );
+    case 'timeout':
+      throw new SetupStillPendingError(
+        `Setup was not completed within ${Math.round(SETUP_PAGE_POLL_TIMEOUT_MS / 60_000)} minutes. ` +
+          `Re-run \`${handoff.rerunCommand}\` to pick up where you left off.`
+      );
+    default: {
+      const exhaustive: never = outcome;
+
+      return exhaustive;
+    }
+  }
+}
+
+async function handOffToTelegramSetupPage(
+  client: HumanApiClient,
+  integrationIdentifier: string,
+  subscriberId: string,
+  io: TelegramSetupIo
+): Promise<void> {
+  const mobileLink = await issueTelegramMobileLink(client, integrationIdentifier, subscriberId);
+  const setupUrl = buildTelegramSetupPageUrl(client.apiUrl, mobileLink);
+
+  await handOffToSetupPage({
+    channelLabel: 'Telegram',
+    rerunCommand: 'human setup telegram',
+    intro: 'Telegram needs a private bot that only you control.',
+    waiting: 'Waiting for you to connect the bot… the link stays open while the page is open.',
+    savedMessage: 'Bot token saved.',
+    pageUrl: setupUrl,
+    poll: () => waitForTelegramSetupPage(client, mobileLink.token),
+    io,
+  });
 }
 
 // --- Email ------------------------------------------------------------------
@@ -330,12 +467,20 @@ async function promptForEmail(): Promise<string> {
 
 // --- Slack ----------------------------------------------------------------
 
-async function connectSlack(
+/**
+ * Links Slack for the human. The App Configuration Token never passes through
+ * this terminal (unless the caller passes `--slack-config-token` for
+ * automation): the landing page creates the app, then this opens Slack's
+ * install page. The OAuth URL is too long for a QR, so a terminal only opens
+ * the browser; the raw URL is printed when there is no terminal to open from.
+ */
+export async function connectSlack(
   client: HumanApiClient,
   agentId: string,
   agentIdentifier: string,
   subscriberId: string,
-  options: SetupOptions
+  options: Pick<SetupOptions, 'slackConfigToken'>,
+  io: TelegramSetupIo = defaultTelegramSetupIo
 ): Promise<string> {
   const integration = await resolveLinkedSlackIntegration(client, agentIdentifier);
 
@@ -345,19 +490,22 @@ async function connectSlack(
     return integration.identifier;
   }
 
-  const authorizeUrl = await buildSlackAuthorizeUrl(
+  const authorizeUrl = await resolveSlackInstall(
     client,
     agentId,
     agentIdentifier,
     integration,
     subscriberId,
-    options
+    options,
+    io
   );
 
-  process.stdout.write(
-    `\nAuthorize the Slack app in your workspace (opening your browser):\n\n  ${pc.underline(authorizeUrl)}\n\n`
-  );
-  openInBrowser(authorizeUrl);
+  if (io.isTTY) {
+    io.write('\nOpening Slack so you can install the app…\n\n');
+    io.openInBrowser(authorizeUrl);
+  } else {
+    io.write(`\nAuthorize the Slack app in your workspace:\n\n  ${pc.underline(authorizeUrl)}\n\n`);
+  }
 
   await waitForEndpoint(client, integration.identifier, subscriberId, 'the Slack install to complete');
   info('Slack connected.');
@@ -366,17 +514,17 @@ async function connectSlack(
 }
 
 /**
- * Builds the Slack authorize URL, falling back to quick-setup (creating the
- * Slack app from an App Configuration Token) when the integration has no
- * credentials yet — same dance as `novu connect`.
+ * Produces the OAuth install URL, first making sure the integration has a
+ * Slack app: created from `--slack-config-token`, or via the landing page.
  */
-async function buildSlackAuthorizeUrl(
+async function resolveSlackInstall(
   client: HumanApiClient,
   agentId: string,
   agentIdentifier: string,
   integration: IntegrationRecord,
   subscriberId: string,
-  options: SetupOptions
+  options: Pick<SetupOptions, 'slackConfigToken'>,
+  io: TelegramSetupIo
 ): Promise<string> {
   const buildUrl = () =>
     generateConnectOauthUrl(client, {
@@ -391,7 +539,7 @@ async function buildSlackAuthorizeUrl(
     if (!isMissingSlackCredentialsError(err)) throw err;
   }
 
-  await runSlackQuickSetup(client, agentId, agentIdentifier, integration, options);
+  await runSlackQuickSetup(client, agentId, agentIdentifier, integration, subscriberId, options, io);
 
   // Credentials can take a moment to become readable after the app is created.
   const deadline = Date.now() + CREDENTIAL_PROPAGATION_TIMEOUT_MS;
@@ -405,13 +553,16 @@ async function buildSlackAuthorizeUrl(
   }
 }
 
+/** Returns true when the landing page (not this process) created the Slack app. */
 async function runSlackQuickSetup(
   client: HumanApiClient,
   agentId: string,
   agentIdentifier: string,
   integration: IntegrationRecord,
-  options: SetupOptions
-): Promise<void> {
+  subscriberId: string,
+  options: Pick<SetupOptions, 'slackConfigToken'>,
+  io: TelegramSetupIo
+): Promise<boolean> {
   const tokenFromFlag = options.slackConfigToken?.trim();
 
   if (tokenFromFlag) {
@@ -420,69 +571,24 @@ async function runSlackQuickSetup(
     info('Creating the Slack app...');
     await slackQuickSetup(client, integration._id, { configToken: tokenFromFlag, agentId });
 
-    return;
+    return false;
   }
 
-  if (process.stdin.isTTY) {
-    await promptAndRunSlackQuickSetup(client, agentId, integration);
+  const setupLink = await issueSlackSetupLink(client, agentIdentifier, integration._id, subscriberId);
+  const setupUrl = buildSetupPageUrl(client.apiUrl, '/connect/slack', setupLink.token, setupLink.url);
 
-    return;
-  }
+  await handOffToSetupPage({
+    channelLabel: 'Slack',
+    rerunCommand: 'human setup slack',
+    intro: 'Slack needs a one-time App Configuration Token to create your app.',
+    waiting: 'Waiting for you to connect Slack… the link stays open while the page is open.',
+    savedMessage: 'Slack app created.',
+    pageUrl: setupUrl,
+    poll: () => waitForSlackSetupPage(client, setupLink.token),
+    io,
+  });
 
-  // Headless: hand the human a secure setup page and wait for the token there.
-  const setupLink = await issueSlackSetupLink(client, agentIdentifier, integration._id);
-  process.stdout.write(`\nOpen this page and paste your Slack App Configuration Token:\n  ${setupLink.url}\n\n`);
-
-  const saved = await pollUntil(
-    async () => {
-      const status = await getSlackSetupLinkStatus(client, setupLink.token);
-      if (!status.valid && status.reason === 'used') return 'done';
-      if (!status.valid) return 'failed';
-
-      return 'pending';
-    },
-    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
-  );
-
-  if (!saved) {
-    throw new Error('The Slack setup link expired or was not completed. Re-run `human setup slack` for a fresh link.');
-  }
-}
-
-async function promptAndRunSlackQuickSetup(
-  client: HumanApiClient,
-  agentId: string,
-  integration: IntegrationRecord
-): Promise<void> {
-  process.stdout.write(
-    `\nSlack needs a one-time App Configuration Token to create your app:\n` +
-      `  1. Open ${pc.underline('https://api.slack.com/apps')}\n` +
-      `  2. Scroll to ${pc.bold('Your App Configuration Tokens')} and generate one\n` +
-      `  3. Paste the ${pc.bold('xoxe.xoxp-...')} token below\n\n`
-  );
-
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const token = (await promptLine('Slack App Configuration Token: ')).trim();
-    const formatError = validateSlackConfigTokenFormat(token);
-    if (formatError) {
-      process.stdout.write(`${pc.yellow(formatError)}\n`);
-      continue;
-    }
-
-    try {
-      info('Creating the Slack app...');
-      await slackQuickSetup(client, integration._id, { configToken: token, agentId });
-
-      return;
-    } catch (err) {
-      if (!(err instanceof HumanApiError) || err.status === 0 || err.status >= 500) throw err;
-      process.stdout.write(`${pc.yellow(err.message)}\n`);
-    }
-  }
-
-  throw new Error(
-    'Slack did not accept the App Configuration Token. Generate a fresh one and re-run `human setup slack`.'
-  );
+  return true;
 }
 
 /** Wrong-token-type guardrails, mirrored from `novu connect`. */
@@ -540,23 +646,6 @@ async function resolveLinkedSlackIntegration(
   }
 
   return integration;
-}
-
-async function promptForBotToken(): Promise<string> {
-  process.stdout.write(
-    `\nCreate a Telegram bot (this is your private line to your agents):\n` +
-      `  1. Open ${pc.underline(BOTFATHER_URL)}\n` +
-      `  2. Send ${pc.bold('/newbot')} and follow the prompts\n` +
-      `  3. Paste the token BotFather gives you below\n\n`
-  );
-
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const token = (await promptLine('Telegram bot token: ')).trim();
-    if (/^\d+:[\w-]+$/.test(token)) return token;
-    process.stdout.write(`${pc.yellow('That does not look like a bot token (expected 123456:ABC-...).')}\n`);
-  }
-
-  throw new Error('No valid bot token provided. Re-run `human setup telegram` or pass --telegram-bot-token.');
 }
 
 /** Best-effort platform browser open — the URL is always printed as fallback. */

@@ -24,11 +24,14 @@ export interface AgentIntegrationLink {
 export async function bootstrapKeylessSession(apiUrl: string): Promise<string> {
   const axios = (await import('axios')).default;
   const baseUrl = apiUrl.replace(/\/$/, '');
-  const res = await axios.post<{ data?: { applicationIdentifier?: string }; applicationIdentifier?: string }>(
-    `${baseUrl}/v1/inbox/session`,
-    {},
-    { httpsAgent: loopbackHttpsAgent(baseUrl) }
-  );
+
+  let res: { data?: { data?: { applicationIdentifier?: string }; applicationIdentifier?: string } };
+  try {
+    res = await axios.post(`${baseUrl}/v1/inbox/session`, {}, { httpsAgent: loopbackHttpsAgent(baseUrl) });
+  } catch (err) {
+    throw new Error(describeKeylessBootstrapFailure(baseUrl, err));
+  }
+
   const identifier = res.data?.data?.applicationIdentifier ?? res.data?.applicationIdentifier;
 
   if (!identifier?.startsWith('pk_keyless_')) {
@@ -36,6 +39,29 @@ export async function bootstrapKeylessSession(apiUrl: string): Promise<string> {
   }
 
   return identifier;
+}
+
+/**
+ * This call runs before we have a `HumanApiClient` (and its error interceptor),
+ * so it needs its own translation. A refused connection on Node 20+ arrives as
+ * an `AggregateError` with an empty message (happy-eyeballs tries ::1 and
+ * 127.0.0.1), which would otherwise print as a bare `error:`.
+ */
+function describeKeylessBootstrapFailure(baseUrl: string, err: unknown): string {
+  const code = (err as { code?: string } | undefined)?.code;
+  const status = (err as { response?: { status?: number } } | undefined)?.response?.status;
+
+  if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ECONNRESET' || code === 'ETIMEDOUT') {
+    return `Could not reach the Novu API at ${baseUrl} (${code}). Is it running?`;
+  }
+
+  if (status) {
+    return `The Novu API at ${baseUrl} rejected the keyless session request (${status}).`;
+  }
+
+  const message = err instanceof Error ? err.message : String(err);
+
+  return message || `Could not create a keyless session against ${baseUrl}.`;
 }
 
 export async function listIntegrations(client: HumanApiClient): Promise<IntegrationRecord[]> {
@@ -217,13 +243,14 @@ export async function generateConnectOauthUrl(
 export async function issueSlackSetupLink(
   client: HumanApiClient,
   agentIdentifier: string,
-  integrationId: string
+  integrationId: string,
+  subscriberId?: string
 ): Promise<{ token: string; url: string; expiresAt: string }> {
   const res = await client.axios.post<
     { data?: { token: string; url: string; expiresAt: string } } | { token: string; url: string; expiresAt: string }
   >(
     `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/slack/setup-link`,
-    {}
+    subscriberId ? { subscriberId } : {}
   );
 
   return unwrap(res.data);

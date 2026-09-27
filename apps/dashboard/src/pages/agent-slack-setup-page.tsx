@@ -29,6 +29,7 @@ export function AgentSlackSetupPage() {
     enabled: token.length > 0,
     retry: false,
     refetchOnWindowFocus: false,
+    refetchInterval: (query) => (query.state.data?.valid ? 60_000 : false),
     meta: { showError: false },
   });
 
@@ -76,7 +77,7 @@ function SetupForm({ token, agentName }: SetupFormProps) {
   });
 
   if (submitMutation.data?.success) {
-    return <SuccessCard agentName={agentName} />;
+    return <SuccessCard agentName={agentName} authorizeUrl={submitMutation.data.authorizeUrl} />;
   }
 
   if (submitMutation.error instanceof SlackSetupSubmitError) {
@@ -157,7 +158,7 @@ function SetupForm({ token, agentName }: SetupFormProps) {
   );
 }
 
-function SuccessCard({ agentName }: { agentName: string }) {
+function SuccessCard({ agentName, authorizeUrl }: { agentName: string; authorizeUrl?: string }) {
   return (
     <Card>
       <div className="flex flex-col items-center gap-3 text-center">
@@ -165,12 +166,26 @@ function SuccessCard({ agentName }: { agentName: string }) {
           <RiCheckLine className="size-6" />
         </div>
         <h1 className="text-text-strong text-paragraph-md font-semibold">Slack app created</h1>
-        <p className="text-text-soft text-paragraph-xs leading-5">
-          Your Slack app is ready for <span className="text-text-strong font-medium">{agentName}</span>. Return to your
-          terminal: the connect command will open Slack authorization next.
-        </p>
+        {authorizeUrl ? (
+          <p className="text-text-soft text-paragraph-xs leading-5">
+            Install it in the workspace for <span className="text-text-strong font-medium">{agentName}</span>. The
+            install link is valid for 5 minutes. Your terminal confirms as soon as Slack accepts it.
+          </p>
+        ) : (
+          <p className="text-text-soft text-paragraph-xs leading-5">
+            Your Slack app is ready for <span className="text-text-strong font-medium">{agentName}</span>. Return to
+            your terminal to finish.
+          </p>
+        )}
       </div>
-      <p className="text-text-soft text-label-xs mt-5 text-center">You can safely close this tab.</p>
+      {authorizeUrl ? (
+        <Button variant="primary" mode="filled" size="md" className="mt-5 w-full" asChild>
+          <a href={authorizeUrl} target="_blank" rel="noopener noreferrer">
+            Add to Slack
+          </a>
+        </Button>
+      ) : null}
+      <p className="text-text-soft text-label-xs mt-5 text-center">You can close this tab after Slack is connected.</p>
     </Card>
   );
 }

@@ -80,6 +80,27 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(previewOrigin);
     });
 
+    it('should allow the human.md landing page origins', () => {
+      for (const humanOrigin of ['https://www.gethuman.md', 'https://gethuman.md']) {
+        const callbackSpy = spy();
+
+        // @ts-expect-error - corsOptionsDelegate is not typed correctly
+        corsOptionsDelegate(
+          {
+            url: '/v1/integrations/mobile-configure/status',
+            headers: {
+              origin: humanOrigin,
+            },
+          },
+          callbackSpy
+        );
+
+        expect(callbackSpy.calledOnce).to.be.ok;
+        expect(callbackSpy.firstCall.firstArg).to.be.null;
+        expect(callbackSpy.firstCall.lastArg.origin).to.deep.equal([humanOrigin]);
+      }
+    });
+
     it('widget routes should be wildcarded', () => {
       const callbackSpy = spy();
 

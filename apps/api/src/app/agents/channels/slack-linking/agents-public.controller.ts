@@ -37,10 +37,19 @@ export class AgentsPublicController {
     summary: 'Check the status of a Slack setup link',
     description:
       'Returns whether a Slack setup token is still usable. Designed to be called from the ' +
-      'setup landing page before showing the credentials form.',
+      'setup landing page before showing the credentials form. Pass `extend=1` while the page is open to keep ' +
+      'the token alive (sliding expiry, capped at 30 minutes since issue).',
   })
-  async getSlackSetupStatus(@Query('token') token: string): Promise<GetSlackSetupLinkStatusResult> {
-    return this.getSlackSetupLinkStatusUsecase.execute(GetSlackSetupLinkStatusCommand.create({ token: token ?? '' }));
+  async getSlackSetupStatus(
+    @Query('token') token: string,
+    @Query('extend') extend?: string
+  ): Promise<GetSlackSetupLinkStatusResult> {
+    return this.getSlackSetupLinkStatusUsecase.execute(
+      GetSlackSetupLinkStatusCommand.create({
+        token: token ?? '',
+        extend: extend === '1' || extend === 'true',
+      })
+    );
   }
 
   @Post('slack/setup')

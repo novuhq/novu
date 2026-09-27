@@ -54,10 +54,52 @@ redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[2]))
 redis.call('DEL', KEYS[2])
 `;
 
+/**
+ * Sliding expiry: push an *active* entry's expiry out to now + ARGV[2], never
+ * past mintedAt + ARGV[3] (the hard cap), and never earlier than it already is.
+ * Operates on the storage key only, so a claimed (used) or expired token can
+ * never be resurrected. When ARGV[5] is non-empty the payload `kind` must match
+ * or the entry is left untouched.
+ * Entries minted before `mintedAt` was recorded infer it as expiresAt - ARGV[4]
+ * (the base TTL).
+ * Returns '' (missing), 'I' (corrupt), 'K' (kind mismatch), 'S' + JSON
+ * (unchanged, already later or capped), or 'M' + JSON (extended).
+ */
+const EXTEND_ATOMIC_SCRIPT = `
+local raw = redis.call('GET', KEYS[1])
+if not raw then
+  return ''
+end
+local ok, parsed = pcall(cjson.decode, raw)
+if not ok or not parsed.expiresAt or not parsed.payload then
+  return 'I'
+end
+if ARGV[5] ~= '' and parsed.payload.kind ~= ARGV[5] then
+  return 'K'
+end
+local now = tonumber(ARGV[1])
+local target = now + tonumber(ARGV[2])
+local mintedAt = tonumber(parsed.mintedAt) or (parsed.expiresAt - tonumber(ARGV[4]))
+local maxExpiresAt = mintedAt + tonumber(ARGV[3])
+if target > maxExpiresAt then
+  target = maxExpiresAt
+end
+if target <= parsed.expiresAt then
+  return 'S' .. raw
+end
+parsed.expiresAt = target
+parsed.mintedAt = mintedAt
+local encoded = cjson.encode(parsed)
+redis.call('SET', KEYS[1], encoded, 'EX', target - now)
+return 'M' .. encoded
+`;
+
 export interface StoredTokenEntry<TPayload> {
   payload: TPayload;
   /** Epoch seconds when this entry naturally expires. */
   expiresAt: number;
+  /** Epoch seconds when the token was issued; anchors the sliding-expiry cap. */
+  mintedAt?: number;
 }
 
 export interface IssuedSingleUseToken {
@@ -83,6 +125,25 @@ export type SingleUseTokenPeekOutcome<TPayload> =
   | { status: 'missing' }
   | { status: 'corrupt' }
   | { status: 'malformed-token' };
+
+export type SingleUseTokenExtendOutcome<TPayload> =
+  | { status: 'extended'; entry: StoredTokenEntry<TPayload> }
+  /** Still active, but already expiring later than requested or pinned at the lifetime cap. */
+  | { status: 'unchanged'; entry: StoredTokenEntry<TPayload> }
+  /** No active entry — expired, never issued, or already consumed. Nothing was touched. */
+  | { status: 'missing' }
+  | { status: 'corrupt' }
+  | { status: 'kind-mismatch' }
+  | { status: 'malformed-token' };
+
+export interface SingleUseTokenExtendOptions {
+  /** Fresh time-to-live from now, in seconds. */
+  ttlSeconds: number;
+  /** Hard cap on total lifetime since mint, in seconds. */
+  maxLifetimeSeconds: number;
+  /** When set, only entries whose payload `kind` matches are extended. */
+  expectedKind?: string;
+}
 
 export interface SingleUseTokenCacheOptions {
   cacheService: CacheService;
@@ -119,7 +180,7 @@ export class SingleUseTokenCache<TPayload> {
     const token = mintAutolinkSafeOpaqueToken();
     const mintedAt = Math.floor(Date.now() / 1000);
     const expiresAtEpoch = mintedAt + this.options.ttlSeconds;
-    const entry: StoredTokenEntry<TPayload> = { payload, expiresAt: expiresAtEpoch };
+    const entry: StoredTokenEntry<TPayload> = { payload, expiresAt: expiresAtEpoch, mintedAt };
 
     await this.options.cacheService.set(this.storageKey(token), JSON.stringify(entry), {
       ttl: this.options.ttlSeconds,
@@ -210,7 +271,11 @@ export class SingleUseTokenCache<TPayload> {
       return;
     }
 
-    const stored: StoredTokenEntry<TPayload> = { payload: entry.payload, expiresAt: entry.expiresAt };
+    const stored: StoredTokenEntry<TPayload> = {
+      payload: entry.payload,
+      expiresAt: entry.expiresAt,
+      ...(entry.mintedAt !== undefined ? { mintedAt: entry.mintedAt } : {}),
+    };
 
     try {
       await this.options.cacheService.eval(
@@ -225,6 +290,60 @@ export class SingleUseTokenCache<TPayload> {
       );
       throw this.options.createCacheUnavailableError('release', err);
     }
+  }
+
+  /**
+   * Sliding expiry for an active token: bumps its expiry to now + `ttlSeconds`,
+   * capped at mint + `maxLifetimeSeconds`. Strictly a no-op for consumed or
+   * expired tokens, so it can be driven by an unauthenticated status poll.
+   */
+  async extend(token: string, options: SingleUseTokenExtendOptions): Promise<SingleUseTokenExtendOutcome<TPayload>> {
+    if (!this.options.isValidTokenFormat(token)) {
+      return { status: 'malformed-token' };
+    }
+
+    this.assertCacheAvailable('extend');
+
+    let raw: string;
+    try {
+      raw = await this.options.cacheService.eval<string>(
+        EXTEND_ATOMIC_SCRIPT,
+        [this.storageKey(token)],
+        [
+          Math.floor(Date.now() / 1000),
+          options.ttlSeconds,
+          options.maxLifetimeSeconds,
+          this.options.ttlSeconds,
+          options.expectedKind ?? '',
+        ]
+      );
+    } catch (err) {
+      throw this.options.createCacheUnavailableError('extend', err);
+    }
+
+    if (!raw) {
+      return { status: 'missing' };
+    }
+
+    if (raw === 'I') {
+      return { status: 'corrupt' };
+    }
+
+    if (raw === 'K') {
+      return { status: 'kind-mismatch' };
+    }
+
+    const marker = raw.charAt(0);
+    if (marker !== 'M' && marker !== 'S') {
+      return { status: 'corrupt' };
+    }
+
+    const entry = this.parseEntry(raw.slice(1));
+    if (!entry) {
+      return { status: 'corrupt' };
+    }
+
+    return { status: marker === 'M' ? 'extended' : 'unchanged', entry };
   }
 
   /** Returns whether a token was already consumed (used-marker present). */
@@ -253,7 +372,11 @@ export class SingleUseTokenCache<TPayload> {
         return null;
       }
 
-      return { payload: parsed.payload, expiresAt: parsed.expiresAt };
+      return {
+        payload: parsed.payload,
+        expiresAt: parsed.expiresAt,
+        ...(typeof parsed.mintedAt === 'number' ? { mintedAt: parsed.mintedAt } : {}),
+      };
     } catch {
       return null;
     }

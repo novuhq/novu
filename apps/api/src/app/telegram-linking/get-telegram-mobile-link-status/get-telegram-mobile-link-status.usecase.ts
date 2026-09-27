@@ -20,6 +20,10 @@ export class GetTelegramMobileLinkStatus {
   async execute(command: GetTelegramMobileLinkStatusCommand): Promise<GetTelegramMobileLinkStatusResult> {
     let payload: Awaited<ReturnType<TelegramMobileLinkTokenService['verify']>>;
     try {
+      if (command.extend) {
+        await this.tokenService.extendAgentSetup(command.token);
+      }
+
       payload = await this.tokenService.verify(command.token);
     } catch (err) {
       if (err instanceof InvalidTelegramMobileTokenError) {

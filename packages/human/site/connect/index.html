@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+<title>Connect Telegram — human.md</title>
+<meta name="description" content="Finish connecting Telegram so agents on your machine can reach you with human." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0908;
+    --bg-raise: #100f0d;
+    --line: rgba(235, 226, 214, 0.09);
+    --line-strong: rgba(235, 226, 214, 0.18);
+    --text: #ebe2d6;
+    --text-dim: #8f887d;
+    --text-faint: #5c574f;
+    --ember: #ff5c30;
+    --ember-dim: #b4432a;
+    --ok: #8fbf7f;
+    --warn: #d9a441;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Geist", -apple-system, sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+
+  ::selection { background: var(--ember); color: #0a0908; }
+
+  a { color: inherit; }
+
+  .mono { font-family: "Geist Mono", ui-monospace, "SF Mono", monospace; }
+
+  header {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header-inner {
+    max-width: 1060px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px clamp(20px, 4vw, 48px);
+  }
+
+  .wordmark {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .wordmark .tld { color: var(--ember); }
+
+  .header-note {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(40px, 8vw, 96px) clamp(16px, 4vw, 48px) 64px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    border: 1px solid var(--line-strong);
+    background: var(--bg-raise);
+    padding: clamp(24px, 4vw, 36px);
+  }
+
+  .eyebrow {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ember);
+    margin: 0 0 18px;
+  }
+
+  .eyebrow::before { content: "// "; color: var(--text-faint); }
+
+  h1 {
+    font-weight: 400;
+    font-size: clamp(1.6rem, 4vw, 2rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin: 0 0 14px;
+  }
+
+  h1 em {
+    font-family: "Instrument Serif", serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ember);
+  }
+
+  p { margin: 0 0 12px; color: var(--text-dim); }
+
+  p strong { color: var(--text); font-weight: 500; }
+
+  code {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.82em;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+  }
+
+  .steps {
+    list-style: none;
+    margin: 26px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+  }
+
+  .step .num {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    padding-top: 3px;
+  }
+
+  .step h2 {
+    font-weight: 500;
+    font-size: 0.98rem;
+    margin: 0 0 6px;
+    color: var(--text);
+  }
+
+  .step p { font-size: 0.92rem; margin-bottom: 10px; }
+
+  .btn {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: "Geist Mono", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    padding: 11px 16px;
+    border: 1px solid var(--line-strong);
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+
+  .btn:hover { border-color: var(--text-dim); }
+
+  .btn.primary {
+    width: 100%;
+    background: var(--ember);
+    border-color: var(--ember);
+    color: #0a0908;
+    font-weight: 500;
+  }
+
+  .btn.primary:hover { background: #ff6f47; border-color: #ff6f47; }
+
+  .btn[disabled], .btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .btn .arrow { color: var(--ember); }
+  .btn.primary .arrow { color: #0a0908; }
+
+  textarea {
+    width: 100%;
+    min-height: 150px;
+    resize: vertical;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+    padding: 12px 14px;
+    font-family: "Geist Mono", monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  textarea::placeholder { color: var(--text-faint); }
+
+  textarea:focus { border-color: var(--text-dim); }
+
+  textarea.detected { border-color: var(--ok); }
+
+  .parse-status {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.72rem;
+    margin: 8px 0 0;
+    min-height: 1.4em;
+    color: var(--text-dim);
+  }
+
+  .parse-status.ok { color: var(--ok); }
+  .parse-status.warn { color: var(--warn); }
+
+  .error {
+    margin: 16px 0 0;
+    padding: 10px 12px;
+    border: 1px solid var(--ember-dim);
+    color: var(--text);
+    font-size: 0.88rem;
+    background: rgba(255, 92, 48, 0.06);
+  }
+
+  .actions { margin-top: 22px; }
+
+  .status-icon {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Geist Mono", monospace;
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+  }
+
+  .status-icon.ok { color: var(--ok); border-color: rgba(143, 191, 127, 0.4); }
+  .status-icon.warn { color: var(--warn); border-color: rgba(217, 164, 65, 0.4); }
+
+  .spinner {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--line-strong);
+    border-top-color: var(--ember);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 12px 0 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .footnote {
+    font-family: "Geist Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    margin: 22px 0 0;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 16px clamp(20px, 4vw, 48px);
+    font-family: "Geist Mono", monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    text-align: center;
+  }
+
+  footer a { color: var(--text-dim); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a class="wordmark" href="/sapien.html">human<span class="tld">.md</span></a>
+    <span class="header-note">telegram · setup</span>
+  </div>
+</header>
+
+<main>
+  <!-- Loading -->
+  <section class="card" id="view-loading">
+    <p class="eyebrow">Checking link</p>
+    <div class="spinner" aria-label="Loading"></div>
+    <p>One moment while we verify your setup link…</p>
+  </section>
+
+  <!-- Inactive (expired / used / invalid) -->
+  <section class="card" id="view-inactive" hidden>
+    <div class="status-icon warn">!</div>
+    <p class="eyebrow">Link inactive</p>
+    <h1 id="inactive-title"></h1>
+    <p id="inactive-desc"></p>
+    <p class="footnote">Setup links are single-use and time-limited on purpose.</p>
+  </section>
+
+  <!-- Form -->
+  <section class="card" id="view-form" hidden>
+    <p class="eyebrow">Connect Telegram</p>
+    <h1>Your <em>private line</em> to your agents.</h1>
+    <p>
+      Agents on your machine will reach you through a Telegram bot that only you control.
+      Two steps, all on this phone or browser.
+    </p>
+
+    <ol class="steps">
+      <li class="step">
+        <span class="num">01</span>
+        <div>
+          <h2>Create the bot</h2>
+          <p>
+            Open <strong>@BotFather</strong> in Telegram, send <code>/newbot</code>, and pick a name.
+            BotFather replies with a confirmation message that contains your token.
+          </p>
+          <a class="btn" href="https://t.me/botfather" target="_blank" rel="noopener noreferrer">
+            Open BotFather <span class="arrow">→</span>
+          </a>
+        </div>
+      </li>
+
+      <li class="step">
+        <span class="num">02</span>
+        <div>
+          <h2>Paste BotFather's reply</h2>
+          <p>Paste the <strong>entire message</strong>. We pull the token out ourselves; nothing else to fill in.</p>
+          <textarea
+            id="bot-message"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            placeholder="Done! Congratulations on your new bot…
+
+Use this token to access the HTTP API:
+1234567890:AAFdT8_…
+
+You will find it at t.me/YourBot_bot."
+          ></textarea>
+          <p class="parse-status" id="parse-status" aria-live="polite"></p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="error" id="submit-error" hidden></div>
+
+    <div class="actions">
+      <button class="btn primary" id="submit" type="button" disabled>Connect bot</button>
+    </div>
+  </section>
+
+  <!-- Success -->
+  <section class="card" id="view-success" hidden>
+    <div class="status-icon ok">✓</div>
+    <p class="eyebrow">Bot connected</p>
+    <h1><span class="mono" id="success-bot">@bot</span> is <em>wired up</em>.</h1>
+    <p id="success-desc">
+      One last tap: open the bot in Telegram and press <strong>Start</strong> so it knows it's you.
+      Your terminal will confirm as soon as it sees you.
+    </p>
+    <div class="actions">
+      <a class="btn primary" id="deep-link" href="#" target="_blank" rel="noopener noreferrer">
+        Connect &amp; test <span class="arrow">→</span>
+      </a>
+    </div>
+    <p class="footnote">After you tap Start you can close this tab.</p>
+  </section>
+</main>
+
+<footer>
+  <a href="/sapien.html">human.md</a> · the human API for agents
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var API_BASE = 'https://api.novu.co';
+  var STATUS_PATH = '/v1/integrations/mobile-configure/status';
+  var CONSUME_PATH = '/v1/integrations/mobile-configure';
+  var HEARTBEAT_MS = 60 * 1000;
+  var RERUN_HINT = 'Back in your terminal, run human setup telegram again to get a fresh link.';
+
+  // Kept in sync with apps/dashboard/src/utils/telegram-bot-token.ts.
+  var BOT_TOKEN_PATTERN = /^\d{8,}:[A-Za-z0-9_-]{35,}$/;
+  var TOKEN_IN_TEXT_PATTERN = /(\d{8,}:[A-Za-z0-9_-]{35,})/;
+  var USERNAME_PATTERN = /t\.me\/([A-Za-z0-9_]+)/i;
+
+  var views = {
+    loading: document.getElementById('view-loading'),
+    inactive: document.getElementById('view-inactive'),
+    form: document.getElementById('view-form'),
+    success: document.getElementById('view-success')
+  };
+
+  var textarea = document.getElementById('bot-message');
+  var parseStatus = document.getElementById('parse-status');
+  var submitButton = document.getElementById('submit');
+  var submitError = document.getElementById('submit-error');
+
+  var token = readToken();
+  var heartbeat = null;
+  var parsedToken = null;
+
+  function readToken() {
+    var hash = (window.location.hash || '').replace(/^#/, '').trim();
+    if (!hash) return '';
+
+    // Tolerate a `#token=…` form as well as the bare `#…` form.
+    var match = hash.match(/^(?:token=)?([A-Za-z0-9_-]+)$/);
+
+    return match ? match[1] : '';
+  }
+
+  function show(name) {
+    Object.keys(views).forEach(function (key) {
+      views[key].hidden = key !== name;
+    });
+  }
+
+  function showInactive(reason) {
+    stopHeartbeat();
+    var title = document.getElementById('inactive-title');
+    var desc = document.getElementById('inactive-desc');
+
+    if (reason === 'expired') {
+      title.textContent = 'This setup link has expired';
+      desc.textContent = 'Setup links stay open while you work but eventually time out. ' + RERUN_HINT;
+    } else if (reason === 'used') {
+      title.textContent = 'This setup link was already used';
+      desc.textContent = 'Each link works exactly once. If your bot is connected, you are done: check your terminal. Otherwise ' + RERUN_HINT.charAt(0).toLowerCase() + RERUN_HINT.slice(1);
+    } else {
+      title.textContent = 'This setup link is not valid';
+      desc.textContent = 'The link may be incomplete or was minted for a different environment. ' + RERUN_HINT;
+    }
+
+    show('inactive');
+  }
+
+  function unwrap(body) {
+    if (body && typeof body === 'object' && 'data' in body && body.data && typeof body.data === 'object') {
+      return body.data;
+    }
+
+    return body;
+  }
+
+  function extractErrorCode(body) {
+    if (!body || typeof body !== 'object') return null;
+    if (typeof body.code === 'string') return body.code;
+    if (body.message && typeof body.message === 'object' && typeof body.message.code === 'string') return body.message.code;
+    if (body.data && typeof body.data === 'object' && typeof body.data.code === 'string') return body.data.code;
+
+    return null;
+  }
+
+  function extractErrorMessage(body) {
+    if (!body || typeof body !== 'object') return null;
+    if (typeof body.message === 'string') return body.message;
+    if (body.message && typeof body.message === 'object' && typeof body.message.message === 'string') return body.message.message;
+    if (Array.isArray(body.message) && body.message.length) return String(body.message[0]);
+
+    return null;
+  }
+
+  function safeJson(response) {
+    return response.text().then(function (text) {
+      if (!text) return null;
+      try {
+        return JSON.parse(text);
+      } catch (_err) {
+        return null;
+      }
+    });
+  }
+
+  function fetchStatus(extend) {
+    var url = API_BASE + STATUS_PATH + '?token=' + encodeURIComponent(token) + (extend ? '&extend=1' : '');
+
+    return fetch(url, { method: 'GET', headers: { Accept: 'application/json' } }).then(function (response) {
+      return safeJson(response).then(function (body) {
+        if (!response.ok) {
+          throw new Error(extractErrorMessage(body) || 'Could not verify the setup link.');
+        }
+
+        return unwrap(body);
+      });
+    });
+  }
+
+  function startHeartbeat() {
+    stopHeartbeat();
+    heartbeat = window.setInterval(function () {
+      fetchStatus(true)
+        .then(function (status) {
+          if (status && status.valid === false) {
+            showInactive(status.reason);
+          }
+        })
+        .catch(function () {
+          // Transient network trouble: keep the form; the next tick retries.
+        });
+    }, HEARTBEAT_MS);
+  }
+
+  function stopHeartbeat() {
+    if (heartbeat !== null) {
+      window.clearInterval(heartbeat);
+      heartbeat = null;
+    }
+  }
+
+  function parseBotFatherMessage(text) {
+    if (!text) return { token: null, botUsername: null };
+
+    var tokenMatch = text.match(TOKEN_IN_TEXT_PATTERN);
+    var usernameMatch = text.match(USERNAME_PATTERN);
+
+    return {
+      token: tokenMatch ? tokenMatch[1] : null,
+      botUsername: usernameMatch ? usernameMatch[1] : null
+    };
+  }
+
+  function isValidBotToken(value) {
+    return BOT_TOKEN_PATTERN.test(value);
+  }
+
+  function updateParseStatus() {
+    var draft = textarea.value;
+    var parsed = parseBotFatherMessage(draft);
+    parsedToken = parsed.token && isValidBotToken(parsed.token) ? parsed.token : null;
+
+    textarea.classList.toggle('detected', Boolean(parsedToken));
+    submitButton.disabled = !parsedToken;
+
+    if (!draft.trim()) {
+      parseStatus.textContent = '';
+      parseStatus.className = 'parse-status';
+
+      return;
+    }
+
+    if (!parsedToken) {
+      parseStatus.textContent = 'No token found yet. Paste the whole message — it starts with "Done!".';
+      parseStatus.className = 'parse-status warn';
+
+      return;
+    }
+
+    parseStatus.textContent = parsed.botUsername
+      ? 'Token detected for @' + parsed.botUsername + '.'
+      : 'Token detected.';
+    parseStatus.className = 'parse-status ok';
+  }
+
+  function setSubmitting(isSubmitting) {
+    submitButton.disabled = isSubmitting || !parsedToken;
+    submitButton.textContent = isSubmitting ? 'Connecting…' : 'Connect bot';
+    textarea.disabled = isSubmitting;
+  }
+
+  function submit() {
+    if (!parsedToken) return;
+
+    submitError.hidden = true;
+    setSubmitting(true);
+
+    fetch(API_BASE + CONSUME_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ token: token, botToken: parsedToken })
+    })
+      .then(function (response) {
+        return safeJson(response).then(function (body) {
+          if (!response.ok) {
+            var code = extractErrorCode(body);
+            if (code === 'token_already_used') return showInactive('used');
+            if (code === 'token_expired') return showInactive('expired');
+            if (code === 'token_invalid') return showInactive('invalid');
+
+            throw new Error(
+              extractErrorMessage(body) ||
+                'Telegram did not accept that token. Double-check the message from @BotFather and try again.'
+            );
+          }
+
+          showSuccess(unwrap(body) || {});
+        });
+      })
+      .catch(function (err) {
+        submitError.textContent = err && err.message ? err.message : 'Something went wrong. Please try again.';
+        submitError.hidden = false;
+        setSubmitting(false);
+      });
+  }
+
+  function showSuccess(result) {
+    stopHeartbeat();
+
+    var botUsername = result.botUsername || '';
+    var deepLinkUrl = result.deepLinkUrl || (botUsername ? 'https://t.me/' + botUsername : '');
+
+    document.getElementById('success-bot').textContent = botUsername ? '@' + botUsername : 'Your bot';
+
+    var deepLink = document.getElementById('deep-link');
+    if (deepLinkUrl) {
+      deepLink.href = deepLinkUrl;
+      deepLink.removeAttribute('aria-disabled');
+    } else {
+      deepLink.setAttribute('aria-disabled', 'true');
+      document.getElementById('success-desc').textContent =
+        'The bot is saved. Open it in Telegram and press Start; your terminal will confirm as soon as it sees you.';
+    }
+
+    show('success');
+  }
+
+  textarea.addEventListener('input', updateParseStatus);
+  submitButton.addEventListener('click', submit);
+
+  if (!token) {
+    showInactive('invalid');
+
+    return;
+  }
+
+  fetchStatus(true)
+    .then(function (status) {
+      if (!status || status.valid !== true) {
+        showInactive(status && status.reason ? status.reason : 'invalid');
+
+        return;
+      }
+
+      show('form');
+      textarea.focus();
+      startHeartbeat();
+    })
+    .catch(function () {
+      showInactive('invalid');
+    });
+})();
+</script>
+</body>
+</html>

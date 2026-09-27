@@ -1,3 +1,4 @@
+import pc from 'picocolors';
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
 import {
   type CreateInteractionCard,
@@ -9,7 +10,7 @@ import {
   type InteractionKind,
 } from '../api/human';
 import { type HumanCliConfig, NOT_SET_UP_MESSAGE, resolveConfig, resolveVia } from '../config';
-import { EXIT_TIMEOUT, emitResult, fail } from '../output';
+import { EXIT_TIMEOUT, emitResult, fail, SetupStillPendingError } from '../output';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 
@@ -290,6 +291,11 @@ export function handleError(err: unknown): never {
 
   if (err instanceof HumanApiError) {
     fail(err.status ? `${err.message} (${err.status})` : err.message);
+  }
+
+  if (err instanceof SetupStillPendingError) {
+    process.stderr.write(`${pc.yellow('pending:')} ${err.message}\n`);
+    process.exit(EXIT_TIMEOUT);
   }
 
   fail(err instanceof Error ? err.message : String(err));

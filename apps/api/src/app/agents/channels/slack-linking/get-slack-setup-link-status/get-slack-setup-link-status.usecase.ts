@@ -22,6 +22,10 @@ export class GetSlackSetupLinkStatus {
   ) {}
 
   async execute(command: GetSlackSetupLinkStatusCommand): Promise<GetSlackSetupLinkStatusResult> {
+    if (command.extend) {
+      await this.tokenService.extendSlackAgentSetup(command.token);
+    }
+
     let payload: SlackAgentSetupLinkPayload;
     try {
       payload = await this.tokenService.verifySlackAgentSetup(command.token);
