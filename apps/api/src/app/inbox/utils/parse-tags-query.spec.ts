@@ -31,4 +31,14 @@ describe('parseTagsQueryValue', () => {
   it('parses explicit { or }', () => {
     expect(parseTagsQueryValue({ or: [1, 'x'] })).to.deep.equal({ or: ['1', 'x'] });
   });
+
+  it('parses indexed object representing overflowed flat tags (>20) as flat string[] (#12719)', () => {
+    const overflowTags: Record<string, string> = {};
+    for (let i = 0; i <= 20; i++) {
+      overflowTags[String(i)] = `tag_${i}`;
+    }
+
+    const expected = Array.from({ length: 21 }, (_, i) => `tag_${i}`);
+    expect(parseTagsQueryValue(overflowTags)).to.deep.equal(expected);
+  });
 });
