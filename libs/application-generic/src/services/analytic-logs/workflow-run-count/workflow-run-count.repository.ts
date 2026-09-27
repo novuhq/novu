@@ -228,12 +228,36 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
    * Same source and half-open range semantics as `getPlatformUsageByDateRange`, but one row per
    * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
    * `day` is the UTC calendar day as `YYYY-MM-DD`.
+   *
+   * When `minimumOrganizationTotal` is set, only organizations whose `sum(count)` over that same
+   * window is at least the minimum are returned.
    */
   async getPlatformDailyUsageByDateRange(
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    minimumOrganizationTotal?: number
   ): Promise<Array<{ organization_id: string; day: string; count: string }>> {
     const { start, end } = toInclusiveUtcDays(startDate, endDate);
+    const params: Record<string, unknown> = {
+      startDate: start,
+      endDate: end,
+    };
+    let organizationTotalFilter = '';
+
+    if (minimumOrganizationTotal !== undefined) {
+      organizationTotalFilter = `
+        AND organization_id IN (
+          SELECT organization_id
+          FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+          WHERE
+            date >= {startDate:Date}
+            AND date <= {endDate:Date}
+            AND event_type = 'workflow_run_status_processing'
+          GROUP BY organization_id
+          HAVING sum(count) >= {minimumOrganizationTotal:UInt64}
+        )`;
+      params.minimumOrganizationTotal = minimumOrganizationTotal;
+    }
 
     const query = `
       SELECT
@@ -245,6 +269,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
         date >= {startDate:Date}
         AND date <= {endDate:Date}
         AND event_type = 'workflow_run_status_processing'
+        ${organizationTotalFilter}
       GROUP BY organization_id, date
       ORDER BY organization_id, date
     `;
@@ -255,10 +280,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
       count: string;
     }>({
       query,
-      params: {
-        startDate: start,
-        endDate: end,
-      },
+      params,
     });
 
     return result.data;
