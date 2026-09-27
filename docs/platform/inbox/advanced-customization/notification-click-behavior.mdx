@@ -10,8 +10,10 @@ The Inbox component provides props that can be used to manage navigation and eve
 The Inbox component uses the `routerPush` prop to make your notifications navigable. When you define a `redirect.url` in your workflow definitions, Novu automatically passes this URL to the `routerPush` function you provide.
 
 <Tabs>
-  <Tab>
+  <Tab title="Next.js">
     ```tsx
+    import { Inbox } from '@novu/react';
+    import { useRouter } from 'next/navigation';
 
     export function NovuInbox() {
       const router = useRouter();
@@ -27,8 +29,10 @@ The Inbox component uses the `routerPush` prop to make your notifications naviga
     ```
 
   </Tab>
-    <Tab>
+  <Tab title="React Router">
     ```tsx
+    import { Inbox } from '@novu/react';
+    import { useNavigate } from 'react-router-dom';
 
     export function NovuInbox() {
       const navigate = useNavigate();
@@ -44,8 +48,10 @@ The Inbox component uses the `routerPush` prop to make your notifications naviga
     ```
 
   </Tab>
-  <Tab>
+  <Tab title="Remix">
     ```tsx
+    import { Inbox } from '@novu/react';
+    import { useNavigate } from '@remix-run/react';
 
     export function NovuInbox() {
       const navigate = useNavigate();
@@ -61,8 +67,10 @@ The Inbox component uses the `routerPush` prop to make your notifications naviga
     ```
 
   </Tab>
-  <Tab>
+  <Tab title="Gatsby">
     ```tsx
+    import { Inbox } from '@novu/react';
+    import { navigate } from 'gatsby';
 
     export function NovuInbox() {
       return (
