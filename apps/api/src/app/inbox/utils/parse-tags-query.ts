@@ -77,10 +77,12 @@ export function parseTagsQueryValue(value: unknown): TagsFilter | undefined {
 
     const keys = Object.keys(record).sort((a, b) => Number(a) - Number(b));
     const groups: string[][] = [];
+    let hasArrayGroup = false;
 
     for (const key of keys) {
       const group = record[key];
       if (Array.isArray(group)) {
+        hasArrayGroup = true;
         groups.push(group.map((t) => String(t)));
       } else if (group !== undefined && group !== null) {
         groups.push([String(group)]);
@@ -98,6 +100,10 @@ export function parseTagsQueryValue(value: unknown): TagsFilter | undefined {
       }
 
       return only;
+    }
+
+    if (!hasArrayGroup) {
+      return groups.map((g) => g[0]);
     }
 
     return {
