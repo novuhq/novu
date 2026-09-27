@@ -1,6 +1,6 @@
 import { workflow } from '@novu/framework';
 import { z } from 'zod';
-import { renderUsageLimitsEmail } from './email';
+import { getUsageLimitsCopy, renderUsageLimitsEmail } from './email';
 import { UsageLimitsAlertState, usageLimitsAlertStateSchema } from './schemas';
 
 /** How often the caller re-sends a `blocked` alert while the organization stays blocked. */
@@ -79,15 +79,28 @@ export const usageLimitsWorkflow = workflow(
     await step.inApp(
       'in-app',
       async (controls) => {
+        const isBlocked = payload.alertState === 'blocked';
+
         return {
-          subject: controls.subject,
-          body: controls.body,
+          subject: isBlocked ? controls.blockedSubject : controls.subject,
+          body: isBlocked ? controls.blockedBody : controls.body,
+          primaryAction: {
+            label: getUsageLimitsCopy(payload.alertState ?? 'approaching_limit').buttonLabel,
+            // Relative so the user stays on their region's dashboard host.
+            redirect: { url: '/settings/billing', target: '_self' },
+          },
         };
       },
       {
         controlSchema: z.object({
           subject: z.string().default('You are approaching your usage limits'),
+          blockedSubject: z.string().default('Usage limit reached: new notifications are blocked'),
           body: z.string().default('You have used {{payload.percentage}}% of your monthly events'),
+          blockedBody: z
+            .string()
+            .default(
+              'You have used 100% of your monthly events. Upgrade to send again, or wait for your next billing cycle.'
+            ),
         }),
       }
     );

@@ -22,28 +22,28 @@ interface IUsageLimitsCopy {
 
 const formatCount = (value: number) => value.toLocaleString('en-US');
 
-function getUsageLimitsCopy(alertState: UsageLimitsAlertState): IUsageLimitsCopy {
+export function getUsageLimitsCopy(alertState: UsageLimitsAlertState): IUsageLimitsCopy {
   switch (alertState) {
     case 'approaching_limit':
       return {
         allowanceLabel: 'monthly limit',
         message:
           'To ensure uninterrupted service and access to additional features, we recommend upgrading your plan before reaching the limit.',
-        buttonLabel: 'Upgrade Your Plan',
+        buttonLabel: 'Upgrade your plan',
         note: 'Note: Once you consume 100% of your monthly limit, notifications will be blocked until you upgrade or the next billing cycle begins.',
       };
     case 'blocked':
       return {
         allowanceLabel: 'monthly limit',
         message: 'New notifications are blocked until you upgrade your plan or the next billing cycle begins.',
-        buttonLabel: 'Upgrade Your Plan',
+        buttonLabel: 'Upgrade your plan',
       };
     case 'alert_level_reached':
       return {
         allowanceLabel: 'monthly usage alert level',
         message:
           'Your notifications will keep sending. If this volume is unexpected, review your workflows and triggers, or reach out to us to discuss a plan that fits your usage.',
-        buttonLabel: 'Review Your Usage',
+        buttonLabel: 'Review your usage',
       };
     default: {
       const unhandled: never = alertState;
