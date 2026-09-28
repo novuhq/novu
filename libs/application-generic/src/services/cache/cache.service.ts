@@ -106,6 +106,20 @@ export class CacheService implements ICacheService {
     return this.client?.get(key);
   }
 
+  /** Values in key order, `null` for a missing key. */
+  public async mget(keys: string[]): Promise<(string | null)[]> {
+    if (!this.client || keys.length === 0) {
+      return [];
+    }
+
+    // Every key is its own `{...}` hash tag, so a multi-key MGET would fail with CROSSSLOT on a cluster.
+    if (this.cacheInMemoryProviderService.providerInUseIsInClusterMode()) {
+      return Promise.all(keys.map((key) => this.client.get(key)));
+    }
+
+    return this.client.mget(keys);
+  }
+
   public async del(key: string | string[]): Promise<number> {
     const keys = Array.isArray(key) ? key : [key];
 

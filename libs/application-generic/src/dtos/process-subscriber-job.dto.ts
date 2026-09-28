@@ -20,6 +20,7 @@ export interface IProcessSubscriberDataDto {
   transactionId: string;
   requestId: string;
   identifier: string;
+  // biome-ignore lint/suspicious/noExplicitAny: the trigger payload is arbitrary customer JSON
   payload: any;
   overrides: TriggerOverrides;
   _agentId?: string | null;
@@ -34,6 +35,12 @@ export interface IProcessSubscriberDataDto {
   requestCategory?: TriggerRequestCategoryEnum;
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
   controls?: StatelessControls;
+  /**
+   * Set by the API when IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED is on; the worker increments the
+   * usage counter only for stamped jobs, so jobs queued before the flag flips are never double-counted.
+   * Transitional; remove once the flag is on for all organizations and the queue has drained (NV-8853).
+   */
+  incrementUsageInWorker?: boolean;
 }
 
 export interface IProcessSubscriberJobDto extends IJobParams {

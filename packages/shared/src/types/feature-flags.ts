@@ -39,6 +39,11 @@ export enum FeatureFlagsKeysEnum {
   IS_USAGE_ALERTS_ENABLED = 'IS_USAGE_ALERTS_ENABLED',
   /** Stops the usage-alerts cron before it reads usage. Default off, so the cron runs. */
   IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
+  /**
+   * Organization-scoped, read only by the API at enqueue: moves the usage counter increment into the worker.
+   * Transitional; remove with the API increment path once on for all organizations (NV-8853).
+   */
+  IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED = 'IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED',
   IS_USE_MERGED_DIGEST_ID_ENABLED = 'IS_USE_MERGED_DIGEST_ID_ENABLED',
   IS_V2_ENABLED = 'IS_V2_ENABLED',
 
