@@ -34,7 +34,7 @@ export const WEBEX_DEFAULT_OAUTH_SCOPES = [
   'spark:kms',
 ] as const;
 
-export const WEBEX_LINK_USER_OAUTH_SCOPES = ['spark:people_read'] as const;
+const WEBEX_LINK_USER_OAUTH_SCOPES = ['spark:people_read'] as const;
 
 @Injectable()
 export class GenerateWebexOauthUrl {

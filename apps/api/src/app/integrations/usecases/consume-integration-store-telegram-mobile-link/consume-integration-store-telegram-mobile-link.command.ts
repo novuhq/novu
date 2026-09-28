@@ -16,4 +16,4 @@ export class ConsumeIntegrationStoreTelegramMobileLinkCommand extends BaseComman
   botToken: string;
 }
 
-export { BOT_TOKEN_PATTERN };
+

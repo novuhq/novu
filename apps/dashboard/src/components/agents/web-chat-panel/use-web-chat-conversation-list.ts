@@ -12,7 +12,7 @@ const VISIBLE_LIMIT = 5;
 const PAGE_SIZE = 20;
 const MAX_PAGES = 5;
 
-export const webChatConversationListQueryKey = (
+const webChatConversationListQueryKey = (
   agentIdentifier: string,
   environmentIdentifier: string,
   subscriberId: string
