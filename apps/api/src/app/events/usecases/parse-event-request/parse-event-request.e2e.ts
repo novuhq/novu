@@ -129,6 +129,35 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     expect(result.acknowledged).to.be.true;
   });
 
+  it('should validate payload schemas that declare JSON Schema draft 2020-12', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const templateWithSchema = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithSchema.triggers[0].identifier
+    );
+
+    command.payload = { name: 'John Doe' };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+  });
+
   it('should skip validation when validatePayload is disabled', async () => {
     const transactionId = uuid();
     const subscriber = await subscribersService.createSubscriber();
