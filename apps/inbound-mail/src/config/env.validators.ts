@@ -1,17 +1,18 @@
-import { assertQueueBackendConfig, isClusterModeEnabled } from '@novu/application-generic';
+import { assertQueueBackendConfig, isBullMqEnabled, isClusterModeEnabled } from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend, StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 
 const processEnv = process.env as Record<string, string>;
 
 /**
+ * BullMQ Redis only. Inbound mail has no cache of its own.
+ *
+ * `QUEUE_BACKEND=sqs` does not open MemoryDB or any other workflow Redis.
  * Cluster mode reads REDIS_CLUSTER_SERVICE_HOST and REDIS_CLUSTER_SERVICE_PORTS.
- * Standalone mode requires REDIS_HOST and REDIS_PORT, and leaves the cluster
- * keys optional.
+ * Standalone mode requires REDIS_HOST and REDIS_PORT.
  *
  * Each key lives in only one branch. Declaring the cluster keys again later as
- * optional would override this branch, and a cluster process would still be
- * asked for REDIS_HOST and REDIS_PORT.
+ * optional would override this branch.
  */
 function clusterRedisValidators() {
   return {
@@ -29,16 +30,23 @@ function standaloneRedisValidators() {
   };
 }
 
+function bullMqRedisValidators() {
+  if (isClusterModeEnabled()) {
+    return clusterRedisValidators();
+  }
+
+  return standaloneRedisValidators();
+}
+
 export function createEnvValidators() {
   return {
     TZ: str({ default: 'UTC' }),
     NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local', 'staging'], default: 'local' }),
     /*
      * Same cluster check the Redis runtime uses: IS_IN_MEMORY_CLUSTER_MODE_ENABLED
-     * or IN_MEMORY_CLUSTER_MODE_ENABLED. Requiring REDIS_HOST unconditionally
-     * fails a cluster deployment that only sets the second flag.
+     * or IN_MEMORY_CLUSTER_MODE_ENABLED. Skipped entirely in SQS-only mode.
      */
-    ...(isClusterModeEnabled() ? clusterRedisValidators() : standaloneRedisValidators()),
+    ...(isBullMqEnabled() ? bullMqRedisValidators() : {}),
     REDIS_TLS: json({ default: undefined }),
     IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
     REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),

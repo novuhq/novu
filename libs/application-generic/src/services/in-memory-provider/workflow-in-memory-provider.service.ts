@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { isBullMqEnabled } from '../../config/queue-backend';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderClient, InMemoryProviderEnum } from './types';
@@ -19,6 +20,8 @@ const isMemoryDbConfigured = (): boolean =>
  *   enabling cluster mode. MemoryDB wins if both are configured.
  * - Novu Cloud uses MemoryDB, falling back to Redis Cluster when MemoryDB is
  *   not configured (see /in-memory-provider/providers/index.ts).
+ * - `QUEUE_BACKEND=sqs` never calls this. BullMQ is gone, so MemoryDB is not
+ *   opened. Cache and sockets stay on ElastiCache.
  *
  * Selection is intent-based, never validated here: cluster mode already routes
  * construction through the cluster path, so silently returning REDIS on an
@@ -43,10 +46,21 @@ export const selectWorkflowInMemoryProvider = (): InMemoryProviderEnum => {
 };
 
 export class WorkflowInMemoryProviderService {
-  public inMemoryProviderService: InMemoryProviderService;
+  public inMemoryProviderService?: InMemoryProviderService;
   public isCluster: boolean;
 
   constructor() {
+    /*
+     * MemoryDB and the workflow Redis exist for BullMQ. SQS-only keeps
+     * ElastiCache for cache and sockets and must not open this client.
+     */
+    if (!isBullMqEnabled()) {
+      this.isCluster = false;
+      Logger.log('BullMQ is disabled; not connecting workflow Redis or MemoryDB', LOG_CONTEXT);
+
+      return;
+    }
+
     const provider = selectWorkflowInMemoryProvider();
     this.isCluster = this.isClusterMode();
 
@@ -69,24 +83,36 @@ export class WorkflowInMemoryProviderService {
   }
 
   public async initialize(): Promise<void> {
+    if (!this.inMemoryProviderService) {
+      return;
+    }
+
     await this.inMemoryProviderService.delayUntilReadiness();
   }
 
   public getClient(): InMemoryProviderClient {
-    return this.inMemoryProviderService.inMemoryProviderClient;
+    return this.inMemoryProviderService?.inMemoryProviderClient;
   }
 
   public isReady(): boolean {
-    return this.inMemoryProviderService.isClientReady();
+    return this.inMemoryProviderService?.isClientReady() ?? false;
   }
 
   public providerInUseIsInClusterMode(): boolean {
+    if (!this.inMemoryProviderService) {
+      return false;
+    }
+
     const providerConfigured = this.inMemoryProviderService.getProvider.configured;
 
     return this.isCluster || providerConfigured !== InMemoryProviderEnum.REDIS;
   }
 
   public async shutdown(): Promise<void> {
+    if (!this.inMemoryProviderService) {
+      return;
+    }
+
     await this.inMemoryProviderService.shutdown();
   }
 }
