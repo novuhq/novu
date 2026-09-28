@@ -135,7 +135,7 @@ describe('GetOrganizationPeriodUsage #novu-v2', () => {
 
   const mockUsageCounterCache = {
     get: sinon.stub().resolves(null),
-    set: sinon.stub().resolves(),
+    seedIfMissing: sinon.stub().resolves(),
   };
 
   const createUseCase = () => {
