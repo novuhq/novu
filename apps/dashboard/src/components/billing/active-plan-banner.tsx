@@ -2,7 +2,6 @@ import { getCalApi } from '@calcom/embed-react';
 import { useOrganization } from '@clerk/react';
 import {
   ApiServiceLevelEnum,
-  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   getFeatureForTierAsText,
@@ -18,7 +17,6 @@ import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useFetchConversationUsage } from '../../hooks/use-fetch-conversation-usage';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
@@ -388,11 +386,11 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
   const { subscription, daysLeft } = useFetchSubscription();
   const { organization } = useOrganization();
   const { conversationUsage } = useFetchConversationUsage();
-  const isUsageLimitsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED, false);
   const has = useHasPermission();
   const { isDrawerRequested, setIsDrawerRequested } = useUsageLimitsDrawerParam();
 
-  const usageLimits = isUsageLimitsEnabled ? subscription?.usageLimits : null;
+  // Null while IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED is off for the organization, as evaluated by the API.
+  const usageLimits = subscription?.usageLimits ?? null;
   const canConfigureUsageLimits = !!usageLimits?.isConfigurable && has({ permission: PermissionsEnum.BILLING_WRITE });
   const openUsageLimitsDrawer = () => setIsDrawerRequested(true);
 
@@ -423,7 +421,7 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
           }
           footer={
             subscription &&
-            usageLimits && (
+            usageLimits?.isConfigurable && (
               <UsageLimitsStatusPills
                 alertsEnabled={usageLimits.alerts.enabled}
                 pauseAtLimit={usageLimits.pauseAtLimit}
