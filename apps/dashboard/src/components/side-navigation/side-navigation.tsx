@@ -36,7 +36,7 @@ import { HomeMenuItem } from './getting-started-menu-item';
 import { NavigationGroup } from './navigation-group';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
-import { UsageCard } from './usage-card';
+import { PausedUsageCard, UsageCard } from './usage-card';
 
 function MailAiLineIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -65,6 +65,8 @@ const BottomSection = ({
   subscription,
   daysLeft,
 }: BottomNavigationProps) => {
+  const isUsageLimitsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED, false);
+
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">
@@ -72,6 +74,11 @@ const BottomSection = ({
       </div>
     );
   }
+
+  const isPaidTier =
+    subscription?.apiServiceLevel === ApiServiceLevelEnum.PRO ||
+    subscription?.apiServiceLevel === ApiServiceLevelEnum.BUSINESS;
+  const showPausedUsageCard = isUsageLimitsEnabled && isPaidTier && !isTrialActive && subscription?.events.isPaused;
 
   return (
     <div className="relative mt-auto gap-8 pt-4">
@@ -81,6 +88,7 @@ const BottomSection = ({
       )}
 
       {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
+      {showPausedUsageCard && subscription && <PausedUsageCard subscription={subscription} />}
       <NavigationGroup>
         <NavigationLink to={ROUTES.SETTINGS_TEAM}>
           <RiUserAddLine className="size-4" />

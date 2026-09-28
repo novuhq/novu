@@ -1,8 +1,10 @@
-import { GetSubscriptionDto } from '@novu/shared';
+import { GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
 import { format } from 'date-fns';
-import { RiCalendarEventLine, RiErrorWarningLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCalendarEventLine, RiErrorWarningFill, RiErrorWarningLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { EDIT_USAGE_LIMITS_ROUTE } from '@/components/billing/utils/usage-limits.constants';
 import { useFetchConversationUsage } from '@/hooks/use-fetch-conversation-usage';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -18,6 +20,9 @@ type UsageMetric = {
   label: string;
   current: number;
   max: number;
+  progressVariant?: UsageStatus['progressVariant'];
+  /** Keeps the plain label at 100% for metrics whose limit is announced elsewhere or doesn't block. */
+  hideLimitReached?: boolean;
 };
 
 export type UsageCardProps = {
@@ -53,12 +58,7 @@ export function UsageCard({ subscription }: UsageCardProps) {
   }
 
   const handleUsageCardClick = () => {
-    track(TelemetryEvent.USAGE_CARD_CLICKED, {
-      currentEvents,
-      maxEvents,
-      usagePercentage: getUsagePercentage(currentEvents, maxEvents),
-      isLimitReached: getUsageStatus(currentEvents, maxEvents).isComplete,
-    });
+    track(TelemetryEvent.USAGE_CARD_CLICKED, getUsageCardClickProperties(currentEvents, maxEvents));
   };
 
   return (
@@ -72,8 +72,74 @@ export function UsageCard({ subscription }: UsageCardProps) {
   );
 }
 
+export type PausedUsageCardProps = {
+  subscription: GetSubscriptionDto;
+};
+
+/** Sidebar card for paid orgs whose workflow runs are paused at their usage limit. */
+export function PausedUsageCard({ subscription }: PausedUsageCardProps) {
+  const track = useTelemetry();
+  const has = useHasPermission();
+  const { conversationUsage } = useFetchConversationUsage();
+
+  const currentEvents = subscription.events.current;
+  const maxEvents = subscription.events.limit ?? subscription.events.included;
+
+  if (maxEvents === null) {
+    return null;
+  }
+
+  const metrics: UsageMetric[] = [];
+
+  // Paid plans have no hard conversation limit, so the row never reads "limit reached".
+  if (conversationUsage && conversationUsage.included !== null) {
+    metrics.push({
+      label: 'Conversations',
+      current: conversationUsage.current,
+      max: conversationUsage.included,
+      hideLimitReached: true,
+    });
+  }
+
+  metrics.push({
+    label: 'Workflow runs',
+    current: currentEvents,
+    max: maxEvents,
+    progressVariant: 'error',
+    hideLimitReached: true,
+  });
+
+  const billingRoute = has({ permission: PermissionsEnum.BILLING_WRITE })
+    ? EDIT_USAGE_LIMITS_ROUTE
+    : ROUTES.SETTINGS_BILLING;
+  const formattedResetDate = formatResetDate(subscription.currentPeriodEnd);
+
+  const handleUsageCardClick = () => {
+    track(TelemetryEvent.USAGE_CARD_CLICKED, getUsageCardClickProperties(currentEvents, maxEvents));
+  };
+
+  return (
+    <Link to={billingRoute} className="bg-warning-lighter mb-2 flex flex-col rounded-lg" onClick={handleUsageCardClick}>
+      <span className="text-warning-dark text-label-xs flex items-center gap-1 px-2 py-1">
+        <RiErrorWarningFill className="text-warning-base size-3.5 shrink-0" />
+        You've reached your usage limit.
+        <RiArrowRightSLine className="ml-auto size-3.5 shrink-0" />
+      </span>
+      <div className="bg-bg-white space-y-2 rounded-lg p-2">
+        {metrics.map((metric) => (
+          <UsageMetricRow key={metric.label} {...metric} />
+        ))}
+        {formattedResetDate && <ResetDateLabel formattedResetDate={formattedResetDate} />}
+      </div>
+    </Link>
+  );
+}
+
 const formatNumber = (num: number): string =>
   num >= 1000 ? `${(num / 1000).toFixed(1).replace(/\.0$/, '')}k` : num.toLocaleString();
+
+const formatResetDate = (resetDate: string | null): string =>
+  resetDate ? format(new Date(resetDate), 'MMM d yyyy') : '';
 
 const getUsagePercentage = (current: number, limit: number): number => Math.min((current / limit) * 100, 100);
 
@@ -87,14 +153,22 @@ const getUsageStatus = (current: number, limit: number): UsageStatus => {
   };
 };
 
-function UsageMetricRow({ label, current, max }: UsageMetric) {
+const getUsageCardClickProperties = (currentEvents: number, maxEvents: number) => ({
+  currentEvents,
+  maxEvents,
+  usagePercentage: getUsagePercentage(currentEvents, maxEvents),
+  isLimitReached: getUsageStatus(currentEvents, maxEvents).isComplete,
+});
+
+function UsageMetricRow({ label, current, max, progressVariant, hideLimitReached = false }: UsageMetric) {
   const percentage = getUsagePercentage(current, max);
-  const { progressVariant, isComplete } = getUsageStatus(current, max);
+  const status = getUsageStatus(current, max);
+  const showLimitReached = status.isComplete && !hideLimitReached;
 
   return (
     <div className="space-y-1">
       <div className="flex items-center">
-        {isComplete ? (
+        {showLimitReached ? (
           <span className="text-error-base text-label-xs flex items-center gap-1">
             <RiErrorWarningLine className="size-3.5" />
             {label} limit reached
@@ -106,7 +180,12 @@ function UsageMetricRow({ label, current, max }: UsageMetric) {
           {formatNumber(current)} / <span className="text-text-soft">{formatNumber(max)}</span>
         </span>
       </div>
-      <Progress value={percentage} max={100} variant={progressVariant} className="h-1 rounded-lg" />
+      <Progress
+        value={percentage}
+        max={100}
+        variant={progressVariant ?? status.progressVariant}
+        className="h-1 rounded-lg"
+      />
     </div>
   );
 }
@@ -135,7 +214,7 @@ function ResetDateLabel({ formattedResetDate }: { formattedResetDate: string }) 
 
 function CardContent({ metrics, resetDate }: CardContentProps) {
   const anyComplete = metrics.some((metric) => getUsageStatus(metric.current, metric.max).isComplete);
-  const formattedResetDate = resetDate ? format(new Date(resetDate), 'MMM d yyyy') : '';
+  const formattedResetDate = formatResetDate(resetDate);
 
   if (anyComplete) {
     return (
