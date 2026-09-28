@@ -34,20 +34,9 @@ describe('ManagedAgentService workflow-origin', () => {
     };
   }
 
-  function makeService(
-    overrides: {
-      listForView?: sinon.SinonStub;
-      findByPlatformMessageId?: sinon.SinonStub;
-      resolveForTurn?: sinon.SinonStub;
-      dispatch?: sinon.SinonStub;
-    } = {}
-  ) {
+  function makeService(overrides: { listForView?: sinon.SinonStub } = {}) {
     const conversationService = {
       listForView: overrides.listForView ?? sinon.stub().resolves({ data: [], hasMore: false }),
-      findByPlatformMessageId: overrides.findByPlatformMessageId ?? sinon.stub().resolves(null),
-    };
-    const workflowOriginService = {
-      resolveForTurn: overrides.resolveForTurn ?? sinon.stub().resolves(null),
     };
 
     const service = new ManagedAgentService(
@@ -61,15 +50,11 @@ describe('ManagedAgentService workflow-origin', () => {
       {} as any,
       {} as any,
       {} as any,
-      workflowOriginService as any,
+      {} as any,
       makeLogger() as any
     );
 
-    if (overrides.dispatch) {
-      sinon.stub(service, 'dispatch').callsFake(overrides.dispatch as any);
-    }
-
-    return { service, conversationService, workflowOriginService };
+    return { service };
   }
 
   function makeContext(overrides: Record<string, unknown> = {}) {
@@ -139,70 +124,33 @@ describe('ManagedAgentService workflow-origin', () => {
 
       expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'where is my order?' }]);
     });
-  });
 
-  describe('replayParkedInboundTurn', () => {
-    it('loads the parked activity and forwards the re-derived origin snapshot into dispatch', async () => {
-      const findByPlatformMessageId = sinon.stub().resolves({
-        content: 'parked hello',
-        type: ConversationActivityTypeEnum.MESSAGE,
-        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+    it('prefixes USER history and the current turn with senderName', async () => {
+      const listForView = sinon.stub().resolves({
+        data: [
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'where is my order?',
+            senderName: 'Ada',
+          },
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'the package is late',
+            senderName: 'Bob',
+          },
+        ],
+        hasMore: false,
       });
-      const resolveForTurn = sinon.stub().resolves(existingSnapshot);
-      const dispatch = sinon.stub().resolves({ status: 'active' });
-      const { service, workflowOriginService } = makeService({
-        findByPlatformMessageId,
-        resolveForTurn,
-        dispatch,
-      });
+      const { service } = makeService({ listForView });
 
-      const result = await service.replayParkedInboundTurn({
-        conversation: {
-          _id: 'conv-1',
-          channels: [{ platformThreadId: 'thread-1' }],
-        } as any,
-        config: {
-          environmentId: 'env-1',
-          organizationId: 'org-1',
-          agentIdentifier: 'agent-1',
-          integrationIdentifier: 'integration-1',
-        } as any,
-        subscriber: { _id: 'sub-mongo', subscriberId: 'sub-1' } as any,
-        pendingPlatformMessageId: 'parked-msg-1',
-        agent: { _id: 'agent-mongo', managedRuntime: { providerId: 'anthropic' } } as any,
-      });
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: undefined, senderName: 'Ada' })
+      );
 
-      expect(result).to.deep.equal({ status: 'active' });
-      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
-      expect(workflowOriginService.resolveForTurn.firstCall.args[0]).to.include({
-        agentId: 'agent-mongo',
-        platformThreadId: 'thread-1',
-        subscriberId: 'sub-1',
-        resolution: null,
-      });
-      expect(dispatch.calledOnce).to.equal(true);
-      expect(dispatch.firstCall.args[0]).to.include({
-        userMessageText: 'parked hello',
-        platformMessageId: 'parked-msg-1',
-        platformThreadId: 'thread-1',
-      });
-      expect(dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(existingSnapshot);
-    });
-
-    it('returns null when the parked activity is missing', async () => {
-      const { service, conversationService, workflowOriginService } = makeService();
-
-      const result = await service.replayParkedInboundTurn({
-        conversation: { _id: 'conv-1', channels: [] } as any,
-        config: { environmentId: 'env-1' } as any,
-        subscriber: {} as any,
-        pendingPlatformMessageId: 'missing',
-        agent: { _id: 'agent-mongo' } as any,
-      });
-
-      expect(result).to.equal(null);
-      expect(conversationService.findByPlatformMessageId.calledOnce).to.equal(true);
-      expect(workflowOriginService.resolveForTurn.called).to.equal(false);
+      expect(String(messages[0].content)).to.include('Bob: the package is late');
+      expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'Ada: where is my order?' });
     });
   });
 });

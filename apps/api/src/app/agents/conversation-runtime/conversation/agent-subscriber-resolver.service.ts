@@ -118,8 +118,12 @@ export class AgentSubscriberResolver {
       return { outcome: 'invalid_identity' };
     }
 
-    // Phone-based platforms (WhatsApp, Sendblue) identify users by their phone number.
-    if (platform === AgentPlatformEnum.WHATSAPP || platform === AgentPlatformEnum.SENDBLUE) {
+    // Phone-based platforms (WhatsApp, Sendblue, Photon) identify users by their phone number.
+    if (
+      platform === AgentPlatformEnum.WHATSAPP ||
+      platform === AgentPlatformEnum.SENDBLUE ||
+      platform === AgentPlatformEnum.PHOTON_IMESSAGE
+    ) {
       return this.resolvePhoneSubscriber({
         environmentId,
         organizationId,
@@ -259,6 +263,7 @@ export class AgentSubscriberResolver {
           break;
         case AgentPlatformEnum.WHATSAPP:
         case AgentPlatformEnum.SENDBLUE:
+        case AgentPlatformEnum.PHOTON_IMESSAGE:
           provisionedSubscriberId = await this.provisionPhoneIdentitySubscriber({
             environmentId: params.environmentId,
             organizationId: params.organizationId,
@@ -341,10 +346,10 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Provision a Subscriber for an open-access WhatsApp or Sendblue sender. Phone
-   * identity lives on `Subscriber.phone` (canonical E.164 with `+`) - no
-   * ChannelEndpoint. Idempotent via deterministic subscriberId. Returns `null`
-   * when the phone is empty/unparseable.
+   * Provision a Subscriber for an open-access WhatsApp, Sendblue, or Photon
+   * sender. Phone identity lives on `Subscriber.phone` (canonical E.164 with
+   * `+`) - no ChannelEndpoint. Idempotent via deterministic subscriberId.
+   * Returns `null` when the phone is empty/unparseable.
    */
   private async provisionPhoneIdentitySubscriber(params: {
     environmentId: string;
@@ -352,7 +357,7 @@ export class AgentSubscriberResolver {
     integrationIdentifier: string;
     agentIdentifier: string;
     phone: string;
-    platform: AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE;
+    platform: AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE | AgentPlatformEnum.PHOTON_IMESSAGE;
   }): Promise<string | null> {
     const phone = toCanonicalE164Phone(params.phone);
 
@@ -378,7 +383,11 @@ export class AgentSubscriberResolver {
     organizationId: string;
     integrationIdentifier: string;
     agentIdentifier: string;
-    platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE;
+    platform:
+      | AgentPlatformEnum.EMAIL
+      | AgentPlatformEnum.WHATSAPP
+      | AgentPlatformEnum.SENDBLUE
+      | AgentPlatformEnum.PHOTON_IMESSAGE;
     identity: string;
     identityFields: { email: string } | { phone: string };
   }): Promise<string> {
@@ -776,13 +785,19 @@ function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>
 }
 
 function openAccessIdentityProvisionMeta(
-  platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE
+  platform:
+    | AgentPlatformEnum.EMAIL
+    | AgentPlatformEnum.WHATSAPP
+    | AgentPlatformEnum.SENDBLUE
+    | AgentPlatformEnum.PHOTON_IMESSAGE
 ): { label: string; operation: string } {
   switch (platform) {
     case AgentPlatformEnum.EMAIL:
       return { label: 'email', operation: 'provision-open-access-email-subscriber' };
     case AgentPlatformEnum.SENDBLUE:
       return { label: 'Sendblue', operation: 'provision-open-access-sendblue-subscriber' };
+    case AgentPlatformEnum.PHOTON_IMESSAGE:
+      return { label: 'Photon', operation: 'provision-open-access-photon-imessage-subscriber' };
     case AgentPlatformEnum.WHATSAPP:
       return { label: 'WhatsApp', operation: 'provision-open-access-whatsapp-subscriber' };
     default: {

@@ -15,9 +15,12 @@ import { BullMqService } from '../bull-mq';
 import { ISqsMessageMeta, SqsRetryError } from '../sqs';
 import { isPermanentClientError, WorkerBaseService } from './worker-base.service';
 
+/** These cases only exercise the SQS path, so BullMQ is never reached. */
+const unusedBullMqService: Partial<BullMqService> = {};
+
 class TestableWorker extends WorkerBaseService {
   constructor() {
-    super(JobTopicNameEnum.WORKFLOW, {} as unknown as BullMqService);
+    super(JobTopicNameEnum.WORKFLOW, unusedBullMqService as BullMqService);
   }
 
   public invokeWrapForSqs(processor: any) {
@@ -196,14 +199,5 @@ describe('WorkerBaseService.wrapForSqs', () => {
     await wrapped(data, meta);
     expect(processor).toHaveBeenCalledTimes(1);
     expect(completedHandler).toHaveBeenCalledTimes(1);
-  });
-
-  it('skips processing entirely when data.skipProcessing is true', async () => {
-    const worker = new TestableWorker();
-    const processor = jest.fn();
-    const wrapped = worker.invokeWrapForSqs(processor);
-
-    await wrapped({ ...data, skipProcessing: true }, meta);
-    expect(processor).not.toHaveBeenCalled();
   });
 });

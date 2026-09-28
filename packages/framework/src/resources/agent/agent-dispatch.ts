@@ -9,6 +9,8 @@ import type {
   AgentHandlerReply,
   AgentHistoryEntry,
   AgentMessageContext,
+  AgentMessageDeletedContext,
+  AgentMessageUpdatedContext,
   AgentReactionContext,
   AgentResolveContext,
   AgentToolCall,
@@ -212,6 +214,26 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
       const message = ctx.message;
       if (message) {
         await dispatchReplyResult(ctx, await registeredAgent.handlers.onMessage(message, ctx as AgentMessageContext));
+      }
+      break;
+    }
+    case AgentEventEnum.ON_MESSAGE_UPDATED: {
+      const message = ctx.message;
+      if (message && registeredAgent.handlers.onMessageUpdated) {
+        await dispatchReplyResult(
+          ctx,
+          await registeredAgent.handlers.onMessageUpdated(message, ctx as AgentMessageUpdatedContext)
+        );
+      }
+      break;
+    }
+    case AgentEventEnum.ON_MESSAGE_DELETED: {
+      const message = ctx.message;
+      if (message && registeredAgent.handlers.onMessageDeleted) {
+        await dispatchReplyResult(
+          ctx,
+          await registeredAgent.handlers.onMessageDeleted(message, ctx as AgentMessageDeletedContext)
+        );
       }
       break;
     }

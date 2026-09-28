@@ -1,16 +1,16 @@
-import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
-import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import {
+  createPinoLoggerMock,
+  createSchedulerServiceMock,
+  createSqsServiceMock,
+} from '../queue-service-mocks.test-helpers';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
-import { EventBridgeSchedulerService } from '../scheduler';
-import { SqsService } from '../sqs';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import { ReadinessService } from './readiness.service';
 
@@ -20,33 +20,9 @@ let workflowQueueService: WorkflowQueueService;
 let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
 
-const mockFeatureFlagsService = {
-  getFlag: jest.fn(),
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: jest.fn(),
-} as unknown as CommunityOrganizationRepository;
-
-const mockSqsService = {
-  getQueueUrl: jest.fn(),
-  getProducer: jest.fn(),
-  getClient: jest.fn(),
-} as unknown as SqsService;
-
-const mockLogger = {
-  setContext: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-} as unknown as PinoLogger;
-
-const mockSchedulerService = {
-  isConfigured: jest.fn(() => false),
-  createDelayedFire: jest.fn(),
-  deleteSchedule: jest.fn(),
-} as unknown as EventBridgeSchedulerService;
+const mockSqsService = createSqsServiceMock();
+const mockLogger = createPinoLoggerMock();
+const mockSchedulerService = createSchedulerServiceMock();
 
 describe('Readiness Service', () => {
   beforeAll(async () => {
@@ -56,23 +32,13 @@ describe('Readiness Service', () => {
     standardQueueService = new StandardQueueService(
       new WorkflowInMemoryProviderService(),
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger,
       mockSchedulerService
     );
-    workflowQueueService = new WorkflowQueueService(
-      new WorkflowInMemoryProviderService(),
-      mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
-      mockLogger
-    );
+    workflowQueueService = new WorkflowQueueService(new WorkflowInMemoryProviderService(), mockSqsService, mockLogger);
     subscriberProcessQueueService = new SubscriberProcessQueueService(
       new WorkflowInMemoryProviderService(),
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger
     );
 

@@ -15,7 +15,7 @@ import { AgentExecutionParams, BridgeExecutorService } from '../conversation-run
 import { RuntimeResolver } from '../conversation-runtime/runtime/runtime-resolver.service';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
-import { AgentTestContext, conversationRepository, setupAgentTestContext } from './helpers/agent-test-setup';
+import { AgentTestContext, conversationRepository, must, setupAgentTestContext } from './helpers/agent-test-setup';
 
 function mockSentMessage() {
   return {
@@ -35,6 +35,7 @@ function mockThread(id: string, opts: { channelId?: string; isDM?: boolean } = {
     isDM: opts.isDM ?? false,
     startTyping: async () => {},
     subscribe: async () => {},
+    unsubscribe: async () => {},
     post: async () => mockSentMessage(),
     toJSON: () => ({ id, channelId }),
     createSentMessageFromMessage: () => mockSentMessage(),
@@ -46,6 +47,7 @@ function mockMessage(opts: { id?: string; userId: string; text: string }) {
     id: opts.id ?? `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text: opts.text,
     author: { userId: opts.userId, fullName: 'Test User', userName: 'testuser', isBot: false },
+    isMention: true,
     metadata: { dateSent: new Date() },
   };
 }
@@ -175,26 +177,26 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       await invokeSlack(threadId, 'initial');
       expect(await countActivations()).to.equal(1);
 
-      const conversation = await findConversation(threadId);
+      const conversation = must(await findConversation(threadId), 'conversation');
       // Mimic resolveConversation's billing + status effects.
       await conversationRepository.updateStatus(
         ctx.session.environment._id,
         ctx.session.organization._id,
-        conversation!._id,
+        conversation._id,
         ConversationStatusEnum.RESOLVED
       );
       await conversationRepository.markBillingResolved(
         ctx.session.environment._id,
         ctx.session.organization._id,
-        conversation!._id,
+        conversation._id,
         new Date().toISOString()
       );
 
       await invokeSlack(threadId, 'reopening');
 
-      const reopened = await findConversation(threadId);
-      expect(reopened!.status).to.equal(ConversationStatusEnum.ACTIVE);
-      expect(reopened!._id).to.equal(conversation!._id);
+      const reopened = must(await findConversation(threadId), 'reopened conversation');
+      expect(reopened.status).to.equal(ConversationStatusEnum.ACTIVE);
+      expect(reopened._id).to.equal(conversation._id);
       expect(await countActivations()).to.equal(2);
     });
 
@@ -202,12 +204,12 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       const threadId = await invokeWhatsApp('15551230000', 'day one');
       expect(await countActivations()).to.equal(1);
 
-      const conversation = await findConversation(threadId);
+      const conversation = must(await findConversation(threadId), 'conversation');
       // Rewind the last engagement past the 24h WhatsApp window.
       const stale = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
       await conversationRepository.update(
         {
-          _id: conversation!._id,
+          _id: conversation._id,
           _environmentId: ctx.session.environment._id,
           _organizationId: ctx.session.organization._id,
         },
@@ -221,12 +223,12 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
 
     it('does not recount within the rolling window', async () => {
       const threadId = await invokeWhatsApp('15551231111', 'first');
-      const conversation = await findConversation(threadId);
+      const conversation = must(await findConversation(threadId), 'conversation');
       // Only 2h elapsed — inside the 24h WhatsApp window.
       const recent = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       await conversationRepository.update(
         {
-          _id: conversation!._id,
+          _id: conversation._id,
           _environmentId: ctx.session.environment._id,
           _organizationId: ctx.session.organization._id,
         },
@@ -244,11 +246,11 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       await invokeSlack(threadId, 'this month');
       expect(await countActivations()).to.equal(1);
 
-      const conversation = await findConversation(threadId);
+      const conversation = must(await findConversation(threadId), 'conversation');
       // Pretend it was last counted in a previous period.
       await conversationRepository.update(
         {
-          _id: conversation!._id,
+          _id: conversation._id,
           _environmentId: ctx.session.environment._id,
           _organizationId: ctx.session.organization._id,
         },

@@ -41,6 +41,7 @@ Each event handler receives a context object with the information needed to unde
 - The current conversation state and metadata
 - The resolved subscriber (when available)
 - Recent conversation history
+- The originating workflow notification (`ctx.notification`), when the conversation started from a [workflow-assigned agent](/agents/workflow-agents#reply-hydration) send
 - Provider information
 - Platform-specific details, such as thread or channel identifiers
 - Methods for replying, emitting custom events, updating metadata, triggering workflows, or resolving the conversation
@@ -222,6 +223,14 @@ export const myAgent = agent('my-agent', {
     }
   },
 });
+```
+
+#### Quote-reply context
+
+When a user quote-replies to a prior message, Novu sets `message.replyTo` with that message's platform id. Supported on WhatsApp, Telegram, and Microsoft Teams.
+
+```typescript
+const quotedMessageId = message.replyTo?.messageId;
 ```
 
 ### onAction

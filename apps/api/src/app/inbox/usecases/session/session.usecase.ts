@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   BadRequestException,
   Injectable,
@@ -55,7 +56,6 @@ import {
   Schedule,
   StepTypeEnum,
 } from '@novu/shared';
-import { createHash } from 'crypto';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
@@ -130,7 +130,7 @@ export class Session {
       throw new BadRequestException('Please provide a valid application identifier');
     }
 
-    const inAppIntegration = await this.selectIntegration.execute(
+    const selection = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
@@ -140,9 +140,10 @@ export class Session {
       })
     );
 
-    if (!inAppIntegration) {
+    if (!selection) {
       throw new NotFoundException('The active in-app integration could not be found');
     }
+    const { integration: inAppIntegration } = selection;
 
     const environmentApiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
 
@@ -414,9 +415,10 @@ export class Session {
   }
 
   private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto, clientIp?: string): Promise<string> {
-    const isKeylessInitialize = !requestData.applicationIdentifier;
-    const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
-    const isKeylessExpired = isKeyless ? isKeylessEnvironmentExpired(requestData.applicationIdentifier) : false;
+    const { applicationIdentifier } = requestData;
+    const isKeylessInitialize = !applicationIdentifier;
+    const isKeyless = applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
+    const isKeylessExpired = isKeyless ? isKeylessEnvironmentExpired(applicationIdentifier) : false;
 
     if (isKeylessInitialize || isKeylessExpired) {
       await this.keylessAbuseGuard.assertEnvCreationAllowed(clientIp);
@@ -425,7 +427,11 @@ export class Session {
       return environment.identifier;
     }
 
-    return requestData.applicationIdentifier!;
+    if (!applicationIdentifier) {
+      throw new BadRequestException('Application identifier is required');
+    }
+
+    return applicationIdentifier;
   }
 
   private async resolveContexts(
@@ -465,7 +471,12 @@ export class Session {
       throw new BadRequestException('Keyless is not supported in community edition');
     }
 
-    const organization = await this.communityOrganizationRepository.findById(process.env.KEYLESS_ORGANIZATION_ID!);
+    const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
+    if (!keylessOrganizationId) {
+      throw new InternalServerErrorException('Keyless Organization ID is not configured');
+    }
+
+    const organization = await this.communityOrganizationRepository.findById(keylessOrganizationId);
 
     if (!organization) {
       this.logger.error('Keyless Organization not found');
@@ -500,7 +511,12 @@ export class Session {
       );
     }
 
-    const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);
+    const keylessUserEmail = process.env.KEYLESS_USER_EMAIL;
+    if (!keylessUserEmail) {
+      throw new InternalServerErrorException('Keyless User email is not configured');
+    }
+
+    const user = await this.communityUserRepository.findByEmail(keylessUserEmail);
 
     if (!user) {
       throw new InternalServerErrorException('Keyless User not found');

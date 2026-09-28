@@ -2,6 +2,7 @@ import { UserEntity } from '@novu/dal';
 import {
   ResourceOriginEnum,
   ResourceTypeEnum,
+  RuntimeIssue,
   SeverityLevelEnum,
   StepIssues,
   StepTypeEnum,
@@ -24,7 +25,7 @@ export interface WorkflowForResponseMapper {
   type?: ResourceTypeEnum;
   origin?: ResourceOriginEnum;
   status?: WorkflowStatusEnum;
-  issues?: Record<string, unknown[]>;
+  issues?: Record<string, RuntimeIssue[]>;
   lastPublishedAt?: string;
   lastPublishedBy?: UserEntity;
   updatedAt?: string;

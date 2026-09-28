@@ -3,7 +3,7 @@ import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchemaDto } from './json-schema.dto';
 import { UiSchema } from './ui-schema.dto';
 
-export class ControlsMetadataDto {
+export class ControlsMetadataDto<TValues = Record<string, unknown>> {
   @ApiPropertyOptional({
     description: 'JSON Schema for data',
     additionalProperties: true,
@@ -21,5 +21,10 @@ export class ControlsMetadataDto {
   @ValidateNested()
   uiSchema?: UiSchema;
 
-  [key: string]: any;
+  @ApiPropertyOptional({
+    description: 'Resolved control values for the step',
+    type: 'object',
+    additionalProperties: true,
+  })
+  values?: TValues;
 }

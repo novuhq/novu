@@ -68,6 +68,24 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * How many other agents already have a conversation on this platform thread.
+   * Used by Smart reply-policy so a second Novu agent counts like a second speaker.
+   */
+  async countOtherAgentsOnPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string,
+    agentId: string
+  ): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _agentId: { $ne: agentId },
+      'channels.platformThreadId': platformThreadId,
+    });
+  }
+
   async findByAgentIntegrationParticipant(
     environmentId: string,
     organizationId: string,
@@ -200,6 +218,24 @@ export class ConversationRepository extends BaseRepositoryV2<
         },
         $inc: { messageCount: 1 },
       },
+      session ? { session } : {}
+    );
+  }
+
+  async incrementMessageCount(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    count: number,
+    session?: ClientSession | null
+  ): Promise<void> {
+    if (count === 0) {
+      return;
+    }
+
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $inc: { messageCount: count } },
       session ? { session } : {}
     );
   }
@@ -504,6 +540,22 @@ export class ConversationRepository extends BaseRepositoryV2<
     conversationId: string,
     minimum = 0
   ): Promise<number> {
+    const [sequence] = await this.allocateEventSequenceRange(environmentId, organizationId, conversationId, 1, minimum);
+
+    return sequence;
+  }
+
+  async allocateEventSequenceRange(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    count: number,
+    minimum = 0
+  ): Promise<number[]> {
+    if (count <= 0) {
+      return [];
+    }
+
     const filter = {
       _id: conversationId,
       _environmentId: environmentId,
@@ -520,9 +572,11 @@ export class ConversationRepository extends BaseRepositoryV2<
       );
     }
 
-    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: count } }, { new: true });
+    const lastSequence = updated?.eventSequence ?? count;
+    const firstSequence = lastSequence - count + 1;
 
-    return updated?.eventSequence ?? 1;
+    return Array.from({ length: count }, (_, index) => firstSequence + index);
   }
 
   async incrementTokenUsage(

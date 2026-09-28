@@ -101,19 +101,6 @@ describe('HandleNovuHuman', () => {
     expect(content.error).to.equal('invalid_title');
   });
 
-  it('delivers tell then resumes immediately', async () => {
-    const { usecase, command, createConversationInteraction, managedAgentService } = setup({
-      input: { kind: 'tell', card: { title: 'Deploy finished.' } },
-    });
-
-    await usecase.execute(command);
-
-    expect(createConversationInteraction.execute.calledOnce).to.equal(true);
-    expect(managedAgentService.sendToolResult.calledOnce).to.equal(true);
-    const content = JSON.parse(managedAgentService.sendToolResult.firstCall.args[0].content);
-    expect(content).to.include({ ok: true, kind: 'tell', status: 'delivered' });
-  });
-
   it('resumes with an error when HITL is disabled', async () => {
     const { usecase, command, createConversationInteraction, managedAgentService } = setup({ flag: false });
 

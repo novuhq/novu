@@ -115,6 +115,7 @@ describe('provider override registry', () => {
   it('points each chat provider at the payload key its step body falls back into', () => {
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.Slack)).toBe('text');
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.Discord)).toBe('content');
+    expect(getProviderPrimaryContentKey(ChatProviderIdEnum.GoogleChat)).toBe('text');
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.GrafanaOnCall)).toBe('message');
     expect(getProviderPrimaryContentKey(ToolProviderIdEnum.PagerDuty)).toBe('summary');
     expect(getProviderPrimaryContentKey(ToolProviderIdEnum.Opsgenie)).toBe('message');

@@ -1,7 +1,6 @@
-import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
   messageWebhookMapper,
@@ -86,7 +85,7 @@ export class MarkAllMessagesAs {
     const eventMessage = mapMarkMessageToWebSocketEvent(command.markAs);
 
     if (eventMessage !== undefined) {
-      this.webSocketsQueueService.add({
+      void this.webSocketsQueueService.add({
         name: 'sendMessage',
         data: {
           event: eventMessage,

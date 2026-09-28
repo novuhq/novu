@@ -2,7 +2,7 @@ import { createContextHash, createHash, decryptApiKey } from '@novu/application-
 import { ContextPayload } from '@novu/shared';
 import { areHexDigestsEqual } from './timing-safe-equal';
 
-export function isHmacValid(secretKey: string, subscriberId: string, hmacHash: string | undefined) {
+function isHmacValid(secretKey: string, subscriberId: string, hmacHash: string | undefined) {
   if (!hmacHash) {
     return false;
   }
@@ -25,11 +25,7 @@ export function isHmacValidForAnyKey(secretKeys: string[], subscriberId: string,
   return secretKeys.some((secretKey) => isHmacValid(secretKey, subscriberId, hmacHash));
 }
 
-export function isContextHmacValid(
-  secretKey: string,
-  context: ContextPayload,
-  contextHash: string | undefined
-): boolean {
+function isContextHmacValid(secretKey: string, context: ContextPayload, contextHash: string | undefined): boolean {
   if (!contextHash) {
     return false;
   }

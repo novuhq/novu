@@ -44,12 +44,14 @@ describe('CreateInteraction', () => {
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+    const activityRecorder = { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
       deliveryService as any,
       connectClaimTokenService as any,
-      logger as any
+      logger as any,
+      activityRecorder as any
     );
     const command = {
       userId: 'user1',

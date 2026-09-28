@@ -71,6 +71,7 @@ export class SendMessageTool extends SendMessageBase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing channel orchestration is outside this change.
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Tool',
@@ -147,7 +148,14 @@ export class SendMessageTool extends SendMessageBase {
       }
 
       for (const channelData of channelDataList) {
-        const result = await this.sendToIntegration(command, integration, content, toolFactory, channelData);
+        const result = await this.sendToIntegration(
+          command,
+          integration,
+          content,
+          toolFactory,
+          channelData,
+          resolved?.matchedConditions
+        );
         status = this.mergeStatus(status, result.status);
         if (result.status === SendMessageStatus.SUCCESS) anySent = true;
         else if (result.status === SendMessageStatus.SKIPPED) anySkipped = true;
@@ -262,9 +270,13 @@ export class SendMessageTool extends SendMessageBase {
     integration: IntegrationEntity,
     content: string,
     toolFactory: ToolFactory,
-    channelData: ChannelData | undefined
+    channelData: ChannelData | undefined,
+    matchedConditions?: IntegrationEndpoints['matchedConditions']
   ): Promise<SendMessageResult> {
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    await this.sendSelectedIntegrationExecution(command.job, {
+      integration,
+      ...(matchedConditions && { matchedConditions }),
+    });
 
     const overrides = {
       ...(integration.channel ? command.overrides[integration.channel] || {} : {}),

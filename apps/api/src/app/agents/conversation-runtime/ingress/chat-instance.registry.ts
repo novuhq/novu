@@ -7,7 +7,16 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuWebChatAdapter } from '@novu/chat-adapter-web-chat';
 import { stripAgentReplyToken } from '@novu/shared';
 import { retryPolicies } from '@slack/web-api';
-import type { Adapter, Chat, Message, MessageContext, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
+import type {
+  Adapter,
+  Chat,
+  Message,
+  MessageContext,
+  MessageDeletedEvent,
+  ReactionEvent,
+  SlashCommandEvent,
+  Thread,
+} from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
@@ -50,9 +59,26 @@ export type PlatformAdapters = {
   web_chat: NovuWebChatAdapter;
   email: Adapter;
   sendblue: Adapter;
+  /**
+   * Keyed `imessage`, NOT `photon_imessage`: the Chat SDK resolves adapters by
+   * thread-id prefix, and the Photon vendor adapter encodes threads as
+   * `imessage:{chatGuid}` — a mismatched key breaks every thread-addressed
+   * send (e.g. the agent reply endpoint) while inbound-context replies still
+   * work, which is exactly the silent way it fails.
+   */
+  imessage: Adapter;
 };
 
 export type ChatWithAdapters = Chat<PlatformAdapters>;
+
+/**
+ * Adapter map key for a platform. Usually the enum value itself — except
+ * Photon, whose vendor adapter encodes thread ids with the `imessage:` prefix
+ * the Chat SDK resolves adapters by, so its map key is `imessage`.
+ */
+export function platformAdapterKey(platform: AgentPlatformEnum): keyof PlatformAdapters {
+  return platform === AgentPlatformEnum.PHOTON_IMESSAGE ? 'imessage' : (platform as keyof PlatformAdapters);
+}
 
 interface ChatStateLogger {
   debug: (msg: string, ctx?: Record<string, unknown>) => void;
@@ -79,6 +105,14 @@ export interface InboundCallbacks {
     rawEvent: unknown
   ) => Promise<void>;
   onReaction: (agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent) => Promise<void>;
+  onMessageUpdated: (
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    previousMessage?: Message
+  ) => Promise<void>;
+  onMessageDeleted: (agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent) => Promise<void>;
 }
 
 /**
@@ -228,6 +262,64 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     this.instances.set(instanceKey, cached);
 
     return chat;
+  }
+
+  private async buildSendblueAdapter(config: ResolvedAgentConfig): Promise<Record<string, unknown>> {
+    const { credentials } = config;
+
+    if (!credentials.apiKey || !credentials.secretKey || !credentials.from) {
+      throw new BadRequestException(
+        'Sendblue agent integration requires API Key, Secret Key, and From Number credentials'
+      );
+    }
+
+    if (!credentials.token) {
+      throw new BadRequestException(
+        'Sendblue agent integration requires a webhook secret. ' +
+          'Run the "Configure webhook" step to provision the receive webhook before this integration can receive messages.'
+      );
+    }
+
+    const { createSendblueAdapter } = await esmImport('@novu/chat-adapter-sendblue');
+
+    return {
+      // The underlying official Sendblue SDK reads `SENDBLUE_API_BASE_URL`
+      // itself; e2e tests point it at an in-process stub (see sendblue-api-stub.ts).
+      sendblue: createSendblueAdapter({
+        apiKey: credentials.apiKey,
+        secretKey: credentials.secretKey,
+        fromNumber: credentials.from,
+        webhookSecret: credentials.token,
+        userName: config.agentName,
+      }),
+    };
+  }
+
+  private async buildPhotonImessageAdapter(config: ResolvedAgentConfig): Promise<Record<string, unknown>> {
+    const { credentials } = config;
+
+    if (!credentials.apiKey || !credentials.secretKey) {
+      throw new BadRequestException('Photon agent integration requires Project ID and Project Secret credentials');
+    }
+
+    if (!credentials.token) {
+      throw new BadRequestException(
+        'Photon agent integration requires a webhook signing secret. ' +
+          'Run the "Configure webhook" step to register the webhook before this integration can receive messages.'
+      );
+    }
+
+    const { createPhotonImessageAdapter } = await esmImport('@novu/chat-adapter-photon-imessage');
+
+    return {
+      // Key must match the vendor thread-id prefix (`imessage:`) — see PlatformAdapters.
+      imessage: createPhotonImessageAdapter({
+        projectId: credentials.apiKey,
+        projectSecret: credentials.secretKey,
+        webhookSecret: credentials.token,
+        userName: config.agentName,
+      }),
+    };
   }
 
   private adapterFingerprint(config: ResolvedAgentConfig): string {
@@ -406,34 +498,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           }),
         };
       }
-      case AgentPlatformEnum.SENDBLUE: {
-        if (!credentials.apiKey || !credentials.secretKey || !credentials.from) {
-          throw new BadRequestException(
-            'Sendblue agent integration requires API Key, Secret Key, and From Number credentials'
-          );
-        }
-
-        if (!credentials.token) {
-          throw new BadRequestException(
-            'Sendblue agent integration requires a webhook secret. ' +
-              'Run the "Configure webhook" step to provision the receive webhook before this integration can receive messages.'
-          );
-        }
-
-        const { createSendblueAdapter } = await esmImport('@novu/chat-adapter-sendblue');
-
-        return {
-          // The underlying official Sendblue SDK reads `SENDBLUE_API_BASE_URL`
-          // itself; e2e tests point it at an in-process stub (see sendblue-api-stub.ts).
-          sendblue: createSendblueAdapter({
-            apiKey: credentials.apiKey,
-            secretKey: credentials.secretKey,
-            fromNumber: credentials.from,
-            webhookSecret: credentials.token,
-            userName: config.agentName,
-          }),
-        };
-      }
+      case AgentPlatformEnum.SENDBLUE:
+        return this.buildSendblueAdapter(config);
+      case AgentPlatformEnum.PHOTON_IMESSAGE:
+        return this.buildPhotonImessageAdapter(config);
       case AgentPlatformEnum.EMAIL: {
         const { outboundIntegrationId } = credentials;
 
@@ -581,7 +649,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     chat.onNewMention(async (thread: Thread, message: Message, context?: MessageContext) => {
       try {
-        await thread.subscribe();
+        // Shared rooms stay unsubscribed until the mention gate in the inbound
+        // handler decides this agent should follow the thread.
+        if (thread.isDM) {
+          await thread.subscribe();
+        }
         this.rehydrateBurstAttachments(cached, message, context);
         await callbacks.onMessage(agentId, cached.config, thread, message, context);
       } catch (err) {
@@ -602,6 +674,43 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           agentId,
           operation: 'on-subscribed-message',
           logMessage: `[agent:${agentId}] Error handling subscribed message`,
+        });
+      }
+    });
+
+    chat.onMessageUpdated(async (thread: Thread, message: Message, previousMessage?: Message) => {
+      try {
+        const adapter = cached.chat?.getAdapter(platformAdapterKey(cached.config.platform));
+        if (adapter) {
+          rehydrateInboundAttachments(adapter, message);
+          if (previousMessage) {
+            rehydrateInboundAttachments(adapter, previousMessage);
+          }
+        }
+        await callbacks.onMessageUpdated(agentId, cached.config, thread, message, previousMessage);
+      } catch (err) {
+        this.rethrowWebChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-message-updated',
+          logMessage: `[agent:${agentId}] Error handling message update`,
+        });
+      }
+    });
+
+    chat.onMessageDeleted(async (event: MessageDeletedEvent) => {
+      try {
+        if (event.previousMessage) {
+          const adapter = cached.chat?.getAdapter(platformAdapterKey(cached.config.platform));
+          if (adapter) {
+            rehydrateInboundAttachments(adapter, event.previousMessage);
+          }
+        }
+        await callbacks.onMessageDeleted(agentId, cached.config, event);
+      } catch (err) {
+        this.rethrowWebChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-message-deleted',
+          logMessage: `[agent:${agentId}] Error handling message delete`,
         });
       }
     });
@@ -664,7 +773,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     chat.onReaction(async (event: ReactionEvent) => {
       try {
         if (event.message) {
-          rehydrateInboundAttachments(chat.getAdapter(cached.config.platform), event.message);
+          rehydrateInboundAttachments(chat.getAdapter(platformAdapterKey(cached.config.platform)), event.message);
         }
 
         await callbacks.onReaction(agentId, cached.config, {
@@ -684,7 +793,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
   }
 
   private rehydrateBurstAttachments(cached: CachedChat, message: Message, context?: MessageContext): void {
-    const adapter = cached.chat?.getAdapter(cached.config.platform);
+    const adapter = cached.chat?.getAdapter(platformAdapterKey(cached.config.platform));
     if (!adapter) {
       return;
     }

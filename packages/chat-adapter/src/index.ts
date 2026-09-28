@@ -18,6 +18,7 @@ export type {
   AgentMessageAuthor,
   AgentReaction,
   AgentReplyPayload,
+  AgentReplyToContext,
   AgentSubscriber,
   NovuAdapter,
   NovuAdapterConfig,

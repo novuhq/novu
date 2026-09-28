@@ -5,6 +5,7 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { StandardWorker, WorkflowWorker } from '../app/workflow/services';
 import { SubscriberProcessWorker } from '../app/workflow/services/subscriber-process.worker';
 import { InboundParseWorker } from '../app/workflow/workers/inbound-parse.worker.service';
+import { ALL_WORKER_TOPICS, WORKER_QUEUE_DEPENDENCIES, workersToProcess } from './worker-topics';
 
 type WorkerClass =
   | typeof StandardWorker
@@ -12,63 +13,26 @@ type WorkerClass =
   | typeof SubscriberProcessWorker
   | typeof InboundParseWorker;
 
-type WorkerModuleTree = { workerClass: WorkerClass; queueDependencies: JobTopicNameEnum[] };
-
-type WorkerDepTree = Partial<Record<JobTopicNameEnum, WorkerModuleTree>>;
-
-const WORKER_MAPPING: WorkerDepTree = {
-  [JobTopicNameEnum.STANDARD]: {
-    workerClass: StandardWorker,
-    queueDependencies: [JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.STANDARD, JobTopicNameEnum.PROCESS_SUBSCRIBER],
-  },
-  [JobTopicNameEnum.WORKFLOW]: {
-    workerClass: WorkflowWorker,
-    queueDependencies: [JobTopicNameEnum.PROCESS_SUBSCRIBER, JobTopicNameEnum.STANDARD, JobTopicNameEnum.WEB_SOCKETS],
-  },
-  [JobTopicNameEnum.PROCESS_SUBSCRIBER]: {
-    workerClass: SubscriberProcessWorker,
-    queueDependencies: [JobTopicNameEnum.STANDARD, JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.PROCESS_SUBSCRIBER],
-  },
-  [JobTopicNameEnum.INBOUND_PARSE_MAIL]: {
-    workerClass: InboundParseWorker,
-    queueDependencies: [],
-  },
+/*
+ * The topic list and its queue dependencies live in `worker-topics` so
+ * `env.validators` can read them without importing these worker classes, which
+ * would drag the Nest graph in before the env has been validated.
+ */
+const WORKER_CLASS_BY_TOPIC: Record<JobTopicNameEnum, WorkerClass | undefined> = {
+  [JobTopicNameEnum.STANDARD]: StandardWorker,
+  [JobTopicNameEnum.WORKFLOW]: WorkflowWorker,
+  [JobTopicNameEnum.PROCESS_SUBSCRIBER]: SubscriberProcessWorker,
+  [JobTopicNameEnum.INBOUND_PARSE_MAIL]: InboundParseWorker,
+  [JobTopicNameEnum.WEB_SOCKETS]: undefined,
+  [JobTopicNameEnum.ACTIVE_JOBS_METRIC]: undefined,
 };
 
-const validQueueEntries = Object.keys(JobTopicNameEnum).map((key) => JobTopicNameEnum[key]);
-const isQueueEntry = (queueName: string): queueName is JobTopicNameEnum => {
-  return validQueueEntries.includes(queueName);
-};
+export { workersToProcess };
 
-export const workersToProcess =
-  process.env.ACTIVE_WORKERS?.split(',')
-    .filter((i) => !!i)
-    .map((queue) => {
-      const queueName = queue.trim();
-      if (!isQueueEntry(queueName)) {
-        throw new Error(`Invalid queue name ${queueName}`);
-      }
+export const UNIQUE_WORKER_DEPENDENCIES = [
+  ...new Set(workersToProcess.flatMap((worker) => WORKER_QUEUE_DEPENDENCIES[worker] ?? [])),
+];
 
-      return queueName;
-    }) || [];
+const ACTIVE_WORKER_TOPICS = workersToProcess.length > 0 ? workersToProcess : ALL_WORKER_TOPICS;
 
-const WORKER_DEPENDENCIES: JobTopicNameEnum[] = workersToProcess.reduce((history, worker) => {
-  const workerDependencies: JobTopicNameEnum[] = WORKER_MAPPING[worker]?.queueDependencies || [];
-
-  return [...history, ...workerDependencies];
-}, []);
-
-export const UNIQUE_WORKER_DEPENDENCIES = [...new Set(WORKER_DEPENDENCIES)];
-
-export const ACTIVE_WORKERS: Provider[] | any[] = [];
-
-if (!workersToProcess.length) {
-  ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, SubscriberProcessWorker, InboundParseWorker);
-} else {
-  workersToProcess.forEach((queue) => {
-    const workerClass = WORKER_MAPPING[queue]?.workerClass;
-    if (workerClass) {
-      ACTIVE_WORKERS.push(workerClass);
-    }
-  });
-}
+export const ACTIVE_WORKERS: Provider[] = ACTIVE_WORKER_TOPICS.flatMap((topic) => WORKER_CLASS_BY_TOPIC[topic] ?? []);

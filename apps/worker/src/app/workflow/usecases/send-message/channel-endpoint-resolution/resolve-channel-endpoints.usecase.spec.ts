@@ -627,8 +627,13 @@ describe('ResolveChannelEndpoints - integration rules', () => {
   let integrationRepository: Record<string, sinon.SinonStub>;
   let usecase: ResolveChannelEndpoints;
 
+  interface TestIntegration {
+    identifier: string;
+    rules?: unknown;
+  }
+
   /** Mirrors a subscriber registered on both a Telegram and a chat-webhook integration. */
-  function givenIntegrations(integrations: Array<{ identifier: string; rules?: unknown }>) {
+  function givenIntegrations(integrations: TestIntegration[]) {
     integrationRepository.find.resolves(integrations);
     channelEndpointRepository.find.resolves(
       integrations.map(({ identifier }) =>
@@ -698,6 +703,41 @@ describe('ResolveChannelEndpoints - integration rules', () => {
     const result = await usecase.execute(buildCommand({ filterData: { context: { tenant: { id: 'acme' } } } }));
 
     expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+  });
+
+  it('keeps only the integration whose saved payload rules match the trigger payload', async () => {
+    const matchingRules = { '==': [{ var: 'payload.region' }, 'eu'] };
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'payload.region' }, 'us'] } },
+      { identifier: 'chat-webhook', rules: matchingRules },
+    ]);
+
+    const result = await usecase.execute(buildCommand({ filterData: { payload: { region: 'eu' } } }));
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+    expect(result[0].matchedConditions).to.deep.equal({ type: 'rules', value: matchingRules });
+  });
+
+  it('keeps only the integration whose rules match workflow metadata', async () => {
+    const matchingRules = { containsAny: [{ var: 'workflow.tags' }, ['transactional']] };
+    givenIntegrations([
+      { identifier: 'telegram-integration', rules: { '==': [{ var: 'workflow.name' }, 'Digest'] } },
+      { identifier: 'chat-webhook', rules: matchingRules },
+    ]);
+
+    const result = await usecase.execute(
+      buildCommand({
+        filterData: {
+          workflow: {
+            name: 'Order confirmation',
+            tags: ['transactional'],
+          },
+        },
+      })
+    );
+
+    expect(resolvedIdentifiers(result)).to.deep.equal(['chat-webhook']);
+    expect(result[0].matchedConditions).to.deep.equal({ type: 'rules', value: matchingRules });
   });
 
   it('still delivers through integrations without rules alongside a matching one', async () => {

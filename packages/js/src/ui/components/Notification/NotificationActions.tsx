@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, JSX } from 'solid-js';
+import { createMemo, createSignal, For, JSX, Show } from 'solid-js';
 import type { Notification } from '../../../notifications';
 import { useInboxContext, useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
@@ -8,7 +8,7 @@ import { MarkAsArchived as DefaultMarkAsArchived } from '../../icons/MarkAsArchi
 import { MarkAsRead as DefaultMarkAsRead } from '../../icons/MarkAsRead';
 import { MarkAsUnread as DefaultMarkAsUnread } from '../../icons/MarkAsUnread';
 import { Unsnooze as DefaultUnsnooze } from '../../icons/Unsnooze';
-import { AllLocalizationKey, NotificationStatus } from '../../types';
+import { AllLocalizationKey } from '../../types';
 import { Button, Dropdown, dropdownItemVariants, Popover } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
@@ -66,11 +66,18 @@ export const formatSnoozeOption = (
   return { label: t(preset.key), time: `${dayName}, ${dateMonth}, ${timeString}` };
 };
 
+/** What `SnoozeDropdownItem` hands to an element rendered in its place. */
+type SnoozeDropdownItemChildProps = {
+  class: string;
+  onClick?: (e: MouseEvent) => void;
+  children: JSX.Element;
+};
+
 const SnoozeDropdownItem = (props: {
   label: string;
   time: string;
   onClick?: (e: MouseEvent) => void;
-  asChild?: (props: any) => JSX.Element;
+  asChild?: (props: SnoozeDropdownItemChildProps) => JSX.Element;
 }) => {
   const style = useStyle();
   const snoozeItemIconClass = style({
@@ -136,77 +143,60 @@ const SnoozeDropdownItem = (props: {
   );
 };
 
-export const ReadButton = (props: { notification: Notification }) => {
+/**
+ * Marks the notification read or unread, depending on its current state.
+ *
+ * One button for both directions on purpose: the snapshot flips under it while its tooltip is open, and swapping
+ * two components would tear the button and the tooltip down at the moment the user is looking at them.
+ */
+export const ToggleReadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const readIconClass = style({
-    key: 'notificationRead__icon',
-    className: 'nt-size-3',
-    iconKey: 'markAsRead',
-  });
+  const isRead = () => props.notification.isRead;
+  const iconClass = () =>
+    style({
+      key: isRead() ? 'notificationUnread__icon' : 'notificationRead__icon',
+      className: 'nt-size-3',
+      iconKey: isRead() ? 'markAsUnread' : 'markAsRead',
+    });
 
   return (
     <Tooltip.Root>
       <Tooltip.Trigger
         asChild={(childProps) => (
           <Button
-            appearanceKey="notificationRead__button"
+            appearanceKey={isRead() ? 'notificationUnread__button' : 'notificationRead__button'}
             size="iconSm"
             variant="ghost"
             {...childProps}
             onClick={async (e) => {
               e.stopPropagation();
-              await props.notification.read();
+              await (isRead() ? props.notification.unread() : props.notification.read());
             }}
           >
-            <IconRendererWrapper
-              iconKey="markAsRead"
-              class={readIconClass}
-              fallback={<DefaultMarkAsRead class={readIconClass} />}
-            />
+            <Show
+              when={isRead()}
+              fallback={
+                <IconRendererWrapper
+                  iconKey="markAsRead"
+                  class={iconClass()}
+                  fallback={<DefaultMarkAsRead class={iconClass()} />}
+                />
+              }
+            >
+              <IconRendererWrapper
+                iconKey="markAsUnread"
+                class={iconClass()}
+                fallback={<DefaultMarkAsUnread class={iconClass()} />}
+              />
+            </Show>
           </Button>
         )}
       />
-      <Tooltip.Content data-localization="notification.actions.read.tooltip">
-        {t('notification.actions.read.tooltip')}
-      </Tooltip.Content>
-    </Tooltip.Root>
-  );
-};
-
-export const UnreadButton = (props: { notification: Notification }) => {
-  const style = useStyle();
-  const { t } = useLocalization();
-  const unreadIconClass = style({
-    key: 'notificationUnread__icon',
-    className: 'nt-size-3',
-    iconKey: 'markAsUnread',
-  });
-
-  return (
-    <Tooltip.Root>
-      <Tooltip.Trigger
-        asChild={(childProps) => (
-          <Button
-            appearanceKey="notificationUnread__button"
-            size="iconSm"
-            variant="ghost"
-            {...childProps}
-            onClick={async (e) => {
-              e.stopPropagation();
-              await props.notification.unread();
-            }}
-          >
-            <IconRendererWrapper
-              iconKey="markAsUnread"
-              class={unreadIconClass}
-              fallback={<DefaultMarkAsUnread class={unreadIconClass} />}
-            />
-          </Button>
-        )}
-      />
-      <Tooltip.Content data-localization="notification.actions.unread.tooltip">
-        {t('notification.actions.unread.tooltip')}
+      <Tooltip.Content
+        data-localization={isRead() ? 'notification.actions.unread.tooltip' : 'notification.actions.read.tooltip'}
+      >
+        {t(isRead() ? 'notification.actions.unread.tooltip' : 'notification.actions.read.tooltip')}
       </Tooltip.Content>
     </Tooltip.Root>
   );
@@ -431,34 +421,5 @@ export const SnoozeButton = (props: { notification: Notification }) => {
         {t('notification.actions.snooze.tooltip')}
       </Tooltip.Content>
     </Tooltip.Root>
-  );
-};
-
-// Helper function to render the appropriate actions based on notification state
-export const renderNotificationActions = (notification: Notification, status: () => NotificationStatus) => {
-  const { isSnoozeEnabled } = useInboxContext();
-
-  // Handle snoozed state - only show unsnooze
-  if (notification.isSnoozed) {
-    return <UnsnoozeButton notification={notification} />;
-  }
-
-  // Handle archived state - only show unarchive
-  if (notification.isArchived) {
-    return <UnarchiveButton notification={notification} />;
-  }
-
-  // Handle normal state - show read/unread, snooze, archive
-  return (
-    <>
-      {status() !== NotificationStatus.ARCHIVED &&
-        (notification.isRead ? (
-          <UnreadButton notification={notification} />
-        ) : (
-          <ReadButton notification={notification} />
-        ))}
-      {isSnoozeEnabled() && <SnoozeButton notification={notification} />}
-      <ArchiveButton notification={notification} />
-    </>
   );
 };

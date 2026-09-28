@@ -169,6 +169,7 @@ export enum SmsProviderIdEnum {
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
+  GoogleChat = 'google-chat',
   MsTeams = 'msteams',
   WebexMessaging = 'webex-messaging',
   Mattermost = 'mattermost',
@@ -184,6 +185,7 @@ export enum ChatProviderIdEnum {
   Telegram = 'telegram',
   Sendblue = 'sendblue',
   NovuWebChat = 'novu-web-chat',
+  PhotonImessage = 'photon-imessage',
 }
 
 export enum PushProviderIdEnum {

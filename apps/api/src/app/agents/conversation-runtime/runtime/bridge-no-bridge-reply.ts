@@ -13,7 +13,7 @@ export type NoBridgeReplyOptions = {
   dashboardUrl?: string;
 };
 
-export function isCliCreationSource(creationSource?: AgentAnalyticsSource): boolean {
+function isCliCreationSource(creationSource?: AgentAnalyticsSource): boolean {
   return creationSource === 'cli';
 }
 

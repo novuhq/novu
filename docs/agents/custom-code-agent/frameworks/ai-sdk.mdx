@@ -105,7 +105,7 @@ const supportAgent = agent('support-bot', async (message, ctx) =>
 
 ## `toModelMessages()`
 
-Convert conversation context into AI SDK `ModelMessage[]`. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an assistant row with capped notification text and the full JSON payload:
+Convert conversation context into AI SDK `ModelMessage[]`. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an assistant row with capped notification text and the full JSON payload. See [Workflow-assigned agents](/agents/workflow-agents#reply-hydration) for how that notification is assigned and hydrated.
 
 ```typescript
 import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';

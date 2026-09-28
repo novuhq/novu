@@ -52,6 +52,8 @@ export interface NovuAdapterConfig {
 
 export enum AgentEvent {
   ON_MESSAGE = 'onMessage',
+  ON_MESSAGE_UPDATED = 'onMessageUpdated',
+  ON_MESSAGE_DELETED = 'onMessageDeleted',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
@@ -72,12 +74,17 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 export interface AgentMessage {
   text: string;
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  replyTo?: AgentReplyToContext;
 }
 
 export interface AgentConversation {
@@ -173,6 +180,7 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  previousMessage?: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
@@ -273,6 +281,7 @@ export interface NovuRawMessage {
   conversationId: string;
   integrationIdentifier: string;
   platform: string;
+  replyTo?: AgentReplyToContext;
   /** Set when this message was built from Novu conversation history. */
   history?: NovuHistoryFields;
 }

@@ -1,12 +1,13 @@
-import { createEffect, createMemo, createSignal, For, JSX, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
-import { ActionTypeEnum, SeverityLevelEnum } from '../../../types';
+import { SeverityLevelEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
+import { createNotificationItemController } from '../../core/item/controller';
+import { notificationItemStyles, SEVERITY_TO_BAR_KEYS, SEVERITY_TO_NOTIFICATION_KEYS } from '../../core/style/tables';
 import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
 import { Clock as DefaultClock } from '../../icons/Clock';
 import {
-  AllAppearanceKey,
   AvatarRenderer,
   type BodyRenderer,
   CustomActionsRenderer,
@@ -18,10 +19,10 @@ import {
 } from '../../types';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import Markdown from '../elements/Markdown';
-import { Button } from '../primitives';
 import { Badge } from '../primitives/Badge';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
-import { renderNotificationActions } from './NotificationActions';
+import { NotificationCustomActions } from './NotificationCustomActions';
+import { NotificationDefaultActions } from './NotificationDefaultActions';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -35,25 +36,18 @@ type DefaultNotificationProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-const SEVERITY_TO_BAR_KEYS: Record<SeverityLevelEnum, AllAppearanceKey> = {
-  [SeverityLevelEnum.NONE]: 'notificationBar',
-  [SeverityLevelEnum.HIGH]: 'severityHigh__notificationBar',
-  [SeverityLevelEnum.MEDIUM]: 'severityMedium__notificationBar',
-  [SeverityLevelEnum.LOW]: 'severityLow__notificationBar',
-};
-
-const SEVERITY_TO_NOTIFICATION_KEYS: Record<SeverityLevelEnum, AllAppearanceKey> = {
-  [SeverityLevelEnum.NONE]: 'notification',
-  [SeverityLevelEnum.HIGH]: 'severityHigh__notification',
-  [SeverityLevelEnum.MEDIUM]: 'severityMedium__notification',
-  [SeverityLevelEnum.LOW]: 'severityLow__notification',
-};
+const styles = notificationItemStyles;
 
 export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
-  const { navigate, status } = useInboxContext();
+  const { navigate } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
+  const controller = createNotificationItemController({
+    notification: () => props.notification,
+    handlers: () => props,
+    navigate,
+  });
 
   const severity = createMemo(() => props.notification.severity ?? SeverityLevelEnum.NONE);
 
@@ -90,63 +84,21 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     return () => clearInterval(interval);
   });
 
-  const handleNotificationClick: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent> = async (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    if (!props.notification.isRead) {
-      await props.notification.read();
-    }
-
-    props.onNotificationClick?.(props.notification);
-
-    navigate(props.notification.redirect?.url, props.notification.redirect?.target);
-  };
-
-  const handleActionButtonClick = async (action: ActionTypeEnum, e: MouseEvent) => {
-    e.stopPropagation();
-
-    if (action === ActionTypeEnum.PRIMARY) {
-      await props.notification.completePrimary();
-      props.onPrimaryActionClick?.(props.notification);
-
-      navigate(props.notification.primaryAction?.redirect?.url, props.notification.primaryAction?.redirect?.target);
-    } else {
-      await props.notification.completeSecondary();
-      props.onSecondaryActionClick?.(props.notification);
-
-      navigate(props.notification.secondaryAction?.redirect?.url, props.notification.secondaryAction?.redirect?.target);
-    }
-  };
-
   return (
     <a
       class={style({
         key: SEVERITY_TO_NOTIFICATION_KEYS[severity()],
-        className: cn(
-          'nt-transition nt-w-full nt-text-sm hover:nt-bg-primary-alpha-25 nt-group nt-relative nt-flex nt-items-start nt-p-4 nt-gap-2',
-          '[&:not(:first-child)]:nt-border-t nt-border-neutral-alpha-100',
-          {
-            'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-            'nt-bg-severity-high-alpha-100 hover:nt-bg-severity-high-alpha-50': severity() === SeverityLevelEnum.HIGH,
-            'nt-bg-severity-medium-alpha-100 hover:nt-bg-severity-medium-alpha-50':
-              severity() === SeverityLevelEnum.MEDIUM,
-            'nt-bg-severity-low-alpha-100 hover:nt-bg-severity-low-alpha-50': severity() === SeverityLevelEnum.LOW,
-          }
-        ),
+        className: cn(styles.root.className, styles.root.severity[severity()], {
+          [styles.root.clickable]: controller.isClickable(),
+        }),
         context: { notification: props.notification } satisfies Parameters<InboxAppearanceCallback['notification']>[0],
       })}
-      onClick={handleNotificationClick}
+      onClick={controller.handleClick}
     >
       <div
         class={style({
           key: SEVERITY_TO_BAR_KEYS[severity()],
-          className: cn('nt-transition nt-absolute nt-left-0 nt-top-0 nt-bottom-0 nt-w-[3px]', {
-            'nt-bg-severity-high group-hover:nt-bg-severity-high-alpha-500': severity() === SeverityLevelEnum.HIGH,
-            'nt-bg-severity-medium group-hover:nt-bg-severity-medium-alpha-500':
-              severity() === SeverityLevelEnum.MEDIUM,
-            'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500': severity() === SeverityLevelEnum.LOW,
-          }),
+          className: cn(styles.bar.className, styles.bar.severity[severity()]),
           context: { notification: props.notification } satisfies Parameters<
             InboxAppearanceCallback['notificationBar']
           >[0],
@@ -161,8 +113,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             fallback={
               <div
                 class={style({
-                  key: 'notificationImageLoadingFallback',
-                  className: 'nt-size-8 nt-rounded-lg nt-shrink-0 nt-aspect-square',
+                  key: styles.avatarFallback.key,
+                  className: styles.avatarFallback.className,
                   context: { notification: props.notification } satisfies Parameters<
                     InboxAppearanceCallback['notificationImageLoadingFallback']
                   >[0],
@@ -172,8 +124,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           >
             <img
               class={style({
-                key: 'notificationImage',
-                className: 'nt-size-8 nt-rounded-lg nt-object-cover nt-aspect-square',
+                key: styles.avatar.key,
+                className: styles.avatar.className,
                 context: { notification: props.notification } satisfies Parameters<
                   InboxAppearanceCallback['notificationImage']
                 >[0],
@@ -183,13 +135,13 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           </Show>
         }
       >
-        {(renderAvatar) => <ExternalElementRenderer render={(el) => renderAvatar()(el, props.notification)} />}
+        {(renderAvatar) => <ExternalElementRenderer render={renderAvatar()} args={[props.notification]} />}
       </Show>
 
       <div
         class={style({
-          key: 'notificationContent',
-          className: 'nt-flex nt-flex-col nt-gap-2 nt-w-full',
+          key: styles.content.key,
+          className: styles.content.className,
           context: { notification: props.notification } satisfies Parameters<
             InboxAppearanceCallback['notificationContent']
           >[0],
@@ -197,7 +149,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       >
         <div
           class={style({
-            key: 'notificationTextContainer',
+            key: styles.textContainer.key,
             context: { notification: props.notification } satisfies Parameters<
               InboxAppearanceCallback['notificationTextContainer']
             >[0],
@@ -209,10 +161,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <Show when={props.notification.subject}>
                 {(subject) => (
                   <Markdown
-                    appearanceKey="notificationSubject"
-                    class="nt-text-start nt-font-medium nt-whitespace-pre-wrap [word-break:break-word]"
-                    strongAppearanceKey="notificationSubject__strong"
-                    emAppearanceKey="notificationSubject__em"
+                    appearanceKey={styles.subject.key}
+                    class={styles.subject.className}
+                    strongAppearanceKey={styles.subject.strongKey}
+                    emAppearanceKey={styles.subject.emKey}
                     context={{ notification: props.notification }}
                   >
                     {subject()}
@@ -221,97 +173,54 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               </Show>
             }
           >
-            {(renderSubject) => <ExternalElementRenderer render={(el) => renderSubject()(el, props.notification)} />}
+            {(renderSubject) => <ExternalElementRenderer render={renderSubject()} args={[props.notification]} />}
           </Show>
           <Show
             when={props.renderBody}
             fallback={
               <Markdown
-                appearanceKey="notificationBody"
-                strongAppearanceKey="notificationBody__strong"
-                emAppearanceKey="notificationBody__em"
-                class="nt-text-start nt-whitespace-pre-wrap nt-text-foreground-alpha-600 [word-break:break-word]"
+                appearanceKey={styles.body.key}
+                strongAppearanceKey={styles.body.strongKey}
+                emAppearanceKey={styles.body.emKey}
+                class={styles.body.className}
                 context={{ notification: props.notification }}
               >
                 {props.notification.body}
               </Markdown>
             }
           >
-            {(renderBody) => <ExternalElementRenderer render={(el) => renderBody()(el, props.notification)} />}
+            {(renderBody) => <ExternalElementRenderer render={renderBody()} args={[props.notification]} />}
           </Show>
         </div>
 
         <Show
           when={props.renderDefaultActions}
-          fallback={
-            <div
-              class={style({
-                key: 'notificationDefaultActions',
-                className: `nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5`,
-                context: { notification: props.notification } satisfies Parameters<
-                  InboxAppearanceCallback['notificationDefaultActions']
-                >[0],
-              })}
-            >
-              {renderNotificationActions(props.notification, status)}
-            </div>
-          }
+          fallback={<NotificationDefaultActions notification={props.notification} />}
         >
           {(renderDefaultActions) => (
-            <ExternalElementRenderer render={(el) => renderDefaultActions()(el, props.notification)} />
+            <ExternalElementRenderer render={renderDefaultActions()} args={[props.notification]} />
           )}
         </Show>
 
         <Show
           when={props.renderCustomActions}
           fallback={
-            <Show when={props.notification.primaryAction || props.notification.secondaryAction}>
-              <div
-                class={style({
-                  key: 'notificationCustomActions',
-                  className: 'nt-flex nt-flex-wrap nt-gap-2',
-                  context: { notification: props.notification } satisfies Parameters<
-                    InboxAppearanceCallback['notificationCustomActions']
-                  >[0],
-                })}
-              >
-                <Show when={props.notification.primaryAction} keyed>
-                  {(primaryAction) => (
-                    <Button
-                      appearanceKey="notificationPrimaryAction__button"
-                      variant="default"
-                      onClick={(e) => handleActionButtonClick(ActionTypeEnum.PRIMARY, e)}
-                      context={{ notification: props.notification }}
-                    >
-                      {primaryAction.label}
-                    </Button>
-                  )}
-                </Show>
-                <Show when={props.notification.secondaryAction} keyed>
-                  {(secondaryAction) => (
-                    <Button
-                      appearanceKey="notificationSecondaryAction__button"
-                      variant="secondary"
-                      onClick={(e) => handleActionButtonClick(ActionTypeEnum.SECONDARY, e)}
-                      context={{ notification: props.notification }}
-                    >
-                      {secondaryAction.label}
-                    </Button>
-                  )}
-                </Show>
-              </div>
-            </Show>
+            <NotificationCustomActions
+              notification={props.notification}
+              onPrimaryActionClick={props.onPrimaryActionClick}
+              onSecondaryActionClick={props.onSecondaryActionClick}
+            />
           }
         >
           {(renderCustomActions) => (
-            <ExternalElementRenderer render={(el) => renderCustomActions()(el, props.notification)} />
+            <ExternalElementRenderer render={renderCustomActions()} args={[props.notification]} />
           )}
         </Show>
 
         <div
           class={style({
-            key: 'notificationDate',
-            className: 'nt-text-foreground-alpha-400 nt-flex nt-items-center nt-gap-1',
+            key: styles.date.key,
+            className: styles.date.className,
             context: { notification: props.notification } satisfies Parameters<
               InboxAppearanceCallback['notificationDate']
             >[0],
@@ -330,14 +239,14 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           <Show when={index() === 0}>{date} ·</Show>
                           <Show when={index() === 1}>
                             <Badge
-                              appearanceKey="notificationDeliveredAt__badge"
+                              appearanceKey={styles.deliveredAtBadge.key}
                               context={{ notification: props.notification }}
                             >
                               <IconRendererWrapper
                                 iconKey="clock"
                                 class={style({
-                                  key: 'notificationDeliveredAt__icon',
-                                  className: 'nt-size-3',
+                                  key: styles.deliveredAtIcon.key,
+                                  className: styles.deliveredAtIcon.className,
                                   iconKey: 'clock',
                                   context: { notification: props.notification } satisfies Parameters<
                                     InboxAppearanceCallback['notificationDeliveredAt__icon']
@@ -346,8 +255,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                                 fallback={
                                   <DefaultClock
                                     class={style({
-                                      key: 'notificationDeliveredAt__icon',
-                                      className: 'nt-size-3',
+                                      key: styles.deliveredAtIcon.key,
+                                      className: styles.deliveredAtIcon.className,
                                       iconKey: 'clock',
                                       context: { notification: props.notification } satisfies Parameters<
                                         InboxAppearanceCallback['notificationDeliveredAt__icon']
@@ -372,8 +281,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 <IconRendererWrapper
                   iconKey="clock"
                   class={style({
-                    key: 'notificationSnoozedUntil__icon',
-                    className: 'nt-size-3',
+                    key: styles.snoozedUntilIcon.key,
+                    className: styles.snoozedUntilIcon.className,
                     iconKey: 'clock',
                     context: { notification: props.notification } satisfies Parameters<
                       InboxAppearanceCallback['notificationSnoozedUntil__icon']
@@ -382,8 +291,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                   fallback={
                     <DefaultClock
                       class={style({
-                        key: 'notificationSnoozedUntil__icon',
-                        className: 'nt-size-3',
+                        key: styles.snoozedUntilIcon.key,
+                        className: styles.snoozedUntilIcon.className,
                         iconKey: 'clock',
                         context: { notification: props.notification } satisfies Parameters<
                           InboxAppearanceCallback['notificationSnoozedUntil__icon']
@@ -399,12 +308,12 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         </div>
       </div>
 
-      <div class="nt-w-1.5 nt-flex nt-justify-center nt-shrink-0">
+      <div class={styles.dotContainer.className}>
         <Show when={!props.notification.isRead}>
           <span
             class={style({
-              key: 'notificationDot',
-              className: 'nt-size-1.5 nt-bg-primary nt-rounded-full',
+              key: styles.dot.key,
+              className: styles.dot.className,
               context: { notification: props.notification } satisfies Parameters<
                 InboxAppearanceCallback['notificationDot']
               >[0],

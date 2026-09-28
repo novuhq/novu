@@ -4,6 +4,8 @@ import type {
   AgentHandlers,
   AgentMessage,
   AgentMessageContext,
+  AgentMessageDeletedContext,
+  AgentMessageUpdatedContext,
   MessageContent,
   ReplyHandle,
   ToolApprovalDecision,
@@ -26,8 +28,19 @@ export type AiSdkApprovalRequestPart = Extract<
  * Extends {@link AgentHandlers}: same events and config (`toolApproval`, etc.),
  * but `onMessage` and `onToolApproval` may return an AI SDK result for automatic delivery.
  */
-export type AiSdkAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolApproval'> & {
+export type AiSdkAgentHandlers = Omit<
+  AgentHandlers,
+  'onMessage' | 'onToolApproval' | 'onMessageUpdated' | 'onMessageDeleted'
+> & {
   onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AiSdkResult | void>;
+  onMessageUpdated?: (
+    message: AgentMessage,
+    ctx: AgentMessageUpdatedContext
+  ) => Awaitable<MessageContent | AiSdkResult | void>;
+  onMessageDeleted?: (
+    message: AgentMessage,
+    ctx: AgentMessageDeletedContext
+  ) => Awaitable<MessageContent | AiSdkResult | void>;
   /**
    * Optional. Auto-resumes `onMessage` after approve/deny unless you return an
    * `AiSdkResult` to drive the resume yourself.

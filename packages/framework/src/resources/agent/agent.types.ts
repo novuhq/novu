@@ -7,6 +7,8 @@ export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
+  ON_MESSAGE_UPDATED = 'onMessageUpdated',
+  ON_MESSAGE_DELETED = 'onMessageDeleted',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
@@ -158,6 +160,10 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 /** An incoming message from the user in the current conversation. */
 export interface AgentMessage {
   /** Plain-text content of the message. */
@@ -167,6 +173,8 @@ export interface AgentMessage {
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
+  replyTo?: AgentReplyToContext;
 }
 
 /** Live state of the current conversation thread. */
@@ -770,6 +778,18 @@ export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
+/** Context passed to the `onMessageUpdated` handler. */
+export interface AgentMessageUpdatedContext extends AgentHandlerContext {
+  readonly event: 'onMessageUpdated';
+  /** The message as it read before this edit. `null` when the channel does not send the old body. */
+  readonly previousMessage: AgentMessage | null;
+}
+
+/** Context passed to the `onMessageDeleted` handler. */
+export interface AgentMessageDeletedContext extends AgentHandlerContext {
+  readonly event: 'onMessageDeleted';
+}
+
 /** Context passed to the `onAction` handler. */
 export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
@@ -789,7 +809,13 @@ export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
-export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+export type AgentContext =
+  | AgentMessageContext
+  | AgentMessageUpdatedContext
+  | AgentMessageDeletedContext
+  | AgentActionContext
+  | AgentReactionContext
+  | AgentResolveContext;
 
 /** Event handlers for a conversational agent. */
 export interface AgentHandlers {
@@ -803,6 +829,26 @@ export interface AgentHandlers {
    * for more control (e.g. editing a message in place).
    */
   onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires when the user edits a previously sent message. Does not re-run `onMessage`.
+   *
+   * @param message - The message after the edit (same `platformMessageId`).
+   * @param ctx - `ctx.previousMessage` is the body before this edit, when the channel sent it.
+   */
+  onMessageUpdated?: (
+    message: AgentMessage,
+    ctx: AgentMessageUpdatedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires when the user deletes a message. Does not re-run `onMessage`.
+   *
+   * @param message - The removed message. `text` is the last known body and may be empty
+   *   when the channel did not send a snapshot.
+   */
+  onMessageDeleted?: (
+    message: AgentMessage,
+    ctx: AgentMessageDeletedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user adds or removes an emoji reaction to a message.
    *
@@ -854,7 +900,13 @@ export interface AgentHandlers {
    */
   onError?: (
     error: AgentError,
-    ctx: AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext
+    ctx:
+      | AgentMessageContext
+      | AgentMessageUpdatedContext
+      | AgentMessageDeletedContext
+      | AgentActionContext
+      | AgentReactionContext
+      | AgentResolveContext
   ) => Awaitable<AgentErrorResult>;
   /**
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
@@ -897,6 +949,11 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  /**
+   * The message as it read before an `onMessageUpdated` edit. Optional on the wire
+   * for backward compatibility; absent → `ctx.previousMessage` is `null`.
+   */
+  previousMessage?: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
