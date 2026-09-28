@@ -2,13 +2,15 @@ import { getCalApi } from '@calcom/embed-react';
 import { useOrganization } from '@clerk/react';
 import {
   ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   getFeatureForTierAsText,
+  PermissionsEnum,
   UNLIMITED_VALUE,
 } from '@novu/shared';
 import { Check, Minus } from 'lucide-react';
-import { useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { RiCalendarEventLine, RiChat3Line, RiTeamLine } from 'react-icons/ri';
 import { Badge } from '@/components/primitives/badge';
 import { LinkButton } from '@/components/primitives/button-link';
@@ -16,10 +18,17 @@ import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useFetchConversationUsage } from '../../hooks/use-fetch-conversation-usage';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { getPlanFeatures, type PlanFeature } from './features-config';
 import { PlanActionButton } from './plan-action-button';
+import { UsageLimitsDrawer } from './usage-limits/usage-limits-drawer';
+import { UsageLimitsStatusPills } from './usage-limits/usage-limits-status-pills';
+import { useUsageLimitsDrawerParam } from './usage-limits/use-usage-limits-drawer-param';
+import { WorkflowRunsUsageRow } from './usage-limits/workflow-runs-usage-row';
+import { getIncludedWorkflowRuns } from './usage-limits/workflow-runs-usage-state';
 
 interface ActivePlanBannerProps {
   selectedBillingInterval: 'month' | 'year';
@@ -129,9 +138,7 @@ function getUsageData(
     case 'events':
       return {
         current: subscription?.events.current ?? 0,
-        included:
-          subscription?.events.included ??
-          getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, currentPlan, false),
+        included: getIncludedWorkflowRuns(subscription),
         label: 'included',
       };
     case 'conversations':
@@ -298,12 +305,19 @@ function UsageCard({
   daysLeft,
   conversationUsage,
   organization,
+  workflowRunsRow,
+  footer,
 }: {
   subscription: ReturnType<typeof useFetchSubscription>['subscription'];
   daysLeft: number;
   conversationUsage: ReturnType<typeof useFetchConversationUsage>['conversationUsage'];
   organization: ReturnType<typeof useOrganization>['organization'];
+  /** Replaces the default Workflow Runs metric row. */
+  workflowRunsRow?: ReactNode;
+  footer?: ReactNode;
 }) {
+  const metrics = workflowRunsRow ? USAGE_METRICS.filter((metric) => metric.type !== 'events') : USAGE_METRICS;
+
   return (
     <Card className="flex h-full flex-col border shadow-none">
       <CardHeader title="Usage" rightContent={<span className="text-label-xs text-text-soft">Updates hourly</span>}>
@@ -319,7 +333,8 @@ function UsageCard({
 
       <div className="p-6">
         <div className="space-y-8">
-          {USAGE_METRICS.map((metric) => (
+          {workflowRunsRow}
+          {metrics.map((metric) => (
             <UsageMetricRow
               key={metric.type}
               metric={metric}
@@ -330,6 +345,7 @@ function UsageCard({
           ))}
         </div>
       </div>
+      {footer && <div className="border-t border-neutral-200 px-3 py-2">{footer}</div>}
     </Card>
   );
 }
@@ -372,6 +388,13 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
   const { subscription, daysLeft } = useFetchSubscription();
   const { organization } = useOrganization();
   const { conversationUsage } = useFetchConversationUsage();
+  const isUsageLimitsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED, false);
+  const has = useHasPermission();
+  const { isDrawerRequested, setIsDrawerRequested } = useUsageLimitsDrawerParam();
+
+  const usageLimits = isUsageLimitsEnabled ? subscription?.usageLimits : null;
+  const canConfigureUsageLimits = !!usageLimits?.isConfigurable && has({ permission: PermissionsEnum.BILLING_WRITE });
+  const openUsageLimitsDrawer = () => setIsDrawerRequested(true);
 
   useEffect(() => {
     (async () => {
@@ -388,9 +411,40 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
           daysLeft={daysLeft}
           conversationUsage={conversationUsage}
           organization={organization}
+          workflowRunsRow={
+            subscription &&
+            usageLimits && (
+              <WorkflowRunsUsageRow
+                subscription={subscription}
+                canConfigure={canConfigureUsageLimits}
+                onEditLimit={openUsageLimitsDrawer}
+              />
+            )
+          }
+          footer={
+            subscription &&
+            usageLimits && (
+              <UsageLimitsStatusPills
+                alertsEnabled={usageLimits.alerts.enabled}
+                pauseAtLimit={usageLimits.pauseAtLimit}
+                isPaused={subscription.events.isPaused}
+                canConfigure={canConfigureUsageLimits}
+                onConfigure={openUsageLimitsDrawer}
+              />
+            )
+          }
         />
         <PlanCard selectedBillingInterval={selectedBillingInterval} subscription={subscription} />
       </div>
+
+      {subscription && usageLimits && canConfigureUsageLimits && (
+        <UsageLimitsDrawer
+          isOpen={isDrawerRequested}
+          onOpenChange={setIsDrawerRequested}
+          subscription={subscription}
+          usageLimits={usageLimits}
+        />
+      )}
 
       <div className="flex justify-end">
         <span className="text-paragraph-sm text-text-sub">
