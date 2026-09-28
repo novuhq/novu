@@ -195,7 +195,8 @@ function UsageLimitsForm({ subscription, usageLimits, onClose }: UsageLimitsForm
     headroom !== null && events.onDemandPricePer1k !== null
       ? usdFormatter.format((headroom / 1000) * events.onDemandPricePer1k)
       : null;
-  const pausesImmediately = pauseAtLimit && headroom !== null && events.current >= included + headroom;
+  const pausesImmediately =
+    !events.isPaused && pauseAtLimit && headroom !== null && events.current >= included + headroom;
 
   const onSubmit = async (values: UsageLimitsFormValues) => {
     try {
