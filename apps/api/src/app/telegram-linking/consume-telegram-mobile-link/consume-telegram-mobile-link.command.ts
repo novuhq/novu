@@ -15,5 +15,3 @@ export class ConsumeTelegramMobileLinkCommand extends BaseCommand {
   })
   botToken: string;
 }
-
-
