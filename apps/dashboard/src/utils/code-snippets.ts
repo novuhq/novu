@@ -20,6 +20,28 @@ export type TriggerCurlCommandOptions = {
 
 const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function serializeJson(value: unknown): string {
+  const serialized = JSON.stringify(value);
+
+  return serialized === undefined ? 'null' : serialized;
+}
+
+function getSubscriberId(to: unknown): string {
+  if (typeof to === 'string' && to.length > 0) {
+    return to;
+  }
+
+  if (isPlainObject(to) && typeof to.subscriberId === 'string' && to.subscriberId.length > 0) {
+    return to.subscriberId;
+  }
+
+  return 'subscriber-id';
+}
+
 const safeParsePayload = (payload: string) => {
   try {
     return JSON.parse(payload);
@@ -192,8 +214,12 @@ novu.trigger(${JSON.stringify(
 `;
 };
 
-const transformJsonToPhpArray = (data: Record<string, unknown>, indentLevel = 4): string => {
+const transformJsonToPhpArray = (data: unknown, indentLevel = 4): string => {
   indentLevel = Math.max(0, indentLevel);
+
+  if (!isPlainObject(data)) {
+    return serializeJson(data ?? {}).replace(/"/g, "'");
+  }
 
   if (Object.keys(data).length === 0) {
     return '[]';
@@ -205,7 +231,8 @@ const transformJsonToPhpArray = (data: Record<string, unknown>, indentLevel = 4)
 
   const items = entries
     .map(([key, value]) => {
-      const formattedValue = JSON.stringify(value).replace(/"/g, "'");
+      const formattedValue = serializeJson(value).replace(/"/g, "'");
+
       return `${indent}'${key}' => ${formattedValue}`;
     })
     .join(',\n');
@@ -227,7 +254,7 @@ export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSni
     ->setServerURL('${API_HOSTNAME}')`;
   }
 
-  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
+  const subscriberId = getSubscriberId(to);
 
   return `<?php
 declare(strict_types=1);
@@ -261,10 +288,10 @@ export const createPythonSnippet = ({ identifier, to, payload, secretKey }: Code
     serverConfig = `,\n    server_url="${API_HOSTNAME}"`;
   }
 
-  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
+  const subscriberId = getSubscriberId(to);
 
   // Format payload with proper Python indentation
-  const formattedPayload = JSON.stringify(safeParsePayload(payload), null, 4)
+  const formattedPayload = JSON.stringify(safeParsePayload(payload) ?? {}, null, 4)
     .split('\n')
     .map((line, index) => (index === 0 ? line : `        ${line}`))
     .join('\n');
@@ -284,24 +311,30 @@ with Novu(
     ))`;
 };
 
-const convertJsonToGoMap = (data: Record<string, unknown>, indentLevel = 2): string => {
+const convertJsonToGoMap = (data: unknown, indentLevel = 2): string => {
+  if (!isPlainObject(data)) {
+    return serializeJson(data ?? {});
+  }
+
   if (Object.keys(data).length === 0) {
     return 'map[string]any{}';
   }
 
-  const indent = '\t'.repeat(indentLevel);
-  const baseIndent = '\t'.repeat(indentLevel - 1);
+  const safeIndentLevel = Math.max(1, indentLevel);
+  const indent = '\t'.repeat(safeIndentLevel);
+  const baseIndent = '\t'.repeat(safeIndentLevel - 1);
 
   const entries = Object.entries(data)
     .map(([key, value]) => {
       let formattedValue: string;
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        formattedValue = convertJsonToGoMap(value as Record<string, unknown>, indentLevel + 1);
+      if (isPlainObject(value)) {
+        formattedValue = convertJsonToGoMap(value, safeIndentLevel + 1);
       } else if (typeof value === 'string') {
         formattedValue = `"${value}"`;
       } else {
-        formattedValue = JSON.stringify(value);
+        formattedValue = serializeJson(value);
       }
+
       return `${indent}"${key}": ${formattedValue}`;
     })
     .join(',\n');
@@ -320,7 +353,7 @@ export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnip
     serverConfig = `\n		novugo.WithServerURL("${API_HOSTNAME}"),`;
   }
 
-  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
+  const subscriberId = getSubscriberId(to);
 
   const formattedPayload = convertJsonToGoMap(safeParsePayload(payload), 2);
   const osImport = needsOsImport ? '\n	"os"' : '';
