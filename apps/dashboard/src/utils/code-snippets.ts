@@ -217,11 +217,7 @@ novu.trigger(${JSON.stringify(
 const transformJsonToPhpArray = (data: unknown, indentLevel = 4): string => {
   indentLevel = Math.max(0, indentLevel);
 
-  if (!isPlainObject(data)) {
-    return serializeJson(data ?? {}).replace(/"/g, "'");
-  }
-
-  if (Object.keys(data).length === 0) {
+  if (!isPlainObject(data) || Object.keys(data).length === 0) {
     return '[]';
   }
 
@@ -312,11 +308,7 @@ with Novu(
 };
 
 const convertJsonToGoMap = (data: unknown, indentLevel = 2): string => {
-  if (!isPlainObject(data)) {
-    return serializeJson(data ?? {});
-  }
-
-  if (Object.keys(data).length === 0) {
+  if (!isPlainObject(data) || Object.keys(data).length === 0) {
     return 'map[string]any{}';
   }
 
