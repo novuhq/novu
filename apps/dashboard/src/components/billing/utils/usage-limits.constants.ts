@@ -1,3 +1,6 @@
 import { ROUTES } from '@/utils/routes';
 
-export const EDIT_USAGE_LIMITS_ROUTE = `${ROUTES.SETTINGS_BILLING}?usageLimits=open`;
+export const USAGE_LIMITS_DRAWER_PARAM = 'usageLimits';
+export const USAGE_LIMITS_DRAWER_OPEN_VALUE = 'open';
+
+export const EDIT_USAGE_LIMITS_ROUTE = `${ROUTES.SETTINGS_BILLING}?${USAGE_LIMITS_DRAWER_PARAM}=${USAGE_LIMITS_DRAWER_OPEN_VALUE}`;
