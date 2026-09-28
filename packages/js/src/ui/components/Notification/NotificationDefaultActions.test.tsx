@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Notification } from '../../../notifications';
 import { NovuUI } from '../../novuUI';
 import {
@@ -6,6 +6,7 @@ import {
   createFakeNotification as createNotification,
   installAnimatePolyfill,
 } from '../../testing/fakes';
+import { TOOLTIP_OPEN_DELAY_MS, TOOLTIP_SKIP_DELAY_MS } from '../primitives/Tooltip';
 
 const mountActions = (notification: Notification) => {
   const novuUI = new NovuUI({
@@ -25,6 +26,7 @@ const mountActions = (notification: Notification) => {
 
 describe('NotificationDefaultActions', () => {
   afterEach(() => {
+    vi.useRealTimers();
     document.body.innerHTML = '';
     document.head.innerHTML = '';
   });
@@ -49,7 +51,10 @@ describe('NotificationDefaultActions', () => {
     const { novuUI, mountPoint, handle } = mountActions(createNotification());
     const button = mountPoint.querySelector('.nv-notificationRead__button') as HTMLButtonElement;
 
+    vi.useFakeTimers();
     button.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(document.querySelector('.nv-tooltipContent')).toBeNull();
+    vi.advanceTimersByTime(TOOLTIP_OPEN_DELAY_MS);
     const tooltip = document.querySelector('.nv-tooltipContent');
     expect(tooltip?.textContent).toBe('Mark as read');
 
@@ -59,6 +64,36 @@ describe('NotificationDefaultActions', () => {
     expect(mountPoint.querySelector('.nv-notificationRead__button')).toBeNull();
     expect(document.querySelector('.nv-tooltipContent')).toBe(tooltip);
     expect(tooltip?.textContent).toBe('Mark as unread');
+    novuUI.unmount();
+  });
+
+  it('opens a tooltip only after the pointer rests, and the next one at once while moving along the row', () => {
+    vi.useFakeTimers();
+    const { novuUI, mountPoint } = mountActions(createNotification());
+    const readButton = mountPoint.querySelector('.nv-notificationRead__button') as HTMLButtonElement;
+    const archiveButton = mountPoint.querySelector('.nv-notificationArchive__button') as HTMLButtonElement;
+    const tooltipText = () => document.querySelector('.nv-tooltipContent')?.textContent;
+
+    // Passing over a button doesn't flash its tooltip.
+    readButton.dispatchEvent(new MouseEvent('mouseenter'));
+    vi.advanceTimersByTime(TOOLTIP_OPEN_DELAY_MS - 1);
+    readButton.dispatchEvent(new MouseEvent('mouseleave'));
+    vi.advanceTimersByTime(TOOLTIP_OPEN_DELAY_MS);
+    expect(tooltipText()).toBeUndefined();
+
+    readButton.dispatchEvent(new MouseEvent('mouseenter'));
+    vi.advanceTimersByTime(TOOLTIP_OPEN_DELAY_MS);
+    expect(tooltipText()).toBe('Mark as read');
+
+    readButton.dispatchEvent(new MouseEvent('mouseleave'));
+    archiveButton.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(tooltipText()).toBe('Archive');
+
+    // Once the row has been left for longer than the skip window, the delay applies again.
+    archiveButton.dispatchEvent(new MouseEvent('mouseleave'));
+    vi.advanceTimersByTime(TOOLTIP_SKIP_DELAY_MS);
+    readButton.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(tooltipText()).toBeUndefined();
     novuUI.unmount();
   });
 
