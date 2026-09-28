@@ -181,14 +181,15 @@ function foldInboundBurst(message: Message, messageContext?: MessageContext): vo
   const verdict = burst.find((item) => parseApprovalReplyVerdict(item.text) !== null);
   if (verdict) {
     message.text = verdict.text;
+    message.formatted = verdict.formatted;
 
     return;
   }
 
-  message.text = burst
-    .map((item) => item.text ?? '')
-    .filter((text) => text.trim().length > 0)
-    .join('\n\n');
+  // `formatted` folds from the same items as `text`: the bridge renders it as `message.markdown`.
+  const withText = burst.filter((item) => (item.text ?? '').trim().length > 0);
+  message.text = withText.map((item) => item.text).join('\n\n');
+  message.formatted = { type: 'root', children: withText.flatMap((item) => item.formatted?.children ?? []) };
   message.attachments = burst.flatMap((item) => item.attachments ?? []);
 }
 
