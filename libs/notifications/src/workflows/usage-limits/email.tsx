@@ -1,3 +1,4 @@
+import { USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared';
 import { Button, Heading, renderAsync, Section, Text } from '@react-email/components';
 import React from 'react';
 import { EmailLayout } from '../../templates/layout';
@@ -5,7 +6,6 @@ import { UsageLimitsAlertState, UsageLimitsCta } from './schemas';
 
 const DASHBOARD_URL = 'https://dashboard.novu.co';
 const BILLING_PATH = '/settings/billing';
-const USAGE_LIMITS_PATH = '/settings/billing?usageLimits=open';
 
 export interface IUsageLimitsCopyInput {
   alertState?: UsageLimitsAlertState;
@@ -147,7 +147,7 @@ function getEditLimitsCopy(alertState: UsageLimitsAlertState, figures: IUsageFig
         message:
           'Further workflow runs this billing period are billed on-demand. Review your usage limits to control how many on-demand runs you allow and whether sending pauses at the limit.',
         buttonLabel: 'Review usage limits',
-        dashboardPath: USAGE_LIMITS_PATH,
+        dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
         notificationText: {
           subject: 'You have used all included workflow runs',
           body: `You have used all ${formatCount(includedEvents)} workflow runs included in your plan. Further runs this billing period are billed on-demand.`,
@@ -160,7 +160,7 @@ function getEditLimitsCopy(alertState: UsageLimitsAlertState, figures: IUsageFig
         message:
           'Once usage reaches your limit, new workflow runs are paused until you raise the limit, turn off pause at limit, or the next billing cycle begins.',
         buttonLabel: 'Edit usage limits',
-        dashboardPath: USAGE_LIMITS_PATH,
+        dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
         notificationText: {
           subject: 'Approaching your usage limit: new workflow runs will pause',
           body: `${usageAgainstLimit} New workflow runs pause when you reach it.`,
@@ -173,7 +173,7 @@ function getEditLimitsCopy(alertState: UsageLimitsAlertState, figures: IUsageFig
         message:
           'New workflow runs are paused. To resume sending, raise your usage limit or turn off pause at limit. Otherwise, sending resumes when the next billing cycle begins.',
         buttonLabel: 'Edit usage limits',
-        dashboardPath: USAGE_LIMITS_PATH,
+        dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
         notificationText: {
           subject: 'Usage limit reached: new workflow runs are paused',
           body: `New workflow runs are paused at your ${formatCount(allowance)} usage limit. Raise the limit or turn off pause at limit to resume sending.`,
@@ -186,7 +186,7 @@ function getEditLimitsCopy(alertState: UsageLimitsAlertState, figures: IUsageFig
         message:
           'Your notifications keep sending, and further workflow runs are billed on-demand. If this volume is unexpected, review your workflows and triggers, or edit your usage limits to pause sending at a set limit.',
         buttonLabel: 'Review usage limits',
-        dashboardPath: USAGE_LIMITS_PATH,
+        dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
         notificationText: {
           subject: `Usage alert: ${figures.percentage}% of the way to your ${limitLabel}`,
           body: `${usageAgainstLimit} Sending continues, with further runs billed on-demand.`,
