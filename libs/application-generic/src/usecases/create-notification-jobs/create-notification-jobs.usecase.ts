@@ -12,6 +12,7 @@ import {
   FeatureFlagsKeysEnum,
   IDigestBaseMetadata,
   IWorkflowStepMetadata,
+  ResourceEnum,
   SeverityLevelEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
@@ -24,6 +25,7 @@ import {
   WorkflowRunTraceInput,
 } from '../../services/analytic-logs';
 import { LogRepository } from '../../services/analytic-logs/log.repository';
+import { buildUsageKey, CacheService } from '../../services/cache';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { type LeanNotificationStep, toLeanStep } from '../../services/step-template-hydration.service';
 import { PlatformException } from '../../utils/exceptions';
@@ -44,7 +46,8 @@ export class CreateNotificationJobs {
     private notificationRepository: NotificationRepository,
     private workflowRunRepository: WorkflowRunRepository,
     private traceLogRepository: TraceLogRepository,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private cacheService: CacheService
   ) {}
 
   @InstrumentUsecase()
@@ -202,6 +205,29 @@ export class CreateNotificationJobs {
       );
       // Don't throw here as we don't want to fail the main notification creation
     }
+
+    await this.incrementUsageCounter(notification, command);
+  }
+
+  private async incrementUsageCounter(notification: NotificationEntity, command: CreateNotificationJobsCommand) {
+    if (!command.incrementUsageInWorker) {
+      return;
+    }
+
+    try {
+      await this.cacheService.incrIfExistsAtomic(
+        buildUsageKey({ _organizationId: command.organizationId, resourceType: ResourceEnum.EVENTS })
+      );
+    } catch (error) {
+      console.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId: notification._id,
+          organizationId: command.organizationId,
+        },
+        'Failed to increment usage counter'
+      );
+    }
   }
 
   private buildJobFromStep(
@@ -306,7 +332,7 @@ export class CreateNotificationJobs {
     // `job.step` is a Mongo Mixed field; under job-step-dedup we intentionally
     // persist this lean projection and rehydrate the full template at execution
     // time (StepTemplateHydrationService).
-    return leanStep as unknown as NotificationStepEntity;
+    return leanStep as NotificationStepEntity;
   }
 
   private createATriggerJobIfMissing(
