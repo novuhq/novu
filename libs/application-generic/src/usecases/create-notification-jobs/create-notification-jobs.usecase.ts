@@ -220,7 +220,11 @@ export class CreateNotificationJobs {
       );
     } catch (error) {
       console.error(
-        { error: error instanceof Error ? error.message : 'Unknown error', notificationId: notification._id },
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId: notification._id,
+          organizationId: command.organizationId,
+        },
         'Failed to increment usage counter'
       );
     }

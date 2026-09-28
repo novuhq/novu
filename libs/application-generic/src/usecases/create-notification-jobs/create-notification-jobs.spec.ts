@@ -193,7 +193,7 @@ describe('CreateNotificationJobs', () => {
     const usageKey = buildUsageKey({ _organizationId: ORGANIZATION_ID, resourceType: ResourceEnum.EVENTS });
 
     function buildStampedCommand(): CreateNotificationJobsCommand {
-      return { ...buildCommand([buildEmailStep()]), incrementUsageInWorker: true } as CreateNotificationJobsCommand;
+      return { ...buildCommand([buildEmailStep()]), incrementUsageInWorker: true };
     }
 
     function enableTracesWrite(featureFlagsService: { getFlag: jest.Mock }) {
@@ -203,11 +203,12 @@ describe('CreateNotificationJobs', () => {
       );
     }
 
-    it('should increment the organization usage counter once for a stamped job', async () => {
-      const { usecase, cacheService } = buildUsecase();
+    it('should increment the organization usage counter once for a stamped job, even with traces disabled', async () => {
+      const { usecase, cacheService, traceLogRepository } = buildUsecase();
 
       await usecase.execute(buildStampedCommand());
 
+      expect(traceLogRepository.createWorkflowRun).not.toHaveBeenCalled();
       expect(cacheService.incrIfExistsAtomic).toHaveBeenCalledTimes(1);
       expect(cacheService.incrIfExistsAtomic).toHaveBeenCalledWith(usageKey);
     });
@@ -224,16 +225,6 @@ describe('CreateNotificationJobs', () => {
       const [tracePushOrder] = traceLogRepository.createWorkflowRun.mock.invocationCallOrder;
       const [incrementOrder] = cacheService.incrIfExistsAtomic.mock.invocationCallOrder;
       expect(incrementOrder).toBeGreaterThan(tracePushOrder);
-    });
-
-    it('should still increment when traces are disabled', async () => {
-      const { usecase, cacheService, traceLogRepository } = buildUsecase();
-
-      await usecase.execute(buildStampedCommand());
-
-      expect(traceLogRepository.createWorkflowRun).not.toHaveBeenCalled();
-      expect(cacheService.incrIfExistsAtomic).toHaveBeenCalledTimes(1);
-      expect(cacheService.incrIfExistsAtomic).toHaveBeenCalledWith(usageKey);
     });
 
     it('should still increment when the trace push throws', async () => {
@@ -253,9 +244,7 @@ describe('CreateNotificationJobs', () => {
       ['false', { incrementUsageInWorker: false }],
     ])('should not increment when the stamp is %s', async (_label, stamp) => {
       const { usecase, cacheService } = buildUsecase();
-      const command = { ...buildCommand([buildEmailStep()]), ...stamp } as CreateNotificationJobsCommand;
-
-      await usecase.execute(command);
+      await usecase.execute({ ...buildCommand([buildEmailStep()]), ...stamp });
 
       expect(cacheService.incrIfExistsAtomic).not.toHaveBeenCalled();
     });
