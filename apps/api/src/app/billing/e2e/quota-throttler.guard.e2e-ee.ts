@@ -148,9 +148,9 @@ describe('Resource Limiting #novu-v2', () => {
           });
           await organizationRepository.updateUsageLimits(session.organization._id, pausingUsageLimits);
 
-          const getSubscription = session.testServer?.getService(GetSubscription) as GetSubscription;
+          // BillingModule is imported by more than one module, so every instance must see the stub.
           getSubscriptionStub = sinon
-            .stub(getSubscription, 'execute')
+            .stub(GetSubscription.prototype, 'execute')
             .resolves(buildSubscription(ApiServiceLevelEnum.PRO, { current: 40_000, included: 30_000 }));
         });
 

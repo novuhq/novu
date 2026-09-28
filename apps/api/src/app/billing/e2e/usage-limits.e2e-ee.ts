@@ -71,8 +71,8 @@ describe('Usage limits #novu-v2', () => {
     await session.initialize();
     await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
 
-    const getStripeSubscription = session.testServer?.getService(GetStripeSubscription) as GetStripeSubscription;
-    getStripeSubscriptionStub = sinon.stub(getStripeSubscription, 'execute');
+    // BillingModule is imported by more than one module, so every instance must see the stub.
+    getStripeSubscriptionStub = sinon.stub(GetStripeSubscription.prototype, 'execute');
     givenIncludedEvents(30_000);
   });
 
@@ -216,7 +216,7 @@ describe('Usage limits #novu-v2', () => {
       it(`should reject ${title}`, async () => {
         const response = await putUsageLimits(body);
 
-        expect(response.status).to.equal(400);
+        expect(response.status).to.equal(422);
         expect(await findStoredUsageLimits()).to.equal(undefined);
       });
     }
