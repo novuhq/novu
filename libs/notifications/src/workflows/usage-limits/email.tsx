@@ -135,10 +135,9 @@ function getEditLimitsCopy(alertState: UsageLimitsAlertState, figures: IUsageFig
   const { organizationName, planName, usage, allowance, includedEvents } = figures;
   const onDemand = Math.max(usage - includedEvents, 0);
   const usageBreakdown = `Your organization ${organizationName} has used ${formatCount(usage)} workflow runs this billing period: all ${formatCount(includedEvents)} runs included in the ${planName} plan and ${formatCount(onDemand)} on-demand.`;
-  const summarizeAgainst = (limitLabel: string) =>
-    `${usageBreakdown} Your ${limitLabel} is ${formatCount(allowance)} workflow runs.`;
-  const usedAgainst = (limitLabel: string) =>
-    `You have used ${formatCount(usage)} workflow runs against your ${formatCount(allowance)} ${limitLabel}.`;
+  const limitLabel = figures.hasSetLimit ? 'usage limit' : 'monthly usage alert level';
+  const limitSummary = `${usageBreakdown} Your ${limitLabel} is ${formatCount(allowance)} workflow runs.`;
+  const usageAgainstLimit = `You have used ${formatCount(usage)} workflow runs against your ${formatCount(allowance)} ${limitLabel}.`;
 
   switch (alertState) {
     case 'included_exhausted':
@@ -157,20 +156,20 @@ function getEditLimitsCopy(alertState: UsageLimitsAlertState, figures: IUsageFig
     case 'approaching_limit':
       return {
         heading: 'Approaching Your Usage Limit',
-        summary: summarizeAgainst('usage limit'),
+        summary: limitSummary,
         message:
           'Once usage reaches your limit, new workflow runs are paused until you raise the limit, turn off pause at limit, or the next billing cycle begins.',
         buttonLabel: 'Edit usage limits',
         dashboardPath: USAGE_LIMITS_PATH,
         notificationText: {
           subject: 'Approaching your usage limit: new workflow runs will pause',
-          body: `${usedAgainst('usage limit')} New workflow runs pause when you reach it.`,
+          body: `${usageAgainstLimit} New workflow runs pause when you reach it.`,
         },
       };
     case 'blocked':
       return {
         heading: 'New Workflow Runs Are Paused',
-        summary: summarizeAgainst('usage limit'),
+        summary: limitSummary,
         message:
           'New workflow runs are paused. To resume sending, raise your usage limit or turn off pause at limit. Otherwise, sending resumes when the next billing cycle begins.',
         buttonLabel: 'Edit usage limits',
@@ -180,22 +179,19 @@ function getEditLimitsCopy(alertState: UsageLimitsAlertState, figures: IUsageFig
           body: `New workflow runs are paused at your ${formatCount(allowance)} usage limit. Raise the limit or turn off pause at limit to resume sending.`,
         },
       };
-    case 'alert_level_reached': {
-      const limitLabel = figures.hasSetLimit ? 'usage limit' : 'monthly usage alert level';
-
+    case 'alert_level_reached':
       return {
         heading: 'Usage Alert for Your Workflow Runs',
-        summary: summarizeAgainst(limitLabel),
+        summary: limitSummary,
         message:
           'Your notifications keep sending, and further workflow runs are billed on-demand. If this volume is unexpected, review your workflows and triggers, or edit your usage limits to pause sending at a set limit.',
         buttonLabel: 'Review usage limits',
         dashboardPath: USAGE_LIMITS_PATH,
         notificationText: {
           subject: `Usage alert: ${figures.percentage}% of the way to your ${limitLabel}`,
-          body: `${usedAgainst(limitLabel)} Sending continues, with further runs billed on-demand.`,
+          body: `${usageAgainstLimit} Sending continues, with further runs billed on-demand.`,
         },
       };
-    }
     default: {
       const unhandled: never = alertState;
 
