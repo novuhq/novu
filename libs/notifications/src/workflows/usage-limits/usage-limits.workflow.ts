@@ -72,6 +72,21 @@ export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {
   } as const;
 }
 
+function upgradeEmailSubject(
+  alertState: UsageLimitsAlertState | undefined,
+  controls: { subject?: string; blockedSubject?: string; alertLevelSubject?: string }
+): string {
+  if (alertState === 'blocked') {
+    return controls.blockedSubject;
+  }
+
+  if (alertState === 'alert_level_reached') {
+    return controls.alertLevelSubject;
+  }
+
+  return controls.subject;
+}
+
 /**
  * The caller's claim decides whether to trigger at all: once per organization, billing period and threshold,
  * with `blocked` re-sent every few days. The `dedup` step guarantees at most one delivery per subscriber,
@@ -81,19 +96,30 @@ export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {
 export const usageLimitsWorkflow = workflow(
   'usage-limits',
   async ({ step, payload }) => {
+    const copy = getUsageLimitsCopy(payload);
+
     await step.throttle('dedup', async () => usageLimitsDedupThrottle(payload));
 
     await step.email(
       'email',
       async (controls) => {
+        const { subject, body: previewText } = copy.notificationText ?? {
+          subject: upgradeEmailSubject(payload.alertState, controls),
+          body: controls.previewText,
+        };
+
         return {
-          subject: controls.subject,
-          body: await renderUsageLimitsEmail(payload, controls),
+          subject,
+          body: await renderUsageLimitsEmail(copy, previewText),
         };
       },
       {
         controlSchema: z.object({
           subject: z.string().default('You are approaching your usage limits'),
+          blockedSubject: z.string().default('Usage limit reached: new notifications are blocked'),
+          alertLevelSubject: z
+            .string()
+            .default('Usage alert: you have used {{payload.percentage}}% of your monthly usage alert level'),
           previewText: z.string().default('You have used {{payload.percentage}}% of your monthly events'),
         }),
       }
@@ -103,14 +129,18 @@ export const usageLimitsWorkflow = workflow(
       'in-app',
       async (controls) => {
         const isBlocked = payload.alertState === 'blocked';
-
-        return {
+        const { subject, body } = copy.notificationText ?? {
           subject: isBlocked ? controls.blockedSubject : controls.subject,
           body: isBlocked ? controls.blockedBody : controls.body,
+        };
+
+        return {
+          subject,
+          body,
           primaryAction: {
-            label: getUsageLimitsCopy(payload.alertState ?? 'approaching_limit').buttonLabel,
+            label: copy.buttonLabel,
             // Relative so the user stays on their region's dashboard host.
-            redirect: { url: '/settings/billing', target: '_self' },
+            redirect: { url: copy.dashboardPath, target: '_self' },
           },
         };
       },
