@@ -28,8 +28,19 @@ export const WORKER_QUEUE_DEPENDENCIES: Partial<Record<JobTopicNameEnum, JobTopi
 
 export const ALL_WORKER_TOPICS = Object.keys(WORKER_QUEUE_DEPENDENCIES) as JobTopicNameEnum[];
 
-function isWorkerTopic(value: string): value is JobTopicNameEnum {
-  return (ALL_WORKER_TOPICS as string[]).includes(value);
+/**
+ * Workers that stay on BullMQ when the deployment produces to SQS.
+ *
+ * `metric-active-jobs` records BullMQ queue counters, so it has no SQS queue
+ * and must not be asked for a queue URL. Deployments still list it in
+ * `ACTIVE_WORKERS`; dropping it here crash-loops the process at boot.
+ */
+export const BULLMQ_ONLY_WORKER_TOPICS: JobTopicNameEnum[] = [JobTopicNameEnum.ACTIVE_JOBS_METRIC];
+
+const ACCEPTED_ACTIVE_WORKERS = [...ALL_WORKER_TOPICS, ...BULLMQ_ONLY_WORKER_TOPICS];
+
+function isAcceptedActiveWorker(value: string): value is JobTopicNameEnum {
+  return (ACCEPTED_ACTIVE_WORKERS as string[]).includes(value);
 }
 
 /**
@@ -40,26 +51,39 @@ function isWorkerTopic(value: string): value is JobTopicNameEnum {
  * unrecognised name resolving to no topics would let a misconfigured process
  * pass boot validation with nothing checked at all, and only fail later when
  * the module graph is built.
+ *
+ * BullMQ-only names stay in the list so a process whose only entry is
+ * `metric-active-jobs` is not treated as "run every worker".
  */
-export const workersToProcess: JobTopicNameEnum[] = (process.env.ACTIVE_WORKERS ?? '')
-  .split(',')
-  .map((entry) => entry.trim())
-  .filter(Boolean)
-  .map((entry) => {
-    if (!isWorkerTopic(entry)) {
-      throw new Error(`Invalid worker "${entry}" in ACTIVE_WORKERS. Expected one of: ${ALL_WORKER_TOPICS.join(', ')}`);
-    }
+export function parseActiveWorkers(raw: string | undefined): JobTopicNameEnum[] {
+  return (raw ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      if (!isAcceptedActiveWorker(entry)) {
+        throw new Error(
+          `Invalid worker "${entry}" in ACTIVE_WORKERS. Expected one of: ${ACCEPTED_ACTIVE_WORKERS.join(', ')}`
+        );
+      }
 
-    return entry;
-  });
+      return entry;
+    });
+}
+
+export const workersToProcess: JobTopicNameEnum[] = parseActiveWorkers(process.env.ACTIVE_WORKERS);
 
 /**
- * Every topic this worker process touches: the ones its active workers consume
- * plus the ones they enqueue to. A sharded worker (`ACTIVE_WORKERS=standard`)
- * must not be asked for queue URLs it never uses.
+ * Every SQS topic this worker process touches: the ones its active workers
+ * consume plus the ones they enqueue to. A sharded worker
+ * (`ACTIVE_WORKERS=standard`) must not be asked for queue URLs it never uses.
+ *
+ * BullMQ-only workers are omitted. In `sqs_bullmq` they keep running against
+ * BullMQ and have nothing to configure on SQS.
  */
 export function getRequiredWorkerTopics(active: JobTopicNameEnum[] = workersToProcess): JobTopicNameEnum[] {
-  const topics = active.length > 0 ? active : ALL_WORKER_TOPICS;
+  const sqsWorkers = active.filter((topic) => !BULLMQ_ONLY_WORKER_TOPICS.includes(topic));
+  const topics = active.length > 0 ? sqsWorkers : ALL_WORKER_TOPICS;
 
   return [...new Set(topics.flatMap((topic) => [topic, ...(WORKER_QUEUE_DEPENDENCIES[topic] ?? [])]))];
 }
