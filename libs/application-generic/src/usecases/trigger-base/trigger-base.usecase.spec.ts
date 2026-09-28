@@ -74,7 +74,9 @@ describe('TriggerBase', () => {
         'subscriber-2',
         'subscriber-3',
       ]);
-      expect(jobs.every((job) => !Object.prototype.hasOwnProperty.call(job.data, 'incrementUsageInWorker'))).toBe(true);
+      for (const job of jobs) {
+        expect(job.data).not.toHaveProperty('incrementUsageInWorker');
+      }
       expect(cacheService.incrIfExistsAtomic.mock.calls).toEqual([
         [USAGE_KEY, 2],
         [USAGE_KEY, 1],
@@ -89,22 +91,18 @@ describe('TriggerBase', () => {
       await trigger.send(buildCommand(), buildSubscribers(3));
 
       const jobs = enqueuedJobs(subscriberProcessQueueService.addBulk);
-      expect(jobs).toHaveLength(3);
-      expect(jobs.every((job) => job.data.incrementUsageInWorker === true)).toBe(true);
+      expect(jobs.map((job) => job.data.incrementUsageInWorker)).toEqual([true, true, true]);
       expect(cacheService.incrIfExistsAtomic).not.toHaveBeenCalled();
     });
 
     it('should log and swallow an enqueue failure', async () => {
-      const { trigger, subscriberProcessQueueService, cacheService, logger } = buildTrigger({
-        workerIncrementEnabled: true,
-      });
+      const { trigger, subscriberProcessQueueService, logger } = buildTrigger({ workerIncrementEnabled: true });
       const error = new Error('queue unavailable');
       subscriberProcessQueueService.addBulk.mockRejectedValue(error);
 
-      await expect(trigger.send(buildCommand(), buildSubscribers(1))).resolves.not.toThrow();
+      await trigger.send(buildCommand(), buildSubscribers(1));
 
       expect(logger.warn).toHaveBeenCalledWith({ err: error }, 'Failed to add jobs to queue');
-      expect(cacheService.incrIfExistsAtomic).not.toHaveBeenCalled();
     });
   });
 

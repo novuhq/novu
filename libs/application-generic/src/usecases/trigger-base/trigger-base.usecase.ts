@@ -55,7 +55,7 @@ export abstract class TriggerBase {
     protected queueChunkSize: number = 100
   ) {}
 
-  protected async subscriberProcessQueueAddBulk(jobs: IProcessSubscriberBulkJobDto[], incrementUsageInWorker: boolean) {
+  protected async subscriberProcessQueueAddBulk(jobs: IProcessSubscriberBulkJobDto[]) {
     return await Promise.all(
       _.chunk(jobs, this.queueChunkSize).map(async (chunk: IProcessSubscriberBulkJobDto[]) => {
         try {
@@ -64,24 +64,26 @@ export abstract class TriggerBase {
           this.logger.warn({ err: error }, 'Failed to add jobs to queue');
         }
 
-        // Transitional: remove with IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED (NV-8853).
-        if (incrementUsageInWorker) {
-          return;
-        }
-
-        try {
-          await this.cacheService.incrIfExistsAtomic(
-            buildUsageKey({
-              _organizationId: jobs[0].data.organizationId,
-              resourceType: ResourceEnum.EVENTS,
-            }),
-            chunk.length
-          );
-        } catch (error) {
-          this.logger.warn({ err: error }, 'Failed to increment usage counter');
+        if (!chunk[0].data.incrementUsageInWorker) {
+          await this.incrementUsageCounter(chunk);
         }
       })
     );
+  }
+
+  // Transitional: remove with IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED (NV-8853).
+  private async incrementUsageCounter(chunk: IProcessSubscriberBulkJobDto[]) {
+    try {
+      await this.cacheService.incrIfExistsAtomic(
+        buildUsageKey({
+          _organizationId: chunk[0].data.organizationId,
+          resourceType: ResourceEnum.EVENTS,
+        }),
+        chunk.length
+      );
+    } catch (error) {
+      this.logger.warn({ err: error }, 'Failed to increment usage counter');
+    }
   }
 
   protected async sendToProcessSubscriberService(
@@ -112,6 +114,6 @@ export abstract class TriggerBase {
       }
     }
 
-    return await this.subscriberProcessQueueAddBulk(jobs, incrementUsageInWorker);
+    return await this.subscriberProcessQueueAddBulk(jobs);
   }
 }
