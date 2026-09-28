@@ -72,7 +72,7 @@ describe('SubscriberJobBound - usage increment stamp', () => {
     expect(createNotificationJobs.execute.firstCall.args[0].incrementUsageInWorker).to.equal(true);
   });
 
-  it('leaves the stamp unset for jobs the API already counted', async () => {
+  it('leaves the stamp unset for jobs already counted at enqueue', async () => {
     const { usecase, createNotificationJobs } = buildUsecase();
 
     await usecase.execute(buildCommand());

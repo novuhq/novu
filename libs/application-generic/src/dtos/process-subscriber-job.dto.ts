@@ -36,8 +36,9 @@ export interface IProcessSubscriberDataDto {
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
   controls?: StatelessControls;
   /**
-   * Set by the API when IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED is on; the worker increments the usage
-   * counter only for stamped jobs, so jobs queued before the flag flips are never counted twice (NV-8853).
+   * Set at enqueue by `TriggerBase` when IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED is on; the usage counter is
+   * then incremented at workflow-run creation only for stamped jobs, so jobs queued before the flag flips are
+   * never counted twice (NV-8853).
    */
   incrementUsageInWorker?: boolean;
 }

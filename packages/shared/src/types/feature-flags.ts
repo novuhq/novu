@@ -40,9 +40,10 @@ export enum FeatureFlagsKeysEnum {
   /** Stops the usage-alerts cron before it reads usage. Default off, so the cron runs. */
   IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
   /**
-   * Organization-scoped, read only by the API at enqueue: moves the usage counter increment into the worker.
-   * Transitional (NV-8853): remove with the API increment path and the job stamp once on for all organizations
-   * and the subscriber-process queue has drained.
+   * Organization-scoped, read only when subscriber-process jobs are enqueued (`TriggerBase`): moves the usage
+   * counter increment from enqueue to workflow-run creation (`CreateNotificationJobs`), matching what ClickHouse
+   * counts. Transitional (NV-8853): remove with the enqueue-time increment and the job stamp once on for all
+   * organizations and the subscriber-process queue has drained.
    */
   IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED = 'IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED',
   IS_USE_MERGED_DIGEST_ID_ENABLED = 'IS_USE_MERGED_DIGEST_ID_ENABLED',
