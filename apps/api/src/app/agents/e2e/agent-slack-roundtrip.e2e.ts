@@ -22,13 +22,18 @@
  * setup couldn't provide.
  */
 
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { AgentRepository, ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
+import type { AgentMessage } from '@novu/framework';
 import { Actions, Button, Card, CardText } from '@novu/framework/express';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
 import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
+import { esmImport } from '../shared/util/esm-import';
 import {
   AgentTestContext,
   activityRepository,
@@ -123,6 +128,11 @@ async function findEmulatorUser(emulatorUrl: string, email: string): Promise<Sla
   }
 
   return body.user;
+}
+
+/** Concatenated text of an mdast table cell (text, inline code, emphasis children). */
+function toPlainCell(node: { value?: string; children?: unknown[] }): string {
+  return node.value ?? (node.children ?? []).map((child) => toPlainCell(child as typeof node)).join('');
 }
 
 const agentRepository = new AgentRepository();
@@ -282,6 +292,73 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
     expect(agentReply, 'agent reply persisted as ConversationActivity').to.exist;
     expect(agentReply!.platformMessageId, 'platformMessageId mirrors emulator ts').to.equal(replyMessage.ts);
+  });
+
+  it('delivers a pasted Slack table and the sender email to the bridge handler', async () => {
+    const received: AgentMessage[] = [];
+    onMessageHandler = async (message) => {
+      received.push(message);
+    };
+
+    const cell = (text: string, bold = false) => ({
+      type: 'rich_text',
+      elements: [
+        { type: 'rich_text_section', elements: [{ type: 'text', text, ...(bold ? { style: { bold: true } } : {}) }] },
+      ],
+    });
+    const threadTs = `${Math.floor(Date.now() / 1000)}.000300`;
+    const payload = buildSlackAppMention({
+      userId: user.id,
+      channel: channel.id,
+      threadTs,
+      text: '<@UBOT> Q3 by region, EMEA is *final*',
+    });
+    Object.assign(payload.event, {
+      blocks: [
+        {
+          type: 'table',
+          rows: [
+            [cell('Region', true), cell('Revenue', true), cell('Owner', true)],
+            [cell('EMEA'), cell('1,200'), cell('ana_lopez')],
+            [cell('APAC | JP'), cell('950'), cell('')],
+          ],
+        },
+      ],
+    });
+    const body = JSON.stringify(payload);
+    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
+
+    const res = await ctx.session.testAgent
+      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+      .set(headers)
+      .set('content-type', 'application/json')
+      .send(body);
+
+    expect(res.status, JSON.stringify(res.body)).to.equal(200);
+    const message = await pollFor(async () => received[0], BRIDGE_DRAIN_TIMEOUT_MS);
+    await bridgeStub.drain();
+
+    // Reproducible artifact: the Slack event in, the framework `ctx.message` out.
+    const artifactPath = join(tmpdir(), 'novu-e2e-artifacts', 'slack-rich-inbound.json');
+    mkdirSync(dirname(artifactPath), { recursive: true });
+    writeFileSync(artifactPath, JSON.stringify({ slackEvent: payload.event, bridgeMessage: message }, null, 2));
+
+    // Parse the way `@novu/chat-sdk-adapter` does, so padding/escaping changes don't matter.
+    const { parseMarkdown }: typeof import('chat') = await esmImport('chat');
+    const root = parseMarkdown(message.markdown ?? '');
+    const table = root.children.find((node) => node.type === 'table');
+    const rows = table?.type === 'table' ? table.children.map((row) => row.children.map(toPlainCell)) : [];
+
+    expect(rows, `table rows (artifact: ${artifactPath})`).to.deep.equal([
+      ['Region', 'Revenue', 'Owner'],
+      ['EMEA', '1,200', 'ana_lopez'],
+      ['APAC | JP', '950', ''],
+    ]);
+    expect(root.children.some((node) => JSON.stringify(node).includes('"strong"'))).to.equal(true);
+    expect(message.text).to.contain('EMEA is final');
+    expect(message.author.userId).to.equal(user.id);
+    expect(message.author.email).to.equal('e2e@novu.test');
+    expect(message.author).to.not.have.property('isSystem');
   });
 
   it('serializes top-level (non-threaded) replies into channel history', async () => {

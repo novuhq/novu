@@ -48,6 +48,7 @@ export class MessageMapper {
     return {
       id: message.platformMessageId,
       text: message.text,
+      ...(message.markdown !== undefined ? { markdown: message.markdown } : {}),
       author: message.author,
       timestamp: message.timestamp,
       attachments: message.attachments,
@@ -65,6 +66,9 @@ export class MessageMapper {
    * `authorOverride` lets the adapter present the Novu subscriber as the message
    * author (so `author.userId === subscriberId` and `adapter.getUser(userId)`
    * resolves). The platform-native author is preserved on `message.raw.author`.
+   *
+   * `formatted` is parsed from the bridge's GFM `markdown` when present, so platform
+   * structure (e.g. Slack table blocks) survives as mdast nodes; plain `text` is the fallback.
    */
   buildMessage(
     raw: NovuRawMessage,
@@ -77,7 +81,7 @@ export class MessageMapper {
       id: raw.id,
       threadId,
       text: raw.text,
-      formatted: this.parts.parseMarkdown(raw.text ?? ''),
+      formatted: this.parts.parseMarkdown(raw.markdown ?? raw.text ?? ''),
       raw,
       author: this.toAuthor(authorOverride ?? raw.author),
       metadata: { dateSent, edited: false },
@@ -141,6 +145,8 @@ export class MessageMapper {
       fullName: author.fullName,
       isBot: author.isBot,
       isMe,
+      ...(author.email ? { email: author.email } : {}),
+      ...(author.isSystem ? { isSystem: true } : {}),
     };
   }
 

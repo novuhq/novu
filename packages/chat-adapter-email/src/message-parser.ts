@@ -30,6 +30,7 @@ export class MessageParser {
       userId: authorEmail,
       userName: authorEmail,
       fullName: authorName,
+      email: authorEmail || undefined,
       isBot: false,
       isMe: authorEmail === fromAddress,
     };
