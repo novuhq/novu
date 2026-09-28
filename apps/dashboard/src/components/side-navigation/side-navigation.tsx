@@ -25,6 +25,7 @@ import { useLocalMode } from '@/context/local-mode';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { usePausedUsagePlan } from '@/hooks/use-paused-usage-plan';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from '../../config';
@@ -65,7 +66,7 @@ const BottomSection = ({
   subscription,
   daysLeft,
 }: BottomNavigationProps) => {
-  const isUsageLimitsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED, false);
+  const pausedUsagePlan = usePausedUsagePlan();
 
   if (IS_SELF_HOSTED) {
     return (
@@ -75,11 +76,6 @@ const BottomSection = ({
     );
   }
 
-  const isPaidTier =
-    subscription?.apiServiceLevel === ApiServiceLevelEnum.PRO ||
-    subscription?.apiServiceLevel === ApiServiceLevelEnum.BUSINESS;
-  const showPausedUsageCard = isUsageLimitsEnabled && isPaidTier && !isTrialActive && subscription?.events.isPaused;
-
   return (
     <div className="relative mt-auto gap-8 pt-4">
       {!isTrialActive && !isLoadingSubscription && <ChangelogStack />}
@@ -88,7 +84,7 @@ const BottomSection = ({
       )}
 
       {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
-      {showPausedUsageCard && subscription && <PausedUsageCard subscription={subscription} />}
+      {!isTrialActive && pausedUsagePlan === 'paid' && subscription && <PausedUsageCard subscription={subscription} />}
       <NavigationGroup>
         <NavigationLink to={ROUTES.SETTINGS_TEAM}>
           <RiUserAddLine className="size-4" />

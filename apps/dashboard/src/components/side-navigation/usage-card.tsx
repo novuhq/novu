@@ -20,8 +20,10 @@ type UsageMetric = {
   label: string;
   current: number;
   max: number;
-  progressVariant?: UsageStatus['progressVariant'];
-  /** Keeps the plain label at 100% for metrics whose limit is announced elsewhere or doesn't block. */
+};
+
+type UsageMetricRowProps = UsageMetric & {
+  /** For the paused card, whose header announces the one blocking limit (paid conversations never block). */
   hideLimitReached?: boolean;
 };
 
@@ -91,23 +93,11 @@ export function PausedUsageCard({ subscription }: PausedUsageCardProps) {
 
   const metrics: UsageMetric[] = [];
 
-  // Paid plans have no hard conversation limit, so the row never reads "limit reached".
   if (conversationUsage && conversationUsage.included !== null) {
-    metrics.push({
-      label: 'Conversations',
-      current: conversationUsage.current,
-      max: conversationUsage.included,
-      hideLimitReached: true,
-    });
+    metrics.push({ label: 'Conversations', current: conversationUsage.current, max: conversationUsage.included });
   }
 
-  metrics.push({
-    label: 'Workflow runs',
-    current: currentEvents,
-    max: maxEvents,
-    progressVariant: 'error',
-    hideLimitReached: true,
-  });
+  metrics.push({ label: 'Workflow runs', current: currentEvents, max: maxEvents });
 
   const billingRoute = has({ permission: PermissionsEnum.BILLING_WRITE })
     ? EDIT_USAGE_LIMITS_ROUTE
@@ -127,7 +117,7 @@ export function PausedUsageCard({ subscription }: PausedUsageCardProps) {
       </span>
       <div className="bg-bg-white space-y-2 rounded-lg p-2">
         {metrics.map((metric) => (
-          <UsageMetricRow key={metric.label} {...metric} />
+          <UsageMetricRow key={metric.label} {...metric} hideLimitReached />
         ))}
         {formattedResetDate && <ResetDateLabel formattedResetDate={formattedResetDate} />}
       </div>
@@ -160,10 +150,10 @@ const getUsageCardClickProperties = (currentEvents: number, maxEvents: number) =
   isLimitReached: getUsageStatus(currentEvents, maxEvents).isComplete,
 });
 
-function UsageMetricRow({ label, current, max, progressVariant, hideLimitReached = false }: UsageMetric) {
+function UsageMetricRow({ label, current, max, hideLimitReached = false }: UsageMetricRowProps) {
   const percentage = getUsagePercentage(current, max);
-  const status = getUsageStatus(current, max);
-  const showLimitReached = status.isComplete && !hideLimitReached;
+  const { progressVariant, isComplete } = getUsageStatus(current, max);
+  const showLimitReached = isComplete && !hideLimitReached;
 
   return (
     <div className="space-y-1">
@@ -180,12 +170,7 @@ function UsageMetricRow({ label, current, max, progressVariant, hideLimitReached
           {formatNumber(current)} / <span className="text-text-soft">{formatNumber(max)}</span>
         </span>
       </div>
-      <Progress
-        value={percentage}
-        max={100}
-        variant={progressVariant ?? status.progressVariant}
-        className="h-1 rounded-lg"
-      />
+      <Progress value={percentage} max={100} variant={progressVariant} className="h-1 rounded-lg" />
     </div>
   );
 }

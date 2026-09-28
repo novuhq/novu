@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum } from '@novu/shared';
 import { format } from 'date-fns';
 import { ReactNode } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
@@ -6,11 +6,10 @@ import { Link } from 'react-router-dom';
 import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
 import { EDIT_USAGE_LIMITS_ROUTE } from '@/components/billing/utils/usage-limits.constants';
 import { linkButtonVariants } from '@/components/primitives/button-link';
-import { IS_SELF_HOSTED } from '@/config';
 import { useContactSupport } from '@/hooks/use-contact-support';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { usePausedUsagePlan } from '@/hooks/use-paused-usage-plan';
 
 const { root: actionRoot, icon: actionIcon } = linkButtonVariants({ variant: 'modifiable', size: 'sm' });
 const actionClassName = actionRoot({ class: 'text-label-xs text-static-white gap-0.5' });
@@ -57,8 +56,10 @@ function PaidUsagePausedBanner() {
   );
 }
 
-function FreeUsagePausedBanner({ resetDate }: { resetDate: string | null }) {
+function FreeUsagePausedBanner() {
+  const { subscription } = useFetchSubscription();
   const planUpgradeClick = usePlanUpgradeClick('workflow-runs-paused-banner', 'workflow_runs_paused');
+  const resetDate = subscription?.currentPeriodEnd;
   const resetSuffix = resetDate ? ` on ${format(new Date(resetDate), 'MMM d, yyyy')}` : '';
 
   return (
@@ -76,24 +77,17 @@ function FreeUsagePausedBanner({ resetDate }: { resetDate: string | null }) {
 
 /** Org-wide, non-dismissible notice shown to every member while new workflow runs are paused. */
 export function UsagePausedBanner() {
-  const isUsageLimitsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED, false);
-  const { subscription } = useFetchSubscription();
+  const pausedPlan = usePausedUsagePlan();
 
-  if (IS_SELF_HOSTED || !isUsageLimitsEnabled || !subscription?.events.isPaused) {
-    return null;
-  }
-
-  switch (subscription.apiServiceLevel) {
-    case ApiServiceLevelEnum.FREE:
-      return <FreeUsagePausedBanner resetDate={subscription.currentPeriodEnd} />;
-    case ApiServiceLevelEnum.PRO:
-    case ApiServiceLevelEnum.BUSINESS:
+  switch (pausedPlan) {
+    case 'free':
+      return <FreeUsagePausedBanner />;
+    case 'paid':
       return <PaidUsagePausedBanner />;
-    case ApiServiceLevelEnum.ENTERPRISE:
-    case ApiServiceLevelEnum.UNLIMITED:
+    case null:
       return null;
     default: {
-      const _exhaustive: never = subscription.apiServiceLevel;
+      const _exhaustive: never = pausedPlan;
 
       return null;
     }
