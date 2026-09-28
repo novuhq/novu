@@ -233,6 +233,27 @@ When a user quote-replies to a prior message, Novu sets `message.replyTo` with t
 const quotedMessageId = message.replyTo?.messageId;
 ```
 
+#### Formatted content
+
+`message.text` is plain text, so formatting such as bold, links, code, and pasted Slack tables is lost. When the message has formatting, Novu also sets `message.markdown` with the same content as GitHub-flavored Markdown. Slack tables become GFM tables. For plain prose, `message.markdown` is not set because `text` already has the full content.
+
+```typescript
+const content = message.markdown ?? message.text;
+```
+
+#### Author details
+
+`message.author` describes who sent the message, even when the sender is not linked to a subscriber:
+
+- `author.email`: the sender's email, when the platform provides it (Slack, Microsoft Teams, and email).
+- `author.isSystem`: `true` when the platform itself generated the message, such as a Slackbot notice. Use it to skip messages that did not come from a person.
+
+```typescript
+if (message.author.isSystem) return;
+
+const senderEmail = message.author.email;
+```
+
 ### onAction
 
 `onAction` fires when a user clicks a button or selects a value in an interactive card. The `action` payload carries `action.id` (the element's `id` prop), `action.value` (its `value` prop, if set), and `action.sourceMessageId`. See [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards).

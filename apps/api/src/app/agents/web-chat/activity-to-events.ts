@@ -214,6 +214,20 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         messageId: activity.platformMessageId ?? activity.identifier,
       };
 
+    case ConversationActivityTypeEnum.REACTION: {
+      const reaction = activity.richContent?.reaction as { emoji?: unknown; added?: unknown } | undefined;
+      if (!activity.platformMessageId || typeof reaction?.emoji !== 'string') {
+        return null;
+      }
+
+      return {
+        type: 'channel.reaction',
+        messageId: activity.platformMessageId,
+        emoji: reaction.emoji,
+        op: reaction.added === false ? 'remove' : 'add',
+      };
+    }
+
     case ConversationActivityTypeEnum.RUN_START:
     case ConversationActivityTypeEnum.RUN_FINISH:
     case ConversationActivityTypeEnum.RUN_ERROR:

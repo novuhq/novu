@@ -168,6 +168,7 @@ export class ResolveChannelEndpoints {
       payload: command.filterData?.payload,
       subscriber: command.filterData?.subscriber,
       context: command.filterData?.context,
+      workflow: command.filterData?.workflow,
     });
     const { issues } = evaluation;
     if (issues.length > 0) {

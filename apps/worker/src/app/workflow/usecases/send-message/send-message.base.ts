@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  buildWorkflowVariablesForJob,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   createProviderSelectedMessage,
@@ -129,6 +130,13 @@ export abstract class SendMessageBase extends SendMessageType {
       payload: command.compileContext?.payload,
       subscriber: command.compileContext?.subscriber,
       context: command.compileContext?.context,
+      workflow: buildWorkflowVariablesForJob({
+        workflow: command.workflow,
+        workflowMetadata: command.job.step.workflowMetadata,
+        identifier: command.identifier,
+        tags: command.tags,
+        severity: command.severity,
+      }),
     };
   }
 

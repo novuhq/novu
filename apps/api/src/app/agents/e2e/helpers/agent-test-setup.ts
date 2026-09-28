@@ -32,6 +32,18 @@ export const conversationRepository = new ConversationRepository();
 export const activityRepository = new ConversationActivityRepository();
 export const channelEndpointRepository = new ChannelEndpointRepository();
 
+/**
+ * Narrows a nullable lookup result, failing the test with the label instead of
+ * throwing an opaque `TypeError` on the first property access.
+ */
+export function must<T>(value: T | null | undefined, label: string): T {
+  if (value === null || value === undefined) {
+    throw new Error(`Expected ${label} to exist, got ${value}`);
+  }
+
+  return value;
+}
+
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelConnectionRepository = new ChannelConnectionRepository();

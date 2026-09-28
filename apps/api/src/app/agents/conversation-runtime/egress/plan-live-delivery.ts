@@ -31,7 +31,3 @@ export function resolvePlanDeliveryMode(platform: string, adapter: PlanCapableAd
 
   return 'markdown';
 }
-
-export function supportsLivePlanDelivery(platform: string, adapter: PlanCapableAdapter): boolean {
-  return resolvePlanDeliveryMode(platform, adapter) !== null;
-}

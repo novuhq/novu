@@ -12,6 +12,11 @@ export enum ConversationActivityTypeEnum {
    * Does not hard-delete the original MESSAGE activity.
    */
   DELETE = 'delete',
+  /**
+   * Append-only emoji reaction added to or removed from a stored message.
+   * `platformMessageId` is the target message; `richContent.reaction` holds `{ emoji, added }`.
+   */
+  REACTION = 'reaction',
   /** System-generated timeline event (e.g. workflow triggered, conversation resolved) */
   SIGNAL = 'signal',
   /** Agent proposed a tool call that requires human approval before it runs. Carries `{ approvalId, toolCallId, toolName, input }` in `toolData`. */
@@ -136,6 +141,10 @@ export class ConversationActivityEntity {
 }
 
 export type ConversationActivityDBModel = ChangePropsValueType<
-  ConversationActivityEntity,
-  '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  ChangePropsValueType<
+    ConversationActivityEntity,
+    '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  >,
+  'createdAt',
+  Date
 >;

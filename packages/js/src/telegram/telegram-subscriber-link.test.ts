@@ -1,10 +1,11 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, test, vi } from 'vitest';
 import { TelegramSubscriberLink } from './telegram-subscriber-link';
 import type { TelegramSubscriberLinkState } from './types';
 
-function mockFetch(responses: Array<{ status: number; body: unknown }>): jest.Mock {
+function mockFetch(responses: Array<{ status: number; body: unknown }>): Mock {
   let callIndex = 0;
 
-  return jest.fn(async () => {
+  return vi.fn(async () => {
     const entry = responses[callIndex] ?? responses[responses.length - 1];
     callIndex++;
 
@@ -29,11 +30,11 @@ const NOT_CONNECTED = { status: 200, body: { data: [] } } as const;
 
 describe('TelegramSubscriberLink', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('issues a subscriber link and transitions to pending with deep-link data', async () => {
@@ -137,7 +138,7 @@ describe('TelegramSubscriberLink', () => {
 
     // Let poll timers fire
     for (let i = 0; i < 10; i++) {
-      jest.advanceTimersByTime(BASE_OPTIONS.pollIntervalMs);
+      vi.advanceTimersByTime(BASE_OPTIONS.pollIntervalMs);
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
@@ -188,7 +189,7 @@ describe('TelegramSubscriberLink', () => {
 
     await link.start();
 
-    jest.advanceTimersByTime(100);
+    vi.advanceTimersByTime(100);
     await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
@@ -294,7 +295,7 @@ describe('TelegramSubscriberLink', () => {
 
     const callCountAfterStop = fetchFn.mock.calls.length;
 
-    jest.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(1000);
     await Promise.resolve();
 
     expect(fetchFn.mock.calls.length).toBe(callCountAfterStop);
@@ -327,7 +328,7 @@ describe('TelegramSubscriberLink', () => {
     await link.start();
 
     for (let i = 0; i < 10; i++) {
-      jest.advanceTimersByTime(BASE_OPTIONS.pollIntervalMs);
+      vi.advanceTimersByTime(BASE_OPTIONS.pollIntervalMs);
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();

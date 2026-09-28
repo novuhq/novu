@@ -25,10 +25,11 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import type { Message } from 'chat';
+import type { Message, Root } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
+import { esmImport } from '../../shared/util/esm-import';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import {
@@ -144,6 +145,7 @@ export interface AgentExecutionParams {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   message: Message | null;
+  previousMessage?: Message | null;
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
@@ -158,6 +160,8 @@ export interface AgentExecutionParams {
   reaction?: BridgeReaction;
   humanResponse?: AgentHumanResponse | null;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
   platformThreadId?: string;
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
@@ -367,8 +371,10 @@ export class BridgeExecutorService {
     const timestamp = new Date().toISOString();
 
     let deliveryId: string;
-    if (message?.id) {
+    if (message?.id && event === AgentEventEnum.ON_MESSAGE) {
       deliveryId = `${conversation._id}:${message.id}`;
+    } else if (message?.id) {
+      deliveryId = `${conversation._id}:${event}:${message.id}:${params.deliveryRevision ?? timestamp}`;
     } else if (action) {
       deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {
@@ -391,6 +397,15 @@ export class BridgeExecutorService {
       integrationIdentifier: config.integrationIdentifier,
       message: message
         ? await this.mapMessage(message, params.storedAttachments, {
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
+          })
+        : null,
+      previousMessage: params.previousMessage
+        ? await this.mapMessage(params.previousMessage, undefined, {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
@@ -442,19 +457,46 @@ export class BridgeExecutorService {
     }
   }
 
+  /**
+   * GFM rendering of the adapter-parsed `formatted` AST, so platform structure that `text`
+   * flattens (Slack table blocks, bold, links, code) reaches every bridge runtime. Omitted for
+   * plain prose: stringifying it only adds Markdown escapes (`snake\_case`) the brain would read.
+   * Fail-soft: an unserializable node must not drop the delivery — the brain still gets `text`.
+   */
+  private async toBridgeMarkdown(message: Message): Promise<string | undefined> {
+    if (!message.formatted || isPlainProse(message.formatted)) {
+      return undefined;
+    }
+
+    try {
+      const { stringifyMarkdown }: typeof import('chat') = await esmImport('chat');
+      const markdown = stringifyMarkdown(message.formatted).trimEnd();
+
+      return markdown.length > 0 ? markdown : undefined;
+    } catch (err) {
+      this.logger.warn(err, `Failed to render inbound message ${message.id} as markdown; sending plain text only`);
+
+      return undefined;
+    }
+  }
+
   private async mapMessage(
     message: Message,
     storedAttachments?: StoredAttachment[],
     signingContext?: AttachmentSigningContext
   ): Promise<AgentMessage> {
+    const markdown = await this.toBridgeMarkdown(message);
     const mapped: AgentMessage = {
       text: message.text,
+      ...(markdown !== undefined ? { markdown } : {}),
       platformMessageId: message.id,
       author: {
         userId: message.author.userId,
         fullName: message.author.fullName,
         userName: message.author.userName,
         isBot: message.author.isBot,
+        ...(message.author.email ? { email: message.author.email } : {}),
+        ...(message.author.isSystem ? { isSystem: true } : {}),
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
@@ -715,4 +757,11 @@ function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotif
     body: origin.body,
     payload: origin.payload,
   };
+}
+
+/** True when the AST is only paragraphs of plain text, i.e. `text` already says everything. */
+function isPlainProse(formatted: Root): boolean {
+  return formatted.children.every(
+    (node) => node.type === 'paragraph' && node.children.every((child) => child.type === 'text')
+  );
 }

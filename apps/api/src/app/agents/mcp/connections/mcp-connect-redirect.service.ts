@@ -10,7 +10,7 @@ export const MCP_CONNECT_REDIRECT_TTL_SECONDS = 24 * 60 * 60;
 
 const CACHE_KEY_PREFIX = 'mcp-connect-redirect:';
 
-export function buildMcpConnectRedirectUrl(token: string): string {
+function buildMcpConnectRedirectUrl(token: string): string {
   return `${buildAgentApiRootUrl()}${MCP_CONNECT_REDIRECT_PATH}/${token}`;
 }
 

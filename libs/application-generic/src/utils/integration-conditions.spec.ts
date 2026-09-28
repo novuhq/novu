@@ -8,8 +8,8 @@ describe('integration rules helpers', () => {
     expect(hasIntegrationRules(null)).to.equal(false);
   });
 
-  it('accepts workflow payload and subscriber fields and rejects deprecated tenant fields', () => {
-    const validPayload = getIntegrationRulesIssues({
+  it('accepts workflow and subscriber fields and rejects payload and deprecated tenant fields', () => {
+    const invalidPayload = getIntegrationRulesIssues({
       '==': [{ var: 'payload.foo' }, 'bar'],
     });
     const invalidTenant = getIntegrationRulesIssues({
@@ -19,9 +19,18 @@ describe('integration rules helpers', () => {
       '==': [{ var: 'subscriber.locale' }, 'fr'],
     });
 
-    expect(validPayload).to.deep.equal([]);
+    expect(invalidPayload.length).to.be.greaterThan(0);
     expect(invalidTenant.length).to.be.greaterThan(0);
     expect(valid).to.deep.equal([]);
+  });
+
+  it('still evaluates already-saved payload rules at send time', () => {
+    const matching = evaluateIntegrationRules(
+      { '==': [{ var: 'payload.region' }, 'eu'] },
+      { payload: { region: 'eu' } }
+    );
+
+    expect(matching).to.deep.equal({ result: true, issues: [] });
   });
 
   it('accepts context.tenant.id', () => {
@@ -30,6 +39,26 @@ describe('integration rules helpers', () => {
     });
 
     expect(valid).to.deep.equal([]);
+  });
+
+  it('accepts and evaluates workflow fields', () => {
+    const result = evaluateIntegrationRules(
+      {
+        and: [
+          { '==': [{ var: 'workflow.name' }, 'Order confirmation'] },
+          { containsAny: [{ var: 'workflow.tags' }, ['transactional']] },
+        ],
+      },
+      {
+        workflow: {
+          name: 'Order confirmation',
+          tags: ['transactional'],
+        },
+      }
+    );
+
+    expect(result).to.deep.equal({ result: true, issues: [] });
+    expect(getIntegrationRulesIssues({ '==': [{ var: 'workflow.internalField' }, 'secret'] })).not.to.deep.equal([]);
   });
 
   it('rejects json-logic operators that skip QueryValidatorService', () => {
@@ -86,10 +115,13 @@ describe('integration rules helpers', () => {
 
   it('validates and evaluates integration rules through one boundary', () => {
     const matching = evaluateIntegrationRules(
-      { '==': [{ var: 'payload.region' }, 'eu'] },
-      { payload: { region: 'eu' } }
+      { '==': [{ var: 'context.tenant.data.region' }, 'eu'] },
+      { context: { tenant: { data: { region: 'eu' } } } }
     );
-    const invalid = evaluateIntegrationRules({ log: { var: 'payload.region' } }, { payload: { region: 'eu' } });
+    const invalid = evaluateIntegrationRules(
+      { log: { var: 'context.tenant.data.region' } },
+      { context: { tenant: { data: { region: 'eu' } } } }
+    );
 
     expect(matching).to.deep.equal({ result: true, issues: [] });
     expect(invalid.result).to.equal(false);

@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import { useNovu } from '../../hooks/NovuProvider';
 import { NovuUI, NovuUIOptions } from '../NovuUI';
-import { withRenderer } from '../Renderer';
 import { DefaultConnectChat, DefaultConnectChatProps } from './DefaultConnectChat';
 
 export type ConnectChatProps = DefaultConnectChatProps & Pick<NovuUIOptions, 'container' | 'appearance'>;
 
-const ConnectChatInternal = withRenderer<ConnectChatProps>((props) => {
+const ConnectChatInternal = (props: ConnectChatProps) => {
   const { container, appearance, ...defaultProps } = props;
   const novu = useNovu();
 
@@ -23,7 +22,7 @@ const ConnectChatInternal = withRenderer<ConnectChatProps>((props) => {
       <DefaultConnectChat {...defaultProps} />
     </NovuUI>
   );
-});
+};
 
 ConnectChatInternal.displayName = 'ConnectChatInternal';
 

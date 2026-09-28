@@ -1,17 +1,4 @@
-export type {
-  ActionsElement,
-  ButtonElement,
-  CardChild,
-  CardElement,
-  DividerElement,
-  ImageElement,
-  LinkElement,
-  SelectElement,
-  SelectOptionElement,
-  TextElement,
-  TextInputElement,
-} from 'chat';
-export { Actions, Button, Card, CardLink, CardText, Divider, Image, Select, SelectOption, TextInput } from 'chat';
+export * from '../../cards';
 export { AgentDeliveryError, AgentError, toAgentError } from './agent.errors';
 export { agent } from './agent.resource';
 export type {
@@ -31,6 +18,8 @@ export type {
   AgentMessage,
   AgentMessageAuthor,
   AgentMessageContext,
+  AgentMessageDeletedContext,
+  AgentMessageUpdatedContext,
   AgentNotification,
   AgentPlatformContext,
   AgentReaction,

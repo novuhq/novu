@@ -1,24 +1,36 @@
-import { IMessageFilter, type JSONSchemaDto } from '@novu/shared';
+import {
+  IMessageFilter,
+  INTEGRATION_CONDITION_NAMESPACES,
+  INTEGRATION_CONDITION_VARIABLES as INTEGRATION_CONDITION_VARIABLE_NAMES,
+} from '@novu/shared';
 import { generateID, RuleGroupType } from 'react-querybuilder';
 import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
-import { type FieldDataType, type IsAllowedVariable, parseStepVariables } from '@/utils/parseStepVariables';
+import { type FieldDataType, type IsAllowedVariable } from '@/utils/parseStepVariables';
 
-const INTEGRATION_CONDITION_FIELD_DEFS: Array<{ name: string; dataType: FieldDataType }> = [
-  { name: 'context.tenant.id', dataType: 'string' },
-  { name: 'subscriber.subscriberId', dataType: 'string' },
-  { name: 'subscriber.email', dataType: 'string' },
-  { name: 'subscriber.phone', dataType: 'string' },
-  { name: 'subscriber.firstName', dataType: 'string' },
-  { name: 'subscriber.lastName', dataType: 'string' },
-  { name: 'subscriber.locale', dataType: 'string' },
-  { name: 'subscriber.data', dataType: 'object' },
-];
+const INTEGRATION_CONDITION_VARIABLE_TYPES: Record<
+  (typeof INTEGRATION_CONDITION_VARIABLE_NAMES)[number],
+  FieldDataType
+> = {
+  'context.tenant.id': 'string',
+  'subscriber.subscriberId': 'string',
+  'subscriber.email': 'string',
+  'subscriber.phone': 'string',
+  'subscriber.firstName': 'string',
+  'subscriber.lastName': 'string',
+  'subscriber.locale': 'string',
+  'subscriber.data': 'object',
+  'workflow.workflowId': 'string',
+  'workflow.name': 'string',
+  'workflow.description': 'string',
+  'workflow.tags': 'array',
+  'workflow.severity': 'string',
+};
 
-export const INTEGRATION_CONDITION_VARIABLES: EnhancedConditionVariable[] = INTEGRATION_CONDITION_FIELD_DEFS.map(
-  (field) => ({
-    name: field.name,
-    displayLabel: field.name,
-    dataType: field.dataType,
+export const INTEGRATION_CONDITION_VARIABLES: EnhancedConditionVariable[] = INTEGRATION_CONDITION_VARIABLE_NAMES.map(
+  (name) => ({
+    name,
+    displayLabel: name,
+    dataType: INTEGRATION_CONDITION_VARIABLE_TYPES[name],
   })
 );
 
@@ -49,27 +61,14 @@ export function mergeIntegrationConditionVariables(
   return Array.from(variablesByName.values());
 }
 
-export function buildPayloadConditionVariables(payloadSchemas: JSONSchemaDto[]): EnhancedConditionVariable[] {
-  return payloadSchemas.flatMap((payloadSchema) => {
-    const schema: JSONSchemaDto = {
-      type: 'object',
-      properties: { payload: payloadSchema },
-    };
-
-    return parseStepVariables(schema, { isPayloadSchemaEnabled: true }).enhancedVariables.filter((variable) =>
-      variable.name.startsWith('payload.')
-    );
-  });
-}
-
-const ALLOWED_PREFIXES = ['context.', 'payload.', 'subscriber.'] as const;
-
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
-  if (variable.name === 'subscriber.data') {
+  if ((INTEGRATION_CONDITION_VARIABLE_NAMES as readonly string[]).includes(variable.name)) {
     return true;
   }
 
-  return ALLOWED_PREFIXES.some((prefix) => variable.name.startsWith(prefix) && variable.name.length > prefix.length);
+  return INTEGRATION_CONDITION_NAMESPACES.some(
+    (prefix) => variable.name.startsWith(prefix) && variable.name.length > prefix.length
+  );
 };
 
 export function countLegacyIntegrationConditions(conditions?: IMessageFilter[]): number {
