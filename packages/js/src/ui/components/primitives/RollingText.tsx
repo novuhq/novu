@@ -13,12 +13,39 @@ type Roll = {
 
 type Align = 'start' | 'center';
 
-const ROLLED_CLASS = 'nt-motion-roll nt-whitespace-nowrap';
+// Positioned, with a `top` to animate from and to (`top: auto` wouldn't interpolate): the values slide with `top`.
+const ROLLED_CLASS = 'nt-motion-roll nt-relative nt-top-0 nt-whitespace-nowrap';
 
 // The leaving value is out of the flow, so the wrapper is as wide as the new value from the start.
 const LEAVING_CLASS: Record<Align, string> = {
   start: 'nt-absolute nt-top-0 nt-start-0',
   center: 'nt-absolute nt-top-0 nt-left-1/2 [translate:-50%_0]',
+};
+
+/**
+ * Layout width in CSS pixels. `offsetWidth` is rounded, so a width animation that ends on it lets go a fraction
+ * short or long and the centered count jumps. A scaling ancestor, such as the Inbox while it opens, is divided out.
+ */
+const layoutWidth = (element: HTMLElement): number => {
+  const rectWidth = element.getBoundingClientRect().width;
+  if (rectWidth === 0) {
+    return element.offsetWidth;
+  }
+
+  let scale = 1;
+  for (let node: Element | null = element; node; node = node.parentElement) {
+    const transform = getComputedStyle(node).transform;
+    if (!transform || transform === 'none') {
+      continue;
+    }
+    const scaleX = new DOMMatrixReadOnly(transform).a;
+    if (!scaleX) {
+      return element.offsetWidth;
+    }
+    scale *= scaleX;
+  }
+
+  return rectWidth / scale;
 };
 
 /**
@@ -29,9 +56,8 @@ const easeWidth = (wrapper: HTMLElement, from: HTMLElement, to: HTMLElement): An
   if (typeof wrapper.animate !== 'function' || !wrapper.closest('[data-nv-motion="full"]')) {
     return undefined;
   }
-  // Layout widths: a scaling ancestor, such as the Inbox while it opens, must not scale the numbers.
-  const start = from.offsetWidth;
-  const end = to.offsetWidth;
+  const start = layoutWidth(from);
+  const end = layoutWidth(to);
   const duration = readMotionDurationMs(wrapper, 'slow');
   if (start === end || duration <= 0) {
     return undefined;

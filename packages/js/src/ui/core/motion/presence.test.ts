@@ -77,6 +77,23 @@ describe('whenExitAnimationEnds', () => {
     expect(done).toHaveBeenCalledTimes(1);
   });
 
+  it('waits out an exit longer than a second instead of cutting it off', () => {
+    vi.useFakeTimers();
+    const element = createElement();
+    stubRunningExitAnimation(element, 1500);
+    const done = vi.fn();
+
+    whenExitAnimationEnds(element, done);
+    vi.advanceTimersByTime(1050);
+    expect(done).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(499);
+    expect(done).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to the animationend event without getAnimations', () => {
     const element = createElement();
     stubRunningExitAnimation(element);

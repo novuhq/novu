@@ -111,4 +111,34 @@ describe('RollingText', () => {
     expect(animations.calls.map((call) => call.keyframes)).toEqual([[{ width: '8px' }, { width: '16px' }]]);
     dispose();
   });
+
+  it('eases the layout width, so a centered count does not jump when the animation ends', () => {
+    const running = stubRunningExits();
+    const animations = installAnimateSpy();
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const width = (this.textContent ?? '').length * 8.5;
+
+      return {
+        x: 0,
+        y: 0,
+        width,
+        height: 10,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: 10,
+        toJSON: () => ({}),
+      } as DOMRect;
+    });
+    restore = () => {
+      animations.restore();
+      running.restore();
+    };
+    const { setText, dispose } = setup('9', 9);
+
+    setText({ value: '10', rank: 10 });
+
+    expect(animations.calls.map((call) => call.keyframes)).toEqual([[{ width: '8.5px' }, { width: '17px' }]]);
+    dispose();
+  });
 });

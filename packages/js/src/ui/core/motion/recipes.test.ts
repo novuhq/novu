@@ -114,4 +114,25 @@ describe('motion recipes', () => {
 
     expect(heavierThanAClass).toEqual([]);
   });
+
+  it('roll text without a transform or opacity animation, which would make it settle visibly when the roll ends', () => {
+    const animated = new Set<string>();
+    stylesheet.walkAtRules('keyframes', (keyframes) => {
+      if (keyframes.params.startsWith('nv-roll')) {
+        keyframes.walkDecls((declaration) => {
+          animated.add(declaration.prop);
+        });
+      }
+    });
+
+    expect([...animated].sort()).toEqual(['color', 'top']);
+
+    // The new value is relatively positioned in an auto-height wrapper, where a percentage `top` resolves to `auto`.
+    const distances: string[] = [];
+    stylesheet.walkDecls(/^--nv-roll-(from|to)$/, (declaration) => {
+      distances.push(declaration.value);
+    });
+    expect(distances.length).toBeGreaterThan(0);
+    expect(distances.filter((value) => value.includes('%'))).toEqual([]);
+  });
 });

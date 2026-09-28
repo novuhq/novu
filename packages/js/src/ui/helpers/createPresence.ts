@@ -22,14 +22,17 @@ type CreatePresenceOptions = {
  * only when the exit animation has finished. Reopening during the exit keeps the element.
  */
 export const createPresence = (options: CreatePresenceOptions) => {
-  const initiallyPresent = untrack(options.present);
-  const [isMounted, setIsMounted] = createSignal(initiallyPresent);
+  // Only a flip counts. `present` often reads values that change without flipping it, such as an unread count going
+  // from 3 to 2; each re-run would otherwise give an element shown without motion (`appear: false`) the `open` state,
+  // and replay its enter animation.
+  const isPresent = createMemo(options.present);
+  const [isMounted, setIsMounted] = createSignal(untrack(isPresent));
   let cancelExit: (() => void) | undefined;
 
   // A memo, not an effect: the element's `data-state` must be `closed` before the effect below reads its styles.
   let isInitial = true;
   const state = createMemo<PresenceState | undefined>(() => {
-    const present = options.present();
+    const present = isPresent();
     if (isInitial) {
       isInitial = false;
       if (present && options.appear === false) {
@@ -43,7 +46,7 @@ export const createPresence = (options: CreatePresenceOptions) => {
   // Not deferred: `present` can already have changed by the time effects first run (a parent effect that sets the
   // initial value), and that change must not be lost.
   createEffect(
-    on(options.present, (present) => {
+    on(isPresent, (present) => {
       cancelExit?.();
       cancelExit = undefined;
 
@@ -58,7 +61,7 @@ export const createPresence = (options: CreatePresenceOptions) => {
 
       cancelExit = whenExitAnimationEnds(untrack(options.element), () => {
         cancelExit = undefined;
-        if (!untrack(options.present)) {
+        if (!untrack(isPresent)) {
           setIsMounted(false);
         }
       });

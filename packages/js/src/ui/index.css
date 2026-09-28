@@ -9,6 +9,7 @@
   --nv-motion-distance-sm: 4px;
   --nv-motion-distance-md: 8px;
   --nv-motion-distance-lg: 12px;
+  --nv-motion-reveal-delay: 60ms;
 
   :where(*),
   :where(*) ::before,
@@ -389,6 +390,7 @@
   --nv-motion-duration-fast: 0ms;
   --nv-motion-duration-base: 0ms;
   --nv-motion-duration-slow: 0ms;
+  --nv-motion-reveal-delay: 0ms;
 }
 
 /*
@@ -410,6 +412,35 @@
     transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0)
       scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1))
       rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+/*
+ * `RollingText` slides its values with `top`, not a transform, and fades them with `color`, not opacity. Animating a
+ * transform or opacity draws the text on its own compositing layer, rasterised differently from the rest of the
+ * badge, and the number visibly settles when that layer is dropped at the end of the roll.
+ */
+@keyframes nv-roll-in {
+  from {
+    top: var(--nv-roll-from);
+  }
+}
+
+@keyframes nv-roll-out {
+  to {
+    top: var(--nv-roll-to);
+  }
+}
+
+@keyframes nv-roll-fade-in {
+  from {
+    color: transparent;
+  }
+}
+
+@keyframes nv-roll-fade-out {
+  to {
+    color: transparent;
   }
 }
 
@@ -438,8 +469,7 @@
   .nt-motion-pop,
   .nt-motion-pill,
   .nt-motion-fade,
-  .nt-motion-page,
-  .nt-motion-roll {
+  .nt-motion-page {
     --tw-enter-opacity: 0;
     --tw-enter-scale: 1;
     --tw-enter-rotate: 0;
@@ -520,16 +550,18 @@
 
   /*
    * Text that rolls to a new value, like an odometer: the new value comes in from below (`up`) or from above (`down`)
-   * while the old one leaves the other way, on top of it and out of the flow. `RollingText` clips them.
+   * while the old one leaves the other way, on top of it and out of the flow. `RollingText` positions and clips them;
+   * see `nv-roll-in` for why they move with `top`. The distance is one line (`1lh`), the height of the wrapper: the
+   * new value is relatively positioned in that auto-height wrapper, where `top: 100%` would count as `auto`.
    */
   .nt-motion-roll {
-    --tw-enter-translate-y: 100%;
-    --tw-exit-translate-y: -100%;
+    --nv-roll-from: 1lh;
+    --nv-roll-to: -1lh;
   }
 
   :where(.nt-motion-roll)[data-direction="down"] {
-    --tw-enter-translate-y: -100%;
-    --tw-exit-translate-y: 100%;
+    --nv-roll-from: -1lh;
+    --nv-roll-to: 1lh;
   }
 
   /* Presence states. */
@@ -539,8 +571,7 @@
       .nt-motion-tooltip,
       .nt-motion-pop,
       .nt-motion-pill,
-      .nt-motion-fade,
-      .nt-motion-roll
+      .nt-motion-fade
     )[data-state="open"] {
     animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
   }
@@ -571,8 +602,7 @@
       .nt-motion-pop,
       .nt-motion-pill,
       .nt-motion-fade,
-      .nt-motion-page,
-      .nt-motion-roll
+      .nt-motion-page
     )[data-state="closed"],
   :where(.nt-motion-page)[data-state="inactive"] {
     animation: nv-exit var(--nv-motion-duration-fast) var(--nv-motion-ease-exit) forwards;
@@ -580,9 +610,21 @@
   }
 
   /* Both values of a roll move together, as one strip. */
-  :where(.nt-motion-roll)[data-state] {
-    animation-duration: var(--nv-motion-duration-slow);
-    animation-timing-function: var(--nv-motion-ease-standard);
+  :where(.nt-motion-roll)[data-state="open"] {
+    animation: nv-roll-in var(--nv-motion-duration-slow) var(--nv-motion-ease-standard);
+  }
+
+  :where(.nt-motion-roll)[data-state="closed"] {
+    animation: nv-roll-out var(--nv-motion-duration-slow) var(--nv-motion-ease-standard) forwards;
+  }
+
+  /* With reduced motion the values don't move: they crossfade in place. */
+  :where([data-nv-motion="reduced"] .nt-motion-roll)[data-state="open"] {
+    animation-name: nv-roll-fade-in;
+  }
+
+  :where([data-nv-motion="reduced"] .nt-motion-roll)[data-state="closed"] {
+    animation-name: nv-roll-fade-out;
   }
 
   /* Content that fades in when it replaces other content (a calendar month) marks itself with `data-animate`. */
@@ -611,7 +653,7 @@
     transition-property: opacity, transform;
     transition-duration: var(--nv-motion-duration-fast);
     transition-timing-function: var(--nv-motion-ease-standard);
-    transition-delay: 60ms;
+    transition-delay: var(--nv-motion-reveal-delay);
   }
 
   @media (hover: hover) {

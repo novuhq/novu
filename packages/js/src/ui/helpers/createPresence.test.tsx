@@ -90,4 +90,20 @@ describe('createPresence', () => {
     expect(presence.state()).toBe('open');
     dispose();
   });
+
+  it('with appear off, stays still while what `present` reads changes without flipping it', () => {
+    // An unread badge: shown while the count is above zero.
+    const [count, setCount] = createSignal(3);
+    const { presence, dispose } = createRoot((dispose) => ({
+      presence: createPresence({ present: () => count() > 0, element: () => undefined, appear: false }),
+      dispose,
+    }));
+
+    setCount(2);
+    expect(presence.state()).toBeUndefined();
+
+    setCount(0);
+    expect(presence.state()).toBe('closed');
+    dispose();
+  });
 });

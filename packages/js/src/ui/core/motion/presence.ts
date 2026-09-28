@@ -75,8 +75,9 @@ export const whenExitAnimationEnds = (el: Element | null | undefined, done: () =
     done();
   };
 
-  // A cap for animations that never report back (the tab is hidden, the element was moved).
-  const timeout = setTimeout(finish, Math.min(totalMs, 1000) + 50);
+  // Animations that never report back (a hidden tab, a moved element) are removed after their computed
+  // time plus a small margin. The wait follows that time, so a longer `--nv-motion-duration-*` is kept.
+  const timeout = setTimeout(finish, totalMs + 50);
   cleanups.push(() => clearTimeout(timeout));
 
   if (typeof el.getAnimations === 'function') {

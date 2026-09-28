@@ -17,6 +17,14 @@ describe('motion tokens', () => {
     for (const [token, px] of Object.entries(MOTION_DISTANCE_PX)) {
       expect(declaredToken(`distance-${token}`)).toBe(`${px}px`);
     }
+    expect(declaredToken('reveal-delay')).toBe('60ms');
+  });
+
+  it('zeroes the reveal delay in off mode, with the duration tokens', () => {
+    const offMode = stylesheet.match(/\.novu\[data-nv-motion="off"\]\s*\{([^}]+)\}/)?.[1] ?? '';
+
+    expect(offMode).toContain('--nv-motion-reveal-delay: 0ms');
+    expect(stylesheet).toContain('transition-delay: var(--nv-motion-reveal-delay)');
   });
 
   it('reads a duration as the element sees it and falls back to the constant', () => {
