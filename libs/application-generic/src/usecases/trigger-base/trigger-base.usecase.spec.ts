@@ -119,6 +119,28 @@ describe('TriggerBase', () => {
     });
   });
 
+  it('should fall back to the API-side counter and log when the flag read throws', async () => {
+    const { trigger, subscriberProcessQueueService, cacheService, featureFlagsService, logger } = buildTrigger();
+    const error = new Error('flag provider unavailable');
+    featureFlagsService.getFlag.mockRejectedValue(error);
+
+    await trigger.send(buildCommand(), buildSubscribers(3));
+
+    const jobs = enqueuedJobs(subscriberProcessQueueService.addBulk);
+    expect(jobs).toHaveLength(3);
+    for (const job of jobs) {
+      expect(job.data).not.toHaveProperty('incrementUsageInWorker');
+    }
+    expect(cacheService.incrIfExistsAtomic.mock.calls).toEqual([
+      [USAGE_KEY, 2],
+      [USAGE_KEY, 1],
+    ]);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { err: error },
+      'Failed to read the worker usage increment flag, using the API-side counter'
+    );
+  });
+
   it('should not read the flag, enqueue or increment usage when there are no subscribers', async () => {
     const { trigger, subscriberProcessQueueService, cacheService, featureFlagsService } = buildTrigger();
 

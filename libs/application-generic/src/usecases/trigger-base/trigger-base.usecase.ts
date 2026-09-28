@@ -99,11 +99,7 @@ export abstract class TriggerBase {
       return;
     }
 
-    const incrementUsageInWorker = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-    });
+    const incrementUsageInWorker = await this.shouldIncrementUsageInWorker(command.organizationId);
 
     const jobs = mapSubscribersToJobs(subscriberSource, subscribers, command);
 
@@ -114,5 +110,20 @@ export abstract class TriggerBase {
     }
 
     return await this.subscriberProcessQueueAddBulk(jobs);
+  }
+
+  // A flag provider outage must not fail the trigger; `false` keeps the API-side counter path.
+  private async shouldIncrementUsageInWorker(organizationId: string): Promise<boolean> {
+    try {
+      return await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED,
+        defaultValue: false,
+        organization: { _id: organizationId },
+      });
+    } catch (error) {
+      this.logger.warn({ err: error }, 'Failed to read the worker usage increment flag, using the API-side counter');
+
+      return false;
+    }
   }
 }
