@@ -1,10 +1,9 @@
-import { PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum, USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared';
 import { format } from 'date-fns';
 import { ReactNode } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
-import { EDIT_USAGE_LIMITS_ROUTE } from '@/components/billing/utils/usage-limits.constants';
 import { linkButtonVariants } from '@/components/primitives/button-link';
 import { useContactSupport } from '@/hooks/use-contact-support';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -46,7 +45,7 @@ function PaidUsagePausedBanner() {
       message="You've hit your usage limit. Your included usage and allowed overages have been fully used. New workflow runs are currently paused."
       primaryAction={
         canEditLimits ? (
-          <Link to={EDIT_USAGE_LIMITS_ROUTE} className={actionClassName}>
+          <Link to={USAGE_LIMITS_DASHBOARD_PATH} className={actionClassName}>
             Edit limits
             <RiArrowRightSLine className={actionIconClassName} />
           </Link>

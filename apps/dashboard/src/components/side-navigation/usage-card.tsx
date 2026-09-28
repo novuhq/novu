@@ -1,8 +1,7 @@
-import { GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
+import { GetSubscriptionDto, PermissionsEnum, USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared';
 import { format } from 'date-fns';
 import { RiArrowRightSLine, RiCalendarEventLine, RiErrorWarningFill, RiErrorWarningLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { EDIT_USAGE_LIMITS_ROUTE } from '@/components/billing/utils/usage-limits.constants';
 import { useFetchConversationUsage } from '@/hooks/use-fetch-conversation-usage';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -100,7 +99,7 @@ export function PausedUsageCard({ subscription }: PausedUsageCardProps) {
   metrics.push({ label: 'Workflow runs', current: currentEvents, max: maxEvents });
 
   const billingRoute = has({ permission: PermissionsEnum.BILLING_WRITE })
-    ? EDIT_USAGE_LIMITS_ROUTE
+    ? USAGE_LIMITS_DASHBOARD_PATH
     : ROUTES.SETTINGS_BILLING;
   const formattedResetDate = formatResetDate(subscription.currentPeriodEnd);
 

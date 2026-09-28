@@ -1,5 +1,5 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { type GetSubscriptionDto, UsageAlertRecipientsEnum } from '@novu/shared';
+import { type GetSubscriptionDto, MAX_USAGE_LIMIT_HEADROOM, UsageAlertRecipientsEnum } from '@novu/shared';
 import { type InputHTMLAttributes, type ReactNode, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { IconType } from 'react-icons';
@@ -41,7 +41,7 @@ const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currenc
 const usageLimitsFormSchema = z
   .object({
     workflowRuns: z.object({
-      headroom: z.number().int().min(0).nullable(),
+      headroom: z.number().int().min(0).max(MAX_USAGE_LIMIT_HEADROOM).nullable(),
       pauseAtLimit: z.boolean(),
     }),
     alerts: z.object({
@@ -119,13 +119,18 @@ function HeadroomStepper({ value, onChange, ...inputProps }: HeadroomStepperProp
           value={value === null ? '' : value.toLocaleString('en-US')}
           onChange={(event) => {
             const digits = event.target.value.replace(/\D/g, '');
-            onChange(digits === '' ? null : Number(digits));
+            onChange(digits === '' ? null : Math.min(Number(digits), MAX_USAGE_LIMIT_HEADROOM));
           }}
           className="h-[34px] min-w-0 flex-1 text-right text-paragraph-sm mask-none"
         />
         <InlineAffix className="flex-1 whitespace-nowrap text-paragraph-sm text-text-soft">runs / month</InlineAffix>
       </InputWrapper>
-      <StepButton icon={RiAddFill} label="Increase limit" onClick={() => onChange((value ?? 0) + HEADROOM_STEP)} />
+      <StepButton
+        icon={RiAddFill}
+        label="Increase limit"
+        onClick={() => onChange(Math.min((value ?? 0) + HEADROOM_STEP, MAX_USAGE_LIMIT_HEADROOM))}
+        disabled={value !== null && value >= MAX_USAGE_LIMIT_HEADROOM}
+      />
     </InputRoot>
   );
 }
