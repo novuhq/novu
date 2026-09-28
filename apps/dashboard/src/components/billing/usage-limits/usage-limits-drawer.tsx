@@ -178,7 +178,6 @@ function UsageLimitsForm({ subscription, usageLimits, onClose }: UsageLimitsForm
 
   const form = useForm<UsageLimitsFormValues>({
     resolver: standardSchemaResolver(usageLimitsFormSchema),
-    mode: 'onChange',
     defaultValues: {
       workflowRuns: { headroom: events.headroom, pauseAtLimit: usageLimits.pauseAtLimit },
       alerts: usageLimits.alerts,

@@ -28,6 +28,7 @@ import { UsageLimitsDrawer } from './usage-limits/usage-limits-drawer';
 import { UsageLimitsStatusPills } from './usage-limits/usage-limits-status-pills';
 import { useUsageLimitsDrawerParam } from './usage-limits/use-usage-limits-drawer-param';
 import { WorkflowRunsUsageRow } from './usage-limits/workflow-runs-usage-row';
+import { getIncludedWorkflowRuns } from './usage-limits/workflow-runs-usage-state';
 
 interface ActivePlanBannerProps {
   selectedBillingInterval: 'month' | 'year';
@@ -137,9 +138,7 @@ function getUsageData(
     case 'events':
       return {
         current: subscription?.events.current ?? 0,
-        included:
-          subscription?.events.included ??
-          getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, currentPlan, false),
+        included: getIncludedWorkflowRuns(subscription),
         label: 'included',
       };
     case 'conversations':
@@ -346,7 +345,7 @@ function UsageCard({
           ))}
         </div>
       </div>
-      {footer && <div className="mt-auto border-t border-neutral-200 px-3 py-2">{footer}</div>}
+      {footer && <div className="border-t border-neutral-200 px-3 py-2">{footer}</div>}
     </Card>
   );
 }

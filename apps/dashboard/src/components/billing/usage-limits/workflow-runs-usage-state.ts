@@ -20,13 +20,15 @@ export function getWorkflowRunsUsageState(events: WorkflowRunsUsage): WorkflowRu
   return 'within_included';
 }
 
-/** Unmetered subscriptions report `included: null`, so fall back to the plan's tier allowance for display. */
-export function getIncludedWorkflowRuns(subscription: Pick<GetSubscriptionDto, 'apiServiceLevel' | 'events'>): number {
+/** Unmetered or still-loading subscriptions have no `included`, so fall back to the plan's tier allowance for display. */
+export function getIncludedWorkflowRuns(
+  subscription: Pick<GetSubscriptionDto, 'apiServiceLevel' | 'events'> | undefined
+): number {
   return (
-    subscription.events.included ??
+    subscription?.events.included ??
     getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
-      subscription.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE,
       false
     )
   );
