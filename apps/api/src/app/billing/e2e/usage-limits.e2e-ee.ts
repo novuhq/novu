@@ -1,5 +1,5 @@
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { GetStripeSubscription } from '@novu/ee-billing';
+import { GetStripeSubscription, StripeSubscriptionSlice } from '@novu/ee-billing';
 import {
   ALL_PERMISSIONS,
   ApiServiceLevelEnum,
@@ -36,7 +36,7 @@ describe('Usage limits #novu-v2', () => {
   let restoreEnv: () => void;
 
   const givenIncludedEvents = (includedEvents: number | null) => {
-    getStripeSubscriptionStub.resolves({
+    const subscription: StripeSubscriptionSlice = {
       includedEvents,
       currentPeriodStart: '2024-04-05T00:00:00.000Z',
       currentPeriodEnd: '2024-05-05T00:00:00.000Z',
@@ -47,7 +47,8 @@ describe('Usage limits #novu-v2', () => {
       hasPaymentMethod: true,
       billingInterval: 'month',
       skip: null,
-    });
+    };
+    getStripeSubscriptionStub.resolves(subscription);
   };
 
   const putUsageLimits = (body: object) => session.testAgent.put(USAGE_LIMITS_PATH).send(body);
@@ -65,7 +66,7 @@ describe('Usage limits #novu-v2', () => {
   };
 
   beforeEach(async () => {
-    restoreEnv = overrideEnv({ [USAGE_LIMITS_FLAG]: 'true' });
+    restoreEnv = overrideEnv({ [USAGE_LIMITS_FLAG]: 'true', IS_RBAC_ENABLED: 'true' });
     session = new UserSession();
     await session.initialize();
     await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
@@ -253,8 +254,6 @@ describe('Usage limits #novu-v2', () => {
   });
 
   describe('Without the billing write permission', () => {
-    let restoreRbac: () => void;
-
     const expectMissingBillingWrite = (response: Awaited<ReturnType<typeof deleteUsageLimits>>) => {
       expect(response.status).to.equal(403);
       expect(response.body.message).to.include('Insufficient permissions');
@@ -262,7 +261,6 @@ describe('Usage limits #novu-v2', () => {
     };
 
     beforeEach(async () => {
-      restoreRbac = overrideEnv({ IS_RBAC_ENABLED: 'true' });
       // Permissions are only enforced on tiers with role-based access control
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
       givenIncludedEvents(250_000);
@@ -271,10 +269,6 @@ describe('Usage limits #novu-v2', () => {
         org_role: MemberRoleEnum.ADMIN,
         org_permissions: ALL_PERMISSIONS.filter((permission) => permission !== PermissionsEnum.BILLING_WRITE),
       });
-    });
-
-    afterEach(() => {
-      restoreRbac();
     });
 
     it('should reject updating the settings', async () => {

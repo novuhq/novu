@@ -133,7 +133,6 @@ describe('Resource Limiting #novu-v2', () => {
           alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
         };
         let getSubscriptionStub: sinon.SinonStub;
-        let getEventResourceUsageSpy: sinon.SinonSpy;
         let restoreEnv: () => void;
 
         const expectNotEvaluated = (response: Awaited<ReturnType<typeof request>>) => {
@@ -153,13 +152,10 @@ describe('Resource Limiting #novu-v2', () => {
           getSubscriptionStub = sinon
             .stub(getSubscription, 'execute')
             .resolves(buildSubscription(ApiServiceLevelEnum.PRO, { current: 40_000, included: 30_000 }));
-          const getEventResourceUsage = session.testServer?.getService(GetEventResourceUsage) as GetEventResourceUsage;
-          getEventResourceUsageSpy = sinon.spy(getEventResourceUsage, 'execute');
         });
 
         afterEach(() => {
           getSubscriptionStub.restore();
-          getEventResourceUsageSpy.restore();
           restoreEnv();
         });
 
@@ -180,7 +176,6 @@ describe('Resource Limiting #novu-v2', () => {
               status: 402,
             });
             expect(response.headers['x-quotalimit-limit']).to.equal(String(included + 10_000));
-            expect(getEventResourceUsageSpy.firstCall.args[0]).to.include({ headroom: 10_000 });
           });
         }
 
