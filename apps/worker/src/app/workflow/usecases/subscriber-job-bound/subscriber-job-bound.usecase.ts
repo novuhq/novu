@@ -236,6 +236,7 @@ export class SubscriberJobBound {
       severity,
       critical,
       contextKeys,
+      incrementUsageInWorker: command.incrementUsageInWorker,
     };
 
     if (actor) {
@@ -273,6 +274,7 @@ export class SubscriberJobBound {
      * Cast used to convert data type for further processing.
      * todo Needs review for potential data corruption.
      */
+    // biome-ignore lint/plugin: the bridge workflow shape does not overlap NotificationTemplateEntity; see the todo above
     return {
       ...bridgeWorkflow,
       type: ResourceTypeEnum.BRIDGE,
