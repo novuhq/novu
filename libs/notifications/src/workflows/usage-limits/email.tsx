@@ -45,6 +45,12 @@ export function getUsageLimitsCopy(alertState: UsageLimitsAlertState): IUsageLim
           'Your notifications will keep sending. If this volume is unexpected, review your workflows and triggers, or reach out to us to discuss a plan that fits your usage.',
         buttonLabel: 'Review your usage',
       };
+    case 'included_exhausted':
+      return {
+        allowanceLabel: 'included monthly events',
+        message: 'Your notifications will keep sending, and further workflow runs are billed on-demand.',
+        buttonLabel: 'Review your usage',
+      };
     default: {
       const unhandled: never = alertState;
 
