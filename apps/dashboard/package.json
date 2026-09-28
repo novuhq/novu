@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "3.19.4",
+  "version": "2.14.0",
   "type": "module",
   "portless": {
     "name": "dashboard.novu"
