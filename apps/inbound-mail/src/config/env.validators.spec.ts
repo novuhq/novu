@@ -3,7 +3,7 @@ import { cleanEnv } from 'envalid';
 
 import { createEnvValidators } from './env.validators';
 
-const CLUSTER_FLAGS = ['IS_IN_MEMORY_CLUSTER_MODE_ENABLED', 'IN_MEMORY_CLUSTER_MODE_ENABLED'] as const;
+const CLUSTER_FLAGS = ['IS_IN_MEMORY_CLUSTER_MODE_ENABLED', 'IN_MEMORY_CLUSTER_MODE_ENABLED', 'QUEUE_BACKEND'] as const;
 
 function withClusterFlags(
   values: Partial<Record<(typeof CLUSTER_FLAGS)[number], string | undefined>>,
@@ -76,8 +76,30 @@ describe('inbound-mail env validators', () => {
   });
 
   it('should require REDIS_HOST when neither cluster flag is set', () => {
-    withClusterFlags({ IS_IN_MEMORY_CLUSTER_MODE_ENABLED: 'false', IN_MEMORY_CLUSTER_MODE_ENABLED: 'false' }, () => {
-      expect(() => cleanRedisEnv({})).to.throw('REDIS_HOST');
-    });
+    withClusterFlags(
+      {
+        IS_IN_MEMORY_CLUSTER_MODE_ENABLED: 'false',
+        IN_MEMORY_CLUSTER_MODE_ENABLED: 'false',
+        QUEUE_BACKEND: 'bullmq',
+      },
+      () => {
+        expect(() => cleanRedisEnv({})).to.throw('REDIS_HOST');
+      }
+    );
+  });
+
+  it('should not require BullMQ Redis in SQS-only mode', () => {
+    withClusterFlags(
+      {
+        IS_IN_MEMORY_CLUSTER_MODE_ENABLED: 'true',
+        IN_MEMORY_CLUSTER_MODE_ENABLED: undefined,
+        QUEUE_BACKEND: 'sqs',
+      },
+      () => {
+        const env = cleanRedisEnv({ QUEUE_BACKEND: 'sqs' });
+
+        expect(env.QUEUE_BACKEND).to.equal('sqs');
+      }
+    );
   });
 });
