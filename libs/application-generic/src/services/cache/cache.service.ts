@@ -108,7 +108,11 @@ export class CacheService implements ICacheService {
 
   /** Values in key order, `null` for a missing key. */
   public async mget(keys: string[]): Promise<(string | null)[]> {
-    if (!this.client || keys.length === 0) {
+    if (!this.client) {
+      return keys.map(() => null);
+    }
+
+    if (keys.length === 0) {
       return [];
     }
 

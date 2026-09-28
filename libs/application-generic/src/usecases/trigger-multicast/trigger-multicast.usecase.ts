@@ -43,7 +43,7 @@ export class TriggerMulticast extends TriggerBase {
   }
 
   @InstrumentUsecase()
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing recipient fan-out is outside this change.
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fan-out over single subscribers, then paged topic subscribers minus exclusions
   async execute(command: TriggerMulticastCommand) {
     const { environmentId, organizationId, to: recipients, actor } = command;
 

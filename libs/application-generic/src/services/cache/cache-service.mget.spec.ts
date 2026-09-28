@@ -31,6 +31,12 @@ describe('CacheService.mget', () => {
     expect(client.get).toHaveBeenCalledTimes(3);
   });
 
+  it('reads every key as missing when there is no client', async () => {
+    const cacheService = new CacheService({ getClient: () => undefined } as never);
+
+    await expect(cacheService.mget(['{a}', '{b}'])).resolves.toEqual([null, null]);
+  });
+
   it('does not call Redis for an empty key list', async () => {
     const { cacheService, client } = buildCacheService({ isCluster: false, store });
 

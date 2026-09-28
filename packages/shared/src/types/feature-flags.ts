@@ -41,7 +41,8 @@ export enum FeatureFlagsKeysEnum {
   IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
   /**
    * Organization-scoped, read only by the API at enqueue: moves the usage counter increment into the worker.
-   * Transitional; remove with the API increment path once on for all organizations (NV-8853).
+   * Transitional (NV-8853): remove with the API increment path and the job stamp once on for all organizations
+   * and the subscriber-process queue has drained.
    */
   IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED = 'IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED',
   IS_USE_MERGED_DIGEST_ID_ENABLED = 'IS_USE_MERGED_DIGEST_ID_ENABLED',

@@ -16,8 +16,7 @@ import _ from 'lodash';
 
 import { IProcessSubscriberBulkJobDto, SubscriberTopicPreference } from '../../dtos';
 import { PinoLogger } from '../../logging';
-import { CacheService } from '../../services/cache';
-import { buildUsageKey } from '../../services/cache/key-builders';
+import { buildUsageKey, CacheService } from '../../services/cache';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { mapSubscribersToJobs } from '../../utils/subscribers.utils';
