@@ -29,6 +29,7 @@ describe('RedisThrottleService SQS cache client', () => {
     'NOVU_ENTERPRISE',
     'IS_IN_MEMORY_CLUSTER_MODE_ENABLED',
     'IN_MEMORY_CLUSTER_MODE_ENABLED',
+    'THROTTLE_REDIS_TTL_BUFFER_MS',
   ] as const;
   const originalEnv = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
 
@@ -52,6 +53,7 @@ describe('RedisThrottleService SQS cache client', () => {
     process.env.NOVU_ENTERPRISE = 'false';
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+    delete process.env.THROTTLE_REDIS_TTL_BUFFER_MS;
 
     const workflowInMemoryProviderService = new WorkflowInMemoryProviderService();
     expect(workflowInMemoryProviderService.getClient()).toBeUndefined();
