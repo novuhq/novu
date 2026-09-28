@@ -201,9 +201,8 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           LOG_FILE=$(mktemp)
-          # Escape Slack mrkdwn control characters so commit titles cannot break formatting.
-          git log --format='%h %s (@%aL)' "origin/prod..origin/$BRANCH_NAME" \
-            | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' > "$LOG_FILE"
+          # Kept raw. jq escapes & < > while it splits, so a cut never lands inside &amp; &lt; or &gt;.
+          git log --format='%h %s (@%aL)' "origin/prod..origin/$BRANCH_NAME" > "$LOG_FILE"
 
           COMMIT_COUNT=$(grep -c . "$LOG_FILE" || true)
           echo "commit_count=$COMMIT_COUNT" >> "$GITHUB_OUTPUT"
@@ -230,18 +229,29 @@ jobs:
             --argjson slack_section_limit 3000 \
             '
             # Section text is wrapped in code fences, so each chunk must stay
-            # under the Slack limit once those 6 characters are added. Lines are
-            # capped to that same budget first — otherwise one long subject
-            # becomes its own oversized chunk. Triple backticks are rewritten so
-            # a commit subject cannot close the fence early.
+            # under the Slack limit once those 6 characters are added. Each raw
+            # character is escaped before it is packed, and & < > become a whole
+            # entity or move to the next piece — a fixed slice of the escaped
+            # line would otherwise cut through &amp; &lt; or &gt;. Triple
+            # backticks are rewritten so a subject cannot close the fence early.
+            def escape_pieces($limit):
+              gsub("```"; "\u0027\u0027\u0027")
+              | reduce explode[] as $cp ({parts: [], buf: "", n: 0};
+                  ([$cp] | implode) as $ch
+                  | (if $ch == "&" then "&amp;"
+                     elif $ch == "<" then "&lt;"
+                     elif $ch == ">" then "&gt;"
+                     else $ch end) as $esc
+                  | ($esc | length) as $elen
+                  | if .n > 0 and (.n + $elen) > $limit then
+                      .parts += [.buf] | .buf = $esc | .n = $elen
+                    else
+                      .buf += $esc | .n += $elen
+                    end)
+              | if .buf != "" then .parts + [.buf] else .parts end;
             ($slack_section_limit - 6) as $max_body
             | ([$max_chunk_chars, $max_body] | min) as $limit
-            | [inputs
-                | select(length > 0)
-                | gsub("```"; "\u0027\u0027\u0027")
-                | . as $line
-                | range(0; ($line | length); $limit)
-                | $line[. : . + $limit]] as $lines
+            | [inputs | select(length > 0) | escape_pieces($limit)[]] as $lines
             | ($lines | reduce .[] as $line ([];
                 if length > 0 and ((.[-1] | length) + ($line | length) + 1) <= $limit
                 then .[:-1] + [.[-1] + "\n" + $line]
