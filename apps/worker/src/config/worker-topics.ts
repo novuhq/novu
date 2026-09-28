@@ -1,4 +1,4 @@
-import { JobTopicNameEnum } from '@novu/shared';
+import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
 
 /**
  * Queues each worker produces to, on top of the topic it consumes.
@@ -53,10 +53,11 @@ function isAcceptedActiveWorker(value: string): value is JobTopicNameEnum {
  * the module graph is built.
  *
  * BullMQ-only names stay in the list so a process whose only entry is
- * `metric-active-jobs` is not treated as "run every worker".
+ * `metric-active-jobs` is not treated as "run every worker". That same list is
+ * rejected once BullMQ is retired: nothing would be left to run.
  */
-export function parseActiveWorkers(raw: string | undefined): JobTopicNameEnum[] {
-  return (raw ?? '')
+export function parseActiveWorkers(raw: string | undefined, env: NodeJS.ProcessEnv = process.env): JobTopicNameEnum[] {
+  const workers = (raw ?? '')
     .split(',')
     .map((entry) => entry.trim())
     .filter(Boolean)
@@ -69,9 +70,33 @@ export function parseActiveWorkers(raw: string | undefined): JobTopicNameEnum[] 
 
       return entry;
     });
+
+  assertBullMqWorkersCanRun(workers, env);
+
+  return workers;
 }
 
-export const workersToProcess: JobTopicNameEnum[] = parseActiveWorkers(process.env.ACTIVE_WORKERS);
+/**
+ * `sqs` retires BullMQ, and these topics have no SQS consumer. A process whose
+ * whole `ACTIVE_WORKERS` list is made of them would pass boot and then sit idle.
+ * A list that also names an SQS worker still starts that worker; the metrics
+ * entry is ignored because there are no BullMQ counters left to read.
+ */
+function assertBullMqWorkersCanRun(workers: JobTopicNameEnum[], env: NodeJS.ProcessEnv): void {
+  const bullMqRetired = env.QUEUE_BACKEND?.trim() === QueueBackend.SQS;
+  const hasSqsWorker = workers.some((topic) => !BULLMQ_ONLY_WORKER_TOPICS.includes(topic));
+
+  if (!bullMqRetired || workers.length === 0 || hasSqsWorker) {
+    return;
+  }
+
+  throw new Error(
+    `ACTIVE_WORKERS is "${workers.join(', ')}", which only runs while BullMQ is enabled. ` +
+      `QUEUE_BACKEND=${QueueBackend.SQS} disables BullMQ, so this process would start with no worker`
+  );
+}
+
+export const workersToProcess: JobTopicNameEnum[] = parseActiveWorkers(process.env.ACTIVE_WORKERS, process.env);
 
 /**
  * Every SQS topic this worker process touches: the ones its active workers

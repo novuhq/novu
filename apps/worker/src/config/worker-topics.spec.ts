@@ -1,4 +1,4 @@
-import { JobTopicNameEnum } from '@novu/shared';
+import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
 import { expect } from 'chai';
 import { getRequiredWorkerTopics, parseActiveWorkers } from './worker-topics';
 
@@ -11,8 +11,26 @@ describe('worker topics', () => {
       ]);
     });
 
-    it('should accept a process that only runs the metrics worker', () => {
-      expect(parseActiveWorkers('metric-active-jobs')).to.deep.equal([JobTopicNameEnum.ACTIVE_JOBS_METRIC]);
+    it('should accept a process that only runs the metrics worker while BullMQ is enabled', () => {
+      expect(parseActiveWorkers('metric-active-jobs', { QUEUE_BACKEND: QueueBackend.BULLMQ })).to.deep.equal([
+        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
+      ]);
+      expect(parseActiveWorkers('metric-active-jobs', { QUEUE_BACKEND: QueueBackend.SQS_BULLMQ })).to.deep.equal([
+        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
+      ]);
+    });
+
+    it('should keep an SQS worker when metrics is also listed and BullMQ is retired', () => {
+      expect(parseActiveWorkers('standard,metric-active-jobs', { QUEUE_BACKEND: QueueBackend.SQS })).to.deep.equal([
+        JobTopicNameEnum.STANDARD,
+        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
+      ]);
+    });
+
+    it('should reject a metrics-only process once BullMQ is retired', () => {
+      expect(() => parseActiveWorkers('metric-active-jobs', { QUEUE_BACKEND: QueueBackend.SQS })).to.throw(
+        'would start with no worker'
+      );
     });
 
     it('should reject a name that is not a worker', () => {
