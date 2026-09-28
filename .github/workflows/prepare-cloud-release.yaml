@@ -227,10 +227,23 @@ jobs:
             --argjson commit_count "$COMMIT_COUNT" \
             --argjson max_chunk_chars 2800 \
             --argjson max_log_blocks 40 \
+            --argjson slack_section_limit 3000 \
             '
-            [inputs | select(length > 0)] as $lines
+            # Section text is wrapped in code fences, so each chunk must stay
+            # under the Slack limit once those 6 characters are added. Lines are
+            # capped to that same budget first — otherwise one long subject
+            # becomes its own oversized chunk. Triple backticks are rewritten so
+            # a commit subject cannot close the fence early.
+            ($slack_section_limit - 6) as $max_body
+            | ([$max_chunk_chars, $max_body] | min) as $limit
+            | [inputs
+                | select(length > 0)
+                | gsub("```"; "\u0027\u0027\u0027")
+                | . as $line
+                | range(0; ($line | length); $limit)
+                | $line[. : . + $limit]] as $lines
             | ($lines | reduce .[] as $line ([];
-                if length > 0 and ((.[-1] | length) + ($line | length) + 1) <= $max_chunk_chars
+                if length > 0 and ((.[-1] | length) + ($line | length) + 1) <= $limit
                 then .[:-1] + [.[-1] + "\n" + $line]
                 else . + [$line]
                 end)) as $chunks
@@ -242,12 +255,35 @@ jobs:
                 type: "context",
                 elements: [{ type: "mrkdwn", text: ("_Commit list truncated — see the <" + $pr_url + "/commits|full list on GitHub>._") }]
               }] else [] end) as $truncated
-            | ($pr_numbers | split(",") | map(select(length > 0))
-                | map("<" + $repo_url + "/pull/" + . + "|#" + . + ">") | join(", ")) as $hotfix_prs
+            | ($pr_numbers | split(",") | map(select(length > 0))) as $pr_ids
+            | ($pr_ids | map("<" + $repo_url + "/pull/" + . + "|#" + . + ">")) as $pr_links
             | (if $commit_count == 1 then "1 commit" else ($commit_count | tostring) + " commits" end) as $count_label
-            | ($kind
-                + "\n<" + $pr_url + "|Release PR> • " + $count_label
-                + (if $hotfix_prs != "" then "\nHotfix PRs: " + $hotfix_prs else "" end)) as $summary
+            | ($kind + "\n<" + $pr_url + "|Release PR> • " + $count_label) as $head
+            | ("\nHotfix PRs: ") as $pr_label
+            | (if ($pr_links | length) == 0 then $head
+               elif (($head + $pr_label + ($pr_links | join(", "))) | length) <= $slack_section_limit then
+                 $head + $pr_label + ($pr_links | join(", "))
+               else
+                 # Keep adding links only while the section, including an
+                 # "and N more" pointer back at the release PR, stays in budget.
+                 (reduce range(0; $pr_links | length) as $i ({text: "", n: 0, stop: false};
+                    if .stop then .
+                    else
+                      ((if .n > 0 then ", " else "" end) + $pr_links[$i]) as $piece
+                      | (($pr_links | length) - (.n + 1)) as $left
+                      | (", and " + ($left | tostring) + " more — see the <" + $pr_url + "|release PR>") as $suffix
+                      | if (($head + $pr_label + .text + $piece + $suffix) | length) <= $slack_section_limit
+                        then .text = .text + $piece | .n = .n + 1
+                        else .stop = true
+                        end
+                    end)) as $fit
+                 | if $fit.n == 0 then $head
+                   else
+                     $head + $pr_label + $fit.text
+                     + ", and " + ((($pr_links | length) - $fit.n) | tostring)
+                     + " more — see the <" + $pr_url + "|release PR>"
+                   end
+               end) as $summary
             | {
                 text: ($title + " — " + $count_label),
                 blocks: ([
