@@ -29,6 +29,7 @@ export * from './ruach-sms.handler';
 export * from './sendchamp.handler';
 export * from './simpletexting.handler';
 export * from './sinch.handler';
+export * from './sfr-sms.handler';
 export * from './sms-central.handler';
 export * from './sms77.handler';
 export * from './sns.handler';

@@ -30,6 +30,7 @@ export const smsProviderSchemas = {
   'ring-central': genericProviderSchemas,
   sendchamp: genericProviderSchemas,
   simpletexting: genericProviderSchemas,
+  'sfr-sms': genericProviderSchemas,
   sms77: genericProviderSchemas,
   'sms-central': genericProviderSchemas,
   smsmode: genericProviderSchemas,

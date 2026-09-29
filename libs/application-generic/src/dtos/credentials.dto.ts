@@ -350,4 +350,19 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   externalWorkspaceId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  serviceId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  servicePassword?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  spaceId?: string;
 }

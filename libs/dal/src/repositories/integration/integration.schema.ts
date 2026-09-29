@@ -113,6 +113,9 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       completedAt: Schema.Types.String,
       errorMessage: Schema.Types.String,
       teamsAppCatalogId: Schema.Types.String,
+      serviceId: Schema.Types.String,
+      servicePassword: Schema.Types.String,
+      spaceId: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
