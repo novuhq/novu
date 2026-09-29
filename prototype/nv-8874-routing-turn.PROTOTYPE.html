@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PROTOTYPE · NV-8874 · One routing turn of the Discovery Agent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --accent: #4338ca; --accent-soft: #eef2ff; --ink: #111827; --muted: #6b7280;
+    --line: #e5e7eb; --bg: #f9fafb; --card: #ffffff; --warn: #92400e; --warn-soft: #fef3c7;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; color: var(--ink); background: var(--bg); }
+  header { padding: 20px 28px 12px; border-bottom: 1px solid var(--line); background: var(--card); }
+  header h1 { margin: 0 0 4px; font-size: 20px; }
+  header .tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--warn); background: var(--warn-soft); padding: 2px 8px; border-radius: 99px; margin-right: 8px; vertical-align: middle; }
+  header p { margin: 6px 0 0; max-width: 1100px; color: #374151; }
+  header details { margin-top: 8px; color: #374151; max-width: 1100px; }
+  header details summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+  header details ul { margin: 6px 0 0 18px; padding: 0; }
+  main { display: grid; grid-template-columns: 330px minmax(420px, 1fr) 400px; gap: 16px; padding: 16px 28px; align-items: start; }
+  section.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  section.panel h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+  .stack > * + * { margin-top: 16px; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: 6px 10px; cursor: pointer; color: var(--ink); }
+  button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.1); }
+  input[type=text], input[type=number], select, textarea { font: inherit; border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; background: #fff; color: var(--ink); }
+  input[type=number] { width: 72px; }
+  /* walkthroughs */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tabs button { font-size: 12px; padding: 4px 8px; }
+  .tabs button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .scenario h3 { margin: 4px 0 6px; font-size: 15px; }
+  .scenario p { margin: 0 0 8px; color: #374151; }
+  .scenario .watch { background: var(--accent-soft); border-radius: 7px; padding: 8px 10px; margin-bottom: 10px; }
+  .steps { list-style: none; padding: 0; margin: 0; }
+  .steps li { margin: 6px 0; }
+  .steps button { width: 100%; text-align: left; }
+  .steps li.done button { color: var(--muted); text-decoration: line-through; }
+  .steps li.next button { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  /* chat */
+  .chat { display: flex; flex-direction: column; gap: 10px; min-height: 280px; max-height: 62vh; overflow: auto; padding: 4px 2px 8px; }
+  .msg { max-width: 86%; padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+  .msg .t { white-space: pre-wrap; }
+  .msg .who { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 2px; text-transform: uppercase; letter-spacing: .04em; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-color: var(--accent); }
+  .msg.user .who { color: #c7d2fe; }
+  .msg.discovery { background: var(--accent-soft); border-color: #c7d2fe; }
+  .msg.pick { align-self: flex-end; background: #fff; color: var(--accent); border-style: dashed; border-color: var(--accent); }
+  .msg.notice { align-self: center; background: var(--warn-soft); border-color: #fcd34d; color: var(--warn); font-size: 12px; }
+  .msg.question { border-color: #f59e0b; }
+  .msg .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; white-space: normal; }
+  .msg .btns button { font-size: 12px; padding: 4px 8px; }
+  .msg .meta { font-size: 11px; color: var(--muted); margin-top: 4px; white-space: normal; }
+  .composer { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 10px; }
+  .composer .row { display: flex; gap: 8px; align-items: center; }
+  .composer .row + .row { margin-top: 8px; }
+  .composer input[type=text] { flex: 1; }
+  .probs { display: grid; grid-template-columns: 1fr 72px 90px; gap: 4px 8px; align-items: center; font-size: 13px; margin-top: 8px; }
+  .probs .bar { height: 8px; background: var(--accent-soft); border-radius: 4px; overflow: hidden; }
+  .probs .bar i { display: block; height: 100%; background: var(--accent); }
+  .hint { color: var(--muted); font-size: 12px; }
+  /* state */
+  dl.state { display: grid; grid-template-columns: 130px 1fr; gap: 6px 10px; margin: 0; }
+  dl.state dt { color: var(--muted); font-size: 12px; padding-top: 1px; }
+  dl.state dd { margin: 0; }
+  dl.state .changed { background: #fef9c3; border-radius: 4px; box-shadow: 0 0 0 3px #fef9c3; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; background: #f3f4f6; }
+  .pill.stay, .pill.forward { background: #dcfce7; color: #166534; }
+  .pill.switch { background: #dbeafe; color: #1e40af; }
+  .pill.card { background: var(--warn-soft); color: var(--warn); }
+  .pill.direct, .pill.flat { background: #f3e8ff; color: #6b21a8; }
+  .pill.pass { background: #e0f2fe; color: #075985; }
+  .pill.open { background: #fee2e2; color: #991b1b; }
+  .checks { list-style: none; margin: 4px 0 0; padding: 0; font-size: 12px; }
+  .checks li { padding: 2px 0; }
+  .checks li.hit { font-weight: 600; }
+  pre { margin: 4px 0 0; padding: 8px; background: #f3f4f6; border-radius: 6px; font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; }
+  /* bottom */
+  .bottom { display: grid; grid-template-columns: 380px 1fr; gap: 16px; padding: 0 28px 32px; }
+  .policy-grid { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; font-size: 13px; }
+  .policy-grid .sub { grid-column: 1 / -1; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 8px; }
+  table.tenant { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.tenant th, table.tenant td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.tenant th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  table.tenant td.optext { font-size: 12px; color: #374151; max-width: 420px; }
+  .muted { color: var(--muted); }
+  @media (max-width: 1250px) { main { grid-template-columns: 1fr 1fr; } main > .walk { grid-column: 1 / -1; } .bottom { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="tag">PROTOTYPE · throw away</span>What does one routing turn of the Discovery Agent look like?</h1>
+  <p><b>Question (NV-8874):</b> every time an employee sends a message, the Discovery Agent must either <b>stay</b> with the agent they're talking to, <b>switch</b> to another agent, <b>answer directly</b>, or <b>ask</b> which agent they meant (the choice card). Does the policy below make the right call on simple requests? Specifically: the confidence thresholds, what "talking to" (sticky) state we keep, what context a new agent gets on a switch, and when the choice card and the <b>Change agent</b> button appear.</p>
+  <details>
+    <summary>What's real and what's mocked here</summary>
+    <ul>
+      <li><b>Real:</b> the routing policy (the <code>RoutingPolicy</code> script block, liftable into the Discovery Agent's <code>onMessage</code>), starting thresholds from NV-8866, the tenant's agents as they exist in the sandbox (NV-8871), their forwarding paths (NV-8864).</li>
+      <li><b>Mocked:</b> the classifier (Jev). A keyword scorer fills in the probabilities; you can overwrite every number before sending. Walkthroughs use fixed numbers so they replay identically.</li>
+      <li><b>Mocked:</b> the agents' answers. The sales agent behaves like the real NV-8869 test agent (asks "Which month?").</li>
+      <li><b>Hypothetical:</b> "HR Policy Helper" (a no-code chat agent) doesn't exist in the sandbox yet. It's there so two agents can plausibly compete for one request.</li>
+      <li><b>Assumed, not proven:</b> an agent's "waiting for your answer" (<code>input-required</code>) state reaches us. Through the Gemini Enterprise proxy it currently doesn't (NV-8869).</li>
+      <li><b>Candidate source:</b> Discovery Engine <code>agents.list</code>, not Agent Registry (NV-8871). Registry search isn't used at all.</li>
+    </ul>
+  </details>
+</header>
+
+<main>
+  <div class="walk stack">
+    <section class="panel">
+      <h2>Guided walkthroughs</h2>
+      <div class="tabs" id="tabs"></div>
+      <div class="scenario" id="scenario"></div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="panel">
+      <h2>Conversation (Gemini Enterprise or Slack)</h2>
+      <div class="chat" id="chat"></div>
+      <div class="composer">
+        <div class="row">
+          <select id="preset"></select>
+        </div>
+        <div class="row">
+          <input type="text" id="text" placeholder="Type what the employee says…">
+          <button class="primary" id="send">Send message</button>
+        </div>
+        <div id="probsBox"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="expire">Choice card times out</button>
+          <button id="reset">New conversation</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="panel">
+      <h2>Current state</h2>
+      <div id="state"></div>
+    </section>
+    <section class="panel">
+      <h2>Last routing decision</h2>
+      <div id="decision"></div>
+    </section>
+  </div>
+</main>
+
+<div class="bottom">
+  <section class="panel">
+    <h2>Routing policy (edit to see decisions change)</h2>
+    <div class="policy-grid" id="policy"></div>
+  </section>
+  <section class="panel">
+    <h2>Agents in the tenant → routing candidates</h2>
+    <div id="tenant"></div>
+  </section>
+</div>
+
+<!-- ============================================================================================
+     RoutingPolicy — the liftable part. Pure: no DOM, no randomness, no I/O.
+     Maps to the Discovery Agent's onMessage / onAction in @novu/framework:
+       state.route          → ctx.metadata 'route'
+       state.pendingCard    → ctx.metadata 'pendingCard' (+ ctx.choose to render it)
+       state.history        → ctx.history (kind 'message' entries only are used)
+       step({type:'message'}) runs first in onMessage; 'cardPick'/'changeAgent' run in onAction.
+     ============================================================================================ -->
+<script id="routing-policy">
+const RoutingPolicy = (() => {
+  const DEFAULT_POLICY = {
+    // thresholds (NV-8866 starting values)
+    stayMin: 0.35,          // sticky agent keeps the turn if its p ≥ this…
+    stayGap: 0.25,          // …and it's within this of the top option
+    forwardMin: 0.70,       // a different agent wins outright if p ≥ this…
+    forwardGap: 0.20,       // …and it leads the runner-up by at least this
+    directMin: 0.60,        // Discovery Agent answers itself if 'direct' p ≥ this
+    cardMin: 0.15,          // options below this never get a button
+    cardMax: 4,             // at most this many options on a choice card
+    // order and edge-case choices
+    directBeforeStay: false,       // check "answer directly" before "stay"
+    padCardToTwo: true,            // one lukewarm favourite → card with it + runner-up (instead of "no match")
+    pendingQuestion: 'pass-through', // agent waiting for an answer: 'pass-through' | 'escape-if-clear'
+    escapeMin: 0.85,               // with 'escape-if-clear': switch away only if another agent has p ≥ this
+    // context handed to a new agent on a switch: 'message' | 'recent' | 'full'
+    handoff: 'recent',
+    recentUserTurns: 3,
+    turnCharLimit: 400,
+    // "Change agent" button: 'every-answer' | 'not-on-questions' | 'after-auto-switch'
+    changeAgentButton: 'every-answer',
+    optionTextLimit: 600,
+    shortlistMax: 8,
+  };
+
+  const PATHS = {
+    managed:  { path: 'streamAssist', forwardable: true },
+    chat:     { path: 'streamAssist', forwardable: true },
+    a2a:      { path: 'A2A proxy', forwardable: true },
+    workflow: { path: 'none → "Open @Agent" card', forwardable: false },
+    adk:      { path: 'none → "Open @Agent" card', forwardable: false },
+  };
+
+  const initialState = () => ({
+    seq: 0,
+    route: null,            // { agentId, taskId, taskState, turnsWithAgent }
+    agentContexts: {},      // agentId → contextId, so returning to an agent continues its own thread
+    pendingCard: null,      // { id, reason, text, msgIndex, options:[{id,label,target}] }
+    lastForward: null,      // { id, agentId, text, msgIndex, isSwitch, userPicked, probs }
+    lastProbs: null,        // { msgIndex, probs }
+    history: [],            // { role, speaker, agentId?, text, kind, ... }
+  });
+
+  // ---- candidates -------------------------------------------------------------------------
+  function optionText(agent, limit) {
+    const bits = [`${agent.displayName}: ${agent.description || ''}`.trim()];
+    const skills = agent.skills || [];
+    if (skills.length) bits.push('Skills: ' + skills.slice(0, 3).map(s => s.name).join(', ') + '.');
+    const examples = skills.flatMap(s => s.examples || []).slice(0, 2);
+    if (examples.length) bits.push('Examples: ' + examples.map(e => `"${e}"`).join(', ') + '.');
+    const t = bits.join(' ');
+    return t.length > limit ? t.slice(0, limit - 1) + '…' : t;
+  }
+
+  function buildCandidates(agents, policy) {
+    const options = [], excluded = [];
+    for (const a of agents) {
+      if (a.hiddenByAdmin) { excluded.push({ agent: a, reason: 'Hidden by the admin' }); continue; }
+      if (a.kind === 'core') { excluded.push({ agent: a, reason: 'Core Assistant is the orchestrator the Discovery Agent stands in for' }); continue; }
+      if (a.source === 'registry-only') { excluded.push({ agent: a, reason: 'Only in Agent Registry, not a Gemini Enterprise agent' }); continue; }
+      if (a.state !== 'ENABLED') { excluded.push({ agent: a, reason: `State is ${a.state}, not ENABLED` }); continue; }
+      const p = PATHS[a.kind] || PATHS.adk;
+      options.push({ id: a.id, name: a.displayName, path: p.path, forwardable: p.forwardable, text: optionText(a, policy.optionTextLimit) });
+    }
+    // > shortlistMax would be cut by embeddings (NV-8866). Not modelled: the demo tenant has ≤ 4.
+    return { options: options.slice(0, policy.shortlistMax), excluded };
+  }
+
+  const nameOf = (candidates, id) =>
+    id === 'direct' ? 'Answer directly' : (candidates.options.find(o => o.id === id) || { name: id }).name;
+
+  // ---- history windows ------------------------------------------------------------------------
+  function recentTurns(history, beforeIndex, policy) {
+    const msgs = history.slice(0, beforeIndex).map((h, i) => ({ ...h, i })).filter(h => h.kind === 'message');
+    const picked = []; let users = 0, assistant = false;
+    for (let k = msgs.length - 1; k >= 0; k--) {
+      const m = msgs[k];
+      if (m.role === 'user' && users < policy.recentUserTurns) { picked.push(m); users++; }
+      else if (m.role === 'assistant' && !assistant) { picked.push(m); assistant = true; }
+      if (users >= policy.recentUserTurns && assistant) break;
+    }
+    return picked.sort((a, b) => a.i - b.i);
+  }
+  const fmtTurn = (m, limit) => {
+    const who = m.role === 'user' ? 'USER' : (m.speaker || 'ASSISTANT').toUpperCase();
+    const t = m.text.length > limit ? m.text.slice(0, limit - 1) + '…' : m.text;
+    return `${who}: ${t}`;
+  };
+
+  // ---- classifier request (what Jev sees) ---------------------------------------------------------
+  function classifierNeeded(state, policy) {
+    return !(state.route && state.route.taskState === 'input-required' && policy.pendingQuestion === 'pass-through');
+  }
+
+  function buildClassifierRequest(state, text, candidates, policy) {
+    const sticky = state.route && state.route.agentId;
+    const ctxLines = recentTurns(state.history, state.history.length, policy).map(m => fmtTurn(m, policy.turnCharLimit));
+    const current = sticky ? `Current agent: ${nameOf(candidates, sticky)} (${state.route.turnsWithAgent} message${state.route.turnsWithAgent === 1 ? '' : 's'})` : 'Current agent: none';
+    return {
+      question: "Which option should handle the user's latest message?",
+      context: [current, ctxLines.length ? 'Recent turns:\n' + ctxLines.join('\n') : 'No earlier turns.', `USER (latest): ${text}`].join('\n'),
+      options: [
+        ...candidates.options.map(o => ({ id: o.id, label: o.id === sticky ? `Continue with ${o.text}` : o.text })),
+        { id: 'direct', label: 'Answer directly: help, which agents exist, small talk, thanks' },
+      ],
+    };
+  }
+
+  // ---- the decision rules ---------------------------------------------------------------------
+  function decide(probs, stickyId, candidates, policy) {
+    const valid = new Set([...candidates.options.map(o => o.id), 'direct']);
+    const ranked = Object.entries(probs || {}).filter(([id]) => valid.has(id))
+      .map(([id, p]) => ({ id, p: Math.max(0, +p || 0) })).sort((a, b) => b.p - a.p);
+    const t1 = ranked[0] || { id: null, p: 0 }, t2 = ranked[1] || { id: null, p: 0 };
+    const f = x => x.toFixed(2);
+    const N = id => nameOf(candidates, id);
+    const hasSticky = !!stickyId && valid.has(stickyId);
+    const pS = hasSticky ? ((ranked.find(r => r.id === stickyId) || { p: 0 }).p) : 0;
+    const checks = [];
+
+    const stay = () => {
+      if (!hasSticky) { checks.push({ rule: 'Stay', ok: false, why: 'No current agent' }); return null; }
+      const ok = pS >= policy.stayMin && (t1.p - pS) < policy.stayGap;
+      checks.push({ rule: 'Stay', ok, why: `${N(stickyId)} p=${f(pS)} ${pS >= policy.stayMin ? '≥' : '<'} ${f(policy.stayMin)}; behind the top by ${f(t1.p - pS)} ${(t1.p - pS) < policy.stayGap ? '<' : '≥'} ${f(policy.stayGap)}` });
+      return ok ? { action: 'stay', target: stickyId } : null;
+    };
+    const forward = () => {
+      const ok = t1.id && t1.id !== 'direct' && t1.p >= policy.forwardMin && (t1.p - t2.p) >= policy.forwardGap;
+      checks.push({ rule: 'Clear winner', ok: !!ok, why: t1.id === 'direct' ? 'Top option is "answer directly", not an agent' : `${N(t1.id)} p=${f(t1.p)} ${t1.p >= policy.forwardMin ? '≥' : '<'} ${f(policy.forwardMin)}; lead ${f(t1.p - t2.p)} ${(t1.p - t2.p) >= policy.forwardGap ? '≥' : '<'} ${f(policy.forwardGap)}` });
+      return ok ? { action: t1.id === stickyId ? 'stay' : (stickyId ? 'switch' : 'forward'), target: t1.id } : null;
+    };
+    const direct = () => {
+      const ok = t1.id === 'direct' && t1.p >= policy.directMin;
+      checks.push({ rule: 'Answer directly', ok, why: t1.id === 'direct' ? `"Answer directly" p=${f(t1.p)} ${t1.p >= policy.directMin ? '≥' : '<'} ${f(policy.directMin)}` : 'Top option is an agent' });
+      return ok ? { action: 'direct' } : null;
+    };
+    const order = policy.directBeforeStay ? [direct, stay, forward] : [stay, forward, direct];
+    for (const r of order) { const d = r(); if (d) return { ...d, ranked, checks }; }
+
+    const eligible = ranked.filter(r => r.p >= policy.cardMin);
+    let cardOpts = null;
+    if (eligible.length >= 2) cardOpts = eligible.slice(0, policy.cardMax);
+    else if (eligible.length === 1 && policy.padCardToTwo && t2.id) cardOpts = [t1, t2];
+    checks.push({ rule: 'Choice card', ok: !!cardOpts, why: `${eligible.length} option(s) with p ≥ ${f(policy.cardMin)}${eligible.length === 1 ? (policy.padCardToTwo ? '; padded with the runner-up' : '; padding is off') : ''}` });
+    if (cardOpts) return { action: 'card', options: cardOpts, ranked, checks };
+    checks.push({ rule: 'No match', ok: true, why: 'Nothing stands out: answer directly and suggest the top 3 agents' });
+    return { action: 'flat', ranked, checks };
+  }
+
+  // ---- step: one input in, next state + effects out ---------------------------------------------
+  function step(prev, input, { candidates, policy }) {
+    const s = JSON.parse(JSON.stringify(prev));
+    const effects = [];
+    const trace = { input: input.type, classifier: null, decision: null, payload: null, notes: [] };
+    const N = id => nameOf(candidates, id);
+    const optById = id => candidates.options.find(o => o.id === id);
+    const nextId = p => `${p}-${++s.seq}`;
+    const say = (entry) => { s.history.push(entry); return s.history.length - 1; };
+
+    const discoveryAnswer = (text) => {
+      say({ role: 'assistant', speaker: 'Discovery Agent', text, kind: 'message' });
+      effects.push({ type: 'direct', text });
+    };
+
+    const forwardTo = (agentId, text, msgIndex, { userPicked = false, sameTask = false } = {}) => {
+      const opt = optById(agentId);
+      if (!opt) { discoveryAnswer(`I can't reach that agent any more.`); return; }
+      if (!opt.forwardable) {
+        say({ role: 'assistant', speaker: 'Discovery Agent', kind: 'open-card', agentId, text: `${opt.name} can't be reached through me. Open it directly:` });
+        effects.push({ type: 'openAgentCard', agentId });
+        trace.notes.push(`${opt.name} has no forwarding path (${opt.path}). Current agent unchanged.`);
+        return;
+      }
+      const from = s.route && s.route.agentId;
+      const isSwitch = from !== agentId;
+      if (isSwitch && s.route && s.route.taskState === 'input-required') {
+        trace.notes.push(`Abandoned ${N(from)}'s unanswered question.`);
+      }
+      const returning = isSwitch && !!s.agentContexts[agentId];
+      const contextId = s.agentContexts[agentId] || nextId('ctx');
+      s.agentContexts[agentId] = contextId;
+
+      let payloadText = text, handoffTurns = [];
+      if (isSwitch && policy.handoff !== 'message') {
+        const all = s.history.slice(0, msgIndex).filter(h => h.kind === 'message');
+        handoffTurns = policy.handoff === 'full' ? all : recentTurns(s.history, msgIndex, policy);
+        if (handoffTurns.length) {
+          const head = from ? `[Handed over by the Novu Discovery Agent. The user was talking to ${N(from)}.]` : '[Forwarded by the Novu Discovery Agent.]';
+          payloadText = `${head}\nEarlier in this conversation:\n${handoffTurns.map(m => fmtTurn(m, policy.turnCharLimit)).join('\n')}\n\nThe user's message:\n${text}`;
+        }
+      }
+      const taskId = sameTask && s.route ? s.route.taskId : nextId('task');
+      s.route = { agentId, taskId, taskState: 'working', turnsWithAgent: isSwitch ? 1 : (s.route.turnsWithAgent + 1) };
+      const probs = s.lastProbs && s.lastProbs.msgIndex === msgIndex ? s.lastProbs.probs : null;
+      s.lastForward = { id: nextId('fwd'), agentId, text, msgIndex, isSwitch: isSwitch && !!from, userPicked, probs };
+      const payload = { agentId, path: opt.path, contextId, taskId, continuesAgentThread: !isSwitch || returning, text: payloadText };
+      trace.payload = payload;
+      effects.push({ type: 'forward', ...payload });
+    };
+
+    const renderCard = (reason, text, msgIndex, options, question) => {
+      const card = {
+        id: nextId('card'), reason, text, msgIndex, question,
+        options: [
+          ...options.map((o, k) => ({ id: `a${k + 1}`, target: o.id, label: o.id === 'direct' ? 'Just answer here' : N(o.id) })),
+          { id: 'none', target: 'none', label: 'None of these' },
+        ],
+      };
+      s.pendingCard = card;
+      say({ role: 'assistant', speaker: 'Discovery Agent', kind: 'card', text: question, cardId: card.id, options: card.options });
+      effects.push({ type: 'choiceCard', card });
+    };
+
+    switch (input.type) {
+      case 'message': {
+        const text = input.text;
+        if (s.pendingCard) { trace.notes.push('An unanswered choice card was dropped: a new message replaces it.'); s.pendingCard = null; }
+        const needClassifier = classifierNeeded(s, policy);
+        if (needClassifier) trace.classifier = { request: buildClassifierRequest(s, text, candidates, policy), probs: input.probs };
+        const msgIndex = say({ role: 'user', speaker: 'Employee', text, kind: 'message' });
+        const waiting = s.route && s.route.taskState === 'input-required';
+
+        if (waiting && !needClassifier) {
+          trace.decision = { action: 'pass', label: `Answer to ${N(s.route.agentId)}'s question`, why: `${N(s.route.agentId)} is waiting for an answer, so the message goes straight back to the same task. Classifier not called.` };
+          forwardTo(s.route.agentId, text, msgIndex, { sameTask: true });
+          break;
+        }
+        s.lastProbs = { msgIndex, probs: input.probs };
+        if (waiting) {
+          const d = decide(input.probs, s.route.agentId, candidates, policy);
+          const t1 = d.ranked[0];
+          if (t1 && t1.id !== 'direct' && t1.id !== s.route.agentId && t1.p >= policy.escapeMin) {
+            trace.decision = { action: 'switch', label: `Leave the question, switch to ${N(t1.id)}`, why: `${N(s.route.agentId)} was waiting for an answer, but ${N(t1.id)} p=${t1.p.toFixed(2)} ≥ ${policy.escapeMin.toFixed(2)}.`, checks: d.checks, ranked: d.ranked };
+            forwardTo(t1.id, text, msgIndex);
+          } else {
+            trace.decision = { action: 'pass', label: `Answer to ${N(s.route.agentId)}'s question`, why: `${N(s.route.agentId)} is waiting for an answer and nothing else reached ${policy.escapeMin.toFixed(2)}.`, ranked: d.ranked };
+            forwardTo(s.route.agentId, text, msgIndex, { sameTask: true });
+          }
+          break;
+        }
+
+        const sticky = s.route && s.route.agentId;
+        const d = decide(input.probs, sticky, candidates, policy);
+        const labels = {
+          stay: `Stay with ${N(d.target)}`, forward: `Forward to ${N(d.target)}`, switch: `Switch to ${N(d.target)}`,
+          direct: 'Answer directly', card: 'Ask: show a choice card', flat: 'No match: answer directly',
+        };
+        const unreachable = d.target && !optById(d.target).forwardable;
+        trace.decision = { action: unreachable ? 'open' : d.action, label: unreachable ? `Can't forward: show "Open @${N(d.target)}"` : labels[d.action], checks: d.checks, ranked: d.ranked };
+        if (d.action === 'stay' || d.action === 'forward' || d.action === 'switch') forwardTo(d.target, text, msgIndex);
+        else if (d.action === 'direct') discoveryAnswer(`(Discovery Agent answers "${text}" itself with Gemini.)`);
+        else if (d.action === 'card') renderCard('unsure', text, msgIndex, d.options, 'Which agent should handle this?');
+        else {
+          const top = d.ranked.filter(r => r.id !== 'direct').slice(0, 3).map(r => N(r.id));
+          discoveryAnswer(`I couldn't find an agent for that, so here's my own answer. Closest agents: ${top.join(', ') || 'none'}.`);
+        }
+        break;
+      }
+
+      case 'targetReply': {
+        if (!s.route || s.route.agentId !== input.agentId) break;
+        s.route.taskState = input.status;
+        const lf = s.lastForward;
+        const rule = policy.changeAgentButton;
+        const show = rule === 'every-answer' ? true
+          : rule === 'not-on-questions' ? input.status !== 'input-required'
+          : (lf.isSwitch && !lf.userPicked);
+        say({ role: 'assistant', speaker: N(input.agentId), agentId: input.agentId, text: input.text, kind: 'message', status: input.status, forwardId: lf.id, changeAgent: show });
+        effects.push({ type: 'showReply', agentId: input.agentId, changeAgent: show });
+        break;
+      }
+
+      case 'cardPick': {
+        const card = s.pendingCard;
+        if (!card || card.id !== input.cardId) {
+          say({ role: 'system', kind: 'notice', text: 'That choice is no longer active, so nothing happened.' });
+          trace.decision = { action: 'ignored', label: 'Old card clicked: ignored', why: 'Only the latest unanswered card is live.' };
+          break;
+        }
+        const opt = card.options.find(o => o.id === input.optionId);
+        s.pendingCard = null;
+        say({ role: 'user', kind: 'pick', text: `Picked: ${opt.label}` });
+        trace.decision = { action: opt.target === 'none' || opt.target === 'direct' ? 'direct' : 'forward', label: `User picked "${opt.label}"`, why: 'An explicit pick is never re-classified.' };
+        if (opt.target === 'direct') discoveryAnswer(`(Discovery Agent answers "${card.text}" itself with Gemini.)`);
+        else if (opt.target === 'none') discoveryAnswer(`Here are the agents I can reach: ${candidates.options.map(o => o.name).join(', ')}. Tell me which one, or rephrase.`);
+        else forwardTo(opt.target, card.text, card.msgIndex, { userPicked: true });
+        break;
+      }
+
+      case 'cardExpired': {
+        if (!s.pendingCard) break;
+        const card = s.pendingCard; s.pendingCard = null;
+        trace.decision = { action: 'direct', label: 'Card timed out: answer directly', why: 'No pick arrived before the card expired.' };
+        if (card.reason === 'unsure') discoveryAnswer(`No agent picked, so here's my own answer to "${card.text}".`);
+        else discoveryAnswer('No other agent picked, so I left the answer as it was.');
+        break;
+      }
+
+      case 'changeAgent': {
+        const lf = s.lastForward;
+        if (!lf || lf.id !== input.forwardId) {
+          say({ role: 'system', kind: 'notice', text: 'Only the latest answer can be sent to a different agent.' });
+          trace.decision = { action: 'ignored', label: 'Old "Change agent" clicked: ignored', why: 'Only the latest forwarded answer can be re-routed.' };
+          break;
+        }
+        const ranked = Object.entries(lf.probs || {}).map(([id, p]) => ({ id, p: +p || 0 })).sort((a, b) => b.p - a.p);
+        const pool = ranked.length ? ranked : candidates.options.map(o => ({ id: o.id, p: 0 }));
+        const others = pool.filter(r => r.id !== lf.agentId && r.id !== 'direct' && optById(r.id));
+        const good = others.filter(r => r.p >= policy.cardMin);
+        const agentsShown = (good.length ? good : others.slice(0, 1)).slice(0, policy.cardMax - 1);
+        trace.decision = { action: 'card', label: 'Change agent: show a choice card', why: `Other agents ranked by the original classifier output for "${lf.text}".` };
+        renderCard('change-agent', lf.text, lf.msgIndex, [...agentsShown, { id: 'direct', p: 0 }], `Send "${lf.text}" to a different agent?`);
+        break;
+      }
+    }
+    return { state: s, effects, trace };
+  }
+
+  return { DEFAULT_POLICY, initialState, buildCandidates, classifierNeeded, buildClassifierRequest, decide, step, optionText };
+})();
+</script>
+
+<!-- ============================================================================================
+     Throwaway: the sandbox tenant, a mocked classifier, mocked agents, and the session driver.
+     ============================================================================================ -->
+<script id="mocks">
+const Mocks = (() => {
+  const TENANT = () => ([
+    { id: 'deep_research', deId: 'deep_research', displayName: 'Deep Research', kind: 'managed', state: 'ENABLED', sharing: 'ALL_USERS',
+      description: 'Gathers, analyzes, and understands information from internal and external sources. It generates a plan, an in-depth report, and a summary.',
+      keywords: ['research', 'report', 'investigate', 'look into', 'analy', 'act', 'regulation', 'competitor', 'deadline', 'fines', 'recruit', 'summar', 'why'] },
+    { id: 'a2a_test', deId: '11935712447824575282', displayName: 'Novu A2A Test Agent', kind: 'a2a', state: 'ENABLED', sharing: 'ALL_USERS',
+      description: 'Answers "What were sales?" with canned data after asking one clarifying question (which month).',
+      skills: [{ name: 'Sales lookup', examples: ['What were sales?', 'What were sales in March?'] }],
+      keywords: ['sales', 'revenue', 'month', 'april', 'march'] },
+    { id: 'policy_helper', deId: '(hypothetical)', displayName: 'HR Policy Helper', kind: 'chat', state: 'ENABLED', sharing: 'ALL_USERS', hypothetical: true,
+      description: 'Answers questions about company HR policies: leave, expenses, remote work. Summarises policy documents.',
+      keywords: ['policy', 'leave', 'expense', 'remote', 'hr', 'summar', 'holiday'] },
+    { id: 'my_workflow', deId: '10211354775949045501', displayName: 'My Workflow', kind: 'workflow', state: 'PRIVATE', sharing: '—',
+      description: 'Approval workflow: asks "Approve action?" and replies Approved or Rejected.',
+      keywords: ['approve', 'approval', 'expense report'] },
+    { id: 'render_stub', deId: '9501084153841946508', displayName: 'Render Stub', kind: 'a2a', state: 'ENABLED', sharing: 'ALL_USERS', hiddenByAdmin: true,
+      description: 'NV-8870 test agent. Send one keyword: text, card, button, working, later, or card08.',
+      skills: [{ name: 'Render test', examples: ['text', 'card'] }], keywords: ['card', 'button', 'render'] },
+    { id: 'core_assistant', deId: 'core_assistant', displayName: 'Core Assistant', kind: 'core', state: 'ENABLED', sharing: 'ALL_USERS', description: 'Gemini Enterprise Core Assistant.', keywords: [] },
+    { id: 'workspace_agent', deId: '— (registry only)', displayName: 'Workspace Agent', kind: 'a2a', source: 'registry-only', state: 'ENABLED', sharing: '—', description: 'Google built-in for Docs and Slides.', keywords: [] },
+  ]);
+
+  // Mock Jev: keyword hits + stickiness for short follow-ups → softmax. Crude on purpose; edit the numbers.
+  function classify(text, candidates, state, tenant) {
+    const t = text.toLowerCase();
+    const sticky = state.route && state.route.agentId;
+    const words = t.split(/\s+/).filter(Boolean).length;
+    const followUp = words <= 7 || /^(and|also|now|what about|it|that|more|focus|make)\b/.test(t);
+    const logits = {};
+    for (const o of candidates.options) {
+      const a = tenant.find(x => x.id === o.id) || { keywords: [] };
+      let l = 0;
+      for (const k of a.keywords) if (t.includes(k)) l += 2.2;
+      if (o.id === sticky && followUp) l += 1.4;
+      logits[o.id] = l;
+    }
+    let d = 0;
+    if (/\b(hi|hello|thanks|thank you|help|which agents|what can you)\b/.test(t)) d += 3;
+    logits.direct = d;
+    const max = Math.max(...Object.values(logits));
+    const exps = Object.fromEntries(Object.entries(logits).map(([k, v]) => [k, Math.exp(v - max)]));
+    const sum = Object.values(exps).reduce((a, b) => a + b, 0);
+    return Object.fromEntries(Object.entries(exps).map(([k, v]) => [k, Math.round((v / sum) * 100) / 100]));
+  }
+
+  // Mock agents. The sales agent mirrors the NV-8869 test agent.
+  const MONTH = /\b(january|february|march|april|may|june|july|august|september|october|november|december|last month)\b/i;
+  function agentReply(agentId, payload, tasks) {
+    if (agentId === 'a2a_test') {
+      const m = payload.text.match(MONTH);
+      if (m) { delete tasks[payload.taskId]; return { status: 'completed', text: `Sales for ${m[1][0].toUpperCase() + m[1].slice(1)}: $42,000 (canned test data).` }; }
+      const again = tasks[payload.taskId] === 'input-required';
+      tasks[payload.taskId] = 'input-required';
+      return { status: 'input-required', text: again ? "I didn't catch a month. Which month?" : 'Which month?' };
+    }
+    const user = payload.text.split("The user's message:\n").pop();
+    if (agentId === 'deep_research') return { status: 'completed', text: `Report on "${user}" — plan, in-depth report, summary. (Canned. The real one runs for minutes.)` };
+    if (agentId === 'policy_helper') return { status: 'completed', text: `Per our HR policy: canned answer to "${user}".` };
+    if (agentId === 'render_stub') return { status: 'completed', text: `Echo: ${user}` };
+    return { status: 'completed', text: '(no mock for this agent)' };
+  }
+
+  // Session driver: dispatch an input, run forwarded agents, feed their replies back in.
+  function createSession() {
+    const app = { tenant: TENANT(), policy: { ...RoutingPolicy.DEFAULT_POLICY }, state: RoutingPolicy.initialState(), tasks: {}, lastTrace: null, prevState: null };
+    app.candidates = () => RoutingPolicy.buildCandidates(app.tenant, app.policy);
+    app.classify = text => classify(text, app.candidates(), app.state, app.tenant);
+    app.dispatch = input => {
+      app.prevState = app.state;
+      const ctx = { candidates: app.candidates(), policy: app.policy };
+      const r = RoutingPolicy.step(app.state, input, ctx);
+      app.state = r.state; app.lastTrace = r.trace;
+      for (const e of r.effects) {
+        if (e.type !== 'forward') continue;
+        const reply = agentReply(e.agentId, e, app.tasks);
+        app.state = RoutingPolicy.step(app.state, { type: 'targetReply', agentId: e.agentId, ...reply }, ctx).state;
+      }
+      return r;
+    };
+    app.reset = () => { app.tenant = TENANT(); app.policy = { ...RoutingPolicy.DEFAULT_POLICY }; app.state = RoutingPolicy.initialState(); app.tasks = {}; app.lastTrace = null; app.prevState = null; };
+    return app;
+  }
+
+  const PRESETS = [
+    'Research the EU AI Act rules for HR tools',
+    'Focus on the recruiting part',
+    'What does it say about fines?',
+    'What were sales?',
+    'March',
+    'and for April?',
+    'Summarise our remote-work policy',
+    'Look into why churn went up in Q3',
+    'Approve my expense report',
+    'Book a flight to Berlin',
+    'Which agents can I use?',
+    'thanks!',
+    'Actually, research competitor pricing instead',
+  ];
+
+  return { createSession, PRESETS };
+})();
+</script>
+
+<script id="walkthroughs">
+// Each scenario resets to the default tenant + policy, then runs these steps in order.
+// Message steps carry fixed classifier numbers so the run is identical every time.
+const SCENARIOS = [
+  {
+    title: 'Follow-ups stay put',
+    story: 'Maya asks Deep Research something, then sends two short follow-ups. The second follow-up actually scores higher for HR Policy Helper.',
+    watch: 'Step 3: HR Policy Helper is the top option (0.46), but Deep Research is within 0.25 of it, so the conversation stays. Is that the right call?',
+    steps: [
+      { label: 'Maya: "Research the EU AI Act rules for HR tools"', do: 'message', text: 'Research the EU AI Act rules for HR tools', probs: { deep_research: 0.84, policy_helper: 0.08, a2a_test: 0.02, direct: 0.06 } },
+      { label: 'Maya: "Focus on the recruiting part"', do: 'message', text: 'Focus on the recruiting part', probs: { deep_research: 0.52, policy_helper: 0.30, a2a_test: 0.03, direct: 0.15 } },
+      { label: 'Maya: "What does it say about fines?"', do: 'message', text: 'What does it say about fines?', probs: { deep_research: 0.40, policy_helper: 0.46, a2a_test: 0.04, direct: 0.10 } },
+    ],
+  },
+  {
+    title: 'Switch and hand over',
+    story: 'Mid-research, Maya asks about sales. The sales agent asks "Which month?", she answers, then she goes back to the research.',
+    watch: 'What the sales agent receives on the switch (right panel, "Sent to the agent"). "March" skips the classifier entirely. Going back to Deep Research continues its own thread, yet the hand-over still re-sends turns it already saw.',
+    steps: [
+      { label: 'Maya: "Research the EU AI Act rules for HR tools"', do: 'message', text: 'Research the EU AI Act rules for HR tools', probs: { deep_research: 0.84, policy_helper: 0.08, a2a_test: 0.02, direct: 0.06 } },
+      { label: 'Maya: "What were sales?"', do: 'message', text: 'What were sales?', probs: { a2a_test: 0.81, deep_research: 0.07, policy_helper: 0.04, direct: 0.08 } },
+      { label: 'Maya answers the question: "March"', do: 'message', text: 'March', probs: { a2a_test: 0.60, deep_research: 0.10, policy_helper: 0.05, direct: 0.25 } },
+      { label: 'Maya: "Back to the AI Act — any deadlines for 2027?"', do: 'message', text: 'Back to the AI Act — any deadlines for 2027?', probs: { deep_research: 0.78, a2a_test: 0.06, policy_helper: 0.10, direct: 0.06 } },
+    ],
+  },
+  {
+    title: 'Unsure → card → Change agent',
+    story: 'A request two agents could handle. Maya picks one from the card, dislikes the answer, and uses "Change agent".',
+    watch: 'Which options the card offers, and what the "Change agent" card offers after Deep Research answered.',
+    steps: [
+      { label: 'Maya: "Summarise our remote-work policy"', do: 'message', text: 'Summarise our remote-work policy', probs: { policy_helper: 0.46, deep_research: 0.38, direct: 0.10, a2a_test: 0.06 } },
+      { label: 'Maya picks "Deep Research" on the card', do: 'pick', target: 'deep_research' },
+      { label: 'Maya clicks "Change agent" on the answer', do: 'changeAgent' },
+      { label: 'Maya picks "HR Policy Helper"', do: 'pick', target: 'policy_helper' },
+    ],
+  },
+  {
+    title: 'Topic change while an agent waits',
+    story: 'The sales agent asks "Which month?". Instead of answering, Maya asks for something else entirely.',
+    watch: 'With the default policy the classifier isn\'t even asked: her new request is sent to the sales agent as the "month". Then flip the policy and try again.',
+    steps: [
+      { label: 'Maya: "What were sales?"', do: 'message', text: 'What were sales?', probs: { a2a_test: 0.83, deep_research: 0.05, policy_helper: 0.04, direct: 0.08 } },
+      { label: 'Maya: "Actually, research competitor pricing instead"', do: 'message', text: 'Actually, research competitor pricing instead', probs: { deep_research: 0.88, a2a_test: 0.04, policy_helper: 0.03, direct: 0.05 } },
+      { label: 'Policy: while an agent waits → "switch if clearly off-topic"', do: 'policy', patch: { pendingQuestion: 'escape-if-clear' } },
+      { label: 'Maya repeats: "Actually, research competitor pricing instead"', do: 'message', text: 'Actually, research competitor pricing instead', probs: { deep_research: 0.88, a2a_test: 0.04, policy_helper: 0.03, direct: 0.05 } },
+    ],
+  },
+  {
+    title: '"thanks!" after an answer',
+    story: 'Deep Research answers. Maya says "thanks!". The classifier leans towards "answer directly" but Deep Research is close.',
+    watch: 'With the default rule order, "Stay" wins and "thanks!" is forwarded to Deep Research (a long-running agent). Then try "answer directly first".',
+    steps: [
+      { label: 'Maya: "Research the EU AI Act rules for HR tools"', do: 'message', text: 'Research the EU AI Act rules for HR tools', probs: { deep_research: 0.84, policy_helper: 0.08, a2a_test: 0.02, direct: 0.06 } },
+      { label: 'Maya: "thanks!"', do: 'message', text: 'thanks!', probs: { direct: 0.60, deep_research: 0.36, policy_helper: 0.02, a2a_test: 0.02 } },
+      { label: 'Policy: check "answer directly" before "stay"', do: 'policy', patch: { directBeforeStay: true } },
+      { label: 'Maya: "thanks!" (again, same numbers)', do: 'message', text: 'thanks!', probs: { direct: 0.60, deep_research: 0.36, policy_helper: 0.02, a2a_test: 0.02 } },
+    ],
+  },
+  {
+    title: 'One lukewarm favourite',
+    story: 'Deep Research is clearly the best fit (0.64) but below the 0.70 bar, and nothing else reaches 0.15.',
+    watch: 'NV-8866\'s rules as written would say "no match" here. With padding on, you get a two-option card instead. Which feels right? Or should 0.64 just forward?',
+    steps: [
+      { label: 'Maya: "Look into why churn went up in Q3"', do: 'message', text: 'Look into why churn went up in Q3', probs: { deep_research: 0.64, direct: 0.13, policy_helper: 0.12, a2a_test: 0.11 } },
+      { label: 'Policy: turn off "pad the card to two options"', do: 'policy', patch: { padCardToTwo: false } },
+      { label: 'Maya: "Look into why churn went up in Q3" (same numbers)', do: 'message', text: 'Look into why churn went up in Q3', probs: { deep_research: 0.64, direct: 0.13, policy_helper: 0.12, a2a_test: 0.11 } },
+    ],
+  },
+  {
+    title: 'Unreachable agent, stale card',
+    story: 'An admin enables My Workflow, which we can\'t forward to. Later Maya ignores a choice card and types something else, then clicks the old card.',
+    watch: 'The "Open @My Workflow" card doesn\'t change who Maya is talking to. My Workflow can still appear on a choice card. A new message drops the pending card, and the old card click does nothing.',
+    steps: [
+      { label: 'Admin sets My Workflow to ENABLED', do: 'tenant', agentId: 'my_workflow', patch: { state: 'ENABLED' } },
+      { label: 'Maya: "Research the EU AI Act rules for HR tools"', do: 'message', text: 'Research the EU AI Act rules for HR tools', probs: { deep_research: 0.84, policy_helper: 0.06, a2a_test: 0.02, my_workflow: 0.02, direct: 0.06 } },
+      { label: 'Maya: "Approve my expense report"', do: 'message', text: 'Approve my expense report', probs: { my_workflow: 0.79, policy_helper: 0.12, direct: 0.06, deep_research: 0.03, a2a_test: 0.00 } },
+      { label: 'Maya: "What\'s our expense policy for travel?"', do: 'message', text: "What's our expense policy for travel?", probs: { policy_helper: 0.47, my_workflow: 0.33, direct: 0.10, deep_research: 0.06, a2a_test: 0.04 } },
+      { label: 'Maya ignores the card: "Never mind, what were sales in March?"', do: 'message', text: 'Never mind, what were sales in March?', probs: { a2a_test: 0.86, deep_research: 0.04, policy_helper: 0.03, my_workflow: 0.01, direct: 0.06 } },
+      { label: 'Maya clicks "HR Policy Helper" on the old card', do: 'oldPick' },
+    ],
+  },
+];
+
+function runStep(app, st) {
+  if (st.do === 'message') return app.dispatch({ type: 'message', text: st.text, probs: st.probs });
+  if (st.do === 'pick') {
+    const c = app.state.pendingCard; if (!c) return;
+    const o = c.options.find(x => x.target === st.target) || c.options[0];
+    return app.dispatch({ type: 'cardPick', cardId: c.id, optionId: o.id });
+  }
+  if (st.do === 'changeAgent') return app.dispatch({ type: 'changeAgent', forwardId: app.state.lastForward && app.state.lastForward.id });
+  if (st.do === 'oldPick') {
+    const old = app.state.history.find(h => h.kind === 'card');
+    return app.dispatch({ type: 'cardPick', cardId: old.cardId, optionId: old.options[0].id });
+  }
+  if (st.do === 'policy') { app.prevState = app.state; Object.assign(app.policy, st.patch); app.lastTrace = { input: 'policy', notes: ['Policy changed: ' + JSON.stringify(st.patch)] }; return; }
+  if (st.do === 'tenant') { app.prevState = app.state; Object.assign(app.tenant.find(a => a.id === st.agentId), st.patch); app.lastTrace = { input: 'tenant', notes: ['Tenant changed: ' + st.agentId + ' ' + JSON.stringify(st.patch)] }; return; }
+}
+</script>
+
+<!-- ============================================================================================
+     Page shell (throwaway): renders the session and wires buttons.
+     ============================================================================================ -->
+<script id="shell">
+if (typeof document !== 'undefined') (() => {
+  const app = Mocks.createSession();
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let draftProbs = {};
+  let tab = 0, stepIdx = 0;
+  const nm = id => id === 'direct' ? 'Answer directly' : ((app.tenant.find(a => a.id === id) || { displayName: id }).displayName);
+
+  // ---------- conversation ----------
+  function renderChat() {
+    const lastFwd = app.state.lastForward && app.state.lastForward.id;
+    const pending = app.state.pendingCard && app.state.pendingCard.id;
+    $('chat').innerHTML = app.state.history.map((h, i) => {
+      if (h.kind === 'notice') return `<div class="msg notice"><span class="t">${esc(h.text)}</span></div>`;
+      if (h.kind === 'pick') return `<div class="msg pick"><span class="t">${esc(h.text)}</span></div>`;
+      if (h.role === 'user') return `<div class="msg user"><div class="who">Maya</div><span class="t">${esc(h.text)}</span></div>`;
+      if (h.kind === 'card') {
+        const live = h.cardId === pending;
+        return `<div class="msg discovery"><div class="who">Discovery Agent · choice card</div><span class="t">${esc(h.text)}</span>
+          <div class="btns">${h.options.map(o => `<button data-card="${h.cardId}" data-opt="${o.id}">${esc(o.label)}</button>`).join('')}</div>
+          <div class="meta">${live ? 'Waiting for a pick' : 'No longer active'}</div></div>`;
+      }
+      if (h.kind === 'open-card') return `<div class="msg discovery"><div class="who">Discovery Agent</div><span class="t">${esc(h.text)}</span><div class="btns"><button disabled>Open @${esc(nm(h.agentId))}</button></div></div>`;
+      const isDisc = h.speaker === 'Discovery Agent';
+      const q = h.status === 'input-required';
+      return `<div class="msg ${isDisc ? 'discovery' : ''} ${q ? 'question' : ''}"><div class="who">${esc(h.speaker)}${q ? ' · waiting for your answer' : ''}${isDisc ? '' : ' · via Discovery Agent'}</div><span class="t">${esc(h.text)}</span>
+        ${h.changeAgent ? `<div class="btns"><button data-change="${h.forwardId}">Change agent</button></div>` : ''}
+        ${h.forwardId && h.forwardId !== lastFwd && h.changeAgent ? '<div class="meta">Older answer</div>' : ''}</div>`;
+    }).join('') || '<div class="hint">No messages yet. Pick a walkthrough on the left, or type a message below.</div>';
+    $('chat').scrollTop = $('chat').scrollHeight;
+    $('chat').querySelectorAll('[data-card]').forEach(b => b.onclick = () => { app.dispatch({ type: 'cardPick', cardId: b.dataset.card, optionId: b.dataset.opt }); leaveWalkthrough(); render(); });
+    $('chat').querySelectorAll('[data-change]').forEach(b => b.onclick = () => { app.dispatch({ type: 'changeAgent', forwardId: b.dataset.change }); leaveWalkthrough(); render(); });
+  }
+
+  // ---------- composer ----------
+  function renderPresets() {
+    $('preset').innerHTML = '<option value="">Simple requests…</option>' + Mocks.PRESETS.map(p => `<option>${esc(p)}</option>`).join('');
+    $('preset').onchange = () => { if ($('preset').value) { $('text').value = $('preset').value; refreshProbs(); } };
+    $('text').oninput = refreshProbs;
+  }
+  function refreshProbs() { draftProbs = $('text').value.trim() ? app.classify($('text').value) : {}; renderProbs(); }
+  function renderProbs() {
+    const needed = RoutingPolicy.classifierNeeded(app.state, app.policy);
+    const ids = Object.keys(draftProbs);
+    if (!ids.length) { $('probsBox').innerHTML = '<div class="hint" style="margin-top:8px">Classifier output appears here once you type. You can overwrite every number.</div>'; return; }
+    const sum = ids.reduce((a, k) => a + (+draftProbs[k] || 0), 0);
+    $('probsBox').innerHTML = `<div class="hint" style="margin-top:8px">${needed ? 'Mock classifier output (edit freely):' : `<b>Classifier will be skipped:</b> ${esc(nm(app.state.route.agentId))} is waiting for an answer.`}</div>
+      <div class="probs">${ids.sort((a, b) => draftProbs[b] - draftProbs[a]).map(id => `<span>${esc(nm(id))}</span><input type="number" step="0.01" min="0" max="1" data-p="${id}" value="${draftProbs[id]}"><div class="bar"><i style="width:${Math.min(100, draftProbs[id] * 100)}%"></i></div>`).join('')}</div>
+      <div class="hint">Sum: ${sum.toFixed(2)}${Math.abs(sum - 1) > 0.02 ? ' — doesn\'t add up to 1; the rules use the numbers as-is' : ''}</div>`;
+    $('probsBox').querySelectorAll('[data-p]').forEach(inp => inp.onchange = () => { draftProbs[inp.dataset.p] = +inp.value; renderProbs(); });
+  }
+  $('send').onclick = () => {
+    const text = $('text').value.trim(); if (!text) return;
+    app.dispatch({ type: 'message', text, probs: { ...draftProbs } });
+    $('text').value = ''; $('preset').value = ''; draftProbs = {};
+    leaveWalkthrough(); render();
+  };
+  $('text').onkeydown = e => { if (e.key === 'Enter') $('send').click(); };
+  $('expire').onclick = () => { app.dispatch({ type: 'cardExpired' }); leaveWalkthrough(); render(); };
+  $('reset').onclick = () => { app.reset(); draftProbs = {}; stepIdx = 0; render(); };
+
+  // ---------- state ----------
+  const TASK = { working: 'Working', completed: 'Answered', 'input-required': 'Waiting for Maya\'s answer (input-required)', failed: 'Failed' };
+  function summary(st) {
+    const r = st.route;
+    return {
+      talking: r ? nm(r.agentId) : 'Nobody yet',
+      task: r ? (TASK[r.taskState] || r.taskState) : '—',
+      turns: r ? String(r.turnsWithAgent) : '—',
+      threads: Object.entries(st.agentContexts).map(([a, c]) => `${nm(a)} → ${c}`).join('\n') || 'None',
+      card: st.pendingCard ? `"${st.pendingCard.text}"\n→ ${st.pendingCard.options.map(o => o.label).join(' · ')}` : 'None',
+      changeable: st.lastForward ? `"${st.lastForward.text}" (answered by ${nm(st.lastForward.agentId)})` : '—',
+    };
+  }
+  function renderState() {
+    const now = summary(app.state), before = app.prevState ? summary(app.prevState) : now;
+    const row = (k, label) => `<dt>${label}</dt><dd class="${now[k] !== before[k] ? 'changed' : ''}" style="white-space:pre-wrap">${esc(now[k])}</dd>`;
+    $('state').innerHTML = `<dl class="state">
+      ${row('talking', 'Talking to (sticky)')}
+      ${row('task', 'That agent\'s task')}
+      ${row('turns', 'Messages in a row')}
+      ${row('threads', 'Agent threads kept')}
+      ${row('card', 'Choice card waiting')}
+      ${row('changeable', '"Change agent" re-sends')}
+    </dl><div class="hint" style="margin-top:8px">Yellow = changed by the last action. Stored per conversation in <code>ctx.metadata</code>.</div>`;
+  }
+
+  function renderDecision() {
+    const t = app.lastTrace;
+    if (!t) { $('decision').innerHTML = '<div class="hint">Nothing routed yet.</div>'; return; }
+    let h = '';
+    if (t.decision) {
+      const a = t.decision.action;
+      const cls = { stay: 'stay', forward: 'forward', switch: 'switch', card: 'card', direct: 'direct', flat: 'flat', pass: 'pass', ignored: 'card', open: 'open' }[a] || '';
+      h += `<div><span class="pill ${cls}">${esc(t.decision.label)}</span></div>`;
+      if (t.decision.why) h += `<div class="hint" style="margin-top:6px">${esc(t.decision.why)}</div>`;
+      if (t.decision.checks) {
+        const hitIdx = t.decision.checks.map(c => c.ok).lastIndexOf(true);
+        h += `<ul class="checks">${t.decision.checks.map((c, i) => `<li class="${i === hitIdx ? 'hit' : ''}">${c.ok ? '✓' : '✗'} ${esc(c.rule)}: ${esc(c.why)}</li>`).join('')}</ul>`;
+      }
+    }
+    for (const n of t.notes || []) h += `<div class="hint" style="margin-top:6px">• ${esc(n)}</div>`;
+    if (t.input === 'message') {
+      if (t.classifier) {
+        const ranked = Object.entries(t.classifier.probs || {}).sort((a, b) => b[1] - a[1]);
+        h += `<div style="margin-top:10px"><b>Classifier</b> <span class="hint">(Jev, mocked)</span></div><div class="probs">${ranked.map(([id, p]) => `<span>${esc(nm(id))}</span><span>${(+p).toFixed(2)}</span><div class="bar"><i style="width:${p * 100}%"></i></div>`).join('')}</div>`;
+        h += `<details style="margin-top:6px"><summary class="hint" style="cursor:pointer">What the classifier was asked</summary><pre>${esc(t.classifier.request.context)}\n\nOPTIONS:\n${t.classifier.request.options.map(o => `- ${o.id}: ${o.label}`).join('\n')}</pre></details>`;
+      } else h += `<div style="margin-top:10px"><b>Classifier</b> <span class="hint">not called</span></div>`;
+    }
+    if (t.payload) {
+      h += `<div style="margin-top:10px"><b>Sent to the agent</b> <span class="hint">${esc(nm(t.payload.agentId))} via ${esc(t.payload.path)} · thread ${esc(t.payload.contextId)} (${t.payload.continuesAgentThread ? 'continued' : 'new'}) · task ${esc(t.payload.taskId)}</span></div><pre>${esc(t.payload.text)}</pre>`;
+    }
+    $('decision').innerHTML = h;
+  }
+
+  // ---------- policy ----------
+  const NUM = [
+    ['stayMin', 'Stay: current agent at least'], ['stayGap', 'Stay: at most this far behind the top'],
+    ['forwardMin', 'Clear winner: at least'], ['forwardGap', 'Clear winner: lead over runner-up'],
+    ['directMin', 'Answer directly: at least'], ['cardMin', 'Card: minimum to get a button'],
+    ['cardMax', 'Card: max options'], ['escapeMin', 'Leave a waiting agent: at least'],
+  ];
+  const SEL = [
+    ['pendingQuestion', 'While an agent waits for an answer', [['pass-through', 'Always pass the reply to it'], ['escape-if-clear', 'Switch if clearly off-topic']]],
+    ['handoff', 'On a switch, the new agent gets', [['recent', 'Message + recent turns'], ['message', 'Only the message'], ['full', 'Message + whole conversation']]],
+    ['changeAgentButton', '"Change agent" button shows on', [['every-answer', 'Every forwarded answer'], ['not-on-questions', 'Answers, not agent questions'], ['after-auto-switch', 'Only after an automatic switch']]],
+  ];
+  const BOOL = [['directBeforeStay', 'Check "answer directly" before "stay"'], ['padCardToTwo', 'One lukewarm favourite → card with runner-up']];
+  function renderPolicy() {
+    const p = app.policy;
+    $('policy').innerHTML =
+      '<div class="sub">Thresholds</div>' + NUM.map(([k, l]) => `<label for="p-${k}">${l}</label><input type="number" id="p-${k}" step="${k === 'cardMax' ? 1 : 0.05}" value="${p[k]}">`).join('') +
+      '<div class="sub">Choices</div>' + SEL.map(([k, l, opts]) => `<label for="p-${k}">${l}</label><select id="p-${k}">${opts.map(([v, t]) => `<option value="${v}" ${p[k] === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`).join('') +
+      BOOL.map(([k, l]) => `<label for="p-${k}">${l}</label><input type="checkbox" id="p-${k}" ${p[k] ? 'checked' : ''}>`).join('') +
+      '<div class="sub"></div><span class="hint">Starting values: NV-8866.</span><button id="p-reset">Reset policy</button>';
+    NUM.forEach(([k]) => $('p-' + k).onchange = e => { p[k] = +e.target.value; render(); });
+    SEL.forEach(([k]) => $('p-' + k).onchange = e => { p[k] = e.target.value; render(); });
+    BOOL.forEach(([k]) => $('p-' + k).onchange = e => { p[k] = e.target.checked; render(); });
+    $('p-reset').onclick = () => { Object.assign(p, RoutingPolicy.DEFAULT_POLICY); render(); };
+  }
+
+  // ---------- tenant ----------
+  function renderTenant() {
+    const c = app.candidates();
+    const status = a => {
+      const o = c.options.find(x => x.id === a.id);
+      if (o) return o.forwardable ? `<span class="pill forward">Candidate</span><div class="hint">${esc(o.path)}</div>` : `<span class="pill open">Candidate, open-only</span><div class="hint">${esc(o.path)}</div>`;
+      const ex = c.excluded.find(x => x.agent.id === a.id);
+      return `<span class="pill">Excluded</span><div class="hint">${esc(ex ? ex.reason : '')}</div>`;
+    };
+    $('tenant').innerHTML = `<table class="tenant"><thead><tr><th>Agent</th><th>Kind · state</th><th>Routing</th><th>What the classifier reads</th><th></th></tr></thead><tbody>
+      ${app.tenant.map(a => {
+        const o = c.options.find(x => x.id === a.id);
+        return `<tr><td><b>${esc(a.displayName)}</b>${a.hypothetical ? ' <span class="pill card">hypothetical</span>' : ''}<div class="hint">${esc(a.deId)}</div></td>
+        <td>${esc(a.kind)}<div class="hint">${esc(a.state)} · ${esc(a.sharing)}</div></td>
+        <td>${status(a)}</td>
+        <td class="optext">${o ? esc(o.text) : '<span class="muted">—</span>'}</td>
+        <td>${a.kind === 'core' || a.source === 'registry-only' ? '' : `<select data-tenant="${a.id}">
+          <option value="on" ${!a.hiddenByAdmin && a.state === 'ENABLED' ? 'selected' : ''}>Enabled</option>
+          <option value="private" ${!a.hiddenByAdmin && a.state !== 'ENABLED' ? 'selected' : ''}>Private</option>
+          <option value="hidden" ${a.hiddenByAdmin ? 'selected' : ''}>Hidden by admin</option></select>`}</td></tr>`;
+      }).join('')}</tbody></table>
+      <div class="hint" style="margin-top:8px">Source: Discovery Engine <code>agents.list</code> (all engine agents) + Agent Registry (for Core Assistant and Workspace Agent). Probed in the sandbox on 2026-09-29 (NV-8871).</div>`;
+    $('tenant').querySelectorAll('[data-tenant]').forEach(s => s.onchange = () => {
+      const a = app.tenant.find(x => x.id === s.dataset.tenant);
+      a.hiddenByAdmin = s.value === 'hidden'; a.state = s.value === 'private' ? 'PRIVATE' : 'ENABLED';
+      render();
+    });
+  }
+
+  // ---------- walkthroughs ----------
+  function leaveWalkthrough() { stepIdx = -1; }
+  function startScenario(i) { tab = i; app.reset(); draftProbs = {}; stepIdx = 0; render(); }
+  function renderWalk() {
+    $('tabs').innerHTML = SCENARIOS.map((s, i) => `<button class="${i === tab ? 'on' : ''}" data-tab="${i}">${i + 1}. ${esc(s.title)}</button>`).join('');
+    $('tabs').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => startScenario(+b.dataset.tab));
+    const sc = SCENARIOS[tab];
+    const off = stepIdx < 0;
+    $('scenario').innerHTML = `<h3>${esc(sc.title)}</h3><p>${esc(sc.story)}</p><div class="watch"><b>Watch:</b> ${esc(sc.watch)}</div>
+      ${off ? '<p class="hint">You clicked outside the walkthrough, so it\'s paused. Restart it to replay from a clean state.</p>' : ''}
+      <ol class="steps">${sc.steps.map((st, i) => `<li class="${!off && i < stepIdx ? 'done' : !off && i === stepIdx ? 'next' : ''}"><button data-step="${i}" ${off || i !== stepIdx ? 'disabled' : ''}>${i + 1}. ${esc(st.label)}</button></li>`).join('')}</ol>
+      <div style="margin-top:10px"><button id="restart">${off || stepIdx > 0 ? 'Restart this walkthrough' : 'Reset'}</button></div>`;
+    $('scenario').querySelectorAll('[data-step]').forEach(b => b.onclick = () => { runStep(app, sc.steps[+b.dataset.step]); stepIdx++; render(); });
+    $('restart').onclick = () => startScenario(tab);
+  }
+
+  function render() { renderWalk(); renderChat(); renderProbs(); renderState(); renderDecision(); renderPolicy(); renderTenant(); }
+  renderPresets();
+  render();
+})();
+</script>
+</body>
+</html>
