@@ -164,7 +164,15 @@ export async function cancelInteraction(client: HumanApiClient, id: string): Pro
 
 export async function setupHumanRelay(
   client: HumanApiClient,
-  input: { subscriberId: string; agentIdentifier?: string; email?: string; firstName?: string; lastName?: string }
+  input: {
+    subscriberId: string;
+    agentIdentifier?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    /** The inviter's `--via` pick; becomes the human's default channel unless they chose one themselves. */
+    defaultVia?: 'telegram' | 'slack' | 'email';
+  }
 ): Promise<{ agentId: string; agentIdentifier: string; subscriberId: string }> {
   const res = await client.axios.post<
     | { data?: { agentId: string; agentIdentifier: string; subscriberId: string } }
@@ -174,6 +182,29 @@ export async function setupHumanRelay(
         subscriberId: string;
       }
   >('/v1/human/setup', input);
+
+  return unwrap(res.data);
+}
+
+export interface HumanInviteChannel {
+  via: 'telegram' | 'slack';
+  integrationIdentifier: string;
+  connected: boolean;
+}
+
+/** A shareable invite page where the human connects any of the relay's chat channels. */
+export interface HumanInvite {
+  url: string;
+  /** ISO timestamp after which the invite link stops working. */
+  expiresAt: string;
+  channels: HumanInviteChannel[];
+}
+
+export async function createHumanInvite(
+  client: HumanApiClient,
+  input: { subscriberId: string; agentIdentifier?: string; firstName?: string; lastName?: string }
+): Promise<HumanInvite> {
+  const res = await client.axios.post<{ data?: HumanInvite } | HumanInvite>('/v1/human/invites', input);
 
   return unwrap(res.data);
 }

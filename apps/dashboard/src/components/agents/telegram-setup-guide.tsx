@@ -29,7 +29,7 @@ type TelegramQrInlineProps = {
   username?: string;
 };
 
-function TelegramQrInline({ url, username }: TelegramQrInlineProps) {
+export function TelegramQrInline({ url, username }: TelegramQrInlineProps) {
   return (
     <div className="border-stroke-soft mt-2 flex w-fit flex-col items-center gap-2 rounded-md border p-3">
       <div className="rounded bg-white p-2">

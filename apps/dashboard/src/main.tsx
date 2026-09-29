@@ -67,6 +67,7 @@ import { EditTranslationPage } from './pages/edit-translation';
 import { EditWorkflowPage } from './pages/edit-workflow';
 import { EnvironmentsPage } from './pages/environments';
 import { ForgotPasswordPage } from './pages/forgot-password';
+import { HumanInvitePage } from './pages/human-invite-page';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
@@ -121,6 +122,13 @@ const router = createBrowserRouter([
         // AuthRoute so unauthenticated visitors are not redirected to sign-in.
         path: ROUTES.AGENT_SLACK_SETUP,
         element: <AgentSlackSetupPage />,
+      },
+      {
+        // Public, unauthenticated invite page opened by a human invited via
+        // `human invite`. Trust comes from the opaque token in the URL; the
+        // visitor is not a Novu user, so it is mounted outside AuthRoute.
+        path: ROUTES.HUMAN_INVITE,
+        element: <HumanInvitePage />,
       },
       {
         // Public, unauthenticated mobile setup page for Telegram. Mounted outside

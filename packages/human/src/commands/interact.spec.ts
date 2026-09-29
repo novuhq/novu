@@ -15,6 +15,7 @@ const {
   formatKeylessCapMessage,
   getKeylessCapDetails,
   handleError,
+  isMessagingSelf,
   parseDuration,
   parseHumanToOption,
   parseIdLabelOption,
@@ -76,6 +77,28 @@ describe('resolveTo', () => {
     expect(resolveTo(config)).toBe('dave');
     process.env.HUMAN_TO = '  ';
     expect(resolveTo(config)).toBe('dave');
+  });
+});
+
+describe('isMessagingSelf', () => {
+  const config: HumanCliConfig = {
+    apiUrl: 'https://api.novu.co',
+    auth: { mode: 'apiKey', secretKey: 'api_key_private' },
+    relayAgentIdentifier: 'human-relay',
+    subscriberId: 'dave',
+  };
+
+  it('treats a missing --to as messaging yourself (HUMAN_TO / config default)', () => {
+    expect(isMessagingSelf(config)).toBe(true);
+    expect(isMessagingSelf({ ...config, subscriberId: undefined })).toBe(true);
+  });
+
+  it('is true only when --to names just your own subscriberId', () => {
+    expect(isMessagingSelf(config, 'dave')).toBe(true);
+    expect(isMessagingSelf(config, ' dave , dave ')).toBe(true);
+    expect(isMessagingSelf(config, 'alice')).toBe(false);
+    expect(isMessagingSelf(config, 'dave,alice')).toBe(false);
+    expect(isMessagingSelf({ ...config, subscriberId: undefined }, 'dave')).toBe(false);
   });
 });
 

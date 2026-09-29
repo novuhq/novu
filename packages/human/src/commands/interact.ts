@@ -84,6 +84,18 @@ export function resolveTo(config: HumanCliConfig, toFlag?: string): string | str
   return config.subscriberId;
 }
 
+/**
+ * True unless `--to` names someone other than your own configured subscriberId.
+ * HUMAN_VIA and the saved default channel only apply when messaging yourself.
+ */
+export function isMessagingSelf(config: HumanCliConfig, toFlag?: string): boolean {
+  if (!toFlag) {
+    return true;
+  }
+
+  return parseHumanToOption(toFlag).every((id) => id === config.subscriberId);
+}
+
 /** Shared engine behind ask / approve / choose / tell. */
 export async function runInteraction(kind: InteractionKind, prompt: string, options: InteractOptions): Promise<never> {
   try {
@@ -95,9 +107,9 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
       fail(NOT_SET_UP_MESSAGE);
     }
 
-    // `--via`, HUMAN_VIA, or the saved defaultChannel preference; omit
-    // via and the API picks when only one channel is linked.
-    const via = resolveVia(config, options.via);
+    // `--via` always wins; HUMAN_VIA and the saved defaultChannel only apply
+    // when messaging yourself. Omit via and the API uses each human's default.
+    const via = resolveVia(config, options.via, { messagingSelf: isMessagingSelf(config, options.to) });
 
     const parsedOptions = options.option?.map(parseIdLabelOption);
     const extraActions = options.extraAction?.map(parseIdLabelOption);

@@ -100,12 +100,22 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
 
 /**
  * Channel preference for create: `--via` wins, then HUMAN_VIA, then the
- * configured default. When none is set, returns undefined and the API picks
- * the sole linked channel (or errors if several are linked).
+ * configured default. HUMAN_VIA and the configured default describe how *you*
+ * like to be reached, so they only apply when messaging yourself — for anyone
+ * else the API uses that person's own default channel. When none applies,
+ * returns undefined and the API picks.
  */
-export function resolveVia(config: HumanCliConfig, via?: string): HumanChannelPlatform | undefined {
+export function resolveVia(
+  config: HumanCliConfig,
+  via?: string,
+  { messagingSelf = true }: { messagingSelf?: boolean } = {}
+): HumanChannelPlatform | undefined {
   if (via) {
     return via.toLowerCase();
+  }
+
+  if (!messagingSelf) {
+    return undefined;
   }
 
   const envVia = process.env.HUMAN_VIA?.trim().toLowerCase();

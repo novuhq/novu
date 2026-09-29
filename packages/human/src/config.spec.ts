@@ -91,6 +91,16 @@ describe('resolveVia', () => {
     process.env.HUMAN_VIA = '  ';
     expect(resolveVia(config)).toBe('slack');
   });
+
+  it('skips HUMAN_VIA and the saved default when messaging someone else', () => {
+    process.env.HUMAN_VIA = 'telegram';
+    expect(resolveVia(config, undefined, { messagingSelf: false })).toBeUndefined();
+    expect(resolveVia({ ...config, defaultChannel: undefined }, undefined, { messagingSelf: false })).toBeUndefined();
+  });
+
+  it('still honors an explicit --via when messaging someone else', () => {
+    expect(resolveVia(config, 'Email', { messagingSelf: false })).toBe('email');
+  });
 });
 
 describe('resolveConfig', () => {
