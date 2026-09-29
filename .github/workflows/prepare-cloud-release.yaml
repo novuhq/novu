@@ -228,8 +228,9 @@ jobs:
             --argjson max_log_blocks 40 \
             --argjson slack_section_limit 3000 \
             '
-            # Section text is wrapped in code fences, so each chunk must stay
-            # under the Slack limit once those 6 characters are added. Each raw
+            # Section text is wrapped in code fences on their own lines, so each
+            # chunk must stay under the Slack limit once those 8 characters are
+            # added. Each raw
             # character is escaped before it is packed, and & < > become a whole
             # entity or move to the next piece — a fixed slice of the escaped
             # line would otherwise cut through &amp; &lt; or &gt;. Triple
@@ -249,7 +250,7 @@ jobs:
                       .buf += $esc | .n += $elen
                     end)
               | if .buf != "" then .parts + [.buf] else .parts end;
-            ($slack_section_limit - 6) as $max_body
+            ($slack_section_limit - 8) as $max_body
             | ([$max_chunk_chars, $max_body] | min) as $limit
             | [inputs | select(length > 0) | escape_pieces($limit)[]] as $lines
             | ($lines | reduce .[] as $line ([];
@@ -259,7 +260,7 @@ jobs:
                 end)) as $chunks
             | ($chunks[:$max_log_blocks] | map({
                 type: "section",
-                text: { type: "mrkdwn", text: ("```" + . + "```") }
+                text: { type: "mrkdwn", text: ("```\n" + . + "\n```") }
               })) as $log_blocks
             | (if ($chunks | length) > $max_log_blocks then [{
                 type: "context",
@@ -310,10 +311,9 @@ jobs:
 
       - name: Send commit log to Slack
         id: slack
-        uses: slackapi/slack-github-action@70cd7be8e40a46e8b0eced40b0de447bdb42f68e # v1.26.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         if: ${{ success() && steps.slack-payload.outputs.commit_count != '0' }}
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
+          webhook-type: incoming-webhook
           payload-file-path: ${{ steps.slack-payload.outputs.payload_file }}
-          payload-file-path-parsed: false
-        env:
-          SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS}}
