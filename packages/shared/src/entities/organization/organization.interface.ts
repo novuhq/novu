@@ -24,6 +24,28 @@ export interface IBrandEnrichment {
   status: BrandEnrichmentStatus;
 }
 
+export enum UsageAlertRecipientsEnum {
+  /** Owners and admins. */
+  ADMINS = 'admins',
+  ALL_MEMBERS = 'all_members',
+}
+
+/** Organization-configured workflow-run limit and usage alert settings. An absent field means its default. */
+export interface IOrganizationUsageLimits {
+  workflowRuns?: {
+    /** On-demand workflow runs allowed on top of the included runs; `null` means no limit. */
+    headroom: number | null;
+    /** Rejects new workflow runs once usage reaches included + headroom. Requires a headroom. */
+    pauseAtLimit: boolean;
+  };
+  alerts?: {
+    enabled: boolean;
+    sendTo: UsageAlertRecipientsEnum;
+  };
+  /** ISO 8601 time of the last change. */
+  updatedAt?: string;
+}
+
 export interface IOrganizationEntity {
   _id: string;
   name: string;
@@ -49,6 +71,7 @@ export interface IOrganizationEntity {
   brandEnrichment?: IBrandEnrichment;
   /** Lifecycle of AI-generated onboarding workflow templates (snapshots). */
   onboardingWorkflowsStatus?: OnboardingWorkflowsStatus;
+  usageLimits?: IOrganizationUsageLimits;
   createdAt: string;
   updatedAt: string;
   externalId?: string;

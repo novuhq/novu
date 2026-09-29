@@ -1,8 +1,35 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, UsageAlertRecipientsEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { OrganizationDBModel, PartnerTypeEnum } from './organization.entity';
+
+const usageLimitsSchema = new Schema(
+  {
+    workflowRuns: {
+      type: new Schema(
+        {
+          headroom: Schema.Types.Number,
+          pauseAtLimit: Schema.Types.Boolean,
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
+    alerts: {
+      type: new Schema(
+        {
+          enabled: Schema.Types.Boolean,
+          sendTo: { type: Schema.Types.String, enum: UsageAlertRecipientsEnum },
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
+    updatedAt: Schema.Types.String,
+  },
+  { _id: false }
+);
 
 const organizationSchema = new Schema<OrganizationDBModel>(
   {
@@ -108,6 +135,10 @@ const organizationSchema = new Schema<OrganizationDBModel>(
     onboardingWorkflowsStatus: {
       type: Schema.Types.String,
       enum: ['pending', 'generating', 'completed', 'failed', 'skipped'],
+      required: false,
+    },
+    usageLimits: {
+      type: usageLimitsSchema,
       required: false,
     },
   },

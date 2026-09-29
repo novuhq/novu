@@ -40,6 +40,12 @@ export enum FeatureFlagsKeysEnum {
   /** Stops the usage-alerts cron before it reads usage. Default off, so the cron runs. */
   IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
   /**
+   * Organization-scoped: workflow-run usage limits (on-demand headroom, pause at limit, alert settings) in the
+   * dashboard and `/billing/usage-limits`, paid-tier enforcement at the limit, and the usage-alerts cron honoring
+   * those settings.
+   */
+  IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED = 'IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED',
+  /**
    * Organization-scoped, read only when subscriber-process jobs are enqueued (`TriggerBase`): moves the usage
    * counter increment from enqueue to workflow-run creation (`CreateNotificationJobs`), matching what ClickHouse
    * counts. Transitional (NV-8853): remove with the enqueue-time increment and the job stamp once on for all
