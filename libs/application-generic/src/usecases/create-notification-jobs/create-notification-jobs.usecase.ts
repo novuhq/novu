@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   JobEntity,
   JobStatusEnum,
@@ -18,6 +18,7 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
+import { PinoLogger } from '../../logging';
 import {
   TraceLogRepository,
   WorkflowRunRepository,
@@ -33,7 +34,6 @@ import { getNestedValue } from '../../utils/object';
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
-const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 type NotificationStepWithTemplate = NotificationStepEntity & {
   template: NonNullable<NotificationStepEntity['template']>;
@@ -47,8 +47,11 @@ export class CreateNotificationJobs {
     private workflowRunRepository: WorkflowRunRepository,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
-    private cacheService: CacheService
-  ) {}
+    private cacheService: CacheService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
@@ -70,7 +73,7 @@ export class CreateNotificationJobs {
     if (!notification) {
       const message = 'Notification could not be created';
       const error = new PlatformException(message);
-      Logger.error(error, message, LOG_CONTEXT);
+      this.logger.error({ err: error }, message);
       throw error;
     }
 
@@ -199,10 +202,7 @@ export class CreateNotificationJobs {
         ]);
       }
     } catch (error) {
-      console.error(
-        { error: error instanceof Error ? error.message : 'Unknown error', notificationId: notification._id },
-        'Failed to create workflow run'
-      );
+      this.logger.error({ err: error, notificationId: notification._id }, 'Failed to create workflow run');
       // Don't throw here as we don't want to fail the main notification creation
     }
 
@@ -219,9 +219,9 @@ export class CreateNotificationJobs {
         buildUsageKey({ _organizationId: command.organizationId, resourceType: ResourceEnum.EVENTS })
       );
     } catch (error) {
-      console.error(
+      this.logger.error(
         {
-          error: error instanceof Error ? error.message : 'Unknown error',
+          err: error,
           notificationId: notification._id,
           organizationId: command.organizationId,
         },
@@ -412,9 +412,8 @@ export class CreateNotificationJobs {
       if (step.template) {
         stepsWithTemplates.push(step as NotificationStepWithTemplate);
       } else {
-        Logger.error(
-          `Skipping step with missing template for workflow ${workflowId} (stepId: ${step.stepId}, _templateId: ${step._templateId})`,
-          LOG_CONTEXT
+        this.logger.error(
+          `Skipping step with missing template for workflow ${workflowId} (stepId: ${step.stepId}, _templateId: ${step._templateId})`
         );
       }
     }
@@ -422,7 +421,7 @@ export class CreateNotificationJobs {
     if (activeSteps.length > 0 && stepsWithTemplates.length === 0) {
       const message = `No active steps with templates found for workflow ${workflowId}`;
       const error = new PlatformException(message);
-      Logger.error(error, message, LOG_CONTEXT);
+      this.logger.error({ err: error }, message);
       throw error;
     }
 
