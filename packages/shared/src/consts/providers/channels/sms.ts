@@ -3,7 +3,6 @@ import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
   africasTalkingConfig,
   afroSmsConfig,
-  sfrSmsConfig,
   azureSmsConfig,
   bandwidthConfig,
   brevoSmsConfig,
@@ -30,6 +29,7 @@ import {
   ringCentralConfig,
   ruachSmsConfig,
   sendchampConfig,
+  sfrSmsConfig,
   simpleTextingConfig,
   sinchConfig,
   sms77Config,

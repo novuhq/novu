@@ -1,7 +1,7 @@
 import { ISmsOptions } from '@novu/stateless';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { SfrSmsProvider } from './sfr-sms.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { SfrSmsProvider } from './sfr-sms.provider';
 
 const mockConfig = {
   serviceId: '777777',
