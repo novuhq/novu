@@ -206,7 +206,11 @@ overrides:
   # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
   # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
   # scheme/hostname normalization. Patched in 3.1.6.
-  fast-uri@<3.1.6: ^3.1.6
+  # GHSA-qw65-cvwx-89v3: additional host-confusion regression affecting
+  # 3.1.6 (and 3.1.6 is separately called out by GHSA-58mr-gqgx-xq4g).
+  # Patched in 3.1.7. Widen the override so the transitive verdaccio > ajv
+  # consumer picks up the fix.
+  fast-uri@<3.1.7: ^3.1.7
   # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
   # growth (OOM) via distinct query results and uncaught crash / prototype
   # write via untrusted browserslist-stats.json. Patched in 4.28.7.
