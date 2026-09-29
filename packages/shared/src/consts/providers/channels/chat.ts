@@ -178,4 +178,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/agents/channels/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'novu-web-chat.svg', dark: 'novu-web-chat.svg' },
   },
+  {
+    id: ChatProviderIdEnum.GeminiEnterprise,
+    displayName: 'Gemini Enterprise',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredential[],
+    docReference: 'https://cloud.google.com/gemini/enterprise/docs/register-and-manage-an-a2a-agent',
+    logoFileName: { light: 'google-chat.svg', dark: 'google-chat.svg' },
+  },
 ];

@@ -35,6 +35,7 @@ export const NOVU_PROVIDERS: ProvidersIdEnum[] = [
   EmailProviderIdEnum.NovuAgent,
   ChatProviderIdEnum.Novu,
   ChatProviderIdEnum.NovuWebChat,
+  ChatProviderIdEnum.GeminiEnterprise,
   AgentRuntimeProviderIdEnum.NovuAnthropic,
 ];
 

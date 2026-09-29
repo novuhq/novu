@@ -144,6 +144,8 @@ const WEBHOOK_SECRET_REJECTIONS: Partial<Record<AgentPlatformEnum, string>> = {
     'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration',
   [AgentPlatformEnum.PHOTON_IMESSAGE]:
     'Photon inbound webhook rejected: webhook signing secret not yet configured for this integration',
+  [AgentPlatformEnum.GEMINI_ENTERPRISE]:
+    'Gemini Enterprise inbound request rejected: endpoint secret not yet configured for this integration',
 };
 
 @Injectable()

@@ -37,6 +37,7 @@ import {
   type WorkflowOriginData,
   type WorkflowOriginSnapshot,
 } from '../ingress/workflow-origin.helpers';
+import { bridgeDispatchProbe } from './bridge-dispatch-probe';
 
 const MAX_RETRIES = 2;
 
@@ -204,6 +205,8 @@ export class BridgeExecutorService {
       );
 
       const payload = await this.buildPayload(params);
+      const dispatchSlot = bridgeDispatchProbe.current();
+      dispatchSlot?.deliveryIds.push(payload.deliveryId);
 
       this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
@@ -212,14 +215,16 @@ export class BridgeExecutorService {
           operation: 'bridge-delivery',
           agentIdentifier,
         });
-        params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
-          this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
-          captureAgentWarning(callbackErr, {
-            component: 'bridge-executor',
-            operation: 'on-bridge-failure-callback',
-            agentIdentifier,
-          });
-        });
+        (params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))) ?? Promise.resolve())
+          .catch((callbackErr) => {
+            this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+            captureAgentWarning(callbackErr, {
+              component: 'bridge-executor',
+              operation: 'on-bridge-failure-callback',
+              agentIdentifier,
+            });
+          })
+          .then(() => dispatchSlot?.onFailed?.(payload.deliveryId));
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {

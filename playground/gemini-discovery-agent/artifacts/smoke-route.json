@@ -1,0 +1,101 @@
+{
+  "ranAt": "2026-09-29T15:29:29.991Z",
+  "classifier": "gemini fallback (gemini-3.5-flash-lite); JEV_API_KEY not set",
+  "directModel": "gemini-3.5-flash",
+  "results": [
+    {
+      "text": "Research how the EU AI Act affects HR tools.",
+      "expect": "forward deep_research",
+      "scores": {
+        "source": "gemini",
+        "choice": "deep_research",
+        "confidence": "high"
+      },
+      "jevError": "JEV_API_KEY is not set",
+      "decision": {
+        "action": "forward",
+        "agentId": "deep_research",
+        "rule": "gemini_high",
+        "switched": true
+      },
+      "pass": true,
+      "ms": 1425
+    },
+    {
+      "text": "What were our sales?",
+      "expect": "forward sales",
+      "scores": {
+        "source": "gemini",
+        "choice": "sales",
+        "confidence": "high"
+      },
+      "jevError": "JEV_API_KEY is not set",
+      "decision": {
+        "action": "forward",
+        "agentId": "sales",
+        "rule": "gemini_high",
+        "switched": true
+      },
+      "pass": true,
+      "ms": 869
+    },
+    {
+      "text": "Summarise last quarter.",
+      "expect": "choose card",
+      "scores": {
+        "source": "gemini",
+        "choice": "sales",
+        "confidence": "medium"
+      },
+      "jevError": "JEV_API_KEY is not set",
+      "decision": {
+        "action": "choose",
+        "candidates": [
+          "sales",
+          "deep_research"
+        ],
+        "rule": "gemini_not_high"
+      },
+      "pass": true,
+      "ms": 864
+    },
+    {
+      "text": "hi, what can you do?",
+      "expect": "direct",
+      "scores": {
+        "source": "gemini",
+        "choice": "direct",
+        "confidence": "high"
+      },
+      "jevError": "JEV_API_KEY is not set",
+      "decision": {
+        "action": "direct",
+        "rule": "gemini_direct"
+      },
+      "pass": true,
+      "ms": 1017
+    }
+  ],
+  "followUp": {
+    "text": "Start Research",
+    "current": "deep_research",
+    "scores": {
+      "source": "gemini",
+      "choice": "deep_research",
+      "confidence": "high"
+    },
+    "jevError": "JEV_API_KEY is not set",
+    "decision": {
+      "action": "forward",
+      "agentId": "deep_research",
+      "rule": "gemini_high",
+      "switched": false
+    },
+    "pass": true
+  },
+  "directAnswer": {
+    "text": "hi, what can you do?",
+    "answer": "Hi there! I am the Novu Discovery Agent. My job is to help route your questions to the right specialist agent. \n\nHere are the agents you can use:\n* **Deep Research**: Best for open-ended, in-depth research topics. It gathers internal and external sources to create a detailed report with citations.\n* **Novu A2A Test Agent**: Answers questions about monthly company sales figures. \n\nIf you have a question for either of these, just let me know and I will help you get started!",
+    "ms": 3684
+  }
+}

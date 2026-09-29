@@ -12,6 +12,8 @@ packages:
   - 'enterprise/workers/socket'
   # playground apps
   - 'playground/*'
+  # standalone Cloud Run demo with its own npm lockfile
+  - '!playground/gemini-discovery-agent'
 
 # Pnpm configuration
 # Wait 3 days (4320 minutes) before allowing packages to be installed

@@ -186,6 +186,7 @@ function collectMentionedUserIds(message: Message, platform: AgentPlatformEnum):
     case AgentPlatformEnum.SENDBLUE:
     case AgentPlatformEnum.PHOTON_IMESSAGE:
     case AgentPlatformEnum.WEB_CHAT:
+    case AgentPlatformEnum.GEMINI_ENTERPRISE:
       return [];
     default: {
       const exhaustiveCheck: never = platform;

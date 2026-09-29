@@ -13,6 +13,7 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { formatToolInputSummary } from '../conversation-runtime/reply/handle-plan-progress/format-tool-input';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
+import { GeminiEnterpriseTurnBus, geTurnBusKey } from '../gemini-enterprise/gemini-enterprise-turn-bus.service';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
@@ -75,6 +76,7 @@ export class AgentEventSink {
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
     private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly geTurnBus: GeminiEnterpriseTurnBus,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -170,23 +172,31 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'run-finish':
-        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+        try {
+          await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
 
-        if (event.outcome === 'paused') {
-          await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
+          if (event.outcome === 'paused') {
+            await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
+
+            return 'accepted';
+          }
+
+          await this.handleRunFinish(event, baseFields, context, metadata, envelope.runId);
 
           return 'accepted';
+        } finally {
+          await this.endGeminiEnterpriseTurn(context, envelope);
         }
 
-        await this.handleRunFinish(event, baseFields, context, metadata, envelope.runId);
-
-        return 'accepted';
-
       case 'run-error':
-        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
-        await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
+        try {
+          await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+          await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
 
-        return 'accepted';
+          return 'accepted';
+        } finally {
+          await this.endGeminiEnterpriseTurn(context, envelope);
+        }
 
       case 'connection.error':
         await this.mcpConnectionErrorHandler.handle(event, context);
@@ -928,6 +938,22 @@ export class AgentEventSink {
     );
 
     return conversation?._agentId ?? null;
+  }
+
+  /** Gemini Enterprise holds the turn's reply stream open until this signal reaches its holder pod. */
+  private async endGeminiEnterpriseTurn(context: AgentEventContext, envelope: AgentEventEnvelope): Promise<void> {
+    if (context.platform !== AgentPlatformEnum.GEMINI_ENTERPRISE || !context.platformThreadId) {
+      return;
+    }
+
+    try {
+      await this.geTurnBus.publish(
+        geTurnBusKey(context.environmentId, context.integrationIdentifier, context.platformThreadId),
+        { type: 'end', turnId: envelope.turnId }
+      );
+    } catch (err) {
+      this.logger.warn(err, `Failed to publish Gemini Enterprise end of turn: run=${envelope.runId}`);
+    }
   }
 
   private async stopTypingIfBridge(context: AgentEventContext): Promise<void> {

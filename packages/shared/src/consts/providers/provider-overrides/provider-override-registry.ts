@@ -167,6 +167,7 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.PhotonImessage]: escapeHatch('text'),
   // Web Chat has no stable override schema yet — free-form passthrough keyed like Discord.
   [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
+  [ChatProviderIdEnum.GeminiEnterprise]: escapeHatch('content'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 export const PROVIDER_OVERRIDE_CONFIGS = {

@@ -27,6 +27,8 @@ import {
   getFeatureForTierAsBoolean,
 } from '@novu/shared';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { isGeminiEnterpriseEnabled } from '../../../gemini-enterprise/gemini-enterprise-enabled';
+import { GeminiEnterpriseProvisioningService } from '../../../gemini-enterprise/gemini-enterprise-provisioning.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import { assertWebChatEnabledForConnect } from '../../../shared/assert-web-chat-enabled';
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
@@ -45,7 +47,8 @@ export class AddAgentIntegration {
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly findOrCreateNovuWebChat: NovuWebChatProvisioningService,
     private readonly analyticsService: AnalyticsService,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly geminiEnterpriseProvisioning: GeminiEnterpriseProvisioningService
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -65,7 +68,7 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'identifier', 'name']
+      ['_id', 'identifier', 'name', 'runtime']
     );
 
     if (!agent) {
@@ -122,6 +125,19 @@ export class AddAgentIntegration {
       }
 
       return response;
+    }
+
+    if (command.providerId === ChatProviderIdEnum.GeminiEnterprise) {
+      if (!(await isGeminiEnterpriseEnabled(this.featureFlagsService, command.organizationId, command.environmentId))) {
+        throw new ForbiddenException('Gemini Enterprise is not enabled for this workspace.');
+      }
+
+      // The streamed reply is matched to bridge deliveries; managed runs are not tracked yet.
+      if (agent.runtime === 'managed') {
+        throw new BadRequestException('Gemini Enterprise supports bridge agents only.');
+      }
+
+      return this.geminiEnterpriseProvisioning.findOrCreate(agent, command.environmentId, command.organizationId);
     }
 
     if (!command.integrationIdentifier) {

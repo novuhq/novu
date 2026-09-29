@@ -71,6 +71,11 @@ import { AgentEmailActionsController } from './email/agent-email-actions.control
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { GeminiEnterpriseAgentCardController } from './gemini-enterprise/gemini-enterprise-agent-card.controller';
+import { GeminiEnterpriseInboundController } from './gemini-enterprise/gemini-enterprise-inbound.controller';
+import { GeminiEnterpriseInboundService } from './gemini-enterprise/gemini-enterprise-inbound.service';
+import { GeminiEnterpriseProvisioningService } from './gemini-enterprise/gemini-enterprise-provisioning.service';
+import { GeminiEnterpriseTurnBus } from './gemini-enterprise/gemini-enterprise-turn-bus.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
 import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
 import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
@@ -134,6 +139,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentEmailActionsController,
     AgentsMcpOAuthController,
     WebChatController,
+    GeminiEnterpriseInboundController,
+    GeminiEnterpriseAgentCardController,
   ],
   providers: [
     ...USE_CASES,
@@ -203,6 +210,9 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WebChatPlatformDeliveryService,
     WebChatLiveActivityPublisher,
     OutboundDeliveryInfo,
+    GeminiEnterpriseTurnBus,
+    GeminiEnterpriseInboundService,
+    GeminiEnterpriseProvisioningService,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,

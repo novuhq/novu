@@ -7,6 +7,7 @@ export enum AgentPlatformEnum {
   SENDBLUE = 'sendblue',
   PHOTON_IMESSAGE = 'photon_imessage',
   WEB_CHAT = 'web_chat',
+  GEMINI_ENTERPRISE = 'gemini_enterprise',
 }
 
 export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
@@ -17,6 +18,7 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.SENDBLUE,
   AgentPlatformEnum.PHOTON_IMESSAGE,
   AgentPlatformEnum.WEB_CHAT,
+  AgentPlatformEnum.GEMINI_ENTERPRISE,
 ]);
 
 type PlatformEgressCapabilities = {
@@ -60,6 +62,12 @@ const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapa
     interactiveButtons: false,
   },
   [AgentPlatformEnum.WEB_CHAT]: DEFAULT_EGRESS_CAPABILITIES,
+  // A2UI buttons only raise events back to the agent; URLs are rendered as markdown links.
+  [AgentPlatformEnum.GEMINI_ENTERPRISE]: {
+    markdownLinks: true,
+    nativeUrlButtons: false,
+    interactiveButtons: true,
+  },
 };
 
 function resolvePlatformEgressCapabilities(platform: string): PlatformEgressCapabilities {

@@ -1,0 +1,28 @@
+{
+  "name": "gemini-discovery-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "write-agent-list": "node scripts/write-agent-list.ts",
+    "smoke:forward": "node scripts/smoke-forward.ts",
+    "smoke:route": "node scripts/smoke-route.ts"
+  },
+  "dependencies": {
+    "@novu/framework": "2.14.0",
+    "express": "5.2.1",
+    "google-auth-library": "11.1.0",
+    "zod": "3.25.76",
+    "zod-to-json-schema": "3.25.2"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "24.19.0",
+    "typescript": "5.9.3"
+  }
+}

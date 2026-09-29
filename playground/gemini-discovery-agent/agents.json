@@ -1,0 +1,16 @@
+[
+  {
+    "id": "deep_research",
+    "name": "Deep Research",
+    "description": "Made by Google. Researches a topic in depth across internal and external sources: proposes a research plan, then writes a long report with citations. For open-ended research questions, not quick facts.",
+    "path": "stream_assist",
+    "targetId": "deep_research"
+  },
+  {
+    "id": "sales",
+    "name": "Novu A2A Test Agent",
+    "description": "Answers questions about company sales: monthly sales figures. Asks which month if the question does not name one.",
+    "path": "a2a_proxy",
+    "targetId": "11935712447824575282"
+  }
+]

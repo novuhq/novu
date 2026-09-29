@@ -130,6 +130,7 @@ export class WorkflowOriginService {
             : null;
           break;
         case AgentPlatformEnum.WEB_CHAT:
+        case AgentPlatformEnum.GEMINI_ENTERPRISE:
           break;
         default: {
           const _exhaustive: never = config.platform;

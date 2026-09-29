@@ -1,0 +1,207 @@
+{
+  "ranAt": "2026-09-29T15:24:17.721Z",
+  "auth": "ADC (Authorization header not recorded)",
+  "steps": [
+    {
+      "name": "a2a-t1",
+      "agent": "sales",
+      "text": "What were sales?",
+      "ms": 3613,
+      "result": {
+        "kind": "question",
+        "text": "Which month?",
+        "session": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548"
+      },
+      "check": "kind=question, text=\"Which month?\"",
+      "pass": true,
+      "exchange": [
+        {
+          "method": "POST",
+          "url": "https://discoveryengine.googleapis.com/v1/projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/assistants/default_assistant/agents/11935712447824575282/a2a/v1/message:send",
+          "requestBody": {
+            "message": {
+              "messageId": "e3313e18-3480-43e8-85c8-40e70c36c579",
+              "role": "ROLE_USER",
+              "content": [
+                {
+                  "text": "What were sales?"
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "ms": 3414,
+          "response": {
+            "message": {
+              "contextId": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548",
+              "role": "ROLE_AGENT",
+              "metadata": {
+                "agentInfo": {
+                  "displayName": "Novu A2A Test Agent",
+                  "agent": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/assistants/default_assistant/agents/11935712447824575282"
+                },
+                "dataSourceInfo": {
+                  "selectionMode": "SELECTION_MODE_NONE"
+                },
+                "assistToken": "<redacted>",
+                "answer": {
+                  "state": "SUCCEEDED",
+                  "diagnosticInfo": {
+                    "plannerSteps": [
+                      {
+                        "queryStep": {
+                          "parts": [
+                            {
+                              "text": "What were sales?"
+                            }
+                          ]
+                        },
+                        "createTime": "2026-09-29T15:24:12.374433962Z"
+                      },
+                      {
+                        "planStep": {
+                          "planStepId": "18306257058303866016",
+                          "role": "MODEL",
+                          "parts": [
+                            {
+                              "functionCall": {
+                                "functionName": "mock_function_call_for_required_user_input",
+                                "functionId": "824e8b14-0bef-4158-9eb7-c11d0d08051b",
+                                "args": {
+                                  "input_required": "Which month?"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "createTime": "2026-09-29T15:24:13.526623671Z"
+                      },
+                      {}
+                    ]
+                  },
+                  "name": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548/assistAnswers/7338326436109176563"
+                },
+                "sessionInfo": {
+                  "queryId": "7338326436109176663",
+                  "turnId": "5561198116822012548_7338326436109174590",
+                  "session": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548"
+                },
+                "modelInfo": {
+                  "modelSelectionMode": "MODEL_SELECTION_MODE_AUTO"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "a2a-t2",
+      "agent": "sales",
+      "text": "March",
+      "sessionIn": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548",
+      "ms": 3190,
+      "result": {
+        "kind": "answer",
+        "text": "Sales for March: $42,000 (canned test data). [taskId=0ea34d27-2cf3-43ad-963b-7b9aee984e07 contextId=26703964-9dbf-4637-99b0-99b17acf90d6 resumedFromInputRequired=true resumedVia=contextId]",
+        "session": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548"
+      },
+      "check": "kind=answer mentioning March, same session",
+      "pass": true,
+      "exchange": [
+        {
+          "method": "POST",
+          "url": "https://discoveryengine.googleapis.com/v1/projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/assistants/default_assistant/agents/11935712447824575282/a2a/v1/message:send",
+          "requestBody": {
+            "message": {
+              "messageId": "f4d9f3f7-7589-49ef-a373-2f06ca607472",
+              "role": "ROLE_USER",
+              "content": [
+                {
+                  "text": "March"
+                }
+              ],
+              "contextId": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548"
+            }
+          },
+          "status": 200,
+          "ms": 3190,
+          "response": {
+            "message": {
+              "contextId": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548",
+              "role": "ROLE_AGENT",
+              "content": [
+                {
+                  "text": "Sales for March: $42,000 (canned test data). [taskId=0ea34d27-2cf3-43ad-963b-7b9aee984e07 contextId=26703964-9dbf-4637-99b0-99b17acf90d6 resumedFromInputRequired=true resumedVia=contextId]"
+                },
+                {
+                  "text": "Sales for March: $42,000 (canned test data). [taskId=0ea34d27-2cf3-43ad-963b-7b9aee984e07 contextId=26703964-9dbf-4637-99b0-99b17acf90d6 resumedFromInputRequired=true resumedVia=contextId]"
+                }
+              ],
+              "metadata": {
+                "modelInfo": {
+                  "modelSelectionMode": "MODEL_SELECTION_MODE_AUTO"
+                },
+                "answer": {
+                  "diagnosticInfo": {
+                    "plannerSteps": [
+                      {
+                        "queryStep": {
+                          "parts": [
+                            {
+                              "text": "March"
+                            }
+                          ]
+                        },
+                        "createTime": "2026-09-29T15:24:15.594613549Z"
+                      },
+                      {
+                        "createTime": "2026-09-29T15:24:16.730753948Z",
+                        "planStep": {
+                          "planStepId": "7711536510052509459",
+                          "role": "MODEL",
+                          "parts": [
+                            {
+                              "text": "Sales for March: $42,000 (canned test data). [taskId=0ea34d27-2cf3-43ad-963b-7b9aee984e07 contextId=26703964-9dbf-4637-99b0-99b17acf90d6 resumedFromInputRequired=true resumedVia=contextId]"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "planStep": {
+                          "role": "MODEL",
+                          "planStepId": "7711536510052509459",
+                          "parts": [
+                            {
+                              "text": "Sales for March: $42,000 (canned test data). [taskId=0ea34d27-2cf3-43ad-963b-7b9aee984e07 contextId=26703964-9dbf-4637-99b0-99b17acf90d6 resumedFromInputRequired=true resumedVia=contextId]"
+                            }
+                          ]
+                        },
+                        "createTime": "2026-09-29T15:24:16.733680292Z"
+                      }
+                    ]
+                  },
+                  "state": "SUCCEEDED",
+                  "name": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548/assistAnswers/13446308008923405503"
+                },
+                "sessionInfo": {
+                  "turnId": "5561198116822012548_13446308008923402250",
+                  "queryId": "13446308008923402531",
+                  "session": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/sessions/5561198116822012548"
+                },
+                "agentInfo": {
+                  "displayName": "Novu A2A Test Agent",
+                  "agent": "projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771/assistants/default_assistant/agents/11935712447824575282"
+                },
+                "dataSourceInfo": {
+                  "selectionMode": "SELECTION_MODE_NONE"
+                },
+                "assistToken": "<redacted>"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

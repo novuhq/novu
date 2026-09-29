@@ -1,0 +1,2 @@
+# Standalone npm project: the Dockerfile runs `npm ci`, so keep the lockfile the repo root ignores.
+!package-lock.json

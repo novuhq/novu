@@ -1,0 +1,23 @@
+[
+  {
+    "id": "novu_a2a_test_agent",
+    "name": "Novu A2A Test Agent",
+    "description": "Sandbox test agent (NV-8869). Answers \"What were sales?\" with canned data after asking one clarifying question (which month) via task state input-required.",
+    "path": "a2a_proxy",
+    "targetId": "11935712447824575282"
+  },
+  {
+    "id": "render_stub",
+    "name": "Render Stub",
+    "description": "NV-8870 test agent. Send one keyword: text, card, button, working, later, or card08.",
+    "path": "a2a_proxy",
+    "targetId": "9501084153841946508"
+  },
+  {
+    "id": "deep_research",
+    "name": "Deep Research",
+    "description": "This agent is a specialized agent that gathers, analyzes, and understands information from internal and external sources. It generates a plan, an in-depth report, and a summary.",
+    "path": "stream_assist",
+    "targetId": "deep_research"
+  }
+]

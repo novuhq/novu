@@ -22,6 +22,8 @@ import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsap
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
+import { GeminiEnterpriseAdapter } from '../../gemini-enterprise/gemini-enterprise.adapter';
+import { GeminiEnterpriseTurnBus, geTurnBusKey } from '../../gemini-enterprise/gemini-enterprise-turn-bus.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
@@ -57,6 +59,7 @@ export type PlatformAdapters = {
   telegram: TelegramAdapter;
   whatsapp: WhatsAppAdapter;
   web_chat: NovuWebChatAdapter;
+  gemini_enterprise: GeminiEnterpriseAdapter;
   email: Adapter;
   sendblue: Adapter;
   /**
@@ -168,6 +171,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
     private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
     private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
+    private readonly geTurnBus: GeminiEnterpriseTurnBus,
     @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: PlanLimitGateService
   ) {
@@ -388,9 +392,12 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
    * add latency to every Web Chat send and can outlive the accept-claim TTL. Web
    * Chat also never has genuinely overlapping inbound messages (one HTTP request
    * per send), so it has nothing to fold. Keep it on the SDK default (`drop`).
+   * Gemini Enterprise has the same one-request-per-turn shape.
    */
   private resolveConcurrency(platform: AgentPlatformEnum): { strategy: 'burst' } | undefined {
-    return platform === AgentPlatformEnum.WEB_CHAT ? undefined : { strategy: 'burst' };
+    return platform === AgentPlatformEnum.WEB_CHAT || platform === AgentPlatformEnum.GEMINI_ENTERPRISE
+      ? undefined
+      : { strategy: 'burst' };
   }
 
   // The Chat SDK's getLogger(prefix) returns this.logger.child(prefix) when a
@@ -576,6 +583,16 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           }),
         };
       }
+      case AgentPlatformEnum.GEMINI_ENTERPRISE:
+        return {
+          gemini_enterprise: new GeminiEnterpriseAdapter({
+            userName: config.agentName,
+            publish: async (threadId, event) => {
+              const { environmentId, integrationIdentifier } = cached.config;
+              await this.geTurnBus.publish(geTurnBusKey(environmentId, integrationIdentifier, threadId), event);
+            },
+          }),
+        };
       default:
         throw new BadRequestException(`Unsupported platform: ${platform}`);
     }

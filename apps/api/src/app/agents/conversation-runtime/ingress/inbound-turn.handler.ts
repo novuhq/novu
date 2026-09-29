@@ -1450,6 +1450,7 @@ export class AgentInboundHandler implements OnModuleInit {
       case AgentPlatformEnum.SENDBLUE:
       case AgentPlatformEnum.PHOTON_IMESSAGE:
       case AgentPlatformEnum.WEB_CHAT:
+      case AgentPlatformEnum.GEMINI_ENTERPRISE:
         return undefined;
       default: {
         const exhaustiveCheck: never = config.platform;

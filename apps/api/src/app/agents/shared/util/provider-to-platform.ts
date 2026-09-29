@@ -10,6 +10,7 @@ const PROVIDER_TO_PLATFORM: Partial<Record<string, AgentPlatformEnum>> = {
   [ChatProviderIdEnum.Sendblue]: AgentPlatformEnum.SENDBLUE,
   [ChatProviderIdEnum.PhotonImessage]: AgentPlatformEnum.PHOTON_IMESSAGE,
   [ChatProviderIdEnum.NovuWebChat]: AgentPlatformEnum.WEB_CHAT,
+  [ChatProviderIdEnum.GeminiEnterprise]: AgentPlatformEnum.GEMINI_ENTERPRISE,
 };
 
 export function resolveAgentPlatform(providerId: string): AgentPlatformEnum | null {
