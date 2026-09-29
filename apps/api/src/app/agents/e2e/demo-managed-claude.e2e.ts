@@ -425,4 +425,52 @@ describe('Demo Managed Claude #novu-v2', () => {
 
     expect(demoIntegration).to.equal(null);
   });
+
+  it('should keep the demo integration when other demo agents remain after migrating one', async () => {
+    const demoIntegrationId = await createNovuAnthropicIntegration();
+    const migratedIdentifier = `e2e-demo-migrate-one-${Date.now()}`;
+    const remainingIdentifier = `e2e-demo-migrate-remaining-${Date.now()}`;
+    createdAgentIdentifiers.push(migratedIdentifier, remainingIdentifier);
+
+    for (const identifier of [migratedIdentifier, remainingIdentifier]) {
+      const createRes = await session.testAgent.post('/v1/agents').send({
+        name: 'Migrate Demo Agent',
+        identifier,
+        runtime: 'managed',
+        managedRuntime: {
+          providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+          integrationId: demoIntegrationId,
+        },
+      });
+
+      expect(createRes.status, `create failed: ${JSON.stringify(createRes.body)}`).to.equal(201);
+    }
+
+    const userIntegrationRes = await session.testAgent.post('/v1/integrations').send({
+      providerId: AgentRuntimeProviderIdEnum.Anthropic,
+      kind: IntegrationKindEnum.AGENT,
+      credentials: { apiKey: 'sk-user-anthropic-key' },
+      active: true,
+      name: `user-anthropic-e2e-${Date.now()}`,
+    });
+
+    expect(userIntegrationRes.status).to.equal(201);
+    const userIntegrationId: string =
+      userIntegrationRes.body._id ?? userIntegrationRes.body.data?._id ?? userIntegrationRes.body.data?.id;
+    createdIntegrationIds.push(userIntegrationId);
+
+    const migrateRes = await session.testAgent
+      .post(`/v1/agents/${encodeURIComponent(migratedIdentifier)}/migrate-runtime`)
+      .send({ integrationId: userIntegrationId });
+
+    expect(migrateRes.status).to.equal(201);
+
+    const demoIntegration = await integrationRepository.findOne({
+      _id: demoIntegrationId,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    expect(demoIntegration).to.not.equal(null);
+  });
 });

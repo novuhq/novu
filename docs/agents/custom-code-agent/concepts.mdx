@@ -104,7 +104,7 @@ Signals queue in memory and batch with your next `ctx.reply()` in one request. I
 Conversations and Novu workflows share the same account:
 
 - **Conversation to workflow:** User asks in Slack for a report by email; handler calls `ctx.trigger()` and an existing workflow sends the email.
-- **Workflow to conversation:** User replies to a digest email; that reply opens a new agent conversation.
+- **Workflow to conversation:** Assign an agent on the workflow so chat and email steps send as that agent. When the subscriber replies, Novu opens an agent conversation and hydrates `ctx.notification` with the original payload. See [Workflow-assigned agents](/agents/workflow-agents).
 
 ACI extends Novu's workflow system; it does not replace it. Transactional workflows and open-ended chat work together on one platform.
 

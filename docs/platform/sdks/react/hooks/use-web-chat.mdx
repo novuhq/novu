@@ -45,6 +45,7 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `retryMessage` | `(messageId: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| WebChatPlanLimitError }>` | Resend a message whose `status` is `failed`. Reuses the original idempotency key. Does not create a second message. See [Retry](/agents/channels/web-chat/conversations#retry). |
 | `respondToAction` | `(args: { approvalId: string; decision: AgentToolApprovalDecision }) => Promise<{ data?: RespondToActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Resolve a pending `approval`. Pass `approvalId` from `pendingActions` or message parts. Typical decisions: `'approved'` or `'denied'`. |
 | `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| WebChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. See [Cards](/agents/channels/web-chat/generative-ui#cards). |
+| `startNewConversation` | `() => void` | Clear the current conversation and start a fresh one without remounting the component. The next `sendMessage` creates the new server conversation. No-op when you pass `conversationId` or a shared `conversation` runtime. See [Start or resume](/agents/channels/web-chat/conversations#start-or-resume). |
 
 ## Pagination
 

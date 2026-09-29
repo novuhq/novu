@@ -3,12 +3,14 @@ import { PinoLogger, shortId } from '@novu/application-generic';
 import {
   ActivityView,
   ConversationActivityEntity,
+  // biome-ignore lint/style/noRestrictedImports: this class is the conversation activity ledger
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivitySignalData,
   ConversationActivityToolData,
   ConversationActivityTypeEnum,
   ConversationRepository,
+  resolveCurrentMessage as foldCurrentMessage,
   isDuplicateKeyError,
 } from '@novu/dal';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
@@ -16,10 +18,15 @@ import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activ
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
+  DeleteInboundMessageParams,
+  ImportInboundMessage,
+  ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
   PersistCustomParams,
+  PersistHumanInteractionActivityParams,
   PersistInboundMessageParams,
+  PersistInboundReactionParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
@@ -27,7 +34,9 @@ import type {
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
+  UpdateInboundMessageParams,
 } from './agent-conversation.types';
+// biome-ignore lint/style/noRestrictedImports: sequence minting is owned by this ledger
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 import {
   describeRunLifecycleFromEvent,
@@ -190,6 +199,97 @@ export class ConversationActivityLedger {
     }
   }
 
+  async updateInboundMessage(params: UpdateInboundMessageParams): Promise<ConversationActivityEntity | null> {
+    return this.appendInboundRevision({
+      ...params,
+      type: ConversationActivityTypeEnum.EDIT,
+      content: params.content ?? '',
+    });
+  }
+
+  async deleteInboundMessage(params: DeleteInboundMessageParams): Promise<ConversationActivityEntity | null> {
+    return this.appendInboundRevision({
+      ...params,
+      type: ConversationActivityTypeEnum.DELETE,
+    });
+  }
+
+  async persistInboundReaction(params: PersistInboundReactionParams): Promise<ConversationActivityEntity> {
+    const { target } = params;
+    const sequence = await this.resolveEventSequence(
+      target._conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+
+    return this.activityRepository.createUserActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: target._conversationId,
+      platform: target.platform,
+      integrationId: target._integrationId,
+      platformThreadId: target.platformThreadId,
+      senderType: params.senderType,
+      senderId: params.senderId,
+      senderName: params.senderName,
+      content: params.emoji,
+      richContent: { reaction: { emoji: params.emoji, added: params.added } },
+      platformMessageId: target.platformMessageId,
+      type: ConversationActivityTypeEnum.REACTION,
+      sequence,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+  }
+
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+    if (params.messages.length === 0) {
+      return [];
+    }
+
+    const existingPlatformMessageIds = await this.activityRepository.findExistingPlatformMessageIds(
+      params.environmentId,
+      params.conversationId,
+      params.messages.map((message) => message.platformMessageId)
+    );
+    const messages = params.messages.filter((message) => !existingPlatformMessageIds.has(message.platformMessageId));
+
+    if (messages.length === 0) {
+      return [];
+    }
+
+    const sequences = await this.eventSequenceService.mintRange(
+      {
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        conversationId: params.conversationId,
+      },
+      messages.length
+    );
+
+    return this.activityRepository.withTransaction(async (session) => {
+      const insertedCount = await this.activityRepository.importUserActivities(
+        {
+          ...params,
+          messages: messages.map((message, index) => ({
+            ...message,
+            sequence: sequences[index],
+          })),
+        },
+        session
+      );
+
+      await this.conversationRepository.incrementMessageCount(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        insertedCount,
+        session
+      );
+
+      return messages;
+    });
+  }
+
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {
     const result = await this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
 
@@ -323,9 +423,15 @@ export class ConversationActivityLedger {
       platformThreadId: params.channel.platformThreadId,
       senderType: params.actorType,
       senderId: params.actorId,
+      senderName: params.actorName,
       content: params.approved ? `Approved ${toolName}` : `Denied ${toolName}`,
       type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
-      toolData: { approvalId: params.approvalId, approved: params.approved, toolName: params.toolName },
+      toolData: {
+        approvalId: params.approvalId,
+        approved: params.approved,
+        toolName: params.toolName,
+        ...(params.optionId ? { optionId: params.optionId } : {}),
+      },
       sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
@@ -334,6 +440,26 @@ export class ConversationActivityLedger {
     await this.emitPersistedClientEvent(params, activity);
 
     return activity;
+  }
+
+  async persistHumanInteractionRequest(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.persistHumanInteractionActivity(
+      params,
+      ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+      'request'
+    );
+  }
+
+  async persistHumanInteractionResponse(
+    params: PersistHumanInteractionActivityParams
+  ): Promise<ConversationActivityEntity> {
+    return this.persistHumanInteractionActivity(
+      params,
+      ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+      'response'
+    );
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
@@ -506,6 +632,30 @@ export class ConversationActivityLedger {
     return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
   }
 
+  async resolveCurrentMessage(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    const existing = await this.activityRepository.findByPlatformMessageId(
+      environmentId,
+      conversationId,
+      platformMessageId
+    );
+    if (!existing?.platformMessageId) {
+      return existing;
+    }
+
+    const revisions = await this.activityRepository.findMessageRevisions(environmentId, conversationId, [
+      existing.platformMessageId,
+    ]);
+    if (revisions.length === 0) {
+      return existing;
+    }
+
+    return foldCurrentMessage(existing, revisions);
+  }
+
   async findSourceActivity(
     environmentId: string,
     conversationId: string,
@@ -603,6 +753,73 @@ export class ConversationActivityLedger {
     return this.activityRepository.repointSubscriberSender(params);
   }
 
+  private async persistHumanInteractionActivity(
+    params: PersistHumanInteractionActivityParams,
+    type: ConversationActivityTypeEnum,
+    suffix: 'request' | 'response'
+  ): Promise<ConversationActivityEntity> {
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+    const identifier = `human:${params.interactionIdentifier}:${suffix}`;
+
+    try {
+      const activity = await this.activityRepository.createToolActivity({
+        identifier,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: params.channel.platformThreadId,
+        senderType: params.actorType,
+        senderId: params.actorId,
+        senderName: params.actorName,
+        content: humanInteractionActivityContent(params, suffix),
+        type,
+        toolData: {},
+        richContent: {
+          humanInteraction: {
+            interactionIdentifier: params.interactionIdentifier,
+            kind: params.kind,
+            title: params.title,
+            ...(params.requestId ? { requestId: params.requestId } : {}),
+            ...(params.subtitle ? { subtitle: params.subtitle } : {}),
+            ...(params.body ? { body: params.body } : {}),
+            ...(params.status ? { status: params.status } : {}),
+            ...(params.optionId ? { optionId: params.optionId } : {}),
+            ...(params.text ? { text: params.text } : {}),
+          },
+        },
+        sequence,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        ...(params.platformMessageId ? { platformMessageId: params.platformMessageId } : {}),
+      });
+
+      await this.emitPersistedClientEvent(params, activity);
+
+      return activity;
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        const existing = await this.activityRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _conversationId: params.conversationId,
+            identifier,
+          },
+          '*'
+        );
+
+        if (existing) {
+          return existing;
+        }
+      }
+
+      throw err;
+    }
+  }
+
   private async persistAndEmitClientEvent(
     context: ConversationActivityContext,
     params: PersistAgentActivityParams,
@@ -696,6 +913,105 @@ export class ConversationActivityLedger {
     }
   }
 
+  private async appendInboundRevision(params: {
+    conversationId: string;
+    environmentId: string;
+    organizationId: string;
+    platformMessageId: string;
+    type: ConversationActivityTypeEnum.EDIT | ConversationActivityTypeEnum.DELETE;
+    content?: string;
+    richContent?: Record<string, unknown>;
+    hasPlatformAttachments?: boolean;
+    editedAt?: string;
+  }): Promise<ConversationActivityEntity | null> {
+    const existing = await this.activityRepository.findByPlatformMessageId(
+      params.environmentId,
+      params.conversationId,
+      params.platformMessageId
+    );
+    if (!existing) {
+      return null;
+    }
+
+    const content = params.content ?? existing.content ?? '';
+    const richContent = params.richContent ?? existing.richContent;
+
+    if (params.type === ConversationActivityTypeEnum.EDIT) {
+      const preview = getInboundActivityPreview(content, {
+        richContent,
+        hasPlatformAttachments: params.hasPlatformAttachments,
+      });
+
+      await Promise.all([
+        this.conversationRepository.touchPreview(
+          params.environmentId,
+          params.organizationId,
+          params.conversationId,
+          preview
+        ),
+        this.insertInboundRevision(existing, params, content, params.richContent),
+      ]);
+    } else {
+      await this.insertInboundRevision(existing, params, content, richContent);
+    }
+
+    return {
+      ...existing,
+      content,
+      richContent,
+    };
+  }
+
+  private async insertInboundRevision(
+    existing: ConversationActivityEntity,
+    params: {
+      conversationId: string;
+      environmentId: string;
+      organizationId: string;
+      platformMessageId: string;
+      type: ConversationActivityTypeEnum.EDIT | ConversationActivityTypeEnum.DELETE;
+      editedAt?: string;
+    },
+    content: string,
+    richContent?: Record<string, unknown>
+  ): Promise<void> {
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+    const identifier =
+      params.type === ConversationActivityTypeEnum.DELETE
+        ? `inbound-delete:${params.conversationId}:${params.platformMessageId}`
+        : `inbound-edit:${params.conversationId}:${params.platformMessageId}:${params.editedAt ?? new Date().toISOString()}`;
+
+    try {
+      await this.activityRepository.createUserActivity({
+        identifier,
+        conversationId: params.conversationId,
+        platform: existing.platform,
+        integrationId: existing._integrationId,
+        platformThreadId: existing.platformThreadId,
+        senderType: existing.senderType,
+        senderId: existing.senderId,
+        senderName: existing.senderName,
+        content,
+        richContent,
+        platformMessageId: params.platformMessageId,
+        type: params.type,
+        sequence,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        return;
+      }
+
+      throw err;
+    }
+  }
+
   private async resolveEventSequence(
     conversationId: string,
     environmentId: string,
@@ -749,5 +1065,47 @@ export class ConversationActivityLedger {
       agentIdentifier: params.agentIdentifier,
       activity,
     });
+  }
+}
+
+function humanInteractionActivityContent(
+  params: PersistHumanInteractionActivityParams,
+  suffix: 'request' | 'response'
+): string {
+  const title = params.title.trim() || params.kind;
+
+  if (suffix === 'request') {
+    switch (params.kind) {
+      case 'ask':
+        return `Waiting for answer: ${title}`;
+      case 'choose':
+        return `Choice required: ${title}`;
+      case 'tell':
+        return `Notice sent: ${title}`;
+      case 'approve':
+        return `Approval required: ${title}`;
+      default:
+        return `Human input required: ${title}`;
+    }
+  }
+
+  const actor = params.actorName?.trim() || params.actorId;
+  const status = params.status;
+
+  switch (status) {
+    case 'approved':
+      return `Approved by ${actor}: ${title}`;
+    case 'denied':
+      return `Denied by ${actor}: ${title}`;
+    case 'answered':
+      return params.text?.trim() ? `Answered by ${actor}: ${params.text.trim()}` : `Answered by ${actor}: ${title}`;
+    case 'expired':
+      return `Expired: ${title}`;
+    case 'canceled':
+      return `Canceled: ${title}`;
+    case 'delivered':
+      return `Delivered: ${title}`;
+    default:
+      return params.optionId ? `${actor} chose ${params.optionId}` : `Human response from ${actor}: ${title}`;
   }
 }

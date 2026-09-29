@@ -1,26 +1,71 @@
 import { autoUpdate, flip, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
-import { Accessor, createContext, createEffect, createMemo, createSignal, JSX, Setter, useContext } from 'solid-js';
-import { useAppearance } from '../../../context';
+import {
+  Accessor,
+  createContext,
+  createMemo,
+  createSignal,
+  JSX,
+  onCleanup,
+  ParentProps,
+  Setter,
+  useContext,
+} from 'solid-js';
+import { type FloatingSide, getSide, roundToDevicePixel, transformOrigin } from '../floating';
+
+/** How long the pointer rests on a trigger before its tooltip opens. */
+export const TOOLTIP_OPEN_DELAY_MS = 400;
+/** After a tooltip closes, the next one within this window opens at once (moving along a row of buttons). */
+export const TOOLTIP_SKIP_DELAY_MS = 300;
+
+type TooltipGroup = {
+  isWarm: () => boolean;
+  markOpened: () => void;
+  markClosed: () => void;
+};
+
+const createTooltipGroup = (): TooltipGroup => {
+  let openCount = 0;
+  let lastClosedAt = Number.NEGATIVE_INFINITY;
+
+  return {
+    isWarm: () => openCount > 0 || Date.now() - lastClosedAt < TOOLTIP_SKIP_DELAY_MS,
+    markOpened: () => {
+      openCount += 1;
+    },
+    markClosed: () => {
+      openCount = Math.max(0, openCount - 1);
+      lastClosedAt = Date.now();
+    },
+  };
+};
+
+const TooltipGroupContext = createContext<TooltipGroup>();
+
+/** Shares the open delay's warm state between the tooltips of one engine. */
+export const TooltipGroupProvider = (props: ParentProps) => (
+  <TooltipGroupContext.Provider value={createTooltipGroup()}>{props.children}</TooltipGroupContext.Provider>
+);
 
 type TooltipRootProps = {
   open?: boolean;
   children?: JSX.Element;
   placement?: Placement;
   fallbackPlacements?: Placement[];
-  animationDuration?: number;
+  /** Delay before a hovered tooltip opens; defaults to {@link TOOLTIP_OPEN_DELAY_MS}. A controlled `open` ignores it. */
+  openDelay?: number;
 };
 
 type TooltipContextValue = {
   open: Accessor<boolean>;
-  shouldRender: Accessor<boolean>;
-  setOpen: Setter<boolean>;
+  setOpen: (open: boolean) => void;
   reference: Accessor<HTMLElement | null>;
   floating: Accessor<HTMLElement | null>;
   setReference: Setter<HTMLElement | null>;
   setFloating: Setter<HTMLElement | null>;
-  floatingStyles: () => Record<any, any>;
-  effectiveAnimationDuration: Accessor<number>;
+  floatingStyles: () => JSX.CSSProperties;
+  side: Accessor<FloatingSide>;
+  origin: Accessor<string | undefined>;
 };
 
 const TooltipContext = createContext<TooltipContextValue | undefined>(undefined);
@@ -28,11 +73,8 @@ const TooltipContext = createContext<TooltipContextValue | undefined>(undefined)
 export function TooltipRoot(props: TooltipRootProps) {
   const [reference, setReference] = createSignal<HTMLElement | null>(null);
   const [floating, setFloating] = createSignal<HTMLElement | null>(null);
-  const { animations } = useAppearance();
-
-  const defaultAnimationDuration = 0.2;
-  const actualAnimationDuration = () => props.animationDuration ?? defaultAnimationDuration;
-  const effectiveAnimationDuration = createMemo(() => (animations() ? actualAnimationDuration() : 0));
+  // Outside a provider (a component rendered on its own) every tooltip is its own group.
+  const group = useContext(TooltipGroupContext) ?? createTooltipGroup();
 
   const position = useFloating(reference, floating, {
     placement: props.placement || 'top',
@@ -47,48 +89,64 @@ export function TooltipRoot(props: TooltipRootProps) {
       shift({
         padding: 8,
         crossAxis: false, // Prevent horizontal shifting that causes layout gaps
-        mainAxis: true    // Allow vertical shifting only
+        mainAxis: true, // Allow vertical shifting only
       }),
+      transformOrigin(),
     ],
   });
 
-  const [uncontrolledOpen, setUncontrolledOpen] = createSignal(props.open ?? false);
+  const [uncontrolledOpen, setUncontrolledOpen] = createSignal(false);
+  const open = createMemo(() => (props.open !== undefined ? !!props.open : uncontrolledOpen()));
 
-  const openAccessor: Accessor<boolean> = createMemo(() => {
-    return props.open !== undefined ? !!props.open : uncontrolledOpen();
-  });
-
-  const setOpenSetter: Setter<boolean> = (valueOrFn) => {
-    if (props.open === undefined) {
-      setUncontrolledOpen(valueOrFn);
+  let openTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearOpenTimer = () => {
+    if (openTimer !== undefined) {
+      clearTimeout(openTimer);
+      openTimer = undefined;
     }
   };
 
-  const [shouldRenderTooltip, setShouldRenderTooltip] = createSignal(openAccessor());
-  let renderTimeoutId: number | undefined;
+  const show = () => {
+    if (!uncontrolledOpen()) {
+      group.markOpened();
+      setUncontrolledOpen(true);
+    }
+  };
 
-  createEffect(() => {
-    const isOpen = openAccessor();
-    if (renderTimeoutId) {
-      clearTimeout(renderTimeoutId);
-      renderTimeoutId = undefined;
+  const hide = () => {
+    if (uncontrolledOpen()) {
+      group.markClosed();
+      setUncontrolledOpen(false);
+    }
+  };
+
+  const setOpen = (next: boolean) => {
+    if (props.open !== undefined) {
+      return;
     }
 
-    if (isOpen) {
-      setShouldRenderTooltip(true);
-    } else if (effectiveAnimationDuration() > 0) {
-      renderTimeoutId = window.setTimeout(() => {
-        setShouldRenderTooltip(false);
-      }, effectiveAnimationDuration() * 1000);
-    } else {
-      setShouldRenderTooltip(false);
-    }
-  });
+    clearOpenTimer();
+    if (!next) {
+      hide();
 
-  createEffect(() => {
-    if (openAccessor()) {
-      setShouldRenderTooltip(true);
+      return;
     }
+
+    const delay = props.openDelay ?? TOOLTIP_OPEN_DELAY_MS;
+    if (delay <= 0 || group.isWarm()) {
+      show();
+
+      return;
+    }
+    openTimer = setTimeout(() => {
+      openTimer = undefined;
+      show();
+    }, delay);
+  };
+
+  onCleanup(() => {
+    clearOpenTimer();
+    hide();
   });
 
   return (
@@ -98,15 +156,15 @@ export function TooltipRoot(props: TooltipRootProps) {
         setReference,
         floating,
         setFloating,
-        open: openAccessor,
-        shouldRender: shouldRenderTooltip,
-        setOpen: setOpenSetter,
+        open,
+        setOpen,
         floatingStyles: () => ({
           position: position.strategy,
-          top: `${position.y ?? 0}px`,
-          left: `${position.x ?? 0}px`,
+          top: `${roundToDevicePixel(position.y ?? 0)}px`,
+          left: `${roundToDevicePixel(position.x ?? 0)}px`,
         }),
-        effectiveAnimationDuration,
+        side: () => getSide(position.placement ?? props.placement ?? 'top'),
+        origin: () => position.middlewareData.transformOrigin?.value as string | undefined,
       }}
     >
       {props.children}

@@ -52,6 +52,8 @@ export interface NovuAdapterConfig {
 
 export enum AgentEvent {
   ON_MESSAGE = 'onMessage',
+  ON_MESSAGE_UPDATED = 'onMessageUpdated',
+  ON_MESSAGE_DELETED = 'onMessageDeleted',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
@@ -62,6 +64,8 @@ export interface AgentMessageAuthor {
   fullName: string;
   userName: string;
   isBot: boolean | 'unknown';
+  email?: string;
+  isSystem?: boolean;
 }
 
 export interface AgentAttachment {
@@ -72,12 +76,19 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 export interface AgentMessage {
   text: string;
+  /** GFM rendering of the platform-formatted message (tables, bold, links); absent for plain prose. */
+  markdown?: string;
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  replyTo?: AgentReplyToContext;
 }
 
 export interface AgentConversation {
@@ -173,6 +184,7 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  previousMessage?: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
@@ -222,6 +234,10 @@ export type TriggerSignal = {
 
 export type Signal = MetadataSignal | TriggerSignal;
 
+export interface QuoteReplyContext {
+  messageId: string;
+}
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -230,6 +246,7 @@ export interface AgentReplyPayload {
   resolve?: { summary?: string };
   signals?: Signal[];
   addReactions?: AddReactionPayload[];
+  quoteReply?: QuoteReplyContext;
 }
 
 /** Shape returned by `/agents/:id/reply` when a reply or edit was delivered. */
@@ -262,12 +279,14 @@ export interface NovuHistoryFields {
 export interface NovuRawMessage {
   id: string;
   text: string;
+  markdown?: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
   conversationId: string;
   integrationIdentifier: string;
   platform: string;
+  replyTo?: AgentReplyToContext;
   /** Set when this message was built from Novu conversation history. */
   history?: NovuHistoryFields;
 }

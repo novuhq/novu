@@ -23,6 +23,7 @@ To send a reply from your backend without going through the bridge handler, use 
 | Plain / rich text | Yes | Yes | Bold / italics | Yes | HTML |
 | Tap-to-respond buttons | Yes | Yes | Yes (up to 3) | Yes | Action links |
 | Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+| Quote reply | Plain post | Plain post | Native | Native | — |
 
 See [Channels overview](/agents/channels/overview) for the full matrix.
 
@@ -52,6 +53,14 @@ Send formatted text by passing a markdown string to `ctx.reply()`:
 
 ```typescript
 await ctx.reply('**Report generated.** See the attached PDF.');
+```
+
+## Quote reply
+
+Pass `quoteReply` to pin the reply to a specific inbound message. WhatsApp and Telegram render a native quote. Other channels send a normal post.
+
+```typescript
+await ctx.reply('Your order shipped today.', { quoteReply: message });
 ```
 
 ## Sending attachments

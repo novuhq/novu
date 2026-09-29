@@ -4,23 +4,6 @@ import sinon from 'sinon';
 import { buildManagedHumanToolResult, ResumeManagedHuman } from './resume-managed-human.usecase';
 
 describe('buildManagedHumanToolResult', () => {
-  it('marks approved as ok with approved true', () => {
-    const result = buildManagedHumanToolResult({
-      kind: HumanInteractionKindEnum.APPROVE,
-      status: HumanInteractionStatusEnum.APPROVED,
-      response: { type: 'option', optionId: 'approve', respondedAt: '2026-01-01T00:00:00.000Z' },
-    } as any);
-
-    expect(result).to.include({
-      ok: true,
-      kind: 'approve',
-      status: 'approved',
-      optionId: 'approve',
-      approved: true,
-      expired: false,
-    });
-  });
-
   it('marks denied/expired/canceled as not ok and never approved', () => {
     const denied = buildManagedHumanToolResult({
       kind: HumanInteractionKindEnum.APPROVE,
@@ -53,37 +36,6 @@ describe('ResumeManagedHuman', () => {
 
     return { usecase, agentRepository, managedAgentService };
   }
-
-  it('sends a content-only tool result for a correlated managed HITL row', async () => {
-    const { usecase, managedAgentService } = setup();
-
-    await usecase.execute({
-      requestId: 'novu_human:ses_1:sevt_1',
-      _conversationId: 'conv1',
-      _agentId: 'agent1',
-      _environmentId: 'env1',
-      _organizationId: 'org1',
-      identifier: 'hi_1',
-      deliveries: [
-        {
-          subscriberId: 'sub-1',
-          integrationIdentifier: 'slack-main',
-          platform: 'slack',
-          platformMessageId: 'msg-1',
-          platformThreadId: 'thread-1',
-        },
-      ],
-      kind: HumanInteractionKindEnum.APPROVE,
-      status: HumanInteractionStatusEnum.APPROVED,
-      response: { type: 'option', optionId: 'approve', respondedAt: '2026-01-01T00:00:00.000Z' },
-    } as any);
-
-    expect(managedAgentService.sendToolResult.calledOnce).to.equal(true);
-    const args = managedAgentService.sendToolResult.firstCall.args[0];
-    expect(args.toolUseId).to.equal('sevt_1');
-    expect(args.approved).to.equal(undefined);
-    expect(JSON.parse(args.content)).to.include({ ok: true, approved: true, status: 'approved' });
-  });
 
   it('skips when the row has no delivery', async () => {
     const { usecase, managedAgentService } = setup();

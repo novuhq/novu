@@ -56,6 +56,9 @@ import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecas
 export class AgentReplyController {
   constructor(private handleAgentReply: HandleAgentReply) {}
 
+  /**
+   * @deprecated Use `POST /v1/agents/events/ingest` (AgentEvent protocol).
+   */
   @Post('/:agentId/reply')
   @HttpCode(HttpStatus.OK)
   @RequireAuthentication()
@@ -95,11 +98,11 @@ export class AgentReplyController {
   })
   @ApiOperation({
     summary: 'Send an agent reply',
+    deprecated: true,
     description: [
-      'Send a message or side-effect into an existing agent conversation from your backend.',
-      '',
-      'Use this endpoint when you are not using `@novu/framework` (for example Python, Go, PHP, .NET, or Java SDKs),',
-      'or when a server process outside the bridge needs to post into a live conversation.',
+      '**Deprecated** — use `POST /v1/agents/events/ingest` (AgentEvent protocol).',
+      'This route stays live for old `@novu/framework` and existing OpenAPI `sendReply` clients.',
+      'Do not use it for new integrations.',
       '',
       '**Message actions**',
       '- `reply` — markdown, interactive card, or tool-approval card (optional `files`)',

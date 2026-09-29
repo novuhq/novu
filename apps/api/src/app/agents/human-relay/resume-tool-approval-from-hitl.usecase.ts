@@ -92,6 +92,8 @@ export class ResumeToolApprovalFromHitl {
           ? ConversationActivitySenderTypeEnum.SUBSCRIBER
           : ConversationActivitySenderTypeEnum.SYSTEM,
         actorId: interaction.response?.respondedBySubscriberId ?? agent.identifier,
+        actorName: interaction.response?.respondedBy ?? interaction.response?.respondedBySubscriberId ?? 'System',
+        optionId: interaction.response?.optionId,
         environmentId: interaction._environmentId,
         organizationId: interaction._organizationId,
       });

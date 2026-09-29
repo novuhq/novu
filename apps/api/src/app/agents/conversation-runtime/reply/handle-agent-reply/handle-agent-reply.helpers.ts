@@ -95,6 +95,116 @@ export function hitlToolApprovalCard(
   return chrome;
 }
 
+const ERROR_EXCLUSIVE_FIELDS = [
+  'reply',
+  'edit',
+  'resolve',
+  'signals',
+  'toolResults',
+  'toolApprovalRequest',
+  'addReactions',
+  'deleteMessages',
+  'plan',
+  'typing',
+] as const satisfies ReadonlyArray<keyof HandleAgentReplyCommand>;
+
+const EDIT_EXCLUSIVE_FIELDS = [
+  'resolve',
+  'signals',
+  'toolResults',
+  'toolApprovalRequest',
+  'addReactions',
+  'deleteMessages',
+] as const satisfies ReadonlyArray<keyof HandleAgentReplyCommand>;
+
+const REQUIRED_ACTION_FIELDS = [
+  'reply',
+  'edit',
+  'resolve',
+  'signals',
+  'toolResults',
+  'toolApprovalRequest',
+  'addReactions',
+  'deleteMessages',
+  'plan',
+  'typing',
+  'error',
+] as const satisfies ReadonlyArray<keyof HandleAgentReplyCommand>;
+
+function commandHasField(command: HandleAgentReplyCommand, key: keyof HandleAgentReplyCommand): boolean {
+  const value = command[key];
+
+  return Array.isArray(value) ? value.length > 0 : Boolean(value);
+}
+
+export function commandHasAny(
+  command: HandleAgentReplyCommand,
+  keys: ReadonlyArray<keyof HandleAgentReplyCommand>
+): boolean {
+  return keys.some((key) => commandHasField(command, key));
+}
+
+export function assertValidReplyCommand(command: HandleAgentReplyCommand): void {
+  if (command.error && commandHasAny(command, ERROR_EXCLUSIVE_FIELDS)) {
+    throw new BadRequestException(
+      'error cannot be combined with reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing'
+    );
+  }
+
+  if (command.reply && command.edit) {
+    throw new BadRequestException('Only one of reply or edit can be provided');
+  }
+
+  if (command.quoteReply && !command.reply) {
+    throw new BadRequestException('quoteReply requires reply');
+  }
+
+  if (command.edit && commandHasAny(command, EDIT_EXCLUSIVE_FIELDS)) {
+    throw new BadRequestException(
+      'edit cannot be combined with resolve, signals, toolResults, toolApprovalRequest, addReactions, or deleteMessages'
+    );
+  }
+
+  if (!commandHasAny(command, REQUIRED_ACTION_FIELDS)) {
+    throw new BadRequestException(
+      'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, typing, or error must be provided'
+    );
+  }
+}
+
+export function collectReplyAnalytics(command: HandleAgentReplyCommand): {
+  actions: string[];
+  triggerSignalCount: number;
+  metadataSignalCount: number;
+  humanSignalCount: number;
+  reactionCount: number;
+} {
+  const triggerSignalCount = (command.signals ?? []).filter((signal) => signal.type === 'trigger').length;
+  const metadataSignalCount = (command.signals ?? []).filter((signal) => signal.type === 'metadata').length;
+  const humanSignalCount = (command.signals ?? []).filter((signal) => signal.type === 'human').length;
+  const reactionCount = command.addReactions?.length ?? 0;
+  const actions: string[] = [];
+
+  if (command.reply) actions.push('reply');
+  if (command.edit) actions.push('edit');
+  if (command.resolve) actions.push('resolve');
+  if (command.toolApprovalRequest) actions.push('tool_approval_request');
+  if (triggerSignalCount > 0) actions.push('trigger_signals');
+  if (metadataSignalCount > 0) actions.push('metadata_signals');
+  if (humanSignalCount > 0) actions.push('human_signals');
+  if (reactionCount > 0) actions.push('add_reactions');
+  if (command.deleteMessages?.length) actions.push('delete_messages');
+  if (command.typing) actions.push('typing');
+
+  return {
+    actions,
+    triggerSignalCount,
+    metadataSignalCount,
+    humanSignalCount,
+    reactionCount,
+  };
+}
+
 export function normalizeMetadataOps(
   signals: Array<{ type: 'metadata'; action?: string; key?: string; value?: unknown }>
 ): MetadataOp[] {

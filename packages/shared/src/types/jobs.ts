@@ -16,3 +16,12 @@ export interface IEventJobData {
   userId: string;
   payload?: Record<string, unknown>;
 }
+
+/**
+ * Code-first display fields persisted on `job.step` for stateless / bridge runs.
+ * `job.step` is a Mixed Mongo field, so this does not need a schema change.
+ */
+export type WorkflowJobMetadata = {
+  name?: string;
+  description?: string;
+};

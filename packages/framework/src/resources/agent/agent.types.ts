@@ -7,6 +7,8 @@ export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
+  ON_MESSAGE_UPDATED = 'onMessageUpdated',
+  ON_MESSAGE_DELETED = 'onMessageDeleted',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
@@ -147,6 +149,16 @@ export interface AgentMessageAuthor {
   fullName: string;
   userName: string;
   isBot: boolean | 'unknown';
+  /**
+   * The author's email, when the platform provides it (Slack with the `users:read.email` scope,
+   * Teams, email). Present even when the author is not linked to a subscriber.
+   */
+  email?: string;
+  /**
+   * `true` when the chat platform itself generated the message (e.g. Slackbot notices from
+   * Slack's reserved `USLACK` user) rather than a person or bot. Absent means `false`.
+   */
+  isSystem?: boolean;
 }
 
 /** A file or media attachment included with a message. */
@@ -158,15 +170,27 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 /** An incoming message from the user in the current conversation. */
 export interface AgentMessage {
   /** Plain-text content of the message. */
   text: string;
+  /**
+   * The message as GitHub-flavored Markdown, preserving platform formatting that `text` flattens:
+   * bold, links, code, and structured content such as pasted Slack tables (rendered as GFM tables).
+   * Absent when the message is plain prose (then `text` is complete); use `markdown ?? text`.
+   */
+  markdown?: string;
   /** Platform-native message ID (e.g. Slack `ts`, Teams `activityId`). */
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
+  replyTo?: AgentReplyToContext;
 }
 
 /** Live state of the current conversation thread. */
@@ -342,6 +366,30 @@ export interface FileRef {
  * Cards and files can be combined on platforms that support it (e.g. WhatsApp sends media then the card).
  */
 export type MessageContent = string | ChatElement;
+
+/** Platform message id or an inbound message to quote in the outbound reply. */
+export type QuoteReplyTarget = { messageId: string } | Pick<AgentMessage, 'platformMessageId'>;
+
+export interface AgentReplyOptions {
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+/**
+ * Wrapper for handler return values that need delivery options beyond bare content.
+ *
+ * @example
+ *   return { content: 'Done', quoteReply: message };
+ */
+export interface AgentHandlerReply {
+  content: MessageContent;
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+export function isAgentHandlerReply(value: unknown): value is AgentHandlerReply {
+  return typeof value === 'object' && value !== null && 'content' in value && !('type' in value);
+}
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
@@ -577,8 +625,11 @@ export interface AgentHandlerContext {
    *   await ctx.reply('Here is your report', {
    *     files: [{ filename: 'report.pdf', url: 'https://...' }],
    *   });
+   *
+   * @example quote-reply to the triggering inbound message
+   *   await ctx.reply('answer', { quoteReply: message });
    */
-  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  reply(content: MessageContent, options?: AgentReplyOptions): Promise<ReplyHandle>;
   /**
    * Gate tool calls that need user approval before they run.
    *
@@ -743,6 +794,18 @@ export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
+/** Context passed to the `onMessageUpdated` handler. */
+export interface AgentMessageUpdatedContext extends AgentHandlerContext {
+  readonly event: 'onMessageUpdated';
+  /** The message as it read before this edit. `null` when the channel does not send the old body. */
+  readonly previousMessage: AgentMessage | null;
+}
+
+/** Context passed to the `onMessageDeleted` handler. */
+export interface AgentMessageDeletedContext extends AgentHandlerContext {
+  readonly event: 'onMessageDeleted';
+}
+
 /** Context passed to the `onAction` handler. */
 export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
@@ -762,7 +825,13 @@ export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
-export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+export type AgentContext =
+  | AgentMessageContext
+  | AgentMessageUpdatedContext
+  | AgentMessageDeletedContext
+  | AgentActionContext
+  | AgentReactionContext
+  | AgentResolveContext;
 
 /** Event handlers for a conversational agent. */
 export interface AgentHandlers {
@@ -775,7 +844,27 @@ export interface AgentHandlers {
    * Return a string or JSX card to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
+  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires when the user edits a previously sent message. Does not re-run `onMessage`.
+   *
+   * @param message - The message after the edit (same `platformMessageId`).
+   * @param ctx - `ctx.previousMessage` is the body before this edit, when the channel sent it.
+   */
+  onMessageUpdated?: (
+    message: AgentMessage,
+    ctx: AgentMessageUpdatedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires when the user deletes a message. Does not re-run `onMessage`.
+   *
+   * @param message - The removed message. `text` is the last known body and may be empty
+   *   when the channel did not send a snapshot.
+   */
+  onMessageDeleted?: (
+    message: AgentMessage,
+    ctx: AgentMessageDeletedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user adds or removes an emoji reaction to a message.
    *
@@ -784,7 +873,10 @@ export interface AgentHandlers {
    *
    * Return a string or card to post a reply, or return nothing to silently acknowledge.
    */
-  onReaction?: (reaction: AgentReaction, ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
+  onReaction?: (
+    reaction: AgentReaction,
+    ctx: AgentReactionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user clicks a `<Button>` or other interactive element.
    *
@@ -794,7 +886,7 @@ export interface AgentHandlers {
    *
    * Return a string or card to reply, or return nothing to silently acknowledge the click.
    */
-  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires after `ctx.resolve()` is called and the conversation is marked resolved.
    * Use for post-resolution side-effects (e.g. triggering a follow-up workflow).
@@ -802,7 +894,7 @@ export interface AgentHandlers {
    * @param ctx - Conversation context. Access subscriber and conversation via
    *   `ctx.subscriber` and `ctx.conversation`.
    */
-  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user approves or denies a tool call you previously gated with
    * `ctx.toolApproval.request()`.
@@ -813,7 +905,10 @@ export interface AgentHandlers {
    * Run the tool (or skip it), then return a reply or call `ctx.reply()` directly.
    * Register this handler whenever you call `ctx.toolApproval.request()` in `onMessage`.
    */
-  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onToolApproval?: (
+    decision: ToolApprovalDecision,
+    ctx: AgentActionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Optional turn failure handler. Return `{ suppress: true }` to skip user notification,
    * return message content for a custom user reply, or return nothing to auto-report
@@ -821,7 +916,13 @@ export interface AgentHandlers {
    */
   onError?: (
     error: AgentError,
-    ctx: AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext
+    ctx:
+      | AgentMessageContext
+      | AgentMessageUpdatedContext
+      | AgentMessageDeletedContext
+      | AgentActionContext
+      | AgentReactionContext
+      | AgentResolveContext
   ) => Awaitable<AgentErrorResult>;
   /**
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
@@ -830,7 +931,7 @@ export interface AgentHandlers {
 }
 
 export type AgentErrorSuppress = { suppress: true };
-export type AgentErrorResult = MessageContent | void | AgentErrorSuppress;
+export type AgentErrorResult = MessageContent | AgentHandlerReply | void | AgentErrorSuppress;
 
 export function isAgentErrorSuppress(result: AgentErrorResult | undefined): result is AgentErrorSuppress {
   return typeof result === 'object' && result !== null && 'suppress' in result && result.suppress === true;
@@ -864,6 +965,11 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  /**
+   * The message as it read before an `onMessageUpdated` edit. Optional on the wire
+   * for backward compatibility; absent → `ctx.previousMessage` is `null`.
+   */
+  previousMessage?: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;

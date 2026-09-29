@@ -41,6 +41,7 @@ Each event handler receives a context object with the information needed to unde
 - The current conversation state and metadata
 - The resolved subscriber (when available)
 - Recent conversation history
+- The originating workflow notification (`ctx.notification`), when the conversation started from a [workflow-assigned agent](/agents/workflow-agents#reply-hydration) send
 - Provider information
 - Platform-specific details, such as thread or channel identifiers
 - Methods for replying, emitting custom events, updating metadata, triggering workflows, or resolving the conversation
@@ -222,6 +223,35 @@ export const myAgent = agent('my-agent', {
     }
   },
 });
+```
+
+#### Quote-reply context
+
+When a user quote-replies to a prior message, Novu sets `message.replyTo` with that message's platform id. Supported on WhatsApp, Telegram, and Microsoft Teams.
+
+```typescript
+const quotedMessageId = message.replyTo?.messageId;
+```
+
+#### Formatted content
+
+`message.text` is plain text, so formatting such as bold, links, code, and pasted Slack tables is lost. When the message has formatting, Novu also sets `message.markdown` with the same content as GitHub-flavored Markdown. Slack tables become GFM tables. For plain prose, `message.markdown` is not set because `text` already has the full content.
+
+```typescript
+const content = message.markdown ?? message.text;
+```
+
+#### Author details
+
+`message.author` describes who sent the message, even when the sender is not linked to a subscriber:
+
+- `author.email`: the sender's email, when the platform provides it (Slack, Microsoft Teams, and email).
+- `author.isSystem`: `true` when the platform itself generated the message, such as a Slackbot notice. Use it to skip messages that did not come from a person.
+
+```typescript
+if (message.author.isSystem) return;
+
+const senderEmail = message.author.email;
 ```
 
 ### onAction

@@ -74,6 +74,18 @@ describe('HandleAgentReply - active-conversation counting', () => {
     };
   }
 
+  it('rejects quoteReply without reply', async () => {
+    const { usecase, baseCommand } = setup();
+
+    try {
+      await usecase.execute({ ...baseCommand, quoteReply: { messageId: 'wamid.abc123' } } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+      expect((err as BadRequestException).message).to.equal('quoteReply requires reply');
+    }
+  });
+
   it('counts an active conversation for a normal agent reply', async () => {
     const { usecase, baseCommand, outboundGateway, conversationActivation } = setup();
 

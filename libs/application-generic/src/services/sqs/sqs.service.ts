@@ -1,8 +1,9 @@
-import { SQSClient } from '@aws-sdk/client-sqs';
+import { SQSClient, SQSClientConfig } from '@aws-sdk/client-sqs';
 import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Producer } from 'sqs-producer';
 
+import { SQS_QUEUE_URL_ENV_BY_TOPIC } from '../../config/queue-backend';
 import { SqsPartialSendError } from './sqs-partial-send.error';
 import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import { ISqsMessage, SQS_BATCH_BYTE_BUDGET, SQS_MAX_BATCH_ENTRIES } from './types';
@@ -116,15 +117,13 @@ export class SqsService {
       this.producers = new Map();
       Logger.log('SQS service initialized with no queues configured', LOG_CONTEXT);
     }
-
-    this.validateConfiguration();
   }
 
   private initializeClient(): void {
     const region = process.env.AWS_REGION || process.env.NOVU_REGION || 'us-east-1';
     const endpoint = process.env.SQS_ENDPOINT;
 
-    const clientConfig: any = {
+    const clientConfig: SQSClientConfig = {
       region,
     };
 
@@ -146,12 +145,12 @@ export class SqsService {
   }
 
   private loadQueueUrls(): void {
-    this.queueUrls = new Map([
-      [JobTopicNameEnum.STANDARD, process.env.SQS_QUEUE_URL_STANDARD],
-      [JobTopicNameEnum.WORKFLOW, process.env.SQS_QUEUE_URL_WORKFLOW],
-      [JobTopicNameEnum.PROCESS_SUBSCRIBER, process.env.SQS_QUEUE_URL_PROCESS_SUBSCRIBER],
-      [JobTopicNameEnum.WEB_SOCKETS, process.env.SQS_QUEUE_URL_WEB_SOCKETS],
-    ]);
+    this.queueUrls = new Map(
+      Object.entries(SQS_QUEUE_URL_ENV_BY_TOPIC).map(([topic, envVar]) => [
+        topic as JobTopicNameEnum,
+        process.env[envVar],
+      ])
+    );
   }
 
   private initializeProducers(): void {
@@ -169,20 +168,6 @@ export class SqsService {
         this.producers.set(topic, producer);
       }
     });
-  }
-
-  private validateConfiguration(): void {
-    const missingQueues: string[] = [];
-
-    this.queueUrls.forEach((url, topic) => {
-      if (!url || url.trim() === '') {
-        missingQueues.push(topic);
-      }
-    });
-
-    if (missingQueues.length > 0) {
-      Logger.warn({ message: 'Missing SQS queue URL configuration', missingTopics: missingQueues }, LOG_CONTEXT);
-    }
   }
 
   public getQueueUrl(topic: JobTopicNameEnum): string | undefined {

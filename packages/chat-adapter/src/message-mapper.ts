@@ -19,6 +19,9 @@ import type {
 
 const ATTACHMENT_TYPES = new Set(['image', 'file', 'video', 'audio']);
 
+/** The object forms of `AdapterPostableMessage` (strings and card elements are handled first). */
+type PostableObjectMessage = Exclude<AdapterPostableMessage, string | CardElement>;
+
 /** Chat-module functions the mapper needs, injected after the dynamic `import('chat')`. */
 export interface ChatModuleParts {
   Message: new <T = unknown>(data: MessageData<T>) => ChatMessage<T>;
@@ -48,6 +51,7 @@ export class MessageMapper {
     return {
       id: message.platformMessageId,
       text: message.text,
+      ...(message.markdown !== undefined ? { markdown: message.markdown } : {}),
       author: message.author,
       timestamp: message.timestamp,
       attachments: message.attachments,
@@ -65,6 +69,9 @@ export class MessageMapper {
    * `authorOverride` lets the adapter present the Novu subscriber as the message
    * author (so `author.userId === subscriberId` and `adapter.getUser(userId)`
    * resolves). The platform-native author is preserved on `message.raw.author`.
+   *
+   * `formatted` is parsed from the bridge's GFM `markdown` when present, so platform
+   * structure (e.g. Slack table blocks) survives as mdast nodes; plain `text` is the fallback.
    */
   buildMessage(
     raw: NovuRawMessage,
@@ -77,7 +84,7 @@ export class MessageMapper {
       id: raw.id,
       threadId,
       text: raw.text,
-      formatted: this.parts.parseMarkdown(raw.text ?? ''),
+      formatted: this.parts.parseMarkdown(raw.markdown ?? raw.text ?? ''),
       raw,
       author: this.toAuthor(authorOverride ?? raw.author),
       metadata: { dateSent, edited: false },
@@ -141,6 +148,8 @@ export class MessageMapper {
       fullName: author.fullName,
       isBot: author.isBot,
       isMe,
+      ...(author.email ? { email: author.email } : {}),
+      ...(author.isSystem ? { isSystem: true } : {}),
     };
   }
 
@@ -153,31 +162,29 @@ export class MessageMapper {
     if (this.parts.isCardElement(message)) {
       return { card: message };
     }
-    if (typeof message === 'object' && message !== null) {
-      const obj = message as unknown as Record<string, unknown>;
-      const files = await mapReplyFiles(obj.files ?? obj.attachments);
 
-      if (typeof obj.markdown === 'string') {
-        return files ? { markdown: obj.markdown, files } : { markdown: obj.markdown };
-      }
-      if (typeof obj.raw === 'string') {
-        return files ? { markdown: obj.raw, files } : { markdown: obj.raw };
-      }
-      if (obj.ast) {
-        const markdown = this.parts.stringifyMarkdown(obj.ast as Root);
+    const files = await mapReplyFiles(message.files ?? ('attachments' in message ? message.attachments : undefined));
+    const body = this.toReplyBody(message);
 
-        return files ? { markdown, files } : { markdown };
-      }
-      if (obj.card !== undefined) {
-        const card = this.toCard(obj.card);
+    return files ? { ...body, files } : body;
+  }
 
-        return files ? { card, files } : { card };
-      }
-      if (obj.type === 'card') {
-        const card = this.toCard(message);
-
-        return files ? { card, files } : { card };
-      }
+  private toReplyBody(message: PostableObjectMessage): ReplyContent {
+    if ('markdown' in message && typeof message.markdown === 'string') {
+      return { markdown: message.markdown };
+    }
+    if ('raw' in message && typeof message.raw === 'string') {
+      return { markdown: message.raw };
+    }
+    if ('ast' in message && message.ast) {
+      return { markdown: this.parts.stringifyMarkdown(message.ast) };
+    }
+    if ('card' in message && message.card !== undefined) {
+      return { card: this.toCard(message.card) };
+    }
+    // A card element that failed `isCardElement` (e.g. JSON-revived) still normalizes via `toCardElement`.
+    if ('type' in message && message.type === 'card') {
+      return { card: this.toCard(message) };
     }
 
     throw new Error('Unsupported message content passed to Novu adapter');

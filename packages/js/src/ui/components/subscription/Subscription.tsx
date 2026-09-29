@@ -4,7 +4,7 @@ import { useSubscription } from '../../api/hooks/useSubscription';
 import { useInboxContext } from '../../context';
 import { cn } from '../../helpers';
 import { useStyle } from '../../helpers/useStyle';
-import { SubscriptionAppearanceCallback } from '../../types';
+import { OutletCleanup, SubscriptionAppearanceCallback } from '../../types';
 import { SubscriptionButton } from './SubscriptionButton';
 import { SubscriptionCog } from './SubscriptionCog';
 
@@ -12,7 +12,7 @@ export type SubscriptionPreferencesRenderer = (
   el: HTMLDivElement,
   subscription?: TopicSubscription,
   loading?: boolean
-) => () => void;
+) => OutletCleanup<[TopicSubscription | undefined, boolean | undefined]>;
 
 export type WorkflowPreference = {
   label?: string;

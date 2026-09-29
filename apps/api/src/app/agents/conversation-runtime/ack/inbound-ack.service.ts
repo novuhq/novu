@@ -5,7 +5,7 @@ import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.s
 import { type AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { OutboundGateway } from '../egress/outbound.gateway';
 
-export const INBOUND_ACK_EMOJI = {
+const INBOUND_ACK_EMOJI = {
   /** Persistent signal while a managed turn waits in the dispatch queue. */
   queued: 'hourglass',
   /** Receipt signal for non-typing platforms (first message only). */

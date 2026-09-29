@@ -321,7 +321,12 @@ export class AgentEventSink {
     }
 
     return this.dispatchReply(
-      HandleAgentReplyCommand.create({ ...baseFields, reply, activityIdentifier: event.messageId }),
+      HandleAgentReplyCommand.create({
+        ...baseFields,
+        reply,
+        quoteReply: event.quoteReply,
+        activityIdentifier: event.messageId,
+      }),
       context,
       'message',
       runId

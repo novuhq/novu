@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { CustomControlDto } from '../controls/custom-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class CustomControlsMetadataResponseDto extends ControlsMetadataDto {
+class CustomControlsMetadataResponseDto extends ControlsMetadataDto<CustomControlDto> {
   @ApiProperty({
     description: 'Control values specific to Custom step',
     type: () => CustomControlDto,

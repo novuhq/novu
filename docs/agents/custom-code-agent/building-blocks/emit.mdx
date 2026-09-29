@@ -8,7 +8,7 @@ sidebarTitle: Emit
 
 Use `ctx.reply()` when the subscriber must see text or a card. Use `ctx.emit()` when your client needs structured data during the turn, for example progress or a machine-readable status.
 
-The call posts at once. It does not wait for `ctx.reply()`. If the bridge has no `eventsUrl`, the call is a no-op.
+The call posts at once. It does not wait for `ctx.reply()`. Custom-code agents need a `@novu/framework` version that sends `AgentEvent`s through the event outbox. The bridge always supplies `eventsUrl`.
 
 ## Channel support
 

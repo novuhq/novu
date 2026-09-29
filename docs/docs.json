@@ -197,6 +197,7 @@
                 "pages": [
                   "platform/integrations/chat/writing-chat-template",
                   "platform/integrations/chat/discord",
+                  "platform/integrations/chat/google-chat",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
                   {
@@ -455,6 +456,7 @@
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
               "agents/get-started/agents-and-providers",
+              "agents/workflow-agents",
               {
                 "group": "Quickstart",
                 "pages": [
@@ -1195,7 +1197,7 @@
     "socials": {
       "x": "https://x.com/novuhq",
       "github": "https://github.com/novuhq/novu",
-      "linkedin": "https://linkedin.com/company/novuhq"
+      "linkedin": "https://www.linkedin.com/company/novuco"
     },
     "links": [
       {

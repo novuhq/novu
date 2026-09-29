@@ -13,7 +13,6 @@ import {
   Fields,
   LinkButton,
   Section,
-  type StateAdapter,
 } from 'chat';
 
 /**
@@ -105,6 +104,12 @@ export function registerHandlers(chat: Chat): void {
       return;
     }
 
+    if (message.text.trim().toLowerCase() === 'quote-reply') {
+      await thread.reply(message, `↩️ Quoted reply to: "${message.text}"`);
+
+      return;
+    }
+
     await thread.post(`echo (${novu.platform}): ${message.text}`);
   });
 
@@ -145,14 +150,14 @@ export function getNovuAgent(): Promise<{ chat: Chat; novu: Adapter }> {
 
       const chat = new Chat({
         userName: 'novu-playground-agent',
-        adapters: { novu: novu as unknown as Adapter },
-        state: createMemoryState() as unknown as StateAdapter,
+        adapters: { novu },
+        state: createMemoryState(),
       });
 
       registerHandlers(chat);
       await chat.initialize();
 
-      return { chat, novu: novu as unknown as Adapter };
+      return { chat, novu };
     })();
   }
 

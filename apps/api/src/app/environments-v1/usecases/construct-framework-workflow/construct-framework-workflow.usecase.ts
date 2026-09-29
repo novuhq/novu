@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
+  buildWorkflowVariables,
   CreateStepConditionEvaluationDetail,
   emailControlSchema,
   evaluateRules,
@@ -16,7 +17,9 @@ import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
   JobRepository,
+  JSONSchemaEntity,
   LocalizationResourceEnum,
+  MessageTemplateEntity,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -71,6 +74,46 @@ interface ISkipEvaluationContext {
 }
 
 type SkipFunction = (controlValues: Record<string, unknown>) => Promise<boolean>;
+
+/** The persisted JSON Schema document, as seen by the framework's narrower `Schema` type. */
+type PersistedControlSchema = {
+  type?: string;
+  anyOf?: unknown[];
+  properties?: Record<string, unknown>;
+};
+
+/**
+ * Persisted control schemas and the framework's `Schema` describe the same JSON Schema document,
+ * but the framework only accepts its narrowed `{ type: 'object' } | { anyOf } | ...` view of it.
+ * Reconciling the two in one place keeps the conversion out of every step constructor.
+ */
+function toFrameworkSchema(schema: PersistedControlSchema): Schema {
+  return schema as Schema;
+}
+
+function getStepTemplate(staticStep: NotificationStepEntity): MessageTemplateEntity {
+  const { template } = staticStep;
+
+  if (!template) {
+    throw new InternalServerErrorException(
+      `Step ${staticStep.stepId || staticStep._templateId} is missing its message template`
+    );
+  }
+
+  return template;
+}
+
+function getControlSchema(staticStep: NotificationStepEntity): JSONSchemaEntity {
+  const { controls } = getStepTemplate(staticStep);
+
+  if (!controls) {
+    throw new InternalServerErrorException(
+      `Step ${staticStep.stepId || staticStep._templateId} is missing its control schema`
+    );
+  }
+
+  return controls.schema;
+}
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -155,7 +198,7 @@ export class ConstructFrameworkWorkflow {
         },
         {
           skip: () => false,
-          controlSchema: emailControlSchema as unknown as Schema,
+          controlSchema: toFrameworkSchema(emailControlSchema),
           disableOutputSanitization: true,
           providers: {},
         }
@@ -179,7 +222,7 @@ export class ConstructFrameworkWorkflow {
       dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber, context, env }) => {
         const fullPayloadForRender: FullPayloadForRender = {
-          workflow: dbWorkflow as unknown as Record<string, unknown>,
+          workflow: buildWorkflowVariables(dbWorkflow),
           payload,
           subscriber,
           context,
@@ -432,7 +475,7 @@ export class ConstructFrameworkWorkflow {
   ): Required<Parameters<ChannelStep>[2]> {
     return {
       skip,
-      controlSchema: staticStep.template!.controls!.schema as unknown as Schema,
+      controlSchema: toFrameworkSchema(getControlSchema(staticStep)),
       disableOutputSanitization: true,
       providers: {},
     };
@@ -501,7 +544,7 @@ export class ConstructFrameworkWorkflow {
           existingControls: staticStep.template?.controls,
           stepResolverHash: staticStep.template?.stepResolverHash,
         }).schema
-      : staticStep.template!.controls!.schema;
+      : getControlSchema(staticStep);
 
     const resolveProviderOverride =
       (providerId: ContentOverrideProviderId) =>
@@ -526,9 +569,9 @@ export class ConstructFrameworkWorkflow {
 
     return {
       skip,
-      controlSchema: withProviderOverridesRuntimeSchema(
-        controlSchema as { properties?: Record<string, unknown> }
-      ) as unknown as Schema,
+      controlSchema: toFrameworkSchema(
+        withProviderOverridesRuntimeSchema(controlSchema as { properties?: Record<string, unknown> })
+      ),
       disableOutputSanitization: true,
       providers,
     } as Required<Parameters<ChannelStep>[2]>;
@@ -548,7 +591,7 @@ export class ConstructFrameworkWorkflow {
   ): NonNullable<Parameters<CustomStep>[2]> {
     return {
       ...this.constructActionStepOptions(staticStep, skip),
-      outputSchema: PERMISSIVE_EMPTY_SCHEMA as unknown as Schema,
+      outputSchema: PERMISSIVE_EMPTY_SCHEMA,
     };
   }
 
@@ -557,17 +600,17 @@ export class ConstructFrameworkWorkflow {
     staticStep: NotificationStepEntity,
     skip: SkipFunction
   ): Required<Parameters<ActionStep>[2]> {
-    const stepType = staticStep.template!.type;
+    const stepType = getStepTemplate(staticStep).type;
     const controlSchema = this.optionalAugmentControlSchemaDueToAjvBug(staticStep, stepType);
 
     return {
-      controlSchema: controlSchema as unknown as Schema,
+      controlSchema: toFrameworkSchema(controlSchema),
       skip,
     };
   }
 
   private optionalAugmentControlSchemaDueToAjvBug(staticStep: NotificationStepEntity, stepType: StepTypeEnum) {
-    let controlSchema = staticStep.template!.controls!.schema;
+    let controlSchema = getControlSchema(staticStep);
 
     /*
      * because of the known AJV issue with anyOf, we need to find the first schema that matches the control values

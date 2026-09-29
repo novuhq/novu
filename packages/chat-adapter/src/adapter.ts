@@ -24,12 +24,14 @@ import { channelIdFromThreadId, decodeThreadId, encodeThreadId, isDMThreadId } f
 import {
   type AgentBridgeRequest,
   AgentEvent,
+  type AgentMessage,
   type AgentMessageAuthor,
   type AgentSubscriber,
   type NovuAdapterConfig,
   type NovuRawMessage,
   type NovuThreadId,
   type NovuTypedAdapter,
+  type QuoteReplyContext,
   type Signal,
   type ThreadSnapshot,
 } from './types.js';
@@ -194,6 +196,12 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       case AgentEvent.ON_MESSAGE:
         await this.dispatchMessage(threadId, bridge, options);
         break;
+      case AgentEvent.ON_MESSAGE_UPDATED:
+        await this.dispatchMessageUpdated(threadId, bridge, options);
+        break;
+      case AgentEvent.ON_MESSAGE_DELETED:
+        await this.dispatchMessageDeleted(threadId, bridge, options);
+        break;
       case AgentEvent.ON_ACTION:
         await this.dispatchAction(threadId, bridge, options);
         break;
@@ -245,13 +253,61 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   private async dispatchMessage(threadId: string, bridge: AgentBridgeRequest, options?: WebhookOptions): Promise<void> {
     if (!bridge.message || !this.chat) return;
 
-    const raw = this.mapper.toRawMessage(bridge.message, {
-      conversationId: bridge.conversationId,
-      integrationIdentifier: bridge.integrationIdentifier,
-      platform: bridge.platform,
-    });
-    const message = this.mapper.buildMessage(raw, threadId, this.humanAuthor(bridge));
-    await this.chat.processMessage(this, threadId, message, options);
+    await this.chat.processMessage(this, threadId, this.toChatMessage(threadId, bridge, bridge.message), options);
+  }
+
+  private async dispatchMessageUpdated(
+    threadId: string,
+    bridge: AgentBridgeRequest,
+    options?: WebhookOptions
+  ): Promise<void> {
+    if (!bridge.message || !this.chat) return;
+
+    await this.chat.processMessageUpdated(
+      {
+        adapter: this,
+        threadId,
+        message: this.toChatMessage(threadId, bridge, bridge.message),
+        previousMessage: bridge.previousMessage
+          ? this.toChatMessage(threadId, bridge, bridge.previousMessage)
+          : undefined,
+      },
+      options
+    );
+  }
+
+  private async dispatchMessageDeleted(
+    threadId: string,
+    bridge: AgentBridgeRequest,
+    options?: WebhookOptions
+  ): Promise<void> {
+    if (!this.chat) return;
+
+    const snapshot = bridge.message ?? bridge.previousMessage;
+    await this.chat.processMessageDeleted(
+      {
+        adapter: this,
+        threadId,
+        channelId: bridge.platformContext.channelId,
+        messageId: snapshot?.platformMessageId ?? '',
+        previousMessage: snapshot ? this.toChatMessage(threadId, bridge, snapshot) : undefined,
+        raw: bridge,
+      },
+      options
+    );
+  }
+
+  private toChatMessage(threadId: string, bridge: AgentBridgeRequest, agentMessage: AgentMessage): ChatMessage {
+    const raw = {
+      ...this.mapper.toRawMessage(agentMessage, {
+        conversationId: bridge.conversationId,
+        integrationIdentifier: bridge.integrationIdentifier,
+        platform: bridge.platform,
+      }),
+      ...(agentMessage.replyTo ? { replyTo: agentMessage.replyTo } : {}),
+    };
+
+    return this.mapper.buildMessage(raw, threadId, this.humanAuthor({ ...bridge, message: agentMessage }));
   }
 
   private async dispatchAction(threadId: string, bridge: AgentBridgeRequest, options?: WebhookOptions): Promise<void> {
@@ -280,11 +336,14 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
 
     const reactedMessage = bridge.reaction.message
       ? this.mapper.buildMessage(
-          this.mapper.toRawMessage(bridge.reaction.message, {
-            conversationId: bridge.conversationId,
-            integrationIdentifier: bridge.integrationIdentifier,
-            platform: bridge.platform,
-          }),
+          {
+            ...this.mapper.toRawMessage(bridge.reaction.message, {
+              conversationId: bridge.conversationId,
+              integrationIdentifier: bridge.integrationIdentifier,
+              platform: bridge.platform,
+            }),
+            ...(bridge.reaction.message.replyTo ? { replyTo: bridge.reaction.message.replyTo } : {}),
+          },
           threadId
         )
       : undefined;
@@ -336,6 +395,9 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       userName: platformAuthor?.userName ?? sub.subscriberId,
       fullName: fullName || platformAuthor?.fullName || sub.subscriberId,
       isBot: false,
+      // The bridge wire carries the platform email; Novu's subscriber record wins when it has one.
+      email: sub.email || platformAuthor?.email,
+      isSystem: platformAuthor?.isSystem,
     };
   }
 
@@ -353,6 +415,22 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   // -- Outbound --
 
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<NovuRawMessage>> {
+    return this.emitOutboundMessage(threadId, message);
+  }
+
+  async reply(
+    threadId: string,
+    messageId: string,
+    message: AdapterPostableMessage
+  ): Promise<RawMessage<NovuRawMessage>> {
+    return this.emitOutboundMessage(threadId, message, { messageId });
+  }
+
+  private async emitOutboundMessage(
+    threadId: string,
+    message: AdapterPostableMessage,
+    quoteReply?: QuoteReplyContext
+  ): Promise<RawMessage<NovuRawMessage>> {
     const decoded = decodeThreadId(threadId);
     const reply = await this.mapper.toReplyContent(message);
     const messageId = mint('msg');
@@ -363,6 +441,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       messageId,
       content: toAgentMessageContent(reply),
       files: toAgentFileRefs(reply.files),
+      ...(quoteReply ? { quoteReply } : {}),
     });
 
     return {
@@ -388,7 +467,10 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       return deliverBufferedStream(threadId, textStream, deps);
     }
 
-    return deliverStreamingWithEdits(threadId, textStream, deps, options);
+    return deliverStreamingWithEdits(threadId, textStream, deps, options, {
+      platform: decoded.platform,
+      isDM: decoded.isDM,
+    });
   }
 
   async editMessage(

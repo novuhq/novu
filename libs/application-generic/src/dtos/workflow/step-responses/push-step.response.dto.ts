@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { PushControlDto } from '../controls/push-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class PushControlsMetadataResponseDto extends ControlsMetadataDto {
+class PushControlsMetadataResponseDto extends ControlsMetadataDto<PushControlDto> {
   @ApiProperty({
     description: 'Control values specific to Push',
     type: () => PushControlDto,
