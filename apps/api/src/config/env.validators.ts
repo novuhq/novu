@@ -1,4 +1,4 @@
-import { assertQueueBackendConfig } from '@novu/application-generic';
+import { assertQueueBackendConfig, requiresStandaloneRedis } from '@novu/application-generic';
 import {
   DEFAULT_NOTIFICATION_RETENTION_DAYS,
   FeatureFlagsKeysEnum,
@@ -71,8 +71,19 @@ export const envValidators = {
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  /*
+   * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
+   * does not open the BullMQ Redis (MemoryDB), so REDIS_HOST is not required.
+   */
+  ...(requiresStandaloneRedis()
+    ? {
+        REDIS_HOST: str(),
+        REDIS_PORT: port(),
+      }
+    : {
+        REDIS_HOST: str({ default: undefined }),
+        REDIS_PORT: str({ default: undefined }),
+      }),
   REDIS_TLS: json({ default: undefined }),
   REDIS_MASTER_HOST: str({ default: '' }),
   REDIS_MASTER_PORT: str({ default: '' }),
