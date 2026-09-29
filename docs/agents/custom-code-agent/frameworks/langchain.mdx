@@ -116,7 +116,7 @@ export default nextConfig;
 
 ## `toLangChainMessages()`
 
-Convert conversation context into LangChain `BaseMessage[]` when you invoke an agent or graph yourself. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an `AIMessage` with capped notification text and the full JSON payload:
+Convert conversation context into LangChain `BaseMessage[]` when you invoke an agent or graph yourself. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an `AIMessage` with capped notification text and the full JSON payload. See [Workflow-assigned agents](/agents/workflow-agents#reply-hydration) for how that notification is assigned and hydrated.
 
 ```typescript
 import { hydrateUnreachableAttachmentUrls, toLangChainMessages } from '@novu/framework/langchain';

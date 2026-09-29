@@ -38,7 +38,7 @@ Do **not** use it to re-gate an MCP / provider tool that is already parked on an
 
 ### Managed agent (Claude / Novu-hosted)
 
-Call the \`novu_human\` tool with \`kind\` \`ask\` | \`approve\` | \`choose\` | \`tell\`, a \`prompt\`, and \`options\` for \`choose\`. The card lands in this conversation. The session stays parked until the human settles it (\`tell\` returns as soon as it is delivered).
+Call the \`novu_human\` tool with \`kind\` \`ask\` | \`approve\` | \`choose\` | \`tell\` and a \`card\`. Title is \`card.title\` (required). \`choose\` needs \`card.options\` (2–10). Optional chrome: \`subtitle\` and \`body\` on every channel; \`icon\` is Slack-only (MCP catalog id like \`stripe\` / \`github\`, catalog display name, or an https 32×32 URL — not emoji). Approve may add \`approveLabel\`, \`denyLabel\`, \`extraActions\`. Do **not** invent \`trust-tool\` / \`trust-server\` extras. Do not pass top-level \`prompt\` or \`options\`. The card lands in this conversation. The session stays parked until the human settles it (\`tell\` returns as soon as it is delivered).
 
 ### Code-defined (framework) agent
 

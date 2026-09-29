@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
-    "chat": "^4.33.0",
+    "chat": "^4.40.0",
     "react": "^19.2.3",
     "rimraf": "~3.0.2",
     "typescript": "5.6.2",

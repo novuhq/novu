@@ -39,7 +39,7 @@ export class ExpoPushProvider extends PushBaseProvider implements IPushProvider 
         title: options.title,
         body: options.content,
         data: options.payload,
-        badge: badge as unknown as number,
+        badge,
         sound: typeof sound === 'string' ? (sound as ExpoPushMessage['sound']) : null,
         ...overrides,
       }).body,

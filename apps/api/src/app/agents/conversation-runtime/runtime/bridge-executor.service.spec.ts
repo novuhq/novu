@@ -1,8 +1,9 @@
-import { FeatureFlagsService } from '@novu/application-generic';
 import { AgentEventEnum } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { esmImport } from '../../shared/util/esm-import';
+import { resolveInboundReplyTo } from '../ingress/workflow-origin.helpers';
 import { BridgeExecutorService } from './bridge-executor.service';
 
 describe('BridgeExecutorService', () => {
@@ -16,35 +17,19 @@ describe('BridgeExecutorService', () => {
     };
   }
 
-  function makeFeatureFlagsService(isEventProtocolEnabled = false) {
-    return {
-      getFlag: sinon.stub().callsFake(async ({ key }: { key: string }) => {
-        if (key === FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED) {
-          return isEventProtocolEnabled;
-        }
-
-        return false;
-      }),
-    };
-  }
-
-  function makeService(
-    overrides: { isEventProtocolEnabled?: boolean; attachmentStorage?: Record<string, unknown> } = {}
-  ) {
+  function makeService(overrides: { attachmentStorage?: Record<string, unknown> } = {}) {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
     const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
-    const featureFlagsService = makeFeatureFlagsService(overrides.isEventProtocolEnabled);
 
     const service = new BridgeExecutorService(
       {} as any,
       logger as any,
       attachmentStorage as any,
-      conversationService as any,
-      featureFlagsService as unknown as FeatureFlagsService
+      conversationService as any
     );
 
-    return { service, logger, attachmentStorage, conversationService, featureFlagsService };
+    return { service, logger, attachmentStorage, conversationService };
   }
 
   function makeExecutionParams() {
@@ -164,26 +149,16 @@ describe('BridgeExecutorService', () => {
   });
 
   describe('buildPayload', () => {
-    it('should include eventsUrl when the agent event protocol flag is enabled', async () => {
-      const { service, featureFlagsService } = makeService({ isEventProtocolEnabled: true });
+    it('should include eventsUrl on every bridge payload', async () => {
+      const { service } = makeService();
 
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
       expect(payload.eventsUrl).to.match(/\/v1\/agents\/events\/ingest$/);
       expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
-      expect(payload.eventsUrl?.replace(/\/v1\/agents\/events\/ingest$/, '')).to.equal(
+      expect(payload.eventsUrl.replace(/\/v1\/agents\/events\/ingest$/, '')).to.equal(
         payload.replyUrl.replace(/\/v1\/agents\/agent-1\/reply$/, '')
       );
-      expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
-    });
-
-    it('should omit eventsUrl when the agent event protocol flag is disabled', async () => {
-      const { service } = makeService({ isEventProtocolEnabled: false });
-
-      const payload = await (service as any).buildPayload(makeExecutionParams());
-
-      expect(payload).to.not.have.property('eventsUrl');
-      expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
     });
 
     it('should map workflowOrigin onto notification for the bridge wire', async () => {
@@ -224,6 +199,65 @@ describe('BridgeExecutorService', () => {
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
       expect(payload.notification).to.equal(null);
+    });
+
+    it('should map WhatsApp quote-reply onto message.replyTo', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.WHATSAPP,
+        },
+        platformThreadId: 'whatsapp:+15551234567',
+        message: {
+          ...makeMessage(),
+          raw: {
+            message: {
+              context: { id: 'wamid.quoted' },
+            },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: 'wamid.quoted' });
+    });
+
+    it('should map Telegram quote-reply with chat-scoped message id', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.TELEGRAM,
+        },
+        platformThreadId: 'telegram:777042',
+        message: {
+          ...makeMessage(),
+          raw: {
+            reply_to_message: { message_id: 42 },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: '777042:42' });
+    });
+
+    it('should omit Telegram replyTo when chat id cannot be resolved', () => {
+      const replyTo = resolveInboundReplyTo(
+        AgentPlatformEnum.TELEGRAM,
+        {
+          id: 'msg-1',
+          text: 'reply',
+          author: makeMessage().author,
+          raw: { reply_to_message: { message_id: 42 } },
+        } as any,
+        'whatsapp:+15551234567'
+      );
+
+      expect(replyTo).to.equal(undefined);
     });
   });
 
@@ -363,6 +397,50 @@ describe('BridgeExecutorService', () => {
   });
 
   describe('mapMessage', () => {
+    /** Real `@chat-adapter/slack` parsing; only the Slack `users.info` lookup is stubbed. */
+    async function parseSlackEvent(event: Record<string, unknown>) {
+      const { SlackAdapter } = await esmImport('@chat-adapter/slack');
+      const adapter = new SlackAdapter({ signingSecret: 'test-secret', botToken: 'xoxb-test', botUserId: 'UBOT' });
+      sinon
+        .stub(adapter, 'lookupUser')
+        .callsFake(async (userId: string) => ({ displayName: userId, realName: userId }));
+
+      return adapter.parseSlackMessage({ channel: 'C1', ts: '1767225600.000100', ...event }, 'slack:C1:');
+    }
+
+    it('should flag Slackbot notices from USLACK as system messages without an email', async () => {
+      const { service } = makeService();
+      const message = await parseSlackEvent({ user: 'USLACK', text: 'Reminder: standup in 5 minutes' });
+
+      const mapped = await (service as any).mapMessage(message);
+
+      expect(mapped.author.isSystem).to.equal(true);
+      expect(mapped.author).to.not.have.property('email');
+    });
+
+    it('should omit markdown for plain prose so the brain never reads Markdown escapes', async () => {
+      const { service } = makeService();
+      const message = await parseSlackEvent({ user: 'UALICE', text: 'run deploy_prod_eu at 5 * 3 minutes [draft]' });
+
+      const mapped = await (service as any).mapMessage(message);
+
+      expect(mapped.text).to.equal('run deploy_prod_eu at 5 * 3 minutes [draft]');
+      expect(mapped).to.not.have.property('markdown');
+    });
+
+    it('should send plain text only when the formatted AST cannot be rendered', async () => {
+      const { service, logger } = makeService();
+
+      const mapped = await (service as any).mapMessage({
+        ...makeMessage(),
+        formatted: { type: 'root', children: [{ type: 'not-a-markdown-node' }] },
+      });
+
+      expect(mapped.text).to.equal('hello');
+      expect(mapped).to.not.have.property('markdown');
+      expect(logger.warn.calledOnce).to.equal(true);
+    });
+
     it('should re-sign stored attachments instead of reusing stored urls', async () => {
       const { service, attachmentStorage } = makeService({
         attachmentStorage: { signRead: sinon.stub().resolves('https://fresh-signed/read') },

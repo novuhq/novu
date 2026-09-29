@@ -1,5 +1,6 @@
-import { createBoundWebChat } from './web-chat/bind-web-chat';
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { loadWebChat, Novu } from './index';
+import { createBoundWebChat } from './web-chat/bind-web-chat';
 
 const sessionToken = 'cafebabe';
 const mockSessionResponse = { data: { token: sessionToken } };
@@ -28,10 +29,10 @@ async function mockFetch(url: string) {
   throw new Error(`Unmocked request: ${url}`);
 }
 
-jest.mock('socket.io-client', () => {
-  const mockIOFn = jest.fn(() => ({
-    on: jest.fn(),
-    disconnect: jest.fn(),
+vi.mock('socket.io-client', () => {
+  const mockIOFn = vi.fn(() => ({
+    on: vi.fn(),
+    disconnect: vi.fn(),
   }));
   return {
     __esModule: true,
@@ -39,21 +40,25 @@ jest.mock('socket.io-client', () => {
   };
 });
 
-jest.mock('./web-chat/bind-web-chat', () => ({
-  createBoundWebChat: jest.fn(),
+vi.mock('./web-chat/bind-web-chat', () => ({
+  createBoundWebChat: vi.fn(),
 }));
 
-const mockCreateBoundWebChat = jest.mocked(createBoundWebChat);
+const mockCreateBoundWebChat = vi.mocked(createBoundWebChat);
 
 function mockWebChatInstance() {
   return {
-    clearCache: jest.fn(),
-    conversation: jest.fn(() => ({ ok: true, data: { dispose: jest.fn() } })),
+    clearCache: vi.fn(),
+    conversation: vi.fn(() => ({ ok: true, data: { dispose: vi.fn() } })),
   };
 }
 
-beforeAll(() => jest.spyOn(global, 'fetch'));
-afterAll(() => jest.restoreAllMocks());
+beforeAll(() => {
+  vi.spyOn(global, 'fetch');
+});
+afterAll(() => {
+  vi.restoreAllMocks();
+});
 
 describe('Novu.loadWebChat', () => {
   const applicationIdentifier = 'foo';

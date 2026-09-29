@@ -492,6 +492,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Integration events
     case 'integration_selected':
       return 'Integration selected';
+    case 'integration_conditions_matched':
+      return 'Integration conditions matched';
 
     // Layout events
     case 'layout_not_found':

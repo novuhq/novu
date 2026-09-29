@@ -24,5 +24,6 @@
       }
     }
   },
-  "tags": ["type:package"]
+  "tags": ["type:package"],
+  "implicitDependencies": ["@novu/agent-event-protocol"]
 }

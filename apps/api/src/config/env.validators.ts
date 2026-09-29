@@ -1,8 +1,31 @@
-import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { assertQueueBackendConfig, requiresStandaloneRedis } from '@novu/application-generic';
+import {
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
+  FeatureFlagsKeysEnum,
+  JobTopicNameEnum,
+  QueueBackend,
+  StringifyEnv,
+} from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  return cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators);
+
+  /*
+   * The API only produces, and only to these three - inbound parse is enqueued
+   * by the SMTP service and process-subscriber by the worker, so demanding
+   * their queue urls here would block boot on config the API never reads.
+   *
+   * It needs the scheduler once BullMQ is gone because snooze puts a delayed
+   * job on the standard queue, and a snooze beyond 900s can then only be
+   * delivered by EventBridge.
+   */
+  assertQueueBackendConfig({
+    topics: [JobTopicNameEnum.STANDARD, JobTopicNameEnum.WORKFLOW, JobTopicNameEnum.WEB_SOCKETS],
+    requiresScheduler: true,
+  });
+
+  return env;
 }
 
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
@@ -48,8 +71,19 @@ export const envValidators = {
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  /*
+   * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
+   * does not open the BullMQ Redis (MemoryDB), so REDIS_HOST is not required.
+   */
+  ...(requiresStandaloneRedis()
+    ? {
+        REDIS_HOST: str(),
+        REDIS_PORT: port(),
+      }
+    : {
+        REDIS_HOST: str({ default: undefined }),
+        REDIS_PORT: str({ default: undefined }),
+      }),
   REDIS_TLS: json({ default: undefined }),
   REDIS_MASTER_HOST: str({ default: '' }),
   REDIS_MASTER_PORT: str({ default: '' }),
@@ -78,7 +112,12 @@ export const envValidators = {
   STORAGE_SERVICE: str({ default: undefined }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
-  // SQS queue backend (optional - when unset, jobs are produced to BullMQ only)
+  /*
+   * Which backend the API produces to. `sqs_bullmq` still falls back to BullMQ
+   * when a send fails; `sqs` lets the failure surface instead. See
+   * assertQueueBackendConfig in @novu/application-generic for required env.
+   */
+  QUEUE_BACKEND: str({ choices: Object.values(QueueBackend), default: QueueBackend.BULLMQ }),
   SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
   SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
   SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
@@ -86,8 +125,8 @@ export const envValidators = {
   SQS_ENDPOINT: str({ default: undefined }),
   SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
   SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
-  // EventBridge Scheduler for delays beyond the SQS 900s cap (optional - when
-  // unset, long delays keep going to BullMQ)
+  // EventBridge Scheduler for delays beyond the SQS 900s cap. Required once
+  // QUEUE_BACKEND=sqs, since long delays then have no BullMQ fallback.
   EVENTBRIDGE_SCHEDULER_GROUP_PREFIX: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_ROLE_ARN: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_DLQ_ARN: str({ default: undefined }),

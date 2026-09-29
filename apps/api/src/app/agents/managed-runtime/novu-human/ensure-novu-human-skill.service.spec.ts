@@ -10,19 +10,6 @@ describe('EnsureNovuHumanSkill', () => {
     return { service, logger };
   }
 
-  it('uploads and attaches when the agent has no Read tool and no other skills', async () => {
-    const { service } = setup();
-    const provider = {
-      capabilities: { skills: true },
-      uploadSkill: sinon.stub().resolves({ skillId: 'skill_hitl', version: 'v1' }),
-    };
-
-    const skills = await service.mergeForCreate(provider as any, undefined);
-
-    expect(provider.uploadSkill.calledOnce).to.equal(true);
-    expect(skills).to.deep.equal([{ type: 'custom', skillId: 'skill_hitl', version: 'v1' }]);
-  });
-
   it('uploads and attaches onto an empty skills list', async () => {
     const { service } = setup();
     const provider = {

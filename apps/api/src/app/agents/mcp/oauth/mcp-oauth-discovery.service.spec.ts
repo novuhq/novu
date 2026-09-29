@@ -614,45 +614,4 @@ describe('McpOAuthDiscoveryService', () => {
       expect(result.tokenEndpointAuthMethod).to.equal('none');
     });
   });
-
-  describe('clearCache', () => {
-    it('drops cached entries on demand', async () => {
-      const prmBody = {
-        resource: 'https://mcp.example.com',
-        authorization_servers: ['https://auth.example.com'],
-      };
-      safeRawStub.resolves(rawResponse(401, {}));
-      safeJsonStub.resolves(jsonResponse(200, prmBody));
-
-      await service.discoverProtectedResource('https://mcp.example.com/mcp');
-      service.clearCache({ mcpUrl: 'https://mcp.example.com/mcp' });
-      await service.discoverProtectedResource('https://mcp.example.com/mcp');
-
-      expect(safeJsonStub.callCount).to.equal(2);
-    });
-
-    it('evicts the canonical issuer entry when clearing a tenant-pathed issuer', async () => {
-      // Auth0-tenant pattern: discovery dual-keys the metadata under both the
-      // tenant-pathed URL and the document's canonical origin issuer. Clearing
-      // by the tenant-pathed key must also drop the canonical entry, otherwise
-      // a later canonical-keyed lookup hits the stale cache.
-      const asBody = {
-        authorization_endpoint: 'https://auth.example.com/authorize',
-        token_endpoint: 'https://auth.example.com/token',
-        registration_endpoint: 'https://auth.example.com/register',
-        code_challenge_methods_supported: ['S256'],
-        authorization_response_iss_parameter_supported: true,
-      };
-      safeJsonStub.resolves(jsonResponse(200, { ...asBody, issuer: 'https://auth.example.com' }));
-
-      const tenantIssuer = 'https://auth.example.com/tenant-abc';
-      await service.discoverAuthorizationServer(tenantIssuer);
-      expect(safeJsonStub.callCount).to.equal(1);
-
-      service.clearCache({ issuer: tenantIssuer });
-
-      await service.discoverAuthorizationServer('https://auth.example.com');
-      expect(safeJsonStub.callCount).to.equal(2);
-    });
-  });
 });

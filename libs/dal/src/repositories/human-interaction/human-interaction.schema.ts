@@ -31,21 +31,9 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
       default: HumanInteractionStatusEnum.PENDING,
       required: true,
     },
-    prompt: {
-      type: Schema.Types.String,
+    content: {
+      type: Schema.Types.Mixed,
       required: true,
-    },
-    options: {
-      type: [
-        new Schema(
-          {
-            id: { type: Schema.Types.String, required: true },
-            label: { type: Schema.Types.String, required: true },
-          },
-          { _id: false }
-        ),
-      ],
-      default: undefined,
     },
     fromLabel: {
       type: Schema.Types.String,
@@ -101,6 +89,7 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
 );
 
 humanInteractionSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
+humanInteractionSchema.index({ _environmentId: 1, requestId: 1 }, { sparse: true });
 // Pending-cap counts + "most recent pending ask" bare-reply correlation.
 humanInteractionSchema.index({ _environmentId: 1, subscriberIds: 1, status: 1, createdAt: -1 });
 // Exact reply-to correlation by delivered card message id.

@@ -16,7 +16,7 @@ import {
   HumanChannelViaEnum,
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
-import { buildPendingContent } from '../../agents/human-relay/human-card.builder';
+import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 
 export interface ResolvedHumanTarget {
@@ -141,7 +141,7 @@ export class HumanDeliveryService {
     interaction: HumanInteractionEntity,
     target: ResolvedHumanTarget
   ): Promise<{ platformMessageId: string; platformThreadId: string }> {
-    return this.deliverContent(interaction._agentId, target, buildPendingContent(interaction));
+    return this.deliverContent(interaction._agentId, target, buildPendingDeliveryContent(interaction));
   }
 
   /** One-off DM of arbitrary content (e.g. the keyless sign-up CTA) to an already-resolved target. */

@@ -108,6 +108,32 @@ const sesConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+const photonImessageConfigurations: ConfigConfiguration[] = [
+  {
+    key: 'inboundWebhookEnabled',
+    displayName: 'Delivery & Read Receipts',
+    tooltip:
+      'When enabled, Photon delivers outbound-echo and read-receipt events to Novu so message activity reflects delivered/read state.',
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: 'inboundWebhookSigningKey',
+    displayName: 'Inbound Webhook Signing Key',
+    type: 'string',
+    required: false,
+  },
+];
+
+export const photonImessageGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: photonImessageConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://docs.photon.codes',
+  },
+];
+
 export const pushConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',

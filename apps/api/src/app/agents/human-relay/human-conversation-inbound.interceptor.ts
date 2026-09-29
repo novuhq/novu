@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { parseNovuHumanRequestId } from '@novu/shared';
+import { parseNovuHumanRequestId, parseToolApprovalRequestId } from '@novu/shared';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { HumanInteractionInboundService } from './human-interaction-inbound.service';
 import { toAgentHumanResponse } from './to-agent-human-response';
@@ -18,6 +18,10 @@ import { toAgentHumanResponse } from './to-agent-human-response';
 @Injectable()
 export class HumanConversationInboundInterceptor {
   constructor(private readonly inbound: HumanInteractionInboundService) {}
+
+  async hasPendingAsk(environmentId: string, conversationId: string): Promise<boolean> {
+    return this.inbound.hasPendingConversationAsk(environmentId, conversationId);
+  }
 
   async tryHandleMessage(turn: ConversationTurn): Promise<boolean> {
     if (turn.agent.runtime === 'human_relay') {
@@ -44,7 +48,16 @@ export class HumanConversationInboundInterceptor {
     if (result.outcome === 'settled') {
       turn.humanResponse = toAgentHumanResponse(result.settled);
 
-      return parseNovuHumanRequestId(result.settled.requestId) !== null;
+      if (parseNovuHumanRequestId(result.settled.requestId) !== null) {
+        return true;
+      }
+
+      const settledToolApproval = parseToolApprovalRequestId(result.settled.requestId) !== null;
+      if (settledToolApproval) {
+        turn.toolApprovalSettledByHitl = true;
+      }
+
+      return settledToolApproval && turn.agent.runtime === 'managed';
     }
 
     return result.outcome === 'consumed';

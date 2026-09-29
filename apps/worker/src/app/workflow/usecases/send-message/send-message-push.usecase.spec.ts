@@ -97,7 +97,7 @@ describe('SendMessagePush - provider content overrides', () => {
       messageRepository as never,
       { execute: sinon.stub().resolves(undefined) } as never, // createExecutionDetails
       {} as never, // compileTemplate
-      { execute: sinon.stub().resolves(fcmIntegration) } as never, // selectIntegration
+      { execute: sinon.stub().resolves({ integration: fcmIntegration }) } as never, // selectIntegration
       {} as never, // getNovuProviderCredentials
       { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never, // selectVariant
       {

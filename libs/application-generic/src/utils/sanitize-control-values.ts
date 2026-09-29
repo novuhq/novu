@@ -22,9 +22,14 @@ import {
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 import { resolveChatEditorType } from './resolve-chat-editor-type';
 
-// Cast input T_Type to trigger Ajv validation errors - possible undefined
-function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
-  return isEmpty(input) ? defaultValue : input;
+function sanitizeEmptyInput<TValue>(input: TValue, defaultValue: TValue): TValue;
+function sanitizeEmptyInput<TValue>(input: TValue): TValue | undefined;
+function sanitizeEmptyInput<TValue>(input: TValue, defaultValue?: TValue): TValue | undefined {
+  if (isEmpty(input)) {
+    return defaultValue;
+  }
+
+  return input;
 }
 
 export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
@@ -197,10 +202,12 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
 
   const anyControlValues = controlValues as Record<string, unknown>;
   const lookBackWindow = (anyControlValues.lookBackWindow as LookBackWindowType)?.amount;
+  const rawAmount = anyControlValues.amount;
+  const amount = typeof rawAmount === 'number' || typeof rawAmount === 'string' ? rawAmount : undefined;
 
   return filterNullishValues({
     // Cast to trigger Ajv validation errors - possible undefined
-    ...(parseAmount(anyControlValues.amount) as { amount?: number }),
+    ...(parseAmount(amount) as { amount?: number }),
     unit: anyControlValues.unit,
     digestKey: anyControlValues.digestKey,
     skip: anyControlValues.skip,
@@ -275,17 +282,17 @@ function sanitizeLayout(controlValues: LayoutControlType) {
   };
 }
 
-function parseAmount(amount?: unknown) {
+function parseAmount(amount?: number | string): { amount?: number } | number | string {
   try {
     if (!isNumber(amount)) {
       return {};
     }
 
-    const numberAmount = typeof amount === 'string' ? parseInt(amount, 10) : amount;
+    const numberAmount = typeof amount === 'string' ? Number.parseInt(amount, 10) : amount;
 
     return { amount: numberAmount };
-  } catch (error) {
-    return amount;
+  } catch {
+    return amount ?? {};
   }
 }
 

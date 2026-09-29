@@ -1,10 +1,11 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
-import { WebChatService } from './web-chat-service';
+import { describe, expect, it, test, vi } from 'vitest';
 import { HttpClient } from './http-client';
+import { WebChatService } from './web-chat-service';
 
 describe('WebChatService', () => {
   it('throws WebChatPlanLimitError on 402 accept response', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 402,
       json: async () => ({
@@ -27,7 +28,7 @@ describe('WebChatService', () => {
   });
 
   it('POSTs a new conversation message', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
       json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
@@ -51,7 +52,7 @@ describe('WebChatService', () => {
   });
 
   it('includes conversationIdentifier when resuming', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
       json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
@@ -80,7 +81,7 @@ describe('WebChatService', () => {
   });
 
   it('includes agentHash when provided', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
       json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
@@ -109,7 +110,7 @@ describe('WebChatService', () => {
   });
 
   it('GETs conversations with the session token already on the client', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({
@@ -137,7 +138,7 @@ describe('WebChatService', () => {
   });
 
   it('GETs conversation events', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({
@@ -164,7 +165,7 @@ describe('WebChatService', () => {
   });
 
   it('POSTs approval decision by echoing actionId', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
       json: async () => ({ data: { identifier: 'conv_abcdefghijkl' } }),
@@ -198,7 +199,7 @@ describe('WebChatService', () => {
   });
 
   it('POSTs a Card button action with sourceMessageId and value', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ data: { identifier: 'conv_abcdefghijkl' } }),
@@ -236,7 +237,7 @@ describe('WebChatService', () => {
   });
 
   it('GETs older conversation events with before cursor', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({
@@ -265,8 +266,8 @@ describe('WebChatService', () => {
   });
 
   it('skips invalid envelopes in history pages', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const fetchMock = jest.fn().mockResolvedValue({
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({

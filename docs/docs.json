@@ -197,6 +197,7 @@
                 "pages": [
                   "platform/integrations/chat/writing-chat-template",
                   "platform/integrations/chat/discord",
+                  "platform/integrations/chat/google-chat",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
                   {
@@ -455,6 +456,7 @@
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
               "agents/get-started/agents-and-providers",
+              "agents/workflow-agents",
               {
                 "group": "Quickstart",
                 "pages": [
@@ -480,7 +482,17 @@
                 "group": "Web Chat",
                 "tag": "Beta",
                 "root": "agents/channels/web-chat",
-                "pages": ["agents/channels/web-chat/quickstart", "agents/channels/web-chat/chat-ui"]
+                "pages": [
+                  "agents/channels/web-chat/messages",
+                  "agents/channels/web-chat/tools",
+                  "agents/channels/web-chat/generative-ui",
+                  "agents/channels/web-chat/conversations",
+                  {
+                    "group": "Recipes",
+                    "pages": ["agents/channels/web-chat/recipes/assistant-ui"]
+                  },
+                  "agents/channels/web-chat/security"
+                ]
               }
             ],
             "icon": "messages-square"
@@ -978,18 +990,17 @@
                       {
                         "group": "HTTP delivery",
                         "expanded": false,
-                        "pages": ["guides/webhook-connectors/polling-endpoint", "guides/webhook-connectors/fifo-endpoint"]
+                        "pages": [
+                          "guides/webhook-connectors/polling-endpoint",
+                          "guides/webhook-connectors/fifo-endpoint"
+                        ]
                       }
                     ]
                   },
                   {
                     "group": "Data sources",
                     "expanded": false,
-                    "pages": [
-                      "guides/analytics/segment",
-                      "guides/analytics/hightouch",
-                      "guides/analytics/databricks"
-                    ]
+                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch", "guides/analytics/databricks"]
                   },
                   {
                     "group": "Recipes",
@@ -1186,7 +1197,7 @@
     "socials": {
       "x": "https://x.com/novuhq",
       "github": "https://github.com/novuhq/novu",
-      "linkedin": "https://linkedin.com/company/novuhq"
+      "linkedin": "https://www.linkedin.com/company/novuco"
     },
     "links": [
       {
@@ -1818,12 +1829,17 @@
     },
     {
       "source": "/agents/agent-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
       "source": "/agents/web-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
@@ -1833,42 +1849,47 @@
     },
     {
       "source": "/agents/channels/agent-chat/quickstart",
-      "destination": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/chat-ui",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/starter-ui",
+      "destination": "/agents/channels/web-chat/recipes/assistant-ui",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/rendering",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
       "source": "/agents/channels/web-chat/rendering",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/production",
-      "destination": "/agents/channels/web-chat",
+      "destination": "/agents/channels/web-chat/security",
       "permanent": true
     },
     {
       "source": "/agents/channels/web-chat/production",
-      "destination": "/agents/channels/web-chat",
+      "destination": "/agents/channels/web-chat/security",
       "permanent": true
     },
     {
       "source": "/agents/channels/agent-chat/messages",
-      "destination": "/agents/channels/web-chat/chat-ui",
-      "permanent": true
-    },
-    {
-      "source": "/agents/channels/web-chat/messages",
-      "destination": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
       "permanent": true
     },
     {

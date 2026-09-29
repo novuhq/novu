@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "3.19.3",
+  "version": "3.19.4",
   "type": "module",
   "portless": {
     "name": "dashboard.novu"
@@ -12,7 +12,7 @@
     "start:test": "vite --mode test",
     "start:static:build": "http-server dist -p 4201 --proxy http://127.0.0.1:4201?",
     "dev": "pnpm start",
-    "build": "NODE_OPTIONS='--max-old-space-size=6144' vite build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' vite build",
     "docker:build": "docker buildx build --load -f ./dockerfile -t novu-dashboard ./../.. $DOCKER_BUILD_ARGUMENTS",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",

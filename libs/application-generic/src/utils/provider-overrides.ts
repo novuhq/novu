@@ -5,6 +5,7 @@ import {
   type ContentOverrideProviderId,
   FCM_OVERRIDE_SCHEMA_SUBPATH,
   getProviderOverrideConfig,
+  type JSONSchemaDto,
   type ProviderOverrideConfig,
   type RuntimeIssue,
   SLACK_OVERRIDE_SCHEMA_SUBPATH,
@@ -17,7 +18,6 @@ import { slackOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-ove
 import { telegramOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/telegram';
 import { whatsappOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/whatsapp';
 import type { ErrorObject } from 'ajv';
-import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { type ControlIssues, mapSchemaErrorsToControlIssues } from './issues';
 import { createLiquidTolerantValidator } from './liquid-tolerant-validator';
 
@@ -39,10 +39,10 @@ const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
  * at runtime an unregistered one can only degrade to accepting anything.
  */
 export const LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH: Readonly<Record<string, JSONSchemaDto>> = {
-  [SLACK_OVERRIDE_SCHEMA_SUBPATH]: slackOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
-  [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: telegramOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
-  [WHATSAPP_OVERRIDE_SCHEMA_SUBPATH]: whatsappOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
-  [FCM_OVERRIDE_SCHEMA_SUBPATH]: fcmOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
+  [SLACK_OVERRIDE_SCHEMA_SUBPATH]: slackOverrideLiquidTolerantJsonSchema,
+  [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: telegramOverrideLiquidTolerantJsonSchema,
+  [WHATSAPP_OVERRIDE_SCHEMA_SUBPATH]: whatsappOverrideLiquidTolerantJsonSchema,
+  [FCM_OVERRIDE_SCHEMA_SUBPATH]: fcmOverrideLiquidTolerantJsonSchema,
 };
 
 export function isSupportedProviderOverrideId(providerId: string): providerId is ContentOverrideProviderId {
@@ -95,7 +95,7 @@ export function withStitchedProviderOverrides(
  */
 function resolveLiquidTolerantSchema(config: ProviderOverrideConfig): JSONSchemaDto {
   if (config.liquidTolerantSchema) {
-    return config.liquidTolerantSchema as unknown as JSONSchemaDto;
+    return config.liquidTolerantSchema;
   }
 
   if (!config.schemaSubpath) {

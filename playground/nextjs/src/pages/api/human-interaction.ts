@@ -27,6 +27,16 @@ type RequestBody = {
   kind?: string;
   prompt?: string;
   options?: string[];
+  card?: {
+    title?: string;
+    icon?: string;
+    subtitle?: string;
+    body?: string;
+    approveLabel?: string;
+    denyLabel?: string;
+    extraActions?: Array<string | { id: string; label: string }>;
+    options?: Array<string | { id: string; label: string }>;
+  };
   to?: string | string[];
   via?: string;
   agentIdentifier?: string;
@@ -60,8 +70,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return;
   }
 
-  if (!body.prompt) {
-    res.status(400).json({ error: 'prompt is required' });
+  const title = body.card?.title?.trim() || body.prompt?.trim();
+  if (!title) {
+    res.status(400).json({ error: 'card.title is required' });
 
     return;
   }
@@ -85,7 +96,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         'Content-Type': 'application/json',
         Authorization: `ApiKey ${secretKey}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        kind: body.kind,
+        card: {
+          ...(body.card ?? {}),
+          title,
+          ...(body.options?.length && !body.card?.options ? { options: body.options } : {}),
+        },
+        to: body.to,
+        ...(body.via ? { via: body.via } : {}),
+        ...(body.agentIdentifier ? { agentIdentifier: body.agentIdentifier } : {}),
+        ...(body.from ? { from: body.from } : {}),
+        ...(body.ttlSeconds !== undefined ? { ttlSeconds: body.ttlSeconds } : {}),
+      }),
     });
 
     const data = (await upstream.json()) as ResponseData;

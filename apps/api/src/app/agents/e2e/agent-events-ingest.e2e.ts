@@ -18,11 +18,6 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
 
   before(() => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
-    process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED = 'true';
-  });
-
-  after(() => {
-    delete process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED;
   });
 
   beforeEach(async () => {
@@ -84,8 +79,8 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
         a.senderType === ConversationActivitySenderTypeEnum.AGENT && a.type === ConversationActivityTypeEnum.MESSAGE
     );
     expect(messageActivity).to.exist;
-    expect(messageActivity!.identifier).to.equal(messageId);
-    expect(messageActivity!.content).to.equal(`Content for ${messageId}`);
+    expect(messageActivity?.identifier).to.equal(messageId);
+    expect(messageActivity?.content).to.equal(`Content for ${messageId}`);
   });
 
   it('should accept a replayed message envelope as idempotent and not persist a second activity', async () => {
@@ -195,20 +190,6 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     expect(activities.filter((a) => a.identifier === 'msg-agent-mismatch')).to.have.length(0);
   });
 
-  it('should return 404 when the agent event protocol flag is off', async () => {
-    const conversationId = await seedConversation(ctx);
-    const previousFlag = process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED;
-    delete process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED;
-
-    try {
-      const res = await postIngest([messageEnvelope(conversationId, 'msg-flag-off')]);
-
-      expect(res.status).to.equal(404);
-    } finally {
-      process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED = previousFlag;
-    }
-  });
-
   it('should accept a bridge tool-approval-request, persist the activity, and deliver the approval card', async () => {
     const conversationId = await seedConversation(ctx);
     const outboundGateway = testServer.getService(OutboundGateway);
@@ -255,13 +236,13 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     const runFinish = activities.find((a) => a.type === ConversationActivityTypeEnum.RUN_FINISH);
 
     expect(runStart).to.exist;
-    expect(runStart!.identifier).to.equal(`run_${runId}_start`);
-    expect(runStart!.sequence).to.be.a('number');
+    expect(runStart?.identifier).to.equal(`run_${runId}_start`);
+    expect(runStart?.sequence).to.be.a('number');
 
     expect(runFinish).to.exist;
-    expect(runFinish!.identifier).to.equal(`run_${runId}_finish`);
-    expect(runFinish!.sequence).to.be.a('number');
-    expect(runFinish!.richContent).to.deep.include({
+    expect(runFinish?.identifier).to.equal(`run_${runId}_finish`);
+    expect(runFinish?.sequence).to.be.a('number');
+    expect(runFinish?.richContent).to.deep.include({
       lifecycle: { outcome: 'completed', finishReason: 'stop' },
     });
 

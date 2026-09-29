@@ -52,7 +52,7 @@ describe('CreateNotificationJobs', () => {
       featureFlagsService as never
     );
 
-    return { usecase, notificationRepository, digestFilterSteps };
+    return { usecase, notificationRepository, digestFilterSteps, featureFlagsService };
   }
 
   function buildEmailStep(overrides: Partial<NotificationStepEntity> = {}): NotificationStepEntity {
@@ -178,4 +178,26 @@ describe('CreateNotificationJobs', () => {
 
     expect(jobs.every((job) => job._agentId === agentObjectId)).toBe(true);
   });
+
+  it.each([false, true])(
+    'should carry code-first workflow metadata on channel jobs when step dedup is %s',
+    async (isJobStepDedupEnabled) => {
+      const { usecase, featureFlagsService } = buildUsecase();
+      featureFlagsService.getFlag.mockResolvedValueOnce(false).mockResolvedValueOnce(isJobStepDedupEnabled);
+      const command = buildCommand([buildEmailStep()]);
+      command.bridgeUrl = 'https://example.com/bridge';
+      command.template.name = 'Order confirmation';
+      command.template.description = 'Sent after an order is placed';
+
+      const jobs = await usecase.execute(command);
+      const emailJob = jobs.find((job) => job.type === StepTypeEnum.EMAIL);
+
+      expect(emailJob?.step).toMatchObject({
+        workflowMetadata: {
+          name: 'Order confirmation',
+          description: 'Sent after an order is placed',
+        },
+      });
+    }
+  );
 });

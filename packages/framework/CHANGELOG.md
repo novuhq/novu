@@ -1,3 +1,37 @@
+## v2.14.0 (2026-09-28)
+
+### 🚀 Features
+
+- **api-service:** rich inbound message content and author metadata fixes NV-8629 ([#12728](https://github.com/novuhq/novu/pull/12728))
+- **framework:** re-export Chart, Table and LinkButton card builders fixes NV-8632 ([#12727](https://github.com/novuhq/novu/pull/12727))
+- **api-service,framework:** add inbound message edit/delete lifecycle fixes NV-8628 ([#12703](https://github.com/novuhq/novu/pull/12703))
+- **providers:** add Google Chat provider and documentation fixes NV-8811 ([#12690](https://github.com/novuhq/novu/pull/12690))
+- **root:** Add Photon (iMessage via Spectrum Cloud) channel and agent integration ([#12411](https://github.com/novuhq/novu/pull/12411))
+- **api-service:** expose inbound message.replyTo fixes NV-8627 ([#12645](https://github.com/novuhq/novu/pull/12645))
+- **framework:** add quoteReply option to ctx.reply() fixes NV-8794 ([#12633](https://github.com/novuhq/novu/pull/12633))
+
+### 🩹 Fixes
+
+- **framework:** treat Chart as a chat JSX primitive and type resolved card nodes fixes NV-8632 ([#12729](https://github.com/novuhq/novu/pull/12729))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Andy
+- Cursor @cursoragent
+- Nikita Grossman @nikitagrossman
+- Pawan Jain
+
+## v2.13.2 (2026-09-07)
+
+### 🩹 Fixes
+
+- **framework:** type outbound agent cards as protocol CardElement instead of Record fixes NV-8745 ([#12525](https://github.com/novuhq/novu/pull/12525))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v2.13.1 (2026-08-31)
 
 ### 🚀 Features

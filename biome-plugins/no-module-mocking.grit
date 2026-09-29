@@ -1,0 +1,11 @@
+language js(typescript)
+
+or {
+  `vi.mock($args)`,
+  `vi.doMock($args)`,
+  `vi.unstable_mockModule($args)`,
+  `jest.mock($args)`,
+  `jest.doMock($args)`
+} as $call where {
+  register_diagnostic(span=$call, severity="error", message="Replace module mocking with dependency injection through a real interface, service layer, or faithful test implementation.")
+}

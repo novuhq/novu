@@ -153,4 +153,3 @@ Every `<Box>` is a flex container. All visible text MUST be inside `<Text>`.
 - [references/INKJS-UI.md](references/INKJS-UI.md) — @inkjs/ui component catalog with examples
 - [references/TERMINAL-COMPAT.md](references/TERMINAL-COMPAT.md) — Terminal detection and graceful degradation
 - [references/PATTERNS.md](references/PATTERNS.md) — Layout patterns and design recipes
-- [scripts/scaffold.sh](scripts/scaffold.sh) — Bootstrap a new Ink wizard project

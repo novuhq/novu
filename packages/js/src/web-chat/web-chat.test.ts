@@ -1,30 +1,31 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { WebChatPlanLimitError, WebChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { NovuError } from '../utils/errors';
-import { WebChat } from './web-chat';
 import { derivePendingActions } from './agent-message.types';
 import { pendingActionKey } from './derive-pending-actions';
 import { createActionIdempotencyKeyForScope } from './idempotency';
 import type { WebChatChange } from './types';
+import { WebChat } from './web-chat';
 
 describe('WebChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
-  let sendMessage: jest.Mock;
-  let respondToAction: jest.Mock;
-  let sendAction: jest.Mock;
-  let getEvents: jest.Mock;
-  let connect: jest.Mock;
+  let sendMessage: Mock;
+  let respondToAction: Mock;
+  let sendAction: Mock;
+  let getEvents: Mock;
+  let connect: Mock;
   let webChat: WebChat;
 
   beforeEach(() => {
     emitter = new NovuEventEmitter();
-    sendMessage = jest.fn();
-    respondToAction = jest.fn();
-    sendAction = jest.fn();
-    getEvents = jest.fn();
-    connect = jest.fn().mockResolvedValue({ data: undefined });
+    sendMessage = vi.fn();
+    respondToAction = vi.fn();
+    sendAction = vi.fn();
+    getEvents = vi.fn();
+    connect = vi.fn().mockResolvedValue({ data: undefined });
     const webChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as WebChatService;
     webChat = new WebChat({
       inboxServiceInstance,
@@ -1234,7 +1235,7 @@ describe('WebChat', () => {
 
   it('drops malformed web_chat.agent_event envelopes without folding them', async () => {
     await openClaimedConversation();
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     emitter.emit('web_chat.agent_event', { result: { invalid: true } as any });
 

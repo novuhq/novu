@@ -300,9 +300,6 @@ export async function generateConnectOauthUrl(client: ConnectApiClient, input: C
       // oauth.v2.access response. That endpoint is what welcome-message
       // queries to know which Slack user to DM.
       autoLinkUser: true,
-      // Carry the agent identifier on the connection for observability /
-      // future scoping. Optional in subscriber mode.
-      context: { agent: input.agentIdentifier },
     }
   );
   const body = res.data;

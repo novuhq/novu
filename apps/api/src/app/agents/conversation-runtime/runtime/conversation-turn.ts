@@ -5,6 +5,7 @@ import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.s
 import type { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import type { StoredAttachment } from '../conversation/agent-attachment-storage.service';
+import type { UnseenThreadMessage } from '../ingress/seed-slack-thread-history';
 import type { WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 import type { BridgeReaction } from './bridge-executor.service';
 
@@ -27,12 +28,26 @@ export interface ConversationTurn {
    */
   subscriberResolution?: SubscriberResolution;
   message: Message | null;
+  /** The message as it read before an inbound edit. */
+  previousMessage?: Message | null;
   event: AgentEventEnum;
   thread: Thread;
   platformThreadId: string;
+  /** The acting user's platform identity (Slack userId, Telegram chatId). Set on message/action turns. */
+  platformUserId?: string;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
   workflowOrigin?: WorkflowOriginSnapshot | null;
+  unseenThreadMessages?: UnseenThreadMessage[];
   humanResponse?: AgentHumanResponse | null;
+  /**
+   * Set by the HITL inbound interceptor when a tool-approval click settled a
+   * `HumanInteraction` row. The settlement chain persists the
+   * `tool_approval_decision` itself, so the legacy `recordApprovalVerdict`
+   * writer must skip this click to avoid double-recording the verdict.
+   */
+  toolApprovalSettledByHitl?: boolean;
 }

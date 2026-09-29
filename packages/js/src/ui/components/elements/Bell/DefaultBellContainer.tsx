@@ -1,6 +1,6 @@
-import { createMemo, Show } from 'solid-js';
+import { createMemo, createSignal, Show } from 'solid-js';
 import { SeverityLevelEnum } from '../../../../types';
-import { cn, useStyle } from '../../../helpers';
+import { cn, createPresence, useStyle } from '../../../helpers';
 import { Bell as DefaultBell } from '../../../icons';
 import { AllAppearanceKey, InboxAppearanceCallback } from '../../../types';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
@@ -39,6 +39,8 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
   });
 
   const unreadCount = createMemo(() => props.unreadCount);
+  const [dotElement, setDotElement] = createSignal<HTMLSpanElement>();
+  const dot = createPresence({ present: () => props.unreadCount.total > 0, element: dotElement, appear: false });
 
   return (
     <span
@@ -92,12 +94,14 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
           />
         }
       />
-      <Show when={props.unreadCount.total > 0}>
+      <Show when={dot.isMounted()}>
         <span
+          ref={setDotElement}
+          data-state={dot.state()}
           class={style({
             key: 'bellDot',
             className:
-              'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background',
+              'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background nt-motion-pop',
             context: { unreadCount: unreadCount() } satisfies Parameters<InboxAppearanceCallback['bellDot']>[0],
           })}
         />

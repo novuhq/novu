@@ -39,7 +39,7 @@ export class SendTestEmail {
       message: 'Sending Email',
     });
 
-    const integration = await this.selectIntegration.execute(
+    const selection = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
@@ -49,9 +49,10 @@ export class SendTestEmail {
       })
     );
 
-    if (!integration) {
+    if (!selection) {
       throw new BadRequestException(`Missing an active email integration`);
     }
+    const { integration } = selection;
 
     if (integration.providerId === EmailProviderIdEnum.Novu) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
@@ -147,7 +148,7 @@ export class SendTestEmail {
         channel: ChannelTypeEnum.EMAIL,
         providerId,
       });
-    } catch (error) {
+    } catch (_error) {
       throw new BadRequestException(`Unexpected provider error`);
     }
   }
