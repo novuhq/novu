@@ -1,54 +1,37 @@
 import { readFileSync } from 'node:fs';
-import path from 'node:path';
 
-export type ForwardPath = 'a2a_proxy' | 'stream_assist';
-
+/** One agent the Discovery Agent can forward to (an entry in agents.json). */
 export type TargetAgent = {
-  /** Local id: routing option, metadata key, log field. */
+  /** Local id: what the classifier picks, and the key of this agent's session. */
   id: string;
   name: string;
+  /** What the classifier reads to pick this agent. */
   description: string;
-  path: ForwardPath;
-  /** Gemini Enterprise agent id (last segment of the agent resource name). */
+  /** `a2a_proxy` for registered A2A agents, `stream_assist` for Google-made agents. */
+  path: 'a2a_proxy' | 'stream_assist';
+  /** Gemini Enterprise agent id. */
   targetId: string;
 };
 
-export type Config = {
-  port: number;
-  novuSecretKey: string | undefined;
-  project: string;
-  engine: string;
-  vertexLocation: string;
-  geminiModel: string;
-  classifierModel: string;
-  agents: TargetAgent[];
-};
-
-export const DIRECT = 'direct';
-
-/** The Core Assistant itself: streamAssist with no agentsSpec. */
-export const CORE_ASSISTANT_ID = 'default_assistant';
-
-function required(name: string): string {
-  const value = process.env[name]?.trim();
+function env(name: string, fallback?: string): string {
+  const value = process.env[name]?.trim() || fallback;
   if (!value) throw new Error(`${name} is required`);
 
   return value;
 }
 
-export function loadConfig(): Config {
-  return {
-    port: Number(process.env.PORT ?? 8080),
-    novuSecretKey: process.env.NOVU_SECRET_KEY?.trim() || undefined,
-    project: required('GOOGLE_CLOUD_PROJECT'),
-    engine: required('GE_ENGINE'),
-    vertexLocation: process.env.VERTEX_LOCATION?.trim() || 'global',
-    geminiModel: process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash',
-    classifierModel: process.env.GEMINI_CLASSIFIER_MODEL?.trim() || 'gemini-3.5-flash-lite',
-    agents: JSON.parse(readFileSync(path.resolve(process.env.AGENTS_FILE?.trim() || './agents.json'), 'utf8')),
-  };
-}
+// Read by @novu/framework itself to post replies to Novu.
+env('NOVU_SECRET_KEY');
 
-export function log(event: string, data: Record<string, unknown>): void {
-  console.log(JSON.stringify({ severity: 'INFO', event, ...data }));
-}
+export const config = {
+  port: Number(env('PORT', '8080')),
+  project: env('GOOGLE_CLOUD_PROJECT'),
+  engine: env('GE_ENGINE'),
+  vertexLocation: env('VERTEX_LOCATION', 'global'),
+  geminiModel: env('GEMINI_MODEL', 'gemini-3.5-flash'),
+  classifierModel: env('GEMINI_CLASSIFIER_MODEL', 'gemini-3.5-flash-lite'),
+};
+
+export const agents: TargetAgent[] = JSON.parse(readFileSync(env('AGENTS_FILE', './agents.json'), 'utf8'));
+
+export const agentById = (id: string | undefined) => agents.find((agent) => agent.id === id);

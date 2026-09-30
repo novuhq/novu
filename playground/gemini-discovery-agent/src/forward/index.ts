@@ -1,17 +1,16 @@
-import type { Config, TargetAgent } from '../config.ts';
-import { sendToA2aProxy } from './a2a-proxy.ts';
-import { sendToStreamAssist } from './stream-assist.ts';
+import type { TargetAgent } from '../config.ts';
+import { askA2aProxy } from './a2a-proxy.ts';
+import { askStreamAssist } from './stream-assist.ts';
 
-export type ForwardResult =
-  /** The agent answered. */
-  | { kind: 'answer'; text: string; session: string }
-  /** The agent asked the user something (A2A input-required, surfaced by the proxy as a mock tool call). */
-  | { kind: 'question'; text: string; session: string }
-  /** No text and no known marker: the agent wants input we cannot read. */
-  | { kind: 'unreadable'; session: string };
+export type AgentReply = {
+  /** The agent's answer or question; undefined when it wants input we can't read. */
+  text?: string;
+  /** Gemini Enterprise session; pass it back on the next message to continue the conversation. */
+  session: string;
+};
 
-export function forward(config: Config, agent: TargetAgent, text: string, session: string | undefined): Promise<ForwardResult> {
-  return agent.path === 'a2a_proxy'
-    ? sendToA2aProxy(config, agent.targetId, text, session)
-    : sendToStreamAssist(config, agent.targetId, text, session);
+export function forward(target: TargetAgent, text: string, session: string | undefined): Promise<AgentReply> {
+  return target.path === 'a2a_proxy'
+    ? askA2aProxy(target.targetId, text, session)
+    : askStreamAssist(target.targetId, text, session);
 }

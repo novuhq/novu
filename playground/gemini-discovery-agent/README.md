@@ -8,11 +8,14 @@ Standalone npm project (excluded from the pnpm workspace). Node 24 runs the Type
 
 | Path | What |
 | --- | --- |
-| `src/server.ts` | Express + `serve()` from `@novu/framework/express` at `/api/novu` |
-| `src/agent.ts` | `onMessage`: routing, forwarding, plain-text replies |
-| `src/route/policy.ts` | Routing decision and the `route` metadata shape |
-| `src/route/gemini.ts` | Gemini Flash-Lite classifier, Gemini direct answers |
-| `src/forward/a2a-proxy.ts`, `stream-assist.ts` | Discovery Engine A2A proxy and `streamAssist` (Deep Research, Core Assistant) |
+| `src/server.ts` | Entry point: Express + `serve()` from `@novu/framework/express` at `/api/novu` |
+| `src/agent.ts` | Start reading here. `onMessage`: classify, then forward or answer directly |
+| `src/classify.ts` | Gemini Flash-Lite picks an agent (or `direct`) with a confidence |
+| `src/answer.ts` | Gemini direct answer: greetings, help, clarifying question |
+| `src/prompt.ts` | Shared prompt pieces: agent list, recent conversation |
+| `src/forward/` | `forward()` to an agent: `a2a-proxy.ts` (A2A agents), `stream-assist.ts` (Deep Research, Core Assistant) |
+| `src/google.ts` | Authenticated POST to Google APIs, and Gemini `generateContent` |
+| `src/config.ts` | Env vars and `agents.json` |
 | `agents.json` | Fixed candidate list |
 | `demo-agents/` | Canned A2A department agents (People, IT Helpdesk, Finance, Analyst) on Cloud Run |
 
@@ -50,7 +53,7 @@ State lives in conversation metadata under `route`: `{ current, sessions: { <age
 2. Gemini Flash-Lite returns `{agent, confidence}` over every agent plus `direct`. `high` forwards; anything else gets a direct Gemini answer, which asks which agent the user means when the message could fit more than one.
 3. A failed forward replies with "Open @Agent in Gemini Enterprise" text.
 
-Every decision is one JSON log line (`route_decision`, `forward_result`, `forward_failed`).
+Every decision is one JSON log line (`route`, `forward`, `forward_failed`).
 
 ## Agent list
 
