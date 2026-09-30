@@ -470,8 +470,10 @@ async function promptForEmail(): Promise<string> {
  * Links Slack for the human. The App Configuration Token never passes through
  * this terminal (unless the caller passes `--slack-config-token` for
  * automation): the landing page creates the app, then this opens Slack's
- * install page. The OAuth URL is too long for a QR, so a terminal only opens
- * the browser; the raw URL is printed when there is no terminal to open from.
+ * install page. The OAuth URL is too long for a QR, so a terminal opens the
+ * browser instead — but the raw URL is always printed too, because the opener
+ * is best-effort (SSH sessions, headless boxes) and setup would otherwise block
+ * with nothing to click.
  */
 export async function connectSlack(
   client: HumanApiClient,
@@ -499,11 +501,13 @@ export async function connectSlack(
     io
   );
 
+  io.write(
+    `\nAuthorize the Slack app in your workspace` +
+      (io.isTTY ? ' (opening it in your browser; use the link if it does not open)' : '') +
+      `:\n\n  ${pc.underline(authorizeUrl)}\n\n`
+  );
   if (io.isTTY) {
-    io.write('\nOpening Slack so you can install the app…\n\n');
     io.openInBrowser(authorizeUrl);
-  } else {
-    io.write(`\nAuthorize the Slack app in your workspace:\n\n  ${pc.underline(authorizeUrl)}\n\n`);
   }
 
   await waitForEndpoint(client, integration.identifier, subscriberId, 'the Slack install to complete');

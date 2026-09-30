@@ -217,7 +217,7 @@ describe('connectSlack', () => {
     expect(mocked.issueSlackSetupLink).not.toHaveBeenCalled();
   });
 
-  it('opens the install page and skips the long authorize URL when the Slack app already exists', async () => {
+  it('opens the install page and prints the authorize URL as a fallback when the Slack app already exists', async () => {
     mocked.hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValue(true);
     mocked.generateConnectOauthUrl.mockResolvedValue(authorizeUrl);
     const { io, output } = makeIo(true);
@@ -226,8 +226,8 @@ describe('connectSlack', () => {
 
     expect(mocked.issueSlackSetupLink).not.toHaveBeenCalled();
     expect(io.openInBrowser).toHaveBeenCalledWith(authorizeUrl);
-    expect(output()).toContain('Opening Slack');
-    expect(output()).not.toContain(authorizeUrl);
+    // The browser opener is best-effort (SSH, headless), so the link is always printed — but never as a QR.
+    expect(output()).toContain(authorizeUrl);
     expect(output()).not.toContain(`<QR ${authorizeUrl}>`);
   });
 
@@ -262,10 +262,9 @@ describe('connectSlack', () => {
     expect(io.openInBrowser).toHaveBeenNthCalledWith(2, authorizeUrl);
     expect(output()).toContain(setupUrl);
     expect(output()).toContain(`<QR ${setupUrl}>`);
-    expect(output()).toContain('Opening Slack');
-    // The config token never passes through the terminal, and the OAuth URL is too long to print.
+    // The config token never passes through the terminal; the OAuth URL is printed but too long for a QR.
     expect(mocked.slackQuickSetup).not.toHaveBeenCalled();
-    expect(output()).not.toContain(authorizeUrl);
+    expect(output()).toContain(authorizeUrl);
     expect(output()).not.toContain(`<QR ${authorizeUrl}>`);
   });
 
