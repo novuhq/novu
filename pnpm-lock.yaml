@@ -76,8 +76,9 @@ overrides:
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
   glob@>=10.2.0 <10.5.0: ^10.5.0
-  undici@>=7.0.0 <7.29.0: ^7.29.0
-  undici@>=6.0.0 <6.28.0: ^6.28.0
+  undici@>=7.0.0 <7.29.1: ^7.29.1
+  undici@>=6.0.0 <6.28.1: ^6.28.1
+  undici@>=8.0.0 <8.10.2: ^8.10.2
   jose@>=3.0.0 <4.15.5: ^4.15.5
   qs@<6.16.0: ^6.16.0
   js-yaml@<3.15.2: ^3.15.2
@@ -98,7 +99,7 @@ overrides:
   '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
   '@octokit/request@<8.4.1': ^8.4.1
   kysely@>=0.26.0 <0.28.17: 0.28.17
-  undici@>=5.0.0 <5.30.0: ^6.28.0
+  undici@>=5.0.0 <5.30.0: ^6.28.1
   markdown-it@>=13.0.0 <14.2.0: ^14.2.0
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
@@ -24469,7 +24470,7 @@ packages:
   native-fetch@4.0.2:
     resolution: {integrity: sha512-4QcVlKFtv2EYVS5MBgsGX5+NWKtbDbIECdUXDBGDMAZXq3Jkv9zf+y8iS7Ub8fEdga3GpYeazp9gauNqXHJOCg==}
     peerDependencies:
-      undici: ^7.29.0
+      undici: ^7.29.1
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
@@ -28949,16 +28950,16 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
-  undici@6.28.0:
-    resolution: {integrity: sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==}
+  undici@6.29.0:
+    resolution: {integrity: sha512-R+RODBqp6i2pPflGdq+xIOUkl+RNfGgHwoinecKu/JCuf2uO06cOKoDbI2P7Dn6KcswdKwrczbU6IYJ6K8X+wg==}
     engines: {node: '>=18.17'}
 
-  undici@7.29.0:
-    resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
+  undici@7.30.0:
+    resolution: {integrity: sha512-dkrQXeHSaoamnItlYbmzG0wFYrM0ZwDxCIg0A7aKjTyyhh9svRzCNFEzV+Vm05/yehjCzjDZ31KXfGEjYSztDQ==}
     engines: {node: '>=20.18.1'}
 
-  undici@8.10.1:
-    resolution: {integrity: sha512-YQ3WlbqjYMmNpdvDH64jAgLjxuAR9+649calDWhbshYaeQGO2bR4nI94ORJmwI3J9YhoKQnpyGOK+0zlWS5N5Q==}
+  undici@8.11.2:
+    resolution: {integrity: sha512-u4UB2/IrKdU6lFxumHmmo1a3fCQO5tzQllRorfoRS63txhrB7xTpSn1PftwC4qEHkOaqP95fCWW4lJzwErwzhQ==}
     engines: {node: '>=22.19.0'}
 
   unenv@2.0.0-rc.24:
@@ -30209,7 +30210,7 @@ snapshots:
       '@ai-sdk/provider': 3.0.16
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
-      undici: 6.28.0
+      undici: 6.29.0
       zod: 3.25.20
 
   '@ai-sdk/provider-utils@4.0.51(zod@3.25.76)':
@@ -30217,7 +30218,7 @@ snapshots:
       '@ai-sdk/provider': 3.0.16
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
-      undici: 6.28.0
+      undici: 6.29.0
       zod: 3.25.76
 
   '@ai-sdk/provider-utils@4.0.51(zod@4.3.5)':
@@ -30225,7 +30226,7 @@ snapshots:
       '@ai-sdk/provider': 3.0.16
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
-      undici: 6.28.0
+      undici: 6.29.0
       zod: 4.3.5
 
   '@ai-sdk/provider-utils@5.0.11(zod@3.25.20)':
@@ -30250,7 +30251,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.0
-      undici: 7.29.0
+      undici: 7.30.0
       zod: 4.4.3
 
   '@ai-sdk/provider@3.0.16':
@@ -35510,7 +35511,7 @@ snapshots:
       open: 8.4.2
       picomatch: 4.0.4
       systeminformation: 5.32.0
-      undici: 7.29.0
+      undici: 7.30.0
       which: 4.0.0
       yocto-spinner: 1.2.2
 
@@ -38232,7 +38233,7 @@ snapshots:
       request-ip: 3.3.0
       ringbufferjs: 2.0.0
       semver: 7.8.5
-      undici: 7.29.0
+      undici: 7.30.0
       unescape: 1.0.1
       unescape-js: 1.1.4
       uuid: 11.1.1
@@ -38555,7 +38556,7 @@ snapshots:
       '@octokit/plugin-paginate-rest': 9.2.2(@octokit/core@5.2.0)
       '@octokit/plugin-rest-endpoint-methods': 10.4.1(@octokit/core@5.2.0)
       '@octokit/types': 12.6.0
-      undici: 6.28.0
+      undici: 6.29.0
 
   '@octokit/auth-action@4.1.0':
     dependencies:
@@ -39818,9 +39819,9 @@ snapshots:
 
   '@plunk/node@2.0.0':
     dependencies:
-      native-fetch: 4.0.2(undici@6.28.0)
+      native-fetch: 4.0.2(undici@6.29.0)
       tslib: 2.8.1
-      undici: 6.28.0
+      undici: 6.29.0
 
   '@pnpm/cli-meta@5.0.0':
     dependencies:
@@ -50715,7 +50716,7 @@ snapshots:
       parse5: 7.1.2
       parse5-htmlparser2-tree-adapter: 7.0.0
       parse5-parser-stream: 7.1.2
-      undici: 6.28.0
+      undici: 6.29.0
       whatwg-mimetype: 4.0.0
 
   cheerio@1.0.0-rc.12:
@@ -50739,7 +50740,7 @@ snapshots:
       parse5: 7.3.0
       parse5-htmlparser2-tree-adapter: 7.1.0
       parse5-parser-stream: 7.1.2
-      undici: 7.29.0
+      undici: 7.30.0
       whatwg-mimetype: 4.0.0
 
   chokidar@1.7.0:
@@ -56334,7 +56335,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.2
-      undici: 8.10.1
+      undici: 8.11.2
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -57968,7 +57969,7 @@ snapshots:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.4(@types/node@22.15.13)
-      undici: 7.29.0
+      undici: 7.30.0
       workerd: 1.20260302.0
       ws: 8.21.0
       youch: 4.1.0-beta.10
@@ -58313,9 +58314,9 @@ snapshots:
 
   napi-postinstall@0.3.3: {}
 
-  native-fetch@4.0.2(undici@6.28.0):
+  native-fetch@4.0.2(undici@6.29.0):
     dependencies:
-      undici: 6.28.0
+      undici: 6.29.0
 
   natural-compare@1.4.0: {}
 
@@ -59043,7 +59044,7 @@ snapshots:
       chardet: 2.2.0
       cheerio: 1.2.0
       iconv-lite: 0.7.3
-      undici: 7.29.0
+      undici: 7.30.0
 
   open@10.2.0:
     dependencies:
@@ -62011,7 +62012,7 @@ snapshots:
       tailwind-merge: 3.4.0
       ts-morph: 26.0.0
       tsconfig-paths: 4.2.0
-      undici: 7.29.0
+      undici: 7.30.0
       validate-npm-package-name: 7.0.2
       zod: 3.25.20
       zod-to-json-schema: 3.25.2(zod@3.25.20)
@@ -64034,11 +64035,11 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici@6.28.0: {}
+  undici@6.29.0: {}
 
-  undici@7.29.0: {}
+  undici@7.30.0: {}
 
-  undici@8.10.1: {}
+  undici@8.11.2: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
