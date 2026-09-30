@@ -43,25 +43,28 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
   return str({ default: undefined });
 }
 
-// Managed-agent (Thalamus) config is optional at boot, same as the other agent features.
-// A blank URL (self-hosted, or a Cloud region without the worker) must not run envalid's `url()`
-// validator, which rejects an empty string even with a default. When a URL is set, the webhook
-// secret is required. Runtime use still fails in buildDurableBackend() if either is missing.
+// Managed-agent (Thalamus) config is optional at boot unless the worker URL is set.
+// A blank URL must not run envalid's `url()` validator, which rejects an empty string even
+// with a default. Once the URL is present, the webhook secret and API key are required too:
+// a worker with API_KEY set rejects requests that omit it with 401.
 // Do not redeclare these inside the enterprise block: a later spread overrides this one.
 function getThalamusValidators(): {
   THALAMUS_CF_URL: ValidatorSpec<string>;
   THALAMUS_WEBHOOK_SECRET: ValidatorSpec<string>;
+  THALAMUS_CF_API_KEY: ValidatorSpec<string>;
 } {
-  if (processEnv.IS_SELF_HOSTED === 'true' || !processEnv.THALAMUS_CF_URL) {
+  if (!processEnv.THALAMUS_CF_URL) {
     return {
       THALAMUS_CF_URL: str({ default: undefined }),
       THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+      THALAMUS_CF_API_KEY: str({ default: undefined }),
     };
   }
 
   return {
     THALAMUS_CF_URL: url(),
     THALAMUS_WEBHOOK_SECRET: str(),
+    THALAMUS_CF_API_KEY: str(),
   };
 }
 
@@ -150,7 +153,6 @@ export const envValidators = {
   STEP_RESOLVER_CF_PLACEMENT_REGION: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
-  THALAMUS_CF_API_KEY: str({ default: undefined }),
   ...getThalamusValidators(),
   /**
    * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
