@@ -1,4 +1,5 @@
 import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
+import { isClusterModeEnabled } from '../services/in-memory-provider/utils';
 
 /**
  * Queue URL env var per topic. Shared by `SqsService` and the per-process
@@ -74,6 +75,22 @@ function queueCapabilities(backend: QueueBackend): IQueueCapabilities {
 /** True while a BullMQ worker runs and BullMQ can still be produced to. */
 export function isBullMqEnabled(): boolean {
   return queueCapabilities(getQueueBackend()).runsBullMq;
+}
+
+/**
+ * `REDIS_HOST` / `REDIS_PORT` are the standalone Redis.
+ *
+ * Cluster mode serves cache and sockets from ElastiCache instead. The workflow
+ * store (MemoryDB, or the workflow Redis cluster) is opened only while BullMQ
+ * runs, so `QUEUE_BACKEND=sqs` in cluster mode does not need `REDIS_HOST`.
+ * Standalone mode still does: community cache and sockets read that host.
+ */
+export function requiresStandaloneRedis(): boolean {
+  if (!isClusterModeEnabled()) {
+    return true;
+  }
+
+  return isBullMqEnabled();
 }
 
 /** True when producers route to SQS, with or without the BullMQ backup. */

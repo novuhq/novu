@@ -24,6 +24,10 @@ const WORKER_CLASS_BY_TOPIC: Record<JobTopicNameEnum, WorkerClass | undefined> =
   [JobTopicNameEnum.PROCESS_SUBSCRIBER]: SubscriberProcessWorker,
   [JobTopicNameEnum.INBOUND_PARSE_MAIL]: InboundParseWorker,
   [JobTopicNameEnum.WEB_SOCKETS]: undefined,
+  /*
+   * Started by ActiveJobsMetricService, and only while BullMQ is enabled.
+   * Listing it in ACTIVE_WORKERS must not register an SQS consumer.
+   */
   [JobTopicNameEnum.ACTIVE_JOBS_METRIC]: undefined,
 };
 

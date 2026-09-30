@@ -24,7 +24,11 @@ import { emptyJsonSchema } from '../../utils/jsonToSchema';
 import { computeResultSchema } from '../../utils/map-step-type-to-result.mapper';
 import { parsePayloadSchema } from '../../utils/parse-payload-schema';
 import { CreateVariablesObject, CreateVariablesObjectCommand } from '../create-variables-object';
-import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
+import {
+  BuildVariableSchemaCommand,
+  IOptimisticStepInfo,
+  IPreloadedEnvironmentContext,
+} from './build-available-variable-schema.command';
 
 type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'>;
 
@@ -101,14 +105,13 @@ export class BuildVariableSchemaUsecase {
 
     const effectivePayloadSchema = optimisticPayloadSchema ?? workflow?.payloadSchema;
 
-    const [rawEnvVars, environmentEntity] = await Promise.all([
-      this.environmentVariableRepository.findByEnvironment(command.organizationId, command.environmentId),
-      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
-    ]);
-    const systemVars: EnvironmentSystemVariables | Record<string, never> = environmentEntity
-      ? { name: environmentEntity.name, type: environmentEntity.type }
+    const environmentContext = command.preloadedEnvironmentContext
+      ? command.preloadedEnvironmentContext
+      : await this.loadEnvironmentContext(command.organizationId, command.environmentId);
+    const systemVars: EnvironmentSystemVariables | Record<string, never> = environmentContext.environment
+      ? { name: environmentContext.environment.name, type: environmentContext.environment.type }
       : {};
-    const envVars = { ...resolveEnvironmentVariables(rawEnvVars), ...systemVars };
+    const envVars = { ...resolveEnvironmentVariables(environmentContext.rawEnvVars), ...systemVars };
     const controlValuesMap = buildControlValuesMap(controls, optimisticSteps);
 
     return {
@@ -128,6 +131,19 @@ export class BuildVariableSchemaUsecase {
       },
       additionalProperties: false,
     } as const satisfies JSONSchemaDto;
+  }
+
+  @Instrument()
+  async loadEnvironmentContext(organizationId: string, environmentId: string): Promise<IPreloadedEnvironmentContext> {
+    const [rawEnvVars, environmentEntity] = await Promise.all([
+      this.environmentVariableRepository.findByEnvironment(organizationId, environmentId),
+      this.environmentRepository.findByIdAndOrganization(environmentId, organizationId),
+    ]);
+
+    return {
+      rawEnvVars,
+      environment: environmentEntity ? { name: environmentEntity.name, type: environmentEntity.type } : null,
+    };
   }
 
   /**

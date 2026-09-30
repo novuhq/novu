@@ -1,29 +1,37 @@
-import { describe, expect, it, vi } from 'vitest';
-import { HumanApiError } from '../api/client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { type HumanApiClient, HumanApiError } from '../api/client';
 import type { AgentIntegrationLink } from '../api/setup';
 import { DEFAULT_API_URL, HUMAN_SETUP_PAGE_ORIGIN } from '../config';
 
-vi.mock('../api/setup', async () => {
-  const actual = await vi.importActual<typeof import('../api/setup')>('../api/setup');
+const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus, hasChannelEndpoint } = vi.hoisted(() => ({
+  getSlackSetupLinkStatus: vi.fn(),
+  getTelegramMobileLinkStatus: vi.fn(),
+  hasChannelEndpoint: vi.fn(),
+}));
 
-  return { ...actual, getSlackSetupLinkStatus: vi.fn(), getTelegramMobileLinkStatus: vi.fn() };
-});
+vi.mock('../api/setup', () => ({
+  getSlackSetupLinkStatus,
+  getTelegramMobileLinkStatus,
+  hasChannelEndpoint,
+  generateConnectOauthUrl: vi.fn(),
+  issueTelegramSubscriberLink: vi.fn(),
+}));
 
-const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus } = await import('../api/setup');
-const {
+import {
   buildSetupPageUrl,
+  CHANNEL_POLL_INTERVAL_MS,
+  CHANNEL_POLL_TIMEOUT_MS,
   findLinkedIntegration,
-  inferViaFromLinks,
   isMissingBotTokenError,
-  linkedVias,
   parseEmailAddress,
   viaForProviderId,
+  waitForAnyEndpoint,
   waitForSlackSetupPage,
   waitForTelegramSetupPage,
-} = await import('./link-channel');
+} from './link-channel';
 
-const mockedStatus = vi.mocked(getTelegramMobileLinkStatus);
-const mockedSlackStatus = vi.mocked(getSlackSetupLinkStatus);
+const mockedStatus = getTelegramMobileLinkStatus;
+const mockedSlackStatus = getSlackSetupLinkStatus;
 const client = { apiUrl: DEFAULT_API_URL } as never;
 
 function link(providerId: string, identifier = providerId, active = true): AgentIntegrationLink {
@@ -41,21 +49,6 @@ describe('viaForProviderId', () => {
   });
 });
 
-describe('inferViaFromLinks', () => {
-  it('returns the sole linked channel', () => {
-    expect(inferViaFromLinks([link('telegram')])).toBe('telegram');
-  });
-
-  it('returns null when none or several channels are linked', () => {
-    expect(inferViaFromLinks([])).toBeNull();
-    expect(inferViaFromLinks([link('telegram'), link('slack')])).toBeNull();
-  });
-
-  it('ignores inactive links', () => {
-    expect(inferViaFromLinks([link('telegram', 'tg', false), link('slack')])).toBe('slack');
-  });
-});
-
 describe('findLinkedIntegration', () => {
   it('picks the integration for the requested channel', () => {
     const links = [link('telegram', 'tg-1'), link('slack', 'sl-1')];
@@ -63,11 +56,9 @@ describe('findLinkedIntegration', () => {
     expect(findLinkedIntegration(links, 'slack')?.integration.identifier).toBe('sl-1');
     expect(findLinkedIntegration(links, 'email')).toBeUndefined();
   });
-});
 
-describe('linkedVias', () => {
-  it('dedupes platforms in first-seen order', () => {
-    expect(linkedVias([link('slack'), link('novu-slack'), link('telegram')])).toEqual(['slack', 'telegram']);
+  it('skips inactive integrations', () => {
+    expect(findLinkedIntegration([link('telegram', 'tg-1', false)], 'telegram')).toBeUndefined();
   });
 });
 
@@ -156,5 +147,53 @@ describe('waitForSlackSetupPage', () => {
     mockedSlackStatus.mockResolvedValue({ valid: true });
 
     await expect(waitForSlackSetupPage(client, 'tok', { intervalMs: 1, timeoutMs: 20 })).resolves.toBe('timeout');
+  });
+});
+
+describe('waitForAnyEndpoint', () => {
+  const client = {} as HumanApiClient;
+
+  afterEach(() => {
+    vi.useRealTimers();
+    hasChannelEndpoint.mockReset();
+  });
+
+  it('returns the integration the human connected on', async () => {
+    hasChannelEndpoint.mockImplementation(
+      async (_client: unknown, integrationIdentifier: string) => integrationIdentifier === 'sl-1'
+    );
+
+    await expect(waitForAnyEndpoint(client, ['tg-1', 'sl-1'], 'alice', 'alice connect', 'hint')).resolves.toBe('sl-1');
+    expect(hasChannelEndpoint).toHaveBeenCalledWith(client, 'tg-1', 'alice');
+  });
+
+  it('keeps polling until one of them connects', async () => {
+    vi.useFakeTimers();
+    hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValueOnce(false).mockResolvedValue(true);
+
+    const connected = waitForAnyEndpoint(client, ['tg-1', 'sl-1'], 'alice', 'alice connect', 'hint');
+    await vi.advanceTimersByTimeAsync(CHANNEL_POLL_INTERVAL_MS);
+
+    await expect(connected).resolves.toBe('tg-1');
+    expect(hasChannelEndpoint).toHaveBeenCalledTimes(3);
+  });
+
+  it('times out with the caller hint', async () => {
+    vi.useFakeTimers();
+    hasChannelEndpoint.mockResolvedValue(false);
+
+    const connected = waitForAnyEndpoint(
+      client,
+      ['tg-1'],
+      'alice',
+      'alice connect telegram',
+      'The link keeps working.'
+    );
+    const assertion = expect(connected).rejects.toThrow(
+      "We didn't see alice connect telegram within 300s. The link keeps working."
+    );
+    await vi.advanceTimersByTimeAsync(CHANNEL_POLL_TIMEOUT_MS + CHANNEL_POLL_INTERVAL_MS);
+
+    await assertion;
   });
 });

@@ -15,6 +15,7 @@ const {
   formatKeylessCapMessage,
   getKeylessCapDetails,
   handleError,
+  channelDefaultsFor,
   parseDuration,
   parseHumanToOption,
   parseIdLabelOption,
@@ -76,6 +77,36 @@ describe('resolveTo', () => {
     expect(resolveTo(config)).toBe('dave');
     process.env.HUMAN_TO = '  ';
     expect(resolveTo(config)).toBe('dave');
+  });
+});
+
+describe('channelDefaultsFor', () => {
+  const config: HumanCliConfig = {
+    apiUrl: 'https://api.novu.co',
+    auth: { mode: 'apiKey', secretKey: 'api_key_private' },
+    relayAgentIdentifier: 'human-relay',
+    subscriberId: 'dave',
+  };
+
+  it('applies both defaults when you message yourself', () => {
+    expect(channelDefaultsFor(config, undefined, 'dave')).toEqual({ useEnvVia: true, useSavedDefault: true });
+    expect(channelDefaultsFor(config, 'dave', ['dave'])).toEqual({ useEnvVia: true, useSavedDefault: true });
+  });
+
+  it('pairs HUMAN_VIA with HUMAN_TO recipients but keeps your saved default to yourself', () => {
+    expect(channelDefaultsFor(config, undefined, ['alice'])).toEqual({ useEnvVia: true, useSavedDefault: false });
+    expect(channelDefaultsFor({ ...config, subscriberId: undefined }, undefined, ['alice'])).toEqual({
+      useEnvVia: true,
+      useSavedDefault: false,
+    });
+  });
+
+  it('applies neither when --to names someone else', () => {
+    expect(channelDefaultsFor(config, 'alice', ['alice'])).toEqual({ useEnvVia: false, useSavedDefault: false });
+    expect(channelDefaultsFor(config, 'dave,alice', ['dave', 'alice'])).toEqual({
+      useEnvVia: false,
+      useSavedDefault: false,
+    });
   });
 });
 

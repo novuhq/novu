@@ -16,6 +16,15 @@ export {
   type NotificationItemHandlers,
 } from './item/controller';
 export { parseMarkdownIntoTokens, type Token } from './markdown';
+export { createPrefersReducedMotion, type MotionMode, resolveMotionMode } from './motion/mode';
+export { whenExitAnimationEnds } from './motion/presence';
+export {
+  MOTION_DISTANCE_PX,
+  MOTION_DURATION_MS,
+  MOTION_EASING,
+  type MotionDurationToken,
+  readMotionDurationMs,
+} from './motion/tokens';
 export { subscribeAccessor } from './reactivity';
 export { type AppearanceStore, createAppearanceStore } from './stores/appearance';
 export {

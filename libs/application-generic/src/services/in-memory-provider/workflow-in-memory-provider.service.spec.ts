@@ -82,4 +82,22 @@ describe('selectWorkflowInMemoryProvider', () => {
       'Provider RedisCluster is not properly configured in the environment variables'
     );
   });
+
+  it('does not connect MemoryDB when BullMQ is disabled', async () => {
+    process.env.QUEUE_BACKEND = 'sqs';
+    process.env.IS_SELF_HOSTED = 'false';
+    process.env.NOVU_ENTERPRISE = 'true';
+    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+    delete process.env.MEMORY_DB_CLUSTER_SERVICE_HOST;
+    delete process.env.MEMORY_DB_CLUSTER_SERVICE_PORT;
+    delete process.env.REDIS_CLUSTER_SERVICE_HOST;
+    delete process.env.REDIS_CLUSTER_SERVICE_PORTS;
+
+    const service = new WorkflowInMemoryProviderService();
+
+    await service.initialize();
+
+    expect(service.getClient()).toBeUndefined();
+    expect(service.isReady()).toBe(false);
+  });
 });

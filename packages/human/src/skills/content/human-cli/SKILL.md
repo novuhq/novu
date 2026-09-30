@@ -91,16 +91,22 @@ To reach a *different* person than the one who ran setup, they need a linked
 channel too:
 
 ```bash
-human invite alice --via slack --name "Alice Chen"
-human invite bob --via telegram --async --name "Bob"
+human invite alice --name "Alice Chen"                 # they pick on a page
+human invite bob --via telegram --async --name "Bob"   # one specific channel
 human invite carol --via email --email carol@acme.com --name "Carol Diaz"
 ```
 
-Send them the printed URL (Slack authorize or Telegram Start). `--async`
-prints the URL and returns immediately. This does **not** change
-`~/.novu/human.json`. After they connect, address them with `--to alice`.
-`--name` is what `human contacts` shows next to the id, so always pass it
-when you know who the person is.
+Prefer plain `human invite <id>`: it prints a link (valid for 3 days) to a
+Novu page where they connect any channel you set up — Telegram, Slack, or
+both — and pick their default. Use `--via <channel>` only when you know the
+one channel they use: it prints that channel's direct connect link instead
+(Slack authorize or Telegram Start, valid for minutes) and makes it their
+default. Nothing is sent for you — share the link with them, or give it to
+your human to forward. `--async` prints the link and returns immediately.
+This does **not** change `~/.novu/human.json`. After they connect, address
+them with `--to alice`; messages go to their default channel unless you pass
+`--via`. `--name` is what `human contacts` shows next to the id, so always
+pass it when you know who the person is.
 
 ## Who can I reach: check contacts before coordinating between people
 
@@ -126,8 +132,8 @@ human tell "Deploy is done." --to alice,bob
 
 Contacts is a directory, not a reachability guarantee. If delivery fails with
 "no linked <channel> endpoint", that person exists but hasn't connected the
-channel yet — run `human invite <id> --via <channel> --name "…"`, send them
-the URL, and retry. Never invent an id that isn't in the list, and
+channel yet — run `human invite <id> --name "…"` (add `--via <channel>` only
+if it must be that channel), share the link, and retry once they connect. Never invent an id that isn't in the list, and
 never page `self` as if they were a third party.
 
 ## The four commands
@@ -194,12 +200,14 @@ other useful work to do while you wait.
   one-off ad hoc runs).
 - `--to <humanId>` / `--via <telegram|slack|email>` — `--to` addresses humans
   who are already linked. Find them with `human contacts --json` first; link
-  someone new with `human invite alice --via slack --name "Alice Chen"`
-  (prints a connect URL for them; does not change your local identity). `--to alice,bob` lets any listed human settle
-  (first valid answer wins, max 50). `--via` on ask/approve is only a delivery
-  override when that person has several channels; don't guess — if you need
-  a specific one, pass `--via`. If they have no endpoint yet, the API tells
-  you to run `human invite <id> --via <channel>`.
+  someone new with `human invite alice --name "Alice Chen"` (prints a link
+  where they pick a channel; does not change your local identity). `--to alice,bob` lets any listed human settle
+  (first valid answer wins, max 50). `--via` on ask/approve is only a
+  per-call delivery override; without it each human gets their own default
+  channel (`HUMAN_VIA` goes with the `HUMAN_TO` default recipients, and
+  `human channels --default` only applies when messaging yourself). If they
+  have no endpoint yet, the API error names the
+  `human invite` command to run.
 - `--ttl 2h` — how long the request stays answerable before it expires
   (default 24h, max 72h). Shorten this for anything time-sensitive so a
   stale approval can't be actioned days later.

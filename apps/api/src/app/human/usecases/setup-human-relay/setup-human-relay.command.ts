@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { HumanChannelViaEnum } from '@novu/shared';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
@@ -21,4 +22,8 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @IsOptional()
+  @IsEnum(HumanChannelViaEnum)
+  defaultVia?: HumanChannelViaEnum;
 }

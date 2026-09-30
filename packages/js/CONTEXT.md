@@ -42,6 +42,12 @@ _Avoid_: embedded component, nested mount
 A host-supplied function that produces the content of an outlet from the data the engine pushes to it.
 _Avoid_: renderer, custom renderer, render callback
 
+### Interaction
+
+**Layer**:
+A surface the engine opens on top of the page or of another layer, such as the Inbox popover, a menu or a date picker. A layer opened from inside another is part of it, so focus or a click in the inner layer never counts as leaving the outer one.
+_Avoid_: overlay, popup, floating element, nested popover
+
 ### Notifications
 
 **Notification**:
@@ -51,3 +57,15 @@ _Avoid_: message, notification object
 **Notification item**:
 The rendered representation of one notification in the list. The built-in item is a root that carries the item's behaviour and, without children, arranges all of its blocks in the default order; a host may pass its own arrangement of those blocks instead.
 _Avoid_: row, list item, notification component, default notification
+
+**Opening a notification**:
+Activating a notification item itself, by pointer or keyboard, rather than one of its actions: the notification is marked read, the host's click handler runs and the notification's redirect is followed.
+_Avoid_: selecting, primary action, row click
+
+**Default actions**:
+The controls every notification item offers for changing the notification's state: read or unread, archive or unarchive, snooze or unsnooze.
+_Avoid_: hover actions, quick actions, item actions
+
+**Custom actions**:
+The primary and secondary buttons a workflow can give a notification; each completes the notification and follows its own redirect.
+_Avoid_: action buttons, CTA, call to action

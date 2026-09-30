@@ -109,11 +109,11 @@ const SUBSCRIBER_LINK_SUCCESS_REPLY = "You're connected. Notifications from this
 const SUBSCRIBER_LINK_DUPLICATE_REPLY =
   'This chat is already connected to your account — no changes needed. Send any message to try the agent out.';
 const SUBSCRIBER_LINK_INVALID_REPLY =
-  "This connection link isn't valid — open a fresh link from your Novu dashboard and try again.";
+  "This connection link isn't valid. Ask whoever sent it for a new one and try again.";
 const SUBSCRIBER_LINK_EXPIRED_REPLY =
-  'This connection link has expired. Open a new link from your Novu dashboard and try again.';
+  'This connection link has expired. Ask whoever sent it for a new one and try again.';
 const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
-  "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
+  "This connection link wasn't issued for this bot. Open the link again (or ask for a new one) and make sure you're messaging the same bot.";
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
@@ -181,14 +181,15 @@ function foldInboundBurst(message: Message, messageContext?: MessageContext): vo
   const verdict = burst.find((item) => parseApprovalReplyVerdict(item.text) !== null);
   if (verdict) {
     message.text = verdict.text;
+    message.formatted = verdict.formatted;
 
     return;
   }
 
-  message.text = burst
-    .map((item) => item.text ?? '')
-    .filter((text) => text.trim().length > 0)
-    .join('\n\n');
+  // `formatted` folds from the same items as `text`: the bridge renders it as `message.markdown`.
+  const withText = burst.filter((item) => (item.text ?? '').trim().length > 0);
+  message.text = withText.map((item) => item.text).join('\n\n');
+  message.formatted = { type: 'root', children: withText.flatMap((item) => item.formatted?.children ?? []) };
   message.attachments = burst.flatMap((item) => item.attachments ?? []);
 }
 
