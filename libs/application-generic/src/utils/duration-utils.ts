@@ -9,11 +9,36 @@ export class DurationUtils {
     }
 
     const [, year, month, day, hour, minute, second, , timezone] = match;
+    const yearNumber = Number(year);
+    const monthNumber = Number(month);
+    const dayNumber = Number(day);
     const hourNumber = Number(hour);
     const minuteNumber = Number(minute);
     const secondNumber = Number(second);
 
-    if (hourNumber === 24 && (minuteNumber !== 0 || secondNumber !== 0)) {
+    if (hourNumber > 24 || (hourNumber === 24 && (minuteNumber !== 0 || secondNumber !== 0))) {
+      return false;
+    }
+
+    const isUTC = timezone === 'Z';
+
+    const dateOnly = isUTC
+      ? new Date(Date.UTC(yearNumber, monthNumber - 1, dayNumber))
+      : new Date(yearNumber, monthNumber - 1, dayNumber);
+
+    if (isUTC) {
+      if (
+        dateOnly.getUTCFullYear() !== yearNumber ||
+        dateOnly.getUTCMonth() + 1 !== monthNumber ||
+        dateOnly.getUTCDate() !== dayNumber
+      ) {
+        return false;
+      }
+    } else if (
+      dateOnly.getFullYear() !== yearNumber ||
+      dateOnly.getMonth() + 1 !== monthNumber ||
+      dateOnly.getDate() !== dayNumber
+    ) {
       return false;
     }
 
@@ -23,30 +48,8 @@ export class DurationUtils {
       return false;
     }
 
-    const yearNumber = Number(year);
-    const monthNumber = Number(month);
-    const dayNumber = Number(day);
-
-    const isUTC = timezone === 'Z';
-
     if (hourNumber === 24) {
-      const nextDay = isUTC
-        ? new Date(Date.UTC(yearNumber, monthNumber - 1, dayNumber + 1))
-        : new Date(yearNumber, monthNumber - 1, dayNumber + 1);
-
-      if (isUTC) {
-        return (
-          date.getUTCFullYear() === nextDay.getUTCFullYear() &&
-          date.getUTCMonth() === nextDay.getUTCMonth() &&
-          date.getUTCDate() === nextDay.getUTCDate()
-        );
-      }
-
-      return (
-        date.getFullYear() === nextDay.getFullYear() &&
-        date.getMonth() === nextDay.getMonth() &&
-        date.getDate() === nextDay.getDate()
-      );
+      return true;
     }
 
     if (isUTC) {
