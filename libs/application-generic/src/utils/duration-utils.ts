@@ -22,9 +22,15 @@ export class DurationUtils {
 
     const isUTC = timezone === 'Z';
 
-    const dateOnly = isUTC
-      ? new Date(Date.UTC(yearNumber, monthNumber - 1, dayNumber))
-      : new Date(yearNumber, monthNumber - 1, dayNumber);
+    const dateOnly = new Date(0);
+
+    if (isUTC) {
+      dateOnly.setUTCFullYear(yearNumber, monthNumber - 1, dayNumber);
+      dateOnly.setUTCHours(0, 0, 0, 0);
+    } else {
+      dateOnly.setFullYear(yearNumber, monthNumber - 1, dayNumber);
+      dateOnly.setHours(0, 0, 0, 0);
+    }
 
     if (isUTC) {
       if (
