@@ -1,6 +1,6 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import type { Request, Response } from 'express';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { AgentSubscriberResolver } from '../conversation-runtime/conversation/agent-subscriber-resolver.service';
@@ -10,7 +10,6 @@ import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { type GeInbound, type GeTurnInput, openTurn, parseInbound, step } from './a2a-mapping';
 import { geThreadId } from './gemini-enterprise.adapter';
-import { isGeminiEnterpriseEnabled } from './gemini-enterprise-enabled';
 import { type GeBusEvent, GeminiEnterpriseTurnBus, geTurnBusKey } from './gemini-enterprise-turn-bus.service';
 
 /** Gemini Enterprise drops a held stream at ~28 min; close first with a message the user can act on. */
@@ -25,13 +24,12 @@ export class GeminiEnterpriseInboundService {
     private readonly registry: ChatInstanceRegistry,
     private readonly turnBus: GeminiEnterpriseTurnBus,
     private readonly subscriberResolver: AgentSubscriberResolver,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
-  /** 404 for every rejection (unknown agent, wrong provider, bad secret, flag off) so the URL leaks nothing. */
+  /** 404 for every rejection (unknown agent, wrong provider, bad secret) so the URL leaks nothing. */
   async authorize(agentId: string, integrationIdentifier: string, secret: string): Promise<ResolvedAgentConfig> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier, {
       source: 'webhook_message',
@@ -39,10 +37,6 @@ export class GeminiEnterpriseInboundService {
     const token = config.credentials.token;
 
     if (config.platform !== AgentPlatformEnum.GEMINI_ENTERPRISE || !token || !secretMatches(token, secret)) {
-      throw new NotFoundException();
-    }
-
-    if (!(await isGeminiEnterpriseEnabled(this.featureFlagsService, config.organizationId, config.environmentId))) {
       throw new NotFoundException();
     }
 

@@ -1,12 +1,11 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
+import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
 import { UserSession } from '../../shared/framework/user.decorator';
-import { isGeminiEnterpriseEnabled } from './gemini-enterprise-enabled';
 import { GeminiEnterpriseProvisioningService } from './gemini-enterprise-provisioning.service';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
@@ -14,10 +13,7 @@ import { GeminiEnterpriseProvisioningService } from './gemini-enterprise-provisi
 @ApiExcludeController()
 @RequireAuthentication()
 export class GeminiEnterpriseAgentCardController {
-  constructor(
-    private readonly provisioning: GeminiEnterpriseProvisioningService,
-    private readonly featureFlagsService: FeatureFlagsService
-  ) {}
+  constructor(private readonly provisioning: GeminiEnterpriseProvisioningService) {}
 
   /** Contains the endpoint secret, hence write permission. */
   @Get('/:identifier/integrations/:integrationIdentifier/gemini-enterprise/agent-card')
@@ -28,10 +24,6 @@ export class GeminiEnterpriseAgentCardController {
     @Param('identifier') agentIdentifier: string,
     @Param('integrationIdentifier') integrationIdentifier: string
   ) {
-    if (!(await isGeminiEnterpriseEnabled(this.featureFlagsService, user.organizationId, user.environmentId))) {
-      throw new NotFoundException();
-    }
-
     return this.provisioning.getAgentCard({
       agentIdentifier,
       integrationIdentifier,

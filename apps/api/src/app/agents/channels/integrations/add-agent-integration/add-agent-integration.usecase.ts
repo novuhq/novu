@@ -27,7 +27,6 @@ import {
   getFeatureForTierAsBoolean,
 } from '@novu/shared';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
-import { isGeminiEnterpriseEnabled } from '../../../gemini-enterprise/gemini-enterprise-enabled';
 import { GeminiEnterpriseProvisioningService } from '../../../gemini-enterprise/gemini-enterprise-provisioning.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import { assertWebChatEnabledForConnect } from '../../../shared/assert-web-chat-enabled';
@@ -128,10 +127,6 @@ export class AddAgentIntegration {
     }
 
     if (command.providerId === ChatProviderIdEnum.GeminiEnterprise) {
-      if (!(await isGeminiEnterpriseEnabled(this.featureFlagsService, command.organizationId, command.environmentId))) {
-        throw new ForbiddenException('Gemini Enterprise is not enabled for this workspace.');
-      }
-
       // The streamed reply is matched to bridge deliveries; managed runs are not tracked yet.
       if (agent.runtime === 'managed') {
         throw new BadRequestException('Gemini Enterprise supports bridge agents only.');
