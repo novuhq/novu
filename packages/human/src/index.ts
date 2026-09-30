@@ -25,7 +25,7 @@ program.addHelpText(
   '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
     '  NOVU_SECRET_KEY    Novu API secret key (replaces `human setup` auth)\n' +
     '  HUMAN_TO           default recipient subscriberId(s), comma-separated (as --to)\n' +
-    '  HUMAN_VIA          your default channel: telegram, slack, or email (as --via; ignored when --to names someone else)\n' +
+    '  HUMAN_VIA          default channel for HUMAN_TO: telegram, slack, or email (as --via; ignored when --to names someone else)\n' +
     '  NOVU_API_URL       Novu API URL override\n' +
     '  NOVU_HUMAN_CONFIG  config file path override\n' +
     'Precedence: CLI flags > environment variables > ~/.novu/human.json\n'

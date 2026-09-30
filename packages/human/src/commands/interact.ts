@@ -85,15 +85,20 @@ export function resolveTo(config: HumanCliConfig, toFlag?: string): string | str
 }
 
 /**
- * True unless `--to` names someone other than your own configured subscriberId.
- * HUMAN_VIA and the saved default channel only apply when messaging yourself.
+ * Which of your channel defaults apply to a send. HUMAN_VIA pairs with HUMAN_TO
+ * as the default recipient (the headless setup), so it applies unless `--to`
+ * names someone else. The saved default channel describes how *you* like to be
+ * reached, so it only applies when every resolved recipient is you.
  */
-export function isMessagingSelf(config: HumanCliConfig, toFlag?: string): boolean {
-  if (!toFlag) {
-    return true;
-  }
+export function channelDefaultsFor(
+  config: HumanCliConfig,
+  toFlag: string | undefined,
+  recipients: string | string[]
+): { useEnvVia: boolean; useSavedDefault: boolean } {
+  const ids = Array.isArray(recipients) ? recipients : [recipients];
+  const onlyYou = ids.length > 0 && ids.every((id) => id === config.subscriberId);
 
-  return parseHumanToOption(toFlag).every((id) => id === config.subscriberId);
+  return { useEnvVia: !toFlag || onlyYou, useSavedDefault: onlyYou };
 }
 
 /** Shared engine behind ask / approve / choose / tell. */
@@ -107,9 +112,9 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
       fail(NOT_SET_UP_MESSAGE);
     }
 
-    // `--via` always wins; HUMAN_VIA and the saved defaultChannel only apply
-    // when messaging yourself. Omit via and the API uses each human's default.
-    const via = resolveVia(config, options.via, { messagingSelf: isMessagingSelf(config, options.to) });
+    // `--via` always wins. Otherwise only the defaults that fit the recipients
+    // apply; omit via and the API uses each human's own default channel.
+    const via = resolveVia(config, options.via, channelDefaultsFor(config, options.to, to));
 
     const parsedOptions = options.option?.map(parseIdLabelOption);
     const extraActions = options.extraAction?.map(parseIdLabelOption);

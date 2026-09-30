@@ -15,7 +15,7 @@ const {
   formatKeylessCapMessage,
   getKeylessCapDetails,
   handleError,
-  isMessagingSelf,
+  channelDefaultsFor,
   parseDuration,
   parseHumanToOption,
   parseIdLabelOption,
@@ -80,7 +80,7 @@ describe('resolveTo', () => {
   });
 });
 
-describe('isMessagingSelf', () => {
+describe('channelDefaultsFor', () => {
   const config: HumanCliConfig = {
     apiUrl: 'https://api.novu.co',
     auth: { mode: 'apiKey', secretKey: 'api_key_private' },
@@ -88,17 +88,25 @@ describe('isMessagingSelf', () => {
     subscriberId: 'dave',
   };
 
-  it('treats a missing --to as messaging yourself (HUMAN_TO / config default)', () => {
-    expect(isMessagingSelf(config)).toBe(true);
-    expect(isMessagingSelf({ ...config, subscriberId: undefined })).toBe(true);
+  it('applies both defaults when you message yourself', () => {
+    expect(channelDefaultsFor(config, undefined, 'dave')).toEqual({ useEnvVia: true, useSavedDefault: true });
+    expect(channelDefaultsFor(config, 'dave', ['dave'])).toEqual({ useEnvVia: true, useSavedDefault: true });
   });
 
-  it('is true only when --to names just your own subscriberId', () => {
-    expect(isMessagingSelf(config, 'dave')).toBe(true);
-    expect(isMessagingSelf(config, ' dave , dave ')).toBe(true);
-    expect(isMessagingSelf(config, 'alice')).toBe(false);
-    expect(isMessagingSelf(config, 'dave,alice')).toBe(false);
-    expect(isMessagingSelf({ ...config, subscriberId: undefined }, 'dave')).toBe(false);
+  it('pairs HUMAN_VIA with HUMAN_TO recipients but keeps your saved default to yourself', () => {
+    expect(channelDefaultsFor(config, undefined, ['alice'])).toEqual({ useEnvVia: true, useSavedDefault: false });
+    expect(channelDefaultsFor({ ...config, subscriberId: undefined }, undefined, ['alice'])).toEqual({
+      useEnvVia: true,
+      useSavedDefault: false,
+    });
+  });
+
+  it('applies neither when --to names someone else', () => {
+    expect(channelDefaultsFor(config, 'alice', ['alice'])).toEqual({ useEnvVia: false, useSavedDefault: false });
+    expect(channelDefaultsFor(config, 'dave,alice', ['dave', 'alice'])).toEqual({
+      useEnvVia: false,
+      useSavedDefault: false,
+    });
   });
 });
 

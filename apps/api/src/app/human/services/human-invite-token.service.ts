@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
-import { SingleUseTokenCache } from '../../shared/services/single-use-link-token.service';
+import { SingleUseTokenCache, type StoredTokenEntry } from '../../shared/services/single-use-link-token.service';
 
 /**
  * Lifetime of a `human invite` link (seconds). The inviter forwards the link
@@ -28,6 +28,9 @@ export interface ActiveHumanInvite {
   /** ISO timestamp when the link expires. */
   expiresAt: string;
 }
+
+/** A link retired by a decline, kept so the decline can be undone. */
+export type RetiredHumanInvite = StoredTokenEntry<HumanInviteTokenPayload>;
 
 export type InactiveHumanInviteReason = 'expired' | 'declined' | 'invalid';
 
@@ -100,16 +103,18 @@ export class HumanInviteTokenService {
   }
 
   /**
-   * Retires the link after the person declines. Declining twice is a no-op;
-   * any other inactive state throws {@link InactiveHumanInviteError}.
+   * Retires the link after the person declines and returns what was retired, so
+   * {@link undoDecline} can put it back. Returns null when it was already
+   * declined; any other inactive state throws {@link InactiveHumanInviteError}.
    */
-  async decline(token: string): Promise<void> {
+  async decline(token: string): Promise<RetiredHumanInvite | null> {
     const outcome = await this.tokens.claim(token);
 
     switch (outcome.status) {
       case 'claimed':
+        return outcome.entry;
       case 'used':
-        return;
+        return null;
       case 'missing':
         throw new InactiveHumanInviteError('expired');
       case 'corrupt':
@@ -121,6 +126,11 @@ export class HumanInviteTokenService {
         throw new Error(`Unhandled claim outcome: ${exhaustive}`);
       }
     }
+  }
+
+  /** Restores a link retired by {@link decline}, for its remaining lifetime. */
+  async undoDecline(token: string, entry: RetiredHumanInvite): Promise<void> {
+    await this.tokens.release(token, entry);
   }
 
   /**

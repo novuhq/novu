@@ -29,7 +29,10 @@ describe('SetHumanInviteDefault', () => {
     return { usecase, humanContactRepository };
   }
 
-  const command = SetHumanInviteDefaultCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.SLACK });
+  const command: SetHumanInviteDefaultCommand = SetHumanInviteDefaultCommand.create({
+    token: 'T'.repeat(32),
+    via: HumanChannelViaEnum.SLACK,
+  });
 
   it("saves the invitee's pick as their own choice", async () => {
     const { usecase, humanContactRepository } = setup(true);

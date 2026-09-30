@@ -190,8 +190,9 @@ other useful work to do while you wait.
   where they pick a channel; does not change your local identity). `--to alice,bob` lets any listed human settle
   (first valid answer wins, max 50). `--via` on ask/approve is only a
   per-call delivery override; without it each human gets their own default
-  channel (`HUMAN_VIA` and `human channels --default` only apply when
-  messaging yourself). If they have no endpoint yet, the API error names the
+  channel (`HUMAN_VIA` goes with the `HUMAN_TO` default recipients, and
+  `human channels --default` only applies when messaging yourself). If they
+  have no endpoint yet, the API error names the
   `human invite` command to run.
 - `--ttl 2h` — how long the request stays answerable before it expires
   (default 24h, max 72h). Shorten this for anything time-sensitive so a

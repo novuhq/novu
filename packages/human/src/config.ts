@@ -99,26 +99,21 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
 }
 
 /**
- * Channel preference for create: `--via` wins, then HUMAN_VIA, then the
- * configured default. HUMAN_VIA and the configured default describe how *you*
- * like to be reached, so they only apply when messaging yourself — for anyone
- * else the API uses that person's own default channel. When none applies,
- * returns undefined and the API picks.
+ * Channel preference for create: `--via` wins, then HUMAN_VIA, then the saved
+ * default channel. The caller decides which defaults apply to the recipients
+ * (see `channelDefaultsFor`); for anyone else the API uses that person's own
+ * default channel. When none applies, returns undefined and the API picks.
  */
 export function resolveVia(
   config: HumanCliConfig,
   via?: string,
-  { messagingSelf = true }: { messagingSelf?: boolean } = {}
+  { useEnvVia = true, useSavedDefault = true }: { useEnvVia?: boolean; useSavedDefault?: boolean } = {}
 ): HumanChannelPlatform | undefined {
   if (via) {
     return via.toLowerCase();
   }
 
-  if (!messagingSelf) {
-    return undefined;
-  }
-
-  const envVia = process.env.HUMAN_VIA?.trim().toLowerCase();
+  const envVia = useEnvVia ? process.env.HUMAN_VIA?.trim().toLowerCase() : undefined;
   if (envVia) {
     if (!(SUPPORTED_CHANNELS as readonly string[]).includes(envVia)) {
       throw new Error(`Invalid HUMAN_VIA "${envVia}". Use one of: ${SUPPORTED_CHANNELS.join(', ')}.`);
@@ -127,5 +122,5 @@ export function resolveVia(
     return envVia;
   }
 
-  return config.defaultChannel;
+  return useSavedDefault ? config.defaultChannel : undefined;
 }

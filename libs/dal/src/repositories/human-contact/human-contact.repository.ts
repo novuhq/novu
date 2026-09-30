@@ -36,35 +36,46 @@ export class HumanContactRepository extends BaseRepositoryV2<
       _agentId: params.agentId,
       subscriberId: params.subscriberId,
     };
+    const choice = { defaultVia: params.via, defaultSetBy: params.setBy };
 
-    if (params.setBy === 'inviter') {
-      const existing = await this.findOne(filter, ['defaultSetBy']);
+    if (params.setBy === 'contact') {
+      try {
+        await this.findOneAndUpdate(
+          filter,
+          { $set: choice, $setOnInsert: { _organizationId: params.organizationId } },
+          { upsert: true }
+        );
+      } catch (err) {
+        // A first-time write raced this one on the unique index, so the row exists now.
+        if (!isDuplicateKeyError(err)) {
+          throw err;
+        }
 
-      if (existing?.defaultSetBy === 'contact') {
-        return;
+        await this.findOneAndUpdate(filter, { $set: choice });
       }
+
+      return;
+    }
+
+    // Two single atomic writes, so the person's own choice is never replaced even if they pick one
+    // meanwhile: update the row only when they don't own it, otherwise create it only when it's missing.
+    const updated = await this.findOneAndUpdate({ ...filter, defaultSetBy: { $ne: 'contact' } }, { $set: choice });
+
+    if (updated) {
+      return;
     }
 
     try {
       await this.findOneAndUpdate(
         filter,
-        {
-          $set: { defaultVia: params.via, defaultSetBy: params.setBy },
-          $setOnInsert: { _organizationId: params.organizationId },
-        },
+        { $setOnInsert: { ...choice, _organizationId: params.organizationId } },
         { upsert: true }
       );
     } catch (err) {
-      // Two first-time writes raced on the unique index; the row now exists, so update it
-      // (still never replacing the person's own choice with the inviter's).
+      // Someone else created the row first; theirs stands.
       if (!isDuplicateKeyError(err)) {
         throw err;
       }
-
-      await this.findOneAndUpdate(
-        params.setBy === 'inviter' ? { ...filter, defaultSetBy: { $ne: 'contact' } } : filter,
-        { $set: { defaultVia: params.via, defaultSetBy: params.setBy } }
-      );
     }
   }
 }

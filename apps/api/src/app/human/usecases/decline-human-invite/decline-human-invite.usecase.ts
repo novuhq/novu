@@ -2,8 +2,10 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
   type ActiveHumanInvite,
+  type HumanInviteTokenPayload,
   HumanInviteTokenService,
   InactiveHumanInviteError,
+  type RetiredHumanInvite,
   toHttpError,
 } from '../../services/human-invite-token.service';
 import { DeclineHumanInviteCommand } from './decline-human-invite.command';
@@ -28,26 +30,43 @@ export class DeclineHumanInvite {
       throw toHttpError(err);
     }
 
-    const channels = await this.deliveryService.describeInviteChannels({
-      environmentId: invite.payload.env,
-      organizationId: invite.payload.org,
-      agentId: invite.payload.agentId,
-      subscriberId: invite.payload.subscriberId,
-    });
-
-    if (channels.some(({ connected }) => connected)) {
-      throw new ConflictException({
-        code: 'channel_already_connected',
-        message: "You're already connected, so there's nothing to decline.",
-      });
+    if (await this.isConnected(invite.payload)) {
+      throw alreadyConnected();
     }
 
+    let retired: RetiredHumanInvite | null;
     try {
-      await this.inviteTokens.decline(command.token);
+      retired = await this.inviteTokens.decline(command.token);
     } catch (err) {
       throw toHttpError(err);
     }
 
+    // The person may have finished connecting an app (Telegram /start, Slack OAuth) between the check
+    // above and retiring the link. Connecting wins, so put the link back.
+    if (retired && (await this.isConnected(invite.payload))) {
+      await this.inviteTokens.undoDecline(command.token, retired);
+
+      throw alreadyConnected();
+    }
+
     return { declined: true };
   }
+
+  private async isConnected(payload: HumanInviteTokenPayload): Promise<boolean> {
+    const channels = await this.deliveryService.describeInviteChannels({
+      environmentId: payload.env,
+      organizationId: payload.org,
+      agentId: payload.agentId,
+      subscriberId: payload.subscriberId,
+    });
+
+    return channels.some(({ connected }) => connected);
+  }
+}
+
+function alreadyConnected(): ConflictException {
+  return new ConflictException({
+    code: 'channel_already_connected',
+    message: "You're already connected, so there's nothing to decline.",
+  });
 }
