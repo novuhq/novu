@@ -24,7 +24,7 @@ import { CreateInteractionCommand } from './create-interaction.command';
 /** Machine-readable code on the 429 body so `@novu/human` can branch without parsing prose. */
 export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
-export const KEYLESS_HUMAN_CLAIMED_MESSAGE =
+const KEYLESS_HUMAN_CLAIMED_MESSAGE =
   'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
 
 @Injectable()

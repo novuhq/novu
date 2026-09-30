@@ -3,13 +3,24 @@ import { Dynamic } from 'solid-js/web';
 import { useStyle } from '../../../helpers';
 import { mergeRefs } from '../../../helpers/mergeRefs';
 import type { AllAppearanceKey } from '../../../types';
+import { callButtonHandler } from '../asChild';
 import { useTooltip } from './TooltipRoot';
 
-type PopoverTriggerProps = JSX.IntrinsicElements['button'] & {
-  appearanceKey?: AllAppearanceKey;
-  asChild?: (props: any) => JSX.Element;
+/** What `Tooltip.Trigger` hands to the element that `asChild` renders in its place. */
+export type TooltipTriggerChildProps = Omit<
+  JSX.IntrinsicElements['button'],
+  'ref' | 'onClick' | 'onMouseEnter' | 'onMouseLeave'
+> & {
+  ref: (el: HTMLButtonElement) => void;
+  onMouseEnter: (e: MouseEvent) => void;
+  onMouseLeave: (e: MouseEvent) => void;
 };
-export const TooltipTrigger = (props: PopoverTriggerProps) => {
+
+type TooltipTriggerProps = JSX.IntrinsicElements['button'] & {
+  appearanceKey?: AllAppearanceKey;
+  asChild?: (props: TooltipTriggerChildProps) => JSX.Element;
+};
+export const TooltipTrigger = (props: TooltipTriggerProps) => {
   const { setReference, setOpen } = useTooltip();
 
   const style = useStyle();
@@ -23,18 +34,14 @@ export const TooltipTrigger = (props: PopoverTriggerProps) => {
   ]);
 
   const handleMouseEnter = (e: MouseEvent) => {
-    if (typeof local.onMouseEnter === 'function') {
-      local.onMouseEnter(e as any);
-    }
+    callButtonHandler(local.onMouseEnter, e);
     setOpen(true);
   };
 
   const ref = createMemo(() => (local.ref ? mergeRefs(setReference, local.ref) : setReference));
 
   const handleMouseLeave = (e: MouseEvent) => {
-    if (typeof local.onMouseLeave === 'function') {
-      local.onMouseLeave(e as any);
-    }
+    callButtonHandler(local.onMouseLeave, e);
     setOpen(false);
   };
 
@@ -53,12 +60,8 @@ export const TooltipTrigger = (props: PopoverTriggerProps) => {
   return (
     <button
       ref={ref()}
-      onMouseEnter={() => {
-        setOpen(true);
-      }}
-      onMouseLeave={() => {
-        setOpen(false);
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       class={style({ key: local.appearanceKey || 'tooltipTrigger' })}
       {...rest}
     >

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { HumanChannelViaEnum } from '@novu/shared';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 export class SetupHumanRelayRequestDto {
   @ApiProperty({ description: 'subscriberId that identifies the human being set up.' })
@@ -35,6 +36,15 @@ export class SetupHumanRelayRequestDto {
   @IsString()
   @MaxLength(128)
   lastName?: string;
+
+  @ApiPropertyOptional({
+    enum: HumanChannelViaEnum,
+    description:
+      'Channel the inviter picked (`human invite --via`). Becomes the human’s default unless they already chose one themselves.',
+  })
+  @IsOptional()
+  @IsEnum(HumanChannelViaEnum)
+  defaultVia?: HumanChannelViaEnum;
 }
 
 export class SetupHumanRelayResponseDto {

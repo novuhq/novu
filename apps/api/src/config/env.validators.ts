@@ -1,4 +1,4 @@
-import { assertQueueBackendConfig } from '@novu/application-generic';
+import { assertQueueBackendConfig, requiresStandaloneRedis } from '@novu/application-generic';
 import {
   DEFAULT_NOTIFICATION_RETENTION_DAYS,
   FeatureFlagsKeysEnum,
@@ -43,23 +43,28 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
   return str({ default: undefined });
 }
 
-// Managed-agent (Thalamus) config is a Novu Cloud concern. On self-hosted (or whenever the URL is
-// blank) we must not run envalid's `url()` validator, which rejects an empty string even with a
-// default — a blank `THALAMUS_CF_URL=` is common in self-hosted .env files and would block boot.
+// Managed-agent (Thalamus) config is optional at boot unless the worker URL is set.
+// A blank URL must not run envalid's `url()` validator, which rejects an empty string even
+// with a default. Once the URL is present, the webhook secret is required. The API key stays
+// optional: the worker only checks Authorization when its own API_KEY is set.
+// Do not redeclare these inside the enterprise block: a later spread overrides this one.
 function getThalamusValidators(): {
   THALAMUS_CF_URL: ValidatorSpec<string>;
   THALAMUS_WEBHOOK_SECRET: ValidatorSpec<string>;
+  THALAMUS_CF_API_KEY: ValidatorSpec<string>;
 } {
-  if (processEnv.IS_SELF_HOSTED === 'true' || !processEnv.THALAMUS_CF_URL) {
+  if (!processEnv.THALAMUS_CF_URL) {
     return {
       THALAMUS_CF_URL: str({ default: undefined }),
       THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+      THALAMUS_CF_API_KEY: str({ default: undefined }),
     };
   }
 
   return {
     THALAMUS_CF_URL: url(),
     THALAMUS_WEBHOOK_SECRET: str(),
+    THALAMUS_CF_API_KEY: str({ default: undefined }),
   };
 }
 
@@ -71,8 +76,19 @@ export const envValidators = {
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  /*
+   * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
+   * does not open the BullMQ Redis (MemoryDB), so REDIS_HOST is not required.
+   */
+  ...(requiresStandaloneRedis()
+    ? {
+        REDIS_HOST: str(),
+        REDIS_PORT: port(),
+      }
+    : {
+        REDIS_HOST: str({ default: undefined }),
+        REDIS_PORT: str({ default: undefined }),
+      }),
   REDIS_TLS: json({ default: undefined }),
   REDIS_MASTER_HOST: str({ default: '' }),
   REDIS_MASTER_PORT: str({ default: '' }),
@@ -137,7 +153,6 @@ export const envValidators = {
   STEP_RESOLVER_CF_PLACEMENT_REGION: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
-  THALAMUS_CF_API_KEY: str({ default: undefined }),
   ...getThalamusValidators(),
   /**
    * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
@@ -186,17 +201,6 @@ export const envValidators = {
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
-      ...(['production', 'dev'].includes(processEnv.NODE_ENV)
-        ? {
-            THALAMUS_CF_API_KEY: str(),
-            THALAMUS_CF_URL: url(),
-            THALAMUS_WEBHOOK_SECRET: str(),
-          }
-        : {
-            THALAMUS_CF_API_KEY: str({ default: undefined }),
-            THALAMUS_CF_URL: url({ default: undefined }),
-            THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
-          }),
     }),
 
   // Feature Flags

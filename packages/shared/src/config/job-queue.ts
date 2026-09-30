@@ -45,4 +45,5 @@ export enum JobCronNameEnum {
   SEND_CRON_METRICS = 'send-cron-metrics',
   CREATE_BILLING_USAGE_RECORDS = 'create-billing-usage-records',
   SEND_USAGE_REPORT = 'send-usage-report',
+  EVALUATE_USAGE_ALERTS = 'evaluate-usage-alerts',
 }

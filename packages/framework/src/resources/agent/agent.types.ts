@@ -149,6 +149,16 @@ export interface AgentMessageAuthor {
   fullName: string;
   userName: string;
   isBot: boolean | 'unknown';
+  /**
+   * The author's email, when the platform provides it (Slack with the `users:read.email` scope,
+   * Teams, email). Present even when the author is not linked to a subscriber.
+   */
+  email?: string;
+  /**
+   * `true` when the chat platform itself generated the message (e.g. Slackbot notices from
+   * Slack's reserved `USLACK` user) rather than a person or bot. Absent means `false`.
+   */
+  isSystem?: boolean;
 }
 
 /** A file or media attachment included with a message. */
@@ -168,6 +178,12 @@ export interface AgentReplyToContext {
 export interface AgentMessage {
   /** Plain-text content of the message. */
   text: string;
+  /**
+   * The message as GitHub-flavored Markdown, preserving platform formatting that `text` flattens:
+   * bold, links, code, and structured content such as pasted Slack tables (rendered as GFM tables).
+   * Absent when the message is plain prose (then `text` is complete); use `markdown ?? text`.
+   */
+  markdown?: string;
   /** Platform-native message ID (e.g. Slack `ts`, Teams `activityId`). */
   platformMessageId: string;
   author: AgentMessageAuthor;

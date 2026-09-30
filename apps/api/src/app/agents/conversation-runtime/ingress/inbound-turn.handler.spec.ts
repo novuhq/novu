@@ -480,6 +480,81 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
     });
 
+    it('should fold a same-author burst into one message whose formatted content matches the folded text', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const paragraph = (value: string) => ({ type: 'paragraph', children: [{ type: 'text', value }] });
+      const table = {
+        type: 'table',
+        children: [
+          { type: 'tableRow', children: [{ type: 'tableCell', children: [{ type: 'text', value: 'EMEA' }] }] },
+        ],
+      };
+      const pastedTable = {
+        ...makeSlackDmMessage(),
+        id: '1777837470.000001',
+        text: 'EMEA',
+        formatted: { type: 'root', children: [table] },
+      };
+      const otherAuthor = {
+        ...makeSlackDmMessage(),
+        id: '1777837472.000001',
+        text: 'not mine',
+        author: { userId: 'user2', fullName: 'User Two', userName: 'usertwo', isBot: false },
+        formatted: { type: 'root', children: [paragraph('not mine')] },
+      };
+      const fileOnly = {
+        ...makeSlackDmMessage(),
+        id: '1777837474.000001',
+        text: ' ',
+        formatted: { type: 'root', children: [paragraph(' ')] },
+        attachments: [{ type: 'file', name: 'q3.csv' }],
+      };
+      const latest = { ...makeSlackDmMessage(), formatted: { type: 'root', children: [paragraph('hello')] } };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        latest as any,
+        AgentEventEnum.ON_MESSAGE,
+        { skipped: [pastedTable, otherAuthor, fileOnly], totalSinceLastHandler: 4 } as any
+      );
+
+      const sent = bridgeExecutor.execute.firstCall.args[0].message;
+      expect(sent.text).to.equal('EMEA\n\nhello');
+      expect(sent.formatted).to.deep.equal({ type: 'root', children: [table, paragraph('hello')] });
+      expect(sent.attachments.map((a: { name: string }) => a.name)).to.deep.equal(['q3.csv']);
+    });
+
+    it('should keep only the approval verdict, text and formatting, when a burst contains one', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const paragraph = (value: string) => ({ type: 'paragraph', children: [{ type: 'text', value }] });
+      const verdict = {
+        ...makeSlackDmMessage(),
+        id: '1777837470.000001',
+        text: 'yes',
+        formatted: { type: 'root', children: [paragraph('yes')] },
+      };
+      const latest = {
+        ...makeSlackDmMessage(),
+        text: 'also restart *prod*',
+        formatted: { type: 'root', children: [paragraph('also restart prod')] },
+      };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        latest as any,
+        AgentEventEnum.ON_MESSAGE,
+        { skipped: [verdict], totalSinceLastHandler: 2 } as any
+      );
+
+      const sent = bridgeExecutor.execute.firstCall.args[0].message;
+      expect(sent.text).to.equal('yes');
+      expect(sent.formatted).to.deep.equal({ type: 'root', children: [paragraph('yes')] });
+    });
+
     it('should seed Slack thread history before recording a mention even when the conversation already exists', async () => {
       const { handler, conversationService } = makeHandler();
       const mention = {
