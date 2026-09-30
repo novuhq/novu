@@ -47,11 +47,11 @@ HOW IT WORKS
   - Telegram is a private bot only you control. `setup telegram` prints one
     QR / link to https://www.gethuman.md/connect — that page walks you
     through @BotFather and takes the bot's reply; the token never touches
-    the terminal. The CLI waits (up to 30 min) and finishes when you tap
+    the terminal. The CLI waits (up to 15 min) and finishes when you tap
     Start. Re-run `human setup telegram` to resume at the missing step.
     Automation can pass --telegram-bot-token to skip the page.
   - Slack is the same shape. `setup slack` prints one QR / link to
-    https://www.gethuman.md/connect/slack — paste an App Configuration
+    https://www.gethuman.md/connect?channel=slack — paste an App Configuration
     Token (xoxe.xoxp-…) and click Add to Slack. The token never touches
     the terminal. --slack-config-token skips the page. Exit 11 means the
     human didn't finish; re-run the same command.

@@ -3,16 +3,13 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 
 import { SingleUseTokenCache, StoredTokenEntry } from '../shared/services/single-use-link-token.service';
 
-/** Lifetime of an issued mobile setup token (seconds). */
-export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
-
 /**
- * Hard ceiling on how long an agent setup token can stay alive through sliding
- * expiry (seconds since mint). Creating a bot with BotFather routinely takes
- * longer than the base TTL, so the landing page heartbeats to keep its token
- * fresh while it is open — but never beyond this.
+ * Lifetime of an issued setup token (seconds). Creating a bot with BotFather or
+ * generating a Slack App Configuration Token routinely takes longer than the
+ * few minutes a `/start` tap or OAuth install needs, so the setup page gets a
+ * longer single-use window.
  */
-export const TELEGRAM_MOBILE_LINK_MAX_LIFETIME_SECONDS = 30 * 60;
+export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 15 * 60;
 
 /**
  * Accepts both the new alphanumeric-only mint format and legacy base64url
@@ -175,33 +172,6 @@ export class TelegramMobileLinkTokenService {
 
   async verifySlackAgentSetup(token: string): Promise<SlackAgentSetupLinkPayload> {
     return this.peek(token, 'slack-agent-setup') as Promise<SlackAgentSetupLinkPayload>;
-  }
-
-  /**
-   * Sliding expiry for the agent setup landing page: re-arms an active `agent`
-   * token for another base TTL, capped at
-   * {@link TELEGRAM_MOBILE_LINK_MAX_LIFETIME_SECONDS} since mint. Consumed,
-   * expired, or other-kind tokens are left untouched — the caller's subsequent
-   * `verify` reports their real status.
-   */
-  async extendAgentSetup(token: string): Promise<void> {
-    await this.tokens.extend(token, {
-      ttlSeconds: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
-      maxLifetimeSeconds: TELEGRAM_MOBILE_LINK_MAX_LIFETIME_SECONDS,
-      expectedKind: 'agent',
-    });
-  }
-
-  /**
-   * Sliding expiry for the Slack setup landing page. Same window and cap as
-   * {@link extendAgentSetup}, scoped to `slack-agent-setup` tokens.
-   */
-  async extendSlackAgentSetup(token: string): Promise<void> {
-    await this.tokens.extend(token, {
-      ttlSeconds: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
-      maxLifetimeSeconds: TELEGRAM_MOBILE_LINK_MAX_LIFETIME_SECONDS,
-      expectedKind: 'slack-agent-setup',
-    });
   }
 
   /** Returns whether a token was already consumed (used marker present). */

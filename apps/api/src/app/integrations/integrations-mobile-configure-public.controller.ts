@@ -38,19 +38,10 @@ export class IntegrationsMobileConfigurePublicController {
     summary: 'Check the status of a Telegram mobile setup link',
     description:
       'Returns whether an opaque Telegram mobile-setup token is still usable. Designed to be called from the ' +
-      'mobile landing page before showing the credentials form. Pass `extend=1` while the page is open to keep ' +
-      'the token alive (sliding expiry, capped at 30 minutes since issue).',
+      'mobile landing page before showing the credentials form.',
   })
-  async getStatus(
-    @Query('token') token: string,
-    @Query('extend') extend?: string
-  ): Promise<GetTelegramMobileLinkStatusResult> {
-    return this.getStatusUsecase.execute(
-      GetTelegramMobileLinkStatusCommand.create({
-        token: token ?? '',
-        extend: extend === '1' || extend === 'true',
-      })
-    );
+  async getStatus(@Query('token') token: string): Promise<GetTelegramMobileLinkStatusResult> {
+    return this.getStatusUsecase.execute(GetTelegramMobileLinkStatusCommand.create({ token: token ?? '' }));
   }
 
   @Post('/')

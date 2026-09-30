@@ -244,7 +244,7 @@ describe('connectSlack', () => {
     });
     expect(mocked.issueSlackSetupLink).not.toHaveBeenCalled();
     expect(output()).toContain(authorizeUrl);
-    expect(output()).not.toContain('/connect/slack');
+    expect(output()).not.toContain('channel=slack');
   });
 
   it('hands off to the human.md landing page when the app does not exist yet (TTY)', async () => {
@@ -255,7 +255,7 @@ describe('connectSlack', () => {
 
     await expect(connectSlack(makeClient(), 'agent_1', 'human-relay', 'sub_1', {}, io)).resolves.toBe('sl');
 
-    const setupUrl = `${HUMAN_SETUP_PAGE_ORIGIN}/connect/slack#${slackSetupLink.token}`;
+    const setupUrl = `${HUMAN_SETUP_PAGE_ORIGIN}/connect?channel=slack#${slackSetupLink.token}`;
     expect(mocked.issueSlackSetupLink).toHaveBeenCalledWith(expect.anything(), 'human-relay', 'int_slack', 'sub_1');
     expect(io.openInBrowser).toHaveBeenCalledTimes(2);
     expect(io.openInBrowser).toHaveBeenNthCalledWith(1, setupUrl);
@@ -278,7 +278,7 @@ describe('connectSlack', () => {
     await connectSlack(makeClient(), 'agent_1', 'human-relay', 'sub_1', {}, io);
 
     expect(io.openInBrowser).not.toHaveBeenCalled();
-    expect(output()).toContain(`${HUMAN_SETUP_PAGE_ORIGIN}/connect/slack#${slackSetupLink.token}`);
+    expect(output()).toContain(`${HUMAN_SETUP_PAGE_ORIGIN}/connect?channel=slack#${slackSetupLink.token}`);
     expect(output()).toContain(authorizeUrl);
     expect(output()).not.toContain('<QR');
   });
@@ -295,7 +295,7 @@ describe('connectSlack', () => {
     await vi.advanceTimersByTimeAsync(31 * 60_000);
 
     await assertion;
-    expect(output()).toContain(`${HUMAN_SETUP_PAGE_ORIGIN}/connect/slack#${slackSetupLink.token}`);
+    expect(output()).toContain(`${HUMAN_SETUP_PAGE_ORIGIN}/connect?channel=slack#${slackSetupLink.token}`);
     expect(output()).not.toContain('<QR');
     vi.useRealTimers();
   });

@@ -29,7 +29,6 @@ export function AgentSlackSetupPage() {
     enabled: token.length > 0,
     retry: false,
     refetchOnWindowFocus: false,
-    refetchInterval: (query) => (query.state.data?.valid ? 60_000 : false),
     meta: { showError: false },
   });
 

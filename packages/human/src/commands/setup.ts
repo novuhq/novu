@@ -37,7 +37,6 @@ import { handleError } from './interact';
 import { splitName } from './invite';
 import {
   buildSetupPageUrl,
-  buildTelegramSetupPageUrl,
   CREDENTIAL_PROPAGATION_TIMEOUT_MS,
   HUMAN_CHANNELS,
   type HumanChannel,
@@ -403,7 +402,7 @@ async function handOffToTelegramSetupPage(
   io: TelegramSetupIo
 ): Promise<void> {
   const mobileLink = await issueTelegramMobileLink(client, integrationIdentifier, subscriberId);
-  const setupUrl = buildTelegramSetupPageUrl(client.apiUrl, mobileLink);
+  const setupUrl = buildSetupPageUrl(client.apiUrl, 'telegram', mobileLink.token, mobileLink.url);
 
   await handOffToSetupPage({
     channelLabel: 'Telegram',
@@ -575,7 +574,7 @@ async function runSlackQuickSetup(
   }
 
   const setupLink = await issueSlackSetupLink(client, agentIdentifier, integration._id, subscriberId);
-  const setupUrl = buildSetupPageUrl(client.apiUrl, '/connect/slack', setupLink.token, setupLink.url);
+  const setupUrl = buildSetupPageUrl(client.apiUrl, 'slack', setupLink.token, setupLink.url);
 
   await handOffToSetupPage({
     channelLabel: 'Slack',

@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="referrer" content="no-referrer" />
-<title>Connect Telegram — human.md</title>
-<meta name="description" content="Finish connecting Telegram so agents on your machine can reach you with human." />
+<title>Connect — human.md</title>
+<meta name="description" content="Finish connecting your channel so agents on your machine can reach you with human." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
@@ -208,7 +208,7 @@
 
   textarea {
     width: 100%;
-    min-height: 150px;
+    min-height: 120px;
     resize: vertical;
     background: var(--bg);
     color: var(--text);
@@ -304,7 +304,7 @@
 <header>
   <div class="header-inner">
     <a class="wordmark" href="/sapien.html">human<span class="tld">.md</span></a>
-    <span class="header-note">telegram · setup</span>
+    <span class="header-note" id="header-note">setup</span>
   </div>
 </header>
 
@@ -325,8 +325,8 @@
     <p class="footnote">Setup links are single-use and time-limited on purpose.</p>
   </section>
 
-  <!-- Form -->
-  <section class="card" id="view-form" hidden>
+  <!-- Telegram: form -->
+  <section class="card" id="view-form-telegram" hidden>
     <p class="eyebrow">Connect Telegram</p>
     <h1>Your <em>private line</em> to your agents.</h1>
     <p>
@@ -355,7 +355,6 @@
           <h2>Paste BotFather's reply</h2>
           <p>Paste the <strong>entire message</strong>. We pull the token out ourselves; nothing else to fill in.</p>
           <textarea
-            id="bot-message"
             spellcheck="false"
             autocapitalize="off"
             autocorrect="off"
@@ -366,24 +365,24 @@ Use this token to access the HTTP API:
 
 You will find it at t.me/YourBot_bot."
           ></textarea>
-          <p class="parse-status" id="parse-status" aria-live="polite"></p>
+          <p class="parse-status" aria-live="polite"></p>
         </div>
       </li>
     </ol>
 
-    <div class="error" id="submit-error" hidden></div>
+    <div class="error" hidden></div>
 
     <div class="actions">
-      <button class="btn primary" id="submit" type="button" disabled>Connect bot</button>
+      <button class="btn primary" type="button" disabled data-label="Connect bot" data-busy-label="Connecting…">Connect bot</button>
     </div>
   </section>
 
-  <!-- Success -->
-  <section class="card" id="view-success" hidden>
+  <!-- Telegram: success -->
+  <section class="card" id="view-success-telegram" hidden>
     <div class="status-icon ok">✓</div>
     <p class="eyebrow">Bot connected</p>
     <h1><span class="mono" id="success-bot">@bot</span> is <em>wired up</em>.</h1>
-    <p id="success-desc">
+    <p id="success-desc-telegram">
       One last tap: open the bot in Telegram and press <strong>Start</strong> so it knows it's you.
       Your terminal will confirm as soon as it sees you.
     </p>
@@ -393,6 +392,69 @@ You will find it at t.me/YourBot_bot."
       </a>
     </div>
     <p class="footnote">After you tap Start you can close this tab.</p>
+  </section>
+
+  <!-- Slack: form -->
+  <section class="card" id="view-form-slack" hidden>
+    <p class="eyebrow">Connect Slack</p>
+    <h1>Your workspace, <em>one token</em>.</h1>
+    <p>
+      Agents on your machine will reach you in Slack through an app created in your workspace.
+      The token never goes through the terminal.
+    </p>
+
+    <ol class="steps">
+      <li class="step">
+        <span class="num">01</span>
+        <div>
+          <h2>Generate an App Configuration Token</h2>
+          <p>
+            Open Slack's app dashboard, scroll to <strong>Your App Configuration Tokens</strong>,
+            click <strong>Generate Token</strong>, and pick the workspace.
+          </p>
+          <a class="btn" href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer">
+            Open api.slack.com/apps <span class="arrow">→</span>
+          </a>
+        </div>
+      </li>
+
+      <li class="step">
+        <span class="num">02</span>
+        <div>
+          <h2>Paste the token</h2>
+          <p>It starts with <code>xoxe.xoxp-</code>. We use it once to create the app, then throw it away.</p>
+          <textarea
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            placeholder="xoxe.xoxp-…"
+          ></textarea>
+          <p class="parse-status" aria-live="polite"></p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="error" hidden></div>
+
+    <div class="actions">
+      <button class="btn primary" type="button" disabled data-label="Create the Slack app" data-busy-label="Creating the app…">Create the Slack app</button>
+    </div>
+  </section>
+
+  <!-- Slack: success -->
+  <section class="card" id="view-success-slack" hidden>
+    <div class="status-icon ok">✓</div>
+    <p class="eyebrow">App created</p>
+    <h1>Add it to <em>your workspace</em>.</h1>
+    <p id="success-desc-slack">
+      One last step: install the app so Slack knows it's you. Your terminal will confirm as soon as it sees the install.
+    </p>
+    <div class="actions">
+      <a class="btn primary" id="authorize-link" href="#" target="_blank" rel="noopener noreferrer">
+        Add to Slack <span class="arrow">→</span>
+      </a>
+    </div>
+    <p class="footnote" id="success-footnote-slack">The install link is valid for 5 minutes. After you approve it you can close this tab.</p>
   </section>
 </main>
 
@@ -405,31 +467,125 @@ You will find it at t.me/YourBot_bot."
   'use strict';
 
   var API_BASE = 'https://api.novu.co';
-  var STATUS_PATH = '/v1/integrations/mobile-configure/status';
-  var CONSUME_PATH = '/v1/integrations/mobile-configure';
-  var HEARTBEAT_MS = 60 * 1000;
-  var RERUN_HINT = 'Back in your terminal, run human setup telegram again to get a fresh link.';
 
   // Kept in sync with apps/dashboard/src/utils/telegram-bot-token.ts.
   var BOT_TOKEN_PATTERN = /^\d{8,}:[A-Za-z0-9_-]{35,}$/;
   var TOKEN_IN_TEXT_PATTERN = /(\d{8,}:[A-Za-z0-9_-]{35,})/;
   var USERNAME_PATTERN = /t\.me\/([A-Za-z0-9_]+)/i;
 
+  /**
+   * Everything that differs between channels. The markup for each channel's
+   * form and success card lives in <main>; this table owns the API paths, the
+   * paste parser, and what to show once the credential is saved.
+   *
+   * parse(draft) -> { credential: string|null, status: string }
+   *   credential is null until the paste is usable; status is the hint shown
+   *   under the textarea.
+   */
+  var CHANNELS = {
+    telegram: {
+      label: 'Telegram',
+      connectedNoun: 'your bot',
+      statusPath: '/v1/integrations/mobile-configure/status',
+      consumePath: '/v1/integrations/mobile-configure',
+      rerunCommand: 'human setup telegram',
+      rejectedMessage: 'Telegram did not accept that token. Double-check the message from @BotFather and try again.',
+      parse: function (draft) {
+        var tokenMatch = draft.match(TOKEN_IN_TEXT_PATTERN);
+        var candidate = tokenMatch ? tokenMatch[1] : null;
+        if (!candidate || !BOT_TOKEN_PATTERN.test(candidate)) {
+          return { credential: null, status: 'No token found yet. Paste the whole message — it starts with "Done!".' };
+        }
+
+        var usernameMatch = draft.match(USERNAME_PATTERN);
+
+        return {
+          credential: candidate,
+          status: usernameMatch ? 'Token detected for @' + usernameMatch[1] + '.' : 'Token detected.'
+        };
+      },
+      body: function (setupToken, credential) {
+        return { token: setupToken, botToken: credential };
+      },
+      showSuccess: function (result) {
+        var botUsername = result.botUsername || '';
+        var deepLinkUrl = result.deepLinkUrl || (botUsername ? 'https://t.me/' + botUsername : '');
+
+        document.getElementById('success-bot').textContent = botUsername ? '@' + botUsername : 'Your bot';
+
+        var deepLink = document.getElementById('deep-link');
+        if (deepLinkUrl) {
+          deepLink.href = deepLinkUrl;
+        } else {
+          deepLink.setAttribute('aria-disabled', 'true');
+          document.getElementById('success-desc-telegram').textContent =
+            'The bot is saved. Open it in Telegram and press Start; your terminal will confirm as soon as it sees you.';
+        }
+      }
+    },
+    slack: {
+      label: 'Slack',
+      connectedNoun: 'Slack',
+      statusPath: '/v1/agents/public/slack/setup/status',
+      consumePath: '/v1/agents/public/slack/setup',
+      rerunCommand: 'human setup slack',
+      rejectedMessage: 'Slack did not accept that token. Generate a fresh one at api.slack.com/apps and try again.',
+      // Kept in sync with validateSlackConfigTokenFormat in packages/human/src/commands/setup.ts.
+      parse: function (draft) {
+        var trimmed = draft.trim();
+        var error = null;
+        if (trimmed.indexOf('xoxb-') === 0) {
+          error = 'That looks like a bot token (xoxb-). App Configuration Tokens start with xoxe.xoxp-.';
+        } else if (trimmed.indexOf('xapp-') === 0) {
+          error = 'That looks like an app-level token (xapp-). App Configuration Tokens start with xoxe.xoxp-.';
+        } else if (trimmed.indexOf('xoxp-') === 0) {
+          error = 'That looks like a user token (xoxp-). App Configuration Tokens start with xoxe.xoxp-.';
+        } else if (trimmed.indexOf('xoxe.xoxp-') !== 0) {
+          error = 'App Configuration Tokens start with xoxe.xoxp- — generate one at the bottom of api.slack.com/apps.';
+        }
+
+        return error ? { credential: null, status: error } : { credential: trimmed, status: 'App Configuration Token detected.' };
+      },
+      body: function (setupToken, credential) {
+        return { token: setupToken, configToken: credential };
+      },
+      showSuccess: function (result) {
+        var authorizeLink = document.getElementById('authorize-link');
+
+        if (result.authorizeUrl) {
+          authorizeLink.href = result.authorizeUrl;
+        } else {
+          authorizeLink.hidden = true;
+          document.getElementById('success-desc-slack').textContent =
+            'The Slack app is created. Return to your terminal — it will finish the install from there.';
+          document.getElementById('success-footnote-slack').textContent = 'You can close this tab.';
+        }
+      }
+    }
+  };
+
+  var requestedChannel = new URLSearchParams(window.location.search).get('channel');
+  var channelName = CHANNELS.hasOwnProperty(requestedChannel) ? requestedChannel : 'telegram';
+  var channel = CHANNELS[channelName];
+  var rerunHint = 'Back in your terminal, run ' + channel.rerunCommand + ' again to get a fresh link.';
+
+  document.title = 'Connect ' + channel.label + ' — human.md';
+  document.getElementById('header-note').textContent = channel.label.toLowerCase() + ' · setup';
+
   var views = {
     loading: document.getElementById('view-loading'),
     inactive: document.getElementById('view-inactive'),
-    form: document.getElementById('view-form'),
-    success: document.getElementById('view-success')
+    form: document.getElementById('view-form-' + channelName),
+    success: document.getElementById('view-success-' + channelName)
   };
 
-  var textarea = document.getElementById('bot-message');
-  var parseStatus = document.getElementById('parse-status');
-  var submitButton = document.getElementById('submit');
-  var submitError = document.getElementById('submit-error');
+  var textarea = views.form.querySelector('textarea');
+  var parseStatus = views.form.querySelector('.parse-status');
+  var submitButton = views.form.querySelector('button');
+  var submitError = views.form.querySelector('.error');
 
   var token = readToken();
-  var heartbeat = null;
-  var parsedToken = null;
+  var credential = null;
 
   function readToken() {
     var hash = (window.location.hash || '').replace(/^#/, '').trim();
@@ -448,19 +604,20 @@ You will find it at t.me/YourBot_bot."
   }
 
   function showInactive(reason) {
-    stopHeartbeat();
     var title = document.getElementById('inactive-title');
     var desc = document.getElementById('inactive-desc');
 
     if (reason === 'expired') {
       title.textContent = 'This setup link has expired';
-      desc.textContent = 'Setup links stay open while you work but eventually time out. ' + RERUN_HINT;
+      desc.textContent = 'Setup links time out after a while. ' + rerunHint;
     } else if (reason === 'used') {
       title.textContent = 'This setup link was already used';
-      desc.textContent = 'Each link works exactly once. If your bot is connected, you are done: check your terminal. Otherwise ' + RERUN_HINT.charAt(0).toLowerCase() + RERUN_HINT.slice(1);
+      desc.textContent =
+        'Each link works exactly once. If ' + channel.connectedNoun + ' is connected, you are done: check your terminal. Otherwise ' +
+        rerunHint.charAt(0).toLowerCase() + rerunHint.slice(1);
     } else {
       title.textContent = 'This setup link is not valid';
-      desc.textContent = 'The link may be incomplete or was minted for a different environment. ' + RERUN_HINT;
+      desc.textContent = 'The link may be incomplete or was minted for a different environment. ' + rerunHint;
     }
 
     show('inactive');
@@ -503,8 +660,8 @@ You will find it at t.me/YourBot_bot."
     });
   }
 
-  function fetchStatus(extend) {
-    var url = API_BASE + STATUS_PATH + '?token=' + encodeURIComponent(token) + (extend ? '&extend=1' : '');
+  function fetchStatus() {
+    var url = API_BASE + channel.statusPath + '?token=' + encodeURIComponent(token);
 
     return fetch(url, { method: 'GET', headers: { Accept: 'application/json' } }).then(function (response) {
       return safeJson(response).then(function (body) {
@@ -517,88 +674,40 @@ You will find it at t.me/YourBot_bot."
     });
   }
 
-  function startHeartbeat() {
-    stopHeartbeat();
-    heartbeat = window.setInterval(function () {
-      fetchStatus(true)
-        .then(function (status) {
-          if (status && status.valid === false) {
-            showInactive(status.reason);
-          }
-        })
-        .catch(function () {
-          // Transient network trouble: keep the form; the next tick retries.
-        });
-    }, HEARTBEAT_MS);
-  }
-
-  function stopHeartbeat() {
-    if (heartbeat !== null) {
-      window.clearInterval(heartbeat);
-      heartbeat = null;
-    }
-  }
-
-  function parseBotFatherMessage(text) {
-    if (!text) return { token: null, botUsername: null };
-
-    var tokenMatch = text.match(TOKEN_IN_TEXT_PATTERN);
-    var usernameMatch = text.match(USERNAME_PATTERN);
-
-    return {
-      token: tokenMatch ? tokenMatch[1] : null,
-      botUsername: usernameMatch ? usernameMatch[1] : null
-    };
-  }
-
-  function isValidBotToken(value) {
-    return BOT_TOKEN_PATTERN.test(value);
-  }
-
   function updateParseStatus() {
     var draft = textarea.value;
-    var parsed = parseBotFatherMessage(draft);
-    parsedToken = parsed.token && isValidBotToken(parsed.token) ? parsed.token : null;
-
-    textarea.classList.toggle('detected', Boolean(parsedToken));
-    submitButton.disabled = !parsedToken;
 
     if (!draft.trim()) {
+      credential = null;
       parseStatus.textContent = '';
       parseStatus.className = 'parse-status';
-
-      return;
+    } else {
+      var parsed = channel.parse(draft);
+      credential = parsed.credential;
+      parseStatus.textContent = parsed.status;
+      parseStatus.className = 'parse-status ' + (credential ? 'ok' : 'warn');
     }
 
-    if (!parsedToken) {
-      parseStatus.textContent = 'No token found yet. Paste the whole message — it starts with "Done!".';
-      parseStatus.className = 'parse-status warn';
-
-      return;
-    }
-
-    parseStatus.textContent = parsed.botUsername
-      ? 'Token detected for @' + parsed.botUsername + '.'
-      : 'Token detected.';
-    parseStatus.className = 'parse-status ok';
+    textarea.classList.toggle('detected', Boolean(credential));
+    submitButton.disabled = !credential;
   }
 
   function setSubmitting(isSubmitting) {
-    submitButton.disabled = isSubmitting || !parsedToken;
-    submitButton.textContent = isSubmitting ? 'Connecting…' : 'Connect bot';
+    submitButton.disabled = isSubmitting || !credential;
+    submitButton.textContent = isSubmitting ? submitButton.dataset.busyLabel : submitButton.dataset.label;
     textarea.disabled = isSubmitting;
   }
 
   function submit() {
-    if (!parsedToken) return;
+    if (!credential) return;
 
     submitError.hidden = true;
     setSubmitting(true);
 
-    fetch(API_BASE + CONSUME_PATH, {
+    fetch(API_BASE + channel.consumePath, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ token: token, botToken: parsedToken })
+      body: JSON.stringify(channel.body(token, credential))
     })
       .then(function (response) {
         return safeJson(response).then(function (body) {
@@ -608,13 +717,11 @@ You will find it at t.me/YourBot_bot."
             if (code === 'token_expired') return showInactive('expired');
             if (code === 'token_invalid') return showInactive('invalid');
 
-            throw new Error(
-              extractErrorMessage(body) ||
-                'Telegram did not accept that token. Double-check the message from @BotFather and try again.'
-            );
+            throw new Error(extractErrorMessage(body) || channel.rejectedMessage);
           }
 
-          showSuccess(unwrap(body) || {});
+          channel.showSuccess(unwrap(body) || {});
+          show('success');
         });
       })
       .catch(function (err) {
@@ -622,27 +729,6 @@ You will find it at t.me/YourBot_bot."
         submitError.hidden = false;
         setSubmitting(false);
       });
-  }
-
-  function showSuccess(result) {
-    stopHeartbeat();
-
-    var botUsername = result.botUsername || '';
-    var deepLinkUrl = result.deepLinkUrl || (botUsername ? 'https://t.me/' + botUsername : '');
-
-    document.getElementById('success-bot').textContent = botUsername ? '@' + botUsername : 'Your bot';
-
-    var deepLink = document.getElementById('deep-link');
-    if (deepLinkUrl) {
-      deepLink.href = deepLinkUrl;
-      deepLink.removeAttribute('aria-disabled');
-    } else {
-      deepLink.setAttribute('aria-disabled', 'true');
-      document.getElementById('success-desc').textContent =
-        'The bot is saved. Open it in Telegram and press Start; your terminal will confirm as soon as it sees you.';
-    }
-
-    show('success');
   }
 
   textarea.addEventListener('input', updateParseStatus);
@@ -654,7 +740,7 @@ You will find it at t.me/YourBot_bot."
     return;
   }
 
-  fetchStatus(true)
+  fetchStatus()
     .then(function (status) {
       if (!status || status.valid !== true) {
         showInactive(status && status.reason ? status.reason : 'invalid');
@@ -664,7 +750,6 @@ You will find it at t.me/YourBot_bot."
 
       show('form');
       textarea.focus();
-      startHeartbeat();
     })
     .catch(function () {
       showInactive('invalid');

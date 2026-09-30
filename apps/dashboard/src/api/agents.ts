@@ -1187,7 +1187,7 @@ export type SlackSetupLinkStatus =
   | { valid: false; reason: 'expired' | 'used' | 'invalid' };
 
 export async function getSlackSetupStatus(token: string, signal?: AbortSignal): Promise<SlackSetupLinkStatus> {
-  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup/status?token=${encodeURIComponent(token)}&extend=1`;
+  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup/status?token=${encodeURIComponent(token)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },

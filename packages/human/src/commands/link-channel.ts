@@ -6,7 +6,6 @@ import {
   getTelegramMobileLinkStatus,
   hasChannelEndpoint,
   issueTelegramSubscriberLink,
-  type TelegramMobileLink,
 } from '../api/setup';
 import { DEFAULT_API_URL, HUMAN_SETUP_PAGE_ORIGIN } from '../config';
 import { pollUntil, sleep } from '../poll';
@@ -19,10 +18,10 @@ export const CHANNEL_POLL_TIMEOUT_MS = 5 * 60_000;
 /**
  * How long we wait for the human to finish on the credential landing page.
  * Creating a Telegram bot or a Slack app routinely takes longer than the 5
- * minutes we allow for a `/start` tap or an OAuth install, and the server keeps
- * the setup token alive while the page is open (sliding expiry, 30 min cap).
+ * minutes we allow for a `/start` tap or an OAuth install. Matches the setup
+ * token's server-side TTL, so the page and the CLI give up together.
  */
-export const SETUP_PAGE_POLL_TIMEOUT_MS = 30 * 60_000;
+export const SETUP_PAGE_POLL_TIMEOUT_MS = 15 * 60_000;
 export const CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
 
 export type SetupPageOutcome = 'saved' | 'expired' | 'invalid' | 'timeout';
@@ -140,22 +139,20 @@ export function isMissingBotTokenError(err: unknown): boolean {
  * gethuman.md page could not reach the API anyway (CORS, mixed content), so we
  * hand back the URL the server minted — that deployment's own dashboard page.
  */
-export function buildSetupPageUrl(apiUrl: string, pagePath: string, token: string, fallbackUrl: string): string {
+export function buildSetupPageUrl(
+  apiUrl: string,
+  channel: Exclude<HumanChannel, 'email'>,
+  token: string,
+  fallbackUrl: string
+): string {
   const normalizedApiUrl = apiUrl.replace(/\/$/, '');
   if (normalizedApiUrl !== DEFAULT_API_URL) {
     return fallbackUrl;
   }
 
-  const path = pagePath.startsWith('/') ? pagePath : `/${pagePath}`;
+  const query = channel === 'telegram' ? '' : `?channel=${channel}`;
 
-  return `${HUMAN_SETUP_PAGE_ORIGIN}${path}#${token}`;
-}
-
-export function buildTelegramSetupPageUrl(
-  apiUrl: string,
-  mobileLink: Pick<TelegramMobileLink, 'token' | 'url'>
-): string {
-  return buildSetupPageUrl(apiUrl, '/connect', mobileLink.token, mobileLink.url);
+  return `${HUMAN_SETUP_PAGE_ORIGIN}/connect${query}#${token}`;
 }
 
 type SetupLinkStatus = { valid: boolean; reason?: 'expired' | 'used' | 'invalid' };

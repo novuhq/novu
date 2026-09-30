@@ -12,7 +12,6 @@ vi.mock('../api/setup', async () => {
 const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus } = await import('../api/setup');
 const {
   buildSetupPageUrl,
-  buildTelegramSetupPageUrl,
   findLinkedIntegration,
   inferViaFromLinks,
   isMissingBotTokenError,
@@ -90,31 +89,27 @@ describe('isMissingBotTokenError', () => {
 
 describe('buildSetupPageUrl', () => {
   it('puts the token in the fragment of the human.md page for Novu Cloud', () => {
-    expect(buildSetupPageUrl(DEFAULT_API_URL, '/connect/slack', 'tok_123', 'https://dash/fallback')).toBe(
-      `${HUMAN_SETUP_PAGE_ORIGIN}/connect/slack#tok_123`
+    expect(buildSetupPageUrl(DEFAULT_API_URL, 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
+      `${HUMAN_SETUP_PAGE_ORIGIN}/connect#tok_123`
     );
-  });
-
-  it('uses the server-minted URL for any other API', () => {
-    expect(buildSetupPageUrl('http://localhost:3000', '/connect/slack', 'tok_123', 'https://dash/fallback')).toBe(
-      'https://dash/fallback'
-    );
-  });
-});
-
-describe('buildTelegramSetupPageUrl', () => {
-  const mobileLink = { token: 'tok_123', url: 'https://dashboard.example/agents/telegram/connect/tok_123' };
-
-  it('sends Novu Cloud users to the human.md page with the token in the fragment', () => {
-    expect(buildTelegramSetupPageUrl(DEFAULT_API_URL, mobileLink)).toBe(`${HUMAN_SETUP_PAGE_ORIGIN}/connect#tok_123`);
-    expect(buildTelegramSetupPageUrl(`${DEFAULT_API_URL}/`, mobileLink)).toBe(
+    expect(buildSetupPageUrl(`${DEFAULT_API_URL}/`, 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
       `${HUMAN_SETUP_PAGE_ORIGIN}/connect#tok_123`
     );
   });
 
+  it('selects the channel with a query parameter so the token stays in the fragment', () => {
+    expect(buildSetupPageUrl(DEFAULT_API_URL, 'slack', 'tok_123', 'https://dash/fallback')).toBe(
+      `${HUMAN_SETUP_PAGE_ORIGIN}/connect?channel=slack#tok_123`
+    );
+  });
+
   it('falls back to the server-minted dashboard URL for self-hosted or local APIs', () => {
-    expect(buildTelegramSetupPageUrl('http://localhost:3000', mobileLink)).toBe(mobileLink.url);
-    expect(buildTelegramSetupPageUrl('https://api.novu.example.com', mobileLink)).toBe(mobileLink.url);
+    expect(buildSetupPageUrl('http://localhost:3000', 'slack', 'tok_123', 'https://dash/fallback')).toBe(
+      'https://dash/fallback'
+    );
+    expect(buildSetupPageUrl('https://api.novu.example.com', 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
+      'https://dash/fallback'
+    );
   });
 });
 

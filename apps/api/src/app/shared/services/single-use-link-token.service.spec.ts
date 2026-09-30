@@ -90,54 +90,6 @@ describe('SingleUseTokenCache', () => {
     keyTtls.delete(usedKey);
   }
 
-  function runExtendScript(
-    cacheStore: Map<string, string>,
-    keyTtls: Map<string, number>,
-    keys: string[],
-    args: (string | number | Buffer)[]
-  ) {
-    const storageKey = keys[0];
-    const now = Number(args[0]);
-    const ttl = Number(args[1]);
-    const maxLifetime = Number(args[2]);
-    const baseTtl = Number(args[3]);
-    const expectedKind = String(args[4] ?? '');
-    const raw = cacheStore.get(storageKey) ?? null;
-
-    if (!raw) {
-      return '';
-    }
-
-    let parsed: { expiresAt?: number; mintedAt?: number; payload?: { kind?: string } };
-    try {
-      parsed = JSON.parse(raw) as { expiresAt?: number; mintedAt?: number; payload?: { kind?: string } };
-    } catch {
-      return 'I';
-    }
-
-    if (!parsed.expiresAt || !parsed.payload) {
-      return 'I';
-    }
-
-    if (expectedKind !== '' && parsed.payload.kind !== expectedKind) {
-      return 'K';
-    }
-
-    const mintedAt = typeof parsed.mintedAt === 'number' ? parsed.mintedAt : parsed.expiresAt - baseTtl;
-    const target = Math.min(now + ttl, mintedAt + maxLifetime);
-    if (target <= parsed.expiresAt) {
-      return `S${raw}`;
-    }
-
-    parsed.expiresAt = target;
-    parsed.mintedAt = mintedAt;
-    const encoded = JSON.stringify(parsed);
-    cacheStore.set(storageKey, encoded);
-    keyTtls.set(storageKey, target - now);
-
-    return `M${encoded}`;
-  }
-
   const TTL_SECONDS = 10 * 60;
 
   function makeCache() {
@@ -166,10 +118,6 @@ describe('SingleUseTokenCache', () => {
           runReleaseScript(cacheStore, keyTtls, keys, args);
 
           return null;
-        }
-
-        if (script.includes('parsed.mintedAt')) {
-          return runExtendScript(cacheStore, keyTtls, keys, args);
         }
 
         return runClaimScript(cacheStore, keyTtls, keys, args);
@@ -337,114 +285,6 @@ describe('SingleUseTokenCache', () => {
     }
 
     expect(await cache.isTokenUsed(token)).to.equal(true);
-  });
-
-  describe('extend (sliding expiry)', () => {
-    const EXTEND_TTL = 20 * 60;
-    const MAX_LIFETIME = 30 * 60;
-
-    it('records mintedAt on issue', async () => {
-      const { cache, cacheService } = makeCache();
-
-      await cache.issue(payload);
-
-      const stored = JSON.parse(cacheService.set.firstCall.args[1] as string);
-      expect(stored.mintedAt).to.be.a('number');
-      expect(stored.expiresAt - stored.mintedAt).to.equal(TTL_SECONDS);
-    });
-
-    it('pushes an active entry out to now + ttl and refreshes the Redis TTL', async () => {
-      const { cache, keyTtls } = makeCache();
-      const { token } = await cache.issue(payload);
-      const now = Math.floor(Date.now() / 1000);
-
-      const outcome = await cache.extend(token, { ttlSeconds: EXTEND_TTL, maxLifetimeSeconds: MAX_LIFETIME });
-
-      expect(outcome.status).to.equal('extended');
-      if (outcome.status === 'extended') {
-        expect(outcome.entry.expiresAt).to.be.within(now + EXTEND_TTL - 1, now + EXTEND_TTL + 1);
-        expect(outcome.entry.payload).to.deep.equal(payload);
-      }
-      expect(keyTtls.get(`test_link:{${token}}`)).to.be.within(EXTEND_TTL - 1, EXTEND_TTL + 1);
-
-      const peeked = await cache.peek(token);
-      expect(peeked.status).to.equal('active');
-    });
-
-    it('never shortens an entry that already expires later', async () => {
-      const { cache } = makeCache();
-      const { token } = await cache.issue(payload);
-
-      const outcome = await cache.extend(token, { ttlSeconds: 60, maxLifetimeSeconds: MAX_LIFETIME });
-
-      expect(outcome.status).to.equal('unchanged');
-    });
-
-    it('caps total lifetime at mint + maxLifetime', async () => {
-      const { cache, cacheStore } = makeCache();
-      const { token } = await cache.issue(payload);
-      const now = Math.floor(Date.now() / 1000);
-      const mintedAt = now - 25 * 60;
-      cacheStore.set(`test_link:{${token}}`, JSON.stringify({ payload, expiresAt: now + 60, mintedAt }));
-
-      const first = await cache.extend(token, { ttlSeconds: EXTEND_TTL, maxLifetimeSeconds: MAX_LIFETIME });
-      expect(first.status).to.equal('extended');
-      if (first.status === 'extended') {
-        expect(first.entry.expiresAt).to.equal(mintedAt + MAX_LIFETIME);
-      }
-
-      const second = await cache.extend(token, { ttlSeconds: EXTEND_TTL, maxLifetimeSeconds: MAX_LIFETIME });
-      expect(second.status).to.equal('unchanged');
-    });
-
-    it('infers mintedAt from the base TTL for entries issued before it was recorded', async () => {
-      const { cache, cacheStore } = makeCache();
-      const { token } = await cache.issue(payload);
-      const now = Math.floor(Date.now() / 1000);
-      // Legacy shape: no mintedAt. Issued TTL_SECONDS ago, i.e. expiring right now.
-      cacheStore.set(`test_link:{${token}}`, JSON.stringify({ payload, expiresAt: now + 1 }));
-
-      const outcome = await cache.extend(token, { ttlSeconds: EXTEND_TTL, maxLifetimeSeconds: MAX_LIFETIME });
-
-      expect(outcome.status).to.equal('extended');
-      if (outcome.status === 'extended') {
-        // Inferred mint = (now + 1) - TTL_SECONDS; the cap is measured from there.
-        const inferredMintedAt = now + 1 - TTL_SECONDS;
-        expect(outcome.entry.mintedAt).to.equal(inferredMintedAt);
-        expect(outcome.entry.expiresAt).to.equal(Math.min(now + EXTEND_TTL, inferredMintedAt + MAX_LIFETIME));
-      }
-    });
-
-    it('cannot resurrect a claimed or unknown token', async () => {
-      const { cache, cacheStore } = makeCache();
-      const { token } = await cache.issue(payload);
-      await cache.claim(token);
-
-      const afterClaim = await cache.extend(token, { ttlSeconds: EXTEND_TTL, maxLifetimeSeconds: MAX_LIFETIME });
-      expect(afterClaim.status).to.equal('missing');
-      expect(cacheStore.has(`test_link:{${token}}`)).to.equal(false);
-
-      const unknown = await cache.extend('b'.repeat(32), { ttlSeconds: EXTEND_TTL, maxLifetimeSeconds: MAX_LIFETIME });
-      expect(unknown.status).to.equal('missing');
-
-      const malformed = await cache.extend('nope', { ttlSeconds: EXTEND_TTL, maxLifetimeSeconds: MAX_LIFETIME });
-      expect(malformed.status).to.equal('malformed-token');
-    });
-
-    it('leaves entries of another kind untouched', async () => {
-      const { cache, keyTtls } = makeCache();
-      const { token } = await cache.issue({ ...payload, kind: 'integration-store' });
-      const ttlBefore = keyTtls.get(`test_link:{${token}}`);
-
-      const outcome = await cache.extend(token, {
-        ttlSeconds: EXTEND_TTL,
-        maxLifetimeSeconds: MAX_LIFETIME,
-        expectedKind: 'agent',
-      });
-
-      expect(outcome.status).to.equal('kind-mismatch');
-      expect(keyTtls.get(`test_link:{${token}}`)).to.equal(ttlBefore);
-    });
   });
 
   it('throws the configured domain error when the cache is unavailable', async () => {
