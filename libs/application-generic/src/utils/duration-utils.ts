@@ -1,13 +1,26 @@
 export class DurationUtils {
-  static isISO8601(value: string): boolean {
+    static isISO8601(value: string): boolean {
     const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
     if (!iso8601Regex.test(value)) {
       return false;
     }
 
     const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return false;
+    }
 
-    return !Number.isNaN(date.getTime());
+    // Guard against V8 date roll-over (e.g. Feb 30 → Mar 2).
+    // Reconstruct the calendar parts from the UTC date and compare to the
+    // original string — if they differ, the input day did not actually exist.
+    const [datePart] = value.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+
+    return (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() + 1 === month &&
+      date.getUTCDate() === day
+    );
   }
 
   static convertToMilliseconds(amount: number, unit: string): number {
