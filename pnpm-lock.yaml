@@ -804,7 +804,7 @@ importers:
         version: 0.14.12(@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(immer@10.1.1)(ioredis@5.11.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3)))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@better-auth/sso':
         specifier: ^1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd))(better-call@1.3.7(zod@4.3.5))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc))(better-call@1.3.7(zod@4.3.5))
       '@calcom/embed-react':
         specifier: 1.5.2
         version: 1.5.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1014,7 +1014,7 @@ importers:
         version: 6.2.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       better-auth:
         specifier: ^1.6.23
-        version: 1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd)
+        version: 1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc)
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
@@ -1289,6 +1289,49 @@ importers:
       vite-plugin-static-copy:
         specifier: ^2.3.2
         version: 2.3.2(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+
+  apps/human-website:
+    dependencies:
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      next:
+        specifier: 16.3.6
+        version: 16.3.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
+      react-dom:
+        specifier: ^19.2.3
+        version: 19.2.3(react@19.2.3)
+      react-qr-code:
+        specifier: ^2.0.21
+        version: 2.0.21(react@19.2.3)
+      tailwind-merge:
+        specifier: 3.4.0
+        version: 3.4.0
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: 4.3.0
+        version: 4.3.0
+      '@types/node':
+        specifier: ^22.7.0
+        version: 22.15.13
+      '@types/react':
+        specifier: ^19.2.8
+        version: 19.2.8
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.8)
+      postcss:
+        specifier: ^8.5.23
+        version: 8.5.25
+      tailwindcss:
+        specifier: 4.3.0
+        version: 4.3.0
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
 
   apps/inbound-mail:
     dependencies:
@@ -2138,7 +2181,7 @@ importers:
     dependencies:
       '@better-auth/sso':
         specifier: ^1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd))(better-call@1.3.7(zod@4.4.3))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc))(better-call@1.3.7(zod@4.4.3))
       '@clerk/backend':
         specifier: ^3.4.11
         version: 3.4.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2177,7 +2220,7 @@ importers:
         version: link:../../../packages/stateless
       better-auth:
         specifier: ^1.6.23
-        version: 1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd)
+        version: 1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc)
       better-call:
         specifier: ^1.3.7
         version: 1.3.7(zod@4.4.3)
@@ -9764,6 +9807,9 @@ packages:
   '@next/env@16.3.4':
     resolution: {integrity: sha512-cjWZnUUa6jZq2kFaNe/ZyJdZonOZ/QoN0Zka2nz/FLOrfx14pQuM9c5RaSVkWMqgdt4ksgPAMWPyHSs/CyV48Q==}
 
+  '@next/env@16.3.6':
+    resolution: {integrity: sha512-x9Vblze1EbtltQYnNH38xCPWU3TVfBd1eXqA3+w9+BTpedkkdNpAaltXlGQ/nsc1+E0mVTNrtcbX3GoO09zeLQ==}
+
   '@next/swc-darwin-arm64@15.5.24':
     resolution: {integrity: sha512-AGdNLvxZNY6eR2iSnV+6wUa8CiHTMr4F7g3uHH7fT4ICIJBE00R9u4tzN/Vuwsw0cOi8MTD2HJcTCb6siMH88Q==}
     engines: {node: '>= 10'}
@@ -9772,6 +9818,12 @@ packages:
 
   '@next/swc-darwin-arm64@16.3.4':
     resolution: {integrity: sha512-iBr3I5LZNk5/bgl5//iTgD2tcym14MX0Xo7fD//u9dYAEgGzza1y9oywluPtf74YnOswVdH1908aK9xVz7zQTw==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@next/swc-darwin-arm64@16.3.6':
+    resolution: {integrity: sha512-E/7GEqaUkt8mk/T8v9lAnrhzR06kdq1ZBkC12F8tAMkdIadwNp3H1KqHynDHrpcTlGCUdq/qu6vUL2aYVyYBdw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
@@ -9788,6 +9840,12 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@next/swc-darwin-x64@16.3.6':
+    resolution: {integrity: sha512-yBE893/nDWTlaiBD1p+qgt7NUen4U5R6FXyH0s67Npq1S3E0cVSef1WIXC2xBRgQvwAvJq6DnS6Y6PrY0cy4Ew==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
   '@next/swc-linux-arm64-gnu@15.5.24':
     resolution: {integrity: sha512-rl9LSfE75si0WT3cDgdUC1XYCKS+TgxC+/IjitmeycrAG18X/plIP1/vy8dd/HPycYcIvE688PD7FuvEAiEAew==}
     engines: {node: '>= 10'}
@@ -9797,6 +9855,13 @@ packages:
 
   '@next/swc-linux-arm64-gnu@16.3.4':
     resolution: {integrity: sha512-+t+U8HZT+fApePCS5h89CSH3datz29MkzyfCn+6fpsZBG/oiEOhINcb9rtkv6sdpToLGFn2e6146NzaKCXkqrA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@next/swc-linux-arm64-gnu@16.3.6':
+    resolution: {integrity: sha512-KJDpjBqBPYlvkivmyrp+Qys6k/7ksbqGQvRVc6ZEGfR+cjQxx+nUkJaWmNZJsmoOrqYNbaXByF8wa0lBwDhB3Q==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -9816,6 +9881,13 @@ packages:
     os: [linux]
     libc: [musl]
 
+  '@next/swc-linux-arm64-musl@16.3.6':
+    resolution: {integrity: sha512-mqNg2K+hvWskSRb/QM+Ix412DvBsuSF0XV+frTSw5vmoucNnIlynFwKYew8D01bfATErMOM7Bujrf0BA5DRKFA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
   '@next/swc-linux-x64-gnu@15.5.24':
     resolution: {integrity: sha512-7dwtlhr0SLndqTG1z9ncRkbJswDZiKWlxzFyXDvJ2RDZRDRHp8zyMJ4D9UH/FgnQeXxxB6gZy2pMcIUoNKQ4pA==}
     engines: {node: '>= 10'}
@@ -9825,6 +9897,13 @@ packages:
 
   '@next/swc-linux-x64-gnu@16.3.4':
     resolution: {integrity: sha512-YIhGY6fSMfha52bnVxnzc9zaVBzJg+cqQTOD8tXIBSx4fuv0pVMxQTE0PaS59YhnMOiYiG09IMwxJAf/CFm/Dw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@next/swc-linux-x64-gnu@16.3.6':
+    resolution: {integrity: sha512-nFncBNGAYouRHjRVaITs9beZRfhX4ssVwpnvPIAbkZVH6LtGoAVlH4bJ8Cnf9SOo9bsXgPFer/GdHtEE3JNOkw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -9844,6 +9923,13 @@ packages:
     os: [linux]
     libc: [musl]
 
+  '@next/swc-linux-x64-musl@16.3.6':
+    resolution: {integrity: sha512-5Mf3cHDGR/Iz0ng2Bj3zUR3p5QS9YK3Hn2QiAfavFmyF48zwThAjpFoiTKNIcOHLYS4zEk+gzyJ/9deQ2ZB8yQ==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
   '@next/swc-win32-arm64-msvc@15.5.24':
     resolution: {integrity: sha512-jBDDkZ/qKAqkWivWDMkJSXUzbzV0QKRBKJjEHUAvSB97Hzw7NLzJ6yV56Lts/wjir7s4P31GYgpbS6ZL+hasAA==}
     engines: {node: '>= 10'}
@@ -9856,6 +9942,12 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@next/swc-win32-arm64-msvc@16.3.6':
+    resolution: {integrity: sha512-0jkJy0C2kbrJWTk4YLa3xk80pVBpx8FCHJym7CnUfDAXe/FWv5qT7SQJbR0KuemyxaEDlEx5WT4VQJoTW+/9Qw==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [win32]
+
   '@next/swc-win32-x64-msvc@15.5.24':
     resolution: {integrity: sha512-JqtwjvvorjacQ0spgjmUJoxySoYgPwdT1sFdQ0/zmW4iMlP2hjYlCoJIyS7o6Epb4Fug8eco3HXFoBDUCDeH7Q==}
     engines: {node: '>= 10'}
@@ -9864,6 +9956,12 @@ packages:
 
   '@next/swc-win32-x64-msvc@16.3.4':
     resolution: {integrity: sha512-vvBzwu1pYQCp92maZCFCIw/XgOTMR5tur9GjakwIo2cmwRTMKajRZZDS9+e4KsUZWKu1E007WUeAFXRRjZeuzw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@next/swc-win32-x64-msvc@16.3.6':
+    resolution: {integrity: sha512-/YXjI1e5OXcZ7YpxRwgP/1jAV/SBKTzeVKqN2mk7mLpcICsyn3Gl5+dIfDTJp70M0ccMhyMMRso4v6mPDCGepg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -24578,6 +24676,27 @@ packages:
       sass:
         optional: true
 
+  next@16.3.6:
+    resolution: {integrity: sha512-L+otWM/aQbYTx98aZhgEoMb4bZAXx1YVW4UMA/vuCyCoWG5HJyZUili8QAkqzrcC+5///tsz3s0M+SlyB5bLMw==}
+    engines: {node: '>=20.9.0'}
+    hasBin: true
+    peerDependencies:
+      '@opentelemetry/api': ^1.1.0
+      '@playwright/test': ^1.51.1
+      babel-plugin-react-compiler: '*'
+      react: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
+      react-dom: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
+      sass: ^1.3.0
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+      '@playwright/test':
+        optional: true
+      babel-plugin-react-compiler:
+        optional: true
+      sass:
+        optional: true
+
   nice-grpc-common@2.0.4:
     resolution: {integrity: sha512-gOEXlD6ShXZMZ8k+49wm/bA2j1+3IKbEFV9WYREJcvZV4kM5L1KkILYTX9VYBzZF2OuYCe1wp8c82bQkvR0fHw==}
 
@@ -30952,8 +31071,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -31293,11 +31412,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+  '@aws-sdk/client-sso-oidc@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -31336,7 +31455,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso@3.575.0':
@@ -31425,11 +31543,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sts@3.575.0':
+  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -31468,6 +31586,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/core@3.575.0':
@@ -31684,7 +31803,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -32019,7 +32138,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -32694,7 +32813,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -34435,12 +34554,12 @@ snapshots:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd))(better-call@1.3.7(zod@4.3.5))':
+  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc))(better-call@1.3.7(zod@4.3.5))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-      better-auth: 1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd)
+      better-auth: 1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc)
       better-call: 1.3.7(zod@4.3.5)
       fast-xml-parser: 5.10.1
       jose: 6.1.3
@@ -34448,12 +34567,12 @@ snapshots:
       tldts: 6.1.86
       zod: 4.3.6
 
-  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd))(better-call@1.3.7(zod@4.4.3))':
+  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc))(better-call@1.3.7(zod@4.4.3))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-      better-auth: 1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd)
+      better-auth: 1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc)
       better-call: 1.3.7(zod@4.4.3)
       fast-xml-parser: 5.10.1
       jose: 6.1.3
@@ -36533,11 +36652,11 @@ snapshots:
 
   '@internationalized/date@3.8.2':
     dependencies:
-      '@swc/helpers': 0.5.15
+      '@swc/helpers': 0.5.23
 
   '@internationalized/number@3.6.3':
     dependencies:
-      '@swc/helpers': 0.5.15
+      '@swc/helpers': 0.5.23
 
   '@ioredis/commands@1.10.0': {}
 
@@ -38247,10 +38366,15 @@ snapshots:
 
   '@next/env@16.3.4': {}
 
+  '@next/env@16.3.6': {}
+
   '@next/swc-darwin-arm64@15.5.24':
     optional: true
 
   '@next/swc-darwin-arm64@16.3.4':
+    optional: true
+
+  '@next/swc-darwin-arm64@16.3.6':
     optional: true
 
   '@next/swc-darwin-x64@15.5.24':
@@ -38259,10 +38383,16 @@ snapshots:
   '@next/swc-darwin-x64@16.3.4':
     optional: true
 
+  '@next/swc-darwin-x64@16.3.6':
+    optional: true
+
   '@next/swc-linux-arm64-gnu@15.5.24':
     optional: true
 
   '@next/swc-linux-arm64-gnu@16.3.4':
+    optional: true
+
+  '@next/swc-linux-arm64-gnu@16.3.6':
     optional: true
 
   '@next/swc-linux-arm64-musl@15.5.24':
@@ -38271,10 +38401,16 @@ snapshots:
   '@next/swc-linux-arm64-musl@16.3.4':
     optional: true
 
+  '@next/swc-linux-arm64-musl@16.3.6':
+    optional: true
+
   '@next/swc-linux-x64-gnu@15.5.24':
     optional: true
 
   '@next/swc-linux-x64-gnu@16.3.4':
+    optional: true
+
+  '@next/swc-linux-x64-gnu@16.3.6':
     optional: true
 
   '@next/swc-linux-x64-musl@15.5.24':
@@ -38283,16 +38419,25 @@ snapshots:
   '@next/swc-linux-x64-musl@16.3.4':
     optional: true
 
+  '@next/swc-linux-x64-musl@16.3.6':
+    optional: true
+
   '@next/swc-win32-arm64-msvc@15.5.24':
     optional: true
 
   '@next/swc-win32-arm64-msvc@16.3.4':
     optional: true
 
+  '@next/swc-win32-arm64-msvc@16.3.6':
+    optional: true
+
   '@next/swc-win32-x64-msvc@15.5.24':
     optional: true
 
   '@next/swc-win32-x64-msvc@16.3.4':
+    optional: true
+
+  '@next/swc-win32-x64-msvc@16.3.6':
     optional: true
 
   '@nextjournal/lang-clojure@1.0.0':
@@ -43966,7 +44111,7 @@ snapshots:
     dependencies:
       '@react-email/text': 0.1.6(react@19.2.3)
       react: 19.2.3
-      tailwindcss: 4.3.0
+      tailwindcss: 4.3.3
     optionalDependencies:
       '@react-email/body': 0.3.0(react@19.2.3)
       '@react-email/button': 0.2.1(react@19.2.3)
@@ -50189,7 +50334,7 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  better-auth@1.6.23(ede7029b10a8cbcc7abd62ca332bc8cd):
+  better-auth@1.6.23(51fd9e6d39da96b8b78a14d0412b1bfc):
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
@@ -50211,7 +50356,7 @@ snapshots:
     optionalDependencies:
       '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
-      next: 16.3.4(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.3.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       solid-js: 1.9.6
@@ -58514,6 +58659,33 @@ snapshots:
       - '@types/node'
       - babel-plugin-macros
 
+  next@16.3.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
+      '@next/env': 16.3.6
+      '@swc/helpers': 0.5.23
+      baseline-browser-mapping: 2.11.20
+      caniuse-lite: 1.0.30001810
+      postcss: 8.5.23
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      styled-jsx: 5.1.6(@babel/core@7.29.7)(babel-plugin-macros@3.1.0)(react@19.2.3)
+    optionalDependencies:
+      '@next/swc-darwin-arm64': 16.3.6
+      '@next/swc-darwin-x64': 16.3.6
+      '@next/swc-linux-arm64-gnu': 16.3.6
+      '@next/swc-linux-arm64-musl': 16.3.6
+      '@next/swc-linux-x64-gnu': 16.3.6
+      '@next/swc-linux-x64-musl': 16.3.6
+      '@next/swc-win32-arm64-msvc': 16.3.6
+      '@next/swc-win32-x64-msvc': 16.3.6
+      '@opentelemetry/api': 1.9.1
+      '@playwright/test': 1.58.2
+      sharp: 0.35.4(@types/node@22.15.13)
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/node'
+      - babel-plugin-macros
+
   nice-grpc-common@2.0.4:
     dependencies:
       ts-error: 1.0.6
@@ -62009,7 +62181,7 @@ snapshots:
       recast: 0.23.21
       socks: 2.8.9
       stringify-object: 5.0.0
-      tailwind-merge: 3.4.0
+      tailwind-merge: 3.6.0
       ts-morph: 26.0.0
       tsconfig-paths: 4.2.0
       undici: 7.30.0

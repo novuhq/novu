@@ -75,6 +75,7 @@ export const envValidators = {
   PORT: port(),
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
+  HUMAN_WEBSITE_URL: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   /*
    * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only

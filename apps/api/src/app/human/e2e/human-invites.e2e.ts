@@ -110,7 +110,7 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
 
     const invite = await createInvite({ firstName: 'Alice', lastName: 'Chen' });
 
-    expect(invite.url).to.match(/\/agents\/invite\/[A-Za-z0-9]{32}$/);
+    expect(invite.url).to.match(/^http:\/\/127\.0\.0\.1:4300\/invite\/[A-Za-z0-9]{32}$/);
     expect(Date.parse(invite.expiresAt) - Date.now()).to.be.greaterThan(2 * 24 * 60 * 60 * 1000);
     expect(invite.channels.map(({ via, connected }) => ({ via, connected }))).to.deep.equal([
       { via: 'telegram', connected: false },
