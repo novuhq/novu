@@ -59,6 +59,17 @@ describe('DeclineHumanInvite', () => {
     expect(inviteTokens.undoDecline.calledOnceWith('T'.repeat(32), { payload: {}, expiresAt: 0 })).to.equal(true);
   });
 
+  it('puts the link back when the check after retiring it fails', async () => {
+    const { usecase, inviteTokens, deliveryService } = setup(false);
+    const outage = new Error('database unavailable');
+    deliveryService.describeInviteChannels.onSecondCall().rejects(outage);
+
+    const err = await usecase.execute(command).catch((error) => error);
+
+    expect(err).to.equal(outage);
+    expect(inviteTokens.undoDecline.calledOnceWith('T'.repeat(32), { payload: {}, expiresAt: 0 })).to.equal(true);
+  });
+
   it('treats a second decline as done', async () => {
     const { usecase, inviteTokens } = setup(false);
     inviteTokens.peek.rejects(new InactiveHumanInviteError('declined'));

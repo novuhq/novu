@@ -34,22 +34,47 @@ export class DeclineHumanInvite {
       throw alreadyConnected();
     }
 
-    let retired: RetiredHumanInvite | null;
-    try {
-      retired = await this.inviteTokens.decline(command.token);
-    } catch (err) {
-      throw toHttpError(err);
+    const retired = await this.retire(command.token);
+
+    if (!retired) {
+      return { declined: true };
     }
 
     // The person may have finished connecting an app (Telegram /start, Slack OAuth) between the check
-    // above and retiring the link. Connecting wins, so put the link back.
-    if (retired && (await this.isConnected(invite.payload))) {
-      await this.inviteTokens.undoDecline(command.token, retired);
+    // above and retiring the link. Connecting wins, so put the link back; a failed check must not
+    // leave it retired either.
+    let connected: boolean;
+    try {
+      connected = await this.isConnected(invite.payload);
+    } catch (err) {
+      await this.restore(command.token, retired);
+
+      throw err;
+    }
+
+    if (connected) {
+      await this.restore(command.token, retired);
 
       throw alreadyConnected();
     }
 
     return { declined: true };
+  }
+
+  private async retire(token: string): Promise<RetiredHumanInvite | null> {
+    try {
+      return await this.inviteTokens.decline(token);
+    } catch (err) {
+      throw toHttpError(err);
+    }
+  }
+
+  private async restore(token: string, retired: RetiredHumanInvite): Promise<void> {
+    try {
+      await this.inviteTokens.undoDecline(token, retired);
+    } catch (err) {
+      throw toHttpError(err);
+    }
   }
 
   private async isConnected(payload: HumanInviteTokenPayload): Promise<boolean> {
