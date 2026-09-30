@@ -17,7 +17,7 @@ Standalone npm project (excluded from the pnpm workspace). Node 24 runs the Type
 | `src/google.ts` | Authenticated POST to Google APIs, and Gemini `generateContent` |
 | `src/config.ts` | Env vars and `agents.json` |
 | `agents.json` | Fixed candidate list |
-| `demo-agents/` | Canned A2A department agents (People, IT Helpdesk, Finance, Analyst) on Cloud Run |
+| `demo-agents/` | Canned A2A department agents (Sales, People, IT Helpdesk, Finance, Analyst) on Cloud Run |
 
 ## Environment
 
@@ -57,9 +57,9 @@ Every decision is one JSON log line (`route`, `forward`, `forward_failed`).
 
 ## Agent list
 
-`agents.json` holds: `deep_research` (Deep Research, `stream_assist`), `web_search` (the Core Assistant with Google Search: `stream_assist` with `targetId: default_assistant`, which sends no `agentsSpec`), `sales` (Sales Agent (A2A), `a2a_proxy`), and the four agents from `demo-agents/` (`a2a_proxy`). `streamAssist` silently falls back to the default assistant on an unknown agent id, so check `targetId`s.
+`agents.json` holds: `deep_research` (Deep Research, `stream_assist`), `web_search` (the Core Assistant with Google Search: `stream_assist` with `targetId: default_assistant`, which sends no `agentsSpec`), and the five agents from `demo-agents/` (`sales`, `people`, `it_helpdesk`, `finance`, `analyst`, all `a2a_proxy`). `streamAssist` silently falls back to the default assistant on an unknown agent id, so check `targetId`s.
 
-`demo-agents/` is one A2A server image; `AGENT` picks the persona (`personas.ts`). `./deploy.sh [tag]` builds it and creates or updates one private Cloud Run service per persona (`a2a-<persona>`), invokable only by the Gemini Enterprise service agent. `node register.ts` registers or updates each one in the engine, shares it with all users, and prints its `agents.json` entry. Each agent asks one follow-up question (kind of leave, system, expense report, quarter) to show multi-turn forwarding.
+`demo-agents/` is one A2A server image; `AGENT` picks the persona (`personas.ts`). `./deploy.sh [tag]` builds it and creates or updates one private Cloud Run service per persona (`a2a-<persona>`), invokable only by the Gemini Enterprise service agent. `node register.ts` registers or updates each one in the engine, shares it with all users, and prints its `agents.json` entry. Each agent asks one follow-up question (month, kind of leave, system, expense report, quarter) to show multi-turn forwarding.
 
 ## Framework notes
 

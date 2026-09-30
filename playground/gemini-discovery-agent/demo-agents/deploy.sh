@@ -10,7 +10,7 @@ PROJECT_NUMBER=398896934586
 REGION=us-central1
 IMAGE="$REGION-docker.pkg.dev/$PROJECT/sandbox-agents/a2a-demo-agents:${1:-v1}"
 INVOKER="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-discoveryengine.iam.gserviceaccount.com"
-PERSONAS=(people it_helpdesk finance analyst)
+PERSONAS=(sales people it_helpdesk finance analyst)
 API="https://run.googleapis.com/v2/projects/$PROJECT/locations/$REGION/services"
 
 TOKEN=$(gcloud auth application-default print-access-token)

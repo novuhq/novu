@@ -41,6 +41,28 @@ const LEAVE: Record<string, string> = {
   Unpaid: 'Unpaid leave of up to 3 months can be approved by your manager and People team. Benefits continue during it.',
 };
 
+const sales: Persona = {
+  id: 'sales',
+  name: 'Sales Agent (A2A)',
+  description:
+    'Answers questions about company sales: monthly sales figures. Asks which month if the question does not name one.',
+  skill: {
+    id: 'sales-lookup',
+    name: 'Sales lookup',
+    description: 'Monthly sales figures.',
+    tags: ['sales'],
+    examples: ['What were sales?', 'What were sales in March?'],
+  },
+  intents: [
+    {
+      match: /sales|sold/i,
+      ask: { question: 'Which month?', find: (text) => findWord(text, MONTHS) },
+      answer: (month) => `Sales for ${month}: $42,000.`,
+    },
+  ],
+  fallback: 'I’m the Sales agent. Ask me for monthly sales figures, for example "What were sales in March?"',
+};
+
 const people: Persona = {
   id: 'people',
   name: 'People Agent (A2A)',
@@ -211,7 +233,7 @@ const analyst: Persona = {
 };
 
 export const PERSONAS: Record<string, Persona> = Object.fromEntries(
-  [people, itHelpdesk, finance, analyst].map((persona) => [persona.id, persona])
+  [sales, people, itHelpdesk, finance, analyst].map((persona) => [persona.id, persona])
 );
 
 export function agentCardFor(persona: Persona, url: string): AgentCard {
