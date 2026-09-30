@@ -140,6 +140,7 @@ export class AgentSubscriberResolver {
       });
     }
 
+    // Both adapters set the message author's user id to the subscriber id itself.
     if (platform === AgentPlatformEnum.WEB_CHAT || platform === AgentPlatformEnum.GEMINI_ENTERPRISE) {
       return this.resolveWebChatSubscriber({ environmentId, platformUserId });
     }
@@ -376,46 +377,6 @@ export class AgentSubscriberResolver {
       identity: phone,
       identityFields: { phone },
     });
-  }
-
-  /**
-   * Gemini Enterprise sends no end-user identity over A2A, so each conversation (`contextId`)
-   * gets its own subscriber. Access is already gated by the integration's secret URL.
-   */
-  async provisionGeminiEnterpriseSubscriber(params: {
-    environmentId: string;
-    organizationId: string;
-    integrationIdentifier: string;
-    agentIdentifier: string;
-    contextId: string;
-  }): Promise<string> {
-    const subscriberId = buildPlatformSubscriberId({
-      organizationId: params.organizationId,
-      integrationIdentifier: params.integrationIdentifier,
-      platform: AgentPlatformEnum.GEMINI_ENTERPRISE,
-      platformUserId: params.contextId,
-    });
-
-    if (await this.subscriberRepository.findBySubscriberId(params.environmentId, subscriberId)) {
-      return subscriberId;
-    }
-
-    await this.createOrUpdateSubscriber.execute(
-      CreateOrUpdateSubscriberCommand.create({
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        subscriberId,
-        data: {
-          [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
-          [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.GEMINI_ENTERPRISE,
-          [AGENT_PROVISION_DATA_KEYS.platformUserId]: params.contextId,
-          [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: params.agentIdentifier,
-          [AGENT_PROVISION_DATA_KEYS.firstSeenAt]: new Date().toISOString(),
-        },
-      })
-    );
-
-    return subscriberId;
   }
 
   private async upsertOpenAccessIdentitySubscriber(params: {
@@ -854,7 +815,7 @@ function openAccessIdentityProvisionMeta(
  * within an environment against customer-created subscriberIds. The prefix is for
  * human readability only; provenance is `data.__novu_source`.
  */
-function buildPlatformSubscriberId(params: {
+export function buildPlatformSubscriberId(params: {
   organizationId: string;
   integrationIdentifier: string;
   platform: AgentPlatformEnum;

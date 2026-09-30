@@ -13,7 +13,7 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { formatToolInputSummary } from '../conversation-runtime/reply/handle-plan-progress/format-tool-input';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
-import { GeminiEnterpriseTurnBus, geTurnBusKey } from '../gemini-enterprise/gemini-enterprise-turn-bus.service';
+import { GeminiEnterpriseTurnBus } from '../gemini-enterprise/gemini-enterprise-turn-bus.service';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
@@ -102,7 +102,13 @@ export class AgentEventSink {
         continue;
       }
 
-      await this.dispatchEvent(envelope, context, event);
+      try {
+        await this.dispatchEvent(envelope, context, event);
+      } finally {
+        if (event.type === 'run-finish' || event.type === 'run-error') {
+          await this.endGeminiEnterpriseTurn(context, envelope);
+        }
+      }
     }
   }
 
@@ -172,31 +178,23 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'run-finish':
-        try {
-          await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
 
-          if (event.outcome === 'paused') {
-            await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
-
-            return 'accepted';
-          }
-
-          await this.handleRunFinish(event, baseFields, context, metadata, envelope.runId);
+        if (event.outcome === 'paused') {
+          await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
 
           return 'accepted';
-        } finally {
-          await this.endGeminiEnterpriseTurn(context, envelope);
         }
+
+        await this.handleRunFinish(event, baseFields, context, metadata, envelope.runId);
+
+        return 'accepted';
 
       case 'run-error':
-        try {
-          await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
-          await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+        await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
 
-          return 'accepted';
-        } finally {
-          await this.endGeminiEnterpriseTurn(context, envelope);
-        }
+        return 'accepted';
 
       case 'connection.error':
         await this.mcpConnectionErrorHandler.handle(event, context);
@@ -947,8 +945,9 @@ export class AgentEventSink {
     }
 
     try {
+      const { environmentId, integrationIdentifier, platformThreadId: threadId } = context;
       await this.geTurnBus.publish(
-        geTurnBusKey(context.environmentId, context.integrationIdentifier, context.platformThreadId),
+        { environmentId, integrationIdentifier, threadId },
         { type: 'end', turnId: envelope.turnId }
       );
     } catch (err) {

@@ -4,33 +4,32 @@ import type { Cluster, Redis } from 'ioredis';
 
 /**
  * Everything the pod holding Gemini Enterprise's open `message/stream` response needs to finish a turn.
- * Deliveries (post / edit / typing) and end-of-turn signals can be produced on any API pod, so they
+ * Deliveries (text / typing) and end-of-turn signals can be produced on any API pod, so they
  * travel through one Redis Stream per conversation thread instead of in-process state.
  */
 export type GeBusEvent =
-  | { type: 'post' | 'edit'; messageId: string; text: string }
+  | { type: 'text'; messageId: string; text: string }
   | { type: 'typing'; status?: string }
   | { type: 'end'; turnId: string }
   | { type: 'superseded'; streamId: string };
 
-export type GeBusEntry = { id: string; event: GeBusEvent };
+export type GeBusThread = { environmentId: string; integrationIdentifier: string; threadId: string };
 
 const MAX_LEN = 200;
 const TTL_MS = 30 * 60 * 1000;
-/** Upper bound between reader wake-ups; the ingress sends a keep-alive on every idle wake-up. */
 const BLOCK_MS = 15_000;
 
-export function geTurnBusKey(environmentId: string, integrationIdentifier: string, threadId: string): string {
-  return `ge:turns:${environmentId}:${integrationIdentifier}:${threadId}`;
-}
+const keyFor = ({ environmentId, integrationIdentifier, threadId }: GeBusThread) =>
+  `ge:turns:${environmentId}:${integrationIdentifier}:${threadId}`;
 
 @Injectable()
 export class GeminiEnterpriseTurnBus {
   constructor(private readonly cacheService: CacheService) {}
 
   /** Returns the stream entry id, usable as a read cursor that excludes this entry. */
-  async publish(key: string, event: GeBusEvent): Promise<string> {
+  async publish(thread: GeBusThread, event: GeBusEvent): Promise<string> {
     const client = this.client();
+    const key = keyFor(thread);
     const id = await client.xadd(key, 'MAXLEN', '~', MAX_LEN, '*', 'e', JSON.stringify(event));
     await client.pexpire(key, TTL_MS);
 
@@ -39,9 +38,10 @@ export class GeminiEnterpriseTurnBus {
 
   /**
    * Blocking reader on a dedicated connection (XREAD BLOCK would stall the shared client).
-   * Yields an empty batch on every idle wake-up. Aborting the signal closes the connection.
+   * Aborting the signal closes the connection.
    */
-  async *read(key: string, fromId: string, signal: AbortSignal): AsyncGenerator<GeBusEntry[]> {
+  async *read(thread: GeBusThread, fromId: string, signal: AbortSignal): AsyncGenerator<GeBusEvent> {
+    const key = keyFor(thread);
     // Shared clients may disable the offline queue; a fresh connection would reject XREAD until ready.
     const client = this.client() as Redis | Cluster;
     const connection = (
@@ -56,15 +56,10 @@ export class GeminiEnterpriseTurnBus {
     try {
       while (!signal.aborted) {
         const result = await connection.xread('BLOCK', BLOCK_MS, 'STREAMS', key, cursor);
-        const entries = result?.[0]?.[1] ?? [];
-        const batch: GeBusEntry[] = [];
-
-        for (const [id, fields] of entries) {
+        for (const [id, fields] of result?.[0]?.[1] ?? []) {
           cursor = id;
-          batch.push({ id, event: JSON.parse(fields[1]) as GeBusEvent });
+          yield JSON.parse(fields[1]) as GeBusEvent;
         }
-
-        yield batch;
       }
     } catch (err) {
       if (!signal.aborted) throw err;

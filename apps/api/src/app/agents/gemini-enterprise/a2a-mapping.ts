@@ -1,5 +1,5 @@
 /**
- * Pure mapping between the Novu chat-SDK world (post / edit / typing keyed by thread = A2A contextId,
+ * Pure mapping between the Novu chat-SDK world (text / typing keyed by thread = A2A contextId,
  * plus the sink's end-of-turn signal) and A2A v0.3 stream events with text parts.
  * Wire shapes were verified against Gemini Enterprise (NV-8870 / NV-8873).
  */
@@ -39,7 +39,7 @@ export function parseInbound(params: InboundParams | undefined): GeInbound {
 
 export type GeTurnInput =
   | { type: 'start' }
-  | { type: 'post' | 'edit'; messageId: string; text: string }
+  | { type: 'text'; messageId: string; text: string }
   | { type: 'typing'; status?: string }
   | { type: 'end' }
   | { type: 'deadline' }
@@ -49,9 +49,7 @@ export type GeTurn = {
   taskId: string;
   contextId: string;
   closed: boolean;
-  closedBy?: 'end' | 'deadline' | 'superseded';
   texts: Array<{ messageId: string; text: string }>;
-  dropped: number;
   statusSeq: number;
 };
 
@@ -65,14 +63,14 @@ export const SUPERSEDED_TEXT = '(Stopped: you sent a newer message.)';
 export const NO_REPLY_TEXT = '(The agent finished without replying.)';
 
 export function openTurn({ taskId, contextId }: { taskId: string; contextId: string }): GeTurn {
-  return { taskId, contextId, closed: false, texts: [], dropped: 0, statusSeq: 0 };
+  return { taskId, contextId, closed: false, texts: [], statusSeq: 0 };
 }
 
 const textPart = (text: string): A2aTextPart => ({ kind: 'text', text });
 
 export function step(current: GeTurn, input: GeTurnInput): GeStepResult {
   if (current.closed) {
-    return { turn: { ...current, dropped: current.dropped + 1 }, events: [], close: false };
+    return { turn: current, events: [], close: false };
   }
 
   const { taskId, contextId } = current;
@@ -112,8 +110,7 @@ export function step(current: GeTurn, input: GeTurnInput): GeStepResult {
       // Renders in GE as a status / thought line, not as the answer.
       return { turn, events: input.status ? [status('working', [textPart(input.status)])] : [], close: false };
 
-    case 'post':
-    case 'edit': {
+    case 'text': {
       // GE appends every artifact-update to the answer, so text can't be edited once sent. Hold the
       // latest version of each message, show it as the status line meanwhile, send it once at the end.
       const { messageId, text } = input;
@@ -136,14 +133,11 @@ export function step(current: GeTurn, input: GeTurnInput): GeStepResult {
       // Always `completed`: Novu already posts a user-facing error text on run-error / bridge failure,
       // and `completed` is the only terminal state whose rendering and follow-up turn are verified.
       return {
-        turn: { ...turn, closed: true, closedBy: input.type },
+        turn: { ...turn, closed: true },
         events: [status('completed', parts, true)],
         close: true,
       };
     }
-
-    default:
-      return { turn, events: [], close: false };
   }
 }
 

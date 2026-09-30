@@ -107,7 +107,7 @@ export class GeminiEnterpriseAdapter implements Adapter<{ contextId: string }, G
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<GeRawMessage>> {
     const id = randomUUID();
     const text = this.toText(message);
-    if (text) await this.config.publish(threadId, { type: 'post', messageId: id, text });
+    if (text) await this.config.publish(threadId, { type: 'text', messageId: id, text });
 
     return this.rawMessage(id, threadId, text);
   }
@@ -118,7 +118,7 @@ export class GeminiEnterpriseAdapter implements Adapter<{ contextId: string }, G
     message: AdapterPostableMessage
   ): Promise<RawMessage<GeRawMessage>> {
     const text = this.toText(message);
-    if (text) await this.config.publish(threadId, { type: 'edit', messageId, text });
+    if (text) await this.config.publish(threadId, { type: 'text', messageId, text });
 
     return this.rawMessage(messageId, threadId, text);
   }

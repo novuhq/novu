@@ -27,10 +27,10 @@ DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE")
 for persona in "${PERSONAS[@]}"; do
   service="a2a-${persona//_/-}"
   url="https://$service-$PROJECT_NUMBER.$REGION.run.app"
-  template=$(jq -n --arg image "$DIGEST" --arg agent "$persona" --arg url "$url" '{
+  template=$(jq -n --arg image "$DIGEST" --arg agent "$persona" --arg url "$url" --arg serviceAccount "$PROJECT_NUMBER-compute@developer.gserviceaccount.com" '{
     scaling: { maxInstanceCount: 1 },
     timeout: "60s",
-    serviceAccount: "398896934586-compute@developer.gserviceaccount.com",
+    serviceAccount: $serviceAccount,
     maxInstanceRequestConcurrency: 10,
     containers: [{
       image: $image,

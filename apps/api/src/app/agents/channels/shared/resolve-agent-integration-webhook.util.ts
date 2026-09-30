@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 export interface ResolvedAgentIntegrationWebhook {
-  agent: { _id: string; identifier: string };
+  agent: { _id: string; identifier: string; name: string; description?: string };
   integration: IntegrationEntity;
   callbackUrl: string;
 }
@@ -69,7 +69,7 @@ export async function resolveAgentIntegrationForWebhook(params: {
 
   const agent = await agentRepository.findOne(
     { identifier: agentIdentifier, _environmentId: environmentId, _organizationId: organizationId },
-    ['_id', 'identifier']
+    ['_id', 'identifier', 'name', 'description']
   );
 
   if (!agent) {

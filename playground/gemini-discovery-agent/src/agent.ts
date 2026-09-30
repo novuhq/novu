@@ -47,6 +47,7 @@ async function forwardTo(ctx: AgentHandlerContext, state: RouteState, target: Ta
 
     if (!reply.text) {
       await ctx.reply(`**${target.name}:** This agent needs more input: open it in Gemini Enterprise.`);
+
       return;
     }
 

@@ -1,19 +1,26 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import {
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
+  PinoLogger,
+} from '@novu/application-generic';
+import { SubscriberRepository } from '@novu/dal';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from '@novu/shared';
 import type { Request, Response } from 'express';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
-import { AgentSubscriberResolver } from '../conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { buildPlatformSubscriberId } from '../conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
 import { type BridgeDispatchSlot, bridgeDispatchProbe } from '../conversation-runtime/runtime/bridge-dispatch-probe';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { type GeInbound, type GeTurnInput, openTurn, parseInbound, step } from './a2a-mapping';
 import { geThreadId } from './gemini-enterprise.adapter';
-import { type GeBusEvent, GeminiEnterpriseTurnBus, geTurnBusKey } from './gemini-enterprise-turn-bus.service';
+import { type GeBusEvent, type GeBusThread, GeminiEnterpriseTurnBus } from './gemini-enterprise-turn-bus.service';
 
 /** Gemini Enterprise drops a held stream at ~28 min; close first with a message the user can act on. */
 const TURN_DEADLINE_MS = 25 * 60 * 1000;
+const KEEP_ALIVE_MS = 15_000;
 
 export type JsonRpcRequest = { jsonrpc?: string; id?: string | number | null; method?: string; params?: unknown };
 
@@ -23,7 +30,8 @@ export class GeminiEnterpriseInboundService {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly registry: ChatInstanceRegistry,
     private readonly turnBus: GeminiEnterpriseTurnBus,
-    private readonly subscriberResolver: AgentSubscriberResolver,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -52,7 +60,11 @@ export class GeminiEnterpriseInboundService {
     const inbound = parseInbound(rpc.params as Parameters<typeof parseInbound>[0]);
     const contextId = inbound.contextId ?? randomUUID();
     const threadId = geThreadId(contextId);
-    const busKey = geTurnBusKey(config.environmentId, config.integrationIdentifier, threadId);
+    const thread: GeBusThread = {
+      environmentId: config.environmentId,
+      integrationIdentifier: config.integrationIdentifier,
+      threadId,
+    };
     const streamId = randomUUID();
     const abort = new AbortController();
     let turn = openTurn({ taskId: randomUUID(), contextId });
@@ -63,8 +75,10 @@ export class GeminiEnterpriseInboundService {
     res.flushHeaders();
 
     const deadline = setTimeout(() => apply({ type: 'deadline' }), TURN_DEADLINE_MS);
+    const keepAlive = setInterval(() => res.write(': keep-alive\n\n'), KEEP_ALIVE_MS);
     const finish = () => {
       clearTimeout(deadline);
+      clearInterval(keepAlive);
       abort.abort();
       if (!res.writableEnded) res.end();
     };
@@ -83,18 +97,20 @@ export class GeminiEnterpriseInboundService {
 
     const slot: BridgeDispatchSlot = {
       deliveryIds: [],
-      onFailed: (deliveryId) => this.publishEnd(busKey, deliveryId),
+      onFailed: (deliveryId) => this.publishEnd(thread, deliveryId),
     };
 
     try {
       // Our own supersede notice is the read cursor: older streams on this context close, and this
       // stream sees exactly what is published after it.
-      const cursor = await this.turnBus.publish(busKey, { type: 'superseded', streamId });
-      const keepAlive = () => {
-        if (!res.writableEnded) res.write(': keep-alive\n\n');
-      };
+      const cursor = await this.turnBus.publish(thread, { type: 'superseded', streamId });
       // Handled now: dispatch awaits before `reading` does, and an unhandled rejection exits the process.
-      const reading = this.consume(busKey, cursor, streamId, slot, abort.signal, apply, keepAlive).catch((err) => {
+      const reading = (async () => {
+        for await (const event of this.turnBus.read(thread, cursor, abort.signal)) {
+          const input = toTurnInput(event, streamId, slot.deliveryIds);
+          if (input) apply(input);
+        }
+      })().catch((err) => {
         this.logger.error(err, `[agent:${config.agentId}] Gemini Enterprise turn bus read failed`);
         apply({ type: 'end' });
       });
@@ -105,7 +121,7 @@ export class GeminiEnterpriseInboundService {
         // Nothing reached a bridge (plan limit, no bridge URL, dropped duplicate): end after what was posted.
         const localTurnId = `local:${streamId}`;
         slot.deliveryIds.push(localTurnId);
-        await this.publishEnd(busKey, localTurnId);
+        await this.publishEnd(thread, localTurnId);
       }
 
       await reading;
@@ -117,29 +133,6 @@ export class GeminiEnterpriseInboundService {
         agentId: config.agentId,
       });
       apply({ type: 'end' });
-    }
-  }
-
-  private async consume(
-    busKey: string,
-    cursor: string,
-    streamId: string,
-    slot: BridgeDispatchSlot,
-    signal: AbortSignal,
-    apply: (input: GeTurnInput) => void,
-    keepAlive: () => void
-  ): Promise<void> {
-    for await (const batch of this.turnBus.read(busKey, cursor, signal)) {
-      if (batch.length === 0) {
-        keepAlive();
-      }
-
-      for (const { event } of batch) {
-        const input = toTurnInput(event, streamId, slot.deliveryIds);
-        if (input) apply(input);
-
-        if (signal.aborted) return;
-      }
     }
   }
 
@@ -157,13 +150,7 @@ export class GeminiEnterpriseInboundService {
       config
     );
     const adapter = chat.getAdapter('gemini_enterprise');
-    const subscriberId = await this.subscriberResolver.provisionGeminiEnterpriseSubscriber({
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      integrationIdentifier: config.integrationIdentifier,
-      agentIdentifier: config.agentIdentifier,
-      contextId,
-    });
+    const subscriberId = await this.provisionSubscriber(config, contextId);
 
     await bridgeDispatchProbe.run(slot, async () => {
       const message = adapter.parseMessage({
@@ -175,9 +162,44 @@ export class GeminiEnterpriseInboundService {
     });
   }
 
-  private async publishEnd(busKey: string, turnId: string): Promise<void> {
+  /**
+   * Gemini Enterprise sends no end-user identity over A2A, so each conversation (`contextId`)
+   * gets its own subscriber. Access is already gated by the integration's secret URL.
+   */
+  private async provisionSubscriber(config: ResolvedAgentConfig, contextId: string): Promise<string> {
+    const { environmentId, organizationId } = config;
+    const subscriberId = buildPlatformSubscriberId({
+      organizationId,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: AgentPlatformEnum.GEMINI_ENTERPRISE,
+      platformUserId: contextId,
+    });
+
+    if (await this.subscriberRepository.findBySubscriberId(environmentId, subscriberId)) {
+      return subscriberId;
+    }
+
+    await this.createOrUpdateSubscriber.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId,
+        organizationId,
+        subscriberId,
+        data: {
+          [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+          [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.GEMINI_ENTERPRISE,
+          [AGENT_PROVISION_DATA_KEYS.platformUserId]: contextId,
+          [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: config.agentIdentifier,
+          [AGENT_PROVISION_DATA_KEYS.firstSeenAt]: new Date().toISOString(),
+        },
+      })
+    );
+
+    return subscriberId;
+  }
+
+  private async publishEnd(thread: GeBusThread, turnId: string): Promise<void> {
     try {
-      await this.turnBus.publish(busKey, { type: 'end', turnId });
+      await this.turnBus.publish(thread, { type: 'end', turnId });
     } catch (err) {
       this.logger.warn(err, 'Failed to publish Gemini Enterprise end of turn');
     }

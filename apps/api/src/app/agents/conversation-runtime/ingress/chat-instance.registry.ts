@@ -23,7 +23,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
 import { GeminiEnterpriseAdapter } from '../../gemini-enterprise/gemini-enterprise.adapter';
-import { GeminiEnterpriseTurnBus, geTurnBusKey } from '../../gemini-enterprise/gemini-enterprise-turn-bus.service';
+import { GeminiEnterpriseTurnBus } from '../../gemini-enterprise/gemini-enterprise-turn-bus.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
@@ -589,7 +589,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             userName: config.agentName,
             publish: async (threadId, event) => {
               const { environmentId, integrationIdentifier } = cached.config;
-              await this.geTurnBus.publish(geTurnBusKey(environmentId, integrationIdentifier, threadId), event);
+              await this.geTurnBus.publish({ environmentId, integrationIdentifier, threadId }, event);
             },
           }),
         };

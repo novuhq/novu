@@ -91,17 +91,12 @@ export class GeminiEnterpriseProvisioningService {
       providerId: ChatProviderIdEnum.GeminiEnterprise,
       providerLabel: PROVIDER_LABEL,
     });
-    const details = await this.agentRepository.findOne(
-      { _id: agent._id, _environmentId: params.environmentId, _organizationId: params.organizationId },
-      ['name', 'description']
-    );
     const secret = decryptCredentials(integration.credentials).token ?? '';
-    const name = details?.name ?? agent.identifier;
 
     return agentCard({
       url: buildGeminiEnterpriseEndpointUrl(agent._id, integration.identifier, secret),
-      name,
-      description: details?.description || `${name}, powered by Novu`,
+      name: agent.name,
+      description: agent.description || `${agent.name}, powered by Novu`,
     });
   }
 }
