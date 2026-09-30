@@ -2,15 +2,17 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
   type ActiveHumanInvite,
-  type HumanInviteTokenPayload,
   HumanInviteTokenService,
   InactiveHumanInviteError,
-  type RetiredHumanInvite,
   toHttpError,
 } from '../../services/human-invite-token.service';
 import { DeclineHumanInviteCommand } from './decline-human-invite.command';
 
-/** "No thanks" on the invite page: retires the link. Only possible before any app is connected. */
+/**
+ * "No thanks" on the invite page: retires the link for good. Only offered before any app is
+ * connected. A decline is final: if the person happens to finish connecting an app at the same
+ * moment, that connection stands and the link is still retired.
+ */
 @Injectable()
 export class DeclineHumanInvite {
   constructor(
@@ -30,68 +32,26 @@ export class DeclineHumanInvite {
       throw toHttpError(err);
     }
 
-    if (await this.isConnected(invite.payload)) {
-      throw alreadyConnected();
+    const channels = await this.deliveryService.describeInviteChannels({
+      environmentId: invite.payload.env,
+      organizationId: invite.payload.org,
+      agentId: invite.payload.agentId,
+      subscriberId: invite.payload.subscriberId,
+    });
+
+    if (channels.some(({ connected }) => connected)) {
+      throw new ConflictException({
+        code: 'channel_already_connected',
+        message: "You're already connected, so there's nothing to decline.",
+      });
     }
 
-    const retired = await this.retire(command.token);
-
-    if (!retired) {
-      return { declined: true };
-    }
-
-    // The person may have finished connecting an app (Telegram /start, Slack OAuth) between the check
-    // above and retiring the link. Connecting wins, so put the link back; a failed check must not
-    // leave it retired either.
-    let connected: boolean;
     try {
-      connected = await this.isConnected(invite.payload);
+      await this.inviteTokens.decline(command.token);
     } catch (err) {
-      await this.restore(command.token, retired);
-
-      throw err;
-    }
-
-    if (connected) {
-      await this.restore(command.token, retired);
-
-      throw alreadyConnected();
+      throw toHttpError(err);
     }
 
     return { declined: true };
   }
-
-  private async retire(token: string): Promise<RetiredHumanInvite | null> {
-    try {
-      return await this.inviteTokens.decline(token);
-    } catch (err) {
-      throw toHttpError(err);
-    }
-  }
-
-  private async restore(token: string, retired: RetiredHumanInvite): Promise<void> {
-    try {
-      await this.inviteTokens.undoDecline(token, retired);
-    } catch (err) {
-      throw toHttpError(err);
-    }
-  }
-
-  private async isConnected(payload: HumanInviteTokenPayload): Promise<boolean> {
-    const channels = await this.deliveryService.describeInviteChannels({
-      environmentId: payload.env,
-      organizationId: payload.org,
-      agentId: payload.agentId,
-      subscriberId: payload.subscriberId,
-    });
-
-    return channels.some(({ connected }) => connected);
-  }
-}
-
-function alreadyConnected(): ConflictException {
-  return new ConflictException({
-    code: 'channel_already_connected',
-    message: "You're already connected, so there's nothing to decline.",
-  });
 }

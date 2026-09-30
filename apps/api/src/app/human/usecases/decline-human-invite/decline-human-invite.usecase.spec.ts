@@ -13,8 +13,7 @@ describe('DeclineHumanInvite', () => {
         payload: { env: 'env1', org: 'org1', agentId: 'relay1', subscriberId: 'alice' },
         expiresAt: '2026-10-02T10:00:00.000Z',
       }),
-      decline: sinon.stub().resolves({ payload: {}, expiresAt: 0 }),
-      undoDecline: sinon.stub().resolves(),
+      decline: sinon.stub().resolves(),
     };
     const deliveryService = {
       describeInviteChannels: sinon
@@ -25,7 +24,7 @@ describe('DeclineHumanInvite', () => {
     };
     const usecase = new DeclineHumanInvite(inviteTokens as never, deliveryService as never);
 
-    return { usecase, inviteTokens, deliveryService };
+    return { usecase, inviteTokens };
   }
 
   const command = DeclineHumanInviteCommand.create({ token: 'T'.repeat(32) });
@@ -45,29 +44,6 @@ describe('DeclineHumanInvite', () => {
     expect(err).to.be.instanceOf(ConflictException);
     expect((err as ConflictException).getResponse()).to.include({ code: 'channel_already_connected' });
     expect(inviteTokens.decline.called).to.equal(false);
-  });
-
-  it('puts the link back when the person finished connecting while declining', async () => {
-    const { usecase, inviteTokens, deliveryService } = setup(false);
-    deliveryService.describeInviteChannels
-      .onSecondCall()
-      .resolves([{ via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: true, isDefault: true }]);
-
-    const err = await usecase.execute(command).catch((error) => error);
-
-    expect(err).to.be.instanceOf(ConflictException);
-    expect(inviteTokens.undoDecline.calledOnceWith('T'.repeat(32), { payload: {}, expiresAt: 0 })).to.equal(true);
-  });
-
-  it('puts the link back when the check after retiring it fails', async () => {
-    const { usecase, inviteTokens, deliveryService } = setup(false);
-    const outage = new Error('database unavailable');
-    deliveryService.describeInviteChannels.onSecondCall().rejects(outage);
-
-    const err = await usecase.execute(command).catch((error) => error);
-
-    expect(err).to.equal(outage);
-    expect(inviteTokens.undoDecline.calledOnceWith('T'.repeat(32), { payload: {}, expiresAt: 0 })).to.equal(true);
   });
 
   it('treats a second decline as done', async () => {

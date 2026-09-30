@@ -36,17 +36,7 @@ describe('HumanInviteTokenService', () => {
       }),
       get: sinon.stub().callsFake(async (key: string) => cacheStore.get(key) ?? null),
       del: sinon.stub().callsFake(async (key: string) => cacheStore.delete(key)),
-      eval: sinon.stub().callsFake(async (script: string, keys: string[], args: (string | number)[]) => {
-        // Mirrors the release Lua script: restore the entry and drop the used-marker.
-        if (script.includes("redis.call('DEL', KEYS[2])")) {
-          cacheStore.set(keys[0], String(args[0]));
-          cacheStore.delete(keys[1]);
-
-          return null;
-        }
-
-        return runClaimScript(cacheStore, keys);
-      }),
+      eval: sinon.stub().callsFake(async (_script: string, keys: string[]) => runClaimScript(cacheStore, keys)),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub(), error: sinon.stub(), debug: sinon.stub() };
 
@@ -91,22 +81,6 @@ describe('HumanInviteTokenService', () => {
       expect(err).to.be.instanceOf(InactiveHumanInviteError);
       expect((err as InactiveHumanInviteError).reason).to.equal('declined');
     }
-  });
-
-  it('makes a declined link usable again when the decline is undone', async () => {
-    const { service } = makeService();
-    const { token } = await service.issue(payload);
-
-    const retired = await service.decline(token);
-    if (!retired) {
-      throw new Error('decline did not retire the link');
-    }
-    expect(retired.payload).to.deep.equal(payload);
-    expect(await service.decline(token)).to.equal(null);
-
-    await service.undoDecline(token, retired);
-
-    expect((await service.peek(token)).payload).to.deep.equal(payload);
   });
 
   it('reads unknown tokens as expired and malformed ones as invalid', async () => {
