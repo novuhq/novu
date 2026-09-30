@@ -45,8 +45,8 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
 
 // Managed-agent (Thalamus) config is optional at boot unless the worker URL is set.
 // A blank URL must not run envalid's `url()` validator, which rejects an empty string even
-// with a default. Once the URL is present, the webhook secret and API key are required too:
-// a worker with API_KEY set rejects requests that omit it with 401.
+// with a default. Once the URL is present, the webhook secret is required. The API key stays
+// optional: the worker only checks Authorization when its own API_KEY is set.
 // Do not redeclare these inside the enterprise block: a later spread overrides this one.
 function getThalamusValidators(): {
   THALAMUS_CF_URL: ValidatorSpec<string>;
@@ -64,7 +64,7 @@ function getThalamusValidators(): {
   return {
     THALAMUS_CF_URL: url(),
     THALAMUS_WEBHOOK_SECRET: str(),
-    THALAMUS_CF_API_KEY: str(),
+    THALAMUS_CF_API_KEY: str({ default: undefined }),
   };
 }
 
