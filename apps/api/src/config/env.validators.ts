@@ -43,9 +43,11 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
   return str({ default: undefined });
 }
 
-// Managed-agent (Thalamus) config is a Novu Cloud concern. On self-hosted (or whenever the URL is
-// blank) we must not run envalid's `url()` validator, which rejects an empty string even with a
-// default — a blank `THALAMUS_CF_URL=` is common in self-hosted .env files and would block boot.
+// Managed-agent (Thalamus) config is optional at boot, same as the other agent features.
+// A blank URL (self-hosted, or a Cloud region without the worker) must not run envalid's `url()`
+// validator, which rejects an empty string even with a default. When a URL is set, the webhook
+// secret is required. Runtime use still fails in buildDurableBackend() if either is missing.
+// Do not redeclare these inside the enterprise block: a later spread overrides this one.
 function getThalamusValidators(): {
   THALAMUS_CF_URL: ValidatorSpec<string>;
   THALAMUS_WEBHOOK_SECRET: ValidatorSpec<string>;
@@ -197,17 +199,6 @@ export const envValidators = {
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
-      ...(['production', 'dev'].includes(processEnv.NODE_ENV)
-        ? {
-            THALAMUS_CF_API_KEY: str(),
-            THALAMUS_CF_URL: url(),
-            THALAMUS_WEBHOOK_SECRET: str(),
-          }
-        : {
-            THALAMUS_CF_API_KEY: str({ default: undefined }),
-            THALAMUS_CF_URL: url({ default: undefined }),
-            THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
-          }),
     }),
 
   // Feature Flags
