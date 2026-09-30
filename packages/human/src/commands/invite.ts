@@ -1,6 +1,6 @@
 import pc from 'picocolors';
 import { type HumanApiClient } from '../api/client';
-import { setupHumanRelay } from '../api/human';
+import { createHumanInvite, setupHumanRelay } from '../api/human';
 import { type AgentIntegrationLink, getSubscriberEmail, hasChannelEndpoint, listAgentIntegrations } from '../api/setup';
 import { info, promptLine } from '../cli-io';
 import { renderQR } from '../qr';
@@ -11,11 +11,10 @@ import {
   generateSlackUserOauthUrl,
   HUMAN_CHANNELS,
   type HumanChannel,
-  inferViaFromLinks,
   isHumanChannel,
   issueTelegramSubscriberLinkWithRetry,
-  linkedVias,
   parseEmailAddress,
+  waitForAnyEndpoint,
   waitForEndpoint,
 } from './link-channel';
 
@@ -27,6 +26,9 @@ export interface InviteOptions {
   async?: boolean;
   apiUrl?: string;
 }
+
+/** Channels the invite page offers. Email joins once it has a double opt-in. */
+const INVITE_PAGE_CHANNELS: readonly HumanChannel[] = ['telegram', 'slack'];
 
 /**
  * `--name "Alice Chen"` → `{ firstName: 'Alice', lastName: 'Chen' }`; a single
@@ -49,15 +51,19 @@ export function splitName(raw: string | undefined): { firstName: string; lastNam
 
 export interface InviteResult {
   humanId: string;
-  via: HumanChannel;
+  /** Channels the human is reachable on; empty while an issued link is still unopened (`--async`). */
+  linkedOn: HumanChannel[];
   alreadyLinked: boolean;
+  /** The `--via` connect URL, or the invite-page link. */
   url?: string;
+  /** Invite-page links only: ISO timestamp after which the link stops working. */
+  expiresAt?: string;
 }
 
 export function parseInviteHumanId(raw: string): string {
   const id = raw.trim();
   if (!id) {
-    throw new Error('Pass the subscriberId to invite, e.g. `human invite alice --via slack`.');
+    throw new Error('Pass the subscriberId to invite, e.g. `human invite alice`.');
   }
 
   if (id.includes(',')) {
@@ -67,35 +73,34 @@ export function parseInviteHumanId(raw: string): string {
   return id;
 }
 
-export function resolveInviteVia(links: AgentIntegrationLink[], viaFlag?: string): HumanChannel {
-  if (viaFlag) {
-    const normalized = viaFlag.toLowerCase();
-    if (!isHumanChannel(normalized)) {
-      throw new Error(`Unknown channel "${viaFlag}". Use one of: ${HUMAN_CHANNELS.join(', ')}.`);
-    }
-
-    return normalized;
+/**
+ * Validates an explicit `--via`. Without one there is nothing to infer: the
+ * invite page lets the human pick among the relay's chat channels.
+ */
+export function resolveInviteVia(viaFlag?: string): HumanChannel | undefined {
+  if (!viaFlag) {
+    return undefined;
   }
 
-  const inferred = inferViaFromLinks(links);
-  if (inferred) {
-    return inferred;
+  const normalized = viaFlag.toLowerCase();
+  if (!isHumanChannel(normalized)) {
+    throw new Error(`Unknown channel "${viaFlag}". Use one of: ${HUMAN_CHANNELS.join(', ')}.`);
   }
 
-  const available = linkedVias(links);
-  if (available.length === 0) {
-    throw new Error('No channel is linked to the relay agent. Run `human setup` first.');
-  }
-
-  throw new Error(`Relay is linked on multiple channels (${available.join(', ')}). Pass --via to pick one.`);
+  return normalized;
 }
 
 export async function runInvite(humanIdArg: string, options: InviteOptions): Promise<InviteResult> {
   const humanId = parseInviteHumanId(humanIdArg);
+  const via = resolveInviteVia(options.via);
   const { client, config } = clientFromConfig(options.apiUrl);
   const agentIdentifier = config.relayAgentIdentifier;
   const links = await listAgentIntegrations(client, agentIdentifier);
-  const via = resolveInviteVia(links, options.via);
+
+  if (!via) {
+    return inviteViaPage(client, humanId, agentIdentifier, links, options);
+  }
+
   const linked = findLinkedIntegration(links, via);
   const name = splitName(options.name);
 
@@ -109,11 +114,11 @@ export async function runInvite(humanIdArg: string, options: InviteOptions): Pro
       result = await inviteEmail(client, humanId, agentIdentifier, linked.integration.sharedInboundAddress, options);
       break;
     case 'telegram':
-      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
+      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name, defaultVia: via });
       result = await inviteTelegram(client, humanId, linked.integration.identifier, options);
       break;
     case 'slack':
-      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
+      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name, defaultVia: via });
       result = await inviteSlack(client, humanId, agentIdentifier, linked.integration.identifier, options);
       break;
     default: {
@@ -130,9 +135,9 @@ export async function inviteCommand(humanIdArg: string, options: InviteOptions):
     const result = await runInvite(humanIdArg, options);
     const who = options.name?.trim() ? `${result.humanId} (${options.name.trim()})` : result.humanId;
     const lead =
-      options.async && !result.alreadyLinked && result.via !== 'email'
+      result.linkedOn.length === 0
         ? 'Link issued. After they connect, address them with:'
-        : `${who} is ${result.alreadyLinked ? 'already ' : ''}linked on ${result.via}. Address them with:`;
+        : `${who} is ${result.alreadyLinked ? 'already ' : ''}linked on ${formatChannels(result.linkedOn, 'and')}. Address them with:`;
 
     process.stdout.write(`\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`human ask "…" --to ${result.humanId}`)}\n`);
 
@@ -140,6 +145,107 @@ export async function inviteCommand(humanIdArg: string, options: InviteOptions):
   } catch (err) {
     handleError(err);
   }
+}
+
+/**
+ * No `--via`: issue a link to the Novu invite page, where the human connects
+ * any of the relay's chat channels and picks their default.
+ */
+async function inviteViaPage(
+  client: HumanApiClient,
+  humanId: string,
+  agentIdentifier: string,
+  links: AgentIntegrationLink[],
+  options: InviteOptions
+): Promise<InviteResult> {
+  const chatChannels = INVITE_PAGE_CHANNELS.flatMap((via) => {
+    const link = findLinkedIntegration(links, via);
+
+    return link ? [{ via, integrationIdentifier: link.integration.identifier }] : [];
+  });
+
+  if (chatChannels.length === 0) {
+    throw new Error(
+      'No Telegram or Slack channel is linked to the relay agent. Run `human setup telegram` or `human setup slack` first.'
+    );
+  }
+
+  const connected = await Promise.all(
+    chatChannels.map((channel) => hasChannelEndpoint(client, channel.integrationIdentifier, humanId))
+  );
+
+  if (connected.every(Boolean)) {
+    const vias = chatChannels.map((channel) => channel.via);
+    info(`${humanId} is already connected on ${formatChannels(vias, 'and')}.`);
+
+    // Still honor a name passed alongside, same as `--via email`.
+    const name = splitName(options.name);
+    if (name) {
+      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
+    }
+
+    return { humanId, linkedOn: vias, alreadyLinked: true };
+  }
+
+  const invite = await createHumanInvite(client, {
+    subscriberId: humanId,
+    agentIdentifier,
+    ...splitName(options.name),
+  });
+  const expiry = formatExpiry(invite.expiresAt);
+  const linkedOn: HumanChannel[] = invite.channels.filter((channel) => channel.connected).map((channel) => channel.via);
+  const pending = invite.channels.filter((channel) => !channel.connected);
+  const pendingVias = pending.map((channel) => channel.via);
+
+  if (linkedOn.length > 0) {
+    info(
+      `${humanId} is already connected on ${formatChannels(linkedOn, 'and')}; the link lets them add ${formatChannels(pendingVias, 'or')}.`
+    );
+  }
+
+  process.stdout.write(
+    `\nSend this link to ${pc.bold(humanId)} — they choose how your agent reaches them (${formatChannels(
+      invite.channels.map((channel) => channel.via),
+      'or'
+    )}):\n\n  ${pc.underline(invite.url)}\n\n`
+  );
+  process.stdout.write(`\n${renderQR(invite.url)}\n`);
+  info(`The link works until ${pc.bold(expiry)}.`);
+
+  const result: InviteResult = {
+    humanId,
+    linkedOn,
+    alreadyLinked: false,
+    url: invite.url,
+    expiresAt: invite.expiresAt,
+  };
+
+  if (options.async || pending.length === 0) {
+    return result;
+  }
+
+  const stopIndicator = startWaitIndicator(
+    `Waiting for ${humanId} to connect ${formatChannels(pendingVias, 'or')}`,
+    `Ctrl-C detaches; the link works until ${expiry}`
+  );
+
+  let connectedIdentifier: string;
+  try {
+    connectedIdentifier = await waitForAnyEndpoint(
+      client,
+      pending.map((channel) => channel.integrationIdentifier),
+      humanId,
+      `${humanId} connect ${formatChannels(pendingVias, 'or')}`,
+      `The link keeps working until ${expiry}; re-run \`human invite ${humanId}\` to check on them.`
+    );
+  } finally {
+    stopIndicator();
+  }
+
+  const connectedVia = pending.find((channel) => channel.integrationIdentifier === connectedIdentifier)?.via;
+  info(`They can add more channels or pick their default from the same link until ${expiry}.`);
+
+  return { ...result, linkedOn: connectedVia ? [...linkedOn, connectedVia] : linkedOn };
 }
 
 async function inviteTelegram(
@@ -151,7 +257,7 @@ async function inviteTelegram(
   if (await hasChannelEndpoint(client, integrationIdentifier, humanId)) {
     info(`${humanId} is already linked on telegram.`);
 
-    return { humanId, via: 'telegram', alreadyLinked: true };
+    return { humanId, linkedOn: ['telegram'], alreadyLinked: true };
   }
 
   let subscriberLink: { deepLinkUrl: string; botUsername: string };
@@ -170,11 +276,13 @@ async function inviteTelegram(
   );
   process.stdout.write(`\n${renderQR(subscriberLink.deepLinkUrl)}\n`);
 
-  if (!options.async) {
-    await waitForInvitee(client, integrationIdentifier, humanId, 'telegram', subscriberLink.botUsername);
+  if (options.async) {
+    return { humanId, linkedOn: [], alreadyLinked: false, url: subscriberLink.deepLinkUrl };
   }
 
-  return { humanId, via: 'telegram', alreadyLinked: false, url: subscriberLink.deepLinkUrl };
+  await waitForInvitee(client, integrationIdentifier, humanId, 'telegram', subscriberLink.botUsername);
+
+  return { humanId, linkedOn: ['telegram'], alreadyLinked: false, url: subscriberLink.deepLinkUrl };
 }
 
 async function inviteSlack(
@@ -187,7 +295,7 @@ async function inviteSlack(
   if (await hasChannelEndpoint(client, integrationIdentifier, humanId)) {
     info(`${humanId} is already linked on slack.`);
 
-    return { humanId, via: 'slack', alreadyLinked: true };
+    return { humanId, linkedOn: ['slack'], alreadyLinked: true };
   }
 
   const authorizeUrl = await generateSlackUserOauthUrl(client, {
@@ -198,11 +306,13 @@ async function inviteSlack(
 
   printInviteUrl(humanId, 'slack', authorizeUrl, 'Open this Slack authorize URL and approve the app');
 
-  if (!options.async) {
-    await waitForInvitee(client, integrationIdentifier, humanId, 'slack');
+  if (options.async) {
+    return { humanId, linkedOn: [], alreadyLinked: false, url: authorizeUrl };
   }
 
-  return { humanId, via: 'slack', alreadyLinked: false, url: authorizeUrl };
+  await waitForInvitee(client, integrationIdentifier, humanId, 'slack');
+
+  return { humanId, linkedOn: ['slack'], alreadyLinked: false, url: authorizeUrl };
 }
 
 async function inviteEmail(
@@ -216,25 +326,33 @@ async function inviteEmail(
   if (existingEmail && !options.email) {
     info(`${humanId} is already linked on email (${existingEmail}).`);
 
-    // Still honor a name passed alongside so `invite --name` is a way to label
-    // someone who was linked before names existed.
-    const name = splitName(options.name);
-    if (name) {
-      await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
-    }
+    // Still record `--via email` as the inviter's pick, and honor a name passed
+    // alongside so `invite --name` can label someone linked before names existed.
+    await setupHumanRelay(client, {
+      subscriberId: humanId,
+      agentIdentifier,
+      ...splitName(options.name),
+      defaultVia: 'email',
+    });
 
-    return { humanId, via: 'email', alreadyLinked: true };
+    return { humanId, linkedOn: ['email'], alreadyLinked: true };
   }
 
   const email = options.email ? requireEmail(options.email) : await promptInviteEmail();
 
-  await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, email, ...splitName(options.name) });
+  await setupHumanRelay(client, {
+    subscriberId: humanId,
+    agentIdentifier,
+    email,
+    ...splitName(options.name),
+    defaultVia: 'email',
+  });
 
   if (inboundAddress) {
     info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);
   }
 
-  return { humanId, via: 'email', alreadyLinked: false };
+  return { humanId, linkedOn: ['email'], alreadyLinked: false };
 }
 
 async function waitForInvitee(
@@ -270,6 +388,31 @@ function printInviteUrl(humanId: string, via: HumanChannel, url: string, instruc
   process.stdout.write(
     `\nSend this ${via} link to ${pc.bold(humanId)} — ${instruction}:\n\n  ${pc.underline(url)}\n\n`
   );
+}
+
+/** `['telegram', 'slack']` → "telegram and slack" (or "telegram or slack"). */
+export function formatChannels(vias: readonly string[], conjunction: 'and' | 'or'): string {
+  if (vias.length <= 1) {
+    return vias.join('');
+  }
+
+  return `${vias.slice(0, -1).join(', ')} ${conjunction} ${vias[vias.length - 1]}`;
+}
+
+/** Invite expiry in the operator's local time, e.g. "Thu, Oct 2, 02:05 PM". */
+function formatExpiry(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+
+  return date.toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function requireEmail(value: string): string {
