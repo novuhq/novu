@@ -4,38 +4,15 @@ import { GoogleAuth } from 'google-auth-library';
 // On Cloud Run this resolves to the metadata server (runtime service account); locally to ADC.
 const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
 
-export type Exchange = {
-  method: string;
-  url: string;
-  requestBody?: unknown;
-  status: number;
-  ms: number;
-  responseText: string;
-};
-
-let recorder: ((exchange: Exchange) => void) | undefined;
-
-/** Smoke scripts use this to capture raw request/response pairs (no credentials are recorded). */
-export function setExchangeRecorder(fn: ((exchange: Exchange) => void) | undefined): void {
-  recorder = fn;
-}
-
-export async function accessToken(): Promise<string> {
+async function accessToken(): Promise<string> {
   const token = await auth.getAccessToken();
   if (!token) throw new Error('google-auth-library returned no access token');
 
   return token;
 }
 
-export class GoogleHttpError extends Error {
-  readonly status: number;
-  readonly body: string;
-
-  constructor(status: number, body: string, url: string) {
-    super(`HTTP ${status} from ${new URL(url).pathname}: ${body.slice(0, 500)}`);
-    this.status = status;
-    this.body = body;
-  }
+export function httpError(status: number, body: string, url: string): Error {
+  return new Error(`HTTP ${status} from ${new URL(url).pathname}: ${body.slice(0, 500)}`);
 }
 
 /**
@@ -51,9 +28,8 @@ export async function googleRequest(
 ): Promise<{ status: number; text: string }> {
   const token = await accessToken();
   const payload = body === undefined ? undefined : JSON.stringify(body);
-  const started = Date.now();
 
-  const result = await new Promise<{ status: number; text: string }>((resolve, reject) => {
+  return new Promise<{ status: number; text: string }>((resolve, reject) => {
     const req = https.request(
       url,
       {
@@ -77,10 +53,6 @@ export async function googleRequest(
     if (payload) req.write(payload);
     req.end();
   });
-
-  recorder?.({ method, url, requestBody: body, status: result.status, ms: Date.now() - started, responseText: result.text });
-
-  return result;
 }
 
 export async function googleJson<T>(
@@ -91,7 +63,7 @@ export async function googleJson<T>(
   timeoutMs: number
 ): Promise<T> {
   const { status, text } = await googleRequest(method, url, userProject, body, timeoutMs);
-  if (status < 200 || status >= 300) throw new GoogleHttpError(status, text, url);
+  if (status < 200 || status >= 300) throw httpError(status, text, url);
 
   return JSON.parse(text) as T;
 }

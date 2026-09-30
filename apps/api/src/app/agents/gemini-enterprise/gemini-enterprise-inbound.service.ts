@@ -164,26 +164,8 @@ export class GeminiEnterpriseInboundService {
       agentIdentifier: config.agentIdentifier,
       contextId,
     });
-    const user = { userId: subscriberId, userName: subscriberId, fullName: subscriberId, isBot: false, isMe: false };
 
     await bridgeDispatchProbe.run(slot, async () => {
-      if (inbound.kind === 'action') {
-        await chat.processAction(
-          {
-            adapter,
-            actionId: inbound.action.id,
-            value: inbound.action.value,
-            messageId: inbound.action.sourceMessageId ?? '',
-            threadId,
-            user,
-            raw: inbound,
-          },
-          undefined
-        );
-
-        return;
-      }
-
       const message = adapter.parseMessage({
         id: inbound.messageId ?? randomUUID(),
         text: inbound.text,

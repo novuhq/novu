@@ -11,10 +11,6 @@ export type ForwardResult =
   | { kind: 'unreadable'; session: string };
 
 export function forward(config: Config, agent: TargetAgent, text: string, session: string | undefined): Promise<ForwardResult> {
-  if (session !== undefined && !session.startsWith(`${config.engine}/sessions/`)) {
-    throw new Error(`refusing to reuse session outside ${config.engine}: ${session}`);
-  }
-
   return agent.path === 'a2a_proxy'
     ? sendToA2aProxy(config, agent.targetId, text, session)
     : sendToStreamAssist(config, agent.targetId, text, session);

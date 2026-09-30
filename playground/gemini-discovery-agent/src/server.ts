@@ -19,6 +19,5 @@ app.listen(config.port, () =>
     agents: config.agents.map((target) => `${target.id}:${target.path}:${target.targetId}`),
     geminiModel: config.geminiModel,
     classifierModel: config.classifierModel,
-    jev: Boolean(config.jevApiKey),
   })
 );

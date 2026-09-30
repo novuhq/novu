@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '@novu/application-generic';
 import type { Cluster, Redis } from 'ioredis';
-import type { GeContent } from './a2a-mapping';
 
 /**
  * Everything the pod holding Gemini Enterprise's open `message/stream` response needs to finish a turn.
@@ -9,7 +8,7 @@ import type { GeContent } from './a2a-mapping';
  * travel through one Redis Stream per conversation thread instead of in-process state.
  */
 export type GeBusEvent =
-  | { type: 'post' | 'edit'; messageId: string; content: GeContent }
+  | { type: 'post' | 'edit'; messageId: string; text: string }
   | { type: 'typing'; status?: string }
   | { type: 'end'; turnId: string }
   | { type: 'superseded'; streamId: string };

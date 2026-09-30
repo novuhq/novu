@@ -8,9 +8,44 @@
   },
   {
     "id": "sales",
-    "name": "Novu A2A Test Agent",
+    "name": "Sales Agent (A2A)",
     "description": "Answers questions about company sales: monthly sales figures. Asks which month if the question does not name one.",
     "path": "a2a_proxy",
     "targetId": "11935712447824575282"
+  },
+  {
+    "id": "people",
+    "name": "People Agent (A2A)",
+    "description": "HR questions: your time-off balance, leave policies (parental, sick, unpaid), benefits and payroll dates. Asks which kind of leave if the question does not say.",
+    "path": "a2a_proxy",
+    "targetId": "18244222581544140683"
+  },
+  {
+    "id": "it_helpdesk",
+    "name": "IT Helpdesk (A2A)",
+    "description": "IT support: VPN problems, laptop issues, password resets and access requests to internal systems (GitHub, Salesforce, Jira…). Opens tickets, and asks which system when an access request does not name one.",
+    "path": "a2a_proxy",
+    "targetId": "11929795155546209334"
+  },
+  {
+    "id": "finance",
+    "name": "Finance Agent (A2A)",
+    "description": "Finance questions: expense report status and reimbursements, team budgets and spend, vendor invoices, and company revenue. Asks which report if an expense question does not say.",
+    "path": "a2a_proxy",
+    "targetId": "5500725065810711911"
+  },
+  {
+    "id": "analyst",
+    "name": "Analyst Agent (A2A)",
+    "description": "Business analyst: quarterly business summaries and KPIs (revenue growth, new customers, churn, NPS) and what drove them. Asks which quarter if the question does not name one.",
+    "path": "a2a_proxy",
+    "targetId": "12093851926081151689"
+  },
+  {
+    "id": "web_search",
+    "name": "Web Search (Google)",
+    "description": "Made by Google: the Gemini Enterprise assistant with Google Search. Answers quick questions that need current public information from the web (news, prices, exchange rates, public companies, laws), with sources. Not for internal company data or long research reports.",
+    "path": "stream_assist",
+    "targetId": "default_assistant"
   }
 ]

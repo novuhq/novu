@@ -1,6 +1,3 @@
 node_modules
-artifacts
-scripts
 *.md
 deploy.sh
-.env*

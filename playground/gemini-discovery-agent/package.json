@@ -7,11 +7,9 @@
     "node": ">=24"
   },
   "scripts": {
-    "start": "node src/server.ts",
-    "typecheck": "tsc --noEmit",
-    "write-agent-list": "node scripts/write-agent-list.ts",
-    "smoke:forward": "node scripts/smoke-forward.ts",
-    "smoke:route": "node scripts/smoke-route.ts"
+    "start": "node --env-file-if-exists=.env src/server.ts",
+    "dev": "npx novu@latest dev -p 4111 --no-studio --route /api/novu --run \"npm start\"",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@novu/framework": "2.14.0",

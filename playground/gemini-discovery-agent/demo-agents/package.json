@@ -1,0 +1,14 @@
+{
+  "name": "gemini-demo-agents",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node server.ts"
+  },
+  "dependencies": {
+    "@a2a-js/sdk": "0.3.14",
+    "express": "5.1.0"
+  }
+}

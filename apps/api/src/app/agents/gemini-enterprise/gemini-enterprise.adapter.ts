@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type {
   Adapter,
   AdapterPostableMessage,
-  CardElement,
   ChatInstance,
   FetchResult,
   FormattedContent,
@@ -13,7 +12,6 @@ import type {
 } from 'chat';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { esmImport } from '../shared/util/esm-import';
-import type { GeContent } from './a2a-mapping';
 import type { GeBusEvent } from './gemini-enterprise-turn-bus.service';
 
 export const GE_ADAPTER_NAME = AgentPlatformEnum.GEMINI_ENTERPRISE;
@@ -108,10 +106,10 @@ export class GeminiEnterpriseAdapter implements Adapter<{ contextId: string }, G
 
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<GeRawMessage>> {
     const id = randomUUID();
-    const content = this.toContent(message);
-    await this.config.publish(threadId, { type: 'post', messageId: id, content });
+    const text = this.toText(message);
+    if (text) await this.config.publish(threadId, { type: 'post', messageId: id, text });
 
-    return this.rawMessage(id, threadId, content);
+    return this.rawMessage(id, threadId, text);
   }
 
   async editMessage(
@@ -119,10 +117,10 @@ export class GeminiEnterpriseAdapter implements Adapter<{ contextId: string }, G
     messageId: string,
     message: AdapterPostableMessage
   ): Promise<RawMessage<GeRawMessage>> {
-    const content = this.toContent(message);
-    await this.config.publish(threadId, { type: 'edit', messageId, content });
+    const text = this.toText(message);
+    if (text) await this.config.publish(threadId, { type: 'edit', messageId, text });
 
-    return this.rawMessage(messageId, threadId, content);
+    return this.rawMessage(messageId, threadId, text);
   }
 
   /** Gemini Enterprise has no way to retract a sent answer. */
@@ -149,18 +147,17 @@ export class GeminiEnterpriseAdapter implements Adapter<{ contextId: string }, G
     return this.stringifyMarkdownFn ? this.stringifyMarkdownFn(content) : '';
   }
 
-  private toContent(message: AdapterPostableMessage): GeContent {
-    if (typeof message === 'string') return { text: message };
-    if ('type' in message && message.type === 'card') return { card: message as CardElement };
-    if ('card' in message) return { card: message.card };
-    if ('markdown' in message) return { text: message.markdown };
-    if ('raw' in message) return { text: message.raw };
-    if ('ast' in message) return { text: this.renderFormatted(message.ast) };
+  /** Text only: cards are not rendered in Gemini Enterprise, so they map to '' and are not published. */
+  private toText(message: AdapterPostableMessage): string {
+    if (typeof message === 'string') return message;
+    if ('markdown' in message) return message.markdown;
+    if ('raw' in message) return message.raw;
+    if ('ast' in message) return this.renderFormatted(message.ast);
 
-    return { text: '' };
+    return '';
   }
 
-  private rawMessage(id: string, threadId: string, content: GeContent): RawMessage<GeRawMessage> {
-    return { id, threadId, raw: { id, text: 'text' in content ? content.text : '', subscriberId: '' } };
+  private rawMessage(id: string, threadId: string, text: string): RawMessage<GeRawMessage> {
+    return { id, threadId, raw: { id, text, subscriberId: '' } };
   }
 }

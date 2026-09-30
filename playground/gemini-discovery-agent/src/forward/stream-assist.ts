@@ -1,5 +1,5 @@
-import type { Config } from '../config.ts';
-import { GoogleHttpError, googleRequest } from '../google-auth.ts';
+import { type Config, CORE_ASSISTANT_ID } from '../config.ts';
+import { googleRequest, httpError } from '../google-auth.ts';
 import type { ForwardResult } from './index.ts';
 
 // A Deep Research report took 484 s in the sandbox; leave headroom.
@@ -23,32 +23,28 @@ export async function sendToStreamAssist(
   session: string | undefined
 ): Promise<ForwardResult> {
   const url = `https://discoveryengine.googleapis.com/v1alpha/${config.engine}/assistants/default_assistant:streamAssist?alt=sse`;
+  const isCoreAssistant = agentId === CORE_ASSISTANT_ID;
   const body = {
     query: { text },
     ...(session ? { session } : {}),
-    agentsSpec: { agentSpecs: [{ agentId }] },
+    ...(isCoreAssistant ? {} : { agentsSpec: { agentSpecs: [{ agentId }] } }),
     toolsSpec: { webGroundingSpec: {} },
   };
   const { status, text: raw } = await googleRequest('POST', url, config.project, body, TIMEOUT_MS);
-  if (status < 200 || status >= 300) throw new GoogleHttpError(status, raw, url);
+  if (status < 200 || status >= 300) throw httpError(status, raw, url);
 
-  return parseAssistChunks(parseStream(raw));
+  // The Core Assistant streams fragments of one answer; Deep Research sends each block complete.
+  return parseAssistChunks(parseStream(raw), isCoreAssistant ? '' : '\n\n');
 }
 
-/** Accepts SSE (`data: {...}` lines) and, as a fallback, the plain JSON-array framing. */
-export function parseStream(raw: string): AssistChunk[] {
-  const events = raw
+function parseStream(raw: string): AssistChunk[] {
+  return raw
     .split('\n')
     .filter((line) => line.startsWith('data:'))
     .map((line) => JSON.parse(line.slice(5)) as AssistChunk);
-  if (events.length > 0) return events;
-
-  const parsed: unknown = JSON.parse(raw);
-
-  return (Array.isArray(parsed) ? parsed : [parsed]) as AssistChunk[];
 }
 
-export function parseAssistChunks(chunks: AssistChunk[]): ForwardResult {
+function parseAssistChunks(chunks: AssistChunk[], separator = '\n\n'): ForwardResult {
   const error = chunks.find((chunk) => chunk.error)?.error;
   if (error) throw new Error(`streamAssist error ${error.code}: ${error.message}`);
 
@@ -62,9 +58,9 @@ export function parseAssistChunks(chunks: AssistChunk[]): ForwardResult {
     .flatMap((chunk) => chunk.answer?.replies ?? [])
     .map((reply) => reply.groundedContent?.content)
     .filter((content) => content && !content.thought && content.text)
-    .map((content) => content!.text!.trim())
+    .map((content) => (separator ? content!.text!.trim() : content!.text!))
     // Deep Research sends each block (greeting, plan, report section) as its own complete reply.
-    .join('\n\n')
+    .join(separator)
     .trim();
   if (text) return { kind: 'answer', text, session };
 

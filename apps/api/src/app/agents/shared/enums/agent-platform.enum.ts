@@ -62,11 +62,11 @@ const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapa
     interactiveButtons: false,
   },
   [AgentPlatformEnum.WEB_CHAT]: DEFAULT_EGRESS_CAPABILITIES,
-  // A2UI buttons only raise events back to the agent; URLs are rendered as markdown links.
+  // Text only: markdown links render, cards and buttons are not sent.
   [AgentPlatformEnum.GEMINI_ENTERPRISE]: {
     markdownLinks: true,
     nativeUrlButtons: false,
-    interactiveButtons: true,
+    interactiveButtons: false,
   },
 };
 

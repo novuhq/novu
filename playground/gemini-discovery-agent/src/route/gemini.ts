@@ -1,8 +1,15 @@
 import { type Config, DIRECT, type TargetAgent } from '../config.ts';
 import { googleJson } from '../google-auth.ts';
-import { type ClassifierInput, DIRECT_DESCRIPTION } from './jev.ts';
 import type { Scores } from './policy.ts';
 
+export type ClassifierInput = {
+  text: string;
+  current: TargetAgent | undefined;
+  history: string[];
+  agents: TargetAgent[];
+};
+
+const DIRECT_DESCRIPTION = 'Answer directly: greetings, help, which agents exist, small talk';
 const CLASSIFIER_TIMEOUT_MS = 10_000;
 const ANSWER_TIMEOUT_MS = 60_000;
 
@@ -30,8 +37,8 @@ function agentList(agents: TargetAgent[], withIds: boolean): string {
   return agents.map((agent) => `- ${withIds ? `${agent.id}: ` : ''}${agent.name} — ${agent.description}`).join('\n');
 }
 
-/** Fallback router when Jev is unavailable. */
-export async function classifyWithGemini(config: Config, input: ClassifierInput): Promise<Scores> {
+/** Gemini Flash-Lite router with a JSON schema. */
+export async function classify(config: Config, input: ClassifierInput): Promise<Scores> {
   const ids = [...input.agents.map((agent) => agent.id), DIRECT];
   const system = [
     "You route an employee's latest message to exactly one option.",
@@ -74,7 +81,7 @@ export async function classifyWithGemini(config: Config, input: ClassifierInput)
   if (typeof parsed.agent !== 'string' || !ids.includes(parsed.agent)) throw new Error(`classifier picked unknown option: ${raw}`);
   if (confidence !== 'high' && confidence !== 'medium' && confidence !== 'low') throw new Error(`classifier confidence invalid: ${raw}`);
 
-  return { source: 'gemini', choice: parsed.agent, confidence };
+  return { choice: parsed.agent, confidence };
 }
 
 export async function answerDirectly(config: Config, text: string, history: string[], agents: TargetAgent[]): Promise<string> {
@@ -84,6 +91,7 @@ export async function answerDirectly(config: Config, text: string, history: stri
     agentList(agents, false),
     'Answer greetings, help requests, and questions about which agents exist. Keep it under 120 words and use plain markdown.',
     'You have no company data. For questions that need it, name the agent that can answer and ask the user to rephrase for it. Never invent figures.',
+    'If the message could fit more than one agent, ask one short question to tell which the user means.',
   ].join('\n');
   const user = [...(history.length ? ['Recent conversation:', ...history, ''] : []), text].join('\n');
 

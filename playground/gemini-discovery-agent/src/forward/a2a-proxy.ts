@@ -46,7 +46,7 @@ export async function sendToA2aProxy(
   return parseProxyMessage(response.message);
 }
 
-export function parseProxyMessage(message: ProxyMessage | undefined): ForwardResult {
+function parseProxyMessage(message: ProxyMessage | undefined): ForwardResult {
   const session = message?.contextId ?? message?.metadata?.sessionInfo?.session;
   if (!message || !session) throw new Error('A2A proxy response has no message or session');
 
