@@ -90,6 +90,22 @@ export class StepsOverrides {
   providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
 
   @ApiPropertyOptional({
+    description:
+      "Passing the integration identifier and the provider specific configurations. Takes precedence over this step's and the workflow's providers overrides",
+    example: {
+      'slack-eng': {
+        text: 'Deployment failed',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  })
+  integrations?: Record<string, Record<string, unknown>>;
+
+  @ApiPropertyOptional({
     description: 'Override the or remove the layout for this specific step',
     example: 'welcome-email-layout',
     nullable: true,
@@ -168,12 +184,28 @@ export class TriggerOverrides {
   providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
 
   @ApiPropertyOptional({
+    description:
+      'Overrides the provider configuration of a specific integration, keyed by the integration identifier, for every step that uses it. Takes precedence over workflow and step level providers overrides',
+    example: {
+      'slack-eng': {
+        text: 'Deployment failed',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  })
+  integrations?: Record<string, Record<string, unknown>>;
+
+  @ApiPropertyOptional({
     description: 'Override the email provider specific configurations for the entire workflow',
     deprecated: true,
     type: 'object',
     additionalProperties: true,
   })
-  email?: Record<string, any>;
+  email?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the push provider specific configurations for the entire workflow',
@@ -181,7 +213,7 @@ export class TriggerOverrides {
     type: 'object',
     additionalProperties: true,
   })
-  push?: Record<string, any>;
+  push?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the sms provider specific configurations for the entire workflow',
@@ -189,7 +221,7 @@ export class TriggerOverrides {
     type: 'object',
     additionalProperties: true,
   })
-  sms?: Record<string, any>;
+  sms?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the chat provider specific configurations for the entire workflow',
@@ -197,7 +229,7 @@ export class TriggerOverrides {
     type: 'object',
     additionalProperties: true,
   })
-  chat?: Record<string, any>;
+  chat?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the layout identifier for the entire workflow',
