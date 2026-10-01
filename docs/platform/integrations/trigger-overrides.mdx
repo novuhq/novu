@@ -50,7 +50,7 @@ Overrides are defined in the `overrides` property of a trigger payload. You can 
 - Workflow-level: Applies to all steps using a specific provider and takes precedence over the default workflow provider settings.
 - Step-level: Targets a specific step in the workflow and it takes precedence over both workflow-level overrides and the default workflow provider settings.
 
-At either level, you can key an override by provider ID, such as `slack`, or by integration identifier, such as `slack-eng`. Integration keys target one integration when several share a provider, and they take precedence over provider keys. See [Target a specific integration](#target-a-specific-integration).
+At either level, you can key an override by provider ID, such as `slack`, or by integration identifier, such as `slack-eng`. Integration keys target one integration when several share a provider, and they take precedence over provider keys at every level, so a workflow-level integration key also beats a step-level provider key. See [Target a specific integration](#target-a-specific-integration).
 
 Some channels also let you save provider overrides on the step itself in the workflow editor, rather than sending them with every trigger. Those configured overrides sit below both scopes above: anything you send at trigger time replaces the configured value for the same field, and fields you do not send keep their configured values. See [chat provider content overrides](/platform/integrations/chat#provider-content-overrides).
 
@@ -923,7 +923,7 @@ When more than one level sets the same field, Novu applies them from lowest to h
 4. `overrides.integrations.<identifier>`
 5. `overrides.steps.<step-id>.integrations.<identifier>`
 
-A workflow-level integration key beats even a step-level provider key. Merging works the same way at every level: objects merge deeply, arrays replace whole, and `null` clears a value set at a lower level.
+A workflow-level integration key beats even a step-level provider key. Merging works the same way at every level: objects merge deeply, arrays replace whole, and `null` clears a value set at a lower level. On email steps, the fields Novu maps itself, such as `to`, `cc`, `bcc`, `from`, `subject`, and `headers`, don't merge: the highest level that sets one replaces it whole.
 
 #### Integration identifiers
 
@@ -934,7 +934,7 @@ A workflow-level integration key beats even a step-level provider key. Merging w
 
 #### Supported steps and limitations
 
-Integration keys work on chat, email, SMS, push, and Tool steps, such as [Tool Webhook](/platform/integrations/tool/webhook). For email steps, they can also set `cc`, `bcc`, `from`, and `replyTo`, the same way provider keys do.
+Integration keys work on chat, email, SMS, push, and Tool steps, such as [Tool Webhook](/platform/integrations/tool/webhook). For email steps, they can also set `cc`, `bcc`, and `from`, the same way provider keys do. To change the reply-to address, use `overrides.email.replyTo`; see [email overrides](/platform/integrations/email#sending-email-overrides).
 
 - In-app (Inbox) steps don't support integration keys.
 - Overrides saved on a step in the workflow editor are keyed by provider only. You can't save per-integration overrides in the dashboard yet, so send them at trigger time.
