@@ -4,6 +4,7 @@ import { NotificationEntity, NotificationRepository, NotificationTemplateEntity,
 import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { subDays } from 'date-fns';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
@@ -582,6 +583,16 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
       expect(JSON.parse(workflowRunEntity.data.payload || '{}')?.testText).to.contain('second trigger');
     }
+  });
+
+  it('should reject date ranges outside the organization retention period', async () => {
+    await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({
+        createdGte: subDays(new Date(), 31).toISOString(),
+        createdLte: new Date().toISOString(),
+      })
+      .expect(402);
   });
 
   it('should support combining multiple filters', async () => {
