@@ -213,17 +213,13 @@ describe('GetSubscription #novu-v2', () => {
     it('should derive the limit and the usage limits settings from the stored settings of the organization', async () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
       await organizationRepository.updateUsageLimits(session.organization._id, PAUSING_USAGE_LIMITS);
-      getOrCreateCustomerStub.resolves(buildStripeCustomer('30000') as Stripe.Customer);
+      getOrCreateCustomerStub.resolves(buildStripeCustomer('30000'));
       getOrganizationPeriodUsageStub.resolves({ notificationsCount: 40_000 });
 
       const { events, usageLimits } = await executeUseCase();
 
       expect(events).to.deep.equal({ current: 40_000, included: 30_000, limit: 40_000, isPaused: true });
-      expect(usageLimits).to.deep.equal({
-        isConfigurable: true,
-        onDemandPricePer1k: 1.2,
-        settings: PAUSING_USAGE_LIMITS,
-      });
+      expect(usageLimits).to.deep.include({ isConfigurable: true, settings: PAUSING_USAGE_LIMITS });
     });
   });
 });

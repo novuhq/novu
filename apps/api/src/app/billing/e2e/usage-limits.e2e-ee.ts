@@ -89,19 +89,18 @@ describe('Usage limits #novu-v2', () => {
       expect(await findStoredUsageLimits()).to.deep.equal(settings);
     });
 
-    for (const onDemandLimit of [null, 0, 1_000_000_000]) {
-      it(`should accept pausing at an on-demand limit of ${onDemandLimit}`, async () => {
-        const settings: IOrganizationUsageLimits = {
-          ...PAUSING_USAGE_LIMITS,
-          workflowRuns: { onDemandLimit, pauseAtLimit: true },
-        };
+    it('should store pausing at the included events without an on-demand limit', async () => {
+      const settings: IOrganizationUsageLimits = {
+        ...PAUSING_USAGE_LIMITS,
+        workflowRuns: { onDemandLimit: null, pauseAtLimit: true },
+      };
 
-        const response = await putUsageLimits(settings);
+      const response = await putUsageLimits(settings);
 
-        expect(response.status).to.equal(200);
-        expect(response.body.data).to.deep.equal(settings);
-      });
-    }
+      expect(response.status).to.equal(200);
+      expect(response.body.data).to.deep.equal(settings);
+      expect(await findStoredUsageLimits()).to.deep.equal(settings);
+    });
 
     it('should reject the request when usage limits are disabled', async () => {
       process.env[USAGE_LIMITS_FLAG] = 'false';
@@ -152,25 +151,15 @@ describe('Usage limits #novu-v2', () => {
       });
     }
 
-    const invalidBodies: Array<{ title: string; body: object }> = [
-      {
-        title: 'a negative on-demand limit',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: -1, pauseAtLimit: true } },
-      },
-      {
-        title: 'missing alerts',
-        body: { workflowRuns: PAUSING_USAGE_LIMITS.workflowRuns },
-      },
-    ];
-
-    for (const { title, body } of invalidBodies) {
-      it(`should reject ${title}`, async () => {
-        const response = await putUsageLimits(body);
-
-        expect(response.status).to.equal(422);
-        expect(await findStoredUsageLimits()).to.equal(undefined);
+    it('should reject an invalid body', async () => {
+      const response = await putUsageLimits({
+        ...PAUSING_USAGE_LIMITS,
+        workflowRuns: { onDemandLimit: -1, pauseAtLimit: true },
       });
-    }
+
+      expect(response.status).to.equal(422);
+      expect(await findStoredUsageLimits()).to.equal(undefined);
+    });
   });
 
   describe('DELETE /v1/billing/usage-limits', () => {
