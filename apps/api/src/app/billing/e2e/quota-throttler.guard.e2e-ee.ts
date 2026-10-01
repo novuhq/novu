@@ -3,7 +3,7 @@ import {
   GetEventResourceUsage,
   GetOrganizationPeriodUsage,
   GetStripeSubscription,
-  USAGE_LIMIT_PAUSED_EXCEPTION_MESSAGE,
+  usageLimitPausedExceptionMessage,
 } from '@novu/ee-billing';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -142,7 +142,7 @@ describe('Resource Limiting #novu-v2', () => {
 
           expect(response.status).to.equal(402);
           expect(response.body).to.deep.include({
-            message: USAGE_LIMIT_PAUSED_EXCEPTION_MESSAGE,
+            message: usageLimitPausedExceptionMessage(),
             error: 'Payment required',
             status: 402,
           });

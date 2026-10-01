@@ -54,7 +54,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     });
 
     it('should return a failed evaluation when events are above the limit', async () => {
-      getSubscriptionStub.resolves(buildSubscriptionDto({ current: 100 }));
+      getSubscriptionStub.resolves(buildSubscriptionDto({ current: 100, isPaused: true }));
 
       const result = await useCase.execute({
         organizationId: 'organization_id',

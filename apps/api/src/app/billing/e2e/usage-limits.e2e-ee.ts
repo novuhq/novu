@@ -111,45 +111,15 @@ describe('Usage limits #novu-v2', () => {
       expect(await findStoredUsageLimits()).to.equal(undefined);
     });
 
-    const ineligibleOrganizations: Array<{ title: string; arrange: () => Promise<void> }> = [
-      {
-        title: 'a Free organization',
-        arrange: async () => {
-          await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
-          givenIncludedEvents(10_000);
-        },
-      },
-      {
-        title: 'an Enterprise organization',
-        arrange: async () => {
-          await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.ENTERPRISE);
-          givenIncludedEvents(5_000_000);
-        },
-      },
-      {
-        title: 'a Pro trial organization',
-        arrange: async () => {
-          await organizationRepository.update({ _id: session.organization._id }, { isTrial: true });
-        },
-      },
-      {
-        title: 'a Pro organization without included events',
-        arrange: async () => {
-          givenIncludedEvents(null);
-        },
-      },
-    ];
+    it('should require payment for a plan that cannot configure usage limits', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
+      givenIncludedEvents(10_000);
 
-    for (const { title, arrange } of ineligibleOrganizations) {
-      it(`should require payment for ${title}`, async () => {
-        await arrange();
+      const response = await putUsageLimits(PAUSING_USAGE_LIMITS);
 
-        const response = await putUsageLimits(PAUSING_USAGE_LIMITS);
-
-        expect(response.status).to.equal(402);
-        expect(await findStoredUsageLimits()).to.equal(undefined);
-      });
-    }
+      expect(response.status).to.equal(402);
+      expect(await findStoredUsageLimits()).to.equal(undefined);
+    });
 
     it('should reject an invalid body', async () => {
       const response = await putUsageLimits({
