@@ -14,6 +14,7 @@ import type { VariableUsageInfo } from '../utils/check-variable-usage';
 import { newProperty } from '../utils/json-helpers';
 import { getMarginClassPx } from '../utils/ui-helpers';
 import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
+import { EnumSection } from './enum-section';
 import { PropertyTypeSelector } from './property-type-selector';
 
 interface ArrayItemPropertyProps {
@@ -94,6 +95,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
   const itemSchemaObject = useWatch({ control, name: itemSchemaObjectPath }) as JSONSchema7 | undefined;
   const itemType = useSchemaPropertyType(itemSchemaObject);
   const itemIsObject = itemType === 'object';
+  const itemIsEnum = itemType === 'enum';
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -134,6 +136,15 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
           isDisabled={readOnly}
         />
       </div>
+
+      {itemIsEnum && (
+        <EnumSection
+          enumArrayPath={`${itemSchemaObjectPath}.enum` as Path<SchemaEditorFormValues>}
+          control={control}
+          indentationLevel={0}
+          readOnly={readOnly}
+        />
+      )}
 
       {itemIsObject && (
         <div className={cn('flex flex-col gap-1.5 pt-1.5', getMarginClassPx(1))}>

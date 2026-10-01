@@ -16,6 +16,7 @@ import type { AgentResponse } from '@/api/agents';
 import { ExceedsPlanIndicator } from '@/components/agents/exceeds-plan-indicator';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CompactButton } from '@/components/primitives/button-compact';
+import { CopyButton } from '@/components/primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -270,12 +271,25 @@ export function AgentsTable({
                   <div className="flex min-h-[41px] items-center gap-4">
                     <AgentIcon agent={agent} />
                     <div className="flex min-w-0 flex-col gap-0.5">
-                      <TruncatedText className="text-text-strong relative z-10 block max-w-[40ch] text-label-sm leading-5 tracking-tight">
+                      <TruncatedText
+                        className="text-text-strong block max-w-[40ch] text-label-sm leading-5 tracking-tight"
+                        title={agent.name}
+                      >
                         {agent.name}
                       </TruncatedText>
-                      <TruncatedText className="text-text-soft relative z-10 block max-w-[40ch] font-mono text-label-xs leading-4 tracking-tight">
-                        {agent.identifier}
-                      </TruncatedText>
+                      <div className="flex items-center gap-1">
+                        <TruncatedText
+                          className="text-text-soft font-code block max-w-[40ch] text-xs"
+                          title={agent.identifier}
+                        >
+                          {agent.identifier}
+                        </TruncatedText>
+                        <CopyButton
+                          className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
+                          valueToCopy={agent.identifier}
+                          size="2xs"
+                        />
+                      </div>
                     </div>
                   </div>
                 </AgentNavTableCell>

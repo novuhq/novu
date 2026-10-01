@@ -50,6 +50,58 @@ export const catalog = {
       : fail('user was signed into the dashboard but a connect command used --keyless instead of dashboard OAuth');
   },
 
+  usedWebChatChannel: (result: RunResult): GraderOutcome | 'pass' => {
+    const commands = connectCommands(result);
+
+    if (commands.length === 0) {
+      return fail('Web Chat flow never ran connect');
+    }
+
+    return commands.every((cmd) => /--channel[\s=]+web-chat\b/.test(cmd))
+      ? 'pass'
+      : fail('Web Chat flow did not use --channel web-chat');
+  },
+
+  usedManagedWebChatDefaults: (result: RunResult): GraderOutcome | 'pass' => {
+    const invalidCommand = connectCommands(result).find(
+      (cmd) => /--runtime\b/.test(cmd) || /--web-chat-setup\b/.test(cmd)
+    );
+
+    return invalidCommand
+      ? fail(`managed Web Chat passed --runtime or an unrequested --web-chat-setup override: ${invalidCommand}`)
+      : 'pass';
+  },
+
+  skippedChannelPickerForWebChat: (result: RunResult): GraderOutcome | 'pass' => {
+    const channelQuestion = result.toolCalls.find(
+      (call) => call.name === 'AskUserQuestion' && /\bchannel\b/i.test(String(call.args.question ?? ''))
+    );
+
+    return channelQuestion ? fail('asked for a channel after the user explicitly selected Web Chat') : 'pass';
+  },
+
+  readWebChatEmbedPrompt: (result: RunResult): GraderOutcome | 'pass' =>
+    result.toolCalls.some(
+      (call) =>
+        call.name === 'Read' && String(call.args.file_path ?? '').includes('novu-connect-web-chat-embed-prompt')
+    )
+      ? 'pass'
+      : fail('never read the Web Chat embed prompt file'),
+
+  reportedWebChatSuccess: (result: RunResult): GraderOutcome | 'pass' =>
+    /^✓ Web Chat connected/m.test(result.finalText)
+      ? 'pass'
+      : fail('final report did not use the Web Chat success line'),
+
+  didNotPromiseWebChatClaim: (result: RunResult): GraderOutcome | 'pass' =>
+    /\bclaim your agent\b|\b(?:open|use|follow|visit)\s+(?:the|this|your)\s+claim (?:link|url)\b/i.test(
+      result.finalText
+    ) ||
+    /https?:\/\/\S*\/claim(?:\/|\b)/i.test(result.finalText) ||
+    result.capturedUrls.some((url) => /\/claim(?:\/|$)/i.test(url))
+      ? fail('promised a claim link that Web Chat does not print')
+      : 'pass',
+
   backgroundConnectShell: (result: RunResult): GraderOutcome | 'pass' => {
     const connectCall = firstConnectCall(result);
 
@@ -383,7 +435,7 @@ export const catalog = {
 export const sharedJudgeGraders = defineGraders({
   personaAudienceFit: labeled(
     'frames the agent for the product end-user audience in domain language',
-    judge(judgePrompts.personaAudienceFit, (result) => [descriptionText(result), transcriptText(result)].join('\n'))
+    judge(judgePrompts.personaAudienceFit, (result) => descriptionText(result))
   ),
   noInfraMcpSemantic: labeled(
     'avoids naming internal infrastructure in the drafted agent description',

@@ -16,6 +16,7 @@ import {
   ConversationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
   SubscriberRepository,
@@ -49,6 +50,7 @@ export class ClaimKeylessConnect {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -106,6 +108,7 @@ export class ClaimKeylessConnect {
         await this.conversationActivityRepository.update(sourceScope, { $set: target }, { session });
         await this.agentMcpServerRepository.update(sourceScope, { $set: target }, { session });
         await this.mcpConnectionRepository.update(sourceScope, { $set: target }, { session });
+        await this.humanInteractionRepository.update(sourceScope, { $set: target }, { session });
         await this.subscriberRepository.update(
           { ...sourceScope, subscriberId: { $ne: KEYLESS_SUBSCRIBER_ID } },
           { $set: target },

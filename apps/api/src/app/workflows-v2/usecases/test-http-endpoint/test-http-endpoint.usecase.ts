@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
+  buildInvalidJsonBodyDetail,
   buildNovuSignatureHeader,
   enhanceStepsMap,
   GetDecryptedSecretKey,
@@ -66,8 +67,6 @@ export class TestHttpEndpointUsecase {
     const method = (compiled.method as string) ?? 'GET';
     const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
     const compiledBody = compiled.body as string | KeyValuePair[] | undefined;
-    const resolvedBodyInput =
-      typeof compiledBody === 'string' && compiledBody.trim() ? repairJsonString(compiledBody) : compiledBody;
 
     const resolvedHeaders: Record<string, string> = Object.fromEntries(
       compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
@@ -77,13 +76,15 @@ export class TestHttpEndpointUsecase {
 
     let resolvedBody: Record<string, unknown> | unknown[] | undefined;
     try {
+      // `repairJsonString` throws on bodies it cannot repair, so it has to stay inside this
+      // try/catch to return a 400 with the reason instead of an unhandled 500.
+      const resolvedBodyInput =
+        typeof compiledBody === 'string' && compiledBody.trim() ? repairJsonString(compiledBody) : compiledBody;
       resolvedBody = resolveHttpRequestBody(resolvedBodyInput);
     } catch (parseError) {
-      const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
-
       return {
         statusCode: 400,
-        body: { error: `Invalid raw JSON body: ${errorMessage}` },
+        body: buildInvalidJsonBodyDetail(parseError, compiledBody),
         headers: {},
         durationMs: Math.round(performance.now() - startTime),
         resolvedRequest: {

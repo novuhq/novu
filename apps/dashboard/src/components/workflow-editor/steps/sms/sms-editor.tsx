@@ -1,23 +1,13 @@
-import { EnvironmentTypeEnum, type UiSchema } from '@novu/shared';
-import { Sms } from '@/components/icons';
+import { type UiSchema } from '@novu/shared';
 
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { useEnvironment } from '@/context/environment/hooks';
-
-import { cn } from '../../../../utils/ui';
-import { StepEditorUnavailable } from '../step-editor-unavailable';
 
 type SmsEditorProps = { uiSchema: UiSchema };
 
 export const SmsEditor = (props: SmsEditorProps) => {
-  const { currentEnvironment } = useEnvironment();
   const { uiSchema } = props;
   const { body } = uiSchema.properties ?? {};
-
-  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
-    return <StepEditorUnavailable />;
-  }
 
   return (
     <div className="flex h-full flex-col">

@@ -65,7 +65,10 @@ export class BridgeRuntime implements AgentRuntime {
       conversation: turn.conversation,
       subscriber: turn.subscriber,
       context: turn.context ?? null,
+      workflowOrigin: turn.workflowOrigin ?? null,
+      bridgeUrlOverride: turn.bridgeUrlOverride,
       message: turn.message,
+      previousMessage: turn.previousMessage,
       platformContext: buildAgentPlatformContext({
         platformThreadId: turn.platformThreadId,
         channelId: turn.thread.channelId,
@@ -78,8 +81,11 @@ export class BridgeRuntime implements AgentRuntime {
         }),
       }),
       storedAttachments: turn.storedAttachments,
+      deliveryRevision: turn.deliveryRevision,
+      platformThreadId: turn.platformThreadId,
       action: turn.action,
       reaction: turn.reaction,
+      humanResponse: turn.humanResponse,
       onBridgeFailure: async () => {
         applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
         await this.outboundGateway.replyOnThread(

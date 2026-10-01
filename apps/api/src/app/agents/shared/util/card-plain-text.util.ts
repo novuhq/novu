@@ -2,7 +2,7 @@ import type { CardElement } from 'chat';
 
 /**
  * Flatten card title + text/link children into a plain-text fallback for durable
- * activity content. Intentionally duplicated from `@novu/chat-adapter-web`
+ * activity content. Intentionally duplicated from `@novu/chat-adapter-web-chat`
  * (which needs it for postable-message parsing) so the channel-agnostic
  * egress layer does not depend on a specific channel adapter package.
  */

@@ -148,9 +148,10 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         identifier: data.identifier,
         active: data.active,
         _environmentId: data.environmentId,
+        rules: data.rules ?? null,
       });
 
-      if (data.primary && isChannelSupportPrimary && data.active) {
+      if (data.primary && isChannelSupportPrimary && data.active && !data.rules) {
         await setPrimaryIntegration({ integrationId: integration.data._id });
       }
 

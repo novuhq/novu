@@ -10,7 +10,7 @@ Interactive cards include buttons, dropdowns, links, and text inputs. When a use
 
 Use replies when the agent needs to communicate something to the participant in the conversation.
 
-Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/building-blocks/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user.
+Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/building-blocks/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user. Use [`ctx.emit`](/agents/custom-code-agent/building-blocks/emit) when your client needs a named payload during the turn.
 
 The public API is `ctx.reply(content, options?)`. You can also return a string or JSX card from a handler instead of calling `ctx.reply()` directly.
 
@@ -23,6 +23,7 @@ To send a reply from your backend without going through the bridge handler, use 
 | Plain / rich text | Yes | Yes | Bold / italics | Yes | HTML |
 | Tap-to-respond buttons | Yes | Yes | Yes (up to 3) | Yes | Action links |
 | Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+| Quote reply | Plain post | Plain post | Native | Native | — |
 
 See [Channels overview](/agents/channels/overview) for the full matrix.
 
@@ -52,6 +53,14 @@ Send formatted text by passing a markdown string to `ctx.reply()`:
 
 ```typescript
 await ctx.reply('**Report generated.** See the attached PDF.');
+```
+
+## Quote reply
+
+Pass `quoteReply` to pin the reply to a specific inbound message. WhatsApp and Telegram render a native quote. Other channels send a normal post.
+
+```typescript
+await ctx.reply('Your order shipped today.', { quoteReply: message });
 ```
 
 ## Sending attachments
@@ -164,10 +173,10 @@ await ctx.reply(
 );
 ```
 
-When a user clicks a button or selects a dropdown value, `onAction` fires with `action.id` and `action.value`. See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#onaction).
-
   </Tab>
 </Tabs>
+
+When a user clicks a button or selects a dropdown value, `onAction` fires with `action.id` and `action.value`. See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#onaction). On [Web Chat](/agents/channels/web-chat/generative-ui#cards), the same tree arrives as a `card` part. The web UI draws it and calls `sendAction`.
 
 ### Available card components
 
@@ -178,11 +187,60 @@ The following table lists the card components you can use in replies:
 | `Card` | Container with an optional `title` |
 | `CardText` | Text block inside a card |
 | `Button` | Interactive button; `id` maps to `action.id` in `onAction` |
-| `Actions` | Required wrapper around `Button` elements |
+| `LinkButton` | Button that opens a URL; goes inside `Actions` |
+| `Actions` | Required wrapper around `Button` and `LinkButton` elements |
 | `Select` / `SelectOption` | Dropdown; triggers `onAction` with selected value |
 | `Divider` | Visual separator |
-| `CardLink` | Clickable link |
+| `CardLink` | Inline clickable link |
+| `Table` | Structured data table with headers and rows |
+| `Chart` | Bar, line, area, or pie chart |
 | `TextInput` | Text input field |
+
+All components are exported from `@novu/framework` (and from `@novu/framework/cards` and every server entrypoint), so you do not need to install a separate package. Each one works in both the function call API and the JSX API.
+
+### Tables, charts, and link buttons
+
+`Table`, `Chart`, and `LinkButton` render structured content inside a card. On channels with native support (such as Slack), they map to the platform's rich blocks; on others they fall back to plain text.
+
+```tsx
+/** @jsxImportSource @novu/framework */
+import { Actions, Card, Chart, LinkButton, Table } from '@novu/framework';
+
+await ctx.reply(
+  <Card title="Weekly deliveries">
+    <Table
+      caption="Deliveries by channel"
+      headers={['Channel', 'Sent']}
+      rows={[
+        ['Email', '1200'],
+        ['SMS', '340'],
+      ]}
+      pageSize={5}
+    />
+    <Chart
+      title="Sent per day"
+      chart={{
+        type: 'bar',
+        categories: ['Mon', 'Tue'],
+        series: [
+          { name: 'Email', data: [{ label: 'Mon', value: 400 }, { label: 'Tue', value: 800 }] },
+        ],
+      }}
+    />
+    <Actions>
+      <LinkButton url="https://dashboard.novu.co/activity">Open dashboard</LinkButton>
+    </Actions>
+  </Card>,
+);
+```
+
+- **`Table`** takes `headers` (column labels) and `rows` (an array of cell-string arrays). Optional `caption` labels the table, and `pageSize` sets rows per page on channels that paginate (Slack: 1-100, default 5).
+- **`Chart`** takes a `title` and a `chart` definition. Use `type: 'bar' | 'line' | 'area'` with `categories` and `series`, or `type: 'pie'` with `segments`. On Slack the title is capped at 50 characters, and series and categories are capped at 12.
+- **`LinkButton`** renders a button that opens a `url`, unlike `CardLink`, which renders an inline link. Place it inside `Actions`.
+
+<Note>
+  On Slack, `Table` ignores per-column `align`. A chart or table that exceeds the platform limits falls back to a plain-text section.
+</Note>
 
 ## Related
 
@@ -193,10 +251,16 @@ The following table lists the card components you can use in replies:
   <Card icon="signal" href="/agents/custom-code-agent/building-blocks/signals" title="Signals">
     Metadata, workflow triggers, and conversation resolution.
   </Card>
+  <Card icon="radio" href="/agents/custom-code-agent/building-blocks/emit" title="Emit custom events">
+    Send a named payload. Web Chat renders it as a `data` part.
+  </Card>
   <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
     Build end to end with `@novu/framework/ai-sdk`.
   </Card>
   <Card icon="code" href="/api-reference/agents/send-an-agent-reply" title="Send an agent reply API">
     Send replies from your backend without a bridge handler.
+  </Card>
+  <Card icon="message-circle" href="/agents/channels/web-chat/generative-ui#cards" title="Web Chat cards">
+    Render `part.type === 'card'` in your product UI and call `sendAction`.
   </Card>
 </Columns>

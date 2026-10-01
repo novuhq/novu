@@ -1,0 +1,9 @@
+language js(typescript)
+
+`{ ...$conditional }` where {
+  $conditional <: or {
+    `($condition ? {} : $value)`,
+    `($condition ? $value : {})`
+  },
+  register_diagnostic(span=$conditional, message="This conditional spread hides property omission behind an empty object. Build the object in separate statements and add the property only when present.", severity="error")
+}

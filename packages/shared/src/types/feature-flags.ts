@@ -37,6 +37,15 @@ export enum FeatureFlagsKeysEnum {
   IS_EVENT_QUOTA_THROTTLER_ENABLED = 'IS_EVENT_QUOTA_THROTTLER_ENABLED',
   IS_NEW_MESSAGES_API_RESPONSE_ENABLED = 'IS_NEW_MESSAGES_API_RESPONSE_ENABLED',
   IS_USAGE_ALERTS_ENABLED = 'IS_USAGE_ALERTS_ENABLED',
+  /** Stops the usage-alerts cron before it reads usage. Default off, so the cron runs. */
+  IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
+  /**
+   * Organization-scoped, read only when subscriber-process jobs are enqueued (`TriggerBase`): moves the usage
+   * counter increment from enqueue to workflow-run creation (`CreateNotificationJobs`), matching what ClickHouse
+   * counts. Transitional (NV-8853): remove with the enqueue-time increment and the job stamp once on for all
+   * organizations and the subscriber-process queue has drained.
+   */
+  IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED = 'IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED',
   IS_USE_MERGED_DIGEST_ID_ENABLED = 'IS_USE_MERGED_DIGEST_ID_ENABLED',
   IS_V2_ENABLED = 'IS_V2_ENABLED',
 
@@ -63,6 +72,7 @@ export enum FeatureFlagsKeysEnum {
   IS_TRACE_LOGS_ENABLED = 'IS_TRACE_LOGS_ENABLED',
   IS_TRACE_LOGS_READ_ENABLED = 'IS_TRACE_LOGS_READ_ENABLED',
   IS_INBOUND_WEBHOOKS_ENABLED = 'IS_INBOUND_WEBHOOKS_ENABLED',
+  IS_INBOUND_WEBHOOK_ATTACHMENT_URLS_ENABLED = 'IS_INBOUND_WEBHOOK_ATTACHMENT_URLS_ENABLED',
   IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED = 'IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED',
   IS_STEP_RUN_LOGS_READ_ENABLED = 'IS_STEP_RUN_LOGS_READ_ENABLED',
   IS_STEP_RUN_LOGS_WRITE_ENABLED = 'IS_STEP_RUN_LOGS_WRITE_ENABLED',
@@ -85,7 +95,10 @@ export enum FeatureFlagsKeysEnum {
   /** When true, integration lookup may match across environments in the same organization (opt-in for regressed customers). Default is false (environment-scoped). */
   IS_CROSS_ENVIRONMENT_INTEGRATION_ENABLED = 'IS_CROSS_ENVIRONMENT_INTEGRATION_ENABLED',
   IS_PREFERENCE_FETCH_OPTIMIZATION_ENABLED = 'IS_PREFERENCE_FETCH_OPTIMIZATION_ENABLED',
+  /** Platform-wide billing usage (Stripe usage records) source. Keep off until shadow mode proves parity. */
   IS_BILLING_USAGE_CLICKHOUSE_ENABLED = 'IS_BILLING_USAGE_CLICKHOUSE_ENABLED',
+  /** Organization-scoped usage source for the event quota check and dashboard subscription usage. */
+  IS_BILLING_QUOTA_CLICKHOUSE_ENABLED = 'IS_BILLING_QUOTA_CLICKHOUSE_ENABLED',
   IS_BILLING_USAGE_CLICKHOUSE_SHADOW_ENABLED = 'IS_BILLING_USAGE_CLICKHOUSE_SHADOW_ENABLED',
   IS_BILLING_USAGE_DETAILED_DIAGNOSTICS_ENABLED = 'IS_BILLING_USAGE_DETAILED_DIAGNOSTICS_ENABLED',
   IS_AI_WORKFLOW_GENERATION_ENABLED = 'IS_AI_WORKFLOW_GENERATION_ENABLED',
@@ -105,12 +118,17 @@ export enum FeatureFlagsKeysEnum {
   IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
   /** Enable Novu-managed demo Claude provider auto-provisioned on dev environments. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_DEMO_MANAGED_CLAUDE_ENABLED` when self-hosted. */
   IS_DEMO_MANAGED_CLAUDE_ENABLED = 'IS_DEMO_MANAGED_CLAUDE_ENABLED',
-  /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
-  IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
   /**
-   * Enable the agent web-chat channel (subscriber `/v1/web-chat/*`, useAgentChat wayfinder).
+   * Enable framework `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` human
+   * interactions delivered into the agent conversation. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_AGENT_HUMAN_HITL_ENABLED` when self-hosted.
+   */
+  IS_AGENT_HUMAN_HITL_ENABLED = 'IS_AGENT_HUMAN_HITL_ENABLED',
+  /**
+   * Enable the Web Chat channel (subscriber `/v1/web-chat/*`, useWebChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
    * `IS_AGENT_WEB_CHAT_ENABLED` when self-hosted (`VITE_IS_AGENT_WEB_CHAT_ENABLED` for dashboard).
+   * Flag key kept as IS_AGENT_WEB_CHAT_ENABLED (LaunchDarkly / env already deployed).
    */
   IS_AGENT_WEB_CHAT_ENABLED = 'IS_AGENT_WEB_CHAT_ENABLED',
   /** Enable the "What's next" section on the agent overview. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_WHATS_NEXT_ENABLED` when self-hosted. */
@@ -170,14 +188,15 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
   /**
-   * Emit a "step conditions matched" execution detail when a step's conditions
-   * pass and the step executes (v2 skip conditions, HTTP Request steps, and
-   * legacy v1 filters including webhook filters). When off, condition results
-   * are only persisted when a step is skipped. Create the boolean in
-   * LaunchDarkly for cloud, or set `IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED`
-   * when self-hosted.
+   * Trace step condition evaluation in the activity feed regardless of outcome:
+   * a "step conditions matched" detail when conditions pass, and a "step was
+   * skipped based on steps conditions" detail when they do not (v2 skip
+   * conditions, HTTP Request steps, and legacy v1 filters including webhook
+   * filters). Legacy v1 skipped steps still persist their skip detail when
+   * this flag is off. Create the boolean in LaunchDarkly for cloud, or set
+   * `IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED` when self-hosted.
    */
-  IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED = 'IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED',
+  IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED = 'IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED',
   /**
    * Stop embedding the fully populated workflow step (message template
    * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
@@ -212,7 +231,6 @@ export enum FeatureFlagsKeysEnum {
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
   // String flags
-  QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
   USAGE_REPORT_OVERRIDE_EMAIL = 'USAGE_REPORT_OVERRIDE_EMAIL',
 
@@ -228,18 +246,23 @@ export enum FeatureFlagsKeysEnum {
   MAX_SUBSCRIBER_DEVICE_TOKENS_NUMBER = 'MAX_SUBSCRIBER_DEVICE_TOKENS_NUMBER',
   MAX_ENVIRONMENT_VARIABLES_LIMIT_NUMBER = 'MAX_ENVIRONMENT_VARIABLES_LIMIT_NUMBER',
   MAX_STEP_RESOLVERS_NUMBER = 'MAX_STEP_RESOLVERS_NUMBER',
+  /**
+   * Max conditions (or nested groups) allowed in a single step-conditions group.
+   * Default is 10 when the flag is unset, invalid, or below 1. Create the number
+   * in LaunchDarkly for cloud, or set `VITE_MAX_STEP_CONDITIONS_PER_GROUP_NUMBER`
+   * when self-hosted.
+   */
+  MAX_STEP_CONDITIONS_PER_GROUP_NUMBER = 'MAX_STEP_CONDITIONS_PER_GROUP_NUMBER',
   MAX_DOMAINS_LIMIT_NUMBER = 'MAX_DOMAINS_LIMIT_NUMBER',
   MAX_AGENTS_LIMIT_NUMBER = 'MAX_AGENTS_LIMIT_NUMBER',
   MAX_CUSTOM_EMAIL_DOMAINS_NUMBER = 'MAX_CUSTOM_EMAIL_DOMAINS_NUMBER',
+  /**
+   * When greater than 0, replaces the tier-derived usage-alert cap and lowers the candidate
+   * query to 75% of this value. 0 keeps the real cap. Set it in the staging environment only.
+   */
+  USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER = 'USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
-}
-
-export enum QueueBackendMode {
-  BULLMQ = 'bullmq',
-  SHADOW = 'shadow',
-  LIVE = 'live',
-  COMPLETE = 'complete',
 }
 
 export type FeatureFlags = {

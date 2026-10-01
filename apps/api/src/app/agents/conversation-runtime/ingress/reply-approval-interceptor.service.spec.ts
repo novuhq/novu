@@ -25,8 +25,6 @@ describe('ReplyApprovalInterceptor', () => {
     const conversationService = {
       getPrimaryChannel: sinon.stub().returns(channel),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
-    };
-    const activityLedger = {
       listForView: sinon.stub().resolves({ data: history, hasMore: false }),
     };
     const outboundGateway = {
@@ -37,14 +35,17 @@ describe('ReplyApprovalInterceptor', () => {
       warn: sinon.stub(),
       setContext: sinon.stub(),
     };
+    const humanInteractionRepository = { findPendingByRequestId: sinon.stub().resolves(null) };
+    const settlement = { settle: sinon.stub().resolves(null) };
     const interceptor = new ReplyApprovalInterceptor(
       conversationService as any,
-      activityLedger as any,
       outboundGateway as any,
+      humanInteractionRepository as any,
+      settlement as any,
       logger as any
     );
 
-    return { interceptor, conversationService, activityLedger, outboundGateway };
+    return { interceptor, conversationService, outboundGateway, humanInteractionRepository, settlement };
   }
 
   function makeTurn(overrides: Record<string, unknown> = {}) {
@@ -295,14 +296,14 @@ describe('ReplyApprovalInterceptor', () => {
   });
 
   it('should fall through when the platform has interactive buttons', async () => {
-    const { interceptor, activityLedger } = makeDeps();
+    const { interceptor, conversationService } = makeDeps();
     const runtime = { dispatch: sinon.stub().resolves(undefined) };
     const turn = makeTurn({ config: { ...makeTurn().config, platform: 'slack' } });
 
     const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
 
     expect(consumed).to.equal(false);
-    expect(activityLedger.listForView.called).to.equal(false);
+    expect(conversationService.listForView.called).to.equal(false);
     expect(runtime.dispatch.called).to.equal(false);
   });
 
@@ -566,38 +567,140 @@ describe('ReplyApprovalInterceptor', () => {
     });
 
     it('should fall through when the reaction was removed rather than added', async () => {
-      const { interceptor, activityLedger } = makeDeps();
+      const { interceptor, conversationService } = makeDeps();
       const runtime = { dispatch: sinon.stub().resolves(undefined) };
       const turn = makeReactionTurn({ reaction: { emoji: 'thumbs_up', added: false, messageId: 'msg-approval' } });
 
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(activityLedger.listForView.called).to.equal(false);
+      expect(conversationService.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 
     it('should fall through for an emoji that is not a verdict', async () => {
-      const { interceptor, activityLedger } = makeDeps();
+      const { interceptor, conversationService } = makeDeps();
       const runtime = { dispatch: sinon.stub().resolves(undefined) };
       const turn = makeReactionTurn({ reaction: { emoji: 'heart', added: true, messageId: 'msg-approval' } });
 
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(activityLedger.listForView.called).to.equal(false);
+      expect(conversationService.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 
     it('should fall through when the platform has interactive buttons', async () => {
-      const { interceptor, activityLedger } = makeDeps();
+      const { interceptor, conversationService } = makeDeps();
       const runtime = { dispatch: sinon.stub().resolves(undefined) };
       const turn = makeReactionTurn({ config: { ...makeTurn().config, platform: 'slack' } });
 
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(activityLedger.listForView.called).to.equal(false);
+      expect(conversationService.listForView.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should settle HITL approve/deny and dispatch the author action id', async () => {
+      const { interceptor, conversationService, settlement, humanInteractionRepository } = makeDeps();
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['sub-1'],
+        status: 'pending',
+      });
+      settlement.settle.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        kind: 'approve',
+        status: 'approved',
+        response: { type: 'option', optionId: 'approve' },
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(settlement.settle.calledOnce).to.equal(true);
+      expect(settlement.settle.firstCall.args[1]).to.equal('approved');
+      expect(settlement.settle.firstCall.args[2].optionId).to.equal('approve');
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.firstCall.args[0].action.id).to.equal('tool-approval:approve:approval-1');
+      expect(runtime.dispatch.firstCall.args[0].humanResponse.requestId).to.equal('tool_approval:approval-1');
+    });
+
+    it('should reject a YES from a subscriber not listed on the HITL row', async () => {
+      const { interceptor, settlement, humanInteractionRepository } = makeDeps();
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['alice'],
+        status: 'pending',
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(settlement.settle.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should reject a HITL verdict from an unresolved subscriber even when it is the requester', async () => {
+      // Regression: a HITL gate authorizes only by its recipient allow-list.
+      // Without a resolved subscriber we cannot prove membership, so the verdict
+      // must fail closed — never fall back to "the requester", or the person who
+      // triggered the tool could self-approve a gate addressed to someone else.
+      const { interceptor, settlement, humanInteractionRepository } = makeDeps([
+        pendingRequest,
+        {
+          type: ConversationActivityTypeEnum.MESSAGE,
+          senderType: 'platform_user',
+          senderId: 'sendblue:+15557654321',
+          content: 'Please issue the refund',
+        },
+      ]);
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['alice'],
+        status: 'pending',
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({
+        subscriber: null,
+        message: { id: 'msg-yes', text: 'yes', author: { userId: '+15557654321' } },
+      });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(settlement.settle.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should consume managed HITL YES without dispatching', async () => {
+      const { interceptor, settlement, humanInteractionRepository } = makeDeps();
+      humanInteractionRepository.findPendingByRequestId.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        subscriberIds: ['sub-1'],
+        status: 'pending',
+      });
+      settlement.settle.resolves({
+        identifier: 'hi_1',
+        requestId: 'tool_approval:approval-1',
+        kind: 'approve',
+        status: 'approved',
+      });
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({ agent: { _id: 'agent-1', runtime: 'managed' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(settlement.settle.calledOnce).to.equal(true);
       expect(runtime.dispatch.called).to.equal(false);
     });
 

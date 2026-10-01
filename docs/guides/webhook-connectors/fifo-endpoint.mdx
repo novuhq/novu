@@ -1,0 +1,140 @@
+---
+title: 'Receive webhook events in FIFO order'
+description: 'Configure a FIFO webhook endpoint to receive selected Novu events in ordered HTTP batches.'
+sidebarTitle: 'FIFO Endpoint'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+A FIFO endpoint sends Novu webhook events to an HTTP receiver in strict first-in, first-out order. Novu waits for a successful acknowledgement before sending the next batch.
+
+<WebhookConnectorsPlanNote />
+
+Strict ordering limits throughput because one failed or slow batch blocks later batches. Use FIFO only when the receiver must process events sequentially.
+
+## Prerequisites
+
+- A publicly reachable HTTPS receiver
+- A receiver that can process the entire request body and return a successful HTTP response
+- Permission to manage webhook endpoints in the Novu environment
+
+## Configuration
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Endpoint URL** | Yes | HTTP receiver that accepts each transformed batch. |
+| **Transformation** | Yes | JavaScript that converts the batch into one raw request body string. |
+| Batching controls | No | Dashboard controls for how many messages are grouped into a delivery and how long the endpoint waits before sending. |
+
+Batching is configured on the endpoint rather than in the transformation. Use the labels and limits shown in your Novu Dashboard, and do not hard-code an assumed batch size in the receiver.
+
+## Transformation contract
+
+FIFO transformations run once per batch.
+
+<WebhookBatchInput />
+
+It must return:
+
+```ts
+{
+  requestBody: string;
+}
+```
+
+This verified example collects the batch into a single JSON request body:
+
+```js
+function handler(input) {
+  const events = input.events.map((event) => ({
+    eventType: event.eventType,
+    payload: event.payload,
+  }));
+
+  return {
+    requestBody: JSON.stringify({ data: events }),
+  };
+}
+```
+
+The receiver gets one HTTP request whose raw body has this shape:
+
+```json
+{
+  "data": [
+    {
+      "eventType": "message.sent",
+      "payload": {
+        "type": "message.sent",
+        "object": "message",
+        "data": {
+          "object": {
+            "subscriberId": "subscriber-123"
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+Your receiver must acknowledge the current batch successfully before the next batch can be delivered. The official FIFO documentation does not define a numeric batch default.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the receiver
+
+Create an HTTPS route that reads the raw batch body, completes processing, and returns a successful response only when the batch is safe to advance.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="FIFO Endpoint" />
+
+  <Step>
+## Enter connection details
+
+Enter the endpoint URL. Configure the batching controls shown in the Dashboard based on the maximum latency and batch size your receiver can handle.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Review the transformation. Ensure `handler(input)` handles every element in `input.events` and returns `requestBody` as a string.
+  </Step>
+
+  <Step>
+## Select event types
+
+Choose the [event types](/platform/developer/webhooks/event-types) that require strict ordering. Avoid unrelated events that could block the same delivery sequence.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint. Send multiple examples from **Testing** and inspect **Logs**. Confirm the receiver gets each batch only after the preceding request succeeds and that the body matches the transformation output.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Confirm the receiver logged one request whose body matches the transformed batch. Send two tests in sequence and verify the second request arrives only after the first returns a successful response.
+
+## Troubleshooting
+
+- **Later events stop arriving**: Inspect the earliest failed or timed-out batch. FIFO delivery cannot advance until the current batch succeeds.
+- **The receiver cannot parse the body**: Confirm the transformation returns `requestBody` as a string containing valid data for your receiver.
+- **Throughput is too low**: Review the Dashboard batching settings and receiver latency. Strict acknowledgement sequencing limits throughput by design.
+- **Events inside a batch disappear**: Ensure the transformation maps every `input.events` entry that the receiver needs.
+- **Events arrive at the wrong endpoint**: Confirm the endpoint URL and Novu environment before replaying failures.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix FIFO endpoints](https://docs.svix.com/advanced-endpoints/fifo-endpoints)
+- [How FIFO webhook delivery works](https://www.svix.com/blog/fifo-ordered-webhooks-delivery/)

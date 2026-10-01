@@ -24,6 +24,7 @@ import {
   ChatProviderIdEnum,
   CronExpressionEnum,
   RedirectTargetEnum,
+  SECRET_MASK,
   StepTypeEnum,
   slugify,
   ToolProviderIdEnum,
@@ -1706,6 +1707,43 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
   });
 
   describe('payload sanitation', () => {
+    it('should mask secret environment variables in preview output (VULN-082)', async () => {
+      const secretValue = `sk_live_preview_exfil_${randomUUID()}`;
+      const publicValue = 'https://cdn.example.com';
+
+      const createSecretResponse = await session.testAgent.post('/v1/environment-variables').send({
+        key: 'PREVIEW_STRIPE_SECRET',
+        isSecret: true,
+        values: [{ _environmentId: session.environment._id, value: secretValue }],
+      });
+      expect(createSecretResponse.status).to.equal(200);
+
+      const createPublicResponse = await session.testAgent.post('/v1/environment-variables').send({
+        key: 'PREVIEW_CDN_URL',
+        isSecret: false,
+        values: [{ _environmentId: session.environment._id, value: publicValue }],
+      });
+      expect(createPublicResponse.status).to.equal(200);
+
+      const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, StepTypeEnum.SMS);
+      const previewResponseDto = await generatePreview(novuClient, workflowId, stepDatabaseId, {
+        controlValues: {
+          body: 'secret={{env.PREVIEW_STRIPE_SECRET}} public={{env.PREVIEW_CDN_URL}}',
+        },
+      });
+
+      expect(previewResponseDto.result!.preview).to.exist;
+      if (previewResponseDto.result!.type !== 'sms') {
+        throw new Error('Expected sms');
+      }
+
+      const previewBody = previewResponseDto.result!.preview.body;
+      expect(previewBody).to.include(publicValue);
+      expect(previewBody).to.include(SECRET_MASK);
+      expect(previewBody).to.not.include(secretValue);
+      expect(JSON.stringify(previewResponseDto)).to.not.include(secretValue);
+    });
+
     it('Should produce a correct payload when pipe is used etc {{payload.variable | upper}}', async () => {
       const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, StepTypeEnum.SMS);
       const requestDto = {

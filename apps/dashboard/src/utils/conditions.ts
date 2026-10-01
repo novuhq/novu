@@ -1,5 +1,6 @@
-import { RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
+import { defaultRuleProcessorJsonLogic, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
+import { isRelativeDateOperator, isUnaryJsonLogicOperator } from '@/components/conditions-editor/field-type-operators';
 
 function parseArrayOperatorArgs(val: any, operator: string) {
   if (!val || !Array.isArray(val) || val.length < 2) {
@@ -36,6 +37,23 @@ function parseRelativeDateArgs(val: any, operator: string) {
   };
 }
 
+function parseUnaryOperatorArgs(val: unknown, operator: string) {
+  if (!val || !Array.isArray(val) || val.length !== 1) {
+    return false;
+  }
+
+  const [operand] = val;
+  if (!operand || typeof operand !== 'object' || !('var' in operand) || typeof operand.var !== 'string') {
+    return false;
+  }
+
+  return {
+    field: operand.var,
+    operator,
+    value: '',
+  };
+}
+
 const customJsonLogicOperations = {
   moreThanXAgo: (val: any) => parseRelativeDateArgs(val, 'moreThanXAgo'),
   lessThanXAgo: (val: any) => parseRelativeDateArgs(val, 'lessThanXAgo'),
@@ -44,6 +62,8 @@ const customJsonLogicOperations = {
   notWithinLast: (val: any) => parseRelativeDateArgs(val, 'notWithinLast'),
   containsAny: (val: any) => parseArrayOperatorArgs(val, 'containsAny'),
   doesNotContainAny: (val: any) => parseArrayOperatorArgs(val, 'doesNotContainAny'),
+  isEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isEmpty'),
+  isNonEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isNonEmpty'),
 };
 
 // Shared parse options for consistency
@@ -131,5 +151,58 @@ export const getUniqueOperators = (jsonLogic?: RQBJsonLogic): string[] => {
   return recursiveGetUniqueOperators(query);
 };
 
-// Export shared configuration for use in other files
+const CONTAINS_ANY_OPERATORS = ['containsAny', 'doesNotContainAny'] as const;
+
+function isContainsAnyOperator(operator: string): boolean {
+  return (CONTAINS_ANY_OPERATORS as readonly string[]).includes(operator);
+}
+
+export const customRuleProcessor = (rule: RuleType, options: Parameters<typeof defaultRuleProcessorJsonLogic>[1]) => {
+  if (isUnaryJsonLogicOperator(rule.operator)) {
+    return {
+      [rule.operator]: [{ var: rule.field }],
+    };
+  }
+
+  if (isRelativeDateOperator(rule.operator)) {
+    try {
+      const parsedValue = JSON.parse(rule.value as string);
+
+      if (
+        parsedValue &&
+        (typeof parsedValue.amount === 'number' || typeof parsedValue.amount === 'string') &&
+        parsedValue.unit
+      ) {
+        return {
+          [rule.operator]: [{ var: rule.field }, parsedValue],
+        };
+      }
+    } catch {
+      // Fall through to the default processor when the relative-date payload is invalid.
+    }
+  }
+
+  if (isContainsAnyOperator(rule.operator)) {
+    const trimmedValue = (rule.value as string).trim();
+    const variableMatch = trimmedValue.match(/^\{\{(.+?)\}\}$/);
+
+    if (variableMatch) {
+      return {
+        [rule.operator]: [{ var: rule.field }, { var: variableMatch[1].trim() }],
+      };
+    }
+
+    const values = trimmedValue
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    return {
+      [rule.operator]: [{ var: rule.field }, values],
+    };
+  }
+
+  return defaultRuleProcessorJsonLogic(rule, options);
+};
+
 export { parseJsonLogicOptions };

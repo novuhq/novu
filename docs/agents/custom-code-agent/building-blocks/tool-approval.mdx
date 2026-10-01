@@ -6,7 +6,9 @@ description: "Pause an agent turn and ask the user to approve or deny a tool cal
 
 Some tool calls should not run without user approval (refunds, deletes, payments). Tool approval posts an **Approve / Deny** card in the conversation and pauses the turn until the user decides.
 
-This page covers `ctx.toolApproval.request()`, the `onToolApproval` handler, and card customization. How you gate a tool depends on your runtime:
+This page covers `ctx.toolApproval.request()`, the `onToolApproval` handler, and card customization. How you gate a tool depends on your runtime.
+
+Asking a human a question (`ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell`) is a different flow. On managed agents the equivalent is the `novu_human` tool plus the Novu HITL skill — see [Add skills](/agents/managed-agent/add-skills#novu-hitl-skill).
 
 ## Channel support
 
@@ -33,7 +35,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),
@@ -143,7 +145,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),

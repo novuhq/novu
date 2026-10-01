@@ -125,7 +125,11 @@ function getProviderDisplayName(providerId: string): string {
 }
 
 /** Chat providers that deliver to the subscriber's phone number rather than a webhook/channel endpoint. */
-const PHONE_BASED_CHAT_PROVIDERS = new Set<string>([ChatProviderIdEnum.WhatsAppBusiness, ChatProviderIdEnum.Sendblue]);
+const PHONE_BASED_CHAT_PROVIDERS = new Set<string>([
+  ChatProviderIdEnum.WhatsAppBusiness,
+  ChatProviderIdEnum.Sendblue,
+  ChatProviderIdEnum.PhotonImessage,
+]);
 
 function isPhoneBasedChatProvider(providerId: string): boolean {
   return PHONE_BASED_CHAT_PROVIDERS.has(providerId);
@@ -475,7 +479,7 @@ export function buildCredentialGroups({
   channelConnections = [],
   includeToolChannel = false,
 }: BuildCredentialGroupsArgs): ChannelGroup[] {
-  const storedChannels = (subscriber.channels ?? []) as unknown as StoredChannel[];
+  const storedChannels: StoredChannel[] = subscriber.channels ?? [];
   const email = subscriber.email ?? '';
   const phone = subscriber.phone ?? '';
 

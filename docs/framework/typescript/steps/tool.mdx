@@ -1,0 +1,26 @@
+---
+title: 'Tool'
+description: "Use the tool step in Novu Framework to deliver a payload to PagerDuty, Opsgenie, Grafana, or a Tool webhook as part of a workflow."
+---
+
+The `tool` step delivers a `body` string through a Tool integration. For when to use it versus `step.custom`, provider mapping, overrides, skip, and controls, see the [Tool channel](/framework/tool-channel) guide.
+
+## Example Usage
+
+```tsx
+await step.tool('page-oncall', async () => {
+  return {
+    body: 'Payment failed for order ORD-12345',
+  };
+});
+```
+
+## Tool Step Output
+
+| Property | Type   | Required | Description                                      |
+| -------- | ------ | -------- | ------------------------------------------------ |
+| body     | string | Yes      | The payload sent to the Tool provider as content |
+
+## Tool Step Result
+
+The `tool` step does not return any result object.

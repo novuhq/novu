@@ -84,7 +84,11 @@ Novu's in-app notification UI and client SDK component (`<Inbox />`). The Inbox 
 
 ### Integration
 
-An environment-scoped, configured connection to a third-party [provider](#provider). Integrations store [credentials](#credential), active/primary flags, and channel settings required for external channel delivery. The in-app channel does not require a third-party integration. See [Integrations](/platform/concepts/integrations).
+An environment-scoped, configured connection to a third-party [provider](#provider). Integrations store [credentials](#credential), active/primary flags, optional [integration conditions](#integration-conditions), and channel settings required for external channel delivery. The in-app channel does not require a third-party integration. See [Integrations](/platform/concepts/integrations).
+
+### Integration conditions
+
+Rules on an [integration](#integration) that select which provider account sends a notification, evaluated at send time against subscriber and [context](#context) data. Distinct from [step conditions](#step-conditions), which skip a workflow step. See [Integration conditions](/platform/integrations/integration-conditions).
 
 ### Layout
 
@@ -114,7 +118,7 @@ An action step that calls an external API during workflow execution. Response fi
 
 ### Step conditions
 
-Rule-based logic that determines whether a [step](#step) runs or is skipped, based on subscriber data, [payload](#payload), [context](#context), or previous step results. Formerly called step filters. See [Step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
+Rule-based logic that determines whether a [step](#step) runs or is skipped, based on subscriber data, [payload](#payload), [context](#context), or previous step results. Formerly called step filters. See [Step conditions](/platform/workflow/add-and-configure-steps/step-conditions). To choose which provider sends after a step runs, use [integration conditions](/platform/integrations/integration-conditions).
 
 ### Throttle step
 
@@ -138,7 +142,7 @@ Per-trigger customizations that override default template content or [integratio
 
 ### Context
 
-Multi-dimensional metadata passed at trigger time as `{ type: id | { id, data } }` - for example, `tenant`, `app`, or `region`. Context data is available in templates (`{{context.tenant.data.name}}`), [step conditions](#step-conditions), [Inbox](#inbox) filtering, and Activity Feed search. You can pass up to five contexts per trigger. See [Contexts](/platform/concepts/contexts).
+Multi-dimensional metadata passed at trigger time as `{ type: id | { id, data } }` - for example, `tenant`, `app`, or `region`. Context data is available in templates (`{{context.tenant.data.name}}`), [step conditions](#step-conditions), [integration conditions](/platform/integrations/integration-conditions), [Inbox](#inbox) filtering, and Activity Feed search. You can pass up to five contexts per trigger. See [Contexts](/platform/concepts/contexts).
 
 ### Tenant
 

@@ -284,8 +284,11 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
-  describe('preheader injection', () => {
-    const buildPreheaderCommand = (preheader: string): EmailOutputRendererCommand => ({
+  describe('sender and preheader metadata', () => {
+    const buildPreheaderCommand = (
+      preheader: string,
+      controlValues: Record<string, unknown> = {}
+    ): EmailOutputRendererCommand => ({
       dbWorkflow: mockDbWorkflow,
       controlValues: {
         subject: 'Welcome Email',
@@ -299,6 +302,7 @@ describe('EmailOutputRendererUsecase', () => {
             },
           ],
         } satisfies MailyJSONContent),
+        ...controlValues,
       },
       fullPayloadForRender: mockFullPayload,
       stepId: 'fake_step_id',
@@ -322,6 +326,38 @@ describe('EmailOutputRendererUsecase', () => {
 
       expect(result.body).to.include("$'");
       expect(result.body.split('Unique body marker')).to.have.lengthOf(2);
+    });
+
+    it('should translate subject, sender name, and preheader only', async () => {
+      translateStub.callsFake(async (command: { content: string }) =>
+        command.content
+          .replace('{{t.subject}}', 'Willkommen')
+          .replace('{{t.senderName}}', 'Acme Sicherheit')
+          .replace('{{t.preheader}}', 'Ein Blick hinein')
+      );
+
+      const result = await emailOutputRendererUsecase.execute(
+        buildPreheaderCommand('{{t.preheader}}', {
+          subject: '{{t.subject}}',
+          from: { email: '{{t.senderEmail}}', name: '{{t.senderName}}' },
+          replyTo: '{{t.replyTo}}',
+        })
+      );
+
+      expect(result.subject).to.equal('Willkommen');
+      expect(result.from).to.deep.equal({ email: '{{t.senderEmail}}', name: 'Acme Sicherheit' });
+      expect(result.replyTo).to.equal('{{t.replyTo}}');
+      expect(result.preheader).to.equal('Ein Blick hinein');
+      expect(result.body).to.include('Ein Blick hinein');
+    });
+
+    it('should preserve an empty translated preheader', async () => {
+      translateStub.callsFake(async (command: { content: string }) => command.content.replace('{{t.preheader}}', ''));
+
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand('{{t.preheader}}'));
+
+      expect(result).to.have.property('preheader', '');
+      expect(result.body).to.not.include('{{t.preheader}}');
     });
   });
 

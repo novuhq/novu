@@ -1,9 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger, shortId } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ConversationActivityEntity,
-  ConversationActivityRepository,
   type ConversationChannel,
   ConversationEntity,
   ConversationRepository,
@@ -27,7 +26,6 @@ interface ToolTask {
 @Injectable()
 export class HandlePlanProgress {
   constructor(
-    private readonly activityRepository: ConversationActivityRepository,
     private readonly agentRepository: AgentRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationService: AgentConversationService,
@@ -52,7 +50,7 @@ export class HandlePlanProgress {
     const channel = this.conversationService.getPrimaryChannel(conversation);
     const activePlanMessageId = conversation.activePlanMessageId;
     const existingActivities = activePlanMessageId
-      ? await this.activityRepository.findToolActivitiesByPlanMessageId(
+      ? await this.conversationService.findToolActivitiesByPlanMessageId(
           command.environmentId,
           command.conversationId,
           activePlanMessageId
@@ -205,32 +203,25 @@ export class HandlePlanProgress {
     if (isEnrichingInProgress) {
       const activity = this.findLatestInProgressToolActivity(existingActivities, taskInput.id);
       if (activity) {
-        await this.activityRepository.update(
-          {
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-            _conversationId: command.conversationId,
-            _id: activity._id,
-          },
-          { $set: { content, 'signalData.payload': payload } }
-        );
+        await this.conversationService.enrichToolUseSignal({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          conversationId: command.conversationId,
+          activityId: activity._id,
+          content,
+          payload,
+        });
 
         return;
       }
     }
 
-    await this.activityRepository.createSignalActivity({
-      identifier: `act_${shortId(12)}`,
+    await this.conversationService.persistToolUseSignal({
       conversationId: command.conversationId,
-      platform: channel.platform,
-      integrationId: channel._integrationId,
-      platformThreadId: channel.platformThreadId,
-      agentId: command.agentIdentifier,
+      channel,
+      agentIdentifier: command.agentIdentifier,
       content,
-      signalData: {
-        type: 'tool-use',
-        payload,
-      },
+      payload,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });

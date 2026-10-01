@@ -72,6 +72,7 @@ export class ContextsController {
         type: body.type,
         id: body.id,
         data: body.data,
+        bridgeUrl: body.bridgeUrl,
       })
     );
 
@@ -104,6 +105,7 @@ export class ContextsController {
         type,
         id,
         data: body.data,
+        bridgeUrl: body.bridgeUrl,
       })
     );
 

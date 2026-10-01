@@ -30,7 +30,7 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
     ...props,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     shouldShow: ({ editor }) => {
-      if (editor.view.dragging) {
+      if (editor.view.dragging || !editor.isEditable) {
         return false;
       }
 

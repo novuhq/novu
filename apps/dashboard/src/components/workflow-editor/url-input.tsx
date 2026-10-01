@@ -7,7 +7,7 @@ import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
-type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
+type URLInputProps = Omit<InputProps, 'value' | 'onChange' | 'readOnly'> & {
   options: string[];
   fields: {
     urlKey: string;
@@ -15,6 +15,7 @@ type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   };
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
+  readOnly?: boolean;
 };
 
 export const URLInput = ({
@@ -23,6 +24,7 @@ export const URLInput = ({
   fields: { urlKey, targetKey },
   variables = [],
   isAllowedVariable,
+  readOnly = false,
 }: URLInputProps) => {
   const { control, getFieldState } = useFormContext();
   const { saveForm } = useSaveForm();
@@ -48,6 +50,7 @@ export const URLInput = ({
                     onChange={field.onChange}
                     variables={variables}
                     isAllowedVariable={isAllowedVariable}
+                    readOnly={readOnly}
                   />
                 </FormItem>
               )}
@@ -64,6 +67,7 @@ export const URLInput = ({
                         field.onChange(value);
                         saveForm();
                       }}
+                      disabled={readOnly}
                     >
                       <SelectTrigger className="border h-[36px] max-w-24 rounded-l-none border-l-0 text-xs focus:ring-0">
                         <SelectValue />

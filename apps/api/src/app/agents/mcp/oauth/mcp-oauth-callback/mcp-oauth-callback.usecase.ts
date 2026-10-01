@@ -31,6 +31,7 @@ import {
   resolvePersistedMcpTokenEndpointAuthMethod,
 } from '@novu/shared';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
+import { AgentConversationService } from '../../../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../../../conversation-runtime/egress/outbound.gateway';
 import { ManagedAgentService } from '../../../managed-runtime/managed-agent.service';
 import { trackAgentMcpOAuthCompleted, trackAgentMcpOAuthFailed } from '../../../shared/analytics/agent-analytics';
@@ -54,6 +55,7 @@ import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oaut
 import { type DcrTokenExchangeOutcome, resolveDcrTokenExchangeOutcome } from './token-exchange-outcome';
 
 const MAX_ERROR_MESSAGE_LEN = 256;
+const MCP_CONNECTION_FAILED_MESSAGE = 'Connection failed. Try again.';
 
 class AlreadyConnectedBailout extends Error {
   readonly status = 'connected' as const;
@@ -104,6 +106,7 @@ export class McpOAuthCallback {
     private readonly discoveryService: McpOAuthDiscoveryService,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
     private readonly managedAgentService: ManagedAgentService,
+    private readonly agentConversationService: AgentConversationService,
     private readonly outboundGateway: OutboundGateway,
     private readonly getNovuAppCredentials: McpNovuAppCredentialsService,
     private readonly analyticsService: AnalyticsService,
@@ -567,7 +570,31 @@ export class McpOAuthCallback {
       return;
     }
 
-    this.deleteConnectCard(stateData, connection);
+    if (stateData.platform === AgentPlatformEnum.WEB_CHAT && stateData.toolUseId && stateData.conversationId) {
+      try {
+        const conversation = await this.agentConversationService.getConversation(
+          stateData.conversationId,
+          stateData.environmentId,
+          stateData.organizationId
+        );
+        if (conversation) {
+          await this.agentConversationService.persistMcpConnectionResult({
+            conversationId: stateData.conversationId,
+            environmentId: stateData.environmentId,
+            organizationId: stateData.organizationId,
+            agentIdentifier: stateData.agentIdentifier ?? '',
+            channel: this.agentConversationService.getPrimaryChannel(conversation),
+            actionId: stateData.toolUseId,
+            mcpId: stateData.mcpId,
+            status: 'connected',
+          });
+        }
+      } catch (err) {
+        this.logger.warn(err, 'Failed to record MCP connection result; continuing session resume');
+      }
+    } else {
+      this.deleteConnectCard(stateData, connection);
+    }
     this.showTypingIndicator(stateData);
 
     await this.managedAgentService.sendToolResult({
@@ -835,6 +862,31 @@ export class McpOAuthCallback {
         $unset: { oauthState: 1 },
       }
     );
+
+    if (stateData.platform === AgentPlatformEnum.WEB_CHAT && stateData.toolUseId && stateData.conversationId) {
+      try {
+        const conversation = await this.agentConversationService.getConversation(
+          stateData.conversationId,
+          stateData.environmentId,
+          stateData.organizationId
+        );
+        if (conversation) {
+          await this.agentConversationService.persistMcpConnectionResult({
+            conversationId: stateData.conversationId,
+            environmentId: stateData.environmentId,
+            organizationId: stateData.organizationId,
+            agentIdentifier: stateData.agentIdentifier ?? '',
+            channel: this.agentConversationService.getPrimaryChannel(conversation),
+            actionId: stateData.toolUseId,
+            mcpId: stateData.mcpId,
+            status: 'failed',
+            message: MCP_CONNECTION_FAILED_MESSAGE,
+          });
+        }
+      } catch (err) {
+        this.logger.warn(err, 'Failed to record MCP connection failure');
+      }
+    }
   }
 
   private async handleTokenExchangeErrorOutcome(args: {

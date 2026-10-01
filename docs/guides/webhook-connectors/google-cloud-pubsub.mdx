@@ -1,0 +1,140 @@
+---
+title: 'Publish webhook events to Google Cloud Pub/Sub'
+description: 'Configure the Google Cloud Pub/Sub webhook connector and verify selected Novu events in a subscription.'
+sidebarTitle: 'Google Cloud Pub/Sub'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Google Cloud Pub/Sub connector publishes selected Novu webhook events to a topic in your Google Cloud project.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- A Google Cloud project
+- An existing Pub/Sub topic, created before you configure the endpoint
+- A service account with a JSON key that can publish to that topic
+- A subscription attached to the topic so you can pull messages during verification
+
+### Required permission
+
+Publishing requires the `pubsub.topics.publish` permission, which is included in the predefined `roles/pubsub.publisher` role. Grant it on the topic rather than the project:
+
+```bash
+gcloud pubsub topics add-iam-policy-binding novu-events \
+  --member="serviceAccount:novu-publisher@my-gcp-project.iam.gserviceaccount.com" \
+  --role="roles/pubsub.publisher"
+```
+
+See [Pub/Sub access control](https://cloud.google.com/pubsub/docs/access-control) for the full role reference. Paste the complete JSON key into the credentials field and treat it as a secret.
+
+## Configuration
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Project ID** | Yes | Google Cloud project that owns the topic. |
+| **Topic** | Yes | Pub/Sub topic that receives the messages. |
+| **Credentials** | Yes | Google Cloud credentials JSON used to connect to the project. |
+| **Transformation** | Yes | Dashboard-provided JavaScript that shapes the published message. |
+
+## Transformation contract
+
+<WebhookBatchInput />
+
+The return shape is defined by the template the Novu Dashboard ships with this connector, and it differs from the return shape of the queue and object storage connectors. Read the JSDoc comment above the template's `handler` for the exact keys, and do not paste a handler from another connector page.
+
+To customize it safely:
+
+1. Send an example event without changing the template.
+2. Inspect the transformation output in the endpoint's **Logs**.
+3. Pull the corresponding message from a Pub/Sub subscription.
+4. Change one field at a time and repeat the test.
+
+A decoded subscriber message can represent the selected Novu event like this:
+
+```json
+{
+  "eventType": "message.sent",
+  "payload": {
+    "type": "message.sent",
+    "object": "message",
+    "data": {
+      "object": {
+        "subscriberId": "subscriber-123",
+        "channel": "email"
+      }
+    }
+  }
+}
+```
+
+Use the endpoint **Logs** and the pulled Pub/Sub message to confirm the exact shape before changing the transformation.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare Pub/Sub
+
+Create the topic and attach a subscription that you can pull from during testing. Prepare credentials JSON that can publish to the topic.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Google Cloud Pub/Sub" />
+
+  <Step>
+## Enter connection details
+
+Enter **Project ID**, **Topic**, and **Credentials**.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Preserve the Dashboard template for the first test. After it succeeds, change one field at a time and compare the published message with the endpoint log.
+  </Step>
+
+  <Step>
+## Select event types
+
+Choose the [event types](/platform/developer/webhooks/event-types) to publish. Start with one event type so the first subscriber message is easy to identify.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint. Open **Testing**, select a subscribed event type, and click **Send Example**. Confirm success in **Logs**, pull the message from your subscription, decode its data as JSON, and compare it with the logged transformation output.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Pull one message from the verification subscription without acknowledging it:
+
+```bash
+gcloud pubsub subscriptions pull novu-events-verify \
+  --limit=1 \
+  --format="value(message.data)" | base64 --decode
+```
+
+Pub/Sub message data is base64 encoded on the wire, so decode it before comparing with the transformation output shown in the endpoint's **Logs**. If the pull returns nothing while **Logs** reports success, another subscriber likely acknowledged the message first. Use a dedicated verification subscription with no active consumers.
+
+## Troubleshooting
+
+- **Authentication fails**: Validate the credentials JSON and confirm it belongs to the configured project.
+- **The topic is not found**: Check the exact project ID and topic name. Confirm the topic already exists.
+- **Novu reports success but the subscriber is empty**: Confirm the subscription is attached to the configured topic and inspect subscription filters or retention settings.
+- **The message shape is unexpected**: Restore the Dashboard template, send another example, and compare the endpoint log with the decoded subscriber message.
+- **Some event types never publish**: Review the endpoint's selected event types and test each one separately.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [Google Cloud Pub/Sub documentation](https://cloud.google.com/pubsub/docs)
+- [Pub/Sub access control](https://cloud.google.com/pubsub/docs/access-control)

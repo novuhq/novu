@@ -27,7 +27,9 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENT_IMESSAGE_LABEL } from '@/utils/agent-channel-branding';
 import { withOnboardingSource } from '@/utils/onboarding-redirect';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -36,6 +38,7 @@ import { AgentIntegrationGuideTransition } from './agent-integration-guides/agen
 import { resolveAgentProviderDisplayName } from './agent-integration-guides/agent-provider-display-name';
 import { providerHasWhatsNextPhase } from './agent-integration-guides/whats-next/whats-next-config';
 import { AgentListenStep } from './agent-listen-step';
+import { ImessageIntegrationSelectProvider } from './imessage-integration-select';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
@@ -53,14 +56,21 @@ const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welc
 const BRAIN_STEPS = 1;
 // Provider guides reserve up to three numbered steps; the bridge section continues from there.
 const PROVIDER_GUIDE_RESERVED_STEPS = 3;
-// The iMessage (Sendblue) guide prepends a "Setup iMessage via" provider-select step, so it
-// reserves one extra step to keep the bridge/handler numbering aligned for self-hosted agents.
+// The iMessage guides (Sendblue, Photon) prepend a "Setup iMessage via" provider-select step, so
+// they reserve one extra step to keep the bridge/handler numbering aligned for self-hosted agents.
 const IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS = 4;
 
 function resolveProviderGuideReservedSteps(providerId: string | undefined): number {
-  return providerId === ChatProviderIdEnum.Sendblue
-    ? IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS
-    : PROVIDER_GUIDE_RESERVED_STEPS;
+  if (providerId === ChatProviderIdEnum.Sendblue || providerId === ChatProviderIdEnum.PhotonImessage) {
+    return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
+  }
+
+  // Web Chat: preview in dashboard + embed from the customer app.
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
+    return 2;
+  }
+
+  return PROVIDER_GUIDE_RESERVED_STEPS;
 }
 // Self-hosted agents add three handler steps (scaffold + run + send) below the provider guide.
 const HANDLER_STEPS = 3;
@@ -269,6 +279,7 @@ export function ManagedAgentRecap({
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing onboarding orchestrator; splitting it is tracked separately
 export function AgentSetupSteps({
   agent,
   onSetupComplete,
@@ -363,10 +374,12 @@ export function AgentSetupSteps({
   // start at 1 here instead of continuing from 3.
   const isOnboarding = Boolean(connectSummary);
   const brainStepsBefore = isOnboarding ? BRAIN_STEPS : 0;
-  const handlerStepsAfter = isManagedRuntime ? 0 : HANDLER_STEPS;
 
   const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
   const selectedProviderId = selectedIntegration?.providerId ?? legacyDefaultFromAgent?.providerId;
+  // Web Chat's first prompt already scaffolds the handler with `--runtime` + `--channel web-chat`.
+  const skipHandlerSection = isManagedRuntime || selectedProviderId === ChatProviderIdEnum.NovuWebChat;
+  const handlerStepsAfter = skipHandlerSection ? 0 : HANDLER_STEPS;
   const isEmailChannelSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent;
   const effectiveIntegrationId = validatedSelectedId ?? selectedIntegrationId ?? legacyDefaultFromAgent?.integrationId;
 
@@ -455,7 +468,13 @@ export function AgentSetupSteps({
   // behind the same generic Continue step the details page uses for non-whats-next providers
   // (`ConnectionSuccessFooter` with `hasUserRolloutPhase={false}`) instead of auto-advancing the
   // moment they connect, so the guide stays visible with every step checked off.
-  const genericContinueGateProviders = useMemo(() => new Set<string>([ChatProviderIdEnum.Sendblue]), []);
+  // Web Chat has no user-rollout phase; hold managed onboarding behind Continue until the
+  // user embeds useWebChat and sends a first message (Connected = first inbound, like Slack).
+  const genericContinueGateProviders = useMemo(
+    () =>
+      new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.PhotonImessage, ChatProviderIdEnum.NovuWebChat]),
+    []
+  );
   const useGenericContinueGate =
     isManagedRuntime && Boolean(guideProviderId && genericContinueGateProviders.has(guideProviderId));
 
@@ -563,6 +582,34 @@ export function AgentSetupSteps({
       }
     },
     [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
+  );
+
+  // "Setup iMessage via" picker: the iMessage guides share one channel card, and
+  // picking a vendor's integration inside the guide links it (or creates a new
+  // one) and points the guide at it. Linking is additive — previously linked
+  // iMessage integrations stay linked.
+  const linkedIntegrationIdsForImessage = useMemo(
+    () => new Set(agentIntegrationLinks.map((link) => link.integration._id)),
+    [agentIntegrationLinks]
+  );
+  const { linkProvider: linkImessageProvider } = useLinkAgentIntegration({
+    agentIdentifier: agent.identifier,
+    linkedIntegrationIds: linkedIntegrationIdsForImessage,
+    onLinked: handleProviderSelect,
+  });
+
+  const handleSelectImessageIntegration = useCallback(
+    (providerId: string, integration?: IIntegration) =>
+      linkImessageProvider(
+        {
+          providerId,
+          displayName: AGENT_IMESSAGE_LABEL,
+          integration,
+          newIntegrationName: agent.name ?? agent.identifier,
+        },
+        integration?._id ?? `${providerId}-imessage-new`
+      ),
+    [agent.identifier, agent.name, linkImessageProvider]
   );
 
   useEffect(() => {
@@ -791,8 +838,8 @@ export function AgentSetupSteps({
             <SetupStep
               index={channelStepIndex}
               status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
-              title="Choose where your agent can talk"
-              description="Connect a channel so users can message the agent and receive replies."
+              title="Setup where your agent can talk"
+              description="Choose where users can message your agent and receive replies."
               fullWidthContent={
                 <ProviderCards
                   agentIdentifier={agent.identifier}
@@ -819,54 +866,58 @@ export function AgentSetupSteps({
             className="flex flex-col gap-10"
             style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
           >
-            {useRolloutGate && guideIntegrationId && guideProviderId ? (
-              <AgentIntegrationGuideTransition
-                isConnected={guideLayer1Complete}
-                providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
-                hasUserRolloutPhase={useOnboardingRolloutGate || useEmailWhatsNextRolloutGate}
-                onContinued={handleRolloutContinue}
-                renderSetupView={(footer) => (
-                  <>
-                    <ProviderGuide
-                      agent={agent}
-                      integrationId={guideIntegrationId}
-                      stepOffset={providerGuideStepOffset}
-                      embedded={false}
-                      isOnboarding={isOnboarding}
-                      onStepsCompleted={handleProviderStepsCompleted}
-                      onWelcomeSent={
-                        guideProviderId !== EmailProviderIdEnum.NovuAgent
-                          ? () => trackWelcomeSent(guideProviderId)
-                          : undefined
-                      }
-                      integrationLink={guideIntegrationLink}
-                    />
-                    {footer}
-                  </>
-                )}
-                renderConnectedView={() => null}
-              />
-            ) : (
-              <ProviderGuide
-                agent={agent}
-                integrationId={guideIntegrationId}
-                stepOffset={providerGuideStepOffset}
-                embedded={false}
-                isOnboarding={isOnboarding}
-                onStepsCompleted={handleProviderStepsCompleted}
-                onWelcomeSent={
-                  isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
-                    ? () => trackWelcomeSent(guideProviderId)
-                    : undefined
-                }
-                integrationLink={guideIntegrationLink}
-              />
-            )}
+            <ImessageIntegrationSelectProvider onSelect={handleSelectImessageIntegration}>
+              {useRolloutGate && guideIntegrationId && guideProviderId ? (
+                <AgentIntegrationGuideTransition
+                  isConnected={guideLayer1Complete}
+                  providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
+                  hasUserRolloutPhase={useOnboardingRolloutGate || useEmailWhatsNextRolloutGate}
+                  onContinued={handleRolloutContinue}
+                  renderSetupView={(footer) => (
+                    <>
+                      <ProviderGuide
+                        agent={agent}
+                        integrationId={guideIntegrationId}
+                        stepOffset={providerGuideStepOffset}
+                        embedded={false}
+                        isOnboarding={isOnboarding}
+                        connectorId={connectSummary?.connectorId}
+                        onStepsCompleted={handleProviderStepsCompleted}
+                        onWelcomeSent={
+                          guideProviderId !== EmailProviderIdEnum.NovuAgent
+                            ? () => trackWelcomeSent(guideProviderId)
+                            : undefined
+                        }
+                        integrationLink={guideIntegrationLink}
+                      />
+                      {footer}
+                    </>
+                  )}
+                  renderConnectedView={() => null}
+                />
+              ) : (
+                <ProviderGuide
+                  agent={agent}
+                  integrationId={guideIntegrationId}
+                  stepOffset={providerGuideStepOffset}
+                  embedded={false}
+                  isOnboarding={isOnboarding}
+                  connectorId={connectSummary?.connectorId}
+                  onStepsCompleted={handleProviderStepsCompleted}
+                  onWelcomeSent={
+                    isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
+                      ? () => trackWelcomeSent(guideProviderId)
+                      : undefined
+                  }
+                  integrationLink={guideIntegrationLink}
+                />
+              )}
+            </ImessageIntegrationSelectProvider>
           </motion.div>
         ) : null}
       </AnimatePresence>
 
-      {channelReadyForBridge && !isManagedRuntime && (
+      {channelReadyForBridge && !skipHandlerSection && (
         <div className="pl-8">
           <AgentCodeSetupSection
             agent={agent}

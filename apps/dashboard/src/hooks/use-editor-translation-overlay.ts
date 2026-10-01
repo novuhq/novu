@@ -15,6 +15,8 @@ type UseTranslationEditorProps = {
   resourceType: LocalizationResourceEnum;
   enableTranslations?: boolean;
   isTranslationEnabledOnResource: boolean;
+  /** Keys still render as pills when true, but the popover that edits and deletes them stays closed. */
+  isReadOnly?: boolean;
 };
 
 export function useEditorTranslationOverlay({
@@ -25,6 +27,7 @@ export function useEditorTranslationOverlay({
   resourceType,
   enableTranslations = true,
   isTranslationEnabledOnResource,
+  isReadOnly = false,
 }: UseTranslationEditorProps) {
   const isTranslationEnabled = useIsTranslationEnabled({ isTranslationEnabledOnResource });
   const shouldEnableTranslations = isTranslationEnabled && enableTranslations;
@@ -83,7 +86,7 @@ export function useEditorTranslationOverlay({
     }
   }, [selectedTranslation, shouldEnableTranslations, viewRef]);
 
-  const isTranslationPopoverOpen = shouldEnableTranslations && !!selectedTranslation;
+  const isTranslationPopoverOpen = shouldEnableTranslations && !isReadOnly && !!selectedTranslation;
 
   return {
     translationCompletionSource,

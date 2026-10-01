@@ -29,7 +29,7 @@ export function isMissingReadToolForSkillsError(err: unknown): boolean {
   return /skills require the read tool/i.test(message);
 }
 
-export function extractErrorMessage(err: unknown): string | undefined {
+function extractErrorMessage(err: unknown): string | undefined {
   if (err instanceof Error) {
     return err.message;
   }

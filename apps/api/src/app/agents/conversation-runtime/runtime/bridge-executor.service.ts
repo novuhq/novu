@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
   buildNovuSignatureHeader,
-  FeatureFlagsService,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   PinoLogger,
@@ -17,25 +16,27 @@ import type {
   AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
+  AgentHumanResponse,
   AgentMessage,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentSubscriber,
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import {
-  AGENT_PLATFORM_PROVISION_SOURCE,
-  AGENT_PROVISION_DATA_KEYS,
-  AgentSubscriberAccessEnum,
-  FeatureFlagsKeysEnum,
-} from '@novu/shared';
-import type { Message } from 'chat';
+import type { Message, Root } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
+import { esmImport } from '../../shared/util/esm-import';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
-import { ConversationActivityLedger } from '../conversation/conversation-activity-ledger';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
+import {
+  resolveInboundReplyTo,
+  type WorkflowOriginData,
+  type WorkflowOriginSnapshot,
+} from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
 
@@ -105,6 +106,8 @@ interface AttachmentSigningContext {
   organizationId: string;
   environmentId: string;
   conversationId: string;
+  platform?: ResolvedAgentConfig['platform'];
+  platformThreadId?: string;
 }
 
 async function mapWithConcurrency<T, R>(
@@ -142,12 +145,24 @@ export interface AgentExecutionParams {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   message: Message | null;
+  previousMessage?: Message | null;
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
+  workflowOrigin?: WorkflowOriginSnapshot | null;
+  /**
+   * Per-context bridge URL override resolved from the connect-time context. Takes precedence over the
+   * agent's default `bridgeUrl` (but not the active dev bridge). Re-validated by the SSRF guard on
+   * every send attempt.
+   */
+  bridgeUrlOverride?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
+  humanResponse?: AgentHumanResponse | null;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
+  platformThreadId?: string;
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
 }
@@ -165,8 +180,7 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly activityLedger: ConversationActivityLedger,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -177,7 +191,7 @@ export class BridgeExecutorService {
     try {
       const { config, event } = params;
 
-      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event);
+      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event, params.bridgeUrlOverride);
       if (!bridgeUrl) {
         throw new NoBridgeUrlError(agentIdentifier);
       }
@@ -295,11 +309,32 @@ export class BridgeExecutorService {
     });
   }
 
-  private resolveBridgeUrl(config: ResolvedAgentConfig, agentIdentifier: string, event: AgentEventEnum): string | null {
+  /** Host only (no path/query) so override routing can be diagnosed without logging a full URL. */
+  private safeHost(rawUrl: string): string {
+    try {
+      return new URL(rawUrl).host;
+    } catch {
+      return 'invalid-url';
+    }
+  }
+
+  private resolveBridgeUrl(
+    config: ResolvedAgentConfig,
+    agentIdentifier: string,
+    event: AgentEventEnum,
+    bridgeUrlOverride?: string
+  ): string | null {
     let baseUrl: string | undefined;
 
+    // Precedence: active dev bridge (local development) > per-context override > agent default.
     if (config.devBridgeActive && config.devBridgeUrl) {
       baseUrl = config.devBridgeUrl;
+    } else if (bridgeUrlOverride) {
+      baseUrl = bridgeUrlOverride;
+      this.logger.info(
+        { agentIdentifier, bridgeHost: this.safeHost(bridgeUrlOverride) },
+        `[agent:${agentIdentifier}] Routing bridge call to per-context bridge URL override`
+      );
     } else if (config.bridgeUrl) {
       baseUrl = config.bridgeUrl;
     }
@@ -319,7 +354,8 @@ export class BridgeExecutorService {
   }
 
   private async buildPayload(params: AgentExecutionParams): Promise<AgentBridgeRequest> {
-    const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
+    const { event, config, conversation, subscriber, message, platformContext, action, reaction, humanResponse } =
+      params;
     const agentIdentifier = config.agentIdentifier;
 
     const history = await this.loadHistory(
@@ -332,22 +368,19 @@ export class BridgeExecutorService {
     const apiOrigin = resolveAgentReplyApiOrigin();
     const replyUrl = `${apiOrigin}/v1/agents/${agentIdentifier}/reply`;
 
-    const isEventProtocolEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
-      defaultValue: false,
-      organization: { _id: config.organizationId },
-      environment: { _id: config.environmentId },
-    });
-
     const timestamp = new Date().toISOString();
 
     let deliveryId: string;
-    if (message?.id) {
+    if (message?.id && event === AgentEventEnum.ON_MESSAGE) {
       deliveryId = `${conversation._id}:${message.id}`;
+    } else if (message?.id) {
+      deliveryId = `${conversation._id}:${event}:${message.id}:${params.deliveryRevision ?? timestamp}`;
     } else if (action) {
       deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {
       deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
+    } else if (humanResponse) {
+      deliveryId = `${conversation._id}:${event}:${humanResponse.interactionId}:${timestamp}`;
     } else {
       deliveryId = `${conversation._id}:${event}`;
     }
@@ -359,6 +392,7 @@ export class BridgeExecutorService {
       event,
       agentId: agentIdentifier,
       replyUrl,
+      eventsUrl: `${apiOrigin}/v1/agents/events/ingest`,
       conversationId: conversation._id,
       integrationIdentifier: config.integrationIdentifier,
       message: message
@@ -366,22 +400,31 @@ export class BridgeExecutorService {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
+          })
+        : null,
+      previousMessage: params.previousMessage
+        ? await this.mapMessage(params.previousMessage, undefined, {
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
           })
         : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
       subscriberAccess: config.subscriberAccess,
       context: params.context ?? null,
+      notification: params.workflowOrigin ? mapWorkflowOriginToNotification(params.workflowOrigin.data) : null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
       action: action ?? null,
-      reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
+      reaction: reaction ? await this.mapReaction(reaction, config, conversation, params.platformThreadId) : null,
+      humanResponse: humanResponse ?? null,
     };
-
-    if (isEventProtocolEnabled) {
-      payload.eventsUrl = `${apiOrigin}/v1/agents/events/ingest`;
-    }
 
     return payload;
   }
@@ -394,7 +437,7 @@ export class BridgeExecutorService {
     organizationId: string
   ): Promise<ConversationActivityEntity[]> {
     try {
-      const page = await this.activityLedger.listForView({
+      const page = await this.conversationService.listForView({
         view: 'agent_handoff',
         environmentId,
         organizationId,
@@ -414,22 +457,56 @@ export class BridgeExecutorService {
     }
   }
 
+  /**
+   * GFM rendering of the adapter-parsed `formatted` AST, so platform structure that `text`
+   * flattens (Slack table blocks, bold, links, code) reaches every bridge runtime. Omitted for
+   * plain prose: stringifying it only adds Markdown escapes (`snake\_case`) the brain would read.
+   * Fail-soft: an unserializable node must not drop the delivery — the brain still gets `text`.
+   */
+  private async toBridgeMarkdown(message: Message): Promise<string | undefined> {
+    if (!message.formatted || isPlainProse(message.formatted)) {
+      return undefined;
+    }
+
+    try {
+      const { stringifyMarkdown }: typeof import('chat') = await esmImport('chat');
+      const markdown = stringifyMarkdown(message.formatted).trimEnd();
+
+      return markdown.length > 0 ? markdown : undefined;
+    } catch (err) {
+      this.logger.warn(err, `Failed to render inbound message ${message.id} as markdown; sending plain text only`);
+
+      return undefined;
+    }
+  }
+
   private async mapMessage(
     message: Message,
     storedAttachments?: StoredAttachment[],
     signingContext?: AttachmentSigningContext
   ): Promise<AgentMessage> {
+    const markdown = await this.toBridgeMarkdown(message);
     const mapped: AgentMessage = {
       text: message.text,
+      ...(markdown !== undefined ? { markdown } : {}),
       platformMessageId: message.id,
       author: {
         userId: message.author.userId,
         fullName: message.author.fullName,
         userName: message.author.userName,
         isBot: message.author.isBot,
+        ...(message.author.email ? { email: message.author.email } : {}),
+        ...(message.author.isSystem ? { isSystem: true } : {}),
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
+
+    if (signingContext?.platform) {
+      const replyTo = resolveInboundReplyTo(signingContext.platform, message, signingContext.platformThreadId);
+      if (replyTo) {
+        mapped.replyTo = replyTo;
+      }
+    }
 
     if (storedAttachments !== undefined) {
       mapped.attachments = signingContext
@@ -483,7 +560,8 @@ export class BridgeExecutorService {
   private async mapReaction(
     reaction: BridgeReaction,
     config: ResolvedAgentConfig,
-    conversation: ConversationEntity
+    conversation: ConversationEntity,
+    platformThreadId?: string
   ): Promise<AgentReaction> {
     return {
       messageId: reaction.messageId,
@@ -494,6 +572,8 @@ export class BridgeExecutorService {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId,
           })
         : null,
     };
@@ -665,4 +745,23 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
+}
+
+function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotification {
+  return {
+    id: origin.notificationId,
+    workflowId: origin.workflowIdentifier,
+    messageId: origin.messageId,
+    platformMessageId: origin.platformMessageId,
+    sentAt: origin.sentAt,
+    body: origin.body,
+    payload: origin.payload,
+  };
+}
+
+/** True when the AST is only paragraphs of plain text, i.e. `text` already says everything. */
+function isPlainProse(formatted: Root): boolean {
+  return formatted.children.every(
+    (node) => node.type === 'paragraph' && node.children.every((child) => child.type === 'text')
+  );
 }

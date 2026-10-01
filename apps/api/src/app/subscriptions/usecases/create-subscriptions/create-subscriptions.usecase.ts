@@ -171,6 +171,7 @@ export class CreateSubscriptionsUsecase {
           _id: topic._id,
           key: topic.key,
           name: topic.name,
+          data: topic.data,
         },
         subscriber: subscriber
           ? {
@@ -238,6 +239,7 @@ export class CreateSubscriptionsUsecase {
             _id: topic._id,
             key: topic.key,
             name: topic.name,
+            data: topic.data,
           },
           subscriber: subscriber
             ? {
@@ -276,6 +278,7 @@ export class CreateSubscriptionsUsecase {
             _id: topic._id,
             key: topic.key,
             name: topic.name,
+            data: topic.data,
           },
           subscriber: subscriber
             ? {

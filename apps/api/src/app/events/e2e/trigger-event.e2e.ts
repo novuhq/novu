@@ -482,15 +482,15 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(executionDetails.length).to.equal(0);
     });
 
-    describe('step conditions passed trace', () => {
+    describe('step condition evaluation trace', () => {
       const skipRule = { '==': [{ var: 'payload.tier' }, 'pro'] };
 
-      async function createV2WorkflowWithSkipConditions(
+      async function createV2WorkflowWithConditions(
         skip: Record<string, unknown> = skipRule
       ): Promise<WorkflowResponseDto> {
         const workflowBody: CreateWorkflowDto = {
-          name: 'Skip Conditions Passed Workflow',
-          workflowId: `skip-conditions-passed-${uuid()}`,
+          name: 'Step Condition Evaluation Workflow',
+          workflowId: `step-condition-evaluation-${uuid()}`,
           __source: WorkflowCreationSourceEnum.DASHBOARD,
           steps: [
             {
@@ -511,14 +511,26 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         return workflowResponse.body.data;
       }
 
-      it('should create a step conditions passed execution detail when the flag is enabled', async () => {
-        const flagKey = FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED;
+      async function withConditionEvaluationTrace(isEnabled: boolean, callback: () => Promise<void>): Promise<void> {
+        const flagKey = FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED;
         const mutableEnv = process.env as Record<string, string | undefined>;
         const previousFlagValue = mutableEnv[flagKey];
-        mutableEnv[flagKey] = 'true';
+        mutableEnv[flagKey] = `${isEnabled}`;
 
         try {
-          const v2Workflow = await createV2WorkflowWithSkipConditions();
+          await callback();
+        } finally {
+          if (previousFlagValue === undefined) {
+            delete mutableEnv[flagKey];
+          } else {
+            mutableEnv[flagKey] = previousFlagValue;
+          }
+        }
+      }
+
+      it('should create a step conditions passed execution detail when the flag is enabled', async () => {
+        await withConditionEvaluationTrace(true, async () => {
+          const v2Workflow = await createV2WorkflowWithConditions();
 
           await novuClient.trigger({
             workflowId: v2Workflow.workflowId,
@@ -548,51 +560,99 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
           expect(raw.passed).to.equal(true);
           expect(raw.conditions).to.deep.equal(skipRule);
           expect(raw.evaluatedValues).to.deep.equal({ 'payload.tier': 'pro' });
-        } finally {
-          if (previousFlagValue === undefined) {
-            delete mutableEnv[flagKey];
-          } else {
-            mutableEnv[flagKey] = previousFlagValue;
-          }
-        }
+        });
+      });
+
+      it('should create a step skipped by conditions execution detail when the conditions do not match', async () => {
+        await withConditionEvaluationTrace(true, async () => {
+          const v2Workflow = await createV2WorkflowWithConditions();
+
+          await novuClient.trigger({
+            workflowId: v2Workflow.workflowId,
+            to: [subscriber.subscriberId],
+            payload: { tier: 'free' },
+          });
+
+          await session.waitForJobCompletion(v2Workflow._id);
+
+          const messages = await messageRepository.find({
+            _environmentId: session.environment._id,
+            _subscriberId: subscriber._id,
+            channel: StepTypeEnum.IN_APP,
+          });
+          expect(messages.length).to.equal(0);
+
+          const executionDetails = await executionDetailsRepository.find({
+            _environmentId: session.environment._id,
+            _notificationTemplateId: v2Workflow._id,
+            detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
+          });
+
+          expect(executionDetails.length).to.equal(1);
+          expect(executionDetails[0].status).to.equal(ExecutionDetailsStatusEnum.FAILED);
+
+          const raw = JSON.parse(executionDetails[0].raw as string);
+          expect(raw.passed).to.equal(false);
+          expect(raw.conditions).to.deep.equal(skipRule);
+          expect(raw.evaluatedValues).to.deep.equal({ 'payload.tier': 'free' });
+        });
+      });
+
+      it('should not create a skipped-by-conditions execution detail when the evaluation flag is disabled', async () => {
+        await withConditionEvaluationTrace(false, async () => {
+          const v2Workflow = await createV2WorkflowWithConditions();
+
+          await novuClient.trigger({
+            workflowId: v2Workflow.workflowId,
+            to: [subscriber.subscriberId],
+            payload: { tier: 'free' },
+          });
+
+          await session.waitForJobCompletion(v2Workflow._id);
+
+          const executionDetails = await executionDetailsRepository.find({
+            _environmentId: session.environment._id,
+            _notificationTemplateId: v2Workflow._id,
+            detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
+          });
+
+          expect(executionDetails.length).to.equal(0);
+        });
       });
 
       it('should not create a step conditions passed execution detail when the flag is disabled', async () => {
-        const v2Workflow = await createV2WorkflowWithSkipConditions();
+        await withConditionEvaluationTrace(false, async () => {
+          const v2Workflow = await createV2WorkflowWithConditions();
 
-        await novuClient.trigger({
-          workflowId: v2Workflow.workflowId,
-          to: [subscriber.subscriberId],
-          payload: { tier: 'pro' },
+          await novuClient.trigger({
+            workflowId: v2Workflow.workflowId,
+            to: [subscriber.subscriberId],
+            payload: { tier: 'pro' },
+          });
+
+          await session.waitForJobCompletion(v2Workflow._id);
+
+          const messages = await messageRepository.find({
+            _environmentId: session.environment._id,
+            _subscriberId: subscriber._id,
+            channel: StepTypeEnum.IN_APP,
+          });
+          expect(messages.length).to.equal(1);
+
+          const executionDetails = await executionDetailsRepository.find({
+            _environmentId: session.environment._id,
+            _notificationTemplateId: v2Workflow._id,
+            detail: DetailEnum.STEP_CONDITIONS_PASSED,
+          });
+
+          expect(executionDetails.length).to.equal(0);
         });
-
-        await session.waitForJobCompletion(v2Workflow._id);
-
-        const messages = await messageRepository.find({
-          _environmentId: session.environment._id,
-          _subscriberId: subscriber._id,
-          channel: StepTypeEnum.IN_APP,
-        });
-        expect(messages.length).to.equal(1);
-
-        const executionDetails = await executionDetailsRepository.find({
-          _environmentId: session.environment._id,
-          _notificationTemplateId: v2Workflow._id,
-          detail: DetailEnum.STEP_CONDITIONS_PASSED,
-        });
-
-        expect(executionDetails.length).to.equal(0);
       });
 
       it('should mask environment variable values in the evaluated values of the execution detail', async () => {
-        const flagKey = FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED;
-        const mutableEnv = process.env as Record<string, string | undefined>;
-        const previousFlagValue = mutableEnv[flagKey];
-        mutableEnv[flagKey] = 'true';
-
         const secretValue = 'sk_live_super_secret_value_123';
 
-        try {
+        await withConditionEvaluationTrace(true, async () => {
           const createVariableResponse = await session.testAgent.post('/v1/environment-variables').send({
             key: 'STRIPE_API_KEY',
             isSecret: true,
@@ -601,7 +661,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
           expect(createVariableResponse.status).to.equal(200);
 
           const envSkipRule = { '!=': [{ var: 'env.STRIPE_API_KEY' }, ''] };
-          const v2Workflow = await createV2WorkflowWithSkipConditions(envSkipRule);
+          const v2Workflow = await createV2WorkflowWithConditions(envSkipRule);
 
           await novuClient.trigger({
             workflowId: v2Workflow.workflowId,
@@ -624,13 +684,67 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
 
           const raw = JSON.parse(rawString);
           expect(raw.evaluatedValues).to.deep.equal({ 'env.STRIPE_API_KEY': SECRET_MASK });
-        } finally {
-          if (previousFlagValue === undefined) {
-            delete mutableEnv[flagKey];
-          } else {
-            mutableEnv[flagKey] = previousFlagValue;
-          }
-        }
+        });
+      });
+
+      it('should mask secret environment variables in delivered channel content', async () => {
+        const secretValue = `sk_live_delivery_exfil_${uuid()}`;
+        const publicValue = 'https://cdn.example.com/assets';
+
+        const createSecretResponse = await session.testAgent.post('/v1/environment-variables').send({
+          key: 'DELIVERY_STRIPE_SECRET',
+          isSecret: true,
+          values: [{ _environmentId: session.environment._id, value: secretValue }],
+        });
+        expect(createSecretResponse.status).to.equal(200);
+
+        const createPublicResponse = await session.testAgent.post('/v1/environment-variables').send({
+          key: 'DELIVERY_CDN_URL',
+          isSecret: false,
+          values: [{ _environmentId: session.environment._id, value: publicValue }],
+        });
+        expect(createPublicResponse.status).to.equal(200);
+
+        const workflowBody: CreateWorkflowDto = {
+          name: 'Secret Env Delivery Mask Workflow',
+          workflowId: `secret-env-delivery-mask-${uuid()}`,
+          __source: WorkflowCreationSourceEnum.DASHBOARD,
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              name: 'In-App Step',
+              controlValues: {
+                subject: 'Secret delivery check',
+                body: 'secret={{env.DELIVERY_STRIPE_SECRET}} public={{env.DELIVERY_CDN_URL}}',
+              },
+            },
+          ],
+        };
+
+        const workflowResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+        expect(workflowResponse.status).to.equal(201);
+        const v2Workflow = workflowResponse.body.data as WorkflowResponseDto;
+
+        await novuClient.trigger({
+          workflowId: v2Workflow.workflowId,
+          to: [subscriber.subscriberId],
+          payload: {},
+        });
+
+        await session.waitForJobCompletion(v2Workflow._id);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+          _templateId: v2Workflow._id,
+        });
+        expect(messages.length).to.equal(1);
+
+        const content = String(messages[0].content ?? '');
+        expect(content).to.include(publicValue);
+        expect(content).to.include(SECRET_MASK);
+        expect(content).to.not.include(secretValue);
       });
     });
 
@@ -869,6 +983,41 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       await createTenant({ session, identifier: 'test', name: 'test' });
 
       await sendTrigger(template, subscriber.subscriberId, {}, {}, 'test');
+
+      await session.waitForJobCompletion(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(
+        session.environment._id,
+        subscriber.subscriberId
+      );
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(message?.providerId).to.equal(payload.providerId);
+    });
+
+    it('should use JsonLogic conditions to select integration by subscriber', async () => {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        rules: {
+          '==': [{ var: 'subscriber.subscriberId' }, subscriber.subscriberId],
+        },
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      await sendTrigger(template, subscriber.subscriberId, {});
 
       await session.waitForJobCompletion(template._id);
 

@@ -1,0 +1,156 @@
+import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
+import { MessageRole } from '@novu/thalamus';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import {
+  type WorkflowOriginData,
+  type WorkflowOriginSnapshot,
+} from '../conversation-runtime/ingress/workflow-origin.helpers';
+import { ManagedAgentService } from './managed-agent.service';
+
+const sampleOriginData: WorkflowOriginData = {
+  notificationId: 'notif-1',
+  workflowIdentifier: 'order-shipped',
+  messageId: 'msg-1',
+  platformMessageId: 'wamid.abc',
+  sentAt: '2026-01-01T00:00:00.000Z',
+  body: 'Your order ORD-1 shipped',
+  payload: { orderId: 'ORD-1' },
+};
+
+const existingSnapshot: WorkflowOriginSnapshot = {
+  data: sampleOriginData,
+  source: 'existing',
+};
+
+describe('ManagedAgentService workflow-origin', () => {
+  function makeLogger() {
+    return {
+      warn: sinon.stub(),
+      error: sinon.stub(),
+      debug: sinon.stub(),
+      info: sinon.stub(),
+      setContext: sinon.stub(),
+    };
+  }
+
+  function makeService(overrides: { listForView?: sinon.SinonStub } = {}) {
+    const conversationService = {
+      listForView: overrides.listForView ?? sinon.stub().resolves({ data: [], hasMore: false }),
+    };
+
+    const service = new ManagedAgentService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      conversationService as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      makeLogger() as any
+    );
+
+    return { service };
+  }
+
+  function makeContext(overrides: Record<string, unknown> = {}) {
+    return {
+      config: {
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        agentIdentifier: 'agent-1',
+        integrationIdentifier: 'integration-1',
+      },
+      conversation: {
+        _id: 'conv-1',
+        channels: [{ platformThreadId: 'thread-1' }],
+      },
+      subscriber: { _id: 'sub-mongo', subscriberId: 'sub-1' },
+      userMessageText: 'where is my order?',
+      ...overrides,
+    };
+  }
+
+  describe('buildMessagesWithHistory', () => {
+    it('injects origin from context on reseed with the real outbound body', async () => {
+      const { service } = makeService();
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: existingSnapshot })
+      );
+
+      expect(messages[0].role).to.equal(MessageRole.ASSISTANT);
+      expect(String(messages[0].content)).to.include('Your order ORD-1 shipped');
+      expect(String(messages[0].content)).to.include('ORD-1');
+      expect(messages.filter((message: { role: string }) => message.role === MessageRole.USER)).to.have.lengthOf(1);
+      expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'where is my order?' });
+    });
+
+    it('keeps the collapsed prior transcript alongside the injected origin', async () => {
+      const listForView = sinon.stub().resolves({
+        data: [
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'where is my order?',
+          },
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.AGENT,
+            content: 'It shipped yesterday.',
+          },
+        ],
+        hasMore: false,
+      });
+      const { service } = makeService({ listForView });
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: existingSnapshot })
+      );
+
+      expect(String(messages[0].content)).to.include('Your order ORD-1 shipped');
+      expect(String(messages[1].content)).to.include('It shipped yesterday.');
+      expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'where is my order?' });
+    });
+
+    it('skips injection when context has no origin', async () => {
+      const { service } = makeService();
+
+      const messages = await (service as any).buildMessagesWithHistory(makeContext({ workflowOrigin: undefined }));
+
+      expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'where is my order?' }]);
+    });
+
+    it('prefixes USER history and the current turn with senderName', async () => {
+      const listForView = sinon.stub().resolves({
+        data: [
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'where is my order?',
+            senderName: 'Ada',
+          },
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'the package is late',
+            senderName: 'Bob',
+          },
+        ],
+        hasMore: false,
+      });
+      const { service } = makeService({ listForView });
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: undefined, senderName: 'Ada' })
+      );
+
+      expect(String(messages[0].content)).to.include('Bob: the package is late');
+      expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'Ada: where is my order?' });
+    });
+  });
+});

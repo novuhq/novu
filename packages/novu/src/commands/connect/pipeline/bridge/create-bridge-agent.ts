@@ -3,6 +3,7 @@ import type { ConnectApiClient } from '../../api/client';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from '../chat-sdk/derive-identifier';
+import { resolveExistingAgentByIdentifier } from '../resolve-existing-agent';
 
 export async function createBridgeAgentFlow(
   client: ConnectApiClient,
@@ -10,6 +11,12 @@ export async function createBridgeAgentFlow(
   options: ConnectCommandOptions
 ): Promise<{ agent: AgentSummary; flow: 'created' | 'reused' }> {
   const existingAgents = await listAgents(client);
+  const requestedIdentifier = options.agentIdentifier?.trim();
+
+  if (requestedIdentifier) {
+    return { agent: resolveExistingAgentByIdentifier(existingAgents, requestedIdentifier), flow: 'reused' };
+  }
+
   const bridgeAgents = existingAgents.filter((agent) => agent.runtime !== 'managed');
 
   if (bridgeAgents.length > 0) {

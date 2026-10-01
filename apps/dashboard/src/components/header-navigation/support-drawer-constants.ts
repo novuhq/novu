@@ -357,9 +357,6 @@ const CONTEXTUAL_GETTING_STARTED: Partial<Record<RouteContext, SuggestionItem[]>
   conversations: AGENT_GETTING_STARTED,
 };
 
-/** Default getting-started links shown outside agent surfaces. */
-export const GETTING_STARTED = DEFAULT_GETTING_STARTED;
-
 export function useContextualGettingStarted(): SuggestionItem[] {
   const location = useLocation();
 

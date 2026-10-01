@@ -32,7 +32,13 @@ import { InputRoot } from './primitives/input';
 const primaryActionKey = 'primaryAction';
 const secondaryActionKey = 'secondaryAction';
 
-export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () => void }) => {
+export const InAppActionDropdown = ({
+  onMenuItemClick,
+  readOnly = false,
+}: {
+  onMenuItemClick?: () => void;
+  readOnly?: boolean;
+}) => {
   const { control, setValue, getFieldState } = useFormContext();
 
   const primaryAction = useWatch({ control, name: primaryActionKey });
@@ -68,7 +74,12 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               </Button>
             )}
             {primaryAction && (
-              <ConfigureActionPopover title="Primary action" asChild fields={{ actionKey: primaryActionKey }}>
+              <ConfigureActionPopover
+                title="Primary action"
+                asChild
+                fields={{ actionKey: primaryActionKey }}
+                readOnly={readOnly}
+              >
                 <button
                   className={inboxButtonVariants({
                     variant: 'default',
@@ -80,7 +91,12 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               </ConfigureActionPopover>
             )}
             {secondaryAction && (
-              <ConfigureActionPopover title="Secondary action" asChild fields={{ actionKey: secondaryActionKey }}>
+              <ConfigureActionPopover
+                title="Secondary action"
+                asChild
+                fields={{ actionKey: secondaryActionKey }}
+                readOnly={readOnly}
+              >
                 <button
                   className={inboxButtonVariants({
                     variant: 'secondary',
@@ -91,13 +107,14 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
                 </button>
               </ConfigureActionPopover>
             )}
-            <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} />
+            <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} disabled={readOnly} />
           </div>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild disabled={readOnly}>
             <CompactButton
               icon={RiExpandUpDownLine}
               size="lg"
               variant="ghost"
+              disabled={readOnly}
               data-testid="in-app-action-dropdown-trigger"
             >
               <span className="sr-only">Actions</span>
@@ -198,11 +215,16 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
 };
 
 const ConfigureActionPopover = (
-  props: ComponentProps<typeof PopoverTrigger> & { title: string; fields: { actionKey: string } }
+  props: ComponentProps<typeof PopoverTrigger> & {
+    title: string;
+    fields: { actionKey: string };
+    readOnly?: boolean;
+  }
 ) => {
   const {
     title,
     fields: { actionKey },
+    readOnly = false,
     ...rest
   } = props;
   const { control } = useFormContext();
@@ -211,7 +233,7 @@ const ConfigureActionPopover = (
 
   return (
     <Popover>
-      <PopoverTrigger {...rest} />
+      <PopoverTrigger {...rest} disabled={readOnly} />
       <PopoverContent className="max-w-72 overflow-visible" side="bottom" align="end">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2 text-sm font-medium leading-none">
@@ -238,6 +260,7 @@ const ConfigureActionPopover = (
                       value={field.value}
                       onChange={field.onChange}
                       enableTranslations
+                      readOnly={readOnly}
                     />
                   </InputRoot>
                 </FormControl>
@@ -255,6 +278,7 @@ const ConfigureActionPopover = (
               }}
               variables={variables}
               isAllowedVariable={isAllowedVariable}
+              readOnly={readOnly}
             />
           </div>
         </div>

@@ -37,7 +37,8 @@ interface BridgeExecutorInternals {
   resolveBridgeUrl: (
     config: AgentExecutionParams['config'],
     agentIdentifier: string,
-    event: AgentExecutionParams['event']
+    event: AgentExecutionParams['event'],
+    bridgeUrlOverride?: string
   ) => string | null;
   buildPayload: (params: AgentExecutionParams) => Promise<AgentBridgeRequest>;
   getDecryptedSecretKey: GetDecryptedSecretKey;
@@ -60,7 +61,12 @@ export function stubBridgeExecutorWithRealHttp(bridgeExecutor: BridgeExecutorSer
     calls.push(params);
 
     const agentIdentifier = params.config.agentIdentifier;
-    const bridgeUrl = internals.resolveBridgeUrl(params.config, agentIdentifier, params.event);
+    const bridgeUrl = internals.resolveBridgeUrl(
+      params.config,
+      agentIdentifier,
+      params.event,
+      params.bridgeUrlOverride
+    );
 
     if (!bridgeUrl) {
       throw new NoBridgeUrlError(agentIdentifier);

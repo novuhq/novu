@@ -1,15 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Redis } from 'ioredis';
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { CacheInMemoryProviderService, WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { buildThrottleGroupingSuffix } from './resolve-throttle-grouping';
 import { IThrottleReservationParams, IThrottleReservationResult } from './throttle.types';
 
 const LOG_CONTEXT = 'RedisThrottleService';
 
 @Injectable()
-export class RedisThrottleService {
+export class RedisThrottleService implements OnModuleDestroy {
   private reserveScriptSha: string | null = null;
   private releaseScriptSha: string | null = null;
   private readonly ttlBufferMs: number;
+  /** Opened only when BullMQ's Redis is absent, so throttle stays on ElastiCache. */
+  private cacheInMemoryProviderService?: CacheInMemoryProviderService;
 
   private readonly reserveScript = `
     -- KEYS[1] = setKey
@@ -89,8 +92,31 @@ export class RedisThrottleService {
     this.ttlBufferMs = Number(process.env.THROTTLE_REDIS_TTL_BUFFER_MS) || 30000;
   }
 
-  private get redisClient(): Redis | undefined {
-    return this.workflowInMemoryProviderService.getClient() as Redis;
+  /**
+   * BullMQ modes keep throttle keys on the workflow Redis (MemoryDB). SQS-only
+   * has no workflow Redis; ElastiCache, which cache already uses, holds them.
+   */
+  private async getRedisClient(): Promise<Redis | undefined> {
+    const workflowClient = this.workflowInMemoryProviderService.getClient();
+
+    if (workflowClient) {
+      return workflowClient as Redis;
+    }
+
+    if (!this.cacheInMemoryProviderService) {
+      this.cacheInMemoryProviderService = new CacheInMemoryProviderService();
+      await this.cacheInMemoryProviderService.initialize();
+    }
+
+    return this.cacheInMemoryProviderService.getClient() as Redis;
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    if (!this.cacheInMemoryProviderService) {
+      return;
+    }
+
+    await this.cacheInMemoryProviderService.shutdown();
   }
 
   private buildSetKey(params: {
@@ -102,9 +128,11 @@ export class RedisThrottleService {
     throttleValue?: string;
   }): string {
     const baseKey = `throttle:${params.environmentId}:${params.subscriberId}:${params.workflowId}:${params.stepId}`;
-    const throttleKeyPart =
-      params.throttleKey && params.throttleValue !== undefined ? `:${params.throttleKey}:${params.throttleValue}` : '';
-    const finalKey = `${baseKey}${throttleKeyPart}:set`;
+    const groupingPart = buildThrottleGroupingSuffix({
+      throttleKey: params.throttleKey,
+      throttleValue: params.throttleValue,
+    });
+    const finalKey = `${baseKey}${groupingPart}:set`;
 
     return finalKey;
   }
@@ -114,7 +142,7 @@ export class RedisThrottleService {
   }
 
   private async ensureScriptsLoaded(): Promise<void> {
-    const client = this.redisClient;
+    const client = await this.getRedisClient();
     if (!client) {
       throw new Error('Redis client not available');
     }
@@ -138,21 +166,20 @@ export class RedisThrottleService {
     ttlSec: number,
     jobId: string
   ): Promise<[number, number, number]> {
-    const client = this.redisClient;
+    const client = await this.getRedisClient();
     if (!client) {
       throw new Error('Redis client not available');
     }
 
     try {
       await this.ensureScriptsLoaded();
-      const result = await client.evalsha(
-        this.reserveScriptSha!,
-        1,
-        setKey,
-        limit.toString(),
-        ttlSec.toString(),
-        jobId
-      );
+      const reserveScriptSha = this.reserveScriptSha;
+
+      if (!reserveScriptSha) {
+        throw new Error('Throttle reserve script failed to load');
+      }
+
+      const result = await client.evalsha(reserveScriptSha, 1, setKey, limit.toString(), ttlSec.toString(), jobId);
       return result as [number, number, number];
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -160,14 +187,13 @@ export class RedisThrottleService {
         Logger.warn('Script not found, reloading and retrying', LOG_CONTEXT);
         this.reserveScriptSha = null;
         await this.ensureScriptsLoaded();
-        const result = await client.evalsha(
-          this.reserveScriptSha!,
-          1,
-          setKey,
-          limit.toString(),
-          ttlSec.toString(),
-          jobId
-        );
+        const reloadedScriptSha = this.reserveScriptSha;
+
+        if (!reloadedScriptSha) {
+          throw new Error('Throttle reserve script failed to load');
+        }
+
+        const result = await client.evalsha(reloadedScriptSha, 1, setKey, limit.toString(), ttlSec.toString(), jobId);
         return result as [number, number, number];
       }
       throw error;

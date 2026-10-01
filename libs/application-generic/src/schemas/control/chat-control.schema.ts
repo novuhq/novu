@@ -8,9 +8,10 @@ export const chatControlZodSchema = z
   .object({
     skip: skipZodSchema,
     body: z.string(),
-    // Optional with no static default so flag-off orgs never persist editorType.
-    // When IS_CHAT_BLOCK_EDITOR_ENABLED is on, the dashboard derives 'block' for
-    // empty/new steps and 'text' for legacy raw bodies.
+    // Optional with no static default so flag-off orgs never persist editorType
+    // for empty steps. When a body is present, upsert/sanitize infers 'block'
+    // from Maily JSON and 'text' from plain/Liquid content — matching email's
+    // persist-a-valid-editorType behavior without forcing a schema default.
     editorType: z.enum(['block', 'text']).optional(),
   })
   .strict();

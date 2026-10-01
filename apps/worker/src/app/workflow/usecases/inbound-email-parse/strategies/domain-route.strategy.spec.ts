@@ -120,6 +120,40 @@ describe('DomainRouteStrategy', () => {
     expect(agentCall.args[0].mail.spf).to.equal('pass');
   });
 
+  it('should match the domain using the selected envelope recipient', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
+    const command = makeCommand('customer');
+    command.to = [{ address: 'customer@other.com', name: '' }];
+    command.cc = [{ address: `support@${DOMAIN_NAME}`, name: '' }];
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(command, `support@${DOMAIN_NAME}`);
+
+    sinon.assert.calledOnceWithExactly(domainRepository.findByName as any, DOMAIN_NAME);
+    const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+    expect(agentCall.args[0].toAddress).to.equal(`support@${DOMAIN_NAME}`);
+    expect(agentCall.args[0].mail.to).to.deep.equal(command.to);
+    expect(agentCall.args[0].mail.cc).to.deep.equal(command.cc);
+    expect(agentCall.args[0].mail.bcc).to.be.undefined;
+  });
+
+  it('should expose an envelope-only route recipient as BCC without changing To', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
+    const command = makeCommand('customer');
+    command.to = [{ address: 'customer@other.com', name: 'Customer' }];
+    command.cc = [];
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(command, `support@${DOMAIN_NAME}`);
+
+    const webhookCall = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
+    expect(webhookCall.args[0].mail.to).to.deep.equal(command.to);
+    expect(webhookCall.args[0].mail.cc).to.deep.equal([]);
+    expect(webhookCall.args[0].mail.bcc).to.deep.equal([{ address: `support@${DOMAIN_NAME}`, name: '' }]);
+  });
+
   it('should strip a +nv reply token and prefer exact then stripped custom-domain routes', async () => {
     const originId = '65f1a2b3c4d5e6f7a8b9c0d1';
     const tokenized = buildAgentReplyToAddress('support@example.com', originId);

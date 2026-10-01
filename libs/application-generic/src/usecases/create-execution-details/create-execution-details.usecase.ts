@@ -97,6 +97,7 @@ const mapDetailToEventType = {
 
   // Integration events
   [DetailEnum.INTEGRATION_INSTANCE_SELECTED]: 'integration_selected',
+  [DetailEnum.INTEGRATION_CONDITIONS_MATCHED]: 'integration_conditions_matched',
 
   // Layout events
   [DetailEnum.LAYOUT_NOT_FOUND]: 'layout_not_found',

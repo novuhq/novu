@@ -55,6 +55,13 @@ export class IntegrationEntity {
 
   conditions?: StepFilter[];
 
+  /**
+   * Opaque JSONLogic blob. Typed as `object` rather than `Record<string, unknown>` so mongoose
+   * does not derive `rules.${string}` projection paths, which would break array-of-field
+   * projections on this repository.
+   */
+  rules?: object | null;
+
   connected?: boolean;
 
   _parentId?: string;

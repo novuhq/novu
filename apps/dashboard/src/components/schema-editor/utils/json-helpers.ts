@@ -153,10 +153,13 @@ export function ensureEnum(schema: JSONSchema7): JSONSchema7 {
   const newSchema: Partial<JSONSchema7> = { type: 'string' };
   carryOverCommonKeywords(schema, newSchema);
 
+  // Empty choices are never seeded here: react-hook-form field arrays drop falsy
+  // entries, so an empty choice would live in the form values without a row to
+  // edit it. `EnumSection` seeds the first editable choice instead.
   if (Array.isArray(schema.enum) && schema.enum.every((val): val is string => typeof val === 'string')) {
-    newSchema.enum = schema.enum.length > 0 ? schema.enum : [''];
+    newSchema.enum = schema.enum.filter((val) => val !== '');
   } else {
-    newSchema.enum = [''];
+    newSchema.enum = [];
   }
 
   if (

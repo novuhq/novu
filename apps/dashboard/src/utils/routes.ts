@@ -99,6 +99,11 @@ export const ROUTES = {
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
 
+/** Legacy `/chat` tab. Redirects to overview with the preview drawer open. */
+export const AGENT_DETAILS_CHAT_TAB = 'chat';
+
+export const WEB_CHAT_PREVIEW_PARAM = 'previewChat';
+
 export const AGENT_DETAILS_TABS = ['overview', 'integrations'] as const;
 
 export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];

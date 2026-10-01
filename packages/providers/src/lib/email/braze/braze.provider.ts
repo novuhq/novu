@@ -9,7 +9,10 @@ import {
 } from '@novu/stateless';
 import { Braze, MessagesSendObject, UsersExportIdsObject, UsersExportIdsResponse } from 'braze-api';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
+
+const BRAZE_REST_HOSTNAME_PATTERN = /^rest\.[a-z0-9-]+\.braze\.(com|eu)$/;
 
 export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Braze;
@@ -25,7 +28,13 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
     }
   ) {
     super();
-    this.braze = new Braze(this.config.apiURL, this.config.apiKey);
+    const apiUrl = resolveSafeProviderUrl(this.config.apiURL, {
+      blockedPrefix: 'Braze API URL blocked',
+      isHostnameAllowed: (hostname) => BRAZE_REST_HOSTNAME_PATTERN.test(hostname),
+      requireHttps: true,
+    });
+
+    this.braze = new Braze(apiUrl, this.config.apiKey);
   }
 
   async sendMessage(

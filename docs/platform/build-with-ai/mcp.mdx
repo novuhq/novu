@@ -1,12 +1,12 @@
 ---
 title: Novu MCP Server
-description: Connect Cursor, Claude, ChatGPT, and other AI tools to the Novu MCP server to manage notifications, workflows, and subscribers using natural language.
+description: Connect Cursor, Claude, ChatGPT, and other AI tools to the Novu MCP server to manage notifications, workflows, subscribers, agents, and conversations using natural language.
 ---
 
-The Novu MCP Server exposes Novu's notification infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to manage subscribers, workflows, integrations, and delivery activity from natural-language prompts.
+The Novu MCP Server exposes Novu's notification and agent infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to manage subscribers, workflows, integrations, agents, conversations, and delivery activity from natural-language prompts.
 
 <Note>
-  Novu also hosts a separate **documentation MCP server** at [docs.novu.co/mcp](https://docs.novu.co/mcp) that lets AI tools search and read this documentation site. The Novu MCP Server described on this page manages your Novu account - triggers, workflows, subscribers, and more.
+  Novu also hosts a separate **documentation MCP server** at [docs.novu.co/mcp](https://docs.novu.co/mcp) that lets AI tools search and read this documentation site. The Novu MCP Server described on this page manages your Novu account - triggers, workflows, subscribers, agents, and more.
 </Note>
 
 ## About the Novu MCP server
@@ -19,12 +19,15 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
 - Debug failed notifications and delivery issues
 - Analyze notification activity and logs
 - Create and manage workflows
+- Create and update [agents](/agents/managed-agent/overview), then connect a channel
+- List [agent conversations](/agents/conversations) and inspect activity timelines
 
 Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills). MCP gives your assistant live access to your Novu account, while skills instruct agents how to use Novu APIs and SDKs effectively. They're complementary - connect the MCP server for account operations and install skills for implementation guidance.
 
 ## Prerequisites
 
-- A Novu Cloud account (to sign in with OAuth), or a [Novu API key](https://dashboard.novu.co/settings/api-keys)
+- A Novu Cloud account
+- OAuth access, or a [Novu Cloud API key](https://dashboard.novu.co/settings/api-keys)
 - An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, VS Code, Codex, or similar
 
 ## Endpoints
@@ -40,7 +43,7 @@ Use the URL that matches your dashboard region - `eu.dashboard.novu.co` pairs wi
 
 ## Connect your AI tool
 
-Connecting with **OAuth** is recommended - you don't copy or paste a key; your client signs you in and picks up your organization automatically. If your client doesn't support OAuth, or you're on self-hosted Novu, use an [API key](#api-key-fallback) instead.
+Connecting with **OAuth** is recommended - you don't copy or paste a key; your client signs you in and picks up your organization automatically. If your client doesn't support OAuth, use a [Novu Cloud API key](#api-key-fallback) instead.
 
 <Tabs>
   <Tab title="Cursor">
@@ -142,14 +145,14 @@ Any MCP client that supports remote OAuth can connect with just the URL and no h
 | --- | --- |
 | **URL** | `https://mcp.novu.co/` (US) or `https://eu.mcp.novu.co/` (EU) |
 | **Transport** | Streamable HTTP |
-| **Authentication** | OAuth (no header), or an [API key](#api-key-fallback) if your client doesn't support OAuth |
+| **Authentication** | OAuth (no header), or a [Novu Cloud API key](#api-key-fallback) if your client doesn't support OAuth |
 
   </Tab>
 </Tabs>
 
 ### API key (fallback)
 
-Use a Novu API key for clients without OAuth support, `mcp-remote` / stdio setups, autonomous agents, and **all self-hosted Novu** deployments. Copy your secret key from the [Novu Dashboard](https://dashboard.novu.co/settings/api-keys) and send it as a bearer token:
+Use a Novu Cloud API key for clients without OAuth support, `mcp-remote` / stdio setups, and autonomous agents. Copy your secret key from the [Novu Dashboard](https://dashboard.novu.co/settings/api-keys) and send it as a bearer token:
 
 ```json
 {
@@ -165,6 +168,13 @@ Use a Novu API key for clients without OAuth support, `mcp-remote` / stdio setup
 ```
 
 Presenting an API key skips the OAuth sign-in entirely. A key is bound to a single environment, so connect to the endpoint matching its region and there's nothing else to configure.
+
+<Warning>
+  The hosted Novu MCP endpoints connect to Novu Cloud only. They do not proxy requests to a self-hosted Novu API,
+  even when you provide an API key from that instance. Novu does not currently publish a self-hosted account MCP
+  server. Self-hosted users can still connect the separate read-only
+  [Novu documentation MCP server](https://docs.novu.co/mcp).
+</Warning>
 
 ## Environments
 
@@ -214,6 +224,16 @@ Trigger my welcome-email workflow for subscriber test-user-123 with payload cont
 Show recent failed notifications in the last 24 hours and help me debug delivery issues.
 </Prompt>
 
+### Agents and conversations
+
+<Prompt description="Create a managed agent and connect a channel" icon="bot" actions={["copy", "cursor"]}>
+Create a managed Novu agent named Support Bot with a system prompt that answers product questions briefly. After it is created, connect Slack to that agent.
+</Prompt>
+
+<Prompt description="Debug an agent conversation" icon="bot" actions={["copy", "cursor"]}>
+List my Novu agents, then show recent conversations for the support-bot agent and inspect the activity timeline of the latest thread.
+</Prompt>
+
 ## MCP tools
 
 Your AI assistant discovers these tools automatically when it connects, and calls the right one based on your prompt.
@@ -237,6 +257,13 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Workflows | `trigger_workflow` | Trigger a workflow for a subscriber |
 | Workflows | `bulk_trigger_workflow` | Trigger multiple workflows in one call |
 | Workflows | `cancel_triggered_event` | Cancel a pending triggered event |
+| Agents | `create_agent` | Create an agent |
+| Agents | `get_agents` | List agents with cursor pagination |
+| Agents | `get_agent` | Retrieve a single agent by identifier (slug) |
+| Agents | `update_agent` | Update an agent's name, status, bridge URL, or behavior |
+| Agents | `connect_agent` | Connect a channel to an existing agent |
+| Conversations | `get_conversations` | List agent conversations with optional filters |
+| Conversations | `get_conversation_activities` | Inspect a conversation timeline |
 | Notifications | `get_notification` | Get a notification with execution logs |
 | Notifications | `get_notifications` | Fetch notifications with filtering |
 | Integrations | `get_integrations` | List channel integrations |
@@ -245,7 +272,7 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Integrations | `set_primary_integration` | Set an integration as primary for its channel |
 
 <Note>
-  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments).
+  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments). Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools on this MCP server require Novu Cloud. Self-hosted Enterprise can still use Conversations in the dashboard and API, but not through `mcp.novu.co`.
 </Note>
 
 ## Use multiple MCP servers
@@ -254,7 +281,7 @@ You can connect both the Novu MCP server and the [Novu documentation MCP server]
 
 | Server | URL | Purpose |
 | --- | --- | --- |
-| Novu MCP | `https://mcp.novu.co/` (US) / `https://eu.mcp.novu.co/` (EU) | Manage your Novu account - workflows, subscribers, triggers |
+| Novu MCP | `https://mcp.novu.co/` (US) / `https://eu.mcp.novu.co/` (EU) | Manage your Novu account - workflows, subscribers, agents, conversations, triggers |
 | Novu Docs MCP | `https://docs.novu.co/mcp` | Search and read Novu documentation |
 
 Connected MCP servers don't consume context until the AI calls a tool. Be specific in your prompts so the assistant uses the most relevant server - for example, "trigger my welcome workflow" uses the Novu MCP, while "how do I configure digest steps?" uses the Docs MCP.
@@ -278,8 +305,17 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
     Double-check you're on the endpoint for your region (`eu.dashboard.novu.co` → `https://eu.mcp.novu.co/`), and that any API key is sent as `Authorization: Bearer your-api-key` with no extra spaces.
   </Accordion>
 
+  <Accordion title="Conversations return 404">
+    `get_conversations` and `get_conversation_activities` on this MCP server require Novu Cloud with Conversations
+    enabled. They are not available through MCP on self-hosted deployments. Confirm you passed an agent
+    **identifier** (slug) as `agentId`, not a Mongo `_id`.
+  </Accordion>
+
   <Accordion title="Self-hosted Novu">
-    OAuth isn't available on self-hosted deployments - connect with an [API key](#api-key-fallback) from your instance. See [API keys](/platform/developer/api-keys).
+    The account-management MCP server is not currently available for self-hosted Novu. `https://mcp.novu.co/` and
+    `https://eu.mcp.novu.co/` connect to Novu Cloud and do not accept a self-hosted API URL. Use the
+    [Agent Toolkit](/platform/build-with-ai/agent-toolkit) with `backendUrl` set to your API, or call the REST API
+    directly. You can still use the [Novu documentation MCP server](https://docs.novu.co/mcp) to search these docs.
   </Accordion>
 
   <Accordion title="Still not connecting">
@@ -292,7 +328,6 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
 - Prefer OAuth over long-lived API keys for interactive clients - OAuth tokens are short-lived and revocable.
 - The server never puts credentials in URLs, and holds no ambient credentials between sessions.
 - Rotate an API key from the Dashboard immediately if you suspect it's been exposed.
-- Self-hosted Novu always uses API keys; OAuth is available for Novu Cloud only.
 - Use caution when combining the Novu MCP server with other MCP servers or untrusted data in the same session, and review tool calls before approving actions that modify your data.
 
 ## Related topics
@@ -303,6 +338,12 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
   </Card>
   <Card title="Agent Toolkit" href="/platform/build-with-ai/agent-toolkit">
     Embed Novu tools inside your own AI agents with the `@novu/agent-toolkit` package.
+  </Card>
+  <Card title="Managed agents" href="/agents/managed-agent/overview">
+    How managed agents, connectors, and channel connect work in Novu.
+  </Card>
+  <Card title="Agent conversations" href="/agents/conversations">
+    How conversation lifecycle and activity look in the dashboard.
   </Card>
   <Card title="Novu Docs MCP" href="https://docs.novu.co/mcp">
     Connect AI tools to search and read this documentation site.

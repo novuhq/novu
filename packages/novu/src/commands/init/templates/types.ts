@@ -46,4 +46,6 @@ export interface InstallTemplateArgs {
   skipInstall?: boolean;
   /** LLM provider wiring for ai-sdk / langchain agent scaffolds. */
   llmAuth?: LlmAuthChoice;
+  /** Cloud region from connect — staging forces pre-release SDK tags. */
+  region?: string;
 }

@@ -142,6 +142,9 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
     const query: FilterQuery<AgentDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,
       _organizationId: organizationId,
+      // System relay agents (human-in-the-loop delivery) are infrastructure,
+      // never user-facing inventory.
+      runtime: { $ne: 'human_relay' },
     };
 
     if (identifier) {

@@ -8,7 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AnalyticsService, encryptSecret, isAgentEmailEnabled } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret, FeatureFlagsService, isAgentEmailEnabled } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
@@ -28,6 +28,7 @@ import {
 } from '@novu/shared';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
+import { assertWebChatEnabledForConnect } from '../../../shared/assert-web-chat-enabled';
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
 import { NovuWebChatProvisioningService } from '../../web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
@@ -43,7 +44,8 @@ export class AddAgentIntegration {
     private readonly environmentRepository: EnvironmentRepository,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly findOrCreateNovuWebChat: NovuWebChatProvisioningService,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -96,6 +98,8 @@ export class AddAgentIntegration {
     }
 
     if (command.providerId === ChatProviderIdEnum.NovuWebChat) {
+      await assertWebChatEnabledForConnect(this.featureFlagsService, command.organizationId, command.environmentId);
+
       const { response, provisionedNewLink } = await this.findOrCreateNovuWebChat.execute(
         agent._id,
         command.environmentId,
@@ -189,6 +193,8 @@ export class AddAgentIntegration {
 
     // Revives a tombstoned (disconnected) link when one exists for this pair —
     // a plain create would violate the unique (_agentId, _integrationId) index.
+    // Web Chat (and every other channel) leaves connectedAt null until the first
+    // genuine inbound user message — same install ≠ connected split as Slack.
     const link = await this.agentIntegrationRepository.createOrReviveLink({
       agentId: agent._id,
       integrationId: integration._id,

@@ -71,17 +71,15 @@ export class SendMessageInApp extends SendMessageBase {
       message: 'Sending In App',
     });
 
-    const integration = await this.getIntegration({
+    const selection = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.IN_APP,
       userId: command.userId,
-      filterData: {
-        tenant: command.job.tenant,
-      },
+      filterData: this.getIntegrationFilterData(command),
     });
 
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -99,6 +97,8 @@ export class SendMessageInApp extends SendMessageBase {
       };
     }
 
+    const { integration } = selection;
+    await this.sendSelectedIntegrationExecution(command.job, selection);
     const { step } = command;
     if (!step.template) throw new PlatformException('Template not found');
 

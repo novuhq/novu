@@ -18,6 +18,7 @@ import {
   ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
   MessageRepository,
@@ -28,12 +29,14 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
+import { PhotonDeviceAuthBindingService } from './channels/photon-imessage/shared/photon-device-auth-binding.service';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
 import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
@@ -55,6 +58,7 @@ import { InboundConnectionContextResolver } from './conversation-runtime/ingress
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
+import { WorkflowOriginService } from './conversation-runtime/ingress/workflow-origin.service';
 import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
@@ -67,6 +71,11 @@ import { AgentEmailActionsController } from './email/agent-email-actions.control
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
+import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
+import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
+import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
+import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
@@ -74,6 +83,7 @@ import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
 import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
+import { EnsureNovuHumanSkill } from './managed-runtime/novu-human/ensure-novu-human-skill.service';
 import { ToolTrustService } from './managed-runtime/tool-approval/tool-trust.service';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
@@ -92,6 +102,7 @@ import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler
 import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatAcceptIdempotencyService } from './web-chat/web-chat-accept-idempotency.service';
 import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
 import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
 import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
@@ -153,12 +164,21 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
+    PhotonDeviceAuthBindingService,
     AgentInboundHandler,
+    WorkflowOriginService,
     ReplyApprovalInterceptor,
     BridgeExecutorService,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     ManagedRuntime,
+    HumanRelayRuntime,
+    HumanConversationInboundInterceptor,
+    HumanInteractionInboundService,
+    HumanInteractionSettlementService,
+    CreateConversationInteraction,
+    HumanInteractionActivityRecorder,
+    HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
@@ -170,12 +190,14 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     McpConnectRedirectService,
     AgentMcpDefinitionService,
     AgentRuntimeDefinitionService,
+    EnsureNovuHumanSkill,
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
     NovuWebChatProvisioningService,
     WebChatPublicationService,
     WebChatSessionVerifier,
+    WebChatAcceptIdempotencyService,
     WebChatResumeAuthorizationService,
     WebChatEventFactory,
     WebChatPlatformDeliveryService,
@@ -207,6 +229,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     OutboundGateway,
     ConfirmLinkedAuthCards,
     ConversationActivityLedger,
+    HumanInteractionSettlementService,
+    HumanInteractionActivityRecorder,
   ],
 })
 export class AgentsModule {}

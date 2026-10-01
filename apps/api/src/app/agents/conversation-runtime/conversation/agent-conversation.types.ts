@@ -1,0 +1,206 @@
+import type { ConversationActivityEntity, ConversationActivitySenderTypeEnum, ConversationChannel } from '@novu/dal';
+import type { TriggerRecipientsPayload } from '@novu/shared';
+
+export interface PersistInboundMessageParams {
+  conversationId: string;
+  platform: string;
+  integrationId: string;
+  platformThreadId: string;
+  senderType: ConversationActivitySenderTypeEnum;
+  senderId: string;
+  senderName?: string;
+  content: string;
+  richContent?: Record<string, unknown>;
+  hasPlatformAttachments?: boolean;
+  platformMessageId?: string;
+  /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
+  identifier?: string;
+  /** Pre-allocated conversation event sequence; minted at persist time when absent */
+  sequence?: number;
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface UpdateInboundMessageParams {
+  conversationId: string;
+  platformMessageId: string;
+  content: string;
+  richContent?: Record<string, unknown>;
+  hasPlatformAttachments?: boolean;
+  /** Platform edit timestamp when the channel provides one (Slack `edited.ts`). */
+  editedAt?: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface DeleteInboundMessageParams {
+  conversationId: string;
+  platformMessageId: string;
+  /** Last-known body from the channel. Falls back to the stored message row. */
+  content?: string;
+  richContent?: Record<string, unknown>;
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface PersistInboundReactionParams {
+  target: ConversationActivityEntity;
+  emoji: string;
+  added: boolean;
+  senderType: ConversationActivitySenderTypeEnum;
+  senderId: string;
+  senderName?: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface ImportInboundMessage {
+  identifier: string;
+  senderId: string;
+  senderName?: string;
+  content: string;
+  platformMessageId: string;
+}
+
+export interface ImportInboundMessagesParams {
+  conversationId: string;
+  platform: string;
+  integrationId: string;
+  platformThreadId: string;
+  messages: ImportInboundMessage[];
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface ConversationActivityContext {
+  conversationId: string;
+  channel: ConversationChannel;
+  agentIdentifier: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface PersistAgentMessageResult {
+  activity: ConversationActivityEntity;
+  /** `false` when the identifier already existed — the caller lost the persist race. */
+  created: boolean;
+}
+
+export interface PersistAgentActivityParams extends ConversationActivityContext {
+  platformMessageId?: string;
+  /** Overrides channel.platformThreadId when delivery returns a different thread ID */
+  platformThreadId?: string;
+  /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
+  identifier?: string;
+  agentName?: string;
+  content: string;
+  richContent?: Record<string, unknown>;
+  /** Pre-allocated conversation event sequence; minted at persist time when absent */
+  sequence?: number;
+}
+
+export interface PersistToolApprovalRequestParams extends ConversationActivityContext {
+  approvalId: string;
+  toolCallId: string;
+  toolName: string;
+  input?: Record<string, unknown>;
+  /** Human-readable preview for the display timeline. */
+  preview?: string;
+  /** When omitted, self-hosted `tool-approval:*` ids are minted. */
+  approveActionId?: string;
+  denyActionId?: string;
+  mcpServerName?: string;
+}
+
+export type MetadataOp =
+  | { action: 'set'; key: string; value: unknown }
+  | { action: 'delete'; key: string }
+  | { action: 'clear' };
+
+export interface UpdateMetadataParams extends ConversationActivityContext {
+  currentMetadata: Record<string, unknown>;
+  ops: MetadataOp[];
+}
+
+export interface ResolveConversationParams extends ConversationActivityContext {
+  summary?: string;
+}
+
+export interface PersistTriggerSignalParams extends ConversationActivityContext {
+  workflowId: string;
+  to: TriggerRecipientsPayload;
+  transactionId: string;
+}
+
+export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
+  platformMessageId: string;
+  platformThreadId: string;
+  signalData: Record<string, unknown>;
+  subscriberFirstName?: string;
+}
+
+export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
+  approvalId: string;
+  approved: boolean;
+  toolName?: string;
+  /** HITL / card option id (`approve`, `deny`, `trust-tool`, …). */
+  optionId?: string;
+  /** Client `idem_*` when the click came from Web Chat. Reused as the activity identifier. */
+  identifier?: string;
+  actorType:
+    | ConversationActivitySenderTypeEnum.SUBSCRIBER
+    | ConversationActivitySenderTypeEnum.PLATFORM_USER
+    | ConversationActivitySenderTypeEnum.SYSTEM;
+  actorId: string;
+  actorName?: string;
+}
+
+export interface PersistHumanInteractionActivityParams extends ConversationActivityContext {
+  interactionIdentifier: string;
+  requestId?: string;
+  kind: string;
+  title: string;
+  subtitle?: string;
+  body?: string;
+  platformMessageId?: string;
+  status?: string;
+  optionId?: string;
+  text?: string;
+  actorType:
+    | ConversationActivitySenderTypeEnum.SUBSCRIBER
+    | ConversationActivitySenderTypeEnum.PLATFORM_USER
+    | ConversationActivitySenderTypeEnum.SYSTEM
+    | ConversationActivitySenderTypeEnum.AGENT;
+  actorId: string;
+  actorName?: string;
+}
+
+export interface PersistToolResultParams extends ConversationActivityContext {
+  toolCallId: string;
+  toolName?: string;
+  /** The tool's output as returned by the model runtime (JSON-serializable). */
+  output: unknown;
+  /** Human-readable preview for the display timeline; defaults to a generic line. */
+  preview?: string;
+}
+
+export interface PersistMcpConnectionRequestParams extends ConversationActivityContext {
+  actionId: string;
+  mcpId: string;
+  displayName: string;
+  authorizeUrl: string;
+  authorizeUrlWithAutoApprove?: string;
+}
+
+export interface PersistMcpConnectionResultParams extends ConversationActivityContext {
+  actionId: string;
+  mcpId: string;
+  status: 'connected' | 'failed';
+  message?: string;
+}
+
+export interface PersistCustomParams extends ConversationActivityContext {
+  identifier: string;
+  name: string;
+  data: unknown;
+}

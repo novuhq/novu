@@ -97,6 +97,31 @@ describe('AgentAttachmentStorage', () => {
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
+  it('should skip the attachment when upload fails', async () => {
+    const uploadFile = sinon.stub().rejects(new Error('s3 unavailable'));
+    const getReadSignedUrl = sinon.stub();
+    const storageService = {
+      uploadFile,
+      getReadSignedUrl,
+      fileExists: sinon.stub(),
+    } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const attachment: Attachment = {
+      type: 'image',
+      name: 'image.png',
+      mimeType: 'image/png',
+      size: 5,
+      fetchData: async () => Buffer.from('hello'),
+    };
+
+    const result = await service.storeInbound([attachment], ctx);
+
+    expect(result).to.have.length(0);
+    expect(getReadSignedUrl.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
   it('should process at most 15 inbound attachments and preserve original indexes', async () => {
     const storageService = makeStorageService();
     const logger = makeLogger();
@@ -322,5 +347,71 @@ describe('AgentAttachmentStorage', () => {
 
     expect(url).to.equal(null);
     expect(storageService.getReadSignedUrl.called).to.equal(false);
+  });
+
+  const getBytesScope = {
+    organizationId: 'org',
+    environmentId: 'env',
+    conversationId: 'conv',
+  };
+
+  it('should return file bytes from getFile without a fileExists probe', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('png-bytes'));
+    const fileExists = sinon.stub();
+    const storageService = {
+      fileExists,
+      getFile,
+    } as unknown as StorageService;
+
+    const service = new AgentAttachmentStorage(storageService, makeLogger() as any);
+    const bytes = await service.getBytes('org/env/agents/conv/msg/0-f.png', getBytesScope);
+
+    expect(bytes?.equals(Buffer.from('png-bytes'))).to.equal(true);
+    expect(getFile.calledOnce).to.equal(true);
+    expect(fileExists.called).to.equal(false);
+  });
+
+  it('should return null from getBytes when getFile fails', async () => {
+    const getFile = sinon.stub().rejects(new Error('NoSuchKey'));
+    const storageService = {
+      fileExists: sinon.stub(),
+      getFile,
+    } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const bytes = await service.getBytes('org/env/agents/conv/msg/missing.png', getBytesScope);
+
+    expect(bytes).to.equal(null);
+    expect(getFile.calledOnce).to.equal(true);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('should not read bytes when storageKey belongs to another tenant', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('secret'));
+    const storageService = { getFile } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const bytes = await service.getBytes('victim-org/victim-env/agents/victim-conv/msg/0-secret.pdf', getBytesScope);
+
+    expect(bytes).to.equal(null);
+    expect(getFile.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('should not read bytes when storageKey escapes the conversation prefix', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('secret'));
+    const storageService = { getFile } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const bytes = await service.getBytes(
+      'org/env/agents/conv/../../victim-org/victim-env/agents/victim-conv/msg/0-secret.pdf',
+      getBytesScope
+    );
+
+    expect(bytes).to.equal(null);
+    expect(getFile.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
   });
 });

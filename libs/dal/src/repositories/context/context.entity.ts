@@ -12,6 +12,8 @@ export class ContextEntity implements Context {
   type: ContextType;
   data: ContextData;
 
+  bridgeUrl?: string;
+
   key: string;
 
   createdAt: string;

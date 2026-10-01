@@ -1,7 +1,14 @@
-import { ConversationActivityTypeEnum } from '@novu/dal';
+import { ConversationActivityTypeEnum, ConversationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
+import { ConversationEventSequenceService } from './conversation-event-sequence.service';
+
+/** Only the repository surface a given test exercises; widened once at the constructor boundary. */
+type ConversationRepositoryDouble = Partial<ConversationRepository>;
+
+/** Tests stub either `mint` or `mintRange` depending on which path the ledger takes. */
+type EventSequenceServiceDouble = Partial<Pick<ConversationEventSequenceService, 'mint' | 'mintRange'>>;
 
 describe('ConversationActivityLedger', () => {
   const lifecycleParams = {
@@ -18,39 +25,597 @@ describe('ConversationActivityLedger', () => {
     event: { type: 'run-start' } as const,
   };
 
-  function makeLedger(createRunActivity: sinon.SinonStub) {
-    return new ConversationActivityLedger({ createRunActivity } as any, { mint: sinon.stub().resolves(7) } as any);
+  function makeLogger() {
+    return {
+      setContext: sinon.stub(),
+      debug: sinon.stub(),
+      warn: sinon.stub(),
+      error: sinon.stub(),
+      info: sinon.stub(),
+    };
   }
 
-  it('stamps the minted sequence so lifecycle rows interleave with messages in order', async () => {
-    const createRunActivity = sinon.stub().resolves({
-      _id: 'run-1',
-      type: ConversationActivityTypeEnum.RUN_START,
-      sequence: 7,
+  function makeActivityRepository(overrides: Record<string, sinon.SinonStub> = {}) {
+    return {
+      createRunActivity: overrides.createRunActivity ?? sinon.stub(),
+      createAgentActivity:
+        overrides.createAgentActivity ?? sinon.stub().resolves({ _id: 'activity-1', identifier: 'act_generated' }),
+      createToolActivity: overrides.createToolActivity ?? sinon.stub().resolves({ _id: 'tool-activity' }),
+      createSignalActivity: overrides.createSignalActivity ?? sinon.stub().resolves({}),
+      findExistingPlatformMessageIds:
+        overrides.findExistingPlatformMessageIds ?? sinon.stub().resolves(new Set<string>()),
+      importUserActivities: overrides.importUserActivities ?? sinon.stub().resolves(0),
+      findOne: overrides.findOne ?? sinon.stub().resolves(null),
+      createUserActivity: overrides.createUserActivity ?? sinon.stub().resolves({ _id: 'user-activity' }),
+      findMessageRevisions: overrides.findMessageRevisions ?? sinon.stub().resolves([]),
+      count: overrides.count ?? sinon.stub().resolves(0),
+      withTransaction:
+        overrides.withTransaction ??
+        sinon.stub().callsFake(async (fn: (session: null) => Promise<unknown>) => fn(null)),
+      ...overrides,
+    };
+  }
+
+  function makeConversationRepository(overrides: Record<string, sinon.SinonStub> = {}) {
+    return {
+      touchActivity: overrides.touchActivity ?? sinon.stub().resolves(undefined),
+      incrementMessageCount: overrides.incrementMessageCount ?? sinon.stub().resolves(undefined),
+      touchPreview: overrides.touchPreview ?? sinon.stub().resolves(undefined),
+      ...overrides,
+    };
+  }
+
+  function makeLedger(
+    activityRepository = makeActivityRepository(),
+    eventSequenceService: EventSequenceServiceDouble = { mint: sinon.stub().resolves(7) },
+    publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) },
+    conversationRepository: ConversationRepositoryDouble = makeConversationRepository(),
+    logger = makeLogger()
+  ) {
+    return new ConversationActivityLedger(
+      activityRepository as any,
+      eventSequenceService as ConversationEventSequenceService,
+      publisher as any,
+      conversationRepository as ConversationRepository,
+      logger as any
+    );
+  }
+
+  function basePersistParams() {
+    return {
+      conversationId: 'conv-1',
+      channel: {
+        platform: 'slack',
+        _integrationId: 'integration-a',
+        platformThreadId: 'thread-1',
+      },
+      platformMessageId: 'msg-1',
+      agentIdentifier: 'agent-a',
+      content: 'hello',
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+    };
+  }
+
+  describe('persistRunLifecycle', () => {
+    it('stamps the minted sequence so lifecycle rows interleave with messages in order', async () => {
+      const createRunActivity = sinon.stub().resolves({
+        _id: 'run-1',
+        type: ConversationActivityTypeEnum.RUN_START,
+        sequence: 7,
+      });
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+
+      await makeLedger(makeActivityRepository({ createRunActivity }), undefined, publisher).persistRunLifecycle(
+        lifecycleParams
+      );
+
+      expect(createRunActivity.firstCall.args[0].sequence).to.equal(7);
+      expect(createRunActivity.firstCall.args[0].identifier).to.equal('run_run-abc_start');
+      expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
     });
 
-    await makeLedger(createRunActivity).persistProtocolEvent(lifecycleParams);
+    it('returns null when the same run event is ingested twice and does not emit', async () => {
+      const createRunActivity = sinon.stub().rejects(Object.assign(new Error('dup'), { code: 11000 }));
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
 
-    expect(createRunActivity.firstCall.args[0].sequence).to.equal(7);
-    expect(createRunActivity.firstCall.args[0].identifier).to.equal('run_run-abc_start');
+      const activity = await makeLedger(
+        makeActivityRepository({ createRunActivity }),
+        undefined,
+        publisher
+      ).persistRunLifecycle(lifecycleParams);
+
+      expect(activity).to.equal(null);
+      expect(publisher.emitPersistedClientEvent.called).to.equal(false);
+    });
+
+    it('propagates non-duplicate write failures to the caller', async () => {
+      const createRunActivity = sinon.stub().rejects(new Error('mongo down'));
+
+      try {
+        await makeLedger(makeActivityRepository({ createRunActivity })).persistRunLifecycle(lifecycleParams);
+        expect.fail('expected persistRunLifecycle to reject');
+      } catch (err) {
+        expect((err as Error).message).to.equal('mongo down');
+      }
+    });
   });
 
-  it('returns null when the same run event is ingested twice so it is published once', async () => {
-    const createRunActivity = sinon.stub().rejects(Object.assign(new Error('dup'), { code: 11000 }));
+  describe('importInboundMessages', () => {
+    it('bulk imports one sequenced batch, returns the new rows, and increments messageCount', async () => {
+      const importUserActivities = sinon.stub().resolves(2);
+      const findExistingPlatformMessageIds = sinon.stub().resolves(new Set(['agent-reply']));
+      const activityRepository = makeActivityRepository({ findExistingPlatformMessageIds, importUserActivities });
+      const incrementMessageCount = sinon.stub().resolves(undefined);
+      const conversationRepository = makeConversationRepository({ incrementMessageCount });
+      const eventSequenceService = {
+        mintRange: sinon.stub().resolves([4, 5]),
+      };
+      const ledger = makeLedger(activityRepository, eventSequenceService, undefined, conversationRepository);
 
-    const activity = await makeLedger(createRunActivity).persistProtocolEvent(lifecycleParams);
+      const inserted = await ledger.importInboundMessages({
+        conversationId: 'conv-1',
+        platform: 'slack',
+        integrationId: 'int-1',
+        platformThreadId: 'thread-1',
+        messages: [
+          {
+            identifier: 'slack_hist_conv-1_1',
+            senderId: 'slack:U1',
+            senderName: 'Ada',
+            content: 'oldest',
+            platformMessageId: '1',
+          },
+          {
+            identifier: 'slack_hist_conv-1_2',
+            senderId: 'slack:U2',
+            senderName: 'Bob',
+            content: 'newest',
+            platformMessageId: '2',
+          },
+          {
+            identifier: 'slack_hist_conv-1_agent-reply',
+            senderId: 'slack:B1',
+            senderName: 'Agent',
+            content: 'already persisted outbound',
+            platformMessageId: 'agent-reply',
+          },
+        ],
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      });
 
-    expect(activity).to.equal(null);
+      expect(inserted.map((message) => message.platformMessageId)).to.deep.equal(['1', '2']);
+      expect(importUserActivities.calledOnce).to.equal(true);
+      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.sequence)).to.deep.equal([4, 5]);
+      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.platformMessageId)).to.deep.equal(
+        ['1', '2']
+      );
+      expect(incrementMessageCount.calledOnceWithExactly('env-1', 'org-1', 'conv-1', 2, null)).to.equal(true);
+    });
   });
 
-  it('propagates non-duplicate write failures to the caller', async () => {
-    const createRunActivity = sinon.stub().rejects(new Error('mongo down'));
+  describe('persistAgentMessage', () => {
+    it('uses the caller-supplied identifier when provided', async () => {
+      const activityRepository = makeActivityRepository();
+      const ledger = makeLedger(activityRepository);
 
-    try {
-      await makeLedger(createRunActivity).persistProtocolEvent(lifecycleParams);
-      expect.fail('expected persistProtocolEvent to reject');
-    } catch (err) {
-      expect((err as Error).message).to.equal('mongo down');
+      const result = await ledger.persistAgentMessage({
+        ...basePersistParams(),
+        identifier: 'client-msg-123',
+      });
+
+      expect(result.created).to.equal(true);
+      expect(activityRepository.createAgentActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('client-msg-123');
+      expect(activityRepository.createAgentActivity.firstCall.args[0].type).to.equal(
+        ConversationActivityTypeEnum.MESSAGE
+      );
+    });
+
+    it('mints an act_ identifier when none is supplied', async () => {
+      const activityRepository = makeActivityRepository();
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistAgentMessage(basePersistParams());
+
+      const identifier = activityRepository.createAgentActivity.firstCall.args[0].identifier;
+
+      expect(identifier).to.match(/^act_/);
+    });
+
+    it('logs and returns the existing activity on duplicate identifier races', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const existingActivity = { _id: 'existing-1', identifier: 'client-msg-123' };
+      const activityRepository = makeActivityRepository({
+        createAgentActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves(existingActivity),
+      });
+      const conversationRepository = makeConversationRepository();
+      const logger = makeLogger();
+      const ledger = makeLedger(
+        activityRepository,
+        { mint: sinon.stub().resolves(7) },
+        undefined,
+        conversationRepository,
+        logger
+      );
+
+      const result = await ledger.persistAgentMessage({
+        ...basePersistParams(),
+        identifier: 'client-msg-123',
+      });
+
+      expect(result.activity).to.equal(existingActivity);
+      expect(result.created).to.equal(false);
+      expect(logger.warn.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+    });
+
+    it('pairs touchActivity with agent message persist', async () => {
+      const touchActivity = sinon.stub().resolves(undefined);
+      const conversationRepository = makeConversationRepository({ touchActivity });
+      const ledger = makeLedger(makeActivityRepository(), undefined, undefined, conversationRepository);
+
+      await ledger.persistAgentMessage(basePersistParams());
+
+      expect(touchActivity.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('persistWorkflowOriginHydration', () => {
+    function makeHydrationParams() {
+      return {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'whatsapp',
+          _integrationId: 'integration-a',
+          platformThreadId: 'whatsapp:15551234567',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        platformMessageId: 'wamid.abc',
+        platformThreadId: 'whatsapp:15551234567',
+        subscriberFirstName: 'Ada',
+        signalData: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-alerts',
+          messageId: 'msg-1',
+          subscriberId: 'sub-1',
+          payload: { orderId: 'ORD-1' },
+        },
+      };
     }
+
+    it('swallows duplicate-key errors from the signal write', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().rejects(duplicateError),
+      });
+      const logger = makeLogger();
+      const ledger = makeLedger(activityRepository, undefined, undefined, undefined, logger);
+
+      await ledger.persistWorkflowOriginHydration(makeHydrationParams());
+
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+      expect(logger.warn.calledOnce).to.equal(true);
+      expect(logger.warn.firstCall.args[1]).to.equal('Workflow origin already hydrated');
+    });
+
+    it('rethrows non-duplicate errors from the signal write', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().rejects(new Error('mongo timeout')),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      try {
+        await ledger.persistWorkflowOriginHydration(makeHydrationParams());
+        expect.fail('expected persistWorkflowOriginHydration to throw');
+      } catch (err) {
+        expect((err as Error).message).to.equal('mongo timeout');
+      }
+    });
+
+    it('writes a SIGNAL activity without an agent MESSAGE row', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+        createAgentActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistWorkflowOriginHydration(makeHydrationParams());
+
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createAgentActivity.called).to.equal(false);
+      const args = activityRepository.createSignalActivity.firstCall.args[0];
+      expect(args.identifier).to.equal('workflow-dispatch-origin:wamid.abc');
+      expect(args.content).to.equal('Ada replied to the message from order-alerts');
+      expect(args.signalData).to.deep.equal({
+        type: 'workflow_origin',
+        payload: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-alerts',
+          messageId: 'msg-1',
+          subscriberId: 'sub-1',
+          payload: { orderId: 'ORD-1' },
+        },
+      });
+    });
+
+    it('falls back to the subscriber id when no first name is known', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistWorkflowOriginHydration({ ...makeHydrationParams(), subscriberFirstName: undefined });
+
+      expect(activityRepository.createSignalActivity.firstCall.args[0].content).to.equal(
+        'sub-1 replied to the message from order-alerts'
+      );
+    });
+
+    it('labels an unknown workflow identifier as unknown', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+      });
+      const ledger = makeLedger(activityRepository);
+      const params = makeHydrationParams();
+
+      await ledger.persistWorkflowOriginHydration({
+        ...params,
+        signalData: { ...params.signalData, workflowIdentifier: undefined },
+      });
+
+      expect(activityRepository.createSignalActivity.firstCall.args[0].content).to.equal(
+        'Ada replied to the message from unknown'
+      );
+    });
+  });
+
+  describe('isWorkflowOriginHydrated', () => {
+    it('matches the signal identifier written by persistWorkflowOriginHydration', async () => {
+      const activityRepository = makeActivityRepository({ count: sinon.stub().resolves(1) });
+      const ledger = makeLedger(activityRepository);
+
+      const hydrated = await ledger.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc');
+
+      expect(hydrated).to.equal(true);
+      expect(activityRepository.count.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _conversationId: 'conv-1',
+        identifier: 'workflow-dispatch-origin:wamid.abc',
+      });
+    });
+
+    it('returns false when the signal is absent', async () => {
+      const activityRepository = makeActivityRepository({ count: sinon.stub().resolves(0) });
+      const ledger = makeLedger(activityRepository);
+
+      expect(await ledger.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc')).to.equal(false);
+    });
+  });
+
+  describe('MCP connection activities', () => {
+    it('persists request and result activities and publishes both to web chat', async () => {
+      const activityRepository = makeActivityRepository();
+      activityRepository.createAgentActivity.callsFake(async (params: Record<string, unknown>) => ({
+        _id: `activity-${activityRepository.createAgentActivity.callCount}`,
+        ...params,
+      }));
+      const mint = sinon.stub().onFirstCall().resolves(10).onSecondCall().resolves(11);
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const ledger = makeLedger(activityRepository, { mint }, publisher);
+      const context = {
+        ...basePersistParams(),
+        channel: {
+          platform: 'web_chat',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+      };
+
+      await ledger.persistMcpConnectionRequest({
+        ...context,
+        actionId: 'tool-use-1',
+        mcpId: 'stripe',
+        displayName: 'Stripe',
+        authorizeUrl: 'https://example.com/authorize',
+      });
+      await ledger.persistMcpConnectionResult({
+        ...context,
+        actionId: 'tool-use-1',
+        mcpId: 'stripe',
+        status: 'connected',
+      });
+
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        identifier: 'mcp-connection:tool-use-1:request',
+        type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST,
+        sequence: 10,
+        richContent: {
+          mcpConnection: {
+            actionId: 'tool-use-1',
+            mcpId: 'stripe',
+            displayName: 'Stripe',
+            authorizeUrl: 'https://example.com/authorize',
+            authorizeUrlWithAutoApprove: undefined,
+          },
+        },
+      });
+      expect(activityRepository.createAgentActivity.secondCall.args[0]).to.deep.include({
+        identifier: 'mcp-connection:tool-use-1:result',
+        type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT,
+        sequence: 11,
+        richContent: {
+          mcpConnection: {
+            actionId: 'tool-use-1',
+            mcpId: 'stripe',
+            status: 'connected',
+            message: undefined,
+          },
+        },
+      });
+      expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
+    });
+  });
+
+  describe('custom activities', () => {
+    it('persists an append-only custom row and publishes it on the durable path', async () => {
+      const activityRepository = makeActivityRepository();
+      const mint = sinon.stub().resolves(12);
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(activityRepository, { mint }, publisher, conversationRepository);
+      const context = {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'web_chat',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      };
+
+      await ledger.persistCustom({
+        ...context,
+        identifier: 'custom:run-custom:1',
+        name: 'order-progress',
+        data: { pct: 70 },
+      });
+
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        type: ConversationActivityTypeEnum.CUSTOM,
+        sequence: 12,
+        content: 'order-progress',
+        richContent: {
+          custom: {
+            name: 'order-progress',
+            data: { pct: 70 },
+          },
+        },
+      });
+      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('custom:run-custom:1');
+      expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+      expect(conversationRepository.touchPreview.called).to.equal(false);
+    });
+  });
+
+  describe('updateInboundMessage', () => {
+    it('leaves the message row unchanged and appends an edit activity', async () => {
+      const update = sinon.stub().resolves(undefined);
+      const createUserActivity = sinon.stub().resolves({ _id: 'edit-1' });
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(
+        makeActivityRepository({
+          findByPlatformMessageId: sinon.stub().resolves({
+            _id: 'activity-1',
+            content: 'where is order 1234?',
+            platform: 'slack',
+            _integrationId: 'int-1',
+            platformThreadId: 'thread-1',
+            senderType: 'subscriber',
+            senderId: 'ada',
+          }),
+          update,
+          createUserActivity,
+        }),
+        undefined,
+        undefined,
+        conversationRepository
+      );
+
+      await ledger.updateInboundMessage({
+        conversationId: 'conv-1',
+        platformMessageId: 'msg-1',
+        content: 'where is order 4321?',
+        editedAt: '1710000000.000200',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      });
+
+      expect(update.called).to.equal(false);
+      expect(createUserActivity.firstCall.args[0]).to.include({
+        type: ConversationActivityTypeEnum.EDIT,
+        content: 'where is order 4321?',
+        platformMessageId: 'msg-1',
+        senderId: 'ada',
+      });
+      expect(createUserActivity.firstCall.args[0].identifier).to.equal('inbound-edit:conv-1:msg-1:1710000000.000200');
+      expect(conversationRepository.touchPreview.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('deleteInboundMessage', () => {
+    it('keeps the message row and appends a delete tombstone', async () => {
+      const findOneAndDelete = sinon.stub().resolves({ _id: 'activity-1' });
+      const createUserActivity = sinon.stub().resolves({ _id: 'delete-1' });
+      const activityRepository = makeActivityRepository({
+        findByPlatformMessageId: sinon.stub().resolves({
+          _id: 'activity-1',
+          content: 'where is order 4321?',
+          platform: 'slack',
+          _integrationId: 'int-1',
+          platformThreadId: 'thread-1',
+          senderType: 'subscriber',
+          senderId: 'ada',
+        }),
+        findOneAndDelete,
+        createUserActivity,
+      });
+
+      await makeLedger(activityRepository).deleteInboundMessage({
+        conversationId: 'conv-1',
+        platformMessageId: 'msg-1',
+        content: 'where is order 4321?',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      });
+
+      expect(findOneAndDelete.called).to.equal(false);
+      expect(createUserActivity.firstCall.args[0]).to.include({
+        type: ConversationActivityTypeEnum.DELETE,
+        content: 'where is order 4321?',
+        platformMessageId: 'msg-1',
+        senderId: 'ada',
+      });
+    });
+  });
+
+  describe('event sequencing', () => {
+    it('allocates a sequence for durable tool activities on any channel', async () => {
+      const activityRepository = makeActivityRepository();
+      const mint = sinon.stub().resolves(4);
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const ledger = makeLedger(activityRepository, { mint }, publisher);
+
+      await ledger.persistToolResult({
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'slack',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        toolCallId: 'tool-call-1',
+        output: 'done',
+      });
+
+      expect(activityRepository.createToolActivity.firstCall.args[0].sequence).to.equal(4);
+      expect(
+        mint.calledOnceWithExactly({
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+          conversationId: 'conv-1',
+        })
+      ).to.equal(true);
+      expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+    });
   });
 });

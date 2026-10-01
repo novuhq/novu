@@ -16,6 +16,9 @@ const mockSMSMessage = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The provider builds its client through `createProviderHttpClient`, so point the
+  // instance's `post` back at the module-level mock these tests already assert on.
+  vi.mocked(axios.create).mockReturnValue({ post: axios.post } as never);
 });
 
 test('should trigger iSendPro API correctly', async () => {

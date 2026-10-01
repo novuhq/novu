@@ -1,7 +1,15 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, encryptCredentials, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  decryptCredentials,
+  encryptCredentials,
+  hasIntegrationRules,
+  hasLegacyIntegrationConditions,
+  PinoLogger,
+} from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
+import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
@@ -212,11 +220,23 @@ export class UpdateIntegration {
       updatePayload.conditions = command.conditions;
     }
 
+    if (command.rules !== undefined) {
+      assertValidIntegrationRules(command.rules);
+
+      if (hasIntegrationRules(command.rules)) {
+        updatePayload.rules = command.rules;
+        updatePayload.conditions = [];
+      } else {
+        updatePayload.rules = null;
+      }
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
 
-    const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
+    const haveConditions =
+      hasIntegrationRules(updatePayload.rules) || hasLegacyIntegrationConditions(updatePayload.conditions);
 
     const isChannelSupportsPrimary =
       !!existingIntegration.channel && CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);

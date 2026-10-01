@@ -294,6 +294,7 @@ export class IntegrationsController {
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
+          rules: body.rules,
           configurations: body.configurations,
         })
       );
@@ -304,7 +305,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
+      return integrationWithoutCredentials as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -349,6 +350,7 @@ export class IntegrationsController {
           active: body.active,
           check: body.check ?? false,
           conditions: body.conditions,
+          rules: body.rules,
           configurations: body.configurations,
           restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
         })
@@ -360,7 +362,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
+      return integrationWithoutCredentials as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -401,6 +403,7 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/set-primary')
+  @HttpCode(HttpStatus.OK)
   @OAuthAccessible()
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
@@ -438,7 +441,7 @@ export class IntegrationsController {
 
     const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-    return integrationWithoutCredentials as unknown as IntegrationResponseDto;
+    return integrationWithoutCredentials as IntegrationResponseDto;
   }
 
   @Delete('/:integrationId')

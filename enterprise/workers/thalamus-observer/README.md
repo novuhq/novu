@@ -12,14 +12,27 @@ Companion to `@novu/thalamus`. The API points at this Worker via `THALAMUS_CF_UR
 
 ## Local development
 
-This package is standalone (not in the pnpm workspace). From this directory:
+This package is part of the pnpm workspace (see `pnpm-workspace.yaml`).
+
+Install dependencies from the repo root:
 
 ```bash
-npm install
-npm run dev
+pnpm install
 ```
 
-`npm run dev` listens on **`http://127.0.0.1:8788`** (local wrangler env `dev.port`, not the Wrangler default 8787). That leaves **8787** free for `@novu/socket-worker`.
+Run from the repo root:
+
+```bash
+pnpm dev:thalamus-observer
+```
+
+Or run directly from this folder:
+
+```bash
+pnpm run dev
+```
+
+`pnpm run dev` listens on **`http://127.0.0.1:8788`** (Wrangler `--port 8788`, not the default 8787). That leaves **8787** free for `@novu/socket-worker`.
 
 Point the API at it:
 
@@ -52,13 +65,13 @@ Required secrets on those GitHub Environments: `CLOUDFLARE_API_TOKEN`, `CLOUDFLA
 Emergency local deploy (break-glass):
 
 ```bash
-npm run deploy:staging
-npm run deploy:production
+pnpm run deploy:staging
+pnpm run deploy:production
 ```
 
 Worker-bound secrets (one-time, not in CI):
 
 ```bash
-npx wrangler secret put API_KEY --env staging
-npx wrangler secret put API_KEY --env production
+pnpm exec wrangler secret put API_KEY --env staging
+pnpm exec wrangler secret put API_KEY --env production
 ```

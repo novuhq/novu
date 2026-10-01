@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsValidContextData, IsValidCustomData } from '@novu/application-generic';
+import { TopicCustomData } from '@novu/shared';
+import { IsNotEmpty, IsObject, IsOptional, IsString, Length, ValidateIf } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class UpdateTopicCommand extends EnvironmentWithUserCommand {
@@ -7,6 +9,14 @@ export class UpdateTopicCommand extends EnvironmentWithUserCommand {
   topicKey: string;
 
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  @IsOptional()
+  @Length(0, 100)
+  name?: string;
+
+  @IsOptional()
+  @ValidateIf((obj) => obj.data !== null)
+  @IsObject()
+  @IsValidCustomData()
+  @IsValidContextData()
+  data?: TopicCustomData | null;
 }

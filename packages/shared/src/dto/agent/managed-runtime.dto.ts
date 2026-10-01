@@ -1,6 +1,6 @@
 import { AgentRuntimeProviderIdEnum } from '../../types/providers';
 
-export type AgentRuntime = 'self-hosted' | 'managed';
+export type AgentRuntime = 'self-hosted' | 'managed' | 'human_relay';
 
 /**
  * Discovery scope of an agent. Today only `public` is exposed to customers,

@@ -17,6 +17,7 @@ import { DomainRouteTypeEnum, DomainStatusEnum, splitAgentReplyLocalPart } from 
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import {
   getDeliveryFailureDiagnostics,
+  INBOUND_UNMATCHED_ROUTE_MESSAGE,
   InboundParseDroppedError,
   InboundParseOutcome,
   InboundParseProcessingError,
@@ -46,8 +47,11 @@ export class DomainRouteStrategy {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome | undefined> {
-    const toAddress = command.to[0].address;
+  async execute(
+    command: InboundEmailParseCommand,
+    recipientAddress = command.to[0].address
+  ): Promise<InboundParseOutcome | undefined> {
+    const toAddress = recipientAddress;
 
     this.logger.info({ toAddress }, 'Processing domain-route email');
 
@@ -114,10 +118,10 @@ export class DomainRouteStrategy {
     if (!route) {
       this.logger.info({ toAddress, domain: domain.name }, 'No route matched the inbound email');
 
-      return { ...baseResolved, strategy: 'domain-route', status: 422, message: 'No matching inbound route' };
+      return { ...baseResolved, strategy: 'domain-route', status: 422, message: INBOUND_UNMATCHED_ROUTE_MESSAGE };
     }
 
-    const mail = this.commandToMail(command);
+    const mail = this.commandToMail(command, toAddress);
 
     if (route.type === DomainRouteTypeEnum.WEBHOOK) {
       const resolved: ResolvedDomainRouteContext = { ...baseResolved, strategy: 'domain-route' };
@@ -330,7 +334,7 @@ export class DomainRouteStrategy {
       await this.inboundDomainRouteDelivery.deliverToAgent({
         domain: syntheticDomain,
         route: syntheticRoute,
-        mail: this.commandToMail(command),
+        mail: this.commandToMail(command, toAddress),
         toAddress,
         originToken: originToken ?? undefined,
       });
@@ -359,7 +363,7 @@ export class DomainRouteStrategy {
     }
   }
 
-  private commandToMail(command: InboundEmailParseCommand) {
+  private commandToMail(command: InboundEmailParseCommand, recipientAddress: string) {
     return {
       from: command.from,
       to: command.to,
@@ -373,6 +377,7 @@ export class DomainRouteStrategy {
       references: command.references,
       date: command.date,
       cc: command.cc,
+      bcc: getBccRecipients(command, recipientAddress),
       // Forward the inbound-mail DKIM/SPF verdicts so the agent runtime can
       // reject identity resolution for spoofed (unverified) senders.
       dkim: command.dkim,
@@ -384,4 +389,23 @@ export class DomainRouteStrategy {
     this.logger.error({ err: error }, 'Error processing domain-route email');
     throw new BadRequestException(error);
   }
+}
+
+function getBccRecipients(command: InboundEmailParseCommand, recipientAddress: string) {
+  const normalizedRecipientAddress = recipientAddress.trim().toLowerCase();
+  const visibleRecipients = [...(command.to ?? []), ...(command.cc ?? [])];
+  const isVisibleRecipient = visibleRecipients.some(
+    (recipient) =>
+      recipient &&
+      typeof recipient === 'object' &&
+      'address' in recipient &&
+      typeof recipient.address === 'string' &&
+      recipient.address.trim().toLowerCase() === normalizedRecipientAddress
+  );
+
+  if (isVisibleRecipient) {
+    return undefined;
+  }
+
+  return [{ address: recipientAddress, name: '' }];
 }

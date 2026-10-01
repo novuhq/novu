@@ -1,0 +1,152 @@
+---
+title: 'Integration conditions'
+description: 'Choose which provider integration sends a notification based on subscriber, context, and workflow data.'
+---
+
+Integration conditions let you choose which integration sends a message when you have more than one active integration on the same channel. For example, you might send email for one tenant through their own SendGrid account, and send everyone else's email through your default provider.
+
+Integration conditions only pick the provider. They don't decide whether a step runs. If you want to skip a step, use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
+
+Some common reasons to use them:
+
+- Each tenant has its own email or SMS provider account.
+- You use different sender credentials for different locales or subscriber plans.
+- A chat connection, such as Slack or Teams, should only receive messages for a specific tenant.
+
+## Add conditions in the dashboard
+
+1. Go to **Integrations** and open an integration, or add a new one.
+2. In the side panel, click **Integration conditions**.
+3. Add your rules using **AND** and **OR** groups, then click **Done**.
+4. Save the integration.
+
+The rule builder is the same one used for [step conditions](/platform/workflow/add-and-configure-steps/step-conditions#how-the-condition-builder-works), so you can nest groups and use the same operators, such as equals, contains, in, and is empty.
+
+<Note>
+  An integration with conditions can't be the primary integration. Saving conditions removes the primary flag, and marking an integration as primary removes its conditions. For email and SMS, keep one primary integration without conditions so Novu has something to fall back to.
+</Note>
+
+If the integration still has conditions from the older dashboard, you'll see a warning in the panel. Saving new conditions replaces the old ones.
+
+## How Novu picks the integration
+
+Novu checks conditions at the moment the step sends a message, not when you save the integration. The behavior depends on the channel.
+
+### Email and SMS
+
+Email and SMS send through one integration per message. Novu picks it in this order:
+
+1. If the trigger passes `integrationIdentifier` in `overrides.email` or `overrides.sms`, Novu uses that integration. Conditions aren't checked at all for that step, including any conditions on the integration you passed.
+2. If the trigger doesn't pass `integrationIdentifier`, Novu goes through the active integrations that have conditions, starting with the highest priority. When two have the same priority, the newer one goes first. The first integration whose conditions match sends the message.
+3. If no conditions match, Novu uses the primary integration.
+
+Active integrations that have no conditions and aren't primary are never picked in steps 2 and 3.
+
+Here's a trigger that sends email through a specific integration, no matter what conditions are set up:
+
+```ts
+await novu.trigger({
+  workflowId: "invoice-paid",
+  to: { subscriberId: "user-123" },
+  overrides: {
+    email: {
+      integrationIdentifier: "sendgrid-acme",
+    },
+  },
+});
+```
+
+If `sendgrid-acme` doesn't exist or isn't active, Novu doesn't fall back to conditions or the primary integration. The step fails, and the activity feed shows that no active integration was found.
+
+For more on passing an integration in overrides, see [Targeting a specific provider](/platform/integrations/email#targeting-a-specific-provider) for email and [Target a specific provider](/platform/integrations/sms#target-a-specific-provider) for SMS.
+
+### Chat and push
+
+Chat and push can send through more than one integration for the same subscriber, so there's no single integration to pick and no primary fallback.
+
+For chat connections stored as channel endpoints, such as Slack, Teams, and Telegram, Novu checks each integration before sending. Endpoints on integrations without conditions always receive the message. Endpoints on integrations whose conditions don't match are skipped. If every integration has conditions and none match, nothing is sent.
+
+For push, and for older chat setups where the webhook URL or token is saved on the subscriber, Novu sends through whichever integration holds those credentials. Conditions on that integration don't stop the send. If you don't want a tenant to receive push or chat through an integration, don't save their credentials on it.
+
+Passing `integrationIdentifier` in the email or SMS overrides has no effect on chat. Chat endpoints still go through their own condition checks.
+
+## What conditions can use
+
+Conditions can read subscriber, context, and workflow data. They can't use payload values or results from earlier steps. If you need those, use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) instead.
+
+Integrations that already had `payload.*` rules saved before this change will keep working, but you can't add new ones.
+
+These fields are available in the dashboard:
+
+| Field | Example use |
+| --- | --- |
+| `context.tenant.id` | Send through a tenant's own provider account |
+| `subscriber.subscriberId` | Use an integration for one specific subscriber |
+| `subscriber.email`, `subscriber.phone` | Match on contact details |
+| `subscriber.firstName`, `subscriber.lastName` | Match on name |
+| `subscriber.locale` | Pick a provider by language or region |
+| `subscriber.data` | Match custom attributes, such as `subscriber.data.plan` |
+| `workflow.workflowId` | Pick a provider for a specific workflow |
+| `workflow.name` | Match on the workflow name |
+| `workflow.description` | Match on the workflow description |
+| `workflow.tags` | Match on workflow tags, using operators like contains any of |
+| `workflow.severity` | Pick a provider by workflow severity |
+
+You can also use other `context.*` and `subscriber.*` paths, like `context.tenant.data.plan` or `subscriber.data.region`. Payload paths and `workflow.*` fields not listed above are rejected.
+
+To set `context.tenant.id`, pass a tenant in the trigger's context:
+
+```ts
+await novu.trigger({
+  workflowId: "invoice-paid",
+  to: { subscriberId: "user-123" },
+  context: {
+    tenant: "acme-corp",
+  },
+});
+```
+
+Passing `"acme-corp"` or `{ id: "acme-corp" }` both set `context.tenant.id` to `acme-corp`. See [Contexts](/platform/concepts/contexts) and [Multi-tenancy](/platform/concepts/tenants) for more.
+
+## Example: a separate email provider for one tenant
+
+Say your default email provider is SendGrid, and your customer Acme wants their emails sent from their own account.
+
+1. Keep your default SendGrid integration active and primary, with no conditions.
+2. Add a second email integration using Acme's credentials. Don't make it primary.
+3. Open **Integration conditions** on the Acme integration and add `context.tenant.id` equals `acme-corp`.
+4. Trigger your workflow with `context: { tenant: "acme-corp" }`. Those emails go through Acme's integration, and everything else goes through your default SendGrid integration.
+
+## Manage conditions with the API
+
+Conditions are saved as JSON Logic in the integration's `rules` field. You can set `rules` when you create or update an integration with the [Integrations API](/api-reference/integrations/create-an-integration).
+
+```json
+{
+  "and": [
+    { "==": [{ "var": "context.tenant.id" }, "acme-corp"] },
+    { "==": [{ "var": "subscriber.locale" }, "fr"] }
+  ]
+}
+```
+
+The API accepts the same fields as the dashboard. Payload paths and unknown `workflow.*` fields are rejected.
+
+Updating an integration with `rules` removes its primary flag and replaces any older conditions. Creating an integration is different. If it's the first active email or SMS integration in the environment, Novu can still make it primary even if you pass `rules`. When that happens and the rules don't match, Novu still sends through it as the primary fallback. To avoid this, create your primary integration first without conditions, then add the integrations that have conditions.
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Integrations" href="/platform/concepts/integrations">
+    How integrations, primary, and active flags work
+  </Card>
+  <Card title="Step conditions" href="/platform/workflow/add-and-configure-steps/step-conditions">
+    Skip or run workflow steps based on payload and subscriber data
+  </Card>
+  <Card title="Contexts" href="/platform/concepts/contexts">
+    Pass tenant and other context on the trigger
+  </Card>
+  <Card title="Multi-tenancy" href="/platform/concepts/tenants">
+    Isolate Inbox, preferences, and providers per tenant
+  </Card>
+</Columns>

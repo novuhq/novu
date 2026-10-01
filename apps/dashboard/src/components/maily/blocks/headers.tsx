@@ -6,7 +6,7 @@ import { EmailHeaderLogoWithText } from '@/components/icons/email-header-logo-wi
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 
-export const createHeaderCenteredLogoWithBorder: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
+const createHeaderCenteredLogoWithBorder: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
   props
 ) => {
   const { track } = props;
@@ -62,7 +62,7 @@ export const createHeaderCenteredLogoWithBorder: (props: { track: ReturnType<typ
   };
 };
 
-export const createHeaderLogoWithText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
+const createHeaderLogoWithText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {
@@ -146,9 +146,7 @@ export const createHeaderLogoWithText: (props: { track: ReturnType<typeof useTel
   };
 };
 
-export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {

@@ -3,8 +3,8 @@ import { AgentRepository, ConversationEntity, ConversationRepository } from '@no
 import { DirectionEnum } from '@novu/shared';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import type {
-  ListWebChatConversationsResponseDto,
   WebChatConversationMetadataDto,
+  ListWebChatConversationsResponseDto,
 } from '../../dtos/web-chat-conversation.dto';
 import { ListWebChatConversationsCommand } from './list-web-chat-conversations.command';
 

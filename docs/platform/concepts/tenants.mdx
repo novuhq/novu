@@ -276,7 +276,7 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
     on {{context.tenant.data.name}} just renewed.
     ```
 
-    You can also branch workflow logic on tenant data in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). See [Contexts in workflows](/platform/workflow/advanced-features/contexts/contexts-in-workflows).
+    You can also branch workflow logic on tenant data in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). To route a tenant to a different provider, see [Integration conditions](/platform/integrations/integration-conditions).
   </Step>
 </Steps>
 
@@ -296,7 +296,7 @@ Each subscriber gets a separate Inbox feed and preference configuration per tena
 
 <AccordionGroup>
   <Accordion title="Can I use a different delivery provider for each tenant?">
-    Currently, Novu does not support using a different delivery provider per tenant. Contact support@novu.co if this is required for your use case.
+    Yes. Add [integration conditions](/platform/integrations/integration-conditions) on `context.tenant.id`, and pass the tenant on the trigger as `context: { tenant: "acme-corp" }`.
   </Accordion>
 
   <Accordion title="Can subscribers manage different preferences per tenant?">
@@ -322,5 +322,8 @@ Each subscriber gets a separate Inbox feed and preference configuration per tena
   </Card>
   <Card title="Inbox with context" icon="shield" href="/platform/inbox/configuration/inbox-with-context">
     Secure tenant context with `contextHash`.
+  </Card>
+  <Card title="Integration conditions" icon="git-branch" href="/platform/integrations/integration-conditions">
+    Route each tenant to a different email, SMS, chat, or push integration.
   </Card>
 </CardGroup>

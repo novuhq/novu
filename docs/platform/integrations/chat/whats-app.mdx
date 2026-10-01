@@ -284,7 +284,7 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 
 ## Configure WhatsApp overrides
 
-Save a WhatsApp Business override on the Chat step when you need Cloud API message shapes beyond the plain-text step body — for example templates, interactive buttons, or media. The override is stored on the step, so it is versioned and promoted with the workflow, and every trigger sends it without changing your trigger call.
+Save a WhatsApp Business override on the Chat step when you need Cloud API message shapes beyond the shared Chat step content (text editor body or block/card fallback text), for example templates, interactive buttons, or media. The override is stored on the step, so it is versioned and promoted with the workflow, and every trigger sends it without changing your trigger call.
 
 <Note>
   Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Chat step yet. Overrides passed at trigger time work regardless. See [provider content overrides](/platform/integrations/chat#provider-content-overrides).

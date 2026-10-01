@@ -1,31 +1,31 @@
 ---
 title: 'Migrate to the New Inbox'
-description: "Migrate from the legacy @novu/notification-center package to the new @novu/react Inbox with a step-by-step guide covering setup and props."
+description: "Migrate from the legacy Notification Center to Inbox for React, Angular, Vue, and Vanilla JS, including package, mount, and notification-object changes."
 ---
 
 <Note>
-  - Use [@novu/react](/platform/sdks/react) Inbox React component and
-  [@novu/js](/platform/sdks/javascript) headless package with new dashboard workflows and [@novu/framework](/platform/workflow)-based workflows.
+  Use Inbox with workflows from the current Dashboard or [@novu/framework](/platform/workflow).
 
-   - With legacy dashboard based workflows, use
-  [@novu/notification-center](https://v0.x-docs.novu.co/notification-center/client/react/get-started) package.
+  - React: [@novu/react](/platform/sdks/react)
+  - Angular, Vue, Vanilla JS, and headless clients: [@novu/js](/platform/sdks/javascript)
+
+  The legacy [@novu/notification-center](https://v0.x-docs.novu.co/notification-center/client/react/get-started) package, including its Angular, Vue, web component, iframe, and headless clients, is for legacy Dashboard workflows only.
 </Note>
 
-The `@novu/react` package introduces a more flexible and customizable way to display notifications in your application. This guide outlines the key differences between the `@novu/notification-center` package and the new `@novu/react` package. 
+Inbox replaces the legacy Notification Center. The notification object, action handlers, tabs, appearance, localization, and HMAC options are the same across hosts. The mount path differs by framework.
 
-Follow the steps below to migrate your application to the latest Inbox version.
+Review the breaking changes, then use the React, Angular, Vue, or Vanilla JS section that matches your application.
 
-## Why you should upgrade to `@novu/react`
+## Why you should upgrade
 
-- **Customization**: The `@novu/react` package provides more customization options for the appearance and behavior of the notification components.
-- **Flexibility**: The new package offers more flexibility in handling notifications and integrating with third-party libraries.
-- **Performance**: It is optimized for performance and provides a smoother user experience.
-- **Bundle Size**: The new package has a smaller bundle size and improved tree-shaking capabilities.
-- **Compatibility with the `@novu/framework`**: The `@novu/react` package is designed to work seamlessly with the `@novu/framework` package for creating and managing notifications.
+- Appearance and layout options that replace the legacy `styles` API
+- A notification object that includes archive, snooze, severity, and action methods
+- A smaller client surface: `@novu/react` for React, `@novu/js` for every other host
+- Compatibility with current Dashboard workflows and `@novu/framework`
 
 ## Breaking Changes
 
-The `@novu/react` package introduces several breaking changes compared to the `@novu/notification-center` package. Here are the key differences:
+These changes apply to every host. React uses component props. Angular, Vue, and Vanilla JS pass the same fields to `NovuUI` options and `mountComponent` props.
 
 ### Components
 
@@ -39,8 +39,8 @@ The `@novu/react` package introduces several breaking changes compared to the `@
 
 ### Notification
 
-- Removal of `seen` , `lastSeenDate`, `content`, `templateIdentifier`, `payload`, `cta` properties from the Notification object.
-- We have introduced `archive` functionality to the Notification object.
+- Removal of `seen`, `lastSeenDate`, `content`, `templateIdentifier`, `payload`, `cta` properties from the Notification object.
+- Archive, snooze, and severity support were added to the Notification object.
 
 ```diff title="Notification object"
 type Notification = {
@@ -59,7 +59,7 @@ type Notification = {
 + channelType: ChannelType;
 
 - payload: Record<string, unknown>;
-+ data?: Record<string, unknown>;
++ data?: NotificationData;
 
 - subscriber: Subscriber;
 + to: Subscriber;
@@ -68,40 +68,47 @@ type Notification = {
 - lastSeenDate: string;
 - templateIdentifier: string;
 
++ transactionId: string;
 + subject?: string;
 + isRead: boolean;
 + isSeen: boolean;
 + isArchived: boolean;
 + isSnoozed: boolean;
++ snoozedUntil?: string | null;
 + readAt?: string | null;
 + archivedAt?: string | null;
++ firstSeenAt?: string | null;
++ deliveredAt?: string[];
 + avatar?: string;
 + tags?: string[];
-+ avatar?: string;
-+ workflow: Workflow;
-+ deliveredAt: string | null;
-+ firstSeenAt: string | null;
++ workflow?: Workflow;
++ severity: SeverityLevelEnum;
 
-updatedAt: string;
 createdAt: string;
 };
 ```
 
 ```ts title="Types"
 type Workflow = {
-  critical: boolean;
   id: string;
   identifier: string;
   name: string;
-  tags: string[];
+  critical: boolean;
+  tags?: string[];
+  severity: SeverityLevelEnum;
 };
 
 type Subscriber = {
-  id: string;
+  id?: string;
+  subscriberId: string;
   firstName?: string;
   lastName?: string;
+  email?: string;
+  phone?: string;
   avatar?: string;
-  subscriberId: string;
+  locale?: string;
+  timezone?: string;
+  data?: Record<string, unknown>;
 };
 
 type Redirect = {
@@ -116,15 +123,65 @@ type Action = {
 };
 ```
 
-## Getting started
+<Note>
+  The legacy `_id` is the notification identifier and is not the same value as `transactionId`, which identifies the workflow trigger.
+</Note>
 
-To begin, install the `@novu/react` package.
+### Subscriber prop
 
-```package-install
-npm install @novu/react
+The `subscriberId` prop is deprecated. Pass `subscriber` with either a subscriber ID string or a subscriber object.
+
+```diff
+- <Inbox applicationIdentifier="YOUR_APP_ID" subscriberId="YOUR_SUBSCRIBER_ID" />
++ <Inbox applicationIdentifier="YOUR_APP_ID" subscriber="YOUR_SUBSCRIBER_ID" />
 ```
 
+## Choose the Inbox package
+
+| Host | Uninstall | Install | Mount Inbox | Setup |
+| --- | --- | --- | --- | --- |
+| [React](#react) | `@novu/notification-center` | `@novu/react` | `<Inbox />` | [React quickstart](/platform/quickstart/react) |
+| [Angular](#angular) | Angular Notification Center wrapper | `@novu/js` | `NovuUI` from `@novu/js/ui` | [Angular quickstart](/platform/quickstart/angular) |
+| [Vue](#vue) | Vue Notification Center wrapper | `@novu/js` | `NovuUI` from `@novu/js/ui` | [Vue quickstart](/platform/quickstart/vue) |
+| [Vanilla JS](#vanilla-js) | Web component, iframe script, or `@novu/headless` | `@novu/js` | `NovuUI` from `@novu/js/ui`, or `@novu/js` for a custom headless client | [Vanilla JS quickstart](/platform/quickstart/vanilla-js) |
+
+There is no native Angular or Vue Inbox package. Those applications mount the same UI through `@novu/js`. React Native uses [@novu/react-native](/platform/sdks/react-native).
+
+The breaking changes, tabs, appearance, actions, and notification methods on this page apply to every host. React uses component props. Angular, Vue, and Vanilla JS pass the same fields to `NovuUI` options and `mountComponent` props.
+
+## React
+
+Uninstall `@novu/notification-center` and install `@novu/react`. Replace `NovuProvider`, `PopoverNotificationCenter`, and `NotificationBell` with `<Inbox />`.
+
+Use `subscriber`, not the deprecated `subscriberId` prop. The [React examples below](#basic-usage) map the remaining components, fields, and handlers. For HMAC, localization, and layout, follow the [React Inbox quickstart](/platform/quickstart/react).
+
+## Angular
+
+Uninstall the Angular Notification Center wrapper and install `@novu/js`. There is no native Angular Inbox package.
+
+Mount Inbox with `NovuUI` from `@novu/js/ui` on an existing header, navbar, or sidebar element. Use a template reference such as `#novuInbox`, mount in `ngAfterViewInit`, and unmount in `ngOnDestroy`. Pass `appearance`, `tabs`, `localization`, and click handlers in the constructor options or in `mountComponent` props.
+
+Follow the [Angular Inbox quickstart](/platform/quickstart/angular) for the install.
+
+## Vue
+
+Uninstall the Vue Notification Center wrapper and install `@novu/js`. There is no native Vue Inbox package.
+
+Mount Inbox with `NovuUI` from `@novu/js/ui` from `onMounted` against a template `ref`, and unmount in `onUnmounted`. Inbox does not support server-side rendering. For Nuxt, wrap the component in `<ClientOnly>` and follow the [Nuxt Inbox quickstart](/platform/quickstart/nuxt).
+
+Follow the [Vue Inbox quickstart](/platform/quickstart/vue) for the install.
+
+## Vanilla JS
+
+Uninstall the web component, iframe embed, or `@novu/headless` client and install `@novu/js`.
+
+Mount Inbox with `NovuUI` from `@novu/js/ui` after `DOMContentLoaded` on an existing element. A bundler is required for the `@novu/js/ui` import. For a plain HTML page, follow the [Vanilla JS Inbox quickstart](/platform/quickstart/vanilla-js), which loads the UI bundle and stylesheet.
+
+For a custom feed without the prebuilt UI, replace `@novu/headless` with `@novu/js` and rebuild queries, counts, and mutation methods against the current notification object. See the [JavaScript SDK](/platform/sdks/javascript).
+
 ## Basic usage
+
+The examples below use `@novu/react`. For Angular, Vue, and Vanilla JS, pass the same options to `NovuUI` and the same handlers in `mountComponent` props.
 
 ### Legacy implementation with `@novu/notification-center`
 
@@ -663,13 +720,15 @@ Add tags on the workflow Tags field. One tag can be used for multiple workflows.
 
 2. Use those tags in the `tabs` prop of the `Inbox` component.
 
+Each tab takes a `filter` object that supports `tags`, `data`, and `severity`. The older `value` array is deprecated, so replace `value: ['security']` with `filter: { tags: ['security'] }`.
+
 ```tsx
 import { Inbox } from '@novu/react';
 
 const tabs = [
-  { label: 'All Notifications', value: [] },
-  { label: 'Security', value: ['security'] },
-  { label: 'Promotions', value: ['promotions'] },
+  { label: 'All Notifications', filter: {} },
+  { label: 'Security', filter: { tags: ['security'] } },
+  { label: 'Promotions', filter: { tags: ['promotions'] } },
 ];
 
 function InboxWithTabs() {
@@ -694,11 +753,21 @@ The process remains the same as before. For more information, refer to [Secure y
 
 ## Handling notifications
 
-Handle notifications using the methods provided by the notification object.
+Legacy mutation hooks such as `useUpdateAction` are replaced by methods on the notification object.
 
-### Marking notifications as read
+| Method | Replaces | Description |
+| --- | --- | --- |
+| `read()` | `useMarkNotificationAsRead` | Marks the notification as read. |
+| `unread()` | `useMarkNotificationAsUnRead` | Marks the notification as unread. |
+| `archive()` | No legacy equivalent | Archives the notification. |
+| `unarchive()` | No legacy equivalent | Restores an archived notification. |
+| `snooze(snoozeUntil)` | No legacy equivalent | Snoozes the notification until an ISO 8601 timestamp. |
+| `unsnooze()` | No legacy equivalent | Cancels an active snooze. |
+| `completePrimary()` and `completeSecondary()` | `useUpdateAction` with `MessageActionStatusEnum.DONE` | Marks an action button as completed. |
+| `revertPrimary()` and `revertSecondary()` | `useUpdateAction` with `MessageActionStatusEnum.PENDING` | Returns an action button to its pending state. |
+| `delete()` | No legacy equivalent | Deletes the notification. |
 
-Mark notifications as read using the `read` method provided by the notification object.
+Each method returns a promise, so handle failures rather than assuming the change succeeded.
 
 ```tsx
 import { Inbox } from '@novu/react';
@@ -708,28 +777,10 @@ function Novu() {
     notification.read();
   };
 
-  return (
-    <Inbox
-      applicationIdentifier="YOUR_APP_ID"
-      subscriber="YOUR_SUBSCRIBER_ID"
-      onNotificationClick={handleNotificationClick}
-    />
-  );
-}
-
-export default Novu;
-```
-
-### Marking notifications as unread
-
-Mark notifications as unread using the `unread` method provided by the notification object.
-
-```tsx
-import { Inbox } from '@novu/react';
-
-function Novu() {
-  const handleNotificationClick = (notification) => {
-    notification.unread();
+  const handlePrimaryActionClick = async (notification) => {
+    // Call your own API first, then record the action in Novu.
+    await acceptFriendRequest(notification.data?.requestId);
+    await notification.completePrimary();
   };
 
   return (
@@ -737,54 +788,7 @@ function Novu() {
       applicationIdentifier="YOUR_APP_ID"
       subscriber="YOUR_SUBSCRIBER_ID"
       onNotificationClick={handleNotificationClick}
-    />
-  );
-}
-
-export default Novu;
-```
-
-### Marking notifications as archive
-
-Mark notifications as archive using the `archive` method provided by the notification object.
-
-```tsx
-import { Inbox } from '@novu/react';
-
-function Novu() {
-  const handleNotificationClick = (notification) => {
-    notification.archive();
-  };
-
-  return (
-    <Inbox
-      applicationIdentifier="YOUR_APP_ID"
-      subscriber="YOUR_SUBSCRIBER_ID"
-      onNotificationClick={handleNotificationClick}
-    />
-  );
-}
-
-export default Novu;
-```
-
-### Marking notifications as unarchive
-
-Mark notifications as unarchive using the `unarchive` method provided by the notification object.
-
-```tsx
-import { Inbox } from '@novu/react';
-
-function Novu() {
-  const handleNotificationClick = (notification) => {
-    notification.unarchive();
-  };
-
-  return (
-    <Inbox
-      applicationIdentifier="YOUR_APP_ID"
-      subscriber="YOUR_SUBSCRIBER_ID"
-      onNotificationClick={handleNotificationClick}
+      onPrimaryActionClick={handlePrimaryActionClick}
     />
   );
 }

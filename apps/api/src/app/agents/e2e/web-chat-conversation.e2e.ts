@@ -96,7 +96,10 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     },
     token = subscriberToken
   ) {
-    return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
+    return ctx.session.testAgent
+      .post('/v1/web-chat/conversations')
+      .set('Authorization', `Bearer ${token}`)
+      .send(body);
   }
 
   async function setWebChatHmac(enabled: boolean) {
@@ -121,7 +124,10 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   }
 
   function listConversations(token = subscriberToken, query: { after?: string; before?: string; limit?: number } = {}) {
-    return ctx.session.testAgent.get('/v1/web-chat/conversations').query(query).set('Authorization', `Bearer ${token}`);
+    return ctx.session.testAgent
+      .get('/v1/web-chat/conversations')
+      .query(query)
+      .set('Authorization', `Bearer ${token}`);
   }
 
   function getConversation(conversationIdentifier: string, token = subscriberToken) {
@@ -239,6 +245,26 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     expect(res.status).to.equal(400);
     expect(res.body.message).to.equal('This agent is not available on web chat');
+  });
+
+  it('should resolve the Web Chat integration linked to the requested agent when several exist', async () => {
+    await linkWebChat();
+
+    const otherIdentifier = `e2e-other-web-chat-${Date.now()}`;
+    const createOther = await ctx.session.testAgent.post('/v1/agents').send({
+      name: 'Other Web Chat Agent',
+      identifier: otherIdentifier,
+    });
+    expect(createOther.status).to.equal(201);
+    await linkWebChat(otherIdentifier);
+
+    const res = await createConversation({
+      agentId: otherIdentifier,
+      text: 'Hello from the second published agent',
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.match(/^conv_/);
   });
 
   it('should allow create without agentHash when web-chat HMAC is off', async () => {
@@ -384,28 +410,6 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     expect(res.status).to.equal(400);
     expect(res.body.message).to.equal('This agent is not available on web chat');
-  });
-
-  it('should return 404 when IS_AGENT_WEB_CHAT_ENABLED is off', async () => {
-    const previousFlag = process.env.IS_AGENT_WEB_CHAT_ENABLED;
-    delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
-
-    try {
-      await linkWebChat();
-
-      const res = await createConversation({
-        agentId: ctx.agentIdentifier,
-        text: 'Should be hidden',
-      });
-
-      expect(res.status).to.equal(404);
-    } finally {
-      if (previousFlag === undefined) {
-        delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
-      } else {
-        process.env.IS_AGENT_WEB_CHAT_ENABLED = previousFlag;
-      }
-    }
   });
 
   it('should return 401 when Authorization is missing on POST', async () => {
@@ -891,6 +895,120 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(historyDelete.sequence).to.equal(liveDelete.sequence);
   });
 
+  it('should mint sequence and stamp public agent id when bridge ingests provider-event', async () => {
+    await linkWebChat();
+    const wsQueue = testServer.getService(WebSocketsQueueService);
+    const addStub = sinon.stub(wsQueue, 'add');
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Provider event bridge thread',
+    });
+    expect(createRes.status).to.equal(201);
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+
+    const historyBefore = await getEvents(createRes.body.data.identifier);
+    expect(historyBefore.status).to.equal(200);
+    const maxHistorySequence = Math.max(
+      0,
+      ...historyBefore.body.data.events.map((envelope: AgentEventEnvelope) => envelope.sequence)
+    );
+
+    addStub.resetHistory();
+
+    const providerEnvelope: AgentEventEnvelope = {
+      ...messageEnvelope(conversation._id, 'msg-unused'),
+      runId: 'run-provider',
+      sequence: 1,
+      event: {
+        type: 'provider-event',
+        provider: 'anthropic',
+        event: 'content_block_delta',
+        data: { index: 0, delta: 'x' },
+      },
+    };
+
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events: [providerEnvelope] });
+    expect(ingestRes.status).to.equal(200);
+
+    const providerJobs = addStub
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter(
+        (job) =>
+          job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+          (job.data.payload as AgentEventEnvelope)?.event?.type === 'provider-event'
+      );
+    expect(providerJobs).to.have.length(1);
+
+    const liveEnvelope = providerJobs[0].data.payload as AgentEventEnvelope;
+    expect(liveEnvelope.agentId).to.equal(ctx.agentIdentifier);
+    expect(liveEnvelope.sequence).to.be.greaterThan(maxHistorySequence);
+    expect(liveEnvelope.event).to.deep.equal(providerEnvelope.event);
+
+    const historyRes = await getEvents(createRes.body.data.identifier);
+    expect(historyRes.status).to.equal(200);
+    const historyProvider = historyRes.body.data.events.find(
+      (envelope: AgentEventEnvelope) => envelope.event.type === 'provider-event'
+    );
+    expect(historyProvider).to.be.undefined;
+  });
+
+  it('should deliver provider-event live after history has advanced lastSequence', async () => {
+    await linkWebChat();
+    const wsQueue = testServer.getService(WebSocketsQueueService);
+    const addStub = sinon.stub(wsQueue, 'add');
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Provider event after history thread',
+    });
+    expect(createRes.status).to.equal(201);
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+    const messageId = `msg-history-${Date.now()}`;
+
+    const messageIngest = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
+      events: [messageEnvelope(conversation._id, messageId)],
+    });
+    expect(messageIngest.status).to.equal(200);
+
+    const historyRes = await getEvents(createRes.body.data.identifier);
+    expect(historyRes.status).to.equal(200);
+    const maxHistorySequence = Math.max(
+      ...historyRes.body.data.events.map((envelope: AgentEventEnvelope) => envelope.sequence)
+    );
+
+    addStub.resetHistory();
+
+    const providerEnvelope: AgentEventEnvelope = {
+      ...messageEnvelope(conversation._id, 'msg-unused'),
+      runId: 'run-provider-stale-seq',
+      sequence: 1,
+      event: {
+        type: 'provider-event',
+        provider: 'anthropic',
+        event: 'message_stop',
+        data: { reason: 'end_turn' },
+      },
+    };
+
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events: [providerEnvelope] });
+    expect(ingestRes.status).to.equal(200);
+
+    const providerJobs = addStub
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter(
+        (job) =>
+          job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+          (job.data.payload as AgentEventEnvelope)?.event?.type === 'provider-event'
+      );
+    expect(providerJobs).to.have.length(1);
+
+    const liveEnvelope = providerJobs[0].data.payload as AgentEventEnvelope;
+    expect(liveEnvelope.sequence).to.be.greaterThan(maxHistorySequence);
+  });
+
   it('should suppress duplicate live delivery for concurrent runtime retries', async () => {
     await linkWebChat();
     const wsQueue = testServer.getService(WebSocketsQueueService);
@@ -1186,5 +1304,209 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(agentMsg.sequence).to.be.a('number');
     // Durable history has fewer events than the high-watermark (ephemeral left a gap).
     expect(eventsRes.body.data.events.length).to.be.lessThan(refreshed!.eventSequence!);
+  });
+
+  it('should persist custom ingest as a durable activity, WS job, and history envelope', async () => {
+    await linkWebChat();
+    const wsQueue = testServer.getService(WebSocketsQueueService);
+    const addStub = sinon.stub(wsQueue, 'add');
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Custom data thread',
+    });
+    expect(createRes.status).to.equal(201);
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+
+    addStub.resetHistory();
+
+    const customEnvelope: AgentEventEnvelope = {
+      ...messageEnvelope(conversation._id, 'msg-unused'),
+      runId: 'run-custom',
+      sequence: 1,
+      event: {
+        type: 'custom',
+        name: 'order-progress',
+        data: { pct: 70 },
+      },
+    };
+
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events: [customEnvelope] });
+    expect(ingestRes.status).to.equal(200);
+
+    const customJobs = addStub
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter(
+        (job) =>
+          job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+          (job.data.payload as AgentEventEnvelope)?.event?.type === 'custom'
+      );
+    expect(customJobs).to.have.length(1);
+
+    const liveEnvelope = customJobs[0].data.payload as AgentEventEnvelope;
+    expect(liveEnvelope.runId).to.equal('run-custom');
+    expect(liveEnvelope.event).to.deep.equal({
+      type: 'custom',
+      name: 'order-progress',
+      data: { pct: 70 },
+    });
+
+    const customActivity = await pollFor(() =>
+      activityRepository.findOne(
+        {
+          _conversationId: conversation._id,
+          _environmentId: ctx.session.environment._id,
+          type: ConversationActivityTypeEnum.CUSTOM,
+        },
+        '*'
+      )
+    );
+    expect(customActivity.identifier).to.equal('custom:run-custom:1');
+    expect(customActivity.sequence).to.equal(liveEnvelope.sequence);
+    expect(customActivity.richContent).to.deep.include({
+      custom: { name: 'order-progress', data: { pct: 70 } },
+    });
+
+    const historyRes = await getEvents(createRes.body.data.identifier);
+    expect(historyRes.status).to.equal(200);
+    const historyCustom = historyRes.body.data.events.filter(
+      (envelope: AgentEventEnvelope) => envelope.event.type === 'custom'
+    );
+    expect(historyCustom).to.have.length(1);
+    expect(historyCustom[0].runId).to.equal('run-custom');
+    expect(historyCustom[0].event).to.deep.equal(liveEnvelope.event);
+    expect(historyCustom[0].sequence).to.equal(liveEnvelope.sequence);
+
+    const transcript = await activityRepository.listForView({
+      view: 'llm_transcript',
+      environmentId: ctx.session.environment._id,
+      organizationId: ctx.session.organization._id,
+      conversationId: conversation._id,
+      limit: 50,
+    });
+    expect(transcript.data.some((activity) => activity.type === ConversationActivityTypeEnum.CUSTOM)).to.equal(false);
+
+    const timeline = await activityRepository.listForView({
+      view: 'operator_timeline',
+      environmentId: ctx.session.environment._id,
+      organizationId: ctx.session.organization._id,
+      conversationId: conversation._id,
+      limit: 50,
+    });
+    expect(timeline.data.some((activity) => activity.type === ConversationActivityTypeEnum.CUSTOM)).to.equal(true);
+  });
+
+  it('should skip oversized custom data in a mixed ingest batch and still persist the sibling message', async () => {
+    await linkWebChat();
+    const wsQueue = testServer.getService(WebSocketsQueueService);
+    const addStub = sinon.stub(wsQueue, 'add');
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Oversized custom thread',
+    });
+    expect(createRes.status).to.equal(201);
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+    const messageId = `msg-oversized-sibling-${Date.now()}`;
+
+    addStub.resetHistory();
+
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
+      events: [
+        {
+          ...messageEnvelope(conversation._id, 'msg-unused'),
+          event: {
+            type: 'custom',
+            name: 'order-progress',
+            data: 'x'.repeat(65535),
+          },
+        },
+        messageEnvelope(conversation._id, messageId),
+      ],
+    });
+    expect(ingestRes.status).to.equal(200);
+
+    const customActivity = await activityRepository.findOne(
+      {
+        _conversationId: conversation._id,
+        _environmentId: ctx.session.environment._id,
+        type: ConversationActivityTypeEnum.CUSTOM,
+      },
+      '*'
+    );
+    expect(customActivity).to.equal(null);
+
+    const messageActivity = await pollFor(() =>
+      activityRepository.findOne(
+        {
+          _conversationId: conversation._id,
+          _environmentId: ctx.session.environment._id,
+          identifier: messageId,
+        },
+        '*'
+      )
+    );
+    expect(messageActivity).to.exist;
+
+    const customJobs = addStub
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter(
+        (job) =>
+          job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+          (job.data.payload as AgentEventEnvelope)?.event?.type === 'custom'
+      );
+    expect(customJobs).to.have.length(0);
+
+    const historyRes = await getEvents(createRes.body.data.identifier);
+    expect(historyRes.status).to.equal(200);
+    expect(
+      historyRes.body.data.events.some((envelope: AgentEventEnvelope) => envelope.event.type === 'custom')
+    ).to.equal(false);
+    expect(
+      historyRes.body.data.events.some(
+        (envelope: AgentEventEnvelope) => envelope.event.type === 'message' && envelope.event.messageId === messageId
+      )
+    ).to.equal(true);
+  });
+
+  it('should persist two same-name custom emits as two history envelopes', async () => {
+    await linkWebChat();
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Duplicate custom name thread',
+    });
+    expect(createRes.status).to.equal(201);
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
+      events: [
+        {
+          ...messageEnvelope(conversation._id, 'msg-unused'),
+          sequence: 1,
+          event: { type: 'custom', name: 'order-progress', data: { pct: 40 } },
+        },
+        {
+          ...messageEnvelope(conversation._id, 'msg-unused'),
+          sequence: 2,
+          event: { type: 'custom', name: 'order-progress', data: { pct: 70 } },
+        },
+      ],
+    });
+    expect(ingestRes.status).to.equal(200);
+
+    const historyRes = await getEvents(createRes.body.data.identifier);
+    expect(historyRes.status).to.equal(200);
+    const historyCustom = historyRes.body.data.events.filter(
+      (envelope: AgentEventEnvelope) => envelope.event.type === 'custom'
+    );
+    expect(historyCustom).to.have.length(2);
+    expect(historyCustom.map((envelope: AgentEventEnvelope) => envelope.event)).to.deep.equal([
+      { type: 'custom', name: 'order-progress', data: { pct: 40 } },
+      { type: 'custom', name: 'order-progress', data: { pct: 70 } },
+    ]);
+    expect(historyCustom[0].sequence).to.be.lessThan(historyCustom[1].sequence);
   });
 });

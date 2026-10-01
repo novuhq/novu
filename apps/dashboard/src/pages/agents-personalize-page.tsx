@@ -9,9 +9,11 @@ import { ChannelChip } from '@/components/onboarding/personalize/channel-chip';
 import {
   AGENT_AUDIENCE_OPTIONS,
   AGENT_CHANNEL_OPTIONS,
+  AGENT_INTERACTION_OPTIONS,
   AGENT_READINESS_OPTIONS,
   type AgentAudience,
   type AgentChannel,
+  type AgentInteraction,
   type AgentReadiness,
   type PersonalizeOption,
 } from '@/components/onboarding/personalize/personalize-options';
@@ -128,6 +130,40 @@ function ChannelQuestion({
   );
 }
 
+/**
+ * Optional single-select chips. Clicking the selected chip again clears the answer so the
+ * question stays skippable without a required pick.
+ */
+function InteractionQuestion({
+  selected,
+  onSelect,
+}: {
+  selected: AgentInteraction | undefined;
+  onSelect: (value: AgentInteraction) => void;
+}) {
+  const labelId = useId();
+
+  return (
+    <fieldset aria-labelledby={labelId} className="flex flex-col gap-2 border-0 p-0">
+      <Label id={labelId} className="text-text-sub cursor-default font-normal">
+        How should users interact with your agent?
+      </Label>
+      <div className="flex max-w-[400px] flex-wrap gap-2">
+        {AGENT_INTERACTION_OPTIONS.map((option) => (
+          <ChannelChip
+            key={option.value}
+            label={option.label}
+            icon={option.icon}
+            accent={option.accent}
+            isSelected={selected === option.value}
+            onToggle={() => onSelect(option.value)}
+          />
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 export function AgentsPersonalizePage() {
   const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const isLaunchDarklyReady = useLaunchDarklyReady();
@@ -140,6 +176,7 @@ export function AgentsPersonalizePage() {
   const [readiness, setReadiness] = useState<AgentReadiness | undefined>(undefined);
   const [audience, setAudience] = useState<AgentAudience | undefined>(undefined);
   const [channels, setChannels] = useState<AgentChannel[]>([]);
+  const [interaction, setInteraction] = useState<AgentInteraction | undefined>(undefined);
 
   // `product_type=agents` signups land here without ever seeing the picker, so sending them "back"
   // to it would push them into a screen that defaults to Inbox and reverses their choice. Setup may
@@ -181,11 +218,23 @@ export function AgentsPersonalizePage() {
     });
   };
 
+  const handleInteractionSelect = (value: AgentInteraction) => {
+    const next = interaction === value ? undefined : value;
+
+    setInteraction(next);
+    telemetry(TelemetryEvent.ONBOARDING_PERSONALIZE_ANSWERED, {
+      question: 'agent_interaction',
+      value,
+      selected: next !== undefined,
+    });
+  };
+
   const handleContinue = () => {
     telemetry(TelemetryEvent.ONBOARDING_PERSONALIZE_SUBMITTED, {
       agentReadiness: readiness,
       agentAudience: audience,
       agentChannels: channels,
+      agentInteraction: interaction,
     });
     // The agents setup page waits on the org, so the loader plays across that hand-off.
     beginOnboardingProvisioning('agents');
@@ -242,6 +291,10 @@ export function AgentsPersonalizePage() {
 
         <RevealedField isRevealed={Boolean(audience)}>
           <ChannelQuestion selected={channels} onToggle={handleChannelToggle} />
+        </RevealedField>
+
+        <RevealedField isRevealed={Boolean(audience)}>
+          <InteractionQuestion selected={interaction} onSelect={handleInteractionSelect} />
         </RevealedField>
       </div>
 

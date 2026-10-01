@@ -8,6 +8,7 @@ import {
   ConversationActivityRepository,
   ConversationRepository,
   EnvironmentRepository,
+  HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
   SubscriberRepository,
@@ -35,6 +36,7 @@ import { ClaimKeylessConnect } from './usecases/claim-keyless-connect/claim-keyl
     AgentMcpServerRepository,
     McpConnectionRepository,
     EnvironmentRepository,
+    HumanInteractionRepository,
   ],
   exports: [ConnectClaimTokenService],
 })

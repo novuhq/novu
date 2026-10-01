@@ -1,13 +1,14 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Clicksend;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.SNAKE_CASE;
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -26,7 +27,7 @@ export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
       to: options.to,
       body: options.content,
     });
-    const response = await axios.create().post(
+    const response = await this.httpClient.post(
       'https://rest.clicksend.com/v3/sms/send',
       {
         messages: [data.body],

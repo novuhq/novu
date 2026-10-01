@@ -553,22 +553,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.0.9
+
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        working-directory: enterprise/workers/thalamus-observer
-        run: npm install
+        run: pnpm install --frozen-lockfile --filter @novu/thalamus-observer-worker...
 
       - name: Deploy with Wrangler
-        working-directory: enterprise/workers/thalamus-observer
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npx wrangler deploy \
+          pnpm --filter @novu/thalamus-observer-worker exec wrangler deploy \
             --env "${{ needs.prepare-matrix.outputs.thalamus_wrangler_env }}" \
             --message "GitHub Actions"
 

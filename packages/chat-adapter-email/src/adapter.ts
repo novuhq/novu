@@ -10,7 +10,6 @@ import type {
   ThreadInfo,
   WebhookOptions,
 } from 'chat';
-import { stripAgentReplyToken } from '@novu/shared';
 import type { CardNode } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
 import { MessageParser } from './message-parser.js';
@@ -65,10 +64,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
     const chatModule = await import('chat');
     this.parseMarkdownFn = chatModule.parseMarkdown;
-    this.messageParser.setChatModule(
-      chatModule.Message as unknown as Parameters<MessageParser['setChatModule']>[0],
-      chatModule.parseMarkdown
-    );
+    this.messageParser.setChatModule(chatModule.Message, chatModule.parseMarkdown);
   }
 
   // -- Thread ID methods --
@@ -109,15 +105,13 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       references: payload.references,
     });
 
-    const agentAddress = payload.to[0]?.address
-      ? stripAgentReplyToken(payload.to[0].address)
-      : undefined;
+    const agentAddress = payload.to[0]?.address ? this.config.stripAgentReplyToken(payload.to[0].address) : undefined;
     await Promise.all([
       this.threadResolver.trackSubject(threadId, payload.subject),
       agentAddress ? this.threadResolver.trackAgentAddress(threadId, agentAddress) : Promise.resolve(),
     ]);
 
-    const message = this.parseMessage(this.toRawMessage(payload));
+    const message = this.parseMessage(this.toRawMessage(payload), threadId);
     this.chat.processMessage(this, threadId, message, options);
 
     return new Response(null, { status: 200 });
@@ -128,7 +122,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       id: payload.messageId,
       messageId: payload.messageId,
       from: payload.from.name ? `${payload.from.name} <${payload.from.address}>` : payload.from.address,
-      to: payload.to.map((t: { address: string; name?: string }) => stripAgentReplyToken(t.address)),
+      to: payload.to.map((t: { address: string; name?: string }) => this.config.stripAgentReplyToken(t.address)),
       subject: payload.subject,
       text: payload.text,
       html: payload.html,
@@ -147,10 +141,10 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
   // -- Message parsing --
 
-  parseMessage(raw: NovuEmailRawMessage): Message<NovuEmailRawMessage> {
+  parseMessage(raw: NovuEmailRawMessage, threadId = ''): Message<NovuEmailRawMessage> {
     const agentAddress = raw.to[0] ?? '';
 
-    return this.messageParser.parse(raw, agentAddress);
+    return this.messageParser.parse(raw, agentAddress, threadId);
   }
 
   // -- Outbound --
@@ -389,15 +383,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   }
 
   private segmentGraphemes(value: string): string[] {
-    const Segmenter = (
-      Intl as unknown as {
-        Segmenter?: new (
-          locale: string,
-          options: { granularity: 'grapheme' }
-        ) => { segment(input: string): Iterable<{ segment: string }> };
-      }
-    ).Segmenter;
-
+    const Segmenter = Intl.Segmenter;
     if (!Segmenter) {
       return Array.from(value);
     }

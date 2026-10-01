@@ -1,6 +1,6 @@
-import type { DeferredToolCall, HumanDecision } from '@novu/agent-toolkit/ai-sdk';
+import type { AiSdkToolSet, DeferredToolCall, HumanDecision } from '@novu/agent-toolkit/ai-sdk';
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/ai-sdk';
-import { type ToolSet, tool } from 'ai';
+import { tool } from 'ai';
 import { z } from 'zod';
 
 export type PendingApproval = {
@@ -53,13 +53,13 @@ export async function getToolkit() {
   return toolkitPromise;
 }
 
-export async function buildRefundTools(): Promise<ToolSet> {
+export async function buildRefundTools(): Promise<AiSdkToolSet> {
   const toolkit = await getToolkit();
 
   const issueRefund = buildIssueRefundTool();
 
-  const guarded = toolkit.requireHumanInput(
-    { issue_refund: issueRefund as ToolSet[string] },
+  return toolkit.requireHumanInput(
+    { issue_refund: issueRefund as AiSdkToolSet[string] },
     {
       workflowId: process.env.NOVU_HITL_WORKFLOW_ID ?? 'refund-approval',
       subscribers: [process.env.NOVU_SUBSCRIBER_ID ?? 'demo-subscriber'],
@@ -73,8 +73,6 @@ export async function buildRefundTools(): Promise<ToolSet> {
       },
     }
   );
-
-  return guarded;
 }
 
 export async function resolveApproval(

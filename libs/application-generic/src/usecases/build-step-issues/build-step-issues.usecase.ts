@@ -85,6 +85,7 @@ export class BuildStepIssuesUsecase {
       providerOverridesDto,
       stepType,
       preloadedControlValues,
+      preloadedEnvironmentContext,
       optimisticPayloadSchema,
     } = command;
 
@@ -98,6 +99,7 @@ export class BuildStepIssuesUsecase {
         ...(controlValuesDto ? { optimisticControlValues: controlValuesDto } : {}),
         ...(command.optimisticSteps ? { optimisticSteps: command.optimisticSteps } : {}),
         ...(preloadedControlValues ? { preloadedControlValues } : {}),
+        ...(preloadedEnvironmentContext ? { preloadedEnvironmentContext } : {}),
         ...(optimisticPayloadSchema ? { optimisticPayloadSchema } : {}),
       })
     );
@@ -195,6 +197,7 @@ export class BuildStepIssuesUsecase {
    * compiled card — is what gets delivered for that provider, so those findings would be misleading.
    */
   @Instrument()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: chat card findings combine button checks, compile, and per-provider limits
   private async processChatCardIssues(
     user: UserSessionData,
     stepType: StepTypeEnum,
@@ -326,12 +329,14 @@ export class BuildStepIssuesUsecase {
       return undefined;
     }
 
-    const preloadedProviderDocs = preloadedControlValues?.filter(
-      (cv) => cv._stepId === stepInternalId && cv.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS
-    );
-
-    if (preloadedProviderDocs && preloadedProviderDocs.length > 0) {
-      return stitchProviderOverridesFromDocs(preloadedProviderDocs);
+    if (preloadedControlValues) {
+      return stitchProviderOverridesFromDocs(
+        preloadedControlValues.filter(
+          (controlValue) =>
+            controlValue._stepId === stepInternalId &&
+            controlValue.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS
+        )
+      );
     }
 
     const providerDocs = await this.controlValuesRepository.find({
@@ -420,6 +425,7 @@ export class BuildStepIssuesUsecase {
         }
 
         return item;
+        // biome-ignore lint/suspicious/noExplicitAny: recursive sanitize returns a mixed array or object
       }) as any;
     }
 
@@ -429,6 +435,7 @@ export class BuildStepIssuesUsecase {
           return [key, null];
         }
         if (Array.isArray(value)) {
+          // biome-ignore lint/suspicious/noExplicitAny: recursive sanitize accepts both arrays and objects
           return [key, this.frameworkSanitizeEmptyStringsToNull(value as any)];
         }
         if (typeof value === 'object' && value !== null) {

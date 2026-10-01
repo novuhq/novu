@@ -390,46 +390,11 @@ describe('AgentSubscriberResolver', () => {
       expect(result).to.equal('sub-existing');
       expect(createOrUpdateSubscriberExecute.called).to.equal(false);
       expect(find.calledOnce).to.equal(true);
-    });
-
-    it('does not reuse a non-agent-provisioned subscriber with the same email', async () => {
-      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
-      const { resolver } = makeResolver({
-        find: sinon.stub().resolves([]),
-        createOrUpdateSubscriberExecute,
-      });
-
-      const result = await resolver.provisionEmailSubscriber({
-        ...baseLookupParams,
-        agentIdentifier: 'agent-test',
-        email: 'customer@example.com',
-      });
-
-      expect(result)
-        .to.be.a('string')
-        .and.to.match(/^sub_ap_/);
-      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
-    });
-
-    it('reuses an agent-provisioned subscriber with a mixed-case stored email', async () => {
-      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
-      const find = sinon.stub().resolves([{ subscriberId: 'sub-mixed-case' }]);
-      const { resolver } = makeResolver({
-        find,
-        createOrUpdateSubscriberExecute,
-      });
-
-      const result = await resolver.provisionEmailSubscriber({
-        ...baseLookupParams,
-        agentIdentifier: 'agent-test',
-        email: 'user@example.com',
-      });
-
-      expect(result).to.equal('sub-mixed-case');
-      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
 
       const query = find.firstCall.args[0];
-      expect(query.email.$regex).to.be.instanceOf(RegExp);
+      expect(query.email.$regex.test('Existing@Example.COM')).to.equal(true);
+      expect(query.email.$regex.test('xexisting@example.com')).to.equal(false);
+      expect(query.email.$regex.test('existing@example.com.x')).to.equal(false);
       expect(query[`data.${AGENT_PROVISION_DATA_KEYS.source}`]).to.equal(AGENT_PLATFORM_PROVISION_SOURCE);
     });
 

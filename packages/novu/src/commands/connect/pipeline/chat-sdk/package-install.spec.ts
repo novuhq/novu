@@ -26,14 +26,16 @@ describe('resolveChatSdkPackagesToInstall', () => {
       path.join(dir, 'package.json'),
       JSON.stringify({
         dependencies: {
-          chat: '4.31.0',
-          '@chat-adapter/state-redis': '4.31.0',
+          chat: '4.40.0',
+          '@chat-adapter/state-redis': '4.40.0',
         },
       })
     );
 
     expect(resolveChatSdkPackagesToInstall(dir)).toEqual(['@novu/chat-sdk-adapter']);
-    expect(buildChatSdkInstallCommand(dir)).toBe('npm install @novu/chat-sdk-adapter --no-workspaces');
+    expect(buildChatSdkInstallCommand(dir)).toBe(
+      'npm install @novu/chat-sdk-adapter --no-workspaces --no-audit --fund=false'
+    );
   });
 
   it('includes state-memory only when no state adapter is present', () => {
@@ -42,14 +44,14 @@ describe('resolveChatSdkPackagesToInstall', () => {
       path.join(dir, 'package.json'),
       JSON.stringify({
         dependencies: {
-          chat: '4.31.0',
+          chat: '4.40.0',
         },
       })
     );
 
     expect(resolveChatSdkPackagesToInstall(dir)).toEqual([
       '@novu/chat-sdk-adapter',
-      '@chat-adapter/state-memory@4.31.0',
+      '@chat-adapter/state-memory@4.40.0',
     ]);
   });
 });

@@ -235,6 +235,13 @@ const initializeCustomOperators = (): void => {
 
   jsonLogic.add_operation('notNull', (dataInput: unknown): boolean => dataInput !== null);
 
+  jsonLogic.add_operation('isEmpty', (dataInput: unknown): boolean => dataInput === '');
+
+  jsonLogic.add_operation(
+    'isNonEmpty',
+    (dataInput: unknown): boolean => typeof dataInput === 'string' && dataInput.length > 0
+  );
+
   jsonLogic.add_operation(
     'notIn',
     (dataInput: unknown, ruleValue: unknown[]): boolean => Array.isArray(ruleValue) && !ruleValue.includes(dataInput)

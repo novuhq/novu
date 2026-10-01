@@ -1,6 +1,5 @@
 import { TelegramConnectButtonProps } from '@novu/js/ui';
-import { useCallback } from 'react';
-import { useNovuUI } from '../../context/NovuUIContext';
+import { useMemo } from 'react';
 import { Mounter } from '../Mounter';
 
 export type DefaultTelegramConnectButtonProps = Pick<
@@ -30,29 +29,21 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
     connectLabel,
     connectedLabel,
   } = props;
-  const { novuUI } = useNovuUI();
 
-  const mount = useCallback(
-    (element: HTMLElement) => {
-      return novuUI.mountComponent({
-        name: 'TelegramConnectButton',
-        props: {
-          integrationIdentifier,
-          subscriberId,
-          context,
-          contextHash,
-          onConnectSuccess,
-          onConnectError,
-          onDisconnectSuccess,
-          onDisconnectError,
-          connectLabel,
-          connectedLabel,
-        },
-        element,
-      });
-    },
+  const mountProps = useMemo(
+    () => ({
+      integrationIdentifier,
+      subscriberId,
+      context,
+      contextHash,
+      onConnectSuccess,
+      onConnectError,
+      onDisconnectSuccess,
+      onDisconnectError,
+      connectLabel,
+      connectedLabel,
+    }),
     [
-      novuUI,
       integrationIdentifier,
       subscriberId,
       context,
@@ -66,5 +57,5 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
     ]
   );
 
-  return <Mounter mount={mount} />;
+  return <Mounter name="TelegramConnectButton" props={mountProps} />;
 };

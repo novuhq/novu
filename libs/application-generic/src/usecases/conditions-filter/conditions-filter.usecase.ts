@@ -314,7 +314,7 @@ export class ConditionsFilter extends Filter {
 
   /**
    * Best-effort pino log for webhook filter diagnostics. Gated by the same flag
-   * as step-conditions-passed execution details. Logs only the HTTP status and
+   * as step-condition evaluation execution details. Logs only the HTTP status and
    * the field value used by the filter comparison — never the full response body,
    * which may contain subscriber PII or credentials outside path-based redaction.
    */
@@ -325,7 +325,7 @@ export class ConditionsFilter extends Filter {
   ): Promise<void> {
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED,
+        key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_EVALUATION_TRACE_ENABLED,
         defaultValue: false,
         organization: { _id: command.organizationId },
         environment: { _id: command.environmentId },

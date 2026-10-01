@@ -219,6 +219,8 @@ export function NodeVariablePill(
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
+  // A locked editor renders the pill, but Configure Variable can edit and delete it.
+  const canEdit = editor.isEditable;
 
   const parsedData = useMemo(
     () => parseVariableWithFallback(variableValue, undefined, digestStepName),
@@ -260,7 +262,7 @@ export function NodeVariablePill(
       <EditVariablePopover
         isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         getSchemaPropertyByKey={getSchemaPropertyByKey}
-        open={isOpen}
+        open={canEdit && isOpen}
         onOpenChange={setIsOpen}
         variable={variable}
         variables={variables}
@@ -274,7 +276,7 @@ export function NodeVariablePill(
           issues={parsedData.issues}
           variableName={parsedData.name}
           filters={parsedData.filtersArray}
-          onClick={() => setIsOpen(true)}
+          onClick={canEdit ? () => setIsOpen(true) : undefined}
           className="-mt-[2px]"
           isNotInSchema={validation.hasError || !validation.isInSchema}
           isPayloadSchemaEnabled={isPayloadSchemaEnabled}
@@ -447,7 +449,7 @@ export function BubbleMenuVariablePill({
 
   // Bubble-menu fields (showIf, URL pills, …) are display-only — editing happens in
   // the parent SuggestionInput. Button label pills (`button-variable`) open Configure Variable.
-  const canEdit = from !== VariableFrom.Bubble;
+  const canEdit = from !== VariableFrom.Bubble && editor?.isEditable !== false;
 
   const pill = (
     <VariablePill

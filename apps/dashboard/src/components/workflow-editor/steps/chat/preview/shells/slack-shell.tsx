@@ -12,7 +12,7 @@ type SlackPreviewFrameProps = {
  * Slack message chrome: app icon/sender line (Block Kit Builder) plus the Figma Message Box
  * composer (`10415:19564`) used in the full preview.
  */
-export function SlackPreviewFrame({ children, variant = 'default' }: SlackPreviewFrameProps) {
+function SlackPreviewFrame({ children, variant = 'default' }: SlackPreviewFrameProps) {
   return (
     <div
       className="border-stroke-soft bg-bg-white pointer-events-none flex w-full flex-col gap-5 rounded-lg border p-2.75"

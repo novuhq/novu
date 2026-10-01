@@ -1,0 +1,5 @@
+language js(typescript)
+
+`Reflect.get($args)` as $call where {
+  register_diagnostic(span=$call, message="Replace `Reflect.get` with typed property access. Parse dynamic input into a named domain type before reading it.", severity="error")
+}

@@ -189,15 +189,26 @@
             "group": "Integrate Channels Providers",
             "pages": [
               "platform/integrations",
+              "platform/integrations/integration-conditions",
               "platform/integrations/demo-integration",
               {
                 "group": "Chat",
                 "root": "platform/integrations/chat",
                 "pages": [
+                  "platform/integrations/chat/writing-chat-template",
                   "platform/integrations/chat/discord",
+                  "platform/integrations/chat/google-chat",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
-                  "platform/integrations/chat/ms-teams",
+                  {
+                    "group": "MS Teams",
+                    "pages": [
+                      "platform/integrations/chat/ms-teams",
+                      "platform/integrations/chat/ms-teams-azure-setup",
+                      "platform/integrations/chat/ms-teams-connect",
+                      "platform/integrations/chat/ms-teams-workflows"
+                    ]
+                  },
                   "platform/integrations/chat/slack",
                   "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/telegram",
@@ -330,6 +341,7 @@
                     "pages": [
                       "platform/sdks/react/hooks/novu-provider",
                       "platform/sdks/react/hooks/subscription",
+                      "platform/sdks/react/hooks/use-web-chat",
                       "platform/sdks/react/hooks/use-counts",
                       "platform/sdks/react/hooks/use-notifications",
                       "platform/sdks/react/hooks/use-novu",
@@ -384,6 +396,7 @@
               "platform/developer/environments",
               "platform/developer/environment-variables",
               "platform/developer/limits",
+              "platform/developer/delivery-retries",
               {
                 "group": "Inbound email",
                 "pages": ["platform/inbound-email/overview"]
@@ -443,6 +456,7 @@
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
               "agents/get-started/agents-and-providers",
+              "agents/workflow-agents",
               {
                 "group": "Quickstart",
                 "pages": [
@@ -463,7 +477,23 @@
               "agents/channels/microsoft-teams",
               "agents/channels/whatsapp",
               "agents/channels/telegram",
-              "agents/channels/email"
+              "agents/channels/email",
+              {
+                "group": "Web Chat",
+                "tag": "Beta",
+                "root": "agents/channels/web-chat",
+                "pages": [
+                  "agents/channels/web-chat/messages",
+                  "agents/channels/web-chat/tools",
+                  "agents/channels/web-chat/generative-ui",
+                  "agents/channels/web-chat/conversations",
+                  {
+                    "group": "Recipes",
+                    "pages": ["agents/channels/web-chat/recipes/assistant-ui"]
+                  },
+                  "agents/channels/web-chat/security"
+                ]
+              }
             ],
             "icon": "messages-square"
           },
@@ -485,6 +515,7 @@
                 "pages": [
                   "agents/custom-code-agent/building-blocks/handle-events",
                   "agents/custom-code-agent/building-blocks/reply",
+                  "agents/custom-code-agent/building-blocks/emit",
                   "agents/custom-code-agent/building-blocks/typing-indicator",
                   "agents/custom-code-agent/building-blocks/edit-sent-messages",
                   "agents/custom-code-agent/building-blocks/signals",
@@ -887,50 +918,120 @@
             "item": "Guides",
             "groups": [
               {
-                "group": "Use Cases",
-                "pages": [
-                  "guides/use-cases/transactional-notifications",
-                  "guides/use-cases/password-reset-notifications",
-                  "guides/use-cases/digest-notifications",
-                  "guides/use-cases/multi-channel-fallback",
-                  "guides/use-cases/notification-preferences"
-                ],
-                "icon": "lightbulb"
-              },
-              {
                 "group": "Guides",
-                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"],
-                "icon": "book-open"
-              },
-              {
-                "group": "Inbound Webhooks",
+                "icon": "book-open",
                 "pages": [
-                  "guides/webhooks/clerk",
-                  "guides/webhooks/auth0",
-                  "guides/webhooks/stripe",
-                  "guides/webhooks/segment"
-                ],
-                "icon": "webhook"
-              },
-              {
-                "group": "Recipes",
-                "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"],
-                "icon": "chef-hat"
-              },
-              {
-                "group": "Framework",
-                "pages": ["guides/framework/using-translations"],
-                "icon": "blocks"
-              },
-              {
-                "group": "Migrate to Novu",
-                "pages": [
-                  "guides/migrate-from-courier-to-novu",
-                  "guides/migrate-from-knock-to-novu",
-                  "guides/migrate-from-magicbell-to-novu",
-                  "guides/migrate-from-in-house-to-novu"
-                ],
-                "icon": "arrow-right-left"
+                  "guides",
+                  {
+                    "group": "Use Cases",
+                    "expanded": false,
+                    "pages": [
+                      "guides/use-cases/transactional-notifications",
+                      "guides/use-cases/password-reset-notifications",
+                      "guides/use-cases/digest-notifications",
+                      "guides/use-cases/multi-channel-fallback",
+                      "guides/use-cases/notification-preferences"
+                    ]
+                  },
+                  {
+                    "group": "Workflow automation",
+                    "expanded": false,
+                    "pages": ["guides/inngest", "guides/triggerdotdev"]
+                  },
+                  {
+                    "group": "Incoming webhooks",
+                    "expanded": false,
+                    "pages": ["guides/webhooks/clerk", "guides/webhooks/auth0", "guides/webhooks/stripe"]
+                  },
+                  {
+                    "group": "Webhook connectors",
+                    "expanded": false,
+                    "pages": [
+                      {
+                        "group": "Data warehouses",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/data-warehouse-sync",
+                          "guides/webhook-connectors/clickhouse",
+                          "guides/webhook-connectors/google-bigquery",
+                          "guides/webhook-connectors/snowflake",
+                          "guides/webhook-connectors/amazon-redshift",
+                          "guides/webhook-connectors/postgres"
+                        ]
+                      },
+                      {
+                        "group": "Object storage",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/amazon-s3",
+                          "guides/webhook-connectors/azure-blob-storage",
+                          "guides/webhook-connectors/google-cloud-storage"
+                        ]
+                      },
+                      {
+                        "group": "Messaging",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/amazon-sqs",
+                          "guides/webhook-connectors/amazon-sns",
+                          "guides/webhook-connectors/amazon-eventbridge",
+                          "guides/webhook-connectors/rabbitmq",
+                          "guides/webhook-connectors/google-cloud-pubsub"
+                        ]
+                      },
+                      {
+                        "group": "Analytics & observability",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/segment",
+                          "guides/webhook-connectors/opentelemetry-collector"
+                        ]
+                      },
+                      {
+                        "group": "HTTP delivery",
+                        "expanded": false,
+                        "pages": [
+                          "guides/webhook-connectors/polling-endpoint",
+                          "guides/webhook-connectors/fifo-endpoint"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Data sources",
+                    "expanded": false,
+                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch", "guides/analytics/databricks"]
+                  },
+                  {
+                    "group": "Recipes",
+                    "expanded": false,
+                    "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"]
+                  },
+                  {
+                    "group": "Framework",
+                    "expanded": false,
+                    "pages": ["guides/framework/using-translations"]
+                  },
+                  {
+                    "group": "Migration to New Dashboard",
+                    "expanded": false,
+                    "pages": [
+                      "guides/migration-to-new-dashboard/overview",
+                      "guides/migration-to-new-dashboard/feature-comparison",
+                      "guides/migration-to-new-dashboard/workflow-conversion",
+                      "guides/migration-to-new-dashboard/application-and-cutover"
+                    ]
+                  },
+                  {
+                    "group": "Migrate to Novu",
+                    "pages": [
+                      "guides/migrate-from-courier-to-novu",
+                      "guides/migrate-from-knock-to-novu",
+                      "guides/migrate-from-magicbell-to-novu",
+                      "guides/migrate-from-in-house-to-novu"
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -979,7 +1080,8 @@
                   "framework/in-app-channel",
                   "framework/push-channel",
                   "framework/sms-channel",
-                  "framework/chat-channel"
+                  "framework/chat-channel",
+                  "framework/tool-channel"
                 ],
                 "icon": "radio"
               },
@@ -1010,15 +1112,16 @@
                   {
                     "group": "Steps",
                     "pages": [
+                      "framework/typescript/steps",
                       "framework/typescript/steps/chat",
-                      "framework/typescript/steps/custom",
-                      "framework/typescript/steps/delay",
-                      "framework/typescript/steps/digest",
                       "framework/typescript/steps/email",
                       "framework/typescript/steps/inApp",
-                      "framework/typescript/steps",
                       "framework/typescript/steps/push",
-                      "framework/typescript/steps/sms"
+                      "framework/typescript/steps/sms",
+                      "framework/typescript/steps/tool",
+                      "framework/typescript/steps/custom",
+                      "framework/typescript/steps/delay",
+                      "framework/typescript/steps/digest"
                     ]
                   },
                   "framework/schema/zod",
@@ -1094,7 +1197,7 @@
     "socials": {
       "x": "https://x.com/novuhq",
       "github": "https://github.com/novuhq/novu",
-      "linkedin": "https://linkedin.com/company/novuhq"
+      "linkedin": "https://www.linkedin.com/company/novuco"
     },
     "links": [
       {
@@ -1186,7 +1289,22 @@
     },
     {
       "source": "/guides/integrations/segment",
-      "destination": "/platform/integrations/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/guides/webhooks/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/guides/webhooks/hightouch",
+      "destination": "/guides/analytics/hightouch",
       "permanent": true
     },
     {
@@ -1687,6 +1805,96 @@
     {
       "source": "/agents/channels/capabilities",
       "destination": "/agents/channels/overview",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/chat/agent-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/chat/web-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/web-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/quickstart",
+      "destination": "/agents/channels/web-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/chat-ui",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/starter-ui",
+      "destination": "/agents/channels/web-chat/recipes/assistant-ui",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/rendering",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/rendering",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/production",
+      "destination": "/agents/channels/web-chat/security",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/web-chat/production",
+      "destination": "/agents/channels/web-chat/security",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/messages",
+      "destination": "/agents/channels/web-chat/messages",
+      "permanent": true
+    },
+    {
+      "source": "/platform/sdks/react/hooks/use-agent-chat",
+      "destination": "/platform/sdks/react/hooks/use-web-chat",
       "permanent": true
     },
     {

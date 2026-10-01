@@ -8,7 +8,13 @@ import {
   SubscriberRepository,
   TenantRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
+} from '@novu/shared';
 import { FeatureFlagsService, TraceLogRepository } from '../../services';
 import { CompileTemplate } from '../compile-template';
 import { ConditionsFilter } from '../conditions-filter';
@@ -69,11 +75,13 @@ const novuIntegration: IntegrationEntity = {
 };
 
 const findOneMock = jest.fn(() => testIntegration);
+const findMock = jest.fn(() => []);
 
 jest.mock('@novu/dal', () => ({
   ...jest.requireActual('@novu/dal'),
   IntegrationRepository: jest.fn(() => ({
     findOne: findOneMock,
+    find: findMock,
   })),
 }));
 
@@ -99,9 +107,23 @@ describe('select integration', () => {
     { setContext: jest.fn(), info: jest.fn() } as any
   );
   beforeEach(async () => {
-    // @ts-expect-error
-    useCase = new SelectIntegration(integrationRepository, conditionsFilter, new TenantRepository());
     jest.clearAllMocks();
+    findMock.mockReturnValue([]);
+    findOneMock.mockReturnValue(testIntegration);
+
+    const featureFlagsService = {
+      getFlag: jest.fn().mockResolvedValue(false),
+    };
+    const normalizeVariablesUsecase = {
+      execute: jest.fn().mockResolvedValue({}),
+    };
+    useCase = new SelectIntegration(
+      integrationRepository,
+      conditionsFilter,
+      new TenantRepository(),
+      normalizeVariablesUsecase as never,
+      featureFlagsService as never
+    );
   });
 
   it('should select the integration', async () => {
@@ -116,7 +138,7 @@ describe('select integration', () => {
     );
 
     expect(integration).not.toBeNull();
-    expect(integration?.identifier).toEqual(testIntegration.identifier);
+    expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
   });
 
   it('should return the novu integration', async () => {
@@ -133,7 +155,7 @@ describe('select integration', () => {
     );
 
     expect(integration).not.toBeNull();
-    expect(integration?.providerId).toEqual(EmailProviderIdEnum.Novu);
+    expect(integration?.integration.providerId).toEqual(EmailProviderIdEnum.Novu);
   });
 
   it.each`
@@ -154,7 +176,7 @@ describe('select integration', () => {
         channel,
       }));
 
-      const integration = await useCase.execute(
+      await useCase.execute(
         SelectIntegrationCommand.create({
           channelType: channel,
           environmentId,
@@ -248,6 +270,301 @@ describe('select integration', () => {
       { query: { sort: { createdAt: -1 } } }
     );
     expect(integration).not.toBeUndefined();
-    expect(integration?.identifier).toEqual(identifier);
+    expect(integration?.integration.identifier).toEqual(identifier);
+  });
+
+  it('should select the first integration matching JsonLogic conditions', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'conditioned-integration',
+      identifier: 'conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          subscriber: { locale: 'fr' },
+        },
+      })
+    );
+
+    expect(integration?.integration.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
+  });
+
+  it('should select an integration matching saved payload conditions', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'payload-conditioned-integration',
+      identifier: 'payload-conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'payload.region' }, 'eu'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          payload: { region: 'eu' },
+        },
+      })
+    );
+
+    expect(integration?.integration.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
+  });
+
+  it('should select an integration matching workflow metadata conditions', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'workflow-conditioned-integration',
+      identifier: 'workflow-conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'workflow.name' }, 'Order confirmation'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          workflow: {
+            name: 'Order confirmation',
+            tags: ['transactional'],
+          },
+        },
+      })
+    );
+
+    expect(integration?.integration.identifier).toEqual(matchingIntegration.identifier);
+    expect(integration?.matchedConditions).toEqual({ type: 'rules', value: matchingIntegration.rules });
+  });
+
+  it('should not apply unsafe json-logic operators and fall back to primary', async () => {
+    const unsafeIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'unsafe-integration',
+      identifier: 'unsafe-integration-identifier',
+      primary: false,
+      rules: {
+        log: { var: 'subscriber.email' },
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([unsafeIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          subscriber: { email: 'secret@example.com' },
+        },
+      })
+    );
+
+    expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
+  });
+
+  it('should fall back to primary when JsonLogic conditions do not match', async () => {
+    const matchingIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'conditioned-integration',
+      identifier: 'conditioned-integration-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'context.tenant.id' }, 'acme'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([matchingIntegration]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          context: { tenant: { id: 'other' } },
+        },
+      })
+    );
+
+    expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
+  });
+
+  it('queries only conditioned integrations when no identifier is provided', async () => {
+    await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {},
+      })
+    );
+
+    expect(findMock).toHaveBeenCalledWith(
+      {
+        _organizationId: 'organizationId',
+        _environmentId: 'environmentId',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        $or: [{ rules: { $type: 'object' } }, { 'conditions.0': { $exists: true } }],
+      },
+      '',
+      { sort: { priority: -1, createdAt: -1 } }
+    );
+    expect(findOneMock).toHaveBeenCalled();
+  });
+
+  it('does not scan conditioned integrations when identifier is provided', async () => {
+    await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        identifier: 'test-integration-identifier',
+        filterData: {},
+      })
+    );
+
+    expect(findMock).not.toHaveBeenCalled();
+  });
+
+  it('selects the first matching integration in priority then createdAt order', async () => {
+    const firstMatch: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'first-match',
+      identifier: 'first-match-identifier',
+      primary: false,
+      priority: 5,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    };
+    const secondMatch: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'second-match',
+      identifier: 'second-match-identifier',
+      primary: false,
+      priority: 1,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([firstMatch, secondMatch]);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          subscriber: { locale: 'fr' },
+        },
+      })
+    );
+
+    expect(findMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        $or: [{ rules: { $type: 'object' } }, { 'conditions.0': { $exists: true } }],
+      }),
+      '',
+      { sort: { priority: -1, createdAt: -1 } }
+    );
+    expect(integration?.integration.identifier).toEqual(firstMatch.identifier);
+  });
+
+  it('prefers rules over contradictory legacy conditions', async () => {
+    const dualFormatIntegration: IntegrationEntity = {
+      ...testIntegration,
+      _id: 'dual-format',
+      identifier: 'dual-format-identifier',
+      primary: false,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+      conditions: [
+        {
+          value: FieldLogicalOperatorEnum.AND,
+          children: [
+            {
+              field: 'locale',
+              value: 'de',
+              operator: FieldOperatorEnum.EQUAL,
+              on: FilterPartTypeEnum.SUBSCRIBER,
+            },
+          ],
+        },
+      ],
+    };
+
+    findOneMock.mockReturnValue(testIntegration);
+    findMock.mockReturnValue([dualFormatIntegration]);
+
+    const ignoredLegacy = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          subscriber: { locale: 'de' },
+        },
+      })
+    );
+
+    expect(ignoredLegacy?.integration.identifier).toEqual(testIntegration.identifier);
+
+    const matchedRules = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {
+          subscriber: { locale: 'fr' },
+        },
+      })
+    );
+
+    expect(matchedRules?.integration.identifier).toEqual(dualFormatIntegration.identifier);
+    expect(matchedRules?.matchedConditions).toEqual({ type: 'rules', value: dualFormatIntegration.rules });
   });
 });

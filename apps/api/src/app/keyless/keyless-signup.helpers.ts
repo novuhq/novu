@@ -68,3 +68,33 @@ export function buildKeylessSignupCard(claimUrl: string): CardElement {
     ],
   };
 }
+
+/**
+ * Sent on the human's linked channel *instead of* the agent's message once a
+ * keyless `@novu/human` environment hits its interaction cap.
+ */
+export function buildKeylessHumanSignupCard(claimUrl: string): CardElement {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content:
+          "You've reached the limit of this free `human` demo. Sign up for a free Novu account to keep this " +
+          'channel and your setup — your agents pick up right where they left off.',
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'Sign up & keep this setup',
+            url: claimUrl,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}

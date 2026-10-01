@@ -10,14 +10,20 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
-import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import { ChatInstanceRegistry, type ChatWithAdapters, type PlatformAdapters } from '../ingress/chat-instance.registry';
+import {
+  ChatInstanceRegistry,
+  type ChatWithAdapters,
+  type PlatformAdapters,
+  platformAdapterKey,
+} from '../ingress/chat-instance.registry';
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
 import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
-import { resolvePlanDeliveryMode } from './plan-live-delivery';
+import { isNativePlanAdapter, resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
 import {
@@ -75,6 +81,7 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
+  quoteReply?: { messageId: string };
 };
 
 /**
@@ -263,9 +270,7 @@ export class OutboundGateway {
     let sequence: number | undefined;
     try {
       const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
-      const collected = await this.deliveryInfo.collect(() =>
-        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg)
-      );
+      const collected = await this.deliveryInfo.collect(() => thread.post(postArg));
       sent = collected.result;
       sequence = collected.info.sequence;
     } catch (err) {
@@ -336,15 +341,35 @@ export class OutboundGateway {
 
     const postArg = this.withPreferredMessageId(
       this.buildAdapterPostableMessage(tokenizedContent, config),
-      chat.getAdapter(config.platform),
+      chat.getAdapter(platformAdapterKey(config.platform)),
       preferredMessageId
     );
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      thread.post(postArg)
+      this.deliverThreadMessage(thread, platform, postArg, options?.quoteReply?.messageId)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  async setThreadSubscribed(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string,
+    subscribed: boolean
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const thread = chat.thread(platformThreadId);
+
+    if (subscribed) {
+      await thread.subscribe();
+
+      return;
+    }
+
+    await thread.unsubscribe();
   }
 
   /**
@@ -362,10 +387,31 @@ export class OutboundGateway {
       return postArg;
     }
 
-    return {
-      ...(postArg as unknown as Record<string, unknown>),
-      messageId: preferredMessageId,
-    } as unknown as AdapterPostableMessage;
+    const envelope = typeof postArg === 'string' ? { markdown: postArg } : postArg;
+
+    return Object.assign({}, envelope, { messageId: preferredMessageId });
+  }
+
+  private async deliverThreadMessage(
+    thread: Thread,
+    platform: string,
+    postArg: AdapterPostableMessage,
+    quoteMessageId?: string
+  ): Promise<{ id: string; threadId: string }> {
+    const messageId = quoteMessageId?.trim();
+    if (messageId) {
+      try {
+        return await thread.reply(messageId, postArg);
+      } catch (err) {
+        if (err instanceof Error && err.name === 'NotImplementedError') {
+          this.logger.debug({ platform }, 'quote-reply not supported by adapter; falling back to post');
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    return thread.post(postArg);
   }
 
   async startTypingInConversation(
@@ -416,7 +462,7 @@ export class OutboundGateway {
 
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-    const adapter = chat.getAdapter(config.platform);
+    const adapter = chat.getAdapter(platformAdapterKey(config.platform));
 
     // Most platforms have no explicit stop API — indicators expire or clear on
     // post. Adapters with in-process delivery (web) expose `stopTyping`.
@@ -575,7 +621,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     if (typeof adapter.editMessage !== 'function') {
       throw new BadRequestException(`Platform ${platform} does not support editing messages`);
     }
@@ -608,7 +654,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     if (typeof adapter.deleteMessage !== 'function') {
       return;
     }
@@ -652,9 +698,9 @@ export class OutboundGateway {
       return null;
     }
 
-    if (mode === 'native') {
+    if (isNativePlanAdapter(adapter)) {
       const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.postObject!(platformThreadId, 'plan', model)
+        adapter.postObject(platformThreadId, 'plan', model)
       ).catch(toDeliveryError);
 
       return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -690,9 +736,9 @@ export class OutboundGateway {
       return;
     }
 
-    if (mode === 'native') {
+    if (isNativePlanAdapter(adapter)) {
       await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.editObject!(platformThreadId, platformMessageId, 'plan', model)
+        adapter.editObject(platformThreadId, platformMessageId, 'plan', model)
       ).catch(toDeliveryError);
 
       return;
@@ -717,7 +763,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
 
     return { chat, config, adapter };
   }
@@ -734,7 +780,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.addReaction(platformThreadId, platformMessageId, resolved)
@@ -753,7 +799,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.removeReaction(platformThreadId, platformMessageId, resolved)
@@ -876,7 +922,7 @@ export class OutboundGateway {
     platform: AgentPlatformEnum,
     platformUserId: string
   ): Promise<Thread> {
-    const adapter: Adapter = chat.getAdapter(platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(platform));
 
     if (typeof adapter.openDM === 'function') {
       const threadId = await adapter.openDM(platformUserId);
@@ -898,13 +944,9 @@ export class OutboundGateway {
   }
 
   /**
-   * Wraps outbound markdown replies with a muted "Powered by Novu" footnote for
-   * organizations that have not removed Novu branding (free plan). Pro and above
-   * can disable it via the existing `removeNovuBranding` org setting, resolved
-   * once per delivery by `AgentConfigResolver`.
-   *
-   * Only plain markdown replies are branded — cards/action messages are left
-   * untouched.
+   * Appends a "Powered by Novu" markdown footer for orgs that have not removed
+   * Novu branding. Pro and above can disable it via `removeNovuBranding`.
+   * Cards and action messages are left untouched.
    */
   private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
     if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
@@ -915,9 +957,10 @@ export class OutboundGateway {
       return content;
     }
 
-    const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
-
-    return { ...content, card, markdown: undefined };
+    return {
+      ...content,
+      markdown: appendPoweredByWatermark(content.markdown, branding.agentIdentifier, branding.platform),
+    };
   }
 
   /**
@@ -932,13 +975,28 @@ export class OutboundGateway {
 
     if (deliveryContent.card) {
       return {
-        card: deliveryContent.card,
+        card:
+          branding.platform === AgentPlatformEnum.SLACK
+            ? splitOversizedSlackText(deliveryContent.card)
+            : deliveryContent.card,
+        ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
+      } as AdapterPostableMessage;
+    }
+
+    const markdown = deliveryContent.markdown ?? '';
+
+    if (branding.platform === AgentPlatformEnum.SLACK && markdown.length > SLACK_MARKDOWN_TEXT_LIMIT) {
+      return {
+        card: splitOversizedSlackText({
+          type: 'card',
+          children: [{ type: 'text', content: markdown }],
+        }),
         ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
       } as AdapterPostableMessage;
     }
 
     return {
-      markdown: deliveryContent.markdown ?? '',
+      markdown,
       files: deliveryContent.files,
     } as AdapterPostableMessage;
   }
@@ -967,7 +1025,7 @@ export class OutboundGateway {
   private async buildThreadPostArg(
     msg: OutboundMessage,
     actionTokenBinding?: AgentActionTokenBinding
-  ): Promise<unknown> {
+  ): Promise<AdapterPostableMessage> {
     if (!msg.card || !actionTokenBinding) {
       return this.toThreadPostArg(msg);
     }
@@ -1022,11 +1080,11 @@ export class OutboundGateway {
     return '';
   }
 
-  private toThreadPostArg(msg: OutboundMessage): unknown {
+  private toThreadPostArg(msg: OutboundMessage): AdapterPostableMessage {
     if (msg.markdown && !msg.card) {
       return msg.markdown;
     }
 
-    return msg.card ?? msg;
+    return msg.card ?? (msg as AdapterPostableMessage);
   }
 }

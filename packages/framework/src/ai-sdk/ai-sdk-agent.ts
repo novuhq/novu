@@ -42,7 +42,7 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
   const userOnToolApproval = typeof h.onToolApproval === 'function';
 
   // The decision is persisted to `ctx.history` by Novu before this turn fires, so
-  // resuming is just re-running `onMessage`: `toModelMessages(ctx.history)` now
+  // resuming is just re-running `onMessage`: `toModelMessages(ctx)` now
   // yields the tool-approval-response and `streamText` continues the tool loop.
   const resume = async (ctx: AgentActionContext): Promise<void> => {
     const runtime = requireRuntimeContext(ctx);
@@ -85,6 +85,30 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
     ...(h.onAction && { onAction: h.onAction }),
     ...(h.onReaction && { onReaction: h.onReaction }),
     ...(h.onResolve && { onResolve: h.onResolve }),
+    ...(h.onMessageUpdated && {
+      onMessageUpdated: async (message, ctx) => {
+        const result = await h.onMessageUpdated?.(message, ctx);
+        if (isAiSdkResult(result)) {
+          await handleAiSdkResult(result, requireRuntimeContext(ctx), config);
+
+          return;
+        }
+
+        return result;
+      },
+    }),
+    ...(h.onMessageDeleted && {
+      onMessageDeleted: async (message, ctx) => {
+        const result = await h.onMessageDeleted?.(message, ctx);
+        if (isAiSdkResult(result)) {
+          await handleAiSdkResult(result, requireRuntimeContext(ctx), config);
+
+          return;
+        }
+
+        return result;
+      },
+    }),
     ...(h.onError && { onError: h.onError }),
   };
 

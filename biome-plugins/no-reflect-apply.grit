@@ -1,0 +1,5 @@
+language js(typescript)
+
+`Reflect.apply($args)` as $call where {
+  register_diagnostic(span=$call, message="Replace `Reflect.apply` with a typed function call. Model dynamic dispatch behind a named interface.", severity="error")
+}

@@ -23,7 +23,11 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent-channel-branding';
+import {
+  AGENT_IMESSAGE_LABEL,
+  getAgentChannelIconFileName,
+  IMESSAGE_PROVIDER_IDS,
+} from '@/utils/agent-channel-branding';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
@@ -37,13 +41,15 @@ import { type ProviderSwitcherStatus, resolveProviderCardDisplayState } from './
  */
 const PROVIDER_SETUP_TIME: Record<string, string> = {
   [EmailProviderIdEnum.NovuAgent]: '~ 30 seconds',
-  [ChatProviderIdEnum.Slack]: '~ 1 minute',
+  [ChatProviderIdEnum.Slack]: '~ 30 seconds',
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
-  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 5 minutes',
+  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
   [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
   [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
+  [ChatProviderIdEnum.PhotonImessage]: '~ 2 minutes',
+  [ChatProviderIdEnum.NovuWebChat]: '~ 30 seconds',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
-  'google-chat': '~ 2 minutes',
+  [ChatProviderIdEnum.GoogleChat]: '~ 2 minutes',
   linear: '~ 2 minutes',
   zoom: '~ 2 minutes',
 };
@@ -51,6 +57,15 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
   if (providerId === ChatProviderIdEnum.Sendblue) {
     return AGENT_IMESSAGE_LABEL;
+  }
+
+  // Two iMessage vendors exist; qualify Photon's card so the pair stays distinguishable.
+  if (providerId === ChatProviderIdEnum.PhotonImessage) {
+    return `${AGENT_IMESSAGE_LABEL} (Photon)`;
+  }
+
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
+    return 'Web chat';
   }
 
   return getAgentChannelDisplayName(providerId, displayName);
@@ -80,6 +95,55 @@ type ProviderCardItem = {
   requiresBusinessTier: boolean;
   integrations: IIntegration[];
 };
+
+/**
+ * Collapse the iMessage vendors into ONE channel card: iMessage is a single
+ * channel to the user, and the vendor is picked on the "Setup iMessage via"
+ * select inside the guide (which re-links through the same replace-existing
+ * flow as the cards). The card carries the ACTIVE vendor's providerId — a
+ * connected link first, then any link, then an existing integration, then the
+ * first vendor as the default for fresh agents. Because the replace-existing
+ * flow keeps at most one iMessage vendor linked, every downstream status check
+ * (selected/connected/in-setup) is correct against the active vendor alone.
+ */
+/** Grid order of the channel cards; unlisted providers sort last. */
+const PROVIDER_CARD_RANK: Record<string, number> = {
+  [ChatProviderIdEnum.NovuWebChat]: 0,
+  [ChatProviderIdEnum.Slack]: 1,
+  [EmailProviderIdEnum.NovuAgent]: 2,
+  [ChatProviderIdEnum.WhatsAppBusiness]: 3,
+  [ChatProviderIdEnum.MsTeams]: 4,
+  [ChatProviderIdEnum.Discord]: 5,
+};
+
+function rankProviderCard(providerId: string): number {
+  return PROVIDER_CARD_RANK[providerId] ?? 6;
+}
+
+function mergeImessageCards(
+  items: ProviderCardItem[],
+  existingLinks: AgentIntegrationLink[] | undefined
+): ProviderCardItem[] {
+  const group = items.filter((item) => IMESSAGE_PROVIDER_IDS.includes(item.providerId));
+
+  if (group.length <= 1) {
+    return items;
+  }
+
+  const imessageLink = (predicate: (link: AgentIntegrationLink) => boolean) =>
+    existingLinks?.find((link) => IMESSAGE_PROVIDER_IDS.includes(link.integration.providerId) && predicate(link));
+
+  const activeProviderId =
+    imessageLink((link) => hasAgentInboundConnection(link.connectedAt))?.integration.providerId ??
+    imessageLink(() => true)?.integration.providerId ??
+    group.find((item) => item.integrations.length > 0)?.providerId ??
+    group[0].providerId;
+
+  const active = group.find((item) => item.providerId === activeProviderId) ?? group[0];
+  const merged: ProviderCardItem = { ...active, displayName: AGENT_IMESSAGE_LABEL };
+
+  return [merged, ...items.filter((item) => !IMESSAGE_PROVIDER_IDS.includes(item.providerId))];
+}
 
 function buildCardItems(
   conversationalProviders: readonly ConversationalProvider[],
@@ -165,6 +229,7 @@ function ProviderPill({
   connected,
   connecting,
   inSetup,
+  idleLabel = 'Connect',
 }: {
   loading: boolean;
   comingSoon: boolean;
@@ -172,6 +237,7 @@ function ProviderPill({
   connected: boolean;
   connecting: boolean;
   inSetup: boolean;
+  idleLabel?: string;
 }) {
   let label: string;
   if (comingSoon) {
@@ -185,7 +251,15 @@ function ProviderPill({
   } else if (connecting) {
     label = 'Connecting...';
   } else {
-    label = 'Connect';
+    label = idleLabel;
+  }
+
+  if (connecting) {
+    return (
+      <div className="bg-bg-weak flex w-full items-center justify-center rounded-[4px] p-1">
+        <span className="text-text-soft px-1 text-label-xs font-medium leading-4">{label}</span>
+      </div>
+    );
   }
 
   return (
@@ -253,22 +327,36 @@ function ScrollEdgeButton({
   );
 }
 
+function ConnectingBadge() {
+  return (
+    <span className="flex size-4 items-center justify-center rounded-full bg-[hsl(var(--yellow-alpha-10))]" aria-hidden>
+      <span className="flex size-3 items-center justify-center rounded-full border border-white/10 bg-[hsl(var(--yellow-alpha-16))]">
+        <span className="size-1.5 rounded-[3px] bg-[#f6b51e]/60" />
+      </span>
+    </span>
+  );
+}
+
 function TopRightIndicator({
   isLocked,
   showCheck,
+  showConnecting,
   showInSetup,
   comingSoon,
   setupTime,
 }: {
   isLocked: boolean;
   showCheck: boolean;
+  showConnecting: boolean;
   showInSetup: boolean;
   comingSoon: boolean;
   setupTime: string;
 }) {
   if (isLocked) return <LockedBadge />;
   if (showCheck) return <SelectedStatusBadge />;
+  if (showConnecting) return <ConnectingBadge />;
   if (showInSetup) return <InSetupBadge />;
+  if (!comingSoon && !setupTime) return null;
 
   return (
     <span className="text-text-soft shrink-0 whitespace-nowrap text-[10px] font-medium leading-[14px]">
@@ -337,6 +425,7 @@ function ProviderCard({
           <TopRightIndicator
             isLocked={isLocked}
             showCheck={showCheck}
+            showConnecting={showConnecting}
             showInSetup={showInSetup}
             comingSoon={item.comingSoon}
             setupTime={setupTime}
@@ -452,18 +541,16 @@ export function ProviderCards({
   // Email (NovuAgent) renders like every other connectable channel card; its integration + link
   // are only provisioned when the user clicks Connect.
   const items = useMemo(() => {
-    const built = buildCardItems(conversationalProviders, integrations).filter(
-      // Agent email is Enterprise/Cloud-only — never surface the card on Community.
-      (item) => !(IS_SELF_HOSTED_CE && item.providerId === EmailProviderIdEnum.NovuAgent)
+    const built = mergeImessageCards(
+      buildCardItems(conversationalProviders, integrations).filter(
+        // Agent email is Enterprise/Cloud-only — never surface the card on Community.
+        (item) => !(IS_SELF_HOSTED_CE && item.providerId === EmailProviderIdEnum.NovuAgent)
+      ),
+      existingLinks
     );
 
-    return [...built].sort((left, right) => {
-      if (left.providerId === EmailProviderIdEnum.NovuAgent) return -1;
-      if (right.providerId === EmailProviderIdEnum.NovuAgent) return 1;
-
-      return 0;
-    });
-  }, [conversationalProviders, integrations]);
+    return [...built].sort((left, right) => rankProviderCard(left.providerId) - rankProviderCard(right.providerId));
+  }, [conversationalProviders, integrations, existingLinks]);
 
   const linkedIntegrationIds = useMemo(
     () => new Set(existingLinks?.map((link) => link.integration._id) ?? []),
@@ -555,8 +642,7 @@ export function ProviderCards({
     }
 
     const integration =
-      integrations?.find((i) => i._id === existingLink.integration._id) ??
-      (existingLink.integration as unknown as IIntegration);
+      integrations?.find((i) => i._id === existingLink.integration._id) ?? (existingLink.integration as IIntegration);
     onSelect(item.providerId, integration);
 
     return true;

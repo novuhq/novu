@@ -1,15 +1,21 @@
 import {
   AgentRepository,
+  ChannelConnectionRepository,
   ChannelEndpointRepository,
+  ContextRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
+  MessageRepository,
+  NotificationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
+import { Types } from 'mongoose';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
@@ -21,6 +27,7 @@ import {
   AgentTestContext,
   activityRepository,
   conversationRepository,
+  must,
   seedChannelEndpoint,
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
@@ -86,6 +93,7 @@ function mockThread(id: string, channelId = 'C_TEST') {
     isDM: false,
     startTyping: async () => {},
     subscribe: async () => {},
+    unsubscribe: async () => {},
     toJSON: () => ({ id, platform: 'slack', channelId, serialized: true }),
     createSentMessageFromMessage: () => mockSentMessage(),
   };
@@ -101,6 +109,7 @@ function mockMessage(opts: { id?: string; userId: string; text: string; fullName
       userName: 'testuser',
       isBot: false,
     },
+    isMention: true,
     metadata: { dateSent: new Date() },
   };
 }
@@ -232,31 +241,33 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       await invokeInbound(threadId, msg);
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
 
-      expect(conversation).to.exist;
-      expect(conversation!.status).to.equal(ConversationStatusEnum.ACTIVE);
-      expect(conversation!.channels[0].platformThreadId).to.equal(threadId);
-      expect(conversation!.messageCount).to.be.gte(1);
+      expect(conversation.status).to.equal(ConversationStatusEnum.ACTIVE);
+      expect(conversation.channels[0].platformThreadId).to.equal(threadId);
+      expect(conversation.messageCount).to.be.gte(1);
 
-      const subParticipant = conversation!.participants.find(
+      const subParticipant = conversation.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
       expect(subParticipant, 'custom-code must not auto-provision a subscriber').to.not.exist;
 
-      const platformUserParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      const platformUserParticipant = must(
+        conversation.participants.find((p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER),
+        'platform user participant'
       );
-      expect(platformUserParticipant, 'expected PLATFORM_USER participant for unresolved Slack sender').to.exist;
-      expect(platformUserParticipant!.id).to.equal('slack:U_CREATOR');
+      expect(platformUserParticipant.id).to.equal('slack:U_CREATOR');
 
-      const agentParticipant = conversation!.participants.find((p) => p.type === ConversationParticipantTypeEnum.AGENT);
+      const agentParticipant = conversation.participants.find((p) => p.type === ConversationParticipantTypeEnum.AGENT);
       expect(agentParticipant).to.exist;
 
       const matchingSubscribers = await subscriberRepository.find({
@@ -276,12 +287,14 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       });
       expect(endpoint, 'custom-code must not write a ChannelEndpoint').to.not.exist;
 
-      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id);
       expect(activities.length).to.be.gte(1);
 
-      const userActivity = activities.find((a) => a.senderType === ConversationActivitySenderTypeEnum.PLATFORM_USER);
-      expect(userActivity).to.exist;
-      expect(userActivity!.content).to.equal('Hello agent');
+      const userActivity = must(
+        activities.find((a) => a.senderType === ConversationActivitySenderTypeEnum.PLATFORM_USER),
+        'user activity'
+      );
+      expect(userActivity.content).to.equal('Hello agent');
     });
 
     it('should create participant as subscriber when channel endpoint exists', async () => {
@@ -301,25 +314,29 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       await invokeInbound(threadId, msg);
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
 
-      expect(conversation).to.exist;
-
-      const subParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      const subParticipant = must(
+        conversation.participants.find((p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER),
+        'subscriber participant'
       );
-      expect(subParticipant).to.exist;
-      expect(subParticipant!.id).to.equal(subscriber.subscriberId);
+      expect(subParticipant.id).to.equal(subscriber.subscriberId);
 
-      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
-      const userActivity = activities.find((a) => a.content === 'Hi from subscriber');
-      expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id);
+      const userActivity = must(
+        activities.find((a) => a.content === 'Hi from subscriber'),
+        'user activity'
+      );
+      expect(userActivity.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
     });
   });
 
@@ -330,18 +347,20 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       await invokeInbound(threadId, mockMessage({ userId: 'U1', text: 'First message' }));
       await invokeInbound(threadId, mockMessage({ userId: 'U1', text: 'Second message' }), AgentEventEnum.ON_MESSAGE);
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
 
-      expect(conversation).to.exist;
-      expect(conversation!.messageCount).to.be.gte(2);
+      expect(conversation.messageCount).to.be.gte(2);
 
-      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id);
       expect(activities.length).to.be.gte(2);
     });
   });
@@ -374,16 +393,96 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(call.conversation._id).to.be.a('string');
 
       expect(call.subscriber).to.exist;
-      expect(call.subscriber!.subscriberId).to.equal(subscriber.subscriberId);
-      expect(call.subscriber!.firstName).to.equal('Bridge');
-      expect(call.subscriber!.email).to.equal('bridge@test.com');
+      const subscriberPayload = must(call.subscriber, 'subscriber');
+      expect(subscriberPayload.subscriberId).to.equal(subscriber.subscriberId);
+      expect(subscriberPayload.firstName).to.equal('Bridge');
+      expect(subscriberPayload.email).to.equal('bridge@test.com');
 
       expect(call.message).to.exist;
-      expect(call.message!.text).to.equal('Bridge test');
+      const messagePayload = must(call.message, 'message');
+      expect(messagePayload.text).to.equal('Bridge test');
 
       expect(call.platformContext.threadId).to.equal(threadId);
       expect(call.platformContext.channelId).to.equal('C_TEST');
       expect(call.platformContext.isDM).to.equal(false);
+      expect(call.workflowOrigin, 'no origin seeded on first touch').to.equal(null);
+    });
+
+    it('forwards a re-derived workflow origin on later turns via workflowOrigin', async () => {
+      const subscriberRepository = new SubscriberRepository();
+      const messageRepository = new MessageRepository();
+      const notificationRepository = new NotificationRepository();
+      const subscriber = await subscriberRepository.create({
+        subscriberId: `sub-origin-${Date.now()}`,
+        firstName: 'Origin',
+        lastName: 'Test',
+        email: 'origin@test.com',
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      await seedChannelEndpoint(ctx, 'U_ORIGIN', subscriber.subscriberId);
+
+      const threadId = `T_ORIGIN_${Date.now()}`;
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'first' }));
+      await waitForBridgeCallCount(1);
+
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
+      );
+
+      const notification = await notificationRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        _subscriberId: subscriber._id,
+        _templateId: new Types.ObjectId().toString(),
+        transactionId: `txn-origin-${Date.now()}`,
+        channels: [ChannelTypeEnum.CHAT],
+        payload: { orderId: 'ORD-42' },
+        to: { subscriberId: subscriber.subscriberId },
+      });
+
+      await messageRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        _subscriberId: subscriber._id,
+        _agentId: ctx.agentId,
+        _notificationId: notification._id,
+        _templateId: notification._templateId,
+        content: 'Your order ORD-42 shipped',
+        templateIdentifier: 'order-shipped',
+        identifier: `C_TEST:1777837477.371619`,
+        channel: ChannelTypeEnum.CHAT,
+        transactionId: notification.transactionId,
+      });
+
+      await conversationRepository.update(
+        {
+          _id: conversation._id,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
+        { $set: { _notificationId: notification._id } }
+      );
+
+      bridgeCalls = [];
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'where is my order?' }));
+      await waitForBridgeCallCount(1);
+
+      expect(bridgeCalls[0].workflowOrigin?.data).to.deep.include({
+        workflowIdentifier: 'order-shipped',
+        notificationId: notification._id,
+        payload: { orderId: 'ORD-42' },
+        body: 'Your order ORD-42 shipped',
+      });
+      expect(bridgeCalls[0].workflowOrigin?.source).to.equal('existing');
     });
 
     it('Passes null subscriber in the bridge payload for first-time Slack senders on open custom-code', async () => {
@@ -392,6 +491,63 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(bridgeCalls.length).to.equal(1);
       expect(bridgeCalls[0].subscriber, 'custom-code open must Pass null, not auto-provision').to.equal(null);
+    });
+  });
+
+  describe('Context bridge URL override', () => {
+    const channelConnectionRepository = new ChannelConnectionRepository();
+    const contextRepository = new ContextRepository();
+
+    async function setWorkspaceContextKeys(contextKeys: string[]) {
+      await channelConnectionRepository.update(
+        {
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+          integrationIdentifier: ctx.integrationIdentifier,
+          'workspace.id': 'W_TEAM',
+        },
+        { $set: { contextKeys } }
+      );
+    }
+
+    async function createContext(type: string, id: string, bridgeUrl?: string) {
+      await contextRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        type,
+        id,
+        key: `${type}:${id}`,
+        data: {},
+        ...(bridgeUrl ? { bridgeUrl } : {}),
+      });
+    }
+
+    it('routes the bridge call to a resolved context bridgeUrl override', async () => {
+      const overrideUrl = 'https://tenant-acme.example.com/api/novu';
+      await createContext('tenant', 'wh-override-acme', overrideUrl);
+      await setWorkspaceContextKeys(['tenant:wh-override-acme']);
+
+      const threadId = `T_CTX_OVERRIDE_${Date.now()}`;
+      const msg = { ...mockMessage({ userId: 'U_CTX', text: 'route me' }), raw: { team_id: 'W_TEAM' } };
+
+      await invokeInbound(threadId, msg as any);
+
+      expect(bridgeCalls.length).to.equal(1);
+      expect(bridgeCalls[0].bridgeUrlOverride).to.equal(overrideUrl);
+      expect(bridgeCalls[0].context).to.have.property('tenant');
+    });
+
+    it('leaves bridgeUrlOverride undefined when the resolved context has no bridgeUrl', async () => {
+      await createContext('tenant', 'wh-plain-acme');
+      await setWorkspaceContextKeys(['tenant:wh-plain-acme']);
+
+      const threadId = `T_CTX_PLAIN_${Date.now()}`;
+      const msg = { ...mockMessage({ userId: 'U_CTX2', text: 'no override' }), raw: { team_id: 'W_TEAM' } };
+
+      await invokeInbound(threadId, msg as any);
+
+      expect(bridgeCalls.length).to.equal(1);
+      expect(bridgeCalls[0].bridgeUrlOverride).to.equal(undefined);
     });
   });
 
@@ -461,33 +617,39 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       await invokeInbound(threadId, mockMessage({ userId: 'U_REOPEN', text: 'Initial' }));
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
-      expect(conversation!.status).to.equal(ConversationStatusEnum.ACTIVE);
+      expect(conversation.status).to.equal(ConversationStatusEnum.ACTIVE);
 
       await conversationRepository.updateStatus(
         ctx.session.environment._id,
         ctx.session.organization._id,
-        conversation!._id,
+        conversation._id,
         ConversationStatusEnum.RESOLVED
       );
 
       await invokeInbound(threadId, mockMessage({ userId: 'U_REOPEN', text: 'Reopening' }), AgentEventEnum.ON_MESSAGE);
 
-      const reopened = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const reopened = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'reopened conversation'
       );
-      expect(reopened!.status).to.equal(ConversationStatusEnum.ACTIVE);
-      expect(reopened!._id).to.equal(conversation!._id);
+      expect(reopened.status).to.equal(ConversationStatusEnum.ACTIVE);
+      expect(reopened._id).to.equal(conversation._id);
     });
 
     it('reuses the PLATFORM_USER participant across subsequent inbound messages from the same unresolved Slack user', async () => {
@@ -495,19 +657,22 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       await invokeInbound(threadId, mockMessage({ userId: 'U_REUSE', text: 'First mention', fullName: 'Bob' }));
 
-      const conversationAfterFirst = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversationAfterFirst = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation after first'
       );
 
-      const firstPlatformParticipant = conversationAfterFirst!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      const firstPlatformParticipant = must(
+        conversationAfterFirst.participants.find((p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER),
+        'platform user participant'
       );
-      expect(firstPlatformParticipant, 'expected PLATFORM_USER on first unresolved inbound').to.exist;
-      expect(firstPlatformParticipant!.id).to.equal('slack:U_REUSE');
+      expect(firstPlatformParticipant.id).to.equal('slack:U_REUSE');
 
       await invokeInbound(
         threadId,
@@ -515,21 +680,24 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         AgentEventEnum.ON_MESSAGE
       );
 
-      const conversationAfterSecond = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversationAfterSecond = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation after second'
       );
 
-      const platformParticipants = conversationAfterSecond!.participants.filter(
+      const platformParticipants = conversationAfterSecond.participants.filter(
         (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
       );
       expect(platformParticipants.length, 'no duplicate PLATFORM_USER participant').to.equal(1);
       expect(platformParticipants[0].id).to.equal('slack:U_REUSE');
 
-      const subParticipants = conversationAfterSecond!.participants.filter(
+      const subParticipants = conversationAfterSecond.participants.filter(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
       expect(subParticipants.length, 'custom-code must not auto-provision').to.equal(0);
@@ -562,10 +730,10 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(bridgeCalls.length).to.equal(1);
       const call = bridgeCalls[0];
       expect(call.event).to.equal(AgentEventEnum.ON_REACTION);
-      expect(call.reaction).to.exist;
-      expect(call.reaction!.emoji).to.equal('thumbs_up');
-      expect(call.reaction!.added).to.equal(true);
-      expect(call.reaction!.messageId).to.equal(msg.id);
+      const reaction = must(call.reaction, 'reaction');
+      expect(reaction.emoji).to.equal('thumbs_up');
+      expect(reaction.added).to.equal(true);
+      expect(reaction.messageId).to.equal(msg.id);
     });
 
     it('should skip reaction when no conversation exists for the thread', async () => {
@@ -612,27 +780,31 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(bridgeCalls.length).to.equal(1);
       const call = bridgeCalls[0];
-      expect(call.reaction!.sourceMessage).to.exist;
-      expect(call.reaction!.sourceMessage!.text).to.equal('Source message test');
-      expect(call.reaction!.sourceMessage!.author.fullName).to.equal('Jane Doe');
+      const reaction = must(call.reaction, 'reaction');
+      const sourceMessage = must(reaction.sourceMessage, 'source message');
+      expect(sourceMessage.text).to.equal('Source message test');
+      expect(sourceMessage.author.fullName).to.equal('Jane Doe');
     });
 
-    it('should not persist conversation activity for reactions', async () => {
+    it('should persist a reaction activity against the source message', async () => {
       const threadId = `T_REACT_NOACT_${Date.now()}`;
       const msg = mockMessage({ userId: 'U_REACT2', text: 'Activity test' });
 
       await invokeInbound(threadId, msg);
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
       const activitiesBefore = await activityRepository.findByConversation(
         ctx.session.environment._id,
-        conversation!._id
+        conversation._id
       );
 
       const reactionEvent: InboundReactionEvent = {
@@ -647,9 +819,17 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       const activitiesAfter = await activityRepository.findByConversation(
         ctx.session.environment._id,
-        conversation!._id
+        conversation._id
       );
-      expect(activitiesAfter.length).to.equal(activitiesBefore.length);
+      expect(activitiesAfter.length).to.equal(activitiesBefore.length + 1);
+
+      const reactionActivity = must(
+        activitiesAfter.find((activity) => activity.type === ConversationActivityTypeEnum.REACTION),
+        'reaction activity'
+      );
+      expect(reactionActivity.content).to.equal('heart');
+      expect(reactionActivity.platformMessageId).to.equal(msg.id);
+      expect((reactionActivity.richContent as any)?.reaction).to.deep.equal({ emoji: 'heart', added: true });
     });
   });
 
@@ -694,25 +874,29 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       const threadId = await invokeEmailInbound('agent-inbound@example.com', 'Hello from email');
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
 
-      expect(conversation).to.exist;
-
-      const subParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      const subParticipant = must(
+        conversation.participants.find((p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER),
+        'subscriber participant'
       );
-      expect(subParticipant).to.exist;
-      expect(subParticipant!.id).to.equal(subscriber.subscriberId);
+      expect(subParticipant.id).to.equal(subscriber.subscriberId);
 
-      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
-      const userActivity = activities.find((a) => a.content === 'Hello from email');
-      expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id);
+      const userActivity = must(
+        activities.find((a) => a.content === 'Hello from email'),
+        'user activity'
+      );
+      expect(userActivity.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
     });
 
     it('should not attach Mixed@Example.com when inbound is lowercased; custom-code open Passes null', async () => {
@@ -727,29 +911,30 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       const threadId = await invokeEmailInbound('mixed@example.com', 'Exact lowercase lookup');
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
-
-      expect(conversation).to.exist;
 
       // Lookup is exact on the normalized inbound address, so Mixed@Example.com
       // must not win. Custom-code open does not auto-provision — Pass null.
-      const subParticipant = conversation!.participants.find(
+      const subParticipant = conversation.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
       expect(subParticipant, 'must not attach Mixed@Example.com or auto-provision').to.not.exist;
 
-      const platformParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      const platformParticipant = must(
+        conversation.participants.find((p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER),
+        'platform user participant'
       );
-      expect(platformParticipant).to.exist;
-      expect(platformParticipant!.id).to.equal('email:mixed@example.com');
-      expect(platformParticipant!.id).to.not.equal(mixedCaseSubscriber.subscriberId);
+      expect(platformParticipant.id).to.equal('email:mixed@example.com');
+      expect(platformParticipant.id).to.not.equal(mixedCaseSubscriber.subscriberId);
     });
 
     it('should not map a spoofed (DKIM/SPF-failed) sender onto a matching subscriber', async () => {
@@ -769,32 +954,36 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         spf: 'failed',
       });
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
 
-      expect(conversation).to.exist;
-
       // The spoofed sender must NOT assume the victim's subscriber identity.
-      const subParticipant = conversation!.participants.find(
+      const subParticipant = conversation.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
       expect(subParticipant).to.not.exist;
 
-      const platformParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      const platformParticipant = must(
+        conversation.participants.find((p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER),
+        'platform user participant'
       );
-      expect(platformParticipant).to.exist;
-      expect(platformParticipant!.id).to.equal(`email:${victimEmail}`);
+      expect(platformParticipant.id).to.equal(`email:${victimEmail}`);
 
-      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
-      const userActivity = activities.find((a) => a.content === 'Run a privileged tool');
-      expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.PLATFORM_USER);
-      expect(userActivity!.senderId).to.not.equal(victim.subscriberId);
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id);
+      const userActivity = must(
+        activities.find((a) => a.content === 'Run a privileged tool'),
+        'user activity'
+      );
+      expect(userActivity.senderType).to.equal(ConversationActivitySenderTypeEnum.PLATFORM_USER);
+      expect(userActivity.senderId).to.not.equal(victim.subscriberId);
     });
   });
 
@@ -836,25 +1025,29 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       const threadId = await invokeWhatsAppInbound('972541111111', 'Hello from WhatsApp');
 
-      const conversation = await conversationRepository.findByPlatformThread(
-        ctx.session.environment._id,
-        ctx.session.organization._id,
-        ctx.agentId,
-        ctx.integrationId,
-        threadId
+      const conversation = must(
+        await conversationRepository.findByPlatformThread(
+          ctx.session.environment._id,
+          ctx.session.organization._id,
+          ctx.agentId,
+          ctx.integrationId,
+          threadId
+        ),
+        'conversation'
       );
 
-      expect(conversation).to.exist;
-
-      const subParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      const subParticipant = must(
+        conversation.participants.find((p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER),
+        'subscriber participant'
       );
-      expect(subParticipant).to.exist;
-      expect(subParticipant!.id).to.equal(subscriber.subscriberId);
+      expect(subParticipant.id).to.equal(subscriber.subscriberId);
 
-      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
-      const userActivity = activities.find((a) => a.content === 'Hello from WhatsApp');
-      expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id);
+      const userActivity = must(
+        activities.find((a) => a.content === 'Hello from WhatsApp'),
+        'user activity'
+      );
+      expect(userActivity.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
     });
   });
 });

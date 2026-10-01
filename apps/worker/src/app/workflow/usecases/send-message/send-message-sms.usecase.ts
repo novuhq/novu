@@ -32,6 +32,13 @@ import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
+type SmsMessageOverrides = {
+  to?: string;
+  from?: string;
+  content?: string;
+  customData?: Record<string, unknown>;
+};
+
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
   channelType = ChannelTypeEnum.SMS;
@@ -62,15 +69,13 @@ export class SendMessageSms extends SendMessageBase {
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
-    const integration = await this.getIntegration({
+    const selection = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.SMS,
       userId: command.userId,
       identifier: overrideSelectedIntegration as string,
-      filterData: {
-        tenant: command.job.tenant,
-      },
+      filterData: this.getIntegrationFilterData(command),
     });
 
     addBreadcrumb({
@@ -121,7 +126,7 @@ export class SendMessageSms extends SendMessageBase {
 
     const phone = command.payload.phone || subscriber.phone;
 
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -146,7 +151,9 @@ export class SendMessageSms extends SendMessageBase {
       };
     }
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const { integration } = selection;
+
+    await this.sendSelectedIntegrationExecution(command.job, selection);
 
     const overrides = {
       ...(integration?.channel ? command.overrides[integration.channel] || {} : {}),
@@ -299,10 +306,10 @@ export class SendMessageSms extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageChannelCommand,
-    overrides: Record<string, any> = {}
+    overrides: SmsMessageOverrides = {}
   ): Promise<SendMessageResult> {
     try {
-      const bridgeBody = command.bridgeData?.outputs.body;
+      const bridgeBody = (command.bridgeData?.outputs as SmsOutput | undefined)?.body;
 
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
@@ -411,7 +418,7 @@ export class SendMessageSms extends SendMessageBase {
     }
   }
 
-  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+  public buildFactoryIntegration(integration: IntegrationEntity, _senderName?: string) {
     return {
       ...integration,
       providerId: integration.providerId,

@@ -1,0 +1,10 @@
+language js(typescript)
+
+or {
+  `function $name($params): unknown { $body }`,
+  `function $name($params): Promise<unknown> { $body }`,
+  `const $name = ($params): unknown => $body`,
+  `const $name = ($params): Promise<unknown> => $body`
+} as $function where {
+  register_diagnostic(span=$function, message="This function exposes `unknown` to its caller. Parse the value at its boundary and return a named domain type.", severity="error")
+}

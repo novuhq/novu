@@ -156,6 +156,23 @@ export async function addAgentEmailIntegration(
   return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
+/**
+ * `POST /v1/agents/:id/integrations` with `providerId: 'novu-web-chat'`
+ * auto-provisions the Web Chat integration and links it to the agent.
+ */
+export async function addWebChatIntegration(
+  client: ConnectApiClient,
+  agentIdentifier: string
+): Promise<AgentIntegrationLink> {
+  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
+    { providerId: 'novu-web-chat' }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
+}
+
 export async function listAgentIntegrations(
   client: ConnectApiClient,
   agentIdentifier: string,

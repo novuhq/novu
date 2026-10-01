@@ -83,6 +83,28 @@ describe('BullMQ Service', () => {
       const queue = bullMqService.createQueue(JobTopicNameEnum.ACTIVE_JOBS_METRIC, {});
       expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });
+
+    it('should hash-tag the prefix when the workflow Redis provider is clustered', () => {
+      const mockInMemoryProvider = {
+        providerInUseIsInClusterMode: jest.fn(() => true),
+      };
+
+      bullMqService = new BullMqService(mockInMemoryProvider as unknown as WorkflowInMemoryProviderService);
+
+      expect((bullMqService as any).generatePrefix(JobTopicNameEnum.ACTIVE_JOBS_METRIC)).toEqual(
+        '{metric-active-jobs}'
+      );
+    });
+
+    it('should omit the prefix for a standalone Redis provider', () => {
+      const mockInMemoryProvider = {
+        providerInUseIsInClusterMode: jest.fn(() => false),
+      };
+
+      bullMqService = new BullMqService(mockInMemoryProvider as unknown as WorkflowInMemoryProviderService);
+
+      expect((bullMqService as any).generatePrefix(JobTopicNameEnum.ACTIVE_JOBS_METRIC)).toBeUndefined();
+    });
   });
 
   describe('Add job', () => {

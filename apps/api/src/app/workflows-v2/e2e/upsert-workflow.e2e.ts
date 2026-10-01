@@ -1186,6 +1186,73 @@ describe('Upsert Workflow #novu-v2', () => {
     });
   });
 
+  describe('chat editorType inference', () => {
+    const mailyBody = JSON.stringify({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello from blocks' }] }],
+    });
+
+    it('sets editorType to block when the chat body is Maily JSON', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Chat EditorType Block Workflow',
+        workflowId: `chat-editor-type-block-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: { body: mailyBody },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      expect(createResponse.body.data.steps[0].controls.values.editorType).to.equal('block');
+      expect(createResponse.body.data.steps[0].issues?.controls?.editorType).to.equal(undefined);
+    });
+
+    it('sets editorType to text when the chat body is plain text', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Chat EditorType Text Workflow',
+        workflowId: `chat-editor-type-text-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: { body: 'hello {{payload.foo}}' },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      expect(createResponse.body.data.steps[0].controls.values.editorType).to.equal('text');
+      expect(createResponse.body.data.steps[0].issues?.controls?.editorType).to.equal(undefined);
+    });
+
+    it('does not report editorType enum issues when editorType is empty and body is Maily JSON', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Chat EditorType Empty Workflow',
+        workflowId: `chat-editor-type-empty-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: { body: mailyBody, editorType: '' },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      expect(createResponse.body.data.steps[0].controls.values.editorType).to.equal('block');
+      expect(createResponse.body.data.steps[0].issues?.controls?.editorType).to.equal(undefined);
+    });
+  });
+
   describe('workflow agent assignment', () => {
     async function createTestAgent(identifier: string, name = identifier) {
       const response = await session.testAgent.post('/v1/agents').send({ name, identifier });

@@ -14,7 +14,7 @@ export function VariableBubbleMenu(props: EditorBubbleMenuProps) {
     ...props,
     pluginKey: 'variable-menu',
     shouldShow: ({ editor }) => {
-      if (editor.view.dragging) {
+      if (editor.view.dragging || !editor.isEditable) {
         return false;
       }
 

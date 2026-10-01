@@ -1247,18 +1247,4 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       ...this.buildContextExactMatchQuery(contextKeys),
     };
   }
-
-  async findByAgentIdentifier(
-    environmentId: string,
-    agentId: string,
-    identifier: string,
-    subscriberId: string
-  ): Promise<MessageEntity | null> {
-    return this.findOne({
-      _environmentId: environmentId,
-      _agentId: agentId,
-      _subscriberId: subscriberId,
-      identifier,
-    });
-  }
 }

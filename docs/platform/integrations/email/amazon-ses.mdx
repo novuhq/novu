@@ -32,6 +32,7 @@ To use the Amazon SES provider in the email channel, you will need to create an 
 - Enter previously saved `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY`.
 - Fill in the `From email address` field using the authenticated sender email id in the previous step.
 - Enter `region` and `Sender name` also.
+- Optionally, set a **Configuration Set Name** to apply an [SES configuration set](https://docs.aws.amazon.com/ses/latest/dg/using-configuration-sets.html) to every email Novu sends through this integration. Leave it empty if you don't use configuration sets. This value is required to enable [Email Activity Tracking](/platform/integrations/email/activity-tracking/manual-configuration/ses).
 
 <Note>
   Example region format:- `us-east-1`. By default Novu uses `us-east-1` region.

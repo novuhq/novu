@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { TopicCustomData } from '@novu/shared';
+import { IsObject, IsOptional, IsString } from 'class-validator';
 
 export class TopicResponseDto {
   @ApiProperty({
@@ -26,6 +27,16 @@ export class TopicResponseDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Additional custom data associated with the topic',
+    type: Object,
+    additionalProperties: true,
+    example: { category: 'product', priority: 1 },
+  })
+  @IsObject()
+  @IsOptional()
+  data?: TopicCustomData;
 
   @ApiPropertyOptional({
     description: 'The date the topic was created',

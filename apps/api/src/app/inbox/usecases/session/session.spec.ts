@@ -169,7 +169,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -206,7 +206,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(legacyProdNamed as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -292,7 +292,7 @@ describe('Session', () => {
       name: 'Development',
     } as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves(mockIntegration);
+    selectIntegration.execute.resolves({ integration: mockIntegration });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -327,7 +327,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -367,7 +367,7 @@ describe('Session', () => {
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
-    selectIntegration.execute.resolves(integration);
+    selectIntegration.execute.resolves({ integration });
     organizationRepository.findById.resolves(organization as any);
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
@@ -414,7 +414,7 @@ describe('Session', () => {
 
     organizationRepository.findById.resolves(organization as any);
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
-    selectIntegration.execute.resolves(integration);
+    selectIntegration.execute.resolves({ integration });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -467,7 +467,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -517,7 +517,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves(mockIntegration);
+    selectIntegration.execute.resolves({ integration: mockIntegration });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -569,7 +569,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);

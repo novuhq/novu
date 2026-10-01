@@ -1,7 +1,18 @@
 import { JsonSchemaTypeEnum } from '@novu/dal';
 import { ContentIssueEnum, StepTypeEnum } from '@novu/shared';
+import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it } from 'vitest';
+import { JSONSchemaDto } from '../dtos/json-schema.dto';
+import { chatControlSchema } from '../schemas/control';
 import { processControlValuesBySchema } from './issues';
+import { dashboardSanitizeControlValues } from './sanitize-control-values';
+
+const logger = { error: () => {} } as unknown as PinoLogger;
+
+const mailyBody = JSON.stringify({
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hi' }] }],
+});
 
 describe('processControlValuesBySchema', () => {
   it('maps additionalProperties failures to UNSUPPORTED_PROPERTY for any strict schema', () => {
@@ -27,5 +38,60 @@ describe('processControlValuesBySchema', () => {
         variableName: 'unexpected',
       },
     ]);
+  });
+
+  it('rejects empty-string chat editorType against the control schema', () => {
+    const issues = processControlValuesBySchema({
+      controlSchema: chatControlSchema,
+      controlValues: { body: mailyBody, editorType: '' },
+      stepType: StepTypeEnum.CHAT,
+    });
+
+    expect(issues.controls?.editorType?.[0]?.message).toBe('must be equal to one of the allowed values');
+  });
+
+  it('does not flag editorType after sanitizing a Maily chat body with an empty editorType', () => {
+    const sanitized = dashboardSanitizeControlValues(logger, { body: mailyBody, editorType: '' }, StepTypeEnum.CHAT);
+
+    const issues = processControlValuesBySchema({
+      controlSchema: chatControlSchema,
+      controlValues: sanitized || {},
+      stepType: StepTypeEnum.CHAT,
+    });
+
+    expect(sanitized).toEqual({ body: mailyBody, editorType: 'block' });
+    expect(issues.controls?.editorType).toBeUndefined();
+  });
+
+  it('validates schemas using JSON Schema draft 2020-12', () => {
+    const issues = processControlValuesBySchema({
+      controlSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {
+          subject: { type: JsonSchemaTypeEnum.STRING, minLength: 1 },
+        },
+        required: ['subject'],
+        additionalProperties: false,
+      } as JSONSchemaDto,
+      controlValues: {},
+    });
+
+    expect(issues.controls?.subject).toHaveLength(1);
+    expect(issues.controls?.subject?.[0].message).toBe('Subject is required');
+  });
+
+  it('does not flag editorType for an empty chat step after sanitize', () => {
+    const sanitized = dashboardSanitizeControlValues(logger, { body: '', editorType: '' }, StepTypeEnum.CHAT);
+
+    const issues = processControlValuesBySchema({
+      controlSchema: chatControlSchema,
+      controlValues: sanitized || {},
+      stepType: StepTypeEnum.CHAT,
+    });
+
+    expect(sanitized).not.toHaveProperty('editorType');
+    expect(issues.controls?.editorType).toBeUndefined();
+    expect(issues.controls?.body).toBeDefined();
   });
 });

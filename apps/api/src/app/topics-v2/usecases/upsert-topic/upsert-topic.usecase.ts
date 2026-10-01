@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ErrorCodesEnum, TopicRepository } from '@novu/dal';
 import { VALID_ID_REGEX } from '@novu/shared';
@@ -17,6 +17,8 @@ export class UpsertTopicUseCase {
       throw new ConflictException(`Topic with key "${command.key}" already exists`);
     }
 
+    let created = !topic;
+
     if (!topic) {
       this.isValidTopicKey(command.key);
 
@@ -26,37 +28,76 @@ export class UpsertTopicUseCase {
           _organizationId: command.organizationId,
           key: command.key,
           name: command.name,
+          data: command.data ?? undefined,
         });
       } catch (error: unknown) {
-        if (this.isDuplicateKeyError(error)) {
-          topic = await this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
-        } else {
+        if (!this.isDuplicateKeyError(error)) {
           throw error;
         }
+
+        if (command.failIfExists) {
+          throw new ConflictException(`Topic with key "${command.key}" already exists`);
+        }
+
+        const winningTopic = await this.topicRepository.findTopicByKey(
+          command.key,
+          command.organizationId,
+          command.environmentId
+        );
+
+        if (!winningTopic) {
+          throw error;
+        }
+
+        created = false;
+        topic = await this.applyTopicUpdate(winningTopic._id, command);
       }
     } else {
-      const updateBody: Record<string, unknown> = {};
+      topic = await this.applyTopicUpdate(topic._id, command);
+    }
 
-      if (command.name) {
-        updateBody.name = command.name;
-      }
-
-      topic = await this.topicRepository.findOneAndUpdate(
-        {
-          _id: topic._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        {
-          $set: updateBody,
-        }
-      );
+    if (!topic) {
+      throw new NotFoundException(`Topic with key "${command.key}" not found`);
     }
 
     return {
-      topic: mapTopicEntityToDto(topic!),
-      created: !topic,
+      topic: mapTopicEntityToDto(topic),
+      created,
     };
+  }
+
+  private async applyTopicUpdate(topicId: string, command: UpsertTopicCommand) {
+    const setBody: Record<string, unknown> = {};
+    const unsetBody: Record<string, ''> = {};
+
+    if (command.name !== undefined) {
+      setBody.name = command.name;
+    }
+
+    if (command.data !== undefined) {
+      if (command.data === null) {
+        unsetBody.data = '';
+      } else {
+        setBody.data = command.data;
+      }
+    }
+
+    if (Object.keys(setBody).length === 0 && Object.keys(unsetBody).length === 0) {
+      return this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
+    }
+
+    return await this.topicRepository.findOneAndUpdate(
+      {
+        _id: topicId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      {
+        ...(Object.keys(setBody).length > 0 ? { $set: setBody } : {}),
+        ...(Object.keys(unsetBody).length > 0 ? { $unset: unsetBody } : {}),
+      },
+      { new: true }
+    );
   }
 
   private isValidTopicKey(key: string): void {

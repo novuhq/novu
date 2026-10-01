@@ -113,6 +113,10 @@ Click on any workflow to open the workflow editor, where you can:
 - Configure [channel preferences](/platform/workflow/configure-workflow#channel-preferences) and [payload schema](/platform/workflow/configure-workflow#payload-schema).
 - Add, remove, or reorder [steps](/platform/workflow/add-and-configure-steps#add-a-step-to-a-workflow).
 
+The dashboard saves workflow edits automatically in the [Development environment](/platform/developer/environments). You cannot disable auto-save, view an earlier workflow version, or restore a previous version.
+
+[Production](/platform/developer/environments#types-of-environments) is view-only for workflows. Make the change in Development, then [publish](/platform/developer/environments#publish-changes-to-other-environments) it to Production. If you need a reversible change, duplicate the workflow first and test the copy before you publish.
+
 ### Duplicate a workflow
 
 Duplicating a workflow lets you reuse an existing configuration as a starting point for a new workflow. This is useful when workflows share similar logic but differ in trigger identifiers, content, or steps.

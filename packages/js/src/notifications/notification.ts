@@ -14,7 +14,7 @@ import {
   unsnooze,
 } from './helpers';
 
-export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
+export class Notification implements InboxNotification {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
 

@@ -1,3 +1,4 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { type Field, QueryBuilder, RuleGroupType, Translations } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
@@ -5,7 +6,8 @@ import 'react-querybuilder/dist/query-builder.css';
 import { AddConditionAction } from '@/components/conditions-editor/add-condition-action';
 import { AddGroupAction } from '@/components/conditions-editor/add-group-action';
 import { CombinatorSelector } from '@/components/conditions-editor/combinator-selector';
-import { ConditionsEditorProvider } from '@/components/conditions-editor/conditions-editor-context';
+import { increasesGroupBeyondLimit } from '@/components/conditions-editor/conditions-editor-policy';
+import { ConditionsEditorProvider } from '@/components/conditions-editor/conditions-editor-provider';
 import { FieldSelector } from '@/components/conditions-editor/field-selector';
 import {
   getHelpTextForField,
@@ -15,16 +17,20 @@ import {
 import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
 import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
-import { ValueEditor } from '@/components/conditions-editor/value-editor';
 import {
-  EnhancedLiquidVariable,
-  type FieldDataType,
-  IsAllowedVariable,
-  LiquidVariable,
-} from '@/utils/parseStepVariables';
+  type ConditionFieldDataType,
+  type ConditionsValueInput,
+  DEFAULT_MAX_CONDITIONS_PER_GROUP,
+  type EnhancedConditionVariable,
+  normalizeMaxConditionsPerGroup,
+} from '@/components/conditions-editor/types';
+import { ValueEditor } from '@/components/conditions-editor/value-editor';
+import { useDataRef } from '@/hooks/use-data-ref';
+import { useNumericFeatureFlag } from '@/hooks/use-feature-flag';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 export interface EnhancedField extends Field {
-  dataType: FieldDataType;
+  dataType: ConditionFieldDataType;
   inputType?: string;
   format?: string;
 }
@@ -77,6 +83,7 @@ function InternalConditionsEditor({
   saveForm,
   enhancedVariables,
   disabled,
+  valueInput,
 }: {
   fields: EnhancedField[];
   variables: LiquidVariable[];
@@ -84,8 +91,9 @@ function InternalConditionsEditor({
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
   saveForm: () => void;
-  enhancedVariables?: EnhancedLiquidVariable[];
+  enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
+  valueInput?: ConditionsValueInput;
 }) {
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
@@ -202,8 +210,9 @@ function InternalConditionsEditor({
       saveForm,
       getPlaceholder,
       getHelpText,
+      valueInput,
     }),
-    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText]
+    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText, valueInput]
   );
 
   return (
@@ -233,6 +242,7 @@ export type ConditionsEditorContext = {
     fieldName: string,
     operator: string
   ) => { title: string; description: string; examples: string[]; notes?: string[] };
+  valueInput?: ConditionsValueInput;
 };
 
 export function ConditionsEditor({
@@ -244,6 +254,7 @@ export function ConditionsEditor({
   isAllowedVariable,
   enhancedVariables,
   disabled,
+  valueInput,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
@@ -251,20 +262,47 @@ export function ConditionsEditor({
   saveForm: () => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
-  enhancedVariables?: EnhancedLiquidVariable[];
+  enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
+  valueInput?: ConditionsValueInput;
 }) {
+  const configuredMaxConditionsPerGroup = useNumericFeatureFlag(
+    FeatureFlagsKeysEnum.MAX_STEP_CONDITIONS_PER_GROUP_NUMBER,
+    DEFAULT_MAX_CONDITIONS_PER_GROUP
+  );
+  const maxConditionsPerGroup = normalizeMaxConditionsPerGroup(configuredMaxConditionsPerGroup);
+  const queryRef = useDataRef(query);
+  const onQueryChangeRef = useDataRef(onQueryChange);
+  const handleQueryChange = useCallback(
+    (nextQuery: RuleGroupType) => {
+      if (increasesGroupBeyondLimit(queryRef.current, nextQuery, maxConditionsPerGroup)) {
+        return false;
+      }
+
+      queryRef.current = nextQuery;
+      onQueryChangeRef.current(nextQuery);
+
+      return true;
+    },
+    [maxConditionsPerGroup, onQueryChangeRef, queryRef]
+  );
+
   return (
-    <ConditionsEditorProvider query={query} onQueryChange={onQueryChange}>
+    <ConditionsEditorProvider
+      queryRef={queryRef}
+      onQueryChange={handleQueryChange}
+      maxConditionsPerGroup={maxConditionsPerGroup}
+    >
       <InternalConditionsEditor
         fields={fields}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
         query={query}
-        onQueryChange={onQueryChange}
+        onQueryChange={handleQueryChange}
         saveForm={saveForm}
         enhancedVariables={enhancedVariables}
         disabled={disabled}
+        valueInput={valueInput}
       />
     </ConditionsEditorProvider>
   );

@@ -86,6 +86,16 @@ You can promote changes to other environments by following these steps:
    ![Publish changes](/images/developer-tools/publish-changes-modal.png)
 5. Click the publish button to publish the selected workflows to the selected environment.
 
+### Publish via API
+
+You can also publish programmatically with the [Publish resources to target environment](/api-reference/environments/publish-resources-to-target-environment) endpoint (`POST /v2/environments/{targetEnvironmentId}/publish`). The request body accepts:
+
+- `sourceEnvironmentId`: the environment to sync from. Defaults to the Development environment.
+- `resources`: an array of specific resources to publish, each with a `resourceType` (`workflow`, `layout`, or `agent`) and a `resourceId`. `resourceId` is the public identifier: the workflow trigger identifier (`workflowId`), layout identifier, or agent identifier. Do not pass an internal database `_id`. If omitted, all resources are published. If none of the supplied IDs match a resource in the source environment, the request succeeds but publishes nothing.
+- `dryRun`: set to `true` to preview the changes without applying them.
+
+Publishing happens at the workflow level. There is no per-step publish action.
+
 ## Frequently asked questions
 
 Frequently asked questions related to managing environments:

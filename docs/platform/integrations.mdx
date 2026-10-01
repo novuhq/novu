@@ -8,7 +8,11 @@ Providers are the third-party services that deliver your notifications through t
 
 Novu provides a unified integration layer that connects your application to all these different providers. You connect your provider accounts to Novu from the Integration Store on the Novu dashboard, and Novu's API handles the rest.
 
-This approach means you can add, remove, or switch providers at any time without having to change your application's code. It also allows Novu to manage complex logic like provider fallbacks, for example, "If SendGrid fails, try sending with Amazon SES".
+This approach means you can add, remove, or switch providers at any time without having to change your application's code.
+
+<Note>
+  Novu sends through one integration per channel step and does not automatically fall back to another provider if that send fails. See the [delivery retry policy](/platform/developer/delivery-retries) for what happens when a provider rejects a message.
+</Note>
 
 ## Provider vs. Integration
 
@@ -44,6 +48,10 @@ How the primary integration behaves depends on the channel:
 - **Push and chat channels**: These channels do not use a single primary integration. Instead, Novu uses all active integrations in parallel to deliver the message.
 
 If you disable an integration that is currently marked as "primary" for Email or SMS channels, then Novu automatically promotes another active integration to be the new primary. You can also manually set which active integration you want to be the primary one from the Integration Store.
+
+<Card title="Integration conditions" href="/platform/integrations/integration-conditions">
+  Route a send to a matching provider integration from subscriber or context data.
+</Card>
 
 ## Managing integrations across environments
 

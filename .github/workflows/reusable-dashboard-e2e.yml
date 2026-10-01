@@ -98,7 +98,7 @@ jobs:
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
-          targets: build
+          targets: build,typecheck
           projects: '@novu/dashboard,@novu/api-service,@novu/worker'
 
       - uses: ./.github/actions/start-localstack

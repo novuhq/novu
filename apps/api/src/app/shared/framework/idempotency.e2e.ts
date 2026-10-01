@@ -154,6 +154,8 @@ describe('Idempotency Test', async () => {
       testIdempotencyPost(IDEMPOTENCE_IMMEDIATE_EXCEPTION, key)
     );
     expect(error?.message).to.eq(error2?.message);
+    expect(error?.statusCode).to.eq(error2?.statusCode);
+    expect(error2?.statusCode).to.not.eq(503);
   });
   it('should return 400 when key bigger than allowed limit', async () => {
     const key = Array.from({ length: 256 })

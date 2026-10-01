@@ -13,6 +13,12 @@ import {
 import type { PlanPhase } from '../../egress/plan-phase';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 
+export class QuoteReplyContextDto {
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+}
+
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
@@ -30,6 +36,11 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => QuoteReplyContextDto)
+  quoteReply?: QuoteReplyContextDto;
 
   @IsOptional()
   @IsString()

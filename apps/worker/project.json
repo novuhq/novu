@@ -9,6 +9,7 @@
       "cache": true,
       "inputs": [
         "default",
+        "^default",
         "{projectRoot}/**/*",
         "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
         "!{projectRoot}/tsconfig.spec.json",

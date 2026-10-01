@@ -8,6 +8,8 @@ import type {
   AgentHandlers,
   AgentMessage,
   AgentMessageContext,
+  AgentMessageDeletedContext,
+  AgentMessageUpdatedContext,
   MessageContent,
   ReplyHandle,
   ToolApprovalDecision,
@@ -76,8 +78,19 @@ export type LangChainResult = LangChainAgentConfig | LangChainInvokeResult | Bas
  * but `onMessage` and `onToolApproval` may return a {@link LangChainResult} for
  * automatic delivery.
  */
-export type LangChainAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolApproval'> & {
+export type LangChainAgentHandlers = Omit<
+  AgentHandlers,
+  'onMessage' | 'onToolApproval' | 'onMessageUpdated' | 'onMessageDeleted'
+> & {
   onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | LangChainResult | void>;
+  onMessageUpdated?: (
+    message: AgentMessage,
+    ctx: AgentMessageUpdatedContext
+  ) => Awaitable<MessageContent | LangChainResult | void>;
+  onMessageDeleted?: (
+    message: AgentMessage,
+    ctx: AgentMessageDeletedContext
+  ) => Awaitable<MessageContent | LangChainResult | void>;
   /**
    * Optional. Auto-resumes `onMessage` after approve/deny unless you return a
    * `LangChainResult` to drive the resume yourself.

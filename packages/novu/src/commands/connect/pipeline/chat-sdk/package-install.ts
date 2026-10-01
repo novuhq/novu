@@ -1,13 +1,12 @@
 import path from 'node:path';
-import { installPackages } from '../../../init/helpers/install';
+import { formatNpmInstallCommand, installPackages } from '../../../init/helpers/install';
 import { detectPackageManager } from '../../../step/utils/package-manager';
 import { hasDependency, readProjectPackageJson } from '../bridge/project-package';
+import { CHAT_PACKAGE_SPEC, DEFAULT_STATE_ADAPTER_SPEC } from './versions';
 
 export const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
 const CHAT_PACKAGE = 'chat';
-const CHAT_PACKAGE_SPEC = 'chat@4.31.0';
 const STATE_ADAPTER_PREFIX = '@chat-adapter/state-';
-const DEFAULT_STATE_ADAPTER_SPEC = '@chat-adapter/state-memory@4.31.0';
 
 export type PackageInstallResult = {
   installed: boolean;
@@ -69,7 +68,7 @@ export function buildChatSdkInstallCommand(projectDir: string): string {
     case 'bun':
       return `bun add ${packageList}`;
     default:
-      return `npm install ${packageList} --no-workspaces`;
+      return formatNpmInstallCommand(packages);
   }
 }
 

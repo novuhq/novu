@@ -36,7 +36,7 @@ import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
@@ -190,6 +190,8 @@ export class EnvironmentsControllerV1 {
     @Param('environmentId') environmentId: string,
     @Body() payload: UpdateEnvironmentRequestDto
   ) {
+    assertEnvironmentScopedAccess(user.scheme, user.environmentId, environmentId);
+
     return await this.updateEnvironmentUsecase.execute(
       UpdateEnvironmentCommand.create({
         environmentId,

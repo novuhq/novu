@@ -1,14 +1,146 @@
+import { createHash } from 'node:crypto';
+
 import { Logger, OnModuleDestroy } from '@nestjs/common';
-import { CommunityOrganizationRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, JobTopicNameEnum, QueueBackendMode } from '@novu/shared';
+import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
+import { isBullMqEnabled, isSqsPrimary } from '../../config';
 import { PinoLogger } from '../../logging';
 
 import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
-import { SqsService } from '../sqs';
+import { DeferReasonEnum, EventBridgeSchedulerService } from '../scheduler';
+import { isSqsPartialSendError, SqsService } from '../sqs';
 import { SQS_MAX_DELAY_SECONDS } from '../sqs/types';
 
 const LOG_CONTEXT = 'QueueService';
+
+/**
+ * Carries the jobs that never reached SQS (or the scheduler) so a fallback can
+ * re-queue exactly those. Without it a mid-batch failure forces the caller to
+ * re-send everything, double-delivering whatever SQS already accepted.
+ *
+ * Exported because in `sqs` mode there is no fallback to consume it and the
+ * error reaches the caller instead. A caller that retries the whole batch is
+ * choosing at-least-once for the jobs SQS already accepted; one that wants to
+ * retry only the remainder can narrow to this type and read `unsentJobs`.
+ */
+export class PartialDispatchError extends Error {
+  constructor(
+    public readonly unsentJobs: (IJobParams | IBulkJobParams)[],
+    public readonly cause: unknown
+  ) {
+    super(cause instanceof Error ? cause.message : String(cause));
+    this.name = 'PartialDispatchError';
+  }
+}
+
+/**
+ * Names to alert on, outermost first. The chain is two deep for the common case
+ * (`PartialDispatchError` -> `SqsPartialSendError` -> `BatchRequestTooLong`),
+ * so a single unwrap would surface only our own wrapper and never the AWS error
+ * that actually explains the failure.
+ */
+function resolveErrorNames(error: unknown): string | undefined {
+  const names: string[] = [];
+
+  for (let current = error; current instanceof Error; current = (current as { cause?: unknown }).cause) {
+    names.push(current.name);
+  }
+
+  return names.length > 0 ? names.join(' <- ') : undefined;
+}
+
+/**
+ * The jobs to hand back to the fallback after a failed SQS send.
+ *
+ * A partial send names the messages it did not deliver; anything else tells us
+ * nothing, so we assume the whole SQS leg failed. Either way the result is
+ * scoped to `sqsEligible` - never the caller's full job list, which may include
+ * schedules that were already accepted.
+ */
+function resolveUnsentJobs(
+  error: unknown,
+  sqsEligible: (IJobParams | IBulkJobParams)[],
+  jobsByMessageId: Map<string, IJobParams | IBulkJobParams>
+): (IJobParams | IBulkJobParams)[] {
+  if (!isSqsPartialSendError(error)) {
+    return sqsEligible;
+  }
+
+  const unsentJobs = error.unsentMessages
+    .map((message) => jobsByMessageId.get(message.id))
+    .filter((job): job is IJobParams | IBulkJobParams => job !== undefined);
+
+  /*
+   * Ids are assigned and mapped in the same pass, so a job that does not map
+   * back is not reachable today. Re-queue the whole leg rather than silently
+   * dropping it: a duplicate is recoverable, a lost job is not.
+   */
+  if (unsentJobs.length !== error.unsentMessages.length) {
+    return sqsEligible;
+  }
+
+  return unsentJobs;
+}
+
+function exceedsSqsDelayCap(delayMs: number | undefined): boolean {
+  return (delayMs || 0) > SQS_MAX_DELAY_SECONDS * 1000;
+}
+
+/**
+ * Mirrors the id BullMQ dedups on, which the producers already make unique per
+ * fire (a schedule extension re-queues the same job under `-ext{N}`). Reusing
+ * it as the schedule name gives EventBridge the same dedup semantics: a
+ * repeated enqueue collides by name instead of creating a second fire.
+ */
+function resolveScheduleId(job: IJobParams | IBulkJobParams): string {
+  return job.options?.jobId || job.data?._id || job.name;
+}
+
+/** AWS caps `MessageGroupId` at 128 characters. */
+const SQS_MAX_GROUP_ID_LENGTH = 128;
+
+/**
+ * A group id can be caller-supplied routing data - inbound mail groups by the
+ * email `Message-ID`, which providers do generate past the cap. Hashing keeps
+ * the only property grouping needs, that equal inputs map to equal groups.
+ */
+function toSqsGroupId(resolved: string): string {
+  if (resolved.length <= SQS_MAX_GROUP_ID_LENGTH) {
+    return resolved;
+  }
+
+  return createHash('sha256').update(resolved).digest('hex');
+}
+
+/**
+ * The tenant a schedule belongs to. EventBridge names every schedule
+ * `${organizationId}-${scheduleId}`, which is what keeps schedules enumerable
+ * per tenant through `ListSchedules --name-prefix`, and the result has to
+ * satisfy AWS's `[0-9a-zA-Z-_.]` pattern and 64-character ceiling.
+ *
+ * Strict where `resolveGroupId` falls back, because the two values are not
+ * interchangeable: a job id would name the schedule `${jobId}-${jobId}` and an
+ * inbound-mail message id is not even a legal schedule name. Throwing routes
+ * the job through the same failure handling as an unavailable scheduler -
+ * BullMQ while it is still there, a surfaced error once it is not.
+ */
+function resolveTenantId(job: IJobParams | IBulkJobParams): string {
+  const tenantId = job.groupId || job.data?._organizationId;
+
+  if (!tenantId) {
+    throw new Error(
+      `Cannot schedule the long delay on job "${job.name}" without an organization id, ` +
+        'because EventBridge schedule names are prefixed by tenant'
+    );
+  }
+
+  return tenantId;
+}
+
+/**
+ * Group counters ship with BullMQ Pro only, so the OSS `Queue` type has no
+ * declaration for them and the method has to be probed at runtime.
+ */
+type QueueWithGroups = Queue & { getGroupsJobsCount?: () => Promise<number> };
 
 export class QueueBaseService implements OnModuleDestroy {
   private bullMqService: BullMqService;
@@ -20,9 +152,8 @@ export class QueueBaseService implements OnModuleDestroy {
     public readonly topic: JobTopicNameEnum,
     bullMqService: BullMqService,
     protected sqsService?: SqsService,
-    protected featureFlagsService?: FeatureFlagsService,
-    protected organizationRepository?: CommunityOrganizationRepository,
-    protected logger?: PinoLogger
+    protected logger?: PinoLogger,
+    protected schedulerService?: EventBridgeSchedulerService
   ) {
     this.bullMqService = bullMqService;
     if (logger) {
@@ -31,6 +162,12 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   public createQueue(overrideOptions?: QueueOptions): void {
+    // Building the queue allocates its Redis keys, so skip it once BullMQ is
+    // retired. The count getters already return 0 when `queue` is unset.
+    if (!isBullMqEnabled()) {
+      return;
+    }
+
     const options = {
       ...this.getQueueOptions(),
       ...(overrideOptions && {
@@ -65,7 +202,7 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   public async getGroupsJobsCount() {
-    const queue = this.bullMqService.queue as any;
+    const queue: QueueWithGroups | undefined = this.bullMqService.queue;
 
     if (!queue) return 0;
 
@@ -85,6 +222,11 @@ export class QueueBaseService implements OnModuleDestroy {
     return await this.bullMqService.queue.getWaitingCount();
   }
 
+  /**
+   * The signal for the `sqs_bullmq` -> `sqs` cutover. A job left in the BullMQ
+   * delayed set when the worker goes away is never delivered, and deferral is
+   * capped at 180 days, so this must read zero before the flip.
+   */
   public async getDelayedCount() {
     if (!this.bullMqService.queue) return 0;
 
@@ -107,167 +249,157 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   public async add(params: IJobParams) {
-    const delayMs = params.options?.delay || 0;
+    if (!this.routesToSqs()) {
+      return await this.addToBullMQ(params);
+    }
 
-    if (delayMs > SQS_MAX_DELAY_SECONDS * 1000) {
-      Logger.log(
-        { topic: this.topic, delay: delayMs },
-        'Job delay exceeds SQS max (15min), routing to BullMQ',
-        LOG_CONTEXT
+    return await this.dispatch([params]);
+  }
+
+  public async addBulk(data: IBulkJobParams[]) {
+    if (!this.routesToSqs()) {
+      return await this.bullMqService.addBulk(data);
+    }
+
+    return await this.dispatch(data);
+  }
+
+  /**
+   * Whether this enqueue goes to SQS, given the deployment's backend and
+   * whether this particular topic has a queue URL.
+   *
+   * An unconfigured topic in `sqs` mode is fatal rather than a quiet BullMQ
+   * write: nothing consumes BullMQ there, so the job would disappear. Boot
+   * validation normally catches this first; this is the backstop for a process
+   * enqueuing to a topic its own validator did not know about.
+   */
+  private routesToSqs(): boolean {
+    if (!isSqsPrimary()) {
+      return false;
+    }
+
+    const isConfigured = this.sqsService?.isConfigured(this.topic) ?? false;
+
+    if (!isConfigured && !isBullMqEnabled()) {
+      throw new Error(
+        `No SQS queue URL configured for topic "${this.topic}" and BullMQ is disabled ` +
+          `(QUEUE_BACKEND=${QueueBackend.SQS}), so the job has no backend to go to`
       );
+    }
 
-      return await this.addToBullMQ(params);
+    return isConfigured;
+  }
+
+  private async dispatch(jobs: (IJobParams | IBulkJobParams)[]): Promise<void> {
+    const { toBullMq, toScheduler, toSqs } = this.planDispatch(jobs);
+
+    if (toBullMq.length > 0) {
+      await this.addJobsToBullMQ(toBullMq);
+    }
+
+    try {
+      await this.addJobsToSQS(toScheduler, toSqs);
+    } catch (error) {
+      await this.handleSqsFailure(error, [...toScheduler, ...toSqs]);
+    }
+  }
+
+  /**
+   * Which of the three destinations each job is bound for, decided up front so
+   * the fan-out is legible in one place rather than inferred from the order of
+   * nested splits.
+   *
+   * SQS caps a per-message delay at 900s, so a longer delay can only reach the
+   * queue through EventBridge Scheduler. Where the scheduler is unavailable
+   * BullMQ still holds them - and where BullMQ is gone too, nothing can, which
+   * has to be an error rather than a write into a queue that was never created.
+   */
+  private planDispatch(jobs: (IJobParams | IBulkJobParams)[]): {
+    toBullMq: (IJobParams | IBulkJobParams)[];
+    toScheduler: (IJobParams | IBulkJobParams)[];
+    toSqs: (IJobParams | IBulkJobParams)[];
+  } {
+    const { longDelayed, sqsEligible } = this.separateByDelay(jobs);
+
+    if (longDelayed.length === 0) {
+      return { toBullMq: [], toScheduler: [], toSqs: sqsEligible };
+    }
+
+    if (this.schedulerService?.isConfigured(this.topic)) {
+      return { toBullMq: [], toScheduler: longDelayed, toSqs: sqsEligible };
     }
 
     /*
-     * When no SQS queue URL is configured for this topic (community edition,
-     * self-hosted, or a partially rolled-out deployment), skip the whole
-     * routing path - including the organization lookup and feature flag
-     * evaluation - and enqueue straight to BullMQ like before the migration.
+     * Boot validation demands scheduler config for the topics that carry
+     * delays, but it cannot prove the config is usable - a queue URL the
+     * scheduler cannot derive an ARN from leaves `isConfigured` false on a
+     * deployment that passed validation. Failing here makes that a legible
+     * error instead of a `TypeError` from an uncreated BullMQ queue.
      */
-    if (!this.sqsService?.isConfigured(this.topic) || !this.featureFlagsService) {
-      return await this.addToBullMQ(params);
+    if (!isBullMqEnabled()) {
+      throw new Error(
+        `Cannot enqueue ${longDelayed.length} job(s) on topic "${this.topic}" with a delay beyond the ` +
+          `SQS ${SQS_MAX_DELAY_SECONDS}s cap: EventBridge Scheduler is not configured for this topic and ` +
+          `BullMQ is disabled (QUEUE_BACKEND=${QueueBackend.SQS})`
+      );
     }
 
-    /*
-     * During the migration, we know groupId is organizationId.
-     * After the migration is complete, we won't need feature flag for queue backend mode.
-     * Then we will use groupId for all scenarios.
-     * This currently being only applied when SQS is enabled for certain topic.
-     * */
-    const organizationId = params.groupId;
+    return { toBullMq: longDelayed, toScheduler: [], toSqs: sqsEligible };
+  }
 
-    if (!organizationId) {
-      Logger.debug({ topic: this.topic }, 'Job without organization ID, routing to BullMQ fallback', LOG_CONTEXT);
+  /**
+   * What happens to jobs SQS refused.
+   *
+   * In `sqs_bullmq` BullMQ absorbs them, which is the point of that mode. Once
+   * BullMQ is gone there is nothing to absorb them, so the error has to reach
+   * the caller - every producer is either a retried job or a request that can
+   * surface a failure.
+   *
+   * Only the undelivered jobs are re-queued when the failure identified them,
+   * which is what stops a mid-batch failure from double-delivering everything
+   * SQS already accepted.
+   */
+  private async handleSqsFailure(error: unknown, jobs: (IJobParams | IBulkJobParams)[]): Promise<void> {
+    const fallbackJobs = error instanceof PartialDispatchError ? error.unsentJobs : jobs;
+    // Reached only when SQS is primary, so "BullMQ is alive" means `sqs_bullmq`.
+    const canFallBack = isBullMqEnabled();
 
-      return await this.addToBullMQ(params);
-    }
+    Logger.error(
+      {
+        topic: this.topic,
+        count: jobs.length,
+        unsentCount: fallbackJobs.length,
+        error: error instanceof Error ? error.message : String(error),
+        errorName: resolveErrorNames(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      canFallBack ? 'SQS send failed, falling back to BullMQ' : 'SQS send failed',
+      LOG_CONTEXT
+    );
 
-    const queueBackendMode = await this.getQueueBackendMode(organizationId);
-    if (queueBackendMode === null) {
+    if (canFallBack) {
+      if (fallbackJobs.length > 0) {
+        await this.addJobsToBullMQ(fallbackJobs);
+      }
+
       return;
     }
 
-    Logger.debug({ topic: this.topic, queueBackendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
-
-    return await this.routeByMode([params], queueBackendMode, organizationId);
+    throw error;
   }
 
-  private async getQueueBackendMode(organizationId: string): Promise<string | null> {
-    let organization: { _id: string; apiServiceLevel?: ApiServiceLevelEnum } | undefined;
-    try {
-      organization = await this.organizationRepository?.findOne({ _id: organizationId }, 'apiServiceLevel', {
-        readPreference: 'secondaryPreferred',
-      });
-    } catch (error) {
-      Logger.warn(
-        { organizationId, error: error instanceof Error ? error.message : String(error) },
-        'Failed to fetch organization for queue backend mode flag',
-        LOG_CONTEXT
-      );
-    }
-
-    /*
-     * If the organization is not found, we return null to indicate that the job should be skipped.
-     * There is no point in trying to route the job to SQS or BullMQ if the organization is not found.
-     */
-
-    if (!organization) {
-      Logger.warn({ organizationId, topic: this.topic }, 'Organization not found, skipping job', LOG_CONTEXT);
-
-      return null;
-    }
-
-    return await this.featureFlagsService.getFlag<string>({
-      key: FeatureFlagsKeysEnum.QUEUE_BACKEND_MODE,
-      defaultValue: QueueBackendMode.BULLMQ,
-      organization: { _id: organizationId, apiServiceLevel: organization.apiServiceLevel },
-    });
-  }
-
-  private markAsSkipProcessing(jobs: (IJobParams | IBulkJobParams)[]): (IJobParams | IBulkJobParams)[] {
-    return jobs.map((job) => ({ ...job, data: { ...job.data, skipProcessing: true } }));
-  }
-
-  private async routeByMode(
-    jobs: (IJobParams | IBulkJobParams)[],
-    queueBackendMode: string,
-    organizationId: string
-  ): Promise<void> {
-    switch (queueBackendMode) {
-      case QueueBackendMode.BULLMQ:
-        return await this.addJobsToBullMQ(jobs);
-
-      case QueueBackendMode.SHADOW: {
-        await this.addJobsToBullMQ(jobs);
-        try {
-          await this.addJobsToSQS(this.markAsSkipProcessing(jobs), organizationId);
-        } catch (error) {
-          this.logger?.warn(
-            { error: error instanceof Error ? error.message : String(error) },
-            'SQS failed in shadow mode, but BullMQ job was added successfully'
-          );
-        }
-        break;
-      }
-
-      case QueueBackendMode.LIVE: {
-        try {
-          await this.addJobsToSQS(jobs, organizationId);
-
-          try {
-            await this.addJobsToBullMQ(this.markAsSkipProcessing(jobs));
-          } catch (bullmqError) {
-            Logger.warn(
-              {
-                topic: this.topic,
-                count: jobs.length,
-                error: bullmqError instanceof Error ? bullmqError.message : String(bullmqError),
-                stack: bullmqError instanceof Error ? bullmqError.stack : undefined,
-              },
-              'BullMQ fallback failed in LIVE mode after successful SQS push',
-              LOG_CONTEXT
-            );
-          }
-        } catch (error) {
-          Logger.error(
-            {
-              topic: this.topic,
-              count: jobs.length,
-              error: error instanceof Error ? error.message : String(error),
-              stack: error instanceof Error ? error.stack : undefined,
-            },
-            'SQS failed in LIVE mode, falling back to BullMQ as primary',
-            LOG_CONTEXT
-          );
-          await this.addJobsToBullMQ(jobs);
-        }
-        break;
-      }
-
-      case QueueBackendMode.COMPLETE: {
-        try {
-          return await this.addJobsToSQS(jobs, organizationId);
-        } catch (error) {
-          // SQS failed in COMPLETE mode - fall back to BullMQ for resilience
-          Logger.error(
-            {
-              topic: this.topic,
-              count: jobs.length,
-              error: error instanceof Error ? error.message : String(error),
-              stack: error instanceof Error ? error.stack : undefined,
-            },
-            'SQS failed in COMPLETE mode, falling back to BullMQ',
-            LOG_CONTEXT
-          );
-          return await this.addJobsToBullMQ(jobs);
-        }
-      }
-
-      default:
-        Logger.warn({ mode: queueBackendMode }, 'Unknown queue backend mode, falling back to BullMQ', LOG_CONTEXT);
-        return await this.addJobsToBullMQ(jobs);
-    }
+  /**
+   * The SQS `MessageGroupId`, which decides fair-queue ordering.
+   *
+   * Organization-scoped topics pass the organization as `groupId`, so one noisy
+   * tenant cannot stall another. Topics with no tenant to be fair to override
+   * this with a per-message value to keep them fully parallel.
+   *
+   * Any stable string is acceptable: this value never leaves SQS. The tenant a
+   * long delay is scheduled under is resolved separately by `resolveTenantId`.
+   */
+  protected resolveGroupId(job: IJobParams | IBulkJobParams): string {
+    return job.groupId || job.data?._organizationId || resolveScheduleId(job);
   }
 
   private toBulkJobParams(jobs: (IJobParams | IBulkJobParams)[]): IBulkJobParams[] {
@@ -286,24 +418,113 @@ export class QueueBaseService implements OnModuleDestroy {
     await this.bullMqService.addBulk(this.toBulkJobParams(jobs));
   }
 
-  private async addJobsToSQS(jobs: (IJobParams | IBulkJobParams)[], organizationId: string): Promise<void> {
-    const messages = jobs.map((job, index) => ({
-      id: `${job.groupId || job.name}-${index}`,
-      body: JSON.stringify(job.data || {}),
-      groupId: organizationId,
-      delaySeconds: Math.ceil((job.options?.delay || 0) / 1000),
-    }));
+  /**
+   * Delivers the two AWS legs. A schedule is just a deferred send to this same
+   * queue, so both live behind one failure boundary.
+   */
+  private async addJobsToSQS(
+    toScheduler: (IJobParams | IBulkJobParams)[],
+    sqsEligible: (IJobParams | IBulkJobParams)[]
+  ): Promise<void> {
+    if (toScheduler.length > 0) {
+      try {
+        await this.addJobsToScheduler(toScheduler);
+      } catch (error) {
+        /*
+         * Nothing has been sent to SQS yet, so the eligible jobs are unsent too
+         * - they are never attempted once this throws.
+         */
+        const unsentScheduled = error instanceof PartialDispatchError ? error.unsentJobs : toScheduler;
+        throw new PartialDispatchError([...unsentScheduled, ...sqsEligible], error);
+      }
+    }
 
-    if (messages.length === 1) {
-      await this.sqsService.send(this.topic, messages[0]);
-      Logger.debug(
-        { topic: this.topic, jobName: jobs[0].name, payloadSizeBytes: this.calculatePayloadSize(jobs[0].data) },
-        'Added job to SQS',
+    if (sqsEligible.length === 0) {
+      return;
+    }
+
+    /*
+     * Keep the id -> job mapping rather than parsing the id back apart: it is
+     * how a partial send is translated into the exact jobs to re-queue.
+     */
+    const jobsByMessageId = new Map<string, IJobParams | IBulkJobParams>();
+    const messages = sqsEligible.map((job, index) => {
+      const id = `${this.topic}-${index}`;
+      jobsByMessageId.set(id, job);
+
+      return {
+        id,
+        body: JSON.stringify(job.data || {}),
+        groupId: toSqsGroupId(this.resolveGroupId(job)),
+        delaySeconds: Math.ceil((job.options?.delay || 0) / 1000),
+      };
+    });
+
+    try {
+      if (messages.length === 1) {
+        await this.sqsService.send(this.topic, messages[0]);
+      } else {
+        await this.sqsService.sendBulk(this.topic, messages);
+      }
+    } catch (error) {
+      /*
+       * Scope the fallback to the SQS leg even when the error does not name the
+       * undelivered messages. Anything already handed to the scheduler above
+       * has been accepted, so replaying the whole `jobs` array here would fire
+       * those a second time - once via EventBridge and once via BullMQ.
+       */
+      throw new PartialDispatchError(resolveUnsentJobs(error, sqsEligible, jobsByMessageId), error);
+    }
+  }
+
+  /**
+   * Throws when the scheduler is unavailable so the caller's failure handling
+   * runs, which is exactly what should happen to a job that has no other way
+   * to be delivered.
+   */
+  private async addJobsToScheduler(jobs: (IJobParams | IBulkJobParams)[]): Promise<void> {
+    if (!this.schedulerService) {
+      throw new Error(`EventBridge Scheduler is unavailable for long-delayed jobs on topic: ${this.topic}`);
+    }
+
+    const now = Date.now();
+
+    /*
+     * `async` so a job that cannot resolve a tenant becomes a rejected promise
+     * rather than throwing out of `map` and taking the whole batch's
+     * partial-dispatch accounting with it.
+     */
+    const results = await Promise.allSettled(
+      jobs.map(async (job) =>
+        this.schedulerService.createDelayedFire(this.topic, {
+          deferReason: job.deferReason || DeferReasonEnum.DELAY,
+          fireAt: new Date(now + (job.options?.delay || 0)),
+          organizationId: resolveTenantId(job),
+          scheduleId: resolveScheduleId(job),
+          messageBody: JSON.stringify(job.data || {}),
+        })
+      )
+    );
+
+    const rejected = results.flatMap((result, index) => (result.status === 'rejected' ? [{ result, index }] : []));
+
+    if (rejected.length > 0) {
+      Logger.error(
+        {
+          topic: this.topic,
+          totalCount: jobs.length,
+          scheduledCount: jobs.length - rejected.length,
+          unscheduledCount: rejected.length,
+          error: rejected.map(({ result }) => String(result.reason)).join('; '),
+        },
+        'Some long-delayed jobs could not be scheduled',
         LOG_CONTEXT
       );
-    } else {
-      await this.sqsService.sendBulk(this.topic, messages);
-      Logger.debug({ topic: this.topic, count: messages.length }, 'Added bulk jobs to SQS', LOG_CONTEXT);
+
+      throw new PartialDispatchError(
+        rejected.map(({ index }) => jobs[index]),
+        rejected[0].result.reason
+      );
     }
   }
 
@@ -314,68 +535,20 @@ export class QueueBaseService implements OnModuleDestroy {
       ...params.options,
     };
 
-    const payloadSize = this.calculatePayloadSize(params.data);
-    Logger.debug(
-      { topic: this.topic, jobName: params.name, payloadSizeBytes: payloadSize },
-      'Adding job to BullMQ queue',
-      LOG_CONTEXT
-    );
-
     await this.bullMqService.add(params.name, params.data, jobOptions, params.groupId);
   }
 
-  public async addBulk(data: IBulkJobParams[]) {
-    this.logBulkPayloadMetrics(data);
-
-    // See add(): unconfigured topics bypass the routing path entirely.
-    if (!this.sqsService?.isConfigured(this.topic) || !this.featureFlagsService) {
-      return await this.bullMqService.addBulk(data);
-    }
-
-    const { longDelayed, sqsEligible } = this.separateByDelay(data);
-
-    if (longDelayed.length > 0) {
-      Logger.debug(
-        { topic: this.topic, count: longDelayed.length },
-        'Routing long-delayed jobs (>15min) to BullMQ',
-        LOG_CONTEXT
-      );
-      await this.bullMqService.addBulk(longDelayed);
-    }
-
-    if (sqsEligible.length > 0) {
-      const organizationId = sqsEligible[0]?.groupId;
-
-      if (!organizationId) {
-        Logger.debug(
-          { topic: this.topic, count: sqsEligible.length },
-          'Jobs without organization ID, routing to BullMQ fallback',
-          LOG_CONTEXT
-        );
-        await this.addJobsToBullMQ(sqsEligible);
-
-        return;
-      }
-
-      const queueBackendMode = await this.getQueueBackendMode(organizationId);
-      if (queueBackendMode === null) {
-        return;
-      }
-
-      await this.routeByMode(sqsEligible, queueBackendMode, organizationId);
-    }
-  }
-
-  private separateByDelay(jobs: IBulkJobParams[]): {
-    longDelayed: IBulkJobParams[];
-    sqsEligible: IBulkJobParams[];
+  private separateByDelay<T extends IJobParams | IBulkJobParams>(
+    jobs: T[]
+  ): {
+    longDelayed: T[];
+    sqsEligible: T[];
   } {
-    const longDelayed: IBulkJobParams[] = [];
-    const sqsEligible: IBulkJobParams[] = [];
+    const longDelayed: T[] = [];
+    const sqsEligible: T[] = [];
 
     for (const job of jobs) {
-      const delayMs = job.options?.delay || 0;
-      if (delayMs > SQS_MAX_DELAY_SECONDS * 1000) {
+      if (exceedsSqsDelayCap(job.options?.delay)) {
         longDelayed.push(job);
       } else {
         sqsEligible.push(job);
@@ -385,46 +558,6 @@ export class QueueBaseService implements OnModuleDestroy {
     return { longDelayed, sqsEligible };
   }
 
-  private logBulkPayloadMetrics(data: IBulkJobParams[]): void {
-    const payloadSizes = data.map((item) => this.calculatePayloadSize(item.data));
-    const validSizes = payloadSizes.filter((size) => size >= 0);
-    const totalPayloadSize = validSizes.reduce((sum, size) => sum + size, 0);
-    const avgPayloadSize = validSizes.length > 0 ? Math.round(totalPayloadSize / validSizes.length) : 0;
-
-    const failedCount = payloadSizes.length - validSizes.length;
-    if (failedCount > 0) {
-      Logger.warn(
-        { topic: this.topic, failedCount, totalCount: data.length },
-        'Failed to serialize bulk job items',
-        LOG_CONTEXT
-      );
-    }
-
-    Logger.debug(
-      {
-        topic: this.topic,
-        count: data.length,
-        totalSizeBytes: totalPayloadSize,
-        avgSizeBytes: avgPayloadSize,
-      },
-      'Adding bulk jobs',
-      LOG_CONTEXT
-    );
-  }
-
-  private calculatePayloadSize(data: any): number {
-    if (!data) return 0;
-
-    try {
-      return Buffer.byteLength(JSON.stringify(data), 'utf8');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      Logger.warn({ error: errorMessage }, 'Failed to calculate payload size', LOG_CONTEXT);
-
-      return -1;
-    }
-  }
-
   async onModuleDestroy(): Promise<void> {
     await this.gracefulShutdown();
   }
@@ -432,14 +565,22 @@ export class QueueBaseService implements OnModuleDestroy {
 
 export interface IJobParams {
   name: string;
+  // biome-ignore lint/suspicious/noExplicitAny: payloads differ per topic; each queue DTO narrows `data` to its own shape
   data?: any;
   groupId?: string;
   options?: JobsOptions;
+  /**
+   * Selects the EventBridge schedule group when the delay exceeds the SQS cap.
+   * Only meaningful for producers that can defer beyond 900s; ignored otherwise.
+   */
+  deferReason?: DeferReasonEnum;
 }
 
 export interface IBulkJobParams {
   name: string;
+  // biome-ignore lint/suspicious/noExplicitAny: payloads differ per topic; each queue DTO narrows `data` to its own shape
   data: any;
   groupId?: string;
   options?: BulkJobOptions;
+  deferReason?: DeferReasonEnum;
 }

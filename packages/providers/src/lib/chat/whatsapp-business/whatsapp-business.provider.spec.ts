@@ -1,6 +1,7 @@
 import { ChannelEndpointByType, ENDPOINT_TYPES, IChatOptions } from '@novu/stateless';
 import { nanoid } from 'nanoid';
 import { expect, test } from 'vitest';
+import { PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
@@ -465,5 +466,6 @@ function expectedHeaders(accessToken: string) {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
+    timeout: PROVIDER_HTTP_TIMEOUT_MS,
   };
 }

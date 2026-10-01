@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { type AgentEntity, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_MANAGED_DEFINITION_VERSION } from '@novu/shared';
+import { EnsureNovuHumanSkill } from './novu-human/ensure-novu-human-skill.service';
 
 export type AgentRuntimeDefinitionReconcileParams = {
   agentId: string;
@@ -18,6 +19,7 @@ export class AgentRuntimeDefinitionService {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly ensureNovuHumanSkill: EnsureNovuHumanSkill,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -72,6 +74,14 @@ export class AgentRuntimeDefinitionService {
       }
 
       await resolved.provider.refreshPlatformDefinition(externalAgentId);
+      try {
+        await this.ensureNovuHumanSkill.reconcile(resolved.provider, externalAgentId);
+      } catch (err) {
+        this.logger.warn(
+          { err, agentId: params.agentId },
+          'Novu HITL skill reconcile failed; continuing with the tool-only path'
+        );
+      }
       await this.markDefinitionSynced(agent, params);
     } catch (err) {
       this.logger.warn(

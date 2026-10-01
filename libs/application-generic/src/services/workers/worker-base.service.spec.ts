@@ -12,12 +12,15 @@ import {
 } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { BullMqService } from '../bull-mq';
-import { ISqsMessageMeta } from '../sqs';
+import { ISqsMessageMeta, SqsRetryError } from '../sqs';
 import { isPermanentClientError, WorkerBaseService } from './worker-base.service';
+
+/** These cases only exercise the SQS path, so BullMQ is never reached. */
+const unusedBullMqService: Partial<BullMqService> = {};
 
 class TestableWorker extends WorkerBaseService {
   constructor() {
-    super(JobTopicNameEnum.WORKFLOW, {} as unknown as BullMqService);
+    super(JobTopicNameEnum.WORKFLOW, unusedBullMqService as BullMqService);
   }
 
   public invokeWrapForSqs(processor: any) {
@@ -117,6 +120,62 @@ describe('WorkerBaseService.wrapForSqs', () => {
     expect(failedHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('retries when the registered failed handler returns the object form with retry true', async () => {
+    const worker = new TestableWorker();
+    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true }));
+
+    const error = new Error('transient');
+    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(error));
+
+    // No delay requested, so the original error propagates unwrapped.
+    await expect(wrapped(data, meta)).rejects.toBe(error);
+  });
+
+  it('acks when the registered failed handler returns the object form with retry false', async () => {
+    const worker = new TestableWorker();
+    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: false, retryDelayMs: 5_000 }));
+
+    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(new Error('permanent')));
+
+    await expect(wrapped(data, meta)).resolves.toBeUndefined();
+  });
+
+  it('wraps the error in SqsRetryError when the failed handler asks for a delay', async () => {
+    const worker = new TestableWorker();
+    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true, retryDelayMs: 4_000 }));
+
+    const error = new Error('webhook filter failed');
+    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(error));
+
+    const thrown = await wrapped(data, meta).catch((err: unknown) => err);
+    expect(thrown).toBeInstanceOf(SqsRetryError);
+    expect((thrown as SqsRetryError).retryDelayMs).toBe(4_000);
+    expect((thrown as SqsRetryError).cause).toBe(error);
+    expect((thrown as SqsRetryError).message).toBe('webhook filter failed');
+  });
+
+  it('treats a zero delay as a request to retry immediately, not as no request', async () => {
+    const worker = new TestableWorker();
+    // Randomised backoffs round down to 0 on early attempts.
+    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true, retryDelayMs: 0 }));
+
+    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(new Error('no backoff')));
+
+    const thrown = await wrapped(data, meta).catch((err: unknown) => err);
+    expect(thrown).toBeInstanceOf(SqsRetryError);
+    expect((thrown as SqsRetryError).retryDelayMs).toBe(0);
+  });
+
+  it('falls through to the flat visibility timeout when no delay is supplied', async () => {
+    const worker = new TestableWorker();
+    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true }));
+
+    const error = new Error('no opinion on cadence');
+    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(error));
+
+    await expect(wrapped(data, meta)).rejects.toBe(error);
+  });
+
   it('defaults to retry when the registered failed handler itself throws', async () => {
     const worker = new TestableWorker();
     const failedHandler = jest.fn().mockRejectedValue(new Error('handler exploded'));
@@ -140,14 +199,5 @@ describe('WorkerBaseService.wrapForSqs', () => {
     await wrapped(data, meta);
     expect(processor).toHaveBeenCalledTimes(1);
     expect(completedHandler).toHaveBeenCalledTimes(1);
-  });
-
-  it('skips processing entirely when data.skipProcessing is true', async () => {
-    const worker = new TestableWorker();
-    const processor = jest.fn();
-    const wrapped = worker.invokeWrapForSqs(processor);
-
-    await wrapped({ ...data, skipProcessing: true }, meta);
-    expect(processor).not.toHaveBeenCalled();
   });
 });

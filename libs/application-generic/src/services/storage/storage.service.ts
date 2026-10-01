@@ -3,7 +3,6 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
-  PutObjectCommandOutput,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -36,9 +35,70 @@ export abstract class StorageService {
   }>;
   abstract getReadSignedUrl(key: string, ttlSeconds: number): Promise<string>;
   abstract fileExists(key: string): Promise<boolean>;
-  abstract uploadFile(key: string, file: Buffer, contentType: string): Promise<PutObjectCommandOutput>;
+  abstract uploadFile(key: string, file: Buffer, contentType: string): Promise<void>;
   abstract getFile(key: string): Promise<Buffer>;
   abstract deleteFile(key: string): Promise<void>;
+}
+
+function isAzureBlobNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const azureError = error as { code?: string; details?: { errorCode?: string } };
+
+  return azureError.code === 'BlobNotFound' || azureError.details?.errorCode === 'BlobNotFound';
+}
+
+function isS3ObjectNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const s3Error = error as { code?: string; message?: string };
+
+  return s3Error.code === 'NoSuchKey' || s3Error.message === 'The specified key does not exist.';
+}
+
+function isS3HeadNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const s3Error = error as { name?: string; Code?: string; $metadata?: { httpStatusCode?: number } };
+
+  return (
+    s3Error.name === 'NotFound' ||
+    s3Error.Code === 'NotFound' ||
+    s3Error.Code === 'NoSuchKey' ||
+    s3Error.$metadata?.httpStatusCode === 404
+  );
+}
+
+function isGcsObjectNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const gcsError = error as {
+    code?: number | string;
+    message?: string;
+    errors?: Array<{ message?: string }>;
+  };
+
+  if (gcsError.code !== 404 && gcsError.code !== '404') {
+    return false;
+  }
+
+  const message = [gcsError.message, ...(gcsError.errors ?? []).map((entry) => entry.message)]
+    .filter(Boolean)
+    .join(' ');
+
+  return !/specified bucket does not exist/i.test(message);
+}
+
+function azureSasStartsOn(): Date {
+  return new Date(Date.now() - 5 * 60 * 1000);
 }
 
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
@@ -56,7 +116,7 @@ export class S3StorageService implements StorageService {
     forcePathStyle: true,
   });
 
-  async uploadFile(key: string, file: Buffer, contentType: string): Promise<PutObjectCommandOutput> {
+  async uploadFile(key: string, file: Buffer, contentType: string): Promise<void> {
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,
       Key: key,
@@ -64,7 +124,7 @@ export class S3StorageService implements StorageService {
       ContentType: contentType,
     });
 
-    return await this.s3.send(command);
+    await this.s3.send(command);
   }
 
   async getFile(key: string): Promise<Buffer> {
@@ -74,11 +134,10 @@ export class S3StorageService implements StorageService {
         Key: key,
       });
       const data = await this.s3.send(command);
-      const bodyContents = await streamToBuffer(data.Body as Readable);
 
-      return bodyContents as unknown as Buffer;
-    } catch (error: any) {
-      if (error.code === 'NoSuchKey' || error.message === 'The specified key does not exist.') {
+      return await streamToBuffer(data.Body as Readable);
+    } catch (error: unknown) {
+      if (isS3ObjectNotFound(error)) {
         throw new NonExistingFileError();
       }
 
@@ -128,13 +187,8 @@ export class S3StorageService implements StorageService {
       );
 
       return true;
-    } catch (error: any) {
-      if (
-        error.name === 'NotFound' ||
-        error.Code === 'NotFound' ||
-        error.Code === 'NoSuchKey' ||
-        error.$metadata?.httpStatusCode === 404
-      ) {
+    } catch (error: unknown) {
+      if (isS3HeadNotFound(error)) {
         return false;
       }
 
@@ -146,47 +200,46 @@ export class S3StorageService implements StorageService {
 export class GCSStorageService implements StorageService {
   private gcs = new Storage();
 
-  async uploadFile(key: string, file: Buffer, contentType: string): Promise<PutObjectCommandOutput> {
-    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+  private requireBucketName(): string {
+    if (!process.env.GCS_BUCKET_NAME) {
+      throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+    }
 
-    const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
-    const fileObject = bucket.file(key);
+    return process.env.GCS_BUCKET_NAME;
+  }
 
-    return (await fileObject.save(file, {
+  async uploadFile(key: string, file: Buffer, contentType: string): Promise<void> {
+    const fileObject = this.gcs.bucket(this.requireBucketName()).file(key);
+
+    await fileObject.save(file, {
       contentType,
-    })) as unknown as PutObjectCommandOutput;
+      resumable: false,
+    });
   }
 
   async getFile(key: string): Promise<Buffer> {
-    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
-
     try {
-      const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
-      const fileObject = bucket.file(key);
+      const fileObject = this.gcs.bucket(this.requireBucketName()).file(key);
       const [file] = await fileObject.download();
 
       return file;
-    } catch (error: any) {
-      if (error.code === 404) {
+    } catch (error: unknown) {
+      if (isGcsObjectNotFound(error)) {
         throw new NonExistingFileError();
       }
+
       throw error;
     }
   }
 
   async deleteFile(key: string): Promise<void> {
-    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
-
-    const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
-    const fileObject = bucket.file(key);
-    fileObject.delete();
+    const fileObject = this.gcs.bucket(this.requireBucketName()).file(key);
+    await fileObject.delete({ ignoreNotFound: true });
   }
 
   async getSignedUrl(key: string, contentType: string) {
-    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
-
     const [signedUrl] = await this.gcs
-      .bucket(process.env.GCS_BUCKET_NAME)
+      .bucket(this.requireBucketName())
       .file(key)
       .getSignedUrl({
         version: 'v4',
@@ -196,18 +249,21 @@ export class GCSStorageService implements StorageService {
       });
 
     const parsedUrl = new URL(signedUrl);
-    const path = process.env.CDN_URL
-      ? `${process.env.CDN_URL}/${key}`
-      : `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`;
+    let path: string;
+    if (process.env.CDN_URL) {
+      path = `${process.env.CDN_URL}/${key}`;
+    } else if (process.env.GCS_DOMAIN) {
+      path = `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`;
+    } else {
+      throw new Error('GCS_DOMAIN or CDN_URL is required for public branding and profile upload paths');
+    }
 
     return { signedUrl, path };
   }
 
   async getReadSignedUrl(key: string, ttlSeconds: number): Promise<string> {
-    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
-
     const [signedUrl] = await this.gcs
-      .bucket(process.env.GCS_BUCKET_NAME)
+      .bucket(this.requireBucketName())
       .file(key)
       .getSignedUrl({
         version: 'v4',
@@ -219,9 +275,7 @@ export class GCSStorageService implements StorageService {
   }
 
   async fileExists(key: string): Promise<boolean> {
-    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
-
-    const [exists] = await this.gcs.bucket(process.env.GCS_BUCKET_NAME).file(key).exists();
+    const [exists] = await this.gcs.bucket(this.requireBucketName()).file(key).exists();
 
     return exists;
   }
@@ -237,17 +291,17 @@ export class AzureBlobStorageService implements StorageService {
     this.sharedKeyCredential
   );
 
-  async uploadFile(key: string, file: Buffer, contentType: string): Promise<PutObjectCommandOutput> {
+  async uploadFile(key: string, file: Buffer, contentType: string): Promise<void> {
     if (!process.env.AZURE_CONTAINER_NAME) throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
 
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
 
-    return (await blockBlobClient.upload(file, file.length, {
+    await blockBlobClient.upload(file, file.length, {
       blobHTTPHeaders: {
         blobContentType: contentType,
       },
-    })) as unknown as PutObjectCommandOutput;
+    });
   }
 
   async getFile(key: string): Promise<Buffer> {
@@ -258,8 +312,8 @@ export class AzureBlobStorageService implements StorageService {
 
     try {
       return await blockBlobClient.downloadToBuffer();
-    } catch (error: any) {
-      if (error.statusCode === 404) {
+    } catch (error: unknown) {
+      if (isAzureBlobNotFound(error)) {
         throw new NonExistingFileError();
       }
       throw error;
@@ -271,7 +325,7 @@ export class AzureBlobStorageService implements StorageService {
 
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
-    blockBlobClient.delete();
+    await blockBlobClient.deleteIfExists();
   }
 
   async getSignedUrl(key: string, contentType: string) {
@@ -284,8 +338,8 @@ export class AzureBlobStorageService implements StorageService {
         containerName,
         blobName,
         permissions: BlobSASPermissions.parse('racwd'),
-        startsOn: new Date(),
-        expiresOn: new Date(new Date().valueOf() + 60 * 60 * 1000), // 60 minutes
+        startsOn: azureSasStartsOn(),
+        expiresOn: new Date(Date.now() + 60 * 60 * 1000), // 60 minutes
         protocol: SASProtocol.HttpsAndHttp,
         contentType,
       },
@@ -315,7 +369,7 @@ export class AzureBlobStorageService implements StorageService {
         containerName,
         blobName,
         permissions: BlobSASPermissions.parse('r'),
-        startsOn: new Date(),
+        startsOn: azureSasStartsOn(),
         expiresOn: new Date(Date.now() + ttlSeconds * 1000),
         protocol: SASProtocol.Https,
       },

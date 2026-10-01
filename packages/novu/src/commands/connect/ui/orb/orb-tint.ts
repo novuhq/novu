@@ -8,6 +8,7 @@ const CHANNEL_TINTS: Record<ChannelChoice, string> = {
   whatsapp: '#25D366', // WhatsApp green
   teams: '#5059C9', // Teams indigo
   sendblue: '#34C759', // iMessage green
+  'web-chat': '#6366F1', // Web Chat indigo
   skip: 'white',
 };
 const DEFAULT_ORB_COLOR = 'white';
@@ -20,6 +21,7 @@ const CHANNEL_LABELS: Partial<Record<ChannelChoice, string>> = {
   whatsapp: 'WHATSAPP',
   teams: 'TEAMS',
   sendblue: 'IMESSAGE',
+  'web-chat': 'WEB CHAT',
 };
 
 function lerpHexColor(from: string, to: string, amount: number): string {
@@ -88,6 +90,11 @@ export function computeOrbTint(
       return CHANNEL_TINTS.sendblue;
     case 'dashboard-channel-ready':
       return CHANNEL_TINTS[phase.channel];
+    case 'adding-web-chat':
+    case 'web-chat-handoff':
+    case 'pick-web-chat-setup':
+    case 'scaffolding-web-chat':
+      return CHANNEL_TINTS['web-chat'];
     case 'success': {
       const activeChannel = phase.connectedChannel ?? phase.dashboardRedirectChannel;
 
@@ -139,6 +146,11 @@ export function computeOrbLabel(
     case 'sending-sendblue-test':
     case 'sendblue-test-waiting':
       return CHANNEL_LABELS.sendblue;
+    case 'adding-web-chat':
+    case 'web-chat-handoff':
+    case 'pick-web-chat-setup':
+    case 'scaffolding-web-chat':
+      return CHANNEL_LABELS['web-chat'];
     case 'dashboard-channel-ready':
       return CHANNEL_LABELS[phase.channel];
     case 'success': {

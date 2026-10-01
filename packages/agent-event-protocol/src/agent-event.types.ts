@@ -8,6 +8,10 @@ import type {
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 
+export interface AgentQuoteReplyContext {
+  messageId: string;
+}
+
 export interface AgentEventUsage {
   inputTokens?: number;
   outputTokens?: number;
@@ -29,13 +33,59 @@ export interface AgentApprovalRequest {
    */
   approveActionId?: string;
   denyActionId?: string;
+  /** Server-minted always-allow-this-tool action id. Echo via respondToAction / card click. */
+  trustToolActionId?: string;
+  /** Server-minted always-allow-MCP-server action id (MCP tools only). */
+  trustServerActionId?: string;
 }
+
+export type AgentHumanOptionInput = string | { id: string; label: string };
+
+/** Chrome presentation built from the simple args or the `card` arg. */
+export type AgentHumanChromeCard = {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: AgentHumanOptionInput[];
+  options?: AgentHumanOptionInput[];
+};
+
+/**
+ * Posted `Card` element from `{ render }`. Structural only — this package cannot
+ * depend on the `chat` SDK's `CardElement`.
+ */
+export type AgentHumanCardElement = {
+  type: 'card';
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  children: unknown[];
+};
+
+export type AgentHumanCard = AgentHumanChromeCard | AgentHumanCardElement;
 
 export type AgentSignal =
   | { type: 'metadata'; action: 'set'; key: string; value: unknown }
   | { type: 'metadata'; action: 'delete'; key: string }
   | { type: 'metadata'; action: 'clear' }
-  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> };
+  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> }
+  | {
+      type: 'human';
+      kind: 'ask' | 'approve' | 'choose' | 'tell';
+      requestId: string;
+      /**
+       * The only content carrier: chrome, or a posted Card element (`type: 'card'`).
+       * Title lives on `card.title`; choose options on `card.options` / option buttons.
+       */
+      card: AgentHumanCard;
+      from?: string;
+      ttlSeconds?: number;
+      to?: string | string[];
+      actionIdentifier?: string;
+    };
 
 export type AgentEvent =
   // Lifecycle
@@ -58,6 +108,7 @@ export type AgentEvent =
       role: AgentMessageRole;
       content: AgentMessageContent;
       files?: AgentFileRef[];
+      quoteReply?: AgentQuoteReplyContext;
     }
   | { type: 'message-start'; messageId: string }
   | { type: 'message-delta'; messageId: string; delta: string }
@@ -86,8 +137,16 @@ export type AgentEvent =
   | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
   | ({
       type: 'tool-approval-request';
+      /** Stable assistant message id used to preserve the approval's timeline position during history replay. */
+      messageId?: string;
       /** When true, no companion message carries the approval UI. The consumer should render its default approval card. */
       deliverCard?: boolean;
+      /** HITL: seconds until the tool gate expires. Server defaults when omitted. */
+      ttlSeconds?: number;
+      /** HITL: Novu subscriberId(s) allowed to settle the gate. Defaults to the conversation subscriber. */
+      to?: string | string[];
+      /** HITL: attribution label shown on the approval card. */
+      from?: string;
     } & AgentApprovalRequest)
   | {
       type: 'tool-approval-response';
@@ -95,6 +154,21 @@ export type AgentEvent =
       decision: 'approved' | 'denied';
       reason?: string;
       automatic?: boolean;
+    }
+  | {
+      type: 'mcp-connection-request';
+      actionId: string;
+      mcpId: string;
+      displayName: string;
+      authorizeUrl: string;
+      authorizeUrlWithAutoApprove?: string;
+    }
+  | {
+      type: 'mcp-connection-result';
+      actionId: string;
+      mcpId: string;
+      status: 'connected' | 'failed';
+      message?: string;
     }
   // Conversation ops
   | { type: 'resolve'; summary?: string }
@@ -112,7 +186,9 @@ export type AgentEvent =
       reason: 'authentication' | 'connection';
       message: string;
     }
-  // Escape hatch
+  // LLM provider passthrough (live only — not history/transcript)
+  | { type: 'provider-event'; provider: string; event: string; data: unknown }
+  // App custom data escape hatch
   | { type: 'custom'; name: string; data: unknown };
 
 export interface AgentEventEnvelope {

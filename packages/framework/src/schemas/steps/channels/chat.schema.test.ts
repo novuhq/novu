@@ -101,5 +101,48 @@ describe('chat schema', () => {
 
       expect(result.success).toBe(true);
     });
+
+    it('accepts Chat SDK 4.40 card width and chart children', async () => {
+      const result = await validateData(chatChannelSchemas.output, {
+        card: {
+          type: 'card',
+          title: 'Weekly report',
+          width: 'full',
+          children: [
+            {
+              type: 'chart',
+              title: 'Signups by region',
+              chart: {
+                type: 'pie',
+                segments: [
+                  { label: 'NA', value: 45 },
+                  { label: 'EU', value: 28 },
+                ],
+              },
+            },
+            {
+              type: 'table',
+              headers: ['Day', 'Users'],
+              rows: [['Mon', '120']],
+              caption: 'Daily active users',
+              pageSize: 5,
+            },
+            {
+              type: 'actions',
+              children: [
+                {
+                  type: 'button',
+                  id: 'approve',
+                  label: 'Approve',
+                  tooltip: 'Approve this request',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(true);
+    });
   });
 });

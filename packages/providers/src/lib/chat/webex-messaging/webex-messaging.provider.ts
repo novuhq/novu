@@ -9,6 +9,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 type WebexMessagingProviderConfig = {
@@ -28,8 +29,6 @@ type WebexMessagePayload = {
   text: string;
 };
 
-const WEBEX_MESSAGE_REQUEST_TIMEOUT_MS = 30000;
-
 export class WebexMessagingProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.WebexMessaging;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -43,12 +42,11 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
 
     const normalizedBaseUrl = this.normalizeBaseUrl(config.baseUrl);
 
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
       baseURL: normalizedBaseUrl,
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: WEBEX_MESSAGE_REQUEST_TIMEOUT_MS,
     });
   }
 

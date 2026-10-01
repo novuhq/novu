@@ -118,8 +118,9 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
     case 'provider-event':
       return [
         {
-          type: 'custom',
-          name: `provider.${part.provider}.${part.event}`,
+          type: 'provider-event',
+          provider: part.provider,
+          event: part.event,
           data: part.data,
         },
       ];

@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "declaration": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "strict": true,
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "sourceMap": false,
+    "target": "es2020",
+    "lib": ["es2020"],
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]
+}

@@ -1,0 +1,295 @@
+---
+title: 'Tool'
+description: "Use the Tool channel in Novu Framework to page on-call, open incidents, or POST JSON to a webhook from a workflow step."
+---
+
+The Tool channel delivers a payload from a workflow to an operational system. Use it to page on-call, open an incident, or POST JSON to an endpoint you control.
+
+It is a **channel step**, like email or SMS. Novu sends through a Tool integration in the Integration Store. It is not a replacement for [`step.custom`](/framework/custom), which runs arbitrary code in your bridge and returns structured results to later steps.
+
+<Note>
+  Connect a Tool provider before triggering. PagerDuty, Opsgenie, and Grafana route per subscriber via [channel endpoints](/api-reference/channel-endpoints/create-a-channel-endpoint). Tool webhook can use a shared URL (static) or per-subscriber URLs (dynamic).
+</Note>
+
+## When to use `step.tool`
+
+| Use `step.tool` when | Use `step.custom` when |
+| --- | --- |
+| You want Novu to deliver to PagerDuty, Opsgenie, Grafana, or a webhook | You need to fetch or transform data in your bridge |
+| Delivery should use a configured integration and Activity feed | The result must be reused in later steps |
+| You need provider-specific fields (severity, tags, extra JSON keys) | You are calling an API that has no Tool provider |
+
+A common pattern is to fetch in `step.custom`, then page with `step.tool` using that result.
+
+## Providers
+
+| Provider | What `body` becomes | Setup |
+| --- | --- | --- |
+| [PagerDuty](/platform/integrations/tool/pagerduty) | Incident `payload.summary` | Per-subscriber Events API v2 routing key |
+| [Opsgenie](/platform/integrations/tool/opsgenie) | Alert `message` (truncated at 130 characters) | Per-subscriber API key |
+| [Grafana](/platform/integrations/tool/grafana) | Alert group `title` (truncated at 1024 characters) | Per-subscriber webhook URL |
+| [Tool webhook](/platform/integrations/tool/webhook) | Request JSON `content` | Static URL on the integration, or dynamic subscriber endpoints |
+
+If a subscriber has no channel endpoint for an endpoint-routed provider (or no dynamic webhook URLs), Novu marks the Tool step **skipped** for that subscriber. Other subscribers on the same trigger are unaffected.
+
+## Define a tool step
+
+The resolver must return a `body` string. That string is the default content sent to the provider.
+
+```tsx
+await step.tool('page-oncall', async () => {
+  return {
+    body: 'Payment failed for order ORD-12345',
+  };
+});
+```
+
+### Workflow with payload
+
+```tsx
+import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const orderFailed = workflow(
+  'order-failed',
+  async ({ step, payload, subscriber }) => {
+    await step.tool('page-oncall', async () => ({
+      body: `Payment failed for order ${payload.orderNumber} (${subscriber.subscriberId}): ${payload.reason}`,
+    }));
+  },
+  {
+    payloadSchema: z.object({
+      orderNumber: z.string(),
+      reason: z.string(),
+    }),
+  }
+);
+```
+
+Trigger the workflow as usual. Delivery uses the subscriber's Tool endpoints for that environment.
+
+```tsx
+await orderFailed.trigger({
+  to: 'user-123',
+  payload: {
+    orderNumber: 'ORD-12345',
+    reason: 'payment_declined',
+  },
+});
+```
+
+## Provider overrides
+
+Use the `providers` option to pass fields the shared `body` schema does not cover. Keys are Tool provider IDs: `pagerduty`, `opsgenie`, `grafana`, and `tool-webhook`.
+
+Only the override for the integration that actually sends is applied. You can define several; unused ones are ignored.
+
+<Tabs>
+  <Tab title="PagerDuty">
+```tsx
+await step.tool(
+  'page-oncall',
+  async () => ({
+    body: 'Payment failed for order ORD-12345',
+  }),
+  {
+    providers: {
+      pagerduty: async ({ outputs }) => ({
+        severity: 'error',
+        source: 'checkout',
+        summary: outputs.body,
+        custom_details: {
+          runbook: 'https://runbooks.example.com/payments',
+        },
+      }),
+    },
+  }
+);
+```
+
+PagerDuty defaults `severity` to `critical` and `source` to `novu` when you omit those fields. See [incident payload defaults](/platform/integrations/tool/pagerduty#incident-payload-defaults-and-overrides).
+  </Tab>
+  <Tab title="Opsgenie">
+```tsx
+await step.tool(
+  'page-oncall',
+  async () => ({
+    body: 'Payment failed for order ORD-12345',
+  }),
+  {
+    providers: {
+      opsgenie: async ({ outputs }) => ({
+        message: outputs.body,
+        description: 'Card declined after 3 retries. Customer is blocked at checkout.',
+        priority: 'P1',
+        tags: ['payments', 'checkout'],
+        source: 'novu',
+      }),
+    },
+  }
+);
+```
+
+Opsgenie truncates `message` at 130 characters. Put detail in `description` (up to 15,000 characters). See [alert payload defaults](/platform/integrations/tool/opsgenie#alert-payload-defaults-and-overrides).
+  </Tab>
+  <Tab title="Grafana">
+```tsx
+await step.tool(
+  'page-oncall',
+  async () => ({
+    body: 'Payment failed for order ORD-12345',
+  }),
+  {
+    providers: {
+      grafana: async ({ outputs }) => ({
+        title: outputs.body,
+        message: 'Card declined after 3 retries.',
+        state: 'alerting',
+        link_to_upstream_details: 'https://app.example.com/orders/ORD-12345',
+      }),
+    },
+  }
+);
+```
+
+Send `state: 'ok'` with the same `alert_uid` to auto-resolve. See [alert payload defaults](/platform/integrations/tool/grafana#alert-payload-defaults-and-overrides).
+  </Tab>
+  <Tab title="Tool webhook">
+```tsx
+await step.tool(
+  'notify-ops',
+  async () => ({
+    body: 'Payment failed for order ORD-12345',
+  }),
+  {
+    providers: {
+      'tool-webhook': async ({ outputs }) => ({
+        alert_type: 'incident',
+        title: outputs.body,
+      }),
+    },
+  }
+);
+```
+
+The rendered `body` is always sent as `content` on the JSON request. Extra keys from the override merge into that object. See [request shape](/platform/integrations/tool/webhook#request-shape).
+  </Tab>
+</Tabs>
+
+You can also use `_passthrough` to merge extra `body`, `headers`, or `query` into the underlying provider request. See [provider overrides](/framework/typescript/steps#providers-overrides-object).
+
+## Step controls
+
+Expose copy that non-developers can edit in the dashboard without changing code.
+
+```tsx
+import { z } from 'zod';
+
+await step.tool(
+  'page-oncall',
+  async (controls) => ({
+    body: controls.body,
+  }),
+  {
+    controlSchema: z.object({
+      body: z.string().default('An incident requires attention.'),
+    }),
+    providers: {
+      pagerduty: async ({ controls, outputs }) => ({
+        summary: outputs.body,
+        severity: 'error',
+        source: 'checkout',
+      }),
+    },
+  }
+);
+```
+
+After you sync the workflow, the dashboard renders a **body** field for this step. Payload data still comes from `novu.trigger`. Learn more about [controls](/framework/controls).
+
+## Skip the step
+
+Skip delivery from previous-step results, payload flags, or subscriber data.
+
+```tsx
+workflow('order-failed', async ({ step, payload }) => {
+  const order = await step.custom(
+    'load-order',
+    async () => {
+      const record = await db.orders.find(payload.orderNumber);
+
+      return {
+        orderNumber: record.id,
+        alreadyPaged: record.pagerDutyIncidentId != null,
+      };
+    },
+    {
+      outputSchema: {
+        type: 'object',
+        properties: {
+          orderNumber: { type: 'string' },
+          alreadyPaged: { type: 'boolean' },
+        },
+        required: ['orderNumber', 'alreadyPaged'],
+      },
+    }
+  );
+
+  await step.tool(
+    'page-oncall',
+    async () => ({
+      body: `Payment failed for order ${order.orderNumber}`,
+    }),
+    {
+      skip: () => order.alreadyPaged || payload.severity === 'low',
+    }
+  );
+});
+```
+
+`skip` runs at send time, not during dashboard preview. See [skip](/framework/skip).
+
+## Channel preferences
+
+Disable Tool for a workflow (or leave it subscriber-controlled) with `preferences.channels.tool`:
+
+```tsx
+workflow(
+  'order-failed',
+  async ({ step, payload }) => {
+    await step.tool('page-oncall', async () => ({
+      body: `Payment failed for order ${payload.orderNumber}`,
+    }));
+  },
+  {
+    preferences: {
+      channels: {
+        tool: { enabled: true },
+      },
+    },
+  }
+);
+```
+
+## Output
+
+The resolver returns `{ body: string }`. The step does not return a result, so you cannot branch later steps on whether the provider accepted the request.
+
+See the [Tool step reference](/framework/typescript/steps/tool).
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="book-open" href="/framework/typescript/steps/tool" title="Tool step reference">
+    Output schema and SDK types.
+  </Card>
+  <Card icon="webhook" href="/platform/integrations/tool/webhook" title="Tool webhook">
+    Static vs dynamic routing, request body merge, and HMAC signatures.
+  </Card>
+  <Card icon="siren" href="/platform/integrations/tool/pagerduty" title="PagerDuty">
+    Per-subscriber routing keys and Events API v2 incident fields.
+  </Card>
+  <Card icon="code" href="/framework/custom" title="Custom step">
+    Fetch data in your bridge, then pass it into `step.tool`.
+  </Card>
+</Columns>

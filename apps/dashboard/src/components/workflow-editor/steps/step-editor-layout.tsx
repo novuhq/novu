@@ -46,6 +46,7 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { ContentSourceProvider } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
 import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
+import { StepEditorReadOnlyBanner } from '@/components/workflow-editor/steps/step-editor-read-only-banner';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
@@ -69,6 +70,7 @@ const CONTENT_OVERRIDE_STEP_TYPES: StepTypeEnum[] = [StepTypeEnum.CHAT, StepType
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
   step: StepResponseDto;
+  isReadOnly: boolean;
   className?: string;
 };
 
@@ -284,6 +286,7 @@ function StepEditorContent() {
                   : !isExternalWorkflow && <StepEditorModeToggle />}
               </div>
             </PanelHeader>
+            <StepEditorReadOnlyBanner />
             <div className="flex-1 overflow-y-auto">
               <div className="h-full p-3">
                 <StepEditorFactory />
@@ -378,7 +381,7 @@ function StepEditorContent() {
   );
 }
 
-export function StepEditorLayout({ workflow, step, className }: StepEditorLayoutProps) {
+export function StepEditorLayout({ workflow, step, isReadOnly, className }: StepEditorLayoutProps) {
   const content = (
     <HttpRequestTestProvider>
       <StepEditorContent />
@@ -387,7 +390,7 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
 
   return (
     <div className={cn('h-full w-full', className)}>
-      <StepEditorProvider workflow={workflow} step={step}>
+      <StepEditorProvider workflow={workflow} step={step} isReadOnly={isReadOnly}>
         {CONTENT_OVERRIDE_STEP_TYPES.includes(step.type) ? (
           <ContentSourceProvider>{content}</ContentSourceProvider>
         ) : (

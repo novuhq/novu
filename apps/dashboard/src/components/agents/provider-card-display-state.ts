@@ -37,7 +37,7 @@ export function resolveProviderCardDisplayState(params: {
 
   return {
     effectiveConnected: isConnected,
-    showCheck: isSelected || isConnected,
+    showCheck: isConnected,
     showConnecting: isSelected && !isConnected,
     showInSetup: false,
     showActiveBorder: false,
