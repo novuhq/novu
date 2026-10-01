@@ -16,9 +16,10 @@ import {
   RiSparklingLine,
   RiUserLine,
 } from 'react-icons/ri';
+import { useSupportDrawer } from '@/components/header-navigation/support-drawer';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { openDocsAssistant } from '@/utils/docs-assistant';
+import { openMintlifyAssistant } from '@/utils/mintlify-assistant';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { Button } from '../primitives/button';
@@ -105,6 +106,7 @@ function CommandFooter({ commands }: { commands: CommandType[] }) {
 
 export function CommandPalette() {
   const { isOpen, closeCommandPalette } = useCommandPalette();
+  const { closeSupportDrawer } = useSupportDrawer();
   const track = useTelemetry();
   const [search, setSearch] = useState('');
   const commandGroups = useCommandRegistry(search);
@@ -120,16 +122,17 @@ export function CommandPalette() {
     }
   }, [isOpen]);
 
-  const openDocsAssistantWithQuery = useCallback(() => {
+  const openAskAiWithQuery = useCallback(() => {
     track(TelemetryEvent.COMMAND_PALETTE_COMMAND_SELECTED, {
       commandId: 'help-ai-search',
       commandLabel: `Ask AI "${search}"`,
       commandCategory: 'help',
     });
 
-    openDocsAssistant(search);
     closeCommandPalette();
-  }, [search, closeCommandPalette, track]);
+    closeSupportDrawer();
+    void openMintlifyAssistant({ source: 'command-palette', query: search });
+  }, [search, closeCommandPalette, closeSupportDrawer, track]);
 
   const executeCommand = useCallback(
     async (command: CommandType) => {
@@ -210,7 +213,7 @@ export function CommandPalette() {
           <CommandMenu.Group heading="AI Assistant" className="px-2.5">
             <CommandMenu.Item
               value={`Ask AI ${search} ai assistant help question`}
-              onSelect={openDocsAssistantWithQuery}
+              onSelect={openAskAiWithQuery}
               className="px-1.5 rounded-8"
             >
               <div className="flex items-center gap-1.5 flex-1">

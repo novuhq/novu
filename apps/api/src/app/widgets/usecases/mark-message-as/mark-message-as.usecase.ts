@@ -17,7 +17,13 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { DeliveryLifecycleStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleStatusEnum,
+  sanitizeMessageCta,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WebSocketEventEnum,
+} from '@novu/shared';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
@@ -111,6 +117,10 @@ export class MarkMessageAs {
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} traces`);
       }
+    }
+
+    for (const message of updatedMessages) {
+      message.cta = sanitizeMessageCta(message.cta);
     }
 
     return updatedMessages;

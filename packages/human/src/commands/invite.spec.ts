@@ -51,7 +51,7 @@ const operatorConfig: HumanCliConfig = {
   subscriberId: 'operator',
 };
 
-const INVITE_URL = 'https://dashboard.novu.co/agents/invite/tok_123';
+const INVITE_URL = 'https://gethuman.md/invite/tok_123';
 const INVITE_EXPIRES_AT = '2026-10-02T12:00:00.000Z';
 
 function slackLink() {

@@ -13,6 +13,7 @@ import {
 } from '@novu/application-generic';
 import { TopicSubscribersRepository } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
+import { ActivityRetentionRange, ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
@@ -66,6 +67,7 @@ export class GetWorkflowRuns {
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
+    private activityRetentionService: ActivityRetentionService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -83,126 +85,13 @@ export class GetWorkflowRuns {
     );
 
     try {
-      const queryBuilder = new QueryBuilder<WorkflowRun>({
-        environmentId: command.environmentId,
+      const retentionRange = await this.activityRetentionService.resolve({
+        organizationId: command.organizationId,
+        after: command.createdGte,
+        before: command.createdLte,
       });
-
-      if (command.workflowIds?.length) {
-        queryBuilder.whereIn('workflow_id', command.workflowIds);
-      }
-
-      if (command.subscriberIds?.length) {
-        queryBuilder.whereIn('external_subscriber_id', command.subscriberIds);
-      }
-
-      if (command.transactionIds?.length) {
-        queryBuilder.whereIn('transaction_id', command.transactionIds);
-      }
-
-      if (command.statuses?.length) {
-        const statuses = command.statuses.map((status) => {
-          //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
-          if (status === WorkflowRunStatusDtoEnum.PROCESSING) {
-            return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
-          }
-          if (status === WorkflowRunStatusDtoEnum.COMPLETED) {
-            return [WorkflowRunStatusEnum.SUCCESS, WorkflowRunStatusEnum.COMPLETED];
-          }
-          if (status === WorkflowRunStatusDtoEnum.ERROR) {
-            return [WorkflowRunStatusEnum.ERROR];
-          }
-          return status;
-        });
-        queryBuilder.whereIn('status', statuses.flat());
-      }
-
-      if (command.createdGte) {
-        queryBuilder.whereGreaterThanOrEqual('created_at', new Date(command.createdGte));
-      }
-
-      if (command.createdLte) {
-        queryBuilder.whereLessThanOrEqual('created_at', new Date(command.createdLte));
-      }
-
-      if (command.channels?.length) {
-        queryBuilder.orWhere(
-          command.channels.map((channel) => ({
-            field: 'channels',
-            operator: 'LIKE',
-            value: `%"${channel}"%`,
-          }))
-        );
-      }
-
-      const severity = command.severity ?? [];
-      if (severity.length) {
-        const orConditions: Array<FieldCondition<WorkflowRun, keyof WorkflowRun, ClickhouseOperator>> = [];
-        if (severity.includes(SeverityLevelEnum.NONE)) {
-          orConditions.push({
-            field: 'severity',
-            operator: 'IS NULL',
-          });
-          orConditions.push({
-            field: 'severity',
-            operator: '=',
-            value: SeverityLevelEnum.NONE,
-          });
-        }
-        const severityWithoutNone = severity.filter((severity) => severity !== SeverityLevelEnum.NONE);
-        for (const severity of severityWithoutNone) {
-          orConditions.push({
-            field: 'severity',
-            operator: '=',
-            value: severity.toString(),
-          });
-        }
-        queryBuilder.orWhere(orConditions);
-      }
-
-      if (command.topicKey) {
-        queryBuilder.whereLike('topics', `%${command.topicKey}%`);
-      }
-
-      if (command.subscriptionId) {
-        const subscription = await this.topicSubscribersRepository.findOne({
-          _environmentId: command.environmentId,
-          identifier: command.subscriptionId,
-        });
-
-        if (subscription) {
-          queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
-          queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
-          queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
-        }
-      }
-
-      if (command.contextKeys !== undefined) {
-        if (command.contextKeys.length === 0) {
-          // Empty array = filter for records with no context (empty context_keys)
-          queryBuilder.whereEquals('context_keys', []);
-        } else {
-          // Non-empty array = filter for records containing all specified contexts
-          queryBuilder.whereHasAll('context_keys', command.contextKeys);
-        }
-      }
-
-      const safeWhere = queryBuilder.build();
-
-      let cursor: CursorData | undefined;
-      if (command.cursor) {
-        try {
-          cursor = this.decodeCursor(command.cursor);
-          this.logger.debug(
-            {
-              timestamp: cursor.created_at,
-              workflowRunId: cursor.workflow_run_id,
-            },
-            'Using compound cursor pagination'
-          );
-        } catch (error) {
-          throw new BadRequestException('Invalid cursor format');
-        }
-      }
+      const safeWhere = await this.buildWorkflowRunsWhere(command, retentionRange);
+      const cursor = this.parseCursor(command.cursor);
 
       const result = (await this.workflowRunRepository.findWithCursor({
         where: safeWhere,
@@ -233,8 +122,8 @@ export class GetWorkflowRuns {
 
       // Generate previous cursor if we're not on the first page
       let previousCursor: string | null = null;
-      if (command.cursor && workflowRuns.length > 0) {
-        previousCursor = await this.generatePreviousCursor(safeWhere, cursor!, command.limit);
+      if (cursor && workflowRuns.length > 0) {
+        previousCursor = await this.generatePreviousCursor(safeWhere, cursor, command.limit);
       }
 
       // Fetch step runs for all workflow runs efficiently
@@ -263,6 +152,164 @@ export class GetWorkflowRuns {
 
       throw error;
     }
+  }
+
+  private async buildWorkflowRunsWhere(
+    command: GetWorkflowRunsCommand,
+    retentionRange: ActivityRetentionRange
+  ): Promise<Where<WorkflowRun>> {
+    const queryBuilder = new QueryBuilder<WorkflowRun>({
+      environmentId: command.environmentId,
+    });
+
+    if (command.workflowIds?.length) {
+      queryBuilder.whereIn('workflow_id', command.workflowIds);
+    }
+
+    if (command.subscriberIds?.length) {
+      queryBuilder.whereIn('external_subscriber_id', command.subscriberIds);
+    }
+
+    if (command.transactionIds?.length) {
+      queryBuilder.whereIn('transaction_id', command.transactionIds);
+    }
+
+    this.applyStatusFilter(queryBuilder, command.statuses);
+
+    if (retentionRange.after) {
+      queryBuilder.whereGreaterThanOrEqual('created_at', new Date(retentionRange.after));
+    }
+
+    if (retentionRange.before) {
+      queryBuilder.whereLessThanOrEqual('created_at', new Date(retentionRange.before));
+    }
+
+    if (command.channels?.length) {
+      queryBuilder.orWhere(
+        command.channels.map((channel) => ({
+          field: 'channels',
+          operator: 'LIKE',
+          value: `%"${channel}"%`,
+        }))
+      );
+    }
+
+    this.applySeverityFilter(queryBuilder, command.severity);
+
+    if (command.topicKey) {
+      queryBuilder.whereLike('topics', `%${command.topicKey}%`);
+    }
+
+    await this.applySubscriptionFilter(queryBuilder, command);
+    this.applyContextKeysFilter(queryBuilder, command.contextKeys);
+
+    return queryBuilder.build();
+  }
+
+  private applyStatusFilter(queryBuilder: QueryBuilder<WorkflowRun>, statuses?: WorkflowRunStatusDtoEnum[]) {
+    if (!statuses?.length) {
+      return;
+    }
+
+    const expandedStatuses = statuses.map((status) => {
+      //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
+      if (status === WorkflowRunStatusDtoEnum.PROCESSING) {
+        return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
+      }
+      if (status === WorkflowRunStatusDtoEnum.COMPLETED) {
+        return [WorkflowRunStatusEnum.SUCCESS, WorkflowRunStatusEnum.COMPLETED];
+      }
+      if (status === WorkflowRunStatusDtoEnum.ERROR) {
+        return [WorkflowRunStatusEnum.ERROR];
+      }
+
+      return status;
+    });
+
+    queryBuilder.whereIn('status', expandedStatuses.flat());
+  }
+
+  private applySeverityFilter(queryBuilder: QueryBuilder<WorkflowRun>, severity?: SeverityLevelEnum[]) {
+    if (!severity?.length) {
+      return;
+    }
+
+    const orConditions: Array<FieldCondition<WorkflowRun, keyof WorkflowRun, ClickhouseOperator>> = [];
+
+    if (severity.includes(SeverityLevelEnum.NONE)) {
+      orConditions.push({
+        field: 'severity',
+        operator: 'IS NULL',
+      });
+      orConditions.push({
+        field: 'severity',
+        operator: '=',
+        value: SeverityLevelEnum.NONE,
+      });
+    }
+
+    for (const level of severity.filter((value) => value !== SeverityLevelEnum.NONE)) {
+      orConditions.push({
+        field: 'severity',
+        operator: '=',
+        value: level.toString(),
+      });
+    }
+
+    queryBuilder.orWhere(orConditions);
+  }
+
+  private async applySubscriptionFilter(queryBuilder: QueryBuilder<WorkflowRun>, command: GetWorkflowRunsCommand) {
+    if (!command.subscriptionId) {
+      return;
+    }
+
+    const subscription = await this.topicSubscribersRepository.findOne({
+      _environmentId: command.environmentId,
+      identifier: command.subscriptionId,
+    });
+
+    if (!subscription) {
+      return;
+    }
+
+    queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
+    queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
+    queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
+  }
+
+  private applyContextKeysFilter(queryBuilder: QueryBuilder<WorkflowRun>, contextKeys?: string[]) {
+    if (contextKeys === undefined) {
+      return;
+    }
+
+    if (contextKeys.length === 0) {
+      // Empty array = filter for records with no context (empty context_keys)
+      queryBuilder.whereEquals('context_keys', []);
+
+      return;
+    }
+
+    // Non-empty array = filter for records containing all specified contexts
+    queryBuilder.whereHasAll('context_keys', contextKeys);
+  }
+
+  private parseCursor(rawCursor?: string): CursorData | undefined {
+    if (!rawCursor) {
+      return undefined;
+    }
+
+    const cursor = this.decodeCursor(rawCursor);
+
+    this.logger.debug(
+      {
+        timestamp: cursor.created_at,
+        workflowRunId: cursor.workflow_run_id,
+      },
+      'Using compound cursor pagination'
+    );
+
+    return cursor;
   }
 
   /**
