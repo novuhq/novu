@@ -50,6 +50,8 @@ Overrides are defined in the `overrides` property of a trigger payload. You can 
 - Workflow-level: Applies to all steps using a specific provider and takes precedence over the default workflow provider settings.
 - Step-level: Targets a specific step in the workflow and it takes precedence over both workflow-level overrides and the default workflow provider settings.
 
+At either level, you can key an override by provider ID, such as `slack`, or by integration identifier, such as `slack-eng`. Integration keys target one integration when several share a provider, and they take precedence over provider keys. See [Target a specific integration](#target-a-specific-integration).
+
 Some channels also let you save provider overrides on the step itself in the workflow editor, rather than sending them with every trigger. Those configured overrides sit below both scopes above: anything you send at trigger time replaces the configured value for the same field, and fields you do not send keep their configured values. See [chat provider content overrides](/platform/integrations/chat#provider-content-overrides).
 
 <Warning>
@@ -705,6 +707,238 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
 </Note>
 
 In this example, only the `push-step` is affected, and multiple FCM-specific settings are overridden for that step, which are the notification title, body, and sound configurations for both Android and iOS platforms.
+
+### Target a specific integration
+
+A provider key applies to every integration of that provider. When an environment has several integrations of the same provider, key the override by integration identifier instead, so each integration receives its own payload.
+
+Use integration-keyed overrides when:
+- A chat step sends through two integrations of the same provider, such as two Slack integrations for different workspaces, and each needs different content.
+- [Integration conditions](/platform/integrations/integration-conditions) route a step to one of several integrations of the same provider, and each needs different settings, such as a different email `from` address.
+
+Integration keys are available at two levels:
+- `overrides.integrations.<identifier>`: Applies to every step that sends through that integration.
+- `overrides.steps.<step-id>.integrations.<identifier>`: Applies only to that step when it sends through that integration.
+
+In this example, the workflow has a chat step that sends through two Slack integrations, `slack-eng` and `slack-sales`:
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.trigger({
+  workflowId: "deploy-alert",
+  to: { subscriberId: "user-123" },
+  payload: { service: "checkout-api" },
+  overrides: {
+    providers: {
+      slack: { text: "deploy failed" },
+    },
+    integrations: {
+      "slack-eng": { text: "eng: deploy failed" },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="deploy-alert",
+        to={"subscriber_id": "user-123"},
+        payload={"service": "checkout-api"},
+        overrides={
+            "providers": {
+                "slack": {"text": "deploy failed"},
+            },
+            "integrations": {
+                "slack-eng": {"text": "eng: deploy failed"},
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "deploy-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "service": "checkout-api",
+    },
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "slack": map[string]any{"text": "deploy failed"},
+        },
+        "integrations": {
+            "slack-eng": map[string]any{"text": "eng: deploy failed"},
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'deploy-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: ['service' => 'checkout-api'],
+        overrides: [
+            'providers' => [
+                'slack' => ['text' => 'deploy failed'],
+            ],
+            'integrations' => [
+                'slack-eng' => ['text' => 'eng: deploy failed'],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "deploy-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = new Dictionary<string, object>() {
+        { "service", "checkout-api" },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "slack", new Dictionary<string, object>() { { "text", "deploy failed" } } },
+        },
+        Integrations = new Dictionary<string, Dictionary<string, object>>() {
+            { "slack-eng", new Dictionary<string, object>() { { "text", "eng: deploy failed" } } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("deploy-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of("service", "checkout-api"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of(
+                "providers", Map.of("slack", Map.of("text", "deploy failed")),
+                "integrations", Map.of("slack-eng", Map.of("text", "eng: deploy failed"))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "deploy-alert",
+    "to": { "subscriberId": "user-123" },
+    "payload": { "service": "checkout-api" },
+    "overrides": {
+        "providers": {
+            "slack": { "text": "deploy failed" }
+        },
+        "integrations": {
+            "slack-eng": { "text": "eng: deploy failed" }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+`slack-eng` receives "eng: deploy failed". `slack-sales` has no integration key, so it falls back to the provider-level "deploy failed".
+
+To limit an integration override to one step, nest `integrations` under the step identifier. Here, only `slack-chat-step` changes for `slack-eng`, and other steps that send through `slack-eng` are unaffected:
+
+```json
+{
+  "overrides": {
+    "steps": {
+      "slack-chat-step": {
+        "integrations": {
+          "slack-eng": { "text": "eng: deploy failed" }
+        }
+      }
+    }
+  }
+}
+```
+
+#### Override precedence
+
+When more than one level sets the same field, Novu applies them from lowest to highest priority, and the later level wins:
+
+1. Overrides saved on the step in the workflow editor, or set in the step's [`providers`](/framework/typescript/steps#providers-overrides-object) option in a Framework workflow. These are keyed by provider.
+2. `overrides.providers.<provider-id>`
+3. `overrides.steps.<step-id>.providers.<provider-id>`
+4. `overrides.integrations.<identifier>`
+5. `overrides.steps.<step-id>.integrations.<identifier>`
+
+Integration keys win over every provider key, including step-level provider keys. Merging works the same way at every level: objects merge deeply, arrays replace whole, and `null` clears a value set at a lower level. Triggers that only use provider keys behave as before.
+
+#### Integration identifiers
+
+- Each integration's identifier is shown on the integration in the **Integration Store**. See [Provider vs. Integration](/platform/integrations#provider-vs-integration).
+- Identifiers are unique within an [environment](/platform/developer/environments), and each environment has its own integrations. Make sure the key you send exists in every environment you trigger from.
+- Keys must match the identifier exactly. If an integration's identifier changes, the old key stops matching.
+- Novu ignores keys that don't match an integration the step sends through. The trigger doesn't fail.
+
+#### Supported steps and limitations
+
+Integration keys work on chat, email, SMS, push, and Tool steps, such as [Tool Webhook](/platform/integrations/tool/webhook). For email steps, they can also set `cc`, `bcc`, `from`, and `replyTo`, the same way provider keys do.
+
+- In-app (Inbox) steps don't support integration keys.
+- Overrides saved on a step in the workflow editor are keyed by provider only. You can't save per-integration overrides in the dashboard yet, so send them at trigger time.
+- Push overrides that add a delivery target at trigger time, such as FCM `tokens` or `topic` for a subscriber without stored device tokens, are only read from provider keys. Send them under `overrides.providers.<provider-id>` or `overrides.steps.<step-id>.providers.<provider-id>`.
 
 ### Slack Block Kit overrides
 
