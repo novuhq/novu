@@ -1,6 +1,11 @@
 import { workflow } from '@novu/framework';
 import { z } from 'zod';
-import { getUsageLimitsCopy, renderUsageLimitsEmail } from './email';
+import {
+  getUsageLimitsCopy,
+  getUsageLimitsNotificationText,
+  renderUsageLimitsEmail,
+  USAGE_LIMITS_CONTROL_DEFAULTS,
+} from './email';
 import { UsageLimitsAlertState, UsageLimitsPayload, usageLimitsPayloadSchema } from './schemas';
 
 /** How often the caller re-sends a `blocked` alert while the organization stays blocked. */
@@ -71,10 +76,10 @@ export const usageLimitsWorkflow = workflow(
     await step.email(
       'email',
       async (controls) => {
-        const { subject, body: previewText } = copy.notificationText ?? {
-          subject: payload.alertState === 'blocked' ? controls.blockedSubject : controls.subject,
+        const { subject, body: previewText } = getUsageLimitsNotificationText(copy, {
+          subject: controls.subject,
           body: controls.previewText,
-        };
+        });
 
         return {
           subject,
@@ -83,9 +88,8 @@ export const usageLimitsWorkflow = workflow(
       },
       {
         controlSchema: z.object({
-          subject: z.string().default('You are approaching your usage limits'),
-          blockedSubject: z.string().default('Usage limit reached: new notifications are blocked'),
-          previewText: z.string().default('You have used {{payload.percentage}}% of your monthly events'),
+          subject: z.string().default(USAGE_LIMITS_CONTROL_DEFAULTS.subject),
+          previewText: z.string().default(USAGE_LIMITS_CONTROL_DEFAULTS.body),
         }),
       }
     );
@@ -93,11 +97,11 @@ export const usageLimitsWorkflow = workflow(
     await step.inApp(
       'in-app',
       async (controls) => {
-        const isBlocked = payload.alertState === 'blocked';
-        const { subject, body } = copy.notificationText ?? {
-          subject: isBlocked ? controls.blockedSubject : controls.subject,
-          body: isBlocked ? controls.blockedBody : controls.body,
-        };
+        const { subject, body } = getUsageLimitsNotificationText(
+          copy,
+          { subject: controls.subject, body: controls.body },
+          { subject: controls.blockedSubject, body: controls.blockedBody }
+        );
 
         return {
           subject,
@@ -111,14 +115,10 @@ export const usageLimitsWorkflow = workflow(
       },
       {
         controlSchema: z.object({
-          subject: z.string().default('You are approaching your usage limits'),
-          blockedSubject: z.string().default('Usage limit reached: new notifications are blocked'),
-          body: z.string().default('You have used {{payload.percentage}}% of your monthly events'),
-          blockedBody: z
-            .string()
-            .default(
-              'You have used 100% of your monthly events. Upgrade to send again, or wait for your next billing cycle.'
-            ),
+          subject: z.string().default(USAGE_LIMITS_CONTROL_DEFAULTS.subject),
+          blockedSubject: z.string().default(USAGE_LIMITS_CONTROL_DEFAULTS.blockedSubject),
+          body: z.string().default(USAGE_LIMITS_CONTROL_DEFAULTS.body),
+          blockedBody: z.string().default(USAGE_LIMITS_CONTROL_DEFAULTS.blockedBody),
         }),
       }
     );
