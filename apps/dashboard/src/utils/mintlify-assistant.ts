@@ -90,18 +90,18 @@ function waitForMintlifyAssistant(timeoutMs = 10_000): Promise<MintlifyAssistant
   });
 }
 
+function removeEmbedScript(): void {
+  document.getElementById(MINTLIFY_SCRIPT_ID)?.remove();
+}
+
 async function loadEmbedScript(): Promise<void> {
   if (window.MintlifyAssistant) {
     return;
   }
 
-  const existingScript = document.getElementById(MINTLIFY_SCRIPT_ID);
-
-  if (existingScript) {
-    await waitForMintlifyAssistant();
-
-    return;
-  }
+  // A previous attempt may have left a script that loaded without registering
+  // the assistant. Waiting on that element can never succeed, so replace it.
+  removeEmbedScript();
 
   await new Promise<void>((resolve, reject) => {
     const script = document.createElement('script');
@@ -120,7 +120,12 @@ async function loadEmbedScript(): Promise<void> {
     document.head.appendChild(script);
   });
 
-  await waitForMintlifyAssistant();
+  try {
+    await waitForMintlifyAssistant();
+  } catch (error) {
+    removeEmbedScript();
+    throw error;
+  }
 }
 
 function setAssistantVisible(isOpen: boolean): void {
