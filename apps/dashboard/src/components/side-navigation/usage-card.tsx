@@ -1,8 +1,7 @@
-import type { GetSubscriptionDto } from '@novu/shared';
+import { type GetSubscriptionDto, USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared';
 import { RiArrowRightSLine, RiCalendarEventLine, RiErrorWarningFill, RiErrorWarningLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { getWorkflowRunsMax } from '@/components/billing/usage-limits/usage-limits-view';
-import { USAGE_LIMITS_DRAWER_ROUTE } from '@/components/billing/usage-limits/use-usage-limits-drawer-param';
 import { useFetchConversationUsage } from '@/hooks/use-fetch-conversation-usage';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatShortDate } from '@/utils/format-date';
@@ -17,79 +16,145 @@ type UsageMetric = {
   label: string;
   current: number;
   max: number;
-  showsLimitReached: boolean;
 };
 
 const getUsagePercentage = (current: number, limit: number): number => Math.min((current / limit) * 100, 100);
 
-type UsageCardProps = {
-  variant: Extract<SidebarPlanCardVariant, 'free_usage' | 'paused_usage'>;
-  subscription: GetSubscriptionDto;
-  canEditUsageLimits: boolean;
-};
+const isLimitReached = ({ current, max }: UsageMetric): boolean => current >= max;
 
-export function UsageCard({ variant, subscription, canEditUsageLimits }: UsageCardProps) {
+function useUsageCard(
+  variant: Extract<SidebarPlanCardVariant, 'free_usage' | 'paused_usage'>,
+  subscription: GetSubscriptionDto
+) {
   const track = useTelemetry();
   const { conversationUsage } = useFetchConversationUsage();
-  // Free plans block at each limit; the paused card's header names its one blocking limit.
-  const showsReachedLimits = variant === 'free_usage';
 
-  const toMetric = (label: string, current: number, max: number): UsageMetric => ({
-    label,
-    current,
-    max,
-    showsLimitReached: showsReachedLimits && current >= max,
-  });
-
-  const workflowRuns = toMetric('Workflow runs', subscription.events.current, getWorkflowRunsMax(subscription));
+  const workflowRuns: UsageMetric = {
+    label: 'Workflow runs',
+    current: subscription.events.current,
+    max: getWorkflowRunsMax(subscription),
+  };
   const metrics = [workflowRuns];
 
   // Unlimited conversation tiers don't need the nudge.
   if (conversationUsage && conversationUsage.included !== null) {
-    metrics.push(toMetric('Conversations', conversationUsage.current, conversationUsage.included));
+    metrics.push({ label: 'Conversations', current: conversationUsage.current, max: conversationUsage.included });
   }
 
-  const handleClick = () => {
+  const trackClick = () => {
     track(TelemetryEvent.USAGE_CARD_CLICKED, {
       variant,
       currentEvents: workflowRuns.current,
       maxEvents: workflowRuns.max,
       usagePercentage: getUsagePercentage(workflowRuns.current, workflowRuns.max),
-      isLimitReached: workflowRuns.current >= workflowRuns.max,
+      isLimitReached: isLimitReached(workflowRuns),
     });
   };
 
-  switch (variant) {
-    case 'free_usage':
-      return (
-        <Link
-          to={ROUTES.SETTINGS_BILLING}
-          className="bg-bg-white group relative mb-2 flex min-h-[58px] cursor-pointer flex-col rounded-lg"
-          onClick={handleClick}
-        >
-          <FreeUsageCardContent metrics={metrics} resetDate={subscription.currentPeriodEnd} />
-        </Link>
-      );
-    case 'paused_usage':
-      return (
-        <Link
-          to={canEditUsageLimits ? USAGE_LIMITS_DRAWER_ROUTE : ROUTES.SETTINGS_BILLING}
-          className="bg-warning-lighter mb-2 flex flex-col rounded-lg"
-          onClick={handleClick}
-        >
-          <PausedUsageCardContent metrics={metrics} resetDate={subscription.currentPeriodEnd} />
-        </Link>
-      );
-    default: {
-      const exhaustiveCheck: never = variant;
-
-      return exhaustiveCheck;
-    }
-  }
+  return { metrics, trackClick };
 }
 
-function UsageMetricRow({ metric }: { metric: UsageMetric }) {
-  const { label, current, max, showsLimitReached } = metric;
+type FreeUsageCardProps = {
+  subscription: GetSubscriptionDto;
+};
+
+/** Free plans block at each limit, so every reached limit is called out with an upgrade prompt. */
+export function FreeUsageCard({ subscription }: FreeUsageCardProps) {
+  const { metrics, trackClick } = useUsageCard('free_usage', subscription);
+
+  return (
+    <Link
+      to={ROUTES.SETTINGS_BILLING}
+      className="bg-bg-white group relative mb-2 flex min-h-[58px] cursor-pointer flex-col rounded-lg"
+      onClick={trackClick}
+    >
+      <FreeUsageCardContent metrics={metrics} resetDate={subscription.currentPeriodEnd} />
+    </Link>
+  );
+}
+
+type FreeUsageCardContentProps = {
+  metrics: UsageMetric[];
+  resetDate: string | null;
+};
+
+function FreeUsageCardContent({ metrics, resetDate }: FreeUsageCardContentProps) {
+  if (metrics.some(isLimitReached)) {
+    return (
+      <div className="flex flex-col p-2">
+        <div className="space-y-2">
+          {metrics.map((metric) => (
+            <UsageMetricRow key={metric.label} metric={metric} showsLimitReached={isLimitReached(metric)} />
+          ))}
+          {resetDate && <ResetDateLabel resetDate={resetDate} />}
+        </div>
+        <div className="mt-2">
+          <UpgradeButton />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex flex-col overflow-hidden p-2">
+      <div className="space-y-2 transition-transform duration-200 ease-out group-hover:-translate-y-1">
+        {metrics.map((metric) => (
+          <UsageMetricRow key={metric.label} metric={metric} />
+        ))}
+      </div>
+
+      <div className="relative mt-2 h-6">
+        {resetDate && (
+          <div className="absolute inset-0 flex items-center transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:opacity-0">
+            <ResetDateLabel resetDate={resetDate} />
+          </div>
+        )}
+        <div className="absolute inset-0 flex items-center translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+          <UpgradeButton />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type PausedUsageCardProps = {
+  subscription: GetSubscriptionDto;
+  canEditUsageLimits: boolean;
+};
+
+/** The header names the one blocking limit, so the rows only show usage. */
+export function PausedUsageCard({ subscription, canEditUsageLimits }: PausedUsageCardProps) {
+  const { metrics, trackClick } = useUsageCard('paused_usage', subscription);
+  const resetDate = subscription.currentPeriodEnd;
+
+  return (
+    <Link
+      to={canEditUsageLimits ? USAGE_LIMITS_DASHBOARD_PATH : ROUTES.SETTINGS_BILLING}
+      className="bg-warning-lighter mb-2 flex flex-col rounded-lg"
+      onClick={trackClick}
+    >
+      <span className="text-warning-dark text-label-xs flex items-center gap-1 px-2 py-1">
+        <RiErrorWarningFill className="text-warning-base size-3.5 shrink-0" />
+        You've reached your usage limit.
+        <RiArrowRightSLine className="ml-auto size-3.5 shrink-0" />
+      </span>
+      <div className="bg-bg-white space-y-2 rounded-lg p-2">
+        {metrics.map((metric) => (
+          <UsageMetricRow key={metric.label} metric={metric} />
+        ))}
+        {resetDate && <ResetDateLabel resetDate={resetDate} />}
+      </div>
+    </Link>
+  );
+}
+
+type UsageMetricRowProps = {
+  metric: UsageMetric;
+  showsLimitReached?: boolean;
+};
+
+function UsageMetricRow({ metric, showsLimitReached = false }: UsageMetricRowProps) {
+  const { label, current, max } = metric;
   const percentage = getUsagePercentage(current, max);
 
   return (
@@ -131,67 +196,5 @@ function ResetDateLabel({ resetDate }: { resetDate: string }) {
       <RiCalendarEventLine className="size-3.5" />
       Usage resets on {formatShortDate(resetDate)}
     </span>
-  );
-}
-
-type UsageCardContentProps = {
-  metrics: UsageMetric[];
-  resetDate: string | null;
-};
-
-function PausedUsageCardContent({ metrics, resetDate }: UsageCardContentProps) {
-  return (
-    <>
-      <span className="text-warning-dark text-label-xs flex items-center gap-1 px-2 py-1">
-        <RiErrorWarningFill className="text-warning-base size-3.5 shrink-0" />
-        You've reached your usage limit.
-        <RiArrowRightSLine className="ml-auto size-3.5 shrink-0" />
-      </span>
-      <div className="bg-bg-white space-y-2 rounded-lg p-2">
-        {metrics.map((metric) => (
-          <UsageMetricRow key={metric.label} metric={metric} />
-        ))}
-        {resetDate && <ResetDateLabel resetDate={resetDate} />}
-      </div>
-    </>
-  );
-}
-
-function FreeUsageCardContent({ metrics, resetDate }: UsageCardContentProps) {
-  if (metrics.some((metric) => metric.showsLimitReached)) {
-    return (
-      <div className="flex flex-col p-2">
-        <div className="space-y-2">
-          {metrics.map((metric) => (
-            <UsageMetricRow key={metric.label} metric={metric} />
-          ))}
-          {resetDate && <ResetDateLabel resetDate={resetDate} />}
-        </div>
-        <div className="mt-2">
-          <UpgradeButton />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative flex flex-col overflow-hidden p-2">
-      <div className="space-y-2 transition-transform duration-200 ease-out group-hover:-translate-y-1">
-        {metrics.map((metric) => (
-          <UsageMetricRow key={metric.label} metric={metric} />
-        ))}
-      </div>
-
-      <div className="relative mt-2 h-6">
-        {resetDate && (
-          <div className="absolute inset-0 flex items-center transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:opacity-0">
-            <ResetDateLabel resetDate={resetDate} />
-          </div>
-        )}
-        <div className="absolute inset-0 flex items-center translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-          <UpgradeButton />
-        </div>
-      </div>
-    </div>
   );
 }

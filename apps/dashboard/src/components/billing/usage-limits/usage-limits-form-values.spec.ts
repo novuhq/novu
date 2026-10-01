@@ -2,28 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   getOnDemandCost,
   getPauseAtLimitDescription,
-  getPauseThreshold,
+  getUsageAlertsDescription,
   pausesOnSave,
 } from './usage-limits-form-values';
 
 const INCLUDED = 30000;
 
 describe('usage-limits-form-values', () => {
-  describe('getPauseThreshold', () => {
-    it('is null when not pausing', () => {
-      expect(getPauseThreshold(INCLUDED, { onDemandLimit: 5000, pauseAtLimit: false })).toBeNull();
-    });
-
-    it('pauses at the included runs without an on-demand limit', () => {
-      expect(getPauseThreshold(INCLUDED, { onDemandLimit: null, pauseAtLimit: true })).toBe(30000);
-      expect(getPauseThreshold(INCLUDED, { onDemandLimit: 0, pauseAtLimit: true })).toBe(30000);
-    });
-
-    it('adds the on-demand limit to the included runs', () => {
-      expect(getPauseThreshold(INCLUDED, { onDemandLimit: 5000, pauseAtLimit: true })).toBe(35000);
-    });
-  });
-
   describe('getOnDemandCost', () => {
     it('prices the whole on-demand limit', () => {
       expect(getOnDemandCost(5000, 1.2)).toBe('$6.00');
@@ -56,11 +41,33 @@ describe('usage-limits-form-values', () => {
     });
   });
 
+  describe('getUsageAlertsDescription', () => {
+    it('alerts from 0 when the limit is the included runs', () => {
+      const expected = 'Email and inbox alerts at 75%, 90% and 100% of your included runs.';
+
+      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: 0, pauseAtLimit: false })).toBe(expected);
+      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: null, pauseAtLimit: true })).toBe(expected);
+    });
+
+    it('alerts when included usage runs out under a higher limit or without one', () => {
+      const expected = 'Email and inbox alerts when included usage runs out, and at 75%, 90% and 100% of the limit.';
+
+      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: 5000, pauseAtLimit: true })).toBe(expected);
+      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: null, pauseAtLimit: false })).toBe(expected);
+    });
+  });
+
   describe('pausesOnSave', () => {
     const pausing = { onDemandLimit: 5000, pauseAtLimit: true };
 
     it('warns when usage already reached the new threshold', () => {
       expect(pausesOnSave({ state: 'billed_on_demand', current: 35000, included: INCLUDED }, pausing)).toBe(true);
+      expect(
+        pausesOnSave(
+          { state: 'within_included', current: INCLUDED, included: INCLUDED },
+          { onDemandLimit: null, pauseAtLimit: true }
+        )
+      ).toBe(true);
     });
 
     it('does not warn below the threshold, when not pausing, or when already paused', () => {
