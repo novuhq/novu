@@ -9807,17 +9807,8 @@ packages:
   '@next/env@16.3.6':
     resolution: {integrity: sha512-x9Vblze1EbtltQYnNH38xCPWU3TVfBd1eXqA3+w9+BTpedkkdNpAaltXlGQ/nsc1+E0mVTNrtcbX3GoO09zeLQ==}
 
-  '@next/env@16.3.6':
-    resolution: {integrity: sha512-x9Vblze1EbtltQYnNH38xCPWU3TVfBd1eXqA3+w9+BTpedkkdNpAaltXlGQ/nsc1+E0mVTNrtcbX3GoO09zeLQ==}
-
   '@next/swc-darwin-arm64@15.5.24':
     resolution: {integrity: sha512-AGdNLvxZNY6eR2iSnV+6wUa8CiHTMr4F7g3uHH7fT4ICIJBE00R9u4tzN/Vuwsw0cOi8MTD2HJcTCb6siMH88Q==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@next/swc-darwin-arm64@16.3.6':
-    resolution: {integrity: sha512-E/7GEqaUkt8mk/T8v9lAnrhzR06kdq1ZBkC12F8tAMkdIadwNp3H1KqHynDHrpcTlGCUdq/qu6vUL2aYVyYBdw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
@@ -9840,21 +9831,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@16.3.6':
-    resolution: {integrity: sha512-yBE893/nDWTlaiBD1p+qgt7NUen4U5R6FXyH0s67Npq1S3E0cVSef1WIXC2xBRgQvwAvJq6DnS6Y6PrY0cy4Ew==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [darwin]
-
   '@next/swc-linux-arm64-gnu@15.5.24':
     resolution: {integrity: sha512-rl9LSfE75si0WT3cDgdUC1XYCKS+TgxC+/IjitmeycrAG18X/plIP1/vy8dd/HPycYcIvE688PD7FuvEAiEAew==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@next/swc-linux-arm64-gnu@16.3.6':
-    resolution: {integrity: sha512-KJDpjBqBPYlvkivmyrp+Qys6k/7ksbqGQvRVc6ZEGfR+cjQxx+nUkJaWmNZJsmoOrqYNbaXByF8wa0lBwDhB3Q==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -9881,22 +9859,8 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@next/swc-linux-arm64-musl@16.3.6':
-    resolution: {integrity: sha512-mqNg2K+hvWskSRb/QM+Ix412DvBsuSF0XV+frTSw5vmoucNnIlynFwKYew8D01bfATErMOM7Bujrf0BA5DRKFA==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
   '@next/swc-linux-x64-gnu@15.5.24':
     resolution: {integrity: sha512-7dwtlhr0SLndqTG1z9ncRkbJswDZiKWlxzFyXDvJ2RDZRDRHp8zyMJ4D9UH/FgnQeXxxB6gZy2pMcIUoNKQ4pA==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@next/swc-linux-x64-gnu@16.3.6':
-    resolution: {integrity: sha512-nFncBNGAYouRHjRVaITs9beZRfhX4ssVwpnvPIAbkZVH6LtGoAVlH4bJ8Cnf9SOo9bsXgPFer/GdHtEE3JNOkw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -9923,13 +9887,6 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@next/swc-linux-x64-musl@16.3.6':
-    resolution: {integrity: sha512-5Mf3cHDGR/Iz0ng2Bj3zUR3p5QS9YK3Hn2QiAfavFmyF48zwThAjpFoiTKNIcOHLYS4zEk+gzyJ/9deQ2ZB8yQ==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
   '@next/swc-win32-arm64-msvc@15.5.24':
     resolution: {integrity: sha512-jBDDkZ/qKAqkWivWDMkJSXUzbzV0QKRBKJjEHUAvSB97Hzw7NLzJ6yV56Lts/wjir7s4P31GYgpbS6ZL+hasAA==}
     engines: {node: '>= 10'}
@@ -9942,20 +9899,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-arm64-msvc@16.3.6':
-    resolution: {integrity: sha512-0jkJy0C2kbrJWTk4YLa3xk80pVBpx8FCHJym7CnUfDAXe/FWv5qT7SQJbR0KuemyxaEDlEx5WT4VQJoTW+/9Qw==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [win32]
-
   '@next/swc-win32-x64-msvc@15.5.24':
     resolution: {integrity: sha512-JqtwjvvorjacQ0spgjmUJoxySoYgPwdT1sFdQ0/zmW4iMlP2hjYlCoJIyS7o6Epb4Fug8eco3HXFoBDUCDeH7Q==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [win32]
-
-  '@next/swc-win32-x64-msvc@16.3.6':
-    resolution: {integrity: sha512-/YXjI1e5OXcZ7YpxRwgP/1jAV/SBKTzeVKqN2mk7mLpcICsyn3Gl5+dIfDTJp70M0ccMhyMMRso4v6mPDCGepg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -24676,27 +24621,6 @@ packages:
       sass:
         optional: true
 
-  next@16.3.6:
-    resolution: {integrity: sha512-L+otWM/aQbYTx98aZhgEoMb4bZAXx1YVW4UMA/vuCyCoWG5HJyZUili8QAkqzrcC+5///tsz3s0M+SlyB5bLMw==}
-    engines: {node: '>=20.9.0'}
-    hasBin: true
-    peerDependencies:
-      '@opentelemetry/api': ^1.1.0
-      '@playwright/test': ^1.51.1
-      babel-plugin-react-compiler: '*'
-      react: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
-      react-dom: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
-      sass: ^1.3.0
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-      '@playwright/test':
-        optional: true
-      babel-plugin-react-compiler:
-        optional: true
-      sass:
-        optional: true
-
   nice-grpc-common@2.0.4:
     resolution: {integrity: sha512-gOEXlD6ShXZMZ8k+49wm/bA2j1+3IKbEFV9WYREJcvZV4kM5L1KkILYTX9VYBzZF2OuYCe1wp8c82bQkvR0fHw==}
 
@@ -38366,12 +38290,7 @@ snapshots:
 
   '@next/env@16.3.6': {}
 
-  '@next/env@16.3.6': {}
-
   '@next/swc-darwin-arm64@15.5.24':
-    optional: true
-
-  '@next/swc-darwin-arm64@16.3.6':
     optional: true
 
   '@next/swc-darwin-arm64@16.3.6':
@@ -38383,13 +38302,7 @@ snapshots:
   '@next/swc-darwin-x64@16.3.6':
     optional: true
 
-  '@next/swc-darwin-x64@16.3.6':
-    optional: true
-
   '@next/swc-linux-arm64-gnu@15.5.24':
-    optional: true
-
-  '@next/swc-linux-arm64-gnu@16.3.6':
     optional: true
 
   '@next/swc-linux-arm64-gnu@16.3.6':
@@ -38401,13 +38314,7 @@ snapshots:
   '@next/swc-linux-arm64-musl@16.3.6':
     optional: true
 
-  '@next/swc-linux-arm64-musl@16.3.6':
-    optional: true
-
   '@next/swc-linux-x64-gnu@15.5.24':
-    optional: true
-
-  '@next/swc-linux-x64-gnu@16.3.6':
     optional: true
 
   '@next/swc-linux-x64-gnu@16.3.6':
@@ -38419,22 +38326,13 @@ snapshots:
   '@next/swc-linux-x64-musl@16.3.6':
     optional: true
 
-  '@next/swc-linux-x64-musl@16.3.6':
-    optional: true
-
   '@next/swc-win32-arm64-msvc@15.5.24':
     optional: true
 
   '@next/swc-win32-arm64-msvc@16.3.6':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@16.3.6':
-    optional: true
-
   '@next/swc-win32-x64-msvc@15.5.24':
-    optional: true
-
-  '@next/swc-win32-x64-msvc@16.3.6':
     optional: true
 
   '@next/swc-win32-x64-msvc@16.3.6':
@@ -58615,33 +58513,6 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       styled-jsx: 5.1.6(@babel/core@7.29.7)(babel-plugin-macros@3.1.0)(react@18.3.1)
-    optionalDependencies:
-      '@next/swc-darwin-arm64': 16.3.6
-      '@next/swc-darwin-x64': 16.3.6
-      '@next/swc-linux-arm64-gnu': 16.3.6
-      '@next/swc-linux-arm64-musl': 16.3.6
-      '@next/swc-linux-x64-gnu': 16.3.6
-      '@next/swc-linux-x64-musl': 16.3.6
-      '@next/swc-win32-arm64-msvc': 16.3.6
-      '@next/swc-win32-x64-msvc': 16.3.6
-      '@opentelemetry/api': 1.9.1
-      '@playwright/test': 1.58.2
-      sharp: 0.35.4(@types/node@22.15.13)
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@types/node'
-      - babel-plugin-macros
-
-  next@16.3.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
-    dependencies:
-      '@next/env': 16.3.6
-      '@swc/helpers': 0.5.23
-      baseline-browser-mapping: 2.11.20
-      caniuse-lite: 1.0.30001810
-      postcss: 8.5.23
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-      styled-jsx: 5.1.6(@babel/core@7.29.7)(babel-plugin-macros@3.1.0)(react@19.2.3)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.3.6
       '@next/swc-darwin-x64': 16.3.6
