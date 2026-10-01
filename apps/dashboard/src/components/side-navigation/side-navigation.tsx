@@ -38,7 +38,7 @@ import { NavigationGroup } from './navigation-group';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { getSidebarPlanCardVariant, type SidebarPlanCardVariant } from './sidebar-plan-card-variant';
-import { PausedUsageCard, UsageCard } from './usage-card';
+import { UsageCard } from './usage-card';
 
 function MailAiLineIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -64,9 +64,8 @@ function SidebarPlanCard({ variant, subscription, daysLeft, canEditUsageLimits }
     case 'trial':
       return <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />;
     case 'free_usage':
-      return <UsageCard subscription={subscription} />;
     case 'paused_usage':
-      return <PausedUsageCard subscription={subscription} canEditUsageLimits={canEditUsageLimits} />;
+      return <UsageCard variant={variant} subscription={subscription} canEditUsageLimits={canEditUsageLimits} />;
     default: {
       const exhaustiveCheck: never = variant;
 

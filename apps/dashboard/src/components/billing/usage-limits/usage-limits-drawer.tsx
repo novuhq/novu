@@ -16,7 +16,7 @@ function showBillingAdminsOnlyToast() {
         <span className="text-sm">Only billing admins can change usage limits</span>
       </>
     ),
-    options: {},
+    options: { id: 'usage-limits-billing-admins-only' },
   });
 }
 
