@@ -2,226 +2,326 @@ import { BILLING_SETTINGS_PATH, USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared
 import { Button, Heading, renderAsync, Section, Text } from '@react-email/components';
 import React from 'react';
 import { EmailLayout } from '../../templates/layout';
-import { UsageLimitsAlertState, UsageLimitsPayload } from './schemas';
+import { UsageLimitsPayload } from './schemas';
 
-/** The `legacy_*` cases are the plan alerts from before usage limits, whose text the step controls hold. */
 type UsageLimitsAlertCase =
-  | 'legacy_approaching'
-  | 'legacy_blocked'
-  | 'legacy_alert_level'
-  | 'plan_blocked'
+  | 'free_75'
+  | 'free_90'
+  | 'free_paused'
   | 'usage_update'
-  | 'included_exhausted'
-  | 'limit_approaching'
-  | 'limit_paused'
+  | 'included_used'
+  | 'included_used_will_pause'
+  | 'limit_75'
+  | 'limit_90'
   | 'limit_reached'
-  | 'limit_progress';
+  | 'pause_75'
+  | 'pause_90'
+  | 'limit_paused';
 
 interface IUsageFigures {
   organizationName: string;
   planName: string;
   percentage: number;
   usage: number;
-  allowance: number;
-  /** Null unless the payload names the included runs of a plan that bills on-demand past them. */
+  limit: number;
+  /** Null on Free and trials. */
   includedEvents: number | null;
-}
-
-/** The email subject and preview, or the in-app subject and body. */
-export interface IUsageLimitsNotificationText {
-  subject: string;
-  body: string;
+  remaining: number;
 }
 
 export interface IUsageLimitsCopy {
-  heading: string;
-  summary: string;
-  message: string;
-  note?: string;
-  buttonLabel: string;
-  /** Relative to the dashboard host. */
-  dashboardPath: string;
-  /** Code-owned text, or which step controls hold it. */
-  notificationText: IUsageLimitsNotificationText | 'controls' | 'blocked_controls';
+  email: { subject: string; preview: string; heading: string; summary?: string; message: string; note?: string };
+  inApp: { subject: string; body: string };
+  /** The path is relative to the dashboard host. */
+  button: { label: string; path: string };
 }
 
-export const USAGE_LIMITS_CONTROL_DEFAULTS = {
-  subject: 'You are approaching your usage limits',
-  body: 'You have used {{payload.percentage}}% of your monthly events',
-  blockedSubject: 'Usage limit reached: new notifications are blocked',
-  blockedBody: 'You have used 100% of your monthly events. Upgrade to send again, or wait for your next billing cycle.',
-};
-
-const KEEPS_SENDING_ON_DEMAND = 'Your notifications keep sending, and additional runs are billed on-demand.';
+const UPGRADE_PLAN_BUTTON = { label: 'Upgrade plan', path: BILLING_SETTINGS_PATH };
+const VIEW_USAGE_BUTTON = { label: 'View usage', path: BILLING_SETTINGS_PATH };
+const REVIEW_USAGE_LIMITS_BUTTON = { label: 'Review usage limits', path: USAGE_LIMITS_DASHBOARD_PATH };
+const EDIT_USAGE_LIMITS_BUTTON = { label: 'Edit usage limits', path: USAGE_LIMITS_DASHBOARD_PATH };
 
 const formatCount = (value: number) => value.toLocaleString('en-US');
 
-function planAllowanceSummary(
-  { organizationName, planName, percentage, usage, allowance }: IUsageFigures,
-  allowanceLabel: string
-) {
-  return {
-    heading: `Used ${percentage}% of Your Monthly Events`,
-    summary: `Your organization ${organizationName} has used ${formatCount(usage)} events this billing period, ${percentage}% of the ${formatCount(allowance)} events ${allowanceLabel} on the ${planName} plan.`,
-  };
+/** The formatted count followed by the singular words when it is 1, e.g. "1 event remains" or "7,500 events remain". */
+function formatCountPhrase(count: number, singular: string, plural: string) {
+  return `${formatCount(count)} ${count === 1 ? singular : plural}`;
 }
 
-function limitSummary({ organizationName, planName, usage, allowance, includedEvents }: IUsageFigures) {
-  const breakdown =
-    includedEvents === null
-      ? ''
-      : `: the ${formatCount(includedEvents)} included in the ${planName} plan and ${formatCount(Math.max(usage - includedEvents, 0))} on-demand`;
+function onDemandSummary({ organizationName, planName, usage, limit, includedEvents }: IUsageFigures) {
+  const included = includedEvents ?? 0;
+  const limitSentence = `Your usage limit is ${formatCount(limit)} workflow runs.`;
 
-  return `Your organization ${organizationName} has used ${formatCount(usage)} workflow runs this billing period${breakdown}. Your usage limit is ${formatCount(allowance)} workflow runs.`;
+  if (usage > included) {
+    return `${organizationName} has used ${formatCount(usage)} workflow runs this billing period: ${formatCount(included)} included in the ${planName} plan and ${formatCount(usage - included)} on demand. ${limitSentence}`;
+  }
+
+  return `${organizationName} has used ${formatCount(usage)} of the ${formatCount(included)} workflow runs included in the ${planName} plan. ${limitSentence}`;
+}
+
+function pausedSummary({ organizationName, planName, limit, includedEvents }: IUsageFigures) {
+  const included = includedEvents ?? 0;
+
+  if (limit > included) {
+    return `${organizationName} has reached its ${formatCount(limit)} workflow run usage limit: ${formatCount(included)} included in the ${planName} plan and ${formatCount(limit - included)} on demand.`;
+  }
+
+  return `${organizationName} has reached its ${formatCount(limit)} workflow run usage limit.`;
 }
 
 const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) => IUsageLimitsCopy> = {
-  legacy_approaching: (figures) => ({
-    ...planAllowanceSummary(figures, 'monthly limit'),
-    message:
-      'To ensure uninterrupted service and access to additional features, we recommend upgrading your plan before reaching the limit.',
-    note: 'Note: Once you consume 100% of your monthly limit, notifications will be blocked until you upgrade or the next billing cycle begins.',
-    buttonLabel: 'Upgrade your plan',
-    dashboardPath: BILLING_SETTINGS_PATH,
-    notificationText: 'controls',
-  }),
-  legacy_blocked: (figures) => ({
-    ...planAllowanceSummary(figures, 'monthly limit'),
-    message: 'New notifications are blocked until you upgrade your plan or the next billing cycle begins.',
-    buttonLabel: 'Upgrade your plan',
-    dashboardPath: BILLING_SETTINGS_PATH,
-    notificationText: 'blocked_controls',
-  }),
-  legacy_alert_level: (figures) => ({
-    ...planAllowanceSummary(figures, 'monthly usage alert level'),
-    message:
-      'Your notifications will keep sending. If this volume is unexpected, review your workflows and triggers, or reach out to us to discuss a plan that fits your usage.',
-    buttonLabel: 'Review your usage',
-    dashboardPath: BILLING_SETTINGS_PATH,
-    notificationText: 'controls',
-  }),
-  // The email step has no blocked subject control, so the blocked plan alert names its own subject.
-  plan_blocked: (figures) => ({
-    ...USAGE_LIMITS_COPY.legacy_blocked(figures),
-    notificationText: {
-      subject: USAGE_LIMITS_CONTROL_DEFAULTS.blockedSubject,
-      body: USAGE_LIMITS_CONTROL_DEFAULTS.blockedBody,
+  free_75: ({ organizationName, planName, usage, limit, remaining }) => {
+    const subject = 'You are approaching your monthly event limit';
+    const usedPercent = limit === 0 ? 0 : Math.floor((usage / limit) * 100);
+    const remainBeforePause = `${formatCountPhrase(remaining, 'remains', 'remain')} before new notifications pause.`;
+
+    return {
+      email: {
+        subject,
+        preview: `${organizationName} has used ${usedPercent}% of its monthly events. ${remainBeforePause}`,
+        heading: 'Your usage is growing',
+        summary: `${organizationName} has used ${formatCount(usage)} of the ${formatCount(limit)} monthly events included on the ${planName} plan.`,
+        message: `You have ${formatCountPhrase(remaining, 'event', 'events')} left this billing period. At ${formatCount(limit)}, new notifications pause until you upgrade or the next billing period begins.`,
+        note: 'Free has a hard monthly event limit. Additional usage is not available.',
+      },
+      inApp: {
+        subject,
+        body: `${organizationName} has used ${formatCount(usage)} of ${formatCount(limit)} events. ${remainBeforePause}`,
+      },
+      button: UPGRADE_PLAN_BUTTON,
+    };
+  },
+  free_90: (figures) => {
+    const copy = USAGE_LIMITS_COPY.free_75(figures);
+    const subject = 'You are close to your monthly event limit';
+
+    return {
+      ...copy,
+      email: {
+        ...copy.email,
+        subject,
+        preview: `${formatCountPhrase(figures.remaining, 'event remains', 'events remain')} before new notifications pause.`,
+        heading: 'Almost at your monthly limit',
+      },
+      inApp: { ...copy.inApp, subject },
+    };
+  },
+  free_paused: ({ organizationName, planName, limit }) => ({
+    email: {
+      subject: 'Monthly event limit reached: notifications are paused',
+      preview: `${organizationName} has reached its ${formatCount(limit)}-event monthly limit.`,
+      heading: 'Notifications are paused',
+      summary: `${organizationName} has used all ${formatCount(limit)} monthly events included on the ${planName} plan.`,
+      message:
+        'New notifications are paused. Upgrade to resume sending now, or wait until the next billing period begins.',
     },
+    inApp: {
+      subject: 'Notifications are paused',
+      body: `${organizationName} has reached its ${formatCount(limit)}-event monthly limit. Upgrade to resume now, or wait until the next billing period.`,
+    },
+    button: UPGRADE_PLAN_BUTTON,
   }),
   /** The alert level of a plan without a set limit is internal, so the copy states the usage rather than a percentage. */
   usage_update: ({ organizationName, planName, usage, includedEvents }) => {
-    const includedNote =
+    const subject = 'Your workflow usage is higher than usual';
+    const preview = `${organizationName} has used ${formatCount(usage)} workflow runs this billing period. Sending continues as usual.`;
+    const summary =
       includedEvents === null
-        ? ''
-        : ` Your ${planName} plan includes ${formatCount(includedEvents)} workflow runs, and runs beyond that are billed on-demand.`;
+        ? `${organizationName} has used ${formatCount(usage)} workflow runs so far this billing period.`
+        : `${organizationName} has used ${formatCount(usage)} workflow runs this billing period. The ${planName} plan includes ${formatCount(includedEvents)}; additional runs are billed on demand.`;
 
     return {
-      heading: 'Your usage this billing period',
-      summary: `Your organization ${organizationName} has used ${formatCount(usage)} workflow runs so far this billing period.${includedNote}`,
-      message:
-        'Nothing changes on your side: your notifications keep sending. We’re letting you know because this is higher than typical for your plan. If it’s expected, no action is needed. If not, it may be worth a look at your workflows and triggers.',
-      buttonLabel: 'View usage',
-      dashboardPath: BILLING_SETTINGS_PATH,
-      notificationText: {
-        subject: 'A quick update on your workflow runs',
-        body: `${organizationName} has used ${formatCount(usage)} workflow runs this billing period. Your notifications keep sending as usual.`,
+      email: {
+        subject,
+        preview,
+        heading: 'Your workflows have been busy',
+        summary,
+        message:
+          'Nothing is paused. If this usage is expected, there is nothing to do. If not, take a look at your workflows and triggers to see what is driving it.',
       },
+      inApp: { subject, body: preview },
+      button: VIEW_USAGE_BUTTON,
     };
   },
-  included_exhausted: ({ organizationName, planName, allowance, includedEvents }) => {
-    const includedRuns = includedEvents === null ? 'the workflow runs' : `${formatCount(includedEvents)} workflow runs`;
+  included_used: ({ organizationName, planName, limit, includedEvents }) => {
+    const subject = 'You have used your included workflow runs';
+    const included = formatCount(includedEvents ?? 0);
 
     return {
-      heading: 'You’ve used your included workflow runs',
-      summary: `Your organization ${organizationName} has used all ${includedRuns} included in the ${planName} plan this billing period.`,
-      message: `Nothing changes on your side: your notifications keep sending, and additional runs are billed on-demand. We’ll check in again as you get closer to your ${formatCount(allowance)} usage limit.`,
-      buttonLabel: 'Review usage limits',
-      dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
-      notificationText: {
-        subject: 'You’ve used your included workflow runs',
-        body: `You’ve used all ${includedRuns} included in your ${planName} plan. ${KEEPS_SENDING_ON_DEMAND}`,
+      email: {
+        subject,
+        preview: `${organizationName} has used all ${included} included runs. Additional runs are now billed on demand.`,
+        heading: 'Your included workflow runs are used',
+        summary: `${organizationName} has used all ${included} workflow runs included in the ${planName} plan this billing period.`,
+        message: `Workflow runs continue as usual. Additional runs are now billed on demand. We’ll check in again as you approach your ${formatCount(limit)}-run usage limit.`,
       },
+      inApp: {
+        subject,
+        body: `${organizationName} has used all ${included} included runs. Workflow runs continue as usual, with additional runs billed on demand.`,
+      },
+      button: REVIEW_USAGE_LIMITS_BUTTON,
     };
   },
-  limit_approaching: (figures) => ({
-    heading: 'Approaching Your Usage Limit',
-    summary: limitSummary(figures),
-    message:
-      'Once usage reaches your limit, new workflow runs are paused until you raise the limit, turn off pause at limit, or the next billing cycle begins.',
-    buttonLabel: 'Edit usage limits',
-    dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
-    notificationText: {
-      subject: 'Approaching your usage limit: new workflow runs will pause',
-      body: `You have used ${formatCount(figures.usage)} workflow runs against your ${formatCount(figures.allowance)} usage limit. New workflow runs pause when you reach it.`,
-    },
-  }),
-  limit_paused: (figures) => ({
-    heading: 'New Workflow Runs Are Paused',
-    summary: limitSummary(figures),
-    message:
-      'New workflow runs are paused. To resume sending, raise your usage limit or turn off pause at limit. Otherwise, sending resumes when the next billing cycle begins.',
-    buttonLabel: 'Edit usage limits',
-    dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
-    notificationText: {
-      subject: 'Usage limit reached: new workflow runs are paused',
-      body: `New workflow runs are paused at your ${formatCount(figures.allowance)} usage limit. Raise the limit or turn off pause at limit to resume sending.`,
-    },
-  }),
-  limit_reached: (figures) => ({
-    heading: 'You’ve reached your usage limit',
-    summary: limitSummary(figures),
-    message:
-      'Nothing is paused: your notifications keep sending, and additional runs are billed on-demand. If you’d like more room, or want sending to pause at your limit, you can update your usage limits.',
-    buttonLabel: 'Review usage limits',
-    dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
-    notificationText: {
-      subject: 'You’ve reached your usage limit',
-      body: `${figures.organizationName} has reached its ${formatCount(figures.allowance)} workflow run usage limit. ${KEEPS_SENDING_ON_DEMAND}`,
-    },
-  }),
-  limit_progress: (figures) => ({
-    heading: `You’re ${figures.percentage}% of the way to your usage limit`,
-    summary: limitSummary(figures),
-    message:
-      'No action is needed. Your notifications keep sending, even past your limit, and additional runs are billed on-demand. If you’d like to change your limit, or pause sending when you reach it, you can do that in your usage limits.',
-    buttonLabel: 'Review usage limits',
-    dashboardPath: USAGE_LIMITS_DASHBOARD_PATH,
-    notificationText: {
-      subject: `You’re ${figures.percentage}% of the way to your usage limit`,
-      body: `${figures.organizationName} has used ${formatCount(figures.usage)} of its ${formatCount(figures.allowance)} workflow run usage limit. Your notifications keep sending as usual.`,
-    },
-  }),
-};
+  included_used_will_pause: ({ organizationName }) => {
+    const subject = 'You have used your included workflow runs';
 
-const LEGACY_ALERT_CASES: Record<Exclude<UsageLimitsAlertState, 'included_exhausted'>, UsageLimitsAlertCase> = {
-  approaching_limit: 'legacy_approaching',
-  blocked: 'legacy_blocked',
-  alert_level_reached: 'legacy_alert_level',
+    return {
+      email: {
+        subject,
+        preview: `${organizationName} has used all included workflow runs. Additional runs are now billed on demand.`,
+        heading: 'Your included workflow runs are used',
+        message:
+          'Workflow runs continue as usual. Additional runs are now billed on demand. We’ll check in again as you approach your usage limit.',
+      },
+      inApp: {
+        subject,
+        body: `${organizationName} has used all included workflow runs. Workflow runs continue as usual, with additional runs billed on demand.`,
+      },
+      button: REVIEW_USAGE_LIMITS_BUTTON,
+    };
+  },
+  limit_75: (figures) => {
+    const { organizationName, usage, limit } = figures;
+    const subject = 'You have used 75% of your usage limit';
+    const preview = `${organizationName} has used ${formatCount(usage)} of ${formatCount(limit)} workflow runs. Sending will continue past the limit.`;
+
+    return {
+      email: {
+        subject,
+        preview,
+        heading: 'Your usage is picking up',
+        summary: onDemandSummary(figures),
+        message: `This is an alert-only limit. Workflow runs will continue past ${formatCount(limit)}, with additional usage billed on demand. You can change the limit or turn on pause at limit at any time.`,
+      },
+      inApp: { subject, body: preview },
+      button: REVIEW_USAGE_LIMITS_BUTTON,
+    };
+  },
+  limit_90: (figures) => {
+    const copy = USAGE_LIMITS_COPY.limit_75(figures);
+    const subject = 'You are approaching your usage limit';
+
+    return {
+      ...copy,
+      email: {
+        ...copy.email,
+        subject,
+        heading: 'You are getting close to your usage limit',
+        message: `You are close to the limit you set, but nothing will pause there. Workflow runs will continue past ${formatCount(figures.limit)}, with additional usage billed on demand. Adjust the limit or turn on pause at limit if you want sending to stop there.`,
+      },
+      inApp: { ...copy.inApp, subject },
+    };
+  },
+  limit_reached: (figures) => {
+    const { organizationName, limit } = figures;
+    const subject = 'You have reached your usage limit';
+
+    return {
+      email: {
+        subject,
+        preview: `${organizationName} has reached ${formatCount(limit)} workflow runs. Sending continues.`,
+        heading: 'You hit your limit. We are still sending.',
+        summary: onDemandSummary(figures),
+        message:
+          'This is an alert-only limit, so nothing is paused. Workflow runs continue, and additional usage is billed on demand. Update your limit or turn on pause at limit if you want sending to stop there.',
+      },
+      inApp: {
+        subject,
+        body: `${organizationName} has reached its ${formatCount(limit)} workflow run limit. Nothing is paused, and additional runs are billed on demand.`,
+      },
+      button: REVIEW_USAGE_LIMITS_BUTTON,
+    };
+  },
+  pause_75: (figures) => {
+    const { organizationName, usage, limit } = figures;
+    const subject = 'You have used 75% of your usage limit';
+    const preview = `${organizationName} has used ${formatCount(usage)} of ${formatCount(limit)} workflow runs. New workflow runs will pause at the limit.`;
+
+    return {
+      email: {
+        subject,
+        preview,
+        heading: 'Your usage is picking up',
+        summary: onDemandSummary(figures),
+        message: `New workflow runs will pause at ${formatCount(limit)}. Raise the limit or turn off pause at limit if you expect more usage.`,
+      },
+      inApp: { subject, body: preview },
+      button: EDIT_USAGE_LIMITS_BUTTON,
+    };
+  },
+  pause_90: (figures) => {
+    const { organizationName, limit, remaining } = figures;
+    const subject = 'You are approaching your usage limit';
+    const runsRemain = formatCountPhrase(remaining, 'workflow run remains', 'workflow runs remain');
+
+    return {
+      email: {
+        subject,
+        preview: `${runsRemain} before new runs pause.`,
+        heading: `${formatCountPhrase(remaining, 'run left', 'runs left')} before pausing`,
+        summary: onDemandSummary(figures),
+        message: `You have ${formatCountPhrase(remaining, 'workflow run left', 'workflow runs left')} before new runs pause. Raise the limit or turn off pause at limit to keep sending.`,
+      },
+      inApp: {
+        subject,
+        body: `${runsRemain} before ${organizationName} reaches its ${formatCount(limit)} limit and new runs pause.`,
+      },
+      button: EDIT_USAGE_LIMITS_BUTTON,
+    };
+  },
+  limit_paused: (figures) => {
+    const { organizationName, limit } = figures;
+
+    return {
+      email: {
+        subject: 'Usage limit reached: workflow runs are paused',
+        preview: `${organizationName} reached its ${formatCount(limit)}-run usage limit. Update your limit to resume.`,
+        heading: 'Workflow runs are paused',
+        summary: pausedSummary(figures),
+        message:
+          'Raise your limit or turn off pause at limit to resume now. Otherwise, workflow runs resume when the next billing period begins.',
+      },
+      inApp: {
+        subject: 'Workflow runs are paused',
+        body: `${organizationName} reached its ${formatCount(limit)}-run usage limit. Raise the limit or turn off pause at limit to resume.`,
+      },
+      button: EDIT_USAGE_LIMITS_BUTTON,
+    };
+  },
 };
 
 function resolveAlertCase(
   { alertState = 'approaching_limit', usageLimits }: Partial<UsageLimitsPayload>,
   { percentage }: IUsageFigures
 ): UsageLimitsAlertCase {
-  if (!usageLimits && alertState !== 'included_exhausted') {
-    return LEGACY_ALERT_CASES[alertState];
-  }
-
   const isLimitSet = usageLimits?.isLimitSet === true;
+  const pausesAtLimit = usageLimits?.pausesAtLimit === true;
 
   switch (alertState) {
     case 'included_exhausted':
-      return 'included_exhausted';
+      return pausesAtLimit ? 'included_used_will_pause' : 'included_used';
     case 'approaching_limit':
-      return isLimitSet ? 'limit_approaching' : 'legacy_approaching';
+      if (isLimitSet) {
+        return percentage >= 90 ? 'pause_90' : 'pause_75';
+      }
+
+      return percentage >= 90 ? 'free_90' : 'free_75';
     case 'blocked':
-      return isLimitSet ? 'limit_paused' : 'plan_blocked';
+      return isLimitSet ? 'limit_paused' : 'free_paused';
     case 'alert_level_reached':
       if (!isLimitSet) {
         return 'usage_update';
       }
 
-      return percentage >= 100 ? 'limit_reached' : 'limit_progress';
+      if (percentage >= 100) {
+        return 'limit_reached';
+      }
+
+      if (percentage >= 90) {
+        return 'limit_90';
+      }
+
+      return 'limit_75';
     default: {
       const unhandled: never = alertState;
 
@@ -238,27 +338,12 @@ export function getUsageLimitsCopy(payload: Partial<UsageLimitsPayload>): IUsage
     planName,
     percentage: Math.round(percentage),
     usage,
-    allowance,
+    limit: allowance,
     includedEvents: usageLimits?.includedEvents ?? null,
+    remaining: Math.max(allowance - usage, 0),
   };
 
   return USAGE_LIMITS_COPY[resolveAlertCase(payload, figures)](figures);
-}
-
-export function getUsageLimitsNotificationText(
-  { notificationText }: IUsageLimitsCopy,
-  controls: IUsageLimitsNotificationText,
-  blockedControls: IUsageLimitsNotificationText = controls
-): IUsageLimitsNotificationText {
-  if (notificationText === 'controls') {
-    return controls;
-  }
-
-  if (notificationText === 'blocked_controls') {
-    return blockedControls;
-  }
-
-  return notificationText;
 }
 
 // Read at render time: the step runs in the API's bridge, whose env names the recipient's regional dashboard.
@@ -268,31 +353,32 @@ function dashboardUrl(path: string) {
 
 interface IEmailProps {
   copy: IUsageLimitsCopy;
-  previewText: string;
 }
 
-export function UsageLimitsEmail({ copy, previewText }: IEmailProps) {
+export function UsageLimitsEmail({ copy }: IEmailProps) {
   return (
-    <EmailLayout previewText={previewText}>
-      <Heading className="mx-0 my-[30px] p-0 text-center text-[24px] font-normal text-black">{copy.heading}</Heading>
-      <Text className="text-[14px] leading-[24px] text-black">{copy.summary}</Text>
+    <EmailLayout previewText={copy.email.preview}>
+      <Heading className="mx-0 my-[30px] p-0 text-center text-[24px] font-normal text-black">
+        {copy.email.heading}
+      </Heading>
+      {copy.email.summary && <Text className="text-[14px] leading-[24px] text-black">{copy.email.summary}</Text>}
 
-      <Text className="text-[14px] leading-[24px] text-black">{copy.message}</Text>
+      <Text className="text-[14px] leading-[24px] text-black">{copy.email.message}</Text>
 
       <Section className="mb-[32px] mt-[32px] text-center">
         <Button
           className="rounded bg-[#000000] px-5 py-3 text-center text-[12px] font-semibold text-white no-underline"
-          href={dashboardUrl(copy.dashboardPath)}
+          href={dashboardUrl(copy.button.path)}
         >
-          {copy.buttonLabel}
+          {copy.button.label}
         </Button>
       </Section>
 
-      {copy.note && <Text className="text-[12px] leading-[20px] text-gray-500">{copy.note}</Text>}
+      {copy.email.note && <Text className="text-[12px] leading-[20px] text-gray-500">{copy.email.note}</Text>}
     </EmailLayout>
   );
 }
 
-export async function renderUsageLimitsEmail(copy: IUsageLimitsCopy, previewText: string) {
-  return renderAsync(<UsageLimitsEmail copy={copy} previewText={previewText} />);
+export async function renderUsageLimitsEmail(copy: IUsageLimitsCopy) {
+  return renderAsync(<UsageLimitsEmail copy={copy} />);
 }
