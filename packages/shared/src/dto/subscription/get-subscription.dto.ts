@@ -1,4 +1,4 @@
-import { UsageAlertRecipientsEnum } from '../../entities/organization/organization.interface';
+import { IOrganizationUsageLimits } from '../../entities/organization/organization.interface';
 import { ApiServiceLevelEnum } from '../../types';
 
 export type GetSubscriptionDto = {
@@ -43,35 +43,28 @@ export type GetSubscriptionDto = {
      */
     included: number | null;
     /**
-     * On-demand events allowed on top of `included`, or null when no limit is set.
-     */
-    onDemandLimit: number | null;
-    /**
-     * The effective limit, `included + onDemandLimit`, or null when no limit is set.
+     * The workflow-run usage limit: `included` plus the on-demand limit, or `included` when pausing without one.
+     * Null when no limit is set.
      */
     limit: number | null;
     /**
      * Whether new workflow runs are currently rejected because usage reached the limit.
      */
     isPaused: boolean;
-    /**
-     * The price of 1,000 on-demand events in USD, or null when it is not known (e.g. negotiated contracts).
-     */
-    onDemandPricePer1k: number | null;
   };
   /**
-   * Usage limit settings, or null when usage limits are not available for the organization.
+   * Workflow-run usage limit settings, or null while usage limits are not enabled for the organization.
    */
   usageLimits: {
     /**
-     * Whether the organization's plan allows changing the limit and alert settings.
+     * Whether the organization's plan allows changing the settings.
      */
     isConfigurable: boolean;
-    pauseAtLimit: boolean;
-    alerts: {
-      enabled: boolean;
-      sendTo: UsageAlertRecipientsEnum;
-    };
+    /**
+     * The price of 1,000 on-demand workflow runs in USD, or null when it is not known (e.g. negotiated contracts).
+     */
+    onDemandPricePer1k: number | null;
+    settings: IOrganizationUsageLimits;
   } | null;
   trial: {
     isActive: boolean;

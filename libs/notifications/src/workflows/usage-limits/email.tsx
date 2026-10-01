@@ -2,21 +2,12 @@ import { USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared';
 import { Button, Heading, renderAsync, Section, Text } from '@react-email/components';
 import React from 'react';
 import { EmailLayout } from '../../templates/layout';
-import { UsageLimitsAlertState, UsageLimitsCta } from './schemas';
+import { UsageLimitsAlertState, UsageLimitsPayload } from './schemas';
 
 const DASHBOARD_URL = 'https://dashboard.novu.co';
 const BILLING_PATH = '/settings/billing';
 
-export interface IUsageLimitsCopyInput {
-  alertState?: UsageLimitsAlertState;
-  cta?: UsageLimitsCta;
-  percentage?: number;
-  organizationName?: string;
-  usage?: number;
-  allowance?: number;
-  includedEvents?: number | null;
-  planName?: string;
-}
+type UsageLimitsCta = 'upgrade' | 'edit_limits';
 
 interface IUsageFigures {
   organizationName: string;
@@ -51,14 +42,15 @@ const formatCount = (value: number) => value.toLocaleString('en-US');
 // The framework passes a partial payload (e.g. step previews), so every field needs a fallback.
 export function getUsageLimitsCopy({
   alertState = 'approaching_limit',
-  cta = 'upgrade',
   organizationName = '',
   planName = '',
   percentage = 0,
   usage = 0,
   allowance = 0,
-  includedEvents,
-}: IUsageLimitsCopyInput): IUsageLimitsCopy {
+  usageLimits,
+}: Partial<UsageLimitsPayload>): IUsageLimitsCopy {
+  const includedEvents = usageLimits?.includedEvents;
+  const cta: UsageLimitsCta = usageLimits?.isLimitSet ? 'edit_limits' : 'upgrade';
   const figures: IUsageFigures = {
     organizationName,
     planName,

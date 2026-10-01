@@ -30,20 +30,28 @@ export enum UsageAlertRecipientsEnum {
   ALL_MEMBERS = 'all_members',
 }
 
-/** Organization-configured workflow-run limit and usage alert settings. An absent field means its default. */
+export interface IWorkflowRunsUsageLimit {
+  /** On-demand workflow runs allowed on top of the included runs; `null` means no on-demand limit. */
+  onDemandLimit: number | null;
+  /**
+   * Rejects new workflow runs once usage reaches the included runs plus `onDemandLimit`, or the included runs when
+   * there is no on-demand limit.
+   */
+  pauseAtLimit: boolean;
+}
+
+export interface IUsageAlertSettings {
+  enabled: boolean;
+  sendTo: UsageAlertRecipientsEnum;
+}
+
+/**
+ * Organization-configured workflow-run limit and usage alert settings, stored and sent over the API in this shape.
+ * Absent on the organization means the defaults.
+ */
 export interface IOrganizationUsageLimits {
-  workflowRuns?: {
-    /** On-demand workflow runs allowed on top of the included runs; `null` means no limit. */
-    onDemandLimit: number | null;
-    /** Rejects new workflow runs once usage reaches included + onDemandLimit. Requires an on-demand limit when pausing. */
-    pauseAtLimit: boolean;
-  };
-  alerts?: {
-    enabled: boolean;
-    sendTo: UsageAlertRecipientsEnum;
-  };
-  /** ISO 8601 time of the last change. */
-  updatedAt?: string;
+  workflowRuns: IWorkflowRunsUsageLimit;
+  alerts: IUsageAlertSettings;
 }
 
 export interface IOrganizationEntity {

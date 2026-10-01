@@ -78,6 +78,7 @@ export class CommunityOrganizationRepository
     );
   }
 
+  /** Billing-only: the Mongo document owns usage limits, so these are not part of `IOrganizationRepository`. */
   async updateUsageLimits(
     organizationId: string,
     usageLimits: IOrganizationUsageLimits

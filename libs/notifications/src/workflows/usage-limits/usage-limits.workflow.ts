@@ -1,7 +1,7 @@
 import { workflow } from '@novu/framework';
 import { z } from 'zod';
 import { getUsageLimitsCopy, renderUsageLimitsEmail } from './email';
-import { UsageLimitsAlertState, usageLimitsAlertStateSchema, usageLimitsCtaSchema } from './schemas';
+import { UsageLimitsAlertState, UsageLimitsPayload, usageLimitsPayloadSchema } from './schemas';
 
 /** How often the caller re-sends a `blocked` alert while the organization stays blocked. */
 export const USAGE_LIMITS_BLOCKED_REMINDER_HOURS = 4 * 24;
@@ -16,50 +16,33 @@ const DEDUP_WINDOW_HOURS: Record<UsageLimitsAlertState, number> = {
   blocked: USAGE_LIMITS_BLOCKED_REMINDER_HOURS - 1,
 };
 
-export const usageLimitsPayloadSchema = z.object({
-  organizationId: z.string(),
-  organizationName: z.string(),
-  /** ISO start of the billing period. */
-  periodStart: z.string(),
-  /**
-   * The threshold crossed: 0 when usage reached `includedEvents`, otherwise 75, 90 or 100 percent of the way
-   * from `includedEvents` (0 when absent) to `allowance`.
-   */
-  percentage: z.number().min(0),
-  usage: z.number().min(0),
-  /** The cap the percentage thresholds lead up to. */
-  allowance: z.number().min(0),
-  planName: z.string(),
-  alertState: usageLimitsAlertStateSchema,
-  /** Included events of a plan that bills on-demand usage past them. */
-  includedEvents: z.number().min(0).nullable().optional(),
-  /** On-demand events the organization allows on top of `includedEvents`; null or absent without a set limit. */
-  onDemandLimit: z.number().min(0).nullable().optional(),
-  /** Absent means `upgrade`. */
-  cta: usageLimitsCtaSchema.optional(),
-});
-
-export type UsageLimitsPayload = z.infer<typeof usageLimitsPayloadSchema>;
-
 /**
  * The alert identity shared by the caller's claim key and the `dedup` step, so both dedupe the same alert.
- * A set limit's cap is part of the identity of the percentage thresholds, so changing the limit re-arms them;
- * the included-events alert (percentage 0) stays once per period.
+ * Without a set limit it is the plan alert's identity, unchanged by enabling usage limits. With one, the cap is part
+ * of each percentage threshold's identity, so changing the limit re-arms them, and pausing is part of the identity at
+ * the limit, so turning pause on after reaching it still sends the paused alert. `included_exhausted` stays once per
+ * period.
  */
 export function usageLimitsDedupKey({
   organizationId,
   periodStart,
   percentage,
   allowance,
-  onDemandLimit,
-}: Pick<UsageLimitsPayload, 'organizationId' | 'periodStart' | 'percentage' | 'allowance' | 'onDemandLimit'>): string {
+  alertState,
+  usageLimits,
+}: Pick<
+  UsageLimitsPayload,
+  'organizationId' | 'periodStart' | 'percentage' | 'allowance' | 'alertState' | 'usageLimits'
+>): string {
   const periodThresholdKey = `${organizationId}:${periodStart}:${percentage}`;
 
-  if (percentage > 0 && typeof onDemandLimit === 'number') {
-    return `${periodThresholdKey}:${allowance}`;
+  if (!usageLimits?.isLimitSet || alertState === 'included_exhausted') {
+    return periodThresholdKey;
   }
 
-  return periodThresholdKey;
+  const limitThresholdKey = `${periodThresholdKey}:${allowance}`;
+
+  return alertState === 'blocked' ? `${limitThresholdKey}:paused` : limitThresholdKey;
 }
 
 export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {

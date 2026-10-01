@@ -26,7 +26,6 @@ const usageLimitsSchema = new Schema(
       ),
       required: false,
     },
-    updatedAt: Schema.Types.String,
   },
   { _id: false }
 );
