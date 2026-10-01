@@ -1,4 +1,4 @@
-import type { GetSubscriptionDto, IEnvironment, UpdateUsageLimitsDto, UsageLimitsSettingsDto } from '@novu/shared';
+import type { GetSubscriptionDto, IEnvironment, IOrganizationUsageLimits } from '@novu/shared';
 import { del, get, put } from './api.client';
 
 export async function getSubscription({ environment }: { environment: IEnvironment }) {
@@ -11,9 +11,9 @@ export async function updateUsageLimits({
   usageLimits,
 }: {
   environment: IEnvironment;
-  usageLimits: UpdateUsageLimitsDto;
+  usageLimits: IOrganizationUsageLimits;
 }) {
-  const { data } = await put<{ data: UsageLimitsSettingsDto }>('/billing/usage-limits', {
+  const { data } = await put<{ data: IOrganizationUsageLimits }>('/billing/usage-limits', {
     environment,
     body: usageLimits,
   });
@@ -22,7 +22,7 @@ export async function updateUsageLimits({
 }
 
 export async function resetUsageLimits({ environment }: { environment: IEnvironment }) {
-  const { data } = await del<{ data: UsageLimitsSettingsDto }>('/billing/usage-limits', { environment });
+  const { data } = await del<{ data: IOrganizationUsageLimits }>('/billing/usage-limits', { environment });
 
   return data;
 }

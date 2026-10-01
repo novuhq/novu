@@ -1,35 +1,17 @@
-import type { GetSubscriptionDto } from '@novu/shared';
 import { RiBarChartBoxLine } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
-import {
-  getIncludedWorkflowRuns,
-  getWorkflowRunsUsageState,
-  type WorkflowRunsUsageState,
-} from './workflow-runs-usage-state';
-
-const compactNumberFormatter = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
-
-function formatCompactNumber(value: number): string {
-  return compactNumberFormatter.format(value).toLowerCase();
-}
-
-function formatResumeDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+import { formatShortDate } from '@/utils/format-date';
+import { formatCompactNumber, formatNumber } from '@/utils/number-formatting';
+import type { UsageLimitsView, WorkflowRunsUsage } from './usage-limits-view';
+import { useUsageLimitsDrawerParam } from './use-usage-limits-drawer-param';
 
 function toPercent(value: number, total: number): number {
   return total > 0 ? (value / total) * 100 : 0;
 }
 
-type UsageBarProps = {
-  state: WorkflowRunsUsageState;
-  current: number;
-  included: number;
-  denominator: number;
-};
-
-function UsageBar({ state, current, included, denominator }: UsageBarProps) {
-  const scale = Math.max(denominator, current);
+function UsageBar({ usage }: { usage: WorkflowRunsUsage }) {
+  const { state, current, included } = usage;
+  const scale = Math.max(usage.max, current);
 
   switch (state) {
     case 'paused':
@@ -41,7 +23,6 @@ function UsageBar({ state, current, included, denominator }: UsageBarProps) {
         </div>
       );
     case 'billed_on_demand':
-    case 'limit_crossed':
       return (
         <div className="flex h-[5px] w-full gap-px overflow-hidden rounded-[2px] bg-bg-muted">
           <div className="h-full bg-neutral-700" style={{ width: `${toPercent(included, scale)}%` }} />
@@ -59,26 +40,16 @@ function UsageBar({ state, current, included, denominator }: UsageBarProps) {
   }
 }
 
-type UsageStatusLabelProps = {
-  state: WorkflowRunsUsageState;
-  current: number;
-  denominator: number;
-  currentPeriodEnd: string | null;
-};
+function UsageStatusLabel({ usage }: { usage: WorkflowRunsUsage }) {
+  const { state, resetsAt } = usage;
 
-function UsageStatusLabel({ state, current, denominator, currentPeriodEnd }: UsageStatusLabelProps) {
   switch (state) {
     case 'within_included':
-      return <span className="text-text-soft">{Math.floor(toPercent(current, denominator))}% used</span>;
+      return <span className="text-text-soft">{Math.floor(toPercent(usage.current, usage.max))}% used</span>;
     case 'billed_on_demand':
-    case 'limit_crossed':
       return <span className="text-warning-base">Billed on-demand</span>;
     case 'paused':
-      return (
-        <span className="text-error-base">
-          Paused{currentPeriodEnd && ` · Resumes ${formatResumeDate(currentPeriodEnd)}`}
-        </span>
-      );
+      return <span className="text-error-base">Paused{resetsAt && ` · Resumes ${formatShortDate(resetsAt)}`}</span>;
     default: {
       const exhaustiveCheck: never = state;
 
@@ -88,16 +59,12 @@ function UsageStatusLabel({ state, current, denominator, currentPeriodEnd }: Usa
 }
 
 type WorkflowRunsUsageRowProps = {
-  subscription: GetSubscriptionDto;
-  canConfigure: boolean;
-  onEditLimit: () => void;
+  view: UsageLimitsView;
 };
 
-export function WorkflowRunsUsageRow({ subscription, canConfigure, onEditLimit }: WorkflowRunsUsageRowProps) {
-  const { events } = subscription;
-  const state = getWorkflowRunsUsageState(events);
-  const included = getIncludedWorkflowRuns(subscription);
-  const denominator = events.limit ?? included;
+export function WorkflowRunsUsageRow({ view }: WorkflowRunsUsageRowProps) {
+  const { setIsDrawerRequested } = useUsageLimitsDrawerParam();
+  const { usage, canEdit } = view;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -107,26 +74,21 @@ export function WorkflowRunsUsageRow({ subscription, canConfigure, onEditLimit }
           <span>Workflow runs</span>
         </div>
         <span className="text-label-xs">
-          <span className="text-text-sub">{events.current.toLocaleString()}</span>{' '}
-          <span className="text-text-soft">/ {denominator.toLocaleString()}</span>
+          <span className="text-text-sub">{formatNumber(usage.current)}</span>{' '}
+          <span className="text-text-soft">/ {formatNumber(usage.max)}</span>
         </span>
       </div>
-      <UsageBar state={state} current={events.current} included={included} denominator={denominator} />
+      <UsageBar usage={usage} />
       <div className="flex items-center justify-between gap-2 text-label-xs">
-        <UsageStatusLabel
-          state={state}
-          current={events.current}
-          denominator={denominator}
-          currentPeriodEnd={subscription.currentPeriodEnd}
-        />
+        <UsageStatusLabel usage={usage} />
         <span className="text-text-soft">
-          {formatCompactNumber(included)} included
-          {events.onDemandLimit !== null && ` · ${formatCompactNumber(events.onDemandLimit)} on-demand`}
-          {canConfigure && (
+          {formatCompactNumber(usage.included)} included
+          {usage.onDemandLimit !== null && ` · ${formatCompactNumber(usage.onDemandLimit)} on-demand`}
+          {canEdit && (
             <>
               {' · '}
-              <LinkButton variant="gray" size="sm" className="text-label-xs" onClick={onEditLimit}>
-                {events.onDemandLimit !== null ? 'Edit limit' : 'Set limit'}
+              <LinkButton variant="gray" size="sm" className="text-label-xs" onClick={() => setIsDrawerRequested(true)}>
+                {usage.onDemandLimit !== null ? 'Edit limit' : 'Set limit'}
               </LinkButton>
             </>
           )}
