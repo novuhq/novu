@@ -1244,109 +1244,6 @@ export async function submitSlackSetupCredentials(
   return unwrapEnvelope(data) as SubmitSlackSetupCredentialsResult;
 }
 
-export type HumanInviteChannelVia = 'telegram' | 'slack';
-
-export type HumanInviteChannel = {
-  via: HumanInviteChannelVia;
-  connected: boolean;
-  isDefault: boolean;
-};
-
-export type HumanInviteStatus =
-  | {
-      valid: true;
-      agentName: string;
-      /** Display name of the invited human, falling back to their subscriberId. */
-      inviteeName: string;
-      /** ISO timestamp when the invite link expires. */
-      expiresAt: string;
-      channels: HumanInviteChannel[];
-    }
-  | { valid: false; reason: 'expired' | 'declined' | 'invalid' };
-
-export type HumanInviteErrorCode =
-  | 'token_invalid'
-  | 'token_expired'
-  | 'invite_declined'
-  | 'channel_unavailable'
-  | 'channel_already_connected'
-  | 'channel_not_connected'
-  | 'unknown';
-
-export class HumanInviteRequestError extends Error {
-  constructor(
-    public readonly code: HumanInviteErrorCode,
-    message: string,
-    public readonly status: number
-  ) {
-    super(message);
-  }
-}
-
-/**
- * Public, unauthenticated request. Used by the invite page opened by a human
- * invited via `human invite` — the visitor is not a Novu user.
- */
-export async function getHumanInviteStatus(token: string, signal?: AbortSignal): Promise<HumanInviteStatus> {
-  const url = `${getApiBaseUrl()}/v1/human/invites/status?token=${encodeURIComponent(token)}`;
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-    signal,
-  });
-
-  const data = await safeJson(response);
-
-  if (!response.ok) {
-    throw new NovuApiError(extractErrorMessage(data) ?? 'Failed to load invitation', response.status, data);
-  }
-
-  return unwrapEnvelope(data) as HumanInviteStatus;
-}
-
-/** Mints a fresh Telegram deep link or Slack authorize URL for the invited human. */
-export async function connectHumanInviteChannel(token: string, via: HumanInviteChannelVia): Promise<{ url: string }> {
-  return postHumanInviteAction<{ url: string }>('connect', { token, via }, 'Failed to start connecting');
-}
-
-export async function setHumanInviteDefaultChannel(
-  token: string,
-  via: HumanInviteChannelVia
-): Promise<{ defaultVia: HumanInviteChannelVia }> {
-  return postHumanInviteAction<{ defaultVia: HumanInviteChannelVia }>(
-    'default',
-    { token, via },
-    'Failed to update the default channel'
-  );
-}
-
-export async function declineHumanInvite(token: string): Promise<{ declined: true }> {
-  return postHumanInviteAction<{ declined: true }>('decline', { token }, 'Failed to decline the invitation');
-}
-
-async function postHumanInviteAction<T>(
-  action: 'connect' | 'default' | 'decline',
-  body: Record<string, string>,
-  fallbackMessage: string
-): Promise<T> {
-  const url = `${getApiBaseUrl()}/v1/human/invites/${action}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  const data = await safeJson(response);
-
-  if (!response.ok) {
-    const code = extractHumanInviteErrorCode(data);
-    const message = extractErrorMessage(data) ?? fallbackMessage;
-    throw new HumanInviteRequestError(code, message, response.status);
-  }
-
-  return unwrapEnvelope(data) as T;
-}
-
 type JsonBody = Record<string, unknown> | null;
 
 async function safeJson(response: Response): Promise<JsonBody> {
@@ -1387,32 +1284,7 @@ function extractErrorMessage(data: unknown): string | undefined {
 }
 
 function extractErrorCode(data: unknown): SubmitTelegramMobileCredentialsError['code'] {
-  const candidate = readErrorCode(data);
-
-  if (candidate === 'token_invalid' || candidate === 'token_expired' || candidate === 'token_already_used') {
-    return candidate;
-  }
-
-  return 'unknown';
-}
-
-const HUMAN_INVITE_ERROR_CODES: ReadonlySet<string> = new Set<HumanInviteErrorCode>([
-  'token_invalid',
-  'token_expired',
-  'invite_declined',
-  'channel_unavailable',
-  'channel_already_connected',
-  'channel_not_connected',
-]);
-
-function extractHumanInviteErrorCode(data: unknown): HumanInviteErrorCode {
-  const candidate = readErrorCode(data);
-
-  return candidate && HUMAN_INVITE_ERROR_CODES.has(candidate) ? (candidate as HumanInviteErrorCode) : 'unknown';
-}
-
-function readErrorCode(data: unknown): string | undefined {
-  if (!data || typeof data !== 'object') return undefined;
+  if (!data || typeof data !== 'object') return 'unknown';
 
   // Nest's HttpException with object payload nests the response under `message`.
   const message = (data as { message?: unknown }).message;
@@ -1421,5 +1293,9 @@ function readErrorCode(data: unknown): string | undefined {
       ? (message as { code?: unknown }).code
       : (data as { code?: unknown }).code;
 
-  return typeof candidate === 'string' ? candidate : undefined;
+  if (candidate === 'token_invalid' || candidate === 'token_expired' || candidate === 'token_already_used') {
+    return candidate;
+  }
+
+  return 'unknown';
 }
