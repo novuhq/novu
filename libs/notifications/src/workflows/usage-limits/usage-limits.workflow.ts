@@ -97,12 +97,11 @@ export const usageLimitsWorkflow = workflow(
     await step.inApp(
       'in-app',
       async (controls) => {
-        const { subject, body } = getUsageLimitsNotificationText(copy, {
-          subject: controls.subject,
-          body: controls.body,
-          blockedSubject: controls.blockedSubject,
-          blockedBody: controls.blockedBody,
-        });
+        const { subject, body } = getUsageLimitsNotificationText(
+          copy,
+          { subject: controls.subject, body: controls.body },
+          { subject: controls.blockedSubject, body: controls.blockedBody }
+        );
 
         return {
           subject,

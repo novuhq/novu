@@ -34,12 +34,6 @@ export interface IUsageLimitsNotificationText {
   body: string;
 }
 
-export interface IUsageLimitsTextControls extends IUsageLimitsNotificationText {
-  /** Only the in-app step has these; a blocked email keeps `subject` and `body`. */
-  blockedSubject?: string;
-  blockedBody?: string;
-}
-
 export interface IUsageLimitsCopy {
   heading: string;
   summary: string;
@@ -73,26 +67,6 @@ function planAllowanceSummary(
   };
 }
 
-function approachingPlanLimitCopy(figures: IUsageFigures) {
-  return {
-    ...planAllowanceSummary(figures, 'monthly limit'),
-    message:
-      'To ensure uninterrupted service and access to additional features, we recommend upgrading your plan before reaching the limit.',
-    note: 'Note: Once you consume 100% of your monthly limit, notifications will be blocked until you upgrade or the next billing cycle begins.',
-    buttonLabel: 'Upgrade your plan',
-    dashboardPath: BILLING_SETTINGS_PATH,
-  };
-}
-
-function blockedAtPlanLimitCopy(figures: IUsageFigures) {
-  return {
-    ...planAllowanceSummary(figures, 'monthly limit'),
-    message: 'New notifications are blocked until you upgrade your plan or the next billing cycle begins.',
-    buttonLabel: 'Upgrade your plan',
-    dashboardPath: BILLING_SETTINGS_PATH,
-  };
-}
-
 function limitSummary({ organizationName, planName, usage, allowance, includedEvents }: IUsageFigures) {
   const breakdown =
     includedEvents === null
@@ -103,8 +77,22 @@ function limitSummary({ organizationName, planName, usage, allowance, includedEv
 }
 
 const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) => IUsageLimitsCopy> = {
-  legacy_approaching: (figures) => ({ ...approachingPlanLimitCopy(figures), notificationText: 'controls' }),
-  legacy_blocked: (figures) => ({ ...blockedAtPlanLimitCopy(figures), notificationText: 'blocked_controls' }),
+  legacy_approaching: (figures) => ({
+    ...planAllowanceSummary(figures, 'monthly limit'),
+    message:
+      'To ensure uninterrupted service and access to additional features, we recommend upgrading your plan before reaching the limit.',
+    note: 'Note: Once you consume 100% of your monthly limit, notifications will be blocked until you upgrade or the next billing cycle begins.',
+    buttonLabel: 'Upgrade your plan',
+    dashboardPath: BILLING_SETTINGS_PATH,
+    notificationText: 'controls',
+  }),
+  legacy_blocked: (figures) => ({
+    ...planAllowanceSummary(figures, 'monthly limit'),
+    message: 'New notifications are blocked until you upgrade your plan or the next billing cycle begins.',
+    buttonLabel: 'Upgrade your plan',
+    dashboardPath: BILLING_SETTINGS_PATH,
+    notificationText: 'blocked_controls',
+  }),
   legacy_alert_level: (figures) => ({
     ...planAllowanceSummary(figures, 'monthly usage alert level'),
     message:
@@ -114,14 +102,14 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
     notificationText: 'controls',
   }),
   plan_approaching: (figures) => ({
-    ...approachingPlanLimitCopy(figures),
+    ...USAGE_LIMITS_COPY.legacy_approaching(figures),
     notificationText: {
       subject: USAGE_LIMITS_CONTROL_DEFAULTS.subject,
       body: `You have used ${figures.percentage}% of your monthly events`,
     },
   }),
   plan_blocked: (figures) => ({
-    ...blockedAtPlanLimitCopy(figures),
+    ...USAGE_LIMITS_COPY.legacy_blocked(figures),
     notificationText: {
       subject: USAGE_LIMITS_CONTROL_DEFAULTS.blockedSubject,
       body: USAGE_LIMITS_CONTROL_DEFAULTS.blockedBody,
@@ -212,11 +200,10 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
   }),
 };
 
-function resolveAlertCase({
-  alertState = 'approaching_limit',
-  percentage = 0,
-  usageLimits,
-}: Partial<UsageLimitsPayload>): UsageLimitsAlertCase {
+function resolveAlertCase(
+  { alertState = 'approaching_limit', usageLimits }: Partial<UsageLimitsPayload>,
+  { percentage }: IUsageFigures
+): UsageLimitsAlertCase {
   switch (alertState) {
     case 'included_exhausted':
       return 'included_exhausted';
@@ -253,28 +240,29 @@ function resolveAlertCase({
 // The framework passes a partial payload (e.g. step previews), so every field needs a fallback.
 export function getUsageLimitsCopy(payload: Partial<UsageLimitsPayload>): IUsageLimitsCopy {
   const { organizationName = '', planName = '', percentage = 0, usage = 0, allowance = 0, usageLimits } = payload;
-  const includedEvents = usageLimits?.includedEvents;
-
-  return USAGE_LIMITS_COPY[resolveAlertCase(payload)]({
+  const figures: IUsageFigures = {
     organizationName,
     planName,
     percentage: Math.round(percentage),
     usage,
     allowance,
-    includedEvents: typeof includedEvents === 'number' ? includedEvents : null,
-  });
+    includedEvents: usageLimits?.includedEvents ?? null,
+  };
+
+  return USAGE_LIMITS_COPY[resolveAlertCase(payload, figures)](figures);
 }
 
 export function getUsageLimitsNotificationText(
   { notificationText }: IUsageLimitsCopy,
-  { subject, body, blockedSubject = subject, blockedBody = body }: IUsageLimitsTextControls
+  controls: IUsageLimitsNotificationText,
+  blockedControls: IUsageLimitsNotificationText = controls
 ): IUsageLimitsNotificationText {
   if (notificationText === 'controls') {
-    return { subject, body };
+    return controls;
   }
 
   if (notificationText === 'blocked_controls') {
-    return { subject: blockedSubject, body: blockedBody };
+    return blockedControls;
   }
 
   return notificationText;
