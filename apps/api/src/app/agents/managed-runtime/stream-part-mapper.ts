@@ -27,13 +27,19 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
         {
           type: 'message',
           role: 'assistant',
-          messageId: randomUUID(),
+          // Provider message id when known (Anthropic event id), so previews and
+          // redelivered webhooks correlate with this durable message.
+          messageId: part.messageId ?? randomUUID(),
           content: { markdown: part.text },
         },
       ];
 
+    case 'text-start':
+      return [{ type: 'message-start', messageId: part.messageId }];
+
     case 'text-delta':
-      return [];
+      // Unkeyed deltas (OpenAI) cannot be tied to a durable message; drop them.
+      return part.messageId ? [{ type: 'message-delta', messageId: part.messageId, delta: part.text }] : [];
 
     case 'thinking':
       return mapThinkingEvents(part.text);

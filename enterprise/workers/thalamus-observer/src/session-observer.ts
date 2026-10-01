@@ -1,6 +1,7 @@
 import type { StreamPart } from '@novu/thalamus';
 import { Agent, type Connection, type ConnectionContext, type FiberRecoveryContext } from 'agents';
 import { type EventSourceMessage, EventSourceParserStream } from 'eventsource-parser/stream';
+import { DeltaCoalescer, isEphemeralPart } from './delta-coalescer';
 import { providers } from './parsers';
 import type {
   DeliveryOutcome,
@@ -201,33 +202,46 @@ export class SessionObserver extends Agent<Env, State> {
     let sequence = this.getNextSequence(params.sessionId);
     let pauseWebhookSent = false;
 
-    for await (const sseEvent of eventStream) {
-      if (signal.aborted) break;
-
-      if (sseEvent.id) {
-        fiberCtx.stash({ ...params, lastEventId: sseEvent.id });
-      }
-
-      const parts = this.parseSSEEvent(sseEvent, parser, acc);
-      let hasError = false;
-      for (const part of parts) {
-        if (part.type === 'finish') continue;
-        if (part.type === 'error') hasError = true;
-        this.persistEvent(params.sessionId, sequence++, part);
-      }
-
+    // Text previews arrive as many small deltas: coalesce them so one webhook
+    // carries a window of text instead of one fragment. Once aborted, the session's
+    // events are already cleaned up, so late flushes must not write or deliver.
+    const coalescer = new DeltaCoalescer((parts) => {
+      if (signal.aborted) return;
+      for (const part of parts) this.persistEvent(params.sessionId, sequence++, part);
       this.triggerDelivery(params);
+    });
 
-      if (hasError) break;
+    try {
+      for await (const sseEvent of eventStream) {
+        if (signal.aborted) break;
 
-      if (acc.done) {
-        if (acc.finishReason === 'requires-action') {
-          sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
-          pauseWebhookSent = true;
+        if (sseEvent.id) {
+          fiberCtx.stash({ ...params, lastEventId: sseEvent.id });
         }
 
-        break;
+        const parts = this.parseSSEEvent(sseEvent, parser, acc);
+
+        let hasError = false;
+        for (const part of parts) {
+          if (part.type === 'finish') continue;
+          if (part.type === 'error') hasError = true;
+          coalescer.push(part);
+        }
+
+        if (hasError) break;
+
+        if (acc.done) {
+          if (acc.finishReason === 'requires-action') {
+            coalescer.flush();
+            sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
+            pauseWebhookSent = true;
+          }
+
+          break;
+        }
       }
+    } finally {
+      coalescer.flush();
     }
 
     if (acc.done && !pauseWebhookSent) {
@@ -505,6 +519,9 @@ export class SessionObserver extends Agent<Env, State> {
     });
 
     const signature = await this.sign(body, webhook.secret, row.created_at);
+    // Previews are best effort and superseded by the durable message: one attempt,
+    // and a failure never holds back the rows behind it.
+    const ephemeral = isEphemeralPart(event);
 
     try {
       await this.retry(
@@ -533,7 +550,7 @@ export class SessionObserver extends Agent<Env, State> {
           throw new Error(`HTTP ${r.status}`);
         },
         {
-          maxAttempts: 3,
+          maxAttempts: ephemeral ? 1 : 3,
           baseDelayMs: BASE_DELAY_MS,
           maxDelayMs: MAX_DELAY_MS,
           shouldRetry: (err) => {
@@ -544,6 +561,12 @@ export class SessionObserver extends Agent<Env, State> {
 
       return 'delivered';
     } catch (err) {
+      if (ephemeral) {
+        console.warn(`Webhook delivery failed, dropping preview: session=${sessionId} seq=${row.sequence}`);
+
+        return 'skipped';
+      }
+
       if (err && typeof err === 'object' && 'permanent' in err) {
         console.warn(`Webhook 4xx (permanent failure): session=${sessionId} seq=${row.sequence}`);
         this.markFailed(row.id);
