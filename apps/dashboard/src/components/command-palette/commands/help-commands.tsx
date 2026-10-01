@@ -1,12 +1,14 @@
 import { RiBookOpenLine, RiChat1Line, RiSparklingLine } from 'react-icons/ri';
+import { useSupportDrawer } from '@/components/header-navigation/support-drawer';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { openDocsAssistant } from '@/utils/docs-assistant';
+import { openMintlifyAssistant } from '@/utils/mintlify-assistant';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Command, CommandExecutionContext } from '../command-types';
 
 export function useHelpCommands(_context: CommandExecutionContext): Command[] {
   const track = useTelemetry();
+  const { closeSupportDrawer } = useSupportDrawer();
 
   const commands: Command[] = [
     {
@@ -50,9 +52,11 @@ export function useHelpCommands(_context: CommandExecutionContext): Command[] {
       priority: 'high',
       keywords: ['ai', 'ask', 'search', 'help', 'question', 'assistant', 'docs'],
       execute: () => {
-        openDocsAssistant();
+        closeSupportDrawer();
+        void openMintlifyAssistant({ source: 'command-palette' });
       },
     });
   }
+
   return commands;
 }
