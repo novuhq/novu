@@ -384,6 +384,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     sinon.stub(usecase as never, 'getIntegration').resolves({
       integration: {
         _id: 'integration_1',
+        identifier: 'sendgrid-main',
         providerId: EmailProviderIdEnum.SendGrid,
         credentials: {
           from: 'integration@test.com',
@@ -396,7 +397,6 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     sinon.stub(usecase as never, 'sendSelectedIntegrationExecution').resolves(undefined);
     sinon.stub(usecase as never, 'initiateTranslations').resolves(undefined);
     sinon.stub(usecase as never, 'storeContent').returns(false);
-    sinon.stub(usecase as never, 'buildEmailProviderOverrides').returns({});
 
     return { usecase, resolveAgentInboundAddresses, messageRepository, agentRepository };
   }
@@ -556,6 +556,27 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     // Still resolves once for reply-to (sender is skipped via useProviderDefaults)
     expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
     expect(sendStub.firstCall.args[0].from).to.equal('integration@test.com');
+  });
+
+  it('delivers cc targeted at the selected integration identifier over the provider-level cc', async () => {
+    const { usecase } = buildUsecase();
+    const sendStub = sinon.stub().resolves({ id: 'msg_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+    await usecase.execute(
+      buildCommand(
+        {},
+        {
+          jobAgentId: null,
+          overrides: {
+            providers: { [EmailProviderIdEnum.SendGrid]: { cc: ['provider@acme.com'] } },
+            integrations: { 'sendgrid-main': { cc: ['integration@acme.com'] } },
+          },
+        }
+      )
+    );
+
+    expect(sendStub.firstCall.args[0].cc).to.deep.equal(['integration@acme.com']);
   });
 
   describe('agent reply correlation', () => {

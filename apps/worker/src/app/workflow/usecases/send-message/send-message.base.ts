@@ -56,20 +56,35 @@ type BridgeProviderOverrides = {
 };
 
 /**
- * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
- * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ * Resolves one integration's overrides from lowest to highest precedence: what the bridge or the
+ * dashboard persisted for the provider, then the workflow-global and step-scoped trigger overrides
+ * keyed by providerId, then the workflow-global and step-scoped ones keyed by integration identifier.
  */
 export function combineProviderOverrides(
   bridgeData: BridgeProviderOverrides | null | undefined,
   overrides: TriggerOverrides | undefined,
   stepId: string | undefined,
-  providerId: string
+  providerId: string,
+  integrationIdentifier?: string
 ): Record<string, unknown> {
   const bridgeProviderData = bridgeData?.providers?.[providerId] || {};
   const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
-  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+  const stepScopedProviderOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+  const workflowGlobalIntegrationOverrides = integrationIdentifier
+    ? overrides?.integrations?.[integrationIdentifier] || {}
+    : {};
+  const stepScopedIntegrationOverrides =
+    stepId && integrationIdentifier ? overrides?.steps?.[stepId]?.integrations?.[integrationIdentifier] || {} : {};
 
-  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
+  return mergeWith(
+    {},
+    bridgeProviderData,
+    workflowGlobalProviderOverrides,
+    stepScopedProviderOverrides,
+    workflowGlobalIntegrationOverrides,
+    stepScopedIntegrationOverrides,
+    replaceArrays
+  );
 }
 
 export abstract class SendMessageBase extends SendMessageType {
