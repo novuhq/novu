@@ -37,7 +37,7 @@ Send transactional email through your own SMTP server. Novu opens the connection
 | **Secure** | No | Use implicit TLS. |
 | **Require TLS** | No | Fail the send if the server does not offer STARTTLS. |
 | **Ignore TLS** | No | Skip STARTTLS and send on a plain connection. |
-| **TLS options** | No | A JSON object of extra [Node.js TLS settings](https://nodejs.org/api/tls.html#tlsconnectoptions-callback). |
+| **TLS options** | No | The only JSON field. Paste one JSON object of extra [Node.js TLS settings](https://nodejs.org/api/tls.html#tlsconnectoptions-callback). Every other field on this form is plain text. |
 | **DKIM: Domain name** | No | Domain placed in the DKIM signature (`d=`). |
 | **DKIM: Private key** | No | PEM private key, including the `-----BEGIN` and `-----END` lines. |
 | **DKIM: Key selector** | No | Selector placed in the DKIM signature (`s=`). |
@@ -57,9 +57,25 @@ Novu authenticates only when both **User** and **Password** have a value. Novu w
 
 With **Secure** on, the connection is encrypted before the first SMTP command. With **Secure** off, Novu opens a plain connection and upgrades with STARTTLS when the server advertises it. **Require TLS** fails the send if that upgrade does not happen. **Ignore TLS** skips the upgrade, and it wins if both toggles are on.
 
-**TLS options** must be a single JSON object, for example `{"minVersion":"TLSv1.2"}`. Novu rejects a string, an array, or invalid JSON, and ignores the field while **Secure** is off. To skip certificate verification for a server you trust, such as one issued by a private certificate authority, turn **Secure** on and set `{"rejectUnauthorized":false}`.
+**TLS options** is a text area. Paste one JSON object into it. Novu rejects a string, an array, or invalid JSON, and ignores the field while **Secure** is off.
 
-Novu always verifies the server certificate against **Host**, in both modes. A `servername` key in **TLS options** is replaced with **Host**. If a send fails with `Host: ... is not in the cert's altnames: DNS:...`, set **Host** to one of the `DNS:` names in that error or to a name covered by a listed wildcard. An internal alias, a different domain, or an IP address fails this check even when it reaches the same server. Enter **Host** without the trailing dot Node prints in the error.
+```json
+{
+  "minVersion": "TLSv1.2"
+}
+```
+
+To trust a private certificate authority, turn **Secure** on and set `ca` to that authority's PEM certificate. `ca` replaces the default public authorities for this connection, so the server certificate must chain to the authority you supply. Keep line breaks in the PEM as `\n` inside the JSON string.
+
+```json
+{
+  "ca": "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n"
+}
+```
+
+Keep certificate checks enabled. `{"rejectUnauthorized":false}` turns them off, so a host on the connection path can impersonate the mail server and receive the SMTP credentials.
+
+Novu checks the server certificate against **Host**. A `servername` key in **TLS options** is replaced with **Host**. If a send fails with `Host: ... is not in the cert's altnames: DNS:...`, set **Host** to one of the `DNS:` names in that error or to a name covered by a listed wildcard. An internal alias, a different domain, or an IP address fails this check even when it reaches the same server. Enter **Host** without the trailing dot Node prints in the error.
 
 ## DKIM
 
@@ -71,7 +87,7 @@ Novu signs the message only when all three DKIM fields are set. Publish the matc
 | --- | --- |
 | Authentication failed | Set both **User** and **Password**, and confirm the account may send as **From email address**. |
 | Connection timed out | Confirm **Host** and **Port**, and allow SMTP from the public internet. Novu Cloud workers do not use a fixed IP address. |
-| `Requests to private or reserved IP addresses are not allowed` | **Host** is `localhost`, a private IP, or resolves to one. Self-hosted deployments can allow it with `NOVU_SAFE_OUTBOUND_ALLOW`; see [Deploy Novu with Docker](/community/self-hosting-novu/deploy-with-docker#faqs). |
+| `Requests to private or reserved IP addresses are not allowed` | Set **Host** to a hostname that resolves to the private address, and add that hostname or address to `NOVU_SAFE_OUTBOUND_ALLOW` on the API and worker. `localhost` cannot be allow-listed. A literal private IP such as `10.0.0.1` is also rejected in **Host**. See [Deploy Novu with Docker](/community/self-hosting-novu/deploy-with-docker#faqs). |
 | TLS handshake failed on `587` or `25` | Turn **Secure** off. Those ports use STARTTLS. |
 | `is not in the cert's altnames` | Set **Host** to a name on the certificate, as described in [TLS settings](#tls-settings). |
 
