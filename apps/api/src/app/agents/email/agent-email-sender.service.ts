@@ -232,25 +232,6 @@ export class AgentEmailSender {
   }
 
   /**
-   * From address for threads the agent opens itself (one-off DMs such as
-   * human interactions), where no inbound email has taught the adapter the
-   * agent's address yet. Prefers the shared inbox so replies route back to the
-   * agent; falls back to an explicit From override on self-hosted setups.
-   */
-  resolveDefaultAgentAddress(config: ResolvedAgentConfig): string | undefined {
-    const sharedInbox = this.resolveSharedInboxAddress(config);
-    if (sharedInbox) {
-      return sharedInbox;
-    }
-
-    if (!config.credentials.useFromAddressOverride) {
-      return undefined;
-    }
-
-    return config.credentials.fromAddressOverride?.trim() || undefined;
-  }
-
-  /**
    * Outbound demo path: the agent is wired to the bundled Novu Email demo
    * provider row. Quota-gated by the same per-environment 300/month cap as
    * workflow notification emails.

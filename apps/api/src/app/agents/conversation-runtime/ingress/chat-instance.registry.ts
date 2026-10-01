@@ -515,7 +515,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           email: createNovuEmailAdapter({
             senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
-            defaultAgentAddress: this.agentEmailSender.resolveDefaultAgentAddress(config),
+            defaultAgentAddress: this.agentEmailSender.resolveSharedInboxAddress(config),
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
             stripAgentReplyToken,
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
