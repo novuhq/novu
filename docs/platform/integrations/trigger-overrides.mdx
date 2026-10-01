@@ -710,7 +710,7 @@ In this example, only the `push-step` is affected, and multiple FCM-specific set
 
 ### Target a specific integration
 
-A provider key applies to every integration of that provider. When an environment has several integrations of the same provider, key the override by integration identifier instead, so each integration receives its own payload.
+A provider key applies to every integration of that provider. When an environment has several integrations of the same provider, key the override by integration identifier so each integration receives its own payload. Provider keys still apply to integrations you don't key.
 
 Use integration-keyed overrides when:
 - A chat step sends through two integrations of the same provider, such as two Slack integrations for different workspaces, and each needs different content.
@@ -923,14 +923,14 @@ When more than one level sets the same field, Novu applies them from lowest to h
 4. `overrides.integrations.<identifier>`
 5. `overrides.steps.<step-id>.integrations.<identifier>`
 
-Integration keys win over every provider key, including step-level provider keys. Merging works the same way at every level: objects merge deeply, arrays replace whole, and `null` clears a value set at a lower level. Triggers that only use provider keys behave as before.
+A workflow-level integration key beats even a step-level provider key. Merging works the same way at every level: objects merge deeply, arrays replace whole, and `null` clears a value set at a lower level.
 
 #### Integration identifiers
 
-- Each integration's identifier is shown on the integration in the **Integration Store**. See [Provider vs. Integration](/platform/integrations#provider-vs-integration).
+- Find each integration's identifier in its settings in the **Integration Store**. See [Provider vs. Integration](/platform/integrations#provider-vs-integration).
 - Identifiers are unique within an [environment](/platform/developer/environments), and each environment has its own integrations. Make sure the key you send exists in every environment you trigger from.
 - Keys must match the identifier exactly. If an integration's identifier changes, the old key stops matching.
-- Novu ignores keys that don't match an integration the step sends through. The trigger doesn't fail.
+- Novu ignores keys that don't match an integration the step sends through, and provider keys still apply. The trigger doesn't fail.
 
 #### Supported steps and limitations
 
