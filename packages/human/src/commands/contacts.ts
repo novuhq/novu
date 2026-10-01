@@ -51,7 +51,7 @@ export function renderContactsTable(rows: ContactRow[], next: string | null): st
 
   for (const row of rows) {
     const name = displayName(row) || pc.dim('—');
-    const email = row.email ?? pc.dim('—');
+    const email = formatEmailColumn(row);
     const self = row.self ? pc.cyan(' (you)') : '';
     lines.push(`${row.id.padEnd(idWidth)}  ${name.padEnd(nameWidth)}  ${email}${self}`);
   }
@@ -61,6 +61,23 @@ export function renderContactsTable(rows: ContactRow[], next: string | null): st
   }
 
   return `${lines.join('\n')}\n`;
+}
+
+function formatEmailColumn(row: ContactRow): string {
+  const emailChannel = row.channels?.find((channel) => channel.via === 'email');
+  if (emailChannel?.status === 'pending') {
+    return `${emailChannel.address ?? row.email ?? '—'} ${pc.yellow('(pending verification)')}`;
+  }
+
+  if (emailChannel?.status === 'verified') {
+    return emailChannel.address ?? row.email ?? pc.dim('—');
+  }
+
+  if (row.email) {
+    return `${row.email} ${pc.dim('(unverified)')}`;
+  }
+
+  return pc.dim('—');
 }
 
 export async function contactsCommand(options: ContactsOptions): Promise<never> {

@@ -117,9 +117,11 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
       { via: 'slack', connected: false },
     ]);
 
-    expect(await getStatus(invite.token)).to.deep.include({
+    const status = await getStatus(invite.token);
+    // The relay still carries its placeholder name, so no agentName is exposed.
+    expect(status).to.not.have.property('agentName');
+    expect(status).to.deep.include({
       valid: true,
-      agentName: 'Human',
       inviteeName: 'Alice Chen',
       channels: [
         { via: 'telegram', connected: false, isDefault: false },
@@ -149,18 +151,20 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
     const invite = await createInvite();
 
     const status = await getStatus(invite.token);
-    expect(status.channels).to.deep.equal([{ via: 'telegram', connected: false, isDefault: false }]);
+    expect(status.channels).to.deep.equal([
+      { via: 'telegram', connected: false, isDefault: false, status: 'unverified' },
+    ]);
 
     const res = await session.testAgent.post('/v1/human/invites/connect').send({ token: invite.token, via: 'slack' });
     expect(res.status).to.equal(400);
     expect(res.body.code).to.equal('channel_unavailable');
   });
 
-  it('refuses to create an invite before Telegram or Slack is set up', async () => {
+  it('refuses to create an invite before any invite channel is set up', async () => {
     const res = await session.testAgent.post('/v1/human/invites').send({ subscriberId });
 
     expect(res.status).to.equal(404);
-    expect(res.body.message).to.include('human setup telegram');
+    expect(res.body.message).to.include('human setup');
   });
 
   it('mints fresh Telegram and Slack connect links from the page', async () => {
@@ -189,8 +193,8 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
 
     let status = await getStatus(invite.token);
     expect(status.channels).to.deep.equal([
-      { via: 'telegram', connected: true, isDefault: true },
-      { via: 'slack', connected: true, isDefault: false },
+      { via: 'telegram', connected: true, isDefault: true, status: 'verified' },
+      { via: 'slack', connected: true, isDefault: false, status: 'verified' },
     ]);
 
     const again = await session.testAgent
@@ -209,8 +213,8 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
 
     status = await getStatus(invite.token);
     expect(status.channels).to.deep.equal([
-      { via: 'telegram', connected: true, isDefault: false },
-      { via: 'slack', connected: true, isDefault: true },
+      { via: 'telegram', connected: true, isDefault: false, status: 'verified' },
+      { via: 'slack', connected: true, isDefault: true, status: 'verified' },
     ]);
   });
 
@@ -224,8 +228,8 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
 
     const status = await getStatus(invite.token);
     expect(status.channels).to.deep.equal([
-      { via: 'telegram', connected: true, isDefault: false },
-      { via: 'slack', connected: true, isDefault: true },
+      { via: 'telegram', connected: true, isDefault: false, status: 'verified' },
+      { via: 'slack', connected: true, isDefault: true, status: 'verified' },
     ]);
   });
 

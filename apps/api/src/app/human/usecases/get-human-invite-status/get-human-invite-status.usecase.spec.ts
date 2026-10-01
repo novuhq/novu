@@ -15,12 +15,32 @@ describe('GetHumanInviteStatus', () => {
     const inviteTokens = { peek: sinon.stub().resolves(invite) };
     const deliveryService = {
       describeInviteChannels: sinon.stub().resolves([
-        { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: true, isDefault: true },
-        { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack', connected: false, isDefault: false },
+        {
+          via: HumanChannelViaEnum.TELEGRAM,
+          integrationIdentifier: 'tg',
+          connected: true,
+          isDefault: true,
+          status: 'verified',
+        },
+        {
+          via: HumanChannelViaEnum.SLACK,
+          integrationIdentifier: 'slack',
+          connected: false,
+          isDefault: false,
+          status: 'unverified',
+        },
       ]),
     };
     const agentRepository = { findOne: sinon.stub().resolves({ name: 'Deploy bot' }) };
-    const subscriberRepository = { findOne: sinon.stub().resolves(subscriber) };
+    const subscriberRepository = {
+      findOne: sinon.stub().callsFake(async (query: { subscriberId?: string }) => {
+        if (query.subscriberId === 'nikita') {
+          return { firstName: 'Nikita', lastName: 'Grossman' };
+        }
+
+        return subscriber;
+      }),
+    };
     const usecase = new GetHumanInviteStatus(
       inviteTokens as never,
       deliveryService as never,
@@ -42,10 +62,33 @@ describe('GetHumanInviteStatus', () => {
       inviteeName: 'Alice Chen',
       expiresAt: '2026-10-02T10:00:00.000Z',
       channels: [
-        { via: HumanChannelViaEnum.TELEGRAM, connected: true, isDefault: true },
-        { via: HumanChannelViaEnum.SLACK, connected: false, isDefault: false },
+        { via: HumanChannelViaEnum.TELEGRAM, connected: true, isDefault: true, status: 'verified' },
+        { via: HumanChannelViaEnum.SLACK, connected: false, isDefault: false, status: 'unverified' },
       ],
     });
+  });
+
+  it('names the operator separately from the agent', async () => {
+    const { usecase, agentRepository } = setup();
+    agentRepository.findOne.resolves({ name: 'Deploy bot', operatorSubscriberId: 'nikita' });
+
+    const status = await usecase.execute(command);
+
+    expect(status).to.include({
+      agentName: 'Deploy bot',
+      operatorName: 'Nikita Grossman',
+      inviteeName: 'Alice Chen',
+    });
+  });
+
+  it('omits the placeholder agent name so the page can say "<operator>\'s agent"', async () => {
+    const { usecase, agentRepository } = setup();
+    agentRepository.findOne.resolves({ name: 'Human', operatorSubscriberId: 'nikita' });
+
+    const status = await usecase.execute(command);
+
+    expect(status).to.include({ operatorName: 'Nikita Grossman' });
+    expect(status).to.not.have.property('agentName');
   });
 
   it('falls back to the subscriberId when the invitee has no name', async () => {

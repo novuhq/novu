@@ -144,7 +144,10 @@ program
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
   .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
   .option('--email <address>', 'your email address for the email channel (skips the interactive prompt)')
-  .option('--name <name>', 'your name, shown to agents (skips the first-run prompt)')
+  .option(
+    '--name <name>',
+    'your first and last name, e.g. "Nikita Grossman" — shown to people you invite (skips the first-run prompt)'
+  )
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .option('--skill', 'also install the human-cli skill for coding agents (default: prompt on a TTY)')
   .option('--no-skill', 'skip the coding-agent skill install')

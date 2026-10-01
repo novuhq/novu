@@ -89,6 +89,13 @@ export class AgentEntity {
 
   createdBy?: string;
 
+  /**
+   * Present on `human_relay` agents. subscriberId of the person who ran
+   * `human setup` — their name is read from that subscriber, never copied
+   * onto `name`, which stays the agent's own display name.
+   */
+  operatorSubscriberId?: string;
+
   createdAt: string;
 
   updatedAt: string;

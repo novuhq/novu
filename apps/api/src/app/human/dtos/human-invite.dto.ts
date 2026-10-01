@@ -1,13 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { HumanChannelViaEnum } from '@novu/shared';
-import { IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
+import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, ValidateIf } from 'class-validator';
 import type { HumanInviteVia } from '../services/human-delivery.service';
 
-const INVITE_VIAS: HumanInviteVia[] = [HumanChannelViaEnum.TELEGRAM, HumanChannelViaEnum.SLACK];
+const INVITE_VIAS: HumanInviteVia[] = [
+  HumanChannelViaEnum.TELEGRAM,
+  HumanChannelViaEnum.SLACK,
+  HumanChannelViaEnum.EMAIL,
+];
 
 export const HUMAN_INVITE_APP_NAMES: Record<HumanInviteVia, string> = {
   [HumanChannelViaEnum.TELEGRAM]: 'Telegram',
   [HumanChannelViaEnum.SLACK]: 'Slack',
+  [HumanChannelViaEnum.EMAIL]: 'Email',
 };
 
 export class CreateHumanInviteRequestDto {
@@ -44,7 +49,7 @@ export class HumanInviteChannelDto {
   @ApiProperty()
   integrationIdentifier: string;
 
-  @ApiProperty({ description: 'Whether the human is already connected on this channel.' })
+  @ApiProperty({ description: 'Whether the human is already connected / verified on this channel.' })
   connected: boolean;
 }
 
@@ -72,13 +77,113 @@ export class HumanInviteChannelRequestDto extends HumanInviteTokenRequestDto {
   via: HumanInviteVia;
 }
 
+/** Connect action — email requires an address for double opt-in. */
+export class HumanInviteConnectRequestDto extends HumanInviteTokenRequestDto {
+  @ApiProperty({ enum: INVITE_VIAS })
+  @IsIn(INVITE_VIAS)
+  via: HumanInviteVia;
+
+  @ApiPropertyOptional({ description: 'Required when `via` is `email`.' })
+  @ValidateIf((body: HumanInviteConnectRequestDto) => body.via === HumanChannelViaEnum.EMAIL)
+  @IsEmail()
+  @IsNotEmpty()
+  address?: string;
+}
+
+export class RequestAddressVerificationDto {
+  @ApiProperty({ description: 'subscriberId of the human being verified.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  subscriberId: string;
+
+  @ApiProperty({ enum: [HumanChannelViaEnum.EMAIL] })
+  @IsIn([HumanChannelViaEnum.EMAIL])
+  via: HumanChannelViaEnum.EMAIL;
+
+  @ApiProperty()
+  @IsEmail()
+  @IsNotEmpty()
+  address: string;
+
+  @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9-_]+$/i)
+  @MaxLength(64)
+  agentIdentifier?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  firstName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  lastName?: string;
+}
+
+export class RequestAddressVerificationResponseDto {
+  @ApiProperty({ description: 'Masked address the verification was sent to.' })
+  address: string;
+
+  @ApiProperty()
+  expiresAt: string;
+
+  @ApiProperty({ description: 'Seconds until another verification email may be sent.' })
+  retryAfterSeconds: number;
+
+  @ApiProperty({
+    description: 'True when a different address is already verified and stays deliverable until this one is confirmed.',
+  })
+  replacesVerifiedAddress: boolean;
+}
+
+export class VerifyAddressRequestDto {
+  @ApiProperty({ description: 'Verification token from the email link.' })
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+}
+
+export class VerifyAddressResponseDto {
+  @ApiProperty()
+  verified: true;
+
+  @ApiPropertyOptional({ description: "The agent's own name; absent while it still has the placeholder name." })
+  agentName?: string;
+
+  @ApiPropertyOptional({ description: 'Person who owns the relay, when they set a name during `human setup`.' })
+  operatorName?: string;
+
+  @ApiProperty({ enum: HumanChannelViaEnum })
+  via: HumanChannelViaEnum;
+
+  @ApiProperty({ description: 'Masked verified address.' })
+  address: string;
+}
+
+export type HumanInviteStatusChannel = {
+  via: HumanInviteVia;
+  connected: boolean;
+  isDefault: boolean;
+  status: HumanAddressVerificationStateEnum;
+  address?: string;
+};
+
 export type HumanInviteStatusResult =
   | {
       valid: true;
-      agentName: string;
+      /** The agent's own name; absent while it still has the placeholder name. */
+      agentName?: string;
+      /** Person who owns the relay, when they set a name during `human setup`. */
+      operatorName?: string;
       /** Display name, falling back to the subscriberId. */
       inviteeName: string;
       expiresAt: string;
-      channels: Array<{ via: HumanInviteVia; connected: boolean; isDefault: boolean }>;
+      channels: HumanInviteStatusChannel[];
     }
   | { valid: false; reason: 'expired' | 'declined' | 'invalid' };

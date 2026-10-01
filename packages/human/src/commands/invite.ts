@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 import { type HumanApiClient } from '../api/client';
-import { createHumanInvite, setupHumanRelay } from '../api/human';
-import { type AgentIntegrationLink, getSubscriberEmail, hasChannelEndpoint, listAgentIntegrations } from '../api/setup';
+import { createHumanInvite, getContact, requestAddressVerification, setupHumanRelay } from '../api/human';
+import { type AgentIntegrationLink, hasChannelEndpoint, listAgentIntegrations } from '../api/setup';
 import { info, promptLine } from '../cli-io';
 import { renderQR } from '../qr';
 import { startWaitIndicator } from '../spinner';
@@ -14,8 +14,8 @@ import {
   isHumanChannel,
   issueTelegramSubscriberLinkWithRetry,
   parseEmailAddress,
-  waitForAnyEndpoint,
   waitForEndpoint,
+  waitForVerifiedChannels,
 } from './link-channel';
 
 export interface InviteOptions {
@@ -27,8 +27,8 @@ export interface InviteOptions {
   apiUrl?: string;
 }
 
-/** Channels the invite page offers. Email joins once it has a double opt-in. */
-const INVITE_PAGE_CHANNELS: readonly HumanChannel[] = ['telegram', 'slack'];
+/** Channels the invite page can offer when the relay has them linked. */
+const INVITE_PAGE_CHANNELS: readonly HumanChannel[] = ['telegram', 'slack', 'email'];
 
 /**
  * `--name "Alice Chen"` → `{ firstName: 'Alice', lastName: 'Chen' }`; a single
@@ -158,33 +158,36 @@ async function inviteViaPage(
   links: AgentIntegrationLink[],
   options: InviteOptions
 ): Promise<InviteResult> {
-  const chatChannels = INVITE_PAGE_CHANNELS.flatMap((via) => {
+  const offeredChannels = INVITE_PAGE_CHANNELS.flatMap((via) => {
     const link = findLinkedIntegration(links, via);
 
     return link ? [{ via, integrationIdentifier: link.integration.identifier }] : [];
   });
 
-  if (chatChannels.length === 0) {
-    throw new Error(
-      'No Telegram or Slack channel is linked to the relay agent. Run `human setup telegram` or `human setup slack` first.'
-    );
+  if (offeredChannels.length === 0) {
+    throw new Error('No Telegram, Slack, or Email channel is linked to the relay agent. Run `human setup` first.');
   }
 
-  const connected = await Promise.all(
-    chatChannels.map((channel) => hasChannelEndpoint(client, channel.integrationIdentifier, humanId))
-  );
+  const alreadyLinked: HumanChannel[] = [];
+  for (const channel of offeredChannels) {
+    if (channel.via === 'email') {
+      if (await isEmailVerified(client, humanId, agentIdentifier)) {
+        alreadyLinked.push('email');
+      }
+    } else if (await hasChannelEndpoint(client, channel.integrationIdentifier, humanId)) {
+      alreadyLinked.push(channel.via);
+    }
+  }
 
-  if (connected.every(Boolean)) {
-    const vias = chatChannels.map((channel) => channel.via);
-    info(`${humanId} is already connected on ${formatChannels(vias, 'and')}.`);
+  if (alreadyLinked.length === offeredChannels.length) {
+    info(`${humanId} is already connected on ${formatChannels(alreadyLinked, 'and')}.`);
 
-    // Still honor a name passed alongside, same as `--via email`.
     const name = splitName(options.name);
     if (name) {
       await setupHumanRelay(client, { subscriberId: humanId, agentIdentifier, ...name });
     }
 
-    return { humanId, linkedOn: vias, alreadyLinked: true };
+    return { humanId, linkedOn: alreadyLinked, alreadyLinked: true };
   }
 
   const invite = await createHumanInvite(client, {
@@ -229,12 +232,13 @@ async function inviteViaPage(
     `Ctrl-C detaches; the link works until ${expiry}`
   );
 
-  let connectedIdentifier: string;
+  let connectedVia: HumanChannel;
   try {
-    connectedIdentifier = await waitForAnyEndpoint(
+    connectedVia = await waitForVerifiedChannels(
       client,
-      pending.map((channel) => channel.integrationIdentifier),
       humanId,
+      agentIdentifier,
+      pendingVias,
       `${humanId} connect ${formatChannels(pendingVias, 'or')}`,
       `The link keeps working until ${expiry}; re-run \`human invite ${humanId}\` to check on them.`
     );
@@ -242,10 +246,9 @@ async function inviteViaPage(
     stopIndicator();
   }
 
-  const connectedVia = pending.find((channel) => channel.integrationIdentifier === connectedIdentifier)?.via;
   info(`They can add more channels or pick their default from the same link until ${expiry}.`);
 
-  return { ...result, linkedOn: connectedVia ? [...linkedOn, connectedVia] : linkedOn };
+  return { ...result, linkedOn: [...linkedOn, connectedVia] };
 }
 
 async function inviteTelegram(
@@ -322,16 +325,18 @@ async function inviteEmail(
   inboundAddress: string | undefined,
   options: InviteOptions
 ): Promise<InviteResult> {
-  const existingEmail = await getSubscriberEmail(client, humanId);
-  if (existingEmail && !options.email) {
-    info(`${humanId} is already linked on email (${existingEmail}).`);
+  const name = splitName(options.name);
+  const contact = await getContact(client, humanId, agentIdentifier).catch(() => null);
+  const emailChannel = contact?.channels?.find((channel) => channel.via === 'email');
+  const verified = emailChannel?.status === 'verified';
 
-    // Still record `--via email` as the inviter's pick, and honor a name passed
-    // alongside so `invite --name` can label someone linked before names existed.
+  if (verified && !options.email) {
+    info(`${humanId} is already verified on email (${emailChannel?.address ?? contact?.email}).`);
+
     await setupHumanRelay(client, {
       subscriberId: humanId,
       agentIdentifier,
-      ...splitName(options.name),
+      ...name,
       defaultVia: 'email',
     });
 
@@ -340,19 +345,63 @@ async function inviteEmail(
 
   const email = options.email ? requireEmail(options.email) : await promptInviteEmail();
 
-  await setupHumanRelay(client, {
+  const sent = await requestAddressVerification(client, {
     subscriberId: humanId,
     agentIdentifier,
-    email,
-    ...splitName(options.name),
-    defaultVia: 'email',
+    via: 'email',
+    address: email,
+    ...name,
   });
 
+  info(`Verification email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
+  if (sent.replacesVerifiedAddress) {
+    info(`A different address is already verified for ${humanId}; it stays reachable until ${email} is verified.`);
+  }
   if (inboundAddress) {
-    info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);
+    info(`Once verified, replies go to ${pc.bold(inboundAddress)}.`);
   }
 
+  if (options.async) {
+    return { humanId, linkedOn: [], alreadyLinked: false };
+  }
+
+  await waitForEmailVerification(client, humanId, agentIdentifier);
+
   return { humanId, linkedOn: ['email'], alreadyLinked: false };
+}
+
+async function isEmailVerified(client: HumanApiClient, humanId: string, agentIdentifier: string): Promise<boolean> {
+  try {
+    const contact = await getContact(client, humanId, agentIdentifier);
+
+    return contact.channels?.some((channel) => channel.via === 'email' && channel.status === 'verified') ?? false;
+  } catch {
+    return false;
+  }
+}
+
+async function waitForEmailVerification(
+  client: HumanApiClient,
+  humanId: string,
+  agentIdentifier: string
+): Promise<void> {
+  const stopIndicator = startWaitIndicator(
+    `Waiting for ${humanId} to verify their email`,
+    `Ctrl-C detaches; resume with: human invite ${humanId} --via email`
+  );
+
+  try {
+    await waitForVerifiedChannels(
+      client,
+      humanId,
+      agentIdentifier,
+      ['email'],
+      `${humanId} verify their email`,
+      `Re-run \`human invite ${humanId} --via email\` to resend.`
+    );
+  } finally {
+    stopIndicator();
+  }
 }
 
 async function waitForInvitee(

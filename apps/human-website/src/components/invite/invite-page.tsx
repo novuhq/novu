@@ -1,14 +1,16 @@
 'use client';
 
-import { type ReactNode, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
 
+import { InactiveInvite, Panel } from '@/components/invite/panel';
 import { Button, buttonClassName } from '@/components/ui/button';
 import { useInviteStatus } from '@/hooks/use-invite-status';
 import {
   type ActiveInviteStatus,
   connectInviteChannel,
   declineInvite,
+  describeSender,
   type InviteChannel,
   type InviteChannelVia,
   InviteRequestError,
@@ -20,15 +22,16 @@ import { AppIcon } from './app-icon';
 const APPS: Record<InviteChannelVia, { label: string; hint: string }> = {
   telegram: { label: 'Telegram', hint: 'Scan a code with your phone, or open Telegram here.' },
   slack: { label: 'Slack', hint: 'Approve the app in your Slack workspace.' },
+  email: { label: 'Email', hint: 'We’ll send a verification link to confirm the address.' },
 };
 
 type InactiveReason = 'expired' | 'declined' | 'invalid';
 
 /**
  * Public page opened by someone invited with `human invite`. The token in the link is the
- * only credential. The person picks which of the inviter's apps (Telegram, Slack) the agent
- * may reach them on and which one is their default. The status refreshes while the page is
- * open, so rows flip to "Connected" once they finish in Telegram or Slack.
+ * only credential. The person picks which of the inviter's apps (Telegram, Slack, Email) the
+ * agent may reach them on and which one is their default. The status refreshes while the page
+ * is open, so rows flip to "Connected" once they finish in Telegram/Slack or verify email.
  */
 export function InvitePage({ apiUrl, token }: { apiUrl: string; token: string }) {
   const { state, refresh } = useInviteStatus(apiUrl, token);
@@ -71,9 +74,10 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   const [connectingVia, setConnectingVia] = useState<InviteChannelVia | null>(null);
   const [defaultingVia, setDefaultingVia] = useState<InviteChannelVia | null>(null);
   const [declining, setDeclining] = useState(false);
+  const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
 
   if (inactiveReason) {
-    return <InactiveInvite reason={inactiveReason} agentName={status.agentName} />;
+    return <InactiveInvite reason={inactiveReason} senderName={describeSender(status)} />;
   }
 
   const handleError = (error: unknown) => {
@@ -95,13 +99,21 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           onChanged();
 
           return;
+        case 'verification_cooldown':
+        case 'verification_cap':
+          if (error.retryAfterSeconds) {
+            setEmailCooldownUntil(Date.now() + error.retryAfterSeconds * 1000);
+          }
+          setErrorMessage(error.message);
+
+          return;
       }
     }
 
     setErrorMessage(error instanceof Error ? error.message : 'Something went wrong. Try again.');
   };
 
-  const handleConnect = async (via: InviteChannelVia) => {
+  const handleConnect = async (via: InviteChannelVia, address?: string) => {
     setErrorMessage(null);
 
     // t.me hands off to the app through a `tg://` link, which fails on a computer without
@@ -116,14 +128,25 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
 
     setConnectingVia(via);
     try {
-      const { url } = await connectInviteChannel(apiUrl, token, via);
+      const result = await connectInviteChannel(apiUrl, token, via, address);
+
+      if (via === 'email' && 'via' in result && result.via === 'email') {
+        setEmailCooldownUntil(Date.now() + result.retryAfterSeconds * 1000);
+        onChanged();
+
+        return;
+      }
+
+      if (!('url' in result)) {
+        return;
+      }
 
       if (via === 'telegram') {
-        setTelegramLink(url);
+        setTelegramLink(result.url);
       } else if (tab && !tab.closed) {
-        tab.location.href = url;
+        tab.location.href = result.url;
       } else {
-        window.location.assign(url);
+        window.location.assign(result.url);
       }
     } catch (error) {
       tab?.close();
@@ -172,8 +195,8 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
       }
       description={
         <>
-          <span className="font-medium text-foreground">{status.agentName}</span> would like to be able to reach you.
-          Choose how:
+          <span className="font-medium text-foreground">{describeSender(status)}</span> would like to be able to reach
+          you. Choose how:
         </>
       }
     >
@@ -182,18 +205,31 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           aria-label="Apps you can connect"
           className="divide-y divide-border rounded-md bg-black ring-1 ring-accent/40"
         >
-          {status.channels.map((channel) => (
-            <ChannelRow
-              key={channel.via}
-              channel={channel}
-              link={channel.via === 'telegram' ? telegramLink : null}
-              connecting={connectingVia === channel.via}
-              settingDefault={defaultingVia === channel.via}
-              disabled={busy}
-              onConnect={() => void handleConnect(channel.via)}
-              onMakeDefault={() => void handleMakeDefault(channel.via)}
-            />
-          ))}
+          {status.channels.map((channel) =>
+            channel.via === 'email' ? (
+              <EmailRow
+                key={channel.via}
+                channel={channel}
+                connecting={connectingVia === 'email'}
+                settingDefault={defaultingVia === 'email'}
+                disabled={busy}
+                cooldownUntil={emailCooldownUntil}
+                onConnect={(address) => void handleConnect('email', address)}
+                onMakeDefault={() => void handleMakeDefault('email')}
+              />
+            ) : (
+              <ChannelRow
+                key={channel.via}
+                channel={channel}
+                link={channel.via === 'telegram' ? telegramLink : null}
+                connecting={connectingVia === channel.via}
+                settingDefault={defaultingVia === channel.via}
+                disabled={busy}
+                onConnect={() => void handleConnect(channel.via)}
+                onMakeDefault={() => void handleMakeDefault(channel.via)}
+              />
+            )
+          )}
         </ul>
       ) : (
         <p className="text-[15px] leading-[1.375] tracking-tight text-foreground/70">
@@ -295,6 +331,113 @@ function ChannelRow({
   );
 }
 
+type EmailRowProps = {
+  channel: InviteChannel;
+  connecting: boolean;
+  settingDefault: boolean;
+  disabled: boolean;
+  cooldownUntil: number | null;
+  onConnect: (address: string) => void;
+  onMakeDefault: () => void;
+};
+
+function EmailRow({
+  channel,
+  connecting,
+  settingDefault,
+  disabled,
+  cooldownUntil,
+  onConnect,
+  onMakeDefault,
+}: EmailRowProps) {
+  const [address, setAddress] = useState('');
+  const cooldownSeconds = useCountdown(cooldownUntil);
+  const pending = channel.status === 'pending';
+  const verified = channel.status === 'verified';
+
+  return (
+    <li className="p-3">
+      <div className="flex items-center gap-3">
+        <AppIcon via="email" />
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-2 text-[15px] font-medium tracking-tight">
+            Email
+            {verified && channel.isDefault && (
+              <span className="rounded-sm bg-accent/15 px-1.5 py-1 font-mono text-xs leading-none text-accent">
+                default
+              </span>
+            )}
+          </p>
+          <p className="mt-0.5 text-sm leading-[1.3] tracking-tight text-foreground/60">
+            {verified
+              ? `Verified${channel.address ? ` · ${channel.address}` : ''}`
+              : pending
+                ? `Check your inbox${channel.address ? ` at ${channel.address}` : ''}`
+                : APPS.email.hint}
+          </p>
+        </div>
+
+        {verified && !channel.isDefault && (
+          <Button
+            variant="outline"
+            pending={settingDefault}
+            disabled={disabled}
+            onClick={onMakeDefault}
+            aria-label="Make Email your default"
+          >
+            Make default
+          </Button>
+        )}
+
+        {verified && channel.isDefault && (
+          <span className="shrink-0 font-mono text-sm text-accent">
+            <span aria-hidden="true">✓</span>
+            <span className="sr-only">Verified</span>
+          </span>
+        )}
+      </div>
+
+      {!verified && (
+        <form
+          className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const trimmed = address.trim();
+            if (!trimmed || disabled || connecting || cooldownSeconds > 0) {
+              return;
+            }
+
+            onConnect(trimmed);
+          }}
+        >
+          <label className="sr-only" htmlFor="invite-email">
+            Email address
+          </label>
+          <input
+            id="invite-email"
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="you@example.com"
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
+            disabled={disabled || connecting}
+            className="min-w-0 flex-1 rounded-md border border-border bg-black px-3 py-2 font-mono text-sm tracking-tight text-foreground placeholder:text-foreground/40 focus:border-accent focus:outline-none"
+          />
+          <Button
+            type="submit"
+            pending={connecting}
+            disabled={disabled || cooldownSeconds > 0 || !address.trim()}
+            aria-label={pending ? 'Resend verification email' : 'Send verification email'}
+          >
+            {pending ? (cooldownSeconds > 0 ? `Resend in ${cooldownSeconds}s` : 'Resend') : 'Send verification'}
+          </Button>
+        </form>
+      )}
+    </li>
+  );
+}
+
 type TelegramLinkPanelProps = {
   url: string;
   refreshing: boolean;
@@ -307,7 +450,6 @@ function TelegramLinkPanel({ url, refreshing, disabled, onRefresh }: TelegramLin
 
   return (
     <div className="mt-3 flex flex-col items-center gap-3 rounded-md bg-border/60 p-4">
-      {/* On a phone the code is no use: the button opens the Telegram app directly. */}
       <figure className="hidden flex-col items-center gap-2 sm:flex">
         <div className="rounded-md bg-foreground p-2.5">
           <QRCode
@@ -357,82 +499,35 @@ function ExpiryNote({ expiresAt, anyConnected }: { expiresAt: string; anyConnect
   );
 }
 
-function InactiveInvite({ reason, agentName }: { reason: InactiveReason; agentName?: string }) {
-  switch (reason) {
-    case 'declined':
-      return (
-        <Panel
-          eyebrow="invitation"
-          title={
-            <>
-              Invitation <em className="font-display tracking-tight text-accent">declined</em>
-            </>
-          }
-          description={
-            <>
-              {agentName ? (
-                <>
-                  <span className="font-medium text-foreground">{agentName}</span> won&apos;t contact you through this
-                  link.
-                </>
-              ) : (
-                "You won't be contacted through this link."
-              )}{' '}
-              You can close this tab.
-            </>
-          }
-        />
-      );
-    case 'expired':
-      return (
-        <Panel
-          eyebrow="invitation"
-          title={
-            <>
-              This invitation has <em className="font-display tracking-tight text-accent">expired</em>
-            </>
-          }
-          description="Invitation links work for a limited time. Ask the person who invited you to send a new one."
-        />
-      );
-    default:
-      return (
-        <Panel
-          eyebrow="invitation"
-          title={
-            <>
-              This link <em className="font-display tracking-tight text-accent">isn&apos;t valid</em>
-            </>
-          }
-          description="It may be incomplete or already replaced. Ask the person who invited you to send a new one."
-        />
-      );
-  }
+function useCountdown(until: number | null): number {
+  const [seconds, setSeconds] = useState(() => remainingSeconds(until));
+
+  useEffect(() => {
+    setSeconds(remainingSeconds(until));
+    if (!until) {
+      return;
+    }
+
+    const id = window.setInterval(() => {
+      const next = remainingSeconds(until);
+      setSeconds(next);
+      if (next <= 0) {
+        window.clearInterval(id);
+      }
+    }, 250);
+
+    return () => window.clearInterval(id);
+  }, [until]);
+
+  return seconds;
 }
 
-type PanelProps = {
-  eyebrow: string;
-  title: ReactNode;
-  description?: ReactNode;
-  children?: ReactNode;
-};
+function remainingSeconds(until: number | null): number {
+  if (!until) {
+    return 0;
+  }
 
-/** Headline block in the style of the gethuman.md call to action, with room for content below. */
-function Panel({ eyebrow, title, description, children }: PanelProps) {
-  const titleId = useId();
-
-  return (
-    <section aria-labelledby={titleId} className="mx-auto w-full max-w-120">
-      <p className="font-mono text-sm tracking-tight text-foreground/50">{eyebrow}</p>
-      <h1 id={titleId} className="mt-3 text-3xl leading-[1.125] tracking-[-0.04em] md:text-[40px]">
-        {title}
-      </h1>
-      {description && (
-        <p className="mt-3.5 text-[15px] leading-[1.375] tracking-tight text-foreground/70">{description}</p>
-      )}
-      {children && <div className="mt-8">{children}</div>}
-    </section>
-  );
+  return Math.max(0, Math.ceil((until - Date.now()) / 1000));
 }
 
 /** `https://t.me/novu_bot?start=…` → `novu_bot`. */

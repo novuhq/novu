@@ -1,4 +1,5 @@
 import { type HumanApiClient, HumanApiError } from '../api/client';
+import { getContact } from '../api/human';
 import {
   type AgentIntegrationLink,
   generateConnectOauthUrl,
@@ -88,6 +89,50 @@ export async function waitForEndpoint(
       `We didn't see ${waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. ${timeoutHint}`
     );
   }
+}
+
+/**
+ * Polls contact channel status until one of `vias` is verified. Chat and email
+ * share this — both report `verified` on `getContact`.
+ */
+export async function waitForVerifiedChannels(
+  client: HumanApiClient,
+  subscriberId: string,
+  agentIdentifier: string | undefined,
+  vias: readonly HumanChannel[],
+  waitingFor: string,
+  timeoutHint: string
+): Promise<HumanChannel> {
+  const found: { via?: HumanChannel } = {};
+
+  await pollUntil(
+    async () => {
+      try {
+        const contact = await getContact(client, subscriberId, agentIdentifier);
+        const match = contact.channels?.find(
+          (channel) => isHumanChannel(channel.via) && vias.includes(channel.via) && channel.status === 'verified'
+        );
+        if (match && isHumanChannel(match.via)) {
+          found.via = match.via;
+
+          return 'done';
+        }
+      } catch {
+        // The contact row may not exist until the first channel lands.
+      }
+
+      return 'pending';
+    },
+    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+  );
+
+  if (!found.via) {
+    throw new Error(
+      `We didn't see ${waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. ${timeoutHint}`
+    );
+  }
+
+  return found.via;
 }
 
 /**

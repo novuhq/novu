@@ -20,7 +20,12 @@ import { ThrottlerCategory } from '../rate-limiting/guards';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
-import { CreateHumanInviteRequestDto, CreateHumanInviteResponseDto } from './dtos/human-invite.dto';
+import {
+  CreateHumanInviteRequestDto,
+  CreateHumanInviteResponseDto,
+  RequestAddressVerificationDto,
+  RequestAddressVerificationResponseDto,
+} from './dtos/human-invite.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import { ListContactsQueryDto, ListContactsResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
@@ -31,12 +36,16 @@ import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
+import { GetContactCommand } from './usecases/get-contact/get-contact.command';
+import { GetContact, type GetContactResult } from './usecases/get-contact/get-contact.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { ListContactsCommand } from './usecases/list-contacts/list-contacts.command';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractionsCommand } from './usecases/list-interactions/list-interactions.command';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { RequestAddressVerificationCommand } from './usecases/request-address-verification/request-address-verification.command';
+import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
@@ -53,7 +62,9 @@ export class HumanInteractionsController {
     private readonly cancelInteractionUsecase: CancelInteraction,
     private readonly setupHumanRelayUsecase: SetupHumanRelay,
     private readonly listContactsUsecase: ListContacts,
-    private readonly createHumanInviteUsecase: CreateHumanInvite
+    private readonly getContactUsecase: GetContact,
+    private readonly createHumanInviteUsecase: CreateHumanInvite,
+    private readonly requestAddressVerificationUsecase: RequestAddressVerification
   ) {}
 
   @Post('/interactions')
@@ -62,9 +73,6 @@ export class HumanInteractionsController {
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createInteraction(
     @UserSession() user: UserSessionData,
-    // `whitelist` strips unknown properties (e.g. a `type: 'card'` + `children`
-    // card element) so this chrome-only endpoint cannot be coerced into posting
-    // a raw card element with attacker-controlled action buttons.
     @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
     body: CreateInteractionRequestDto
   ): Promise<InteractionResponseDto> {
@@ -142,11 +150,6 @@ export class HumanInteractionsController {
     );
   }
 
-  /**
-   * Contacts are the environment's subscribers — the people an agent can
-   * address with `--to`. Deliberately a thin subscriber list today; filters
-   * and a per-contact `channels` field are the intended extension points.
-   */
   @Get('/contacts')
   @KeylessAccessible()
   @ExternalApiAccessible()
@@ -162,6 +165,51 @@ export class HumanInteractionsController {
         userId: user._id,
         limit: query.limit,
         after: query.after,
+      })
+    );
+  }
+
+  @Get('/contacts/:subscriberId')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getContact(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Query('agentIdentifier') agentIdentifier?: string
+  ): Promise<GetContactResult> {
+    return this.getContactUsecase.execute(
+      GetContactCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId,
+        agentIdentifier,
+      })
+    );
+  }
+
+  @Post('/verifications')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  requestVerification(
+    @UserSession() user: UserSessionData,
+    @Body() body: RequestAddressVerificationDto
+  ): Promise<RequestAddressVerificationResponseDto> {
+    return this.requestAddressVerificationUsecase.execute(
+      RequestAddressVerificationCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId: body.subscriberId,
+        via: body.via,
+        address: body.address,
+        agentIdentifier: body.agentIdentifier,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        setDefaultVia: true,
       })
     );
   }
@@ -186,6 +234,7 @@ export class HumanInteractionsController {
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,
+        operator: body.operator,
       })
     );
   }

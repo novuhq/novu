@@ -20,14 +20,23 @@ describe('ConnectHumanInviteChannel', () => {
       execute: sinon.stub().resolves({ deepLinkUrl: 'https://t.me/bot?start=code', botUsername: 'bot', expiresAt: '' }),
     };
     const generateConnectOauthUrl = { execute: sinon.stub().resolves('https://slack.com/oauth/v2/authorize?x=1') };
+    const requestAddressVerification = {
+      execute: sinon.stub().resolves({
+        address: 'a***@example.com',
+        expiresAt: '2026-10-02T10:00:00.000Z',
+        retryAfterSeconds: 60,
+        replacesVerifiedAddress: false,
+      }),
+    };
     const usecase = new ConnectHumanInviteChannel(
       inviteTokens as never,
       deliveryService as never,
       issueTelegramSubscriberLink as never,
-      generateConnectOauthUrl as never
+      generateConnectOauthUrl as never,
+      requestAddressVerification as never
     );
 
-    return { usecase, issueTelegramSubscriberLink, generateConnectOauthUrl };
+    return { usecase, issueTelegramSubscriberLink, generateConnectOauthUrl, requestAddressVerification };
   }
 
   const both = [
@@ -88,5 +97,34 @@ describe('ConnectHumanInviteChannel', () => {
     expect(err).to.be.instanceOf(ConflictException);
     expect((err as ConflictException).getResponse()).to.include({ code: 'channel_already_connected' });
     expect(issueTelegramSubscriberLink.execute.called).to.equal(false);
+  });
+
+  it('starts email verification instead of minting a URL', async () => {
+    const { usecase, requestAddressVerification } = setup([
+      { via: HumanChannelViaEnum.EMAIL, integrationIdentifier: 'email-1', connected: false },
+    ]);
+
+    const result = await usecase.execute(
+      ConnectHumanInviteChannelCommand.create({
+        token: 'T'.repeat(32),
+        via: HumanChannelViaEnum.EMAIL,
+        address: 'alice@example.com',
+      })
+    );
+
+    expect(result).to.deep.equal({
+      via: HumanChannelViaEnum.EMAIL,
+      address: 'a***@example.com',
+      expiresAt: '2026-10-02T10:00:00.000Z',
+      retryAfterSeconds: 60,
+      replacesVerifiedAddress: false,
+    });
+    expect(requestAddressVerification.execute.firstCall.args[0]).to.include({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agentId: 'relay1',
+      subscriberId: 'alice',
+      address: 'alice@example.com',
+    });
   });
 });

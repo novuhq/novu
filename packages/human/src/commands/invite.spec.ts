@@ -5,9 +5,10 @@ const listAgentIntegrations = vi.fn();
 const hasChannelEndpoint = vi.fn();
 const generateConnectOauthUrl = vi.fn();
 const issueTelegramSubscriberLink = vi.fn();
-const getSubscriberEmail = vi.fn();
 const setupHumanRelay = vi.fn();
 const createHumanInvite = vi.fn();
+const getContact = vi.fn();
+const requestAddressVerification = vi.fn();
 const saveConfig = vi.fn();
 const clientFromConfig = vi.fn();
 
@@ -16,12 +17,13 @@ vi.mock('../api/setup', () => ({
   hasChannelEndpoint: (...args: unknown[]) => hasChannelEndpoint(...args),
   generateConnectOauthUrl: (...args: unknown[]) => generateConnectOauthUrl(...args),
   issueTelegramSubscriberLink: (...args: unknown[]) => issueTelegramSubscriberLink(...args),
-  getSubscriberEmail: (...args: unknown[]) => getSubscriberEmail(...args),
 }));
 
 vi.mock('../api/human', () => ({
   setupHumanRelay: (...args: unknown[]) => setupHumanRelay(...args),
   createHumanInvite: (...args: unknown[]) => createHumanInvite(...args),
+  getContact: (...args: unknown[]) => getContact(...args),
+  requestAddressVerification: (...args: unknown[]) => requestAddressVerification(...args),
 }));
 
 vi.mock('../config', async (importOriginal) => {
@@ -90,9 +92,10 @@ function resetMocks() {
   hasChannelEndpoint.mockReset();
   generateConnectOauthUrl.mockReset();
   issueTelegramSubscriberLink.mockReset();
-  getSubscriberEmail.mockReset();
   setupHumanRelay.mockReset();
   createHumanInvite.mockReset();
+  getContact.mockReset();
+  requestAddressVerification.mockReset();
   saveConfig.mockReset();
   clientFromConfig.mockReset();
   clientFromConfig.mockReturnValue({
@@ -103,6 +106,12 @@ function resetMocks() {
     agentId: 'agent-1',
     agentIdentifier: 'human-relay',
     subscriberId: 'alice',
+  });
+  getContact.mockRejectedValue(new Error('not found'));
+  requestAddressVerification.mockResolvedValue({
+    address: 'c***@acme.com',
+    expiresAt: '2026-10-02T12:00:00.000Z',
+    retryAfterSeconds: 60,
   });
 }
 
@@ -232,24 +241,43 @@ describe('runInvite with --via', () => {
     });
   });
 
-  it('forwards --name alongside --email and labels an already-linked email human', async () => {
+  it('sends a verification email and polls until verified', async () => {
     listAgentIntegrations.mockResolvedValue([emailLink()]);
-    getSubscriberEmail.mockResolvedValue(undefined);
+    getContact
+      .mockRejectedValueOnce(new Error('not found'))
+      .mockResolvedValueOnce({
+        id: 'carol',
+        channels: [{ via: 'email', status: 'pending', address: 'c***@acme.com' }],
+      })
+      .mockResolvedValue({
+        id: 'carol',
+        channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
+      });
 
-    await runInvite('carol', { via: 'email', email: 'carol@acme.com', name: 'Carol' });
-    expect(setupHumanRelay).toHaveBeenCalledWith(expect.anything(), {
+    const result = await runInvite('carol', { via: 'email', email: 'carol@acme.com', name: 'Carol' });
+
+    expect(requestAddressVerification).toHaveBeenCalledWith(expect.anything(), {
       subscriberId: 'carol',
       agentIdentifier: 'human-relay',
-      email: 'carol@acme.com',
+      via: 'email',
+      address: 'carol@acme.com',
       firstName: 'Carol',
-      defaultVia: 'email',
+    });
+    expect(result).toEqual({ humanId: 'carol', linkedOn: ['email'], alreadyLinked: false });
+  });
+
+  it('short-circuits when email is already verified', async () => {
+    listAgentIntegrations.mockResolvedValue([emailLink()]);
+    getContact.mockResolvedValue({
+      id: 'carol',
+      email: 'carol@acme.com',
+      channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
     });
 
-    setupHumanRelay.mockClear();
-    getSubscriberEmail.mockResolvedValue('carol@acme.com');
-
     const result = await runInvite('carol', { via: 'email', name: 'Carol Diaz' });
+
     expect(result.alreadyLinked).toBe(true);
+    expect(requestAddressVerification).not.toHaveBeenCalled();
     expect(setupHumanRelay).toHaveBeenCalledWith(expect.anything(), {
       subscriberId: 'carol',
       agentIdentifier: 'human-relay',
@@ -259,18 +287,33 @@ describe('runInvite with --via', () => {
     });
   });
 
-  it('records --via email as the default even when already linked without a name', async () => {
+  it('warns from the API when a different address is already verified', async () => {
     listAgentIntegrations.mockResolvedValue([emailLink()]);
-    getSubscriberEmail.mockResolvedValue('carol@acme.com');
-
-    const result = await runInvite('carol', { via: 'email' });
-
-    expect(result).toEqual({ humanId: 'carol', linkedOn: ['email'], alreadyLinked: true });
-    expect(setupHumanRelay).toHaveBeenCalledWith(expect.anything(), {
-      subscriberId: 'carol',
-      agentIdentifier: 'human-relay',
-      defaultVia: 'email',
+    getContact.mockResolvedValue({
+      id: 'carol',
+      channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
     });
+    requestAddressVerification.mockResolvedValue({
+      address: 'n***@acme.com',
+      expiresAt: '2026-10-02T12:00:00.000Z',
+      retryAfterSeconds: 60,
+      replacesVerifiedAddress: true,
+    });
+
+    const result = await runInvite('carol', { via: 'email', email: 'new@acme.com', async: true });
+
+    expect(result.alreadyLinked).toBe(false);
+    expect(stdoutText()).toContain('A different address is already verified');
+  });
+
+  it('returns immediately with --async after sending the verification email', async () => {
+    listAgentIntegrations.mockResolvedValue([emailLink()]);
+    getContact.mockRejectedValue(new Error('not found'));
+
+    const result = await runInvite('carol', { via: 'email', email: 'carol@acme.com', async: true });
+
+    expect(result).toEqual({ humanId: 'carol', linkedOn: [], alreadyLinked: false });
+    expect(requestAddressVerification).toHaveBeenCalled();
   });
 
   it('asks for setup when the requested channel is not linked', async () => {
@@ -285,12 +328,14 @@ describe('runInvite without --via (invite page)', () => {
 
   it('creates an invite link, prints it, and waits for the first channel they connect', async () => {
     listAgentIntegrations.mockResolvedValue([telegramLink(), slackLink()]);
-    hasChannelEndpoint
-      .mockResolvedValueOnce(false)
-      .mockResolvedValueOnce(false)
-      .mockImplementation(
-        async (_client: unknown, integrationIdentifier: string) => integrationIdentifier === 'slack-1'
-      );
+    hasChannelEndpoint.mockResolvedValue(false);
+    getContact.mockResolvedValue({
+      id: 'alice',
+      channels: [
+        { via: 'telegram', status: 'unverified' },
+        { via: 'slack', status: 'verified' },
+      ],
+    });
     createHumanInvite.mockResolvedValue(pageInvite());
 
     const result = await runInvite('alice', { name: 'Alice Chen' });
@@ -365,12 +410,20 @@ describe('runInvite without --via (invite page)', () => {
   it('short-circuits without creating a link when they are connected on every channel', async () => {
     listAgentIntegrations.mockResolvedValue([telegramLink(), slackLink(), emailLink()]);
     hasChannelEndpoint.mockResolvedValue(true);
+    getContact.mockResolvedValue({
+      id: 'alice',
+      channels: [{ via: 'email', status: 'verified', address: 'a***@acme.com' }],
+    });
 
     const result = await runInvite('alice', { name: 'Alice Chen' });
 
-    expect(result).toEqual({ humanId: 'alice', linkedOn: ['telegram', 'slack'], alreadyLinked: true });
+    expect(result).toEqual({
+      humanId: 'alice',
+      linkedOn: ['telegram', 'slack', 'email'],
+      alreadyLinked: true,
+    });
     expect(createHumanInvite).not.toHaveBeenCalled();
-    expect(stdoutText()).toContain('alice is already connected on telegram and slack.');
+    expect(stdoutText()).toContain('alice is already connected on telegram, slack and email.');
     expect(setupHumanRelay).toHaveBeenCalledWith(expect.anything(), {
       subscriberId: 'alice',
       agentIdentifier: 'human-relay',
@@ -379,11 +432,30 @@ describe('runInvite without --via (invite page)', () => {
     });
   });
 
-  it('asks for Telegram or Slack setup when the relay has neither', async () => {
+  it('offers an invite page when only email is linked', async () => {
     listAgentIntegrations.mockResolvedValue([emailLink()]);
+    getContact.mockResolvedValue({
+      id: 'alice',
+      channels: [{ via: 'email', status: 'unverified' }],
+    });
+    createHumanInvite.mockResolvedValue({
+      url: INVITE_URL,
+      expiresAt: INVITE_EXPIRES_AT,
+      channels: [{ via: 'email', integrationIdentifier: 'email-1', connected: false }],
+    });
+
+    const result = await runInvite('alice', { async: true });
+
+    expect(createHumanInvite).toHaveBeenCalled();
+    expect(result.url).toBe(INVITE_URL);
+    expect(stdoutText()).toContain('email');
+  });
+
+  it('asks for channel setup when the relay has none linked', async () => {
+    listAgentIntegrations.mockResolvedValue([]);
 
     await expect(runInvite('alice', {})).rejects.toThrow(
-      'No Telegram or Slack channel is linked to the relay agent. Run `human setup telegram` or `human setup slack` first.'
+      'No Telegram, Slack, or Email channel is linked to the relay agent. Run `human setup` first.'
     );
     expect(createHumanInvite).not.toHaveBeenCalled();
   });

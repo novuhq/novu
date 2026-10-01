@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
+import { DEFAULT_HUMAN_RELAY_NAME } from '../../services/relay-owner-name';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
 export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
@@ -18,6 +19,10 @@ export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
  * hidden `human_relay` system agent (the delivery/webhook anchor for all human
  * interactions) and that the human's subscriber row exists. Channel linking
  * itself reuses the standard agent-integration + channel-endpoint flows.
+ *
+ * When the caller is the relay's owner (`operator: true`), the relay records
+ * their subscriberId. Their name stays on that subscriber and is shown next to
+ * the agent's own name, which is never overwritten.
  */
 @Injectable()
 export class SetupHumanRelay {
@@ -69,11 +74,20 @@ export class SetupHumanRelay {
         );
       }
 
+      if (command.operator && existing.operatorSubscriberId !== command.subscriberId) {
+        await this.agentRepository.update(
+          { _id: existing._id, _environmentId: command.environmentId, _organizationId: command.organizationId },
+          { $set: { operatorSubscriberId: command.subscriberId } }
+        );
+
+        return { ...existing, operatorSubscriberId: command.subscriberId };
+      }
+
       return existing;
     }
 
     return this.agentRepository.create({
-      name: 'Human',
+      name: DEFAULT_HUMAN_RELAY_NAME,
       identifier,
       active: true,
       runtime: 'human_relay',
@@ -84,11 +98,12 @@ export class SetupHumanRelay {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       ...(command.userId ? { createdBy: command.userId } : {}),
+      ...(command.operator ? { operatorSubscriberId: command.subscriberId } : {}),
     });
   }
 
   private async ensureSubscriber(command: SetupHumanRelayCommand): Promise<void> {
-    const email = command.email?.trim().toLowerCase();
+    // Subscriber.email is written when verification is promoted (`VerifyAddress`).
     const firstName = command.firstName?.trim() || undefined;
     const lastName = command.lastName?.trim() || undefined;
 
@@ -98,12 +113,9 @@ export class SetupHumanRelay {
     });
 
     if (existing) {
-      // Email identity powers the email channel (delivery target + inbound
-      // reply resolution live on Subscriber.email — no ChannelEndpoint).
       // Names are only ever set or replaced, never cleared: an invite that
       // omits `--name` must not wipe a name captured earlier.
-      const updates: Partial<Pick<SubscriberEntity, 'email' | 'firstName' | 'lastName'>> = {};
-      if (email && existing.email !== email) updates.email = email;
+      const updates: Partial<Pick<SubscriberEntity, 'firstName' | 'lastName'>> = {};
       if (firstName && existing.firstName !== firstName) updates.firstName = firstName;
       if (lastName && existing.lastName !== lastName) updates.lastName = lastName;
 
@@ -121,7 +133,6 @@ export class SetupHumanRelay {
       subscriberId: command.subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      ...(email ? { email } : {}),
       ...(firstName ? { firstName } : {}),
       ...(lastName ? { lastName } : {}),
     });
