@@ -69,9 +69,10 @@ function getEffectiveOnDemandLimit({
 
 function getPauseAtLimitDescription(
   included: number,
-  { onDemandLimit, pauseAtLimit }: UsageLimitsFormValues['workflowRuns']
+  onDemandLimit: number | null,
+  pauseThreshold: number | null
 ): string {
-  if (!pauseAtLimit) {
+  if (pauseThreshold === null) {
     return 'Sending stops until the cycle resets. When off, usage continues and is billed on-demand.';
   }
 
@@ -79,7 +80,7 @@ function getPauseAtLimitDescription(
     return `Sending stops at your ${runsFormatter.format(included)} included runs until the cycle resets.`;
   }
 
-  return `Sending stops at ${runsFormatter.format(included + onDemandLimit)} runs (${runsFormatter.format(included)} included + ${runsFormatter.format(onDemandLimit)} on-demand) until the cycle resets.`;
+  return `Sending stops at ${runsFormatter.format(pauseThreshold)} runs (${runsFormatter.format(included)} included + ${runsFormatter.format(onDemandLimit)} on-demand) until the cycle resets.`;
 }
 
 type SubscriptionUsageLimits = NonNullable<GetSubscriptionDto['usageLimits']>;
@@ -258,16 +259,12 @@ function UsageLimitsForm({ subscription, usageLimits, onClose }: UsageLimitsForm
 
   const onDemandLimit = form.watch('workflowRuns.onDemandLimit');
   const pauseAtLimit = form.watch('workflowRuns.pauseAtLimit');
-  const effectiveOnDemandLimit = getEffectiveOnDemandLimit({ onDemandLimit, pauseAtLimit });
+  const pauseThreshold = pauseAtLimit ? included + (onDemandLimit ?? 0) : null;
   const onDemandCost =
     onDemandLimit !== null && events.onDemandPricePer1k !== null
       ? usdFormatter.format((onDemandLimit / 1000) * events.onDemandPricePer1k)
       : null;
-  const pausesImmediately =
-    !events.isPaused &&
-    pauseAtLimit &&
-    effectiveOnDemandLimit !== null &&
-    events.current >= included + effectiveOnDemandLimit;
+  const pausesImmediately = !events.isPaused && pauseThreshold !== null && events.current >= pauseThreshold;
 
   const onSubmit = async (values: UsageLimitsFormValues) => {
     try {
@@ -392,10 +389,7 @@ function UsageLimitsForm({ subscription, usageLimits, onClose }: UsageLimitsForm
                   <SettingCard
                     label="Pause at limit"
                     tooltip="Rejects new workflow runs once usage reaches your included runs plus the on-demand limit. Without an on-demand limit, pauses at your included runs."
-                    description={getPauseAtLimitDescription(included, {
-                      onDemandLimit,
-                      pauseAtLimit: field.value,
-                    })}
+                    description={getPauseAtLimitDescription(included, onDemandLimit, pauseThreshold)}
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   />

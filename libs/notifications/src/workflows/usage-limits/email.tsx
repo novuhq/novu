@@ -131,7 +131,7 @@ function getUsageUpdateCopy({
   billsOnDemand,
 }: IUsageFigures): IUsageLimitsCopy {
   const includedNote = billsOnDemand
-    ? ` Your ${planName} plan includes ${formatCount(includedEvents)}, and runs beyond that are billed on-demand.`
+    ? ` Your ${planName} plan includes ${formatCount(includedEvents)} workflow runs, and runs beyond that are billed on-demand.`
     : '';
 
   return {
