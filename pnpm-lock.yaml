@@ -475,7 +475,7 @@ importers:
         version: link:../../libs/testing
       '@novu/thalamus':
         specifier: 0.1.0-alpha.18
-        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
+        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -2549,7 +2549,7 @@ importers:
     dependencies:
       '@novu/thalamus':
         specifier: 0.1.0-alpha.18
-        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))
+        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))
       agents:
         specifier: ^0.21.0
         version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.0.0)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.4)(zod@4.4.3)
@@ -2604,8 +2604,8 @@ importers:
         specifier: 0.3.0
         version: 0.3.0(zod@3.25.20)
       '@anthropic-ai/sdk':
-        specifier: 0.95.1
-        version: 0.95.1(zod@3.25.20)
+        specifier: 0.128.0
+        version: 0.128.0(zod@3.25.20)
       '@aws-sdk/client-s3':
         specifier: ^3.996.0
         version: 3.996.0
@@ -5137,6 +5137,15 @@ packages:
     peerDependencies:
       zod: ^4.0.0
 
+  '@anthropic-ai/sdk@0.128.0':
+    resolution: {integrity: sha512-tl5cBFZC1jVFrTuQyvQObA4WmuNgcYVeXfriqOumgtLAHUm4gPUj18YnszBW60v0PrjDB8nBDOC6wd9CmHQFlA==}
+    hasBin: true
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
+
   '@anthropic-ai/sdk@0.71.2':
     resolution: {integrity: sha512-TGNDEUuEstk/DKu0/TflXAEt+p+p/WhTlFzEnoosvbaDU2LTjm42igSdlL0VijrKpWejtOKxX0b8A7uc+XiSAQ==}
     hasBin: true
@@ -5148,15 +5157,6 @@ packages:
 
   '@anthropic-ai/sdk@0.93.0':
     resolution: {integrity: sha512-q9vaSZQVFx6B/gPxetGYfLXSJD5v0sOmh0OpZDq7yCrTSA+Rscvrtyol7JJTW40wEpQB4U1B4JXzxQitbQ3CAA==}
-    hasBin: true
-    peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
-    peerDependenciesMeta:
-      zod:
-        optional: true
-
-  '@anthropic-ai/sdk@0.95.1':
-    resolution: {integrity: sha512-OO9AF7hmAoU492c/mD7Q2cPqI2WNAj7rAPHlawgBeUgpwiboLRiDs+grsErGWeHHP9ZRWfzq2OVrODTt8aITVg==}
     hasBin: true
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -30428,7 +30428,7 @@ snapshots:
 
   '@anthropic-ai/aws-sdk@0.3.0(zod@3.25.20)':
     dependencies:
-      '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
+      '@anthropic-ai/sdk': 0.128.0(zod@3.25.20)
       '@aws-crypto/sha256-js': 4.0.0
       '@aws-sdk/credential-providers': 3.1052.0
       '@smithy/config-resolver': 4.4.17
@@ -30482,6 +30482,21 @@ snapshots:
       - '@cfworker/json-schema'
       - supports-color
 
+  '@anthropic-ai/sdk@0.128.0(zod@3.25.20)':
+    dependencies:
+      json-schema-to-ts: 3.1.1
+      standardwebhooks: 1.0.0
+    optionalDependencies:
+      zod: 3.25.20
+
+  '@anthropic-ai/sdk@0.128.0(zod@4.4.3)':
+    dependencies:
+      json-schema-to-ts: 3.1.1
+      standardwebhooks: 1.0.0
+    optionalDependencies:
+      zod: 4.4.3
+    optional: true
+
   '@anthropic-ai/sdk@0.71.2(zod@3.25.76)':
     dependencies:
       json-schema-to-ts: 3.1.1
@@ -30493,21 +30508,6 @@ snapshots:
       json-schema-to-ts: 3.1.1
     optionalDependencies:
       zod: 3.25.20
-
-  '@anthropic-ai/sdk@0.95.1(zod@3.25.20)':
-    dependencies:
-      json-schema-to-ts: 3.1.1
-      standardwebhooks: 1.0.0
-    optionalDependencies:
-      zod: 3.25.20
-
-  '@anthropic-ai/sdk@0.95.1(zod@4.4.3)':
-    dependencies:
-      json-schema-to-ts: 3.1.1
-      standardwebhooks: 1.0.0
-    optionalDependencies:
-      zod: 4.4.3
-    optional: true
 
   '@apidevtools/json-schema-ref-parser@11.6.4':
     dependencies:
@@ -38398,16 +38398,16 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
+  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
     optionalDependencies:
-      '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
+      '@anthropic-ai/sdk': 0.128.0(zod@3.25.20)
       '@aws-crypto/sha256-js': 5.2.0
       '@smithy/signature-v4': 5.6.12
       openai: 6.17.0(ws@8.21.0)(zod@3.25.20)
 
-  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))':
+  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))':
     optionalDependencies:
-      '@anthropic-ai/sdk': 0.95.1(zod@4.4.3)
+      '@anthropic-ai/sdk': 0.128.0(zod@4.4.3)
       '@aws-crypto/sha256-js': 5.2.0
       '@smithy/signature-v4': 5.6.12
       openai: 6.17.0(ws@8.21.0)(zod@4.4.3)
