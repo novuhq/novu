@@ -69,20 +69,20 @@ export function combineProviderOverrides(
 ): Record<string, unknown> {
   const bridgeProviderData = bridgeData?.providers?.[providerId] || {};
   const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
-  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
-  const workflowIntegrationOverrides = integrationIdentifier
+  const stepScopedProviderOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+  const workflowGlobalIntegrationOverrides = integrationIdentifier
     ? overrides?.integrations?.[integrationIdentifier] || {}
     : {};
-  const stepIntegrationOverrides =
+  const stepScopedIntegrationOverrides =
     stepId && integrationIdentifier ? overrides?.steps?.[stepId]?.integrations?.[integrationIdentifier] || {} : {};
 
   return mergeWith(
     {},
     bridgeProviderData,
     workflowGlobalProviderOverrides,
-    stepScopedOverrides,
-    workflowIntegrationOverrides,
-    stepIntegrationOverrides,
+    stepScopedProviderOverrides,
+    workflowGlobalIntegrationOverrides,
+    stepScopedIntegrationOverrides,
     replaceArrays
   );
 }

@@ -223,9 +223,11 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       { create: sinon.stub().resolves({ _id: 'message_1' }) } as never,
       {} as never, // compileTemplate
       {
-        execute: sinon.stub().callsFake(async ({ identifier }: { identifier?: string }) => ({
-          integration: integrations.find((integration) => integration.identifier === identifier),
-        })),
+        execute: sinon.stub().callsFake(async ({ identifier }: { identifier?: string }) => {
+          const integration = integrations.find((candidate) => candidate.identifier === identifier);
+
+          return integration ? { integration } : undefined;
+        }),
       } as never,
       {} as never, // getNovuProviderCredentials
       { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
