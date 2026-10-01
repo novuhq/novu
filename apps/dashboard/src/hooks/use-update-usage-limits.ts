@@ -1,4 +1,4 @@
-import type { UpdateUsageLimitsDto } from '@novu/shared';
+import type { IOrganizationUsageLimits } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateUsageLimits } from '@/api/billing';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -9,7 +9,7 @@ export const useUpdateUsageLimits = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (usageLimits: UpdateUsageLimitsDto) => {
+    mutationFn: (usageLimits: IOrganizationUsageLimits) => {
       if (!currentEnvironment) {
         throw new Error('No environment selected');
       }

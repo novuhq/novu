@@ -1,18 +1,14 @@
-import { PermissionsEnum, USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared';
-import { format } from 'date-fns';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
-import { linkButtonVariants } from '@/components/primitives/button-link';
+import { LinkButton, Icon as LinkButtonIcon } from '@/components/primitives/button-link';
 import { useContactSupport } from '@/hooks/use-contact-support';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { usePausedUsagePlan } from '@/hooks/use-paused-usage-plan';
+import { formatShortDate } from '@/utils/format-date';
+import { USAGE_LIMITS_DRAWER_ROUTE } from './use-usage-limits-drawer-param';
+import { useUsageLimitsView } from './use-usage-limits-view';
 
-const { root: actionRoot, icon: actionIcon } = linkButtonVariants({ variant: 'modifiable', size: 'sm' });
-const actionClassName = actionRoot({ class: 'text-label-xs text-static-white gap-0.5' });
-const actionIconClassName = actionIcon();
+const ACTION_CLASS_NAME = 'text-label-xs text-static-white gap-0.5';
 
 type UsagePausedStripProps = {
   message: string;
@@ -28,47 +24,50 @@ function UsagePausedStrip({ message, primaryAction }: UsagePausedStripProps) {
       <div className="flex items-center gap-1.5">
         {primaryAction}
         {primaryAction && <span aria-hidden="true">·</span>}
-        <button type="button" className={actionClassName} onClick={contactSupport}>
+        <LinkButton variant="modifiable" size="sm" className={ACTION_CLASS_NAME} onClick={contactSupport}>
           Contact support
-        </button>
+        </LinkButton>
       </div>
     </div>
   );
 }
 
-function PaidUsagePausedBanner() {
-  const has = useHasPermission();
-  const canEditLimits = has({ permission: PermissionsEnum.BILLING_WRITE });
-
+function PaidUsagePausedBanner({ canEdit }: { canEdit: boolean }) {
   return (
     <UsagePausedStrip
       message="You've hit your usage limit. Your included usage and allowed overages have been fully used. New workflow runs are currently paused."
       primaryAction={
-        canEditLimits ? (
-          <Link to={USAGE_LIMITS_DASHBOARD_PATH} className={actionClassName}>
-            Edit limits
-            <RiArrowRightSLine className={actionIconClassName} />
-          </Link>
-        ) : undefined
+        canEdit && (
+          // `asChild` keeps only the first child, so the icon goes inside the link instead of `trailingIcon`.
+          <LinkButton asChild variant="modifiable" size="sm" className={ACTION_CLASS_NAME}>
+            <Link to={USAGE_LIMITS_DRAWER_ROUTE}>
+              Edit limits
+              <LinkButtonIcon as={RiArrowRightSLine} />
+            </Link>
+          </LinkButton>
+        )
       }
     />
   );
 }
 
-function FreeUsagePausedBanner() {
-  const { subscription } = useFetchSubscription();
+function FreeUsagePausedBanner({ resetsAt }: { resetsAt: string | null }) {
   const planUpgradeClick = usePlanUpgradeClick('workflow-runs-paused-banner', 'workflow_runs_paused');
-  const resetDate = subscription?.currentPeriodEnd;
-  const resetSuffix = resetDate ? ` on ${format(new Date(resetDate), 'MMM d, yyyy')}` : '';
+  const resetSuffix = resetsAt ? ` on ${formatShortDate(resetsAt)}` : '';
 
   return (
     <UsagePausedStrip
       message={`You've used all workflow runs included in your plan. New workflow runs are paused until your usage resets${resetSuffix}.`}
       primaryAction={
-        <button type="button" className={actionClassName} onClick={planUpgradeClick}>
+        <LinkButton
+          variant="modifiable"
+          size="sm"
+          className={ACTION_CLASS_NAME}
+          trailingIcon={RiArrowRightSLine}
+          onClick={planUpgradeClick}
+        >
           {UPGRADE_CTA_LABEL}
-          <RiArrowRightSLine className={actionIconClassName} />
-        </button>
+        </LinkButton>
       }
     />
   );
@@ -76,19 +75,25 @@ function FreeUsagePausedBanner() {
 
 /** Org-wide, non-dismissible notice shown to every member while new workflow runs are paused. */
 export function UsagePausedBanner() {
-  const pausedPlan = usePausedUsagePlan();
+  const view = useUsageLimitsView();
+
+  if (!view) {
+    return null;
+  }
+
+  const { pausedPlan } = view;
 
   switch (pausedPlan) {
     case 'free':
-      return <FreeUsagePausedBanner />;
+      return <FreeUsagePausedBanner resetsAt={view.usage.resetsAt} />;
     case 'paid':
-      return <PaidUsagePausedBanner />;
+      return <PaidUsagePausedBanner canEdit={view.canEdit} />;
     case null:
       return null;
     default: {
-      const _exhaustive: never = pausedPlan;
+      const exhaustiveCheck: never = pausedPlan;
 
-      return null;
+      return exhaustiveCheck;
     }
   }
 }
