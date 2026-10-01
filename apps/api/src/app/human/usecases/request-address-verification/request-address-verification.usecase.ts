@@ -109,6 +109,19 @@ export class RequestAddressVerification {
       throw err;
     }
 
+    const verified = await this.humanContactRepository.findVerifiedAddress(
+      params.environmentId,
+      params.agentId,
+      params.subscriberId,
+      params.via
+    );
+    const previousPending = await this.humanContactRepository.findPendingAddress(
+      params.environmentId,
+      params.agentId,
+      params.subscriberId,
+      params.via
+    );
+
     const { retryAfterSeconds } = await this.rateLimit.assertAndRecord({
       environmentId: params.environmentId,
       agentId: params.agentId,
@@ -116,53 +129,83 @@ export class RequestAddressVerification {
       via: params.via,
     });
 
-    const verified = await this.humanContactRepository.findVerifiedAddress(
-      params.environmentId,
-      params.agentId,
-      params.subscriberId,
-      params.via
-    );
-
-    await this.humanContactRepository.upsertPendingAddress({
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-      agentId: params.agentId,
-      subscriberId: params.subscriberId,
-      via: params.via,
-      address: params.address,
-    });
-
-    let issued: { token: string; expiresAt: string };
+    let pendingReplaced = false;
     try {
-      issued = await this.verificationTokens.issue({
-        env: params.environmentId,
-        org: params.organizationId,
+      await this.humanContactRepository.upsertPendingAddress({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
         agentId: params.agentId,
         subscriberId: params.subscriberId,
         via: params.via,
         address: params.address,
       });
+      pendingReplaced = true;
+
+      let issued: { token: string; expiresAt: string };
+      try {
+        issued = await this.verificationTokens.issue({
+          env: params.environmentId,
+          org: params.organizationId,
+          agentId: params.agentId,
+          subscriberId: params.subscriberId,
+          via: params.via,
+          address: params.address,
+        });
+      } catch (err) {
+        throw toVerificationHttpError(err);
+      }
+
+      await this.emailSender.send({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        address: params.address,
+        token: issued.token,
+        expiresAt: issued.expiresAt,
+        outbound,
+      });
+
+      return {
+        address: maskEmail(params.address),
+        expiresAt: issued.expiresAt,
+        retryAfterSeconds,
+        replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
+      };
     } catch (err) {
-      throw toVerificationHttpError(err);
+      await this.compensateFailedSend(params, pendingReplaced ? previousPending : undefined);
+
+      throw err;
+    }
+  }
+
+  /**
+   * A failed send must leave the previous pending link usable and must not
+   * consume the cooldown or daily allowance. Restore while the cooldown is
+   * still held, then release it.
+   */
+  private async compensateFailedSend(
+    params: {
+      environmentId: string;
+      agentId: string;
+      subscriberId: string;
+      via: HumanChannelViaEnum;
+    },
+    previousPending: Awaited<ReturnType<HumanContactRepository['findPendingAddress']>> | undefined
+  ): Promise<void> {
+    if (previousPending !== undefined) {
+      await this.humanContactRepository
+        .restorePendingAddress({
+          environmentId: params.environmentId,
+          agentId: params.agentId,
+          subscriberId: params.subscriberId,
+          via: params.via,
+          pending: previousPending,
+        })
+        .catch(() => undefined);
     }
 
-    await this.emailSender.send({
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-      agentId: params.agentId,
-      subscriberId: params.subscriberId,
-      address: params.address,
-      token: issued.token,
-      expiresAt: issued.expiresAt,
-      outbound,
-    });
-
-    return {
-      address: maskEmail(params.address),
-      expiresAt: issued.expiresAt,
-      retryAfterSeconds,
-      replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
-    };
+    await this.rateLimit.release(params).catch(() => undefined);
   }
 }
 

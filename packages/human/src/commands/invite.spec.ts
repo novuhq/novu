@@ -287,6 +287,44 @@ describe('runInvite with --via', () => {
     });
   });
 
+  it('keeps waiting while a replacement is still pending, even when the mask matches', async () => {
+    listAgentIntegrations.mockResolvedValue([emailLink()]);
+    let reads = 0;
+    getContact.mockImplementation(async () => {
+      reads += 1;
+      if (reads === 1) {
+        return {
+          id: 'carol',
+          channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
+        };
+      }
+      if (reads === 2) {
+        return {
+          id: 'carol',
+          channels: [
+            { via: 'email', status: 'verified', address: 'c***@acme.com', requestedAt: '2026-10-01T00:00:00.000Z' },
+          ],
+        };
+      }
+
+      return {
+        id: 'carol',
+        channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
+      };
+    });
+    requestAddressVerification.mockResolvedValue({
+      address: 'c***@acme.com',
+      expiresAt: '2026-10-02T12:00:00.000Z',
+      retryAfterSeconds: 60,
+      replacesVerifiedAddress: true,
+    });
+
+    const result = await runInvite('carol', { via: 'email', email: 'chris@acme.com' });
+
+    expect(result).toEqual({ humanId: 'carol', linkedOn: ['email'], alreadyLinked: false });
+    expect(reads).toBeGreaterThanOrEqual(3);
+  });
+
   it('warns from the API when a different address is already verified', async () => {
     listAgentIntegrations.mockResolvedValue([emailLink()]);
     getContact.mockResolvedValue({

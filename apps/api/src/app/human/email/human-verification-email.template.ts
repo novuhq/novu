@@ -38,7 +38,9 @@ export function buildHumanVerificationEmail(params: {
   expiresAt: string;
 }): HumanVerificationEmailContent {
   const who = reachLine(params.sender);
-  const greeting = params.inviteeName?.trim() ? `Hi ${escapeHtml(params.inviteeName.trim())},` : 'Hi,';
+  const inviteeName = params.inviteeName?.trim();
+  const greetingText = inviteeName ? `Hi ${inviteeName},` : 'Hi,';
+  const greetingHtml = inviteeName ? `Hi ${escapeHtml(inviteeName)},` : 'Hi,';
   const expiresLabel = formatExpiry(params.expiresAt);
   const verifyUrl = escapeHtml(params.verifyUrl);
 
@@ -58,7 +60,7 @@ export function buildHumanVerificationEmail(params: {
     '<tr><td style="font-family:Georgia,\'Times New Roman\',serif;font-size:32px;line-height:1.15;letter-spacing:-0.04em;color:#eee5d8;padding-bottom:16px;">',
     'Verify your <span style="color:#ff5c30;font-style:italic;">email</span>',
     '</td></tr>',
-    `<tr><td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:8px;">${greeting}</td></tr>`,
+    `<tr><td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:8px;">${greetingHtml}</td></tr>`,
     '<tr><td style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:28px;">',
     `${who.html}. Confirm this address belongs to you:`,
     '</td></tr>',
@@ -73,7 +75,7 @@ export function buildHumanVerificationEmail(params: {
   ].join('');
 
   const text = [
-    greeting.replace(/,$/, ''),
+    greetingText.replace(/,$/, ''),
     '',
     `${who.text}.`,
     '',

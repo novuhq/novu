@@ -68,6 +68,19 @@ export class HumanVerificationTokenService {
     return this.tokens.issue(payload);
   }
 
+  /**
+   * Puts a claimed link back so the same click can retry after a failed write.
+   * No-op when the link has already expired.
+   */
+  async release(token: string, claimed: ClaimedHumanVerification): Promise<void> {
+    const expiresAt = Math.floor(Date.parse(claimed.expiresAt) / 1000);
+    if (!Number.isFinite(expiresAt)) {
+      return;
+    }
+
+    await this.tokens.release(token, { payload: claimed.payload, expiresAt });
+  }
+
   /** Claims the link. Throws {@link InactiveHumanVerificationError} when inactive. */
   async claim(token: string): Promise<ClaimedHumanVerification> {
     const outcome = await this.tokens.claim(token);

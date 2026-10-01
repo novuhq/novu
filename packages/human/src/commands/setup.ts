@@ -45,7 +45,7 @@ import {
   issueTelegramSubscriberLinkWithRetry,
   parseEmailAddress,
   waitForEndpoint,
-  waitForVerifiedChannels,
+  waitForVerifiedEmail,
 } from './link-channel';
 
 const BOTFATHER_URL = 'https://t.me/botfather';
@@ -342,11 +342,11 @@ async function connectEmail(
     'Ctrl-C detaches; resume with: human setup email'
   );
   try {
-    await waitForVerifiedChannels(
+    await waitForVerifiedEmail(
       client,
       subscriberId,
       agentIdentifier,
-      ['email'],
+      sent.address,
       'you verify your email',
       'Re-run `human setup email` to resend.'
     );

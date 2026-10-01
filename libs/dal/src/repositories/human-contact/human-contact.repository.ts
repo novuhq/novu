@@ -129,6 +129,33 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
+   * Puts the pending slot back after a failed send. `null` clears it, which is
+   * the state before the first request for this channel.
+   */
+  async restorePendingAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    pending: HumanContactPendingAddress | null;
+  }): Promise<void> {
+    const pendingPath = `addresses.${params.via}.pending`;
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+
+    if (params.pending) {
+      await this.update(filter, { $set: { [pendingPath]: params.pending } });
+
+      return;
+    }
+
+    await this.update(filter, { $unset: { [pendingPath]: '' } });
+  }
+
+  /**
    * Promotes a matching pending slot to verified and clears pending, in one
    * write. Returns null when that pending address is gone (a superseded link).
    */

@@ -28,6 +28,8 @@ describe('buildHumanVerificationEmail', () => {
     expect(content.html).to.include('Verify this email');
     expect(content.html).to.include('https://gethuman.md/verify/tok123');
     expect(content.html).to.include('Alice &lt;script&gt;');
+    expect(content.text.startsWith('Hi Alice <script>')).to.equal(true);
+    expect(content.text).to.not.include('&lt;');
     expect(content.html).to.include('#ff5c30');
     expect(content.html.toLowerCase()).to.not.include('powered by novu');
     expect(content.text).to.include('Nikita <Grossman> wants to reach you via agent Acme Ops.');

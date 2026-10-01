@@ -136,6 +136,43 @@ export async function waitForVerifiedChannels(
 }
 
 /**
+ * Polls until the verified email is `expectedMaskedAddress` and no newer
+ * request is still pending. A previously verified address stays `verified`
+ * while a replacement is pending, so status alone would resolve too early.
+ */
+export async function waitForVerifiedEmail(
+  client: HumanApiClient,
+  subscriberId: string,
+  agentIdentifier: string | undefined,
+  expectedMaskedAddress: string,
+  waitingFor: string,
+  timeoutHint: string
+): Promise<void> {
+  const confirmed = await pollUntil(
+    async () => {
+      try {
+        const contact = await getContact(client, subscriberId, agentIdentifier);
+        const channel = contact.channels?.find((item) => item.via === 'email');
+        if (channel?.status === 'verified' && channel.address === expectedMaskedAddress && !channel.requestedAt) {
+          return 'done';
+        }
+      } catch {
+        // The contact row may not exist until the verification lands.
+      }
+
+      return 'pending';
+    },
+    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+  );
+
+  if (!confirmed) {
+    throw new Error(
+      `We didn't see ${waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. ${timeoutHint}`
+    );
+  }
+}
+
+/**
  * Invite-page counterpart of {@link waitForEndpoint}: resolves with the first
  * integration the human connects on, out of several they could pick from.
  */

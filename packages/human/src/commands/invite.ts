@@ -16,6 +16,7 @@ import {
   parseEmailAddress,
   waitForEndpoint,
   waitForVerifiedChannels,
+  waitForVerifiedEmail,
 } from './link-channel';
 
 export interface InviteOptions {
@@ -365,7 +366,7 @@ async function inviteEmail(
     return { humanId, linkedOn: [], alreadyLinked: false };
   }
 
-  await waitForEmailVerification(client, humanId, agentIdentifier);
+  await waitForEmailVerification(client, humanId, agentIdentifier, sent.address);
 
   return { humanId, linkedOn: ['email'], alreadyLinked: false };
 }
@@ -383,7 +384,8 @@ async function isEmailVerified(client: HumanApiClient, humanId: string, agentIde
 async function waitForEmailVerification(
   client: HumanApiClient,
   humanId: string,
-  agentIdentifier: string
+  agentIdentifier: string,
+  expectedMaskedAddress: string
 ): Promise<void> {
   const stopIndicator = startWaitIndicator(
     `Waiting for ${humanId} to verify their email`,
@@ -391,11 +393,11 @@ async function waitForEmailVerification(
   );
 
   try {
-    await waitForVerifiedChannels(
+    await waitForVerifiedEmail(
       client,
       humanId,
       agentIdentifier,
-      ['email'],
+      expectedMaskedAddress,
       `${humanId} verify their email`,
       `Re-run \`human invite ${humanId} --via email\` to resend.`
     );

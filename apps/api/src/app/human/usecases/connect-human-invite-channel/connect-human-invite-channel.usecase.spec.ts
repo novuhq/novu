@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -125,6 +125,34 @@ describe('ConnectHumanInviteChannel', () => {
       agentId: 'relay1',
       subscriberId: 'alice',
       address: 'alice@example.com',
+    });
+  });
+
+  it('hides mail-provider errors from the public invite connect path', async () => {
+    const { usecase, requestAddressVerification } = setup([
+      { via: HumanChannelViaEnum.EMAIL, integrationIdentifier: 'email-1', connected: false },
+    ]);
+    requestAddressVerification.execute.rejects(
+      new BadGatewayException({
+        error: 'delivery_failed',
+        message: 'Unauthorized: The from address is not a verified sender identity.',
+      })
+    );
+
+    const err = await usecase
+      .execute(
+        ConnectHumanInviteChannelCommand.create({
+          token: 'T'.repeat(32),
+          via: HumanChannelViaEnum.EMAIL,
+          address: 'alice@example.com',
+        })
+      )
+      .catch((error) => error);
+
+    expect(err).to.be.instanceOf(BadGatewayException);
+    expect((err as BadGatewayException).getResponse()).to.deep.equal({
+      error: 'delivery_failed',
+      message: 'Could not send the verification email. Try again in a moment.',
     });
   });
 });

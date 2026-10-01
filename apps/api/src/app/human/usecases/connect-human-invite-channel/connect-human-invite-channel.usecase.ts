@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { GenerateConnectOauthUrlCommand } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
 import { GenerateConnectOauthUrl } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
@@ -68,18 +68,29 @@ export class ConnectHumanInviteChannel {
         });
       }
 
-      const result = await this.requestAddressVerification.execute(
-        RequestAddressVerificationCommand.create({
-          environmentId: payload.env,
-          organizationId: payload.org,
-          agentId: payload.agentId,
-          subscriberId: payload.subscriberId,
-          via: HumanChannelViaEnum.EMAIL,
-          address: command.address,
-        })
-      );
+      try {
+        const result = await this.requestAddressVerification.execute(
+          RequestAddressVerificationCommand.create({
+            environmentId: payload.env,
+            organizationId: payload.org,
+            agentId: payload.agentId,
+            subscriberId: payload.subscriberId,
+            via: HumanChannelViaEnum.EMAIL,
+            address: command.address,
+          })
+        );
 
-      return { ...result, via: HumanChannelViaEnum.EMAIL };
+        return { ...result, via: HumanChannelViaEnum.EMAIL };
+      } catch (err) {
+        if (err instanceof BadGatewayException) {
+          throw new BadGatewayException({
+            error: 'delivery_failed',
+            message: 'Could not send the verification email. Try again in a moment.',
+          });
+        }
+
+        throw err;
+      }
     }
 
     if (command.via === HumanChannelViaEnum.TELEGRAM) {
