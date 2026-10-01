@@ -171,7 +171,7 @@ export class AgentEmailSender {
 
   private buildMailOptions(
     params: AgentOutboundEmailParams,
-    from: string,
+    from: string | undefined,
     replyTo: string | undefined,
     senderName: string
   ): IEmailOptions {
