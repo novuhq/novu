@@ -91,7 +91,7 @@ export class StepsOverrides {
 
   @ApiPropertyOptional({
     description:
-      "Passing the integration identifier and the provider specific configurations. Takes precedence over this step's and the workflow's providers overrides",
+      'Passing the integration identifier and the provider specific configurations. Takes precedence over workflow level integrations overrides and all providers overrides',
     example: {
       'slack-eng': {
         text: 'Deployment failed',
@@ -185,7 +185,7 @@ export class TriggerOverrides {
 
   @ApiPropertyOptional({
     description:
-      'Overrides the provider configuration of a specific integration, keyed by the integration identifier, for every step that uses it. Takes precedence over workflow and step level providers overrides',
+      'Overrides the provider configuration of a specific integration, keyed by the integration identifier, for every step that uses it. Takes precedence over all providers overrides; step level integrations overrides take precedence over it',
     example: {
       'slack-eng': {
         text: 'Deployment failed',
