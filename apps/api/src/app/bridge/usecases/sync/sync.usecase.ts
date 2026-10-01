@@ -3,10 +3,12 @@ import {
   AnalyticsService,
   assertSafeOutboundUrl,
   BuildStepIssuesUsecase,
+  BuildVariableSchemaUsecase,
   CreateWorkflowCommandV0,
   CreateWorkflowV0,
   computeWorkflowStatus,
   ExecuteBridgeRequest,
+  IPreloadedEnvironmentContext,
   JSONSchema,
   JSONSchemaDto,
   NotificationStep,
@@ -48,6 +50,12 @@ import {
 } from '../../utils/discover-workflow.mapper';
 import { SyncCommand } from './sync.command';
 
+interface BridgeSyncBuildContext {
+  environmentContext: IPreloadedEnvironmentContext;
+  controlValuesByWorkflowId: Map<string, ControlValuesEntity[]>;
+  generalNotificationGroupId?: string;
+}
+
 @Injectable()
 export class Sync {
   constructor(
@@ -59,6 +67,7 @@ export class Sync {
     private environmentRepository: EnvironmentRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
+    private buildVariableSchemaUsecase: BuildVariableSchemaUsecase,
     private analyticsService: AnalyticsService,
     private controlValuesRepository: ControlValuesRepository
   ) {}
@@ -230,44 +239,120 @@ export class Sync {
       }
     });
 
+    const buildContext = await this.loadBuildContext(command, existingFrameworkWorkflows);
+
     return Promise.all(
       workflowsFromBridge.map(async (workflow, index) => {
         const existingFrameworkWorkflow = existingFrameworkWorkflows[index];
 
-        return await this.upsertWorkflow(command, workflow, existingFrameworkWorkflow);
+        return await this.upsertWorkflow(command, workflow, existingFrameworkWorkflow, buildContext);
       })
     );
+  }
+
+  private async loadBuildContext(
+    command: SyncCommand,
+    existingWorkflows: Array<NotificationTemplateEntity | null>
+  ): Promise<BridgeSyncBuildContext> {
+    const existingWorkflowIds = existingWorkflows.flatMap((workflow) => (workflow?._id ? [workflow._id] : []));
+    const hasNewWorkflow = existingWorkflows.some((workflow) => !workflow);
+    const [environmentContext, controlValuesByWorkflowId, generalNotificationGroupId] = await Promise.all([
+      this.buildVariableSchemaUsecase.loadEnvironmentContext(command.organizationId, command.environmentId),
+      this.loadControlValuesByWorkflowId(command, existingWorkflowIds),
+      hasNewWorkflow ? this.getNotificationGroup(undefined, command.environmentId) : Promise.resolve(undefined),
+    ]);
+
+    return {
+      environmentContext,
+      controlValuesByWorkflowId,
+      generalNotificationGroupId,
+    };
+  }
+
+  private async loadControlValuesByWorkflowId(
+    command: SyncCommand,
+    workflowIds: string[]
+  ): Promise<Map<string, ControlValuesEntity[]>> {
+    const grouped = new Map<string, ControlValuesEntity[]>();
+
+    if (workflowIds.length === 0) {
+      return grouped;
+    }
+
+    const controlValues = await this.controlValuesRepository.find(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _workflowId: { $in: workflowIds },
+        level: {
+          $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+        },
+        controls: { $ne: null },
+      },
+      {
+        controls: 1,
+        _stepId: 1,
+        _workflowId: 1,
+        level: 1,
+        providerId: 1,
+        _id: 0,
+      }
+    );
+
+    for (const controlValue of controlValues) {
+      if (!controlValue._workflowId) {
+        continue;
+      }
+
+      const existing = grouped.get(controlValue._workflowId);
+
+      if (existing) {
+        existing.push(controlValue);
+        continue;
+      }
+
+      grouped.set(controlValue._workflowId, [controlValue]);
+    }
+
+    return grouped;
   }
 
   private async upsertWorkflow(
     command: SyncCommand,
     workflow: DiscoverWorkflowOutput,
-    existingFrameworkWorkflow: NotificationTemplateEntity | null
+    existingFrameworkWorkflow: NotificationTemplateEntity | null,
+    buildContext: BridgeSyncBuildContext
   ): Promise<NotificationTemplateEntity> {
     if (existingFrameworkWorkflow) {
       return await this.updateWorkflowUsecase.execute(
         UpdateWorkflowCommandV0.create(
-          await this.mapDiscoverWorkflowToUpdateWorkflowCommand(existingFrameworkWorkflow, command, workflow)
+          await this.mapDiscoverWorkflowToUpdateWorkflowCommand(
+            existingFrameworkWorkflow,
+            command,
+            workflow,
+            buildContext
+          )
         )
       );
     }
 
-    return await this.createWorkflow(command, workflow);
+    return await this.createWorkflow(command, workflow, buildContext);
   }
 
   private async createWorkflow(
     command: SyncCommand,
-    workflow: DiscoverWorkflowOutput
+    workflow: DiscoverWorkflowOutput,
+    buildContext: BridgeSyncBuildContext
   ): Promise<NotificationTemplateEntity> {
-    const notificationGroupId = await this.getNotificationGroup(
-      this.castToAnyNotSupportedParam(workflow)?.notificationGroupId,
-      command.environmentId
-    );
+    const requestedNotificationGroupId = this.castToAnyNotSupportedParam(workflow)?.notificationGroupId as
+      | string
+      | undefined;
+    const notificationGroupId = requestedNotificationGroupId || buildContext.generalNotificationGroupId;
 
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
     }
-    const steps = await this.mapSteps(command, workflow.steps ?? []);
+    const steps = await this.mapSteps(command, workflow.steps ?? [], undefined, buildContext);
     const workflowActive = getDiscoveredWorkflowActive(workflow);
 
     return await this.createWorkflowUsecase.execute(
@@ -284,9 +369,11 @@ export class Sync {
         __source: WorkflowCreationSourceEnum.BRIDGE,
         steps,
         controls: {
+          // biome-ignore lint/plugin: discover control schema is a loose bridge payload
           schema: workflow.controls?.schema as unknown as JSONSchema,
         },
         rawData: this.buildRawData(workflow),
+        // biome-ignore lint/plugin: discover payload schema is a loose bridge payload
         payloadSchema: workflow.payload?.schema as unknown as JSONSchema,
         active: workflowActive,
         status: computeWorkflowStatus(workflowActive, steps),
@@ -302,9 +389,10 @@ export class Sync {
   private async mapDiscoverWorkflowToUpdateWorkflowCommand(
     workflowExist: NotificationTemplateEntity,
     command: SyncCommand,
-    workflow: DiscoverWorkflowOutput
+    workflow: DiscoverWorkflowOutput,
+    buildContext: BridgeSyncBuildContext
   ): Promise<UpdateWorkflowCommandV0> {
-    const steps = await this.mapSteps(command, workflow.steps ?? [], workflowExist);
+    const steps = await this.mapSteps(command, workflow.steps ?? [], workflowExist, buildContext);
     const workflowActive = getDiscoveredWorkflowActive(workflow);
 
     return {
@@ -317,9 +405,11 @@ export class Sync {
       workflowId: workflow.workflowId,
       steps,
       controls: {
+        // biome-ignore lint/plugin: discover control schema is a loose bridge payload
         schema: workflow.controls?.schema as unknown as JSONSchemaDto,
       },
       rawData: this.buildRawData(workflow),
+      // biome-ignore lint/plugin: discover payload schema is a loose bridge payload
       payloadSchema: workflow.payload?.schema as unknown as JSONSchemaDto,
       type: ResourceTypeEnum.BRIDGE,
       description: this.getWorkflowDescription(workflow),
@@ -333,19 +423,12 @@ export class Sync {
   private async mapSteps(
     command: SyncCommand,
     commandWorkflowSteps: DiscoverStepOutput[],
-    workflow?: NotificationTemplateEntity | undefined
+    workflow: NotificationTemplateEntity | undefined,
+    buildContext: BridgeSyncBuildContext
   ): Promise<NotificationStep[]> {
-    let preloadedControlValues: ControlValuesEntity[] | undefined;
-
-    if (workflow?._id) {
-      preloadedControlValues = await this.controlValuesRepository.find({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _workflowId: workflow._id,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
-    }
-
+    const preloadedControlValues = workflow?._id
+      ? (buildContext.controlValuesByWorkflowId.get(workflow._id) ?? [])
+      : undefined;
     const steps = commandWorkflowSteps ?? [];
 
     return Promise.all(
@@ -362,7 +445,9 @@ export class Sync {
           stepInternalId: foundStep?._id,
           workflow,
           stepType: step.type as StepTypeEnum,
+          // biome-ignore lint/plugin: discover control schema is a loose bridge payload
           controlSchema: step.controls?.schema as unknown as JSONSchemaDto,
+          preloadedEnvironmentContext: buildContext.environmentContext,
           ...(preloadedControlValues ? { preloadedControlValues } : {}),
         });
 
@@ -430,7 +515,9 @@ export class Sync {
     return buildDiscoveredWorkflowRawData(workflow);
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: bridge discover payloads include fields that are not modeled yet
   private castToAnyNotSupportedParam(param: any): any {
+    // biome-ignore lint/suspicious/noExplicitAny: bridge discover payloads include fields that are not modeled yet
     return param as any;
   }
 }
