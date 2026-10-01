@@ -56,9 +56,28 @@ type BridgeProviderOverrides = {
 };
 
 /**
- * Resolves one integration's overrides from lowest to highest precedence: what the bridge or the
- * dashboard persisted for the provider, then the workflow-global and step-scoped trigger overrides
- * keyed by providerId, then the workflow-global and step-scoped ones keyed by integration identifier.
+ * Trigger-time overrides for one integration, lowest to highest precedence: workflow-global then
+ * step-scoped keyed by providerId, then workflow-global then step-scoped keyed by integration identifier.
+ */
+export function getTriggerOverrideLayers(
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier: string | undefined
+): Record<string, unknown>[] {
+  const stepOverrides = stepId ? overrides?.steps?.[stepId] : undefined;
+
+  return [
+    overrides?.providers?.[providerId] || {},
+    stepOverrides?.providers?.[providerId] || {},
+    integrationIdentifier ? overrides?.integrations?.[integrationIdentifier] || {} : {},
+    integrationIdentifier ? stepOverrides?.integrations?.[integrationIdentifier] || {} : {},
+  ];
+}
+
+/**
+ * Resolves one integration's overrides: what the bridge or the dashboard persisted for the provider,
+ * overlaid with the trigger-time layers from `getTriggerOverrideLayers`.
  */
 export function combineProviderOverrides(
   bridgeData: BridgeProviderOverrides | null | undefined,
@@ -68,23 +87,9 @@ export function combineProviderOverrides(
   integrationIdentifier?: string
 ): Record<string, unknown> {
   const bridgeProviderData = bridgeData?.providers?.[providerId] || {};
-  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
-  const stepScopedProviderOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
-  const workflowGlobalIntegrationOverrides = integrationIdentifier
-    ? overrides?.integrations?.[integrationIdentifier] || {}
-    : {};
-  const stepScopedIntegrationOverrides =
-    stepId && integrationIdentifier ? overrides?.steps?.[stepId]?.integrations?.[integrationIdentifier] || {} : {};
+  const triggerOverrideLayers = getTriggerOverrideLayers(overrides, stepId, providerId, integrationIdentifier);
 
-  return mergeWith(
-    {},
-    bridgeProviderData,
-    workflowGlobalProviderOverrides,
-    stepScopedProviderOverrides,
-    workflowGlobalIntegrationOverrides,
-    stepScopedIntegrationOverrides,
-    replaceArrays
-  );
+  return mergeWith({}, bridgeProviderData, ...triggerOverrideLayers, replaceArrays);
 }
 
 export abstract class SendMessageBase extends SendMessageType {
