@@ -136,15 +136,15 @@ export async function waitForVerifiedChannels(
 }
 
 /**
- * Polls until the verified email is `expectedMaskedAddress` and no newer
- * request is still pending. A previously verified address stays `verified`
- * while a replacement is pending, so status alone would resolve too early.
+ * Polls until the link from the request identified by `requestedAt` has been
+ * used. A previously verified address stays `verified` while a replacement is
+ * pending, and masked addresses can collide, so only the request id is trusted.
  */
 export async function waitForVerifiedEmail(
   client: HumanApiClient,
   subscriberId: string,
   agentIdentifier: string | undefined,
-  expectedMaskedAddress: string,
+  requestedAt: string,
   waitingFor: string,
   timeoutHint: string
 ): Promise<void> {
@@ -153,7 +153,7 @@ export async function waitForVerifiedEmail(
       try {
         const contact = await getContact(client, subscriberId, agentIdentifier);
         const channel = contact.channels?.find((item) => item.via === 'email');
-        if (channel?.status === 'verified' && channel.address === expectedMaskedAddress && !channel.requestedAt) {
+        if (channel?.status === 'verified' && channel.verifiedRequestedAt === requestedAt) {
           return 'done';
         }
       } catch {

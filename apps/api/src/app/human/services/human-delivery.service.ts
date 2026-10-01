@@ -72,6 +72,7 @@ export type InviteChannelDescription = {
   /** Masked address for address-based channels. */
   address?: string;
   verifiedAt?: string;
+  verifiedRequestedAt?: string;
   requestedAt?: string;
 };
 
@@ -243,6 +244,7 @@ export class HumanDeliveryService {
           status: email.status,
           ...(email.address ? { address: email.address } : {}),
           ...(email.verifiedAt ? { verifiedAt: email.verifiedAt } : {}),
+          ...(email.verifiedRequestedAt ? { verifiedRequestedAt: email.verifiedRequestedAt } : {}),
           ...(email.requestedAt ? { requestedAt: email.requestedAt } : {}),
         };
       }
@@ -292,6 +294,7 @@ export class HumanDeliveryService {
         status: email.status,
         address: email.address,
         ...(email.verifiedAt ? { verifiedAt: email.verifiedAt } : {}),
+        ...(email.verifiedRequestedAt ? { verifiedRequestedAt: email.verifiedRequestedAt } : {}),
         ...(email.requestedAt ? { requestedAt: email.requestedAt } : {}),
       },
     ];
@@ -466,6 +469,7 @@ function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {
   status: HumanAddressVerificationStateEnum;
   address?: string;
   verifiedAt?: string;
+  verifiedRequestedAt?: string;
   requestedAt?: string;
 } {
   const verified = slot?.verified;
@@ -484,6 +488,7 @@ function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {
     status,
     ...(rawAddress ? { address: maskEmail(rawAddress) } : {}),
     ...(verified?.verifiedAt ? { verifiedAt: verified.verifiedAt } : {}),
+    ...(verified?.requestedAt ? { verifiedRequestedAt: verified.requestedAt } : {}),
     ...(pending?.requestedAt ? { requestedAt: pending.requestedAt } : {}),
   };
 }
@@ -494,6 +499,7 @@ function toContactChannelStatus(channel: InviteChannelDescription): HumanContact
     status: channel.status,
     ...(channel.address ? { address: channel.address } : {}),
     ...(channel.verifiedAt ? { verifiedAt: channel.verifiedAt } : {}),
+    ...(channel.verifiedRequestedAt ? { verifiedRequestedAt: channel.verifiedRequestedAt } : {}),
     ...(channel.requestedAt ? { requestedAt: channel.requestedAt } : {}),
   };
 }

@@ -10,6 +10,7 @@ describe('RequestAddressVerification', () => {
     address: 'old@example.com',
     requestedAt: '2026-10-01T12:00:00.000Z',
   };
+  const writtenPending = { address: 'new@example.com', requestedAt: '2026-10-01T12:05:00.000Z' };
 
   function setup() {
     const humanContactRepository = {
@@ -17,13 +18,11 @@ describe('RequestAddressVerification', () => {
         .stub()
         .resolves({ address: 'old@example.com', verifiedAt: '2026-10-01T11:00:00.000Z' }),
       findPendingAddress: sinon.stub().resolves(previousPending),
-      upsertPendingAddress: sinon
-        .stub()
-        .resolves({ address: 'new@example.com', requestedAt: '2026-10-01T12:05:00.000Z' }),
+      upsertPendingAddress: sinon.stub().resolves(writtenPending),
       restorePendingAddress: sinon.stub().resolves(),
     };
     const rateLimit = {
-      assertAndRecord: sinon.stub().resolves({ retryAfterSeconds: 60 }),
+      assertAndRecord: sinon.stub().resolves({ retryAfterSeconds: 60, reservation: 'res-1' }),
       release: sinon.stub().resolves(),
     };
     const verificationTokens = {
@@ -95,9 +94,20 @@ describe('RequestAddressVerification', () => {
 
     expect(humanContactRepository.restorePendingAddress.calledOnce).to.equal(true);
     expect(humanContactRepository.restorePendingAddress.firstCall.args[0]).to.deep.include({
+      replaced: writtenPending,
       pending: previousPending,
     });
     expect(rateLimit.release.calledOnce).to.equal(true);
+    expect(rateLimit.release.firstCall.args[0]).to.deep.include({ reservation: 'res-1' });
     expect(rateLimit.release.calledAfter(humanContactRepository.restorePendingAddress)).to.equal(true);
+  });
+
+  it('returns the requestedAt of the pending slot it wrote', async () => {
+    const { usecase } = setup();
+
+    const result = await usecase.execute(command());
+
+    expect(result.requestedAt).to.equal(writtenPending.requestedAt);
+    expect(result.address).to.equal('n***@example.com');
   });
 });

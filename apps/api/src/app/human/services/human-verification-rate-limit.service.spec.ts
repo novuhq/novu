@@ -55,6 +55,16 @@ describe('HumanVerificationRateLimitService', () => {
 
         return existed ? 1 : 0;
       }),
+      // Compare-and-delete, matching RELEASE_OWNED_COOLDOWN_SCRIPT.
+      eval: sinon.stub().callsFake(async (_script: string, keys: string[], args: string[]) => {
+        if (cacheStore.get(keys[0]) === args[0]) {
+          cacheStore.delete(keys[0]);
+
+          return 1;
+        }
+
+        return 0;
+      }),
     };
     const logger = { setContext: sinon.stub() };
 
@@ -141,13 +151,27 @@ describe('HumanVerificationRateLimitService', () => {
     const dailyKey = `human_verify_daily:{${params.environmentId}:${params.agentId}:${params.subscriberId}:${params.via}}`;
     const cooldownKey = `human_verify_cooldown:{${params.environmentId}:${params.agentId}:${params.subscriberId}:${params.via}}`;
 
-    await service.assertAndRecord(params);
-    await service.release(params);
+    const { reservation } = await service.assertAndRecord(params);
+    await service.release({ ...params, reservation });
 
     expect(cacheStore.has(cooldownKey)).to.equal(false);
     expect(cacheStore.has(dailyKey)).to.equal(false);
 
     const again = await service.assertAndRecord(params);
     expect(again.retryAfterSeconds).to.equal(HUMAN_VERIFICATION_COOLDOWN_SECONDS);
+  });
+
+  it('does not clear a cooldown that a newer request now owns', async () => {
+    const { service, cacheStore } = makeService();
+    const cooldownKey = `human_verify_cooldown:{${params.environmentId}:${params.agentId}:${params.subscriberId}:${params.via}}`;
+
+    const older = await service.assertAndRecord(params);
+    // The older cooldown expired and a newer request reserved it.
+    cacheStore.delete(cooldownKey);
+    const newer = await service.assertAndRecord(params);
+
+    await service.release({ ...params, reservation: older.reservation });
+
+    expect(cacheStore.get(cooldownKey)).to.equal(newer.reservation);
   });
 });

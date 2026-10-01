@@ -346,7 +346,7 @@ async function connectEmail(
       client,
       subscriberId,
       agentIdentifier,
-      sent.address,
+      sent.requestedAt,
       'you verify your email',
       'Re-run `human setup email` to resend.'
     );

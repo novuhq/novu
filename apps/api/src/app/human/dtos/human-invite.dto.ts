@@ -130,6 +130,12 @@ export class RequestAddressVerificationResponseDto {
   @ApiProperty({ description: 'Masked address the verification was sent to.' })
   address: string;
 
+  @ApiProperty({
+    description:
+      'Identifies this request. Once the link is used, the contact’s email channel reports it as `verifiedRequestedAt`.',
+  })
+  requestedAt: string;
+
   @ApiProperty()
   expiresAt: string;
 

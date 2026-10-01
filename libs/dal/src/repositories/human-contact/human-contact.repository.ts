@@ -129,14 +129,17 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Puts the pending slot back after a failed send. `null` clears it, which is
-   * the state before the first request for this channel.
+   * Puts the pending slot back after a failed send, but only while it still
+   * holds `replaced` (the value the failed request wrote). A newer request
+   * that already replaced it keeps its own link. `pending: null` clears the
+   * slot, which is the state before the first request for this channel.
    */
   async restorePendingAddress(params: {
     environmentId: string;
     agentId: string;
     subscriberId: string;
     via: HumanChannelViaEnum;
+    replaced: HumanContactPendingAddress;
     pending: HumanContactPendingAddress | null;
   }): Promise<void> {
     const pendingPath = `addresses.${params.via}.pending`;
@@ -144,6 +147,8 @@ export class HumanContactRepository extends BaseRepositoryV2<
       _environmentId: params.environmentId,
       _agentId: params.agentId,
       subscriberId: params.subscriberId,
+      [`${pendingPath}.address`]: params.replaced.address,
+      [`${pendingPath}.requestedAt`]: params.replaced.requestedAt,
     };
 
     if (params.pending) {

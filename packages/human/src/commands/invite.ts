@@ -366,7 +366,7 @@ async function inviteEmail(
     return { humanId, linkedOn: [], alreadyLinked: false };
   }
 
-  await waitForEmailVerification(client, humanId, agentIdentifier, sent.address);
+  await waitForEmailVerification(client, humanId, agentIdentifier, sent.requestedAt);
 
   return { humanId, linkedOn: ['email'], alreadyLinked: false };
 }
@@ -385,7 +385,7 @@ async function waitForEmailVerification(
   client: HumanApiClient,
   humanId: string,
   agentIdentifier: string,
-  expectedMaskedAddress: string
+  requestedAt: string
 ): Promise<void> {
   const stopIndicator = startWaitIndicator(
     `Waiting for ${humanId} to verify their email`,
@@ -397,7 +397,7 @@ async function waitForEmailVerification(
       client,
       humanId,
       agentIdentifier,
-      expectedMaskedAddress,
+      requestedAt,
       `${humanId} verify their email`,
       `Re-run \`human invite ${humanId} --via email\` to resend.`
     );

@@ -55,6 +55,8 @@ const operatorConfig: HumanCliConfig = {
 
 const INVITE_URL = 'https://gethuman.md/invite/tok_123';
 const INVITE_EXPIRES_AT = '2026-10-02T12:00:00.000Z';
+/** `requestedAt` the API returns for the verification the CLI just sent. */
+const REQUESTED_AT = '2026-10-01T12:00:00.000Z';
 
 function slackLink() {
   return { integration: { identifier: 'slack-1', providerId: 'slack', active: true } };
@@ -110,6 +112,7 @@ function resetMocks() {
   getContact.mockRejectedValue(new Error('not found'));
   requestAddressVerification.mockResolvedValue({
     address: 'c***@acme.com',
+    requestedAt: REQUESTED_AT,
     expiresAt: '2026-10-02T12:00:00.000Z',
     retryAfterSeconds: 60,
   });
@@ -251,7 +254,7 @@ describe('runInvite with --via', () => {
       })
       .mockResolvedValue({
         id: 'carol',
-        channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
+        channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com', verifiedRequestedAt: REQUESTED_AT }],
       });
 
     const result = await runInvite('carol', { via: 'email', email: 'carol@acme.com', name: 'Carol' });
@@ -287,33 +290,43 @@ describe('runInvite with --via', () => {
     });
   });
 
-  it('keeps waiting while a replacement is still pending, even when the mask matches', async () => {
+  it('keeps waiting until the link it sent is the one that got verified, even when masks collide', async () => {
     listAgentIntegrations.mockResolvedValue([emailLink()]);
+    const olderRequest = '2026-09-30T12:00:00.000Z';
     let reads = 0;
     getContact.mockImplementation(async () => {
       reads += 1;
       if (reads === 1) {
+        // carol@acme.com is already verified from an earlier request.
         return {
           id: 'carol',
-          channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
+          channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com', verifiedRequestedAt: olderRequest }],
         };
       }
       if (reads === 2) {
+        // Our chris@acme.com request is pending; the old address still shows verified with the same mask.
         return {
           id: 'carol',
           channels: [
-            { via: 'email', status: 'verified', address: 'c***@acme.com', requestedAt: '2026-10-01T00:00:00.000Z' },
+            {
+              via: 'email',
+              status: 'verified',
+              address: 'c***@acme.com',
+              verifiedRequestedAt: olderRequest,
+              requestedAt: REQUESTED_AT,
+            },
           ],
         };
       }
 
       return {
         id: 'carol',
-        channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
+        channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com', verifiedRequestedAt: REQUESTED_AT }],
       };
     });
     requestAddressVerification.mockResolvedValue({
       address: 'c***@acme.com',
+      requestedAt: REQUESTED_AT,
       expiresAt: '2026-10-02T12:00:00.000Z',
       retryAfterSeconds: 60,
       replacesVerifiedAddress: true,
@@ -333,6 +346,7 @@ describe('runInvite with --via', () => {
     });
     requestAddressVerification.mockResolvedValue({
       address: 'n***@acme.com',
+      requestedAt: REQUESTED_AT,
       expiresAt: '2026-10-02T12:00:00.000Z',
       retryAfterSeconds: 60,
       replacesVerifiedAddress: true,

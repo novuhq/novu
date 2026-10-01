@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, HumanContactRepository, IntegrationRepository } from '@novu/dal';
+import {
+  AgentIntegrationRepository,
+  AgentRepository,
+  type HumanContactPendingAddress,
+  HumanContactRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { resolveAgentOutboundEmail } from '../../../agents/email/resolve-agent-outbound-email';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
@@ -17,6 +23,8 @@ import { RequestAddressVerificationCommand } from './request-address-verificatio
 
 export type RequestAddressVerificationResult = {
   address: string;
+  /** Identifies this request; the contact's verified channel reports the same value once this link is used. */
+  requestedAt: string;
   expiresAt: string;
   retryAfterSeconds: number;
   /** A different address is already verified and stays deliverable until this one is confirmed. */
@@ -122,16 +130,16 @@ export class RequestAddressVerification {
       params.via
     );
 
-    const { retryAfterSeconds } = await this.rateLimit.assertAndRecord({
+    const { retryAfterSeconds, reservation } = await this.rateLimit.assertAndRecord({
       environmentId: params.environmentId,
       agentId: params.agentId,
       subscriberId: params.subscriberId,
       via: params.via,
     });
 
-    let pendingReplaced = false;
+    let written: HumanContactPendingAddress | undefined;
     try {
-      await this.humanContactRepository.upsertPendingAddress({
+      written = await this.humanContactRepository.upsertPendingAddress({
         environmentId: params.environmentId,
         organizationId: params.organizationId,
         agentId: params.agentId,
@@ -139,7 +147,6 @@ export class RequestAddressVerification {
         via: params.via,
         address: params.address,
       });
-      pendingReplaced = true;
 
       let issued: { token: string; expiresAt: string };
       try {
@@ -168,12 +175,13 @@ export class RequestAddressVerification {
 
       return {
         address: maskEmail(params.address),
+        requestedAt: written.requestedAt,
         expiresAt: issued.expiresAt,
         retryAfterSeconds,
         replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
       };
     } catch (err) {
-      await this.compensateFailedSend(params, pendingReplaced ? previousPending : undefined);
+      await this.compensateFailedSend({ ...params, reservation }, written, previousPending);
 
       throw err;
     }
@@ -190,16 +198,19 @@ export class RequestAddressVerification {
       agentId: string;
       subscriberId: string;
       via: HumanChannelViaEnum;
+      reservation: string;
     },
-    previousPending: Awaited<ReturnType<HumanContactRepository['findPendingAddress']>> | undefined
+    written: HumanContactPendingAddress | undefined,
+    previousPending: HumanContactPendingAddress | null
   ): Promise<void> {
-    if (previousPending !== undefined) {
+    if (written) {
       await this.humanContactRepository
         .restorePendingAddress({
           environmentId: params.environmentId,
           agentId: params.agentId,
           subscriberId: params.subscriberId,
           via: params.via,
+          replaced: written,
           pending: previousPending,
         })
         .catch(() => undefined);

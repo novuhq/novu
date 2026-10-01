@@ -124,8 +124,8 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
       valid: true,
       inviteeName: 'Alice Chen',
       channels: [
-        { via: 'telegram', connected: false, isDefault: false },
-        { via: 'slack', connected: false, isDefault: false },
+        { via: 'telegram', connected: false, isDefault: false, status: 'unverified' },
+        { via: 'slack', connected: false, isDefault: false, status: 'unverified' },
       ],
     });
   });

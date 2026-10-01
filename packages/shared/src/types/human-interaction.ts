@@ -255,6 +255,9 @@ export type HumanContactChannelStatus = {
   /** Masked address for address-based channels (e.g. `a***@b.com`). */
   address?: string;
   verifiedAt?: string;
+  /** `requestedAt` of the request that produced the verified slot. Lets a caller match its own request. */
+  verifiedRequestedAt?: string;
+  /** Set while a newer request is pending (the pending slot's `requestedAt`). */
   requestedAt?: string;
 };
 

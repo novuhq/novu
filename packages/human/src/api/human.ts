@@ -218,6 +218,9 @@ export type ContactChannel = {
   status: ContactChannelStatus;
   address?: string;
   verifiedAt?: string;
+  /** `requestedAt` of the request whose link verified the current address. */
+  verifiedRequestedAt?: string;
+  /** Set while a newer request is still pending. */
   requestedAt?: string;
 };
 
@@ -265,6 +268,8 @@ export async function getContact(
 
 export type AddressVerificationResult = {
   address: string;
+  /** Identifies this request; the contact's email channel reports it as `verifiedRequestedAt` once used. */
+  requestedAt: string;
   expiresAt: string;
   retryAfterSeconds: number;
   /** A different address is already verified and stays deliverable until this one is confirmed. */

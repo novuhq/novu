@@ -23,6 +23,7 @@ describe('ConnectHumanInviteChannel', () => {
     const requestAddressVerification = {
       execute: sinon.stub().resolves({
         address: 'a***@example.com',
+        requestedAt: '2026-10-01T10:00:00.000Z',
         expiresAt: '2026-10-02T10:00:00.000Z',
         retryAfterSeconds: 60,
         replacesVerifiedAddress: false,
@@ -115,6 +116,7 @@ describe('ConnectHumanInviteChannel', () => {
     expect(result).to.deep.equal({
       via: HumanChannelViaEnum.EMAIL,
       address: 'a***@example.com',
+      requestedAt: '2026-10-01T10:00:00.000Z',
       expiresAt: '2026-10-02T10:00:00.000Z',
       retryAfterSeconds: 60,
       replacesVerifiedAddress: false,
