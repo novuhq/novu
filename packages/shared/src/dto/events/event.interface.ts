@@ -13,10 +13,14 @@ export type TriggerTenantContext = string | ITenantDefine;
 
 export type TriggerOverrides = {
   providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+  /** Keyed by integration identifier; takes precedence over `providers`. */
+  integrations?: Record<string, Record<string, unknown>>;
   steps?: Record<
     string,
     {
       providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+      /** Keyed by integration identifier; takes precedence over `providers`. */
+      integrations?: Record<string, Record<string, unknown>>;
       layoutId?: string | null;
     }
   >;
