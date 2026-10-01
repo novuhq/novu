@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
 import { SVGProps } from 'react';
 import {
   RiBarChartBoxLine,
@@ -19,13 +19,13 @@ import {
   RiUserAddLine,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { useUsageLimitsView } from '@/components/billing/usage-limits/use-usage-limits-view';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useLocalMode } from '@/context/local-mode';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { usePausedUsagePlan } from '@/hooks/use-paused-usage-plan';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from '../../config';
@@ -37,6 +37,7 @@ import { HomeMenuItem } from './getting-started-menu-item';
 import { NavigationGroup } from './navigation-group';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
+import { getSidebarPlanCardVariant, type SidebarPlanCardVariant } from './sidebar-plan-card-variant';
 import { PausedUsageCard, UsageCard } from './usage-card';
 
 function MailAiLineIcon(props: SVGProps<SVGSVGElement>) {
@@ -51,22 +52,37 @@ function buildEnvironmentRoute(route: string, environmentSlug: string | undefine
   return environmentSlug ? buildRoute(route, { environmentSlug }) : undefined;
 }
 
-type BottomNavigationProps = {
-  isTrialActive?: boolean;
-  isFreeTier?: boolean;
-  isLoadingSubscription: boolean;
-  subscription?: GetSubscriptionDto | undefined;
-  daysLeft?: number;
+type SidebarPlanCardProps = {
+  variant: SidebarPlanCardVariant;
+  subscription: GetSubscriptionDto;
+  daysLeft: number;
+  canEditUsageLimits: boolean;
 };
 
-const BottomSection = ({
-  isTrialActive,
-  isFreeTier,
-  isLoadingSubscription,
-  subscription,
-  daysLeft,
-}: BottomNavigationProps) => {
-  const pausedUsagePlan = usePausedUsagePlan();
+function SidebarPlanCard({ variant, subscription, daysLeft, canEditUsageLimits }: SidebarPlanCardProps) {
+  switch (variant) {
+    case 'trial':
+      return <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />;
+    case 'free_usage':
+      return <UsageCard subscription={subscription} />;
+    case 'paused_usage':
+      return <PausedUsageCard subscription={subscription} canEditUsageLimits={canEditUsageLimits} />;
+    default: {
+      const exhaustiveCheck: never = variant;
+
+      return exhaustiveCheck;
+    }
+  }
+}
+
+type BottomNavigationProps = {
+  isLoadingSubscription: boolean;
+  subscription: GetSubscriptionDto | undefined;
+  daysLeft: number;
+};
+
+const BottomSection = ({ isLoadingSubscription, subscription, daysLeft }: BottomNavigationProps) => {
+  const usageLimits = useUsageLimitsView();
 
   if (IS_SELF_HOSTED) {
     return (
@@ -76,15 +92,19 @@ const BottomSection = ({
     );
   }
 
+  const planCardVariant = getSidebarPlanCardVariant(subscription, usageLimits?.pausedPlan ?? null);
+
   return (
     <div className="relative mt-auto gap-8 pt-4">
-      {!isTrialActive && !isLoadingSubscription && <ChangelogStack />}
-      {isTrialActive && !isLoadingSubscription && daysLeft !== undefined && (
-        <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
+      {planCardVariant !== 'trial' && !isLoadingSubscription && <ChangelogStack />}
+      {subscription && planCardVariant && (
+        <SidebarPlanCard
+          variant={planCardVariant}
+          subscription={subscription}
+          daysLeft={daysLeft}
+          canEditUsageLimits={usageLimits?.canEdit ?? false}
+        />
       )}
-
-      {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
-      {!isTrialActive && pausedUsagePlan === 'paid' && subscription && <PausedUsageCard subscription={subscription} />}
       <NavigationGroup>
         <NavigationLink to={ROUTES.SETTINGS_TEAM}>
           <RiUserAddLine className="size-4" />
@@ -98,8 +118,6 @@ const BottomSection = ({
 
 export const LegacySideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
-  const isTrialActive = subscription?.trial.isActive;
-  const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isDomainsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DOMAINS_PAGE_ENABLED);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
@@ -303,8 +321,6 @@ export const LegacySideNavigation = () => {
           </div>
 
           <BottomSection
-            isTrialActive={isTrialActive}
-            isFreeTier={isFreeTier}
             isLoadingSubscription={isLoadingSubscription}
             subscription={subscription}
             daysLeft={daysLeft}
