@@ -8,6 +8,7 @@ import {
   InactiveHumanInviteError,
   toHttpError,
 } from '../../services/human-invite-token.service';
+import { buildRelayOwnerName, resolveRelaySender } from '../../services/relay-owner-name';
 import { GetHumanInviteStatusCommand } from './get-human-invite-status.command';
 
 /** What the public invite page renders. Read-only, so link scanners can't change anything. */
@@ -35,14 +36,14 @@ export class GetHumanInviteStatus {
     const { payload } = invite;
     const agent = await this.agentRepository.findOne(
       { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
-      ['name']
+      ['name', 'operatorSubscriberId']
     );
 
     if (!agent) {
       return { valid: false, reason: 'invalid' };
     }
 
-    const [channels, subscriber] = await Promise.all([
+    const [channels, subscriber, sender] = await Promise.all([
       this.deliveryService.describeInviteChannels({
         environmentId: payload.env,
         organizationId: payload.org,
@@ -53,15 +54,22 @@ export class GetHumanInviteStatus {
         { _environmentId: payload.env, subscriberId: payload.subscriberId },
         'firstName lastName'
       ),
+      resolveRelaySender({ agent, environmentId: payload.env, subscriberRepository: this.subscriberRepository }),
     ]);
-    const displayName = [subscriber?.firstName, subscriber?.lastName].filter(Boolean).join(' ');
+    const displayName = buildRelayOwnerName(subscriber?.firstName, subscriber?.lastName);
 
     return {
       valid: true,
-      agentName: agent.name,
-      inviteeName: displayName || payload.subscriberId,
+      ...sender,
+      inviteeName: displayName ?? payload.subscriberId,
       expiresAt: invite.expiresAt,
-      channels: channels.map(({ via, connected, isDefault }) => ({ via, connected, isDefault })),
+      channels: channels.map(({ via, connected, isDefault, status, address }) => ({
+        via,
+        connected,
+        isDefault,
+        status,
+        ...(address ? { address } : {}),
+      })),
     };
   }
 }

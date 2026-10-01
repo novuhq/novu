@@ -53,7 +53,13 @@ describe('Human contacts (setup names → list) #novu-v2', () => {
     it('lists every subscriber in the environment with only contact fields', async () => {
       const stamp = Date.now();
       await setup({ subscriberId: `alice-${stamp}`, firstName: 'Alice', lastName: 'Chen' });
-      await setup({ subscriberId: `bob-${stamp}`, email: 'bob@example.com' });
+      // Setup no longer writes Subscriber.email (it lands after double opt-in), so seed it directly.
+      await subscriberRepository.create({
+        subscriberId: `bob-${stamp}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        email: 'bob@example.com',
+      });
       await subscriberRepository.create({
         subscriberId: `carol-${stamp}`,
         _environmentId: session.environment._id,

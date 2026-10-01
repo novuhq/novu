@@ -1,6 +1,6 @@
 import { BaseCommand } from '@novu/application-generic';
 import { HumanChannelViaEnum } from '@novu/shared';
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import type { HumanInviteVia } from '../../services/human-delivery.service';
 
 export class ConnectHumanInviteChannelCommand extends BaseCommand {
@@ -8,6 +8,11 @@ export class ConnectHumanInviteChannelCommand extends BaseCommand {
   @IsNotEmpty()
   token: string;
 
-  @IsIn([HumanChannelViaEnum.TELEGRAM, HumanChannelViaEnum.SLACK])
+  @IsIn([HumanChannelViaEnum.TELEGRAM, HumanChannelViaEnum.SLACK, HumanChannelViaEnum.EMAIL])
   via: HumanInviteVia;
+
+  @ValidateIf((command: ConnectHumanInviteChannelCommand) => command.via === HumanChannelViaEnum.EMAIL)
+  @IsEmail()
+  @IsNotEmpty()
+  address?: string;
 }

@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import pc from 'picocolors';
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
-import { createInteraction, setupHumanRelay } from '../api/human';
+import { createInteraction, requestAddressVerification, setupHumanRelay } from '../api/human';
 import {
   addAgentEmailIntegration,
   bootstrapKeylessSession,
@@ -32,6 +32,7 @@ import {
 import { pollUntil, sleep } from '../poll';
 import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
+import { startWaitIndicator } from '../spinner';
 import { handleError } from './interact';
 import { splitName } from './invite';
 import {
@@ -44,14 +45,17 @@ import {
   issueTelegramSubscriberLinkWithRetry,
   parseEmailAddress,
   waitForEndpoint,
+  waitForVerifiedEmail,
 } from './link-channel';
 
 const BOTFATHER_URL = 'https://t.me/botfather';
 
 /**
- * `--name` always wins. Otherwise ask once — only on the very first setup
- * (no subscriberId in config yet) and only on a TTY; an empty answer or a
- * non-interactive run just leaves the name unset.
+ * The operator's name is what invitees see ("Nikita Grossman wants to reach
+ * you via Human"). `--name` always wins. Otherwise ask for first and last
+ * name once — only on the very first setup (no subscriberId in config yet)
+ * and only on a TTY; an empty first name or a non-interactive run leaves the
+ * name unset and invitees see "Someone" until `human setup --name` is run.
  */
 export async function resolveOperatorName(
   options: Pick<SetupOptions, 'name'>,
@@ -69,7 +73,18 @@ export async function resolveOperatorName(
     return undefined;
   }
 
-  return splitName(await io.prompt('Your name (shown to agents, optional): '));
+  info('People your agents contact will see your name on invites and verification emails.');
+  const firstName = (await io.prompt('Your first name: ')).trim();
+
+  if (!firstName) {
+    info('No name set — invitees will see "Someone". Set it later with: human setup --name "First Last"');
+
+    return undefined;
+  }
+
+  const lastName = (await io.prompt('Your last name (optional): ')).trim();
+
+  return lastName ? { firstName, lastName } : { firstName };
 }
 
 interface SetupOptions {
@@ -117,7 +132,12 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
 
     info('Setting up your human relay...');
-    const relay = await setupHumanRelay(client, { subscriberId, agentIdentifier: relayIdentifier, ...name });
+    const relay = await setupHumanRelay(client, {
+      subscriberId,
+      agentIdentifier: relayIdentifier,
+      ...name,
+      operator: true,
+    });
 
     // 3. Channel linking — linked channels live on the server; locally we only
     // remember a default preference for when the caller does not pass `--via`.
@@ -309,7 +329,30 @@ async function connectEmail(
   }
 
   info('Registering your email address...');
-  await setupHumanRelay(client, { subscriberId, agentIdentifier, email });
+  const sent = await requestAddressVerification(client, {
+    subscriberId,
+    agentIdentifier,
+    via: 'email',
+    address: email,
+  });
+  info(`Verification email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
+
+  const stopIndicator = startWaitIndicator(
+    'Waiting for you to verify your email',
+    'Ctrl-C detaches; resume with: human setup email'
+  );
+  try {
+    await waitForVerifiedEmail(
+      client,
+      subscriberId,
+      agentIdentifier,
+      sent.requestedAt,
+      'you verify your email',
+      'Re-run `human setup email` to resend.'
+    );
+  } finally {
+    stopIndicator();
+  }
 
   if (inboundAddress) {
     info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);

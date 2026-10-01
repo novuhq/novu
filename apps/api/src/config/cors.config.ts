@@ -79,9 +79,9 @@ function isBlueprintRoute(url: string): boolean {
   return url.startsWith('/v1/blueprints');
 }
 
-/** The public invite page endpoints; `POST /v1/human/invites` (create, authenticated) is excluded. */
+/** The public invite / verify page endpoints; authenticated create routes are excluded. */
 function isHumanInviteRoute(url: string): boolean {
-  return url.startsWith('/v1/human/invites/');
+  return url.startsWith('/v1/human/invites/') || url.startsWith('/v1/human/verify');
 }
 
 function humanWebsiteOrigin(): string | undefined {

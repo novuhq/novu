@@ -6,10 +6,35 @@ import { OrganizationId } from '../organization';
 /** Who picked the default channel. The person's own choice always wins over the inviter's. */
 export type HumanContactDefaultSetBy = 'inviter' | 'contact';
 
+/** An address waiting on double opt-in. One pending slot per channel. */
+export interface HumanContactPendingAddress {
+  /** Normalized address (lowercase email). */
+  address: string;
+  requestedAt: string;
+}
+
+/** An address that passed double opt-in. One verified slot per channel. */
+export interface HumanContactVerifiedAddress {
+  /** Normalized address (lowercase email). */
+  address: string;
+  requestedAt: string;
+  verifiedAt: string;
+}
+
 /**
- * How one human (subscriber) wants a relay agent to reach them. Channel
- * bindings themselves stay on ChannelEndpoint (chat) and Subscriber.email;
- * this row only records the choices layered on top of them.
+ * Address-based channel binding (email today; SMS/WhatsApp later).
+ * Chat bindings stay on ChannelEndpoint. Each channel has at most one pending
+ * and one verified slot, so a promote is a single write.
+ */
+export interface HumanContactChannelAddresses {
+  pending?: HumanContactPendingAddress;
+  verified?: HumanContactVerifiedAddress;
+}
+
+/**
+ * How one human (subscriber) wants a relay agent to reach them. Chat bindings
+ * stay on ChannelEndpoint; address-based channels (email) live in `addresses`
+ * after double opt-in. This row is never exposed on the public subscriber API.
  */
 export class HumanContactEntity {
   _id: string;
@@ -23,6 +48,13 @@ export class HumanContactEntity {
   defaultVia?: HumanChannelViaEnum;
 
   defaultSetBy?: HumanContactDefaultSetBy;
+
+  /**
+   * Address-based channel verification state, keyed by channel. Delivery to
+   * email requires `addresses.email.verified` — `Subscriber.email` is copied
+   * from that slot only after promote.
+   */
+  addresses?: Partial<Record<HumanChannelViaEnum, HumanContactChannelAddresses>>;
 
   _environmentId: EnvironmentId;
 

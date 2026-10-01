@@ -83,14 +83,15 @@ human invite carol --via email --email carol@acme.com --name "Carol Diaz"
 ```
 
 Prefer plain `human invite <id>`: it prints a link (valid for 3 days) to a
-Novu page where they connect any channel you set up — Telegram, Slack, or
-both — and pick their default. Use `--via <channel>` only when you know the
-one channel they use: it prints that channel's direct connect link instead
-(Slack authorize or Telegram Start, valid for minutes) and makes it their
-default. Nothing is sent for you — share the link with them, or give it to
-your human to forward. `--async` prints the link and returns immediately.
-This does **not** change `~/.novu/human.json`. After they connect, address
-them with `--to alice`; messages go to their default channel unless you pass
+Novu page where they connect any channel you set up — Telegram, Slack, and/or
+Email — and pick their default. Use `--via <channel>` only when you know the
+one channel they use: Telegram/Slack print that channel's direct connect link
+(valid for minutes); `--via email --email <addr>` sends a verification email
+they must confirm before the address is reachable. Nothing is sent for you —
+share the link with them, or give it to your human to forward. `--async`
+prints the link (or sends the verification) and returns immediately. This does
+**not** change `~/.novu/human.json`. After they connect / verify, address them
+with `--to alice`; messages go to their default channel unless you pass
 `--via`. `--name` is what `human contacts` shows next to the id, so always
 pass it when you know who the person is.
 

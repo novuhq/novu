@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HumanChannelViaEnum } from '@novu/shared';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 export class SetupHumanRelayRequestDto {
   @ApiProperty({ description: 'subscriberId that identifies the human being set up.' })
@@ -45,6 +45,14 @@ export class SetupHumanRelayRequestDto {
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)
   defaultVia?: HumanChannelViaEnum;
+
+  @ApiPropertyOptional({
+    description:
+      'True when the caller is the relay’s owner (`human setup`). Their first/last name becomes the relay’s display name — what invitees see in verification emails and on the invite page.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  operator?: boolean;
 }
 
 export class SetupHumanRelayResponseDto {

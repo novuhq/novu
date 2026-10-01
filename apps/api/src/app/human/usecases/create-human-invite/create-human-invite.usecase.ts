@@ -44,7 +44,7 @@ export class CreateHumanInvite {
 
     if (channels.length === 0) {
       throw new NotFoundException(
-        'No Telegram or Slack channel is linked to the relay agent. Run `human setup telegram` or `human setup slack` first.'
+        'No Telegram, Slack, or Email channel is linked to the relay agent. Run `human setup` first.'
       );
     }
 

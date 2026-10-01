@@ -172,6 +172,8 @@ export async function setupHumanRelay(
     lastName?: string;
     /** The inviter's `--via` pick; becomes the human's default channel unless they chose one themselves. */
     defaultVia?: 'telegram' | 'slack' | 'email';
+    /** True from `human setup`: this subscriber owns the relay and their name is shown to invitees. */
+    operator?: boolean;
   }
 ): Promise<{ agentId: string; agentIdentifier: string; subscriberId: string }> {
   const res = await client.axios.post<
@@ -187,7 +189,7 @@ export async function setupHumanRelay(
 }
 
 export interface HumanInviteChannel {
-  via: 'telegram' | 'slack';
+  via: 'telegram' | 'slack' | 'email';
   integrationIdentifier: string;
   connected: boolean;
 }
@@ -209,6 +211,19 @@ export async function createHumanInvite(
   return unwrap(res.data);
 }
 
+export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
+
+export type ContactChannel = {
+  via: 'telegram' | 'slack' | 'email';
+  status: ContactChannelStatus;
+  address?: string;
+  verifiedAt?: string;
+  /** `requestedAt` of the request whose link verified the current address. */
+  verifiedRequestedAt?: string;
+  /** Set while a newer request is still pending. */
+  requestedAt?: string;
+};
+
 /** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */
 export interface Contact {
   id: string;
@@ -219,6 +234,7 @@ export interface Contact {
   data?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  channels?: ContactChannel[];
 }
 
 export interface ContactsPage {
@@ -234,4 +250,47 @@ export async function listContacts(
   const body = res.data;
 
   return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
+}
+
+export async function getContact(
+  client: HumanApiClient,
+  subscriberId: string,
+  agentIdentifier?: string
+): Promise<Contact> {
+  const res = await client.axios.get<{ data?: Contact } | Contact>(
+    `/v1/human/contacts/${encodeURIComponent(subscriberId)}`,
+    { params: agentIdentifier ? { agentIdentifier } : undefined }
+  );
+
+  // Explicit type arg: `Contact.data` would otherwise make `unwrap` infer the wrong envelope.
+  return unwrap<Contact>(res.data);
+}
+
+export type AddressVerificationResult = {
+  address: string;
+  /** Identifies this request; the contact's email channel reports it as `verifiedRequestedAt` once used. */
+  requestedAt: string;
+  expiresAt: string;
+  retryAfterSeconds: number;
+  /** A different address is already verified and stays deliverable until this one is confirmed. */
+  replacesVerifiedAddress: boolean;
+};
+
+export async function requestAddressVerification(
+  client: HumanApiClient,
+  input: {
+    subscriberId: string;
+    via: 'email';
+    address: string;
+    agentIdentifier?: string;
+    firstName?: string;
+    lastName?: string;
+  }
+): Promise<AddressVerificationResult> {
+  const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
+    '/v1/human/verifications',
+    input
+  );
+
+  return unwrap(res.data);
 }

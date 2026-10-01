@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { GenerateConnectOauthUrlCommand } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
 import { GenerateConnectOauthUrl } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
@@ -7,12 +7,22 @@ import { IssueTelegramSubscriberLink } from '../../../telegram-linking/issue-tel
 import { HUMAN_INVITE_APP_NAMES } from '../../dtos/human-invite.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { HumanInviteTokenService } from '../../services/human-invite-token.service';
+import { RequestAddressVerificationCommand } from '../request-address-verification/request-address-verification.command';
+import {
+  RequestAddressVerification,
+  type RequestAddressVerificationResult,
+} from '../request-address-verification/request-address-verification.usecase';
 import { ConnectHumanInviteChannelCommand } from './connect-human-invite-channel.command';
+
+export type ConnectHumanInviteChannelResult =
+  | { url: string }
+  | (RequestAddressVerificationResult & { via: HumanChannelViaEnum.EMAIL });
 
 /**
  * Mints a fresh connect link for the app the human picked on the invite page —
  * the same links `human invite --via` prints (Telegram start code, Slack OAuth
  * with the Slack user auto-linked), created at click time so they never go stale.
+ * Email starts double opt-in instead of minting a URL.
  */
 @Injectable()
 export class ConnectHumanInviteChannel {
@@ -20,10 +30,11 @@ export class ConnectHumanInviteChannel {
     private readonly inviteTokens: HumanInviteTokenService,
     private readonly deliveryService: HumanDeliveryService,
     private readonly issueTelegramSubscriberLink: IssueTelegramSubscriberLink,
-    private readonly generateConnectOauthUrl: GenerateConnectOauthUrl
+    private readonly generateConnectOauthUrl: GenerateConnectOauthUrl,
+    private readonly requestAddressVerification: RequestAddressVerification
   ) {}
 
-  async execute(command: ConnectHumanInviteChannelCommand): Promise<{ url: string }> {
+  async execute(command: ConnectHumanInviteChannelCommand): Promise<ConnectHumanInviteChannelResult> {
     const { payload } = await this.inviteTokens.requireActive(command.token);
     const appName = HUMAN_INVITE_APP_NAMES[command.via];
 
@@ -47,6 +58,39 @@ export class ConnectHumanInviteChannel {
         code: 'channel_already_connected',
         message: `You're already connected on ${appName}.`,
       });
+    }
+
+    if (command.via === HumanChannelViaEnum.EMAIL) {
+      if (!command.address?.trim()) {
+        throw new BadRequestException({
+          code: 'address_required',
+          message: 'Enter an email address to verify.',
+        });
+      }
+
+      try {
+        const result = await this.requestAddressVerification.execute(
+          RequestAddressVerificationCommand.create({
+            environmentId: payload.env,
+            organizationId: payload.org,
+            agentId: payload.agentId,
+            subscriberId: payload.subscriberId,
+            via: HumanChannelViaEnum.EMAIL,
+            address: command.address,
+          })
+        );
+
+        return { ...result, via: HumanChannelViaEnum.EMAIL };
+      } catch (err) {
+        if (err instanceof BadGatewayException) {
+          throw new BadGatewayException({
+            error: 'delivery_failed',
+            message: 'Could not send the verification email. Try again in a moment.',
+          });
+        }
+
+        throw err;
+      }
     }
 
     if (command.via === HumanChannelViaEnum.TELEGRAM) {
