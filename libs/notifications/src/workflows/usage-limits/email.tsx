@@ -21,7 +21,6 @@ type UsageLimitsAlertCase =
 interface IUsageFigures {
   organizationName: string;
   planName: string;
-  percentage: number;
   usage: number;
   limit: number;
   /** Null on Free and trials. */
@@ -290,10 +289,12 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
   },
 };
 
-function resolveAlertCase(
-  { alertState = 'approaching_limit', usageLimits }: Partial<UsageLimitsPayload>,
-  { percentage }: IUsageFigures
-): UsageLimitsAlertCase {
+// Only Free pauses at its limit without a set limit, and only trials reach an alert level without included events.
+function resolveAlertCase({
+  alertState = 'approaching_limit',
+  percentage = 0,
+  usageLimits,
+}: Partial<UsageLimitsPayload>): UsageLimitsAlertCase {
   const isLimitSet = usageLimits?.isLimitSet === true;
   const pausesAtLimit = usageLimits?.pausesAtLimit === true;
 
@@ -332,18 +333,17 @@ function resolveAlertCase(
 
 // The framework passes a partial payload (e.g. step previews), so every field needs a fallback.
 export function getUsageLimitsCopy(payload: Partial<UsageLimitsPayload>): IUsageLimitsCopy {
-  const { organizationName = '', planName = '', percentage = 0, usage = 0, allowance = 0, usageLimits } = payload;
+  const { organizationName = '', planName = '', usage = 0, allowance = 0, usageLimits } = payload;
   const figures: IUsageFigures = {
     organizationName,
     planName,
-    percentage: Math.round(percentage),
     usage,
     limit: allowance,
     includedEvents: usageLimits?.includedEvents ?? null,
     remaining: Math.max(allowance - usage, 0),
   };
 
-  return USAGE_LIMITS_COPY[resolveAlertCase(payload, figures)](figures);
+  return USAGE_LIMITS_COPY[resolveAlertCase(payload)](figures);
 }
 
 // Read at render time: the step runs in the API's bridge, whose env names the recipient's regional dashboard.

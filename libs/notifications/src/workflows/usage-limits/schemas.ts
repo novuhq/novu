@@ -35,7 +35,7 @@ export const usageLimitsPayloadSchema = z.object({
     includedEvents: z.number().min(0).nullable(),
     /** `allowance` is a usage limit the organization set and can edit, rather than its plan's alert level. */
     isLimitSet: z.boolean(),
-    /** Sending pauses once usage reaches `allowance`. */
+    /** Sending pauses once usage reaches `allowance`; `alertState` implies it for every state but `included_exhausted`. */
     pausesAtLimit: z.boolean(),
   }),
 });
