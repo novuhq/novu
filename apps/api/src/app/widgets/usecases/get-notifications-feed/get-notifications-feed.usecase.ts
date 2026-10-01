@@ -8,7 +8,7 @@ import {
   InstrumentUsecase,
 } from '@novu/application-generic';
 import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ActorTypeEnum, ChannelTypeEnum } from '@novu/shared';
+import { ActorTypeEnum, ChannelTypeEnum, sanitizeMessageCta } from '@novu/shared';
 import { FeedResponseDto } from '../../dtos/feeds-response.dto';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 
@@ -95,7 +95,11 @@ export class GetNotificationsFeed {
     const hasMore = feed.length < totalCount;
     totalCount = Math.min(totalCount, command.limit);
 
-    const data = feed.map((el) => ({ ...el, content: el.content as string }));
+    const data = feed.map((el) => ({
+      ...el,
+      content: el.content as string,
+      cta: sanitizeMessageCta(el.cta),
+    }));
 
     return {
       data,

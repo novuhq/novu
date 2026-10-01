@@ -24,11 +24,17 @@ import { emptyJsonSchema } from '../../utils/jsonToSchema';
 import { computeResultSchema } from '../../utils/map-step-type-to-result.mapper';
 import { parsePayloadSchema } from '../../utils/parse-payload-schema';
 import { CreateVariablesObject, CreateVariablesObjectCommand } from '../create-variables-object';
-import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
+import {
+  BuildVariableSchemaCommand,
+  IOptimisticStepInfo,
+  IPreloadedEnvironmentContext,
+} from './build-available-variable-schema.command';
 
-type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'>;
+type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'> & {
+  level?: ControlValuesLevelEnum;
+};
 
-const SELECTED_CONTROL_VALUES_PROJECTION: Record<keyof SelectedControlValuesFields, 1> & { _id: 0 } = {
+const SELECTED_CONTROL_VALUES_PROJECTION = {
   controls: 1,
   _stepId: 1,
   _id: 0,
@@ -36,6 +42,13 @@ const SELECTED_CONTROL_VALUES_PROJECTION: Record<keyof SelectedControlValuesFiel
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
+  /**
+   * Concurrent callers in one request need the same environment document and variables.
+   * Share the in-flight read so that burst hits Mongo once, then drop it so the next
+   * request sees fresh data.
+   */
+  private readonly environmentContextInflight = new Map<string, Promise<IPreloadedEnvironmentContext>>();
+
   constructor(
     private readonly createVariablesObject: CreateVariablesObject,
     private readonly controlValuesRepository: ControlValuesRepository,
@@ -101,15 +114,14 @@ export class BuildVariableSchemaUsecase {
 
     const effectivePayloadSchema = optimisticPayloadSchema ?? workflow?.payloadSchema;
 
-    const [rawEnvVars, environmentEntity] = await Promise.all([
-      this.environmentVariableRepository.findByEnvironment(command.organizationId, command.environmentId),
-      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
-    ]);
-    const systemVars: EnvironmentSystemVariables | Record<string, never> = environmentEntity
-      ? { name: environmentEntity.name, type: environmentEntity.type }
+    const environmentContext = command.preloadedEnvironmentContext
+      ? command.preloadedEnvironmentContext
+      : await this.loadEnvironmentContext(command.organizationId, command.environmentId);
+    const systemVars: EnvironmentSystemVariables | Record<string, never> = environmentContext.environment
+      ? { name: environmentContext.environment.name, type: environmentContext.environment.type }
       : {};
-    const envVars = { ...resolveEnvironmentVariables(rawEnvVars), ...systemVars };
-    const controlValuesMap = buildControlValuesMap(controls, optimisticSteps);
+    const envVars = { ...resolveEnvironmentVariables(environmentContext.rawEnvVars), ...systemVars };
+    const controlValuesMap = buildControlValuesMap(controls.filter(isStepControlValue), optimisticSteps);
 
     return {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -128,6 +140,39 @@ export class BuildVariableSchemaUsecase {
       },
       additionalProperties: false,
     } as const satisfies JSONSchemaDto;
+  }
+
+  @Instrument()
+  loadEnvironmentContext(organizationId: string, environmentId: string): Promise<IPreloadedEnvironmentContext> {
+    const key = `${organizationId}:${environmentId}`;
+    const inflight = this.environmentContextInflight.get(key);
+
+    if (inflight) {
+      return inflight;
+    }
+
+    const pending = this.fetchEnvironmentContext(organizationId, environmentId).finally(() => {
+      this.environmentContextInflight.delete(key);
+    });
+
+    this.environmentContextInflight.set(key, pending);
+
+    return pending;
+  }
+
+  private async fetchEnvironmentContext(
+    organizationId: string,
+    environmentId: string
+  ): Promise<IPreloadedEnvironmentContext> {
+    const [rawEnvVars, environmentEntity] = await Promise.all([
+      this.environmentVariableRepository.findByEnvironment(organizationId, environmentId),
+      this.environmentRepository.findByIdAndOrganization(environmentId, organizationId),
+    ]);
+
+    return {
+      rawEnvVars,
+      environment: environmentEntity ? { name: environmentEntity.name, type: environmentEntity.type } : null,
+    };
   }
 
   /**
@@ -220,6 +265,14 @@ export class BuildVariableSchemaUsecase {
       context: { ...((extracted.context as Record<string, unknown>) || {}), ...(previewData?.context || {}) },
     };
   }
+}
+
+function isStepControlValue(controlValue: { level?: ControlValuesLevelEnum | null }): boolean {
+  if (!controlValue.level) {
+    return true;
+  }
+
+  return controlValue.level === ControlValuesLevelEnum.STEP_CONTROLS;
 }
 
 function buildControlValuesMap(

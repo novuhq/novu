@@ -99,16 +99,21 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
 }
 
 /**
- * Channel preference for create: `--via` wins, then HUMAN_VIA, then the
- * configured default. When none is set, returns undefined and the API picks
- * the sole linked channel (or errors if several are linked).
+ * Channel preference for create: `--via` wins, then HUMAN_VIA, then the saved
+ * default channel. The caller decides which defaults apply to the recipients
+ * (see `channelDefaultsFor`); for anyone else the API uses that person's own
+ * default channel. When none applies, returns undefined and the API picks.
  */
-export function resolveVia(config: HumanCliConfig, via?: string): HumanChannelPlatform | undefined {
+export function resolveVia(
+  config: HumanCliConfig,
+  via?: string,
+  { useEnvVia = true, useSavedDefault = true }: { useEnvVia?: boolean; useSavedDefault?: boolean } = {}
+): HumanChannelPlatform | undefined {
   if (via) {
     return via.toLowerCase();
   }
 
-  const envVia = process.env.HUMAN_VIA?.trim().toLowerCase();
+  const envVia = useEnvVia ? process.env.HUMAN_VIA?.trim().toLowerCase() : undefined;
   if (envVia) {
     if (!(SUPPORTED_CHANNELS as readonly string[]).includes(envVia)) {
       throw new Error(`Invalid HUMAN_VIA "${envVia}". Use one of: ${SUPPORTED_CHANNELS.join(', ')}.`);
@@ -117,5 +122,5 @@ export function resolveVia(config: HumanCliConfig, via?: string): HumanChannelPl
     return envVia;
   }
 
-  return config.defaultChannel;
+  return useSavedDefault ? config.defaultChannel : undefined;
 }

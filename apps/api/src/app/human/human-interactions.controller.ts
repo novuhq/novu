@@ -20,12 +20,15 @@ import { ThrottlerCategory } from '../rate-limiting/guards';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
+import { CreateHumanInviteRequestDto, CreateHumanInviteResponseDto } from './dtos/human-invite.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import { ListContactsQueryDto, ListContactsResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import { SetupHumanRelayRequestDto, SetupHumanRelayResponseDto } from './dtos/setup-human-relay.dto';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
+import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-human-invite.command';
+import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
@@ -49,7 +52,8 @@ export class HumanInteractionsController {
     private readonly listInteractionsUsecase: ListInteractions,
     private readonly cancelInteractionUsecase: CancelInteraction,
     private readonly setupHumanRelayUsecase: SetupHumanRelay,
-    private readonly listContactsUsecase: ListContacts
+    private readonly listContactsUsecase: ListContacts,
+    private readonly createHumanInviteUsecase: CreateHumanInvite
   ) {}
 
   @Post('/interactions')
@@ -179,6 +183,28 @@ export class HumanInteractionsController {
         subscriberId: body.subscriberId,
         agentIdentifier: body.agentIdentifier,
         email: body.email,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        defaultVia: body.defaultVia,
+      })
+    );
+  }
+
+  @Post('/invites')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createInvite(
+    @UserSession() user: UserSessionData,
+    @Body() body: CreateHumanInviteRequestDto
+  ): Promise<CreateHumanInviteResponseDto> {
+    return this.createHumanInviteUsecase.execute(
+      CreateHumanInviteCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId: body.subscriberId,
+        agentIdentifier: body.agentIdentifier,
         firstName: body.firstName,
         lastName: body.lastName,
       })

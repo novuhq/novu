@@ -187,11 +187,60 @@ The following table lists the card components you can use in replies:
 | `Card` | Container with an optional `title` |
 | `CardText` | Text block inside a card |
 | `Button` | Interactive button; `id` maps to `action.id` in `onAction` |
-| `Actions` | Required wrapper around `Button` elements |
+| `LinkButton` | Button that opens a URL; goes inside `Actions` |
+| `Actions` | Required wrapper around `Button` and `LinkButton` elements |
 | `Select` / `SelectOption` | Dropdown; triggers `onAction` with selected value |
 | `Divider` | Visual separator |
-| `CardLink` | Clickable link |
+| `CardLink` | Inline clickable link |
+| `Table` | Structured data table with headers and rows |
+| `Chart` | Bar, line, area, or pie chart |
 | `TextInput` | Text input field |
+
+All components are exported from `@novu/framework` (and from `@novu/framework/cards` and every server entrypoint), so you do not need to install a separate package. Each one works in both the function call API and the JSX API.
+
+### Tables, charts, and link buttons
+
+`Table`, `Chart`, and `LinkButton` render structured content inside a card. On channels with native support (such as Slack), they map to the platform's rich blocks; on others they fall back to plain text.
+
+```tsx
+/** @jsxImportSource @novu/framework */
+import { Actions, Card, Chart, LinkButton, Table } from '@novu/framework';
+
+await ctx.reply(
+  <Card title="Weekly deliveries">
+    <Table
+      caption="Deliveries by channel"
+      headers={['Channel', 'Sent']}
+      rows={[
+        ['Email', '1200'],
+        ['SMS', '340'],
+      ]}
+      pageSize={5}
+    />
+    <Chart
+      title="Sent per day"
+      chart={{
+        type: 'bar',
+        categories: ['Mon', 'Tue'],
+        series: [
+          { name: 'Email', data: [{ label: 'Mon', value: 400 }, { label: 'Tue', value: 800 }] },
+        ],
+      }}
+    />
+    <Actions>
+      <LinkButton url="https://dashboard.novu.co/activity">Open dashboard</LinkButton>
+    </Actions>
+  </Card>,
+);
+```
+
+- **`Table`** takes `headers` (column labels) and `rows` (an array of cell-string arrays). Optional `caption` labels the table, and `pageSize` sets rows per page on channels that paginate (Slack: 1-100, default 5).
+- **`Chart`** takes a `title` and a `chart` definition. Use `type: 'bar' | 'line' | 'area'` with `categories` and `series`, or `type: 'pie'` with `segments`. On Slack the title is capped at 50 characters, and series and categories are capped at 12.
+- **`LinkButton`** renders a button that opens a `url`, unlike `CardLink`, which renders an inline link. Place it inside `Actions`.
+
+<Note>
+  On Slack, `Table` ignores per-column `align`. A chart or table that exceeds the platform limits falls back to a plain-text section.
+</Note>
 
 ## Related
 

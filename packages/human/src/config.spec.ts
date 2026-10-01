@@ -91,6 +91,23 @@ describe('resolveVia', () => {
     process.env.HUMAN_VIA = '  ';
     expect(resolveVia(config)).toBe('slack');
   });
+
+  it('skips HUMAN_VIA and the saved default when neither applies to the recipients', () => {
+    process.env.HUMAN_VIA = 'telegram';
+    expect(resolveVia(config, undefined, { useEnvVia: false, useSavedDefault: false })).toBeUndefined();
+  });
+
+  it('can use HUMAN_VIA without falling back to the saved default', () => {
+    process.env.HUMAN_VIA = 'telegram';
+    expect(resolveVia(config, undefined, { useEnvVia: true, useSavedDefault: false })).toBe('telegram');
+
+    delete process.env.HUMAN_VIA;
+    expect(resolveVia(config, undefined, { useEnvVia: true, useSavedDefault: false })).toBeUndefined();
+  });
+
+  it('still honors an explicit --via when no default applies', () => {
+    expect(resolveVia(config, 'Email', { useEnvVia: false, useSavedDefault: false })).toBe('email');
+  });
 });
 
 describe('resolveConfig', () => {
