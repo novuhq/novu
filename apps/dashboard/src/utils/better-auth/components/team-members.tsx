@@ -1,7 +1,7 @@
 import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   RiAddCircleLine,
   RiArrowDownSLine,
@@ -19,12 +19,15 @@ import { Input } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useIsRbacEnabled } from '@/hooks/use-is-rbac-enabled';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 import { useAuth, useOrganization, useUser } from '../index';
 
 const MANAGEABLE_ROLES = [MemberRoleEnum.ADMIN, MemberRoleEnum.AUTHOR, MemberRoleEnum.VIEWER];
 const OWNER_MANAGEABLE_ROLES = [MemberRoleEnum.OWNER, ...MANAGEABLE_ROLES];
+/** Without RBAC the API grants every member full access, so these roles would change nothing. */
+const RBAC_ONLY_ROLES = [MemberRoleEnum.AUTHOR, MemberRoleEnum.VIEWER];
 
 function getInitials(name: string): string {
   return name
@@ -104,6 +107,7 @@ type OrganizationData = {
 type MemberPermissions = {
   canManageMembers: boolean;
   isCurrentUserOwner: boolean;
+  isRbacEnabled: boolean;
   ownerCount: number;
 };
 
@@ -111,6 +115,16 @@ type PendingConfirmation =
   | { type: 'remove-member'; member: Member }
   | { type: 'change-own-role'; member: Member; role: MemberRoleEnum }
   | { type: 'leave-organization' };
+
+function getAssignableRoles(permissions: Pick<MemberPermissions, 'isCurrentUserOwner' | 'isRbacEnabled'>) {
+  const roles = permissions.isCurrentUserOwner ? OWNER_MANAGEABLE_ROLES : MANAGEABLE_ROLES;
+
+  if (permissions.isRbacEnabled) {
+    return roles;
+  }
+
+  return roles.filter((role) => !RBAC_ONLY_ROLES.includes(role));
+}
 
 /**
  * Mirrors Better Auth's server-side rules: only owners can assign the Owner role or edit another
@@ -121,15 +135,22 @@ function getEditableRoleOptions(member: Member, permissions: MemberPermissions):
     return [];
   }
 
-  const isMemberOwner = member.role === MemberRoleEnum.OWNER;
+  const memberRole = member.role as MemberRoleEnum;
 
-  if (isMemberOwner && (!permissions.isCurrentUserOwner || permissions.ownerCount <= 1)) {
+  if (!OWNER_MANAGEABLE_ROLES.includes(memberRole)) {
     return [];
   }
 
-  const options = permissions.isCurrentUserOwner ? OWNER_MANAGEABLE_ROLES : MANAGEABLE_ROLES;
+  if (memberRole === MemberRoleEnum.OWNER && (!permissions.isCurrentUserOwner || permissions.ownerCount <= 1)) {
+    return [];
+  }
 
-  return options.includes(member.role as MemberRoleEnum) ? options : [];
+  const options = getAssignableRoles(permissions);
+
+  // Keep a role assigned while RBAC was on visible, so the member can still be promoted from it.
+  const editableOptions = options.includes(memberRole) ? options : [memberRole, ...options];
+
+  return editableOptions.length > 1 ? editableOptions : [];
 }
 
 function canRemoveMember(member: Member, currentUserId: string, permissions: MemberPermissions): boolean {
@@ -388,12 +409,14 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
   const { user } = useUser();
   const { has, refreshSession, refreshOrganization } = useAuth();
   const navigate = useNavigate();
+  const isRbacEnabled = useIsRbacEnabled();
   const canManageMembers = has({ permission: PermissionsEnum.ORG_SETTINGS_WRITE });
   const isCurrentUserOwner = has({ role: MemberRoleEnum.OWNER });
   const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviting, setIsInviting] = useState(false);
-  const [pendingMemberId, setPendingMemberId] = useState<string | null>(null);
+  const [pendingMemberIds, setPendingMemberIds] = useState<ReadonlySet<string>>(new Set());
+  const latestLoadIdRef = useRef(0);
   const [cancellingInvitationId, setCancellingInvitationId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation | null>(null);
@@ -401,11 +424,31 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
 
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState(MemberRoleEnum.VIEWER);
+  const inviteRoleOptions = getAssignableRoles({ isCurrentUserOwner, isRbacEnabled });
+  const selectedInviteRole = inviteRoleOptions.includes(inviteRole) ? inviteRole : MemberRoleEnum.ADMIN;
 
   const inviteEmailId = useId();
 
+  const setMemberPending = useCallback((memberId: string, isPending: boolean) => {
+    setPendingMemberIds((current) => {
+      const next = new Set(current);
+
+      if (isPending) {
+        next.add(memberId);
+      } else {
+        next.delete(memberId);
+      }
+
+      return next;
+    });
+  }, []);
+
   const loadOrganizationData = useCallback(async () => {
     if (!organization?.id) return;
+
+    // Concurrent mutations each trigger a reload; only the most recently started one may write state.
+    const loadId = ++latestLoadIdRef.current;
+    const isLatestLoad = () => loadId === latestLoadIdRef.current;
 
     try {
       setIsLoading(true);
@@ -419,12 +462,18 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
         throw new Error(error.message || 'Failed to load organization data');
       }
 
-      setOrganizationData(data);
+      if (isLatestLoad()) {
+        setOrganizationData(data);
+      }
     } catch (e) {
-      console.error('Failed to load organization:', e);
-      showErrorToast(getErrorMessage(e, 'Failed to load organization data'), 'Load Error');
+      if (isLatestLoad()) {
+        console.error('Failed to load organization:', e);
+        showErrorToast(getErrorMessage(e, 'Failed to load organization data'), 'Load Error');
+      }
     } finally {
-      setIsLoading(false);
+      if (isLatestLoad()) {
+        setIsLoading(false);
+      }
     }
   }, [organization?.id]);
 
@@ -441,7 +490,7 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
       const { data, error } = await authClient.organization.inviteMember({
         organizationId: organization.id,
         email: inviteEmail,
-        role: inviteRole,
+        role: selectedInviteRole,
       });
 
       if (error) {
@@ -465,10 +514,10 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
     }
   };
 
-  const updateMemberRole = async (member: Member, role: MemberRoleEnum) => {
-    if (!organization?.id) return;
+  const updateMemberRole = async (member: Member, role: MemberRoleEnum): Promise<boolean> => {
+    if (!organization?.id) return false;
 
-    setPendingMemberId(member.id);
+    setMemberPending(member.id, true);
     try {
       const { error } = await authClient.organization.updateMemberRole({
         organizationId: organization.id,
@@ -487,11 +536,15 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
       }
 
       await loadOrganizationData();
+
+      return true;
     } catch (e) {
       console.error('Failed to update member role:', e);
       showErrorToast(getErrorMessage(e, 'Failed to update member role'), 'Update Error');
+
+      return false;
     } finally {
-      setPendingMemberId(null);
+      setMemberPending(member.id, false);
     }
   };
 
@@ -507,10 +560,10 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
     void updateMemberRole(member, role);
   };
 
-  const removeMember = async (member: Member) => {
-    if (!organization?.id) return;
+  const removeMember = async (member: Member): Promise<boolean> => {
+    if (!organization?.id) return false;
 
-    setPendingMemberId(member.id);
+    setMemberPending(member.id, true);
     try {
       const { error } = await authClient.organization.removeMember({
         organizationId: organization.id,
@@ -523,16 +576,20 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
 
       showSuccessToast('Member removed successfully', 'Member Removed');
       await loadOrganizationData();
+
+      return true;
     } catch (e) {
       console.error('Failed to remove member:', e);
       showErrorToast(getErrorMessage(e, 'Failed to remove member'), 'Remove Error');
+
+      return false;
     } finally {
-      setPendingMemberId(null);
+      setMemberPending(member.id, false);
     }
   };
 
-  const leaveOrganization = async () => {
-    if (!organization?.id) return;
+  const leaveOrganization = async (): Promise<boolean> => {
+    if (!organization?.id) return false;
 
     try {
       const { error } = await authClient.organization.leave({
@@ -546,9 +603,29 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
       showSuccessToast(`You left ${organization.name}`, 'Left Organization');
       await refreshSession();
       void navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
+
+      return true;
     } catch (e) {
       console.error('Failed to leave organization:', e);
       showErrorToast(getErrorMessage(e, 'Failed to leave organization'), 'Leave Error');
+
+      return false;
+    }
+  };
+
+  const runConfirmedAction = (confirmation: PendingConfirmation): Promise<boolean> => {
+    switch (confirmation.type) {
+      case 'remove-member':
+        return removeMember(confirmation.member);
+      case 'change-own-role':
+        return updateMemberRole(confirmation.member, confirmation.role);
+      case 'leave-organization':
+        return leaveOrganization();
+      default: {
+        const exhaustiveCheck: never = confirmation;
+
+        return exhaustiveCheck;
+      }
     }
   };
 
@@ -557,25 +634,13 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
 
     setIsConfirming(true);
     try {
-      switch (pendingConfirmation.type) {
-        case 'remove-member':
-          await removeMember(pendingConfirmation.member);
-          break;
-        case 'change-own-role':
-          await updateMemberRole(pendingConfirmation.member, pendingConfirmation.role);
-          break;
-        case 'leave-organization':
-          await leaveOrganization();
-          break;
-        default: {
-          const exhaustiveCheck: never = pendingConfirmation;
+      const succeeded = await runConfirmedAction(pendingConfirmation);
 
-          return exhaustiveCheck;
-        }
+      if (succeeded) {
+        setPendingConfirmation(null);
       }
     } finally {
       setIsConfirming(false);
-      setPendingConfirmation(null);
     }
   };
 
@@ -616,10 +681,10 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
   const permissions: MemberPermissions = {
     canManageMembers,
     isCurrentUserOwner,
+    isRbacEnabled,
     ownerCount: members.filter((member) => member.role === MemberRoleEnum.OWNER).length,
   };
   const isCurrentUserSoleOwner = isCurrentUserOwner && permissions.ownerCount <= 1;
-  const inviteRoleOptions = isCurrentUserOwner ? OWNER_MANAGEABLE_ROLES : MANAGEABLE_ROLES;
   const confirmationContent = pendingConfirmation ? getConfirmationContent(pendingConfirmation) : null;
 
   return (
@@ -629,6 +694,12 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
           Members <span className="text-foreground-600">({members.length})</span>
         </h2>
         <p className="mt-1 text-sm text-foreground-600">Manage who has access to this organization</p>
+        {canManageMembers && !isRbacEnabled && (
+          <p className="mt-1 text-xs text-foreground-600">
+            Role-based access control is off, so every member has full access. Author and Viewer roles become available
+            when it is enabled.
+          </p>
+        )}
       </div>
 
       {canManageMembers && (
@@ -657,7 +728,7 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
               </div>
               <div className="w-32">
                 <Select
-                  value={inviteRole}
+                  value={selectedInviteRole}
                   onValueChange={(value) => setInviteRole(value as MemberRoleEnum)}
                   disabled={isInviting}
                 >
@@ -750,7 +821,7 @@ export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
                 member={member}
                 currentUserId={currentUserId}
                 permissions={permissions}
-                isPending={pendingMemberId === member.id}
+                isPending={pendingMemberIds.has(member.id)}
                 onRoleChange={handleRoleChange}
                 onRemove={(memberToRemove) => setPendingConfirmation({ type: 'remove-member', member: memberToRemove })}
               />
