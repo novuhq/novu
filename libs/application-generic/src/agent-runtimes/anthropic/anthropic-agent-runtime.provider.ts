@@ -1,3 +1,8 @@
+/**
+ * biome-ignore-all lint/suspicious/noExplicitAny: Managed Agents beta payloads are accessed untyped until the SDK types are adopted (NV-8923)
+ * biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: needs to be fixed
+ * biome-ignore-all lint/style/noNonNullAssertion: needs to be fixed
+ */
 import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
 import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
