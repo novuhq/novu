@@ -1,22 +1,33 @@
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   RiAddCircleLine,
   RiArrowDownSLine,
-  RiCheckLine,
   RiCloseLine,
   RiDeleteBinLine,
   RiLoader4Line,
+  RiLogoutBoxRLine,
   RiUserAddLine,
 } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Avatar, AvatarFallback } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useIsRbacEnabled } from '@/hooks/use-is-rbac-enabled';
+import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 import { useAuth, useOrganization, useUser } from '../index';
+
+const MANAGEABLE_ROLES = [MemberRoleEnum.ADMIN, MemberRoleEnum.AUTHOR, MemberRoleEnum.VIEWER];
+const OWNER_MANAGEABLE_ROLES = [MemberRoleEnum.OWNER, ...MANAGEABLE_ROLES];
+/** Without RBAC the API grants every member full access, so these roles would change nothing. */
+const RBAC_ONLY_ROLES = [MemberRoleEnum.AUTHOR, MemberRoleEnum.VIEWER];
 
 function getInitials(name: string): string {
   return name
@@ -26,6 +37,41 @@ function getInitials(name: string): string {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+}
+
+function getRoleLabel(role: string): string {
+  switch (role) {
+    case MemberRoleEnum.OWNER:
+      return 'Owner';
+    case MemberRoleEnum.ADMIN:
+      return 'Admin';
+    case MemberRoleEnum.AUTHOR:
+      return 'Author';
+    case MemberRoleEnum.VIEWER:
+      return 'Viewer';
+    default: {
+      const name = role.replace('org:', '');
+
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+  }
+}
+
+function getRoleBadgeStyle(role: string): string {
+  switch (role) {
+    case MemberRoleEnum.OWNER:
+      return 'bg-primary-100 text-primary-700';
+    case MemberRoleEnum.ADMIN:
+      return 'bg-blue-100 text-blue-700';
+    case MemberRoleEnum.AUTHOR:
+      return 'bg-purple-100 text-purple-700';
+    default:
+      return 'bg-neutral-100 text-foreground-700';
+  }
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
 }
 
 type Member = {
@@ -58,51 +104,173 @@ type OrganizationData = {
   invitations?: Invitation[];
 };
 
+type MemberPermissions = {
+  canManageMembers: boolean;
+  isCurrentUserOwner: boolean;
+  isRbacEnabled: boolean;
+  ownerCount: number;
+};
+
+type PendingConfirmation =
+  | { type: 'remove-member'; member: Member }
+  | { type: 'change-own-role'; member: Member; role: MemberRoleEnum }
+  | { type: 'leave-organization' };
+
+function getAssignableRoles(permissions: Pick<MemberPermissions, 'isCurrentUserOwner' | 'isRbacEnabled'>) {
+  const roles = permissions.isCurrentUserOwner ? OWNER_MANAGEABLE_ROLES : MANAGEABLE_ROLES;
+
+  if (permissions.isRbacEnabled) {
+    return roles;
+  }
+
+  return roles.filter((role) => !RBAC_ONLY_ROLES.includes(role));
+}
+
+/**
+ * Mirrors Better Auth's server-side rules: only owners can assign the Owner role or edit another
+ * owner, and the last owner cannot step down.
+ */
+function getEditableRoleOptions(member: Member, permissions: MemberPermissions): MemberRoleEnum[] {
+  if (!permissions.canManageMembers) {
+    return [];
+  }
+
+  const memberRole = member.role as MemberRoleEnum;
+
+  if (!OWNER_MANAGEABLE_ROLES.includes(memberRole)) {
+    return [];
+  }
+
+  if (memberRole === MemberRoleEnum.OWNER && (!permissions.isCurrentUserOwner || permissions.ownerCount <= 1)) {
+    return [];
+  }
+
+  const options = getAssignableRoles(permissions);
+
+  // Keep a role assigned while RBAC was on visible, so the member can still be promoted from it.
+  const editableOptions = options.includes(memberRole) ? options : [memberRole, ...options];
+
+  return editableOptions.length > 1 ? editableOptions : [];
+}
+
+function canRemoveMember(member: Member, currentUserId: string, permissions: MemberPermissions): boolean {
+  if (!permissions.canManageMembers || member.userId === currentUserId) {
+    return false;
+  }
+
+  if (member.role === MemberRoleEnum.OWNER) {
+    return permissions.isCurrentUserOwner && permissions.ownerCount > 1;
+  }
+
+  return true;
+}
+
+function getConfirmationContent(confirmation: PendingConfirmation) {
+  switch (confirmation.type) {
+    case 'remove-member':
+      return {
+        title: 'Remove member',
+        description: `${confirmation.member.user.name || confirmation.member.user.email} will lose access to this organization.`,
+        confirmButtonText: 'Remove member',
+      };
+    case 'change-own-role':
+      return {
+        title: 'Change your role',
+        description: `You are about to change your own role to ${getRoleLabel(confirmation.role)}. You may lose access to some settings, including this page.`,
+        confirmButtonText: 'Change role',
+      };
+    case 'leave-organization':
+      return {
+        title: 'Leave organization',
+        description: 'You will lose access to this organization. You will need a new invitation to rejoin.',
+        confirmButtonText: 'Leave organization',
+      };
+    default: {
+      const exhaustiveCheck: never = confirmation;
+
+      return exhaustiveCheck;
+    }
+  }
+}
+
+function RoleBadge({ role }: { role: string }) {
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRoleBadgeStyle(role)}`}>
+      {getRoleLabel(role)}
+    </span>
+  );
+}
+
+function MemberRoleControl({
+  member,
+  roleOptions,
+  isSoleOwner,
+  isPending,
+  onRoleChange,
+}: {
+  member: Member;
+  roleOptions: MemberRoleEnum[];
+  isSoleOwner: boolean;
+  isPending: boolean;
+  onRoleChange: (member: Member, role: MemberRoleEnum) => void;
+}) {
+  if (roleOptions.length > 0) {
+    return (
+      <div className="w-28">
+        <Select
+          value={member.role}
+          onValueChange={(value) => onRoleChange(member, value as MemberRoleEnum)}
+          disabled={isPending}
+        >
+          <SelectTrigger className="h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {roleOptions.map((role) => (
+              <SelectItem key={role} value={role}>
+                {getRoleLabel(role)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  if (isSoleOwner) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>
+            <RoleBadge role={member.role} />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>Promote another member to Owner before changing your role.</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return <RoleBadge role={member.role} />;
+}
+
 function MemberListItem({
   member,
   currentUserId,
+  permissions,
+  isPending,
+  onRoleChange,
   onRemove,
-  isRemoving,
-  canManageMembers,
 }: {
   member: Member;
   currentUserId: string;
-  onRemove: (memberId: string) => void;
-  isRemoving: boolean;
-  canManageMembers: boolean;
+  permissions: MemberPermissions;
+  isPending: boolean;
+  onRoleChange: (member: Member, role: MemberRoleEnum) => void;
+  onRemove: (member: Member) => void;
 }) {
   const isCurrentUser = member.userId === currentUserId;
-  const isOwner = member.role === MemberRoleEnum.OWNER;
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case MemberRoleEnum.OWNER:
-        return 'Owner';
-      case MemberRoleEnum.ADMIN:
-        return 'Admin';
-      case MemberRoleEnum.AUTHOR:
-        return 'Author';
-      case MemberRoleEnum.VIEWER:
-        return 'Viewer';
-      default:
-        return role.replace('org:', '').charAt(0).toUpperCase() + role.replace('org:', '').slice(1);
-    }
-  };
-
-  const getRoleBadgeStyle = (role: string) => {
-    switch (role) {
-      case MemberRoleEnum.OWNER:
-        return 'bg-primary-100 text-primary-700';
-      case MemberRoleEnum.ADMIN:
-        return 'bg-blue-100 text-blue-700';
-      case MemberRoleEnum.AUTHOR:
-        return 'bg-purple-100 text-purple-700';
-      case MemberRoleEnum.VIEWER:
-        return 'bg-neutral-100 text-foreground-700';
-      default:
-        return 'bg-neutral-100 text-foreground-700';
-    }
-  };
+  const roleOptions = getEditableRoleOptions(member, permissions);
+  const isSoleOwner = isCurrentUser && member.role === MemberRoleEnum.OWNER && permissions.ownerCount <= 1;
 
   return (
     <motion.div
@@ -131,23 +299,24 @@ function MemberListItem({
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRoleBadgeStyle(member.role)}`}>
-          {getRoleLabel(member.role)}
-        </span>
-        {!isOwner && canManageMembers && (
+        {isPending && <RiLoader4Line className="size-4 animate-spin text-foreground-600" />}
+        <MemberRoleControl
+          member={member}
+          roleOptions={roleOptions}
+          isSoleOwner={isSoleOwner}
+          isPending={isPending}
+          onRoleChange={onRoleChange}
+        />
+        {canRemoveMember(member, currentUserId, permissions) && (
           <Button
             variant="secondary"
             mode="ghost"
             size="sm"
-            onClick={() => onRemove(member.id)}
-            disabled={isCurrentUser || isRemoving}
+            onClick={() => onRemove(member)}
+            disabled={isPending}
             className="h-8 w-8 p-0"
           >
-            {isRemoving ? (
-              <RiLoader4Line className="size-4 animate-spin" />
-            ) : (
-              <RiDeleteBinLine className="size-4 text-destructive" />
-            )}
+            <RiDeleteBinLine className="size-4 text-destructive" />
           </Button>
         )}
       </div>
@@ -166,20 +335,6 @@ function InvitationListItem({
   isCancelling: boolean;
   canManageMembers: boolean;
 }) {
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case MemberRoleEnum.OWNER:
-        return 'Owner';
-      case MemberRoleEnum.ADMIN:
-        return 'Admin';
-      case MemberRoleEnum.AUTHOR:
-        return 'Author';
-      case MemberRoleEnum.VIEWER:
-        return 'Viewer';
-      default:
-        return role.replace('org:', '').charAt(0).toUpperCase() + role.replace('org:', '').slice(1);
-    }
-  };
   return (
     <motion.div
       initial={{ opacity: 0, y: -4 }}
@@ -224,25 +379,76 @@ function InvitationListItem({
   );
 }
 
-export function TeamMembers({ appearance }: { appearance?: any }) {
+function LeaveOrganizationSection({ isSoleOwner, onLeave }: { isSoleOwner: boolean; onLeave: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-white p-4">
+      <div className="flex flex-col">
+        <h3 className="text-sm font-medium text-foreground-950">Leave organization</h3>
+        <p className="mt-1 text-xs text-foreground-600">
+          {isSoleOwner
+            ? 'You are the only owner. Make another member an Owner first.'
+            : 'Remove yourself from this organization.'}
+        </p>
+      </div>
+      <Button
+        variant="error"
+        mode="outline"
+        size="sm"
+        leadingIcon={RiLogoutBoxRLine}
+        onClick={onLeave}
+        disabled={isSoleOwner}
+      >
+        Leave
+      </Button>
+    </div>
+  );
+}
+
+export function TeamMembers(_props: { appearance?: ClerkAppearanceTheme }) {
   const { organization } = useOrganization();
   const { user } = useUser();
-  const { has } = useAuth();
+  const { has, refreshSession, refreshOrganization } = useAuth();
+  const navigate = useNavigate();
+  const isRbacEnabled = useIsRbacEnabled();
   const canManageMembers = has({ permission: PermissionsEnum.ORG_SETTINGS_WRITE });
+  const isCurrentUserOwner = has({ role: MemberRoleEnum.OWNER });
   const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviting, setIsInviting] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [pendingMemberIds, setPendingMemberIds] = useState<ReadonlySet<string>>(new Set());
+  const latestLoadIdRef = useRef(0);
+  const [cancellingInvitationId, setCancellingInvitationId] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation | null>(null);
   const [showPendingInvites, setShowPendingInvites] = useState(false);
 
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState(MemberRoleEnum.VIEWER);
+  const inviteRoleOptions = getAssignableRoles({ isCurrentUserOwner, isRbacEnabled });
+  const selectedInviteRole = inviteRoleOptions.includes(inviteRole) ? inviteRole : MemberRoleEnum.ADMIN;
 
   const inviteEmailId = useId();
 
+  const setMemberPending = useCallback((memberId: string, isPending: boolean) => {
+    setPendingMemberIds((current) => {
+      const next = new Set(current);
+
+      if (isPending) {
+        next.add(memberId);
+      } else {
+        next.delete(memberId);
+      }
+
+      return next;
+    });
+  }, []);
+
   const loadOrganizationData = useCallback(async () => {
     if (!organization?.id) return;
+
+    // Concurrent mutations each trigger a reload; only the most recently started one may write state.
+    const loadId = ++latestLoadIdRef.current;
+    const isLatestLoad = () => loadId === latestLoadIdRef.current;
 
     try {
       setIsLoading(true);
@@ -256,17 +462,23 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
         throw new Error(error.message || 'Failed to load organization data');
       }
 
-      setOrganizationData(data as any);
-    } catch (e: any) {
-      console.error('Failed to load organization:', e);
-      showErrorToast(e.message || 'Failed to load organization data', 'Load Error');
+      if (isLatestLoad()) {
+        setOrganizationData(data);
+      }
+    } catch (e) {
+      if (isLatestLoad()) {
+        console.error('Failed to load organization:', e);
+        showErrorToast(getErrorMessage(e, 'Failed to load organization data'), 'Load Error');
+      }
     } finally {
-      setIsLoading(false);
+      if (isLatestLoad()) {
+        setIsLoading(false);
+      }
     }
   }, [organization?.id]);
 
   useEffect(() => {
-    loadOrganizationData();
+    void loadOrganizationData();
   }, [loadOrganizationData]);
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -278,7 +490,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
       const { data, error } = await authClient.organization.inviteMember({
         organizationId: organization.id,
         email: inviteEmail,
-        role: inviteRole as any,
+        role: selectedInviteRole,
       });
 
       if (error) {
@@ -294,25 +506,68 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
       setInviteEmail('');
       setInviteRole(MemberRoleEnum.VIEWER);
       await loadOrganizationData();
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to invite member:', e);
-      showErrorToast(e.message || 'Failed to send invitation', 'Invitation Error');
+      showErrorToast(getErrorMessage(e, 'Failed to send invitation'), 'Invitation Error');
     } finally {
       setIsInviting(false);
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!organization?.id) return;
+  const updateMemberRole = async (member: Member, role: MemberRoleEnum): Promise<boolean> => {
+    if (!organization?.id) return false;
 
-    const confirmed = window.confirm('Are you sure you want to remove this member from the organization?');
-    if (!confirmed) return;
+    setMemberPending(member.id, true);
+    try {
+      const { error } = await authClient.organization.updateMemberRole({
+        organizationId: organization.id,
+        memberId: member.id,
+        role,
+      });
 
-    setIsRemoving(true);
+      if (error) {
+        throw new Error(error.message || 'Failed to update member role');
+      }
+
+      showSuccessToast(`Role changed to ${getRoleLabel(role)}`, 'Role Updated');
+
+      if (member.userId === user?.id) {
+        await refreshOrganization();
+      }
+
+      await loadOrganizationData();
+
+      return true;
+    } catch (e) {
+      console.error('Failed to update member role:', e);
+      showErrorToast(getErrorMessage(e, 'Failed to update member role'), 'Update Error');
+
+      return false;
+    } finally {
+      setMemberPending(member.id, false);
+    }
+  };
+
+  const handleRoleChange = (member: Member, role: MemberRoleEnum) => {
+    if (role === member.role) return;
+
+    if (member.userId === user?.id) {
+      setPendingConfirmation({ type: 'change-own-role', member, role });
+
+      return;
+    }
+
+    void updateMemberRole(member, role);
+  };
+
+  const removeMember = async (member: Member): Promise<boolean> => {
+    if (!organization?.id) return false;
+
+    setMemberPending(member.id, true);
     try {
       const { error } = await authClient.organization.removeMember({
         organizationId: organization.id,
-        memberIdOrEmail: memberId,
+        memberIdOrEmail: member.id,
       });
 
       if (error) {
@@ -321,18 +576,78 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
 
       showSuccessToast('Member removed successfully', 'Member Removed');
       await loadOrganizationData();
-    } catch (e: any) {
+
+      return true;
+    } catch (e) {
       console.error('Failed to remove member:', e);
-      showErrorToast(e.message || 'Failed to remove member', 'Remove Error');
+      showErrorToast(getErrorMessage(e, 'Failed to remove member'), 'Remove Error');
+
+      return false;
     } finally {
-      setIsRemoving(false);
+      setMemberPending(member.id, false);
+    }
+  };
+
+  const leaveOrganization = async (): Promise<boolean> => {
+    if (!organization?.id) return false;
+
+    try {
+      const { error } = await authClient.organization.leave({
+        organizationId: organization.id,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to leave organization');
+      }
+
+      showSuccessToast(`You left ${organization.name}`, 'Left Organization');
+      await refreshSession();
+      void navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
+
+      return true;
+    } catch (e) {
+      console.error('Failed to leave organization:', e);
+      showErrorToast(getErrorMessage(e, 'Failed to leave organization'), 'Leave Error');
+
+      return false;
+    }
+  };
+
+  const runConfirmedAction = (confirmation: PendingConfirmation): Promise<boolean> => {
+    switch (confirmation.type) {
+      case 'remove-member':
+        return removeMember(confirmation.member);
+      case 'change-own-role':
+        return updateMemberRole(confirmation.member, confirmation.role);
+      case 'leave-organization':
+        return leaveOrganization();
+      default: {
+        const exhaustiveCheck: never = confirmation;
+
+        return exhaustiveCheck;
+      }
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!pendingConfirmation) return;
+
+    setIsConfirming(true);
+    try {
+      const succeeded = await runConfirmedAction(pendingConfirmation);
+
+      if (succeeded) {
+        setPendingConfirmation(null);
+      }
+    } finally {
+      setIsConfirming(false);
     }
   };
 
   const handleCancelInvitation = async (invitationId: string) => {
     if (!organization?.id) return;
 
-    setIsCancelling(true);
+    setCancellingInvitationId(invitationId);
     try {
       const { error } = await authClient.organization.cancelInvitation({
         invitationId,
@@ -344,15 +659,15 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
 
       showSuccessToast('Invitation cancelled', 'Invitation Cancelled');
       await loadOrganizationData();
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to cancel invitation:', e);
-      showErrorToast(e.message || 'Failed to cancel invitation', 'Cancel Error');
+      showErrorToast(getErrorMessage(e, 'Failed to cancel invitation'), 'Cancel Error');
     } finally {
-      setIsCancelling(false);
+      setCancellingInvitationId(null);
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !organizationData) {
     return (
       <div className="flex items-center justify-center py-12">
         <RiLoader4Line className="size-6 animate-spin text-foreground-600" />
@@ -362,6 +677,15 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
 
   const members = organizationData?.members || [];
   const pendingInvitations = organizationData?.invitations?.filter((inv) => inv.status === 'pending') || [];
+  const currentUserId = user?.id || '';
+  const permissions: MemberPermissions = {
+    canManageMembers,
+    isCurrentUserOwner,
+    isRbacEnabled,
+    ownerCount: members.filter((member) => member.role === MemberRoleEnum.OWNER).length,
+  };
+  const isCurrentUserSoleOwner = isCurrentUserOwner && permissions.ownerCount <= 1;
+  const confirmationContent = pendingConfirmation ? getConfirmationContent(pendingConfirmation) : null;
 
   return (
     <div className="space-y-6">
@@ -370,6 +694,12 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
           Members <span className="text-foreground-600">({members.length})</span>
         </h2>
         <p className="mt-1 text-sm text-foreground-600">Manage who has access to this organization</p>
+        {canManageMembers && !isRbacEnabled && (
+          <p className="mt-1 text-xs text-foreground-600">
+            Role-based access control is off, so every member has full access. Author and Viewer roles become available
+            when it is enabled.
+          </p>
+        )}
       </div>
 
       {canManageMembers && (
@@ -398,7 +728,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
               </div>
               <div className="w-32">
                 <Select
-                  value={inviteRole}
+                  value={selectedInviteRole}
                   onValueChange={(value) => setInviteRole(value as MemberRoleEnum)}
                   disabled={isInviting}
                 >
@@ -406,9 +736,11 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={MemberRoleEnum.VIEWER}>Viewer</SelectItem>
-                    <SelectItem value={MemberRoleEnum.AUTHOR}>Author</SelectItem>
-                    <SelectItem value={MemberRoleEnum.ADMIN}>Admin</SelectItem>
+                    {inviteRoleOptions.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {getRoleLabel(role)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -468,7 +800,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
                         key={invitation.id}
                         invitation={invitation}
                         onCancel={handleCancelInvitation}
-                        isCancelling={isCancelling}
+                        isCancelling={cancellingInvitationId === invitation.id}
                         canManageMembers={canManageMembers}
                       />
                     ))}
@@ -487,10 +819,11 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
               <MemberListItem
                 key={member.id}
                 member={member}
-                currentUserId={user?.id || ''}
-                onRemove={handleRemoveMember}
-                isRemoving={isRemoving}
-                canManageMembers={canManageMembers}
+                currentUserId={currentUserId}
+                permissions={permissions}
+                isPending={pendingMemberIds.has(member.id)}
+                onRoleChange={handleRoleChange}
+                onRemove={(memberToRemove) => setPendingConfirmation({ type: 'remove-member', member: memberToRemove })}
               />
             ))}
           </AnimatePresence>
@@ -502,6 +835,30 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
           )}
         </div>
       </div>
+
+      {members.length > 0 && (
+        <LeaveOrganizationSection
+          isSoleOwner={isCurrentUserSoleOwner}
+          onLeave={() => setPendingConfirmation({ type: 'leave-organization' })}
+        />
+      )}
+
+      {confirmationContent && (
+        <ConfirmationModal
+          open
+          onOpenChange={(open) => {
+            if (!open && !isConfirming) {
+              setPendingConfirmation(null);
+            }
+          }}
+          onConfirm={handleConfirm}
+          title={confirmationContent.title}
+          description={confirmationContent.description}
+          confirmButtonText={confirmationContent.confirmButtonText}
+          confirmButtonVariant="error"
+          isLoading={isConfirming}
+        />
+      )}
     </div>
   );
 }
