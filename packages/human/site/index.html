@@ -44,17 +44,16 @@ HOW IT WORKS
     app install. Run it again with another channel to add more. Linked
     channels live on the server; `human channels --default slack` sets
     the local preference when you don't pass `--via`.
-  - Telegram is a private bot only you control. `setup telegram` prints one
-    QR / link to https://www.gethuman.md/connect — that page walks you
-    through @BotFather and takes the bot's reply; the token never touches
-    the terminal. The CLI waits (up to 15 min) and finishes when you tap
-    Start. Re-run `human setup telegram` to resume at the missing step.
-    Automation can pass --telegram-bot-token to skip the page.
-  - Slack is the same shape. `setup slack` prints one QR / link to
-    https://www.gethuman.md/connect?channel=slack — paste an App Configuration
-    Token (xoxe.xoxp-…) and click Add to Slack. The token never touches
-    the terminal. --slack-config-token skips the page. Exit 11 means the
-    human didn't finish; re-run the same command.
+  - Telegram is a private bot only you control. On a terminal, `setup
+    telegram` asks whether to paste the BotFather token here or finish on
+    https://www.gethuman.md/connect (QR or browser). Without a terminal it
+    prints that page and waits (up to 15 min) until you tap Start. Re-run
+    `human setup telegram` to resume at the missing step.
+    --telegram-bot-token skips the choice.
+  - Slack is the same shape: paste an App Configuration Token (xoxe.xoxp-…)
+    in the terminal, or open https://www.gethuman.md/connect?channel=slack
+    and click Add to Slack. --slack-config-token skips the choice. Exit 11
+    means the human didn't finish; re-run the same command.
   - Agents stay channel-blind: routing is the human's preference.
     `--via telegram|slack|email` exists as a rare per-call override.
   - Each command delivers a one-off message (with action buttons where
