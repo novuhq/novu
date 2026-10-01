@@ -42,7 +42,7 @@
     "@types/newrelic": "^9.14.8",
     "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
-    "axios": "^1.18.1",
+    "axios": "^1.20.0",
     "body-parser": "^2.2.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",

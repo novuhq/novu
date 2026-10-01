@@ -35,7 +35,7 @@
     "@sentry/nestjs": "^10.63.0",
     "@sentry/node": "^10.63.0",
     "@sentry/profiling-node": "^10.63.0",
-    "axios": "^1.18.1",
+    "axios": "^1.20.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "dotenv": "^16.4.5",
