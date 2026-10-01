@@ -64,7 +64,7 @@ declare global {
   }
 }
 
-let initPromise: Promise<void> | undefined;
+let initPromise: Promise<MintlifyAssistantApi> | undefined;
 
 function waitForMintlifyAssistant(timeoutMs = 10_000): Promise<MintlifyAssistantApi> {
   if (window.MintlifyAssistant) {
@@ -94,9 +94,9 @@ function removeEmbedScript(): void {
   document.getElementById(MINTLIFY_SCRIPT_ID)?.remove();
 }
 
-async function loadEmbedScript(): Promise<void> {
+async function loadEmbedScript(): Promise<MintlifyAssistantApi> {
   if (window.MintlifyAssistant) {
-    return;
+    return window.MintlifyAssistant;
   }
 
   // A previous attempt may have left a script that loaded without registering
@@ -121,7 +121,7 @@ async function loadEmbedScript(): Promise<void> {
   });
 
   try {
-    await waitForMintlifyAssistant();
+    return await waitForMintlifyAssistant();
   } catch (error) {
     removeEmbedScript();
     throw error;
@@ -169,8 +169,7 @@ async function ensureInitialized(): Promise<MintlifyAssistantApi> {
 
   if (!initPromise) {
     initPromise = (async () => {
-      await loadEmbedScript();
-      const api = window.MintlifyAssistant!;
+      const api = await loadEmbedScript();
 
       await api.init({
         id: MINTLIFY_WIDGET_ID,
@@ -201,15 +200,15 @@ async function ensureInitialized(): Promise<MintlifyAssistantApi> {
       });
 
       setAssistantVisible(false);
+
+      return api;
     })().catch((error) => {
       initPromise = undefined;
       throw error;
     });
   }
 
-  await initPromise;
-
-  return window.MintlifyAssistant!;
+  return initPromise;
 }
 
 export type OpenMintlifyAssistantOptions = {
