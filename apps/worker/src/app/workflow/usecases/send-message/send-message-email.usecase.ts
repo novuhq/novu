@@ -177,7 +177,12 @@ export class SendMessageEmail extends SendMessageBase {
       step.template = template;
     }
 
-    const overrides = this.buildEmailProviderOverrides(command, integration?.providerId, command.step?.stepId);
+    const overrides = this.buildEmailProviderOverrides(
+      command,
+      integration?.providerId,
+      command.step?.stepId,
+      integration?.identifier
+    );
 
     let html = '';
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
@@ -628,7 +633,8 @@ export class SendMessageEmail extends SendMessageBase {
           command.bridgeData,
           command.overrides,
           command.step.stepId,
-          integration.providerId
+          integration.providerId,
+          integration.identifier
         ),
       });
 
@@ -803,19 +809,22 @@ export class SendMessageEmail extends SendMessageBase {
   /**
    * Builds the merged provider overrides object for email sending.
    *
-   * Provider-specific fields (cc/bcc/from/replyTo/etc.) can arrive in three shapes:
-   *   1. Deprecated channel bucket:     `overrides.email`
-   *   2. Deprecated flat provider key:  `overrides.<providerId>`
-   *   3. Modern nested providers shape: `overrides.providers.<providerId>`
-   *                                     `overrides.steps.<stepId>.providers.<providerId>`
+   * Provider-specific fields (cc/bcc/from/replyTo/etc.) can arrive in four shapes:
+   *   1. Deprecated channel bucket:       `overrides.email`
+   *   2. Deprecated flat provider key:    `overrides.<providerId>`
+   *   3. Modern nested providers shape:   `overrides.providers.<providerId>`
+   *                                       `overrides.steps.<stepId>.providers.<providerId>`
+   *   4. Integration identifier shape:    `overrides.integrations.<identifier>`
+   *                                       `overrides.steps.<stepId>.integrations.<identifier>`
    *
-   * All three are merged (step-level wins) so values like `cc` reach `createMailData`
-   * and downstream providers (e.g. SendGrid `personalizations[0].cc`).
+   * All four are merged in that order (later wins, step-level wins within a shape) so values like
+   * `cc` reach `createMailData` and downstream providers (e.g. SendGrid `personalizations[0].cc`).
    */
   private buildEmailProviderOverrides(
     command: SendMessageChannelCommand,
     providerId: string | undefined,
-    stepId: string | undefined
+    stepId: string | undefined,
+    integrationIdentifier: string | undefined
   ): EmailMessageOverrides {
     const deprecatedFlatEmailOverride = command.overrides?.email || {};
     const deprecatedFlatProviderOverride = providerId
@@ -824,12 +833,21 @@ export class SendMessageEmail extends SendMessageBase {
     const providerOverride = providerId ? command.overrides?.providers?.[providerId] || {} : {};
     const stepProviderOverride =
       providerId && stepId ? command.overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+    const integrationOverride = integrationIdentifier
+      ? command.overrides?.integrations?.[integrationIdentifier] || {}
+      : {};
+    const stepIntegrationOverride =
+      integrationIdentifier && stepId
+        ? command.overrides?.steps?.[stepId]?.integrations?.[integrationIdentifier] || {}
+        : {};
 
     return {
       ...deprecatedFlatEmailOverride,
       ...deprecatedFlatProviderOverride,
       ...providerOverride,
       ...stepProviderOverride,
+      ...integrationOverride,
+      ...stepIntegrationOverride,
     };
   }
 

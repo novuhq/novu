@@ -375,4 +375,36 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
       });
     }
   });
+
+  it('applies an integration-identifier override only to the targeted integration of a shared provider', async () => {
+    const { usecase } = buildUsecase({
+      integration: [
+        buildWebhookIntegration('static', 'webhook-ops'),
+        buildWebhookIntegration('static', 'webhook-billing'),
+      ],
+    });
+    const sendsByIdentifier: Record<string, Record<string, unknown>> = {};
+    sinon.stub(ToolFactory.prototype, 'getHandler').callsFake((integration) => {
+      const { identifier } = integration as typeof integration & { identifier: string };
+
+      return {
+        send: async (args: Record<string, unknown>) => {
+          sendsByIdentifier[identifier] = args;
+
+          return { status: 200 };
+        },
+      } as never;
+    });
+    const command = buildCommand();
+    command.overrides = {
+      providers: { [ToolProviderIdEnum.Webhook]: { priority: 'low' } },
+      integrations: { 'webhook-ops': { priority: 'high' } },
+    } as never;
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(sendsByIdentifier['webhook-ops'].bridgeProviderData).to.deep.equal({ priority: 'high' });
+    expect(sendsByIdentifier['webhook-billing'].bridgeProviderData).to.deep.equal({ priority: 'low' });
+  });
 });

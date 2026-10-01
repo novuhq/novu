@@ -201,12 +201,32 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     return post;
   }
 
-  function buildUsecase() {
+  function buildUsecase(
+    options: {
+      integrations?: Array<typeof slackIntegration>;
+      endpointGroups?: Array<{ integrationIdentifier: string; providerId: string; channelData: unknown[] }>;
+    } = {}
+  ) {
+    const {
+      integrations = [slackIntegration],
+      endpointGroups = [
+        {
+          integrationIdentifier: 'slack-main',
+          providerId: ChatProviderIdEnum.Slack,
+          channelData: [slackChannelData],
+        },
+      ],
+    } = options;
+
     const usecase = new SendMessageChat(
       {} as never, // subscriberRepository
       { create: sinon.stub().resolves({ _id: 'message_1' }) } as never,
       {} as never, // compileTemplate
-      { execute: sinon.stub().resolves({ integration: slackIntegration }) } as never,
+      {
+        execute: sinon.stub().callsFake(async ({ identifier }: { identifier?: string }) => ({
+          integration: integrations.find((integration) => integration.identifier === identifier),
+        })),
+      } as never,
       {} as never, // getNovuProviderCredentials
       { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
       { execute: sinon.stub().resolves(undefined) } as never,
@@ -216,15 +236,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
         }),
       } as never,
       { execute: sinon.stub().resolves(undefined) } as never,
-      {
-        execute: sinon.stub().resolves([
-          {
-            integrationIdentifier: 'slack-main',
-            providerId: ChatProviderIdEnum.Slack,
-            channelData: [slackChannelData],
-          },
-        ]),
-      } as never,
+      { execute: sinon.stub().resolves(endpointGroups) } as never,
       {} as never, // agentRepository
       {} as never, // agentIntegrationRepository
       { getFlag: sinon.stub().resolves(false) } as never // featureFlagsService
@@ -333,6 +345,40 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     expect(post.firstCall.args[1].text).to.equal('compiled step body');
+  });
+
+  it('applies an integration-identifier override only to the targeted Slack integration', async () => {
+    const post = stubSlackTransport();
+    const usecase = buildUsecase({
+      integrations: [
+        { ...slackIntegration, _id: 'integration_eng', identifier: 'slack-eng' },
+        { ...slackIntegration, _id: 'integration_sales', identifier: 'slack-sales' },
+      ],
+      endpointGroups: [
+        {
+          integrationIdentifier: 'slack-eng',
+          providerId: ChatProviderIdEnum.Slack,
+          channelData: [{ ...slackChannelData, endpoint: { channelId: 'C_ENG' } }],
+        },
+        {
+          integrationIdentifier: 'slack-sales',
+          providerId: ChatProviderIdEnum.Slack,
+          channelData: [{ ...slackChannelData, endpoint: { channelId: 'C_SALES' } }],
+        },
+      ],
+    });
+
+    const result = await usecase.execute(
+      buildCommand({
+        providerOverrides: { text: 'shared text' },
+        overrides: { integrations: { 'slack-eng': { text: 'eng text' } } },
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledTwice(post);
+    const textByChannel = Object.fromEntries(post.getCalls().map((call) => [call.args[1].channel, call.args[1].text]));
+    expect(textByChannel).to.deep.equal({ C_ENG: 'eng text', C_SALES: 'shared text' });
   });
 
   function stubSlackHandlerWithCardResolve(nativePayload: Record<string, unknown>) {
