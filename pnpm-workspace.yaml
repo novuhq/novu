@@ -94,7 +94,13 @@ overrides:
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
   basic-ftp@<5.3.1: ^5.3.1
-  axios@>=1.0.0 <1.18.0: ^1.18.1
+  # GHSA-c29m-xwm3-cm6r / GHSA-mghh-pgcx-3jjj / GHSA-x97p-jq2g-jp4f /
+  # GHSA-3pq3-5fj3-cg6v / GHSA-542g-h47m-68v8 / GHSA-m8m8-qj5v-23w3 /
+  # GHSA-r4gj-5m52-g5wh (high) and GHSA-vh66-26gq-q6x8 / GHSA-9fr6-4gfg-395g
+  # / GHSA-j8rh-479h-cp32 / GHSA-4hqw-qxg8-jxx2 / GHSA-44g4-m2mj-wpvx
+  # (moderate): axios ReDoS, prototype pollution, SSRF, header injection, and
+  # proxy bypass issues. All patched in 1.20.0.
+  axios@>=1.0.0 <1.20.0: ^1.20.0
   '@slack/web-api': 7.17.0
   seroval@<1.5.3: ^1.5.3
   h3@<1.15.9: ^1.15.9
