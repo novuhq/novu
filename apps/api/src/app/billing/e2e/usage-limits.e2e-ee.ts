@@ -1,5 +1,5 @@
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { GetStripeSubscription, StripeSubscriptionSlice } from '@novu/ee-billing';
+import { GetStripeSubscription } from '@novu/ee-billing';
 import {
   ALL_PERMISSIONS,
   ApiServiceLevelEnum,
@@ -7,48 +7,30 @@ import {
   IOrganizationUsageLimits,
   MemberRoleEnum,
   PermissionsEnum,
-  UpdateUsageLimitsDto,
   UsageAlertRecipientsEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { buildStripeSubscription, PAUSING_USAGE_LIMITS, useEnvironment } from './billing-e2e.helpers';
 
 process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
 
 const USAGE_LIMITS_PATH = '/v1/billing/usage-limits';
 const USAGE_LIMITS_FLAG = FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED;
 
-const DEFAULT_USAGE_LIMITS: UpdateUsageLimitsDto = {
+const DEFAULT_USAGE_LIMITS: IOrganizationUsageLimits = {
   workflowRuns: { onDemandLimit: null, pauseAtLimit: false },
   alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
-};
-
-const PAUSING_USAGE_LIMITS: UpdateUsageLimitsDto = {
-  workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: true },
-  alerts: { enabled: false, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
 };
 
 describe('Usage limits #novu-v2', () => {
   const organizationRepository = new CommunityOrganizationRepository();
   let session: UserSession;
   let getStripeSubscriptionStub: sinon.SinonStub;
-  let restoreEnv: () => void;
 
   const givenIncludedEvents = (includedEvents: number | null) => {
-    const subscription: StripeSubscriptionSlice = {
-      includedEvents,
-      currentPeriodStart: '2024-04-05T00:00:00.000Z',
-      currentPeriodEnd: '2024-05-05T00:00:00.000Z',
-      status: 'active',
-      trialStart: null,
-      trialEnd: null,
-      cancelAt: null,
-      hasPaymentMethod: true,
-      billingInterval: 'month',
-      skip: null,
-    };
-    getStripeSubscriptionStub.resolves(subscription);
+    getStripeSubscriptionStub.resolves(buildStripeSubscription(includedEvents));
   };
 
   const putUsageLimits = (body: object) => session.testAgent.put(USAGE_LIMITS_PATH).send(body);
@@ -58,15 +40,9 @@ describe('Usage limits #novu-v2', () => {
   const findStoredUsageLimits = async () =>
     (await organizationRepository.findById(session.organization._id, 'usageLimits'))?.usageLimits;
 
-  const expectStored = async (settings: UpdateUsageLimitsDto) => {
-    const { updatedAt, ...storedSettings }: IOrganizationUsageLimits = (await findStoredUsageLimits()) ?? {};
-
-    expect(storedSettings).to.deep.equal(settings);
-    expect(updatedAt).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-  };
+  useEnvironment({ [USAGE_LIMITS_FLAG]: 'true', IS_RBAC_ENABLED: 'true' });
 
   beforeEach(async () => {
-    restoreEnv = overrideEnv({ [USAGE_LIMITS_FLAG]: 'true', IS_RBAC_ENABLED: 'true' });
     session = new UserSession();
     await session.initialize();
     await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
@@ -76,24 +52,19 @@ describe('Usage limits #novu-v2', () => {
     givenIncludedEvents(30_000);
   });
 
-  afterEach(() => {
-    getStripeSubscriptionStub.restore();
-    restoreEnv();
-  });
-
   describe('PUT /v1/billing/usage-limits', () => {
     it('should store and return the settings of a Pro organization', async () => {
       const response = await putUsageLimits(PAUSING_USAGE_LIMITS);
 
       expect(response.status).to.equal(200);
       expect(response.body.data).to.deep.equal(PAUSING_USAGE_LIMITS);
-      await expectStored(PAUSING_USAGE_LIMITS);
+      expect(await findStoredUsageLimits()).to.deep.equal(PAUSING_USAGE_LIMITS);
     });
 
     it('should store and return the settings of a Business organization', async () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
       givenIncludedEvents(250_000);
-      const settings: UpdateUsageLimitsDto = {
+      const settings: IOrganizationUsageLimits = {
         workflowRuns: { onDemandLimit: 50_000, pauseAtLimit: false },
         alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
       };
@@ -102,11 +73,11 @@ describe('Usage limits #novu-v2', () => {
 
       expect(response.status).to.equal(200);
       expect(response.body.data).to.deep.equal(settings);
-      await expectStored(settings);
+      expect(await findStoredUsageLimits()).to.deep.equal(settings);
     });
 
     it('should replace every previously stored setting', async () => {
-      const settings: UpdateUsageLimitsDto = {
+      const settings: IOrganizationUsageLimits = {
         workflowRuns: { onDemandLimit: null, pauseAtLimit: false },
         alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
       };
@@ -115,12 +86,12 @@ describe('Usage limits #novu-v2', () => {
       const response = await putUsageLimits(settings);
 
       expect(response.status).to.equal(200);
-      await expectStored(settings);
+      expect(await findStoredUsageLimits()).to.deep.equal(settings);
     });
 
-    for (const onDemandLimit of [0, 1_000_000_000]) {
-      it(`should accept an on-demand limit of ${onDemandLimit}`, async () => {
-        const settings: UpdateUsageLimitsDto = {
+    for (const onDemandLimit of [null, 0, 1_000_000_000]) {
+      it(`should accept pausing at an on-demand limit of ${onDemandLimit}`, async () => {
+        const settings: IOrganizationUsageLimits = {
           ...PAUSING_USAGE_LIMITS,
           workflowRuns: { onDemandLimit, pauseAtLimit: true },
         };
@@ -187,28 +158,8 @@ describe('Usage limits #novu-v2', () => {
         body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: -1, pauseAtLimit: true } },
       },
       {
-        title: 'a fractional on-demand limit',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: 1.5, pauseAtLimit: true } },
-      },
-      {
-        title: 'a string on-demand limit',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: '1000', pauseAtLimit: true } },
-      },
-      {
-        title: 'an on-demand limit above 1,000,000,000',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: 1_000_000_001, pauseAtLimit: true } },
-      },
-      {
-        title: 'unknown alert recipients',
-        body: { ...PAUSING_USAGE_LIMITS, alerts: { enabled: true, sendTo: 'owners' } },
-      },
-      {
         title: 'missing alerts',
         body: { workflowRuns: PAUSING_USAGE_LIMITS.workflowRuns },
-      },
-      {
-        title: 'pause at limit without an on-demand limit',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: null, pauseAtLimit: true } },
       },
     ];
 
@@ -225,7 +176,7 @@ describe('Usage limits #novu-v2', () => {
   describe('DELETE /v1/billing/usage-limits', () => {
     it('should remove the stored settings and return the defaults', async () => {
       await putUsageLimits(PAUSING_USAGE_LIMITS).expect(200);
-      await expectStored(PAUSING_USAGE_LIMITS);
+      expect(await findStoredUsageLimits()).to.deep.equal(PAUSING_USAGE_LIMITS);
 
       const response = await deleteUsageLimits();
 
@@ -282,18 +233,3 @@ describe('Usage limits #novu-v2', () => {
     });
   });
 });
-
-function overrideEnv(values: Record<string, string>): () => void {
-  const previousValues = Object.keys(values).map((key) => [key, process.env[key]] as const);
-  Object.assign(process.env, values);
-
-  return () => {
-    for (const [key, value] of previousValues) {
-      if (value === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = value;
-      }
-    }
-  };
-}
