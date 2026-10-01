@@ -1,9 +1,19 @@
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, IOrganizationUsageLimits, UsageAlertRecipientsEnum } from '@novu/shared';
+import {
+  GetOrCreateCustomer,
+  GetOrganizationPeriodUsage,
+  GetOrganizationPeriodUsageCommand,
+  GetSubscription,
+  GetSubscriptionCommand,
+} from '@novu/ee-billing';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { Stripe } from 'stripe';
+import { PAUSING_USAGE_LIMITS, useEnvironment } from './billing-e2e.helpers';
+
+process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
 
 type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
@@ -56,36 +66,14 @@ const buildStripeCustomer = (includedEvents = '1000000'): DeepPartial<Stripe.Cus
   },
 });
 
-describe('GetSubscription #novu-v2', async () => {
+describe('GetSubscription #novu-v2', () => {
+  const organizationRepository = new CommunityOrganizationRepository();
   let session: UserSession;
-
-  const eeBilling = require('@novu/ee-billing');
-  if (!eeBilling) {
-    throw new Error('ee-billing does not exist');
-  }
-
-  const { GetOrganizationPeriodUsageCommand, GetStripeSubscription, GetSubscription, GetSubscriptionCommand } =
-    eeBilling;
-
-  const communityOrganizationRepository = new CommunityOrganizationRepository();
-  let notificationsCount: number;
-  const getOrganizationPeriodUsage = {
-    execute: () => Promise.resolve({ notificationsCount }),
-  };
-  let getOrCreateCustomer: { execute: () => Promise<DeepPartial<Stripe.Customer>> };
-  let isUsageLimitsEnabled: boolean;
-  const featureFlagsService = {
-    getFlag: async () => isUsageLimitsEnabled,
-  };
-  let getOrganizationPeriodUsageSpy: sinon.SinonSpy;
+  let getOrCreateCustomerStub: sinon.SinonStub;
+  let getOrganizationPeriodUsageStub: sinon.SinonStub;
 
   const executeUseCase = () =>
-    new GetSubscription(
-      new GetStripeSubscription(getOrCreateCustomer),
-      getOrganizationPeriodUsage,
-      communityOrganizationRepository,
-      featureFlagsService
-    ).execute(
+    (session.testServer?.getService(GetSubscription) as GetSubscription).execute(
       GetSubscriptionCommand.create({
         organizationId: session.organization._id,
       })
@@ -95,16 +83,14 @@ describe('GetSubscription #novu-v2', async () => {
     session = new UserSession();
     await session.initialize();
     await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-    notificationsCount = 1000000;
-    isUsageLimitsEnabled = false;
-    getOrCreateCustomer = {
-      execute: () => Promise.resolve(buildStripeCustomer()),
-    };
-    getOrganizationPeriodUsageSpy = sinon.spy(getOrganizationPeriodUsage, 'execute');
-  });
 
-  afterEach(() => {
-    getOrganizationPeriodUsageSpy.restore();
+    // BillingModule is imported by more than one module, so every instance must see the stubs.
+    getOrCreateCustomerStub = sinon
+      .stub(GetOrCreateCustomer.prototype, 'execute')
+      .resolves(buildStripeCustomer() as Stripe.Customer);
+    getOrganizationPeriodUsageStub = sinon
+      .stub(GetOrganizationPeriodUsage.prototype, 'execute')
+      .resolves({ notificationsCount: 1000000 });
   });
 
   it('should return the correct subscription details for a given organization', async () => {
@@ -121,10 +107,8 @@ describe('GetSubscription #novu-v2', async () => {
       events: {
         current: 1000000,
         included: 1000000,
-        onDemandLimit: null,
         limit: null,
         isPaused: false,
-        onDemandPricePer1k: null,
       },
       usageLimits: null,
       trial: {
@@ -140,7 +124,7 @@ describe('GetSubscription #novu-v2', async () => {
   it('should fetch usage with the subscription period dates and organizationId', async () => {
     await executeUseCase();
 
-    expect(getOrganizationPeriodUsageSpy.lastCall.args.at(0)).to.deep.equal(
+    expect(getOrganizationPeriodUsageStub.lastCall.args.at(0)).to.deep.equal(
       GetOrganizationPeriodUsageCommand.create({
         organizationId: session.organization._id,
         startDate: new Date('2024-04-05T00:00:00.000Z'),
@@ -151,34 +135,31 @@ describe('GetSubscription #novu-v2', async () => {
 
   it('should throw error if no licensed subscription is found', async () => {
     const stripeCustomer = buildStripeCustomer();
-    getOrCreateCustomer = {
-      execute: () =>
-        Promise.resolve({
-          ...stripeCustomer,
-          subscriptions: {
-            data: [
-              {
-                ...stripeCustomer.subscriptions?.data?.[0],
-                items: {
-                  data: [
-                    {
-                      price: {
-                        recurring: {
-                          usage_type: 'metered',
-                          interval: 'month',
-                        },
-                        metadata: {
-                          includedEvents: '1000000',
-                        },
-                      },
+    getOrCreateCustomerStub.resolves({
+      ...stripeCustomer,
+      subscriptions: {
+        data: [
+          {
+            ...stripeCustomer.subscriptions?.data?.[0],
+            items: {
+              data: [
+                {
+                  price: {
+                    recurring: {
+                      usage_type: 'metered',
+                      interval: 'month',
                     },
-                  ],
+                    metadata: {
+                      includedEvents: '1000000',
+                    },
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        }),
-    };
+        ],
+      },
+    });
 
     try {
       await executeUseCase();
@@ -191,34 +172,31 @@ describe('GetSubscription #novu-v2', async () => {
 
   it('should throw error if no metered subscription is found', async () => {
     const stripeCustomer = buildStripeCustomer();
-    getOrCreateCustomer = {
-      execute: () =>
-        Promise.resolve({
-          ...stripeCustomer,
-          subscriptions: {
-            data: [
-              {
-                ...stripeCustomer.subscriptions?.data?.[0],
-                items: {
-                  data: [
-                    {
-                      price: {
-                        recurring: {
-                          usage_type: 'licensed',
-                          interval: 'month',
-                        },
-                        metadata: {
-                          includedEvents: '1000000',
-                        },
-                      },
+    getOrCreateCustomerStub.resolves({
+      ...stripeCustomer,
+      subscriptions: {
+        data: [
+          {
+            ...stripeCustomer.subscriptions?.data?.[0],
+            items: {
+              data: [
+                {
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                      interval: 'month',
                     },
-                  ],
+                    metadata: {
+                      includedEvents: '1000000',
+                    },
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        }),
-    };
+        ],
+      },
+    });
 
     try {
       await executeUseCase();
@@ -229,183 +207,23 @@ describe('GetSubscription #novu-v2', async () => {
     }
   });
 
-  describe('workflow run usage limits', () => {
-    const pausingUsageLimits: IOrganizationUsageLimits = {
-      workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: true },
-      alerts: { enabled: false, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
-    };
-    const defaultAlerts = { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS };
+  describe('with workflow run usage limits enabled', () => {
+    useEnvironment({ [FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED]: 'true' });
 
-    const givenOrganization = async ({
-      apiServiceLevel,
-      isTrial = false,
-      includedEvents,
-      usageLimits,
-    }: {
-      apiServiceLevel: ApiServiceLevelEnum;
-      isTrial?: boolean;
-      includedEvents: number;
-      usageLimits?: IOrganizationUsageLimits;
-    }) => {
-      await communityOrganizationRepository.update({ _id: session.organization._id }, { apiServiceLevel, isTrial });
-      if (usageLimits) {
-        await communityOrganizationRepository.updateUsageLimits(session.organization._id, usageLimits);
-      }
-      getOrCreateCustomer = {
-        execute: () => Promise.resolve(buildStripeCustomer(String(includedEvents))),
-      };
-    };
-
-    beforeEach(() => {
-      isUsageLimitsEnabled = true;
-    });
-
-    it('should report the limit and a paused state for a Pro organization at its included events plus on-demand limit', async () => {
-      await givenOrganization({
-        apiServiceLevel: ApiServiceLevelEnum.PRO,
-        includedEvents: 30_000,
-        usageLimits: pausingUsageLimits,
-      });
-      notificationsCount = 40_000;
+    it('should derive the limit and the usage limits settings from the stored settings of the organization', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+      await organizationRepository.updateUsageLimits(session.organization._id, PAUSING_USAGE_LIMITS);
+      getOrCreateCustomerStub.resolves(buildStripeCustomer('30000') as Stripe.Customer);
+      getOrganizationPeriodUsageStub.resolves({ notificationsCount: 40_000 });
 
       const { events, usageLimits } = await executeUseCase();
 
-      expect(events).to.deep.equal({
-        current: 40_000,
-        included: 30_000,
-        onDemandLimit: 10_000,
-        limit: 40_000,
-        isPaused: true,
-        onDemandPricePer1k: 1.2,
-      });
+      expect(events).to.deep.equal({ current: 40_000, included: 30_000, limit: 40_000, isPaused: true });
       expect(usageLimits).to.deep.equal({
         isConfigurable: true,
-        pauseAtLimit: true,
-        alerts: { enabled: false, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
-      });
-    });
-
-    it('should not report a paused state for a Pro organization below its included events plus on-demand limit', async () => {
-      await givenOrganization({
-        apiServiceLevel: ApiServiceLevelEnum.PRO,
-        includedEvents: 30_000,
-        usageLimits: pausingUsageLimits,
-      });
-      notificationsCount = 39_999;
-
-      const { events } = await executeUseCase();
-
-      expect(events).to.deep.equal({
-        current: 39_999,
-        included: 30_000,
-        onDemandLimit: 10_000,
-        limit: 40_000,
-        isPaused: false,
         onDemandPricePer1k: 1.2,
+        settings: PAUSING_USAGE_LIMITS,
       });
-    });
-
-    it('should report the limit without pausing a Business organization that does not pause at its limit', async () => {
-      await givenOrganization({
-        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-        includedEvents: 250_000,
-        usageLimits: { workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: false } },
-      });
-      notificationsCount = 300_000;
-
-      const { events, usageLimits } = await executeUseCase();
-
-      expect(events).to.deep.equal({
-        current: 300_000,
-        included: 250_000,
-        onDemandLimit: 10_000,
-        limit: 260_000,
-        isPaused: false,
-        onDemandPricePer1k: 1.2,
-      });
-      expect(usageLimits).to.deep.equal({ isConfigurable: true, pauseAtLimit: false, alerts: defaultAlerts });
-    });
-
-    it('should ignore the stored settings of a Pro trial organization', async () => {
-      await givenOrganization({
-        apiServiceLevel: ApiServiceLevelEnum.PRO,
-        isTrial: true,
-        includedEvents: 30_000,
-        usageLimits: pausingUsageLimits,
-      });
-      notificationsCount = 40_000;
-
-      const { events, usageLimits } = await executeUseCase();
-
-      expect(events).to.deep.equal({
-        current: 40_000,
-        included: 30_000,
-        onDemandLimit: null,
-        limit: null,
-        isPaused: false,
-        onDemandPricePer1k: 1.2,
-      });
-      expect(usageLimits).to.deep.equal({ isConfigurable: false, pauseAtLimit: false, alerts: defaultAlerts });
-    });
-
-    it('should never pause an Enterprise organization', async () => {
-      await givenOrganization({
-        apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE,
-        includedEvents: 5_000_000,
-        usageLimits: pausingUsageLimits,
-      });
-
-      const { events, usageLimits } = await executeUseCase();
-
-      expect(events).to.deep.equal({
-        current: 0,
-        included: 5_000_000,
-        onDemandLimit: null,
-        limit: null,
-        isPaused: false,
-        onDemandPricePer1k: null,
-      });
-      expect(usageLimits).to.deep.equal({ isConfigurable: false, pauseAtLimit: false, alerts: defaultAlerts });
-    });
-
-    it('should hide the usage limits of a pausing Pro organization when usage limits are disabled', async () => {
-      isUsageLimitsEnabled = false;
-      await givenOrganization({
-        apiServiceLevel: ApiServiceLevelEnum.PRO,
-        includedEvents: 30_000,
-        usageLimits: pausingUsageLimits,
-      });
-      notificationsCount = 40_000;
-
-      const { events, usageLimits } = await executeUseCase();
-
-      expect(events).to.deep.equal({
-        current: 40_000,
-        included: 30_000,
-        onDemandLimit: null,
-        limit: null,
-        isPaused: false,
-        onDemandPricePer1k: 1.2,
-      });
-      expect(usageLimits).to.equal(null);
-    });
-
-    it('should report a paused state for a Free organization at its included events when usage limits are disabled', async () => {
-      isUsageLimitsEnabled = false;
-      await givenOrganization({ apiServiceLevel: ApiServiceLevelEnum.FREE, includedEvents: 10_000 });
-      notificationsCount = 10_000;
-
-      const { events, usageLimits } = await executeUseCase();
-
-      expect(events).to.deep.equal({
-        current: 10_000,
-        included: 10_000,
-        onDemandLimit: null,
-        limit: null,
-        isPaused: true,
-        onDemandPricePer1k: null,
-      });
-      expect(usageLimits).to.equal(null);
     });
   });
 });
