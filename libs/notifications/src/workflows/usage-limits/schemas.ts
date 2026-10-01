@@ -30,15 +30,14 @@ export const usageLimitsPayloadSchema = z.object({
   allowance: z.number().min(0),
   planName: z.string(),
   alertState: usageLimitsAlertStateSchema,
-  /** Sent while workflow-run usage limits are enabled for the organization; without it the alert keeps its plan copy. */
-  usageLimits: z
-    .object({
-      /** Included workflow runs of a plan that bills on-demand runs past them; null on plans that do not. */
-      includedEvents: z.number().min(0).nullable(),
-      /** `allowance` is a usage limit the organization set and can edit, rather than its plan's alert level. */
-      isLimitSet: z.boolean(),
-    })
-    .optional(),
+  usageLimits: z.object({
+    /** Included workflow runs of a plan that bills on-demand runs past them; null on Free and trials. */
+    includedEvents: z.number().min(0).nullable(),
+    /** `allowance` is a usage limit the organization set and can edit, rather than its plan's alert level. */
+    isLimitSet: z.boolean(),
+    /** Sending pauses once usage reaches `allowance`. */
+    pausesAtLimit: z.boolean(),
+  }),
 });
 
 export type UsageLimitsPayload = z.infer<typeof usageLimitsPayloadSchema>;
