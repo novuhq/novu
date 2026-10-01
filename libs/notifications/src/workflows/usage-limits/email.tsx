@@ -2,14 +2,13 @@ import { BILLING_SETTINGS_PATH, USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared
 import { Button, Heading, renderAsync, Section, Text } from '@react-email/components';
 import React from 'react';
 import { EmailLayout } from '../../templates/layout';
-import { UsageLimitsPayload } from './schemas';
+import { UsageLimitsAlertState, UsageLimitsPayload } from './schemas';
 
-/** The `legacy_*` cases are the alerts sent without `usageLimits`, unchanged from before usage limits. */
+/** The `legacy_*` cases are the plan alerts from before usage limits, whose text the step controls hold. */
 type UsageLimitsAlertCase =
   | 'legacy_approaching'
   | 'legacy_blocked'
   | 'legacy_alert_level'
-  | 'plan_approaching'
   | 'plan_blocked'
   | 'usage_update'
   | 'included_exhausted'
@@ -101,13 +100,7 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
     dashboardPath: BILLING_SETTINGS_PATH,
     notificationText: 'controls',
   }),
-  plan_approaching: (figures) => ({
-    ...USAGE_LIMITS_COPY.legacy_approaching(figures),
-    notificationText: {
-      subject: USAGE_LIMITS_CONTROL_DEFAULTS.subject,
-      body: `You have used ${figures.percentage}% of your monthly events`,
-    },
-  }),
+  // The email step has no blocked subject control, so the blocked plan alert names its own subject.
   plan_blocked: (figures) => ({
     ...USAGE_LIMITS_COPY.legacy_blocked(figures),
     notificationText: {
@@ -200,31 +193,31 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
   }),
 };
 
+const LEGACY_ALERT_CASES: Record<Exclude<UsageLimitsAlertState, 'included_exhausted'>, UsageLimitsAlertCase> = {
+  approaching_limit: 'legacy_approaching',
+  blocked: 'legacy_blocked',
+  alert_level_reached: 'legacy_alert_level',
+};
+
 function resolveAlertCase(
   { alertState = 'approaching_limit', usageLimits }: Partial<UsageLimitsPayload>,
   { percentage }: IUsageFigures
 ): UsageLimitsAlertCase {
+  if (!usageLimits && alertState !== 'included_exhausted') {
+    return LEGACY_ALERT_CASES[alertState];
+  }
+
+  const isLimitSet = usageLimits?.isLimitSet === true;
+
   switch (alertState) {
     case 'included_exhausted':
       return 'included_exhausted';
     case 'approaching_limit':
-      if (!usageLimits) {
-        return 'legacy_approaching';
-      }
-
-      return usageLimits.isLimitSet ? 'limit_approaching' : 'plan_approaching';
+      return isLimitSet ? 'limit_approaching' : 'legacy_approaching';
     case 'blocked':
-      if (!usageLimits) {
-        return 'legacy_blocked';
-      }
-
-      return usageLimits.isLimitSet ? 'limit_paused' : 'plan_blocked';
+      return isLimitSet ? 'limit_paused' : 'plan_blocked';
     case 'alert_level_reached':
-      if (!usageLimits) {
-        return 'legacy_alert_level';
-      }
-
-      if (!usageLimits.isLimitSet) {
+      if (!isLimitSet) {
         return 'usage_update';
       }
 

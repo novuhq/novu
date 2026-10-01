@@ -21,33 +21,55 @@ const DEDUP_WINDOW_HOURS: Record<UsageLimitsAlertState, number> = {
   blocked: USAGE_LIMITS_BLOCKED_REMINDER_HOURS - 1,
 };
 
+/** What makes two usage alerts the same alert, for the caller's claim key and the `dedup` step. */
+export interface IUsageLimitsAlertIdentity {
+  organizationId: string;
+  periodStart: string;
+  percentage: number;
+  /**
+   * The set limit a percentage threshold leads up to, and whether reaching it paused new runs; null for a plan's alert
+   * levels and for `included_exhausted`, whose identity is the same with or without usage limits.
+   */
+  limitThreshold: { allowance: number; isPaused: boolean } | null;
+}
+
 /**
- * The alert identity shared by the caller's claim key and the `dedup` step, so both dedupe the same alert.
- * Without a set limit it is the plan alert's identity, unchanged by enabling usage limits. With one, the cap is part
- * of each percentage threshold's identity, so changing the limit re-arms them, and pausing is part of the identity at
- * the limit, so turning pause on after reaching it still sends the paused alert. `included_exhausted` stays once per
- * period.
+ * A set limit is part of its thresholds' identity, so changing the limit re-arms them, and pausing is part of it at
+ * the limit, so turning pause on after reaching it still sends the paused alert.
  */
-export function usageLimitsDedupKey({
+export function usageLimitsAlertIdentity({
   organizationId,
   periodStart,
   percentage,
   allowance,
   alertState,
   usageLimits,
-}: Pick<
-  UsageLimitsPayload,
-  'organizationId' | 'periodStart' | 'percentage' | 'allowance' | 'alertState' | 'usageLimits'
->): string {
+}: UsageLimitsPayload): IUsageLimitsAlertIdentity {
+  const hasLimitThreshold = usageLimits?.isLimitSet === true && alertState !== 'included_exhausted';
+
+  return {
+    organizationId,
+    periodStart,
+    percentage,
+    limitThreshold: hasLimitThreshold ? { allowance, isPaused: alertState === 'blocked' } : null,
+  };
+}
+
+export function usageLimitsDedupKey({
+  organizationId,
+  periodStart,
+  percentage,
+  limitThreshold,
+}: IUsageLimitsAlertIdentity): string {
   const periodThresholdKey = `${organizationId}:${periodStart}:${percentage}`;
 
-  if (!usageLimits?.isLimitSet || alertState === 'included_exhausted') {
+  if (limitThreshold === null) {
     return periodThresholdKey;
   }
 
-  const limitThresholdKey = `${periodThresholdKey}:${allowance}`;
+  const limitThresholdKey = `${periodThresholdKey}:${limitThreshold.allowance}`;
 
-  return alertState === 'blocked' ? `${limitThresholdKey}:paused` : limitThresholdKey;
+  return limitThreshold.isPaused ? `${limitThresholdKey}:paused` : limitThresholdKey;
 }
 
 export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {
@@ -56,7 +78,7 @@ export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {
     amount: DEDUP_WINDOW_HOURS[payload.alertState],
     unit: 'hours',
     threshold: 1,
-    throttleKey: usageLimitsDedupKey(payload),
+    throttleKey: usageLimitsDedupKey(usageLimitsAlertIdentity(payload)),
   } as const;
 }
 
