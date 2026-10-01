@@ -23,6 +23,11 @@ export type UsageLimitsFormValues = z.infer<typeof usageLimitsFormSchema>;
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
+/** Usage at which new workflow runs pause; null when they never pause. */
+function getPauseThreshold(included: number, workflowRuns: IWorkflowRunsUsageLimit): number | null {
+  return workflowRuns.pauseAtLimit ? getWorkflowRunLimit(included, workflowRuns) : null;
+}
+
 /** USD cost of using the whole on-demand limit; null without a limit or a known price. */
 export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k: number | null): string | null {
   if (onDemandLimit === null || onDemandPricePer1k === null) {
@@ -33,17 +38,17 @@ export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k
 }
 
 export function getPauseAtLimitDescription(included: number, workflowRuns: IWorkflowRunsUsageLimit) {
-  const limit = getWorkflowRunLimit(included, workflowRuns);
+  const pauseThreshold = getPauseThreshold(included, workflowRuns);
 
-  if (!workflowRuns.pauseAtLimit || limit === null) {
+  if (pauseThreshold === null) {
     return 'Sending stops until the cycle resets. When off, usage continues and is billed on-demand.';
   }
 
-  if (limit === included) {
+  if (pauseThreshold === included) {
     return `Sending stops at your ${formatNumber(included)} included runs until the cycle resets.`;
   }
 
-  return `Sending stops at ${formatNumber(limit)} runs (${formatNumber(included)} included + ${formatNumber(limit - included)} on-demand) until the cycle resets.`;
+  return `Sending stops at ${formatNumber(pauseThreshold)} runs (${formatNumber(included)} included + ${formatNumber(pauseThreshold - included)} on-demand) until the cycle resets.`;
 }
 
 /** Usage alerts measure from the included runs under a higher limit, and from 0 when the limit is the included runs. */
@@ -59,7 +64,7 @@ export function pausesOnSave(
   usage: Pick<WorkflowRunsUsage, 'state' | 'current' | 'included'>,
   workflowRuns: IWorkflowRunsUsageLimit
 ): boolean {
-  const limit = getWorkflowRunLimit(usage.included, workflowRuns);
+  const pauseThreshold = getPauseThreshold(usage.included, workflowRuns);
 
-  return usage.state !== 'paused' && workflowRuns.pauseAtLimit && limit !== null && usage.current >= limit;
+  return usage.state !== 'paused' && pauseThreshold !== null && usage.current >= pauseThreshold;
 }

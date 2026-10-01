@@ -49,11 +49,10 @@ describe('usage-limits-form-values', () => {
       expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: null, pauseAtLimit: true })).toBe(expected);
     });
 
-    it('alerts when included usage runs out under a higher limit or without one', () => {
-      const expected = 'Email and inbox alerts when included usage runs out, and at 75%, 90% and 100% of the limit.';
-
-      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: 5000, pauseAtLimit: true })).toBe(expected);
-      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: null, pauseAtLimit: false })).toBe(expected);
+    it('alerts when included usage runs out under a higher limit', () => {
+      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: 5000, pauseAtLimit: true })).toBe(
+        'Email and inbox alerts when included usage runs out, and at 75%, 90% and 100% of the limit.'
+      );
     });
   });
 

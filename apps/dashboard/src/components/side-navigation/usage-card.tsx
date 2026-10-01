@@ -73,50 +73,6 @@ export function FreeUsageCard({ subscription }: FreeUsageCardProps) {
   );
 }
 
-type FreeUsageCardContentProps = {
-  metrics: UsageMetric[];
-  resetDate: string | null;
-};
-
-function FreeUsageCardContent({ metrics, resetDate }: FreeUsageCardContentProps) {
-  if (metrics.some(isLimitReached)) {
-    return (
-      <div className="flex flex-col p-2">
-        <div className="space-y-2">
-          {metrics.map((metric) => (
-            <UsageMetricRow key={metric.label} metric={metric} showsLimitReached={isLimitReached(metric)} />
-          ))}
-          {resetDate && <ResetDateLabel resetDate={resetDate} />}
-        </div>
-        <div className="mt-2">
-          <UpgradeButton />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative flex flex-col overflow-hidden p-2">
-      <div className="space-y-2 transition-transform duration-200 ease-out group-hover:-translate-y-1">
-        {metrics.map((metric) => (
-          <UsageMetricRow key={metric.label} metric={metric} />
-        ))}
-      </div>
-
-      <div className="relative mt-2 h-6">
-        {resetDate && (
-          <div className="absolute inset-0 flex items-center transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:opacity-0">
-            <ResetDateLabel resetDate={resetDate} />
-          </div>
-        )}
-        <div className="absolute inset-0 flex items-center translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-          <UpgradeButton />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 type PausedUsageCardProps = {
   subscription: GetSubscriptionDto;
   canEditUsageLimits: boolean;
@@ -196,5 +152,49 @@ function ResetDateLabel({ resetDate }: { resetDate: string }) {
       <RiCalendarEventLine className="size-3.5" />
       Usage resets on {formatShortDate(resetDate)}
     </span>
+  );
+}
+
+type FreeUsageCardContentProps = {
+  metrics: UsageMetric[];
+  resetDate: string | null;
+};
+
+function FreeUsageCardContent({ metrics, resetDate }: FreeUsageCardContentProps) {
+  if (metrics.some(isLimitReached)) {
+    return (
+      <div className="flex flex-col p-2">
+        <div className="space-y-2">
+          {metrics.map((metric) => (
+            <UsageMetricRow key={metric.label} metric={metric} showsLimitReached={isLimitReached(metric)} />
+          ))}
+          {resetDate && <ResetDateLabel resetDate={resetDate} />}
+        </div>
+        <div className="mt-2">
+          <UpgradeButton />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex flex-col overflow-hidden p-2">
+      <div className="space-y-2 transition-transform duration-200 ease-out group-hover:-translate-y-1">
+        {metrics.map((metric) => (
+          <UsageMetricRow key={metric.label} metric={metric} />
+        ))}
+      </div>
+
+      <div className="relative mt-2 h-6">
+        {resetDate && (
+          <div className="absolute inset-0 flex items-center transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:opacity-0">
+            <ResetDateLabel resetDate={resetDate} />
+          </div>
+        )}
+        <div className="absolute inset-0 flex items-center translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+          <UpgradeButton />
+        </div>
+      </div>
+    </div>
   );
 }
