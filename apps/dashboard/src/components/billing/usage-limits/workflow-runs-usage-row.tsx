@@ -121,12 +121,12 @@ export function WorkflowRunsUsageRow({ subscription, canConfigure, onEditLimit }
         />
         <span className="text-text-soft">
           {formatCompactNumber(included)} included
-          {events.headroom !== null && ` · ${formatCompactNumber(events.headroom)} on-demand`}
+          {events.onDemandLimit !== null && ` · ${formatCompactNumber(events.onDemandLimit)} on-demand`}
           {canConfigure && (
             <>
               {' · '}
               <LinkButton variant="gray" size="sm" className="text-label-xs" onClick={onEditLimit}>
-                {events.headroom !== null ? 'Edit limit' : 'Set limit'}
+                {events.onDemandLimit !== null ? 'Edit limit' : 'Set limit'}
               </LinkButton>
             </>
           )}

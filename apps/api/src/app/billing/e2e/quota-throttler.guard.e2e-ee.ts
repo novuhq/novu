@@ -129,7 +129,7 @@ describe('Resource Limiting #novu-v2', () => {
       describe('Workflow run usage limits', () => {
         const organizationRepository = new CommunityOrganizationRepository();
         const pausingUsageLimits: IOrganizationUsageLimits = {
-          workflowRuns: { headroom: 10_000, pauseAtLimit: true },
+          workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: true },
           alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
         };
         let getSubscriptionStub: sinon.SinonStub;
@@ -163,7 +163,7 @@ describe('Resource Limiting #novu-v2', () => {
           { apiServiceLevel: ApiServiceLevelEnum.PRO, included: 30_000 },
           { apiServiceLevel: ApiServiceLevelEnum.BUSINESS, included: 250_000 },
         ]) {
-          it(`should block a ${apiServiceLevel} organization that reached its included events plus headroom`, async () => {
+          it(`should block a ${apiServiceLevel} organization that reached its included events plus on-demand limit`, async () => {
             await session.updateOrganizationServiceLevel(apiServiceLevel);
             getSubscriptionStub.resolves(buildSubscription(apiServiceLevel, { current: included + 10_000, included }));
 
@@ -179,7 +179,7 @@ describe('Resource Limiting #novu-v2', () => {
           });
         }
 
-        it('should NOT block a pausing organization below its included events plus headroom', async () => {
+        it('should NOT block a pausing organization below its included events plus on-demand limit', async () => {
           getSubscriptionStub.resolves(
             buildSubscription(ApiServiceLevelEnum.PRO, { current: 39_999, included: 30_000 })
           );
@@ -190,13 +190,13 @@ describe('Resource Limiting #novu-v2', () => {
           expect(response.headers['x-quotalimit-limit']).to.equal('40000');
         });
 
-        it('should resume workflow runs once the headroom is raised', async () => {
+        it('should resume workflow runs once the on-demand limit is raised', async () => {
           const pausedResponse = await request(pathEvent);
           expect(pausedResponse.status).to.equal(402);
 
           await organizationRepository.updateUsageLimits(session.organization._id, {
             ...pausingUsageLimits,
-            workflowRuns: { headroom: 20_000, pauseAtLimit: true },
+            workflowRuns: { onDemandLimit: 20_000, pauseAtLimit: true },
           });
           const response = await request(pathEvent);
 
@@ -207,16 +207,16 @@ describe('Resource Limiting #novu-v2', () => {
         it('should NOT evaluate a paid organization that does not pause at its limit', async () => {
           await organizationRepository.updateUsageLimits(session.organization._id, {
             ...pausingUsageLimits,
-            workflowRuns: { headroom: 10_000, pauseAtLimit: false },
+            workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: false },
           });
 
           expectNotEvaluated(await request(pathEvent));
         });
 
-        it('should NOT evaluate a paid organization that pauses without a headroom', async () => {
+        it('should NOT evaluate a paid organization that pauses without an on-demand limit', async () => {
           await organizationRepository.updateUsageLimits(session.organization._id, {
             ...pausingUsageLimits,
-            workflowRuns: { headroom: null, pauseAtLimit: true },
+            workflowRuns: { onDemandLimit: null, pauseAtLimit: true },
           });
 
           expectNotEvaluated(await request(pathEvent));
@@ -252,7 +252,7 @@ describe('Resource Limiting #novu-v2', () => {
           expect(response.headers['x-quotalimit-limit']).to.equal('30000');
         });
 
-        it('should keep blocking a free organization at its included events regardless of the headroom', async () => {
+        it('should keep blocking a free organization at its included events regardless of the on-demand limit', async () => {
           await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
           getSubscriptionStub.resolves(
             buildSubscription(ApiServiceLevelEnum.FREE, { current: 10_000, included: 10_000 })
@@ -297,7 +297,7 @@ function buildSubscription(
     currentPeriodStart: '2024-04-05T00:00:00.000Z',
     currentPeriodEnd: '2024-05-05T00:00:00.000Z',
     billingInterval: 'month',
-    events: { ...events, headroom: null, limit: null, isPaused: false, onDemandPricePer1k: null },
+    events: { ...events, onDemandLimit: null, limit: null, isPaused: false, onDemandPricePer1k: null },
     usageLimits: null,
     trial: { isActive: false, start: null, end: null, daysTotal: 0 },
     cancelAt: null,

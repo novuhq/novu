@@ -20,12 +20,12 @@ const USAGE_LIMITS_PATH = '/v1/billing/usage-limits';
 const USAGE_LIMITS_FLAG = FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED;
 
 const DEFAULT_USAGE_LIMITS: UpdateUsageLimitsDto = {
-  workflowRuns: { headroom: null, pauseAtLimit: false },
+  workflowRuns: { onDemandLimit: null, pauseAtLimit: false },
   alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
 };
 
 const PAUSING_USAGE_LIMITS: UpdateUsageLimitsDto = {
-  workflowRuns: { headroom: 10_000, pauseAtLimit: true },
+  workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: true },
   alerts: { enabled: false, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
 };
 
@@ -94,7 +94,7 @@ describe('Usage limits #novu-v2', () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
       givenIncludedEvents(250_000);
       const settings: UpdateUsageLimitsDto = {
-        workflowRuns: { headroom: 50_000, pauseAtLimit: false },
+        workflowRuns: { onDemandLimit: 50_000, pauseAtLimit: false },
         alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
       };
 
@@ -107,7 +107,7 @@ describe('Usage limits #novu-v2', () => {
 
     it('should replace every previously stored setting', async () => {
       const settings: UpdateUsageLimitsDto = {
-        workflowRuns: { headroom: null, pauseAtLimit: false },
+        workflowRuns: { onDemandLimit: null, pauseAtLimit: false },
         alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
       };
       await putUsageLimits(PAUSING_USAGE_LIMITS).expect(200);
@@ -118,11 +118,11 @@ describe('Usage limits #novu-v2', () => {
       await expectStored(settings);
     });
 
-    for (const headroom of [0, 1_000_000_000]) {
-      it(`should accept a headroom of ${headroom}`, async () => {
+    for (const onDemandLimit of [0, 1_000_000_000]) {
+      it(`should accept an on-demand limit of ${onDemandLimit}`, async () => {
         const settings: UpdateUsageLimitsDto = {
           ...PAUSING_USAGE_LIMITS,
-          workflowRuns: { headroom, pauseAtLimit: true },
+          workflowRuns: { onDemandLimit, pauseAtLimit: true },
         };
 
         const response = await putUsageLimits(settings);
@@ -183,20 +183,20 @@ describe('Usage limits #novu-v2', () => {
 
     const invalidBodies: Array<{ title: string; body: object }> = [
       {
-        title: 'a negative headroom',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { headroom: -1, pauseAtLimit: true } },
+        title: 'a negative on-demand limit',
+        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: -1, pauseAtLimit: true } },
       },
       {
-        title: 'a fractional headroom',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { headroom: 1.5, pauseAtLimit: true } },
+        title: 'a fractional on-demand limit',
+        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: 1.5, pauseAtLimit: true } },
       },
       {
-        title: 'a string headroom',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { headroom: '1000', pauseAtLimit: true } },
+        title: 'a string on-demand limit',
+        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: '1000', pauseAtLimit: true } },
       },
       {
-        title: 'a headroom above 1,000,000,000',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { headroom: 1_000_000_001, pauseAtLimit: true } },
+        title: 'an on-demand limit above 1,000,000,000',
+        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: 1_000_000_001, pauseAtLimit: true } },
       },
       {
         title: 'unknown alert recipients',
@@ -207,8 +207,8 @@ describe('Usage limits #novu-v2', () => {
         body: { workflowRuns: PAUSING_USAGE_LIMITS.workflowRuns },
       },
       {
-        title: 'pause at limit without a headroom',
-        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { headroom: null, pauseAtLimit: true } },
+        title: 'pause at limit without an on-demand limit',
+        body: { ...PAUSING_USAGE_LIMITS, workflowRuns: { onDemandLimit: null, pauseAtLimit: true } },
       },
     ];
 

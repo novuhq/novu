@@ -16,8 +16,8 @@ export const usageLimitsAlertStateSchema = z.enum([
 export type UsageLimitsAlertState = z.infer<typeof usageLimitsAlertStateSchema>;
 
 /**
- * - `upgrade`: the plan has no on-demand usage, so the way forward is a paid plan.
- * - `edit_limits`: the plan's on-demand limit and pause setting are configurable in the dashboard.
+ * - `upgrade`: no usage limit is set, so the copy is about the plan: Free, trials, and Pro or Team without a limit.
+ * - `edit_limits`: a usage limit is set, and it and its pause setting are editable in the dashboard.
  */
 export const usageLimitsCtaSchema = z.enum(['upgrade', 'edit_limits']);
 

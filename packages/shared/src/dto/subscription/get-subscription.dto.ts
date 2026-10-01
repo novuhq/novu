@@ -45,9 +45,9 @@ export type GetSubscriptionDto = {
     /**
      * On-demand events allowed on top of `included`, or null when no limit is set.
      */
-    headroom: number | null;
+    onDemandLimit: number | null;
     /**
-     * The effective limit, `included + headroom`, or null when no limit is set.
+     * The effective limit, `included + onDemandLimit`, or null when no limit is set.
      */
     limit: number | null;
     /**

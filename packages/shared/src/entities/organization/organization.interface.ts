@@ -34,8 +34,8 @@ export enum UsageAlertRecipientsEnum {
 export interface IOrganizationUsageLimits {
   workflowRuns?: {
     /** On-demand workflow runs allowed on top of the included runs; `null` means no limit. */
-    headroom: number | null;
-    /** Rejects new workflow runs once usage reaches included + headroom. Requires a headroom. */
+    onDemandLimit: number | null;
+    /** Rejects new workflow runs once usage reaches included + onDemandLimit. Requires an on-demand limit when pausing. */
     pauseAtLimit: boolean;
   };
   alerts?: {

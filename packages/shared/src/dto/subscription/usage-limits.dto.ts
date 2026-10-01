@@ -5,9 +5,9 @@ export type UsageLimitsSettingsDto = {
     /**
      * On-demand workflow runs allowed on top of the included runs, or null for no limit.
      */
-    headroom: number | null;
+    onDemandLimit: number | null;
     /**
-     * Rejects new workflow runs once usage reaches the included runs plus the headroom. Requires a headroom.
+     * Rejects new workflow runs once usage reaches the included runs plus the on-demand limit. Requires an on-demand limit.
      */
     pauseAtLimit: boolean;
   };

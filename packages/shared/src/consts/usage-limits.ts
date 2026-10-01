@@ -1,5 +1,5 @@
-/** The largest on-demand headroom of workflow runs an organization can set. */
-export const MAX_USAGE_LIMIT_HEADROOM = 1_000_000_000;
+/** The largest on-demand limit of workflow runs an organization can set. */
+export const MAX_ON_DEMAND_LIMIT = 1_000_000_000;
 
 /** Opens the usage limits drawer on the billing settings page. */
 export const USAGE_LIMITS_DRAWER_PARAM = 'usageLimits';

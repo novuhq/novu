@@ -26,7 +26,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     events: {
       current: 50,
       included: 100,
-      headroom: null,
+      onDemandLimit: null,
       limit: null,
       isPaused: false,
       onDemandPricePer1k: null,

@@ -121,7 +121,7 @@ describe('GetSubscription #novu-v2', async () => {
       events: {
         current: 1000000,
         included: 1000000,
-        headroom: null,
+        onDemandLimit: null,
         limit: null,
         isPaused: false,
         onDemandPricePer1k: null,
@@ -231,7 +231,7 @@ describe('GetSubscription #novu-v2', async () => {
 
   describe('workflow run usage limits', () => {
     const pausingUsageLimits: IOrganizationUsageLimits = {
-      workflowRuns: { headroom: 10_000, pauseAtLimit: true },
+      workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: true },
       alerts: { enabled: false, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
     };
     const defaultAlerts = { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS };
@@ -260,7 +260,7 @@ describe('GetSubscription #novu-v2', async () => {
       isUsageLimitsEnabled = true;
     });
 
-    it('should report the limit and a paused state for a Pro organization at its included events plus headroom', async () => {
+    it('should report the limit and a paused state for a Pro organization at its included events plus on-demand limit', async () => {
       await givenOrganization({
         apiServiceLevel: ApiServiceLevelEnum.PRO,
         includedEvents: 30_000,
@@ -273,7 +273,7 @@ describe('GetSubscription #novu-v2', async () => {
       expect(events).to.deep.equal({
         current: 40_000,
         included: 30_000,
-        headroom: 10_000,
+        onDemandLimit: 10_000,
         limit: 40_000,
         isPaused: true,
         onDemandPricePer1k: 1.2,
@@ -285,7 +285,7 @@ describe('GetSubscription #novu-v2', async () => {
       });
     });
 
-    it('should not report a paused state for a Pro organization below its included events plus headroom', async () => {
+    it('should not report a paused state for a Pro organization below its included events plus on-demand limit', async () => {
       await givenOrganization({
         apiServiceLevel: ApiServiceLevelEnum.PRO,
         includedEvents: 30_000,
@@ -298,7 +298,7 @@ describe('GetSubscription #novu-v2', async () => {
       expect(events).to.deep.equal({
         current: 39_999,
         included: 30_000,
-        headroom: 10_000,
+        onDemandLimit: 10_000,
         limit: 40_000,
         isPaused: false,
         onDemandPricePer1k: 1.2,
@@ -309,7 +309,7 @@ describe('GetSubscription #novu-v2', async () => {
       await givenOrganization({
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
         includedEvents: 250_000,
-        usageLimits: { workflowRuns: { headroom: 10_000, pauseAtLimit: false } },
+        usageLimits: { workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: false } },
       });
       notificationsCount = 300_000;
 
@@ -318,7 +318,7 @@ describe('GetSubscription #novu-v2', async () => {
       expect(events).to.deep.equal({
         current: 300_000,
         included: 250_000,
-        headroom: 10_000,
+        onDemandLimit: 10_000,
         limit: 260_000,
         isPaused: false,
         onDemandPricePer1k: 1.2,
@@ -340,7 +340,7 @@ describe('GetSubscription #novu-v2', async () => {
       expect(events).to.deep.equal({
         current: 40_000,
         included: 30_000,
-        headroom: null,
+        onDemandLimit: null,
         limit: null,
         isPaused: false,
         onDemandPricePer1k: 1.2,
@@ -360,7 +360,7 @@ describe('GetSubscription #novu-v2', async () => {
       expect(events).to.deep.equal({
         current: 0,
         included: 5_000_000,
-        headroom: null,
+        onDemandLimit: null,
         limit: null,
         isPaused: false,
         onDemandPricePer1k: null,
@@ -382,7 +382,7 @@ describe('GetSubscription #novu-v2', async () => {
       expect(events).to.deep.equal({
         current: 40_000,
         included: 30_000,
-        headroom: null,
+        onDemandLimit: null,
         limit: null,
         isPaused: false,
         onDemandPricePer1k: 1.2,
@@ -400,7 +400,7 @@ describe('GetSubscription #novu-v2', async () => {
       expect(events).to.deep.equal({
         current: 10_000,
         included: 10_000,
-        headroom: null,
+        onDemandLimit: null,
         limit: null,
         isPaused: true,
         onDemandPricePer1k: null,

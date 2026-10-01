@@ -34,7 +34,7 @@ export const usageLimitsPayloadSchema = z.object({
   /** Included events of a plan that bills on-demand usage past them. */
   includedEvents: z.number().min(0).nullable().optional(),
   /** On-demand events the organization allows on top of `includedEvents`; null or absent without a set limit. */
-  headroom: z.number().min(0).nullable().optional(),
+  onDemandLimit: z.number().min(0).nullable().optional(),
   /** Absent means `upgrade`. */
   cta: usageLimitsCtaSchema.optional(),
 });
@@ -51,11 +51,11 @@ export function usageLimitsDedupKey({
   periodStart,
   percentage,
   allowance,
-  headroom,
-}: Pick<UsageLimitsPayload, 'organizationId' | 'periodStart' | 'percentage' | 'allowance' | 'headroom'>): string {
+  onDemandLimit,
+}: Pick<UsageLimitsPayload, 'organizationId' | 'periodStart' | 'percentage' | 'allowance' | 'onDemandLimit'>): string {
   const periodThresholdKey = `${organizationId}:${periodStart}:${percentage}`;
 
-  if (percentage > 0 && typeof headroom === 'number') {
+  if (percentage > 0 && typeof onDemandLimit === 'number') {
     return `${periodThresholdKey}:${allowance}`;
   }
 
@@ -70,21 +70,6 @@ export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {
     threshold: 1,
     throttleKey: usageLimitsDedupKey(payload),
   } as const;
-}
-
-function upgradeEmailSubject(
-  alertState: UsageLimitsAlertState | undefined,
-  controls: { subject?: string; blockedSubject?: string; alertLevelSubject?: string }
-): string {
-  if (alertState === 'blocked') {
-    return controls.blockedSubject;
-  }
-
-  if (alertState === 'alert_level_reached') {
-    return controls.alertLevelSubject;
-  }
-
-  return controls.subject;
 }
 
 /**
@@ -104,7 +89,7 @@ export const usageLimitsWorkflow = workflow(
       'email',
       async (controls) => {
         const { subject, body: previewText } = copy.notificationText ?? {
-          subject: upgradeEmailSubject(payload.alertState, controls),
+          subject: payload.alertState === 'blocked' ? controls.blockedSubject : controls.subject,
           body: controls.previewText,
         };
 
@@ -117,9 +102,6 @@ export const usageLimitsWorkflow = workflow(
         controlSchema: z.object({
           subject: z.string().default('You are approaching your usage limits'),
           blockedSubject: z.string().default('Usage limit reached: new notifications are blocked'),
-          alertLevelSubject: z
-            .string()
-            .default('Usage alert: you have used {{payload.percentage}}% of your monthly usage alert level'),
           previewText: z.string().default('You have used {{payload.percentage}}% of your monthly events'),
         }),
       }

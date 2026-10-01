@@ -9,7 +9,7 @@ const usageLimitsSchema = new Schema(
     workflowRuns: {
       type: new Schema(
         {
-          headroom: Schema.Types.Number,
+          onDemandLimit: Schema.Types.Number,
           pauseAtLimit: Schema.Types.Boolean,
         },
         { _id: false }
