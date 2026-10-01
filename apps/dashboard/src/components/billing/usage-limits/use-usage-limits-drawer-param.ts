@@ -1,9 +1,6 @@
 import { USAGE_LIMITS_DRAWER_OPEN_VALUE, USAGE_LIMITS_DRAWER_PARAM } from '@novu/shared';
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ROUTES } from '@/utils/routes';
-
-export const USAGE_LIMITS_DRAWER_ROUTE = `${ROUTES.SETTINGS_BILLING}?${USAGE_LIMITS_DRAWER_PARAM}=${USAGE_LIMITS_DRAWER_OPEN_VALUE}`;
 
 /** The drawer's open state lives in `?usageLimits=open`, so any page link can deep-link into it. */
 export function useUsageLimitsDrawerParam() {

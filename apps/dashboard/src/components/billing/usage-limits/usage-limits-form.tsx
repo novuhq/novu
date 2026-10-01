@@ -18,6 +18,7 @@ import { SettingCard } from './setting-card';
 import {
   getOnDemandCost,
   getPauseAtLimitDescription,
+  getUsageAlertsDescription,
   pausesOnSave,
   type UsageLimitsFormValues,
   usageLimitsFormSchema,
@@ -114,11 +115,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
                   <SettingCard
                     label="Usage alerts"
                     tooltip="Notifies your team before on-demand usage adds up."
-                    description={
-                      field.value
-                        ? undefined
-                        : 'Email and inbox alerts when included usage runs out, and at 75%, 90% and 100% of the limit.'
-                    }
+                    description={field.value ? undefined : getUsageAlertsDescription(usage.included, workflowRuns)}
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   >

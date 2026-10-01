@@ -1,3 +1,4 @@
+import { USAGE_LIMITS_DASHBOARD_PATH } from '@novu/shared';
 import type { ReactNode } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -5,7 +6,6 @@ import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use
 import { LinkButton, Icon as LinkButtonIcon } from '@/components/primitives/button-link';
 import { useContactSupport } from '@/hooks/use-contact-support';
 import { formatShortDate } from '@/utils/format-date';
-import { USAGE_LIMITS_DRAWER_ROUTE } from './use-usage-limits-drawer-param';
 import { useUsageLimitsView } from './use-usage-limits-view';
 
 const ACTION_CLASS_NAME = 'text-label-xs text-static-white gap-0.5';
@@ -40,7 +40,7 @@ function PaidUsagePausedBanner({ canEdit }: { canEdit: boolean }) {
         canEdit && (
           // `asChild` keeps only the first child, so the icon goes inside the link instead of `trailingIcon`.
           <LinkButton asChild variant="modifiable" size="sm" className={ACTION_CLASS_NAME}>
-            <Link to={USAGE_LIMITS_DRAWER_ROUTE}>
+            <Link to={USAGE_LIMITS_DASHBOARD_PATH}>
               Edit limits
               <LinkButtonIcon as={RiArrowRightSLine} />
             </Link>
