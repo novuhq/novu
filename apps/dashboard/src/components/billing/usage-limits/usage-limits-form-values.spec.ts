@@ -54,6 +54,12 @@ describe('usage-limits-form-values', () => {
         'Email and inbox alerts when included usage runs out, and at 75%, 90% and 100% of the limit.'
       );
     });
+
+    it('only flags unusually high usage without a limit', () => {
+      expect(getUsageAlertsDescription(INCLUDED, { onDemandLimit: null, pauseAtLimit: false })).toBe(
+        'Email and inbox alerts if usage is much higher than typical for your plan.'
+      );
+    });
   });
 
   describe('pausesOnSave', () => {

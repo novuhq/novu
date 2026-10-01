@@ -51,9 +51,18 @@ export function getPauseAtLimitDescription(included: number, workflowRuns: IWork
   return `Sending stops at ${formatNumber(pauseThreshold)} runs (${formatNumber(included)} included + ${formatNumber(pauseThreshold - included)} on-demand) until the cycle resets.`;
 }
 
-/** Usage alerts measure from the included runs under a higher limit, and from 0 when the limit is the included runs. */
+/**
+ * Usage alerts measure from the included runs under a higher limit, and from 0 when the limit is the included runs.
+ * Without a limit they only flag usage far above the plan's typical volume.
+ */
 export function getUsageAlertsDescription(included: number, workflowRuns: IWorkflowRunsUsageLimit) {
-  if (getWorkflowRunLimit(included, workflowRuns) === included) {
+  const limit = getWorkflowRunLimit(included, workflowRuns);
+
+  if (limit === null) {
+    return 'Email and inbox alerts if usage is much higher than typical for your plan.';
+  }
+
+  if (limit === included) {
     return 'Email and inbox alerts at 75%, 90% and 100% of your included runs.';
   }
 
