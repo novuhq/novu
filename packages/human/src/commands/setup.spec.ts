@@ -24,7 +24,7 @@ vi.mock('../api/setup', () => ({
 }));
 
 vi.mock('../qr', () => ({ renderQR: vi.fn((text: string) => `<QR ${text}>`) }));
-vi.mock('../cli-io', () => ({ info: vi.fn(), promptLine: vi.fn() }));
+vi.mock('../cli-io', () => ({ info: vi.fn(), promptLine: vi.fn(), promptSecret: vi.fn() }));
 
 const api = await import('../api/setup');
 const { connectSlack, connectTelegram, resolveOperatorName } = await import('./setup');
@@ -51,17 +51,20 @@ const mobileLink = {
   expiresAt: new Date().toISOString(),
 };
 
+/** `prompt` and `promptSecret` share one answer queue, so tests list answers in prompt order. */
 function makeIo(isTTY: boolean, answers: readonly string[] = []) {
   const chunks: string[] = [];
   const queue = [...answers];
-  const prompt = vi.fn(async () => {
+  const nextAnswer = async () => {
     const next = queue.shift();
     if (next === undefined) {
       throw new Error('unexpected prompt');
     }
 
     return next;
-  });
+  };
+  const prompt = vi.fn(nextAnswer);
+  const promptSecret = vi.fn(nextAnswer);
 
   return {
     io: {
@@ -71,8 +74,10 @@ function makeIo(isTTY: boolean, answers: readonly string[] = []) {
       },
       openInBrowser: vi.fn(),
       prompt,
+      promptSecret,
     },
     prompt,
+    promptSecret,
     output: () => chunks.join(''),
   };
 }
@@ -163,12 +168,14 @@ describe('connectTelegram', () => {
   it('saves a bot token pasted in the terminal when that is the chosen path', async () => {
     mocked.hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValue(true);
     mocked.issueTelegramSubscriberLink.mockRejectedValueOnce(missingBotToken).mockResolvedValue(deepLink);
-    const { io, output, prompt } = makeIo(true, ['1', 'not-a-token', '123456:ABC-def']);
+    const { io, output, prompt, promptSecret } = makeIo(true, ['1', 'not-a-token', '123456:ABC-def']);
 
     await expect(connectTelegram(makeClient(), 'human-relay', 'sub_1', {}, io)).resolves.toBe('tg');
 
     expect(prompt).toHaveBeenCalledWith('Choice [1-2]: ');
-    expect(prompt).toHaveBeenCalledWith('Telegram bot token: ');
+    expect(prompt).not.toHaveBeenCalledWith('Telegram bot token: ');
+    // The token is a credential — it must go through the non-echoing prompt.
+    expect(promptSecret).toHaveBeenCalledWith('Telegram bot token: ');
     expect(mocked.consumeTelegramMobileLink).toHaveBeenCalledWith(expect.anything(), {
       token: mobileLink.token,
       botToken: '123456:ABC-def',
@@ -269,11 +276,12 @@ describe('connectSlack', () => {
   it('creates the app from a token pasted in the terminal', async () => {
     mocked.hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValue(true);
     mocked.generateConnectOauthUrl.mockRejectedValueOnce(missingSlackCredentials).mockResolvedValue(authorizeUrl);
-    const { io, output, prompt } = makeIo(true, ['paste', 'xoxb-nope', 'xoxe.xoxp-pasted']);
+    const { io, output, prompt, promptSecret } = makeIo(true, ['paste', 'xoxb-nope', 'xoxe.xoxp-pasted']);
 
     await expect(connectSlack(makeClient(), 'agent_1', 'human-relay', 'sub_1', {}, io)).resolves.toBe('sl');
 
-    expect(prompt).toHaveBeenCalledWith('Slack App Configuration Token: ');
+    expect(prompt).not.toHaveBeenCalledWith('Slack App Configuration Token: ');
+    expect(promptSecret).toHaveBeenCalledWith('Slack App Configuration Token: ');
     expect(mocked.slackQuickSetup).toHaveBeenCalledWith(expect.anything(), 'int_slack', {
       configToken: 'xoxe.xoxp-pasted',
       agentId: 'agent_1',
@@ -285,6 +293,38 @@ describe('connectSlack', () => {
     expect(output()).not.toContain('channel=slack');
     expect(io.openInBrowser).toHaveBeenCalledTimes(1);
     expect(io.openInBrowser).toHaveBeenCalledWith(authorizeUrl);
+  });
+
+  it('re-prompts when Slack rejects the pasted token (400 — no app was created)', async () => {
+    mocked.hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValue(true);
+    mocked.generateConnectOauthUrl.mockRejectedValueOnce(missingSlackCredentials).mockResolvedValue(authorizeUrl);
+    mocked.slackQuickSetup
+      .mockRejectedValueOnce(new HumanApiError('Slack app creation failed: invalid_token.', 400, 'POST /q', {}))
+      .mockResolvedValueOnce(undefined);
+    const { io, output, promptSecret } = makeIo(true, ['1', 'xoxe.xoxp-expired', 'xoxe.xoxp-fresh']);
+
+    await expect(connectSlack(makeClient(), 'agent_1', 'human-relay', 'sub_1', {}, io)).resolves.toBe('sl');
+
+    expect(promptSecret).toHaveBeenCalledTimes(2);
+    expect(mocked.slackQuickSetup).toHaveBeenCalledTimes(2);
+    expect(output()).toContain('invalid_token');
+  });
+
+  it('stops after a 409 instead of re-prompting — the app already exists on Slack', async () => {
+    mocked.hasChannelEndpoint.mockResolvedValue(false);
+    mocked.generateConnectOauthUrl.mockRejectedValue(missingSlackCredentials);
+    mocked.slackQuickSetup.mockRejectedValueOnce(
+      new HumanApiError('Integration is already linked to a different agent', 409, 'POST /q', {})
+    );
+    const { io, promptSecret } = makeIo(true, ['1', 'xoxe.xoxp-token', 'xoxe.xoxp-should-not-be-asked']);
+
+    await expect(connectSlack(makeClient(), 'agent_1', 'human-relay', 'sub_1', {}, io)).rejects.toThrow(
+      'already linked to a different agent'
+    );
+
+    // A second paste would create a second Slack app the human then has to delete.
+    expect(promptSecret).toHaveBeenCalledTimes(1);
+    expect(mocked.slackQuickSetup).toHaveBeenCalledTimes(1);
   });
 
   it('creates the app from --slack-config-token without the landing page', async () => {

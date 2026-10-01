@@ -20,7 +20,7 @@ import {
   listIntegrations,
   slackQuickSetup,
 } from '../api/setup';
-import { info, promptLine } from '../cli-io';
+import { info, promptLine, promptSecret } from '../cli-io';
 import {
   configPath,
   DEFAULT_API_URL,
@@ -255,6 +255,8 @@ export interface TelegramSetupIo {
   write: (text: string) => void;
   openInBrowser: (url: string) => void;
   prompt: (question: string) => Promise<string>;
+  /** Same as `prompt`, but the answer is not echoed — for pasted credentials. */
+  promptSecret: (question: string) => Promise<string>;
 }
 
 /** Where the human supplies Telegram or Slack credentials. */
@@ -278,6 +280,7 @@ const defaultTelegramSetupIo: TelegramSetupIo = {
   write: (text) => process.stdout.write(text),
   openInBrowser,
   prompt: promptLine,
+  promptSecret,
 };
 
 /**
@@ -391,7 +394,7 @@ async function promptForBotToken(io: TelegramSetupIo): Promise<string> {
   );
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const token = (await io.prompt('Telegram bot token: ')).trim();
+    const token = (await io.promptSecret('Telegram bot token: ')).trim();
     if (/^\d+:[\w-]+$/.test(token)) {
       return token;
     }
@@ -682,7 +685,7 @@ async function promptAndRunSlackQuickSetup(
   );
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const token = (await io.prompt('Slack App Configuration Token: ')).trim();
+    const token = (await io.promptSecret('Slack App Configuration Token: ')).trim();
     const formatError = validateSlackConfigTokenFormat(token);
     if (formatError) {
       io.write(`${pc.yellow(formatError)}\n`);
@@ -695,7 +698,10 @@ async function promptAndRunSlackQuickSetup(
 
       return;
     } catch (err) {
-      if (!(err instanceof HumanApiError) || err.status === 0 || err.status >= 500) throw err;
+      // Only a 400 means Slack rejected the token before any app was created.
+      // Anything else (409 link conflict, 404, 5xx) happens after or outside
+      // that step — re-pasting would create a second app, so stop here.
+      if (!(err instanceof HumanApiError) || err.status !== 400) throw err;
       io.write(`${pc.yellow(err.message)}\n`);
     }
   }
