@@ -1,18 +1,9 @@
-import { SeverityLevelEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { IsArray, IsIn, IsInt, IsISO8601, IsOptional, IsString, Max, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
-export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit: number;
-
-  @IsOptional()
-  @IsString()
-  cursor?: string;
-
+export class WorkflowRunFiltersCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -64,4 +55,25 @@ export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   @IsArray()
   @IsString({ each: true })
   contextKeys?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(Object.values(DeliveryLifecycleStatusEnum), { each: true })
+  deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum[];
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(Object.values(DeliveryLifecycleDetail), { each: true })
+  deliveryLifecycleDetail?: DeliveryLifecycleDetail[];
+}
+
+export class GetWorkflowRunsCommand extends WorkflowRunFiltersCommand {
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number;
+
+  @IsOptional()
+  @IsString()
+  cursor?: string;
 }
