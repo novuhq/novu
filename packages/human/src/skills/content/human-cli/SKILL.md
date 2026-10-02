@@ -56,6 +56,21 @@ reachable (chat, PR description, logs) rather than silently giving up or
 looping. Never attempt to configure it on the human's behalf — you don't have
 their Telegram/Slack/email credentials, and setup is interactive by design.
 
+If you do run `human setup telegram` or `human setup slack` on a TTY, the human
+chooses whether to paste credentials in the terminal or open a setup page.
+Without a TTY it prints a single URL and blocks (up to 15 minutes) while they
+finish on that page:
+
+- Telegram: `https://www.gethuman.md/connect#…` — they create a bot with
+  @BotFather and tap Start.
+- Slack: `https://www.gethuman.md/connect?channel=slack#…` — they paste an App
+  Configuration Token (`xoxe.xoxp-…`) and click Add to Slack.
+
+Without a TTY, forward that URL verbatim and wait. Never ask them for a bot
+token or a Slack token, and never paste one yourself. Exit code 11 means they
+didn't finish in time — nothing is broken, re-running the same command resumes
+at the missing step.
+
 The no-account (keyless) setup is a free demo with a small message allowance.
 When it runs out, commands exit 1 with a message containing a sign-up link:
 

@@ -8,6 +8,8 @@ import {
 import { PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { GenerateConnectOauthUrlCommand } from '../../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
+import { GenerateConnectOauthUrl } from '../../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { SlackQuickSetupCommand } from '../../../../integrations/usecases/slack-quick-setup/slack-quick-setup.command';
 import { SlackQuickSetup } from '../../../../integrations/usecases/slack-quick-setup/slack-quick-setup.usecase';
 import {
@@ -19,6 +21,8 @@ import { ConsumeSlackSetupLinkCommand } from './consume-slack-setup-link.command
 
 export interface ConsumeSlackSetupLinkResult {
   success: true;
+  /** Slack OAuth install URL when the setup token was bound to a subscriber. */
+  authorizeUrl?: string;
 }
 
 /**
@@ -34,6 +38,7 @@ export class ConsumeSlackSetupLink {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly slackQuickSetupUsecase: SlackQuickSetup,
+    private readonly generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -63,7 +68,7 @@ export class ConsumeSlackSetupLink {
           _environmentId: payload.env,
           _organizationId: payload.org,
         },
-        '_id providerId'
+        '_id providerId identifier'
       );
 
       if (!integration) {
@@ -85,7 +90,13 @@ export class ConsumeSlackSetupLink {
         })
       );
 
-      return { success: true };
+      const authorizeUrl = await this.buildAuthorizeUrl(payload, integration.identifier);
+
+      if (!authorizeUrl) {
+        return { success: true };
+      }
+
+      return { success: true, authorizeUrl };
     } catch (err) {
       try {
         await this.tokenService.release(command.token, claimed);
@@ -94,6 +105,36 @@ export class ConsumeSlackSetupLink {
       }
       this.logger.warn(`Slack setup consume failed: ${(err as Error).message}`);
       throw err;
+    }
+  }
+
+  /**
+   * Best-effort: the Slack app is already created, so a failure here must not
+   * roll the token back. The page falls back to "return to your terminal".
+   */
+  private async buildAuthorizeUrl(
+    payload: SlackAgentSetupLinkPayload,
+    integrationIdentifier: string | undefined
+  ): Promise<string | undefined> {
+    if (!payload.sid || !integrationIdentifier) {
+      return undefined;
+    }
+
+    try {
+      return await this.generateConnectOauthUrlUsecase.execute(
+        GenerateConnectOauthUrlCommand.create({
+          environmentId: payload.env,
+          organizationId: payload.org,
+          subscriberId: payload.sid,
+          integrationIdentifier,
+          connectionMode: 'subscriber',
+          autoLinkUser: true,
+        })
+      );
+    } catch (err) {
+      this.logger.warn(`Slack authorize URL generation failed: ${(err as Error).message}`);
+
+      return undefined;
     }
   }
 

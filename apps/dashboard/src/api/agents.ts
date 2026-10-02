@@ -1205,6 +1205,7 @@ export async function getSlackSetupStatus(token: string, signal?: AbortSignal): 
 
 export type SubmitSlackSetupCredentialsResult = {
   success: true;
+  authorizeUrl?: string;
 };
 
 export type SubmitSlackSetupCredentialsError = {
