@@ -1,3 +1,11 @@
+import {
+  type JsonBody,
+  readErrorMessage,
+  readErrorCode as readRawErrorCode,
+  safeJson,
+  unwrapData,
+} from './api-response';
+
 export type InviteChannelVia = 'telegram' | 'slack';
 
 export type InviteChannel = {
@@ -102,45 +110,11 @@ async function request<T>(url: string, init: RequestInit, fallbackMessage: strin
     throw new InviteRequestError(readErrorCode(data), readErrorMessage(data) ?? fallbackMessage, response.status);
   }
 
-  // The API wraps every successful body in `{ data: ... }`.
-  return (data && 'data' in data ? data.data : data) as T;
+  return unwrapData<T>(data);
 }
 
-type JsonBody = Record<string, unknown> | null;
-
-async function safeJson(response: Response): Promise<JsonBody> {
-  try {
-    const body = await response.json();
-
-    return body && typeof body === 'object' ? body : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Nest's HttpException with an object payload nests the response under `message`. */
 function readErrorCode(data: JsonBody): InviteErrorCode {
-  const message = data?.message;
-  const candidate =
-    typeof message === 'object' && message !== null && 'code' in message
-      ? (message as { code?: unknown }).code
-      : data?.code;
+  const candidate = readRawErrorCode(data);
 
-  return typeof candidate === 'string' && KNOWN_ERROR_CODES.has(candidate) ? (candidate as InviteErrorCode) : 'unknown';
-}
-
-function readErrorMessage(data: JsonBody): string | undefined {
-  const message = data?.message;
-
-  if (typeof message === 'string') {
-    return message;
-  }
-
-  if (typeof message === 'object' && message !== null && 'message' in message) {
-    const inner = (message as { message?: unknown }).message;
-
-    return typeof inner === 'string' ? inner : undefined;
-  }
-
-  return undefined;
+  return candidate && KNOWN_ERROR_CODES.has(candidate) ? (candidate as InviteErrorCode) : 'unknown';
 }

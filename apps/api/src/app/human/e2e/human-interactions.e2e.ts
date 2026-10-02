@@ -635,14 +635,14 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(third.status).to.equal(429, JSON.stringify(third.body));
       expect(third.body.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
       expect(third.body.cap).to.equal(2);
-      expect(third.body.claimUrl).to.match(/\/connect\/claim\?token=/);
+      expect(third.body.claimUrl).to.match(/\/claim\?token=/);
       expect(third.body.message).to.include(third.body.claimUrl);
 
       // The human got the CTA card on the channel the prompt would have used — not the prompt itself.
       const sends = telegramSends();
       expect(sends.length).to.equal(sendsBefore + 1);
       const cta = JSON.stringify(sends[sends.length - 1].payload);
-      expect(cta).to.include('connect/claim');
+      expect(cta).to.include('/claim?token=');
       expect(cta).to.include('Sign up');
       expect(cta).to.not.include('Three?');
 

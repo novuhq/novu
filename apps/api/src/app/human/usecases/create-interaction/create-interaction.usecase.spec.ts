@@ -373,7 +373,7 @@ describe('CreateInteraction', () => {
       expect((thrown as HttpException).getStatus()).to.equal(429);
       expect(response.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
       expect(response.cap).to.equal(2);
-      expect(response.claimUrl).to.match(/\/connect\/claim\?token=tok$/);
+      expect(response.claimUrl).to.match(/\/claim\?token=tok$/);
       expect(response.message).to.include(response.claimUrl as string);
 
       expect(humanInteractionRepository.create.called).to.equal(false);
