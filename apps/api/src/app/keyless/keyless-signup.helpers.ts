@@ -1,4 +1,5 @@
 import type { CardElement } from 'chat';
+import { buildHumanWebsiteUrl } from '../shared/helpers/resolve-human-website-base-url';
 
 export function resolveConnectClaimBaseUrl(): string {
   for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
@@ -17,6 +18,18 @@ export function resolveConnectClaimBaseUrl(): string {
 
 export function buildConnectClaimUrl(token: string): string {
   return `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
+}
+
+/**
+ * Human keyless setups are claimed on the Human website when one is configured,
+ * and on the dashboard otherwise (self-hosted, or before the website is live).
+ */
+export function buildHumanClaimUrl(token: string): string {
+  if (!process.env.HUMAN_WEBSITE_URL?.trim()) {
+    return buildConnectClaimUrl(token);
+  }
+
+  return buildHumanWebsiteUrl('/claim', { token });
 }
 
 export function buildKeylessWelcomeCard(welcomeText: string, claimUrl: string): CardElement {

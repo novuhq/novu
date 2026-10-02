@@ -42,3 +42,57 @@ export function sanitizeInAppRedirect(url?: string, target?: unknown): InAppRedi
     ...(isValidInAppRedirectTarget(target) ? { target } : {}),
   };
 }
+
+type CtaUrlFields = {
+  url?: string;
+  target?: unknown;
+};
+
+type SanitizableMessageCta = {
+  data?: CtaUrlFields;
+  action?: {
+    buttons?: CtaUrlFields[];
+  };
+};
+
+function omitUnsafeRedirect<T extends CtaUrlFields>(fields: T): T {
+  const redirect = sanitizeInAppRedirect(fields.url, fields.target);
+  const { url: _url, target: _target, ...rest } = fields;
+
+  if (!redirect) {
+    return rest as T;
+  }
+
+  return {
+    ...rest,
+    url: redirect.url,
+    ...(redirect.target ? { target: redirect.target } : {}),
+  } as T;
+}
+
+/**
+ * Removes CTA redirect URLs and targets that fail the in-app redirect allowlist.
+ * Button labels and the rest of the CTA are preserved.
+ */
+export function sanitizeMessageCta<T extends SanitizableMessageCta>(cta: T): T;
+export function sanitizeMessageCta(cta: undefined): undefined;
+export function sanitizeMessageCta<T extends SanitizableMessageCta>(cta?: T): T | undefined {
+  if (!cta) {
+    return undefined;
+  }
+
+  const sanitized = { ...cta };
+
+  if (cta.data) {
+    sanitized.data = omitUnsafeRedirect(cta.data);
+  }
+
+  if (cta.action?.buttons) {
+    sanitized.action = {
+      ...cta.action,
+      buttons: cta.action.buttons.map((button) => omitUnsafeRedirect(button)),
+    };
+  }
+
+  return sanitized;
+}

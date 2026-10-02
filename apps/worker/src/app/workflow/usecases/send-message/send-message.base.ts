@@ -63,11 +63,11 @@ export function combineProviderOverrides(
   bridgeData: BridgeProviderOverrides | null | undefined,
   overrides: TriggerOverrides | undefined,
   stepId: string | undefined,
-  integrationId: string
+  providerId: string
 ): Record<string, unknown> {
-  const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
-  const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
-  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
+  const bridgeProviderData = bridgeData?.providers?.[providerId] || {};
+  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
+  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
 
   return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
 }

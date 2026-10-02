@@ -84,6 +84,23 @@ export function resolveTo(config: HumanCliConfig, toFlag?: string): string | str
   return config.subscriberId;
 }
 
+/**
+ * Which of your channel defaults apply to a send. HUMAN_VIA pairs with HUMAN_TO
+ * as the default recipient (the headless setup), so it applies unless `--to`
+ * names someone else. The saved default channel describes how *you* like to be
+ * reached, so it only applies when every resolved recipient is you.
+ */
+export function channelDefaultsFor(
+  config: HumanCliConfig,
+  toFlag: string | undefined,
+  recipients: string | string[]
+): { useEnvVia: boolean; useSavedDefault: boolean } {
+  const ids = Array.isArray(recipients) ? recipients : [recipients];
+  const onlyYou = ids.length > 0 && ids.every((id) => id === config.subscriberId);
+
+  return { useEnvVia: !toFlag || onlyYou, useSavedDefault: onlyYou };
+}
+
 /** Shared engine behind ask / approve / choose / tell. */
 export async function runInteraction(kind: InteractionKind, prompt: string, options: InteractOptions): Promise<never> {
   try {
@@ -95,9 +112,9 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
       fail(NOT_SET_UP_MESSAGE);
     }
 
-    // `--via`, HUMAN_VIA, or the saved defaultChannel preference; omit
-    // via and the API picks when only one channel is linked.
-    const via = resolveVia(config, options.via);
+    // `--via` always wins. Otherwise only the defaults that fit the recipients
+    // apply; omit via and the API uses each human's own default channel.
+    const via = resolveVia(config, options.via, channelDefaultsFor(config, options.to, to));
 
     const parsedOptions = options.option?.map(parseIdLabelOption);
     const extraActions = options.extraAction?.map(parseIdLabelOption);

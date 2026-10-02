@@ -109,11 +109,11 @@ const SUBSCRIBER_LINK_SUCCESS_REPLY = "You're connected. Notifications from this
 const SUBSCRIBER_LINK_DUPLICATE_REPLY =
   'This chat is already connected to your account — no changes needed. Send any message to try the agent out.';
 const SUBSCRIBER_LINK_INVALID_REPLY =
-  "This connection link isn't valid — open a fresh link from your Novu dashboard and try again.";
+  "This connection link isn't valid. Ask whoever sent it for a new one and try again.";
 const SUBSCRIBER_LINK_EXPIRED_REPLY =
-  'This connection link has expired. Open a new link from your Novu dashboard and try again.';
+  'This connection link has expired. Ask whoever sent it for a new one and try again.';
 const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
-  "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
+  "This connection link wasn't issued for this bot. Open the link again (or ask for a new one) and make sure you're messaging the same bot.";
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
