@@ -10,11 +10,7 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
-import {
-  appendPoweredByWatermark,
-  buildPoweredByWatermark,
-  contentHasPoweredByWatermark,
-} from '../../shared/util/novu-powered-by-watermark';
+import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -86,6 +82,8 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
   quoteReply?: { messageId: string };
+  /** Deliver by editing this already posted message (a streamed preview) instead of posting. */
+  replacePlatformMessageId?: string;
 };
 
 /**
@@ -128,16 +126,7 @@ export class OutboundGateway {
     // post first, then persist with the delivered message id.
     if (!persist.activityIdentifier) {
       const { result: sent, info } = await this.deliveryInfo.collect(() =>
-        this.postToConversation(
-          target.agentId,
-          target.integrationIdentifier,
-          target.platform,
-          target.platformThreadId,
-          msg,
-          options,
-          target.workspaceId,
-          persist.activityIdentifier
-        )
+        this.sendToConversation(target, msg, options, persist.activityIdentifier)
       );
 
       // In-process deliveries (web) report the authoritative message id so the
@@ -177,18 +166,9 @@ export class OutboundGateway {
 
     try {
       const { result: sent, info } = await this.deliveryInfo.collect(() =>
-        this.postToConversation(
-          target.agentId,
-          target.integrationIdentifier,
-          target.platform,
-          target.platformThreadId,
-          msg,
-          options,
-          target.workspaceId,
-          persist.activityIdentifier
-        )
+        this.sendToConversation(target, msg, options, persist.activityIdentifier)
       );
-      const platformMessageId = info.messageId ?? sent.messageId;
+      const platformMessageId = options?.replacePlatformMessageId ?? info.messageId ?? sent.messageId;
 
       await this.conversation.setAgentMessagePlatformMessageId({
         environmentId: persist.environmentId,
@@ -210,6 +190,37 @@ export class OutboundGateway {
 
       throw err;
     }
+  }
+
+  private sendToConversation(
+    target: ConversationTarget,
+    msg: OutboundMessage,
+    options: OutboundDeliveryOptions | undefined,
+    activityIdentifier: string | undefined
+  ): Promise<SentMessageInfo> {
+    if (options?.replacePlatformMessageId) {
+      return this.editInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        options.replacePlatformMessageId,
+        msg,
+        options,
+        target.workspaceId
+      );
+    }
+
+    return this.postToConversation(
+      target.agentId,
+      target.integrationIdentifier,
+      target.platform,
+      target.platformThreadId,
+      msg,
+      options,
+      target.workspaceId,
+      activityIdentifier
+    );
   }
 
   async edit(
@@ -356,8 +367,12 @@ export class OutboundGateway {
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
 
-  /** Posts markdown text as it arrives; the chat SDK streams natively or throttles post + edit. */
-  async streamToConversation(target: ConversationTarget, chunks: AsyncIterable<string>): Promise<SentMessageInfo> {
+  /**
+   * Shows text while it is generated (chat SDK native streaming, or throttled post + edit).
+   * A preview is not a delivery: nothing is persisted or branded. Replace it through
+   * `deliver()` with `replacePlatformMessageId`, or delete it.
+   */
+  async streamPreview(target: ConversationTarget, chunks: AsyncIterable<string>): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(target.agentId, target.integrationIdentifier);
     const chat = await this.registry.getOrCreate(
       `${target.agentId}:${target.integrationIdentifier}`,
@@ -366,14 +381,6 @@ export class OutboundGateway {
       config
     );
     const thread = chat.thread(target.platformThreadId);
-    const watermark = config.removeNovuBranding
-      ? undefined
-      : buildPoweredByWatermark(config.agentIdentifier, config.platform);
-
-    async function* branded(): AsyncIterable<string> {
-      yield* chunks;
-      if (watermark) yield `\n\n${watermark}`;
-    }
 
     const sent = await this.runWithPlatformToken(
       chat,
@@ -381,7 +388,7 @@ export class OutboundGateway {
       target.agentId,
       target.platformThreadId,
       target.workspaceId,
-      () => thread.post(branded())
+      () => thread.post(chunks)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };

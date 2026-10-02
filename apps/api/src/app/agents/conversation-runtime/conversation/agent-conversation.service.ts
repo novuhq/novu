@@ -381,17 +381,6 @@ export class AgentConversationService {
     return this.ledger.setAgentMessagePlatformMessageId(params);
   }
 
-  async completeAgentMessage(params: {
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    activityId: string;
-    platformMessageId: string;
-    content: string;
-  }): Promise<void> {
-    return this.ledger.completeAgentMessage(params);
-  }
-
   async deleteAgentMessage(params: {
     environmentId: string;
     organizationId: string;

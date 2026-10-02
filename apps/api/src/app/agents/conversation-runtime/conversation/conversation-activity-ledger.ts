@@ -333,32 +333,6 @@ export class ConversationActivityLedger {
     );
   }
 
-  /** Fills in a message persisted before its text was known (a streamed reply). */
-  async completeAgentMessage(params: {
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    activityId: string;
-    platformMessageId: string;
-    content: string;
-  }): Promise<void> {
-    await this.activityRepository.update(
-      {
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        _conversationId: params.conversationId,
-        _id: params.activityId,
-      },
-      { $set: { platformMessageId: params.platformMessageId, content: params.content } }
-    );
-    await this.conversationRepository.touchPreview(
-      params.environmentId,
-      params.organizationId,
-      params.conversationId,
-      params.content
-    );
-  }
-
   async deleteAgentMessage(params: {
     environmentId: string;
     organizationId: string;

@@ -197,7 +197,16 @@ export class AgentEventSink {
 
       case 'message-start':
         if (context.source === 'managed') {
-          this.liveReplyStreamer.start(context, event.messageId);
+          // The final text replaces the preview through the same path as the `message` webhook.
+          this.liveReplyStreamer.start(context, event.messageId, (text, previewMessageId) =>
+            this.handleMessageEvent(
+              { type: 'message', role: 'assistant', messageId: event.messageId, content: { markdown: text } },
+              baseFields,
+              context,
+              envelope.runId,
+              previewMessageId
+            )
+          );
         }
 
         return 'accepted';
@@ -302,7 +311,8 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'message' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string
+    runId: string,
+    replacePlatformMessageId?: string
   ): Promise<IngestOutcome> {
     // Runtime ingest accepts assistant messages only. Subscriber turns arrive
     // through the inbound HTTP endpoint, not through this path.
@@ -334,6 +344,7 @@ export class AgentEventSink {
         reply,
         quoteReply: event.quoteReply,
         activityIdentifier: event.messageId,
+        replacePlatformMessageId,
       }),
       context,
       'message',
