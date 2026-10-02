@@ -101,8 +101,8 @@ export class SessionObserver extends Agent<Env, State> {
 
   /* ---------- RPC: live reply text ---------- */
 
-  async openLive(messageId: string): Promise<ReadableStream<Uint8Array> | null> {
-    return (this.live ?? new LiveReplies()).open(messageId);
+  async openLive(messageId: string): Promise<ReadableStream<Uint8Array> | 'unknown' | 'busy'> {
+    return this.live?.open(messageId) ?? 'unknown';
   }
 
   /* ---------- RPC: message queue ---------- */

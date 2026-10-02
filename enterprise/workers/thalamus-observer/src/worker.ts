@@ -95,7 +95,10 @@ export default {
         }
         const stub = await getAgentByName<Env, SessionObserver>(env.SESSION_OBSERVER, sessionId);
         const stream = await stub.openLive(messageId);
-        if (!stream) {
+        if (stream === 'unknown') {
+          return new Response('No reply is being generated with this id', { status: 404 });
+        }
+        if (stream === 'busy') {
           return new Response('Another reader owns this reply', { status: 409 });
         }
 

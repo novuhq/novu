@@ -12,8 +12,8 @@ interface Reply {
 
 /**
  * Text of the replies still being generated in one observation, relayed to at most
- * one `/live` reader per reply. Previews are best effort: nothing here is persisted,
- * the durable `message` webhook stays the record.
+ * one `/live` reader per reply. Previews are best effort and nothing here is persisted;
+ * a completed reply ends with its `message` text, which the durable webhook also carries.
  */
 export class LiveReplies {
   private replies = new Map<string, Reply>();
@@ -30,17 +30,9 @@ export class LiveReplies {
         this.send(reply, { type: 'text', text: part.text });
         return;
       }
-      case 'message': {
-        const id = part.messageId;
-        const reply = id ? this.replies.get(id) : undefined;
-        if (!id || !reply) return;
-        // Shed deltas leave a prefix of the final text: send the part the reader missed.
-        if (part.text.length > reply.text.length && part.text.startsWith(reply.text)) {
-          this.send(reply, { type: 'text', text: part.text.slice(reply.text.length) });
-        }
-        this.end(id, 'complete');
+      case 'message':
+        if (part.messageId) this.end(part.messageId, { type: 'end', reason: 'complete', text: part.text });
         return;
-      }
       case 'step-done':
         // The model request ended; a reply still open here got no durable message.
         this.endAll('interrupted');
@@ -48,37 +40,30 @@ export class LiveReplies {
     }
   }
 
-  /** Opens the reader stream for a reply, or returns null when it already has a reader. */
-  open(messageId: string): ReadableStream<Uint8Array> | null {
+  /** Opens the reader stream for a reply still being generated. */
+  open(messageId: string): ReadableStream<Uint8Array> | 'unknown' | 'busy' {
     const reply = this.replies.get(messageId);
-    if (reply?.writer) return null;
+    if (!reply) return 'unknown';
+    if (reply.writer) return 'busy';
 
     const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
-    const writer = writable.getWriter();
-    if (!reply) {
-      writer.write(encoder.encode(encodeLiveEvent({ type: 'end', reason: 'complete' }))).catch(() => {});
-      writer.close().catch(() => {});
-
-      return readable;
-    }
-
-    reply.writer = writer;
+    reply.writer = writable.getWriter();
     reply.ping = setInterval(() => this.write(reply, ': ping\n\n'), PING_INTERVAL_MS);
     if (reply.text) this.send(reply, { type: 'text', text: reply.text });
 
     return readable;
   }
 
-  endAll(reason: LiveEndReason): void {
-    for (const id of [...this.replies.keys()]) this.end(id, reason);
+  endAll(reason: Exclude<LiveEndReason, 'complete'>): void {
+    for (const id of [...this.replies.keys()]) this.end(id, { type: 'end', reason });
   }
 
-  private end(messageId: string, reason: LiveEndReason): void {
+  private end(messageId: string, event: Extract<LiveEvent, { type: 'end' }>): void {
     const reply = this.replies.get(messageId);
     if (!reply) return;
     this.replies.delete(messageId);
     const { writer } = reply;
-    this.send(reply, { type: 'end', reason });
+    this.send(reply, event);
     this.detach(reply);
     writer?.close().catch(() => {});
   }
