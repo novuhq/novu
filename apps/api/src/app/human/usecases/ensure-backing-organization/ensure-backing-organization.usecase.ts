@@ -16,8 +16,12 @@ import { EnsureBackingOrganizationCommand } from './ensure-backing-organization.
 const LOCK_KEY_PREFIX = 'human_backing_account_lock:';
 const LOCK_TTL_SECONDS = 60;
 
+function pickDevelopmentEnvironment(environments: EnvironmentEntity[]): EnvironmentEntity | undefined {
+  return environments.find((env) => env.type === EnvironmentTypeEnum.DEV && !env._parentId);
+}
+
 export function findBackingDevelopmentEnvironment(environments: EnvironmentEntity[]): EnvironmentEntity {
-  const development = environments.find((env) => env.type === EnvironmentTypeEnum.DEV && !env._parentId);
+  const development = pickDevelopmentEnvironment(environments);
   if (!development) {
     throw new NotFoundException('The Development environment of this Human account was not found.');
   }
@@ -49,15 +53,9 @@ export class EnsureBackingOrganization {
         firstName: command.firstName,
         lastName: command.lastName,
       });
-      const organizationId = await this.ensureNovuOrganization(command.humanUserId, account);
-      const environments = await this.environmentRepository.findOrganizationEnvironments(organizationId);
+      const { organizationId, environmentId } = await this.ensureNovuOrganization(command.humanUserId, account);
 
-      return {
-        organizationId,
-        userId: account.novuUserId,
-        environmentId: findBackingDevelopmentEnvironment(environments)._id,
-        region: resolveHumanRegion(),
-      };
+      return { organizationId, userId: account.novuUserId, environmentId, region: resolveHumanRegion() };
     } finally {
       if (locked) {
         await this.cacheService.del(lockKey);
@@ -85,13 +83,25 @@ export class EnsureBackingOrganization {
     return true;
   }
 
-  private async ensureNovuOrganization(humanUserId: string, account: HumanBackingAccount): Promise<string> {
+  private async ensureNovuOrganization(
+    humanUserId: string,
+    account: HumanBackingAccount
+  ): Promise<{ organizationId: string; environmentId: string }> {
     const existing = await this.communityOrganizationRepository.findOne(
       { externalId: account.clerkOrganizationId },
       '_id'
     );
     if (existing) {
-      return existing._id;
+      const development = pickDevelopmentEnvironment(
+        await this.environmentRepository.findOrganizationEnvironments(existing._id)
+      );
+      if (development) {
+        return { organizationId: existing._id, environmentId: development._id };
+      }
+
+      // An earlier setup stopped before creating the environments. Nothing else hangs off the organization
+      // record at that point, so drop it and run the setup again; it re-links the Clerk organization.
+      await this.communityOrganizationRepository.delete({ _id: existing._id });
     }
 
     const syncExternalOrganization = await this.moduleRef.resolve('SyncOrganizationUsecase', undefined, {
@@ -105,7 +115,10 @@ export class EnsureBackingOrganization {
         headers: {},
       })
     );
+    const development = findBackingDevelopmentEnvironment(
+      await this.environmentRepository.findOrganizationEnvironments(organization._id)
+    );
 
-    return organization._id;
+    return { organizationId: organization._id, environmentId: development._id };
   }
 }

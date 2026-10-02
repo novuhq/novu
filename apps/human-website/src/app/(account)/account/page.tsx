@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { Panel } from '@/components/site/panel';
 import { SiteFrame } from '@/components/site/site-frame';
 import { buttonClassName } from '@/components/ui/button';
-import { ensureStoredBackingAccount } from '@/lib/human-account';
+import { readStoredBackingAccount } from '@/lib/human-account';
 import { getBackingSecretKey } from '@/lib/human-accounts-api';
 import { listContacts, listRelayChannels, type SetupChannel, type SetupContact } from '@/lib/human-setup-api';
 
@@ -17,11 +17,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type Setup = { status: 'ready'; channels: SetupChannel[]; contacts: SetupContact[] } | { status: 'unavailable' };
+type Setup =
+  | { status: 'ready'; channels: SetupChannel[]; contacts: SetupContact[]; moreContacts: boolean }
+  | { status: 'empty' }
+  | { status: 'unavailable' };
 
 /**
- * The operator's Human account. The first visit after a plain sign-up creates the backing
- * organization; the setup is read on the server with the environment's key.
+ * The operator's Human account. Visiting it never creates the backing organization (the first claim
+ * does, in that link's region); the setup is read on the server with the environment's key.
  */
 export default async function AccountPage(props: PageProps<'/account'>) {
   const user = await currentUser();
@@ -60,15 +63,19 @@ export default async function AccountPage(props: PageProps<'/account'>) {
 }
 
 async function loadSetup(user: User): Promise<Setup> {
+  const account = readStoredBackingAccount(user);
+  if (!account) {
+    return { status: 'empty' };
+  }
+
   try {
-    const account = await ensureStoredBackingAccount(user, 'us');
     const { secretKey } = await getBackingSecretKey(account.region, user.id);
-    const [channels, contacts] = await Promise.all([
+    const [channels, { contacts, hasMore }] = await Promise.all([
       listRelayChannels(account.region, secretKey),
       listContacts(account.region, secretKey),
     ]);
 
-    return { status: 'ready', channels, contacts };
+    return { status: 'ready', channels, contacts, moreContacts: hasMore };
   } catch (error) {
     console.error('Failed to load the Human account setup', error);
 
@@ -88,7 +95,7 @@ function SetupSummary({ setup }: { setup: Setup }) {
     );
   }
 
-  if (setup.channels.length === 0 && setup.contacts.length === 0) {
+  if (setup.status === 'empty' || (setup.channels.length === 0 && setup.contacts.length === 0)) {
     return (
       <p className="text-[15px] leading-[1.375] tracking-tight text-foreground/70">
         Nothing here yet. When your agent sends you a link to keep its setup, its channels and contacts show up here.
@@ -110,6 +117,7 @@ function SetupSummary({ setup }: { setup: Setup }) {
       <SummaryList
         title="Contacts"
         emptyText="No contacts yet."
+        note={setup.moreContacts ? `Showing the first ${setup.contacts.length} contacts.` : undefined}
         rows={setup.contacts.map((contact) => ({
           key: contact.id,
           primary: contact.name,
@@ -122,7 +130,9 @@ function SetupSummary({ setup }: { setup: Setup }) {
 
 type SummaryRow = { key: string; primary: string; secondary: string };
 
-function SummaryList({ title, emptyText, rows }: { title: string; emptyText: string; rows: SummaryRow[] }) {
+type SummaryListProps = { title: string; emptyText: string; note?: string; rows: SummaryRow[] };
+
+function SummaryList({ title, emptyText, note, rows }: SummaryListProps) {
   return (
     <section>
       <h2 className="font-mono text-sm tracking-tight text-foreground/50">{title}</h2>
@@ -138,6 +148,7 @@ function SummaryList({ title, emptyText, rows }: { title: string; emptyText: str
       ) : (
         <p className="mt-3 text-sm tracking-tight text-foreground/60">{emptyText}</p>
       )}
+      {note && <p className="mt-2 font-mono text-xs tracking-tight text-foreground/50">{note}</p>}
     </section>
   );
 }

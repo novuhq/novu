@@ -28,8 +28,9 @@ export function readStoredBackingAccount(user: User): StoredBackingAccount | nul
 }
 
 /**
- * Makes sure the signed-in operator has a backing organization. The first call decides the region
- * (the claim link's, or US for a plain sign-up) and remembers it; later calls reuse what's stored.
+ * Makes sure the signed-in operator has a backing organization. It's only created when something needs it
+ * (today: the first claim), so the region comes from that claim link instead of being fixed at sign-up.
+ * Later calls reuse what's stored.
  */
 export async function ensureStoredBackingAccount(user: User, regionForNewAccount: HumanRegion) {
   const stored = readStoredBackingAccount(user);
@@ -52,4 +53,13 @@ export async function ensureStoredBackingAccount(user: User, regionForNewAccount
   await clerk.users.updateUserMetadata(user.id, { privateMetadata: { [METADATA_KEY]: created } });
 
   return created;
+}
+
+/**
+ * Forgets the backing organization once it's deleted, so a Human account whose own deletion then fails
+ * looks like a fresh sign-up and deleting it again is safe.
+ */
+export async function forgetStoredBackingAccount(userId: string) {
+  const clerk = await clerkClient();
+  await clerk.users.updateUserMetadata(userId, { privateMetadata: { [METADATA_KEY]: null } });
 }
