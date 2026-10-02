@@ -171,7 +171,9 @@ overrides:
   cookie@<0.7.0: ^0.7.0
   tmp@<0.2.7: ^0.2.7
   socket.io-parser@>=4.0.0 <4.2.7: ^4.2.7
-  engine.io@>=6.0.0 <6.6.7: ^6.6.7
+  # GHSA-2gc4-cqfq-p2gv (high): engine.io protocol revision mismatch DoS.
+  # Patched in 6.6.10. Transitive via @nestjs/platform-socket.io > socket.io.
+  engine.io@>=6.0.0 <6.6.10: ^6.6.10
   cross-spawn@<6.0.6: ^6.0.6
   path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
   path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
