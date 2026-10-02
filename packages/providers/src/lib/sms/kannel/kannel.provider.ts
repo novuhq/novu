@@ -7,6 +7,18 @@ import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
+function buildKannelOrigin(host: string, port: string): string {
+  const trimmedHost = host.trim().replace(/\/+$/, '');
+
+  if (/^https?:\/\//i.test(trimmedHost)) {
+    return port ? `${trimmedHost}:${port}` : trimmedHost;
+  }
+
+  const protocol = String(port).trim() === '443' ? 'https' : 'http';
+
+  return `${protocol}://${trimmedHost}:${port}`;
+}
+
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Kannel;
   apiBaseUrl: string;
@@ -24,7 +36,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
-    this.apiBaseUrl = `http://${config.host}:${config.port}/cgi-bin`;
+    this.apiBaseUrl = `${buildKannelOrigin(config.host, config.port)}/cgi-bin`;
     this.axiosInstance = createProviderHttpClient();
   }
 
