@@ -264,7 +264,10 @@ overrides:
   # the 9.1.x patch line.
   nodemailer@<9.1.0: ^9.1.0
   shell-quote@<1.8.5: ^1.8.5
-  piscina@<4.9.3: ^4.9.3
+  # GHSA-67c8-pqhq-4rmx (critical): piscina prototype-pollution gadget in
+  # ThreadPool.options enables RCE via execArgv / loadBalancer / env. Patched
+  # in 4.9.4. Transitive via @swc/cli > @nestjs/cli.
+  piscina@<4.9.4: ^4.9.4
   # GHSA-9crc-q9x8-hgqq: @vitest/mocker path-traversal / arbitrary file read
   # via Redirect Mock; vitest re-exports the vulnerable code. Patched in
   # 4.1.11 (patch bump within the 4.1.x line). Widen the pre-existing
