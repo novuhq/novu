@@ -13,6 +13,7 @@
       "!**/node_modules",
       "!**/dist",
       "!**/build",
+      "!**/.next",
       "!**/.nx",
       "!**/coverage",
       "!**/.git",
