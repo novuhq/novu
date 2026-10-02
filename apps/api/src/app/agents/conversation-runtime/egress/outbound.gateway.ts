@@ -10,7 +10,11 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
-import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import {
+  appendPoweredByWatermark,
+  buildPoweredByWatermark,
+  contentHasPoweredByWatermark,
+} from '../../shared/util/novu-powered-by-watermark';
 import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -347,6 +351,37 @@ export class OutboundGateway {
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       this.deliverThreadMessage(thread, platform, postArg, options?.quoteReply?.messageId)
+    ).catch(toDeliveryError);
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /** Posts markdown text as it arrives; the chat SDK streams natively or throttles post + edit. */
+  async streamToConversation(target: ConversationTarget, chunks: AsyncIterable<string>): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(target.agentId, target.integrationIdentifier);
+    const chat = await this.registry.getOrCreate(
+      `${target.agentId}:${target.integrationIdentifier}`,
+      target.agentId,
+      config.platform,
+      config
+    );
+    const thread = chat.thread(target.platformThreadId);
+    const watermark = config.removeNovuBranding
+      ? undefined
+      : buildPoweredByWatermark(config.agentIdentifier, config.platform);
+
+    async function* branded(): AsyncIterable<string> {
+      yield* chunks;
+      if (watermark) yield `\n\n${watermark}`;
+    }
+
+    const sent = await this.runWithPlatformToken(
+      chat,
+      config,
+      target.agentId,
+      target.platformThreadId,
+      target.workspaceId,
+      () => thread.post(branded())
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };

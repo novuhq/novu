@@ -38,8 +38,8 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
       return [{ type: 'message-start', messageId: part.messageId }];
 
     case 'text-delta':
-      // Unkeyed deltas (OpenAI) cannot be tied to a durable message; drop them.
-      return part.messageId ? [{ type: 'message-delta', messageId: part.messageId, delta: part.text }] : [];
+      // Reply text reaches chat channels through the observer's live stream, not webhooks.
+      return [];
 
     case 'thinking':
       return mapThinkingEvents(part.text);

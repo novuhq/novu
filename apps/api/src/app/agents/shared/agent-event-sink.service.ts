@@ -14,6 +14,7 @@ import { formatToolInputSummary } from '../conversation-runtime/reply/handle-pla
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
+import { LiveReplyStreamer } from '../managed-runtime/live-reply-streamer.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
@@ -75,6 +76,7 @@ export class AgentEventSink {
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
     private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly liveReplyStreamer: LiveReplyStreamer,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -193,6 +195,13 @@ export class AgentEventSink {
 
         return 'accepted';
 
+      case 'message-start':
+        if (context.source === 'managed') {
+          this.liveReplyStreamer.start(context, event.messageId);
+        }
+
+        return 'accepted';
+
       case 'step-start':
       case 'step-end':
       case 'thinking-start':
@@ -204,7 +213,6 @@ export class AgentEventSink {
       case 'tool-approval-response':
       case 'mcp-connection-request':
       case 'mcp-connection-result':
-      case 'message-start':
       case 'message-end':
         this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Agent event no-op');
 
