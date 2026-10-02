@@ -58,7 +58,11 @@ overrides:
   '@types/mocha': ^10.0.8
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
-  '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  # GHSA-m9gg-hp2v-232j (high) / GHSA-f596-whhp-79r4 (low): @grpc/grpc-js
+  # getAuthContext may return unauthorized certificates as authorized, and
+  # server leaks handler error messages to clients. Patched in 1.14.5.
+  # Transitive via @nestjs/terminus and newrelic.
+  '@grpc/grpc-js@>=1.14.0 <1.14.5': ^1.14.5
   # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
   # via `__proto__` in custom message language and `object().rename()` with a
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
