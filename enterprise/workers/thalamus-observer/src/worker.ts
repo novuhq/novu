@@ -87,6 +87,23 @@ export default {
         return new Response(null, { status: 204 });
       }
 
+      if (request.method === 'GET' && path.startsWith('/live/')) {
+        const sessionId = decodeURIComponent(path.slice('/live/'.length));
+        const messageId = url.searchParams.get('messageId');
+        if (!messageId) {
+          return Response.json({ error: 'Invalid params: messageId is required' }, { status: 400 });
+        }
+        const stub = await getAgentByName<Env, SessionObserver>(env.SESSION_OBSERVER, sessionId);
+        const stream = await stub.openLive(messageId);
+        if (!stream) {
+          return new Response('Another reader owns this reply', { status: 409 });
+        }
+
+        return new Response(stream, {
+          headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+        });
+      }
+
       return new Response('Not found', { status: 404 });
     } catch (err) {
       console.error('Worker request failed:', err);
