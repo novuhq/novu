@@ -188,7 +188,7 @@ describe('keyless cap errors', () => {
     const text = formatKeylessCapMessage({ claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
     expect(text).toContain('5 free messages');
     expect(text).toContain('https://dash/connect/claim?token=t');
-    expect(text).toContain('human setup --secret-key');
+    expect(text).toContain('run: human login');
   });
 
   it('routes the cap error through fail with the claim link', () => {

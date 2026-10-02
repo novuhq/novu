@@ -1,4 +1,4 @@
-import { CLI_DEVICE_SESSION_NAME_NOVU_CONNECT } from '@novu/shared';
+import { CLI_DEVICE_SESSION_NAME_HUMAN_CLI, CLI_DEVICE_SESSION_NAME_NOVU_CONNECT } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -57,6 +57,63 @@ describe('CliDeviceSessionService', () => {
     expect(result.expiresIn).to.be.greaterThan(0);
     expect(result.interval).to.be.greaterThan(0);
     expect(cacheService.set.calledOnce).to.be.true;
+  });
+
+  describe('human login sessions', () => {
+    const originalWebsiteUrl = process.env.HUMAN_WEBSITE_URL;
+    const originalRegion = process.env.NOVU_REGION;
+
+    afterEach(() => {
+      restoreEnv('HUMAN_WEBSITE_URL', originalWebsiteUrl);
+      restoreEnv('NOVU_REGION', originalRegion);
+    });
+
+    function restoreEnv(name: string, value: string | undefined) {
+      if (value === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = value;
+      }
+    }
+
+    it('send the CLI to the Human website and wait as long as novu connect', async () => {
+      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md/';
+      delete process.env.NOVU_REGION;
+      const { service } = makeService();
+
+      const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
+
+      expect(result.expiresIn).to.equal(30 * 60);
+      expect(result.verificationUrl).to.equal(`https://gethuman.md/cli/login?code=${result.deviceCode}`);
+    });
+
+    it('carry the EU region from EU deployments', async () => {
+      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
+      process.env.NOVU_REGION = 'eu-central-1';
+      const { service } = makeService();
+
+      const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
+
+      expect(new URL(result.verificationUrl ?? '').searchParams.get('region')).to.equal('eu');
+    });
+
+    it('have no page to open where the Human website is not configured', async () => {
+      delete process.env.HUMAN_WEBSITE_URL;
+      const { service } = makeService();
+
+      const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
+
+      expect(result).not.to.have.property('verificationUrl');
+    });
+
+    it('leave other CLIs on the dashboard', async () => {
+      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
+      const { service } = makeService();
+
+      const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_NOVU_CONNECT });
+
+      expect(result).not.to.have.property('verificationUrl');
+    });
   });
 
   it('returns pending while the dashboard has not approved yet', async () => {

@@ -22,6 +22,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
 import { CreateHumanInviteRequestDto, CreateHumanInviteResponseDto } from './dtos/human-invite.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
+import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
 import { ListContactsQueryDto, ListContactsResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import { SetupHumanRelayRequestDto, SetupHumanRelayResponseDto } from './dtos/setup-human-relay.dto';
@@ -33,6 +34,8 @@ import { CreateInteractionCommand } from './usecases/create-interaction/create-i
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
+import { GetKeylessClaimTokenCommand } from './usecases/get-keyless-claim-token/get-keyless-claim-token.command';
+import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContactsCommand } from './usecases/list-contacts/list-contacts.command';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractionsCommand } from './usecases/list-interactions/list-interactions.command';
@@ -53,7 +56,8 @@ export class HumanInteractionsController {
     private readonly cancelInteractionUsecase: CancelInteraction,
     private readonly setupHumanRelayUsecase: SetupHumanRelay,
     private readonly listContactsUsecase: ListContacts,
-    private readonly createHumanInviteUsecase: CreateHumanInvite
+    private readonly createHumanInviteUsecase: CreateHumanInvite,
+    private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken
   ) {}
 
   @Post('/interactions')
@@ -186,6 +190,24 @@ export class HumanInteractionsController {
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,
+      })
+    );
+  }
+
+  /**
+   * The claim token of the caller's keyless setup. `human login` hands it to the Human website, so
+   * signing in there also moves the setup into the operator's Human account.
+   */
+  @Post('/claim-token')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createClaimToken(@UserSession() user: UserSessionData): Promise<KeylessClaimTokenResponseDto> {
+    return this.getKeylessClaimTokenUsecase.execute(
+      GetKeylessClaimTokenCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }

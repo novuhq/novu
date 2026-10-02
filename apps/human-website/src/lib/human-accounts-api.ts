@@ -5,6 +5,8 @@ import { resolveNovuApiUrl } from './novu-api';
 
 export type HumanRegion = 'us' | 'eu';
 
+export const REGION_NAMES: Record<HumanRegion, string> = { us: 'US', eu: 'EU' };
+
 /** Where a Human account's backing organization lives in Novu. */
 export type BackingAccount = {
   organizationId: string;
@@ -45,6 +47,18 @@ export function claimKeylessSetup(
   return request(region, '/v1/human/accounts/claim', {
     method: 'POST',
     body: { ...toIdentityBody(identity), token },
+  });
+}
+
+/** Approves a `human login` request, so the waiting CLI gets the account's Development key. */
+export function approveCliLogin(
+  region: HumanRegion,
+  identity: Identity & { email?: string | null },
+  deviceCode: string
+): Promise<{ environmentId: string }> {
+  return request(region, '/v1/human/accounts/cli-login', {
+    method: 'POST',
+    body: { ...toIdentityBody(identity), ...(identity.email ? { email: identity.email } : {}), deviceCode },
   });
 }
 

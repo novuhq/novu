@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { ApproveCliDeviceSessionRequest, CreateCliDeviceSessionResponse } from '@novu/shared';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
@@ -22,6 +22,12 @@ export class CreateCliDeviceSessionResponseDto implements CreateCliDeviceSession
 
   @ApiProperty({ type: Number, description: 'Minimum seconds the CLI should wait between poll requests.' })
   interval: number;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Page where the session is approved, for CLIs that are not approved on the dashboard (human login).',
+  })
+  verificationUrl?: string;
 }
 
 export class CliDeviceSessionPollResponseDto {

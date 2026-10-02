@@ -24,8 +24,17 @@ import { CreateInteractionCommand } from './create-interaction.command';
 /** Machine-readable code on the 429 body so `@novu/human` can branch without parsing prose. */
 export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
-const KEYLESS_HUMAN_CLAIMED_MESSAGE =
-  'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
+/**
+ * Where the Human website runs, setups are claimed there and the CLI continues with `human login`.
+ * Elsewhere (self-hosted) they're claimed on the dashboard, and the CLI needs the environment's key.
+ */
+function keylessHumanClaimedMessage(): string {
+  if (process.env.HUMAN_WEBSITE_URL?.trim()) {
+    return 'This setup was moved into your Human account. Run `human login` to keep using it.';
+  }
+
+  return 'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
+}
 
 @Injectable()
 export class CreateInteraction {
@@ -54,7 +63,7 @@ export class CreateInteraction {
     // Once claimed, the relay agent and channels live in the user's own
     // environment; a stale keyless credential must not read as "run setup".
     if (isKeyless && (await this.connectClaimTokenService.isEnvironmentClaimed(command.environmentId))) {
-      throw new ForbiddenException(KEYLESS_HUMAN_CLAIMED_MESSAGE);
+      throw new ForbiddenException(keylessHumanClaimedMessage());
     }
 
     const agent = await this.resolveAgent(command);
