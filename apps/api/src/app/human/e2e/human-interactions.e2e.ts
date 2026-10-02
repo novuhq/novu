@@ -636,6 +636,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(third.body.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
       expect(third.body.cap).to.equal(2);
       expect(third.body.claimUrl).to.match(/\/claim\?token=/);
+      expect(third.body.browserLogin).to.equal(true);
       expect(third.body.message).to.include(third.body.claimUrl);
 
       // The human got the CTA card on the channel the prompt would have used — not the prompt itself.

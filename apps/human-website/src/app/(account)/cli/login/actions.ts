@@ -2,14 +2,8 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 
-import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
-import {
-  approveCliLogin,
-  claimKeylessSetup,
-  HumanAccountsApiError,
-  type HumanRegion,
-  REGION_NAMES,
-} from '@/lib/human-accounts-api';
+import { readStoredBackingAccount, storeBackingAccount } from '@/lib/human-account';
+import { approveCliLogin, HumanAccountsApiError, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 
 export type CliLoginFormState = {
   approved?: boolean;
@@ -18,10 +12,12 @@ export type CliLoginFormState = {
   error?: string;
   /** That setup can't be kept, but logging in without it still works. */
   canSkipClaim?: boolean;
+  /** What was typed, so the field keeps it after an error. */
+  userCode?: string;
 };
 
-/** Device codes of the Novu API's CLI login requests (`CLI_DEVICE_CODE_PATTERN` there). */
-const DEVICE_CODE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+/** Letters of the codes `human login` prints (`CLI_USER_CODE_ALPHABET` in `@novu/shared`). */
+const USER_CODE_LETTERS = /^[BCDFGHJKLMNPQRSTVWXZ]{8}$/;
 
 /** Claim tokens are 32 URL-safe characters (`@novu/shared` `isConnectClaimTokenFormat`). */
 const CLAIM_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
@@ -29,8 +25,9 @@ const CLAIM_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
 const GENERIC_ERROR = 'Something went wrong while logging in. Please try again.';
 
 /**
- * Approves `human login` for the signed-in operator. With a claim token, the CLI's setup made without an
- * account first moves into the Human account, so the CLI carries on with the same contacts and channels.
+ * Approves the `human login` waiting for the code the operator typed. With a claim token, the CLI's setup made
+ * without an account first moves into the Human account, so the CLI carries on with the same contacts and
+ * channels. The API checks the code before it creates or moves anything.
  */
 export async function approveCliLoginAction(
   _previous: CliLoginFormState,
@@ -41,12 +38,17 @@ export async function approveCliLoginAction(
     return { error: 'Your session has ended. Sign in again to log in.' };
   }
 
-  const code = String(formData.get('code') ?? '');
+  const typedCode = String(formData.get('userCode') ?? '');
   const claim = String(formData.get('claim') ?? '');
   const keepSetup = Boolean(claim) && formData.get('keepSetup') !== 'no';
   const region: HumanRegion = formData.get('region') === 'eu' ? 'eu' : 'us';
 
-  if (!DEVICE_CODE_PATTERN.test(code) || (claim && !CLAIM_TOKEN_PATTERN.test(claim))) {
+  const userCode = normalizeUserCode(typedCode);
+  if (!userCode) {
+    return { error: 'Enter the 8-letter code from your terminal, like BCDF-GHJK.', userCode: typedCode };
+  }
+
+  if (claim && !CLAIM_TOKEN_PATTERN.test(claim)) {
     return { error: 'This link isn’t valid. Run human login again for a new one.' };
   }
 
@@ -57,39 +59,56 @@ export async function approveCliLoginAction(
     };
   }
 
-  const identity = { humanUserId: user.id, firstName: user.firstName, lastName: user.lastName };
-
+  let account: Awaited<ReturnType<typeof approveCliLogin>>;
   try {
-    await ensureStoredBackingAccount(user, region);
-  } catch (error) {
-    console.error('Failed to set up the Human account for a CLI login', error);
-
-    return { error: GENERIC_ERROR };
-  }
-
-  if (keepSetup) {
-    try {
-      await claimKeylessSetup(region, identity, claim);
-    } catch (error) {
-      console.error('Failed to keep the keyless setup during a CLI login', error);
-
-      return describeClaimError(error);
-    }
-  }
-
-  try {
-    await approveCliLogin(region, { ...identity, email: user.primaryEmailAddress?.emailAddress }, code);
+    account = await approveCliLogin(
+      region,
+      {
+        humanUserId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.primaryEmailAddress?.emailAddress,
+      },
+      { userCode, claimToken: keepSetup ? claim : undefined }
+    );
   } catch (error) {
     console.error('Failed to approve the CLI login', error);
 
-    return { error: describeLoginError(error) };
+    return { ...describeLoginError(error), userCode };
   }
 
-  return { approved: true, keptSetup: keepSetup };
+  if (!stored) {
+    try {
+      await storeBackingAccount(user.id, {
+        region,
+        organizationId: account.organizationId,
+        userId: account.userId,
+      });
+    } catch (error) {
+      // The CLI is logged in already; the account page catches up on the next login or claim.
+      console.error('Failed to remember the backing organization after a CLI login', error);
+    }
+  }
+
+  return { approved: true, keptSetup: account.keptSetup };
 }
 
-function describeClaimError(error: unknown): CliLoginFormState {
+/** Accepts the code however it's typed: any case, with or without the dash or spaces. */
+function normalizeUserCode(input: string): string | null {
+  const letters = input.toUpperCase().replace(/[^A-Z]/g, '');
+
+  return USER_CODE_LETTERS.test(letters) ? `${letters.slice(0, 4)}-${letters.slice(4)}` : null;
+}
+
+function describeLoginError(error: unknown): CliLoginFormState {
   if (error instanceof HumanAccountsApiError) {
+    if (error.code === 'cli_login_not_found') {
+      return {
+        error:
+          'That code doesn’t match a login waiting in a terminal. Check it, or run human login again for a new one.',
+      };
+    }
+
     if (error.code === 'claim_agent_exists') {
       return {
         error:
@@ -99,18 +118,10 @@ function describeClaimError(error: unknown): CliLoginFormState {
     }
 
     // The claim's own messages ("already been used", "expired", …) are written for people.
-    if (error.status === 400 || error.status === 404 || error.status === 409) {
+    if (error.code?.startsWith('claim_')) {
       return { error: `${error.message} You can still log in without keeping that setup.`, canSkipClaim: true };
     }
   }
 
-  return { error: 'Something went wrong while keeping your setup. Please try again.' };
-}
-
-function describeLoginError(error: unknown): string {
-  if (error instanceof HumanAccountsApiError && error.status === 404) {
-    return 'This login request expired or was already used. Run human login again.';
-  }
-
-  return GENERIC_ERROR;
+  return { error: GENERIC_ERROR };
 }

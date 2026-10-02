@@ -4,7 +4,11 @@ import { EnsureBackingOrganizationCommand } from '../ensure-backing-organization
 export class ApproveHumanCliLoginCommand extends EnsureBackingOrganizationCommand {
   @IsString()
   @IsNotEmpty()
-  deviceCode: string;
+  userCode: string;
+
+  @IsOptional()
+  @IsString()
+  claimToken?: string;
 
   @IsOptional()
   @IsString()

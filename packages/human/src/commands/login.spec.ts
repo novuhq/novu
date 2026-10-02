@@ -32,7 +32,7 @@ vi.mock('../spinner', () => ({ startWaitIndicator: () => () => undefined }));
 
 const { LOGIN_UNAVAILABLE_MESSAGE, runLogin, withClaimToken } = await import('./login');
 
-const LOGIN_URL = 'https://gethuman.md/cli/login?code=device_code';
+const LOGIN_URL = 'https://gethuman.md/cli/login';
 
 const keylessConfig: HumanCliConfig = {
   apiUrl: 'https://api.novu.co',
@@ -56,6 +56,7 @@ describe('runLogin', () => {
       expiresIn: 1800,
       interval: 2,
       verificationUrl: LOGIN_URL,
+      userCode: 'BCDF-GHJK',
     });
     checkLoginRequest.mockResolvedValueOnce({ status: 'pending', expiresIn: 1800, interval: 2 }).mockResolvedValue({
       status: 'approved',
@@ -82,6 +83,10 @@ describe('runLogin', () => {
 
     expect(startLoginRequest).toHaveBeenCalledWith('https://api.novu.co');
     expect(openInBrowser).toHaveBeenCalledWith(LOGIN_URL);
+    // The operator types the code on the page; the device code the CLI polls with is never printed.
+    const printed = stdout.mock.calls.map(([text]) => String(text)).join('');
+    expect(printed).toContain('BCDF-GHJK');
+    expect(printed).not.toContain('device_code');
     expect(checkLoginRequest).toHaveBeenCalledTimes(2);
     expect(getKeylessClaimToken).not.toHaveBeenCalled();
     expect(saveConfig).toHaveBeenCalledWith({
@@ -97,7 +102,7 @@ describe('runLogin', () => {
 
     const result = await runLogin({});
 
-    expect(openInBrowser).toHaveBeenCalledWith(`${LOGIN_URL}&claim=claim_token`);
+    expect(openInBrowser).toHaveBeenCalledWith(`${LOGIN_URL}?claim=claim_token`);
     expect(hasSubscriber).toHaveBeenCalledWith(expect.anything(), 'human_abc');
     expect(saveConfig).toHaveBeenCalledWith({
       apiUrl: 'https://api.novu.co',
@@ -158,8 +163,17 @@ describe('runLogin', () => {
 
   it('explains when the API has no browser login', async () => {
     startLoginRequest.mockResolvedValue({ deviceCode: 'device_code', expiresIn: 300, interval: 2 });
-
     await expect(runLogin({})).rejects.toThrow(LOGIN_UNAVAILABLE_MESSAGE);
+
+    // An API that still puts the device code in the link, without a code to type, isn't used either.
+    startLoginRequest.mockResolvedValue({
+      deviceCode: 'device_code',
+      expiresIn: 300,
+      interval: 2,
+      verificationUrl: `${LOGIN_URL}?code=device_code`,
+    });
+    await expect(runLogin({})).rejects.toThrow(LOGIN_UNAVAILABLE_MESSAGE);
+
     expect(openInBrowser).not.toHaveBeenCalled();
     expect(saveConfig).not.toHaveBeenCalled();
   });
@@ -174,8 +188,8 @@ describe('runLogin', () => {
 
 describe('withClaimToken', () => {
   it('adds the claim token next to the region the API put on the link', () => {
-    expect(withClaimToken('https://gethuman.md/cli/login?code=abc&region=eu', 'tok')).toBe(
-      'https://gethuman.md/cli/login?code=abc&region=eu&claim=tok'
+    expect(withClaimToken('https://gethuman.md/cli/login?region=eu', 'tok')).toBe(
+      'https://gethuman.md/cli/login?region=eu&claim=tok'
     );
     expect(withClaimToken(LOGIN_URL, null)).toBe(LOGIN_URL);
   });

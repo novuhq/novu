@@ -1,11 +1,9 @@
+import { CLI_USER_CODE_PATTERN } from '@novu/shared';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import type { HumanRegion } from '../../shared/helpers/resolve-human-website-base-url';
 
 /** Clerk user IDs of the Human Clerk app, e.g. `user_2abc…`. Also used as the local part of the made-up email. */
 export const HUMAN_USER_ID_PATTERN = /^[A-Za-z0-9_]{1,64}$/;
-
-/** Device codes of `POST /v1/cli/device-sessions`, which `human login` opens the Human website with. */
-export const CLI_DEVICE_CODE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
 export class EnsureHumanAccountRequestDto {
   @IsString()
@@ -31,9 +29,16 @@ export class ClaimHumanAccountRequestDto extends EnsureHumanAccountRequestDto {
 }
 
 export class ApproveHumanCliLoginRequestDto extends EnsureHumanAccountRequestDto {
+  /** The code `human login` printed in the operator's terminal, e.g. `BCDF-GHJK`. */
   @IsString()
-  @Matches(CLI_DEVICE_CODE_PATTERN)
-  deviceCode: string;
+  @Matches(CLI_USER_CODE_PATTERN)
+  userCode: string;
+
+  /** Claim token of the keyless setup on that computer, to move it into the account before approving. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  claimToken?: string;
 
   /** The operator's email on the Human account. Only handed to the CLI, so it can say who logged in. */
   @IsOptional()
@@ -54,8 +59,9 @@ export interface HumanAccountClaimResponseDto {
   agentIdentifier?: string;
 }
 
-export interface HumanAccountCliLoginResponseDto {
-  environmentId: string;
+export interface HumanAccountCliLoginResponseDto extends HumanAccountResponseDto {
+  /** The keyless setup moved into the account on the way. */
+  keptSetup: boolean;
 }
 
 export interface HumanAccountSecretKeyResponseDto {

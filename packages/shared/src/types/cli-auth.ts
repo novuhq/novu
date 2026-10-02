@@ -13,6 +13,15 @@ export const CLI_DEVICE_SESSION_NAME_NOVU_CONNECT = 'novu-connect';
 /** CLI surface identifier for `human login` device-auth sessions, approved on the Human website. */
 export const CLI_DEVICE_SESSION_NAME_HUMAN_CLI = 'human-cli';
 
+/**
+ * Letters of the short code a person types to approve a `human login` session. Consonants only, so codes
+ * never spell words and can't be misread (no vowels, so no O/0 or I/1 either).
+ */
+export const CLI_USER_CODE_ALPHABET = 'BCDFGHJKLMNPQRSTVWXZ';
+
+/** A user code as the CLI prints it, e.g. `BCDF-GHJK`. */
+export const CLI_USER_CODE_PATTERN = /^[BCDFGHJKLMNPQRSTVWXZ]{4}-[BCDFGHJKLMNPQRSTVWXZ]{4}$/;
+
 export type CliDeviceSessionConfig = {
   ttlSeconds: number;
   slideTtlOnPoll: boolean;
@@ -48,6 +57,11 @@ export type CreateCliDeviceSessionResponse = {
   interval: number;
   /** Page where the session is approved, when the API decides it (`human login`). Other CLIs open the dashboard. */
   verificationUrl?: string;
+  /**
+   * Short code the person types on that page (`human login`). Approving takes this code, so the device code the
+   * CLI polls with never appears in a browser.
+   */
+  userCode?: string;
 };
 
 export type CliDeviceSessionPollResponse =

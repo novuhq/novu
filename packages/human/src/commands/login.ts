@@ -74,7 +74,7 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
   const current = existing?.apiUrl === apiUrl ? existing : null;
 
   const request = await startLoginRequest(apiUrl);
-  if (!request.verificationUrl) {
+  if (!request.verificationUrl || !request.userCode) {
     throw new Error(LOGIN_UNAVAILABLE_MESSAGE);
   }
 
@@ -85,12 +85,14 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
   const loginUrl = withClaimToken(request.verificationUrl, claimToken);
 
   process.stdout.write(
-    `\n${claimToken ? 'Log in to keep this setup in your Human account' : 'Log in with your Human account'} (opening your browser):\n\n` +
-      `  ${pc.underline(loginUrl)}\n\n`
+    `\nLog in with your Human account in your browser (opening it now):\n\n  ${pc.underline(loginUrl)}\n\n` +
+      `Enter this code there:  ${pc.bold(request.userCode)}\n` +
+      (claimToken ? 'The setup you made without an account moves into your Human account.\n' : '') +
+      '\n'
   );
   openInBrowser(loginUrl);
 
-  const approved = await waitForApproval(apiUrl, request);
+  const approved = await waitForApproval(apiUrl, request, request.userCode);
   const client = createHumanApiClient({ apiUrl, secretKey: approved.apiKey });
   const subscriberId = current?.subscriberId;
   // The key is handed over only once, so a failed check must not lose it: keep the identity when unsure.
@@ -120,9 +122,10 @@ export function withClaimToken(verificationUrl: string, claimToken: string | nul
 
 async function waitForApproval(
   apiUrl: string,
-  request: LoginRequest
+  request: LoginRequest,
+  userCode: string
 ): Promise<Extract<LoginRequestStatus, { status: 'approved' }>> {
-  const stopIndicator = startWaitIndicator('Waiting for you to approve the login in your browser', 'Ctrl-C cancels');
+  const stopIndicator = startWaitIndicator(`Waiting for you to enter ${userCode} in your browser`, 'Ctrl-C cancels');
   const deadline = Date.now() + MAX_WAIT_MS;
   let intervalMs = toIntervalMs(request.interval);
 

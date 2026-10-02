@@ -36,13 +36,14 @@ export function buildHumanWebsiteUrl(path: string, params: Record<string, string
 }
 
 /**
- * Page where an operator approves `human login`. Approving goes through the Human accounts endpoints,
- * which only run where the Human website is configured, so there's no browser login without it.
+ * Page where an operator approves `human login` by typing the code their terminal shows. Approving goes
+ * through the Human accounts endpoints, which only run where the Human website is configured, so there's
+ * no browser login without it.
  */
-export function buildHumanCliLoginUrl(deviceCode: string): string | undefined {
+export function buildHumanCliLoginUrl(): string | undefined {
   if (!process.env.HUMAN_WEBSITE_URL?.trim()) {
     return undefined;
   }
 
-  return buildHumanWebsiteUrl('/cli/login', { code: deviceCode });
+  return buildHumanWebsiteUrl('/cli/login');
 }

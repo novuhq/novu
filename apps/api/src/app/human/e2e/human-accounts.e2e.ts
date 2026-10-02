@@ -1,6 +1,8 @@
+import { CLI_USER_CODE_PATTERN } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
 import { HUMAN_WEBSITE_SECRET_HEADER } from '../guards/human-website-secret.guard';
 import { EnsureBackingOrganization } from '../usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 
@@ -59,77 +61,125 @@ describe('Human accounts (private endpoints for the Human website) #novu-v2', ()
     expect(res.status).to.equal(422, JSON.stringify(res.body));
   });
 
-  it('validates the login request before touching Clerk', async () => {
-    process.env.HUMAN_WEBSITE_API_SECRET = 'e2e-human-website-secret';
+  describe('human login', () => {
+    const SECRET = 'e2e-human-website-secret';
+    const originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
+    let ensureBackingOrganization: sinon.SinonStub;
 
-    const res = await session.testAgent
-      .post('/v1/human/accounts/cli-login')
-      .set('Authorization', '')
-      .set(HUMAN_WEBSITE_SECRET_HEADER, 'e2e-human-website-secret')
-      .send({ humanUserId: 'user_e2e', deviceCode: 'not a device code' });
-
-    expect(res.status).to.equal(422, JSON.stringify(res.body));
-  });
-
-  it('starts `human login` requests that are approved on the Human website', async () => {
-    const res = await session.testAgent
-      .post('/v1/cli/device-sessions')
-      .set('Authorization', '')
-      .send({ name: 'human-cli' });
-
-    expect(res.status).to.equal(201, JSON.stringify(res.body));
-    const { deviceCode, verificationUrl } = res.body.data;
-    const url = new URL(verificationUrl);
-    expect(`${url.origin}${url.pathname}`).to.equal(`${process.env.HUMAN_WEBSITE_URL?.replace(/\/$/, '')}/cli/login`);
-    expect(url.searchParams.get('code')).to.equal(deviceCode);
-
-    const poll = await session.testAgent.post(`/v1/cli/device-sessions/${deviceCode}/poll`).set('Authorization', '');
-    expect(poll.body.data.status).to.equal('pending', JSON.stringify(poll.body));
-  });
-
-  it('hands an approved `human login` the Development key of the account, once', async () => {
-    process.env.HUMAN_WEBSITE_API_SECRET = 'e2e-human-website-secret';
-    const ensureBackingOrganization = sinon.stub(testServer.getService(EnsureBackingOrganization), 'execute').resolves({
-      organizationId: session.organization._id,
-      userId: session.user._id,
-      environmentId: session.environment._id,
-      region: 'us',
+    beforeEach(() => {
+      process.env.HUMAN_WEBSITE_API_SECRET = SECRET;
+      // The test session's own organization stands in for the backing organization, so Clerk isn't needed.
+      ensureBackingOrganization = sinon.stub(testServer.getService(EnsureBackingOrganization), 'execute').resolves({
+        organizationId: session.organization._id,
+        userId: session.user._id,
+        environmentId: session.environment._id,
+        region: 'us',
+      });
     });
 
-    try {
-      const started = await session.testAgent
+    afterEach(() => {
+      ensureBackingOrganization.restore();
+
+      if (originalKeylessOrgId === undefined) {
+        delete process.env.KEYLESS_ORGANIZATION_ID;
+      } else {
+        process.env.KEYLESS_ORGANIZATION_ID = originalKeylessOrgId;
+      }
+    });
+
+    async function startLogin(): Promise<{ deviceCode: string; userCode: string; verificationUrl: string }> {
+      const res = await session.testAgent
         .post('/v1/cli/device-sessions')
         .set('Authorization', '')
         .send({ name: 'human-cli' });
-      const { deviceCode } = started.body.data;
+      expect(res.status).to.equal(201, JSON.stringify(res.body));
 
-      const approve = () =>
-        session.testAgent
-          .post('/v1/human/accounts/cli-login')
-          .set('Authorization', '')
-          .set(HUMAN_WEBSITE_SECRET_HEADER, 'e2e-human-website-secret')
-          .send({ humanUserId: 'user_e2e', firstName: 'Ada', email: 'ada@example.com', deviceCode });
+      return res.body.data;
+    }
 
-      const approved = await approve();
+    function approve(body: Record<string, string>) {
+      return session.testAgent
+        .post('/v1/human/accounts/cli-login')
+        .set('Authorization', '')
+        .set(HUMAN_WEBSITE_SECRET_HEADER, SECRET)
+        .send({ humanUserId: 'user_e2e', firstName: 'Ada', email: 'ada@example.com', ...body });
+    }
+
+    function poll(deviceCode: string) {
+      return session.testAgent.post(`/v1/cli/device-sessions/${deviceCode}/poll`).set('Authorization', '');
+    }
+
+    it('validates the login request before touching Clerk', async () => {
+      const res = await approve({ userCode: 'not a code' });
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+      expect(ensureBackingOrganization.called).to.equal(false);
+    });
+
+    it('starts requests that are approved on the Human website with the code the CLI shows', async () => {
+      const { deviceCode, userCode, verificationUrl } = await startLogin();
+
+      // The device code the CLI polls with is not in the link.
+      expect(verificationUrl).to.equal(`${process.env.HUMAN_WEBSITE_URL?.replace(/\/$/, '')}/cli/login`);
+      expect(userCode).to.match(CLI_USER_CODE_PATTERN);
+      expect((await poll(deviceCode)).body.data.status).to.equal('pending');
+    });
+
+    it('hands the Development key of the account to the CLI that showed the code, once', async () => {
+      const { deviceCode, userCode } = await startLogin();
+
+      const approved = await approve({ userCode });
       expect(approved.status).to.equal(200, JSON.stringify(approved.body));
-      expect(ensureBackingOrganization.firstCall.args[0]).to.deep.include({ humanUserId: 'user_e2e' });
+      expect(approved.body.data).to.deep.include({ organizationId: session.organization._id, keptSetup: false });
 
-      const poll = await session.testAgent.post(`/v1/cli/device-sessions/${deviceCode}/poll`).set('Authorization', '');
-      expect(poll.body.data).to.deep.include({
+      const first = await poll(deviceCode);
+      expect(first.body.data).to.deep.include({
         status: 'approved',
         apiKey: session.apiKey,
         environmentId: session.environment._id,
       });
-      expect(poll.body.data.user).to.deep.include({ email: 'ada@example.com', firstName: 'Ada' });
+      expect(first.body.data.user).to.deep.include({ email: 'ada@example.com', firstName: 'Ada' });
+      expect((await poll(deviceCode)).body.data.status).to.equal('expired');
 
-      const handedOver = await session.testAgent
-        .post(`/v1/cli/device-sessions/${deviceCode}/poll`)
-        .set('Authorization', '');
-      expect(handedOver.body.data.status).to.equal('expired');
+      expect((await approve({ userCode })).status).to.equal(404);
+    });
 
-      expect((await approve()).status).to.equal(404);
-    } finally {
-      ensureBackingOrganization.restore();
-    }
+    describe('from a computer with a keyless setup', () => {
+      let keylessSession: UserSession;
+      let claimToken: string;
+
+      function claimTokens() {
+        return testServer.getService(ConnectClaimTokenService) as ConnectClaimTokenService;
+      }
+
+      beforeEach(async () => {
+        keylessSession = new UserSession();
+        await keylessSession.initialize();
+        process.env.KEYLESS_ORGANIZATION_ID = keylessSession.organization._id;
+        ({ token: claimToken } = await claimTokens().issueOrGetForEnvironment({
+          env: keylessSession.environment._id,
+          org: keylessSession.organization._id,
+        }));
+      });
+
+      it('keeps the setup, then lets the CLI in', async () => {
+        const { deviceCode, userCode } = await startLogin();
+
+        const approved = await approve({ userCode, claimToken });
+
+        expect(approved.status).to.equal(200, JSON.stringify(approved.body));
+        expect(approved.body.data.keptSetup).to.equal(true);
+        expect(await claimTokens().isEnvironmentClaimed(keylessSession.environment._id)).to.equal(true);
+        expect((await poll(deviceCode)).body.data.status).to.equal('approved');
+      });
+
+      it('leaves the setup where it is when no login is waiting for the code', async () => {
+        const res = await approve({ userCode: 'BCDF-GHJK', claimToken });
+
+        expect(res.status).to.equal(404, JSON.stringify(res.body));
+        expect(res.body.code).to.equal('cli_login_not_found');
+        expect(await claimTokens().isEnvironmentClaimed(keylessSession.environment._id)).to.equal(false);
+      });
+    });
   });
 });

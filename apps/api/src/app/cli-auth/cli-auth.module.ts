@@ -11,6 +11,6 @@ import { ApproveCliDeviceSession } from './usecases/approve-cli-device-session/a
   imports: [SharedModule, AuthModule],
   controllers: [CliAuthController],
   providers: [...USE_CASES, CliDeviceSessionService],
-  exports: [ApproveCliDeviceSession],
+  exports: [ApproveCliDeviceSession, CliDeviceSessionService],
 })
 export class CliAuthModule {}

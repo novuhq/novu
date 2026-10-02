@@ -1,4 +1,5 @@
-import { auth } from '@clerk/nextjs/server';
+import { SignOutButton } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
@@ -12,30 +13,29 @@ import { CliLoginForm } from './cli-login-form';
 export const metadata: Metadata = {
   title: 'Log in to human',
   robots: { index: false, follow: false },
-  // The login code and claim token are in the URL; keep them out of the Referer.
+  // A claim token can be in the URL; keep it out of the Referer.
   referrer: 'origin',
 };
 
 /**
- * Opened by `human login` (`…/cli/login?code=…`, plus `&region=eu` from the EU API). When the CLI has a
- * setup made without an account, `&claim=…` carries its claim token, so logging in also keeps that setup.
+ * Opened by `human login` (`…/cli/login`, plus `?region=eu` from the EU API). The operator types the code the
+ * terminal shows, so a link someone else sends can't log anyone in. When the CLI has a setup made without an
+ * account, `claim=…` carries its claim token, so logging in also keeps that setup.
  */
 export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
   const searchParams = await props.searchParams;
-  const code = typeof searchParams.code === 'string' ? searchParams.code : '';
   const claim = typeof searchParams.claim === 'string' ? searchParams.claim : '';
   const region: HumanRegion = searchParams.region === 'eu' ? 'eu' : 'us';
+  const query = new URLSearchParams({ ...(claim ? { claim } : {}), ...(region === 'eu' ? { region } : {}) });
+  const loginPath = query.size > 0 ? `/cli/login?${query}` : '/cli/login';
 
-  const { userId } = await auth();
-  if (!userId && code) {
-    const loginPath = `/cli/login?${new URLSearchParams({
-      code,
-      ...(claim ? { claim } : {}),
-      ...(region === 'eu' ? { region } : {}),
-    })}`;
+  const user = await currentUser();
+  if (!user) {
     // Someone keeping a setup made without an account is usually new; anyone else likely has an account.
     redirect(`${claim ? '/sign-up' : '/sign-in'}?${new URLSearchParams({ redirect_url: loginPath })}`);
   }
+
+  const email = user.primaryEmailAddress?.emailAddress;
 
   return (
     <SiteFrame className="px-4 py-14 md:px-8 md:py-20">
@@ -52,29 +52,28 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
             </>
           )
         }
-        description={<Description code={code} claim={claim} />}
+        description={
+          <>
+            {claim
+              ? 'Moves the agent, channels and contacts you set up without an account into your Human account, and lets the human CLI on your computer use it.'
+              : 'Lets the human CLI on your computer use your Human account, so your agents can reach you and your contacts.'}{' '}
+            Enter the code <Command>human login</Command> shows in your terminal. If you didn&apos;t just run it
+            yourself, close this page.
+          </>
+        }
       >
-        {code && <CliLoginForm code={code} claim={claim} region={region} />}
+        <CliLoginForm claim={claim} region={region} />
+        {email && (
+          <p className="mt-6 text-sm tracking-tight text-foreground/60">
+            Signed in as {email}.{' '}
+            <SignOutButton redirectUrl={loginPath}>
+              <button type="button" className="cursor-pointer underline underline-offset-4 hover:text-foreground">
+                Use another account
+              </button>
+            </SignOutButton>
+          </p>
+        )}
       </Panel>
     </SiteFrame>
-  );
-}
-
-function Description({ code, claim }: { code: string; claim: string }) {
-  if (!code) {
-    return (
-      <>
-        This page needs the link that <Command>human login</Command> prints. Run it in your terminal.
-      </>
-    );
-  }
-
-  return (
-    <>
-      {claim
-        ? 'Moves the agent, channels and contacts you set up without an account into your Human account, and lets the human CLI on your computer use it.'
-        : 'Lets the human CLI on your computer use your Human account, so your agents can reach you and your contacts.'}{' '}
-      Only continue if you just ran <Command>human login</Command> yourself.
-    </>
   );
 }

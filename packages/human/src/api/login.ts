@@ -13,6 +13,8 @@ export interface LoginRequest {
   interval: number;
   /** Missing on APIs without the Human website (self-hosted), where there's no browser login. */
   verificationUrl?: string;
+  /** What the operator types on that page; the device code the CLI polls with never leaves this computer. */
+  userCode?: string;
 }
 
 export type LoginRequestStatus =

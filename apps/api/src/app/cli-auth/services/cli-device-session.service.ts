@@ -1,10 +1,11 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomInt } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import {
   CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
   CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS,
   CLI_DEVICE_SESSION_NAME_HUMAN_CLI,
+  CLI_USER_CODE_ALPHABET,
   type CliDeviceSessionPollResponse,
   type CliDeviceSessionUser,
   type CreateCliDeviceSessionResponse,
@@ -16,6 +17,10 @@ import { buildHumanCliLoginUrl } from '../../shared/helpers/resolve-human-websit
 const CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS = 2;
 
 const CACHE_KEY_PREFIX = 'cli-device-session:';
+
+const USER_CODE_KEY_PREFIX = 'cli-device-session-user-code:';
+
+const USER_CODE_ATTEMPTS = 5;
 
 export class CliDeviceSessionNotFoundError extends Error {
   constructor(message = 'CLI device session not found or expired') {
@@ -41,6 +46,7 @@ interface CliDeviceSessionRecord {
   organizationId?: string | null;
   user?: CliDeviceSessionUser | null;
   approvedByUserId?: string;
+  userCode?: string;
 }
 
 const APPROVE_IF_PENDING_SCRIPT = `
@@ -97,14 +103,6 @@ export class CliDeviceSessionService {
   async create(params: { name?: string }): Promise<CreateCliDeviceSessionResponse> {
     const deviceCode = randomBytes(24).toString('base64url');
     const sessionConfig = resolveCliDeviceSessionConfig(params.name);
-    const record: CliDeviceSessionRecord = {
-      status: 'pending',
-      name: params.name,
-      createdAt: new Date().toISOString(),
-      createdAtEpoch: Math.floor(Date.now() / 1000),
-      sessionTtlSeconds: sessionConfig.ttlSeconds,
-      slideTtlOnPoll: sessionConfig.slideTtlOnPoll,
-    };
 
     if (!this.cacheService.cacheEnabled()) {
       this.logger.warn('Cache unavailable — cannot persist CLI device session');
@@ -112,20 +110,44 @@ export class CliDeviceSessionService {
       throw new Error('Cache is required to issue CLI device sessions');
     }
 
+    // `human login` is approved on the Human website by typing a short user code, so the device code the CLI
+    // polls with never reaches a browser, and a link alone can't approve anything.
+    const verificationUrl = params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI ? buildHumanCliLoginUrl() : undefined;
+    const userCode = verificationUrl ? await this.reserveUserCode(deviceCode) : undefined;
+
+    const record: CliDeviceSessionRecord = {
+      status: 'pending',
+      name: params.name,
+      createdAt: new Date().toISOString(),
+      createdAtEpoch: Math.floor(Date.now() / 1000),
+      sessionTtlSeconds: sessionConfig.ttlSeconds,
+      slideTtlOnPoll: sessionConfig.slideTtlOnPoll,
+      ...(userCode ? { userCode } : {}),
+    };
+
     await this.cacheService.set(this.cacheKey(deviceCode), JSON.stringify(record), {
       ttl: sessionConfig.ttlSeconds,
     });
-
-    // `human login` is approved on the Human website, so the CLI opens the page the API names.
-    const verificationUrl =
-      params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI ? buildHumanCliLoginUrl(deviceCode) : undefined;
 
     return {
       deviceCode,
       expiresIn: sessionConfig.ttlSeconds,
       interval: CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS,
-      ...(verificationUrl ? { verificationUrl } : {}),
+      ...(verificationUrl && userCode ? { verificationUrl, userCode } : {}),
     };
+  }
+
+  /** The device code of the session still waiting for approval under this user code, if there is one. */
+  async findPendingByUserCode(userCode: string): Promise<string | null> {
+    if (!userCode || !this.cacheService.cacheEnabled()) {
+      return null;
+    }
+
+    const deviceCode = await this.cacheService.get(this.userCodeKey(userCode));
+    const raw = deviceCode ? await this.cacheService.get(this.cacheKey(deviceCode)) : null;
+    const record = raw ? this.parseRecord(raw) : null;
+
+    return deviceCode && record?.status === 'pending' && record.userCode === userCode ? deviceCode : null;
   }
 
   async poll(deviceCode: string): Promise<CliDeviceSessionPollResponse> {
@@ -251,13 +273,41 @@ export class CliDeviceSessionService {
         organizationId: parsed.organizationId,
         user: parsed.user,
         approvedByUserId: parsed.approvedByUserId,
+        userCode: parsed.userCode,
       };
     } catch {
       return null;
     }
   }
 
+  /** Points a fresh user code at the session. It lives as long as polling can keep the session alive. */
+  private async reserveUserCode(deviceCode: string): Promise<string> {
+    for (let attempt = 0; attempt < USER_CODE_ATTEMPTS; attempt++) {
+      const userCode = generateUserCode();
+      const reserved = await this.cacheService.setIfNotExist(this.userCodeKey(userCode), deviceCode, {
+        ttl: CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
+      });
+
+      if (reserved === 'OK') {
+        return userCode;
+      }
+    }
+
+    throw new Error('Could not issue a unique CLI user code');
+  }
+
   private cacheKey(deviceCode: string): string {
     return `${CACHE_KEY_PREFIX}${deviceCode}`;
   }
+
+  private userCodeKey(userCode: string): string {
+    return `${USER_CODE_KEY_PREFIX}${userCode}`;
+  }
+}
+
+/** Eight letters, e.g. `BCDF-GHJK`: about 2.5e10 codes, against at most a handful waiting at once. */
+function generateUserCode(): string {
+  const letters = Array.from({ length: 8 }, () => CLI_USER_CODE_ALPHABET[randomInt(CLI_USER_CODE_ALPHABET.length)]);
+
+  return `${letters.slice(0, 4).join('')}-${letters.slice(4).join('')}`;
 }

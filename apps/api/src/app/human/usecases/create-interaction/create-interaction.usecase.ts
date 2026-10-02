@@ -24,12 +24,17 @@ import { CreateInteractionCommand } from './create-interaction.command';
 /** Machine-readable code on the 429 body so `@novu/human` can branch without parsing prose. */
 export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
+/** `human login` is approved on the Human website, so it only works where one is configured (not self-hosted). */
+function isHumanBrowserLoginAvailable(): boolean {
+  return Boolean(process.env.HUMAN_WEBSITE_URL?.trim());
+}
+
 /**
  * Where the Human website runs, setups are claimed there and the CLI continues with `human login`.
  * Elsewhere (self-hosted) they're claimed on the dashboard, and the CLI needs the environment's key.
  */
 function keylessHumanClaimedMessage(): string {
-  if (process.env.HUMAN_WEBSITE_URL?.trim()) {
+  if (isHumanBrowserLoginAvailable()) {
     return 'This setup was moved into your Human account. Run `human login` to keep using it.';
   }
 
@@ -161,7 +166,15 @@ export class CreateInteraction {
       : `You've used the ${cap} free messages of this keyless demo. Sign up for a free Novu account to keep your channels and continue.`;
 
     throw new HttpException(
-      { statusCode: 429, message, code: KEYLESS_HUMAN_CAP_REACHED_CODE, cap, ...(claimUrl ? { claimUrl } : {}) },
+      {
+        statusCode: 429,
+        message,
+        code: KEYLESS_HUMAN_CAP_REACHED_CODE,
+        cap,
+        ...(claimUrl ? { claimUrl } : {}),
+        // Tells `@novu/human` whether `human login` works here, or the operator needs a secret key instead.
+        browserLogin: isHumanBrowserLoginAvailable(),
+      },
       429
     );
   }

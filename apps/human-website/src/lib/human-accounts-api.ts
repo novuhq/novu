@@ -50,15 +50,24 @@ export function claimKeylessSetup(
   });
 }
 
-/** Approves a `human login` request, so the waiting CLI gets the account's Development key. */
+/**
+ * Approves the `human login` waiting for this code, so that CLI gets the account's Development key. With the
+ * claim token of the CLI's keyless setup, the setup moves into the account first. Creates the backing
+ * organization when the account has none yet.
+ */
 export function approveCliLogin(
   region: HumanRegion,
   identity: Identity & { email?: string | null },
-  deviceCode: string
-): Promise<{ environmentId: string }> {
+  login: { userCode: string; claimToken?: string }
+): Promise<BackingAccount & { keptSetup: boolean }> {
   return request(region, '/v1/human/accounts/cli-login', {
     method: 'POST',
-    body: { ...toIdentityBody(identity), ...(identity.email ? { email: identity.email } : {}), deviceCode },
+    body: {
+      ...toIdentityBody(identity),
+      ...(identity.email ? { email: identity.email } : {}),
+      userCode: login.userCode,
+      ...(login.claimToken ? { claimToken: login.claimToken } : {}),
+    },
   });
 }
 

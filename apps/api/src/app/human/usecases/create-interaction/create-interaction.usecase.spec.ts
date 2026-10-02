@@ -363,6 +363,7 @@ describe('CreateInteraction', () => {
       } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
       humanInteractionRepository.count.resolves(2);
+      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
 
       let thrown: unknown;
       try {
@@ -378,6 +379,7 @@ describe('CreateInteraction', () => {
       expect(response.cap).to.equal(2);
       expect(response.claimUrl).to.match(/\/claim\?token=tok$/);
       expect(response.message).to.include(response.claimUrl as string);
+      expect(response.browserLogin).to.equal(true);
 
       expect(humanInteractionRepository.create.called).to.equal(false);
       expect(deliveryService.deliver.called).to.equal(false);
@@ -434,6 +436,18 @@ describe('CreateInteraction', () => {
       expect(thrown?.getStatus()).to.equal(429);
       expect((thrown?.getResponse() as Record<string, unknown>).claimUrl).to.equal(undefined);
       expect(deliveryService.deliverContent.called).to.equal(false);
+    });
+
+    it('tells the CLI there is no browser login where the Human website is not configured', async () => {
+      delete process.env.HUMAN_WEBSITE_URL;
+      const { usecase, command, agentRepository, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+      humanInteractionRepository.count.resolves(2);
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(429);
+      expect((thrown.getResponse() as Record<string, unknown>).browserLogin).to.equal(false);
     });
 
     it('rejects a claimed keyless environment with a re-auth hint before looking up the agent', async () => {

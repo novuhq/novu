@@ -28,6 +28,12 @@ export class CreateCliDeviceSessionResponseDto implements CreateCliDeviceSession
     description: 'Page where the session is approved, for CLIs that are not approved on the dashboard (human login).',
   })
   verificationUrl?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Short code the person types on the verification page to approve the session (human login).',
+  })
+  userCode?: string;
 }
 
 export class CliDeviceSessionPollResponseDto {

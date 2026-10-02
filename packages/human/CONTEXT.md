@@ -33,5 +33,5 @@ Moving a keyless setup into the operator's backing organization.
 _Avoid_: transfer, migrate
 
 **CLI login**:
-Letting the `human` CLI on one computer act for a Human account, once the operator approves it on gethuman.md.
+Letting the `human` CLI on one computer act for a Human account, once the operator enters the code it shows on gethuman.md.
 _Avoid_: device session, CLI auth, connecting

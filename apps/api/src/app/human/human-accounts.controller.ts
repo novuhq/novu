@@ -72,7 +72,9 @@ export class HumanAccountsController {
 
   @Post('/cli-login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Approve a `human login` request with the Development environment key of a Human account' })
+  @ApiOperation({
+    summary: 'Approve a `human login` with the Development key of a Human account, keeping its keyless setup',
+  })
   approveCliLogin(@Body() body: ApproveHumanCliLoginRequestDto): Promise<HumanAccountCliLoginResponseDto> {
     return this.approveHumanCliLoginUsecase.execute(
       ApproveHumanCliLoginCommand.create({
@@ -80,7 +82,8 @@ export class HumanAccountsController {
         firstName: body.firstName,
         lastName: body.lastName,
         email: body.email,
-        deviceCode: body.deviceCode,
+        userCode: body.userCode,
+        claimToken: body.claimToken,
       })
     );
   }

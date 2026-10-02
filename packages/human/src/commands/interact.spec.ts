@@ -169,13 +169,22 @@ describe('keyless cap errors', () => {
     new HumanApiError(message, status, 'POST https://api.novu.co/v1/human/interactions', body);
 
   it('detects the structured 429 body and extracts the claim link', () => {
-    const err = capError({ code: 'KEYLESS_HUMAN_CAP_REACHED', claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
-    expect(getKeylessCapDetails(err)).toEqual({ claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
+    const err = capError({
+      code: 'KEYLESS_HUMAN_CAP_REACHED',
+      claimUrl: 'https://gethuman.md/claim?token=t',
+      cap: 5,
+      browserLogin: true,
+    });
+    expect(getKeylessCapDetails(err)).toEqual({
+      claimUrl: 'https://gethuman.md/claim?token=t',
+      cap: 5,
+      browserLogin: true,
+    });
   });
 
   it('falls back to the message wording when the body has no code', () => {
     const err = capError({}, 429, "You've used the 5 free messages of this keyless demo.");
-    expect(getKeylessCapDetails(err)).toEqual({ claimUrl: undefined, cap: undefined });
+    expect(getKeylessCapDetails(err)).toEqual({ claimUrl: undefined, cap: undefined, browserLogin: false });
   });
 
   it('ignores other 429s and non-API errors', () => {
@@ -184,11 +193,23 @@ describe('keyless cap errors', () => {
     expect(getKeylessCapDetails(new Error('boom'))).toBeNull();
   });
 
-  it('prints the claim link and the recovery command', () => {
-    const text = formatKeylessCapMessage({ claimUrl: 'https://dash/connect/claim?token=t', cap: 5 });
+  it('sends the operator to human login where the API has it, with the claim link as a fallback', () => {
+    const text = formatKeylessCapMessage({ claimUrl: 'https://gethuman.md/claim?token=t', cap: 5, browserLogin: true });
     expect(text).toContain('5 free messages');
-    expect(text).toContain('https://dash/connect/claim?token=t');
     expect(text).toContain('run: human login');
+    expect(text).toContain('https://gethuman.md/claim?token=t');
+    expect(text).not.toContain('--secret-key');
+  });
+
+  it('keeps the secret-key route where the API has no browser login (self-hosted)', () => {
+    const text = formatKeylessCapMessage({
+      claimUrl: 'https://dash/connect/claim?token=t',
+      cap: 5,
+      browserLogin: false,
+    });
+    expect(text).toContain('https://dash/connect/claim?token=t');
+    expect(text).toContain('human setup --secret-key');
+    expect(text).not.toContain('human login');
   });
 
   it('routes the cap error through fail with the claim link', () => {

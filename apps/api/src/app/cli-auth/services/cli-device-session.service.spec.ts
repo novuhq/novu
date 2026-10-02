@@ -1,4 +1,8 @@
-import { CLI_DEVICE_SESSION_NAME_HUMAN_CLI, CLI_DEVICE_SESSION_NAME_NOVU_CONNECT } from '@novu/shared';
+import {
+  CLI_DEVICE_SESSION_NAME_HUMAN_CLI,
+  CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
+  CLI_USER_CODE_PATTERN,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -20,6 +24,7 @@ describe('CliDeviceSessionService', () => {
     const cacheService = {
       cacheEnabled: () => true,
       set: sinon.stub().resolves('OK'),
+      setIfNotExist: sinon.stub().resolves('OK'),
       get: sinon.stub().resolves(null),
       del: sinon.stub().resolves(1),
       eval: sinon.stub().resolves(''),
@@ -76,15 +81,47 @@ describe('CliDeviceSessionService', () => {
       }
     }
 
-    it('send the CLI to the Human website and wait as long as novu connect', async () => {
+    it('send the CLI to the Human website with a code to type there, and wait as long as novu connect', async () => {
       process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md/';
       delete process.env.NOVU_REGION;
-      const { service } = makeService();
+      const { service, cacheService } = makeService();
 
       const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
 
       expect(result.expiresIn).to.equal(30 * 60);
-      expect(result.verificationUrl).to.equal(`https://gethuman.md/cli/login?code=${result.deviceCode}`);
+      expect(result.userCode).to.match(CLI_USER_CODE_PATTERN);
+      // The device code the CLI polls with stays out of the link.
+      expect(result.verificationUrl).to.equal('https://gethuman.md/cli/login');
+      expect(cacheService.setIfNotExist.firstCall.args.slice(0, 2)).to.deep.equal([
+        `cli-device-session-user-code:${result.userCode}`,
+        result.deviceCode,
+      ]);
+      expect(JSON.parse(cacheService.set.firstCall.args[1]).userCode).to.equal(result.userCode);
+    });
+
+    it('pick another code when one is taken', async () => {
+      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
+      const { service, cacheService } = makeService();
+      cacheService.setIfNotExist.onFirstCall().resolves(null);
+
+      const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
+
+      expect(cacheService.setIfNotExist.callCount).to.equal(2);
+      expect(result.userCode).to.equal(cacheService.setIfNotExist.secondCall.args[0].split(':').pop());
+    });
+
+    it('are found by their code only while they wait for approval', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.get.withArgs('cli-device-session-user-code:BCDF-GHJK').resolves('device-code');
+      cacheService.get.withArgs('cli-device-session:device-code').resolves(pendingRecord({ userCode: 'BCDF-GHJK' }));
+
+      expect(await service.findPendingByUserCode('BCDF-GHJK')).to.equal('device-code');
+      expect(await service.findPendingByUserCode('BCDF-GHJL')).to.equal(null);
+
+      cacheService.get
+        .withArgs('cli-device-session:device-code')
+        .resolves(pendingRecord({ userCode: 'BCDF-GHJK', status: 'approved' }));
+      expect(await service.findPendingByUserCode('BCDF-GHJK')).to.equal(null);
     });
 
     it('carry the EU region from EU deployments', async () => {
@@ -104,15 +141,18 @@ describe('CliDeviceSessionService', () => {
       const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
 
       expect(result).not.to.have.property('verificationUrl');
+      expect(result).not.to.have.property('userCode');
     });
 
     it('leave other CLIs on the dashboard', async () => {
       process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
-      const { service } = makeService();
+      const { service, cacheService } = makeService();
 
       const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_NOVU_CONNECT });
 
       expect(result).not.to.have.property('verificationUrl');
+      expect(result).not.to.have.property('userCode');
+      expect(cacheService.setIfNotExist.called).to.equal(false);
     });
   });
 
