@@ -283,18 +283,16 @@ export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
 
 export function formatKeylessCapMessage(details: KeylessCapDetails): string {
   const count = details.cap ? `${details.cap} free messages` : 'free messages';
-  const lines = [`You've used the ${count} of this keyless demo.`];
+  const lines = [
+    `You've used the ${count} of this keyless demo.`,
+    'To keep your channels and continue, run: human login',
+  ];
 
   if (details.claimUrl) {
-    lines.push(`Sign up to keep your channels and continue: ${details.claimUrl}`);
-  } else {
-    lines.push('Sign up for a free Novu account to keep your channels and continue.');
+    lines.push(
+      `(Or sign up from this link, which we also sent to your linked channel, then run \`human login\`: ${details.claimUrl})`
+    );
   }
-
-  lines.push(
-    '(We also sent this link to you on your linked channel.)',
-    'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
-  );
 
   return lines.join('\n');
 }

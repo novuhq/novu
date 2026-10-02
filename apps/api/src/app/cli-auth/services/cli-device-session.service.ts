@@ -4,11 +4,14 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import {
   CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
   CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS,
+  CLI_DEVICE_SESSION_NAME_HUMAN_CLI,
   type CliDeviceSessionPollResponse,
   type CliDeviceSessionUser,
   type CreateCliDeviceSessionResponse,
   resolveCliDeviceSessionConfig,
 } from '@novu/shared';
+
+import { buildHumanCliLoginUrl } from '../../shared/helpers/resolve-human-website-base-url';
 
 const CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS = 2;
 
@@ -113,10 +116,15 @@ export class CliDeviceSessionService {
       ttl: sessionConfig.ttlSeconds,
     });
 
+    // `human login` is approved on the Human website, so the CLI opens the page the API names.
+    const verificationUrl =
+      params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI ? buildHumanCliLoginUrl(deviceCode) : undefined;
+
     return {
       deviceCode,
       expiresIn: sessionConfig.ttlSeconds,
       interval: CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS,
+      ...(verificationUrl ? { verificationUrl } : {}),
     };
   }
 

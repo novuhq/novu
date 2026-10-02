@@ -687,8 +687,33 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       // The keyless env is now empty; the CLI must be told to re-auth, not to run setup again.
       const after = await createInteraction({ kind: 'tell', prompt: 'Still here?' });
       expect(after.status).to.equal(403, JSON.stringify(after.body));
-      expect(after.body.message).to.match(/claimed into your Novu account/);
-      expect(after.body.message).to.include('human setup --secret-key');
+      expect(after.body.message).to.include('human login');
+    });
+
+    it('hands `human login` the claim token of a keyless setup until it is claimed', async () => {
+      const first = await session.testAgent.post('/v1/human/claim-token').send({});
+      expect(first.status).to.equal(200, JSON.stringify(first.body));
+      const { token } = first.body.data;
+
+      const again = await session.testAgent.post('/v1/human/claim-token').send({});
+      expect(again.body.data.token).to.equal(token);
+
+      const claimer = new UserSession();
+      await claimer.initialize();
+      const claimRes = await claimer.testAgent.post('/v1/connect/claim').send({ token });
+      expect(claimRes.status).to.equal(200, JSON.stringify(claimRes.body));
+
+      const afterClaim = await session.testAgent.post('/v1/human/claim-token').send({});
+      expect(afterClaim.status).to.equal(409, JSON.stringify(afterClaim.body));
+      expect(afterClaim.body.code).to.equal('keyless_setup_claimed');
+    });
+
+    it('has no claim token for setups that belong to an account', async () => {
+      process.env.KEYLESS_ORGANIZATION_ID = 'some-other-org';
+
+      const res = await session.testAgent.post('/v1/human/claim-token').send({});
+
+      expect(res.status).to.equal(400, JSON.stringify(res.body));
     });
   });
 });
