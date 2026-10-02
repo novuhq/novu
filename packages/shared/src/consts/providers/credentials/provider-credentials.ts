@@ -1766,3 +1766,25 @@ export const toolWebhookConfig: IConfigCredential[] = [
     required: false,
   },
 ];
+
+export const sfrSmsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ServiceId,
+    displayName: 'Service ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ServicePassword,
+    displayName: 'Service Password',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SpaceId,
+    displayName: 'Space ID',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
