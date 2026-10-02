@@ -14,6 +14,13 @@ export interface NovuEmailAdapterConfig {
   sendEmail: (params: SendEmailParams) => Promise<{ messageId?: string }>;
   stripAgentReplyToken: (address: string) => string;
   /**
+   * Address the agent sends from when a thread has no recorded agent address yet.
+   * Inbound threads learn it from the `To` header of the first email; threads the
+   * agent opens itself (`openDM` → `post`, e.g. a human-interaction DM) have no
+   * inbound email to learn from and would otherwise fail on the first send.
+   */
+  defaultAgentAddress?: string;
+  /**
    * Resolves a URL for an interactive `<Button id="…">` rendered inside an outbound email.
    * Called once per button before the email HTML is rendered. When omitted, action buttons
    * fall back to the legacy `href="#"` (no-op) behavior — `<LinkButton url="…">` always uses
