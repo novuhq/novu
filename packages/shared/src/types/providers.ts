@@ -70,6 +70,8 @@ export enum CredentialsKeyEnum {
   RoutingMode = 'routingMode',
   /** Email webhook: how the HMAC secret key value is interpreted when signing webhook calls. */
   HmacSecretKeyEncoding = 'hmacSecretKeyEncoding',
+  /** Aliyun SMS: default registered TemplateCode, overridable per-message via `_passthrough.body.TemplateCode`. */
+  TemplateId = 'templateId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -142,6 +144,7 @@ export enum SmsProviderIdEnum {
   ISendProSms = 'isendpro-sms',
   CmTelecom = 'cm-telecom',
   RuachSms = 'ruach-sms',
+  Aliyun = 'aliyun',
 }
 
 export enum ChatProviderIdEnum {
