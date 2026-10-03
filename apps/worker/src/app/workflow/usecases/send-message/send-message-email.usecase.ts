@@ -322,7 +322,7 @@ export class SendMessageEmail extends SendMessageBase {
       })
     );
 
-    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
+    const triggerAttachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
         <IAttachmentOptions>{
           file: attachment.file,
@@ -332,7 +332,22 @@ export class SendMessageEmail extends SendMessageBase {
           cid: attachment.cid,
           disposition: attachment.disposition,
         }
-    );
+    ) || [];
+
+    const bridgeStepAttachments = (<IAttachmentOptions[]>(bridgeEmailOutput as any)?.attachments)?.map(
+      (attachment) =>
+        <IAttachmentOptions>{
+          file: attachment.file,
+          mime: attachment.mime,
+          name: attachment.name,
+          channels: attachment.channels,
+          cid: attachment.cid,
+          disposition: attachment.disposition,
+        }
+    ) || [];
+
+    const mergedAttachmentsList = [...triggerAttachments, ...bridgeStepAttachments];
+    const attachments = mergedAttachmentsList.length > 0 ? mergedAttachmentsList : undefined;
 
     const replaceToRecipient = overrides?.replaceToRecipient === true;
     const hasOverrideRecipients = hasEmailOverrideRecipients(overrides);
