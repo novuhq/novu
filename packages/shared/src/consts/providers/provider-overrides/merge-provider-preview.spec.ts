@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ChatProviderIdEnum, ToolProviderIdEnum } from '../../../types';
+import { ChatProviderIdEnum, PushProviderIdEnum, ToolProviderIdEnum } from '../../../types';
 import { mergeProviderPreview } from './merge-provider-preview';
 
 describe('mergeProviderPreview', () => {
@@ -158,6 +158,75 @@ describe('mergeProviderPreview', () => {
         text: {
           body: 'Custom WhatsApp body',
           preview_url: true,
+        },
+      },
+    });
+    expect(result.defaultContentKey).toBeUndefined();
+  });
+
+  it('fills omitted Expo body from the step body and sets defaultContentKey', () => {
+    const result = mergeProviderPreview({
+      body: 'Default push body',
+      providerId: PushProviderIdEnum.EXPO,
+      override: { channelId: 'orders' },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        channelId: 'orders',
+        body: 'Default push body',
+      },
+      defaultContentKey: 'body',
+    });
+  });
+
+  it('keeps an explicit Expo body override and omits defaultContentKey', () => {
+    const result = mergeProviderPreview({
+      body: 'Default push body',
+      providerId: PushProviderIdEnum.EXPO,
+      override: { body: 'Custom Expo body', channelId: 'orders' },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        body: 'Custom Expo body',
+        channelId: 'orders',
+      },
+    });
+    expect(result.defaultContentKey).toBeUndefined();
+  });
+
+  it('fills omitted FCM notification.body from the step body and preserves siblings', () => {
+    const result = mergeProviderPreview({
+      body: 'Default push body',
+      providerId: PushProviderIdEnum.FCM,
+      override: { notification: { title: 'Orders' }, android: { priority: 'high' } },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        notification: {
+          title: 'Orders',
+          body: 'Default push body',
+        },
+        android: { priority: 'high' },
+      },
+      defaultContentKey: 'notification.body',
+    });
+  });
+
+  it('keeps an explicit FCM notification.body override and omits defaultContentKey', () => {
+    const result = mergeProviderPreview({
+      body: 'Default push body',
+      providerId: PushProviderIdEnum.FCM,
+      override: { notification: { title: 'Orders', body: 'Custom FCM body' } },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        notification: {
+          title: 'Orders',
+          body: 'Custom FCM body',
         },
       },
     });

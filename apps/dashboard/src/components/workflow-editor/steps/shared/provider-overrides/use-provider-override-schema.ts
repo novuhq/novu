@@ -1,4 +1,5 @@
 import {
+  FCM_OVERRIDE_SCHEMA_SUBPATH,
   getProviderOverrideConfig,
   SLACK_OVERRIDE_SCHEMA_SUBPATH,
   TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,
@@ -35,6 +36,11 @@ const SUBPATH_SCHEMA_LOADERS: Record<string, () => Promise<OverrideFieldSchema>>
     const { whatsappOverrideJsonSchema } = await import('@novu/shared/provider-overrides/whatsapp');
 
     return whatsappOverrideJsonSchema as OverrideFieldSchema;
+  },
+  [FCM_OVERRIDE_SCHEMA_SUBPATH]: async () => {
+    const { fcmOverrideJsonSchema } = await import('@novu/shared/provider-overrides/fcm');
+
+    return fcmOverrideJsonSchema as OverrideFieldSchema;
   },
 };
 
