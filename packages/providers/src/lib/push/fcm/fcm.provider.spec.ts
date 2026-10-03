@@ -473,3 +473,161 @@ describe.skip('FcmPushProvider', () => {
     });
   });
 });
+
+describe('FcmPushProvider notification message data', () => {
+  let provider: FcmPushProvider;
+  let multicastSpy: ReturnType<typeof vi.spyOn>;
+  let topicSpy: ReturnType<typeof vi.spyOn>;
+  const subscriber = {};
+  const step: IPushOptions['step'] = {
+    digest: false,
+    events: [{}],
+    total_count: 1,
+  };
+
+  const baseOptions: IPushOptions = {
+    title: 'New transaction',
+    content: 'You have a new transaction',
+    target: ['tester'],
+    payload: {},
+    subscriber,
+    step,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    provider = new FcmPushProvider({
+      secretKey: '--BEGIN PRIVATE KEY--abc',
+      projectId: 'test',
+      email: 'test@iam.firebase.google.com',
+    });
+
+    multicastSpy = vi
+      // @ts-expect-error - messaging is private
+      .spyOn(provider.messaging, 'sendEachForMulticast')
+      .mockResolvedValue({ successCount: 1, responses: [{ success: true, messageId: 'message-id' }] } as any);
+
+    topicSpy = vi
+      // @ts-expect-error - messaging is private
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('message-id' as any);
+  });
+
+  test('should send the trigger payload in the data object of a notification message', async () => {
+    await provider.sendMessage({
+      ...baseOptions,
+      payload: {
+        type: 'transaction',
+        transaction_id: 'transaction_123',
+        legal_entity_id: 'legalentity_456',
+      },
+    });
+
+    expect(multicastSpy).toHaveBeenCalledWith({
+      tokens: ['tester'],
+      notification: {
+        title: 'New transaction',
+        body: 'You have a new transaction',
+      },
+      data: {
+        type: 'transaction',
+        transaction_id: 'transaction_123',
+        legal_entity_id: 'legalentity_456',
+      },
+    });
+  });
+
+  test('should stringify non string payload values for the data object', async () => {
+    await provider.sendMessage({
+      ...baseOptions,
+      payload: {
+        amount: 1200,
+        settled: false,
+        meta: { currency: 'EUR' },
+        tags: ['a', 'b'],
+      },
+    });
+
+    expect((multicastSpy.mock.calls[0][0] as Record<string, unknown>).data).toEqual({
+      amount: '1200',
+      settled: 'false',
+      meta: '{"currency":"EUR"}',
+      tags: '["a","b"]',
+    });
+  });
+
+  test('should let the fcm data override win over the trigger payload', async () => {
+    await provider.sendMessage({
+      ...baseOptions,
+      payload: {
+        transaction_id: 'from_payload',
+        legal_entity_id: 'legalentity_456',
+      },
+      overrides: {
+        data: { transaction_id: 'from_override' },
+      },
+    });
+
+    expect((multicastSpy.mock.calls[0][0] as Record<string, unknown>).data).toEqual({
+      transaction_id: 'from_override',
+      legal_entity_id: 'legalentity_456',
+    });
+  });
+
+  test('should drop payload keys that FCM reserves inside data', async () => {
+    await provider.sendMessage({
+      ...baseOptions,
+      payload: {
+        from: 'reserved',
+        message_type: 'reserved',
+        google_channel: 'reserved',
+        gcm_channel: 'reserved',
+        transaction_id: 'transaction_123',
+      },
+    });
+
+    expect((multicastSpy.mock.calls[0][0] as Record<string, unknown>).data).toEqual({
+      transaction_id: 'transaction_123',
+    });
+  });
+
+  test('should keep the novu message id alongside the trigger payload', async () => {
+    await provider.sendMessage({
+      ...baseOptions,
+      payload: {
+        __nvMessageId: 'message_123',
+        transaction_id: 'transaction_123',
+      },
+    });
+
+    expect((multicastSpy.mock.calls[0][0] as Record<string, unknown>).data).toEqual({
+      __nvMessageId: 'message_123',
+      transaction_id: 'transaction_123',
+    });
+  });
+
+  test('should send the trigger payload in the data object of a topic message', async () => {
+    await provider.sendMessage(
+      {
+        ...baseOptions,
+        payload: {
+          transaction_id: 'transaction_123',
+        },
+      },
+      { topic: 'topic-123' }
+    );
+
+    expect(multicastSpy).not.toHaveBeenCalled();
+    expect(topicSpy).toHaveBeenCalledWith({
+      topic: 'topic-123',
+      notification: {
+        title: 'New transaction',
+        body: 'You have a new transaction',
+      },
+      data: {
+        transaction_id: 'transaction_123',
+      },
+    });
+  });
+});
