@@ -93,7 +93,14 @@ overrides:
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
-  basic-ftp@<5.3.1: ^5.3.1
+  # GHSA-c475-qrg2-pj4r: basic-ftp SSRF via `./` prefixed paths in list()
+  # bypassing the loopback / private-IP guard. Patched in 6.2.1. Widen the
+  # override from the previous 5.3.1 floor so the transitive `get-uri` >
+  # `pac-proxy-agent` > `proxy-agent` chain in `packages/providers` picks up
+  # the 6.x line. basic-ftp 6.0 removed the deprecated `Client.list()` string
+  # overload and tightened TypeScript signatures, but `get-uri` only calls
+  # `Client.access()` + `Client.downloadTo()`, which are unchanged.
+  basic-ftp@<6.2.1: ^6.2.1
   # GHSA-c29m-xwm3-cm6r / GHSA-mghh-pgcx-3jjj / GHSA-x97p-jq2g-jp4f /
   # GHSA-3pq3-5fj3-cg6v / GHSA-542g-h47m-68v8 / GHSA-m8m8-qj5v-23w3 /
   # GHSA-r4gj-5m52-g5wh (high) and GHSA-vh66-26gq-q6x8 / GHSA-9fr6-4gfg-395g
