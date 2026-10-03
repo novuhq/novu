@@ -194,9 +194,9 @@ export default NovuInbox;
 
 Use the `renderNotification` prop to customize the entire notification item in the Inbox UI, including the container, layout, and the content of the subject and body of each notification.
 
-<Warning>
-  While `renderNotification` gives you full control over the notification UI, it is **not recommended** for most use cases. Using it means you will have to **re-create the Inbox component built-in actions** like mark as read, archive snooze, and other interaction tooltips yourself.
-</Warning>
+<Note>
+  `renderNotification` gives you full control over the notification UI. You do not have to rebuild the built-in behaviour from scratch: render `NotificationItem` inside it to keep the default look, actions and click handling, and swap or rearrange only the parts you need. See [Reuse the built-in notification item](#reuse-the-built-in-notification-item).
+</Note>
 
 ![Customize entire notification item](/images/inbox/custom-notification.png)
 
@@ -220,3 +220,82 @@ function NovuInbox() {
 
 export default NovuInbox;
 ```
+
+Render props are render functions. They run again whenever the notification changes, for example after `notification.read()` or a websocket update, and whenever your component re-renders. React reconciles what they return, so a component you render inside a render prop keeps its state across those updates.
+
+## Reuse the built-in notification item
+
+`NotificationItem` is the built-in notification item as a React component. Rendered without children it is the default look, actions included. Rendered with children it becomes a root that carries the item's behaviour, severity styling, hover state, the click that marks the notification read and follows its redirect, around whatever arrangement of its parts you pass.
+
+The parts are `NotificationItem.Avatar`, `Content`, `Text`, `Subject`, `Body`, `DefaultActions`, `CustomActions`, `Date` and `Dot`. Every part accepts a `className`; `Subject`, `Body` and `Date` also accept `children` to replace their content. `DefaultActions` and `CustomActions` keep the built-in read, archive, snooze and action buttons.
+
+### Keep the default look
+
+```tsx
+import { Inbox, NotificationItem } from '@novu/react';
+
+function NovuInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => <NotificationItem notification={notification} />}
+    />
+  );
+}
+```
+
+### Swap one part
+
+The same `renderAvatar`, `renderSubject`, `renderBody`, `renderDefaultActions` and `renderCustomActions` props that `Inbox` accepts work on `NotificationItem`.
+
+```tsx
+import { Inbox, NotificationItem } from '@novu/react';
+
+function NovuInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => (
+        <NotificationItem
+          notification={notification}
+          renderBody={(n) => <p>🔔 {n.body}</p>}
+        />
+      )}
+    />
+  );
+}
+```
+
+### Rearrange the parts
+
+```tsx
+import { Inbox, NotificationItem } from '@novu/react';
+
+function NovuInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => (
+        <NotificationItem notification={notification}>
+          <NotificationItem.Content>
+            <NotificationItem.Date />
+            <NotificationItem.Text>
+              <NotificationItem.Subject />
+              <NotificationItem.Body />
+            </NotificationItem.Text>
+            <NotificationItem.CustomActions />
+          </NotificationItem.Content>
+          <NotificationItem.DefaultActions />
+          <NotificationItem.Avatar />
+          <NotificationItem.Dot />
+        </NotificationItem>
+      )}
+    />
+  );
+}
+```
+
+`NotificationItem` uses the same appearance keys as the default item, so `appearance.elements` styles both the same way, and it inherits the `onNotificationClick`, `onPrimaryActionClick` and `onSecondaryActionClick` handlers you pass to `Inbox` unless you give it its own.
