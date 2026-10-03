@@ -264,10 +264,16 @@ overrides:
   '@better-auth/sso@<1.6.13': ^1.6.23
   # GHSA-2x7j-588g-ccc2 (high) and the related moderate advisories
   # GHSA-8m3c-c648-2xjj, GHSA-wmmp-3585-3rmp, GHSA-cc9r-2j5m-2m83 are all
-  # patched in nodemailer 9.1.0. Widen the override so transitive 9.0.x
-  # resolutions via mailparser, mailtrap, smtp-server, and nextjs pick up
-  # the 9.1.x patch line.
-  nodemailer@<9.1.0: ^9.1.0
+  # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)
+  # and GHSA-v53p-9fqp-m79j (high, <=10.0.5) require the 10.x line and
+  # GHSA-g57g-f23g-4646 (moderate, 9.1.0-10.0.9) pushes the floor to 10.0.9.
+  # Widen the override so transitive 9.x resolutions via mailparser, mailtrap,
+  # smtp-server, and nextjs pick up the 10.0.x patch line. Nodemailer 10
+  # preserves backward-compatible subpath exports (`./lib/*` → `./dist/cjs/*`)
+  # so consumers that `require('nodemailer/lib/addressparser')` and
+  # `require('nodemailer/lib/shared')` keep resolving. Repo-wide `engines`
+  # already requires Node >=22, satisfying nodemailer 10's `>=20` floor.
+  nodemailer@<10.0.9: ^10.0.9
   shell-quote@<1.8.5: ^1.8.5
   piscina@<4.9.3: ^4.9.3
   # GHSA-9crc-q9x8-hgqq: @vitest/mocker path-traversal / arbitrary file read
