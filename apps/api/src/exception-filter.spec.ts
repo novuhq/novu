@@ -129,6 +129,44 @@ describe('AllExceptionsFilter', () => {
     expect(unhandledRejections).to.deep.equal([]);
   });
 
+  it('should map a multer error to a 400 using its code rather than its message', async () => {
+    const status = sinon.stub().returnsThis();
+    const json = sinon.stub().returnsThis();
+    const response = { status, json };
+    const request = buildLogRequest({ _shouldLogAnalytics: false });
+
+    const host = buildHost({ request, response });
+    const exception = Object.assign(new Error('Unexpected file field'), {
+      name: 'MulterError',
+      code: 'LIMIT_UNEXPECTED_FILE',
+      field: 'file',
+    });
+
+    await filter.catch(exception, host);
+
+    expect(status.calledWith(HttpStatus.BAD_REQUEST)).to.equal(true);
+    expect(json.firstCall.args[0].message).to.equal('Unexpected file field - file');
+    expect(logger.error.called).to.equal(false);
+  });
+
+  it('should map an oversized multer upload to a 413', async () => {
+    const status = sinon.stub().returnsThis();
+    const json = sinon.stub().returnsThis();
+    const response = { status, json };
+    const request = buildLogRequest({ _shouldLogAnalytics: false });
+
+    const host = buildHost({ request, response });
+    const exception = Object.assign(new Error('File too large'), {
+      name: 'MulterError',
+      code: 'LIMIT_FILE_SIZE',
+      field: 'file',
+    });
+
+    await filter.catch(exception, host);
+
+    expect(status.calledWith(HttpStatus.PAYLOAD_TOO_LARGE)).to.equal(true);
+  });
+
   it('should not call the request log repository when analytics logging is not enabled', async () => {
     const status = sinon.stub().returnsThis();
     const json = sinon.stub().returnsThis();

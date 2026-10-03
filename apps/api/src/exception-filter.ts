@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus, PayloadTooLargeException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  BadRequestException,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  PayloadTooLargeException,
+} from '@nestjs/common';
 import { InternalServerErrorException } from '@nestjs/common/exceptions/internal-server-error.exception';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { CommandValidationException, PinoLogger, RequestLogRepository } from '@novu/application-generic';
@@ -15,6 +22,13 @@ const ERROR_MSG_500 = `Internal server error, contact support and provide them w
 
 class ValidationPipeError {
   response: { message: string[] | string };
+}
+
+interface MulterLikeError {
+  name: string;
+  code: string;
+  message: string;
+  field?: string;
 }
 
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -147,6 +161,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.handleOtherHttpExceptions(new PayloadTooLargeException(), request);
     }
 
+    if (isMulterError(exception)) {
+      return this.handleOtherHttpExceptions(buildMulterHttpException(exception), request);
+    }
+
     return this.buildA5xxError(request, exception);
   }
 
@@ -242,6 +260,33 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 function safeHasProperty(obj: unknown, property: string): boolean {
   return typeof obj === 'object' && obj !== null && property in obj;
+}
+
+/*
+ * `@nestjs/platform-express` translates multer failures into HTTP exceptions by comparing the
+ * error *message* against a hardcoded table, so an upstream reword leaks the failure through as a
+ * 500 — multer 2.4.0 renamed `LIMIT_UNEXPECTED_FILE` from "Unexpected field" to "Unexpected file
+ * field". multer documents `code` as the stable contract, so match on that instead. Duck-typing
+ * rather than `instanceof MulterError` because uploads can be parsed by a different copy of multer
+ * than the one this app would resolve.
+ */
+function isMulterError(exception: unknown): exception is MulterLikeError {
+  return (
+    typeof exception === 'object' &&
+    exception !== null &&
+    (exception as MulterLikeError).name === 'MulterError' &&
+    typeof (exception as MulterLikeError).code === 'string'
+  );
+}
+
+function buildMulterHttpException(error: MulterLikeError): HttpException {
+  const message = error.field ? `${error.message} - ${error.field}` : error.message;
+
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return new PayloadTooLargeException(message);
+  }
+
+  return new BadRequestException(message);
 }
 
 function stripQuery(url: string | undefined): string {
