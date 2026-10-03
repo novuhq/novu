@@ -14,6 +14,13 @@ export interface IConnectionMetadata {
   contextKeys: string[];
 }
 
+export interface IOnlineReportRecord {
+  reportedAt: number;
+  jwtToken: string;
+  userId: string;
+  environmentId: string;
+}
+
 export interface IWebSocketRoom {
   sendToUser(userId: string, event: string, data: unknown, contextKeys: string[]): Promise<void>;
   getActiveConnectionsForUser(userId: string): number;
