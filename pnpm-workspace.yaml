@@ -234,6 +234,11 @@ overrides:
   # and copies data from outside the source tree. Patched in 0.16.8. Only
   # pulled transitively via eslint (dev-only tooling).
   '@humanfs/node@<0.16.8': ^0.16.8
+  # GHSA-xjh9-v7x6-24jw / GHSA-x8mw-p69m-v3mx: @fastify/busboy header-DoS /
+  # memory-exhaustion issues (ReDoS on headers, uncapped field growth).
+  # Patched in 3.2.1 (patch bump within the 3.x line). Transitive via
+  # firebase-admin in `packages/providers`.
+  '@fastify/busboy@<3.2.1': ^3.2.1
   sharp@<0.35.4: ^0.35.4
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
