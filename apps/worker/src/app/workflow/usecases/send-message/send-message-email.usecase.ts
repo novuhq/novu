@@ -53,7 +53,7 @@ import {
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, getTriggerOverrideLayers, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -177,7 +177,7 @@ export class SendMessageEmail extends SendMessageBase {
       step.template = template;
     }
 
-    const overrides = this.buildEmailProviderOverrides(command, integration?.providerId, command.step?.stepId);
+    const overrides = this.buildEmailProviderOverrides(command, integration);
 
     let html = '';
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
@@ -628,7 +628,8 @@ export class SendMessageEmail extends SendMessageBase {
           command.bridgeData,
           command.overrides,
           command.step.stepId,
-          integration.providerId
+          integration.providerId,
+          integration.identifier
         ),
       });
 
@@ -803,34 +804,32 @@ export class SendMessageEmail extends SendMessageBase {
   /**
    * Builds the merged provider overrides object for email sending.
    *
-   * Provider-specific fields (cc/bcc/from/replyTo/etc.) can arrive in three shapes:
+   * Fields Novu maps itself (to/cc/bcc/from/senderName/subject/headers/etc.) can arrive in three shapes:
    *   1. Deprecated channel bucket:     `overrides.email`
    *   2. Deprecated flat provider key:  `overrides.<providerId>`
-   *   3. Modern nested providers shape: `overrides.providers.<providerId>`
-   *                                     `overrides.steps.<stepId>.providers.<providerId>`
+   *   3. The trigger-time layers from `getTriggerOverrideLayers` (providers, then integrations)
    *
-   * All three are merged (step-level wins) so values like `cc` reach `createMailData`
-   * and downstream providers (e.g. SendGrid `personalizations[0].cc`).
+   * They are spread shallowly in that order (the highest layer that sets a field replaces it whole) so
+   * values like `cc` reach `createMailData` and downstream providers (e.g. SendGrid `personalizations[0].cc`).
    */
   private buildEmailProviderOverrides(
     command: SendMessageChannelCommand,
-    providerId: string | undefined,
-    stepId: string | undefined
+    integration: IntegrationEntity
   ): EmailMessageOverrides {
     const deprecatedFlatEmailOverride = command.overrides?.email || {};
-    const deprecatedFlatProviderOverride = providerId
-      ? (command.overrides as Record<string, Record<string, unknown>>)?.[providerId] || {}
-      : {};
-    const providerOverride = providerId ? command.overrides?.providers?.[providerId] || {} : {};
-    const stepProviderOverride =
-      providerId && stepId ? command.overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+    const deprecatedFlatProviderOverride =
+      (command.overrides as Record<string, Record<string, unknown>>)?.[integration.providerId] || {};
+    const triggerOverrideLayers = getTriggerOverrideLayers(
+      command.overrides,
+      command.step?.stepId,
+      integration.providerId,
+      integration.identifier
+    );
 
-    return {
+    return triggerOverrideLayers.reduce<EmailMessageOverrides>((merged, layer) => ({ ...merged, ...layer }), {
       ...deprecatedFlatEmailOverride,
       ...deprecatedFlatProviderOverride,
-      ...providerOverride,
-      ...stepProviderOverride,
-    };
+    });
   }
 
   public buildFactoryIntegration(integration: IntegrationEntity) {

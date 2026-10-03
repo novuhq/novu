@@ -13,7 +13,8 @@ function bridge(providerData: ProviderData) {
 /** `TriggerOverrides.providers` is a total record over every provider id, so one-provider literals need the cast. */
 function triggerOverrides(shape: {
   providers?: Record<string, ProviderData>;
-  steps?: Record<string, { providers: Record<string, ProviderData> }>;
+  integrations?: Record<string, ProviderData>;
+  steps?: Record<string, { providers?: Record<string, ProviderData>; integrations?: Record<string, ProviderData> }>;
 }): TriggerOverrides {
   return shape as unknown as TriggerOverrides;
 }
@@ -208,6 +209,102 @@ describe('combineProviderOverrides', () => {
     expect(combined).to.deep.equal({
       channel: 'C_ATTACKER',
       _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } },
+    });
+  });
+
+  describe('integration-identifier keyed overrides', () => {
+    it('lets the workflow integration layer beat the workflow-global and step-scoped provider layers', () => {
+      const combined = combineProviderOverrides(
+        bridge({ text: 'bridge text', channel: 'C_BRIDGE' }),
+        triggerOverrides({
+          providers: { [PROVIDER_ID]: { text: 'global text', icon: ':global:' } },
+          integrations: { 'slack-eng': { text: 'eng text', icon: ':eng:', username: 'eng-bot' } },
+          steps: { step_1: { providers: { [PROVIDER_ID]: { text: 'step text', icon: ':step:' } } } },
+        }),
+        'step_1',
+        PROVIDER_ID,
+        'slack-eng'
+      );
+
+      expect(combined).to.deep.equal({ text: 'eng text', channel: 'C_BRIDGE', icon: ':eng:', username: 'eng-bot' });
+    });
+
+    it('lets the step integration layer beat the workflow integration layer', () => {
+      const combined = combineProviderOverrides(
+        bridge({ text: 'bridge text' }),
+        triggerOverrides({
+          integrations: { 'slack-eng': { text: 'workflow eng text', icon: ':eng:' } },
+          steps: { step_1: { integrations: { 'slack-eng': { text: 'step eng text' } } } },
+        }),
+        'step_1',
+        PROVIDER_ID,
+        'slack-eng'
+      );
+
+      expect(combined).to.deep.equal({ text: 'step eng text', icon: ':eng:' });
+    });
+
+    it('resolves distinct payloads for two integrations that share a providerId', () => {
+      const overrides = triggerOverrides({
+        providers: { [PROVIDER_ID]: { text: 'shared text' } },
+        integrations: {
+          'slack-eng': { channel: 'C_ENG' },
+          'slack-sales': { channel: 'C_SALES', text: 'sales text' },
+        },
+      });
+
+      const eng = combineProviderOverrides(undefined, overrides, 'step_1', PROVIDER_ID, 'slack-eng');
+      const sales = combineProviderOverrides(undefined, overrides, 'step_1', PROVIDER_ID, 'slack-sales');
+
+      expect(eng).to.deep.equal({ text: 'shared text', channel: 'C_ENG' });
+      expect(sales).to.deep.equal({ text: 'sales text', channel: 'C_SALES' });
+    });
+
+    it('yields the provider-keyed result when the identifier is missing or not targeted', () => {
+      const overrides = triggerOverrides({
+        providers: { [PROVIDER_ID]: { text: 'global text' } },
+        integrations: { 'slack-eng': { text: 'eng text' } },
+        steps: {
+          step_1: {
+            providers: { [PROVIDER_ID]: { icon: ':step:' } },
+            integrations: { 'slack-eng': { icon: ':eng:' } },
+          },
+        },
+      });
+      const providerKeyedOnly = { text: 'global text', icon: ':step:', channel: 'C_BRIDGE' };
+
+      expect(combineProviderOverrides(bridge({ channel: 'C_BRIDGE' }), overrides, 'step_1', PROVIDER_ID)).to.deep.equal(
+        providerKeyedOnly
+      );
+      expect(
+        combineProviderOverrides(bridge({ channel: 'C_BRIDGE' }), overrides, 'step_1', PROVIDER_ID, 'slack-unknown')
+      ).to.deep.equal(providerKeyedOnly);
+    });
+
+    it('replaces inherited arrays whole and clears inherited fields set to null', () => {
+      const combined = combineProviderOverrides(
+        bridge({ blocks: [{ type: 'section' }, { type: 'divider' }], attachments: ['a'] }),
+        triggerOverrides({
+          steps: { step_1: { integrations: { 'slack-eng': { blocks: [{ type: 'header' }], attachments: null } } } },
+        }),
+        'step_1',
+        PROVIDER_ID,
+        'slack-eng'
+      );
+
+      expect(combined).to.deep.equal({ blocks: [{ type: 'header' }], attachments: null });
+    });
+
+    it('ignores integration overrides belonging to another step', () => {
+      const combined = combineProviderOverrides(
+        bridge({ text: 'bridge text' }),
+        triggerOverrides({ steps: { step_2: { integrations: { 'slack-eng': { text: 'other step text' } } } } }),
+        'step_1',
+        PROVIDER_ID,
+        'slack-eng'
+      );
+
+      expect(combined).to.deep.equal({ text: 'bridge text' });
     });
   });
 });
