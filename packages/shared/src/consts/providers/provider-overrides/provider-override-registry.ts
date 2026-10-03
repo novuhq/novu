@@ -167,6 +167,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.PhotonImessage]: escapeHatch('text'),
   // Web Chat has no stable override schema yet — free-form passthrough keyed like Discord.
   [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
+  // 8x8 WhatsApp (Connect): freeform text body lives under `content.text`.
+  [ChatProviderIdEnum.EightByEightWhatsApp]: escapeHatch('content.text'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 export const PROVIDER_OVERRIDE_CONFIGS = {
