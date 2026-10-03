@@ -21,6 +21,13 @@ minimumReleaseAge: 4320
 # (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
 # matches the pre-v11.0.4 behavior.
 minimumReleaseAgeStrict: false
+# pnpm v11.3+ re-verifies every lockfile entry against `minimumReleaseAge`
+# by fetching each package's manifest from its registry before install.
+# Our private `@taskforcesh/bullmq-pro` dep lives on npm.taskforce.sh which
+# requires an auth token; without it the supply-chain pass 401/404s and
+# blocks `pnpm install`. The lockfile is committed and review-gated, so
+# treat it as already-trusted and skip the re-verification pass.
+trustLockfile: true
 
 # Settings migrated from .npmrc (pnpm v11 reads only auth/registry settings from .npmrc).
 autoInstallPeers: true
