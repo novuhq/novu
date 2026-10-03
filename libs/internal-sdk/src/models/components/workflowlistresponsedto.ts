@@ -70,6 +70,10 @@ export type WorkflowListResponseDto = {
    */
   name: string;
   /**
+   * Description of the workflow
+   */
+  description?: string | undefined;
+  /**
    * Tags associated with the workflow
    */
   tags?: Array<string> | undefined;
@@ -191,6 +195,7 @@ export const WorkflowListResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   name: z.string(),
+  description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   updatedAt: z.string(),
   createdAt: z.string(),
