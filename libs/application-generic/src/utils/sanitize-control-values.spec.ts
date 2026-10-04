@@ -25,6 +25,47 @@ describe('dashboardSanitizeControlValues', () => {
     expect(sanitized).not.toHaveProperty('providerOverrides');
   });
 
+  it.each([StepTypeEnum.CHAT, StepTypeEnum.TOOL])(
+    'keeps integrationOverrides stitched into %s control values',
+    (stepType) => {
+      const sanitized = dashboardSanitizeControlValues(
+        logger,
+        {
+          body: 'hello',
+          providerOverrides: { slack: { text: 'hi' } },
+          integrationOverrides: { slack: { 'workspace-a': { text: 'hi A' } } },
+        },
+        stepType
+      );
+
+      expect(sanitized).toMatchObject({
+        body: 'hello',
+        providerOverrides: { slack: { text: 'hi' } },
+        integrationOverrides: { slack: { 'workspace-a': { text: 'hi A' } } },
+      });
+    }
+  );
+
+  it.each([StepTypeEnum.CHAT, StepTypeEnum.TOOL])(
+    'keeps integrationOverrides on %s without provider overrides',
+    (stepType) => {
+      const sanitized = dashboardSanitizeControlValues(
+        logger,
+        { body: 'hello', integrationOverrides: { slack: { 'workspace-a': { text: 'hi A' } } } },
+        stepType
+      );
+
+      expect(sanitized).toMatchObject({ integrationOverrides: { slack: { 'workspace-a': { text: 'hi A' } } } });
+      expect(sanitized).not.toHaveProperty('providerOverrides');
+    }
+  );
+
+  it.each([StepTypeEnum.CHAT, StepTypeEnum.TOOL])('omits integrationOverrides from %s when absent', (stepType) => {
+    const sanitized = dashboardSanitizeControlValues(logger, { body: 'hello' }, stepType);
+
+    expect(sanitized).not.toHaveProperty('integrationOverrides');
+  });
+
   it('keeps chat editorType when present', () => {
     const sanitized = dashboardSanitizeControlValues(logger, { body: 'hello', editorType: 'text' }, StepTypeEnum.CHAT);
 

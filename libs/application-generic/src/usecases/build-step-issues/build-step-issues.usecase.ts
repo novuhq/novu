@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
+import { ControlValuesEntity, ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import { getChatCardValidator } from '@novu/providers';
 import {
@@ -33,9 +33,13 @@ import {
 import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from '../../utils/issues';
 import { parseStepVariables } from '../../utils/parse-step-variables';
 import {
+  processIntegrationOverridesIssues,
   processProviderOverridesIssues,
+  type StepIntegrationOverrides,
   type StepProviderOverrides,
+  stitchIntegrationOverridesFromDocs,
   stitchProviderOverridesFromDocs,
+  withStitchedProviderOverrides,
 } from '../../utils/provider-overrides';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildVariableSchemaCommand, BuildVariableSchemaUsecase } from '../build-variable-schema';
@@ -45,6 +49,15 @@ import { BuildStepIssuesCommand } from './build-step-issues.command';
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
+const OVERRIDE_CONTROL_LEVELS = [
+  ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+  ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+];
+
+interface StepOverrides {
+  providerOverrides?: StepProviderOverrides;
+  integrationOverrides?: StepIntegrationOverrides;
+}
 
 function getChatProviderDisplayName(providerId: string): string {
   return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;
@@ -83,6 +96,7 @@ export class BuildStepIssuesUsecase {
       controlSchema,
       controlsDto: controlValuesDto,
       providerOverridesDto,
+      integrationOverridesDto,
       stepType,
       preloadedControlValues,
       preloadedEnvironmentContext,
@@ -124,8 +138,9 @@ export class BuildStepIssuesUsecase {
       }
     }
 
-    const providerOverrides = await this.resolveProviderOverrides({
+    const { providerOverrides, integrationOverrides } = await this.resolveOverrides({
       providerOverridesDto,
+      integrationOverridesDto,
       user,
       stepInternalId,
       workflowId: persistedWorkflow?._id,
@@ -151,16 +166,15 @@ export class BuildStepIssuesUsecase {
       currentPath: [],
       issues: liquidIssues,
     });
-    // Validate Liquid in provider override values under the namespaced path.
-    if (providerOverrides) {
-      processControlValuesByLiquid({
-        variableSchema,
-        currentValue: { providerOverrides },
-        currentPath: [],
-        issues: liquidIssues,
-      });
-    }
+    // Validate Liquid in provider and integration override values under their namespaced paths.
+    processControlValuesByLiquid({
+      variableSchema,
+      currentValue: withStitchedProviderOverrides({}, providerOverrides, integrationOverrides),
+      currentPath: [],
+      issues: liquidIssues,
+    });
     const providerOverrideIssues = processProviderOverridesIssues(providerOverrides);
+    const integrationOverrideIssues = processIntegrationOverridesIssues(integrationOverrides);
     const customIssues = await this.processControlValuesByCustomeRules(user, stepType, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip
       ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
@@ -172,7 +186,15 @@ export class BuildStepIssuesUsecase {
       providerOverrides
     );
 
-    return merge(schemaIssues, liquidIssues, providerOverrideIssues, customIssues, skipLogicIssues, chatCardIssues);
+    return merge(
+      schemaIssues,
+      liquidIssues,
+      providerOverrideIssues,
+      integrationOverrideIssues,
+      customIssues,
+      skipLogicIssues,
+      chatCardIssues
+    );
   }
 
   /**
@@ -304,50 +326,73 @@ export class BuildStepIssuesUsecase {
     return [...new Set(integrations.map((integration) => integration.providerId))];
   }
 
-  private async resolveProviderOverrides({
+  /**
+   * A dto layer that is present (even `null`, meaning "delete all") replaces what is persisted for
+   * that layer; only absent layers fall back to the persisted override docs.
+   */
+  private async resolveOverrides({
     providerOverridesDto,
+    integrationOverridesDto,
+    ...persistedDocsQuery
+  }: {
+    providerOverridesDto?: StepProviderOverrides | null;
+    integrationOverridesDto?: StepIntegrationOverrides | null;
+    user: UserSessionData;
+    stepInternalId?: string;
+    workflowId?: string;
+    preloadedControlValues?: BuildStepIssuesCommand['preloadedControlValues'];
+  }): Promise<StepOverrides> {
+    const persistedDocs =
+      providerOverridesDto === undefined || integrationOverridesDto === undefined
+        ? await this.loadPersistedOverrideDocs(persistedDocsQuery)
+        : [];
+
+    return {
+      providerOverrides:
+        providerOverridesDto === undefined
+          ? stitchProviderOverridesFromDocs(
+              persistedDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS)
+            )
+          : (providerOverridesDto ?? undefined),
+      integrationOverrides:
+        integrationOverridesDto === undefined
+          ? stitchIntegrationOverridesFromDocs(
+              persistedDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS)
+            )
+          : (integrationOverridesDto ?? undefined),
+    };
+  }
+
+  /** Preloaded control values are authoritative: when present, the repository is never queried. */
+  private async loadPersistedOverrideDocs({
     user,
     stepInternalId,
     workflowId,
     preloadedControlValues,
   }: {
-    providerOverridesDto?: StepProviderOverrides | null;
     user: UserSessionData;
     stepInternalId?: string;
     workflowId?: string;
     preloadedControlValues?: BuildStepIssuesCommand['preloadedControlValues'];
-  }): Promise<StepProviderOverrides | undefined> {
-    if (providerOverridesDto === null) {
-      return undefined;
-    }
-
-    if (providerOverridesDto !== undefined) {
-      return providerOverridesDto;
-    }
-
+  }): Promise<ControlValuesEntity[]> {
     if (!stepInternalId || !workflowId) {
-      return undefined;
+      return [];
     }
 
     if (preloadedControlValues) {
-      return stitchProviderOverridesFromDocs(
-        preloadedControlValues.filter(
-          (controlValue) =>
-            controlValue._stepId === stepInternalId &&
-            controlValue.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS
-        )
+      return preloadedControlValues.filter(
+        (controlValue) =>
+          controlValue._stepId === stepInternalId && OVERRIDE_CONTROL_LEVELS.includes(controlValue.level)
       );
     }
 
-    const providerDocs = await this.controlValuesRepository.find({
+    return this.controlValuesRepository.find({
       _environmentId: user.environmentId,
       _organizationId: user.organizationId,
       _workflowId: workflowId,
       _stepId: stepInternalId,
-      level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      level: { $in: OVERRIDE_CONTROL_LEVELS },
     });
-
-    return stitchProviderOverridesFromDocs(providerDocs);
   }
 
   @Instrument()

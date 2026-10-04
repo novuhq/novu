@@ -12,8 +12,10 @@ import {
   AGENTS_ORG_FUNNEL_EVENTS,
   buildWorkflowPreferences,
   ControlValuesLevelEnum,
+  isRecord,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  type StepIntegrationOverrides,
   type StepProviderOverrides,
   StepTypeEnum,
   WebhookEventEnum,
@@ -51,6 +53,30 @@ import { UpdateWorkflowCommandV0, UpdateWorkflowV0 } from '../update-workflow-v0
 import { UpsertControlValuesCommand, UpsertControlValuesUseCase } from '../upsert-control-values';
 import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
+
+interface IntegrationOverrideEntry {
+  providerId: string;
+  integrationIdentifier: string;
+  controls: Record<string, unknown>;
+}
+
+function toIntegrationOverridePairKey(providerId: string | undefined, integrationIdentifier: string | undefined) {
+  return JSON.stringify([providerId ?? '', integrationIdentifier ?? '']);
+}
+
+/**
+ * An empty identifier is dropped: without one, the control-values lookup would match any
+ * integration override doc of that provider and overwrite it.
+ */
+function toIntegrationOverrideEntries(integrationOverrides: StepIntegrationOverrides): IntegrationOverrideEntry[] {
+  return Object.entries(integrationOverrides)
+    .filter(([providerId]) => isSupportedProviderOverrideId(providerId))
+    .flatMap(([providerId, overridesByIdentifier]) =>
+      Object.entries(isRecord(overridesByIdentifier) ? overridesByIdentifier : {})
+        .filter(([integrationIdentifier]) => integrationIdentifier.length > 0)
+        .map(([integrationIdentifier, controls]) => ({ providerId, integrationIdentifier, controls: controls ?? {} }))
+    );
+}
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -125,7 +151,9 @@ export class UpsertWorkflowUseCase {
         eventType: WebhookEventEnum.WORKFLOW_UPDATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
+          // biome-ignore lint/plugin: webhook payloads carry the workflow entity as a loose JSON object
           object: updatedWorkflow as unknown as Record<string, unknown>,
+          // biome-ignore lint/plugin: webhook payloads carry the workflow entity as a loose JSON object
           previousObject: existingWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
@@ -136,6 +164,7 @@ export class UpsertWorkflowUseCase {
         eventType: WebhookEventEnum.WORKFLOW_CREATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
+          // biome-ignore lint/plugin: webhook payloads carry the workflow entity as a loose JSON object
           object: updatedWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
@@ -215,6 +244,7 @@ export class UpsertWorkflowUseCase {
       userId: user._id,
       name: workflowDto.name,
       steps,
+      // biome-ignore lint/plugin: rawData stores the submitted workflow DTO as a loose JSON object
       rawData: workflowDto as unknown as Record<string, unknown>,
       type: ResourceTypeEnum.BRIDGE,
       description: workflowDto.description,
@@ -246,7 +276,11 @@ export class UpsertWorkflowUseCase {
           _organizationId: user.organizationId,
           _workflowId: existingWorkflow._id,
           level: {
-            $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+            $in: [
+              ControlValuesLevelEnum.STEP_CONTROLS,
+              ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+              ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+            ],
           },
           controls: { $ne: null },
         },
@@ -255,6 +289,7 @@ export class UpsertWorkflowUseCase {
           _stepId: 1,
           level: 1,
           providerId: 1,
+          integrationIdentifier: 1,
           _id: 0,
         }
       );
@@ -307,6 +342,7 @@ export class UpsertWorkflowUseCase {
           controlSchema: controlSchemas.schema,
           controlsDto: step.controlValues,
           providerOverridesDto: step.providerOverrides,
+          integrationOverridesDto: step.integrationOverrides,
           optimisticSteps,
           preloadedControlValues,
           optimisticPayloadSchema,
@@ -399,11 +435,15 @@ export class UpsertWorkflowUseCase {
   ): Promise<void> {
     const controlValuesUpdates = this.getControlValuesUpdates(updatedWorkflow.steps, command);
     const providerOverrideUpdates = this.getProviderOverrideUpdates(updatedWorkflow.steps, command);
+    const integrationOverrideUpdates = this.getIntegrationOverrideUpdates(updatedWorkflow.steps, command);
 
     await Promise.all([
       ...controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, updatedWorkflow._id, command)),
       ...providerOverrideUpdates.map((update) =>
         this.executeProviderOverridesUpdate(update, updatedWorkflow._id, command)
+      ),
+      ...integrationOverrideUpdates.map((update) =>
+        this.executeIntegrationOverridesUpdate(update, updatedWorkflow._id, command)
       ),
     ]);
   }
@@ -441,6 +481,25 @@ export class UpsertWorkflowUseCase {
   }
 
   @Instrument()
+  private getIntegrationOverrideUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
+    return updatedSteps
+      .map((step) => {
+        const commandStep = this.findMatchingCommandStep(step, command.workflowDto.steps);
+        // Omit (undefined) when the step is absent from the request — do not treat as delete-all.
+        const integrationOverrides = commandStep?.integrationOverrides;
+        if (integrationOverrides === undefined) return null;
+
+        return {
+          step,
+          integrationOverrides,
+          shouldDelete: integrationOverrides === null,
+        };
+      })
+      .filter((update): update is NonNullable<typeof update> => update !== null);
+  }
+
+  @Instrument()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing control-value persistence flow is outside this change.
   private async executeControlValuesUpdate(
     {
       shouldDelete,
@@ -451,7 +510,7 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      // Cascade-delete main step controls and any per-provider override docs for the step.
+      // Cascade-delete main step controls and any per-provider / per-integration override docs for the step.
       return this.controlValuesRepository.deleteMany(
         {
           _environmentId: command.user.environmentId,
@@ -459,17 +518,27 @@ export class UpsertWorkflowUseCase {
           _workflowId: workflowId,
           _stepId: step._templateId,
           level: {
-            $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+            $in: [
+              ControlValuesLevelEnum.STEP_CONTROLS,
+              ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+              ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+            ],
           },
         },
         { session: command.session }
       );
     }
 
-    // providerOverrides is persisted as STEP_PROVIDER_CONTROLS docs — never nest in main controls.
-    const { providerOverrides: _ignoredProviderOverrides, ...controlValuesWithoutProviderOverrides } = (controlValues ||
-      {}) as Record<string, unknown> & { providerOverrides?: unknown };
-    const newControlValues = controlValuesWithoutProviderOverrides;
+    // providerOverrides / integrationOverrides are persisted as STEP_PROVIDER_CONTROLS / STEP_INTEGRATION_CONTROLS
+    // docs — never nest them in main controls.
+    const {
+      providerOverrides: _ignoredProviderOverrides,
+      integrationOverrides: _ignoredIntegrationOverrides,
+      ...newControlValues
+    } = (controlValues || {}) as Record<string, unknown> & {
+      providerOverrides?: unknown;
+      integrationOverrides?: unknown;
+    };
 
     /*
      * Only apply email-specific processing for NOVU_CLOUD workflows
@@ -622,6 +691,79 @@ export class UpsertWorkflowUseCase {
             level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
             providerId,
             newControlValues: providerOverrides[providerId] ?? {},
+            session: command.session,
+          })
+        )
+      )
+    );
+  }
+
+  @Instrument()
+  private async executeIntegrationOverridesUpdate(
+    {
+      shouldDelete,
+      step,
+      integrationOverrides,
+    }: {
+      step: NotificationStepEntity;
+      integrationOverrides: StepIntegrationOverrides | null;
+      shouldDelete: boolean;
+    },
+    workflowId: string,
+    command: UpsertWorkflowCommand
+  ) {
+    const baseQuery = {
+      _environmentId: command.user.environmentId,
+      _organizationId: command.user.organizationId,
+      _workflowId: workflowId,
+      _stepId: step._templateId,
+      level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+    };
+
+    if (shouldDelete || integrationOverrides === null) {
+      return this.controlValuesRepository.deleteMany(baseQuery, { session: command.session });
+    }
+
+    const desiredEntries = toIntegrationOverrideEntries(integrationOverrides);
+    const desiredPairKeys = new Set(
+      desiredEntries.map((entry) => toIntegrationOverridePairKey(entry.providerId, entry.integrationIdentifier))
+    );
+
+    const existingDocs = await this.controlValuesRepository.find(
+      baseQuery,
+      {
+        providerId: 1,
+        integrationIdentifier: 1,
+        _id: 1,
+      },
+      { session: command.session }
+    );
+    const docIdsToDelete = existingDocs
+      .filter((doc) => !desiredPairKeys.has(toIntegrationOverridePairKey(doc.providerId, doc.integrationIdentifier)))
+      .map((doc) => doc._id);
+
+    if (docIdsToDelete.length > 0) {
+      await this.controlValuesRepository.delete(
+        {
+          ...baseQuery,
+          _id: { $in: docIdsToDelete },
+        },
+        { session: command.session }
+      );
+    }
+
+    await Promise.all(
+      desiredEntries.map((entry) =>
+        this.upsertControlValuesUseCase.execute(
+          UpsertControlValuesCommand.create({
+            organizationId: command.user.organizationId,
+            environmentId: command.user.environmentId,
+            stepId: step._templateId,
+            workflowId,
+            level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+            providerId: entry.providerId,
+            integrationIdentifier: entry.integrationIdentifier,
+            newControlValues: entry.controls,
             session: command.session,
           })
         )

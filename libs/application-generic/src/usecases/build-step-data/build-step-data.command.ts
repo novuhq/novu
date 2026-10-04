@@ -12,6 +12,10 @@ export interface WorkflowStepSharedContext {
   workflow: NotificationTemplateEntity;
   stepControlsByTemplateId: Map<string, Record<string, unknown>>;
   providerDocsByTemplateId: Map<string, Array<Pick<ControlValuesEntity, 'providerId' | 'controls'>>>;
+  integrationDocsByTemplateId: Map<
+    string,
+    Array<Pick<ControlValuesEntity, 'providerId' | 'integrationIdentifier' | 'controls'>>
+  >;
   stepControlValues: ControlValuesEntity[];
   environmentContext: IPreloadedEnvironmentContext;
 }

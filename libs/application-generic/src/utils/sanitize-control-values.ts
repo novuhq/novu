@@ -23,6 +23,7 @@ import { InAppActionType, InAppControlType } from '../schemas/control/in-app-con
 import { resolveChatEditorType } from './resolve-chat-editor-type';
 
 // Cast input T_Type to trigger Ajv validation errors - possible undefined
+// biome-ignore lint/plugin: the undefined default is intentional so Ajv reports the missing value
 function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
   return isEmpty(input) ? defaultValue : input;
 }
@@ -123,24 +124,33 @@ function sanitizePush(controlValues: PushControlType) {
   return filterNullishValues(mappedValues);
 }
 
-type WithProviderOverrides<T> = T & { providerOverrides?: Record<string, unknown> };
+interface StitchedContentOverrides {
+  providerOverrides?: Record<string, unknown>;
+  integrationOverrides?: Record<string, unknown>;
+}
 
 /**
- * Runtime/preview may still nest providerOverrides (stitched or form-sourced).
+ * Runtime/preview may still nest providerOverrides and integrationOverrides (stitched or form-sourced).
  * They are not part of the persisted main control schema — pass them through.
  */
-function keepProviderOverrides(
+function keepContentOverrides(
   sanitized: Record<string, unknown>,
-  controlValues: { providerOverrides?: Record<string, unknown> }
+  controlValues: StitchedContentOverrides
 ): Record<string, unknown> {
-  if (controlValues.providerOverrides === undefined) {
+  const { providerOverrides, integrationOverrides } = controlValues;
+
+  if (providerOverrides === undefined && integrationOverrides === undefined) {
     return sanitized;
   }
 
-  return { ...sanitized, providerOverrides: controlValues.providerOverrides };
+  return {
+    ...sanitized,
+    ...(providerOverrides === undefined ? {} : { providerOverrides }),
+    ...(integrationOverrides === undefined ? {} : { integrationOverrides }),
+  };
 }
 
-function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
+function sanitizeChat(controlValues: ChatControlType & StitchedContentOverrides) {
   const editorType = resolveChatEditorType(controlValues.body, controlValues.editorType);
   const mappedValues: ChatControlType = {
     body: sanitizeEmptyInput(controlValues.body),
@@ -148,16 +158,16 @@ function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
     ...(editorType ? { editorType } : {}),
   };
 
-  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
+  return keepContentOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
-function sanitizeTool(controlValues: WithProviderOverrides<ToolControlType>) {
+function sanitizeTool(controlValues: ToolControlType & StitchedContentOverrides) {
   const mappedValues: ToolControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
   };
 
-  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
+  return keepContentOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
 function sanitizeDigest(controlValues: DigestControlSchemaType) {
@@ -275,6 +285,7 @@ function sanitizeLayout(controlValues: LayoutControlType) {
   };
 }
 
+// biome-ignore lint/plugin: digest amount arrives as raw control input (number or numeric string) and is parsed here
 function parseAmount(amount?: unknown) {
   try {
     if (!isNumber(amount)) {
@@ -363,10 +374,10 @@ export function dashboardSanitizeControlValues(
         normalizedValues = sanitizePush(controlValues as PushControlType);
         break;
       case StepTypeEnum.CHAT:
-        normalizedValues = sanitizeChat(controlValues as WithProviderOverrides<ChatControlType>);
+        normalizedValues = sanitizeChat(controlValues as ChatControlType & StitchedContentOverrides);
         break;
       case StepTypeEnum.TOOL:
-        normalizedValues = sanitizeTool(controlValues as WithProviderOverrides<ToolControlType>);
+        normalizedValues = sanitizeTool(controlValues as ToolControlType & StitchedContentOverrides);
         break;
       case StepTypeEnum.DIGEST:
         normalizedValues = sanitizeDigest(controlValues as DigestControlSchemaType);
