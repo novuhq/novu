@@ -80,6 +80,7 @@ export class UpdateWorkflowV0 {
   ) {}
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing v0 update orchestration is outside this change.
   async execute(command: UpdateWorkflowCommandV0): Promise<WorkflowWithPreferencesResponseDto> {
     await this.validatePayload(command);
 
@@ -154,6 +155,7 @@ export class UpdateWorkflowV0 {
 
     const allowedTemplateIds = this.buildAllowedTemplateIds(existingTemplate.steps);
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing v0 update orchestration is outside this change.
     const workflowUpdate = async (session?: ClientSession | null) => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
@@ -483,7 +485,7 @@ export class UpdateWorkflowV0 {
         throw new BadRequestException(`Something un-expected happened, template couldn't be found`);
       }
 
-      const updatedVariants = await this.updateVariants(message.variants, command, parentChangeId!, allowedTemplateIds);
+      const updatedVariants = await this.updateVariants(message.variants, command, parentChangeId, allowedTemplateIds);
 
       const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
         type: message.template.type,
@@ -792,7 +794,11 @@ export class UpdateWorkflowV0 {
           _workflowId: command.id,
           _stepId: id,
           level: {
-            $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+            $in: [
+              ControlValuesLevelEnum.STEP_CONTROLS,
+              ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+              ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+            ],
           },
         },
         { session }
