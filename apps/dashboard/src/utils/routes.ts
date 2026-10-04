@@ -94,8 +94,6 @@ export const ROUTES = {
   AGENT_WHATSAPP_SIGNUP: '/agents/whatsapp/connect/:token',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
   AGENT_SLACK_SETUP: '/agents/slack/connect/:token',
-  /** Public, tokenized page where a human invited via `human invite` picks how the agent reaches them. */
-  HUMAN_INVITE: '/agents/invite/:token',
   INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
 } as const;
 
