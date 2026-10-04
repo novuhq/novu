@@ -15,8 +15,8 @@ import {
   InstrumentUsecase,
   NotificationPayloadService,
   PinoLogger,
-  stitchIntegrationOverridesFromDocs,
-  stitchProviderOverridesFromDocs,
+  STEP_OVERRIDE_CONTROL_LEVELS,
+  stitchStepOverridesFromDocs,
   withStitchedProviderOverrides,
 } from '@novu/application-generic';
 import {
@@ -190,9 +190,7 @@ export class ExecuteBridgeJob {
         _environmentId: command.environmentId,
         _workflowId: workflow._id,
         _stepId: command.job.step._id,
-        level: {
-          $in: [ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS, ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS],
-        },
+        level: { $in: STEP_OVERRIDE_CONTROL_LEVELS },
       }),
     ]);
 
@@ -207,12 +205,7 @@ export class ExecuteBridgeJob {
       sanitizedControls = rawControls ?? {};
     }
 
-    const providerOverrides = stitchProviderOverridesFromDocs(
-      overrideDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS)
-    );
-    const integrationOverrides = stitchIntegrationOverridesFromDocs(
-      overrideDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS)
-    );
+    const { providerOverrides, integrationOverrides } = stitchStepOverridesFromDocs(overrideDocs);
 
     return {
       controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides, integrationOverrides),
