@@ -1,31 +1,61 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { type OverrideFieldSchema } from '@/components/workflow-editor/steps/shared/provider-overrides/override-field-schema';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { getActiveWebhookSchemaSources, mergeWebhookPayloadSchemas } from './webhook-payload-schema';
+import {
+  getActiveWebhookSchemaSources,
+  type MergedWebhookPayloadSchema,
+  mergeWebhookPayloadSchemas,
+  type WebhookSchemaSource,
+} from './webhook-payload-schema';
+
+type WebhookOverrideSchema = {
+  payloadSchema: MergedWebhookPayloadSchema;
+  rootSchema: OverrideFieldSchema;
+};
+
+function toWebhookOverrideSchema(sources: WebhookSchemaSource[]): WebhookOverrideSchema {
+  const payloadSchema = mergeWebhookPayloadSchemas(sources);
+
+  return { payloadSchema, rootSchema: { type: 'object', properties: payloadSchema.properties } };
+}
 
 export function useToolOverrideProviderOptions() {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
-  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.TOOL);
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.TOOL);
 
-  const webhookPayloadSchema = useMemo(() => {
-    const environmentIntegrations = (integrations ?? []).filter(
-      (integration) =>
-        integration.channel === ChannelTypeEnum.TOOL && integration._environmentId === currentEnvironment?._id
+  // Built once per integrations fetch for stable identities: the override editor memoizes its
+  // completion source and supported-field rows on the root schema, so a fresh object per render
+  // would invalidate both on every keystroke.
+  const webhookSchemas = useMemo(() => {
+    const sources = getActiveWebhookSchemaSources(
+      (integrations ?? []).filter(
+        (integration) =>
+          integration.channel === ChannelTypeEnum.TOOL && integration._environmentId === currentEnvironment?._id
+      )
     );
 
-    return mergeWebhookPayloadSchemas(getActiveWebhookSchemaSources(environmentIntegrations));
+    return {
+      allIntegrations: toWebhookOverrideSchema(sources),
+      byIdentifier: new Map(sources.map((source) => [source.identifier, toWebhookOverrideSchema([source])])),
+      disconnected: toWebhookOverrideSchema([]),
+    };
   }, [currentEnvironment?._id, integrations]);
 
-  // Stable identity: the override editor memoizes its completion source and supported-field rows
-  // on this object, so a fresh wrapper per render would invalidate both on every keystroke.
-  const webhookRootSchema = useMemo(
-    (): OverrideFieldSchema => ({ type: 'object', properties: webhookPayloadSchema.properties }),
-    [webhookPayloadSchema]
+  /** Every active webhook's merged schema, or one integration's own (empty once it is disconnected). */
+  const getWebhookOverrideSchema = useCallback(
+    (integrationIdentifier?: string): WebhookOverrideSchema => {
+      if (integrationIdentifier === undefined) {
+        return webhookSchemas.allIntegrations;
+      }
+
+      return webhookSchemas.byIdentifier.get(integrationIdentifier) ?? webhookSchemas.disconnected;
+    },
+    [webhookSchemas]
   );
 
-  return { providerOptions, providerOverrides, webhookPayloadSchema, webhookRootSchema };
+  return { providerOptions, overrides, getWebhookOverrideSchema };
 }

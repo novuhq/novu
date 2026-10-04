@@ -38,6 +38,7 @@ function fingerprintControls(step: StepResponseDto): string {
   return JSON.stringify({
     v: step.controls?.values,
     po: step.providerOverrides,
+    io: step.integrationOverrides,
     ui: step.controls?.uiSchema,
     ds: step.controls?.dataSchema,
   });
@@ -99,9 +100,8 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
     // Live environments render the editors read-only; never let a stray blur write to them.
     isReadOnly,
     save: (data, { onSuccess }) => {
-      const { providerOverrides, ...controlValues } = data as Record<string, unknown> & {
-        providerOverrides?: StepUpdateDto['providerOverrides'];
-      };
+      const { providerOverrides, integrationOverrides, ...controlValues } = data as Record<string, unknown> &
+        Pick<StepUpdateDto, 'providerOverrides' | 'integrationOverrides'>;
 
       if (step.type === StepTypeEnum.CHAT && isChatBlockEditorEnabled) {
         controlValues.editorType = deriveChatEditorType(controlValues.body, controlValues.editorType, true);
@@ -110,6 +110,7 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       const fp = JSON.stringify({
         v: controlValues,
         po: providerOverrides,
+        io: integrationOverrides,
         ui: step.controls?.uiSchema,
         ds: step.controls?.dataSchema,
       });
@@ -123,6 +124,9 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       // Omit when untouched (leave server docs unchanged); send null only to delete all.
       if (providerOverrides !== undefined) {
         updateStepData.providerOverrides = providerOverrides;
+      }
+      if (integrationOverrides !== undefined) {
+        updateStepData.integrationOverrides = integrationOverrides;
       }
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
         onSuccess: () => {

@@ -1,7 +1,6 @@
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
-  type ContentOverrideProviderId,
   FeatureFlagsKeysEnum,
   UiComponentEnum,
   type UiSchema,
@@ -12,6 +11,7 @@ import {
   ContentOverridePanel,
   type ProviderOverrideEditorExtras,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
+import { type OverrideContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { SlackBlockKitBuilderHint } from '@/components/workflow-editor/steps/shared/provider-overrides/slack-block-kit-builder-hint';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
@@ -35,9 +35,9 @@ function ChatOverrideEditor({
   defaultContent: ReactNode;
   defaultContentActions?: ReactNode;
 }) {
-  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
 
-  const getEditorExtras = useCallback((providerId: ContentOverrideProviderId): ProviderOverrideEditorExtras => {
+  const getEditorExtras = useCallback(({ providerId }: OverrideContentSource): ProviderOverrideEditorExtras => {
     if (providerId !== ChatProviderIdEnum.Slack) {
       return {};
     }
@@ -51,7 +51,7 @@ function ChatOverrideEditor({
     <ContentOverridePanel
       channel={ChannelTypeEnum.CHAT}
       providerOptions={providerOptions}
-      providerOverrides={providerOverrides}
+      overrides={overrides}
       defaultContent={defaultContent}
       defaultContentActions={defaultContentActions}
       showEscapeHatchBadge
