@@ -407,28 +407,28 @@ export function getUnsupportedOverrideKeys(
  * Those UNSUPPORTED_PROPERTY issues are mirrored client-side by `getUnsupportedOverrideKeys`;
  * nested paths (e.g. `…document.link`) are not, so the server issue must still be shown.
  */
-export function isTopLevelOverrideIssuePath(issuePath: string, providerPathPrefix: string): boolean {
-  if (!issuePath.startsWith(`${providerPathPrefix}.`)) {
+export function isTopLevelOverrideIssuePath(issuePath: string, overridePath: string): boolean {
+  if (!issuePath.startsWith(`${overridePath}.`)) {
     return false;
   }
 
-  const relative = issuePath.slice(providerPathPrefix.length + 1);
+  const relative = issuePath.slice(overridePath.length + 1);
 
   return relative.length > 0 && !relative.includes('.');
 }
 
 /**
- * Whether a server control issue should still be shown for a provider override.
+ * Whether a server control issue should still be shown for a provider or integration override.
  * Top-level UNSUPPORTED_PROPERTY is mirrored client-side; nested ones are not.
  */
 export function shouldKeepServerOverrideIssue(
   issue: { issueType: string; variableName?: string },
   fallbackPath: string,
-  providerPathPrefix: string
+  overridePath: string
 ): boolean {
   if (issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY) {
     return true;
   }
 
-  return !isTopLevelOverrideIssuePath(issue.variableName ?? fallbackPath, providerPathPrefix);
+  return !isTopLevelOverrideIssuePath(issue.variableName ?? fallbackPath, overridePath);
 }

@@ -41,8 +41,8 @@ type OverrideSourceItemProps = {
   /** Muted text after the label, e.g. an integration's identifier. */
   detail?: string;
   icon?: ReactNode;
-  isSelected: boolean;
-  isInvalid: boolean;
+  selectedSource: ContentSource;
+  invalidSourcePaths?: Set<string>;
   showEscapeHatchBadge: boolean;
   supportsOverrides: boolean;
   canAddOverrides: boolean;
@@ -55,14 +55,17 @@ function OverrideSourceItem({
   label,
   detail,
   icon,
-  isSelected,
-  isInvalid,
+  selectedSource,
+  invalidSourcePaths,
   showEscapeHatchBadge,
   supportsOverrides,
   canAddOverrides,
   onSelectSource,
   onAddOverride,
 }: OverrideSourceItemProps) {
+  const source = toOverrideSource(option);
+  const isSelected = isSameContentSource(selectedSource, source);
+  const isInvalid = !!invalidSourcePaths?.has(getOverridePath(source));
   const canSelectDirectly = !supportsOverrides || option.hasOverride;
   const isDimmed = supportsOverrides && !option.hasOverride;
 
@@ -76,9 +79,9 @@ function OverrideSourceItem({
       )}
       onSelect={() => {
         if (canSelectDirectly) {
-          onSelectSource(toOverrideSource(option));
+          onSelectSource(source);
         } else if (canAddOverrides) {
-          onAddOverride?.(toOverrideSource(option));
+          onAddOverride?.(source);
         }
       }}
     >
@@ -110,7 +113,7 @@ function OverrideSourceItem({
           onPointerDown={(event) => event.preventDefault()}
           onClick={(event) => {
             event.stopPropagation();
-            onAddOverride?.(toOverrideSource(option));
+            onAddOverride?.(source);
           }}
         >
           <RiAddFill className="size-3.5" />
@@ -137,6 +140,8 @@ export function ContentSourceSelector({
   const selectedLabel = getContentSourceLabel(selectedSource, providers);
 
   const itemProps = {
+    selectedSource,
+    invalidSourcePaths,
     supportsOverrides,
     canAddOverrides,
     onSelectSource,
@@ -189,8 +194,6 @@ export function ContentSourceSelector({
                       className={cn('size-4', !provider.hasOverride && supportsOverrides && 'grayscale opacity-50')}
                     />
                   }
-                  isSelected={isSameContentSource(selectedSource, toOverrideSource(provider))}
-                  isInvalid={!!invalidSourcePaths?.has(getOverridePath(provider))}
                   showEscapeHatchBadge={showEscapeHatchBadge}
                 />
                 {provider.integrations.map((integration) => (
@@ -200,8 +203,6 @@ export function ContentSourceSelector({
                     option={integration}
                     label={integration.name}
                     detail={integration.integrationIdentifier}
-                    isSelected={isSameContentSource(selectedSource, toOverrideSource(integration))}
-                    isInvalid={!!invalidSourcePaths?.has(getOverridePath(integration))}
                     showEscapeHatchBadge={false}
                   />
                 ))}
