@@ -1,8 +1,8 @@
-import { type ContentOverrideProviderId, getProviderPrimaryContentKey, setAtPath } from '@novu/shared';
+import { getProviderPrimaryContentKey, setAtPath } from '@novu/shared';
 import { Braces } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
+import { RiErrorWarningLine, RiGitMergeLine, RiLightbulbLine } from 'react-icons/ri';
 import { InputRoot } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ControlInput } from '@/components/workflow-editor/control-input';
@@ -12,11 +12,14 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
+  getOverrideFormField,
+  getOverridePath,
+  getSourceOverride,
   getUnsupportedOverrideKeys,
   isEscapeHatchProvider,
-  PROVIDER_OVERRIDES_FIELD,
-  type ProviderOverrides,
+  type OverrideContentSource,
   shouldKeepServerOverrideIssue,
+  updateSourceOverride,
 } from './content-source';
 import { EscapeHatchCallout } from './escape-hatch-callout';
 import { createOverrideCompletionSource } from './override-autocomplete';
@@ -28,6 +31,7 @@ import {
 import { findDuplicateRootKey } from './override-json';
 import { OverrideSupportedFields } from './override-supported-fields';
 import { createSchemaResolver } from './schema-resolver';
+import { readOverrideValues } from './use-provider-override-options';
 import { useProviderOverrideSchema } from './use-provider-override-schema';
 
 function formatOverrideJson(value: Record<string, unknown> | undefined): string {
@@ -55,7 +59,7 @@ function formatOverrideJsonDraft(value: string): string {
 /**
  * Server issues carry the full control path (e.g. `providerOverrides.slack.blocks.0.status`) in
  * `variableName`, but their message only names the leaf field ("Status is required"). Derive the
- * path relative to this provider, with array indices in bracket notation (`blocks[0].status`), so
+ * path relative to this override, with array indices in bracket notation (`blocks[0].status`), so
  * nested errors point at a location. Top-level fields return undefined — the message already names
  * them.
  */
@@ -111,7 +115,7 @@ export type ProviderOverrideNoticeContext = {
 export type ProviderOverrideNotice = ReactNode | ((context: ProviderOverrideNoticeContext) => ReactNode);
 
 export type ProviderOverrideEditorProps = {
-  providerId: ContentOverrideProviderId;
+  source: OverrideContentSource;
   displayName: string;
   /**
    * Replaces both the schema-less callout and the default hint with channel-specific copy. Rendered
@@ -124,11 +128,11 @@ export type ProviderOverrideEditorProps = {
   rootSchemaOverride?: OverrideFieldSchema;
   describeField?: DescribeOverrideField;
   annotateField?: AnnotateOverrideField;
-  onDraftParseValidityChange?: (providerId: ContentOverrideProviderId, isParseValid: boolean) => void;
+  onDraftParseValidityChange?: (overridePath: string, isParseValid: boolean) => void;
 };
 
 export function ProviderOverrideEditor({
-  providerId,
+  source,
   displayName,
   notice,
   headerTooltip,
@@ -138,6 +142,7 @@ export function ProviderOverrideEditor({
   annotateField,
   onDraftParseValidityChange,
 }: ProviderOverrideEditorProps) {
+  const { providerId, integrationIdentifier } = source;
   const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
@@ -159,12 +164,14 @@ export function ProviderOverrideEditor({
   const showEscapeHatchCallout = !notice && isEscapeHatchProvider(providerId);
 
   const [draft, setDraft] = useState(() =>
-    formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined)?.[providerId])
+    formatOverrideJson(getSourceOverride({ providerId, integrationIdentifier }, readOverrideValues(getValues)))
   );
 
   useEffect(() => {
-    setDraft(formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined)?.[providerId]));
-  }, [getValues, providerId]);
+    setDraft(
+      formatOverrideJson(getSourceOverride({ providerId, integrationIdentifier }, readOverrideValues(getValues)))
+    );
+  }, [getValues, providerId, integrationIdentifier]);
 
   const formatJson = useCallback(() => {
     setDraft((current) => formatOverrideJsonDraft(current));
@@ -179,7 +186,7 @@ export function ProviderOverrideEditor({
     return { parseError: undefined, parsedDraft: parsed };
   }, [draft]);
 
-  const issuePathPrefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
+  const issuePathPrefix = getOverridePath({ providerId, integrationIdentifier });
 
   // Top-level unsupported keys are detected client-side from the shared override key
   // list (keystroke-by-keystroke); skip only those server UNSUPPORTED_PROPERTY issues
@@ -227,12 +234,12 @@ export function ProviderOverrideEditor({
   );
 
   useEffect(() => {
-    onDraftParseValidityChange?.(providerId, !parseError);
+    onDraftParseValidityChange?.(issuePathPrefix, !parseError);
 
     return () => {
-      onDraftParseValidityChange?.(providerId, true);
+      onDraftParseValidityChange?.(issuePathPrefix, true);
     };
-  }, [onDraftParseValidityChange, parseError, providerId]);
+  }, [onDraftParseValidityChange, parseError, issuePathPrefix]);
 
   const resolvedTooltip =
     headerTooltip ??
@@ -250,14 +257,10 @@ export function ProviderOverrideEditor({
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
       <Controller
         control={control}
-        name={PROVIDER_OVERRIDES_FIELD}
+        name={getOverrideFormField(source)}
         render={({ field }) => {
-          const writeProviderOverride = (next: Record<string, unknown>) => {
-            const current = (field.value as ProviderOverrides | undefined) ?? {};
-            field.onChange({
-              ...current,
-              [providerId]: next,
-            });
+          const writeOverride = (next: Record<string, unknown>) => {
+            field.onChange(updateSourceOverride(source, readOverrideValues(getValues), next));
             saveForm();
           };
 
@@ -271,7 +274,7 @@ export function ProviderOverrideEditor({
               [key]: browsableResolver?.defaultValue(browsableSchema?.properties?.[key]) ?? '',
             };
             setDraft(formatOverrideJson(next));
-            writeProviderOverride(next);
+            writeOverride(next);
           };
 
           return (
@@ -313,6 +316,15 @@ export function ProviderOverrideEditor({
                   <EscapeHatchCallout providerId={providerId} displayName={displayName} />
                 </div>
               )}
+              {integrationIdentifier !== undefined && (
+                <div className="text-text-soft flex items-start gap-1 px-1 pb-1">
+                  <RiGitMergeLine className="mt-0.5 size-3 shrink-0" />
+                  <span className="min-w-0 flex-1 text-xs">
+                    Merged over the {displayName} (all) override, only for this integration. Keys you leave out are
+                    inherited from it.
+                  </span>
+                </div>
+              )}
               <InputRoot className="min-h-[180px]" hasError={!!parseError}>
                 <ControlInput
                   size="2xs"
@@ -332,7 +344,7 @@ export function ProviderOverrideEditor({
                       return;
                     }
 
-                    writeProviderOverride(parsed);
+                    writeOverride(parsed);
                   }}
                   onBlur={() => {
                     field.onBlur();

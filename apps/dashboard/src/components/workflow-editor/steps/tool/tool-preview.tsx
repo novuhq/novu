@@ -10,16 +10,19 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
 import {
   DEFAULT_CONTENT_SOURCE,
+  getOverrideProviderDisplayName,
   type ProviderOverrideOption,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import {
+  getInheritedKeysHint,
   getMergedOverrideHint,
   PREVIEW_PANEL_CLASS,
   useAnnotatedOverridePreview,
+  usePreviewOverrideValues,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
 import { PreviewSourceBar } from '@/components/workflow-editor/steps/shared/provider-overrides/preview-source-bar';
-import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
+import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 
 type ToolPreviewResult = {
   type: string;
@@ -91,23 +94,26 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const preview = extractToolPreview(previewData);
   const body = preview?.body ?? '';
 
-  const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.TOOL);
   const { selectedSource, previewSource, setPreviewSource } = useContentSource();
-  const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
-  const isWebhookPreview = activeProviderId === ToolProviderIdEnum.Webhook;
+  const overrideSource = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
+  const isWebhookSource = overrideSource?.providerId === ToolProviderIdEnum.Webhook;
+  // The provider-wide webhook payload is shown raw; an integration's is shown merged over it.
+  const isWebhookProviderPreview = isWebhookSource && overrideSource?.integrationIdentifier === undefined;
 
+  const previewOverrides = usePreviewOverrideValues(preview);
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
-    providerId: isWebhookPreview ? undefined : activeProviderId,
-    formOverrides: providerOverrides,
-    previewOverrides: preview?.providerOverrides,
+    source: isWebhookProviderPreview ? undefined : overrideSource,
+    formOverrides: overrides,
+    previewOverrides,
   });
-  const webhookPreviewJson = isWebhookPreview
+  const webhookPreviewJson = isWebhookProviderPreview
     ? JSON.stringify(preview?.providerOverrides?.[ToolProviderIdEnum.Webhook] ?? {}, null, 2)
     : undefined;
 
   const getHintText = () => {
-    if (!activeProviderId) {
+    if (!overrideSource) {
       const defaultContentMapping = formatConnectedPrimaryContentHints(providerOptions);
 
       if (!defaultContentMapping) {
@@ -117,17 +123,27 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       return `Delivered to every enabled tool provider — ${defaultContentMapping}.`;
     }
 
-    if (isWebhookPreview) {
+    if (isWebhookProviderPreview) {
       return 'Each webhook integration merges its own body template beneath this payload.';
     }
 
-    // Non-webhook providerId always yields an annotated preview object from the hook.
+    const displayName = getOverrideProviderDisplayName(overrideSource.providerId);
+    const hasInheritedKeys = annotatedPreview?.hasInheritedKeys ?? false;
+
+    if (isWebhookSource) {
+      const hint = 'This integration merges its own body template beneath this payload.';
+
+      return hasInheritedKeys ? `${hint} ${getInheritedKeysHint(displayName)}` : hint;
+    }
+
+    // Every source other than the provider-wide webhook yields an annotated preview object from the hook.
     return getMergedOverrideHint({
       hasOverride: annotatedPreview?.hasOverride ?? false,
       defaultContentKey: annotatedPreview?.defaultContentKey,
       body,
-      providerId: activeProviderId,
-      displayName: providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? '',
+      providerId: overrideSource.providerId,
+      displayName,
+      hasInheritedKeys,
     });
   };
 
@@ -152,10 +168,10 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   };
 
   let previewLabel = 'Default content';
-  if (activeProviderId) {
+  if (overrideSource) {
     previewLabel = 'Merged override fields';
   }
-  if (isWebhookPreview) {
+  if (isWebhookProviderPreview) {
     previewLabel = 'Rendered override JSON';
   }
 

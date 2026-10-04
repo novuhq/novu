@@ -1,3 +1,4 @@
+import { Fragment, type ReactNode } from 'react';
 import { RiAddFill, RiCheckLine, RiErrorWarningFill, RiExpandUpDownLine } from 'react-icons/ri';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
@@ -13,23 +14,117 @@ import {
   type ContentSource,
   DEFAULT_CONTENT_SOURCE,
   getContentSourceLabel,
+  getOverridePath,
+  getOverrideProviderDisplayName,
+  getProviderOptionLabel,
+  type IntegrationOverrideOption,
+  isSameContentSource,
+  type OverrideContentSource,
   type ProviderOverrideOption,
+  toOverrideSource,
 } from './content-source';
 
 type ContentSourceSelectorProps = {
   selectedSource: ContentSource;
   providers: ProviderOverrideOption[];
-  invalidProviderIds?: Set<string>;
+  /** Override paths (`getOverridePath`) whose override has errors. */
+  invalidSourcePaths?: Set<string>;
   /** Marks providers whose override payload is free-form. Off by default so existing tabs stay untouched. */
   showEscapeHatchBadge?: boolean;
   onSelectSource: (source: ContentSource) => void;
-  onAddOverride?: (providerId: ProviderOverrideOption['providerId']) => void;
+  onAddOverride?: (source: OverrideContentSource) => void;
 };
+
+type OverrideSourceItemProps = {
+  option: ProviderOverrideOption | IntegrationOverrideOption;
+  label: string;
+  /** Muted text after the label, e.g. an integration's identifier. */
+  detail?: string;
+  icon?: ReactNode;
+  isSelected: boolean;
+  isInvalid: boolean;
+  showEscapeHatchBadge: boolean;
+  supportsOverrides: boolean;
+  canAddOverrides: boolean;
+  onSelectSource: (source: ContentSource) => void;
+  onAddOverride?: (source: OverrideContentSource) => void;
+};
+
+function OverrideSourceItem({
+  option,
+  label,
+  detail,
+  icon,
+  isSelected,
+  isInvalid,
+  showEscapeHatchBadge,
+  supportsOverrides,
+  canAddOverrides,
+  onSelectSource,
+  onAddOverride,
+}: OverrideSourceItemProps) {
+  const canSelectDirectly = !supportsOverrides || option.hasOverride;
+  const isDimmed = supportsOverrides && !option.hasOverride;
+
+  return (
+    <DropdownMenuItem
+      disabled={!canSelectDirectly && !canAddOverrides}
+      className={cn(
+        'flex cursor-pointer items-center justify-between gap-2 rounded-md px-1.5 py-1',
+        !icon && 'pl-[26px]',
+        isSelected && 'bg-neutral-alpha-50'
+      )}
+      onSelect={() => {
+        if (canSelectDirectly) {
+          onSelectSource(toOverrideSource(option));
+        } else if (canAddOverrides) {
+          onAddOverride?.(toOverrideSource(option));
+        }
+      }}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        {icon}
+        <span className={cn('truncate text-xs font-medium', isDimmed ? 'text-foreground-400' : 'text-foreground-950')}>
+          {label}
+        </span>
+        {detail && <span className="text-foreground-400 min-w-0 truncate text-[11px]">{detail}</span>}
+        {isInvalid && <RiErrorWarningFill className="text-destructive size-3 shrink-0" />}
+        {!option.isConnected && option.hasOverride && (
+          <span className="text-warning text-[10px] font-medium">disconnected</span>
+        )}
+      </div>
+
+      {showEscapeHatchBadge && option.isEscapeHatch && (
+        <span
+          className="text-foreground-400 border-stroke-soft shrink-0 rounded-sm border px-1 text-[10px] font-medium uppercase leading-4 tracking-[0.2px]"
+          title="No schema — this override is passed through to the provider API without validation."
+        >
+          no schema
+        </span>
+      )}
+      {canAddOverrides && !option.hasOverride && (
+        <button
+          type="button"
+          aria-label={`Add ${label} override`}
+          className="text-foreground-400 hover:text-foreground-950 rounded p-0.5"
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onAddOverride?.(toOverrideSource(option));
+          }}
+        >
+          <RiAddFill className="size-3.5" />
+        </button>
+      )}
+      {isSelected && canSelectDirectly && <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />}
+    </DropdownMenuItem>
+  );
+}
 
 export function ContentSourceSelector({
   selectedSource,
   providers,
-  invalidProviderIds,
+  invalidSourcePaths,
   showEscapeHatchBadge = false,
   onSelectSource,
   onAddOverride,
@@ -38,26 +133,35 @@ export function ContentSourceSelector({
   const supportsOverrides = !!onAddOverride;
   // Existing overrides stay browsable in read-only environments; only creating new ones is blocked.
   const canAddOverrides = supportsOverrides && !isReadOnly;
+  const hasIntegrationRows = providers.some((provider) => provider.integrations.length > 0);
+  const selectedLabel = getContentSourceLabel(selectedSource, providers);
+
+  const itemProps = {
+    supportsOverrides,
+    canAddOverrides,
+    onSelectSource,
+    onAddOverride,
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="border-stroke-soft bg-bg-white hover:bg-bg-weak flex h-7 items-center gap-0.5 border-r pl-2 pr-1 transition-colors"
+          className="border-stroke-soft bg-bg-white hover:bg-bg-weak flex h-7 min-w-0 items-center gap-0.5 border-r pl-2 pr-1 transition-colors"
         >
           {selectedSource !== DEFAULT_CONTENT_SOURCE && (
             <ProviderIcon
-              providerId={selectedSource}
-              providerDisplayName={getContentSourceLabel(selectedSource)}
+              providerId={selectedSource.providerId}
+              providerDisplayName={getOverrideProviderDisplayName(selectedSource.providerId)}
               className="size-3.5"
             />
           )}
-          <span className="text-label-xs text-text-sub">{getContentSourceLabel(selectedSource)}</span>
-          <RiExpandUpDownLine className="text-text-sub ml-0.5 size-3" />
+          <span className="text-label-xs text-text-sub truncate">{selectedLabel}</span>
+          <RiExpandUpDownLine className="text-text-sub ml-0.5 size-3 shrink-0" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[220px] p-1">
+      <DropdownMenuContent align="start" className={cn('w-[220px] p-1', hasIntegrationRows && 'w-[280px]')}>
         <DropdownMenuItem
           className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-1.5 py-1"
           onSelect={() => onSelectSource(DEFAULT_CONTENT_SOURCE)}
@@ -72,73 +176,37 @@ export function ContentSourceSelector({
             <div className="text-foreground-400 px-1.5 py-1 text-[11px] font-medium uppercase tracking-[0.22px]">
               {supportsOverrides ? 'overrides' : 'providers'}
             </div>
-            {providers.map((provider) => {
-              const isSelected = selectedSource === provider.providerId;
-              const isInvalid = invalidProviderIds?.has(provider.providerId);
-              const canSelectDirectly = !supportsOverrides || provider.hasOverride;
-
-              return (
-                <DropdownMenuItem
-                  key={provider.providerId}
-                  disabled={!canSelectDirectly && !canAddOverrides}
-                  className={cn(
-                    'flex cursor-pointer items-center justify-between gap-2 rounded-md px-1.5 py-1',
-                    isSelected && 'bg-neutral-alpha-50'
-                  )}
-                  onSelect={() => {
-                    if (canSelectDirectly) {
-                      onSelectSource(provider.providerId);
-                    } else if (canAddOverrides) {
-                      onAddOverride?.(provider.providerId);
-                    }
-                  }}
-                >
-                  <div className="flex min-w-0 flex-1 items-center gap-1">
+            {providers.map((provider) => (
+              <Fragment key={provider.providerId}>
+                <OverrideSourceItem
+                  {...itemProps}
+                  option={provider}
+                  label={getProviderOptionLabel(provider)}
+                  icon={
                     <ProviderIcon
                       providerId={provider.providerId}
                       providerDisplayName={provider.displayName}
                       className={cn('size-4', !provider.hasOverride && supportsOverrides && 'grayscale opacity-50')}
                     />
-                    <span
-                      className={cn(
-                        'truncate text-xs font-medium',
-                        provider.hasOverride || !supportsOverrides ? 'text-foreground-950' : 'text-foreground-400'
-                      )}
-                    >
-                      {provider.displayName}
-                    </span>
-                    {isInvalid && <RiErrorWarningFill className="text-destructive size-3 shrink-0" />}
-                    {!provider.isConnected && provider.hasOverride && (
-                      <span className="text-warning text-[10px] font-medium">disconnected</span>
-                    )}
-                  </div>
-
-                  {showEscapeHatchBadge && provider.isEscapeHatch && (
-                    <span
-                      className="text-foreground-400 border-stroke-soft shrink-0 rounded-sm border px-1 text-[10px] font-medium uppercase leading-4 tracking-[0.2px]"
-                      title="No schema — this override is passed through to the provider API without validation."
-                    >
-                      no schema
-                    </span>
-                  )}
-                  {canAddOverrides && !provider.hasOverride && (
-                    <button
-                      type="button"
-                      aria-label={`Add ${provider.displayName} override`}
-                      className="text-foreground-400 hover:text-foreground-950 rounded p-0.5"
-                      onPointerDown={(event) => event.preventDefault()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onAddOverride?.(provider.providerId);
-                      }}
-                    >
-                      <RiAddFill className="size-3.5" />
-                    </button>
-                  )}
-                  {isSelected && canSelectDirectly && <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />}
-                </DropdownMenuItem>
-              );
-            })}
+                  }
+                  isSelected={isSameContentSource(selectedSource, toOverrideSource(provider))}
+                  isInvalid={!!invalidSourcePaths?.has(getOverridePath(provider))}
+                  showEscapeHatchBadge={showEscapeHatchBadge}
+                />
+                {provider.integrations.map((integration) => (
+                  <OverrideSourceItem
+                    {...itemProps}
+                    key={integration.integrationIdentifier}
+                    option={integration}
+                    label={integration.name}
+                    detail={integration.integrationIdentifier}
+                    isSelected={isSameContentSource(selectedSource, toOverrideSource(integration))}
+                    isInvalid={!!invalidSourcePaths?.has(getOverridePath(integration))}
+                    showEscapeHatchBadge={false}
+                  />
+                ))}
+              </Fragment>
+            ))}
           </>
         )}
       </DropdownMenuContent>
