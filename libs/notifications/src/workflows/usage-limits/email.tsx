@@ -68,6 +68,13 @@ function pausedSummary({ organizationName, planName, limit, includedEvents }: IU
   return `${organizationName} has reached its ${formatCount(limit)} workflow run usage limit.`;
 }
 
+/** A limit above the included runs measures its thresholds from them, so 75% is of the on-demand runs alone. */
+function usedThreeQuartersSubject({ limit, includedEvents }: IUsageFigures) {
+  const measured = limit > (includedEvents ?? 0) ? 'on-demand limit' : 'usage limit';
+
+  return `You have used 75% of your ${measured}`;
+}
+
 const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) => IUsageLimitsCopy> = {
   free_75: ({ organizationName, planName, usage, limit, remaining }) => {
     const subject = 'You are approaching your monthly event limit';
@@ -136,7 +143,7 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
         heading: 'Your workflows have been busy',
         summary,
         message:
-          'Nothing is paused. If this usage is expected, there is nothing to do. If not, take a look at your workflows and triggers to see what is driving it.',
+          'If this usage is expected, there is nothing to do. If not, take a look at your workflows and triggers to see what is driving it.',
       },
       inApp: { subject, body: preview },
       button: VIEW_USAGE_BUTTON,
@@ -181,7 +188,7 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
   },
   limit_75: (figures) => {
     const { organizationName, usage, limit } = figures;
-    const subject = 'You have used 75% of your usage limit';
+    const subject = usedThreeQuartersSubject(figures);
     const preview = `${organizationName} has used ${formatCount(usage)} of ${formatCount(limit)} workflow runs. Sending will continue past the limit.`;
 
     return {
@@ -222,18 +229,18 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
         heading: 'You hit your limit. We are still sending.',
         summary: onDemandSummary(figures),
         message:
-          'This is an alert-only limit, so nothing is paused. Workflow runs continue, and additional usage is billed on demand. Update your limit or turn on pause at limit if you want sending to stop there.',
+          'This is an alert-only limit. Workflow runs continue, and additional usage is billed on demand. Update your limit or turn on pause at limit if you want sending to stop there.',
       },
       inApp: {
         subject,
-        body: `${organizationName} has reached its ${formatCount(limit)} workflow run limit. Nothing is paused, and additional runs are billed on demand.`,
+        body: `${organizationName} has reached its ${formatCount(limit)} workflow run limit. Additional runs are billed on demand.`,
       },
       button: REVIEW_USAGE_LIMITS_BUTTON,
     };
   },
   pause_75: (figures) => {
     const { organizationName, usage, limit } = figures;
-    const subject = 'You have used 75% of your usage limit';
+    const subject = usedThreeQuartersSubject(figures);
     const preview = `${organizationName} has used ${formatCount(usage)} of ${formatCount(limit)} workflow runs. New workflow runs will pause at the limit.`;
 
     return {
@@ -290,13 +297,8 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
 };
 
 // Only Free pauses at its limit without a set limit, and only trials reach an alert level without included events.
-function resolveAlertCase({
-  alertState = 'approaching_limit',
-  percentage = 0,
-  usageLimits,
-}: Partial<UsageLimitsPayload>): UsageLimitsAlertCase {
-  const isLimitSet = usageLimits?.isLimitSet === true;
-  const pausesAtLimit = usageLimits?.pausesAtLimit === true;
+function resolveAlertCase({ alertState, percentage, usageLimits }: UsageLimitsPayload): UsageLimitsAlertCase {
+  const { isLimitSet, pausesAtLimit } = usageLimits;
 
   switch (alertState) {
     case 'included_exhausted':
@@ -331,15 +333,14 @@ function resolveAlertCase({
   }
 }
 
-// The framework passes a partial payload (e.g. step previews), so every field needs a fallback.
-export function getUsageLimitsCopy(payload: Partial<UsageLimitsPayload>): IUsageLimitsCopy {
-  const { organizationName = '', planName = '', usage = 0, allowance = 0, usageLimits } = payload;
+export function getUsageLimitsCopy(payload: UsageLimitsPayload): IUsageLimitsCopy {
+  const { organizationName, planName, usage, allowance, usageLimits } = payload;
   const figures: IUsageFigures = {
     organizationName,
     planName,
     usage,
     limit: allowance,
-    includedEvents: usageLimits?.includedEvents ?? null,
+    includedEvents: usageLimits.includedEvents,
     remaining: Math.max(allowance - usage, 0),
   };
 

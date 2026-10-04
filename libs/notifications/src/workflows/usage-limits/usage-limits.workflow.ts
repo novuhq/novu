@@ -85,24 +85,27 @@ export function usageLimitsDedupThrottle(payload: UsageLimitsPayload) {
 export const usageLimitsWorkflow = workflow(
   'usage-limits',
   async ({ step, payload }) => {
-    const copy = getUsageLimitsCopy(payload);
-
     await step.throttle('dedup', async () => usageLimitsDedupThrottle(payload));
 
-    await step.email('email', async () => ({
-      subject: copy.email.subject,
-      body: await renderUsageLimitsEmail(copy),
-    }));
+    await step.email('email', async () => {
+      const copy = getUsageLimitsCopy(payload);
 
-    await step.inApp('in-app', async () => ({
-      subject: copy.inApp.subject,
-      body: copy.inApp.body,
-      primaryAction: {
-        label: copy.button.label,
-        // Relative so the user stays on their region's dashboard host.
-        redirect: { url: copy.button.path, target: '_self' },
-      },
-    }));
+      return { subject: copy.email.subject, body: await renderUsageLimitsEmail(copy) };
+    });
+
+    await step.inApp('in-app', async () => {
+      const { inApp, button } = getUsageLimitsCopy(payload);
+
+      return {
+        subject: inApp.subject,
+        body: inApp.body,
+        primaryAction: {
+          label: button.label,
+          // Relative so the user stays on their region's dashboard host.
+          redirect: { url: button.path, target: '_self' },
+        },
+      };
+    });
   },
   {
     name: 'Usage Limits Alert',
