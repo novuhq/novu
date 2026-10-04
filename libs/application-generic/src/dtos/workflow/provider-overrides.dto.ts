@@ -1,5 +1,5 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { StepIntegrationOverrides, StepProviderOverrides } from '@novu/shared';
+import type { StepProviderOverrides } from '@novu/shared';
 
 /**
  * OpenAPI shape for per-provider content overrides.

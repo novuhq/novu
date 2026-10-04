@@ -4,6 +4,7 @@ import {
   ContentIssueEnum,
   type ContentOverrideProviderId,
   getProviderOverrideConfig,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
   isRecord,
   type ProviderOverrideConfig,
   type RuntimeIssue,
@@ -57,12 +58,14 @@ export function isSupportedProviderOverrideId(providerId: string): providerId is
  * Rebuilds the runtime `providerOverrides` map from STEP_PROVIDER_CONTROLS docs.
  */
 export function stitchProviderOverridesFromDocs(
-  docs: Array<Pick<ControlValuesEntity, 'providerId' | 'controls'>>
+  docs: Array<
+    Pick<ControlValuesEntity, 'providerId' | 'controls'> & Partial<Pick<ControlValuesEntity, 'integrationIdentifier'>>
+  >
 ): StepProviderOverrides | undefined {
   const stitched: StepProviderOverrides = {};
 
   for (const doc of docs) {
-    if (!doc.providerId || !isSupportedProviderOverrideId(doc.providerId)) {
+    if (!doc.providerId || doc.integrationIdentifier || !isSupportedProviderOverrideId(doc.providerId)) {
       continue;
     }
 
@@ -161,9 +164,9 @@ function getValidator(schema: JSONSchemaDto) {
   return validate;
 }
 
-function unsupportedProviderIssue(path: string, providerId: string): RuntimeIssue {
+function unsupportedPropertyIssue(path: string, property: string): RuntimeIssue {
   return {
-    message: `"${providerId}" is not a supported property`,
+    message: `"${property}" is not a supported property`,
     issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
     variableName: path,
   };
@@ -193,7 +196,7 @@ export function processProviderOverridesIssues(
     const config = getProviderOverrideConfig(providerId);
 
     if (!config) {
-      controls[providerPath] = [unsupportedProviderIssue(providerPath, providerId)];
+      controls[providerPath] = [unsupportedPropertyIssue(providerPath, providerId)];
       continue;
     }
 
@@ -221,7 +224,7 @@ export function processIntegrationOverridesIssues(
     const config = getProviderOverrideConfig(providerId);
 
     if (!config) {
-      controls[providerPath] = [unsupportedProviderIssue(providerPath, providerId)];
+      controls[providerPath] = [unsupportedPropertyIssue(providerPath, providerId)];
       continue;
     }
 
@@ -253,5 +256,11 @@ function collectSchemaIssues(
 
   for (const [path, pathIssues] of Object.entries(overrideIssues ?? {})) {
     controls[path] = [...(controls[path] ?? []), ...pathIssues];
+  }
+
+  // Free-form schemas accept any key, but this one is how the bridge carries integration overrides.
+  if (isRecord(override) && Object.prototype.hasOwnProperty.call(override, INTEGRATION_OVERRIDES_OUTPUT_KEY)) {
+    const reservedPath = `${pathPrefix}.${INTEGRATION_OVERRIDES_OUTPUT_KEY}`;
+    controls[reservedPath] = [unsupportedPropertyIssue(reservedPath, INTEGRATION_OVERRIDES_OUTPUT_KEY)];
   }
 }

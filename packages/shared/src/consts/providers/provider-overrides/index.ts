@@ -12,6 +12,11 @@ import {
 
 export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
 export { grafanaOverrideJsonSchema } from './grafana-override.schema';
+export {
+  packProviderOverrideOutput,
+  type UnpackedProviderOverrideOutput,
+  unpackProviderOverrideOutput,
+} from './integration-overrides-output';
 export { LIQUID_TEMPLATE_PATTERN, toLiquidTolerantSchema } from './liquid-tolerant';
 export {
   type MergedProviderPreview,

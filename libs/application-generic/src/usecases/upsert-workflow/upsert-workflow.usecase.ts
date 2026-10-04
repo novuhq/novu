@@ -36,6 +36,8 @@ import {
   isSupportedProviderOverrideId,
   removeBrandingFromHtml,
   resolveStepControlSchemas,
+  STEP_CONTROL_LEVELS,
+  type StepOverrideLevel,
   shortId,
   slugifyOrRandom,
 } from '../../utils';
@@ -54,21 +56,35 @@ import { UpsertControlValuesCommand, UpsertControlValuesUseCase } from '../upser
 import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
 
-interface IntegrationOverrideEntry {
+/** One override control-values doc: a provider override, or an integration override when it carries an identifier. */
+interface StepOverrideEntry {
   providerId: string;
-  integrationIdentifier: string;
+  integrationIdentifier?: string;
   controls: Record<string, unknown>;
 }
 
-function toIntegrationOverridePairKey(providerId: string | undefined, integrationIdentifier: string | undefined) {
+interface StepOverridesUpdate {
+  step: NotificationStepEntity;
+  level: StepOverrideLevel;
+  /** `null` deletes every override doc of the level. */
+  entries: StepOverrideEntry[] | null;
+}
+
+function toStepOverrideKey({ providerId, integrationIdentifier }: Partial<StepOverrideEntry>): string {
   return JSON.stringify([providerId ?? '', integrationIdentifier ?? '']);
+}
+
+function toProviderOverrideEntries(providerOverrides: StepProviderOverrides): StepOverrideEntry[] {
+  return Object.entries(providerOverrides)
+    .filter(([providerId]) => isSupportedProviderOverrideId(providerId))
+    .map(([providerId, controls]) => ({ providerId, controls: controls ?? {} }));
 }
 
 /**
  * An empty identifier is dropped: without one, the control-values lookup would match any
  * integration override doc of that provider and overwrite it.
  */
-function toIntegrationOverrideEntries(integrationOverrides: StepIntegrationOverrides): IntegrationOverrideEntry[] {
+function toIntegrationOverrideEntries(integrationOverrides: StepIntegrationOverrides): StepOverrideEntry[] {
   return Object.entries(integrationOverrides)
     .filter(([providerId]) => isSupportedProviderOverrideId(providerId))
     .flatMap(([providerId, overridesByIdentifier]) =>
@@ -275,13 +291,7 @@ export class UpsertWorkflowUseCase {
           _environmentId: user.environmentId,
           _organizationId: user.organizationId,
           _workflowId: existingWorkflow._id,
-          level: {
-            $in: [
-              ControlValuesLevelEnum.STEP_CONTROLS,
-              ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
-              ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
-            ],
-          },
+          level: { $in: STEP_CONTROL_LEVELS },
           controls: { $ne: null },
         },
         {
@@ -434,18 +444,16 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ): Promise<void> {
     const controlValuesUpdates = this.getControlValuesUpdates(updatedWorkflow.steps, command);
-    const providerOverrideUpdates = this.getProviderOverrideUpdates(updatedWorkflow.steps, command);
-    const integrationOverrideUpdates = this.getIntegrationOverrideUpdates(updatedWorkflow.steps, command);
+    const stepOverridesUpdates = this.getStepOverridesUpdates(updatedWorkflow.steps, command);
 
-    await Promise.all([
-      ...controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, updatedWorkflow._id, command)),
-      ...providerOverrideUpdates.map((update) =>
-        this.executeProviderOverridesUpdate(update, updatedWorkflow._id, command)
-      ),
-      ...integrationOverrideUpdates.map((update) =>
-        this.executeIntegrationOverridesUpdate(update, updatedWorkflow._id, command)
-      ),
-    ]);
+    // A null controlValues cascade-deletes the step's override docs, so it must finish before the
+    // overrides sent in the same request are written.
+    await Promise.all(
+      controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, updatedWorkflow._id, command))
+    );
+    await Promise.all(
+      stepOverridesUpdates.map((update) => this.executeStepOverridesUpdate(update, updatedWorkflow._id, command))
+    );
   }
 
   @Instrument()
@@ -464,38 +472,37 @@ export class UpsertWorkflowUseCase {
       .filter((update): update is NonNullable<typeof update> => update !== null);
   }
 
+  /** An omitted override field (or a step absent from the request) leaves that level's docs untouched. */
   @Instrument()
-  private getProviderOverrideUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
-    return updatedSteps
-      .map((step) => {
-        const providerOverrides = this.findProviderOverridesInRequest(step, command.workflowDto.steps);
-        if (providerOverrides === undefined) return null;
+  private getStepOverridesUpdates(
+    updatedSteps: NotificationStepEntity[],
+    command: UpsertWorkflowCommand
+  ): StepOverridesUpdate[] {
+    return updatedSteps.flatMap((step) => {
+      const commandStep = this.findMatchingCommandStep(step, command.workflowDto.steps);
+      if (!commandStep) return [];
 
-        return {
+      const { providerOverrides, integrationOverrides } = commandStep;
+      const updates: StepOverridesUpdate[] = [];
+
+      if (providerOverrides !== undefined) {
+        updates.push({
           step,
-          providerOverrides,
-          shouldDelete: providerOverrides === null,
-        };
-      })
-      .filter((update): update is NonNullable<typeof update> => update !== null);
-  }
+          level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+          entries: providerOverrides === null ? null : toProviderOverrideEntries(providerOverrides),
+        });
+      }
 
-  @Instrument()
-  private getIntegrationOverrideUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
-    return updatedSteps
-      .map((step) => {
-        const commandStep = this.findMatchingCommandStep(step, command.workflowDto.steps);
-        // Omit (undefined) when the step is absent from the request — do not treat as delete-all.
-        const integrationOverrides = commandStep?.integrationOverrides;
-        if (integrationOverrides === undefined) return null;
-
-        return {
+      if (integrationOverrides !== undefined) {
+        updates.push({
           step,
-          integrationOverrides,
-          shouldDelete: integrationOverrides === null,
-        };
-      })
-      .filter((update): update is NonNullable<typeof update> => update !== null);
+          level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+          entries: integrationOverrides === null ? null : toIntegrationOverrideEntries(integrationOverrides),
+        });
+      }
+
+      return updates;
+    });
   }
 
   @Instrument()
@@ -517,13 +524,7 @@ export class UpsertWorkflowUseCase {
           _organizationId: command.user.organizationId,
           _workflowId: workflowId,
           _stepId: step._templateId,
-          level: {
-            $in: [
-              ControlValuesLevelEnum.STEP_CONTROLS,
-              ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
-              ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
-            ],
-          },
+          level: { $in: STEP_CONTROL_LEVELS },
         },
         { session: command.session }
       );
@@ -629,16 +630,8 @@ export class UpsertWorkflowUseCase {
   }
 
   @Instrument()
-  private async executeProviderOverridesUpdate(
-    {
-      shouldDelete,
-      step,
-      providerOverrides,
-    }: {
-      step: NotificationStepEntity;
-      providerOverrides: StepProviderOverrides | null;
-      shouldDelete: boolean;
-    },
+  private async executeStepOverridesUpdate(
+    { step, level, entries }: StepOverridesUpdate,
     workflowId: string,
     command: UpsertWorkflowCommand
   ) {
@@ -647,88 +640,14 @@ export class UpsertWorkflowUseCase {
       _organizationId: command.user.organizationId,
       _workflowId: workflowId,
       _stepId: step._templateId,
-      level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      level,
     };
 
-    if (shouldDelete || providerOverrides === null) {
+    if (entries === null) {
       return this.controlValuesRepository.deleteMany(baseQuery, { session: command.session });
     }
 
-    const desiredProviderIds = Object.keys(providerOverrides).filter(isSupportedProviderOverrideId);
-
-    const existingDocs = await this.controlValuesRepository.find(
-      baseQuery,
-      {
-        providerId: 1,
-        _id: 1,
-      },
-      { session: command.session }
-    );
-    const existingProviderIds = existingDocs
-      .map((doc) => doc.providerId)
-      .filter((id): id is string => typeof id === 'string');
-    const desiredProviderIdSet = new Set<string>(desiredProviderIds);
-    const providerIdsToDelete = existingProviderIds.filter((id) => !desiredProviderIdSet.has(id));
-
-    if (providerIdsToDelete.length > 0) {
-      await this.controlValuesRepository.deleteMany(
-        {
-          ...baseQuery,
-          providerId: { $in: providerIdsToDelete },
-        },
-        { session: command.session }
-      );
-    }
-
-    await Promise.all(
-      desiredProviderIds.map((providerId) =>
-        this.upsertControlValuesUseCase.execute(
-          UpsertControlValuesCommand.create({
-            organizationId: command.user.organizationId,
-            environmentId: command.user.environmentId,
-            stepId: step._templateId,
-            workflowId,
-            level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
-            providerId,
-            newControlValues: providerOverrides[providerId] ?? {},
-            session: command.session,
-          })
-        )
-      )
-    );
-  }
-
-  @Instrument()
-  private async executeIntegrationOverridesUpdate(
-    {
-      shouldDelete,
-      step,
-      integrationOverrides,
-    }: {
-      step: NotificationStepEntity;
-      integrationOverrides: StepIntegrationOverrides | null;
-      shouldDelete: boolean;
-    },
-    workflowId: string,
-    command: UpsertWorkflowCommand
-  ) {
-    const baseQuery = {
-      _environmentId: command.user.environmentId,
-      _organizationId: command.user.organizationId,
-      _workflowId: workflowId,
-      _stepId: step._templateId,
-      level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
-    };
-
-    if (shouldDelete || integrationOverrides === null) {
-      return this.controlValuesRepository.deleteMany(baseQuery, { session: command.session });
-    }
-
-    const desiredEntries = toIntegrationOverrideEntries(integrationOverrides);
-    const desiredPairKeys = new Set(
-      desiredEntries.map((entry) => toIntegrationOverridePairKey(entry.providerId, entry.integrationIdentifier))
-    );
-
+    const desiredKeys = new Set(entries.map(toStepOverrideKey));
     const existingDocs = await this.controlValuesRepository.find(
       baseQuery,
       {
@@ -738,29 +657,24 @@ export class UpsertWorkflowUseCase {
       },
       { session: command.session }
     );
-    const docIdsToDelete = existingDocs
-      .filter((doc) => !desiredPairKeys.has(toIntegrationOverridePairKey(doc.providerId, doc.integrationIdentifier)))
-      .map((doc) => doc._id);
+    const docIdsToDelete = existingDocs.filter((doc) => !desiredKeys.has(toStepOverrideKey(doc))).map((doc) => doc._id);
 
     if (docIdsToDelete.length > 0) {
-      await this.controlValuesRepository.delete(
-        {
-          ...baseQuery,
-          _id: { $in: docIdsToDelete },
-        },
+      await this.controlValuesRepository.deleteMany(
+        { ...baseQuery, _id: { $in: docIdsToDelete } },
         { session: command.session }
       );
     }
 
     await Promise.all(
-      desiredEntries.map((entry) =>
+      entries.map((entry) =>
         this.upsertControlValuesUseCase.execute(
           UpsertControlValuesCommand.create({
             organizationId: command.user.organizationId,
             environmentId: command.user.environmentId,
             stepId: step._templateId,
             workflowId,
-            level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+            level,
             providerId: entry.providerId,
             integrationIdentifier: entry.integrationIdentifier,
             newControlValues: entry.controls,
@@ -800,19 +714,6 @@ export class UpsertWorkflowUseCase {
     if (!commandStep) return null;
 
     return commandStep.controlValues;
-  }
-
-  @Instrument()
-  private findProviderOverridesInRequest(
-    updatedStep: NotificationStepEntity,
-    commandSteps: UpsertStepDataCommand[]
-  ): StepProviderOverrides | undefined | null {
-    const commandStep = this.findMatchingCommandStep(updatedStep, commandSteps);
-
-    // Omit (undefined) when the step is absent from the request — do not treat as delete-all.
-    if (!commandStep) return undefined;
-
-    return commandStep.providerOverrides;
   }
 
   private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {

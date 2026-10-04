@@ -1,19 +1,10 @@
-import {
-  INTEGRATION_OVERRIDES_OUTPUT_KEY,
-  isRecord,
-  StepTypeEnum,
-  supportsContentProviderOverrides,
-} from '@novu/shared';
+import { StepTypeEnum, supportsContentProviderOverrides, unpackProviderOverrideOutput } from '@novu/shared';
 
 function mapPayloadsToPreview(payloads: Record<string, unknown>): Record<string, Record<string, unknown>> | undefined {
   const result: Record<string, Record<string, unknown>> = {};
 
   for (const [key, payload] of Object.entries(payloads)) {
-    if (!isRecord(payload)) {
-      continue;
-    }
-
-    const { _passthrough: _, [INTEGRATION_OVERRIDES_OUTPUT_KEY]: __, ...rest } = payload;
+    const { _passthrough: _, ...rest } = unpackProviderOverrideOutput(payload).providerOverride;
 
     if (Object.keys(rest).length === 0) {
       continue;
@@ -53,13 +44,7 @@ export function mapProvidersToPreviewIntegrationOverrides(
   const result: Record<string, Record<string, Record<string, unknown>>> = {};
 
   for (const [providerId, payload] of Object.entries(providers)) {
-    const overridesByIdentifier = payload[INTEGRATION_OVERRIDES_OUTPUT_KEY];
-
-    if (!isRecord(overridesByIdentifier)) {
-      continue;
-    }
-
-    const mapped = mapPayloadsToPreview(overridesByIdentifier);
+    const mapped = mapPayloadsToPreview(unpackProviderOverrideOutput(payload).integrationOverrides);
 
     if (mapped) {
       result[providerId] = mapped;

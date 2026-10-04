@@ -34,11 +34,16 @@ export class UpdateIntegration {
   }
 
   /**
-   * Step integration overrides are keyed by integration identifier, so a rename must carry them along.
-   * Overrides left on the same step under the new identifier (e.g. by a deleted integration) are
-   * dropped first so the renamed integration's own overrides win instead of colliding.
+   * Step integration overrides are keyed by integration identifier, so a rename carries them along.
+   * Overrides already stored under the new identifier (left by a deleted integration, or synced from
+   * another environment whose integration uses that identifier) apply to whichever integration holds
+   * it, so they are kept; only on steps where both exist does the renamed integration's own win.
    */
   private async renameStepIntegrationOverrides(integration: IntegrationEntity, newIdentifier: string): Promise<void> {
+    if (newIdentifier === integration.identifier) {
+      return;
+    }
+
     const scope = {
       _environmentId: integration._environmentId,
       _organizationId: integration._organizationId,

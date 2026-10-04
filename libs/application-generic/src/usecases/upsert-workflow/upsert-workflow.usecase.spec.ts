@@ -43,7 +43,7 @@ describe('UpsertWorkflowUseCase integration overrides', () => {
   const updateWorkflowV0Usecase = { execute: vi.fn() };
   const getWorkflowUseCase = { execute: vi.fn() };
   const buildStepIssuesUsecase = { execute: vi.fn() };
-  const controlValuesRepository = { find: vi.fn(), deleteMany: vi.fn(), delete: vi.fn() };
+  const controlValuesRepository = { find: vi.fn(), deleteMany: vi.fn() };
   const upsertControlValuesUseCase = { execute: vi.fn() };
   const analyticsService = { mixpanelTrack: vi.fn(), track: vi.fn() };
   const sendWebhookMessage = { execute: vi.fn() };
@@ -94,7 +94,6 @@ describe('UpsertWorkflowUseCase integration overrides', () => {
 
     expect(integrationLevelCalls(controlValuesRepository.find)).toHaveLength(0);
     expect(controlValuesRepository.deleteMany).not.toHaveBeenCalled();
-    expect(controlValuesRepository.delete).not.toHaveBeenCalled();
     expect(upsertControlValuesUseCase.execute).not.toHaveBeenCalled();
   });
 
@@ -131,8 +130,8 @@ describe('UpsertWorkflowUseCase integration overrides', () => {
       ...stepQuery,
       level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
     });
-    expect(controlValuesRepository.delete).toHaveBeenCalledTimes(1);
-    expect(controlValuesRepository.delete.mock.calls[0][0]).toEqual({
+    expect(controlValuesRepository.deleteMany).toHaveBeenCalledTimes(1);
+    expect(controlValuesRepository.deleteMany.mock.calls[0][0]).toEqual({
       ...stepQuery,
       level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
       _id: { $in: ['doc-staging', 'doc-slack'] },
@@ -177,8 +176,54 @@ describe('UpsertWorkflowUseCase integration overrides', () => {
       integrationOverrides: { [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { alert_type: 'test' } } },
     });
 
-    expect(controlValuesRepository.delete).not.toHaveBeenCalled();
+    expect(controlValuesRepository.deleteMany).not.toHaveBeenCalled();
     expect(upsertControlValuesUseCase.execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('reconciles provider overrides through the same path, keyed by providerId alone', async () => {
+    controlValuesRepository.find.mockImplementation(async (query) =>
+      query.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS
+        ? [
+            { _id: 'doc-webhook', providerId: ToolProviderIdEnum.Webhook },
+            { _id: 'doc-pagerduty', providerId: ToolProviderIdEnum.PagerDuty },
+          ]
+        : []
+    );
+
+    await upsertStep({ providerOverrides: { [ToolProviderIdEnum.Webhook]: { env: 'all' } } });
+
+    expect(controlValuesRepository.deleteMany).toHaveBeenCalledTimes(1);
+    expect(controlValuesRepository.deleteMany.mock.calls[0][0]).toEqual({
+      ...stepQuery,
+      level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      _id: { $in: ['doc-pagerduty'] },
+    });
+    expect(upsertControlValuesUseCase.execute).toHaveBeenCalledTimes(1);
+    expect(upsertControlValuesUseCase.execute.mock.calls[0][0]).toMatchObject({
+      level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      providerId: ToolProviderIdEnum.Webhook,
+      integrationIdentifier: undefined,
+      newControlValues: { env: 'all' },
+    });
+  });
+
+  it('writes overrides sent alongside a null controlValues only after the cascade delete', async () => {
+    const order: string[] = [];
+    controlValuesRepository.deleteMany.mockImplementation(async (query) => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      order.push(`delete:${JSON.stringify(query.level)}`);
+    });
+    upsertControlValuesUseCase.execute.mockImplementation(async (command) => {
+      order.push(`upsert:${command.level}`);
+    });
+
+    await upsertStep({
+      controlValues: null,
+      integrationOverrides: { [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { env: 'prod' } } },
+    });
+
+    expect(order[0]).toMatch(/^delete:/);
+    expect(order.at(-1)).toBe(`upsert:${ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS}`);
   });
 
   it('preloads integration controls and validates the requested integration overrides', async () => {

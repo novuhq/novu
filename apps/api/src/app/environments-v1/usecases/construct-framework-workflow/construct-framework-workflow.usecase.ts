@@ -41,10 +41,10 @@ import {
   type ContentOverrideProviderId,
   EnvironmentTypeEnum,
   getContentOverrideProviderIds,
-  INTEGRATION_OVERRIDES_OUTPUT_KEY,
   isRecord,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
+  packProviderOverrideOutput,
   StepTypeEnum,
   withProviderOverridesRuntimeSchema,
 } from '@novu/shared';
@@ -568,15 +568,10 @@ export class ConstructFrameworkWorkflow {
           organization,
           locale,
         });
-        const { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: _reserved, ...providerOverride } =
-          getProviderEntry(translated.providerOverrides, providerId) ?? {};
-        const integrationOverrides = getProviderEntry(translated.integrationOverrides, providerId);
-
-        if (!integrationOverrides || Object.keys(integrationOverrides).length === 0) {
-          return providerOverride;
-        }
-
-        return { ...providerOverride, [INTEGRATION_OVERRIDES_OUTPUT_KEY]: integrationOverrides };
+        return packProviderOverrideOutput(
+          getProviderEntry(translated.providerOverrides, providerId) ?? {},
+          getProviderEntry(translated.integrationOverrides, providerId)
+        );
       };
 
     const providers = Object.fromEntries(

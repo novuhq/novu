@@ -23,11 +23,11 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   INTEGRATION_OVERRIDES_OUTPUT_KEY,
-  isRecord,
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
   TriggerOverrides,
+  unpackProviderOverrideOutput,
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
@@ -57,20 +57,6 @@ type BridgeProviderOverrides = {
   providers?: Record<string, Record<string, unknown>>;
 };
 
-function getIntegrationOverride(
-  bridgeProviderData: Record<string, unknown>,
-  integrationIdentifier: string | undefined
-): Record<string, unknown> {
-  const overridesByIdentifier = bridgeProviderData[INTEGRATION_OVERRIDES_OUTPUT_KEY];
-  if (!integrationIdentifier || !isRecord(overridesByIdentifier)) {
-    return {};
-  }
-
-  const integrationOverride = overridesByIdentifier[integrationIdentifier];
-
-  return isRecord(integrationOverride) ? integrationOverride : {};
-}
-
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted for the provider, then for the sending integration, then the workflow-global
@@ -86,15 +72,15 @@ export function combineProviderOverrides(
   providerId: string,
   integrationIdentifier?: string
 ): Record<string, unknown> {
-  const bridgeProviderData = bridgeData?.providers?.[providerId] || {};
-  const integrationProviderData = getIntegrationOverride(bridgeProviderData, integrationIdentifier);
+  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
+  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
   const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
 
   const combined: Record<string, unknown> = mergeWith(
     {},
-    bridgeProviderData,
-    integrationProviderData,
+    providerOverride,
+    integrationOverride,
     workflowGlobalProviderOverrides,
     stepScopedOverrides,
     replaceArrays

@@ -15,7 +15,6 @@ import {
 import {
   buildWorkflowPreferences,
   ChangeEntityTypeEnum,
-  ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   isBridgeWorkflow,
   PreferencesTypeEnum,
@@ -26,7 +25,7 @@ import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { AnalyticsService, ContentService } from '../../services';
 import { ResourceValidatorService } from '../../services/resource-validator.service';
-import { isVariantEmpty, PlatformException } from '../../utils';
+import { isVariantEmpty, PlatformException, STEP_CONTROL_LEVELS } from '../../utils';
 import { computeWorkflowStatus } from '../../utils/compute-workflow-status';
 import { MANAGE_TRANSLATIONS, TRANSLATIONS_SERVICE } from '../../utils/constants';
 import { NotificationStep, NotificationStepVariantCommand } from '../../value-objects';
@@ -794,11 +793,7 @@ export class UpdateWorkflowV0 {
           _workflowId: command.id,
           _stepId: id,
           level: {
-            $in: [
-              ControlValuesLevelEnum.STEP_CONTROLS,
-              ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
-              ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
-            ],
+            $in: STEP_CONTROL_LEVELS,
           },
         },
         { session }
