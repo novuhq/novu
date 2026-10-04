@@ -10,12 +10,12 @@ const usageLimitsSchema = new Schema(
       type: new Schema(
         {
           onDemandLimit: Schema.Types.Number,
-          pauseAtLimit: Schema.Types.Boolean,
         },
         { _id: false }
       ),
       required: false,
     },
+    pauseAtLimit: Schema.Types.Boolean,
     alerts: {
       type: new Schema(
         {

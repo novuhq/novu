@@ -20,7 +20,8 @@ const USAGE_LIMITS_PATH = '/v1/billing/usage-limits';
 const USAGE_LIMITS_FLAG = FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED;
 
 const DEFAULT_USAGE_LIMITS: IOrganizationUsageLimits = {
-  workflowRuns: { onDemandLimit: null, pauseAtLimit: false },
+  workflowRuns: { onDemandLimit: null },
+  pauseAtLimit: false,
   alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
 };
 
@@ -65,7 +66,8 @@ describe('Usage limits #novu-v2', () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
       givenIncludedEvents(250_000);
       const settings: IOrganizationUsageLimits = {
-        workflowRuns: { onDemandLimit: 50_000, pauseAtLimit: false },
+        workflowRuns: { onDemandLimit: 50_000 },
+        pauseAtLimit: false,
         alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
       };
 
@@ -78,7 +80,8 @@ describe('Usage limits #novu-v2', () => {
 
     it('should replace every previously stored setting', async () => {
       const settings: IOrganizationUsageLimits = {
-        workflowRuns: { onDemandLimit: null, pauseAtLimit: false },
+        workflowRuns: { onDemandLimit: null },
+        pauseAtLimit: false,
         alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
       };
       await putUsageLimits(PAUSING_USAGE_LIMITS).expect(200);
@@ -92,7 +95,7 @@ describe('Usage limits #novu-v2', () => {
     it('should store pausing at the included events without an on-demand limit', async () => {
       const settings: IOrganizationUsageLimits = {
         ...PAUSING_USAGE_LIMITS,
-        workflowRuns: { onDemandLimit: null, pauseAtLimit: true },
+        workflowRuns: { onDemandLimit: null },
       };
 
       const response = await putUsageLimits(settings);
@@ -124,7 +127,7 @@ describe('Usage limits #novu-v2', () => {
     it('should reject an invalid body', async () => {
       const response = await putUsageLimits({
         ...PAUSING_USAGE_LIMITS,
-        workflowRuns: { onDemandLimit: -1, pauseAtLimit: true },
+        workflowRuns: { onDemandLimit: -1 },
       });
 
       expect(response.status).to.equal(422);

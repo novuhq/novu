@@ -29,7 +29,8 @@ function buildSubscription({
             isConfigurable: true,
             onDemandPricePer1k: 1.2,
             settings: {
-              workflowRuns: { onDemandLimit: null, pauseAtLimit: false },
+              workflowRuns: { onDemandLimit: null },
+              pauseAtLimit: false,
               alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
             },
             ...usageLimits,

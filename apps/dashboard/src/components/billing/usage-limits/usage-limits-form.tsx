@@ -46,7 +46,8 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
     defaultValues: view.settings,
   });
 
-  const workflowRuns = form.watch('workflowRuns');
+  const [workflowRuns, pauseAtLimit] = form.watch(['workflowRuns', 'pauseAtLimit']);
+  const limitSettings = { workflowRuns, pauseAtLimit };
   const onDemandCost = getOnDemandCost(workflowRuns.onDemandLimit, usage.onDemandPricePer1k);
 
   const onSubmit = async (values: UsageLimitsFormValues) => {
@@ -115,7 +116,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
                   <SettingCard
                     label="Usage alerts"
                     tooltip="Notifies your team before on-demand usage adds up."
-                    description={field.value ? undefined : getUsageAlertsDescription(usage.included, workflowRuns)}
+                    description={field.value ? undefined : getUsageAlertsDescription(usage.included, limitSettings)}
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   >
@@ -128,19 +129,19 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
             <div className="flex flex-col gap-5 px-4 py-5">
               <FormField
                 control={form.control}
-                name="workflowRuns.pauseAtLimit"
+                name="pauseAtLimit"
                 render={({ field }) => (
                   <SettingCard
                     label="Pause at limit"
                     tooltip="Rejects new workflow runs once usage reaches your included runs plus the on-demand limit. Without an on-demand limit, pauses at your included runs."
-                    description={getPauseAtLimitDescription(usage.included, workflowRuns)}
+                    description={getPauseAtLimitDescription(usage.included, limitSettings)}
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 )}
               />
 
-              {pausesOnSave(usage, workflowRuns) && (
+              {pausesOnSave(usage, limitSettings) && (
                 <InlineToast
                   variant="warning"
                   title="Limit already reached."

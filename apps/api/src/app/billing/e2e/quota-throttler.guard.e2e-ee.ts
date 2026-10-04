@@ -123,7 +123,7 @@ describe('Resource Limiting #novu-v2', () => {
 
           await organizationRepository.updateUsageLimits(session.organization._id, {
             ...PAUSING_USAGE_LIMITS,
-            workflowRuns: { onDemandLimit: 20_000, pauseAtLimit: true },
+            workflowRuns: { onDemandLimit: 20_000 },
           });
           const response = await request(pathEvent);
 

@@ -2,7 +2,8 @@ import { IOrganizationUsageLimits, UsageAlertRecipientsEnum } from '@novu/shared
 
 /** Its alerts differ from the defaults, so a test can tell the stored settings from the defaults. */
 export const PAUSING_USAGE_LIMITS: IOrganizationUsageLimits = {
-  workflowRuns: { onDemandLimit: 10_000, pauseAtLimit: true },
+  workflowRuns: { onDemandLimit: 10_000 },
+  pauseAtLimit: true,
   alerts: { enabled: false, sendTo: UsageAlertRecipientsEnum.ALL_MEMBERS },
 };
 

@@ -33,11 +33,6 @@ export enum UsageAlertRecipientsEnum {
 export interface IWorkflowRunsUsageLimit {
   /** On-demand workflow runs allowed on top of the included runs; `null` means no on-demand limit. */
   onDemandLimit: number | null;
-  /**
-   * Rejects new workflow runs once usage reaches the included runs plus `onDemandLimit`, or the included runs when
-   * there is no on-demand limit.
-   */
-  pauseAtLimit: boolean;
 }
 
 export interface IUsageAlertSettings {
@@ -51,6 +46,11 @@ export interface IUsageAlertSettings {
  */
 export interface IOrganizationUsageLimits {
   workflowRuns: IWorkflowRunsUsageLimit;
+  /**
+   * Rejects new workflow runs once usage reaches the included runs plus the on-demand limit, or the included runs when
+   * there is no on-demand limit.
+   */
+  pauseAtLimit: boolean;
   alerts: IUsageAlertSettings;
 }
 

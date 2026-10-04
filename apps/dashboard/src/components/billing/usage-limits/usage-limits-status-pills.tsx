@@ -11,7 +11,7 @@ type UsageLimitsStatusPillsProps = {
 export function UsageLimitsStatusPills({ view }: UsageLimitsStatusPillsProps) {
   const { setIsDrawerRequested } = useUsageLimitsDrawerParam();
   const { settings, usage, canEdit } = view;
-  const { pauseAtLimit } = settings.workflowRuns;
+  const { pauseAtLimit } = settings;
 
   return (
     <div className="flex items-center justify-between gap-2">

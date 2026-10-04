@@ -1,6 +1,6 @@
 import {
   getWorkflowRunLimit,
-  type IWorkflowRunsUsageLimit,
+  type IOrganizationUsageLimits,
   MAX_ON_DEMAND_LIMIT,
   UsageAlertRecipientsEnum,
 } from '@novu/shared';
@@ -11,8 +11,8 @@ import type { WorkflowRunsUsage } from './usage-limits-view';
 export const usageLimitsFormSchema = z.object({
   workflowRuns: z.object({
     onDemandLimit: z.number().int().min(0).max(MAX_ON_DEMAND_LIMIT).nullable(),
-    pauseAtLimit: z.boolean(),
   }),
+  pauseAtLimit: z.boolean(),
   alerts: z.object({
     enabled: z.boolean(),
     sendTo: z.enum(UsageAlertRecipientsEnum),
@@ -21,11 +21,13 @@ export const usageLimitsFormSchema = z.object({
 
 export type UsageLimitsFormValues = z.infer<typeof usageLimitsFormSchema>;
 
+export type WorkflowRunLimitSettings = Pick<IOrganizationUsageLimits, 'workflowRuns' | 'pauseAtLimit'>;
+
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 /** Usage at which new workflow runs pause; null when they never pause. */
-function getPauseThreshold(included: number, workflowRuns: IWorkflowRunsUsageLimit): number | null {
-  return workflowRuns.pauseAtLimit ? getWorkflowRunLimit(included, workflowRuns) : null;
+function getPauseThreshold(included: number, settings: WorkflowRunLimitSettings): number | null {
+  return settings.pauseAtLimit ? getWorkflowRunLimit(included, settings) : null;
 }
 
 /** USD cost of using the whole on-demand limit; null without a limit or a known price. */
@@ -37,8 +39,8 @@ export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k
   return usdFormatter.format((onDemandLimit / 1000) * onDemandPricePer1k);
 }
 
-export function getPauseAtLimitDescription(included: number, workflowRuns: IWorkflowRunsUsageLimit) {
-  const pauseThreshold = getPauseThreshold(included, workflowRuns);
+export function getPauseAtLimitDescription(included: number, settings: WorkflowRunLimitSettings) {
+  const pauseThreshold = getPauseThreshold(included, settings);
 
   if (pauseThreshold === null) {
     return 'Sending stops until the cycle resets. When off, usage continues and is billed on-demand.';
@@ -55,8 +57,8 @@ export function getPauseAtLimitDescription(included: number, workflowRuns: IWork
  * Usage alerts measure from the included runs under a higher limit, and from 0 when the limit is the included runs.
  * Without a limit they only flag usage far above the plan's typical volume.
  */
-export function getUsageAlertsDescription(included: number, workflowRuns: IWorkflowRunsUsageLimit) {
-  const limit = getWorkflowRunLimit(included, workflowRuns);
+export function getUsageAlertsDescription(included: number, settings: WorkflowRunLimitSettings) {
+  const limit = getWorkflowRunLimit(included, settings);
 
   if (limit === null) {
     return 'Email and inbox alerts if usage is much higher than typical for your plan.';
@@ -71,9 +73,9 @@ export function getUsageAlertsDescription(included: number, workflowRuns: IWorkf
 
 export function pausesOnSave(
   usage: Pick<WorkflowRunsUsage, 'state' | 'current' | 'included'>,
-  workflowRuns: IWorkflowRunsUsageLimit
+  settings: WorkflowRunLimitSettings
 ): boolean {
-  const pauseThreshold = getPauseThreshold(usage.included, workflowRuns);
+  const pauseThreshold = getPauseThreshold(usage.included, settings);
 
   return usage.state !== 'paused' && pauseThreshold !== null && usage.current >= pauseThreshold;
 }
