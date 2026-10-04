@@ -22,6 +22,8 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  isRecord,
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
@@ -55,21 +57,51 @@ type BridgeProviderOverrides = {
   providers?: Record<string, Record<string, unknown>>;
 };
 
+function getIntegrationOverride(
+  bridgeProviderData: Record<string, unknown>,
+  integrationIdentifier: string | undefined
+): Record<string, unknown> {
+  const overridesByIdentifier = bridgeProviderData[INTEGRATION_OVERRIDES_OUTPUT_KEY];
+  if (!integrationIdentifier || !isRecord(overridesByIdentifier)) {
+    return {};
+  }
+
+  const integrationOverride = overridesByIdentifier[integrationIdentifier];
+
+  return isRecord(integrationOverride) ? integrationOverride : {};
+}
+
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
- * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ * dashboard persisted for the provider, then for the sending integration, then the workflow-global
+ * trigger override, then the step-scoped one.
+ *
+ * The integration overrides map rides inside the bridge provider entry and is never provider data,
+ * so it is stripped from the result whichever layer carried it.
  */
 export function combineProviderOverrides(
   bridgeData: BridgeProviderOverrides | null | undefined,
   overrides: TriggerOverrides | undefined,
   stepId: string | undefined,
-  providerId: string
+  providerId: string,
+  integrationIdentifier?: string
 ): Record<string, unknown> {
   const bridgeProviderData = bridgeData?.providers?.[providerId] || {};
+  const integrationProviderData = getIntegrationOverride(bridgeProviderData, integrationIdentifier);
   const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
 
-  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
+  const combined = mergeWith(
+    {},
+    bridgeProviderData,
+    integrationProviderData,
+    workflowGlobalProviderOverrides,
+    stepScopedOverrides,
+    replaceArrays
+  );
+  delete combined[INTEGRATION_OVERRIDES_OUTPUT_KEY];
+
+  return combined;
 }
 
 export abstract class SendMessageBase extends SendMessageType {

@@ -1,4 +1,4 @@
-import { TriggerOverrides } from '@novu/shared';
+import { INTEGRATION_OVERRIDES_OUTPUT_KEY, TriggerOverrides } from '@novu/shared';
 import { expect } from 'chai';
 import { combineProviderOverrides } from './send-message.base';
 
@@ -208,6 +208,123 @@ describe('combineProviderOverrides', () => {
     expect(combined).to.deep.equal({
       channel: 'C_ATTACKER',
       _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } },
+    });
+  });
+
+  describe('integration overrides', () => {
+    const INTEGRATION_ID = 'slack-eu';
+
+    function bridgeWithIntegrations(
+      providerData: ProviderData,
+      integrationOverrides: Record<string, ProviderData | string>
+    ) {
+      return bridge({ ...providerData, [INTEGRATION_OVERRIDES_OUTPUT_KEY]: integrationOverrides });
+    }
+
+    it('merges the integration blob over the provider blob for sends through that integration', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations(
+          { text: 'provider text', metadata: { channel: 'general', icon: ':bell:' } },
+          {
+            [INTEGRATION_ID]: { text: 'eu text', metadata: { icon: ':eu:' } },
+            'slack-us': { text: 'us text' },
+          }
+        ),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'eu text', metadata: { channel: 'general', icon: ':eu:' } });
+    });
+
+    it('replaces a provider-blob array with the integration-blob array', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations({ blocks: ['a', 'b', 'c'] }, { [INTEGRATION_ID]: { blocks: ['eu'] } }),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ blocks: ['eu'] });
+    });
+
+    it('lets workflow-global and step-scoped trigger overrides win over the integration blob', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations(
+          { text: 'provider text' },
+          { [INTEGRATION_ID]: { text: 'eu text', color: 'eu', icon: 'eu', blocks: ['eu'] } }
+        ),
+        triggerOverrides({
+          providers: { [PROVIDER_ID]: { color: 'global' } },
+          steps: { step_1: { providers: { [PROVIDER_ID]: { icon: 'step', blocks: ['step'] } } } },
+        }),
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'eu text', color: 'global', icon: 'step', blocks: ['step'] });
+    });
+
+    it('applies only the provider blob when the identifier matches no integration override', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations({ text: 'provider text' }, { 'slack-us': { text: 'us text' } }),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
+    });
+
+    it('strips the reserved key when no integration identifier is passed', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations({ text: 'provider text' }, { [INTEGRATION_ID]: { text: 'eu text' } }),
+        undefined,
+        'step_1',
+        PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
+    });
+
+    it('ignores an integration override that is not an object', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations({ text: 'provider text' }, { [INTEGRATION_ID]: 'eu text' }),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
+    });
+
+    it('neither applies nor forwards the reserved key when a trigger override carries it', () => {
+      const combined = combineProviderOverrides(
+        bridge({ text: 'provider text' }),
+        triggerOverrides({
+          providers: {
+            [PROVIDER_ID]: { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [INTEGRATION_ID]: { text: 'global smuggled' } } },
+          },
+          steps: {
+            step_1: {
+              providers: {
+                [PROVIDER_ID]: { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [INTEGRATION_ID]: { text: 'step smuggled' } } },
+              },
+            },
+          },
+        }),
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
     });
   });
 });

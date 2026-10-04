@@ -1,5 +1,5 @@
 import { ToolFactory } from '@novu/application-generic';
-import { ChannelTypeEnum, ToolProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, INTEGRATION_OVERRIDES_OUTPUT_KEY, ToolProviderIdEnum } from '@novu/shared';
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -372,6 +372,62 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
       expect(call.args[0].bridgeProviderData).to.deep.equal({
         alert_type: 'incident',
         priority: 'high',
+      });
+    }
+  });
+
+  it('layers each integration override over the provider override for sends through that integration only', async () => {
+    const secondChannelData = {
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      identifier: 'webhook-endpoint-2',
+      endpoint: { url: 'https://hooks.example.com/second' },
+    };
+    const { usecase } = buildUsecase({
+      integration: [
+        buildWebhookIntegration('static', 'webhook-static'),
+        buildWebhookIntegration('dynamic', 'webhook-dynamic'),
+      ],
+      endpointGroups: [
+        {
+          integrationIdentifier: 'webhook-dynamic',
+          providerId: ToolProviderIdEnum.Webhook,
+          channelData: [webhookChannelData, secondChannelData],
+        },
+      ],
+    });
+    const sendStub = sinon.stub().resolves({ status: 200 });
+    sinon.stub(ToolFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+    const command = buildCommand();
+    if (!command.bridgeData) {
+      throw new Error('Expected bridge data');
+    }
+    command.bridgeData = {
+      ...command.bridgeData,
+      providers: {
+        [ToolProviderIdEnum.Webhook]: {
+          alert_type: 'incident',
+          priority: 'high',
+          [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+            'webhook-static': { priority: 'low' },
+            'webhook-dynamic': { priority: 'critical', team: 'sre' },
+          },
+        },
+      },
+    };
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.callCount(sendStub, 3);
+    const [staticSend, ...dynamicSends] = sendStub.getCalls().map((call) => call.args[0]);
+    expect(staticSend.channelData).to.equal(undefined);
+    expect(staticSend.bridgeProviderData).to.deep.equal({ alert_type: 'incident', priority: 'low' });
+    expect(dynamicSends.map((send) => send.channelData)).to.deep.equal([webhookChannelData, secondChannelData]);
+    for (const dynamicSend of dynamicSends) {
+      expect(dynamicSend.bridgeProviderData).to.deep.equal({
+        alert_type: 'incident',
+        priority: 'critical',
+        team: 'sre',
       });
     }
   });

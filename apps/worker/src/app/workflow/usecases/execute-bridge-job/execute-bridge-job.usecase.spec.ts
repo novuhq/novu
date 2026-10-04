@@ -353,6 +353,91 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     });
   });
 
+  it('stitches STEP_INTEGRATION_CONTROLS docs into controls.integrationOverrides, apart from providerOverrides', async () => {
+    const { usecase, executeBridgeRequest, controlValuesRepository } = buildUsecase();
+
+    controlValuesRepository.findOne.resolves({
+      controls: { body: 'default alert' },
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+    controlValuesRepository.find.resolves([
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        controls: { alert_type: 'incident', priority: 'high' },
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      },
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier: 'prod-alerts',
+        controls: { priority: 'critical' },
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+      },
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier: 'staging-alerts',
+        controls: { priority: 'low' },
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+      },
+    ]);
+
+    const command = {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: {
+          stepId: 'step_1',
+          uuid: 'step_1',
+          _id: 'step_tpl_1',
+          template: { type: 'tool' },
+        },
+      },
+      variables: {
+        payload: {},
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+
+    await usecase.execute(command);
+
+    expect(controlValuesRepository.find.calledOnce).to.equal(true);
+    expect(controlValuesRepository.find.firstCall.args[0]).to.deep.equal({
+      _organizationId: 'org_1',
+      _environmentId: 'env_1',
+      _workflowId: 'tpl_1',
+      _stepId: 'step_tpl_1',
+      level: {
+        $in: [ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS, ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS],
+      },
+    });
+    const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
+    expect(bridgeRequest.event.controls).to.deep.equal({
+      body: 'default alert',
+      providerOverrides: {
+        [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
+      },
+      integrationOverrides: {
+        [ToolProviderIdEnum.Webhook]: {
+          'prod-alerts': { priority: 'critical' },
+          'staging-alerts': { priority: 'low' },
+        },
+      },
+    });
+  });
+
   it('buildStepsMap maps digest parent outputs to steps.<stepId> namespace', async () => {
     const { usecase, jobRepository, notificationPayloadService } = buildUsecase();
 

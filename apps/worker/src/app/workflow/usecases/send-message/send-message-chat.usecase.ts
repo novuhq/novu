@@ -569,7 +569,8 @@ export class SendMessageChat extends SendMessageBase {
       command.bridgeData,
       command.overrides,
       command.step.stepId,
-      integration.providerId
+      integration.providerId,
+      integration.identifier
     );
 
     const chatWebhookUrl =
@@ -739,7 +740,8 @@ export class SendMessageChat extends SendMessageBase {
       command.bridgeData,
       command.overrides,
       command.step.stepId,
-      integration.providerId
+      integration.providerId,
+      integration.identifier
     );
 
     // Apply channel data overrides if present for this specific endpoint
