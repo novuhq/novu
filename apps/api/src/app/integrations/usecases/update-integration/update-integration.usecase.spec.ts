@@ -1,6 +1,12 @@
 import { ConflictException } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { ControlValuesRepository, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  ControlValuesEntity,
+  ControlValuesRepository,
+  EnvironmentRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ToolProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -45,7 +51,7 @@ describe('UpdateIntegration - step integration overrides', () => {
       'identifier' in query ? null : ({ ...existingIntegration } as IntegrationEntity)
     );
     integrationRepository.update.resolves({ matched: 1, modified: 1 });
-    controlValuesRepository.find.resolves([{ _stepId: 'step-a' }, { _stepId: 'step-b' }] as never);
+    controlValuesRepository.find.resolves([{ _stepId: 'step-a' }, { _stepId: 'step-b' }] as ControlValuesEntity[]);
     controlValuesRepository.delete.resolves({ acknowledged: true, deletedCount: 0 });
     controlValuesRepository.update.resolves({ matched: 2, modified: 2 });
 

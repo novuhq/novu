@@ -309,8 +309,8 @@ export class UpdateIntegration {
       });
     }
 
-    if (identifierHasChanged && command.identifier) {
-      await this.renameStepIntegrationOverrides(existingIntegration, command.identifier);
+    if (updatePayload.identifier) {
+      await this.renameStepIntegrationOverrides(existingIntegration, updatePayload.identifier);
     }
 
     const updatedIntegration = await this.integrationRepository.findOne({

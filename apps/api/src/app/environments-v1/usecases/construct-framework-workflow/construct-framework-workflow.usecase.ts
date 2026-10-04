@@ -93,7 +93,6 @@ function toFrameworkSchema(schema: PersistedControlSchema): Schema {
   return schema as Schema;
 }
 
-/** Reads one provider's entry from a translated `providerOverrides` / `integrationOverrides` map. */
 function getProviderEntry(
   overridesByProvider: unknown,
   providerId: ContentOverrideProviderId
