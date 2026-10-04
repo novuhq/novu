@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { NotificationStepEntity } from '@novu/dal';
 import { DigestTypeEnum, FeatureFlagsKeysEnum, ResourceEnum, StepTypeEnum } from '@novu/shared';
 import { buildUsageKey } from '../../services/cache';
@@ -22,10 +21,6 @@ const MISSING_TEMPLATE_ID = 'aaaaaaaaaaaaaaaaaaaaaaa8';
 const DIGEST_TEMPLATE_ID = 'aaaaaaaaaaaaaaaaaaaaaaa9';
 
 describe('CreateNotificationJobs', () => {
-  beforeEach(() => {
-    jest.spyOn(Logger, 'error').mockImplementation(() => {});
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -44,6 +39,7 @@ describe('CreateNotificationJobs', () => {
     const traceLogRepository = { createWorkflowRun: jest.fn() };
     const featureFlagsService = { getFlag: jest.fn().mockResolvedValue(false) };
     const cacheService = { incrIfExistsAtomic: jest.fn() };
+    const logger = { error: jest.fn(), setContext: jest.fn() };
     const digestFilterSteps = new DigestFilterSteps();
 
     const usecase = new CreateNotificationJobs(
@@ -52,7 +48,8 @@ describe('CreateNotificationJobs', () => {
       workflowRunRepository as never,
       traceLogRepository as never,
       featureFlagsService as never,
-      cacheService as never
+      cacheService as never,
+      logger as never
     );
 
     return {
@@ -62,6 +59,7 @@ describe('CreateNotificationJobs', () => {
       traceLogRepository,
       featureFlagsService,
       cacheService,
+      logger,
     };
   }
 
@@ -112,13 +110,13 @@ describe('CreateNotificationJobs', () => {
   }
 
   it('should skip active steps with a missing template and build jobs for the valid ones', async () => {
-    const { usecase } = buildUsecase();
+    const { usecase, logger } = buildUsecase();
     const command = buildCommand([buildEmailStep(), buildBrokenStep()]);
 
     const jobs = await usecase.execute(command);
 
     expect(jobs.map((job) => job.type)).toEqual([StepTypeEnum.TRIGGER, StepTypeEnum.EMAIL]);
-    expect(Logger.error).toHaveBeenCalledWith(expect.stringContaining(MISSING_TEMPLATE_ID), expect.anything());
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining(MISSING_TEMPLATE_ID));
   });
 
   it('should throw when all active steps have missing templates', async () => {
@@ -145,14 +143,14 @@ describe('CreateNotificationJobs', () => {
   });
 
   it('should ignore inactive steps with missing templates', async () => {
-    const { usecase } = buildUsecase();
+    const { usecase, logger } = buildUsecase();
     const inactiveBrokenStep = { ...buildBrokenStep(), active: false } as NotificationStepEntity;
     const command = buildCommand([buildEmailStep(), inactiveBrokenStep]);
 
     const jobs = await usecase.execute(command);
 
     expect(jobs.map((job) => job.type)).toEqual([StepTypeEnum.TRIGGER, StepTypeEnum.EMAIL]);
-    expect(Logger.error).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   it('should persist explicit null _agentId on jobs', async () => {
@@ -228,8 +226,7 @@ describe('CreateNotificationJobs', () => {
     });
 
     it('should still increment when the trace push throws', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-      const { usecase, cacheService, traceLogRepository, featureFlagsService } = buildUsecase();
+      const { usecase, cacheService, traceLogRepository, featureFlagsService, logger } = buildUsecase();
       enableTracesWrite(featureFlagsService);
       traceLogRepository.createWorkflowRun.mockRejectedValue(new Error('ClickHouse unavailable'));
 
@@ -237,6 +234,10 @@ describe('CreateNotificationJobs', () => {
 
       expect(cacheService.incrIfExistsAtomic).toHaveBeenCalledTimes(1);
       expect(cacheService.incrIfExistsAtomic).toHaveBeenCalledWith(usageKey);
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ notificationId: NOTIFICATION_ID }),
+        'Failed to create workflow run'
+      );
     });
 
     it.each([
@@ -250,13 +251,19 @@ describe('CreateNotificationJobs', () => {
     });
 
     it('should still return the jobs when the increment fails', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-      const { usecase, cacheService } = buildUsecase();
+      const { usecase, cacheService, logger } = buildUsecase();
       cacheService.incrIfExistsAtomic.mockRejectedValue(new Error('Redis unavailable'));
 
       const jobs = await usecase.execute(buildStampedCommand());
 
       expect(jobs.map((job) => job.type)).toEqual([StepTypeEnum.TRIGGER, StepTypeEnum.EMAIL]);
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          notificationId: NOTIFICATION_ID,
+          organizationId: ORGANIZATION_ID,
+        }),
+        'Failed to increment usage counter'
+      );
     });
   });
 

@@ -25,7 +25,7 @@ program.addHelpText(
   '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
     '  NOVU_SECRET_KEY    Novu API secret key (replaces `human setup` auth)\n' +
     '  HUMAN_TO           default recipient subscriberId(s), comma-separated (as --to)\n' +
-    '  HUMAN_VIA          default channel: telegram, slack, or email (as --via)\n' +
+    '  HUMAN_VIA          default channel for HUMAN_TO: telegram, slack, or email (as --via; ignored when --to names someone else)\n' +
     '  NOVU_API_URL       Novu API URL override\n' +
     '  NOVU_HUMAN_CONFIG  config file path override\n' +
     'Precedence: CLI flags > environment variables > ~/.novu/human.json\n'
@@ -59,7 +59,7 @@ function withCommonOptions(command: Command): Command {
     )
     .option(
       '--via <platform>',
-      'deliver on a specific linked channel (telegram, slack, email) instead of the default (env: HUMAN_VIA)'
+      "deliver on a specific linked channel (telegram, slack, email) instead of each human's default (env: HUMAN_VIA, ignored when --to names someone else)"
     )
     .option('--from <name>', 'attribution label shown to the human (e.g. "deploy-bot")')
     .option('--ttl <duration>', 'time until the request expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
@@ -156,13 +156,15 @@ program
   .argument('<humanId>', 'subscriberId of the human to link (does not change your local identity)')
   .option(
     '--via <platform>',
-    'channel to link them on (telegram, slack, email). Required when several channels are linked.'
+    'skip the invite page and link them on one channel (telegram, slack, email); it becomes their default'
   )
   .option('--email <address>', 'their email address (required for --via email when not a TTY)')
   .option('--name <name>', 'their display name, e.g. "Alice Chen" (shown in `human contacts`)')
-  .option('--async', 'print the connect URL and exit instead of waiting for them to finish')
+  .option('--async', 'print the link and exit instead of waiting for them to connect')
   .option('--api-url <url>', 'Novu API URL override')
-  .description('Link another human to a channel (sends them a Slack/Telegram connect URL)')
+  .description(
+    'Get a link to share with another human: they connect Telegram or Slack on a Novu page and pick their default (nothing is sent for you)'
+  )
   .action(inviteCommand);
 
 program
@@ -176,9 +178,9 @@ program
 
 program
   .command('channels')
-  .option('--default <platform>', 'switch the default channel')
+  .option('--default <platform>', 'switch your default channel')
   .option('--json', 'print JSON')
-  .description('Show or set the default delivery channel preference')
+  .description('Show or set your default delivery channel (used when --to is you)')
   .action(channelsCommand);
 
 const skill = program

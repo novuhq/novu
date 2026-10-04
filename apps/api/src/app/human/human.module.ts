@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import {
   AgentIntegrationRepository,
   ChannelEndpointRepository,
+  HumanContactRepository,
   HumanInteractionRepository,
   IntegrationRepository,
   SubscriberRepository,
@@ -9,14 +10,30 @@ import {
 import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { ConnectModule } from '../connect/connect.module';
+import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
+import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
+import { HumanWebsiteSecretGuard } from './guards/human-website-secret.guard';
+import { HumanAccountsController } from './human-accounts.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
+import { HumanInvitesPublicController } from './human-invites-public.controller';
+import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
+import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
+import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
+import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
+import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
+import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
+import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human-account.usecase';
+import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
+import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
 /**
@@ -25,10 +42,18 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
  * Framework `ctx.*` helpers create in-thread cards via `CreateConversationInteraction`.
  */
 @Module({
-  imports: [SharedModule, AuthModule, AgentsModule, ConnectModule],
-  controllers: [HumanInteractionsController],
+  imports: [
+    SharedModule,
+    AuthModule,
+    AgentsModule,
+    ConnectModule,
+    TelegramLinkingModule,
+    forwardRef(() => IntegrationModule),
+  ],
+  controllers: [HumanInteractionsController, HumanInvitesPublicController, HumanAccountsController],
   providers: [
     HumanInteractionRepository,
+    HumanContactRepository,
     AgentIntegrationRepository,
     ChannelEndpointRepository,
     IntegrationRepository,
@@ -40,6 +65,18 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     CancelInteraction,
     SetupHumanRelay,
     ListContacts,
+    HumanInviteTokenService,
+    CreateHumanInvite,
+    GetHumanInviteStatus,
+    ConnectHumanInviteChannel,
+    SetHumanInviteDefault,
+    DeclineHumanInvite,
+    HumanBackingAccounts,
+    HumanWebsiteSecretGuard,
+    EnsureBackingOrganization,
+    ClaimForHumanAccount,
+    GetBackingSecretKey,
+    DeleteHumanAccount,
   ],
 })
 export class HumanModule {}

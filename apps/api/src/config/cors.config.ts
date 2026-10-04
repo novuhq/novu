@@ -1,5 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
+import type { Request } from 'express';
+import { resolveHumanWebsiteBaseUrl } from '../app/shared/helpers/resolve-human-website-base-url';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
@@ -39,9 +41,14 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     if (process.env.DOCS_BASE_URL) {
       corsOptions.origin.push(process.env.DOCS_BASE_URL);
     }
+    // The invite page on the Human website calls the public invite endpoints (token-only, no cookies).
+    const humanWebsite = isHumanInviteRoute(req.url) ? humanWebsiteOrigin() : undefined;
+    if (humanWebsite) {
+      corsOptions.origin.push(humanWebsite);
+    }
   }
 
-  callback(null as unknown as Error, corsOptions);
+  callback(null, corsOptions);
 };
 
 function enableWildcard(req: Request): boolean {
@@ -72,6 +79,19 @@ function isBlueprintRoute(url: string): boolean {
   return url.startsWith('/v1/blueprints');
 }
 
+/** The public invite page endpoints; `POST /v1/human/invites` (create, authenticated) is excluded. */
+function isHumanInviteRoute(url: string): boolean {
+  return url.startsWith('/v1/human/invites/');
+}
+
+function humanWebsiteOrigin(): string | undefined {
+  try {
+    return new URL(resolveHumanWebsiteBaseUrl()).origin;
+  } catch {
+    return undefined;
+  }
+}
+
 function isWebChatRoute(url: string): boolean {
   return url.startsWith('/v1/web-chat');
 }
@@ -81,5 +101,5 @@ function isDevelopmentEnvironment(): boolean {
 }
 
 function origin(req: Request): string {
-  return (req.headers as any)?.origin || '';
+  return req.headers?.origin || '';
 }

@@ -206,7 +206,10 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
       // server-side source filter is broken (truncates and lies with
       // `has_more: false`); see provider for the full explanation.
       expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.beta.skills.list.mock.calls[0][0]).to.deep.equal({ limit: 100 });
+      expect(mockClient.beta.skills.list.mock.calls[0][0]).to.deep.equal({
+        limit: 100,
+        betas: ['skills-2025-10-02'],
+      });
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
       expect(mockClient.post.mock.calls).to.have.lengthOf(0);
 
@@ -243,7 +246,10 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
       // `github-repo` re-uploads converge on the same version-append branch.
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(0);
       expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.beta.skills.list.mock.calls[0][0]).to.deep.equal({ limit: 100 });
+      expect(mockClient.beta.skills.list.mock.calls[0][0]).to.deep.equal({
+        limit: 100,
+        betas: ['skills-2025-10-02'],
+      });
 
       expect(mockClient.post.mock.calls).to.have.lengthOf(1);
       const [pathArg, optsArg] = mockClient.post.mock.calls[0];

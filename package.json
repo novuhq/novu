@@ -64,6 +64,7 @@
     "start:api": "cross-env nx run @novu/api-service:start",
     "start:dal": "cross-env nx run @novu/dal:start",
     "start:dashboard": "cross-env nx run @novu/dashboard:start",
+    "start:human-website": "cross-env nx run @novu/human-website:start",
     "start:integration:api": "cd apps/api && pnpm run test",
     "start:shared": "cross-env nx run @novu/shared:start",
     "start:webhook:test": "cross-env nx run-many --target=start:test --projects=@novu/webhook",
