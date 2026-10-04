@@ -223,6 +223,19 @@ export const PROVIDER_OVERRIDES_RUNTIME_SCHEMA = {
   },
 } as const;
 
+/** Runtime control-schema fragment that accepts stitched `integrationOverrides` (providerId → identifier → blob). */
+export const INTEGRATION_OVERRIDES_RUNTIME_SCHEMA = {
+  type: 'object',
+  additionalProperties: PROVIDER_OVERRIDES_RUNTIME_SCHEMA,
+} as const;
+
+/**
+ * Key under which a provider's bridge output carries its rendered per-integration overrides.
+ * Bridge provider keys must be known provider ids, so integration overrides ride inside the
+ * provider entry; the worker strips this key before anything reaches the provider.
+ */
+export const INTEGRATION_OVERRIDES_OUTPUT_KEY = '__integrationOverrides';
+
 export function withProviderOverridesRuntimeSchema<T extends { properties?: Record<string, unknown> }>(
   controlSchema: T
 ): T & { properties: Record<string, unknown> } {
@@ -231,6 +244,7 @@ export function withProviderOverridesRuntimeSchema<T extends { properties?: Reco
     properties: {
       ...(controlSchema.properties ?? {}),
       providerOverrides: PROVIDER_OVERRIDES_RUNTIME_SCHEMA,
+      integrationOverrides: INTEGRATION_OVERRIDES_RUNTIME_SCHEMA,
     },
   };
 }

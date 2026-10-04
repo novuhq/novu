@@ -220,6 +220,12 @@ export enum FeatureFlagsKeysEnum {
   IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED = 'IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED',
   /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
   IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
+  /**
+   * Show per-integration content overrides on chat and tool steps in the dashboard. Stored
+   * integration overrides are always applied at send time. Create the boolean in LaunchDarkly
+   * for cloud, or set `VITE_IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED` when self-hosted.
+   */
+  IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED = 'IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require
