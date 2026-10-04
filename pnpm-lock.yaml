@@ -58,7 +58,7 @@ overrides:
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
-  basic-ftp@<5.3.1: ^5.3.1
+  basic-ftp@<6.2.1: ^6.2.1
   http-cache-semantics@<4.2.1: ^4.2.1
   axios@>=1.0.0 <1.20.0: ^1.20.0
   '@slack/web-api': 7.17.0
@@ -153,6 +153,7 @@ overrides:
   fast-uri@<3.1.7: ^3.1.7
   browserslist@<4.28.7: ^4.28.7
   '@humanfs/node@<0.16.8': ^0.16.8
+  '@fastify/busboy@<3.2.1': ^3.2.1
   sharp@<0.35.4: ^0.35.4
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
@@ -173,7 +174,7 @@ overrides:
   samlify@<2.13.0: ^2.13.0
   better-auth@<1.6.13: ^1.6.23
   '@better-auth/sso@<1.6.13': ^1.6.23
-  nodemailer@<9.1.0: ^9.1.0
+  nodemailer@<10.0.9: ^10.0.9
   shell-quote@<1.8.5: ^1.8.5
   piscina@<4.9.3: ^4.9.3
   vitest@<4.1.11: ^4.1.11
@@ -4300,7 +4301,7 @@ importers:
         version: 8.2.1
       mailtrap:
         specifier: ^3.1.1
-        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@9.1.1)
+        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@10.0.13)
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
@@ -4314,8 +4315,8 @@ importers:
         specifier: ^6.0.8
         version: 6.0.8
       nodemailer:
-        specifier: ^9.1.0
-        version: 9.1.1
+        specifier: ^10.0.9
+        version: 10.0.13
       plivo:
         specifier: ^4.70.0
         version: 4.70.0
@@ -4785,8 +4786,8 @@ importers:
         specifier: 15.5.24
         version: 15.5.24(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nodemailer:
-        specifier: ^9.1.0
-        version: 9.1.1
+        specifier: ^10.0.9
+        version: 10.0.13
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -8282,8 +8283,8 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=9.0.0'}
     deprecated: Please update to a newer version
 
-  '@fastify/busboy@3.1.1':
-    resolution: {integrity: sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==}
+  '@fastify/busboy@3.2.2':
+    resolution: {integrity: sha512-yXSS27qPExaXeuLvMRMXOLtpipzfQYNjG3FkunDWKGfMYjKuhFXko9CVzqxm8jcF+lmtS9Fd89QNdh9XDjnbNg==}
 
   '@firebase/app-check-interop-types@0.3.3':
     resolution: {integrity: sha512-gAlxfPLT2j8bTI/qfe3ahl2I2YcBQ8cFIBdhAQA4I2f3TndcO+22YizyGYuttLHPQEpWkhmpFW60VCFEPg4g5A==}
@@ -18133,8 +18134,8 @@ packages:
     resolution: {integrity: sha512-CtGuTyWf3ig+sgRyC7uP6DM3N+5ur/p8L+FPfsd+BbIfIs74TFfCajZTHnCw6K5dqM0bZEbRIqRy1fAdiUJhTA==}
     engines: {node: '>= 0.6'}
 
-  basic-ftp@5.3.1:
-    resolution: {integrity: sha512-bopVNp6ugyA150DDuZfPFdt1KZ5a94ZDiwX4hMgZDzF+GttD80lEy8kj98kbyhLXnPvhtIo93mdnLIjpCAeeOw==}
+  basic-ftp@6.2.1:
+    resolution: {integrity: sha512-bK67isD+lKq46AU8vNtjvMaT2ZqAOAmNCbxUHlFBRD4k15NWxyEjmaKtZPlgce58So4BNTjITGQOVTjL9y0ECA==}
     engines: {node: '>=10.0.0'}
 
   bcrypt-pbkdf@1.0.2:
@@ -23715,7 +23716,7 @@ packages:
     engines: {node: '>=16.20.1', yarn: '>=1.22.17'}
     peerDependencies:
       '@types/nodemailer': ^6.4.9
-      nodemailer: ^9.1.0
+      nodemailer: ^10.0.9
     peerDependenciesMeta:
       '@types/nodemailer':
         optional: true
@@ -24745,9 +24746,9 @@ packages:
     resolution: {integrity: sha512-1uiY543L+N7Og4yswvlm5NCKgPKDEXd9AUR9Jh3gen6oOeBsesr6LqhXom1er3eRzSUcVRWXzhv8tSNrIfGHKw==}
     engines: {node: '>=18'}
 
-  nodemailer@9.1.1:
-    resolution: {integrity: sha512-izw9mVKFix6YSnC9eLgV6g1opl9DUlRio9ZNcq+Wu9Ujn2UwF+8Nl0B8nz22kEC+CTZCvinkxwJ0DeFbb6NwcQ==}
-    engines: {node: '>=6.0.0'}
+  nodemailer@10.0.13:
+    resolution: {integrity: sha512-SzG86OlvcW/NNhUFC6uROMwRTL4n7MswfQqC/T8mhkmnY1YVa23zUEMYi4ijSeXSl9GLz9ZeTJDUatEDuY5FeQ==}
+    engines: {node: '>=20.0.0'}
 
   nodemon@3.0.1:
     resolution: {integrity: sha512-g9AZ7HmkhQkqXkRc20w+ZfQ73cHLbE8hnPbtaFbFtCumZsjyMhKk9LajQ07U5Ux28lvFjZ5X7HvWR1xzU8jHVw==}
@@ -35918,7 +35919,7 @@ snapshots:
 
   '@faker-js/faker@9.5.0': {}
 
-  '@fastify/busboy@3.1.1': {}
+  '@fastify/busboy@3.2.2': {}
 
   '@firebase/app-check-interop-types@0.3.3': {}
 
@@ -50067,7 +50068,7 @@ snapshots:
 
   basic-auth@1.1.0: {}
 
-  basic-ftp@5.3.1: {}
+  basic-ftp@6.2.1: {}
 
   bcrypt-pbkdf@1.0.2:
     dependencies:
@@ -53237,7 +53238,7 @@ snapshots:
 
   firebase-admin@13.3.0:
     dependencies:
-      '@fastify/busboy': 3.1.1
+      '@fastify/busboy': 3.2.2
       '@firebase/database-compat': 2.0.5
       '@firebase/database-types': 1.0.10
       '@types/node': 22.15.13
@@ -53665,7 +53666,7 @@ snapshots:
 
   get-uri@6.0.5:
     dependencies:
-      basic-ftp: 5.3.1
+      basic-ftp: 6.2.1
       data-uri-to-buffer: 6.0.2
       debug: 4.4.3(supports-color@7.2.0)
     transitivePeerDependencies:
@@ -57193,16 +57194,16 @@ snapshots:
       iconv-lite: 0.7.3
       libmime: 5.4.2
       linkify-it: 5.0.2
-      nodemailer: 9.1.1
+      nodemailer: 10.0.13
       punycode.js: 2.3.1
       tlds: 1.261.0
 
-  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@9.1.1):
+  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@10.0.13):
     dependencies:
       axios: 1.20.0
     optionalDependencies:
       '@types/nodemailer': 8.0.0
-      nodemailer: 9.1.1
+      nodemailer: 10.0.13
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -58563,7 +58564,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.7
 
-  nodemailer@9.1.1: {}
+  nodemailer@10.0.13: {}
 
   nodemon@3.0.1:
     dependencies:
@@ -62113,7 +62114,7 @@ snapshots:
   smtp-server@3.18.4:
     dependencies:
       ipv6-normalize: 1.0.1
-      nodemailer: 9.1.1
+      nodemailer: 10.0.13
       punycode.js: 2.3.1
 
   snake-case@2.1.0:
