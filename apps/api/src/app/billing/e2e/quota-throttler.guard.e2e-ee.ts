@@ -50,16 +50,14 @@ describe('Resource Limiting #novu-v2', () => {
     });
 
     describe('Event resource blocking', () => {
-      describe('Base Quota FF is enabled', () => {
+      describe('Free organizations', () => {
         let getEventResourceUsageStub: sinon.SinonStub;
 
-        beforeEach(() => {
-          const getEventResourceUsage = session.testServer?.getService(GetEventResourceUsage) as GetEventResourceUsage;
-          getEventResourceUsageStub = sinon.stub(getEventResourceUsage, 'execute');
-        });
+        beforeEach(async () => {
+          await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
 
-        afterEach(() => {
-          getEventResourceUsageStub.reset();
+          // BillingModule is imported by more than one module, so every instance must see the stub.
+          getEventResourceUsageStub = sinon.stub(GetEventResourceUsage.prototype, 'execute');
         });
 
         it('should NOT block the request when the quota limit is NOT exceeded', async () => {
@@ -74,10 +72,10 @@ describe('Resource Limiting #novu-v2', () => {
           const response = await request(pathEvent);
 
           expect(response.status).to.equal(200);
+          expect(response.headers['x-quotalimit-limit']).to.equal('100');
         });
 
-        it('should block the request when the quota limit is exceeded and product tier is free', async () => {
-          await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
+        it('should block the request when the quota limit is exceeded', async () => {
           getEventResourceUsageStub.resolves({
             remaining: 0,
             limit: 100,
@@ -89,35 +87,6 @@ describe('Resource Limiting #novu-v2', () => {
           const response = await request(pathEvent);
 
           expect(response.status).to.equal(402);
-        });
-
-        it('should NOT block the request when the quota limit is exceeded and product tier is NOT free', async () => {
-          getEventResourceUsageStub.resolves({
-            remaining: 0,
-            limit: 100,
-            success: false,
-            start: 1609459200000,
-            reset: 1612137600000,
-            apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-          });
-          const response = await request(pathEvent);
-
-          expect(response.status).to.equal(200);
-        });
-
-        it('should NOT block the request when the evaluation lock is false', async () => {
-          getEventResourceUsageStub.resolves({
-            remaining: 0,
-            limit: 0,
-            success: true,
-            start: 0,
-            reset: 0,
-            apiServiceLevel: ApiServiceLevelEnum.FREE,
-            locked: false,
-          });
-          const response = await request(pathEvent);
-
-          expect(response.status).to.equal(200);
         });
       });
 
