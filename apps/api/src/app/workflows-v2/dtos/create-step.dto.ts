@@ -6,6 +6,7 @@ import {
   DigestControlDto,
   EmailControlDto,
   HttpRequestControlDto,
+  INTEGRATION_OVERRIDES_API_PROPERTY,
   InAppControlDto,
   PROVIDER_OVERRIDES_API_PROPERTY,
   PushControlDto,
@@ -15,6 +16,7 @@ import {
 } from '@novu/application-generic';
 import {
   SLUG_IDENTIFIER_REGEX,
+  type StepIntegrationOverrides,
   type StepProviderOverrides,
   StepTypeEnum,
   slugIdentifierFormatMessage,
@@ -148,6 +150,14 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   @IsOptional()
   @IsObject()
   providerOverrides?: StepProviderOverrides | null;
+
+  @ApiPropertyOptional({
+    ...INTEGRATION_OVERRIDES_API_PROPERTY,
+    description: `${INTEGRATION_OVERRIDES_API_PROPERTY.description} Omit to leave unchanged; pass null to delete all integration overrides; pass an object to replace the full set.`,
+  })
+  @IsOptional()
+  @IsObject()
+  integrationOverrides?: StepIntegrationOverrides | null;
 }
 
 export class ToolStepUpsertDto extends BaseStepConfigDto {
@@ -175,6 +185,14 @@ export class ToolStepUpsertDto extends BaseStepConfigDto {
   @IsOptional()
   @IsObject()
   providerOverrides?: StepProviderOverrides | null;
+
+  @ApiPropertyOptional({
+    ...INTEGRATION_OVERRIDES_API_PROPERTY,
+    description: `${INTEGRATION_OVERRIDES_API_PROPERTY.description} Omit to leave unchanged; pass null to delete all integration overrides; pass an object to replace the full set.`,
+  })
+  @IsOptional()
+  @IsObject()
+  integrationOverrides?: StepIntegrationOverrides | null;
 }
 
 export class DelayStepUpsertDto extends BaseStepConfigDto {

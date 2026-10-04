@@ -7,10 +7,10 @@ import {
   hasLegacyIntegrationConditions,
   PinoLogger,
 } from '@novu/application-generic';
-import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
-import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
+import { ControlValuesRepository, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum } from '@novu/shared';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
+import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -27,9 +27,42 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
     private environmentRepository: EnvironmentRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private controlValuesRepository: ControlValuesRepository
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  /**
+   * Step integration overrides are keyed by integration identifier, so a rename must carry them along.
+   * Overrides left on the same step under the new identifier (e.g. by a deleted integration) are
+   * dropped first so the renamed integration's own overrides win instead of colliding.
+   */
+  private async renameStepIntegrationOverrides(integration: IntegrationEntity, newIdentifier: string): Promise<void> {
+    const scope = {
+      _environmentId: integration._environmentId,
+      _organizationId: integration._organizationId,
+      level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+      providerId: integration.providerId,
+    };
+    const overrides = await this.controlValuesRepository.find(
+      { ...scope, integrationIdentifier: integration.identifier },
+      { _stepId: 1 }
+    );
+
+    if (overrides.length === 0) {
+      return;
+    }
+
+    await this.controlValuesRepository.delete({
+      ...scope,
+      integrationIdentifier: newIdentifier,
+      _stepId: { $in: overrides.map((override) => override._stepId) },
+    });
+    await this.controlValuesRepository.update(
+      { ...scope, integrationIdentifier: integration.identifier },
+      { $set: { integrationIdentifier: newIdentifier } }
+    );
   }
 
   private async calculatePriorityAndPrimaryForActive({
@@ -103,6 +136,7 @@ export class UpdateIntegration {
     return result;
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: validates and applies every optional integration field in one pass
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     this.logger.trace('Executing Update Integration Command');
 
@@ -273,6 +307,10 @@ export class UpdateIntegration {
         _environmentId: existingIntegration._environmentId,
         channel: existingIntegration.channel,
       });
+    }
+
+    if (updatePayload.identifier) {
+      await this.renameStepIntegrationOverrides(existingIntegration, updatePayload.identifier);
     }
 
     const updatedIntegration = await this.integrationRepository.findOne({

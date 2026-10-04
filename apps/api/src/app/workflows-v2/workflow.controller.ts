@@ -186,6 +186,7 @@ export class WorkflowController {
         'providerOverrides' in step
           ? ((step as { providerOverrides?: Record<string, Record<string, unknown>> | null }).providerOverrides ?? null)
           : undefined,
+      integrationOverrides: 'integrationOverrides' in step ? (step.integrationOverrides ?? null) : undefined,
     }));
   }
 
