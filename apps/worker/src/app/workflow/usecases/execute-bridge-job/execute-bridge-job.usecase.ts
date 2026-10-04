@@ -15,6 +15,7 @@ import {
   InstrumentUsecase,
   NotificationPayloadService,
   PinoLogger,
+  stitchIntegrationOverridesFromDocs,
   stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
 } from '@novu/application-generic';
@@ -71,6 +72,7 @@ export class ExecuteBridgeJob {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing bridge orchestration is outside this change.
   async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteBridgeJobResult | null> {
     const stepId = command.job.step.stepId || command.job.step.uuid;
 
@@ -176,7 +178,7 @@ export class ExecuteBridgeJob {
     controls: Record<string, unknown>;
     stepResolverHash?: string;
   }> {
-    const [controlsEntity, providerDocs] = await Promise.all([
+    const [controlsEntity, overrideDocs] = await Promise.all([
       this.controlValuesRepository.findOne({
         _organizationId: command.organizationId,
         _workflowId: workflow._id,
@@ -188,7 +190,9 @@ export class ExecuteBridgeJob {
         _environmentId: command.environmentId,
         _workflowId: workflow._id,
         _stepId: command.job.step._id,
-        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+        level: {
+          $in: [ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS, ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS],
+        },
       }),
     ]);
 
@@ -203,10 +207,15 @@ export class ExecuteBridgeJob {
       sanitizedControls = rawControls ?? {};
     }
 
-    const providerOverrides = stitchProviderOverridesFromDocs(providerDocs);
+    const providerOverrides = stitchProviderOverridesFromDocs(
+      overrideDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS)
+    );
+    const integrationOverrides = stitchIntegrationOverridesFromDocs(
+      overrideDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS)
+    );
 
     return {
-      controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides),
+      controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides, integrationOverrides),
       stepResolverHash,
     };
   }
@@ -230,6 +239,7 @@ export class ExecuteBridgeJob {
      * carry a base64 string. Runtime consumers of this normalized payload expect that.
      */
     const attachments = payload.attachments.map((attachment) => {
+      // biome-ignore lint/plugin: file is typed Buffer but rehydrated attachments can carry a Uint8Array, so narrow from unknown
       const file: unknown = attachment?.file;
 
       if (Buffer.isBuffer(file)) {
