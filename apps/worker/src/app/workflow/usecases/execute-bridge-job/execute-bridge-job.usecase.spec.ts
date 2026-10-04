@@ -86,6 +86,35 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     } as never;
   }
 
+  /** Unlike `buildCommand`, the step carries the `_id` and template type that the control-value lookup reads. */
+  function buildStepCommand(templateType: string) {
+    return {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: { stepId: 'step_1', uuid: 'step_1', _id: 'step_tpl_1', template: { type: templateType } },
+      },
+      variables: {
+        payload: {},
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+  }
+
   afterEach(() => {
     sinon.restore();
   });
@@ -250,38 +279,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       },
     ]);
 
-    const command = {
-      environmentId: 'env_1',
-      organizationId: 'org_1',
-      userId: 'user_1',
-      identifier: 'wf-identifier',
-      jobId: 'job_1',
-      job: {
-        _id: 'job_1',
-        _templateId: 'tpl_1',
-        _parentId: undefined,
-        _environmentId: 'env_1',
-        _organizationId: 'org_1',
-        step: {
-          stepId: 'step_1',
-          uuid: 'step_1',
-          _id: 'step_tpl_1',
-          template: { type: 'tool' },
-        },
-      },
-      variables: {
-        payload: {},
-        env: { name: 'Development', type: 'dev' },
-      },
-      workflow: {
-        _id: 'tpl_1',
-        type: ResourceTypeEnum.BRIDGE,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
-        triggers: [{ identifier: 'wf-identifier' }],
-      },
-    } as never;
-
-    await usecase.execute(command);
+    await usecase.execute(buildStepCommand('tool'));
 
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
@@ -309,38 +307,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       },
     ]);
 
-    const command = {
-      environmentId: 'env_1',
-      organizationId: 'org_1',
-      userId: 'user_1',
-      identifier: 'wf-identifier',
-      jobId: 'job_1',
-      job: {
-        _id: 'job_1',
-        _templateId: 'tpl_1',
-        _parentId: undefined,
-        _environmentId: 'env_1',
-        _organizationId: 'org_1',
-        step: {
-          stepId: 'step_1',
-          uuid: 'step_1',
-          _id: 'step_tpl_1',
-          template: { type: 'chat' },
-        },
-      },
-      variables: {
-        payload: {},
-        env: { name: 'Development', type: 'dev' },
-      },
-      workflow: {
-        _id: 'tpl_1',
-        type: ResourceTypeEnum.BRIDGE,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
-        triggers: [{ identifier: 'wf-identifier' }],
-      },
-    } as never;
-
-    await usecase.execute(command);
+    await usecase.execute(buildStepCommand('chat'));
 
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
     expect(bridgeRequest.event.controls).to.deep.equal({
@@ -380,38 +347,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       },
     ]);
 
-    const command = {
-      environmentId: 'env_1',
-      organizationId: 'org_1',
-      userId: 'user_1',
-      identifier: 'wf-identifier',
-      jobId: 'job_1',
-      job: {
-        _id: 'job_1',
-        _templateId: 'tpl_1',
-        _parentId: undefined,
-        _environmentId: 'env_1',
-        _organizationId: 'org_1',
-        step: {
-          stepId: 'step_1',
-          uuid: 'step_1',
-          _id: 'step_tpl_1',
-          template: { type: 'tool' },
-        },
-      },
-      variables: {
-        payload: {},
-        env: { name: 'Development', type: 'dev' },
-      },
-      workflow: {
-        _id: 'tpl_1',
-        type: ResourceTypeEnum.BRIDGE,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
-        triggers: [{ identifier: 'wf-identifier' }],
-      },
-    } as never;
-
-    await usecase.execute(command);
+    await usecase.execute(buildStepCommand('tool'));
 
     expect(controlValuesRepository.find.calledOnce).to.equal(true);
     expect(controlValuesRepository.find.firstCall.args[0]).to.deep.equal({

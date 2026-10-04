@@ -91,7 +91,7 @@ export function combineProviderOverrides(
   const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
 
-  const combined = mergeWith(
+  const combined: Record<string, unknown> = mergeWith(
     {},
     bridgeProviderData,
     integrationProviderData,

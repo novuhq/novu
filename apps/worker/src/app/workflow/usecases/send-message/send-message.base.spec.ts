@@ -214,10 +214,7 @@ describe('combineProviderOverrides', () => {
   describe('integration overrides', () => {
     const INTEGRATION_ID = 'slack-eu';
 
-    function bridgeWithIntegrations(
-      providerData: ProviderData,
-      integrationOverrides: Record<string, ProviderData | string>
-    ) {
+    function bridgeWithIntegrations(providerData: ProviderData, integrationOverrides: Record<string, ProviderData>) {
       return bridge({ ...providerData, [INTEGRATION_OVERRIDES_OUTPUT_KEY]: integrationOverrides });
     }
 
@@ -294,7 +291,7 @@ describe('combineProviderOverrides', () => {
 
     it('ignores an integration override that is not an object', () => {
       const combined = combineProviderOverrides(
-        bridgeWithIntegrations({ text: 'provider text' }, { [INTEGRATION_ID]: 'eu text' }),
+        bridge({ text: 'provider text', [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [INTEGRATION_ID]: 'eu text' } }),
         undefined,
         'step_1',
         PROVIDER_ID,
