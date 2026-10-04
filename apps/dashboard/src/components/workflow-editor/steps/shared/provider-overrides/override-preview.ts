@@ -65,6 +65,15 @@ export function resolveOverrideForPreview({
 }
 
 /**
+ * Whether the merge keeps the provider value under an overlay key. Mirrors the worker's lodash
+ * `mergeWith` with array replacement: an `undefined` overlay is skipped, and an object merged into
+ * an array leaves the array as sent.
+ */
+function keepsBaseValue(baseValue: unknown, overlayValue: unknown): boolean {
+  return overlayValue === undefined || (Array.isArray(baseValue) && isRecord(overlayValue));
+}
+
+/**
  * Layers an integration override over its provider override the way the send path does: objects
  * merge key by key, while arrays and scalars from the integration replace the provider's value whole.
  */
@@ -77,12 +86,12 @@ export function mergeOverrideLayers(
   // `Object.fromEntries` defines own properties, so a `__proto__` key stays data.
   return Object.fromEntries(
     [...keys].map((key) => {
-      if (!hasOwn(overlay, key)) {
-        return [key, base[key]];
-      }
-
       const baseValue = base[key];
       const overlayValue = overlay[key];
+
+      if (!hasOwn(overlay, key) || keepsBaseValue(baseValue, overlayValue)) {
+        return [key, baseValue];
+      }
 
       return [
         key,
@@ -95,12 +104,12 @@ export function mergeOverrideLayers(
 /** Dotted paths in `mergeOverrideLayers(base, overlay)` whose value comes from `base` alone. */
 export function getInheritedOverridePaths(base: Record<string, unknown>, overlay: Record<string, unknown>): string[] {
   return Object.keys(base).flatMap((key) => {
-    if (!hasOwn(overlay, key)) {
-      return [key];
-    }
-
     const baseValue = base[key];
     const overlayValue = overlay[key];
+
+    if (!hasOwn(overlay, key) || keepsBaseValue(baseValue, overlayValue)) {
+      return [key];
+    }
 
     return isRecord(baseValue) && isRecord(overlayValue)
       ? getInheritedOverridePaths(baseValue, overlayValue).map((path) => `${key}.${path}`)

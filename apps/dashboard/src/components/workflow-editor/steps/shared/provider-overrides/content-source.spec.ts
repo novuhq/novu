@@ -148,7 +148,6 @@ describe('buildProviderOverrideOptions', () => {
         name: 'Prod',
         hasOverride: false,
         isConnected: true,
-        isEscapeHatch: true,
       },
       {
         providerId: WEBHOOK,
@@ -156,7 +155,6 @@ describe('buildProviderOverrideOptions', () => {
         name: 'Staging',
         hasOverride: false,
         isConnected: true,
-        isEscapeHatch: true,
       },
     ]);
   });

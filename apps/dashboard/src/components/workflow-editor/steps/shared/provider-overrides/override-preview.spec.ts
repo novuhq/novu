@@ -91,6 +91,15 @@ describe('mergeOverrideLayers', () => {
     });
   });
 
+  it('matches the send path where lodash keeps the provider value: an undefined overlay or an object over an array', () => {
+    expect(
+      mergeOverrideLayers(
+        { blocks: [{ type: 'divider' }], text: 'all' },
+        { blocks: { type: 'section' }, text: undefined }
+      )
+    ).toEqual({ blocks: [{ type: 'divider' }], text: 'all' });
+  });
+
   it('keeps a "__proto__" key as plain data', () => {
     const merged = mergeOverrideLayers({}, JSON.parse('{"__proto__": {"polluted": true}}'));
 
@@ -111,6 +120,15 @@ describe('getInheritedOverridePaths', () => {
 
   it('inherits every top-level key from an empty integration layer', () => {
     expect(getInheritedOverridePaths({ a: 1, b: { c: 2 } }, {})).toEqual(['a', 'b']);
+  });
+
+  it('marks provider values the merge keeps despite an overlay key as inherited', () => {
+    expect(
+      getInheritedOverridePaths(
+        { blocks: [{ type: 'divider' }], text: 'all' },
+        { blocks: { type: 'x' }, text: undefined }
+      )
+    ).toEqual(['blocks', 'text']);
   });
 });
 

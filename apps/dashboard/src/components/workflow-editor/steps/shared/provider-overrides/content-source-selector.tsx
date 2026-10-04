@@ -43,7 +43,7 @@ type OverrideSourceItemProps = {
   icon?: ReactNode;
   selectedSource: ContentSource;
   invalidSourcePaths?: Set<string>;
-  showEscapeHatchBadge: boolean;
+  showNoSchemaBadge?: boolean;
   supportsOverrides: boolean;
   canAddOverrides: boolean;
   onSelectSource: (source: ContentSource) => void;
@@ -57,7 +57,7 @@ function OverrideSourceItem({
   icon,
   selectedSource,
   invalidSourcePaths,
-  showEscapeHatchBadge,
+  showNoSchemaBadge = false,
   supportsOverrides,
   canAddOverrides,
   onSelectSource,
@@ -97,7 +97,7 @@ function OverrideSourceItem({
         )}
       </div>
 
-      {showEscapeHatchBadge && option.isEscapeHatch && (
+      {showNoSchemaBadge && (
         <span
           className="text-foreground-400 border-stroke-soft shrink-0 rounded-sm border px-1 text-[10px] font-medium uppercase leading-4 tracking-[0.2px]"
           title="No schema — this override is passed through to the provider API without validation."
@@ -194,7 +194,7 @@ export function ContentSourceSelector({
                       className={cn('size-4', !provider.hasOverride && supportsOverrides && 'grayscale opacity-50')}
                     />
                   }
-                  showEscapeHatchBadge={showEscapeHatchBadge}
+                  showNoSchemaBadge={showEscapeHatchBadge && provider.isEscapeHatch}
                 />
                 {provider.integrations.map((integration) => (
                   <OverrideSourceItem
@@ -202,8 +202,11 @@ export function ContentSourceSelector({
                     key={integration.integrationIdentifier}
                     option={integration}
                     label={integration.name}
-                    detail={integration.integrationIdentifier}
-                    showEscapeHatchBadge={false}
+                    detail={
+                      integration.name === integration.integrationIdentifier
+                        ? undefined
+                        : integration.integrationIdentifier
+                    }
                   />
                 ))}
               </Fragment>

@@ -53,7 +53,6 @@ export type IntegrationOverrideOption = {
   name: string;
   hasOverride: boolean;
   isConnected: boolean;
-  isEscapeHatch: boolean;
 };
 
 export type ProviderOverrideOption = {
@@ -109,12 +108,10 @@ function buildIntegrationOptions({
   providerId,
   activeIntegrations,
   overrides,
-  isEscapeHatch,
 }: {
   providerId: ContentOverrideProviderId;
   activeIntegrations: ActiveOverrideIntegration[];
   overrides: Record<string, Record<string, unknown>> | undefined;
-  isEscapeHatch: boolean;
 }): IntegrationOverrideOption[] {
   const overrideIdentifiers = Object.keys(overrides ?? {});
   const optionsByIdentifier = new Map<string, IntegrationOverrideOption>();
@@ -126,7 +123,6 @@ function buildIntegrationOptions({
       name: integration.name,
       hasOverride: hasOwn(overrides, integration.identifier),
       isConnected: true,
-      isEscapeHatch,
     });
   }
 
@@ -142,7 +138,6 @@ function buildIntegrationOptions({
         name: identifier,
         hasOverride: true,
         isConnected: false,
-        isEscapeHatch,
       });
     }
   }
@@ -197,25 +192,20 @@ export function buildProviderOverrideOptions({
           overrideKeys.has(providerId) ||
           integrationOverrideKeys.has(providerId)
       )
-      .map((providerId) => {
-        const isEscapeHatch = isEscapeHatchProvider(providerId);
-
-        return {
-          providerId,
-          displayName: getOverrideProviderDisplayName(providerId),
-          hasOverride: providerId in (providerOverrides ?? {}),
-          isConnected: activeIntegrationsByProvider.has(providerId),
-          isEscapeHatch,
-          integrations: includeIntegrationOptions
-            ? buildIntegrationOptions({
-                providerId,
-                activeIntegrations: activeIntegrationsByProvider.get(providerId) ?? [],
-                overrides: integrationOverrides?.[providerId],
-                isEscapeHatch,
-              })
-            : [],
-        };
-      })
+      .map((providerId) => ({
+        providerId,
+        displayName: getOverrideProviderDisplayName(providerId),
+        hasOverride: hasOwn(providerOverrides, providerId),
+        isConnected: activeIntegrationsByProvider.has(providerId),
+        isEscapeHatch: isEscapeHatchProvider(providerId),
+        integrations: includeIntegrationOptions
+          ? buildIntegrationOptions({
+              providerId,
+              activeIntegrations: activeIntegrationsByProvider.get(providerId) ?? [],
+              overrides: integrationOverrides?.[providerId],
+            })
+          : [],
+      }))
       // Configured overrides first (selectable / hold data), then schema-backed providers before
       // escape-hatch ("no schema") ones; alphabetical within each group for stable ordering.
       .sort((left, right) => {
