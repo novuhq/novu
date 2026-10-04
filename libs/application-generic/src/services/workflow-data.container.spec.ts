@@ -92,8 +92,9 @@ describe('WorkflowDataContainer', () => {
     expect(container.getWorkflowDto('alerts', 'env-id')?.steps[0].integrationOverrides).toEqual(
       step?.integrationOverrides
     );
-    expect(container.getWorkflowData('alerts', 'env-id')?.integrationOverridesByStep.get('template-1')).toEqual(
-      step?.integrationOverrides
-    );
+    expect(container.getWorkflowData('alerts', 'env-id')?.overridesByStep.get('template-1')).toEqual({
+      providerOverrides: step?.providerOverrides,
+      integrationOverrides: step?.integrationOverrides,
+    });
   });
 });

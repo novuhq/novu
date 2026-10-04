@@ -2,6 +2,7 @@ import { ControlValuesEntity, NotificationTemplateEntity } from '@novu/dal';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserObjectCommand } from '../../commands';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
+import type { StepOverrideDoc } from '../../utils/step-overrides';
 import { IPreloadedEnvironmentContext } from '../build-variable-schema/build-available-variable-schema.command';
 
 /**
@@ -11,11 +12,7 @@ import { IPreloadedEnvironmentContext } from '../build-variable-schema/build-ava
 export interface WorkflowStepSharedContext {
   workflow: NotificationTemplateEntity;
   stepControlsByTemplateId: Map<string, Record<string, unknown>>;
-  providerDocsByTemplateId: Map<string, Array<Pick<ControlValuesEntity, 'providerId' | 'controls'>>>;
-  integrationDocsByTemplateId: Map<
-    string,
-    Array<Pick<ControlValuesEntity, 'providerId' | 'integrationIdentifier' | 'controls'>>
-  >;
+  overrideDocsByTemplateId: Map<string, StepOverrideDoc[]>;
   stepControlValues: ControlValuesEntity[];
   environmentContext: IPreloadedEnvironmentContext;
 }

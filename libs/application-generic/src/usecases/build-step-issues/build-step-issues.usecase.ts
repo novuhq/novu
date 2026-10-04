@@ -37,10 +37,13 @@ import {
   processProviderOverridesIssues,
   type StepIntegrationOverrides,
   type StepProviderOverrides,
-  stitchIntegrationOverridesFromDocs,
-  stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
 } from '../../utils/provider-overrides';
+import {
+  STEP_OVERRIDE_CONTROL_LEVELS,
+  type StepOverrides,
+  stitchStepOverridesFromDocs,
+} from '../../utils/step-overrides';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildVariableSchemaCommand, BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { TierRestrictionsValidateCommand, TierRestrictionsValidateUsecase } from '../tier-restrictions-validate';
@@ -49,15 +52,6 @@ import { BuildStepIssuesCommand } from './build-step-issues.command';
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
-const OVERRIDE_CONTROL_LEVELS = [
-  ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
-  ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
-];
-
-interface StepOverrides {
-  providerOverrides?: StepProviderOverrides;
-  integrationOverrides?: StepIntegrationOverrides;
-}
 
 function getChatProviderDisplayName(providerId: string): string {
   return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;
@@ -342,24 +336,16 @@ export class BuildStepIssuesUsecase {
     workflowId?: string;
     preloadedControlValues?: BuildStepIssuesCommand['preloadedControlValues'];
   }): Promise<StepOverrides> {
-    const persistedDocs =
+    const persisted: StepOverrides =
       providerOverridesDto === undefined || integrationOverridesDto === undefined
-        ? await this.loadPersistedOverrideDocs(persistedDocsQuery)
-        : [];
+        ? stitchStepOverridesFromDocs(await this.loadPersistedOverrideDocs(persistedDocsQuery))
+        : {};
 
     return {
       providerOverrides:
-        providerOverridesDto === undefined
-          ? stitchProviderOverridesFromDocs(
-              persistedDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS)
-            )
-          : (providerOverridesDto ?? undefined),
+        providerOverridesDto === undefined ? persisted.providerOverrides : (providerOverridesDto ?? undefined),
       integrationOverrides:
-        integrationOverridesDto === undefined
-          ? stitchIntegrationOverridesFromDocs(
-              persistedDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS)
-            )
-          : (integrationOverridesDto ?? undefined),
+        integrationOverridesDto === undefined ? persisted.integrationOverrides : (integrationOverridesDto ?? undefined),
     };
   }
 
@@ -382,7 +368,7 @@ export class BuildStepIssuesUsecase {
     if (preloadedControlValues) {
       return preloadedControlValues.filter(
         (controlValue) =>
-          controlValue._stepId === stepInternalId && OVERRIDE_CONTROL_LEVELS.includes(controlValue.level)
+          controlValue._stepId === stepInternalId && STEP_OVERRIDE_CONTROL_LEVELS.includes(controlValue.level)
       );
     }
 
@@ -391,7 +377,7 @@ export class BuildStepIssuesUsecase {
       _organizationId: user.organizationId,
       _workflowId: workflowId,
       _stepId: stepInternalId,
-      level: { $in: OVERRIDE_CONTROL_LEVELS },
+      level: { $in: STEP_OVERRIDE_CONTROL_LEVELS },
     });
   }
 

@@ -15,11 +15,10 @@ import { StepForResponseMapper, WorkflowForResponseMapper } from '../../types/wo
 import { buildSlug } from '../../utils/build-slug';
 import { InvalidStepException } from '../../utils/exceptions';
 import {
-  type StepIntegrationOverrides,
-  type StepProviderOverrides,
-  stitchIntegrationOverridesFromDocs,
-  stitchProviderOverridesFromDocs,
-} from '../../utils/provider-overrides';
+  STEP_OVERRIDE_CONTROL_LEVELS,
+  type StepOverrides,
+  stitchStepOverridesFromDocs,
+} from '../../utils/step-overrides';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { GetWorkflowByIdsUseCase } from '../workflow';
 import { BuildStepDataCommand, WorkflowStepSharedContext } from './build-step-data.command';
@@ -31,11 +30,6 @@ const WORKFLOW_STEP_CONTROL_PROJECTION = {
   providerId: 1,
   integrationIdentifier: 1,
 } as const;
-
-interface StepOverrides {
-  providerOverrides?: StepProviderOverrides;
-  integrationOverrides?: StepIntegrationOverrides;
-}
 
 @Injectable()
 export class BuildStepDataUsecase {
@@ -73,8 +67,8 @@ export class BuildStepDataUsecase {
     const controlValues = sharedContext
       ? (sharedContext.stepControlsByTemplateId.get(currentStep._templateId) ?? {})
       : await this.getControlValues(command, currentStep, workflow._id);
-    const { providerOverrides, integrationOverrides } = sharedContext
-      ? stitchSharedContextOverrides(sharedContext, currentStep._templateId)
+    const overrides = sharedContext
+      ? stitchStepOverridesFromDocs(sharedContext.overrideDocsByTemplateId.get(currentStep._templateId) ?? [])
       : await this.getStepOverrides(command, currentStep, workflow._id);
     const variables = await this.buildAvailableVariableSchema(
       command,
@@ -84,14 +78,7 @@ export class BuildStepDataUsecase {
       sharedContext
     );
 
-    return BuildStepDataUsecase.mapToStepResponse(
-      workflow,
-      currentStep,
-      controlValues,
-      variables,
-      providerOverrides,
-      integrationOverrides
-    );
+    return BuildStepDataUsecase.mapToStepResponse(workflow, currentStep, controlValues, variables, overrides);
   }
 
   @Instrument()
@@ -106,11 +93,7 @@ export class BuildStepDataUsecase {
           _organizationId: user.organizationId,
           _workflowId: workflow._id,
           level: {
-            $in: [
-              ControlValuesLevelEnum.STEP_CONTROLS,
-              ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
-              ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
-            ],
+            $in: [ControlValuesLevelEnum.STEP_CONTROLS, ...STEP_OVERRIDE_CONTROL_LEVELS],
           },
         },
         WORKFLOW_STEP_CONTROL_PROJECTION
@@ -130,8 +113,7 @@ export class BuildStepDataUsecase {
     currentStep: StepForResponseMapper,
     controlValues: Record<string, unknown>,
     variables: JSONSchemaDto,
-    providerOverrides?: StepProviderOverrides,
-    integrationOverrides?: StepIntegrationOverrides
+    { providerOverrides, integrationOverrides }: StepOverrides = {}
   ): StepResponseDto {
     const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
     const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, currentStep._templateId);
@@ -219,19 +201,10 @@ export class BuildStepDataUsecase {
       _organizationId: command.user.organizationId,
       _workflowId,
       _stepId: currentStep._templateId,
-      level: {
-        $in: [ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS, ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS],
-      },
+      level: { $in: STEP_OVERRIDE_CONTROL_LEVELS },
     });
 
-    return {
-      providerOverrides: stitchProviderOverridesFromDocs(
-        overrideDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS)
-      ),
-      integrationOverrides: stitchIntegrationOverridesFromDocs(
-        overrideDocs.filter((doc) => doc.level === ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS)
-      ),
-    };
+    return stitchStepOverridesFromDocs(overrideDocs);
   }
 
   @Instrument()
@@ -255,34 +228,11 @@ export class BuildStepDataUsecase {
   }
 }
 
-function stitchSharedContextOverrides(sharedContext: WorkflowStepSharedContext, templateId: string): StepOverrides {
-  return {
-    providerOverrides: stitchProviderOverridesFromDocs(sharedContext.providerDocsByTemplateId.get(templateId) ?? []),
-    integrationOverrides: stitchIntegrationOverridesFromDocs(
-      sharedContext.integrationDocsByTemplateId.get(templateId) ?? []
-    ),
-  };
-}
-
-function appendByStep(map: Map<string, ControlValuesEntity[]>, stepId: string, document: ControlValuesEntity): void {
-  const existing = map.get(stepId);
-
-  if (existing) {
-    existing.push(document);
-  } else {
-    map.set(stepId, [document]);
-  }
-}
-
 function indexControlDocuments(
   documents: ControlValuesEntity[]
-): Pick<
-  WorkflowStepSharedContext,
-  'stepControlsByTemplateId' | 'providerDocsByTemplateId' | 'integrationDocsByTemplateId' | 'stepControlValues'
-> {
+): Pick<WorkflowStepSharedContext, 'stepControlsByTemplateId' | 'overrideDocsByTemplateId' | 'stepControlValues'> {
   const stepControlsByTemplateId = new Map<string, Record<string, unknown>>();
-  const providerDocsByTemplateId = new Map<string, ControlValuesEntity[]>();
-  const integrationDocsByTemplateId = new Map<string, ControlValuesEntity[]>();
+  const overrideDocsByTemplateId = new Map<string, ControlValuesEntity[]>();
   const stepControlValues: ControlValuesEntity[] = [];
 
   for (const document of documents) {
@@ -298,16 +248,16 @@ function indexControlDocuments(
       continue;
     }
 
-    if (!document._stepId) {
-      continue;
-    }
+    if (STEP_OVERRIDE_CONTROL_LEVELS.includes(document.level) && document._stepId) {
+      const existing = overrideDocsByTemplateId.get(document._stepId);
 
-    if (document.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS) {
-      appendByStep(providerDocsByTemplateId, document._stepId, document);
-    } else if (document.level === ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS) {
-      appendByStep(integrationDocsByTemplateId, document._stepId, document);
+      if (existing) {
+        existing.push(document);
+      } else {
+        overrideDocsByTemplateId.set(document._stepId, [document]);
+      }
     }
   }
 
-  return { stepControlsByTemplateId, providerDocsByTemplateId, integrationDocsByTemplateId, stepControlValues };
+  return { stepControlsByTemplateId, overrideDocsByTemplateId, stepControlValues };
 }
