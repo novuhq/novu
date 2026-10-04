@@ -243,7 +243,10 @@ export function ContentOverridePanel({
 
       <TabsSection className="flex min-h-0 flex-1 flex-col p-3">
         {overrideSource ? (
+          // Keyed per source: the editor's Controller binds `providerOverrides` or `integrationOverrides`,
+          // and react-hook-form unregisters (drops the value of) a Controller's previous field on rename.
           <ProviderOverrideEditor
+            key={getOverridePath(overrideSource)}
             source={overrideSource}
             displayName={getOverrideProviderDisplayName(overrideSource.providerId)}
             onDraftParseValidityChange={handleDraftParseValidityChange}
