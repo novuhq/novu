@@ -5,6 +5,7 @@ import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   ChatProviderIdEnum,
   DeepPartial,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
   ResourceOriginEnum,
   StepTypeEnum,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -151,6 +152,148 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
 
     expect(options.controlSchema.properties?.body, 'the step\u2019s own controls must survive').to.exist;
     expect(providerOverrides?.additionalProperties?.additionalProperties).to.equal(true);
+  });
+
+  describe('integration overrides', () => {
+    const webhookIntegrationOverrides = {
+      'prod-alerts': { alert_type: 'incident' },
+      'staging-alerts': { alert_type: 'test' },
+    };
+
+    it('carries the provider\u2019s integration overrides under the reserved key, next to its provider override', async () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+      const controls = {
+        body: 'hi',
+        providerOverrides: { [ToolProviderIdEnum.Webhook]: { alert_type: 'all' } },
+        integrationOverrides: { [ToolProviderIdEnum.Webhook]: webhookIntegrationOverrides },
+      };
+
+      expect(await options.providers[ToolProviderIdEnum.Webhook]({ controls })).to.deep.equal({
+        alert_type: 'all',
+        [INTEGRATION_OVERRIDES_OUTPUT_KEY]: webhookIntegrationOverrides,
+      });
+    });
+
+    it('carries integration overrides alone when the provider has no provider override', async () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+      const controls = {
+        body: 'hi',
+        integrationOverrides: { [ToolProviderIdEnum.Webhook]: webhookIntegrationOverrides },
+      };
+
+      expect(await options.providers[ToolProviderIdEnum.Webhook]({ controls })).to.deep.equal({
+        [INTEGRATION_OVERRIDES_OUTPUT_KEY]: webhookIntegrationOverrides,
+      });
+    });
+
+    it('leaves a provider\u2019s output untouched when its integration overrides are absent or empty', async () => {
+      const options = buildOptions(StepTypeEnum.CHAT);
+      const controls = {
+        body: 'hi',
+        providerOverrides: { [ChatProviderIdEnum.Slack]: { text: 'compiled' } },
+        integrationOverrides: {
+          [ChatProviderIdEnum.Slack]: {},
+          [ChatProviderIdEnum.Discord]: { 'discord-main': { content: 'other provider' } },
+        },
+      };
+
+      expect(await options.providers[ChatProviderIdEnum.Slack]({ controls })).to.deep.equal({ text: 'compiled' });
+      expect(await options.providers[ChatProviderIdEnum.MsTeams]({ controls })).to.deep.equal({});
+    });
+
+    it('never forwards a reserved key authored inside a provider override', async () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+      const controls = {
+        body: 'hi',
+        providerOverrides: {
+          [ToolProviderIdEnum.Webhook]: {
+            alert_type: 'all',
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'prod-alerts': { alert_type: 'spoofed' } },
+          },
+        },
+      };
+
+      expect(await options.providers[ToolProviderIdEnum.Webhook]({ controls })).to.deep.equal({ alert_type: 'all' });
+    });
+
+    it('accepts the stitched integrationOverrides field the framework would otherwise strip', () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+
+      expect(options.controlSchema.properties?.integrationOverrides).to.exist;
+    });
+  });
+});
+
+/**
+ * Integration overrides reach the worker only inside a provider's bridge output, so both the
+ * control schema (AJV strips unknown controls) and the provider output validation must keep them.
+ */
+describe('ConstructFrameworkWorkflow integration override bridge transport', () => {
+  const TOOL_STEP_ID = 'tool-step';
+  const WORKFLOW_ID = 'tool-integration-overrides-workflow';
+
+  function buildToolWorkflow(): Workflow {
+    const transportUsecase = Object.create(ConstructFrameworkWorkflow.prototype) as {
+      logger: { setContext: () => void; warn: () => void; error: () => void };
+      controlsTranslationService: ConstructFrameworkWorkflowTestDouble['controlsTranslationService'];
+      toolOutputRendererUseCase: { execute: (controls: Record<string, unknown>) => { body: string } };
+      constructFrameworkWorkflow: (args: { dbWorkflow: NotificationTemplateEntity }) => Workflow;
+    };
+
+    transportUsecase.logger = { setContext: () => {}, warn: () => {}, error: () => {} };
+    transportUsecase.controlsTranslationService = { processTranslations: async ({ controls }) => controls };
+    transportUsecase.toolOutputRendererUseCase = { execute: (controls) => ({ body: String(controls.body ?? '') }) };
+
+    return transportUsecase.constructFrameworkWorkflow({
+      dbWorkflow: asWorkflowEntity({
+        _id: 'workflow-id',
+        _environmentId: 'env-id',
+        _organizationId: 'org-id',
+        name: 'Tool integration overrides',
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: WORKFLOW_ID }],
+        steps: [
+          {
+            stepId: TOOL_STEP_ID,
+            template: {
+              type: StepTypeEnum.TOOL,
+              controls: { schema: { type: JsonSchemaTypeEnum.OBJECT, properties: { body: {} } } },
+            },
+          },
+        ],
+      }),
+    });
+  }
+
+  it('returns the rendered integration overrides inside the provider output of the executed step', async () => {
+    const client = new Client({ secretKey: 'construct-framework-workflow-secret' });
+    await client.addWorkflows([buildToolWorkflow()]);
+
+    const result = await client.executeWorkflow(
+      asEvent({
+        action: PostActionEnum.EXECUTE,
+        workflowId: WORKFLOW_ID,
+        stepId: TOOL_STEP_ID,
+        subscriber: {},
+        payload: { severity: 'sev1' },
+        controls: {
+          body: 'Disk full',
+          providerOverrides: { [ToolProviderIdEnum.Webhook]: { alert_type: 'all' } },
+          integrationOverrides: {
+            [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { alert_type: '{{payload.severity}}' } },
+          },
+        },
+        state: [],
+        context: {},
+        env: { name: 'Test', type: 'dev' },
+      })
+    );
+
+    expect(result.outputs.body).to.equal('Disk full');
+    expect(result.providers?.[ToolProviderIdEnum.Webhook]).to.deep.include({
+      alert_type: 'all',
+      [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'prod-alerts': { alert_type: 'sev1' } },
+    });
   });
 });
 

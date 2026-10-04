@@ -285,7 +285,11 @@ export class Sync {
         _organizationId: command.organizationId,
         _workflowId: { $in: workflowIds },
         level: {
-          $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+          $in: [
+            ControlValuesLevelEnum.STEP_CONTROLS,
+            ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+            ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+          ],
         },
         controls: { $ne: null },
       },
@@ -295,6 +299,7 @@ export class Sync {
         _workflowId: 1,
         level: 1,
         providerId: 1,
+        integrationIdentifier: 1,
         _id: 0,
       }
     );
