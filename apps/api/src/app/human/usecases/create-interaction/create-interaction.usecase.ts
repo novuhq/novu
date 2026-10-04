@@ -7,7 +7,7 @@ import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-pa
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { resolveKeylessHumanInteractionCap } from '../../../keyless/keyless-abuse.constants';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
-import { buildConnectClaimUrl, buildKeylessHumanSignupCard } from '../../../keyless/keyless-signup.helpers';
+import { buildHumanClaimUrl, buildKeylessHumanSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
@@ -164,7 +164,7 @@ export class CreateInteraction {
         org: command.organizationId,
       });
 
-      return buildConnectClaimUrl(token);
+      return buildHumanClaimUrl(token);
     } catch (err) {
       this.logger.warn({ err, environmentId: command.environmentId }, 'Failed to issue keyless claim token');
 

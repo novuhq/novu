@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { resolveHumanWebsiteBaseUrl } from '../../../shared/helpers/resolve-human-website-base-url';
+import { buildHumanWebsiteUrl } from '../../../shared/helpers/resolve-human-website-base-url';
 import type { CreateHumanInviteResponseDto } from '../../dtos/human-invite.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { HumanInviteTokenService, toHttpError } from '../../services/human-invite-token.service';
@@ -61,7 +61,7 @@ export class CreateHumanInvite {
     }
 
     return {
-      url: buildInviteUrl(issued.token),
+      url: buildHumanWebsiteUrl(`/invite/${issued.token}`),
       expiresAt: issued.expiresAt,
       channels: channels.map(({ via, integrationIdentifier, connected }) => ({
         via,
@@ -70,15 +70,4 @@ export class CreateHumanInvite {
       })),
     };
   }
-}
-
-/**
- * The Human website is one site for every region, so links from an EU
- * deployment carry `region=eu` and the page calls the EU API. Every AWS EU
- * region starts with `eu-`.
- */
-function buildInviteUrl(token: string): string {
-  const url = `${resolveHumanWebsiteBaseUrl()}/invite/${token}`;
-
-  return process.env.NOVU_REGION?.startsWith('eu-') ? `${url}?region=eu` : url;
 }
