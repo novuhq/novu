@@ -176,8 +176,7 @@ export function isDuplicateDisplayTitleError(err: unknown): boolean {
   }
 
   const directMessage = err.message ?? '';
-  const errorBody = (err as unknown as { error?: unknown }).error;
-  const serializedBody = errorBody ? safeStringify(errorBody) : '';
+  const serializedBody = err.error ? safeStringify(err.error) : '';
 
   return (
     /reuse an existing display_title/i.test(directMessage) || /reuse an existing display_title/i.test(serializedBody)
@@ -237,11 +236,13 @@ export const MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG = {
  */
 export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
   if (raw.type === 'agent_toolset_20260401') {
-    return ((raw.configs as any[]) ?? [])
+    const configs = (raw.configs as Array<{ name: string; enabled?: boolean }> | undefined) ?? [];
+
+    return configs
       .filter((c) => c.enabled !== false)
       .map((c) => ({
-        externalId: c.name as string,
-        name: c.name as string,
+        externalId: c.name,
+        name: c.name,
         type: 'builtin' as const,
       }));
   }
