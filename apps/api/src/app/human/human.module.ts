@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
+import { CliAuthModule } from '../cli-auth/cli-auth.module';
 import { ConnectModule } from '../connect/connect.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
@@ -20,6 +21,7 @@ import { HumanInvitesPublicController } from './human-invites-public.controller'
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
+import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
@@ -31,6 +33,7 @@ import { EnsureBackingOrganization } from './usecases/ensure-backing-organizatio
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
+import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
@@ -46,6 +49,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     SharedModule,
     AuthModule,
     AgentsModule,
+    CliAuthModule,
     ConnectModule,
     TelegramLinkingModule,
     forwardRef(() => IntegrationModule),
@@ -77,6 +81,8 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     ClaimForHumanAccount,
     GetBackingSecretKey,
     DeleteHumanAccount,
+    ApproveHumanCliLogin,
+    GetKeylessClaimToken,
   ],
 })
 export class HumanModule {}

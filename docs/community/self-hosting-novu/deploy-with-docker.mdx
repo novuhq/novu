@@ -624,6 +624,34 @@ The Dashboard container is served separately on its configured port (default **4
     Link-local and cloud metadata addresses (`169.254.0.0/16`, `fe80::/10`, `metadata.google.internal`) cannot be allow-listed.
   </Accordion>
 
+  <Accordion title="How do I check which Novu version is deployed?">
+    The API health check endpoint returns the running API version under `info.apiVersion.version`:
+
+    ```bash
+    curl http://<your-docker-host>:3000/v1/health-check
+    ```
+
+    ```json
+    {
+      "status": "ok",
+      "info": {
+        "apiVersion": {
+          "version": "3.19.0",
+          "status": "up"
+        }
+      }
+    }
+    ```
+
+    If you set `GLOBAL_CONTEXT_PATH` or `API_CONTEXT_PATH`, include those path segments before `/v1/health-check`.
+
+    You can also check the image tags of the running containers. The `docker-compose.yml` pins each Novu service to a specific tag, such as `ghcr.io/novuhq/novu/api:3.19.0`:
+
+    ```bash
+    docker compose images
+    ```
+  </Accordion>
+
   <Accordion title="When is Local Tunnel Required?">
     If the application and Novu deployment reside on different networks, you can still interact with your self-hosted Novu instance using the Novu CLI. The CLI allows you to specify the Dashboard URL and Bridge Endpoint Origin to enable communication across networks via the Novu Cloud Local Tunnel.
 
