@@ -49,7 +49,10 @@ export class LiveReplyStreamer implements OnApplicationShutdown {
     void run.finally(() => this.running.delete(run));
   }
 
-  /** Waits until the reply's live reader delivered it, or gives up so the caller delivers it. */
+  /**
+   * Waits until the reply's live reader delivered it (its row has a platform message), or gives up
+   * so the caller delivers it. A row without one is still being posted and is deleted if that fails.
+   */
   async waitForDelivery(context: AgentEventContext, messageId: string): Promise<void> {
     for (let waited = 0; waited < READER_DELIVERY_TIMEOUT_MS; waited += READER_DELIVERY_POLL_MS) {
       const delivered = await this.conversationService.findAgentMessageByIdentifier(
@@ -57,7 +60,7 @@ export class LiveReplyStreamer implements OnApplicationShutdown {
         context.conversationId,
         messageId
       );
-      if (delivered) return;
+      if (delivered?.platformMessageId) return;
       await delay(READER_DELIVERY_POLL_MS);
     }
   }
