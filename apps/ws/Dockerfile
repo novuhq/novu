@@ -1,10 +1,9 @@
-FROM node:20-alpine3.19
+FROM node:20.20.2-alpine3.23 AS build
 
 ENV NX_DAEMON=false
 
 RUN npm install -g pnpm@8.9.0 --loglevel notice
-RUN npm i pm2 -g
-RUN apk --no-cache add g++ make py3-pip
+RUN apk --no-cache upgrade && apk --no-cache add g++ make py3-pip
 
 USER 1000
 WORKDIR /usr/src/app
@@ -43,4 +42,21 @@ RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 
-CMD [ "pm2-runtime", "dist/src/main.js" ]
+# ------- PRODUCTION BUILD ----------
+# Runtime image without build toolchain or package managers
+FROM node:20.20.2-alpine3.23 AS prod
+RUN apk --no-cache upgrade && apk --no-cache add tini && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
+
+ENV NX_DAEMON=false
+
+USER 1000
+WORKDIR /usr/src/app
+
+COPY --chown=1000:1000 --from=build /usr/src/app .
+
+WORKDIR /usr/src/app/apps/ws
+ENTRYPOINT [ "/sbin/tini", "--" ]
+CMD [ "node", "dist/src/main.js" ]

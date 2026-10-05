@@ -1,9 +1,8 @@
-FROM node:20-alpine3.19 as dev_base
-RUN apk add g++ make py3-pip
+FROM node:20.20.2-alpine3.23 AS dev_base
+RUN apk --no-cache upgrade && apk --no-cache add g++ make py3-pip
 
 ENV NX_DAEMON=false
 
-RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@8.9.0
 RUN pnpm --version
 
@@ -46,8 +45,8 @@ WORKDIR /usr/src/app
 # Remove all dependencies so later we can only install prod dependencies without devDependencies
 RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
-# ------- PRODUCTION BUILD ----------
-FROM dev_base AS prod
+# ------- PRODUCTION DEPENDENCIES ----------
+FROM dev_base AS prod_deps
 
 ARG PACKAGE_PATH
 
@@ -66,7 +65,21 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --frozen-lockfile \
  --unsafe-perm
 
+# ------- PRODUCTION BUILD ----------
+# Runtime image without build toolchain or package managers
+FROM node:20.20.2-alpine3.23 AS prod
+RUN apk --no-cache upgrade && apk --no-cache add tini && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
+
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
+USER 1000
+WORKDIR /usr/src/app
+
+COPY --chown=1000:1000 --from=prod_deps /usr/src/app .
+
 WORKDIR /usr/src/app/apps/api
-CMD [ "pm2-runtime","start", "dist/main.js" ]
+ENTRYPOINT [ "/sbin/tini", "--" ]
+CMD [ "node", "dist/main.js" ]
