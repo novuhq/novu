@@ -224,14 +224,8 @@ export class SessionObserver extends Agent<Env, State> {
         for (const part of parts) {
           if (part.type === 'finish') continue;
           if (part.type === 'error') hasError = true;
-          const streamed = live.handle(part);
-          // Deltas reach the API over `/live` only; webhooks carry the durable parts.
-          if (part.type === 'text-delta') continue;
-          this.persistEvent(
-            params.sessionId,
-            sequence++,
-            streamed && part.type === 'message' ? { ...part, streamed: true } : part
-          );
+          const durable = live.handle(part);
+          if (durable) this.persistEvent(params.sessionId, sequence++, durable);
         }
 
         this.triggerDelivery(params);

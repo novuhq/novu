@@ -18,27 +18,39 @@ interface Reply {
 export class LiveReplies {
   private replies = new Map<string, Reply>();
 
-  /** Returns true for a `message` whose text reached its live reader, which then delivers it. */
-  handle(part: StreamPart): boolean {
+  /**
+   * Relays a part to its reply's reader and returns the part to persist: `null` for text deltas,
+   * which never become webhooks, and `streamed: true` on a message whose text reached its reader.
+   */
+  handle(part: StreamPart): StreamPart | null {
     switch (part.type) {
       case 'text-start':
         if (!this.replies.has(part.messageId)) this.replies.set(part.messageId, { text: '' });
-        return false;
+
+        return part;
       case 'text-delta': {
         const reply = part.messageId ? this.replies.get(part.messageId) : undefined;
-        if (!reply) return false;
-        reply.text += part.text;
-        this.send(reply, { type: 'text', text: part.text });
-        return false;
+        if (reply) {
+          reply.text += part.text;
+          this.send(reply, { type: 'text', text: part.text });
+        }
+
+        return null;
       }
-      case 'message':
-        return part.messageId ? this.end(part.messageId, { type: 'end', reason: 'complete', text: part.text }) : false;
+      case 'message': {
+        const streamed =
+          part.messageId !== undefined &&
+          this.end(part.messageId, { type: 'end', reason: 'complete', text: part.text });
+
+        return streamed ? { ...part, streamed } : part;
+      }
       case 'step-done':
         // The model request ended; a reply still open here got no durable message.
         this.endAll('interrupted');
-        return false;
+
+        return part;
       default:
-        return false;
+        return part;
     }
   }
 
