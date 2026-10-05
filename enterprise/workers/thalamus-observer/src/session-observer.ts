@@ -25,7 +25,7 @@ export class SessionObserver extends Agent<Env, State> {
   private abortController: AbortController | null = null;
   private delivering = false;
   private lastSnapshotSentAt = 0;
-  private snapshotTimer: ReturnType<typeof setTimeout> | null = null;
+  private snapshotWakeScheduled = false;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -546,11 +546,10 @@ export class SessionObserver extends Agent<Env, State> {
       return false;
     }
 
-    if (!this.snapshotTimer) {
-      this.snapshotTimer = setTimeout(() => {
-        this.snapshotTimer = null;
-        this.triggerDelivery(params);
-      }, waitMs);
+    // A durable alarm, so a queued final message still goes out if the observer is evicted.
+    if (!this.snapshotWakeScheduled) {
+      this.snapshotWakeScheduled = true;
+      void this.schedule(new Date(Date.now() + waitMs), 'resumeDelivery', params);
     }
 
     return true;
@@ -635,6 +634,11 @@ export class SessionObserver extends Agent<Env, State> {
     const delaySec = Math.min((BASE_DELAY_MS * 2 ** attempt) / 1000, MAX_DELAY_MS / 1000);
 
     this.schedule(delaySec, 'retryDelivery', params);
+  }
+
+  async resumeDelivery(params: ObservationParams): Promise<void> {
+    this.snapshotWakeScheduled = false;
+    this.triggerDelivery(params);
   }
 
   async retryDelivery(params: ObservationParams): Promise<void> {
