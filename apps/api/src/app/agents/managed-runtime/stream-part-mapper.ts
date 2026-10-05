@@ -35,11 +35,9 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
       ];
 
     case 'text-start':
-      return [{ type: 'message-start', messageId: part.messageId }];
-
     case 'text-delta':
     case 'text-snapshot':
-      // Webhooks never carry deltas; ManagedAgentEventHandler shows snapshots on the channel.
+      // The observer sends a reply's text as `text-snapshot` only; ManagedAgentEventHandler shows it on the channel.
       return [];
 
     case 'thinking':
