@@ -77,9 +77,10 @@ test('should trigger Kannel SMS axios request correctly with _passthrough', asyn
 });
 
 test.each([
-  ['0.0.0.0', '443', 'https://0.0.0.0:443/cgi-bin/sendsms'],
+  ['0.0.0.0', '443', 'http://0.0.0.0:443/cgi-bin/sendsms'],
   ['https://kannel.example.com', '8443', 'https://kannel.example.com:8443/cgi-bin/sendsms'],
-  ['https://kannel.example.com/', '443', 'https://kannel.example.com:443/cgi-bin/sendsms'],
+  ['https://kannel.example.com/', '443', 'https://kannel.example.com/cgi-bin/sendsms'],
+  ['https://kannel.example.com:8443', '8443', 'https://kannel.example.com:8443/cgi-bin/sendsms'],
   ['http://kannel.example.com', '13013', 'http://kannel.example.com:13013/cgi-bin/sendsms'],
 ])('should build the Kannel URL from host %s and port %s', async (host, port, expectedUrl) => {
   const { mockGet: fakeGet } = axiosSpy({

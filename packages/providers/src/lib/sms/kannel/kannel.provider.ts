@@ -7,16 +7,20 @@ import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
-function buildKannelOrigin(host: string, port: string): string {
-  const trimmedHost = host.trim().replace(/\/+$/, '');
+export function buildKannelBaseUrl(host: string, port: string): string {
+  const trimmedHost = String(host).trim().replace(/\/+$/, '');
+  const trimmedPort = String(port ?? '').trim();
 
-  if (/^https?:\/\//i.test(trimmedHost)) {
-    return port ? `${trimmedHost}:${port}` : trimmedHost;
+  if (!/^https?:\/\//i.test(trimmedHost)) {
+    return `http://${trimmedHost}:${trimmedPort}/cgi-bin`;
   }
 
-  const protocol = String(port).trim() === '443' ? 'https' : 'http';
+  const url = new URL(trimmedHost);
+  if (!url.port && trimmedPort) {
+    url.port = trimmedPort;
+  }
 
-  return `${protocol}://${trimmedHost}:${port}`;
+  return `${url.origin}/cgi-bin`;
 }
 
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
@@ -36,7 +40,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
-    this.apiBaseUrl = `${buildKannelOrigin(config.host, config.port)}/cgi-bin`;
+    this.apiBaseUrl = buildKannelBaseUrl(config.host, config.port);
     this.axiosInstance = createProviderHttpClient();
   }
 
