@@ -1,14 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
-import { GetEventResourceUsage, GetSubscription } from '@novu/ee-billing';
+import { GetEventResourceUsage, GetEventResourceUsageCommand, GetSubscription } from '@novu/ee-billing';
 import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AppModule } from '../../../app.module';
-
-const organization = { apiServiceLevel: ApiServiceLevelEnum.BUSINESS };
 
 describe('GetEventResourceUsage #novu-v2', async () => {
   let useCase: GetEventResourceUsage;
@@ -39,12 +37,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
 
   describe('within the maximum evaluation duration', () => {
     it('should return a successful evaluation when events are within the limit', async () => {
-      const result = await useCase.execute({
-        organizationId: 'organization_id',
-        environmentId: 'environment_id',
-        userId: 'user_id',
-        organization,
-      });
+      const result = await useCase.execute(buildUsageCommand('organization_id'));
 
       expect(result).to.deep.equal({
         remaining: 50,
@@ -59,12 +52,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     it('should return a failed evaluation when events are above the limit', async () => {
       getSubscriptionStub.resolves(buildSubscriptionDto({ current: 100, isPaused: true }));
 
-      const result = await useCase.execute({
-        organizationId: 'organization_id',
-        environmentId: 'environment_id',
-        userId: 'user_id',
-        organization,
-      });
+      const result = await useCase.execute(buildUsageCommand('organization_id'));
 
       expect(result).to.deep.equal({
         remaining: 0,
@@ -87,12 +75,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         })
       );
 
-      const result = await useCase.execute({
-        organizationId: randomUUID(),
-        environmentId: 'environment_id',
-        userId: 'user_id',
-        organization,
-      });
+      const result = await useCase.execute(buildUsageCommand(randomUUID()));
 
       expect(result).to.deep.equal({
         remaining: 0,
@@ -108,12 +91,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     it('should return the fallback evaluation when the subscription has no included events', async () => {
       getSubscriptionStub.resolves(buildSubscriptionDto({ current: 100, included: null }));
 
-      const result = await useCase.execute({
-        organizationId: randomUUID(),
-        environmentId: 'environment_id',
-        userId: 'user_id',
-        organization,
-      });
+      const result = await useCase.execute(buildUsageCommand(randomUUID()));
 
       expect(result).to.deep.equal({
         remaining: 0,
@@ -127,6 +105,15 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     });
   });
 });
+
+function buildUsageCommand(organizationId: string): GetEventResourceUsageCommand {
+  return {
+    organizationId,
+    environmentId: 'environment_id',
+    userId: 'user_id',
+    organization: { _id: organizationId, apiServiceLevel: ApiServiceLevelEnum.BUSINESS },
+  };
+}
 
 function buildSubscriptionDto(events: Partial<GetSubscriptionDto['events']> = {}): GetSubscriptionDto {
   return {
