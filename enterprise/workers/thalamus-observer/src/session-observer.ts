@@ -215,7 +215,8 @@ export class SessionObserver extends Agent<Env, State> {
       const parts = this.parseSSEEvent(sseEvent, parser, acc);
       let hasError = false;
       for (const part of parts) {
-        if (part.type === 'finish') continue;
+        // A reply's text reaches the webhook as `text-snapshot` parts, so `text-start` adds nothing.
+        if (part.type === 'finish' || part.type === 'text-start') continue;
         if (part.type === 'error') hasError = true;
         if (part.type === 'text-delta') {
           sequence = this.persistDelta(params, sequence, part);
