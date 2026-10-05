@@ -1232,6 +1232,33 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
       expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(0);
     });
+
+    it('should re-key step integration overrides in the destination environment when the integration is also moved', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnv!._id,
+      });
+      expect(syncResponse.status).to.equal(200);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+
+      const response = await session.testAgent
+        .put(`/v1/integrations/${integration._id}`)
+        .send({ identifier: NEW_IDENTIFIER, _environmentId: prodEnv!._id, check: false });
+      expect(response.status).to.equal(200);
+      expect(response.body.data.identifier).to.equal(NEW_IDENTIFIER);
+      expect(response.body.data._environmentId).to.equal(prodEnv!._id);
+
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(1);
+    });
   });
 
   describe('API key authentication is scoped to the key environment', () => {

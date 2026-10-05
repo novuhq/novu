@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum } from '@novu/shared';
+import type { ClientSession } from 'mongoose';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
@@ -38,36 +39,48 @@ export class UpdateIntegration {
    * Overrides already stored under the new identifier (left by a deleted integration, or synced from
    * another environment whose integration uses that identifier) apply to whichever integration holds
    * it, so they are kept; only on steps where both exist does the renamed integration's own win.
+   *
+   * Overrides are re-keyed in every environment the integration belongs to during the update: its
+   * current one, plus the destination when the same request moves it to another environment, so
+   * overrides synced there under the old identifier follow the integration.
    */
-  private async renameStepIntegrationOverrides(integration: IntegrationEntity, newIdentifier: string): Promise<void> {
-    if (newIdentifier === integration.identifier) {
-      return;
+  private async renameStepIntegrationOverrides(
+    integration: IntegrationEntity,
+    newIdentifier: string,
+    environmentIds: string[],
+    session: ClientSession | null
+  ): Promise<void> {
+    for (const environmentId of environmentIds) {
+      const scope = {
+        _environmentId: environmentId,
+        _organizationId: integration._organizationId,
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        providerId: integration.providerId,
+      };
+      const overrides = await this.controlValuesRepository.find(
+        { ...scope, integrationIdentifier: integration.identifier },
+        { _stepId: 1 },
+        { session }
+      );
+
+      if (overrides.length === 0) {
+        continue;
+      }
+
+      await this.controlValuesRepository.delete(
+        {
+          ...scope,
+          integrationIdentifier: newIdentifier,
+          _stepId: { $in: overrides.map((override) => override._stepId) },
+        },
+        { session }
+      );
+      await this.controlValuesRepository.update(
+        { ...scope, integrationIdentifier: integration.identifier },
+        { $set: { integrationIdentifier: newIdentifier } },
+        { session }
+      );
     }
-
-    const scope = {
-      _environmentId: integration._environmentId,
-      _organizationId: integration._organizationId,
-      level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
-      providerId: integration.providerId,
-    };
-    const overrides = await this.controlValuesRepository.find(
-      { ...scope, integrationIdentifier: integration.identifier },
-      { _stepId: 1 }
-    );
-
-    if (overrides.length === 0) {
-      return;
-    }
-
-    await this.controlValuesRepository.delete({
-      ...scope,
-      integrationIdentifier: newIdentifier,
-      _stepId: { $in: overrides.map((override) => override._stepId) },
-    });
-    await this.controlValuesRepository.update(
-      { ...scope, integrationIdentifier: integration.identifier },
-      { $set: { integrationIdentifier: newIdentifier } }
-    );
   }
 
   private async calculatePriorityAndPrimaryForActive({
@@ -294,16 +307,26 @@ export class UpdateIntegration {
       updatePayload.primary = false;
     }
 
-    await this.integrationRepository.update(
-      {
-        _id: existingIntegration._id,
-        _organizationId: existingIntegration._organizationId,
-        _environmentId: existingIntegration._environmentId,
-      },
-      {
-        $set: updatePayload,
+    const newIdentifier = updatePayload.identifier;
+    const environmentIdsToRekey = [...new Set([existingIntegration._environmentId, environmentId])];
+
+    await this.integrationRepository.withTransaction(async (session) => {
+      await this.integrationRepository.update(
+        {
+          _id: existingIntegration._id,
+          _organizationId: existingIntegration._organizationId,
+          _environmentId: existingIntegration._environmentId,
+        },
+        {
+          $set: updatePayload,
+        },
+        { session }
+      );
+
+      if (newIdentifier) {
+        await this.renameStepIntegrationOverrides(existingIntegration, newIdentifier, environmentIdsToRekey, session);
       }
-    );
+    });
 
     if (shouldRemovePrimary) {
       await this.integrationRepository.recalculatePriorityForAllActive({
@@ -312,10 +335,6 @@ export class UpdateIntegration {
         _environmentId: existingIntegration._environmentId,
         channel: existingIntegration.channel,
       });
-    }
-
-    if (updatePayload.identifier) {
-      await this.renameStepIntegrationOverrides(existingIntegration, updatePayload.identifier);
     }
 
     const updatedIntegration = await this.integrationRepository.findOne({
