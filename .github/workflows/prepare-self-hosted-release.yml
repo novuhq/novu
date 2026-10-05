@@ -20,6 +20,14 @@ on:
         required: false
         type: string
         default: 'all'
+      platforms:
+        description: 'Target architectures for the images'
+        required: false
+        type: choice
+        default: 'linux/amd64,linux/arm64'
+        options:
+          - 'linux/amd64,linux/arm64'
+          - 'linux/amd64'
 
 permissions:
   contents: write
@@ -35,7 +43,24 @@ jobs:
       latest-version: ${{ steps.get_version.outputs.latest-version }}
       sha: ${{ steps.get_version.outputs.sha }}
       services: ${{ steps.get_services.outputs.services }}
+      platforms: ${{ steps.get_platforms.outputs.platforms }}
     steps:
+      - name: Resolve target platforms
+        id: get_platforms
+        shell: bash
+        env:
+          INPUT_PLATFORMS: ${{ inputs.platforms }}
+        run: |
+          PLATFORMS="${INPUT_PLATFORMS:-linux/amd64,linux/arm64}"
+          case "$PLATFORMS" in
+            linux/amd64|linux/amd64,linux/arm64) ;;
+            *)
+              echo "::error::Unsupported platforms '$PLATFORMS'. Use linux/amd64 or linux/amd64,linux/arm64"
+              exit 1
+              ;;
+          esac
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+          echo "Building for platforms: \`$PLATFORMS\`" >> $GITHUB_STEP_SUMMARY
       - name: Resolve services to build
         id: get_services
         shell: bash
@@ -111,8 +136,10 @@ jobs:
   build_docker:
     runs-on: ubuntu-latest
     needs: prepare
-    timeout-minutes: 90
+    timeout-minutes: 240
     environment: Development
+    env:
+      DOCKER_PLATFORMS: ${{ needs.prepare.outputs.platforms }}
     strategy:
       fail-fast: false
       matrix:
@@ -160,6 +187,8 @@ jobs:
 
       - uses: ./.github/actions/free-space
       - uses: ./.github/actions/setup-qemu
+        with:
+          platforms: ${{ needs.prepare.outputs.platforms }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0

@@ -2,6 +2,12 @@ name: Setup QEMU
 
 description: Configures QEMU for cross-platform builds.
 
+inputs:
+  platforms:
+    description: Platforms to build images for
+    required: false
+    default: linux/amd64,linux/arm64
+
 runs:
   using: composite
   steps:
@@ -18,9 +24,10 @@ runs:
     - name: Setup QEMU
       uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
       with:
-        platforms: linux/amd64,linux/arm64
+        platforms: ${{ inputs.platforms }}
 
     - name: Set Up Docker Buildx
       uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
       with:
         driver-opts: 'image=moby/buildkit:v0.13.1'
+        platforms: ${{ inputs.platforms }}
