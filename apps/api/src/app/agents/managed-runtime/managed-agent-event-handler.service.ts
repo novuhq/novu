@@ -53,12 +53,6 @@ export class ManagedAgentEventHandler {
 
     return {
       onPart: async (part) => {
-        if (part.type === 'text-snapshot') {
-          await this.agentEventSink.ingestTextSnapshot(agentEventContext, part.messageId, part.text);
-
-          return;
-        }
-
         // One StreamPart can expand to multiple AgentEvents (e.g. finish →
         // tool-approval-request* + run-finish). Ingest as a batch so paused
         // finish can pair with those approval requests without a process Map.

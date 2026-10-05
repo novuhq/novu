@@ -85,30 +85,6 @@ export class AgentEventSink {
   }
 
   /**
-   * Shows the text so far of a managed reply still being generated: the first snapshot
-   * posts it, later ones edit it, and its `message` delivers it. Best effort, so a failed
-   * snapshot never holds up the session's webhooks.
-   */
-  async ingestTextSnapshot(context: AgentEventContext, messageId: string, text: string): Promise<void> {
-    if (context.suppressReply || !text.trim()) {
-      return;
-    }
-
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...this.buildBaseFields(context),
-          reply: { markdown: text },
-          activityIdentifier: messageId,
-          streaming: true,
-        })
-      );
-    } catch (err) {
-      this.logger.warn({ err, messageId }, 'Failed to show the text of a streamed reply');
-    }
-  }
-
-  /**
    * Ingest a batch produced from one upstream unit (e.g. one Thalamus StreamPart).
    * Each envelope is dispatched independently — paused `run-finish` events carry
    * their tool approvals inline.
@@ -214,6 +190,13 @@ export class AgentEventSink {
 
       case 'connection.error':
         await this.mcpConnectionErrorHandler.handle(event, context);
+
+        return 'accepted';
+
+      case 'message-snapshot':
+        if (context.source === 'managed') {
+          await this.showMessageSnapshot(event, baseFields, context);
+        }
 
         return 'accepted';
 
@@ -891,6 +874,34 @@ export class AgentEventSink {
       if (event.type === 'run-start') {
         throw err;
       }
+    }
+  }
+
+  /**
+   * Shows the text so far of a reply still being generated: the first snapshot posts it,
+   * later ones edit it, and its `message` delivers it. Best effort, so a failed snapshot
+   * never holds up the session's webhooks.
+   */
+  private async showMessageSnapshot(
+    event: Extract<AgentEvent, { type: 'message-snapshot' }>,
+    baseFields: BaseCommandFields,
+    context: AgentEventContext
+  ): Promise<void> {
+    if (context.suppressReply || !event.text.trim()) {
+      return;
+    }
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          ...baseFields,
+          reply: { markdown: event.text },
+          activityIdentifier: event.messageId,
+          streaming: true,
+        })
+      );
+    } catch (err) {
+      this.logger.warn({ err, messageId: event.messageId }, 'Failed to show the text of a streamed reply');
     }
   }
 

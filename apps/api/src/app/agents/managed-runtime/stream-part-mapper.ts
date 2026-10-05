@@ -34,10 +34,12 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
         },
       ];
 
+    case 'text-snapshot':
+      return [{ type: 'message-snapshot', messageId: part.messageId, text: part.text }];
+
     case 'text-start':
     case 'text-delta':
-    case 'text-snapshot':
-      // The observer sends a reply's text as `text-snapshot` only; ManagedAgentEventHandler shows it on the channel.
+      // The observer sends a reply's text as `text-snapshot` only.
       return [];
 
     case 'thinking':
