@@ -24,8 +24,6 @@ export class SessionObserver extends Agent<Env, State> {
 
   private abortController: AbortController | null = null;
   private delivering = false;
-  /** The event row whose webhook is in flight; its text must not change anymore. */
-  private sendingEventId: number | null = null;
   private lastSnapshotSentAt = 0;
   private snapshotTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -400,7 +398,8 @@ export class SessionObserver extends Agent<Env, State> {
     const latest = this.findSnapshot(params.sessionId, messageId);
     const snapshot: StreamPart = { type: 'text-snapshot', messageId, text: (latest?.text ?? '') + part.text };
 
-    if (latest?.status === 'pending' && latest.id !== this.sendingEventId) {
+    // A snapshot in flight was serialized already; folding into it shows up in the next one.
+    if (latest?.status === 'pending') {
       this.ctx.storage.sql.exec('UPDATE events SET event_json = ? WHERE id = ?', JSON.stringify(snapshot), latest.id);
 
       return sequence;
@@ -424,7 +423,7 @@ export class SessionObserver extends Agent<Env, State> {
   /** The `message` replaces its snapshot still waiting to be sent. */
   private dropPendingSnapshot(sessionId: string, messageId: string): void {
     const latest = this.findSnapshot(sessionId, messageId);
-    if (latest?.status === 'pending' && latest.id !== this.sendingEventId) this.markDelivered(latest.id);
+    if (latest?.status === 'pending') this.markDelivered(latest.id);
   }
 
   private getNextSequence(sessionId: string): number {
@@ -501,10 +500,7 @@ export class SessionObserver extends Agent<Env, State> {
 
       if (event.type === 'text-snapshot' && this.deferSnapshot(params)) return;
 
-      this.sendingEventId = row.id;
-      const outcome = await this.deliverOne(row, event, params).finally(() => {
-        this.sendingEventId = null;
-      });
+      const outcome = await this.deliverOne(row, event, params);
 
       switch (outcome) {
         case 'delivered':
