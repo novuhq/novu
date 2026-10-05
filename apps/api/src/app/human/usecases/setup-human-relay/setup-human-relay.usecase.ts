@@ -1,6 +1,12 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { AgentEntity, AgentRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import {
+  AgentEntity,
+  AgentRepository,
+  HumanContactRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
@@ -17,7 +23,8 @@ export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
 export class SetupHumanRelay {
   constructor(
     private readonly agentRepository: AgentRepository,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly humanContactRepository: HumanContactRepository
   ) {}
 
   @InstrumentUsecase()
@@ -26,6 +33,17 @@ export class SetupHumanRelay {
 
     const agent = await this.ensureRelayAgent(command, identifier);
     await this.ensureSubscriber(command);
+
+    if (command.defaultVia) {
+      await this.humanContactRepository.setDefaultVia({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentId: agent._id,
+        subscriberId: command.subscriberId,
+        via: command.defaultVia,
+        setBy: 'inviter',
+      });
+    }
 
     return {
       agentId: agent._id,

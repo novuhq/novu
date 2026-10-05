@@ -32,7 +32,7 @@ export function providerHasWhatsNextPhase(providerId: string): boolean {
 }
 
 /** Whether Overview / rollout tracking should treat this provider as a user-facing connect flow. */
-export function isUserRolloutChannel(
+function isUserRolloutChannel(
   providerId: string,
   options: { isMsTeamsWhatsNextEnabled: boolean; isEmailWhatsNextEnabled: boolean }
 ): boolean {

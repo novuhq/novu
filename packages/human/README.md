@@ -9,14 +9,19 @@ npx @novu/human setup telegram
 npx @novu/human setup slack
 npx @novu/human setup email
 
+# Keep it in a Human account: sign in or up on gethuman.md, no secret key to copy:
+npx @novu/human login
+
 # Forever after, by any agent on the machine:
 human ask "Which environment should I deploy to?"
 human approve "Delete 342 stale records from prod?"
 human choose "Pick a release strategy" --option canary --option blue-green
 human tell "Nightly build finished — 0 failures."
 
-# Link another human (they open the URL; does not change your local identity):
-human invite alice --via slack --name "Alice Chen"
+# Invite another human — share the printed link; they pick Telegram or Slack on a Novu page
+# and choose their default (does not change your local identity):
+human invite alice --name "Alice Chen"
+# …or skip the page and link them on one channel (it becomes their default):
 human invite bob --via telegram --async
 human invite carol --via email --email carol@acme.com
 
@@ -27,10 +32,11 @@ human contacts --json
 
 ## How it works
 
-- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links **your** channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more. Linked channels live on the server; `human channels --default slack` sets a local preference for where interactions land when you don't pass `--via`.
-- `invite` links a **different** subscriber the same way Slack/Telegram connect does (OAuth or a deep link → channel endpoint). Send them the URL; your `~/.novu/human.json` subscriberId stays yours. Then `--to alice` can reach them. Pass `--name "Alice Chen"` so they show up by name.
+- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links **your** channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more. Linked channels live on the server; `human channels --default slack` sets a local preference for where **your** interactions land when you don't pass `--via` (other people get their own default).
+- `login` opens gethuman.md, where you sign in (or sign up) and enter the code your terminal shows; the CLI then saves your Human account's key. A keyless setup made on this computer moves into the account on the same page, so your channels keep working.
+- `invite` gives you a link to share with a **different** person — nothing is sent for you. Without `--via` it opens a Novu page (valid for 3 days) where they connect any channel you set up — Telegram, Slack, or both — and pick their default. With `--via telegram|slack|email` you get the direct connect link instead (a Slack authorize URL or Telegram deep link, valid for minutes; email needs no link), and that channel becomes their default. Your `~/.novu/human.json` subscriberId stays yours. Then `--to alice` reaches them on their default channel. Pass `--name "Alice Chen"` so they show up by name.
 - `contacts` lists the environment's subscribers — every person `--to` can address — so an agent can check who exists before coordinating between people. It's a directory, not a reachability check: if delivery fails with "no linked endpoint", `invite` them on that channel.
-- Agents stay channel-blind: routing is the human's preference. `--via telegram|slack|email` on ask/approve is a rare per-call **delivery** override, not how you onboard someone.
+- Agents stay channel-blind: routing is the human's preference — the default they picked on the invite page, or the first channel they connected. `--via telegram|slack|email` on ask/approve is a rare per-call **delivery** override, not how you onboard someone.
 - Each command delivers a one-off message (with action buttons where relevant) and **blocks** until the human answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI resolves and your agent continues.
 
@@ -52,7 +58,7 @@ human contacts --json
 - `--async` — don't block; print the interaction id immediately.
 - `--json` — full interaction object for programmatic parsing.
 - `--to <humanId>` — address a human who is already linked (`human contacts` to find them, `human invite` to add them), or comma-separated humans (`alice,bob`, max 50) so any listed person can settle.
-- `--via <platform>` — deliver on a specific linked channel instead of the default.
+- `--via <platform>` — deliver on a specific linked channel instead of the human's default.
 - `--icon` — Slack-only card icon: MCP catalog id (`stripe`) or https URL (32×32). Ignored on other channels.
 - `--subtitle`, `--body` — optional card chrome on ask / approve / choose / tell.
 - `--approve-label`, `--deny-label`, `--extra-action <id:label>` — approve-only button chrome (repeat `--extra-action`).
@@ -60,9 +66,9 @@ human contacts --json
 
 ## Auth & headless use
 
-`setup` stores credentials in `~/.novu/human.json`. Alternatively set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment.
+`login` and `setup` store credentials in `~/.novu/human.json`; `setup` reuses a saved login. Alternatively pass `setup --secret-key <key>` or set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment. `NOVU_SECRET_KEY` takes priority over the saved login.
 
-The keyless environment `setup` creates is a free demo with a small message allowance. Once it's used up, the next command exits `1` with a sign-up link (the same link is sent to you on your linked channel) instead of delivering the message. Sign up, claim the demo — your channels and relay move into your own Development environment — then point the CLI at it: `human setup --secret-key <key>` or `NOVU_SECRET_KEY`.
+Without a login, `setup` creates a keyless environment: a free demo with a small message allowance. Run `human login` anytime to keep it; your channels and relay move into your Human account. Once the allowance is used up, the next command exits `1` and asks you to run `human login` instead of delivering the message (a sign-up link is also sent to you on your linked channel; if you use it, run `human login` afterwards).
 
 In containers, sandboxes, and CI — anywhere no config file exists — the CLI is fully operational from environment variables alone:
 

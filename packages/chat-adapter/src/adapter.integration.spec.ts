@@ -367,6 +367,99 @@ describe('Novu adapter end-to-end', () => {
     expect(resolvedFullName).toBe('Alice Smith');
   });
 
+  it('parses bridged markdown so a pasted Slack table reaches handlers as table rows and cells', async () => {
+    const { adapter, chat } = buildChat();
+    let received: { text: string; formatted: unknown } | undefined;
+    chat.onSubscribedMessage(async (_thread, message) => {
+      received = { text: message.text, formatted: message.formatted };
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        message: {
+          ...bridgeRequest().message!,
+          text: 'Q3 numbers below\n\nRegion Revenue EMEA 1,200 APAC | JP 950',
+          markdown: [
+            'Q3 numbers **below**',
+            '',
+            '| Region     | Revenue |',
+            '| ---------- | ------- |',
+            '| EMEA       | 1,200   |',
+            '| APAC \\| JP | 950     |',
+          ].join('\n'),
+        },
+      })
+    );
+
+    type Node = { type: string; value?: string; children?: Node[] };
+    const textOf = (node: Node): string => node.value ?? (node.children ?? []).map(textOf).join('');
+    const root = received?.formatted as Node;
+    const table = root.children?.find((node) => node.type === 'table');
+
+    expect(received?.text).toBe('Q3 numbers below\n\nRegion Revenue EMEA 1,200 APAC | JP 950');
+    expect(root.children?.[0]?.children?.some((node) => node.type === 'strong')).toBe(true);
+    expect(table?.children?.map((row) => row.children?.map(textOf))).toEqual([
+      ['Region', 'Revenue'],
+      ['EMEA', '1,200'],
+      ['APAC | JP', '950'],
+    ]);
+  });
+
+  it('exposes platform email and the system flag on the author for unlinked and linked senders', async () => {
+    const { adapter, chat } = buildChat();
+    const authors: Array<{ userId: string; email?: string; isSystem?: boolean }> = [];
+    chat.onSubscribedMessage(async (_thread, message) => {
+      authors.push({ userId: message.author.userId, email: message.author.email, isSystem: message.author.isSystem });
+    });
+    await chat.initialize();
+
+    const platformMessage = bridgeRequest().message!;
+    // Unlinked Slackbot notice: no subscriber, platform author passes through.
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: null,
+        message: {
+          ...platformMessage,
+          platformMessageId: 'pm-system',
+          author: { userId: 'USLACK', userName: 'slackbot', fullName: 'Slackbot', isBot: false, isSystem: true },
+        },
+      })
+    );
+    // Linked subscriber without an email on file: fall back to the platform email.
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: { subscriberId: 'sub-1', firstName: 'Alice' },
+        message: {
+          ...platformMessage,
+          platformMessageId: 'pm-linked',
+          author: { ...platformMessage.author, email: 'alice@acme.test' },
+        },
+      })
+    );
+    // Linked subscriber with an email on file: Novu's subscriber record wins.
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: { subscriberId: 'sub-2', firstName: 'Bob', email: 'bob@novu.test' },
+        message: {
+          ...platformMessage,
+          platformMessageId: 'pm-linked-2',
+          author: { ...platformMessage.author, email: 'bob@personal.test' },
+        },
+      })
+    );
+
+    expect(authors).toEqual([
+      { userId: 'USLACK', email: undefined, isSystem: true },
+      { userId: 'sub-1', email: 'alice@acme.test', isSystem: undefined },
+      { userId: 'sub-2', email: 'bob@novu.test', isSystem: undefined },
+    ]);
+  });
+
   it('resolves the subscriber as portable UserInfo via getUser(subscriberId)', async () => {
     const { adapter, chat } = buildChat();
     chat.onSubscribedMessage(async () => {});

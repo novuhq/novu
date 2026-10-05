@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { loadConfig, NOT_SET_UP_MESSAGE, saveConfig, SUPPORTED_CHANNELS } from '../config';
+import { loadConfig, NOT_SET_UP_MESSAGE, SUPPORTED_CHANNELS, saveConfig } from '../config';
 import { fail } from '../output';
 
 export async function channelsCommand(options: { default?: string; json?: boolean }): Promise<never> {
@@ -30,7 +30,7 @@ export async function channelsCommand(options: { default?: string; json?: boolea
   if (config.defaultChannel) {
     process.stdout.write(`Default channel: ${pc.bold(config.defaultChannel)}\n`);
   } else {
-    process.stdout.write(`${pc.dim('No default channel set — the API picks when only one channel is linked.')}\n`);
+    process.stdout.write(`${pc.dim('No default channel set — the API uses the first channel you connected.')}\n`);
   }
 
   process.stdout.write(

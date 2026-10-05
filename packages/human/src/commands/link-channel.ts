@@ -49,48 +49,6 @@ export function providerIdsForVia(via: HumanChannel): readonly string[] {
   }
 }
 
-export function inferViaFromLinks(links: AgentIntegrationLink[]): HumanChannel | null {
-  const unique = new Set<HumanChannel>();
-
-  for (const link of links) {
-    if (link.integration.active === false) {
-      continue;
-    }
-
-    const via = viaForProviderId(link.integration.providerId);
-    if (via) {
-      unique.add(via);
-    }
-  }
-
-  if (unique.size !== 1) {
-    return null;
-  }
-
-  return [...unique][0] ?? null;
-}
-
-export function linkedVias(links: AgentIntegrationLink[]): HumanChannel[] {
-  const unique: HumanChannel[] = [];
-  const seen = new Set<HumanChannel>();
-
-  for (const link of links) {
-    if (link.integration.active === false) {
-      continue;
-    }
-
-    const via = viaForProviderId(link.integration.providerId);
-    if (!via || seen.has(via)) {
-      continue;
-    }
-
-    seen.add(via);
-    unique.push(via);
-  }
-
-  return unique;
-}
-
 export function findLinkedIntegration(
   links: AgentIntegrationLink[],
   via: HumanChannel
@@ -130,6 +88,43 @@ export async function waitForEndpoint(
       `We didn't see ${waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. ${timeoutHint}`
     );
   }
+}
+
+/**
+ * Invite-page counterpart of {@link waitForEndpoint}: resolves with the first
+ * integration the human connects on, out of several they could pick from.
+ */
+export async function waitForAnyEndpoint(
+  client: HumanApiClient,
+  integrationIdentifiers: string[],
+  subscriberId: string,
+  waitingFor: string,
+  timeoutHint: string
+): Promise<string> {
+  const found: { integrationIdentifier?: string } = {};
+
+  await pollUntil(
+    async () => {
+      for (const integrationIdentifier of integrationIdentifiers) {
+        if (await hasChannelEndpoint(client, integrationIdentifier, subscriberId)) {
+          found.integrationIdentifier = integrationIdentifier;
+
+          return 'done';
+        }
+      }
+
+      return 'pending';
+    },
+    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+  );
+
+  if (!found.integrationIdentifier) {
+    throw new Error(
+      `We didn't see ${waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. ${timeoutHint}`
+    );
+  }
+
+  return found.integrationIdentifier;
 }
 
 export async function issueTelegramSubscriberLinkWithRetry(

@@ -395,6 +395,9 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       userName: platformAuthor?.userName ?? sub.subscriberId,
       fullName: fullName || platformAuthor?.fullName || sub.subscriberId,
       isBot: false,
+      // The bridge wire carries the platform email; Novu's subscriber record wins when it has one.
+      email: sub.email || platformAuthor?.email,
+      isSystem: platformAuthor?.isSystem,
     };
   }
 

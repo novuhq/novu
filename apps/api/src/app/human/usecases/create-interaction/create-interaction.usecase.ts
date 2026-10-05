@@ -7,7 +7,7 @@ import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-pa
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { resolveKeylessHumanInteractionCap } from '../../../keyless/keyless-abuse.constants';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
-import { buildConnectClaimUrl, buildKeylessHumanSignupCard } from '../../../keyless/keyless-signup.helpers';
+import { buildHumanClaimUrl, buildKeylessHumanSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
@@ -24,8 +24,22 @@ import { CreateInteractionCommand } from './create-interaction.command';
 /** Machine-readable code on the 429 body so `@novu/human` can branch without parsing prose. */
 export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
-export const KEYLESS_HUMAN_CLAIMED_MESSAGE =
-  'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
+/** `human login` is approved on the Human website, so it only works where one is configured (not self-hosted). */
+function isHumanBrowserLoginAvailable(): boolean {
+  return Boolean(process.env.HUMAN_WEBSITE_URL?.trim());
+}
+
+/**
+ * Where the Human website runs, setups are claimed there and the CLI continues with `human login`.
+ * Elsewhere (self-hosted) they're claimed on the dashboard, and the CLI needs the environment's key.
+ */
+function keylessHumanClaimedMessage(): string {
+  if (isHumanBrowserLoginAvailable()) {
+    return 'This setup was moved into your Human account. Run `human login` to keep using it.';
+  }
+
+  return 'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
+}
 
 @Injectable()
 export class CreateInteraction {
@@ -54,7 +68,7 @@ export class CreateInteraction {
     // Once claimed, the relay agent and channels live in the user's own
     // environment; a stale keyless credential must not read as "run setup".
     if (isKeyless && (await this.connectClaimTokenService.isEnvironmentClaimed(command.environmentId))) {
-      throw new ForbiddenException(KEYLESS_HUMAN_CLAIMED_MESSAGE);
+      throw new ForbiddenException(keylessHumanClaimedMessage());
     }
 
     const agent = await this.resolveAgent(command);
@@ -152,7 +166,15 @@ export class CreateInteraction {
       : `You've used the ${cap} free messages of this keyless demo. Sign up for a free Novu account to keep your channels and continue.`;
 
     throw new HttpException(
-      { statusCode: 429, message, code: KEYLESS_HUMAN_CAP_REACHED_CODE, cap, ...(claimUrl ? { claimUrl } : {}) },
+      {
+        statusCode: 429,
+        message,
+        code: KEYLESS_HUMAN_CAP_REACHED_CODE,
+        cap,
+        ...(claimUrl ? { claimUrl } : {}),
+        // Tells `@novu/human` whether `human login` works here, or the operator needs a secret key instead.
+        browserLogin: isHumanBrowserLoginAvailable(),
+      },
       429
     );
   }
@@ -164,7 +186,7 @@ export class CreateInteraction {
         org: command.organizationId,
       });
 
-      return buildConnectClaimUrl(token);
+      return buildHumanClaimUrl(token);
     } catch (err) {
       this.logger.warn({ err, environmentId: command.environmentId }, 'Failed to issue keyless claim token');
 

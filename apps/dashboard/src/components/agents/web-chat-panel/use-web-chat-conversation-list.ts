@@ -1,4 +1,4 @@
-import { useNovu } from '@novu/react';
+import { useNovu, type WebChatConversation } from '@novu/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
@@ -12,11 +12,33 @@ const VISIBLE_LIMIT = 5;
 const PAGE_SIZE = 20;
 const MAX_PAGES = 5;
 
-export const webChatConversationListQueryKey = (
+const webChatConversationListQueryKey = (
   agentIdentifier: string,
   environmentIdentifier: string,
   subscriberId: string
 ) => ['web-chat-conversation-list', agentIdentifier, environmentIdentifier, subscriberId] as const;
+
+function collectAgentMatches(
+  conversations: WebChatConversation[],
+  agentIdentifier: string,
+  matches: WebChatSessionItem[]
+): void {
+  for (const conversation of conversations) {
+    if (conversation.agentIdentifier !== agentIdentifier) {
+      continue;
+    }
+
+    matches.push({
+      identifier: conversation.identifier,
+      title: conversation.title.trim() || 'Untitled conversation',
+      lastActivityAt: conversation.lastActivityAt,
+    });
+
+    if (matches.length >= VISIBLE_LIMIT) {
+      return;
+    }
+  }
+}
 
 async function fetchAgentConversations(
   novu: ReturnType<typeof useNovu>,
@@ -44,20 +66,10 @@ async function fetchAgentConversations(
       throw error;
     }
 
-    for (const conversation of data?.conversations ?? []) {
-      if (conversation.agentIdentifier !== agentIdentifier) {
-        continue;
-      }
+    collectAgentMatches(data?.conversations ?? [], agentIdentifier, matches);
 
-      matches.push({
-        identifier: conversation.identifier,
-        title: conversation.title.trim() || 'Untitled conversation',
-        lastActivityAt: conversation.lastActivityAt,
-      });
-
-      if (matches.length >= VISIBLE_LIMIT) {
-        return matches;
-      }
+    if (matches.length >= VISIBLE_LIMIT) {
+      return matches;
     }
 
     if (!data?.next) {

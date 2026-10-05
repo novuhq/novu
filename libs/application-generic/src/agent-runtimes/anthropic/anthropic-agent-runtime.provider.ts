@@ -1,3 +1,8 @@
+/**
+ * biome-ignore-all lint/suspicious/noExplicitAny: Managed Agents beta payloads are accessed untyped until the SDK types are adopted (NV-8923)
+ * biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: needs to be fixed
+ * biome-ignore-all lint/style/noNonNullAssertion: needs to be fixed
+ */
 import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
 import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
@@ -71,6 +76,14 @@ const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const RETRY_JITTER_MS = 500;
 /** Anthropic enforces a 64-char cap on `display_title` for `beta.skills.create`. */
 const MAX_DISPLAY_TITLE_LENGTH = 64;
+
+/**
+ * Pins the Skills API to the beta shape (`display_title`, `latest_version`).
+ * Since @anthropic-ai/sdk@0.122.0 `beta.skills.*` no longer sends this header
+ * by default and the API answers with the GA shape (`display_name`,
+ * `latest_version_id`) instead.
+ */
+const SKILLS_BETA = 'skills-2025-10-02';
 
 export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
@@ -708,6 +721,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       const skill = await (client as any).beta.skills.create({
         ...(displayTitle ? { display_title: displayTitle } : {}),
         files,
+        betas: [SKILLS_BETA],
       });
 
       return {
@@ -777,7 +791,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     displayTitle: string
   ): Promise<string | null> {
     try {
-      const iterator = (client as any).beta.skills.list({ limit: 100 }) as AsyncIterable<{
+      const iterator = (client as any).beta.skills.list({ limit: 100, betas: [SKILLS_BETA] }) as AsyncIterable<{
         id: string;
         display_title: string | null;
         source?: string;
@@ -799,18 +813,13 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
   /**
    * Append a new version to an existing skill by calling the underlying HTTP
-   * endpoint directly. We can't use `client.beta.skills.versions.create` here
-   * because @anthropic-ai/sdk@0.95.x defaults `stripFilenames` to `true` for
-   * that endpoint, which strips directory components from the multipart form
-   * `filename` parts. The Anthropic API then can't locate `SKILL.md` inside
-   * a top-level folder and rejects the bundle.
+   * endpoint directly. The multipart `filename` parts must keep the
+   * `<directoryName>/` prefix, otherwise the Anthropic API can't locate
+   * `SKILL.md` inside a top-level folder and rejects the bundle.
    *
-   *   skills.create        → multipartFormRequestOptions(..., false) → sends "my-skill/SKILL.md"
-   *   skills.versions.create → multipartFormRequestOptions(...)      → sends "SKILL.md" (broken)
-   *
-   * Building the FormData ourselves and passing it to `client.post` bypasses
-   * the SDK's stripping logic entirely (BaseAnthropic#buildBody hands any
-   * FormData body straight through to fetch).
+   * Older SDKs (<0.98.1) stripped that prefix in `skills.versions.create`;
+   * current versions keep it, so this raw POST can be replaced by the SDK
+   * call (NV-8922).
    */
   private async createSkillVersion(
     client: AnthropicCompatibleClient,
@@ -826,7 +835,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
     return (await (client as any).post(`/v1/skills/${encodeURIComponent(skillId)}/versions?beta=true`, {
       body: formData,
-      headers: { 'anthropic-beta': 'skills-2025-10-02' },
+      headers: { 'anthropic-beta': SKILLS_BETA },
     })) as { version: string | null };
   }
 }

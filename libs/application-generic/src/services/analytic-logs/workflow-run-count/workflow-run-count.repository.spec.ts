@@ -21,9 +21,11 @@ describe('WorkflowRunCountRepository', () => {
       error: sinon.stub(),
     };
 
+    const query: ClickHouseService['query'] = (options) => queryStub(options);
+
     repository = new WorkflowRunCountRepository(
-      { query: queryStub } as unknown as ClickHouseService,
-      logger as unknown as PinoLogger,
+      { query } as ClickHouseService,
+      logger as PinoLogger,
       {} as FeatureFlagsService
     );
   });
@@ -108,6 +110,90 @@ describe('WorkflowRunCountRepository', () => {
       );
 
       expect(result).to.deep.equal([]);
+    });
+  });
+
+  describe('getPlatformDailyUsageByDateRange', () => {
+    it('queries daily processing rows for every organization when no minimum is provided', async () => {
+      const startDate = new Date('2024-01-01T12:34:56.000Z');
+      const endDate = new Date('2024-01-31T23:59:59.000Z');
+      const rows = [
+        { organization_id: 'org-a', day: '2024-01-01', count: '10' },
+        { organization_id: 'org-b', day: '2024-01-02', count: '25' },
+      ];
+
+      queryStub.resolves({ data: rows });
+
+      const result = await repository.getPlatformDailyUsageByDateRange(startDate, endDate);
+
+      expect(result).to.deep.equal(rows);
+      expect(queryStub.calledOnce).to.equal(true);
+
+      const call = queryStub.firstCall.args[0];
+      expect(call.query).to.include('FROM workflow_run_count');
+      expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
+      expect(call.query).to.include('date >= {startDate:Date}');
+      expect(call.query).to.include('date <= {endDate:Date}');
+      expect(call.query).to.include('toString(date) as day');
+      expect(call.query).to.include('sum(count) as count');
+      expect(call.query).to.include('GROUP BY organization_id, date');
+      expect(call.query).to.include('ORDER BY organization_id, date');
+      expect(call.query).to.not.include('HAVING');
+      expect(call.params).to.deep.equal({
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+      });
+      expect(call.params).to.not.have.property('minimumOrganizationTotal');
+    });
+
+    it('maps a midnight exclusive endDate to the previous calendar day', async () => {
+      queryStub.resolves({ data: [{ organization_id: 'org-a', day: '2024-01-31', count: '3' }] });
+
+      await repository.getPlatformDailyUsageByDateRange(
+        new Date('2024-01-01T00:00:00.000Z'),
+        new Date('2024-02-01T00:00:00.000Z')
+      );
+
+      const call = queryStub.firstCall.args[0];
+      expect(call.params).to.deep.equal({
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+      });
+      expect(call.query).to.not.include('HAVING');
+      expect(call.params).to.not.have.property('minimumOrganizationTotal');
+    });
+
+    it('returns daily rows only for organizations whose window total meets the minimum', async () => {
+      const rows = [{ organization_id: 'org-big', day: '2024-01-02', count: '8000' }];
+
+      queryStub.resolves({ data: rows });
+
+      const result = await repository.getPlatformDailyUsageByDateRange(
+        new Date('2024-01-01T00:00:00.000Z'),
+        new Date('2024-02-01T00:00:00.000Z'),
+        7500
+      );
+
+      expect(result).to.deep.equal(rows);
+
+      const call = queryStub.firstCall.args[0];
+      expect(call.query).to.include('organization_id IN (');
+      expect(call.query).to.include('SELECT organization_id');
+      expect(call.query).to.include('FROM workflow_run_count');
+      expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
+      expect(call.query).to.include('date >= {startDate:Date}');
+      expect(call.query).to.include('date <= {endDate:Date}');
+      expect(call.query).to.include('GROUP BY organization_id');
+      expect(call.query).to.include('HAVING sum(count) >= {minimumOrganizationTotal:UInt64}');
+      expect(call.query).to.include('toString(date) as day');
+      expect(call.query).to.include('GROUP BY organization_id, date');
+      expect(call.query).to.include('ORDER BY organization_id, date');
+      expect(call.query).to.not.include('7500');
+      expect(call.params).to.deep.equal({
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+        minimumOrganizationTotal: 7500,
+      });
     });
   });
 });

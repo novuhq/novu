@@ -20,16 +20,22 @@ import { ThrottlerCategory } from '../rate-limiting/guards';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
+import { CreateHumanInviteRequestDto, CreateHumanInviteResponseDto } from './dtos/human-invite.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
+import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
 import { ListContactsQueryDto, ListContactsResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import { SetupHumanRelayRequestDto, SetupHumanRelayResponseDto } from './dtos/setup-human-relay.dto';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
+import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-human-invite.command';
+import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
+import { GetKeylessClaimTokenCommand } from './usecases/get-keyless-claim-token/get-keyless-claim-token.command';
+import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContactsCommand } from './usecases/list-contacts/list-contacts.command';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractionsCommand } from './usecases/list-interactions/list-interactions.command';
@@ -49,7 +55,9 @@ export class HumanInteractionsController {
     private readonly listInteractionsUsecase: ListInteractions,
     private readonly cancelInteractionUsecase: CancelInteraction,
     private readonly setupHumanRelayUsecase: SetupHumanRelay,
-    private readonly listContactsUsecase: ListContacts
+    private readonly listContactsUsecase: ListContacts,
+    private readonly createHumanInviteUsecase: CreateHumanInvite,
+    private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken
   ) {}
 
   @Post('/interactions')
@@ -179,6 +187,46 @@ export class HumanInteractionsController {
         subscriberId: body.subscriberId,
         agentIdentifier: body.agentIdentifier,
         email: body.email,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        defaultVia: body.defaultVia,
+      })
+    );
+  }
+
+  /**
+   * The claim token of the caller's keyless setup. `human login` hands it to the Human website, so
+   * signing in there also moves the setup into the operator's Human account.
+   */
+  @Post('/claim-token')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createClaimToken(@UserSession() user: UserSessionData): Promise<KeylessClaimTokenResponseDto> {
+    return this.getKeylessClaimTokenUsecase.execute(
+      GetKeylessClaimTokenCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @Post('/invites')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createInvite(
+    @UserSession() user: UserSessionData,
+    @Body() body: CreateHumanInviteRequestDto
+  ): Promise<CreateHumanInviteResponseDto> {
+    return this.createHumanInviteUsecase.execute(
+      CreateHumanInviteCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId: body.subscriberId,
+        agentIdentifier: body.agentIdentifier,
         firstName: body.firstName,
         lastName: body.lastName,
       })
