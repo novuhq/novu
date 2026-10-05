@@ -20,7 +20,7 @@ export function buildKannelBaseUrl(host: string, port: string): string {
     url.port = trimmedPort;
   }
 
-  return `${url.origin}/cgi-bin`;
+  return `${url.origin}${url.pathname.replace(/\/+$/, '')}/cgi-bin`;
 }
 
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
