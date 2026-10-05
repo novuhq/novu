@@ -97,6 +97,8 @@ describe('CliDeviceSessionService', () => {
         result.deviceCode,
       ]);
       expect(JSON.parse(cacheService.set.firstCall.args[1]).userCode).to.equal(result.userCode);
+      // The code outlasts the longest a polling CLI can keep the session waiting, with no TTL jitter.
+      expect(cacheService.setIfNotExist.firstCall.args[2]).to.deep.equal({ ttl: 60 * 60 + 30 * 60, jitter: false });
     });
 
     it('pick another code when one is taken', async () => {

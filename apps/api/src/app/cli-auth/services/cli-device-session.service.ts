@@ -113,7 +113,7 @@ export class CliDeviceSessionService {
     // `human login` is approved on the Human website by typing a short user code, so the device code the CLI
     // polls with never reaches a browser, and a link alone can't approve anything.
     const verificationUrl = params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI ? buildHumanCliLoginUrl() : undefined;
-    const userCode = verificationUrl ? await this.reserveUserCode(deviceCode) : undefined;
+    const userCode = verificationUrl ? await this.reserveUserCode(deviceCode, sessionConfig.ttlSeconds) : undefined;
 
     const record: CliDeviceSessionRecord = {
       status: 'pending',
@@ -280,12 +280,17 @@ export class CliDeviceSessionService {
     }
   }
 
-  /** Points a fresh user code at the session. It lives as long as polling can keep the session alive. */
-  private async reserveUserCode(deviceCode: string): Promise<string> {
+  /**
+   * Points a fresh user code at the session. Polling can keep a session alive for the whole polling window, and
+   * the last poll extends it by one more TTL, so the code is kept that long, without the cache's TTL jitter.
+   * A code that outlives its session is harmless: the lookup also needs the session to be pending.
+   */
+  private async reserveUserCode(deviceCode: string, sessionTtlSeconds: number): Promise<string> {
     for (let attempt = 0; attempt < USER_CODE_ATTEMPTS; attempt++) {
       const userCode = generateUserCode();
       const reserved = await this.cacheService.setIfNotExist(this.userCodeKey(userCode), deviceCode, {
-        ttl: CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
+        ttl: CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS + sessionTtlSeconds,
+        jitter: false,
       });
 
       if (reserved === 'OK') {

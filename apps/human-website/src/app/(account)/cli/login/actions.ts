@@ -2,7 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 
-import { readStoredBackingAccount, storeBackingAccount } from '@/lib/human-account';
+import { readStoredBackingAccount, type StoredBackingAccount, storeBackingAccount } from '@/lib/human-account';
 import { approveCliLogin, HumanAccountsApiError, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 
 export type CliLoginFormState = {
@@ -12,6 +12,8 @@ export type CliLoginFormState = {
   error?: string;
   /** That setup can't be kept, but logging in without it still works. */
   canSkipClaim?: boolean;
+  /** The login worked, but the account page couldn't be told where the setup lives. */
+  accountPageBehind?: boolean;
   /** What was typed, so the field keeps it after an error. */
   userCode?: string;
 };
@@ -77,20 +79,27 @@ export async function approveCliLoginAction(
     return { ...describeLoginError(error), userCode };
   }
 
-  if (!stored) {
+  // The CLI is logged in at this point, so a failed write here must not read as a failed login.
+  const remembered =
+    Boolean(stored) ||
+    (await rememberBackingAccount(user.id, { region, organizationId: account.organizationId, userId: account.userId }));
+
+  return { approved: true, keptSetup: account.keptSetup, accountPageBehind: !remembered };
+}
+
+/** Tries twice, since the account page shows nothing until this is saved. */
+async function rememberBackingAccount(userId: string, account: StoredBackingAccount): Promise<boolean> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      await storeBackingAccount(user.id, {
-        region,
-        organizationId: account.organizationId,
-        userId: account.userId,
-      });
+      await storeBackingAccount(userId, account);
+
+      return true;
     } catch (error) {
-      // The CLI is logged in already; the account page catches up on the next login or claim.
-      console.error('Failed to remember the backing organization after a CLI login', error);
+      console.error(`Failed to remember the backing organization after a CLI login (attempt ${attempt})`, error);
     }
   }
 
-  return { approved: true, keptSetup: account.keptSetup };
+  return false;
 }
 
 /** Accepts the code however it's typed: any case, with or without the dash or spaces. */

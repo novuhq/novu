@@ -18,6 +18,9 @@ export function CliLoginForm({ claim, region }: CliLoginFormProps) {
       <output className="block rounded-md px-3 py-2 text-[15px] tracking-tight text-foreground ring-1 ring-border">
         {state.keptSetup ? 'Your setup is now in your Human account. ' : ''}
         You&apos;re logged in. Go back to your terminal; you can close this tab.
+        {state.accountPageBehind
+          ? ' Your account page couldn’t be updated just now, so it may not show your setup until you log in again.'
+          : ''}
       </output>
     );
   }
