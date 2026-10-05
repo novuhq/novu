@@ -8,6 +8,8 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AppModule } from '../../../app.module';
 
+const organization = { apiServiceLevel: ApiServiceLevelEnum.BUSINESS };
+
 describe('GetEventResourceUsage #novu-v2', async () => {
   let useCase: GetEventResourceUsage;
   let session: UserSession;
@@ -41,6 +43,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         organizationId: 'organization_id',
         environmentId: 'environment_id',
         userId: 'user_id',
+        organization,
       });
 
       expect(result).to.deep.equal({
@@ -60,6 +63,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         organizationId: 'organization_id',
         environmentId: 'environment_id',
         userId: 'user_id',
+        organization,
       });
 
       expect(result).to.deep.equal({
@@ -87,6 +91,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         organizationId: randomUUID(),
         environmentId: 'environment_id',
         userId: 'user_id',
+        organization,
       });
 
       expect(result).to.deep.equal({
@@ -107,6 +112,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         organizationId: randomUUID(),
         environmentId: 'environment_id',
         userId: 'user_id',
+        organization,
       });
 
       expect(result).to.deep.equal({
