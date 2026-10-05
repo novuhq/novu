@@ -1,6 +1,7 @@
 import type { StreamPart } from '@novu/thalamus';
 import { Agent, type Connection, type ConnectionContext, type FiberRecoveryContext } from 'agents';
 import { type EventSourceMessage, EventSourceParserStream } from 'eventsource-parser/stream';
+import { LiveReplies } from './live-replies';
 import { providers } from './parsers';
 import type {
   DeliveryOutcome,
@@ -24,8 +25,7 @@ export class SessionObserver extends Agent<Env, State> {
 
   private abortController: AbortController | null = null;
   private delivering = false;
-  private lastSnapshotSentAt = 0;
-  private snapshotWakeScheduled = false;
+  private live: LiveReplies | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -97,6 +97,12 @@ export class SessionObserver extends Agent<Env, State> {
 
   async getStatus(): Promise<string> {
     return this.state.observation?.status ?? 'none';
+  }
+
+  /* ---------- RPC: live reply text ---------- */
+
+  async openLive(messageId: string): Promise<ReadableStream<Uint8Array> | 'unknown' | 'busy'> {
+    return this.live?.open(messageId) ?? 'unknown';
   }
 
   /* ---------- RPC: message queue ---------- */
@@ -202,39 +208,48 @@ export class SessionObserver extends Agent<Env, State> {
     const acc = parser.createAccumulator();
     let sequence = this.getNextSequence(params.sessionId);
     let pauseWebhookSent = false;
+    const live = new LiveReplies();
+    this.live = live;
 
-    for await (const sseEvent of eventStream) {
-      if (signal.aborted) break;
+    try {
+      for await (const sseEvent of eventStream) {
+        if (signal.aborted) break;
 
-      if (sseEvent.id) {
-        fiberCtx.stash({ ...params, lastEventId: sseEvent.id });
-      }
-
-      const parts = this.parseSSEEvent(sseEvent, parser, acc);
-      let hasError = false;
-      for (const part of parts) {
-        // Webhooks carry reply text as `text-snapshot`.
-        if (part.type === 'finish' || part.type === 'text-start') continue;
-        if (part.type === 'error') hasError = true;
-        if (part.type === 'text-delta') {
-          sequence = this.persistDelta(params, sequence, part);
-          continue;
-        }
-        this.persistEvent(params.sessionId, sequence++, part);
-      }
-
-      this.triggerDelivery(params);
-
-      if (hasError) break;
-
-      if (acc.done) {
-        if (acc.finishReason === 'requires-action') {
-          sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
-          pauseWebhookSent = true;
+        if (sseEvent.id) {
+          fiberCtx.stash({ ...params, lastEventId: sseEvent.id });
         }
 
-        break;
+        const parts = this.parseSSEEvent(sseEvent, parser, acc);
+        let hasError = false;
+        for (const part of parts) {
+          if (part.type === 'finish') continue;
+          if (part.type === 'error') hasError = true;
+          const streamed = live.handle(part);
+          // Deltas reach the API over `/live` only; webhooks carry the durable parts.
+          if (part.type === 'text-delta') continue;
+          this.persistEvent(
+            params.sessionId,
+            sequence++,
+            streamed && part.type === 'message' ? { ...part, streamed: true } : part
+          );
+        }
+
+        this.triggerDelivery(params);
+
+        if (hasError) break;
+
+        if (acc.done) {
+          if (acc.finishReason === 'requires-action') {
+            sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
+            pauseWebhookSent = true;
+          }
+
+          break;
+        }
       }
+    } finally {
+      live.endAll('aborted');
+      if (this.live === live) this.live = null;
     }
 
     if (acc.done && !pauseWebhookSent) {
@@ -364,8 +379,6 @@ export class SessionObserver extends Agent<Env, State> {
   /* ---------- SQLite event queue ---------- */
 
   private persistEvent(sessionId: string, sequence: number, event: StreamPart): void {
-    if (event.type === 'message' && event.messageId) this.dropPendingSnapshot(sessionId, event.messageId);
-
     const serializable =
       event.type === 'error'
         ? {
@@ -380,45 +393,6 @@ export class SessionObserver extends Agent<Env, State> {
       JSON.stringify(serializable),
       Math.floor(Date.now() / 1000)
     );
-  }
-
-  /** Folds a delta into its pending snapshot, or queues a new one with the full text. */
-  private persistDelta(
-    params: ObservationParams,
-    sequence: number,
-    part: Extract<StreamPart, { type: 'text-delta' }>
-  ): number {
-    const { messageId } = part;
-    if (!messageId || textSnapshotIntervalMs(params) === 0) return sequence;
-
-    const latest = this.findSnapshot(params.sessionId, messageId);
-    const snapshot: StreamPart = { type: 'text-snapshot', messageId, text: (latest?.text ?? '') + part.text };
-
-    // An in-flight snapshot was serialized already.
-    if (latest?.status === 'pending') {
-      this.ctx.storage.sql.exec('UPDATE events SET event_json = ? WHERE id = ?', JSON.stringify(snapshot), latest.id);
-
-      return sequence;
-    }
-
-    this.persistEvent(params.sessionId, sequence, snapshot);
-
-    return sequence + 1;
-  }
-
-  private findSnapshot(sessionId: string, messageId: string): { id: number; status: string; text: string } | undefined {
-    return this.ctx.storage.sql
-      .exec<{ id: number; status: string; text: string }>(
-        "SELECT id, status, json_extract(event_json, '$.text') AS text FROM events WHERE session_id = ? AND json_extract(event_json, '$.type') = 'text-snapshot' AND json_extract(event_json, '$.messageId') = ? ORDER BY sequence DESC LIMIT 1",
-        sessionId,
-        messageId
-      )
-      .toArray()[0];
-  }
-
-  private dropPendingSnapshot(sessionId: string, messageId: string): void {
-    const latest = this.findSnapshot(sessionId, messageId);
-    if (latest?.status === 'pending') this.markDelivered(latest.id);
   }
 
   private getNextSequence(sessionId: string): number {
@@ -492,9 +466,6 @@ export class SessionObserver extends Agent<Env, State> {
 
       const row = pending[0];
       const event = JSON.parse(row.event_json) as StreamPart;
-
-      if (event.type === 'text-snapshot' && this.deferSnapshot(params)) return;
-
       const outcome = await this.deliverOne(row, event, params);
 
       switch (outcome) {
@@ -535,24 +506,6 @@ export class SessionObserver extends Agent<Env, State> {
           break;
       }
     }
-  }
-
-  /** True when the previous snapshot was sent too recently; delivery retries later. */
-  private deferSnapshot(params: ObservationParams): boolean {
-    const waitMs = this.lastSnapshotSentAt + textSnapshotIntervalMs(params) - Date.now();
-    if (waitMs <= 0) {
-      this.lastSnapshotSentAt = Date.now();
-
-      return false;
-    }
-
-    // A durable alarm, so a queued final message still goes out if the observer is evicted.
-    if (!this.snapshotWakeScheduled) {
-      this.snapshotWakeScheduled = true;
-      void this.schedule(new Date(Date.now() + waitMs), 'resumeDelivery', params);
-    }
-
-    return true;
   }
 
   private async deliverOne(row: EventRow, event: StreamPart, params: ObservationParams): Promise<DeliveryOutcome> {
@@ -636,11 +589,6 @@ export class SessionObserver extends Agent<Env, State> {
     this.schedule(delaySec, 'retryDelivery', params);
   }
 
-  async resumeDelivery(params: ObservationParams): Promise<void> {
-    this.snapshotWakeScheduled = false;
-    this.triggerDelivery(params);
-  }
-
   async retryDelivery(params: ObservationParams): Promise<void> {
     if (!this.state.observation) return;
     const pending = this.getPendingEvents(params.sessionId);
@@ -669,9 +617,4 @@ export class SessionObserver extends Agent<Env, State> {
   private updateObservation(obs: (ObservationParams & { status: ObservationStatus }) | null): void {
     this.setState({ ...this.state, observation: obs });
   }
-}
-
-/** 0 (unset) disables snapshots. */
-function textSnapshotIntervalMs(params: ObservationParams): number {
-  return Number(params.webhook.metadata?.textSnapshotIntervalMs) || 0;
 }
