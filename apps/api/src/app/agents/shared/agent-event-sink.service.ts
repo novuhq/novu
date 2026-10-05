@@ -326,6 +326,10 @@ export class AgentEventSink {
       return 'accepted';
     }
 
+    if (event.streamed) {
+      await this.liveReplyStreamer.waitForDelivery(context, event.messageId);
+    }
+
     const isDuplicate = await this.isDuplicateMessage(context.environmentId, context.conversationId, event.messageId);
 
     if (isDuplicate) {

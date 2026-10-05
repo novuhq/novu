@@ -23,18 +23,14 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
       return [{ type: 'run-start' }];
 
     case 'message':
-      // Its live reader (LiveReplyStreamer) delivers a streamed message.
-      if (part.streamed) {
-        return [];
-      }
-
       return [
         {
           type: 'message',
           role: 'assistant',
-          // Anthropic event id when known, so redelivered webhooks match this message.
+          // Anthropic event id when known, so redelivered webhooks and its live reader match this message.
           messageId: part.messageId ?? randomUUID(),
           content: { markdown: part.text },
+          ...(part.streamed ? { streamed: true } : {}),
         },
       ];
 

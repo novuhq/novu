@@ -222,8 +222,10 @@ export class OutboundGateway {
     options: OutboundDeliveryOptions,
     activityIdentifier: string | undefined
   ): Promise<SentMessageInfo> {
+    // The reply keeps the preview's id, so its reader can tell the preview became the reply.
+    const replaced = { messageId: previewMessageId, platformThreadId: target.platformThreadId };
     try {
-      return await this.editInConversation(
+      await this.editInConversation(
         target.agentId,
         target.integrationIdentifier,
         target.platform,
@@ -233,9 +235,11 @@ export class OutboundGateway {
         options,
         target.workspaceId
       );
+
+      return replaced;
     } catch (err) {
-      if (target.platform === AgentPlatformEnum.TELEGRAM && isUnchangedTelegramEditError(err)) {
-        return { messageId: previewMessageId, platformThreadId: target.platformThreadId };
+      if (isUnchangedTelegramEditError(err)) {
+        return replaced;
       }
 
       this.logger.warn({ err, previewMessageId }, 'Editing a streamed preview failed; posting the reply anew');
@@ -245,7 +249,7 @@ export class OutboundGateway {
         target.platform,
         target.platformThreadId,
         msg,
-        { ...options, replacePlatformMessageId: undefined },
+        options,
         target.workspaceId,
         activityIdentifier
       );
@@ -414,12 +418,8 @@ export class OutboundGateway {
    */
   async streamPreview(target: ConversationTarget, chunks: AsyncIterable<string>): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(target.agentId, target.integrationIdentifier);
-    const chat = await this.registry.getOrCreate(
-      `${target.agentId}:${target.integrationIdentifier}`,
-      target.agentId,
-      config.platform,
-      config
-    );
+    const instanceKey = `${target.agentId}:${target.integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, target.agentId, config.platform, config);
     const thread = chat.thread(target.platformThreadId);
 
     const sent = await this.runWithPlatformToken(
