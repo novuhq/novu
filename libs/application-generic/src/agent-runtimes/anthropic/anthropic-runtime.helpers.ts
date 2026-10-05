@@ -106,7 +106,7 @@ export function extractSkillNameFromBundle(files: UploadSkillFile[]): string | n
  * form — `^`-anchored quantifiers are tried at exactly one position and
  * are unambiguously linear.
  */
-export function parseSkillNameLine(frontmatter: string): string | null {
+function parseSkillNameLine(frontmatter: string): string | null {
   for (const rawLine of frontmatter.split('\n')) {
     const line = rawLine.replace(/\r$/, '');
     const trimmedStart = line.replace(/^[ \t]+/, '');
@@ -139,7 +139,7 @@ export function parseSkillNameLine(frontmatter: string): string | null {
  * `js/polynomial-redos` warning on `+`-quantified, `$`-anchored character
  * classes.
  */
-export function trimTrailingSpacesAndTabs(value: string): string {
+function trimTrailingSpacesAndTabs(value: string): string {
   let end = value.length;
   while (end > 0 && isSpaceOrTab(value[end - 1])) {
     end -= 1;
@@ -148,7 +148,7 @@ export function trimTrailingSpacesAndTabs(value: string): string {
   return end === value.length ? value : value.slice(0, end);
 }
 
-export function isSpaceOrTab(char: string): boolean {
+function isSpaceOrTab(char: string): boolean {
   return char === ' ' || char === '\t';
 }
 
@@ -176,15 +176,14 @@ export function isDuplicateDisplayTitleError(err: unknown): boolean {
   }
 
   const directMessage = err.message ?? '';
-  const errorBody = (err as unknown as { error?: unknown }).error;
-  const serializedBody = errorBody ? safeStringify(errorBody) : '';
+  const serializedBody = err.error ? safeStringify(err.error) : '';
 
   return (
     /reuse an existing display_title/i.test(directMessage) || /reuse an existing display_title/i.test(serializedBody)
   );
 }
 
-export function safeStringify(value: unknown): string {
+function safeStringify(value: unknown): string {
   try {
     return JSON.stringify(value);
   } catch {
@@ -237,11 +236,13 @@ export const MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG = {
  */
 export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
   if (raw.type === 'agent_toolset_20260401') {
-    return ((raw.configs as any[]) ?? [])
+    const configs = (raw.configs as Array<{ name: string; enabled?: boolean }> | undefined) ?? [];
+
+    return configs
       .filter((c) => c.enabled !== false)
       .map((c) => ({
-        externalId: c.name as string,
-        name: c.name as string,
+        externalId: c.name,
+        name: c.name,
         type: 'builtin' as const,
       }));
   }
