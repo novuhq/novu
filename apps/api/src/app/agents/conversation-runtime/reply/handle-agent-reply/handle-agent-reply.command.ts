@@ -46,10 +46,13 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()
   activityIdentifier?: string;
 
-  /** Platform message of a streamed preview that the reply replaces instead of posting. */
+  /**
+   * The reply is still being generated: post or edit it under `activityIdentifier`
+   * without completing the turn. The same reply without this flag delivers it.
+   */
   @IsOptional()
-  @IsString()
-  replacePlatformMessageId?: string;
+  @IsBoolean()
+  streaming?: boolean;
 
   @IsOptional()
   @ValidateNested()

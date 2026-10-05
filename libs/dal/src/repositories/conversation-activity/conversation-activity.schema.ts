@@ -66,6 +66,9 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
     toolData: {
       type: Schema.Types.Mixed,
     },
+    streaming: {
+      type: Schema.Types.Boolean,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

@@ -347,6 +347,50 @@ export class ConversationActivityLedger {
     });
   }
 
+  /** Stores the final content of a streamed message; it no longer streams. */
+  async completeStreamedMessage(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+    content: string;
+    richContent?: Record<string, unknown>;
+  }): Promise<void> {
+    await this.activityRepository.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        _id: params.activityId,
+      },
+      {
+        $set: { content: params.content, ...(params.richContent ? { richContent: params.richContent } : {}) },
+        $unset: { streaming: 1 },
+      }
+    );
+    await this.conversationRepository.touchPreview(
+      params.environmentId,
+      params.organizationId,
+      params.conversationId,
+      params.content
+    );
+  }
+
+  async findStreamingAgentMessages(
+    environmentId: string,
+    conversationId: string
+  ): Promise<ConversationActivityEntity[]> {
+    return this.activityRepository.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        type: ConversationActivityTypeEnum.MESSAGE,
+        streaming: true,
+      },
+      '*'
+    );
+  }
+
   async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
     const toolName = params.toolName;
     const sequence = await this.resolveEventSequence(
@@ -868,6 +912,7 @@ export class ConversationActivityLedger {
           toolData: params.toolData,
           type,
           sequence,
+          streaming: params.streaming,
           environmentId: params.environmentId,
           organizationId: params.organizationId,
           session,

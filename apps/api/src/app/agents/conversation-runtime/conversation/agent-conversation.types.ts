@@ -97,6 +97,8 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   richContent?: Record<string, unknown>;
   /** Pre-allocated conversation event sequence; minted at persist time when absent */
   sequence?: number;
+  /** Message still being generated; see `ConversationActivityEntity.streaming` */
+  streaming?: boolean;
 }
 
 export interface PersistToolApprovalRequestParams extends ConversationActivityContext {

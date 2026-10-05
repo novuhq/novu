@@ -27,7 +27,7 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
         {
           type: 'message',
           role: 'assistant',
-          // Provider message id when known (Anthropic event id), so previews and
+          // Provider message id when known (Anthropic event id), so its text snapshots and
           // redelivered webhooks correlate with this durable message.
           messageId: part.messageId ?? randomUUID(),
           content: { markdown: part.text },
@@ -38,7 +38,8 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
       return [{ type: 'message-start', messageId: part.messageId }];
 
     case 'text-delta':
-      // Reply text reaches chat channels through the observer's live stream, not webhooks.
+    case 'text-snapshot':
+      // Webhooks never carry deltas; ManagedAgentEventHandler shows snapshots on the channel.
       return [];
 
     case 'thinking':

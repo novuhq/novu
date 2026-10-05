@@ -499,6 +499,27 @@ export class ManagedAgentService implements OnModuleInit {
       metadata.suppressReply = 'true';
     }
 
+    const snapshotIntervalMs = textSnapshotIntervalMs(input.platform, input.platformThreadId);
+    if (snapshotIntervalMs) {
+      metadata.textSnapshotIntervalMs = String(snapshotIntervalMs);
+    }
+
     return metadata;
+  }
+}
+
+/**
+ * How often the observer may send the text so far of a reply being generated, kept under
+ * the platform's edit rate limit. Other platforms get only the final message.
+ */
+function textSnapshotIntervalMs(platform: AgentPlatformEnum, platformThreadId: string): number | undefined {
+  switch (platform) {
+    case AgentPlatformEnum.SLACK:
+      return 1000;
+    case AgentPlatformEnum.TELEGRAM:
+      // About one edit a second in private chats, 20 a minute in groups (negative chat ids).
+      return platformThreadId.includes(':-') ? 3100 : 1100;
+    default:
+      return undefined;
   }
 }

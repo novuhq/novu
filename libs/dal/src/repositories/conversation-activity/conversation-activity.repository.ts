@@ -377,6 +377,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     senderName?: string;
     platformMessageId?: string;
     sequence?: number;
+    streaming?: boolean;
     environmentId: string;
     organizationId: string;
     session?: ClientSession | null;
@@ -399,6 +400,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         senderName: params.senderName,
         ...(params.platformMessageId !== undefined ? { platformMessageId: params.platformMessageId } : {}),
         ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
+        ...(params.streaming ? { streaming: true } : {}),
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
       },

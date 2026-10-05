@@ -14,7 +14,6 @@ import { formatToolInputSummary } from '../conversation-runtime/reply/handle-pla
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
-import { LiveReplyStreamer } from '../managed-runtime/live-reply-streamer.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
@@ -76,7 +75,6 @@ export class AgentEventSink {
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
     private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
-    private readonly liveReplyStreamer: LiveReplyStreamer,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -84,6 +82,30 @@ export class AgentEventSink {
 
   async ingest(envelope: AgentEventEnvelope, context: AgentEventContext): Promise<void> {
     await this.ingestMany([envelope], context);
+  }
+
+  /**
+   * Shows the text so far of a managed reply still being generated: the first snapshot
+   * posts it, later ones edit it, and its `message` delivers it. Best effort, so a failed
+   * snapshot never holds up the session's webhooks.
+   */
+  async ingestTextSnapshot(context: AgentEventContext, messageId: string, text: string): Promise<void> {
+    if (context.suppressReply || !text.trim()) {
+      return;
+    }
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          ...this.buildBaseFields(context),
+          reply: { markdown: text },
+          activityIdentifier: messageId,
+          streaming: true,
+        })
+      );
+    } catch (err) {
+      this.logger.warn({ err, messageId }, 'Failed to show the text of a streamed reply');
+    }
   }
 
   /**
@@ -195,24 +217,14 @@ export class AgentEventSink {
 
         return 'accepted';
 
-      case 'message-start':
+      case 'step-end':
         if (context.source === 'managed') {
-          // The final text replaces the preview through the same path as the `message` webhook.
-          this.liveReplyStreamer.start(context, event.messageId, (text, previewMessageId) =>
-            this.handleMessageEvent(
-              { type: 'message', role: 'assistant', messageId: event.messageId, content: { markdown: text } },
-              baseFields,
-              context,
-              envelope.runId,
-              previewMessageId
-            )
-          );
+          await this.discardInterruptedStreams(context);
         }
 
         return 'accepted';
 
       case 'step-start':
-      case 'step-end':
       case 'thinking-start':
       case 'thinking-delta':
       case 'thinking-end':
@@ -222,6 +234,7 @@ export class AgentEventSink {
       case 'tool-approval-response':
       case 'mcp-connection-request':
       case 'mcp-connection-result':
+      case 'message-start':
       case 'message-end':
         this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Agent event no-op');
 
@@ -311,8 +324,7 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'message' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string,
-    replacePlatformMessageId?: string
+    runId: string
   ): Promise<IngestOutcome> {
     // Runtime ingest accepts assistant messages only. Subscriber turns arrive
     // through the inbound HTTP endpoint, not through this path.
@@ -344,7 +356,6 @@ export class AgentEventSink {
         reply,
         quoteReply: event.quoteReply,
         activityIdentifier: event.messageId,
-        replacePlatformMessageId,
       }),
       context,
       'message',
@@ -883,6 +894,40 @@ export class AgentEventSink {
     }
   }
 
+  /**
+   * A model request ended, so a message still streaming never got its `message` (the request
+   * was interrupted or failed): remove it from the channel and the timeline.
+   */
+  private async discardInterruptedStreams(context: AgentEventContext): Promise<void> {
+    const streams = await this.conversationService.findStreamingAgentMessages(
+      context.environmentId,
+      context.conversationId
+    );
+
+    for (const activity of streams) {
+      try {
+        if (activity.platformMessageId && context.agentId) {
+          await this.outboundGateway.deleteInConversation(
+            context.agentId,
+            context.integrationIdentifier,
+            activity.platformThreadId,
+            activity.platformMessageId,
+            context.channel?.workspace?.id
+          );
+        }
+
+        await this.conversationService.deleteAgentMessage({
+          environmentId: context.environmentId,
+          organizationId: context.organizationId,
+          conversationId: context.conversationId,
+          activityId: activity._id,
+        });
+      } catch (err) {
+        this.logger.warn({ err, activityId: activity._id }, 'Failed to remove an interrupted streamed reply');
+      }
+    }
+  }
+
   private async isDuplicateMessage(environmentId: string, conversationId: string, messageId: string): Promise<boolean> {
     if (typeof messageId !== 'string' || messageId.length === 0) {
       return false;
@@ -894,7 +939,8 @@ export class AgentEventSink {
       messageId
     );
 
-    return existing !== null;
+    // A streamed message is only shown so far; its `message` delivers it.
+    return existing !== null && !existing.streaming;
   }
 
   /**

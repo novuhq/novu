@@ -390,6 +390,24 @@ export class AgentConversationService {
     return this.ledger.deleteAgentMessage(params);
   }
 
+  async completeStreamedMessage(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+    content: string;
+    richContent?: Record<string, unknown>;
+  }): Promise<void> {
+    return this.ledger.completeStreamedMessage(params);
+  }
+
+  async findStreamingAgentMessages(
+    environmentId: string,
+    conversationId: string
+  ): Promise<ConversationActivityEntity[]> {
+    return this.ledger.findStreamingAgentMessages(environmentId, conversationId);
+  }
+
   async persistAgentEdit(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
     return this.ledger.persistAgentEdit(params);
   }
