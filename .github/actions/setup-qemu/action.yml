@@ -5,7 +5,7 @@ description: Configures QEMU for cross-platform builds.
 runs:
   using: composite
   steps:
-    - uses: crazy-max/ghaction-setup-docker@v2
+    - uses: crazy-max/ghaction-setup-docker@69b561f709cbd934060981d481ccfc316cfb77b7 # v2.2.0
       with:
         version: v24.0.6
         daemon-config: |
@@ -16,11 +16,11 @@ runs:
           }
 
     - name: Setup QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
       with:
         platforms: linux/amd64,linux/arm64
 
     - name: Set Up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
       with:
         driver-opts: 'image=moby/buildkit:v0.13.1'

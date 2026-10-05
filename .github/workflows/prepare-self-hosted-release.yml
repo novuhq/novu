@@ -30,7 +30,7 @@ jobs:
       latest-version: ${{ steps.get_version.outputs.latest-version }}
       sha: ${{ steps.get_version.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ inputs.branch || github.ref }}
       - name: Resolve release version
@@ -76,7 +76,7 @@ jobs:
         name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed']
     steps:
       - name: Git Checkout with Submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         if: contains(matrix.name, '-ee')
         with:
           ref: ${{ needs.prepare.outputs.sha }}
@@ -85,7 +85,7 @@ jobs:
 
       - name: Git Checkout without Submodules
         if: "!contains(matrix.name, '-ee')"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
@@ -100,10 +100,10 @@ jobs:
           echo "SERVICE_COMMON_NAME=$SERVICE_COMMON_NAME" >> $GITHUB_ENV
           echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3.0.0
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20.8.1
           cache: 'pnpm'
