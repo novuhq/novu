@@ -40,9 +40,10 @@ export class UpdateIntegration {
    * another environment whose integration uses that identifier) apply to whichever integration holds
    * it, so they are kept; only on steps where both exist does the renamed integration's own win.
    *
-   * Overrides are re-keyed in every environment the integration belongs to during the update: its
-   * current one, plus the destination when the same request moves it to another environment, so
-   * overrides synced there under the old identifier follow the integration.
+   * Overrides are re-keyed in the integration's current environment, and in the destination when the
+   * same request moves it, so copies synced there under the old identifier follow it. Identifiers
+   * are unique per environment, so the destination may already have its own integration under that
+   * identifier; its overrides apply to it and are left in place.
    */
   private async renameStepIntegrationOverrides(
     integration: IntegrationEntity,
@@ -51,6 +52,10 @@ export class UpdateIntegration {
     session: ClientSession | null
   ): Promise<void> {
     for (const environmentId of environmentIds) {
+      if (await this.destinationOwnsIdentifier(integration, environmentId, session)) {
+        continue;
+      }
+
       const scope = {
         _environmentId: environmentId,
         _organizationId: integration._organizationId,
@@ -81,6 +86,33 @@ export class UpdateIntegration {
         { session }
       );
     }
+  }
+
+  /**
+   * True when `environmentId` is a move destination whose own integration already holds this
+   * identifier for the same provider. Overrides there apply to that integration, not to the one
+   * being renamed.
+   */
+  private async destinationOwnsIdentifier(
+    integration: IntegrationEntity,
+    environmentId: string,
+    session: ClientSession | null
+  ): Promise<boolean> {
+    if (environmentId === integration._environmentId) {
+      return false;
+    }
+
+    const owner = await this.integrationRepository.findOne(
+      {
+        _organizationId: integration._organizationId,
+        _environmentId: environmentId,
+        identifier: integration.identifier,
+      },
+      'providerId',
+      { session }
+    );
+
+    return owner?.providerId === integration.providerId;
   }
 
   private async calculatePriorityAndPrimaryForActive({
