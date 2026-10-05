@@ -12,7 +12,7 @@ import { CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum, OrgScopePre
  * @param prefixString The prefix string to wrap.
  * @returns The prefix string wrapped with curly braces.
  */
-export function prefixWrapper(prefixString: string) {
+function prefixWrapper(prefixString: string) {
   return `{${prefixString}}`;
 }
 

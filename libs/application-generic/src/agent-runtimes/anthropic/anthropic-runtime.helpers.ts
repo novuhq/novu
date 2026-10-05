@@ -106,7 +106,7 @@ export function extractSkillNameFromBundle(files: UploadSkillFile[]): string | n
  * form — `^`-anchored quantifiers are tried at exactly one position and
  * are unambiguously linear.
  */
-export function parseSkillNameLine(frontmatter: string): string | null {
+function parseSkillNameLine(frontmatter: string): string | null {
   for (const rawLine of frontmatter.split('\n')) {
     const line = rawLine.replace(/\r$/, '');
     const trimmedStart = line.replace(/^[ \t]+/, '');
@@ -139,7 +139,7 @@ export function parseSkillNameLine(frontmatter: string): string | null {
  * `js/polynomial-redos` warning on `+`-quantified, `$`-anchored character
  * classes.
  */
-export function trimTrailingSpacesAndTabs(value: string): string {
+function trimTrailingSpacesAndTabs(value: string): string {
   let end = value.length;
   while (end > 0 && isSpaceOrTab(value[end - 1])) {
     end -= 1;
@@ -148,7 +148,7 @@ export function trimTrailingSpacesAndTabs(value: string): string {
   return end === value.length ? value : value.slice(0, end);
 }
 
-export function isSpaceOrTab(char: string): boolean {
+function isSpaceOrTab(char: string): boolean {
   return char === ' ' || char === '\t';
 }
 
@@ -184,7 +184,7 @@ export function isDuplicateDisplayTitleError(err: unknown): boolean {
   );
 }
 
-export function safeStringify(value: unknown): string {
+function safeStringify(value: unknown): string {
   try {
     return JSON.stringify(value);
   } catch {
