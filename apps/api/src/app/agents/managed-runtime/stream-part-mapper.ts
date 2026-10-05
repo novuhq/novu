@@ -27,8 +27,7 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
         {
           type: 'message',
           role: 'assistant',
-          // Provider message id when known (Anthropic event id), so its text snapshots and
-          // redelivered webhooks correlate with this durable message.
+          // Anthropic event id when known, so snapshots and redeliveries match this message.
           messageId: part.messageId ?? randomUUID(),
           content: { markdown: part.text },
         },
@@ -39,7 +38,6 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
 
     case 'text-start':
     case 'text-delta':
-      // The observer sends a reply's text as `text-snapshot` only.
       return [];
 
     case 'thinking':

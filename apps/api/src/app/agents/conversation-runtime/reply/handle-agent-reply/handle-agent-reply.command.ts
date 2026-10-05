@@ -46,10 +46,7 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()
   activityIdentifier?: string;
 
-  /**
-   * The reply is still being generated: post or edit it under `activityIdentifier`
-   * without completing the turn. The same reply without this flag delivers it.
-   */
+  /** Post or edit the reply without completing the turn. */
   @IsOptional()
   @IsBoolean()
   streaming?: boolean;

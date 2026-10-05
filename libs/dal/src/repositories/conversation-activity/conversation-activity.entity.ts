@@ -133,7 +133,7 @@ export class ConversationActivityEntity {
   /** Populated only for the `TOOL_*` activity types — the tool call, decision, or result. */
   toolData?: ConversationActivityToolData;
 
-  /** Agent message still being generated: posted with its text so far and edited until its final delivery. */
+  /** Agent message still being generated. */
   streaming?: boolean;
 
   _environmentId: EnvironmentId;

@@ -112,7 +112,7 @@ export type AgentEvent =
     }
   | { type: 'message-start'; messageId: string }
   | { type: 'message-delta'; messageId: string; delta: string }
-  /** The full text so far of a message still being generated. Best effort; the `message` is authoritative. */
+  /** Full text so far of a message being generated; the `message` is authoritative. */
   | { type: 'message-snapshot'; messageId: string; text: string }
   | { type: 'message-end'; messageId: string; content?: AgentMessageContent; files?: AgentFileRef[] }
   | { type: 'thinking-start'; thinkingId: string }

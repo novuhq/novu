@@ -84,10 +84,7 @@ export function usesProtocolEventApprovals(platform: string): boolean {
   return platform === AgentPlatformEnum.WEB_CHAT;
 }
 
-/**
- * Minimum gap between the text snapshots of a reply being generated, kept under the
- * platform's edit rate limit. `undefined`: the platform shows only the final message.
- */
+/** Gap between streamed edits, under the platform's edit rate limit; `undefined` disables streaming. */
 export function textSnapshotIntervalMs(platform: string, platformThreadId: string): number | undefined {
   switch (platform) {
     case AgentPlatformEnum.SLACK:

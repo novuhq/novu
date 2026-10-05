@@ -877,11 +877,7 @@ export class AgentEventSink {
     }
   }
 
-  /**
-   * Shows the text so far of a reply still being generated: the first snapshot posts it,
-   * later ones edit it, and its `message` delivers it. Best effort, so a failed snapshot
-   * never holds up the session's webhooks.
-   */
+  /** Best effort: a failed snapshot must not hold up the session's webhooks. */
   private async showMessageSnapshot(
     event: Extract<AgentEvent, { type: 'message-snapshot' }>,
     baseFields: BaseCommandFields,
@@ -905,10 +901,7 @@ export class AgentEventSink {
     }
   }
 
-  /**
-   * A model request ended, so a message still streaming never got its `message` (the request
-   * was interrupted or failed): remove it from the channel and the timeline.
-   */
+  /** A message still streaming after its model request ended was interrupted. */
   private async discardInterruptedStreams(context: AgentEventContext): Promise<void> {
     const streams = await this.conversationService.findStreamingAgentMessages(
       context.environmentId,
@@ -950,7 +943,7 @@ export class AgentEventSink {
       messageId
     );
 
-    // A streamed message is only shown so far; its `message` delivers it.
+    // A streaming message still needs its final delivery.
     return existing !== null && !existing.streaming;
   }
 

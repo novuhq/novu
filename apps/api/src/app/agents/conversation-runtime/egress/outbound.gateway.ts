@@ -82,10 +82,7 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
   quoteReply?: { messageId: string };
-  /**
-   * The message is still being generated: post it once, then edit it on every later
-   * delivery of the same activity identifier, until one arrives without this flag.
-   */
+  /** Reply still being generated: post once, then edit until a delivery without this flag. */
   streaming?: boolean;
 };
 
@@ -218,11 +215,7 @@ export class OutboundGateway {
     }
   }
 
-  /**
-   * Shows the latest text of a streamed message: edits the posted message, skipping unchanged
-   * text, or posts it when no post landed yet. The delivery without `streaming` also completes the
-   * activity; if its edit fails it posts the final text anew, so a reply is never lost.
-   */
+  /** A failed final edit posts the reply anew, so it is never lost. */
   private async updateStreamedMessage(
     target: ConversationTarget,
     activity: ConversationActivityEntity,

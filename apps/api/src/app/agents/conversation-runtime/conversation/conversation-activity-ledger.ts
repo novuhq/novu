@@ -347,7 +347,6 @@ export class ConversationActivityLedger {
     });
   }
 
-  /** Records what a streamed message shows; `final` ends its streaming and updates the preview. */
   async updateStreamedMessage(params: {
     environmentId: string;
     organizationId: string;

@@ -213,7 +213,7 @@ export class SessionObserver extends Agent<Env, State> {
       const parts = this.parseSSEEvent(sseEvent, parser, acc);
       let hasError = false;
       for (const part of parts) {
-        // A reply's text reaches the webhook as `text-snapshot` parts, so `text-start` adds nothing.
+        // Webhooks carry reply text as `text-snapshot`.
         if (part.type === 'finish' || part.type === 'text-start') continue;
         if (part.type === 'error') hasError = true;
         if (part.type === 'text-delta') {
@@ -382,11 +382,7 @@ export class SessionObserver extends Agent<Env, State> {
     );
   }
 
-  /**
-   * Deltas are never sent one by one. When the webhook asks for snapshots, each delta
-   * folds into its message's snapshot still waiting to be sent, or queues a new snapshot
-   * with the full text so far. Returns the next sequence.
-   */
+  /** Folds a delta into its pending snapshot, or queues a new one with the full text. */
   private persistDelta(
     params: ObservationParams,
     sequence: number,
@@ -398,7 +394,7 @@ export class SessionObserver extends Agent<Env, State> {
     const latest = this.findSnapshot(params.sessionId, messageId);
     const snapshot: StreamPart = { type: 'text-snapshot', messageId, text: (latest?.text ?? '') + part.text };
 
-    // A snapshot in flight was serialized already; folding into it shows up in the next one.
+    // An in-flight snapshot was serialized already.
     if (latest?.status === 'pending') {
       this.ctx.storage.sql.exec('UPDATE events SET event_json = ? WHERE id = ?', JSON.stringify(snapshot), latest.id);
 
@@ -420,7 +416,6 @@ export class SessionObserver extends Agent<Env, State> {
       .toArray()[0];
   }
 
-  /** The `message` replaces its snapshot still waiting to be sent. */
   private dropPendingSnapshot(sessionId: string, messageId: string): void {
     const latest = this.findSnapshot(sessionId, messageId);
     if (latest?.status === 'pending') this.markDelivered(latest.id);
@@ -542,11 +537,7 @@ export class SessionObserver extends Agent<Env, State> {
     }
   }
 
-  /**
-   * Spaces snapshots by the interval: returns true and retries delivery later when the
-   * previous one was sent too recently. Meanwhile deltas keep folding into it, and a
-   * `message` drops it.
-   */
+  /** True when the previous snapshot was sent too recently; delivery retries later. */
   private deferSnapshot(params: ObservationParams): boolean {
     const waitMs = this.lastSnapshotSentAt + textSnapshotIntervalMs(params) - Date.now();
     if (waitMs <= 0) {
@@ -676,7 +667,7 @@ export class SessionObserver extends Agent<Env, State> {
   }
 }
 
-/** Minimum gap between `text-snapshot` webhooks; 0 (unset) drops text deltas. */
+/** 0 (unset) disables snapshots. */
 function textSnapshotIntervalMs(params: ObservationParams): number {
   return Number(params.webhook.metadata?.textSnapshotIntervalMs) || 0;
 }
