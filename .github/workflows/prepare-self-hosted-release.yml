@@ -30,9 +30,18 @@ jobs:
       latest-version: ${{ steps.get_version.outputs.latest-version }}
       sha: ${{ steps.get_version.outputs.sha }}
     steps:
+      - name: Resolve ref to build
+        id: get_ref
+        shell: bash
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
+          DEFAULT_REF: ${{ github.ref }}
+        run: |
+          REF="$(printf '%s' "$INPUT_BRANCH" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          echo "ref=${REF:-$DEFAULT_REF}" >> $GITHUB_OUTPUT
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          ref: ${{ inputs.branch || github.ref }}
+          ref: ${{ steps.get_ref.outputs.ref }}
       - name: Resolve release version
         id: get_version
         shell: bash
@@ -44,7 +53,8 @@ jobs:
           LERNA_VERSION="$(jq -r '.version' lerna.json)"
           if [ "$EVENT_NAME" == "workflow_dispatch" ]
           then
-            VERSION="${INPUT_VERSION#v}"
+            VERSION="$(printf '%s' "$INPUT_VERSION" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            VERSION="${VERSION#v}"
             if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
             then
               echo "::error::Invalid version '$INPUT_VERSION'. Expected a semantic version such as 0.24.8"
