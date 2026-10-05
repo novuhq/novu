@@ -81,7 +81,6 @@ export class ParseEventRequest {
     this.logger.setContext(this.constructor.name);
   }
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing trigger orchestration; AJV routing change only
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand): Promise<ParseEventRequestResult> {
     const transactionId = command.transactionId || generateTransactionId();
