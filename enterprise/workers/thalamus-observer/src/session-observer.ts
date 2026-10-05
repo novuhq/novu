@@ -2,7 +2,7 @@ import type { StreamPart } from '@novu/thalamus';
 import { Agent, type Connection, type ConnectionContext, type FiberRecoveryContext } from 'agents';
 import { type EventSourceMessage, EventSourceParserStream } from 'eventsource-parser/stream';
 import { LiveReplies } from './live-replies';
-import { providers } from './parsers';
+import { type EdgeAccumulator, providers } from './parsers';
 import type {
   DeliveryOutcome,
   EnqueueParams,
@@ -11,6 +11,7 @@ import type {
   MessageQueueRow,
   ObservationParams,
   ObservationStatus,
+  ProviderParser,
   State,
 } from './types';
 
@@ -19,6 +20,9 @@ const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 60_000;
 const MAX_QUEUE_SIZE = 50;
 const STALE_QUEUE_TTL_SECONDS = 600;
+
+/** A queued event: a stream part, or the observer's own queue-ready signal. */
+type QueuedEvent = StreamPart | { type: 'queue-ready'; request: unknown };
 
 export class SessionObserver extends Agent<Env, State> {
   initialState: State = { observation: null, queueState: 'idle' };
@@ -179,6 +183,33 @@ export class SessionObserver extends Agent<Env, State> {
       throw new Error(`Unsupported provider: ${params.provider}`);
     }
 
+    const body = await this.openStream(params, signal);
+    onConnected();
+
+    const eventStream = body.pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream());
+    const acc = parser.createAccumulator();
+    const live = new LiveReplies();
+    this.live = live;
+
+    let consumed: { sequence: number; paused: boolean };
+    try {
+      consumed = await this.consumeStream(eventStream, { params, parser, acc, live, fiberCtx, signal });
+    } finally {
+      live.endAll('aborted');
+      if (this.live === live) this.live = null;
+    }
+
+    if (consumed.paused) {
+      this.finalizeObservation(params, signal, 'pause-complete');
+    } else if (acc.done) {
+      this.emitFinishWebhook(params, params.sessionId, consumed.sequence, acc);
+      this.finalizeObservation(params, signal, 'terminal-complete');
+    } else {
+      this.finalizeObservation(params, signal, 'stream-error');
+    }
+  }
+
+  private async openStream(params: ObservationParams, signal: AbortSignal): Promise<ReadableStream<Uint8Array>> {
     const fetchHeaders: Record<string, string> = {
       ...params.headers,
       Accept: 'text/event-stream',
@@ -201,59 +232,58 @@ export class SessionObserver extends Agent<Env, State> {
       throw new Error(`SSE connection failed: ${response.status}`);
     }
 
-    onConnected();
+    return response.body;
+  }
 
-    const eventStream = response.body.pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream());
-
-    const acc = parser.createAccumulator();
+  /** Persists the stream's durable parts until it ends; `paused` when the turn awaits an action. */
+  private async consumeStream(
+    eventStream: ReadableStream<EventSourceMessage>,
+    run: {
+      params: ObservationParams;
+      parser: ProviderParser;
+      acc: EdgeAccumulator;
+      live: LiveReplies;
+      fiberCtx: { stash(data: unknown): void };
+      signal: AbortSignal;
+    }
+  ): Promise<{ sequence: number; paused: boolean }> {
+    const { params, parser, acc, live, fiberCtx, signal } = run;
     let sequence = this.getNextSequence(params.sessionId);
-    let pauseWebhookSent = false;
-    const live = new LiveReplies();
-    this.live = live;
 
-    try {
-      for await (const sseEvent of eventStream) {
-        if (signal.aborted) break;
+    for await (const sseEvent of eventStream) {
+      if (signal.aborted) break;
+      if (sseEvent.id) fiberCtx.stash({ ...params, lastEventId: sseEvent.id });
 
-        if (sseEvent.id) {
-          fiberCtx.stash({ ...params, lastEventId: sseEvent.id });
-        }
+      const persisted = this.persistParts(params.sessionId, this.parseSSEEvent(sseEvent, parser, acc), live, sequence);
+      sequence = persisted.sequence;
+      this.triggerDelivery(params);
 
-        const parts = this.parseSSEEvent(sseEvent, parser, acc);
-        let hasError = false;
-        for (const part of parts) {
-          if (part.type === 'finish') continue;
-          if (part.type === 'error') hasError = true;
-          const durable = live.handle(part);
-          if (durable) this.persistEvent(params.sessionId, sequence++, durable);
-        }
-
-        this.triggerDelivery(params);
-
-        if (hasError) break;
-
-        if (acc.done) {
-          if (acc.finishReason === 'requires-action') {
-            sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
-            pauseWebhookSent = true;
-          }
-
-          break;
-        }
+      if (persisted.hasError) break;
+      if (acc.done && acc.finishReason === 'requires-action') {
+        return { sequence: this.emitFinishWebhook(params, params.sessionId, sequence, acc), paused: true };
       }
-    } finally {
-      live.endAll('aborted');
-      if (this.live === live) this.live = null;
+      if (acc.done) break;
     }
 
-    if (acc.done && !pauseWebhookSent) {
-      sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
-      this.finalizeObservation(params, signal, 'terminal-complete');
-    } else if (pauseWebhookSent) {
-      this.finalizeObservation(params, signal, 'pause-complete');
-    } else {
-      this.finalizeObservation(params, signal, 'stream-error');
+    return { sequence, paused: false };
+  }
+
+  private persistParts(
+    sessionId: string,
+    parts: StreamPart[],
+    live: LiveReplies,
+    sequence: number
+  ): { sequence: number; hasError: boolean } {
+    let next = sequence;
+    let hasError = false;
+    for (const part of parts) {
+      if (part.type === 'finish') continue;
+      if (part.type === 'error') hasError = true;
+      const durable = live.handle(part);
+      if (durable) this.persistEvent(sessionId, next++, durable);
     }
+
+    return { sequence: next, hasError };
   }
 
   private emitFinishWebhook(
@@ -282,7 +312,7 @@ export class SessionObserver extends Agent<Env, State> {
   ): void {
     if (endState === 'terminal-complete') {
       this.updateObservation({
-        ...this.state.observation!,
+        ...(this.state.observation ?? params),
         status: 'completed',
       });
 
@@ -320,7 +350,7 @@ export class SessionObserver extends Agent<Env, State> {
 
     const request = JSON.parse(row.request_json);
     const webhook = JSON.parse(row.webhook_json);
-    const event = { type: 'queue-ready', request } as unknown as StreamPart;
+    const event: QueuedEvent = { type: 'queue-ready', request };
     const sequence = this.getNextSequence(sessionId);
     this.persistEvent(sessionId, sequence, event);
 
@@ -372,7 +402,7 @@ export class SessionObserver extends Agent<Env, State> {
 
   /* ---------- SQLite event queue ---------- */
 
-  private persistEvent(sessionId: string, sequence: number, event: StreamPart): void {
+  private persistEvent(sessionId: string, sequence: number, event: QueuedEvent): void {
     const serializable =
       event.type === 'error'
         ? {
@@ -459,7 +489,7 @@ export class SessionObserver extends Agent<Env, State> {
       if (pending.length === 0) break;
 
       const row = pending[0];
-      const event = JSON.parse(row.event_json) as StreamPart;
+      const event = JSON.parse(row.event_json) as QueuedEvent;
       const outcome = await this.deliverOne(row, event, params);
 
       switch (outcome) {
@@ -502,7 +532,7 @@ export class SessionObserver extends Agent<Env, State> {
     }
   }
 
-  private async deliverOne(row: EventRow, event: StreamPart, params: ObservationParams): Promise<DeliveryOutcome> {
+  private async deliverOne(row: EventRow, event: QueuedEvent, params: ObservationParams): Promise<DeliveryOutcome> {
     const { sessionId, runId, turnId, provider, webhook } = params;
 
     if (row.attempts >= MAX_ATTEMPTS) return 'exhausted';
