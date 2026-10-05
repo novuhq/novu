@@ -15,6 +15,11 @@ on:
         description: 'Image version tag to publish, e.g. 0.24.8'
         required: true
         type: string
+      services:
+        description: 'Comma-separated services to build (api, worker, ws, webhook, inbound-mail, web, widget, embed) or "all"'
+        required: false
+        type: string
+        default: 'all'
 
 permissions:
   contents: write
@@ -29,7 +34,35 @@ jobs:
     outputs:
       latest-version: ${{ steps.get_version.outputs.latest-version }}
       sha: ${{ steps.get_version.outputs.sha }}
+      services: ${{ steps.get_services.outputs.services }}
     steps:
+      - name: Resolve services to build
+        id: get_services
+        shell: bash
+        env:
+          INPUT_SERVICES: ${{ inputs.services }}
+        run: |
+          set -f
+          ALL_SERVICES="api worker inbound-mail web webhook widget ws embed"
+          SELECTED="$(printf '%s' "$INPUT_SERVICES" | tr ',' ' ')"
+          if [ -z "${SELECTED// /}" ] || [ "$(printf '%s' "$SELECTED" | tr -d '[:space:]')" == "all" ]
+          then
+            SELECTED="$ALL_SERVICES"
+          fi
+          NAMES=()
+          for SERVICE in $SELECTED
+          do
+            SERVICE="${SERVICE#novu/}"
+            if [[ " $ALL_SERVICES " != *" $SERVICE "* ]]
+            then
+              echo "::error::Unknown service '$SERVICE'. Valid services are: ${ALL_SERVICES// /, } or all"
+              exit 1
+            fi
+            NAMES+=("novu/$SERVICE")
+          done
+          SERVICES_JSON="$(printf '%s\n' "${NAMES[@]}" | jq -R . | jq -cs 'unique')"
+          echo "services=$SERVICES_JSON" >> $GITHUB_OUTPUT
+          echo "Building services: \`$SERVICES_JSON\`" >> $GITHUB_STEP_SUMMARY
       - name: Resolve ref to build
         id: get_ref
         shell: bash
@@ -83,7 +116,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed']
+        name: ${{ fromJSON(needs.prepare.outputs.services) }}
     steps:
       - name: Git Checkout with Submodules
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
