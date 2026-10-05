@@ -23,7 +23,7 @@ import { AgentConversationService } from '../conversation-runtime/conversation/a
 import type { UnseenThreadMessage } from '../conversation-runtime/ingress/seed-slack-thread-history';
 import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
-import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum, textSnapshotIntervalMs } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
 import { buildLiveSessionMessages, buildOriginAssistantMessage } from './build-live-session-messages';
 import {
@@ -505,21 +505,5 @@ export class ManagedAgentService implements OnModuleInit {
     }
 
     return metadata;
-  }
-}
-
-/**
- * How often the observer may send the text so far of a reply being generated, kept under
- * the platform's edit rate limit. Other platforms get only the final message.
- */
-function textSnapshotIntervalMs(platform: AgentPlatformEnum, platformThreadId: string): number | undefined {
-  switch (platform) {
-    case AgentPlatformEnum.SLACK:
-      return 1000;
-    case AgentPlatformEnum.TELEGRAM:
-      // About one edit a second in private chats, 20 a minute in groups (negative chat ids).
-      return platformThreadId.includes(':-') ? 3100 : 1100;
-    default:
-      return undefined;
   }
 }

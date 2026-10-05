@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
@@ -8,7 +8,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
-import { toDeliveryError } from '../../shared/util/delivery-error.util';
+import { isUnchangedTelegramEditError, toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
@@ -218,7 +218,11 @@ export class OutboundGateway {
     }
   }
 
-  /** Edits a streamed message to the latest text; a delivery without `streaming` also completes its activity. */
+  /**
+   * Shows the latest text of a streamed message: edits the posted message, skipping unchanged
+   * text, or posts it when no post landed yet. The delivery without `streaming` also completes the
+   * activity; if its edit fails it posts the final text anew, so a reply is never lost.
+   */
   private async updateStreamedMessage(
     target: ConversationTarget,
     activity: ConversationActivityEntity,
@@ -226,33 +230,94 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
-    if (!activity.platformMessageId) {
-      throw new ConflictException(`Streamed message ${activity.identifier} is still being posted`);
+    const content = this.extractTextFallback(msg);
+    const final = !options?.streaming;
+    const shown = activity.platformMessageId;
+    let sent: SentMessageInfo = {
+      messageId: shown ?? '',
+      platformThreadId: activity.platformThreadId ?? target.platformThreadId,
+    };
+
+    if (!shown) {
+      sent = await this.postToConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        msg,
+        options,
+        target.workspaceId,
+        persist.activityIdentifier
+      );
+    } else if (content.trim() !== activity.content.trim()) {
+      sent = await this.editStreamedMessage(target, shown, msg, persist, options, final);
     }
 
-    const sent = await this.editInConversation(
-      target.agentId,
-      target.integrationIdentifier,
-      target.platform,
-      target.platformThreadId,
-      activity.platformMessageId,
-      msg,
-      options,
-      target.workspaceId
-    );
-
-    if (!options?.streaming) {
-      await this.conversation.completeStreamedMessage({
-        environmentId: persist.environmentId,
-        organizationId: persist.organizationId,
-        conversationId: persist.conversationId,
-        activityId: activity._id,
-        content: this.extractTextFallback(msg),
-        richContent: extractReplyRichContent(msg),
-      });
-    }
+    await this.conversation.updateStreamedMessage({
+      environmentId: persist.environmentId,
+      organizationId: persist.organizationId,
+      conversationId: persist.conversationId,
+      activityId: activity._id,
+      platformMessageId: sent.messageId,
+      content,
+      richContent: extractReplyRichContent(msg),
+      final,
+    });
 
     return sent;
+  }
+
+  private async editStreamedMessage(
+    target: ConversationTarget,
+    platformMessageId: string,
+    msg: OutboundMessage,
+    persist: OutboundPersistContext,
+    options: OutboundDeliveryOptions | undefined,
+    final: boolean
+  ): Promise<SentMessageInfo> {
+    try {
+      return await this.editInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        platformMessageId,
+        msg,
+        options,
+        target.workspaceId
+      );
+    } catch (err) {
+      if (target.platform === AgentPlatformEnum.TELEGRAM && isUnchangedTelegramEditError(err)) {
+        return { messageId: platformMessageId, platformThreadId: target.platformThreadId };
+      }
+
+      if (!final) {
+        throw err;
+      }
+
+      this.logger.warn({ err, platformMessageId }, 'Final edit of a streamed reply failed; posting it anew');
+      const sent = await this.postToConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        msg,
+        options,
+        target.workspaceId,
+        persist.activityIdentifier
+      );
+      await this.deleteInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platformThreadId,
+        platformMessageId,
+        target.workspaceId
+      ).catch((deleteErr) =>
+        this.logger.warn({ err: deleteErr, platformMessageId }, 'Failed to delete a stale preview')
+      );
+
+      return sent;
+    }
   }
 
   async edit(
@@ -684,14 +749,7 @@ export class OutboundGateway {
 
     const edited = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.editMessage(platformThreadId, platformMessageId, editPayload)
-    ).catch((err) => {
-      // Telegram rejects an edit to the text the message already shows.
-      if (err instanceof Error && /message is not modified/i.test(err.message)) {
-        return { id: platformMessageId, threadId: platformThreadId };
-      }
-
-      return toDeliveryError(err);
-    });
+    ).catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }

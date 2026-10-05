@@ -347,14 +347,16 @@ export class ConversationActivityLedger {
     });
   }
 
-  /** Stores the final content of a streamed message; it no longer streams. */
-  async completeStreamedMessage(params: {
+  /** Records what a streamed message shows; `final` ends its streaming and updates the preview. */
+  async updateStreamedMessage(params: {
     environmentId: string;
     organizationId: string;
     conversationId: string;
     activityId: string;
+    platformMessageId: string;
     content: string;
     richContent?: Record<string, unknown>;
+    final: boolean;
   }): Promise<void> {
     await this.activityRepository.update(
       {
@@ -364,22 +366,29 @@ export class ConversationActivityLedger {
         _id: params.activityId,
       },
       {
-        $set: { content: params.content, ...(params.richContent ? { richContent: params.richContent } : {}) },
-        $unset: { streaming: 1 },
+        $set: {
+          platformMessageId: params.platformMessageId,
+          content: params.content,
+          ...(params.richContent ? { richContent: params.richContent } : {}),
+        },
+        ...(params.final ? { $unset: { streaming: 1 } } : {}),
       }
     );
-    await this.conversationRepository.touchPreview(
-      params.environmentId,
-      params.organizationId,
-      params.conversationId,
-      params.content
-    );
+
+    if (params.final) {
+      await this.conversationRepository.touchPreview(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        params.content
+      );
+    }
   }
 
   async findStreamingAgentMessages(
     environmentId: string,
     conversationId: string
-  ): Promise<ConversationActivityEntity[]> {
+  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformMessageId' | 'platformThreadId'>[]> {
     return this.activityRepository.find(
       {
         _environmentId: environmentId,
@@ -387,7 +396,7 @@ export class ConversationActivityLedger {
         type: ConversationActivityTypeEnum.MESSAGE,
         streaming: true,
       },
-      '*'
+      ['_id', 'platformMessageId', 'platformThreadId']
     );
   }
 

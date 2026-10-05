@@ -115,3 +115,16 @@ export function toDeliveryError(err: unknown): never {
 
   throw new HttpException(payload, status);
 }
+
+/** A delivery error (from `toDeliveryError`) for an edit to the text a Telegram message already shows. */
+export function isUnchangedTelegramEditError(err: unknown): boolean {
+  if (!(err instanceof HttpException)) {
+    return false;
+  }
+
+  const response = err.getResponse();
+  const message =
+    typeof response === 'object' && response !== null ? (response as { message?: unknown }).message : response;
+
+  return typeof message === 'string' && /message is not modified/i.test(message);
+}
