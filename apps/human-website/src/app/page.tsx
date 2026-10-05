@@ -13,9 +13,14 @@ export default function HomePage() {
         <p className="mt-3.5 text-[15px] leading-[1.375] tracking-tight text-foreground/70">
           Human is a tiny CLI that lets AI agents reach you on Telegram, Slack or email when they need a decision.
         </p>
-        <a href="https://www.npmjs.com/package/@novu/human" className={buttonClassName('primary', 'mt-8')}>
-          Get @novu/human
-        </a>
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          <a href="https://www.npmjs.com/package/@novu/human" className={buttonClassName('primary')}>
+            Get @novu/human
+          </a>
+          <a href="/sign-in" className={buttonClassName('text')}>
+            Sign in
+          </a>
+        </div>
       </section>
     </SiteFrame>
   );

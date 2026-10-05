@@ -1,8 +1,9 @@
 'use client';
 
-import { type ReactNode, useId, useState } from 'react';
+import { useState } from 'react';
 import QRCode from 'react-qr-code';
 
+import { Panel } from '@/components/site/panel';
 import { Button, buttonClassName } from '@/components/ui/button';
 import { useInviteStatus } from '@/hooks/use-invite-status';
 import {
@@ -408,31 +409,6 @@ function InactiveInvite({ reason, agentName }: { reason: InactiveReason; agentNa
         />
       );
   }
-}
-
-type PanelProps = {
-  eyebrow: string;
-  title: ReactNode;
-  description?: ReactNode;
-  children?: ReactNode;
-};
-
-/** Headline block in the style of the gethuman.md call to action, with room for content below. */
-function Panel({ eyebrow, title, description, children }: PanelProps) {
-  const titleId = useId();
-
-  return (
-    <section aria-labelledby={titleId} className="mx-auto w-full max-w-120">
-      <p className="font-mono text-sm tracking-tight text-foreground/50">{eyebrow}</p>
-      <h1 id={titleId} className="mt-3 text-3xl leading-[1.125] tracking-[-0.04em] md:text-[40px]">
-        {title}
-      </h1>
-      {description && (
-        <p className="mt-3.5 text-[15px] leading-[1.375] tracking-tight text-foreground/70">{description}</p>
-      )}
-      {children && <div className="mt-8">{children}</div>}
-    </section>
-  );
 }
 
 /** `https://t.me/novu_bot?start=…` → `novu_bot`. */
