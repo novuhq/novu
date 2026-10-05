@@ -84,6 +84,23 @@ export function resolveTo(config: HumanCliConfig, toFlag?: string): string | str
   return config.subscriberId;
 }
 
+/**
+ * Which of your channel defaults apply to a send. HUMAN_VIA pairs with HUMAN_TO
+ * as the default recipient (the headless setup), so it applies unless `--to`
+ * names someone else. The saved default channel describes how *you* like to be
+ * reached, so it only applies when every resolved recipient is you.
+ */
+export function channelDefaultsFor(
+  config: HumanCliConfig,
+  toFlag: string | undefined,
+  recipients: string | string[]
+): { useEnvVia: boolean; useSavedDefault: boolean } {
+  const ids = Array.isArray(recipients) ? recipients : [recipients];
+  const onlyYou = ids.length > 0 && ids.every((id) => id === config.subscriberId);
+
+  return { useEnvVia: !toFlag || onlyYou, useSavedDefault: onlyYou };
+}
+
 /** Shared engine behind ask / approve / choose / tell. */
 export async function runInteraction(kind: InteractionKind, prompt: string, options: InteractOptions): Promise<never> {
   try {
@@ -95,9 +112,9 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
       fail(NOT_SET_UP_MESSAGE);
     }
 
-    // `--via`, HUMAN_VIA, or the saved defaultChannel preference; omit
-    // via and the API picks when only one channel is linked.
-    const via = resolveVia(config, options.via);
+    // `--via` always wins. Otherwise only the defaults that fit the recipients
+    // apply; omit via and the API uses each human's own default channel.
+    const via = resolveVia(config, options.via, channelDefaultsFor(config, options.to, to));
 
     const parsedOptions = options.option?.map(parseIdLabelOption);
     const extraActions = options.extraAction?.map(parseIdLabelOption);
@@ -236,6 +253,8 @@ const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 export interface KeylessCapDetails {
   claimUrl?: string;
   cap?: number;
+  /** The API has `human login` (the Human website); self-hosted and older APIs need a secret key instead. */
+  browserLogin?: boolean;
 }
 
 /**
@@ -252,6 +271,7 @@ export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
     code?: unknown;
     claimUrl?: unknown;
     cap?: unknown;
+    browserLogin?: unknown;
   };
 
   if (body.code !== KEYLESS_CAP_CODE && !/keyless demo/i.test(err.message)) {
@@ -261,6 +281,7 @@ export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
   return {
     claimUrl: typeof body.claimUrl === 'string' ? body.claimUrl : undefined,
     cap: typeof body.cap === 'number' ? body.cap : undefined,
+    browserLogin: body.browserLogin === true,
   };
 }
 
@@ -268,13 +289,23 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
   const count = details.cap ? `${details.cap} free messages` : 'free messages';
   const lines = [`You've used the ${count} of this keyless demo.`];
 
-  if (details.claimUrl) {
-    lines.push(`Sign up to keep your channels and continue: ${details.claimUrl}`);
-  } else {
-    lines.push('Sign up for a free Novu account to keep your channels and continue.');
+  if (details.browserLogin) {
+    lines.push('To keep your channels and continue, run: human login');
+
+    if (details.claimUrl) {
+      lines.push(
+        `(Or sign up from this link, which we also sent to your linked channel, then run \`human login\`: ${details.claimUrl})`
+      );
+    }
+
+    return lines.join('\n');
   }
 
+  // Without `human login` (self-hosted or older APIs), the operator signs up and copies the environment's key.
   lines.push(
+    details.claimUrl
+      ? `Sign up to keep your channels and continue: ${details.claimUrl}`
+      : 'Sign up for a free Novu account to keep your channels and continue.',
     '(We also sent this link to you on your linked channel.)',
     'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
   );

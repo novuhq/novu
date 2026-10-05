@@ -61,7 +61,8 @@ describe('GetSubscription #novu-v2', async () => {
     throw new Error('ee-billing does not exist');
   }
 
-  const { GetPlatformNotificationUsageCommand, GetSubscription, GetSubscriptionCommand } = eeBilling;
+  const { GetOrganizationPeriodUsageCommand, GetStripeSubscription, GetSubscription, GetSubscriptionCommand } =
+    eeBilling;
 
   const communityOrganizationRepo = {
     findById: () =>
@@ -70,25 +71,18 @@ describe('GetSubscription #novu-v2', async () => {
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
       }),
   };
-  const getPlatformNotificationUsage = {
-    execute: () =>
-      Promise.resolve([
-        {
-          _id: session.organization._id,
-          notificationsCount: 1000000,
-          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-        },
-      ]),
+  const getOrganizationPeriodUsage = {
+    execute: () => Promise.resolve({ notificationsCount: 1000000 }),
   };
-  let getOrCreateCustomer = {
+  let getOrCreateCustomer: { execute: () => Promise<DeepPartial<Stripe.Customer>> } = {
     execute: () => Promise.resolve(mockedStripeCustomer),
   };
-  let getPlatformNotificationUsageSpy: sinon.SinonSpy;
+  let getOrganizationPeriodUsageSpy: sinon.SinonSpy;
 
   const createUseCase = () => {
     const useCase = new GetSubscription(
-      getOrCreateCustomer as any,
-      getPlatformNotificationUsage as any,
+      new GetStripeSubscription(getOrCreateCustomer),
+      getOrganizationPeriodUsage,
       communityOrganizationRepo
     );
 
@@ -98,11 +92,11 @@ describe('GetSubscription #novu-v2', async () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    getPlatformNotificationUsageSpy = sinon.spy(getPlatformNotificationUsage, 'execute');
+    getOrganizationPeriodUsageSpy = sinon.spy(getOrganizationPeriodUsage, 'execute');
   });
 
   afterEach(() => {
-    getPlatformNotificationUsageSpy.resetHistory();
+    getOrganizationPeriodUsageSpy.resetHistory();
   });
 
   it('should return the correct subscription details for a given organization', async () => {
@@ -141,8 +135,8 @@ describe('GetSubscription #novu-v2', async () => {
       })
     );
 
-    expect(getPlatformNotificationUsageSpy.lastCall.args.at(0)).to.deep.equal(
-      GetPlatformNotificationUsageCommand.create({
+    expect(getOrganizationPeriodUsageSpy.lastCall.args.at(0)).to.deep.equal(
+      GetOrganizationPeriodUsageCommand.create({
         organizationId: session.organization._id,
         startDate: new Date('2024-04-05T00:00:00.000Z'),
         endDate: new Date('2024-05-05T00:00:00.000Z'),
@@ -177,7 +171,7 @@ describe('GetSubscription #novu-v2', async () => {
               },
             ],
           },
-        } as unknown as Stripe.Customer),
+        }),
     };
 
     try {
@@ -220,7 +214,7 @@ describe('GetSubscription #novu-v2', async () => {
               },
             ],
           },
-        } as unknown as Stripe.Customer),
+        }),
     };
 
     try {

@@ -3,6 +3,7 @@ import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getNovuInboxContext } from '@/api/novu-context';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { APP_ID, IS_SELF_HOSTED } from '@/config';
@@ -103,6 +104,7 @@ export const InboxButton = ({
   side?: 'top' | 'bottom' | 'left' | 'right';
 }) => {
   const { user } = useUser();
+  const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const { isWorkflowEditorPage: isTestPage } = useWorkflowEditorPage();
   const { currentOrganization } = useAuth();
@@ -177,6 +179,7 @@ export const InboxButton = ({
       context={isTestPage ? undefined : connectContext?.context}
       contextHash={isTestPage ? undefined : connectContext?.contextHash}
       localization={localization}
+      routerPush={(path: string) => navigate(path)}
     >
       <InboxInner align={align} side={side} />
     </Inbox>

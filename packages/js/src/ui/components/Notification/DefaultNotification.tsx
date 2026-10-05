@@ -5,7 +5,7 @@ import { SeverityLevelEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
 import { createNotificationItemController } from '../../core/item/controller';
 import { notificationItemStyles, SEVERITY_TO_BAR_KEYS, SEVERITY_TO_NOTIFICATION_KEYS } from '../../core/style/tables';
-import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
+import { cn, createPresence, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
 import { Clock as DefaultClock } from '../../icons/Clock';
 import {
   AvatarRenderer,
@@ -50,6 +50,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   });
 
   const severity = createMemo(() => props.notification.severity ?? SeverityLevelEnum.NONE);
+
+  const [dotElement, setDotElement] = createSignal<HTMLSpanElement>();
+  const dot = createPresence({ present: () => !props.notification.isRead, element: dotElement, appear: false });
 
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
@@ -309,8 +312,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       </div>
 
       <div class={styles.dotContainer.className}>
-        <Show when={!props.notification.isRead}>
+        <Show when={dot.isMounted()}>
           <span
+            ref={setDotElement}
+            data-state={dot.state()}
             class={style({
               key: styles.dot.key,
               className: styles.dot.className,
