@@ -83,21 +83,3 @@ export function usesReplyBasedApprovals(platform: string): boolean {
 export function usesProtocolEventApprovals(platform: string): boolean {
   return platform === AgentPlatformEnum.WEB_CHAT;
 }
-
-/** Gap between streamed edits, under the platform's edit rate limit; `undefined` disables streaming. */
-export function textSnapshotIntervalMs(platform: string, platformThreadId: string): number | undefined {
-  switch (platform) {
-    case AgentPlatformEnum.SLACK:
-      return 1000;
-    case AgentPlatformEnum.TELEGRAM:
-      // About one edit a second in private chats, 20 a minute in groups.
-      return isTelegramGroupThread(platformThreadId) ? 3100 : 1100;
-    default:
-      return undefined;
-  }
-}
-
-/** Telegram group and channel chat ids are negative: `telegram:-100…`. */
-function isTelegramGroupThread(platformThreadId: string): boolean {
-  return platformThreadId.includes(':-');
-}

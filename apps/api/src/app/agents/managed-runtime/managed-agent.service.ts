@@ -23,7 +23,7 @@ import { AgentConversationService } from '../conversation-runtime/conversation/a
 import type { UnseenThreadMessage } from '../conversation-runtime/ingress/seed-slack-thread-history';
 import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
-import { AgentPlatformEnum, textSnapshotIntervalMs } from '../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
 import { buildLiveSessionMessages, buildOriginAssistantMessage } from './build-live-session-messages';
 import {
@@ -497,11 +497,6 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (input.suppressReply) {
       metadata.suppressReply = 'true';
-    }
-
-    const snapshotIntervalMs = textSnapshotIntervalMs(input.platform, input.platformThreadId);
-    if (snapshotIntervalMs) {
-      metadata.textSnapshotIntervalMs = String(snapshotIntervalMs);
     }
 
     return metadata;

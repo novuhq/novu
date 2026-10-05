@@ -14,6 +14,7 @@ import { formatToolInputSummary } from '../conversation-runtime/reply/handle-pla
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
+import { LiveReplyStreamer } from '../managed-runtime/live-reply-streamer.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
@@ -75,6 +76,7 @@ export class AgentEventSink {
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
     private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly liveReplyStreamer: LiveReplyStreamer,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -193,21 +195,24 @@ export class AgentEventSink {
 
         return 'accepted';
 
-      case 'message-snapshot':
+      case 'message-start':
         if (context.source === 'managed') {
-          await this.showMessageSnapshot(event, baseFields, context);
-        }
-
-        return 'accepted';
-
-      case 'step-end':
-        if (context.source === 'managed') {
-          await this.discardInterruptedStreams(context);
+          // The streamer delivers the reply through this path; its `message` webhook is skipped.
+          this.liveReplyStreamer.start(context, event.messageId, (text, previewMessageId) =>
+            this.handleMessageEvent(
+              { type: 'message', role: 'assistant', messageId: event.messageId, content: { markdown: text } },
+              baseFields,
+              context,
+              envelope.runId,
+              previewMessageId
+            )
+          );
         }
 
         return 'accepted';
 
       case 'step-start':
+      case 'step-end':
       case 'thinking-start':
       case 'thinking-delta':
       case 'thinking-end':
@@ -217,7 +222,6 @@ export class AgentEventSink {
       case 'tool-approval-response':
       case 'mcp-connection-request':
       case 'mcp-connection-result':
-      case 'message-start':
       case 'message-end':
         this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Agent event no-op');
 
@@ -307,7 +311,8 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'message' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string
+    runId: string,
+    replacePlatformMessageId?: string
   ): Promise<IngestOutcome> {
     // Runtime ingest accepts assistant messages only. Subscriber turns arrive
     // through the inbound HTTP endpoint, not through this path.
@@ -339,6 +344,7 @@ export class AgentEventSink {
         reply,
         quoteReply: event.quoteReply,
         activityIdentifier: event.messageId,
+        replacePlatformMessageId,
       }),
       context,
       'message',
@@ -877,61 +883,6 @@ export class AgentEventSink {
     }
   }
 
-  /** Best effort: a failed snapshot must not hold up the session's webhooks. */
-  private async showMessageSnapshot(
-    event: Extract<AgentEvent, { type: 'message-snapshot' }>,
-    baseFields: BaseCommandFields,
-    context: AgentEventContext
-  ): Promise<void> {
-    if (context.suppressReply || !event.text.trim()) {
-      return;
-    }
-
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...baseFields,
-          reply: { markdown: event.text },
-          activityIdentifier: event.messageId,
-          streaming: true,
-        })
-      );
-    } catch (err) {
-      this.logger.warn({ err, messageId: event.messageId }, 'Failed to show the text of a streamed reply');
-    }
-  }
-
-  /** A message still streaming after its model request ended was interrupted. */
-  private async discardInterruptedStreams(context: AgentEventContext): Promise<void> {
-    const streams = await this.conversationService.findStreamingAgentMessages(
-      context.environmentId,
-      context.conversationId
-    );
-
-    for (const activity of streams) {
-      try {
-        if (activity.platformMessageId && context.agentId) {
-          await this.outboundGateway.deleteInConversation(
-            context.agentId,
-            context.integrationIdentifier,
-            activity.platformThreadId,
-            activity.platformMessageId,
-            context.channel?.workspace?.id
-          );
-        }
-
-        await this.conversationService.deleteAgentMessage({
-          environmentId: context.environmentId,
-          organizationId: context.organizationId,
-          conversationId: context.conversationId,
-          activityId: activity._id,
-        });
-      } catch (err) {
-        this.logger.warn({ err, activityId: activity._id }, 'Failed to remove an interrupted streamed reply');
-      }
-    }
-  }
-
   private async isDuplicateMessage(environmentId: string, conversationId: string, messageId: string): Promise<boolean> {
     if (typeof messageId !== 'string' || messageId.length === 0) {
       return false;
@@ -943,8 +894,7 @@ export class AgentEventSink {
       messageId
     );
 
-    // A streaming message still needs its final delivery.
-    return existing !== null && !existing.streaming;
+    return existing !== null;
   }
 
   /**

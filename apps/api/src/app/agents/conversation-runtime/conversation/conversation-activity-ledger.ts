@@ -347,58 +347,6 @@ export class ConversationActivityLedger {
     });
   }
 
-  async updateStreamedMessage(params: {
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    activityId: string;
-    platformMessageId: string;
-    content: string;
-    richContent?: Record<string, unknown>;
-    final: boolean;
-  }): Promise<void> {
-    await this.activityRepository.update(
-      {
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        _conversationId: params.conversationId,
-        _id: params.activityId,
-      },
-      {
-        $set: {
-          platformMessageId: params.platformMessageId,
-          content: params.content,
-          ...(params.richContent ? { richContent: params.richContent } : {}),
-        },
-        ...(params.final ? { $unset: { streaming: 1 } } : {}),
-      }
-    );
-
-    if (params.final) {
-      await this.conversationRepository.touchPreview(
-        params.environmentId,
-        params.organizationId,
-        params.conversationId,
-        params.content
-      );
-    }
-  }
-
-  async findStreamingAgentMessages(
-    environmentId: string,
-    conversationId: string
-  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformMessageId' | 'platformThreadId'>[]> {
-    return this.activityRepository.find(
-      {
-        _environmentId: environmentId,
-        _conversationId: conversationId,
-        type: ConversationActivityTypeEnum.MESSAGE,
-        streaming: true,
-      },
-      ['_id', 'platformMessageId', 'platformThreadId']
-    );
-  }
-
   async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
     const toolName = params.toolName;
     const sequence = await this.resolveEventSequence(
@@ -920,7 +868,6 @@ export class ConversationActivityLedger {
           toolData: params.toolData,
           type,
           sequence,
-          streaming: params.streaming,
           environmentId: params.environmentId,
           organizationId: params.organizationId,
           session,

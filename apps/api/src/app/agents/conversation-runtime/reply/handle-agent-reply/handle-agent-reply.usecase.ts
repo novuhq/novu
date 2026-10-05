@@ -106,12 +106,6 @@ export class HandleAgentReply {
       return this.deliverPlan(command, conversation, channel, command.plan);
     }
 
-    if (command.streaming && command.reply) {
-      await this.assertOutboundWithinLimitUnlessSystemGenerated(command, conversation, channel);
-
-      return this.deliverMessage(command, conversation, channel, command.reply, agentName);
-    }
-
     return this.completeReplyTurn(command, conversation, channel, agentName);
   }
 
@@ -469,7 +463,11 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
-      { slackNative: resolved.slackNative, quoteReply: command.quoteReply, streaming: command.streaming }
+      {
+        slackNative: resolved.slackNative,
+        quoteReply: command.quoteReply,
+        replacePlatformMessageId: command.replacePlatformMessageId,
+      }
     );
   }
 
