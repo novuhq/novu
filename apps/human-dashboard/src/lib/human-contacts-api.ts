@@ -1,8 +1,7 @@
 import 'server-only';
 
 import type { HumanAccount } from './human-account';
-import { notAvailableYet } from './human-api';
-import { requestPageForAccount } from './human-api-key';
+import { requestForAccount, requestPageForAccount } from './human-api-key';
 
 const DEFAULT_PAGE_SIZE = 50;
 /** `MAX_CONTACTS_LIMIT` of the API. */
@@ -17,8 +16,34 @@ export type Contact = {
   lastName?: string;
   email?: string;
   phone?: string;
+  /** Where the relay agent can reach them, one entry per kind of channel. Empty until they connect one. */
+  channels: ContactChannel[];
+  /** The channel used when a question doesn't name one. */
+  defaultVia?: ContactChannelVia;
+  /** `joined` once they're reachable on a channel; `invite_sent` until then. */
+  status: ContactStatus;
+  /** The newest invite link that still works. Missing when none was sent, or it expired or was declined. */
+  invite?: ContactInvite;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ContactChannelVia = 'telegram' | 'slack' | 'email';
+
+export type ContactChannel = {
+  via: ContactChannelVia;
+  /** ISO timestamp when they connected it. Email has none. */
+  connectedAt?: string;
+  isDefault: boolean;
+};
+
+export type ContactStatus = 'joined' | 'invite_sent';
+
+export type ContactInvite = {
+  /** The invite page to send them. */
+  url?: string;
+  /** ISO timestamp when the link stops working. */
+  expiresAt: string;
 };
 
 export type ContactsPage = {
@@ -27,14 +52,16 @@ export type ContactsPage = {
   next: string | null;
 };
 
-/** Which channels a contact connected, and which one is their default. */
-export type ContactChannelStatus = {
-  via: 'telegram' | 'slack' | 'email';
-  connected: boolean;
-  isDefault: boolean;
+export type RemovedContact = {
+  id: string;
+  /** How many open questions to them were cancelled. */
+  canceledInteractions: number;
 };
 
-type ApiContact = Omit<Contact, 'name'>;
+type ApiContact = Omit<Contact, 'name' | 'channels' | 'status'> & {
+  channels?: ContactChannel[];
+  status?: ContactStatus;
+};
 
 /** One page of the operator's contacts. */
 export async function listContactsPage(
@@ -66,14 +93,14 @@ export async function listAllContacts(account: HumanAccount): Promise<Contact[]>
   return contacts;
 }
 
-/** Not in the API yet. */
-export async function removeContact(_account: HumanAccount, _contactId: string): Promise<void> {
-  notAvailableYet('Removing a contact');
-}
-
-/** Not in the API yet: contacts come back without their channels. */
-export async function listContactChannels(_account: HumanAccount, _contactId: string): Promise<ContactChannelStatus[]> {
-  notAvailableYet('Seeing a contact’s channels');
+/**
+ * Removes a contact for good: their invite links stop working, the open questions to them are cancelled
+ * and agents can no longer reach them.
+ */
+export function removeContact(account: HumanAccount, contactId: string): Promise<RemovedContact> {
+  return requestForAccount<RemovedContact>(account, `/v1/human/contacts/${encodeURIComponent(contactId)}`, {
+    method: 'DELETE',
+  });
 }
 
 function toContact(contact: ApiContact): Contact {
@@ -84,6 +111,10 @@ function toContact(contact: ApiContact): Contact {
     lastName: contact.lastName,
     email: contact.email,
     phone: contact.phone,
+    channels: Array.isArray(contact.channels) ? contact.channels : [],
+    defaultVia: contact.defaultVia,
+    status: contact.status === 'joined' ? 'joined' : 'invite_sent',
+    invite: contact.invite,
     createdAt: contact.createdAt,
     updatedAt: contact.updatedAt,
   };
