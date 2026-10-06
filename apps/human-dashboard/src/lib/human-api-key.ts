@@ -5,7 +5,7 @@ import { cache } from 'react';
 import { type JsonBody, unwrapData } from './api-response';
 import type { HumanAccount } from './human-account';
 import type { HumanRegion } from './human-accounts-api';
-import { type HumanApiRequest, notAvailableYet, requestWithSecretKey, requestWithDashboardSecret } from './human-api';
+import { type HumanApiRequest, notAvailableYet, requestWithDashboardSecret, requestWithSecretKey } from './human-api';
 
 /**
  * The backing organization's Development secret key, the one `human login` hands to the CLI. It's read

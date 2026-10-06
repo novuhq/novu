@@ -15,7 +15,11 @@ export type HumanApiRequest = {
  * The private `/v1/human/accounts*` endpoints. They trust the secret shared with the Novu API,
  * so only this server may call them; the browser never sees the secret or the keys they return.
  */
-export function requestWithDashboardSecret(region: HumanRegion, path: string, init?: HumanApiRequest): Promise<JsonBody> {
+export function requestWithDashboardSecret(
+  region: HumanRegion,
+  path: string,
+  init?: HumanApiRequest
+): Promise<JsonBody> {
   return send(region, path, { 'x-human-dashboard-secret': process.env.HUMAN_DASHBOARD_API_SECRET ?? '' }, init);
 }
 
