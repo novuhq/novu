@@ -475,7 +475,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       }
 
       if (event.stop_reason.type === 'requires_action') {
-        return event.stop_reason.event_ids.filter((toolUseId) => toolUseId.length > 0);
+        return event.stop_reason.event_ids;
       }
     }
 
