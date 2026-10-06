@@ -1,6 +1,6 @@
 import { ApiServiceLevelEnum, type GetSubscriptionDto, UsageAlertRecipientsEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getUsageLimitsView } from './usage-limits-view';
+import { getUsageLimitsView, resolveUsageAlertsAllowanceOverride } from './usage-limits-view';
 
 type SubscriptionOverrides = {
   apiServiceLevel?: ApiServiceLevelEnum;
@@ -72,6 +72,55 @@ describe('getUsageLimitsView', () => {
   it('measures usage against the limit, or the included runs without one', () => {
     expect(getUsageLimitsView(buildSubscription({ events: { limit: 35000 } }), true)?.usage.max).toBe(35000);
     expect(getUsageLimitsView(buildSubscription(), true)?.usage.max).toBe(30000);
+    expect(getUsageLimitsView(buildSubscription(), true)?.usage.allowanceOverride).toBeNull();
+    expect(getUsageLimitsView(buildSubscription(), true, 0)?.usage.max).toBe(30000);
+  });
+
+  it('measures the meter from 0 to the usage alert allowance override without an on-demand limit', () => {
+    const view = getUsageLimitsView(buildSubscription({ events: { current: 28 } }), true, 20);
+
+    expect(view?.usage.max).toBe(20);
+    expect(view?.usage.allowanceOverride).toBe(20);
+    expect(view?.usage.current).toBe(28);
+    expect(view?.usage.included).toBe(30000);
+    expect(view?.usage.state).toBe('within_included');
+  });
+
+  it('stands the usage alert allowance override in for the included runs under an on-demand limit', () => {
+    const withOnDemandLimit = (current: number) =>
+      getUsageLimitsView(
+        buildSubscription({
+          events: { current, limit: 30010 },
+          usageLimits: {
+            settings: {
+              workflowRuns: { onDemandLimit: 10 },
+              pauseAtLimit: false,
+              alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
+            },
+          },
+        }),
+        true,
+        20
+      );
+
+    expect(withOnDemandLimit(20)?.usage).toMatchObject({ max: 30, included: 30000, state: 'within_included' });
+    expect(withOnDemandLimit(28)?.usage).toMatchObject({ max: 30, included: 30000, state: 'billed_on_demand' });
+  });
+
+  it('keeps the plan allowance for unlimited organizations', () => {
+    const view = getUsageLimitsView(buildSubscription({ apiServiceLevel: ApiServiceLevelEnum.UNLIMITED }), true, 20);
+
+    expect(view?.usage.max).toBe(30000);
+    expect(view?.usage.allowanceOverride).toBeNull();
+  });
+
+  describe('resolveUsageAlertsAllowanceOverride', () => {
+    it('keeps the plan allowance for non-positive values and floors a positive cap', () => {
+      expect(resolveUsageAlertsAllowanceOverride(0)).toBeNull();
+      expect(resolveUsageAlertsAllowanceOverride(-5)).toBeNull();
+      expect(resolveUsageAlertsAllowanceOverride(Number.NaN)).toBeNull();
+      expect(resolveUsageAlertsAllowanceOverride(20.9)).toBe(20);
+    });
   });
 
   it('allows editing only on configurable plans with billing write', () => {

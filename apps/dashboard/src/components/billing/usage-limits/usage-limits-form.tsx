@@ -116,7 +116,11 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
                   <SettingCard
                     label="Usage alerts"
                     tooltip="Notifies your team before on-demand usage adds up."
-                    description={field.value ? undefined : getUsageAlertsDescription(usage.included, limitSettings)}
+                    description={
+                      field.value && usage.allowanceOverride === null
+                        ? undefined
+                        : getUsageAlertsDescription(usage.included, limitSettings, usage.allowanceOverride)
+                    }
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   >

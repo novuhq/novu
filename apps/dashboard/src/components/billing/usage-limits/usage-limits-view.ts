@@ -11,12 +11,23 @@ export type WorkflowRunsUsageState = 'within_included' | 'billed_on_demand' | 'p
 export type PausedUsagePlan = 'free' | 'paid';
 
 export type WorkflowRunsUsage = {
+  /** Measured against the usage-alert allowance override while it is set, like `max`. */
   state: WorkflowRunsUsageState;
   current: number;
+  /** The plan's included runs, even under the allowance override, since pausing and billing still follow them. */
   included: number;
   onDemandLimit: number | null;
-  /** The usage limit, or the included runs when no limit is set. */
+  /**
+   * The usage limit, or the included runs when no limit is set. Under the usage-alert allowance override, the
+   * override plus an on-demand limit above it, or the override alone.
+   */
   max: number;
+  /**
+   * Staging stand-in from `USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER`, matching alert evaluation: it replaces the
+   * included runs under an on-demand limit, and otherwise caps the meter from 0. Null keeps the plan allowance.
+   * Unlimited plans ignore it.
+   */
+  allowanceOverride: number | null;
   resetsAt: string | null;
   onDemandPricePer1k: number | null;
 };
@@ -48,12 +59,35 @@ export function getWorkflowRunsMax(subscription: SubscriptionUsage): number {
   return subscription.events.limit ?? getIncludedWorkflowRuns(subscription);
 }
 
-function getWorkflowRunsUsageState({ events }: SubscriptionUsage): WorkflowRunsUsageState {
+type WorkflowRunsMeter = {
+  /** Usage past it is billed on-demand; null when nothing is. */
+  onDemandFrom: number | null;
+  max: number;
+};
+
+/** Must match how usage-alert evaluation applies the allowance override, so the meter shows what the alerts measure. */
+function getWorkflowRunsMeter(
+  subscription: SubscriptionUsage,
+  onDemandLimit: number | null,
+  allowanceOverride: number | null
+): WorkflowRunsMeter {
+  if (allowanceOverride === null) {
+    return { onDemandFrom: subscription.events.included, max: getWorkflowRunsMax(subscription) };
+  }
+
+  if (onDemandLimit !== null && onDemandLimit > 0) {
+    return { onDemandFrom: allowanceOverride, max: allowanceOverride + onDemandLimit };
+  }
+
+  return { onDemandFrom: null, max: allowanceOverride };
+}
+
+function getWorkflowRunsUsageState({ events }: SubscriptionUsage, onDemandFrom: number | null): WorkflowRunsUsageState {
   if (events.isPaused) {
     return 'paused';
   }
 
-  if (events.included !== null && events.current > events.included) {
+  if (onDemandFrom !== null && events.current > onDemandFrom) {
     return 'billed_on_demand';
   }
 
@@ -82,10 +116,23 @@ function getPausedUsagePlan({ apiServiceLevel, events }: SubscriptionUsage): Pau
   }
 }
 
+/**
+ * Same rule as usage-alert evaluation: `0` and any non-positive value keep the plan allowance.
+ * A positive value stands in for the included runs under an on-demand limit, and is the cap from 0 otherwise.
+ */
+export function resolveUsageAlertsAllowanceOverride(value: number): number | null {
+  if (!Number.isFinite(value) || value < 1) {
+    return null;
+  }
+
+  return Math.floor(value);
+}
+
 /** Null until the subscription loads, and while the API reports usage limits as off for the organization. */
 export function getUsageLimitsView(
   subscription: GetSubscriptionDto | undefined,
-  canWriteBilling: boolean
+  canWriteBilling: boolean,
+  allowanceOverride: number | null = null
 ): UsageLimitsView | null {
   const usageLimits = subscription?.usageLimits;
 
@@ -93,13 +140,23 @@ export function getUsageLimitsView(
     return null;
   }
 
+  const measuredOverride =
+    subscription.apiServiceLevel === ApiServiceLevelEnum.UNLIMITED ||
+    allowanceOverride === null ||
+    allowanceOverride < 1
+      ? null
+      : Math.floor(allowanceOverride);
+  const { onDemandLimit } = usageLimits.settings.workflowRuns;
+  const meter = getWorkflowRunsMeter(subscription, onDemandLimit, measuredOverride);
+
   return {
     usage: {
-      state: getWorkflowRunsUsageState(subscription),
+      state: getWorkflowRunsUsageState(subscription, meter.onDemandFrom),
       current: subscription.events.current,
       included: getIncludedWorkflowRuns(subscription),
-      onDemandLimit: usageLimits.settings.workflowRuns.onDemandLimit,
-      max: getWorkflowRunsMax(subscription),
+      onDemandLimit,
+      max: meter.max,
+      allowanceOverride: measuredOverride,
       resetsAt: subscription.currentPeriodEnd,
       onDemandPricePer1k: usageLimits.onDemandPricePer1k,
     },

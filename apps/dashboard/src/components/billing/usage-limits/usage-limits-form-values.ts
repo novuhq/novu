@@ -57,7 +57,21 @@ export function getPauseAtLimitDescription(included: number, settings: WorkflowR
  * Usage alerts measure from the included runs under a higher limit, and from 0 when the limit is the included runs.
  * Without a limit they only flag usage far above the plan's typical volume.
  */
-export function getUsageAlertsDescription(included: number, settings: WorkflowRunLimitSettings) {
+export function getUsageAlertsDescription(
+  included: number,
+  settings: WorkflowRunLimitSettings,
+  allowanceOverride: number | null = null
+) {
+  if (allowanceOverride !== null) {
+    const { onDemandLimit } = settings.workflowRuns;
+
+    if (onDemandLimit !== null && onDemandLimit > 0) {
+      return `Email and inbox alerts at the ${formatNumber(allowanceOverride)} usage alert cap, and at 75%, 90% and 100% of the ${formatNumber(onDemandLimit)} on-demand runs above it.`;
+    }
+
+    return `Email and inbox alerts at 75%, 90% and 100% of the ${formatNumber(allowanceOverride)} usage alert cap.`;
+  }
+
   const limit = getWorkflowRunLimit(included, settings);
 
   if (limit === null) {

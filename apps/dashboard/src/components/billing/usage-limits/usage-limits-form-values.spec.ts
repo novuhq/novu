@@ -65,6 +65,20 @@ describe('usage-limits-form-values', () => {
         'Email and inbox alerts if usage is much higher than typical for your plan.'
       );
     });
+
+    it('measures thresholds from 0 to the usage alert cap override without an on-demand limit', () => {
+      const expected = 'Email and inbox alerts at 75%, 90% and 100% of the 20 usage alert cap.';
+
+      expect(getUsageAlertsDescription(INCLUDED, settings(null, false), 20)).toBe(expected);
+      expect(getUsageAlertsDescription(INCLUDED, settings(null, true), 20)).toBe(expected);
+      expect(getUsageAlertsDescription(INCLUDED, settings(0, true), 20)).toBe(expected);
+    });
+
+    it('alerts at the usage alert cap override and along the on-demand runs above it', () => {
+      expect(getUsageAlertsDescription(INCLUDED, settings(10, false), 20)).toBe(
+        'Email and inbox alerts at the 20 usage alert cap, and at 75%, 90% and 100% of the 10 on-demand runs above it.'
+      );
+    });
   });
 
   describe('pausesOnSave', () => {

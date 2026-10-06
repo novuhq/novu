@@ -263,8 +263,9 @@ export enum FeatureFlagsKeysEnum {
   MAX_AGENTS_LIMIT_NUMBER = 'MAX_AGENTS_LIMIT_NUMBER',
   MAX_CUSTOM_EMAIL_DOMAINS_NUMBER = 'MAX_CUSTOM_EMAIL_DOMAINS_NUMBER',
   /**
-   * When greater than 0, replaces the tier-derived usage-alert cap and lowers the candidate
-   * query to 75% of this value. 0 keeps the real cap. Set it in the staging environment only.
+   * When greater than 0, stands in for the included events under an on-demand limit above them,
+   * replaces the tier-derived usage-alert cap otherwise, and lowers the candidate query to 75% of
+   * this value. 0 keeps the real cap. Set it in the staging environment only.
    */
   USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER = 'USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',

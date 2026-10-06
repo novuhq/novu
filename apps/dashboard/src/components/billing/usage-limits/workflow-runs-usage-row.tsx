@@ -10,7 +10,8 @@ function toPercent(value: number, total: number): number {
 }
 
 function UsageBar({ usage }: { usage: WorkflowRunsUsage }) {
-  const { state, current, included } = usage;
+  const { state, current } = usage;
+  const included = usage.allowanceOverride ?? usage.included;
   const scale = Math.max(usage.max, current);
 
   switch (state) {
@@ -82,7 +83,9 @@ export function WorkflowRunsUsageRow({ view }: WorkflowRunsUsageRowProps) {
       <div className="flex items-center justify-between gap-2 text-label-xs">
         <UsageStatusLabel usage={usage} />
         <span className="text-text-soft">
-          {formatCompactNumber(usage.included)} included
+          {usage.allowanceOverride !== null
+            ? `${formatCompactNumber(usage.allowanceOverride)} usage alert cap`
+            : `${formatCompactNumber(usage.included)} included`}
           {usage.onDemandLimit !== null && ` · ${formatCompactNumber(usage.onDemandLimit)} on-demand`}
           {canEdit && (
             <>
