@@ -117,24 +117,9 @@ interface AgentToolsetPayloadEntry {
   };
 }
 
-function installUpdateConfigMockClient(
-  provider: AnthropicAgentRuntimeProvider,
-  options: {
-    retrieve: jest.Mock;
-    update: jest.Mock;
-  }
-) {
-  const mockClient = {
-    beta: {
-      agents: {
-        retrieve: options.retrieve,
-        update: options.update,
-      },
-    },
-  };
-
-  // `buildClient` is private; injecting via cast keeps the test independent of the SDK constructor.
-  (provider as unknown as { buildClient: () => unknown }).buildClient = () => mockClient;
+function installAgentsMockClient(agents: { retrieve: jest.Mock; update?: jest.Mock }) {
+  (Anthropic as unknown as jest.Mock).mockReset();
+  (Anthropic as unknown as jest.Mock).mockImplementation(() => ({ beta: { agents } }));
 }
 
 function getToolsetPayload(updatePayload: {
@@ -395,15 +380,7 @@ describe('AnthropicAgentRuntimeProvider.getConfig', () => {
       skills: [],
     });
 
-    const mockClient = {
-      beta: {
-        agents: {
-          retrieve,
-        },
-      },
-    };
-
-    (provider as unknown as { buildClient: () => unknown }).buildClient = () => mockClient;
+    installAgentsMockClient({ retrieve });
 
     const result = await provider.getConfig('ext-agent-id');
 
@@ -422,6 +399,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       version: 1,
       tools: [],
       mcp_servers: [],
+      skills: [],
     });
 
     const update = jest.fn().mockResolvedValue({
@@ -437,7 +415,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     const result = await provider.updateConfig('ext-agent-id', {
       tools: [{ externalId: 'bash', name: 'Bash', type: 'builtin' }],
@@ -475,6 +453,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
         },
       ],
       mcp_servers: [],
+      skills: [],
     });
 
     const update = jest.fn().mockResolvedValue({
@@ -485,7 +464,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', { tools: [] });
 
@@ -496,7 +475,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     );
 
     expect(toolset?.configs?.every((c) => c.enabled === false)).to.equal(true);
-    expect(platformTools?.map((t) => t.name)).to.deep.equal(['novu_tool_catalog', 'novu_resolve']);
+    expect(platformTools?.map((t) => t.name)).to.deep.equal(['novu_tool_catalog', 'novu_resolve', 'novu_human']);
   });
 
   it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {
@@ -534,7 +513,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', {
       mcpServers: [{ externalId: 'Slack', name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
@@ -580,7 +559,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [{ type: 'anthropic', skill_id: 'pdf', version: null }],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', {
       skills: [{ type: 'anthropic', skillId: 'pdf', version: null }],
@@ -612,7 +591,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [{ type: 'anthropic', skill_id: 'pdf', version: null }],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', {
       tools: [{ externalId: 'web_search', name: 'Web Search', type: 'builtin' }],

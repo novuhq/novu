@@ -1,9 +1,11 @@
 /**
- * biome-ignore-all lint/suspicious/noExplicitAny: Managed Agents beta payloads are accessed untyped until the SDK types are adopted (NV-8923)
+ * biome-ignore-all lint/suspicious/noExplicitAny: appendSkillVersion reads the skills beta `version` field, which the SDK's BetaSkillVersion does not type
  * biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: needs to be fixed
  * biome-ignore-all lint/style/noNonNullAssertion: needs to be fixed
  */
 import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile, type Uploadable } from '@anthropic-ai/sdk';
+import type { AgentUpdateParams, BetaManagedAgentsCustomTool } from '@anthropic-ai/sdk/resources/beta/agents/agents';
+import type { BetaSkill } from '@anthropic-ai/sdk/resources/beta/skills/skills';
 import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
@@ -55,6 +57,7 @@ import {
   extractSkillNameFromBundle,
   isDuplicateDisplayTitleError,
   isTransient,
+  mapAgentRuntimeConfig,
   mapMcpServer,
   mapSkill,
   mapToolset,
@@ -83,6 +86,21 @@ const MAX_DISPLAY_TITLE_LENGTH = 64;
  * `latest_version_id`) instead.
  */
 const SKILLS_BETA = 'skills-2025-10-02';
+
+/** Reads the {@link SKILLS_BETA} response fields; the SDK only types the GA shape (`display_name`, `latest_version_id`). */
+function readSkillsBetaFields(skill: BetaSkill): {
+  displayTitle: string | null;
+  latestVersion: string | null;
+  source: string | null;
+} {
+  const fields: Record<string, unknown> = { ...skill };
+
+  return {
+    displayTitle: typeof fields.display_title === 'string' ? fields.display_title : null,
+    latestVersion: typeof fields.latest_version === 'string' ? fields.latest_version : null,
+    source: typeof fields.source === 'string' ? fields.source : null,
+  };
+}
 
 export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
@@ -195,7 +213,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       const skills = input.skills ?? [];
       const hasSkills = skills.length > 0;
       const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, hasSkills);
-      const agent = await (client as any).beta.agents.create({
+      const agent = await client.beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
         ...(input.systemPrompt ? { system: input.systemPrompt } : {}),
@@ -206,7 +224,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         ...(hasSkills ? { skills: skills.map(toSkillParam) } : {}),
       });
 
-      return { externalAgentId: agent.id as string };
+      return { externalAgentId: agent.id };
     } catch (err) {
       this.normaliseError(err);
     }
@@ -258,15 +276,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
     return this.withRetry(async () => {
       try {
-        const agent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const agent = await client.beta.agents.retrieve(externalAgentId);
 
-        return {
-          model: agent.model?.id ?? agent.model ?? DEFAULT_MODEL,
-          systemPrompt: agent.system ?? '',
-          mcpServers: ((agent.mcp_servers as any[]) ?? []).map(mapMcpServer),
-          tools: ((agent.tools as any[]) ?? []).flatMap(mapToolset),
-          skills: ((agent.skills as any[]) ?? []).map(mapSkill),
-        };
+        return mapAgentRuntimeConfig(agent);
       } catch (err) {
         this.normaliseError(err);
       }
@@ -282,9 +294,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         // concurrency control the Anthropic API requires on every update, and its
         // `tools` / `mcp_servers` to merge partial patches without clearing the
         // side the caller didn't touch.
-        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const currentAgent = await client.beta.agents.retrieve(externalAgentId);
 
-        const updatePayload: Record<string, unknown> = {
+        const updatePayload: AgentUpdateParams = {
           version: currentAgent.version,
         };
 
@@ -299,15 +311,15 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         // Anthropic rejects skills without a usable `read` tool. Compute the
         // effective skill set after this patch so we can force-enable `read`
         // even on a skills-only update that wouldn't otherwise touch tools.
-        const currentSkills = ((currentAgent.skills as any[]) ?? []).map(mapSkill);
+        const currentSkills = currentAgent.skills.map(mapSkill);
         const effectiveSkills = patch.skills !== undefined ? patch.skills : currentSkills;
         const hasSkills = effectiveSkills.length > 0;
         const shouldRebuildTools =
           patch.tools !== undefined || patch.mcpServers !== undefined || (patch.skills !== undefined && hasSkills);
 
         if (shouldRebuildTools) {
-          const currentTools = ((currentAgent.tools as any[]) ?? []).flatMap(mapToolset);
-          const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
+          const currentTools = currentAgent.tools.flatMap(mapToolset);
+          const currentMcpServers = currentAgent.mcp_servers.map(mapMcpServer);
           // Use externalId (the provider tool `type`, e.g. "bash"), not the display `name`
           // (e.g. "Bash") — the latter never matches CLAUDE_BUILTIN_TOOLS, leaving every
           // tool disabled in the toolset payload.
@@ -325,15 +337,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           updatePayload.skills = patch.skills.map(toSkillParam);
         }
 
-        const updated = await (client as any).beta.agents.update(externalAgentId, updatePayload);
+        const updated = await client.beta.agents.update(externalAgentId, updatePayload);
 
-        return {
-          model: updated.model?.id ?? updated.model ?? DEFAULT_MODEL,
-          systemPrompt: updated.system ?? '',
-          mcpServers: ((updated.mcp_servers as any[]) ?? []).map(mapMcpServer),
-          tools: ((updated.tools as any[]) ?? []).flatMap(mapToolset),
-          skills: ((updated.skills as any[]) ?? []).map(mapSkill),
-        };
+        return mapAgentRuntimeConfig(updated);
       } catch (err) {
         this.normaliseError(err);
       }
@@ -348,16 +354,16 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         // Read the agent's current user-selected tools/MCP and re-emit them through
         // buildToolsPayload, which always appends Novu-owned platform tools (e.g.
         // novu_tool_catalog). Nothing the user chose changes — this only backfills the overlay.
-        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
-        const rawTools = (currentAgent.tools as any[]) ?? [];
+        const currentAgent = await client.beta.agents.retrieve(externalAgentId);
+        const rawTools = currentAgent.tools;
         const currentTools = rawTools.flatMap(mapToolset);
-        const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
-        const hasSkills = ((currentAgent.skills as any[]) ?? []).length > 0;
+        const currentMcpServers = currentAgent.mcp_servers.map(mapMcpServer);
+        const hasSkills = currentAgent.skills.length > 0;
 
         // Preserve any provider-side custom tools we don't own (e.g. on an adopted agent).
         // buildToolsPayload re-emits Novu-owned platform tools, so drop those here to avoid duplicates.
         const foreignCustomTools = rawTools.filter(
-          (tool) => tool?.type === 'custom' && !isNovuInternalToolName(tool?.name)
+          (tool): tool is BetaManagedAgentsCustomTool => tool.type === 'custom' && !isNovuInternalToolName(tool.name)
         );
 
         const toolsPayload = [
@@ -373,7 +379,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           return;
         }
 
-        await (client as any).beta.agents.update(externalAgentId, {
+        await client.beta.agents.update(externalAgentId, {
           version: currentAgent.version,
           tools: toolsPayload,
         });
@@ -388,9 +394,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const resourceStem = input.resourceName ?? input.integrationName;
 
     // Not retried: environment creation is not idempotent.
-    const env: { id: string } = await (async () => {
+    const env = await (async () => {
       try {
-        return await (client as any).beta.environments.create({
+        return await client.beta.environments.create({
           name: `nv-${resourceStem}`,
           config: {
             type: 'cloud',
@@ -428,7 +434,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     if (externalEnvironmentId) {
       await this.withRetry(async () => {
         try {
-          await (client as any).beta.environments.archive(externalEnvironmentId);
+          await client.beta.environments.archive(externalEnvironmentId);
         } catch (err) {
           this.normaliseError(err);
         }
@@ -438,7 +444,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     if (legacyExternalVaultId) {
       await this.withRetry(async () => {
         try {
-          await (client as any).beta.vaults.archive(legacyExternalVaultId);
+          await client.beta.vaults.archive(legacyExternalVaultId);
         } catch (err) {
           this.normaliseError(err);
         }
@@ -529,11 +535,11 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // first. Callers (`McpConnectionVaultService`) detect race-induced
     // orphans separately via a `setIfMissing` claim + warn-log.
     try {
-      const vault = await (client as any).beta.vaults.create({
+      const vault = await client.beta.vaults.create({
         display_name: input.displayName,
       });
 
-      return { externalVaultId: vault.id as string };
+      return { externalVaultId: vault.id };
     } catch (err) {
       this.normaliseError(err);
     }
@@ -547,22 +553,22 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     return this.withRetry(async () => {
       try {
         if (existingCredentialId) {
-          const updated = await (client as any).beta.vaults.credentials.update(existingCredentialId, {
+          const updated = await client.beta.vaults.credentials.update(existingCredentialId, {
             vault_id: vaultId,
             display_name: input.displayName,
             auth: buildMcpOAuthUpdateAuth(input.auth),
           });
 
-          return { vaultCredentialId: updated.id as string };
+          return { vaultCredentialId: updated.id };
         }
 
         try {
-          const created = await (client as any).beta.vaults.credentials.create(vaultId, {
+          const created = await client.beta.vaults.credentials.create(vaultId, {
             display_name: input.displayName,
             auth: buildMcpOAuthCreateAuth(input.mcpServerUrl, input.auth),
           });
 
-          return { vaultCredentialId: created.id as string };
+          return { vaultCredentialId: created.id };
         } catch (createErr) {
           // Anthropic enforces uniqueness on (vault_id, auth.mcp_server_url).
           // If a previous flow pushed a credential for this URL but Novu's
@@ -619,17 +625,14 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     let orphan: { id: string; mcpServerUrl: string; archived: boolean } | null = null;
 
     try {
-      const credentials = (client as any).beta.vaults.credentials.list(vaultId, { include_archived: true });
+      const credentials = client.beta.vaults.credentials.list(vaultId, { include_archived: true });
 
       for await (const credential of credentials) {
-        const credAuth = (credential as { auth?: { mcp_server_url?: string } }).auth;
-        const credUrl = credAuth?.mcp_server_url;
-
-        if (typeof credUrl === 'string' && credUrl === mcpServerUrl) {
+        if ('mcp_server_url' in credential.auth && credential.auth.mcp_server_url === mcpServerUrl) {
           orphan = {
-            id: (credential as { id: string }).id,
-            mcpServerUrl: credUrl,
-            archived: !!(credential as { archived_at?: string | null }).archived_at,
+            id: credential.id,
+            mcpServerUrl: credential.auth.mcp_server_url,
+            archived: !!credential.archived_at,
           };
           break;
         }
@@ -646,22 +649,22 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       if (orphan.archived) {
         // Archived credentials still occupy the (vault, mcp_url) uniqueness
         // slot but can't be updated in place — delete then re-create.
-        await (client as any).beta.vaults.credentials.delete(orphan.id, { vault_id: vaultId });
-        const created = await (client as any).beta.vaults.credentials.create(vaultId, {
+        await client.beta.vaults.credentials.delete(orphan.id, { vault_id: vaultId });
+        const created = await client.beta.vaults.credentials.create(vaultId, {
           display_name: displayName,
           auth: buildMcpOAuthCreateAuth(mcpServerUrl, auth),
         });
 
-        return created.id as string;
+        return created.id;
       }
 
-      const updated = await (client as any).beta.vaults.credentials.update(orphan.id, {
+      const updated = await client.beta.vaults.credentials.update(orphan.id, {
         vault_id: vaultId,
         display_name: displayName,
         auth: buildMcpOAuthUpdateAuth(auth),
       });
 
-      return updated.id as string;
+      return updated.id;
     } catch {
       return null;
     }
@@ -672,7 +675,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
     await this.withRetry(async () => {
       try {
-        await (client as any).beta.vaults.credentials.delete(input.vaultCredentialId, {
+        await client.beta.vaults.credentials.delete(input.vaultCredentialId, {
           vault_id: input.externalVaultId,
         });
       } catch (err) {
@@ -718,15 +721,15 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // Not retried: skill creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable skill upstream.
     try {
-      const skill = await (client as any).beta.skills.create({
+      const skill = await client.beta.skills.create({
         ...(displayTitle ? { display_title: displayTitle } : {}),
         files,
         betas: [SKILLS_BETA],
       });
 
       return {
-        skillId: skill.id as string,
-        version: ((skill.latest_version as string | null | undefined) ?? null) as string | null,
+        skillId: skill.id,
+        version: readSkillsBetaFields(skill).latestVersion,
       };
     } catch (err) {
       // Race fallback: a concurrent caller (or eventual-consistency on the
@@ -790,14 +793,12 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     displayTitle: string
   ): Promise<string | null> {
     try {
-      const iterator = (client as any).beta.skills.list({ limit: 100, betas: [SKILLS_BETA] }) as AsyncIterable<{
-        id: string;
-        display_title: string | null;
-        source?: string;
-      }>;
+      const iterator = client.beta.skills.list({ limit: 100, betas: [SKILLS_BETA] });
 
       for await (const skill of iterator) {
-        if (skill.display_title === displayTitle && skill.source === 'custom') {
+        const fields = readSkillsBetaFields(skill);
+
+        if (fields.displayTitle === displayTitle && fields.source === 'custom') {
           return skill.id;
         }
       }

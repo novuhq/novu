@@ -1,5 +1,25 @@
 import { APIError } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto, McpTokenEndpointAuthMethod } from '@novu/shared';
+import type {
+  AgentCreateParams,
+  BetaManagedAgentsAgent,
+  BetaManagedAgentsAgentToolConfigParams,
+  BetaManagedAgentsCustomToolParams,
+  BetaManagedAgentsMCPServerURLDefinition,
+  BetaManagedAgentsSkillParams,
+} from '@anthropic-ai/sdk/resources/beta/agents/agents';
+import type {
+  BetaManagedAgentsMCPOAuthCreateParams,
+  BetaManagedAgentsMCPOAuthRefreshParams,
+  BetaManagedAgentsMCPOAuthRefreshUpdateParams,
+  BetaManagedAgentsMCPOAuthUpdateParams,
+} from '@anthropic-ai/sdk/resources/beta/vaults/credentials';
+import type {
+  AgentMcpServerDto,
+  AgentRuntimeConfigDto,
+  AgentSkillDto,
+  AgentToolDto,
+  McpTokenEndpointAuthMethod,
+} from '@novu/shared';
 import {
   CLAUDE_BUILTIN_TOOLS,
   NOVU_HUMAN_SCHEMA,
@@ -176,7 +196,7 @@ export function isDuplicateDisplayTitleError(err: unknown): boolean {
   }
 
   const directMessage = err.message ?? '';
-  const errorBody = (err as unknown as { error?: unknown }).error;
+  const errorBody = err.error;
   const serializedBody = errorBody ? safeStringify(errorBody) : '';
 
   return (
@@ -192,15 +212,27 @@ export function safeStringify(value: unknown): string {
   }
 }
 
-export function mapSkill(raw: Record<string, unknown>): AgentSkillDto {
+export type AgentToolParam = NonNullable<AgentCreateParams['tools']>[number];
+
+export function mapAgentRuntimeConfig(agent: BetaManagedAgentsAgent): AgentRuntimeConfigDto {
   return {
-    type: raw.type as 'anthropic' | 'custom',
-    skillId: raw.skill_id as string,
-    version: (raw.version as string | null | undefined) ?? null,
+    model: agent.model.id,
+    systemPrompt: agent.system ?? '',
+    mcpServers: agent.mcp_servers.map(mapMcpServer),
+    tools: agent.tools.flatMap(mapToolset),
+    skills: agent.skills.map(mapSkill),
   };
 }
 
-export function toSkillParam(skill: AgentSkillDto): Record<string, unknown> {
+export function mapSkill(skill: BetaManagedAgentsAgent['skills'][number]): AgentSkillDto {
+  return {
+    type: skill.type,
+    skillId: skill.skill_id,
+    version: skill.version,
+  };
+}
+
+export function toSkillParam(skill: AgentSkillDto): BetaManagedAgentsSkillParams {
   return {
     type: skill.type,
     skill_id: skill.skillId,
@@ -208,11 +240,11 @@ export function toSkillParam(skill: AgentSkillDto): Record<string, unknown> {
   };
 }
 
-export function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
+export function mapMcpServer(server: BetaManagedAgentsMCPServerURLDefinition): AgentMcpServerDto {
   return {
-    externalId: (raw.name as string) ?? '',
-    name: raw.name as string,
-    url: raw.url as string,
+    externalId: server.name,
+    name: server.name,
+    url: server.url,
   };
 }
 
@@ -235,38 +267,50 @@ export const MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG = {
  * separately via `agent.mcp_servers` (and Novu's enablement table), matching how
  * Claude surfaces built-in tools vs MCP integrations in its own UI.
  */
-export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
-  if (raw.type === 'agent_toolset_20260401') {
-    return ((raw.configs as any[]) ?? [])
-      .filter((c) => c.enabled !== false)
-      .map((c) => ({
-        externalId: c.name as string,
-        name: c.name as string,
-        type: 'builtin' as const,
-      }));
+export function mapToolset(tool: BetaManagedAgentsAgent['tools'][number]): AgentToolDto[] {
+  if (tool.type !== 'agent_toolset_20260401') {
+    return [];
   }
 
-  return [];
+  return tool.configs
+    .filter((c) => c.enabled)
+    .map((c) => ({
+      externalId: c.name,
+      name: c.name,
+      type: 'builtin' as const,
+    }));
 }
 
 /**
  * Novu-owned tools always attached to managed agents (independent of user tool/MCP selections).
  */
-export function buildPlatformToolsPayload(): Record<string, unknown>[] {
-  return [
-    { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
-    { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
-    { type: 'custom', ...NOVU_HUMAN_SCHEMA },
-  ];
+export function buildPlatformToolsPayload(): BetaManagedAgentsCustomToolParams[] {
+  return [NOVU_TOOL_CATALOG_SCHEMA, NOVU_RESOLVE_SCHEMA, NOVU_HUMAN_SCHEMA].map(toCustomToolParam);
+}
+
+/** The shared schemas are `as const`; the SDK expects a mutable `required` array. */
+function toCustomToolParam(schema: {
+  name: string;
+  description: string;
+  input_schema: { type: 'object'; properties: Readonly<Record<string, unknown>>; required?: readonly string[] };
+}): BetaManagedAgentsCustomToolParams {
+  const { required, ...inputSchema } = schema.input_schema;
+
+  return {
+    type: 'custom',
+    ...schema,
+    input_schema: { ...inputSchema, ...(required ? { required: [...required] } : {}) },
+  };
 }
 
 function buildUserToolsetPayload(
   toolTypes?: string[],
   mcpServers?: Array<{ name: string; url: string }>
-): Record<string, unknown>[] {
-  const payload: Record<string, unknown>[] = [];
+): AgentToolParam[] {
+  const payload: AgentToolParam[] = [];
   const enabledSet = new Set(toolTypes ?? []);
-  const allToolNames = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
+  // CLAUDE_BUILTIN_TOOLS types `type` as string; its entries are the Anthropic built-in tool names.
+  const allToolNames = CLAUDE_BUILTIN_TOOLS.map((t) => t.type as BetaManagedAgentsAgentToolConfigParams['name']);
 
   payload.push({
     type: 'agent_toolset_20260401',
@@ -329,7 +373,7 @@ export function buildToolsPayload(
   toolTypes?: string[],
   mcpServers?: Array<{ name: string; url: string }>,
   hasSkills = false
-): Record<string, unknown>[] {
+): AgentToolParam[] {
   return [
     ...buildUserToolsetPayload(ensureSkillRequiredTools(toolTypes, hasSkills), mcpServers),
     ...buildPlatformToolsPayload(),
@@ -342,14 +386,17 @@ export function buildToolsPayload(
  * — that's what enables Anthropic-side automated refresh; otherwise the vault
  * stores an access-only credential that Novu re-pushes on refresh.
  */
-export function buildMcpOAuthCreateAuth(mcpServerUrl: string, auth: VaultCredentialAuth): Record<string, unknown> {
+export function buildMcpOAuthCreateAuth(
+  mcpServerUrl: string,
+  auth: VaultCredentialAuth
+): BetaManagedAgentsMCPOAuthCreateParams {
   if (!auth.accessToken) {
     // The interface marks accessToken optional (delete flow), but create
     // semantically requires it. Surface as a programmer error.
     throw new Error('Anthropic vault credential create requires an access token');
   }
 
-  const payload: Record<string, unknown> = {
+  const payload: BetaManagedAgentsMCPOAuthCreateParams = {
     type: 'mcp_oauth',
     access_token: auth.accessToken,
     mcp_server_url: mcpServerUrl,
@@ -363,8 +410,8 @@ export function buildMcpOAuthCreateAuth(mcpServerUrl: string, auth: VaultCredent
   return payload;
 }
 
-export function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<string, unknown> {
-  const payload: Record<string, unknown> = {
+export function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): BetaManagedAgentsMCPOAuthUpdateParams {
+  const payload: BetaManagedAgentsMCPOAuthUpdateParams = {
     type: 'mcp_oauth',
   };
 
@@ -393,7 +440,7 @@ export function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<strin
  */
 function buildAnthropicTokenEndpointAuth(
   oauthClient: NonNullable<VaultCredentialAuth['oauthClient']>
-): Record<string, unknown> {
+): BetaManagedAgentsMCPOAuthRefreshParams['token_endpoint_auth'] {
   const method: McpTokenEndpointAuthMethod = resolvePersistedMcpTokenEndpointAuthMethod(
     oauthClient.tokenEndpointAuthMethod
   );
@@ -418,7 +465,7 @@ function buildAnthropicTokenEndpointAuth(
   }
 }
 
-export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<string, unknown> {
+export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): BetaManagedAgentsMCPOAuthRefreshParams {
   // Caller guarantees both before invoking, but narrow defensively so we
   // never emit a half-built refresh block.
   if (!auth.refreshToken || !auth.oauthClient) {
@@ -449,7 +496,9 @@ export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<st
  * the update schema rejects `{ type: 'none' }` on a credential that was
  * created with one of the secret-bearing methods.
  */
-export function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Record<string, unknown> {
+export function buildMcpOAuthRefreshUpdateParams(
+  auth: VaultCredentialAuth
+): BetaManagedAgentsMCPOAuthRefreshUpdateParams {
   if (!auth.refreshToken || !auth.oauthClient) {
     throw new Error('buildMcpOAuthRefreshUpdateParams requires refreshToken and oauthClient');
   }
@@ -461,7 +510,7 @@ export function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Rec
   const tokenEndpointAuth = oauthClient.clientSecret ? buildAnthropicTokenEndpointAuth(oauthClient) : undefined;
   const hasSecretBearingAuth = tokenEndpointAuth && tokenEndpointAuth.type !== 'none';
 
-  const payload: Record<string, unknown> = {
+  const payload: BetaManagedAgentsMCPOAuthRefreshUpdateParams = {
     refresh_token: auth.refreshToken,
     scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
   };
