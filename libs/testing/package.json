@@ -35,13 +35,13 @@
     "fs-extra": "^9.0.0",
     "jsonfile": "^6.0.1",
     "mongoose": "^7.5.0",
+    "nanoid": "^3.1.20",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "superagent-defaults": "^0.1.14",
-    "supertest": "^5.0.0",
+    "supertest": "^6.3.4",
     "uuid": "^8.3.0"
   },
   "devDependencies": {

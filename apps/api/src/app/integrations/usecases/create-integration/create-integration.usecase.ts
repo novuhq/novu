@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
-import * as shortid from 'shortid';
+import { nanoid } from 'nanoid';
 import slugify from 'slugify';
 import { IntegrationEntity, IntegrationRepository, DalException, IntegrationQuery } from '@novu/dal';
 import {
@@ -147,7 +147,7 @@ export class CreateIntegration {
       const defaultName =
         providers.find((provider) => provider.id === command.providerId)?.displayName ?? providerIdCapitalized;
       const name = command.name ?? defaultName;
-      const identifier = command.identifier ?? `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`;
+      const identifier = command.identifier ?? `${slugify(name, { lower: true, strict: true })}-${nanoid(10)}`;
 
       const query: IntegrationQuery = {
         name,

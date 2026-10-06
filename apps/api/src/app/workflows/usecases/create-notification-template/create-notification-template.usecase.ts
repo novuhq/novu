@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
-import * as shortid from 'shortid';
+import { nanoid } from 'nanoid';
 
 import {
   NotificationTemplateRepository,
@@ -104,7 +104,7 @@ export class CreateNotificationTemplate {
 
     const trigger: INotificationTrigger = {
       type: TriggerTypeEnum.EVENT,
-      identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + shortid.generate()}`,
+      identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + nanoid(10)}`,
       variables: variables.map((i) => {
         return {
           name: i.name,
