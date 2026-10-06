@@ -23,15 +23,21 @@ type StepProps = {
   children?: ReactNode;
   /** The bottom bar with the Back and Continue buttons. Only shown with `children`. */
   footer?: ReactNode;
+  /** Adds the dithered orange glow, for a step that waits on something outside the page. */
+  glow?: boolean;
 };
 
-export function Step({ index, title, status, summary, action, children, footer }: StepProps) {
+export function Step({ index, title, status, summary, action, children, footer, glow = false }: StepProps) {
   const open = status === 'current' || status === 'error';
 
   return (
     <li
       aria-current={open ? 'step' : undefined}
-      className={cn('rounded-lg border border-border bg-raised', status === 'upcoming' && 'bg-transparent')}
+      className={cn(
+        'rounded-lg border border-border bg-raised',
+        status === 'upcoming' && 'bg-transparent',
+        glow && open && 'dot-glow'
+      )}
     >
       <div className="flex items-start gap-3 p-4">
         <StepMarker index={index} status={status} />
