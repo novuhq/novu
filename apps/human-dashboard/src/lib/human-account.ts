@@ -1,6 +1,8 @@
 import 'server-only';
 
-import { clerkClient, type User } from '@clerk/nextjs/server';
+import { clerkClient, currentUser, type User } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { cache } from 'react';
 
 import { ensureBackingAccount, type HumanRegion } from './human-accounts-api';
 
@@ -11,7 +13,44 @@ export type StoredBackingAccount = {
   userId: string;
 };
 
+/** The signed-in operator's backing account. It's what every data helper takes, and holds no key. */
+export type HumanAccount = StoredBackingAccount & { humanUserId: string };
+
 const METADATA_KEY = 'novu';
+
+/** A backing organization made by a dashboard visit has no claim link or CLI to take its region from. */
+const DEFAULT_REGION: HumanRegion = 'us';
+
+const loadHumanAccount = cache(async (): Promise<HumanAccount | null> => {
+  const user = await currentUser();
+  if (!user) {
+    return null;
+  }
+
+  return { ...(await ensureStoredBackingAccount(user, DEFAULT_REGION)), humanUserId: user.id };
+});
+
+/**
+ * The signed-in operator's backing account, created on their first visit so the dashboard never
+ * opens on a missing one. Sends signed-out visitors to `/sign-in`, and back to `returnTo` afterwards.
+ *
+ * Server components of one request share a single lookup, so each of them can call this.
+ */
+export async function requireHumanAccount({ returnTo }: { returnTo?: string } = {}): Promise<HumanAccount> {
+  const account = await loadHumanAccount();
+  if (!account) {
+    redirect(returnTo ? `/sign-in?${new URLSearchParams({ redirect_url: returnTo })}` : '/sign-in');
+  }
+
+  return account;
+}
+
+/** The operator's backing account if they already have one. Never creates it. */
+export function readHumanAccount(user: User): HumanAccount | null {
+  const stored = readStoredBackingAccount(user);
+
+  return stored && { ...stored, humanUserId: user.id };
+}
 
 export function readStoredBackingAccount(user: User): StoredBackingAccount | null {
   const stored = user.privateMetadata?.[METADATA_KEY] as Partial<StoredBackingAccount> | undefined;
@@ -29,8 +68,8 @@ export function readStoredBackingAccount(user: User): StoredBackingAccount | nul
 
 /**
  * Makes sure the signed-in operator has a backing organization. It's only created when something needs it
- * (today: the first claim), so the region comes from that claim link instead of being fixed at sign-up.
- * Later calls reuse what's stored.
+ * (a claim, or the first dashboard visit), so the region comes from that claim link instead of being fixed
+ * at sign-up. Later calls reuse what's stored.
  */
 export async function ensureStoredBackingAccount(user: User, regionForNewAccount: HumanRegion) {
   const stored = readStoredBackingAccount(user);

@@ -3,7 +3,8 @@
 import { currentUser } from '@clerk/nextjs/server';
 
 import { readStoredBackingAccount, type StoredBackingAccount, storeBackingAccount } from '@/lib/human-account';
-import { approveCliLogin, HumanAccountsApiError, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { approveCliLogin, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { HumanApiError } from '@/lib/human-api-error';
 
 export type CliLoginFormState = {
   approved?: boolean;
@@ -110,7 +111,7 @@ function normalizeUserCode(input: string): string | null {
 }
 
 function describeLoginError(error: unknown): CliLoginFormState {
-  if (error instanceof HumanAccountsApiError) {
+  if (error instanceof HumanApiError) {
     if (error.code === 'cli_login_not_found') {
       return {
         error:
@@ -127,7 +128,7 @@ function describeLoginError(error: unknown): CliLoginFormState {
     }
 
     // The claim's own messages ("already been used", "expired", …) are written for people.
-    if (error.code?.startsWith('claim_')) {
+    if (error.code.startsWith('claim_')) {
       return { error: `${error.message} You can still log in without keeping that setup.`, canSkipClaim: true };
     }
   }
