@@ -3,7 +3,7 @@ import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
-import { geistMono, instrumentSerif, inter } from '@/lib/fonts';
+import { geist, geistMono, instrumentSerif } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -15,12 +15,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#0a0908',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={cn(inter.variable, geistMono.variable, instrumentSerif.variable)}>
+    <html lang="en" className={cn(geist.variable, geistMono.variable, instrumentSerif.variable)}>
       <body>{children}</body>
     </html>
   );

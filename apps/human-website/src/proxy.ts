@@ -7,5 +7,15 @@ import { clerkMiddleware } from '@clerk/nextjs/server';
 export default clerkMiddleware();
 
 export const config = {
-  matcher: ['/account/:path*', '/claim/:path*', '/cli/:path*', '/sign-in/:path*', '/sign-up/:path*'],
+  matcher: [
+    '/account/:path*',
+    '/agent/:path*',
+    '/channels/:path*',
+    '/claim/:path*',
+    '/cli/:path*',
+    '/contacts/:path*',
+    '/settings/:path*',
+    '/sign-in/:path*',
+    '/sign-up/:path*',
+  ],
 };

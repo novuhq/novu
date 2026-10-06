@@ -1,10 +1,10 @@
-import { Geist_Mono, Instrument_Serif, Inter } from 'next/font/google';
+import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google';
 
 // Variable font, so every weight comes from one file. An explicit weight list failed to build
 // under Turbopack in Next 16.3.6.
-export const inter = Inter({
+export const geist = Geist({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-geist',
   display: 'swap',
 });
 
