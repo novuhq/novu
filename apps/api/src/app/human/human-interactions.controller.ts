@@ -195,7 +195,7 @@ export class HumanInteractionsController {
   }
 
   /**
-   * The claim token of the caller's keyless setup. `human login` hands it to the Human website, so
+   * The claim token of the caller's keyless setup. `human login` hands it to the Human dashboard, so
    * signing in there also moves the setup into the operator's Human account.
    */
   @Post('/claim-token')

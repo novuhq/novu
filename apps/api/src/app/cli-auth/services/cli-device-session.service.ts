@@ -12,7 +12,7 @@ import {
   resolveCliDeviceSessionConfig,
 } from '@novu/shared';
 
-import { buildHumanCliLoginUrl } from '../../shared/helpers/resolve-human-website-base-url';
+import { buildHumanCliLoginUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 
 const CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS = 2;
 
@@ -110,7 +110,7 @@ export class CliDeviceSessionService {
       throw new Error('Cache is required to issue CLI device sessions');
     }
 
-    // `human login` is approved on the Human website by typing a short user code, so the device code the CLI
+    // `human login` is approved on the Human dashboard by typing a short user code, so the device code the CLI
     // polls with never reaches a browser, and a link alone can't approve anything.
     const verificationUrl = params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI ? buildHumanCliLoginUrl() : undefined;
     const userCode = verificationUrl ? await this.reserveUserCode(deviceCode, sessionConfig.ttlSeconds) : undefined;

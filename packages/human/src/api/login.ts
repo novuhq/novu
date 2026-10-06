@@ -6,12 +6,12 @@ export const HUMAN_CLI_SESSION_NAME = 'human-cli';
 /** Matches the API's `KEYLESS_SETUP_CLAIMED_CODE`. */
 const KEYLESS_SETUP_CLAIMED_CODE = 'keyless_setup_claimed';
 
-/** A `human login` request, approved by the operator on the Human website. */
+/** A `human login` request, approved by the operator on the Human dashboard. */
 export interface LoginRequest {
   deviceCode: string;
   expiresIn: number;
   interval: number;
-  /** Missing on APIs without the Human website (self-hosted), where there's no browser login. */
+  /** Missing on APIs without the Human dashboard (self-hosted), where there's no browser login. */
   verificationUrl?: string;
   /** What the operator types on that page; the device code the CLI polls with never leaves this computer. */
   userCode?: string;

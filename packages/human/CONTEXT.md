@@ -1,6 +1,6 @@
 # Human
 
-Human lets AI agents reach the people they work for on Telegram, Slack or email, and wait for their answer. It spans the `@novu/human` CLI, the Human API module (`apps/api/src/app/human`) and gethuman.md (`apps/human-website`), and runs on Novu underneath without people ever seeing Novu.
+Human lets AI agents reach the people they work for on Telegram, Slack or email, and wait for their answer. It spans the `@novu/human` CLI, the Human API module (`apps/api/src/app/human`) and gethuman.md (`apps/human-dashboard`), and runs on Novu underneath without people ever seeing Novu.
 
 ## Language
 
