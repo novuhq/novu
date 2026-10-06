@@ -14,6 +14,19 @@ import { WorkflowRunsCountDataPointDto } from '../../dtos/get-charts.response.dt
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { BuildWorkflowRunsCountChartCommand } from './build-workflow-runs-count-chart.command';
 
+function hasGranularFilters(command: BuildWorkflowRunsCountChartCommand): boolean {
+  const { workflowIds, subscriberIds, transactionIds, statuses, channels, topicKey } = command;
+
+  return Boolean(
+    workflowIds?.length ||
+      subscriberIds?.length ||
+      transactionIds?.length ||
+      statuses?.length ||
+      channels?.length ||
+      topicKey
+  );
+}
+
 @Injectable()
 export class BuildWorkflowRunsCountChart {
   constructor(
@@ -28,6 +41,14 @@ export class BuildWorkflowRunsCountChart {
   @InstrumentUsecase()
   async execute(command: BuildWorkflowRunsCountChartCommand): Promise<WorkflowRunsCountDataPointDto> {
     const { environmentId, organizationId, startDate, endDate } = command;
+
+    /*
+     * The pre-aggregated workflow_run_count table is only bucketed by environment, organization and date,
+     * so it cannot honor granular filters. Any filtered request must be counted from the raw workflow runs.
+     */
+    if (hasGranularFilters(command)) {
+      return this.buildCountFromWorkflowRuns(command);
+    }
 
     const isWorkflowRunCountEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_COUNT_ENABLED,
