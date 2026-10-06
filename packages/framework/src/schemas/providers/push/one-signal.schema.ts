@@ -1362,9 +1362,7 @@ const oneSignalOutputSchema = {
             },
           },
         },
-        {
-          required: ['appId'],
-        },
+        // appId comes from integration credentials — do not require it on override output.
       ],
     },
     {
