@@ -122,7 +122,7 @@ export function combineProviderOverrides(
 
   const [bridgeLayer, workflowLayer, stepLayer] = applyExclusiveKeyGroups(
     [bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides],
-    resolveExclusiveKeyGroups(integrationId)
+    resolveExclusiveKeyGroups(providerId)
   );
 
   return mergeWith({}, bridgeLayer, workflowLayer, stepLayer, replaceArrays);
