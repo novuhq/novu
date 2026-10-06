@@ -4,7 +4,7 @@ import { CacheService } from '@novu/application-generic';
 import { CommunityOrganizationRepository, EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import { SyncExternalOrganizationCommand } from '../../../organization/usecases/create-organization/sync-external-organization/sync-external-organization.command';
-import { resolveHumanRegion } from '../../../shared/helpers/resolve-human-website-base-url';
+import { resolveHumanRegion } from '../../../shared/helpers/resolve-human-dashboard-base-url';
 import type { HumanAccountResponseDto } from '../../dtos/human-account.dto';
 import {
   buildHumanBackingEmail,

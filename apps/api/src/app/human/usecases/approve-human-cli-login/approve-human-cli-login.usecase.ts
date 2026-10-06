@@ -10,7 +10,7 @@ import { EnsureBackingOrganizationCommand } from '../ensure-backing-organization
 import { EnsureBackingOrganization } from '../ensure-backing-organization/ensure-backing-organization.usecase';
 import { ApproveHumanCliLoginCommand } from './approve-human-cli-login.command';
 
-/** Machine-readable code on the 404, so the Human website can tell a wrong or expired code from a failed claim. */
+/** Machine-readable code on the 404, so the Human dashboard can tell a wrong or expired code from a failed claim. */
 export const CLI_LOGIN_NOT_FOUND_CODE = 'cli_login_not_found';
 
 /** Claim failures keep their `claim_*` code, or get this one, so the website can offer to log in without the setup. */

@@ -253,7 +253,7 @@ const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 export interface KeylessCapDetails {
   claimUrl?: string;
   cap?: number;
-  /** The API has `human login` (the Human website); self-hosted and older APIs need a secret key instead. */
+  /** The API has `human login` (the Human dashboard); self-hosted and older APIs need a secret key instead. */
   browserLogin?: boolean;
 }
 

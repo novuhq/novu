@@ -99,7 +99,7 @@ async function request<T>(
     method: init.method,
     headers: {
       'Content-Type': 'application/json',
-      'x-human-website-secret': process.env.HUMAN_WEBSITE_API_SECRET ?? '',
+      'x-human-dashboard-secret': process.env.HUMAN_DASHBOARD_API_SECRET ?? '',
     },
     body: init.body ? JSON.stringify(init.body) : undefined,
     cache: 'no-store',

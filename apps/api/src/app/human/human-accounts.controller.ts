@@ -12,7 +12,7 @@ import {
   type HumanAccountResponseDto,
   type HumanAccountSecretKeyResponseDto,
 } from './dtos/human-account.dto';
-import { HumanWebsiteSecretGuard } from './guards/human-website-secret.guard';
+import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { ApproveHumanCliLoginCommand } from './usecases/approve-human-cli-login/approve-human-cli-login.command';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { ClaimForHumanAccountCommand } from './usecases/claim-for-human-account/claim-for-human-account.command';
@@ -25,7 +25,7 @@ import { GetBackingSecretKeyCommand } from './usecases/get-backing-secret-key/ge
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
 
 /**
- * Private endpoints for the Human website's server (gethuman.md), which signs operators in with its
+ * Private endpoints for the Human dashboard's server (gethuman.md), which signs operators in with its
  * own Clerk app. Each Human account is backed by a hidden Novu organization; see
  * packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md.
  */
@@ -33,7 +33,7 @@ import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backi
 @ApiCommonResponses()
 @Controller('/human/accounts')
 @ApiExcludeController()
-@UseGuards(HumanWebsiteSecretGuard)
+@UseGuards(HumanDashboardSecretGuard)
 export class HumanAccountsController {
   constructor(
     private readonly ensureBackingOrganizationUsecase: EnsureBackingOrganization,
