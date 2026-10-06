@@ -3,7 +3,7 @@ import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentRepository, BaseRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { DirectionEnum } from '../../../shared/dtos/base-responses';
-import { buildHumanWebsiteUrl } from '../../../shared/helpers/resolve-human-website-base-url';
+import { buildHumanDashboardUrl } from '../../../shared/helpers/resolve-human-dashboard-base-url';
 import {
   DEFAULT_CONTACTS_LIMIT,
   HumanContactChannelDto,
@@ -133,7 +133,7 @@ function toContact(
     ...(reach?.invite
       ? {
           invite: {
-            ...(includeInviteLink ? { url: buildHumanWebsiteUrl(`/invite/${reach.invite.token}`) } : {}),
+            ...(includeInviteLink ? { url: buildHumanDashboardUrl(`/invite/${reach.invite.token}`) } : {}),
             expiresAt: reach.invite.expiresAt,
           },
         }
