@@ -1,7 +1,7 @@
 export type HumanRegion = 'us' | 'eu';
 
 /**
- * Base URL of the Human website (`apps/human-website`), which hosts the pages
+ * Base URL of the Human website (`apps/human-dashboard`), which hosts the pages
  * that `human invite` links point to. `HUMAN_WEBSITE_URL` wins, falling back
  * to gethuman.md. The trailing slash is stripped so callers can append paths.
  */

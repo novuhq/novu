@@ -1,5 +1,5 @@
 {
-  "name": "@novu/human-website",
+  "name": "@novu/human-dashboard",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,7 +11,7 @@
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "npx biome lint apps/human-website"
+          "command": "npx biome lint apps/human-dashboard"
         }
       }
     }

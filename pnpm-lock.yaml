@@ -1292,7 +1292,7 @@ importers:
         specifier: ^2.3.2
         version: 2.3.2(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
-  apps/human-website:
+  apps/human-dashboard:
     dependencies:
       '@clerk/nextjs':
         specifier: ^7.9.9
