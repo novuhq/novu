@@ -1,16 +1,16 @@
 export type HumanRegion = 'us' | 'eu';
 
 /**
- * Base URL of the Human website (`apps/human-dashboard`), which hosts the pages
- * that `human invite` links point to. `HUMAN_WEBSITE_URL` wins, falling back
+ * Base URL of the Human dashboard (`apps/human-dashboard`), which hosts the pages
+ * that `human invite` links point to. `HUMAN_DASHBOARD_URL` wins, falling back
  * to gethuman.md. The trailing slash is stripped so callers can append paths.
  */
-export function resolveHumanWebsiteBaseUrl(): string {
-  return (process.env.HUMAN_WEBSITE_URL || 'https://gethuman.md').replace(/\/$/, '');
+export function resolveHumanDashboardBaseUrl(): string {
+  return (process.env.HUMAN_DASHBOARD_URL || 'https://gethuman.md').replace(/\/$/, '');
 }
 
 /**
- * The region this API serves, as the Human website names it. Every AWS EU
+ * The region this API serves, as the Human dashboard names it. Every AWS EU
  * region starts with `eu-`; everything else is served by the US website flow.
  */
 export function resolveHumanRegion(): HumanRegion {
@@ -18,11 +18,11 @@ export function resolveHumanRegion(): HumanRegion {
 }
 
 /**
- * The Human website is one site for every region, so links from an EU
+ * The Human dashboard is one site for every region, so links from an EU
  * deployment carry `region=eu` and the page calls the EU API.
  */
-export function buildHumanWebsiteUrl(path: string, params: Record<string, string> = {}): string {
-  const url = new URL(`${resolveHumanWebsiteBaseUrl()}${path}`);
+export function buildHumanDashboardUrl(path: string, params: Record<string, string> = {}): string {
+  const url = new URL(`${resolveHumanDashboardBaseUrl()}${path}`);
 
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
@@ -37,13 +37,13 @@ export function buildHumanWebsiteUrl(path: string, params: Record<string, string
 
 /**
  * Page where an operator approves `human login` by typing the code their terminal shows. Approving goes
- * through the Human accounts endpoints, which only run where the Human website is configured, so there's
+ * through the Human accounts endpoints, which only run where the Human dashboard is configured, so there's
  * no browser login without it.
  */
 export function buildHumanCliLoginUrl(): string | undefined {
-  if (!process.env.HUMAN_WEBSITE_URL?.trim()) {
+  if (!process.env.HUMAN_DASHBOARD_URL?.trim()) {
     return undefined;
   }
 
-  return buildHumanWebsiteUrl('/cli/login');
+  return buildHumanDashboardUrl('/cli/login');
 }

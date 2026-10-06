@@ -14,7 +14,7 @@ import { ConnectModule } from '../connect/connect.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
-import { HumanWebsiteSecretGuard } from './guards/human-website-secret.guard';
+import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController } from './human-invites-public.controller';
@@ -76,7 +76,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     SetHumanInviteDefault,
     DeclineHumanInvite,
     HumanBackingAccounts,
-    HumanWebsiteSecretGuard,
+    HumanDashboardSecretGuard,
     EnsureBackingOrganization,
     ClaimForHumanAccount,
     GetBackingSecretKey,

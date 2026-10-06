@@ -65,11 +65,11 @@ describe('CliDeviceSessionService', () => {
   });
 
   describe('human login sessions', () => {
-    const originalWebsiteUrl = process.env.HUMAN_WEBSITE_URL;
+    const originalDashboardUrl = process.env.HUMAN_DASHBOARD_URL;
     const originalRegion = process.env.NOVU_REGION;
 
     afterEach(() => {
-      restoreEnv('HUMAN_WEBSITE_URL', originalWebsiteUrl);
+      restoreEnv('HUMAN_DASHBOARD_URL', originalDashboardUrl);
       restoreEnv('NOVU_REGION', originalRegion);
     });
 
@@ -81,8 +81,8 @@ describe('CliDeviceSessionService', () => {
       }
     }
 
-    it('send the CLI to the Human website with a code to type there, and wait as long as novu connect', async () => {
-      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md/';
+    it('send the CLI to the Human dashboard with a code to type there, and wait as long as novu connect', async () => {
+      process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md/';
       delete process.env.NOVU_REGION;
       const { service, cacheService } = makeService();
 
@@ -102,7 +102,7 @@ describe('CliDeviceSessionService', () => {
     });
 
     it('pick another code when one is taken', async () => {
-      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
+      process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
       const { service, cacheService } = makeService();
       cacheService.setIfNotExist.onFirstCall().resolves(null);
 
@@ -127,7 +127,7 @@ describe('CliDeviceSessionService', () => {
     });
 
     it('carry the EU region from EU deployments', async () => {
-      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
+      process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
       process.env.NOVU_REGION = 'eu-central-1';
       const { service } = makeService();
 
@@ -136,8 +136,8 @@ describe('CliDeviceSessionService', () => {
       expect(new URL(result.verificationUrl ?? '').searchParams.get('region')).to.equal('eu');
     });
 
-    it('have no page to open where the Human website is not configured', async () => {
-      delete process.env.HUMAN_WEBSITE_URL;
+    it('have no page to open where the Human dashboard is not configured', async () => {
+      delete process.env.HUMAN_DASHBOARD_URL;
       const { service } = makeService();
 
       const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
@@ -147,7 +147,7 @@ describe('CliDeviceSessionService', () => {
     });
 
     it('leave other CLIs on the dashboard', async () => {
-      process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
+      process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
       const { service, cacheService } = makeService();
 
       const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_NOVU_CONNECT });

@@ -3,7 +3,7 @@ import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
-import { HUMAN_WEBSITE_SECRET_HEADER } from '../guards/human-website-secret.guard';
+import { HUMAN_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
 import { EnsureBackingOrganization } from '../usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 
 /**
@@ -11,8 +11,8 @@ import { EnsureBackingOrganization } from '../usecases/ensure-backing-organizati
  * enterprise use cases it depends on, and request validation. Nothing here reaches Clerk: where a
  * backing organization is needed, the test session's own organization stands in for it.
  */
-describe('Human accounts (private endpoints for the Human website) #novu-v2', () => {
-  const originalSecret = process.env.HUMAN_WEBSITE_API_SECRET;
+describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', () => {
+  const originalSecret = process.env.HUMAN_DASHBOARD_API_SECRET;
   let session: UserSession;
 
   beforeEach(async () => {
@@ -22,9 +22,9 @@ describe('Human accounts (private endpoints for the Human website) #novu-v2', ()
 
   afterEach(() => {
     if (originalSecret === undefined) {
-      delete process.env.HUMAN_WEBSITE_API_SECRET;
+      delete process.env.HUMAN_DASHBOARD_API_SECRET;
     } else {
-      process.env.HUMAN_WEBSITE_API_SECRET = originalSecret;
+      process.env.HUMAN_DASHBOARD_API_SECRET = originalSecret;
     }
   });
 
@@ -33,17 +33,17 @@ describe('Human accounts (private endpoints for the Human website) #novu-v2', ()
   }
 
   it('does not exist while no shared secret is configured', async () => {
-    delete process.env.HUMAN_WEBSITE_API_SECRET;
+    delete process.env.HUMAN_DASHBOARD_API_SECRET;
 
-    const res = await ensureAccount({ [HUMAN_WEBSITE_SECRET_HEADER]: '' }, { humanUserId: 'user_e2e' });
+    const res = await ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: '' }, { humanUserId: 'user_e2e' });
 
     expect(res.status).to.equal(404, JSON.stringify(res.body));
   });
 
   it('rejects callers without the shared secret, including dashboard sessions', async () => {
-    process.env.HUMAN_WEBSITE_API_SECRET = 'e2e-human-website-secret';
+    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
 
-    const anonymous = await ensureAccount({ [HUMAN_WEBSITE_SECRET_HEADER]: 'wrong' }, { humanUserId: 'user_e2e' });
+    const anonymous = await ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: 'wrong' }, { humanUserId: 'user_e2e' });
     expect(anonymous.status).to.equal(401, JSON.stringify(anonymous.body));
 
     const dashboardSession = await session.testAgent.post('/v1/human/accounts').send({ humanUserId: 'user_e2e' });
@@ -51,10 +51,10 @@ describe('Human accounts (private endpoints for the Human website) #novu-v2', ()
   });
 
   it('validates the Human user ID before touching Clerk', async () => {
-    process.env.HUMAN_WEBSITE_API_SECRET = 'e2e-human-website-secret';
+    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
 
     const res = await ensureAccount(
-      { [HUMAN_WEBSITE_SECRET_HEADER]: 'e2e-human-website-secret' },
+      { [HUMAN_DASHBOARD_SECRET_HEADER]: 'e2e-human-dashboard-secret' },
       { humanUserId: 'not an id@example.com' }
     );
 
@@ -62,12 +62,12 @@ describe('Human accounts (private endpoints for the Human website) #novu-v2', ()
   });
 
   describe('human login', () => {
-    const SECRET = 'e2e-human-website-secret';
+    const SECRET = 'e2e-human-dashboard-secret';
     const originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
     let ensureBackingOrganization: sinon.SinonStub;
 
     beforeEach(() => {
-      process.env.HUMAN_WEBSITE_API_SECRET = SECRET;
+      process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
       // The test session's own organization stands in for the backing organization, so Clerk isn't needed.
       ensureBackingOrganization = sinon.stub(testServer.getService(EnsureBackingOrganization), 'execute').resolves({
         organizationId: session.organization._id,
@@ -101,7 +101,7 @@ describe('Human accounts (private endpoints for the Human website) #novu-v2', ()
       return session.testAgent
         .post('/v1/human/accounts/cli-login')
         .set('Authorization', '')
-        .set(HUMAN_WEBSITE_SECRET_HEADER, SECRET)
+        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ humanUserId: 'user_e2e', firstName: 'Ada', email: 'ada@example.com', ...body });
     }
 
@@ -116,11 +116,11 @@ describe('Human accounts (private endpoints for the Human website) #novu-v2', ()
       expect(ensureBackingOrganization.called).to.equal(false);
     });
 
-    it('starts requests that are approved on the Human website with the code the CLI shows', async () => {
+    it('starts requests that are approved on the Human dashboard with the code the CLI shows', async () => {
       const { deviceCode, userCode, verificationUrl } = await startLogin();
 
       // The device code the CLI polls with is not in the link.
-      expect(verificationUrl).to.equal(`${process.env.HUMAN_WEBSITE_URL?.replace(/\/$/, '')}/cli/login`);
+      expect(verificationUrl).to.equal(`${process.env.HUMAN_DASHBOARD_URL?.replace(/\/$/, '')}/cli/login`);
       expect(userCode).to.match(CLI_USER_CODE_PATTERN);
       expect((await poll(deviceCode)).body.data.status).to.equal('pending');
     });

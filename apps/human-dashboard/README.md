@@ -26,13 +26,13 @@ pnpm start:human-dashboard         # http://localhost:4300
 ```
 
 The invite page calls the Novu API's public `/v1/human/invites/*` endpoints. Run the API locally
-(`pnpm start:api:dev`) with `HUMAN_WEBSITE_URL=http://localhost:4300` so `human invite` links point here,
+(`pnpm start:api:dev`) with `HUMAN_DASHBOARD_URL=http://localhost:4300` so `human invite` links point here,
 then run `human invite <id>` against the local API and open the printed link.
 
 Human accounts also need:
 
 - a Clerk application for Human (development instance is fine), with its keys in `.env.local`;
-- the same `HUMAN_WEBSITE_API_SECRET` here and in the API's `.env`;
+- the same `HUMAN_DASHBOARD_API_SECRET` here and in the API's `.env`;
 - an API running with the Clerk-backed enterprise auth and keyless enabled;
 - if Novu's Clerk instance has an allowlist (the development one does), `*@users.gethuman.md` on it. The
   hidden Novu users get made-up addresses there, and otherwise Clerk refuses them with `not_allowed_access`.
@@ -41,7 +41,7 @@ To try a claim, set `KEYLESS_HUMAN_INTERACTION_CAP=1` on the API, run `human set
 the local API, send two messages, and open the printed `/claim` link.
 
 To try `human login`, run it against the local API (`NOVU_API_URL=http://localhost:3000 human login`) and enter
-the code it prints on `/cli/login` here. The API only offers the browser login when `HUMAN_WEBSITE_URL` is set.
+the code it prints on `/cli/login` here. The API only offers the browser login when `HUMAN_DASHBOARD_URL` is set.
 
 ## Configuration
 
@@ -51,7 +51,7 @@ the code it prints on `/cli/login` here. The API only offers the browser login w
 | `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | API for links issued with `?region=eu`, and EU accounts.   |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                        | Human Clerk app. Only the account pages use it.            |
 | `CLERK_SECRET_KEY`                  | —                        | Human Clerk app, server only.                              |
-| `HUMAN_WEBSITE_API_SECRET`          | —                        | Shared with the Novu API for `/v1/human/accounts`. Server only. |
+| `HUMAN_DASHBOARD_API_SECRET`          | —                        | Shared with the Novu API for `/v1/human/accounts`. Server only. |
 
 `NEXT_PUBLIC_` values are inlined at build time. The API URL never comes from a link itself.
 
