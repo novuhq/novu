@@ -221,8 +221,10 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
       const [skillIdArg, paramsArg] = mockClient.beta.skills.versions.create.mock.calls[0];
       expect(skillIdArg).to.equal('skill_existing');
       expect(paramsArg.betas).to.deep.equal(['skills-2025-10-02']);
-      // Filenames must retain the `<directoryName>/` prefix, otherwise the API
-      // rejects the bundle as "SKILL.md must be exactly in the top-level folder".
+      // The provider must hand the SDK `<directoryName>/`-prefixed filenames,
+      // otherwise the API rejects the bundle as "SKILL.md must be exactly in
+      // the top-level folder". `toFile` is stubbed, so this does not cover the
+      // SDK's own multipart encoding.
       const fileNames = (paramsArg.files as Array<{ path: string }>).map((file) => file.path);
       expect(fileNames.sort()).to.deep.equal(['my-skill/SKILL.md', 'my-skill/lib/helpers.py']);
     });
