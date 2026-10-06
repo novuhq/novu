@@ -226,6 +226,8 @@ export enum FeatureFlagsKeysEnum {
    * for cloud, or set `VITE_IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED` when self-hosted.
    */
   IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED = 'IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED',
+  /** Enable per-provider content overrides on push steps (FCM/Expo schemas, free-form elsewhere). */
+  IS_PUSH_PROVIDER_OVERRIDES_ENABLED = 'IS_PUSH_PROVIDER_OVERRIDES_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require

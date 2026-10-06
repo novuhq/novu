@@ -22,7 +22,9 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  getProviderOverrideConfig,
   INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  layerClaimsExclusiveGroup,
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
@@ -58,12 +60,61 @@ type BridgeProviderOverrides = {
 };
 
 /**
+ * For each exclusive key group, the highest-precedence layer that claims it — sets one of its keys
+ * to a value `resolveExclusiveRoutingKeys` can still use — keeps its group keys, and every other
+ * layer loses them. That stops a deep-merge from leaving a mixed destination (e.g. FCM `topic` from
+ * bridge + `tokens` from trigger).
+ *
+ * Group keys on non-claiming layers are dropped rather than merged, so an unusable value cannot
+ * silently take the destination away: lodash merges `topic: ''` over a dashboard `topic: 'orders'`,
+ * and the resolver would then discard the empty string and find no destination at all.
+ *
+ * `layers` is ordered low → high precedence. Returns shallow-cloned layers; originals are untouched.
+ */
+function applyExclusiveKeyGroups(
+  layers: readonly Record<string, unknown>[],
+  exclusiveKeyGroups: readonly (readonly string[])[]
+): Record<string, unknown>[] {
+  if (exclusiveKeyGroups.length === 0) {
+    return [...layers];
+  }
+
+  const result = layers.map((layer) => ({ ...layer }));
+
+  for (const group of exclusiveKeyGroups) {
+    let claimed = false;
+
+    for (let i = result.length - 1; i >= 0; i -= 1) {
+      const layer = result[i];
+
+      if (!claimed && layerClaimsExclusiveGroup(layer, group)) {
+        claimed = true;
+        continue;
+      }
+
+      for (const key of group) {
+        delete layer[key];
+      }
+    }
+  }
+
+  return result;
+}
+
+function resolveExclusiveKeyGroups(providerId: string): readonly (readonly string[])[] {
+  return getProviderOverrideConfig(providerId)?.exclusiveKeyGroups ?? [];
+}
+
+/**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted for the provider, then for the sending integration, then the workflow-global
  * trigger override, then the step-scoped one.
  *
  * The integration overrides map rides inside the bridge provider entry and is never provider data,
  * so it is stripped from the result whichever layer carried it.
+ *
+ * When the provider declares exclusive key groups (e.g. FCM routing destinations), the highest layer
+ * that sets a usable key in a group evicts all group keys contributed by the other layers before merge.
  */
 export function combineProviderOverrides(
   bridgeData: BridgeProviderOverrides | null | undefined,
@@ -77,12 +128,17 @@ export function combineProviderOverrides(
   const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
 
+  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = applyExclusiveKeyGroups(
+    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
+    resolveExclusiveKeyGroups(providerId)
+  );
+
   const combined: Record<string, unknown> = mergeWith(
     {},
-    providerOverride,
-    integrationOverride,
-    workflowGlobalProviderOverrides,
-    stepScopedOverrides,
+    providerLayer,
+    integrationLayer,
+    workflowLayer,
+    stepLayer,
     replaceArrays
   );
   delete combined[INTEGRATION_OVERRIDES_OUTPUT_KEY];

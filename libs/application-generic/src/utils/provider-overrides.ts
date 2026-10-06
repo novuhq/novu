@@ -3,6 +3,7 @@ import {
   CONTENT_OVERRIDE_PROVIDER_IDS,
   ContentIssueEnum,
   type ContentOverrideProviderId,
+  FCM_OVERRIDE_SCHEMA_SUBPATH,
   getProviderOverrideConfig,
   INTEGRATION_OVERRIDES_OUTPUT_KEY,
   isRecord,
@@ -15,9 +16,11 @@ import {
   TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,
   WHATSAPP_OVERRIDE_SCHEMA_SUBPATH,
 } from '@novu/shared';
+import { fcmOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/fcm';
 import { slackOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/slack';
 import { telegramOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/telegram';
 import { whatsappOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/whatsapp';
+import type { ErrorObject } from 'ajv';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { type ControlIssues, mapSchemaErrorsToControlIssues } from './issues';
 import { createLiquidTolerantValidator } from './liquid-tolerant-validator';
@@ -48,6 +51,7 @@ export const LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH: Readonly<Record<string, JSONSch
   [SLACK_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(slackOverrideLiquidTolerantJsonSchema),
   [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(telegramOverrideLiquidTolerantJsonSchema),
   [WHATSAPP_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(whatsappOverrideLiquidTolerantJsonSchema),
+  [FCM_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(fcmOverrideLiquidTolerantJsonSchema),
 };
 
 export function isSupportedProviderOverrideId(providerId: string): providerId is ContentOverrideProviderId {
@@ -172,6 +176,90 @@ function unsupportedPropertyIssue(path: string, property: string): RuntimeIssue 
   };
 }
 
+function hasMultipleExclusiveKeys(override: unknown, group: readonly string[]): boolean {
+  if (!override || typeof override !== 'object' || Array.isArray(override)) {
+    return false;
+  }
+
+  const record = override as Record<string, unknown>;
+  let present = 0;
+
+  for (const key of group) {
+    if (key in record) {
+      present += 1;
+      if (present > 1) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/** Pairwise `allOf`/`not.required` constraints report as root `not` errors with message "must NOT be valid". */
+function isExclusiveGroupAjvError(error: ErrorObject, groupKeys: ReadonlySet<string>): boolean {
+  if (error.keyword !== 'not' || !error.schemaPath.includes('/allOf/')) {
+    return false;
+  }
+
+  const negated = error.schema;
+  if (!negated || typeof negated !== 'object' || Array.isArray(negated)) {
+    return false;
+  }
+
+  const required = 'required' in negated ? negated.required : undefined;
+  if (!Array.isArray(required) || required.length < 2) {
+    return false;
+  }
+
+  return required.every((key) => typeof key === 'string' && groupKeys.has(key));
+}
+
+function exclusiveGroupMessage(group: readonly string[]): string {
+  return `Only one of ${group.join(', ')} is allowed`;
+}
+
+/**
+ * Rewrites exclusive-key-group failures (config + AJV pairwise `not`/`allOf`) to one friendly issue.
+ */
+function mapExclusiveKeyGroupIssues(
+  override: unknown,
+  providerPath: string,
+  errors: ErrorObject[],
+  exclusiveKeyGroups: readonly (readonly string[])[]
+): Record<string, RuntimeIssue[]> {
+  const conflictGroups = exclusiveKeyGroups.filter((group) => {
+    const groupKeys = new Set(group);
+
+    return (
+      hasMultipleExclusiveKeys(override, group) || errors.some((error) => isExclusiveGroupAjvError(error, groupKeys))
+    );
+  });
+
+  const filteredErrors = errors.filter(
+    (error) => !conflictGroups.some((group) => isExclusiveGroupAjvError(error, new Set(group)))
+  );
+
+  const controls =
+    mapSchemaErrorsToControlIssues(filteredErrors, {
+      pathPrefix: providerPath,
+      collapseUrlFieldErrors: false,
+    }).controls ?? {};
+
+  for (const group of conflictGroups) {
+    controls[providerPath] = [
+      ...(controls[providerPath] ?? []),
+      {
+        message: exclusiveGroupMessage(group),
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: providerPath,
+      },
+    ];
+  }
+
+  return controls;
+}
+
 /**
  * Validates each provider override blob against that provider's Liquid-tolerant schema and returns
  * step issues namespaced as `providerOverrides.<providerId>.<path>`. Values are validated with the
@@ -200,7 +288,13 @@ export function processProviderOverridesIssues(
       continue;
     }
 
-    collectSchemaIssues(controls, resolveLiquidTolerantSchema(config), override, providerPath);
+    collectSchemaIssues(
+      controls,
+      resolveLiquidTolerantSchema(config),
+      override,
+      providerPath,
+      config.exclusiveKeyGroups ?? []
+    );
   }
 
   return Object.keys(controls).length === 0 ? {} : { controls };
@@ -236,7 +330,7 @@ export function processIntegrationOverridesIssues(
     const schema = resolveLiquidTolerantSchema(config);
 
     for (const [identifier, override] of Object.entries(overridesByIdentifier)) {
-      collectSchemaIssues(controls, schema, override, `${providerPath}.${identifier}`);
+      collectSchemaIssues(controls, schema, override, `${providerPath}.${identifier}`, config.exclusiveKeyGroups ?? []);
     }
   }
 
@@ -247,12 +341,17 @@ function collectSchemaIssues(
   controls: Record<string, RuntimeIssue[]>,
   schema: JSONSchemaDto,
   override: unknown,
-  pathPrefix: string
+  pathPrefix: string,
+  exclusiveKeyGroups: readonly (readonly string[])[] = []
 ): void {
-  const overrideIssues = mapSchemaErrorsToControlIssues(getValidator(schema)(override), {
-    pathPrefix,
-    collapseUrlFieldErrors: false,
-  }).controls;
+  const schemaErrors = getValidator(schema)(override);
+  const overrideIssues =
+    exclusiveKeyGroups.length > 0
+      ? mapExclusiveKeyGroupIssues(override, pathPrefix, schemaErrors, exclusiveKeyGroups)
+      : mapSchemaErrorsToControlIssues(schemaErrors, {
+          pathPrefix,
+          collapseUrlFieldErrors: false,
+        }).controls;
 
   for (const [path, pathIssues] of Object.entries(overrideIssues ?? {})) {
     controls[path] = [...(controls[path] ?? []), ...pathIssues];

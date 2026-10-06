@@ -16,7 +16,7 @@ export const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 export const INTEGRATION_OVERRIDES_FIELD = 'integrationOverrides';
 
 /** Channels whose steps can carry per-provider content overrides. */
-export type OverrideChannel = ChannelTypeEnum.CHAT | ChannelTypeEnum.TOOL;
+export type OverrideChannel = ChannelTypeEnum.CHAT | ChannelTypeEnum.TOOL | ChannelTypeEnum.PUSH;
 
 /**
  * A provider override, applied to every integration of that provider, or — with an

@@ -67,7 +67,7 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
-type ProviderOverrideStepType = StepTypeEnum.CHAT | StepTypeEnum.TOOL;
+type ProviderOverrideStepType = StepTypeEnum.CHAT | StepTypeEnum.TOOL | StepTypeEnum.PUSH;
 
 interface ISkipEvaluationContext {
   jobId?: string;
@@ -402,15 +402,24 @@ export class ConstructFrameworkWorkflow {
         return step.push(
           stepId,
           async (controlValues) => {
-            return this.pushOutputRendererUseCase.execute({
-              controlValues,
-              fullPayloadForRender,
-              dbWorkflow,
-              organization,
-              locale,
-            });
+            return this.pushOutputRendererUseCase.execute(
+              await this.translateContentOverrideControls(controlValues, {
+                fullPayloadForRender,
+                dbWorkflow,
+                organization,
+                locale,
+              })
+            );
           },
-          this.constructChannelStepOptions(staticStep, skip)
+          this.constructProviderOverrideStepOptions(
+            staticStep,
+            skip,
+            fullPayloadForRender,
+            dbWorkflow,
+            StepTypeEnum.PUSH,
+            organization,
+            locale
+          )
         );
       case StepTypeEnum.TOOL:
         return step.tool(
@@ -492,7 +501,7 @@ export class ConstructFrameworkWorkflow {
     };
   }
 
-  /** One translation per controls object for chat/tool resolve + provider resolvers. */
+  /** One translation per controls object for chat/tool/push resolve + provider resolvers. */
   private contentOverrideTranslationCache?: WeakMap<object, Promise<Record<string, unknown>>>;
 
   private translateContentOverrideControls(
@@ -535,7 +544,7 @@ export class ConstructFrameworkWorkflow {
   }
 
   /**
-   * Chat/tool step options: canonical control schema plus runtime `providerOverrides` and
+   * Chat/tool/push step options: canonical control schema plus runtime `providerOverrides` and
    * `integrationOverrides`, and resolvers that project a provider slice from the shared translated
    * controls. Bridge provider keys must be known provider ids, so a provider's integration overrides
    * ride inside its slice under `INTEGRATION_OVERRIDES_OUTPUT_KEY` for the worker to unpack.

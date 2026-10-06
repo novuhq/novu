@@ -4,14 +4,12 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
-import { claimKeylessSetup, HumanAccountsApiError, type HumanRegion } from '@/lib/human-accounts-api';
+import { claimKeylessSetup, HumanAccountsApiError, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 
 export type ClaimFormState = { error?: string };
 
 /** Claim tokens are 32 URL-safe characters (`@novu/shared` `isConnectClaimTokenFormat`). */
 const CLAIM_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
-
-const REGION_NAMES: Record<HumanRegion, string> = { us: 'US', eu: 'EU' };
 
 /** Moves the keyless setup from the claim link into the signed-in operator's Human account. */
 export async function claimSetupAction(_previous: ClaimFormState, formData: FormData): Promise<ClaimFormState> {

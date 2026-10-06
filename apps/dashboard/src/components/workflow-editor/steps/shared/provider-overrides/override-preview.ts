@@ -253,7 +253,7 @@ function getDefaultContentMergeHint({
 }): string {
   if (hasOverride) {
     if (!defaultContentKey) {
-      return 'Override merged over the default content.';
+      return `This override is deep-merged over the payload ${displayName} builds from the step's default content.`;
     }
 
     if (!body) {
@@ -265,7 +265,7 @@ function getDefaultContentMergeHint({
 
   const primaryKey = getProviderPrimaryContentKey(providerId);
   if (!primaryKey) {
-    return `No override for this provider. ${displayName} nests its message content, so the default message is not merged in.`;
+    return `No override for this provider. When you add one, it is deep-merged over the payload ${displayName} builds from the step's default content.`;
   }
 
   return `No override for this provider. Default message maps to "${primaryKey}".`;

@@ -43,16 +43,20 @@ export async function ensureStoredBackingAccount(user: User, regionForNewAccount
     firstName: user.firstName,
     lastName: user.lastName,
   });
-  const created: StoredBackingAccount = {
+
+  return storeBackingAccount(user.id, {
     region: regionForNewAccount,
     organizationId: account.organizationId,
     userId: account.userId,
-  };
+  });
+}
 
+/** Remembers where the operator's backing organization lives, for the account page. */
+export async function storeBackingAccount(userId: string, account: StoredBackingAccount) {
   const clerk = await clerkClient();
-  await clerk.users.updateUserMetadata(user.id, { privateMetadata: { [METADATA_KEY]: created } });
+  await clerk.users.updateUserMetadata(userId, { privateMetadata: { [METADATA_KEY]: account } });
 
-  return created;
+  return account;
 }
 
 /**
