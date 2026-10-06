@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 
 /**
  * The dashboard shell around the operator's pages: sidebar, top bar and the content column.
- * Only signed-in operators get in; everyone else goes to sign in first.
+ * Only signed-in operators get in. `proxy.ts` sends everyone else to sign in and back to the page
+ * they asked for; the check here is the backstop if a request ever gets past it.
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const user = await currentUser();

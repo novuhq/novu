@@ -44,7 +44,17 @@ export function CodeInput({
   }
 
   function handleInput(index: number, typed: string) {
-    const digit = typed.replace(/\D/g, '').slice(-1);
+    const digits = typed.replace(/\D/g, '');
+
+    // A phone's one-time-code autofill puts the whole code into one box, after any digit already there.
+    if (digits.length > 2) {
+      const code = digits.slice(-length);
+      update(code, code.length);
+
+      return;
+    }
+
+    const digit = digits.slice(-1);
     if (!digit) {
       return;
     }

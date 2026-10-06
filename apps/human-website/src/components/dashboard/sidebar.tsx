@@ -34,7 +34,10 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
         </div>
       </div>
 
-      <nav aria-label="Dashboard" className="flex flex-1 flex-row gap-1 md:flex-col md:justify-between">
+      <nav
+        aria-label="Dashboard"
+        className="flex flex-1 flex-row flex-wrap gap-1 md:flex-col md:flex-nowrap md:justify-between"
+      >
         <NavList items={MAIN_NAV} current={current} />
         <NavList items={FOOTER_NAV} current={current} />
       </nav>
@@ -44,7 +47,7 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
 
 function NavList({ items, current }: { items: NavItem[]; current: NavItem | undefined }) {
   return (
-    <ul className="flex flex-row gap-1 md:flex-col">
+    <ul className="flex flex-row flex-wrap gap-1 md:flex-col md:flex-nowrap">
       {items.map((item) => (
         <li key={item.href}>
           <NavLink item={item} active={item === current} />
