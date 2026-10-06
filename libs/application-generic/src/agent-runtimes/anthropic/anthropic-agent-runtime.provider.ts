@@ -811,31 +811,17 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  /**
-   * Append a new version to an existing skill by calling the underlying HTTP
-   * endpoint directly. The multipart `filename` parts must keep the
-   * `<directoryName>/` prefix, otherwise the Anthropic API can't locate
-   * `SKILL.md` inside a top-level folder and rejects the bundle.
-   *
-   * Older SDKs (<0.98.1) stripped that prefix in `skills.versions.create`;
-   * current versions keep it, so this raw POST can be replaced by the SDK
-   * call (NV-8922).
-   */
   private async createSkillVersion(
     client: AnthropicCompatibleClient,
     skillId: string,
     files: UploadSkillFile[],
     directoryName: string
   ): Promise<{ version: string | null }> {
-    const formData = new FormData();
+    const uploadables = await Promise.all(files.map((file) => toFile(file.content, `${directoryName}/${file.path}`)));
 
-    for (const file of files) {
-      formData.append('files[]', new File([new Uint8Array(file.content)], `${directoryName}/${file.path}`));
-    }
-
-    return (await (client as any).post(`/v1/skills/${encodeURIComponent(skillId)}/versions?beta=true`, {
-      body: formData,
-      headers: { 'anthropic-beta': SKILLS_BETA },
+    return (await (client as any).beta.skills.versions.create(skillId, {
+      files: uploadables,
+      betas: [SKILLS_BETA],
     })) as { version: string | null };
   }
 }
