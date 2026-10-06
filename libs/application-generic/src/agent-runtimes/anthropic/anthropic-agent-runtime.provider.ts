@@ -53,6 +53,7 @@ import {
   buildMcpOAuthCreateAuth,
   buildMcpOAuthUpdateAuth,
   buildToolsPayload,
+  DEFAULT_MODEL,
   extractApiErrorMessage,
   extractSkillNameFromBundle,
   isDuplicateDisplayTitleError,
@@ -73,7 +74,6 @@ export type AnthropicProviderInit = {
   awsCredentials?: ResolvedAwsAnthropicCredentials;
 };
 
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
 /** Single retry jitter window in ms */
 const RETRY_JITTER_MS = 500;
 /** Anthropic enforces a 64-char cap on `display_title` for `beta.skills.create`. */

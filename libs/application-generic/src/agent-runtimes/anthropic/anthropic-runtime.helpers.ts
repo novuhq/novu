@@ -214,9 +214,14 @@ export function safeStringify(value: unknown): string {
 
 export type AgentToolParam = NonNullable<AgentCreateParams['tools']>[number];
 
+export const DEFAULT_MODEL = 'claude-sonnet-4-6';
+
 export function mapAgentRuntimeConfig(agent: BetaManagedAgentsAgent): AgentRuntimeConfigDto {
+  /** The SDK only types the `{ id }` form; agent responses may still carry a bare model id string. */
+  const model: BetaManagedAgentsAgent['model'] | string | undefined = agent.model;
+
   return {
-    model: agent.model.id,
+    model: typeof model === 'string' ? model : (model?.id ?? DEFAULT_MODEL),
     systemPrompt: agent.system ?? '',
     mcpServers: agent.mcp_servers.map(mapMcpServer),
     tools: agent.tools.flatMap(mapToolset),
@@ -273,7 +278,7 @@ export function mapToolset(tool: BetaManagedAgentsAgent['tools'][number]): Agent
   }
 
   return tool.configs
-    .filter((c) => c.enabled)
+    .filter((c) => c.enabled !== false)
     .map((c) => ({
       externalId: c.name,
       name: c.name,

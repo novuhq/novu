@@ -389,6 +389,48 @@ describe('AnthropicAgentRuntimeProvider.getConfig', () => {
       { externalId: 'HubSpot', name: 'HubSpot', url: 'https://mcp.hubspot.com/mcp' },
     ]);
   });
+
+  it('reads the model from object, bare string, or missing model responses', async () => {
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
+    const cases: Array<[unknown, string]> = [
+      [{ id: 'claude-opus-4-1' }, 'claude-opus-4-1'],
+      ['claude-sonnet-4-5', 'claude-sonnet-4-5'],
+      [undefined, 'claude-sonnet-4-6'],
+    ];
+
+    for (const [model, expected] of cases) {
+      installAgentsMockClient({
+        retrieve: jest.fn().mockResolvedValue({ model, system: '', tools: [], mcp_servers: [], skills: [] }),
+      });
+
+      const result = await provider.getConfig('ext-agent-id');
+
+      expect(result.model).to.equal(expected);
+    }
+  });
+
+  it('keeps builtin tools whose config omits enabled', async () => {
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
+
+    installAgentsMockClient({
+      retrieve: jest.fn().mockResolvedValue({
+        model: { id: 'claude-sonnet-4-6' },
+        system: '',
+        tools: [
+          {
+            type: 'agent_toolset_20260401',
+            configs: [{ name: 'bash' }, { name: 'read', enabled: false }],
+          },
+        ],
+        mcp_servers: [],
+        skills: [],
+      }),
+    });
+
+    const result = await provider.getConfig('ext-agent-id');
+
+    expect(result.tools).to.deep.equal([{ externalId: 'bash', name: 'bash', type: 'builtin' }]);
+  });
 });
 
 describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
