@@ -89,6 +89,7 @@ export class ParseEventRequest {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential trigger guards (bridge, workflow lookup, payload schema, tenant, active, steps) before dispatch
   public async execute(command: ParseEventRequestCommand): Promise<ParseEventRequestResult> {
     const transactionId = command.transactionId || generateTransactionId();
     const requestId = command.requestId;

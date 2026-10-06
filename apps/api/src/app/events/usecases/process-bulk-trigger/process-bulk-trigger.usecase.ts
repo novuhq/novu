@@ -44,7 +44,7 @@ export class ProcessBulkTrigger {
           try {
             const workflow = workflowMap.get(event.name);
 
-            const result = (await this.parseEventRequest.execute(
+            const result: TriggerEventResponseDto = await this.parseEventRequest.execute(
               ParseEventRequestMulticastCommand.create({
                 userId: command.userId,
                 environmentId: command.environmentId,
@@ -65,7 +65,7 @@ export class ProcessBulkTrigger {
                 skipQueueInsertion: true,
                 ...(event.agentId !== undefined && { agentId: event.agentId }),
               })
-            )) as unknown as TriggerEventResponseDto;
+            );
 
             return result;
           } catch (e) {

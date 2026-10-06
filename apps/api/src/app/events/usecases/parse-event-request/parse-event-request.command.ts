@@ -26,6 +26,7 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsDefined()
+  // biome-ignore lint/suspicious/noExplicitAny: arbitrary customer payload, validated against the workflow payloadSchema in ParseEventRequest
   payload: any;
 
   @IsDefined()
