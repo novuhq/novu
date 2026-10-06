@@ -1,21 +1,71 @@
 @import "tailwindcss";
 
-/* Design tokens shared with the gethuman.md landing page (human-website). */
+/* Design tokens from the Human design system (Figma: Design system › Foundations, dark). */
 @theme inline {
-  --font-sans: var(--font-inter), sans-serif;
+  --font-sans: var(--font-geist), sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
   --font-display: var(--font-instrument-serif), serif;
-  --color-background: #000000;
-  --color-foreground: #eee5d8;
+
+  /* Surfaces, from the page canvas up to raised cards. */
+  --color-background: #0a0908;
+  --color-subtle: #100f0d;
+  --color-raised: #12110f;
+  --color-surface: #2e2b27;
+
+  /* Text and icons. */
+  --color-foreground: #ebe2d6;
+  --color-secondary: #8f887d;
+  --color-muted: #5c574f;
+  --color-placeholder: #757575;
+  --color-on-accent: #ffffff;
+
   --color-accent: #ff5c30;
-  --color-border: #1f1d1b;
-  --color-surface: #2a2724;
+  --color-border: #1f1d1a;
+  --color-border-strong: #2e2b27;
+
+  /* Status. */
+  --color-success: #1fc16b;
+  --color-pending: #ff8547;
+  --color-pending-subtle: #311d12;
+  --color-info: #3b82ff;
+  --color-warning: #f2ae40;
+  --color-danger: #fb3748;
+  --color-danger-strong: #d0312d;
+  --color-danger-border: #6a1c22;
+
+  /* Channel brand colors. */
+  --color-telegram: #26a5e4;
+  --color-slack: #e01e5a;
+  --color-imessage: #34c759;
+
   --tracking-tight: -0.02em;
   --animate-terminal-cursor: terminal-cursor 1.1s steps(1) infinite;
+  --animate-overlay-in: overlay-in 150ms ease-out;
+  --animate-dialog-in: dialog-in 150ms ease-out;
+  --animate-drawer-in: drawer-in 200ms ease-out;
 
   @keyframes terminal-cursor {
     50% {
       opacity: 0;
+    }
+  }
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.98);
+    }
+  }
+
+  @keyframes drawer-in {
+    from {
+      transform: translateX(100%);
     }
   }
 }
@@ -30,6 +80,47 @@
     border-inline: 1px solid var(--color-border);
     pointer-events: none;
     z-index: 30;
+  }
+}
+
+/* The dithered orange glow behind highlighted cards and banners. Fades out from the top right corner. */
+@utility dot-glow {
+  position: relative;
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-accent) 60%, transparent) 1px,
+      transparent 1.5px
+    );
+    background-size: 5px 5px;
+    mask-image: radial-gradient(ellipse 70% 120% at 100% 0%, black, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+/* The same dither across a whole screen, rising from the bottom right corner behind a centered card. */
+@utility stage-glow {
+  position: relative;
+  isolation: isolate;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-accent) 35%, transparent) 1px,
+      transparent 1.5px
+    );
+    background-size: 6px 6px;
+    mask-image: radial-gradient(ellipse 60% 70% at 100% 100%, black, transparent 75%);
+    pointer-events: none;
   }
 }
 
