@@ -18,6 +18,7 @@ const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   'photon-imessage': 'photon',
   // AgentPlatformEnum value stored on conversation activity, like `web_chat` above.
   photon_imessage: 'photon',
+  gemini_enterprise: 'gemini-enterprise',
 };
 
 export function getProviderSquareIconFileName(platform: string): string {

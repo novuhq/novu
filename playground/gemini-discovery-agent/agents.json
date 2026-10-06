@@ -9,7 +9,7 @@
   {
     "id": "sales",
     "name": "Sales Agent (A2A)",
-    "description": "Answers questions about company sales: monthly sales figures. Asks which month if the question does not name one.",
+    "description": "Answers questions about company sales: monthly sales figures. Not for revenue, ARR or quarterly results. Asks which month if the question does not name one.",
     "path": "a2a_proxy",
     "targetId": "11935712447824575282"
   },
@@ -42,9 +42,16 @@
     "targetId": "12093851926081151689"
   },
   {
+    "id": "nyt_news",
+    "name": "NYT News Digest",
+    "description": "Today's top New York Times headlines as a short briefing with links. For 'what's in the news today', not for research or company data.",
+    "path": "a2a_proxy",
+    "targetId": "17697238048339299345"
+  },
+  {
     "id": "web_search",
     "name": "Web Search (Google)",
-    "description": "Made by Google: the Gemini Enterprise assistant with Google Search. Answers quick questions that need current public information from the web (news, prices, exchange rates, public companies, laws), with sources. Not for internal company data or long research reports.",
+    "description": "Made by Google: the Gemini Enterprise assistant with Google Search. Answers quick questions that need current public information from the web (a specific news story, prices, exchange rates, public companies, laws), with sources. Not for a general daily news briefing, internal company data or long research reports.",
     "path": "stream_assist",
     "targetId": "default_assistant"
   }

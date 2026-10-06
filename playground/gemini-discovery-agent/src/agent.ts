@@ -2,6 +2,7 @@ import { type AgentHandlerContext, agent } from '@novu/framework/express';
 import { answerDirectly } from './answer.ts';
 import { classify } from './classify.ts';
 import { agentById, type TargetAgent } from './config.ts';
+import { answerFromSeveral } from './fan-out.ts';
 import { forward } from './forward/index.ts';
 import { log } from './log.ts';
 import { conversationPrompt } from './prompt.ts';
@@ -21,27 +22,33 @@ export const discoveryAgent = agent('discovery-agent', {
 
     // Every message is classified, so a follow-up stays with the current agent and a new topic switches.
     const started = Date.now();
-    const { agent: choice, confidence } = await classify(prompt, agentById(state.current));
-    log('route', { conversationId: ctx.conversation.identifier, current: state.current, choice, confidence, ms: Date.now() - started });
+    const { agent: choice, confidence, request, multiple } = await classify(prompt, agentById(state.current));
+    log('route', { conversationId: ctx.conversation.identifier, current: state.current, choice, confidence, multiple, ms: Date.now() - started });
+
+    if (multiple && (await answerFromSeveral(ctx, prompt))) return;
 
     // Forward only when the classifier is sure; otherwise Gemini answers, asking which agent the user means.
     const target = confidence === 'high' ? agentById(choice) : undefined;
     if (target) {
-      await forwardTo(ctx, state, target, text);
+      // An agent's first message carries the conversation's context; later ones go verbatim ("March", "Start Research").
+      // Google-made agents are LLMs and get the conversation itself; the canned A2A agents keyword-match, so they get the rewrite.
+      const session = state.sessions[target.id];
+      const firstMessage = target.path === 'stream_assist' ? prompt : request.trim() || text;
+      await forwardTo(ctx, state, target, session ? text : firstMessage);
     } else {
       await ctx.reply(`**Discovery Agent:** ${await answerDirectly(prompt)}`);
     }
   },
 });
 
-async function forwardTo(ctx: AgentHandlerContext, state: RouteState, target: TargetAgent, text: string) {
+async function forwardTo(ctx: AgentHandlerContext, state: RouteState, target: TargetAgent, request: string) {
   const isDeepResearch = target.targetId === 'deep_research';
   const session = state.sessions[target.id];
   await ctx.typing(isDeepResearch ? `${target.name} is working (this can take minutes)…` : `Asking ${target.name}…`);
   const started = Date.now();
 
   try {
-    const reply = await forward(target, text, session);
+    const reply = await forward(target, request, session);
     ctx.metadata.set(ROUTE_KEY, { current: target.id, sessions: { ...state.sessions, [target.id]: reply.session } });
     log('forward', { conversationId: ctx.conversation.identifier, target: target.id, answered: Boolean(reply.text), ms: Date.now() - started });
 

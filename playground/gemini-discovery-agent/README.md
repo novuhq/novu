@@ -12,6 +12,7 @@ Standalone npm project (excluded from the pnpm workspace). Node 24 runs the Type
 | `src/agent.ts` | Start reading here. `onMessage`: classify, then forward or answer directly |
 | `src/classify.ts` | Gemini Flash-Lite picks an agent (or `direct`) with a confidence |
 | `src/answer.ts` | Gemini direct answer: greetings, help, clarifying question |
+| `src/fan-out.ts` | A message asking for several things: plan one request per agent, ask them in parallel, merge one briefing |
 | `src/prompt.ts` | Shared prompt pieces: agent list, recent conversation |
 | `src/forward/` | `forward()` to an agent: `a2a-proxy.ts` (A2A agents), `stream-assist.ts` (Deep Research, Core Assistant) |
 | `src/google.ts` | Authenticated POST to Google APIs, and Gemini `generateContent` |
@@ -27,7 +28,7 @@ Standalone npm project (excluded from the pnpm workspace). Node 24 runs the Type
 | `GOOGLE_CLOUD_PROJECT` | yes | | `gemini-enterprise-test-509310`. Also sent as `x-goog-user-project`. |
 | `GE_ENGINE` | yes | | `projects/398896934586/locations/global/collections/default_collection/engines/gemini-enterprise-17899859_1789985955771` |
 | `PORT` | no | `8080` | `4111` for `npm run dev` |
-| `NOVU_API_URL` | no | `https://api.novu.co` | Read by `novu dev`; `http://localhost:3000` for a local API |
+| `NOVU_API_URL` | no | `https://api.novu.co` | Read by `novu dev`; `http://localhost:3000` for a local API. Agent events and replies also go here instead of the API's public URL. |
 | `VERTEX_LOCATION` | no | `global` | |
 | `GEMINI_MODEL` | no | `gemini-3.5-flash` | Direct answers |
 | `GEMINI_CLASSIFIER_MODEL` | no | `gemini-3.5-flash-lite` | Router (JSON schema, `thinkingLevel: MINIMAL`) |
@@ -52,8 +53,9 @@ State lives in conversation metadata under `route`: `{ current, sessions: { <age
 1. Every message is classified with the current agent as context, so follow-ups ("March", "Start Research") stay with it and naming another agent's topic switches.
 2. Gemini Flash-Lite returns `{agent, confidence}` over every agent plus `direct`. `high` forwards; anything else gets a direct Gemini answer, which asks which agent the user means when the message could fit more than one.
 3. A failed forward replies with "Open @Agent in Gemini Enterprise" text.
+4. When the classifier flags `multiple` (the message asks for things that need different agents), `fan-out.ts` plans 2-3 requests, asks those agents in parallel with fresh sessions, and Gemini merges their answers into one briefing. Deep Research and NYT News Digest are left out as too slow. The route state is not changed.
 
-Every decision is one JSON log line (`route`, `forward`, `forward_failed`).
+Every decision is one JSON log line (`route`, `forward`, `forward_failed`, `fan_out`).
 
 ## Agent list
 
