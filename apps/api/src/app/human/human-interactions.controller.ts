@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -23,7 +24,7 @@ import { CreateInteractionRequestDto } from './dtos/create-interaction-request.d
 import { CreateHumanInviteRequestDto, CreateHumanInviteResponseDto } from './dtos/human-invite.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
-import { ListContactsQueryDto, ListContactsResponseDto } from './dtos/list-contacts.dto';
+import { ListContactsQueryDto, ListContactsResponseDto, RemoveContactResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import { SetupHumanRelayRequestDto, SetupHumanRelayResponseDto } from './dtos/setup-human-relay.dto';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
@@ -40,6 +41,8 @@ import { ListContactsCommand } from './usecases/list-contacts/list-contacts.comm
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractionsCommand } from './usecases/list-interactions/list-interactions.command';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { RemoveContactCommand } from './usecases/remove-contact/remove-contact.command';
+import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
@@ -56,6 +59,7 @@ export class HumanInteractionsController {
     private readonly cancelInteractionUsecase: CancelInteraction,
     private readonly setupHumanRelayUsecase: SetupHumanRelay,
     private readonly listContactsUsecase: ListContacts,
+    private readonly removeContactUsecase: RemoveContact,
     private readonly createHumanInviteUsecase: CreateHumanInvite,
     private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken
   ) {}
@@ -148,8 +152,9 @@ export class HumanInteractionsController {
 
   /**
    * Contacts are the environment's subscribers — the people an agent can
-   * address with `--to`. Deliberately a thin subscriber list today; filters
-   * and a per-contact `channels` field are the intended extension points.
+   * address with `--to`. Each one says where the relay agent reaches them
+   * (`channels`, `defaultVia`), whether they joined yet (`status`) and the
+   * invite link still waiting for them (`invite`).
    */
   @Get('/contacts')
   @KeylessAccessible()
@@ -166,6 +171,29 @@ export class HumanInteractionsController {
         userId: user._id,
         limit: query.limit,
         after: query.after,
+        agentIdentifier: query.agentIdentifier,
+      })
+    );
+  }
+
+  /**
+   * Removes the contact for good: cancels their open interactions, retires their invite links and
+   * deletes the subscriber behind them, so they leave the list and agents can't reach them.
+   */
+  @Delete('/contacts/:subscriberId')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  removeContact(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<RemoveContactResponseDto> {
+    return this.removeContactUsecase.execute(
+      RemoveContactCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId,
       })
     );
   }

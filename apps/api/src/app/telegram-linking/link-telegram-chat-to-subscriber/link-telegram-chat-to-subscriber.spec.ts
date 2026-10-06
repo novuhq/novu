@@ -95,6 +95,16 @@ describe('LinkTelegramChatToSubscriber', () => {
     expect(cmd.integrationIdentifier).to.equal('telegram-main');
   });
 
+  it('keeps the Telegram username on the endpoint when the update carried one', async () => {
+    const { usecase, createChannelEndpoint } = makeUsecase();
+
+    await usecase.execute(LinkTelegramChatToSubscriberCommand.create({ ...baseCommand, username: 'dima' }));
+    await usecase.execute(LinkTelegramChatToSubscriberCommand.create(baseCommand));
+
+    expect(createChannelEndpoint.execute.firstCall.args[0].displayName).to.equal('dima');
+    expect(createChannelEndpoint.execute.secondCall.args[0].displayName).to.equal(undefined);
+  });
+
   it('passes pre-resolved contextKeys through to CreateChannelEndpoint', async () => {
     const { usecase, createChannelEndpoint } = makeUsecase();
 

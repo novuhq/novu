@@ -95,6 +95,7 @@ export class LinkTelegramChatToSubscriber {
         subscriberId: subscriber.subscriberId,
         type: ENDPOINT_TYPES.TELEGRAM_CHAT,
         endpoint: { chatId: command.chatId },
+        displayName: command.username,
         context: command.context,
         contextKeys: command.contextKeys,
         // chatId originates from a verified Telegram deep-link start payload.

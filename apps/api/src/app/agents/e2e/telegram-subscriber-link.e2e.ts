@@ -250,6 +250,8 @@ describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
       );
 
       expect(created.subscriberId).to.equal(subscriberId);
+      // The sender's username from the update is kept so the person can be shown as `@tguser`.
+      expect(created.displayName).to.equal('tguser');
 
       const confirmation = await pollFor(async () =>
         telegramApiStub.calls.find(

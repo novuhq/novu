@@ -20,6 +20,7 @@ import {
   extractTelegramChatIdFromUpdate,
   extractTelegramMessageText,
   extractTelegramStartToken,
+  extractTelegramUsernameFromUpdate,
 } from '../telegram-webhook.utils';
 import { ProcessIntegrationTelegramWebhookCommand } from './process-integration-telegram-webhook.command';
 
@@ -106,6 +107,7 @@ export class ProcessIntegrationTelegramWebhook {
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
+            username: extractTelegramUsernameFromUpdate(command.update),
             context: payload.context,
             contextKeys: payload.contextKeys,
           })

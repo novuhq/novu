@@ -49,6 +49,8 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   via: HumanChannelViaEnum;
   /** When the human connected it. Absent for email, whose identity lives on the subscriber. */
   connectedAt?: string;
+  /** How the human is known on the platform, when it was reported while they connected. */
+  displayName?: string;
 }
 
 /** Chat apps a human can connect themselves from the invite page. */
@@ -217,6 +219,96 @@ export class HumanDeliveryService {
     return { targets, defaultVia: pickDefaultTarget(targets, contact?.defaultVia)?.via };
   }
 
+  /**
+   * {@link describeReachability} for a page of contacts in a fixed number of queries. Takes the
+   * subscribers' emails from the caller, which has just loaded them.
+   */
+  async describeReachabilityForMany(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscribers: Array<{ subscriberId: string; email?: string }>;
+  }): Promise<Map<string, { targets: ReachableHumanTarget[]; defaultVia?: HumanChannelViaEnum }>> {
+    const result = new Map<string, { targets: ReachableHumanTarget[]; defaultVia?: HumanChannelViaEnum }>();
+    const subscriberIds = params.subscribers.map(({ subscriberId }) => subscriberId);
+    const integrations = subscriberIds.length > 0 ? await this.findLinkedIntegrations(params) : [];
+
+    if (integrations.length === 0) {
+      return result;
+    }
+
+    const chatIdentifiers = integrations
+      .filter((integration) => integration.channel !== ChannelTypeEnum.EMAIL)
+      .map((integration) => integration.identifier);
+    const [endpoints, contacts] = await Promise.all([
+      chatIdentifiers.length > 0
+        ? this.channelEndpointRepository.find(
+            {
+              _environmentId: params.environmentId,
+              _organizationId: params.organizationId,
+              subscriberId: { $in: subscriberIds },
+              integrationIdentifier: { $in: chatIdentifiers },
+            },
+            '',
+            { sort: { _id: 1 } }
+          )
+        : [],
+      this.humanContactRepository.find(
+        { _environmentId: params.environmentId, _agentId: params.agentId, subscriberId: { $in: subscriberIds } },
+        ['subscriberId', 'defaultVia']
+      ),
+    ]);
+    const savedDefaults = new Map(contacts.map((contact) => [contact.subscriberId, contact.defaultVia]));
+
+    for (const subscriber of params.subscribers) {
+      const targets = this.reachableTargetsOf(subscriber, integrations, endpoints);
+
+      result.set(subscriber.subscriberId, {
+        targets,
+        defaultVia: pickDefaultTarget(targets, savedDefaults.get(subscriber.subscriberId))?.via,
+      });
+    }
+
+    return result;
+  }
+
+  /** Same rules as {@link tryResolveTarget}, over rows that were loaded up front. */
+  private reachableTargetsOf(
+    subscriber: { subscriberId: string; email?: string },
+    integrations: IntegrationEntity[],
+    endpoints: ChannelEndpointEntity[]
+  ): ReachableHumanTarget[] {
+    const targets: ReachableHumanTarget[] = [];
+
+    for (const integration of integrations) {
+      const via = viaForProviderId(integration.providerId);
+      if (!via) {
+        continue;
+      }
+
+      if (integration.channel === ChannelTypeEnum.EMAIL) {
+        if (subscriber.email) {
+          targets.push(emailTarget(subscriber.email, via, integration.identifier));
+        }
+
+        continue;
+      }
+
+      const endpoint = endpoints.find(
+        (candidate) =>
+          candidate.subscriberId === subscriber.subscriberId &&
+          candidate.integrationIdentifier === integration.identifier
+      );
+      const target = endpoint ? this.toTarget(endpoint, via, integration.identifier) : null;
+
+      if (target) {
+        targets.push(target);
+      }
+    }
+
+    return targets;
+  }
+
   /** Delivers the pending message and returns the platform refs for stamping. */
   async deliver(
     interaction: HumanInteractionEntity,
@@ -302,12 +394,7 @@ export class HumanDeliveryService {
         return null;
       }
 
-      return {
-        via,
-        platform: HumanChannelViaEnum.EMAIL,
-        platformUserId: subscriber.email,
-        integrationIdentifier: integration.identifier,
-      };
+      return emailTarget(subscriber.email, via, integration.identifier);
     }
 
     const endpoint = await this.channelEndpointRepository.findOne({
@@ -335,8 +422,19 @@ export class HumanDeliveryService {
       return null;
     }
 
-    return { via, platform: via, platformUserId, integrationIdentifier, connectedAt: endpoint.createdAt };
+    return {
+      via,
+      platform: via,
+      platformUserId,
+      integrationIdentifier,
+      connectedAt: endpoint.createdAt,
+      ...(endpoint.displayName ? { displayName: endpoint.displayName } : {}),
+    };
   }
+}
+
+function emailTarget(email: string, via: HumanChannelViaEnum, integrationIdentifier: string): ReachableHumanTarget {
+  return { via, platform: HumanChannelViaEnum.EMAIL, platformUserId: email, integrationIdentifier };
 }
 
 function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {

@@ -12,4 +12,8 @@ export class ListContactsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   after?: string;
+
+  @IsOptional()
+  @IsString()
+  agentIdentifier?: string;
 }

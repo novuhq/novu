@@ -13,6 +13,14 @@ export const HUMAN_INVITE_LINK_TTL_SECONDS = 3 * 24 * 60 * 60;
 
 const TOKEN_FORMAT = /^[A-Za-z0-9]{32}$/;
 
+/**
+ * Per-contact list of the invite links issued to them, so the contacts list can show a pending
+ * invite again and removing a contact can retire its links. Kept a little longer than the links
+ * themselves (their TTL is jittered); entries are re-checked against the link before use.
+ */
+const PENDING_KEY_PREFIX = 'human_invite_pending:';
+const PENDING_TTL_SECONDS = Math.ceil(HUMAN_INVITE_LINK_TTL_SECONDS * 1.1);
+
 export interface HumanInviteTokenPayload {
   /** Environment id. */
   env: string;
@@ -28,6 +36,16 @@ export interface ActiveHumanInvite {
   /** ISO timestamp when the link expires. */
   expiresAt: string;
 }
+
+/** An invite link that still works, as shown next to a contact. */
+export interface PendingHumanInvite {
+  token: string;
+  /** ISO timestamp when the link expires. */
+  expiresAt: string;
+}
+
+/** Which contact of which relay agent an invite link was issued for. */
+export type HumanInviteContactRef = Pick<HumanInviteTokenPayload, 'env' | 'agentId' | 'subscriberId'>;
 
 export type InactiveHumanInviteReason = 'expired' | 'declined' | 'invalid';
 
@@ -57,7 +75,10 @@ export class HumanInviteCacheUnavailableError extends Error {
 export class HumanInviteTokenService {
   private readonly tokens: SingleUseTokenCache<HumanInviteTokenPayload>;
 
-  constructor(cacheService: CacheService, logger: PinoLogger) {
+  constructor(
+    private readonly cacheService: CacheService,
+    private readonly logger: PinoLogger
+  ) {
     logger.setContext(this.constructor.name);
     this.tokens = new SingleUseTokenCache<HumanInviteTokenPayload>({
       cacheService,
@@ -72,7 +93,68 @@ export class HumanInviteTokenService {
   }
 
   async issue(payload: HumanInviteTokenPayload): Promise<{ token: string; expiresAt: string }> {
-    return this.tokens.issue(payload);
+    const issued = await this.tokens.issue(payload);
+    await this.rememberPending(payload, issued);
+
+    return issued;
+  }
+
+  /**
+   * The newest link that still works for each of the given contacts. Contacts without one are left
+   * out. Never throws: the contacts list must still load while the cache is down.
+   */
+  async findPending(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberIds: string[];
+  }): Promise<Map<string, PendingHumanInvite>> {
+    const pending = new Map<string, PendingHumanInvite>();
+
+    if (params.subscriberIds.length === 0 || !this.cacheService.cacheEnabled()) {
+      return pending;
+    }
+
+    try {
+      const keys = params.subscriberIds.map((subscriberId) =>
+        pendingKey({ env: params.environmentId, agentId: params.agentId, subscriberId })
+      );
+      const values = await this.cacheService.mget(keys);
+
+      await Promise.all(
+        params.subscriberIds.map(async (subscriberId, index) => {
+          const invite = await this.newestActive(parsePending(values[index]));
+
+          if (invite) {
+            pending.set(subscriberId, invite);
+          }
+        })
+      );
+    } catch (err) {
+      this.logger.warn({ err }, 'Failed to read pending Human invite links');
+    }
+
+    return pending;
+  }
+
+  /** Retires every link issued to the contact, so a link sent earlier can't reconnect them. */
+  async revokeAll(ref: HumanInviteContactRef): Promise<void> {
+    if (!this.cacheService.cacheEnabled()) {
+      return;
+    }
+
+    const key = pendingKey(ref);
+
+    try {
+      for (const { token } of parsePending(await this.cacheService.get(key))) {
+        await this.tokens.claim(token);
+      }
+
+      await this.cacheService.del(key);
+    } catch (err) {
+      throw toHttpError(
+        err instanceof HumanInviteCacheUnavailableError ? err : new HumanInviteCacheUnavailableError('revoke', err)
+      );
+    }
   }
 
   /** Returns the active invite, or throws {@link InactiveHumanInviteError}. */
@@ -135,6 +217,35 @@ export class HumanInviteTokenService {
     }
   }
 
+  /** A link can be declined or expire early (jittered TTL), so the remembered entry alone is not proof. */
+  private async newestActive(invites: PendingHumanInvite[]): Promise<PendingHumanInvite | undefined> {
+    for (const invite of [...invites].reverse()) {
+      const outcome = await this.tokens.peek(invite.token);
+
+      if (outcome.status === 'active') {
+        return invite;
+      }
+    }
+
+    return undefined;
+  }
+
+  /** Best effort: a link that could not be remembered still works, it just isn't listed. */
+  private async rememberPending(payload: HumanInviteTokenPayload, issued: PendingHumanInvite): Promise<void> {
+    const key = pendingKey(payload);
+
+    try {
+      const earlier = parsePending(await this.cacheService.get(key));
+
+      await this.cacheService.set(key, JSON.stringify([...earlier, issued]), {
+        ttl: PENDING_TTL_SECONDS,
+        jitter: false,
+      });
+    } catch (err) {
+      this.logger.warn({ err, subscriberId: payload.subscriberId }, 'Failed to remember a Human invite link');
+    }
+  }
+
   private validatePayload(payload: HumanInviteTokenPayload): HumanInviteTokenPayload {
     if (!payload.env || !payload.org || !payload.agentId || !payload.subscriberId) {
       throw new InactiveHumanInviteError('invalid');
@@ -142,6 +253,32 @@ export class HumanInviteTokenService {
 
     return payload;
   }
+}
+
+function pendingKey({ env, agentId, subscriberId }: HumanInviteContactRef): string {
+  return `${PENDING_KEY_PREFIX}${env}:${agentId}:${subscriberId}`;
+}
+
+/** The remembered links that have not passed their expiry, oldest first. */
+function parsePending(raw: string | null | undefined): PendingHumanInvite[] {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    const now = Date.now();
+
+    return Array.isArray(parsed)
+      ? parsed.filter((entry) => isPendingInvite(entry) && Date.parse(entry.expiresAt) > now)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function isPendingInvite(entry: Partial<PendingHumanInvite> | null): entry is PendingHumanInvite {
+  return typeof entry?.token === 'string' && typeof entry?.expiresAt === 'string';
 }
 
 export function toHttpError(err: unknown): Error {

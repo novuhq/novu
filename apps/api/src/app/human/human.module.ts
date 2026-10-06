@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import {
   AgentIntegrationRepository,
+  ChannelConnectionRepository,
   ChannelEndpointRepository,
   HumanContactRepository,
   HumanInteractionRepository,
@@ -13,6 +14,7 @@ import { CliAuthModule } from '../cli-auth/cli-auth.module';
 import { ConnectModule } from '../connect/connect.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
+import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/remove-subscriber.usecase';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
@@ -36,6 +38,7 @@ import { GetInteraction } from './usecases/get-interaction/get-interaction.useca
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
@@ -59,6 +62,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     HumanInteractionRepository,
     HumanContactRepository,
     AgentIntegrationRepository,
+    ChannelConnectionRepository,
     ChannelEndpointRepository,
     IntegrationRepository,
     SubscriberRepository,
@@ -69,6 +73,8 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     CancelInteraction,
     SetupHumanRelay,
     ListContacts,
+    RemoveContact,
+    RemoveSubscriber,
     HumanInviteTokenService,
     CreateHumanInvite,
     GetHumanInviteStatus,

@@ -23,6 +23,17 @@ export function extractTelegramChatIdFromUpdate(update: Record<string, unknown>)
   return String(chatId);
 }
 
+/** The sender's username from a Telegram message (`message.from.username`). Many accounts have none. */
+export function extractTelegramUsernameFromMessage(message: Record<string, unknown> | undefined): string | undefined {
+  const username = asRecord(message?.from)?.username;
+
+  return typeof username === 'string' && username.length > 0 ? username : undefined;
+}
+
+export function extractTelegramUsernameFromUpdate(update: Record<string, unknown>): string | undefined {
+  return extractTelegramUsernameFromMessage(asRecord(update.message) ?? asRecord(update.edited_message));
+}
+
 export function extractTelegramMessageText(update: Record<string, unknown>): string | undefined {
   const message = asRecord(update.message) ?? asRecord(update.edited_message);
   const text = message?.text;

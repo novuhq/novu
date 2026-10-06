@@ -253,6 +253,7 @@ export class CreateChannelEndpoint {
         contextKeys,
         type: command.type,
         endpoint: encryptChannelEndpoint(command.type, command.endpoint),
+        ...(command.displayName ? { displayName: command.displayName } : {}),
       });
 
       // Decrypt for the response (platform convention: secrets returned; clients mask).
