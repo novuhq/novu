@@ -3,7 +3,7 @@
  * biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: needs to be fixed
  * biome-ignore-all lint/style/noNonNullAssertion: needs to be fixed
  */
-import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
+import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile, type Uploadable } from '@anthropic-ai/sdk';
 import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
@@ -37,7 +37,6 @@ import type {
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
-  UploadSkillFile,
   UploadSkillInput,
   UploadSkillResult,
   UpsertVaultCredentialInput,
@@ -698,6 +697,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const displayTitle = input.displayTitle
       ? truncateWithEllipsis(input.displayTitle, MAX_DISPLAY_TITLE_LENGTH)
       : undefined;
+    const files = await Promise.all(input.files.map((file) => toFile(file.content, `${directoryName}/${file.path}`)));
 
     // Proactive lookup: when a `display_title` is supplied, check whether a
     // custom skill with the same title already exists in this environment and
@@ -709,11 +709,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       const existingSkillId = await this.findExistingSkillIdByDisplayTitle(client, displayTitle);
 
       if (existingSkillId) {
-        return this.appendSkillVersion(client, existingSkillId, input.files, directoryName);
+        return this.appendSkillVersion(client, existingSkillId, files);
       }
     }
-
-    const files = await Promise.all(input.files.map((file) => toFile(file.content, `${directoryName}/${file.path}`)));
 
     // Not retried: skill creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable skill upstream.
@@ -737,7 +735,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         const existingSkillId = await this.findExistingSkillIdByDisplayTitle(client, displayTitle);
 
         if (existingSkillId) {
-          return this.appendSkillVersion(client, existingSkillId, input.files, directoryName);
+          return this.appendSkillVersion(client, existingSkillId, files);
         }
       }
 
@@ -755,18 +753,17 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   private async appendSkillVersion(
     client: AnthropicCompatibleClient,
     skillId: string,
-    files: UploadSkillFile[],
-    directoryName: string
+    files: Uploadable[]
   ): Promise<UploadSkillResult> {
     // Not retried: version creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable version.
     try {
-      const version = await this.createSkillVersion(client, skillId, files, directoryName);
+      const version = (await (client as any).beta.skills.versions.create(skillId, {
+        files,
+        betas: [SKILLS_BETA],
+      })) as { version: string | null | undefined };
 
-      return {
-        skillId,
-        version: ((version.version as string | null | undefined) ?? null) as string | null,
-      };
+      return { skillId, version: version.version ?? null };
     } catch (versionErr) {
       this.normaliseError(versionErr);
     }
@@ -809,34 +806,6 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       // the original duplicate-title error so the user sees the real cause.
       return null;
     }
-  }
-
-  /**
-   * Append a new version to an existing skill by calling the underlying HTTP
-   * endpoint directly. The multipart `filename` parts must keep the
-   * `<directoryName>/` prefix, otherwise the Anthropic API can't locate
-   * `SKILL.md` inside a top-level folder and rejects the bundle.
-   *
-   * Older SDKs (<0.98.1) stripped that prefix in `skills.versions.create`;
-   * current versions keep it, so this raw POST can be replaced by the SDK
-   * call (NV-8922).
-   */
-  private async createSkillVersion(
-    client: AnthropicCompatibleClient,
-    skillId: string,
-    files: UploadSkillFile[],
-    directoryName: string
-  ): Promise<{ version: string | null }> {
-    const formData = new FormData();
-
-    for (const file of files) {
-      formData.append('files[]', new File([new Uint8Array(file.content)], `${directoryName}/${file.path}`));
-    }
-
-    return (await (client as any).post(`/v1/skills/${encodeURIComponent(skillId)}/versions?beta=true`, {
-      body: formData,
-      headers: { 'anthropic-beta': SKILLS_BETA },
-    })) as { version: string | null };
   }
 }
 
