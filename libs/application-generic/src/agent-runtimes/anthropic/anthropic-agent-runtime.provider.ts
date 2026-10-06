@@ -464,18 +464,18 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
   /** Tool-use ids Anthropic is blocked on in the latest session pause. */
   private async getRequiresActionToolUseIds(client: AnthropicCompatibleClient, sessionId: string): Promise<string[]> {
-    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+    const iterator = client.beta.sessions.events.list(sessionId, {
       order: 'desc',
       types: ['session.status_idle', 'session.thread_status_idle'],
     });
 
     for await (const event of iterator) {
-      const stopReason = event?.stop_reason as { type?: string; event_ids?: string[] } | undefined;
+      if (event.type !== 'session.status_idle' && event.type !== 'session.thread_status_idle') {
+        continue;
+      }
 
-      if (stopReason?.type === 'requires_action') {
-        return (stopReason.event_ids ?? []).filter(
-          (toolUseId): toolUseId is string => typeof toolUseId === 'string' && toolUseId.length > 0
-        );
+      if (event.stop_reason.type === 'requires_action') {
+        return event.stop_reason.event_ids.filter((toolUseId) => toolUseId.length > 0);
       }
     }
 
@@ -490,23 +490,25 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const pendingIds = new Set(toolUseIds);
     const tools = new Map<string, PendingToolApproval>();
 
-    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+    const iterator = client.beta.sessions.events.list(sessionId, {
       order: 'asc',
       types: ['agent.mcp_tool_use', 'agent.tool_use'],
     });
 
     for await (const event of iterator) {
-      const toolUseId = event?.id as string | undefined;
-
-      if (!toolUseId || !pendingIds.has(toolUseId)) {
+      if (event.type !== 'agent.mcp_tool_use' && event.type !== 'agent.tool_use') {
         continue;
       }
 
-      tools.set(toolUseId, {
-        toolUseId,
-        toolName: (event.name as string | undefined) ?? 'unknown_tool',
-        mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
-        input: (event.input as Record<string, unknown> | undefined) ?? undefined,
+      if (!pendingIds.has(event.id)) {
+        continue;
+      }
+
+      tools.set(event.id, {
+        toolUseId: event.id,
+        toolName: event.name,
+        mcpServerName: event.type === 'agent.mcp_tool_use' ? event.mcp_server_name : undefined,
+        input: event.input,
       });
 
       if (tools.size === pendingIds.size) {
