@@ -58,9 +58,16 @@ COPY --chown=1000:1000 ./meta .
 # Get the build artifacts that only include dist folders
 COPY --chown=1000:1000 --from=assets /usr/src/app .
 
+# The root prepare script runs husky, a devDependency that is absent under --prod
+RUN node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json')); delete pkg.scripts.prepare; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+
+# @novu/testing is only a devDependency here, but a filtered install still materialises it and its deps
+RUN rm -rf libs/testing
+
 RUN --mount=type=cache,id=pnpm-store-worker,target=/root/.pnpm-store\
     --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
- pnpm install --filter "{${PACKAGE_PATH}}..." \
+ pnpm install --filter-prod "{${PACKAGE_PATH}}..." \
+ --prod \
  --frozen-lockfile \
  --unsafe-perm \
  --reporter=silent

@@ -1,4 +1,4 @@
-import * as shortid from 'shortid';
+import { nanoid } from 'nanoid';
 import slugify from 'slugify';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import {
@@ -62,7 +62,7 @@ export class IntegrationService {
       channel,
       credentials: {},
       active,
-      identifier: `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`,
+      identifier: `${slugify(name, { lower: true, strict: true })}-${nanoid(10)}`,
     };
 
     return await this.integrationRepository.create(payload);

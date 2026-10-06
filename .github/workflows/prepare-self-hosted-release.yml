@@ -221,12 +221,17 @@ jobs:
         if: "!contains(matrix.name, '-ee')"
         id: check-ee-files
         run: |
+          # Paths are relative to the workspace root; the image WORKDIR is apps/<service>.
+          # bullmq-pro is matched on package.json because pnpm leaves an empty directory for the
+          # optional dependency when the private registry is unavailable.
           patterns=(
-            './node_modules/@novu/ee-**/dist/index.js'
-            './node_modules/@taskforcesh/bullmq-pro'  # Add more patterns as needed
+            'enterprise/packages/*/dist/index.js'
+            'enterprise/packages/libs/*/dist/index.js'
+            'node_modules/.pnpm/@novu+ee-*/node_modules/@novu/ee-*/dist/index.js'
+            'node_modules/.pnpm/@taskforcesh+bullmq-pro@*/node_modules/@taskforcesh/bullmq-pro/package.json'
           )
           for pattern in "${patterns[@]}"; do
-            if docker run --rm novu-$SERVICE_COMMON_NAME sh -c "ls $pattern 2>/dev/null"; then
+            if docker run --rm --entrypoint sh novu-$SERVICE_COMMON_NAME -c "cd /usr/src/app && ls -d $pattern 2>/dev/null"; then
               echo "::error::'$pattern' files were detected in ${{ matrix.name }}."
               exit 1
             fi

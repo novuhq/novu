@@ -20,7 +20,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "multer": "^1.4.5-lts.1",
-    "shortid": "^2.2.16",
+    "nanoid": "^3.1.20",
     "slugify": "^1.4.6"
   },
   "devDependencies": {
