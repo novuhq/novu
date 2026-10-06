@@ -7,9 +7,9 @@ import { Command } from '@/components/site/command';
 import { Panel } from '@/components/site/panel';
 import { SiteFrame } from '@/components/site/site-frame';
 import { buttonClassName } from '@/components/ui/button';
-import { readStoredBackingAccount } from '@/lib/human-account';
-import { getBackingSecretKey } from '@/lib/human-accounts-api';
-import { listContacts, listRelayChannels, type SetupChannel, type SetupContact } from '@/lib/human-setup-api';
+import { readHumanAccount } from '@/lib/human-account';
+import { type Channel, listChannels } from '@/lib/human-channels-api';
+import { type Contact, listContactsPage } from '@/lib/human-contacts-api';
 
 import { DeleteAccountButton } from './delete-account-button';
 
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 type Setup =
-  | { status: 'ready'; channels: SetupChannel[]; contacts: SetupContact[]; moreContacts: boolean }
+  | { status: 'ready'; channels: Channel[]; contacts: Contact[]; moreContacts: boolean }
   | { status: 'empty' }
   | { status: 'unavailable' };
 
@@ -73,19 +73,15 @@ export default async function AccountPage(props: PageProps<'/account'>) {
 }
 
 async function loadSetup(user: User): Promise<Setup> {
-  const account = readStoredBackingAccount(user);
+  const account = readHumanAccount(user);
   if (!account) {
     return { status: 'empty' };
   }
 
   try {
-    const { secretKey } = await getBackingSecretKey(account.region, user.id);
-    const [channels, { contacts, hasMore }] = await Promise.all([
-      listRelayChannels(account.region, secretKey),
-      listContacts(account.region, secretKey),
-    ]);
+    const [channels, { contacts, next }] = await Promise.all([listChannels(account), listContactsPage(account)]);
 
-    return { status: 'ready', channels, contacts, moreContacts: hasMore };
+    return { status: 'ready', channels, contacts, moreContacts: Boolean(next) };
   } catch (error) {
     console.error('Failed to load the Human account setup', error);
 

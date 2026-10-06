@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { readErrorCode, readErrorMessage, safeJson, unwrapData } from './api-response';
-import { resolveNovuApiUrl } from './novu-api';
+import { unwrapData } from './api-response';
+import { type HumanApiRequest, requestWithDashboardSecret } from './human-api';
 
 export type HumanRegion = 'us' | 'eu';
 
@@ -20,16 +20,6 @@ type Identity = {
   firstName?: string | null;
   lastName?: string | null;
 };
-
-export class HumanAccountsApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly code: string | undefined,
-    message: string
-  ) {
-    super(message);
-  }
-}
 
 /**
  * Private Novu endpoints behind Human accounts. They trust the secret shared with the Novu API,
@@ -71,13 +61,6 @@ export function approveCliLogin(
   });
 }
 
-export function getBackingSecretKey(
-  region: HumanRegion,
-  humanUserId: string
-): Promise<{ environmentId: string; secretKey: string }> {
-  return request(region, `/v1/human/accounts/${encodeURIComponent(humanUserId)}/secret-key`, { method: 'GET' });
-}
-
 export async function deleteBackingAccount(region: HumanRegion, humanUserId: string): Promise<void> {
   await request(region, `/v1/human/accounts/${encodeURIComponent(humanUserId)}`, { method: 'DELETE' });
 }
@@ -90,29 +73,6 @@ function toIdentityBody({ humanUserId, firstName, lastName }: Identity) {
   };
 }
 
-async function request<T>(
-  region: HumanRegion,
-  path: string,
-  init: { method: 'GET' | 'POST' | 'DELETE'; body?: Record<string, string> }
-): Promise<T> {
-  const response = await fetch(`${resolveNovuApiUrl(region)}${path}`, {
-    method: init.method,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-human-dashboard-secret': process.env.HUMAN_DASHBOARD_API_SECRET ?? '',
-    },
-    body: init.body ? JSON.stringify(init.body) : undefined,
-    cache: 'no-store',
-  });
-  const body = await safeJson(response);
-
-  if (!response.ok) {
-    throw new HumanAccountsApiError(
-      response.status,
-      readErrorCode(body),
-      readErrorMessage(body) ?? `Human account request failed (${response.status})`
-    );
-  }
-
-  return unwrapData<T>(body);
+async function request<T>(region: HumanRegion, path: string, init: HumanApiRequest): Promise<T> {
+  return unwrapData<T>(await requestWithDashboardSecret(region, path, init));
 }

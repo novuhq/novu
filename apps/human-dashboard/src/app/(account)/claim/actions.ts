@@ -4,7 +4,8 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
-import { claimKeylessSetup, HumanAccountsApiError, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { HumanApiError } from '@/lib/human-api-error';
 
 export type ClaimFormState = { error?: string };
 
@@ -49,7 +50,7 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
 }
 
 function describeClaimError(error: unknown): string {
-  if (error instanceof HumanAccountsApiError) {
+  if (error instanceof HumanApiError) {
     if (error.code === 'claim_agent_exists') {
       return 'Your Human account already has a setup, so this one can’t be added to it.';
     }
