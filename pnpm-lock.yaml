@@ -58,7 +58,8 @@ overrides:
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
-  basic-ftp@<5.3.1: ^5.3.1
+  basic-ftp@<6.2.1: ^6.2.1
+  http-cache-semantics@<4.2.1: ^4.2.1
   axios@>=1.0.0 <1.20.0: ^1.20.0
   '@slack/web-api': 7.17.0
   seroval@<1.5.3: ^1.5.3
@@ -100,7 +101,7 @@ overrides:
   '@octokit/request@<8.4.1': ^8.4.1
   kysely@>=0.26.0 <0.28.17: 0.28.17
   undici@>=5.0.0 <5.30.0: ^6.28.1
-  markdown-it@>=13.0.0 <14.2.0: ^14.2.0
+  markdown-it@>=13.0.0 <14.3.1: ^14.3.1
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
   micromatch@>=4.0.0 <4.0.8: ^4.0.8
@@ -146,12 +147,13 @@ overrides:
   '@tootallnate/once@<3.0.1': ^3.0.1
   protobufjs@<7.6.5: ^7.6.5
   protobufjs@>=8.0.0 <8.6.6: ^8.6.6
-  ip-address@<10.3.1: ^10.3.1
+  ip-address@<10.7.1: ^10.7.1
   mongoose@>=8.0.0 <8.24.1: ^8.24.1
   newrelic: 13.19.2
   fast-uri@<3.1.7: ^3.1.7
   browserslist@<4.28.7: ^4.28.7
   '@humanfs/node@<0.16.8': ^0.16.8
+  '@fastify/busboy@<3.2.1': ^3.2.1
   sharp@<0.35.4: ^0.35.4
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
@@ -172,7 +174,7 @@ overrides:
   samlify@<2.13.0: ^2.13.0
   better-auth@<1.6.13: ^1.6.23
   '@better-auth/sso@<1.6.13': ^1.6.23
-  nodemailer@<9.1.0: ^9.1.0
+  nodemailer@<10.0.9: ^10.0.9
   shell-quote@<1.8.5: ^1.8.5
   piscina@<4.9.3: ^4.9.3
   vitest@<4.1.11: ^4.1.11
@@ -474,8 +476,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: 0.1.0-alpha.18
-        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
+        specifier: 0.1.0-alpha.19
+        version: 0.1.0-alpha.19(@anthropic-ai/sdk@0.128.0(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -2551,8 +2553,8 @@ importers:
   enterprise/workers/thalamus-observer:
     dependencies:
       '@novu/thalamus':
-        specifier: 0.1.0-alpha.18
-        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))
+        specifier: 0.1.0-alpha.19
+        version: 0.1.0-alpha.19(@anthropic-ai/sdk@0.128.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))
       agents:
         specifier: ^0.21.0
         version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.0.0)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.4)(zod@4.4.3)
@@ -4299,7 +4301,7 @@ importers:
         version: 8.2.1
       mailtrap:
         specifier: ^3.1.1
-        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@9.1.1)
+        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@10.0.13)
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
@@ -4313,8 +4315,8 @@ importers:
         specifier: ^6.0.8
         version: 6.0.8
       nodemailer:
-        specifier: ^9.1.0
-        version: 9.1.1
+        specifier: ^10.0.9
+        version: 10.0.13
       plivo:
         specifier: ^4.70.0
         version: 4.70.0
@@ -4784,8 +4786,8 @@ importers:
         specifier: 15.5.24
         version: 15.5.24(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nodemailer:
-        specifier: ^9.1.0
-        version: 9.1.1
+        specifier: ^10.0.9
+        version: 10.0.13
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -4855,7 +4857,7 @@ importers:
         version: 0.14.12(@assistant-ui/react@0.15.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(immer@10.1.1)(ioredis@5.11.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@base-ui/react':
         specifier: ^1.7.0
-        version: 1.7.0(@types/react@19.2.8)(date-fns@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 1.7.0(@date-fns/tz@1.5.0)(@types/react@19.2.8)(date-fns@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@novu/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -8281,8 +8283,8 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=9.0.0'}
     deprecated: Please update to a newer version
 
-  '@fastify/busboy@3.1.1':
-    resolution: {integrity: sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==}
+  '@fastify/busboy@3.2.2':
+    resolution: {integrity: sha512-yXSS27qPExaXeuLvMRMXOLtpipzfQYNjG3FkunDWKGfMYjKuhFXko9CVzqxm8jcF+lmtS9Fd89QNdh9XDjnbNg==}
 
   '@firebase/app-check-interop-types@0.3.3':
     resolution: {integrity: sha512-gAlxfPLT2j8bTI/qfe3ahl2I2YcBQ8cFIBdhAQA4I2f3TndcO+22YizyGYuttLHPQEpWkhmpFW60VCFEPg4g5A==}
@@ -9985,11 +9987,11 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@0.1.0-alpha.18':
-    resolution: {integrity: sha512-ZAYIeepTPr71vTOv/G6AvzFlkjKSarH/vzQCfFGeTBKcuh8SdW7AJGt5oiB4ufCBCZgAXUIVNvV3Fs3HnZwbxQ==}
+  '@novu/thalamus@0.1.0-alpha.19':
+    resolution: {integrity: sha512-3XwoAV85TASmPxHETlmQzMn1/R9KtyFTWnXiMGX5rXlvZW5kXlGmiRj7+rvFlCUOHrsu/qpnyOXJ7xdm4wxh9Q==}
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
-      '@anthropic-ai/sdk': '>=0.86.0'
+      '@anthropic-ai/sdk': '>=0.109.0'
       '@aws-crypto/sha256-js': '>=5.0.0'
       '@smithy/signature-v4': '>=3.0.0'
       openai: '>=4.87.0'
@@ -18132,8 +18134,8 @@ packages:
     resolution: {integrity: sha512-CtGuTyWf3ig+sgRyC7uP6DM3N+5ur/p8L+FPfsd+BbIfIs74TFfCajZTHnCw6K5dqM0bZEbRIqRy1fAdiUJhTA==}
     engines: {node: '>= 0.6'}
 
-  basic-ftp@5.3.1:
-    resolution: {integrity: sha512-bopVNp6ugyA150DDuZfPFdt1KZ5a94ZDiwX4hMgZDzF+GttD80lEy8kj98kbyhLXnPvhtIo93mdnLIjpCAeeOw==}
+  basic-ftp@6.2.1:
+    resolution: {integrity: sha512-bK67isD+lKq46AU8vNtjvMaT2ZqAOAmNCbxUHlFBRD4k15NWxyEjmaKtZPlgce58So4BNTjITGQOVTjL9y0ECA==}
     engines: {node: '>=10.0.0'}
 
   bcrypt-pbkdf@1.0.2:
@@ -21579,8 +21581,8 @@ packages:
   htmlparser2@9.1.0:
     resolution: {integrity: sha512-5zfg6mHUoaer/97TxnGpxmbR7zJtPwIYFMZ/H5ucTlPZhKvtum05yiPK3Mgai3a0DyVxv7qYqoweaEd2nrYQzQ==}
 
-  http-cache-semantics@4.1.1:
-    resolution: {integrity: sha512-er295DKPVsV82j5kw1Gjt+ADA/XYHsajl82cGNQG2eyoPkvgUhX+nDIyelzhIWbbsXP39EHcI6l5tYs2FYqYXQ==}
+  http-cache-semantics@4.3.0:
+    resolution: {integrity: sha512-M5t5LlJpS1UHMjvwRQVdFHvPISGeLAxNcrWuJkeGh0KxsqCHZ1O3NXZU/8x7cD0BDcGW8kapxMKTvwlqrNkHkA==}
 
   http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
@@ -21911,8 +21913,8 @@ packages:
     resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
     engines: {node: '>=12.22.0'}
 
-  ip-address@10.4.0:
-    resolution: {integrity: sha512-oSK96Grm3aP6OrS263xVxbNDGVL7rzBtYdpGqlDG8iQdoenDoTs/nkki+DflYbAEE8Xl6o5YxhxlrKvI3nqKXQ==}
+  ip-address@10.7.2:
+    resolution: {integrity: sha512-7H/2gFSIitxc0hG3nOI1glS8QLo/EHBFFLk8vEUjXY/xu0AdL8jZ9U1IzO2PUm0d2D/ofQcAifb0g6OBkt8U7w==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -23714,7 +23716,7 @@ packages:
     engines: {node: '>=16.20.1', yarn: '>=1.22.17'}
     peerDependencies:
       '@types/nodemailer': ^6.4.9
-      nodemailer: ^9.1.0
+      nodemailer: ^10.0.9
     peerDependenciesMeta:
       '@types/nodemailer':
         optional: true
@@ -23753,8 +23755,8 @@ packages:
   markdown-escape@2.0.0:
     resolution: {integrity: sha512-Trz4v0+XWlwy68LJIyw3bLbsJiC8XAbRCKF9DbEtZjyndKOGVx6n+wNB0VfoRmY2LKboQLeniap3xrb6LGSJ8A==}
 
-  markdown-it@14.2.0:
-    resolution: {integrity: sha512-1TGiQiJVRQ3NPmZH6sx5Cfnmg6GQm9jvC1ch4TK511NjSJvjzKLzn5pPfZRNZkRPZP0HqCioSndqH8v2nRaWVQ==}
+  markdown-it@14.3.2:
+    resolution: {integrity: sha512-sHHjZ5fJKlgrG4qns2YwVcdNep35h5fERrfkD2YNsb9UFk0UIHarbiTaHKVMlPuWAoiilyK8Fv/jAm11slsY7Q==}
     hasBin: true
 
   markdown-table@3.0.3:
@@ -24744,9 +24746,9 @@ packages:
     resolution: {integrity: sha512-1uiY543L+N7Og4yswvlm5NCKgPKDEXd9AUR9Jh3gen6oOeBsesr6LqhXom1er3eRzSUcVRWXzhv8tSNrIfGHKw==}
     engines: {node: '>=18'}
 
-  nodemailer@9.1.1:
-    resolution: {integrity: sha512-izw9mVKFix6YSnC9eLgV6g1opl9DUlRio9ZNcq+Wu9Ujn2UwF+8Nl0B8nz22kEC+CTZCvinkxwJ0DeFbb6NwcQ==}
-    engines: {node: '>=6.0.0'}
+  nodemailer@10.0.13:
+    resolution: {integrity: sha512-SzG86OlvcW/NNhUFC6uROMwRTL4n7MswfQqC/T8mhkmnY1YVa23zUEMYi4ijSeXSl9GLz9ZeTJDUatEDuY5FeQ==}
+    engines: {node: '>=20.0.0'}
 
   nodemon@3.0.1:
     resolution: {integrity: sha512-g9AZ7HmkhQkqXkRc20w+ZfQ73cHLbE8hnPbtaFbFtCumZsjyMhKk9LajQ07U5Ux28lvFjZ5X7HvWR1xzU8jHVw==}
@@ -34355,7 +34357,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@base-ui/react@1.7.0(@types/react@19.2.8)(date-fns@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@base-ui/react@1.7.0(@date-fns/tz@1.5.0)(@types/react@19.2.8)(date-fns@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@base-ui/utils': 0.3.2(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -34365,6 +34367,7 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       use-sync-external-store: 1.6.0(react@18.3.1)
     optionalDependencies:
+      '@date-fns/tz': 1.5.0
       '@types/react': 19.2.8
       date-fns: 4.1.0
 
@@ -35916,7 +35919,7 @@ snapshots:
 
   '@faker-js/faker@9.5.0': {}
 
-  '@fastify/busboy@3.1.1': {}
+  '@fastify/busboy@3.2.2': {}
 
   '@firebase/app-check-interop-types@0.3.3': {}
 
@@ -36478,11 +36481,11 @@ snapshots:
 
   '@internationalized/date@3.8.2':
     dependencies:
-      '@swc/helpers': 0.5.23
+      '@swc/helpers': 0.5.15
 
   '@internationalized/number@3.6.3':
     dependencies:
-      '@swc/helpers': 0.5.23
+      '@swc/helpers': 0.5.15
 
   '@ioredis/commands@1.10.0': {}
 
@@ -38300,14 +38303,14 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
+  '@novu/thalamus@0.1.0-alpha.19(@anthropic-ai/sdk@0.128.0(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.128.0(zod@3.25.20)
       '@aws-crypto/sha256-js': 5.2.0
       '@smithy/signature-v4': 5.6.12
       openai: 6.17.0(ws@8.21.0)(zod@3.25.20)
 
-  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.128.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))':
+  '@novu/thalamus@0.1.0-alpha.19(@anthropic-ai/sdk@0.128.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.128.0(zod@4.4.3)
       '@aws-crypto/sha256-js': 5.2.0
@@ -50065,7 +50068,7 @@ snapshots:
 
   basic-auth@1.1.0: {}
 
-  basic-ftp@5.3.1: {}
+  basic-ftp@6.2.1: {}
 
   bcrypt-pbkdf@1.0.2:
     dependencies:
@@ -50382,7 +50385,7 @@ snapshots:
     dependencies:
       clone-response: 1.0.3
       get-stream: 5.2.0
-      http-cache-semantics: 4.1.1
+      http-cache-semantics: 4.3.0
       keyv: 4.5.4
       lowercase-keys: 2.0.0
       normalize-url: 6.1.0
@@ -52821,7 +52824,7 @@ snapshots:
   express-rate-limit@8.5.2(express@5.2.1):
     dependencies:
       express: 5.2.1
-      ip-address: 10.4.0
+      ip-address: 10.7.2
 
   express@4.21.2:
     dependencies:
@@ -53235,7 +53238,7 @@ snapshots:
 
   firebase-admin@13.3.0:
     dependencies:
-      '@fastify/busboy': 3.1.1
+      '@fastify/busboy': 3.2.2
       '@firebase/database-compat': 2.0.5
       '@firebase/database-types': 1.0.10
       '@types/node': 22.15.13
@@ -53663,7 +53666,7 @@ snapshots:
 
   get-uri@6.0.5:
     dependencies:
-      basic-ftp: 5.3.1
+      basic-ftp: 6.2.1
       data-uri-to-buffer: 6.0.2
       debug: 4.4.3(supports-color@7.2.0)
     transitivePeerDependencies:
@@ -54315,7 +54318,7 @@ snapshots:
       domutils: 3.2.2
       entities: 4.5.0
 
-  http-cache-semantics@4.1.1: {}
+  http-cache-semantics@4.3.0: {}
 
   http-errors@2.0.0:
     dependencies:
@@ -54742,7 +54745,7 @@ snapshots:
       - supports-color
     optional: true
 
-  ip-address@10.4.0: {}
+  ip-address@10.7.2: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -57191,16 +57194,16 @@ snapshots:
       iconv-lite: 0.7.3
       libmime: 5.4.2
       linkify-it: 5.0.2
-      nodemailer: 9.1.1
+      nodemailer: 10.0.13
       punycode.js: 2.3.1
       tlds: 1.261.0
 
-  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@9.1.1):
+  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@10.0.13):
     dependencies:
       axios: 1.20.0
     optionalDependencies:
       '@types/nodemailer': 8.0.0
-      nodemailer: 9.1.1
+      nodemailer: 10.0.13
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -57229,7 +57232,7 @@ snapshots:
 
   markdown-escape@2.0.0: {}
 
-  markdown-it@14.2.0:
+  markdown-it@14.3.2:
     dependencies:
       argparse: 2.0.1
       entities: 4.5.0
@@ -57258,7 +57261,7 @@ snapshots:
 
   markdownlint@0.27.0:
     dependencies:
-      markdown-it: 14.2.0
+      markdown-it: 14.3.2
 
   marked-terminal@7.1.0(marked@9.1.6):
     dependencies:
@@ -58561,7 +58564,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.7
 
-  nodemailer@9.1.1: {}
+  nodemailer@10.0.13: {}
 
   nodemon@3.0.1:
     dependencies:
@@ -60282,7 +60285,7 @@ snapshots:
   prosemirror-markdown@1.13.1:
     dependencies:
       '@types/markdown-it': 14.1.2
-      markdown-it: 14.2.0
+      markdown-it: 14.3.2
       prosemirror-model: 1.22.3
 
   prosemirror-menu@1.2.4:
@@ -62111,7 +62114,7 @@ snapshots:
   smtp-server@3.18.4:
     dependencies:
       ipv6-normalize: 1.0.1
-      nodemailer: 9.1.1
+      nodemailer: 10.0.13
       punycode.js: 2.3.1
 
   snake-case@2.1.0:
@@ -62169,12 +62172,12 @@ snapshots:
 
   socks@2.8.7:
     dependencies:
-      ip-address: 10.4.0
+      ip-address: 10.7.2
       smart-buffer: 4.2.0
 
   socks@2.8.9:
     dependencies:
-      ip-address: 10.4.0
+      ip-address: 10.7.2
       smart-buffer: 4.2.0
 
   solid-devtools@0.30.1(solid-js@1.9.6):

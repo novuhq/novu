@@ -9,6 +9,7 @@ landing page moves in here later.
 | `/invite/[token]` | Page opened from a `human invite` link. The person connects Telegram or Slack and picks their default app. |
 | `/sign-up`, `/sign-in` | Human accounts, signed in with the Human Clerk app (not the Novu dashboard's).         |
 | `/claim`          | Opened from the link an agent gets when its keyless setup runs out of free messages. Moves that setup into the operator's Human account. |
+| `/cli/login`      | Opened by `human login`. The operator types the code their terminal shows, and that CLI gets the account's key; a keyless setup on that computer moves into the account on the way. |
 | `/account`        | The operator's Human account: the agent's channels and contacts, sign-out and delete.        |
 | `/`               | Placeholder until the landing page moves in.                                               |
 
@@ -38,6 +39,9 @@ Human accounts also need:
 
 To try a claim, set `KEYLESS_HUMAN_INTERACTION_CAP=1` on the API, run `human setup` without a key against
 the local API, send two messages, and open the printed `/claim` link.
+
+To try `human login`, run it against the local API (`NOVU_API_URL=http://localhost:3000 human login`) and enter
+the code it prints on `/cli/login` here. The API only offers the browser login when `HUMAN_WEBSITE_URL` is set.
 
 ## Configuration
 

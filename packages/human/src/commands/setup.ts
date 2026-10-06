@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import pc from 'picocolors';
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
@@ -23,12 +22,13 @@ import {
 import { info, promptLine } from '../cli-io';
 import {
   configPath,
-  DEFAULT_API_URL,
   DEFAULT_RELAY_AGENT_IDENTIFIER,
   type HumanCliConfig,
   loadConfig,
+  resolveTargetApiUrl,
   saveConfig,
 } from '../config';
+import { openInBrowser } from '../open-browser';
 import { pollUntil, sleep } from '../poll';
 import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
@@ -85,24 +85,44 @@ interface SetupOptions {
   skill?: boolean;
 }
 
+/**
+ * `--secret-key` (or NOVU_SECRET_KEY) wins. Otherwise the credentials saved for this API are reused: a
+ * `human login` (or an earlier `--secret-key`), or a keyless setup. Null means a new keyless setup is needed.
+ */
+export function reusableAuth(
+  existing: HumanCliConfig | null,
+  apiUrl: string,
+  secretKey: string | undefined
+): HumanCliConfig['auth'] | null {
+  if (secretKey) {
+    return { mode: 'apiKey', secretKey };
+  }
+
+  if (!existing || existing.apiUrl !== apiUrl) {
+    return null;
+  }
+
+  const { auth } = existing;
+  const usable = auth.mode === 'apiKey' ? Boolean(auth.secretKey) : Boolean(auth.keylessIdentifier);
+
+  return usable ? auth : null;
+}
+
 export async function setupCommand(channelArg: string | undefined, options: SetupOptions): Promise<never> {
   try {
     const channel = await resolveChannelChoice(channelArg);
-    const apiUrl = (options.apiUrl ?? process.env.NOVU_API_URL ?? DEFAULT_API_URL).replace(/\/$/, '');
     const existing = loadConfig();
+    const apiUrl = resolveTargetApiUrl(options.apiUrl, existing);
 
-    // 1. Auth — reuse stored credentials, else secret key, else fresh keyless env.
-    let auth: HumanCliConfig['auth'];
+    // 1. Auth — secret key, else the saved login or keyless setup, else a fresh keyless env.
     const secretKey = options.secretKey ?? process.env.NOVU_SECRET_KEY?.trim();
+    let auth = reusableAuth(existing, apiUrl, secretKey);
 
-    if (secretKey) {
-      auth = { mode: 'apiKey', secretKey };
-    } else if (existing?.apiUrl === apiUrl && existing.auth.mode === 'keyless' && existing.auth.keylessIdentifier) {
-      auth = existing.auth;
-      info('Reusing your existing keyless session.');
-    } else {
+    if (!auth) {
       info('Creating a keyless Novu environment (no account needed)...');
       auth = { mode: 'keyless', keylessIdentifier: await bootstrapKeylessSession(apiUrl) };
+    } else if (!secretKey) {
+      info(auth.mode === 'keyless' ? 'Reusing your existing keyless session.' : 'Using your saved login.');
     }
 
     const client = createHumanApiClient({
@@ -163,6 +183,12 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
         `  ${pc.bold('human approve "Deploy to production?"')}\n` +
         `  ${pc.bold('human tell "Build finished."')}\n`
     );
+
+    if (auth.mode === 'keyless') {
+      info(
+        `This is a free demo without an account. Run ${pc.bold('human login')} anytime to keep it in a Human account.`
+      );
+    }
 
     await maybeInstallSkill(options);
     process.exit(0);
@@ -557,17 +583,4 @@ async function promptForBotToken(): Promise<string> {
   }
 
   throw new Error('No valid bot token provided. Re-run `human setup telegram` or pass --telegram-bot-token.');
-}
-
-/** Best-effort platform browser open — the URL is always printed as fallback. */
-function openInBrowser(url: string): void {
-  const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-
-  try {
-    spawn(command, [url], { stdio: 'ignore', detached: true })
-      .on('error', () => undefined)
-      .unref();
-  } catch {
-    // URL is printed above — the human can click it.
-  }
 }

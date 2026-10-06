@@ -3,6 +3,7 @@ import { currentUser, type User } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
+import { Command } from '@/components/site/command';
 import { Panel } from '@/components/site/panel';
 import { SiteFrame } from '@/components/site/site-frame';
 import { buttonClassName } from '@/components/ui/button';
@@ -45,7 +46,16 @@ export default async function AccountPage(props: PageProps<'/account'>) {
             Hi <em className="font-display tracking-tight text-accent">{user.firstName || 'there'}</em>
           </>
         }
-        description={claimed === '1' ? 'Your setup is now in your Human account.' : email && `Signed in as ${email}.`}
+        description={
+          claimed === '1' ? (
+            <>
+              Your setup is now in your Human account. Run <Command>human login</Command> on your computer to keep using
+              it from there.
+            </>
+          ) : (
+            email && `Signed in as ${email}.`
+          )
+        }
       >
         <SetupSummary setup={setup} />
 
@@ -98,7 +108,8 @@ function SetupSummary({ setup }: { setup: Setup }) {
   if (setup.status === 'empty' || (setup.channels.length === 0 && setup.contacts.length === 0)) {
     return (
       <p className="text-[15px] leading-[1.375] tracking-tight text-foreground/70">
-        Nothing here yet. When your agent sends you a link to keep its setup, its channels and contacts show up here.
+        Nothing here yet. Run <Command>human login</Command> in your terminal to use this account with the human CLI,
+        then <Command>human setup</Command> to connect a channel. Its channels and contacts show up here.
       </p>
     );
   }
@@ -124,6 +135,9 @@ function SetupSummary({ setup }: { setup: Setup }) {
           secondary: contact.email ?? contact.id,
         }))}
       />
+      <p className="text-sm tracking-tight text-foreground/60">
+        To use this account from another computer, run <Command>human login</Command> there.
+      </p>
     </div>
   );
 }
