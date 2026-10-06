@@ -14,6 +14,8 @@ export interface DeleteManyValuesQuery {
   _layoutId?: string;
   level?: ControlValuesLevelEnum | { $in: ControlValuesLevelEnum[] };
   providerId?: string | { $in: string[] };
+  integrationIdentifier?: string;
+  _id?: { $in: string[] };
 }
 
 export class ControlValuesRepository extends BaseRepository<

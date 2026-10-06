@@ -7,7 +7,7 @@ const mongooseDelete = require('mongoose-delete');
 
 export type ControlValuesModel = ChangePropsValueType<
   ControlValuesEntity,
-  '_environmentId' | '_organizationId' | '_workflowId' | '_layoutId'
+  '_environmentId' | '_organizationId' | '_workflowId' | '_layoutId' | '_stepId'
 >;
 
 const controlValuesSchema = new Schema<ControlValuesModel>(
@@ -26,7 +26,7 @@ const controlValuesSchema = new Schema<ControlValuesModel>(
     },
     _stepId: {
       type: Schema.Types.ObjectId,
-    } as any,
+    },
     _layoutId: {
       type: Schema.Types.ObjectId,
       ref: 'Layout',
@@ -35,6 +35,7 @@ const controlValuesSchema = new Schema<ControlValuesModel>(
     priority: Schema.Types.Number,
     controls: Schema.Types.Mixed,
     providerId: Schema.Types.String,
+    integrationIdentifier: Schema.Types.String,
   },
   schemaOptions
 );
@@ -46,6 +47,15 @@ controlValuesSchema.index({
   level: 1,
   providerId: 1,
 });
+
+controlValuesSchema.index(
+  {
+    _environmentId: 1,
+    level: 1,
+    integrationIdentifier: 1,
+  },
+  { partialFilterExpression: { integrationIdentifier: { $exists: true } } }
+);
 
 controlValuesSchema.plugin(mongooseDelete, {
   deletedAt: true,

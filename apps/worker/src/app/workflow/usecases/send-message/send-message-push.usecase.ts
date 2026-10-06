@@ -638,7 +638,8 @@ export class SendMessagePush extends SendMessageBase {
           command.bridgeData,
           command.overrides,
           command.step.stepId,
-          integration.providerId
+          integration.providerId,
+          integration.identifier
         ),
       });
 

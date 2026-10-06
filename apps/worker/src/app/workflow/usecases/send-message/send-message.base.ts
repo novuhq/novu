@@ -23,11 +23,13 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   getProviderOverrideConfig,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
   layerClaimsExclusiveGroup,
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
   TriggerOverrides,
+  unpackProviderOverrideOutput,
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
@@ -99,13 +101,17 @@ function applyExclusiveKeyGroups(
   return result;
 }
 
-function resolveExclusiveKeyGroups(integrationId: string): readonly (readonly string[])[] {
-  return getProviderOverrideConfig(integrationId)?.exclusiveKeyGroups ?? [];
+function resolveExclusiveKeyGroups(providerId: string): readonly (readonly string[])[] {
+  return getProviderOverrideConfig(providerId)?.exclusiveKeyGroups ?? [];
 }
 
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
- * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ * dashboard persisted for the provider, then for the sending integration, then the workflow-global
+ * trigger override, then the step-scoped one.
+ *
+ * The integration overrides map rides inside the bridge provider entry and is never provider data,
+ * so it is stripped from the result whichever layer carried it.
  *
  * When the provider declares exclusive key groups (e.g. FCM routing destinations), the highest layer
  * that sets a usable key in a group evicts all group keys contributed by the other layers before merge.
@@ -114,18 +120,30 @@ export function combineProviderOverrides(
   bridgeData: BridgeProviderOverrides | null | undefined,
   overrides: TriggerOverrides | undefined,
   stepId: string | undefined,
-  providerId: string
+  providerId: string,
+  integrationIdentifier?: string
 ): Record<string, unknown> {
-  const bridgeProviderData = bridgeData?.providers?.[providerId] || {};
+  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
+  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
   const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
 
-  const [bridgeLayer, workflowLayer, stepLayer] = applyExclusiveKeyGroups(
-    [bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides],
+  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = applyExclusiveKeyGroups(
+    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
     resolveExclusiveKeyGroups(providerId)
   );
 
-  return mergeWith({}, bridgeLayer, workflowLayer, stepLayer, replaceArrays);
+  const combined: Record<string, unknown> = mergeWith(
+    {},
+    providerLayer,
+    integrationLayer,
+    workflowLayer,
+    stepLayer,
+    replaceArrays
+  );
+  delete combined[INTEGRATION_OVERRIDES_OUTPUT_KEY];
+
+  return combined;
 }
 
 export abstract class SendMessageBase extends SendMessageType {

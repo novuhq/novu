@@ -5,10 +5,13 @@ import {
   type ContentOverrideProviderId,
   FCM_OVERRIDE_SCHEMA_SUBPATH,
   getProviderOverrideConfig,
-  type JSONSchemaDto,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  isRecord,
   type ProviderOverrideConfig,
   type RuntimeIssue,
+  type JSONSchemaDto as SharedJSONSchemaDto,
   SLACK_OVERRIDE_SCHEMA_SUBPATH,
+  type StepIntegrationOverrides,
   type StepProviderOverrides,
   TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,
   WHATSAPP_OVERRIDE_SCHEMA_SUBPATH,
@@ -18,10 +21,11 @@ import { slackOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-ove
 import { telegramOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/telegram';
 import { whatsappOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/whatsapp';
 import type { ErrorObject } from 'ajv';
+import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { type ControlIssues, mapSchemaErrorsToControlIssues } from './issues';
 import { createLiquidTolerantValidator } from './liquid-tolerant-validator';
 
-export type { StepProviderOverrides };
+export type { StepIntegrationOverrides, StepProviderOverrides };
 
 const SUPPORTED_PROVIDER_IDS = new Set<string>(CONTENT_OVERRIDE_PROVIDER_IDS);
 
@@ -31,6 +35,11 @@ const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
   additionalProperties: true,
 };
 
+function toValidatorSchema(schema: SharedJSONSchemaDto): JSONSchemaDto {
+  // biome-ignore lint/plugin: the shared JSON Schema type and the API JSONSchemaDto class model the same JSON with different enum typings
+  return schema as unknown as JSONSchemaDto;
+}
+
 /**
  * Schemas the shared registry only points at by subpath, resolved eagerly. The subpath exists to
  * keep a very large schema out of the dashboard bundle; on the server there is no bundle to protect.
@@ -39,10 +48,10 @@ const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
  * at runtime an unregistered one can only degrade to accepting anything.
  */
 export const LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH: Readonly<Record<string, JSONSchemaDto>> = {
-  [SLACK_OVERRIDE_SCHEMA_SUBPATH]: slackOverrideLiquidTolerantJsonSchema,
-  [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: telegramOverrideLiquidTolerantJsonSchema,
-  [WHATSAPP_OVERRIDE_SCHEMA_SUBPATH]: whatsappOverrideLiquidTolerantJsonSchema,
-  [FCM_OVERRIDE_SCHEMA_SUBPATH]: fcmOverrideLiquidTolerantJsonSchema,
+  [SLACK_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(slackOverrideLiquidTolerantJsonSchema),
+  [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(telegramOverrideLiquidTolerantJsonSchema),
+  [WHATSAPP_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(whatsappOverrideLiquidTolerantJsonSchema),
+  [FCM_OVERRIDE_SCHEMA_SUBPATH]: toValidatorSchema(fcmOverrideLiquidTolerantJsonSchema),
 };
 
 export function isSupportedProviderOverrideId(providerId: string): providerId is ContentOverrideProviderId {
@@ -53,12 +62,14 @@ export function isSupportedProviderOverrideId(providerId: string): providerId is
  * Rebuilds the runtime `providerOverrides` map from STEP_PROVIDER_CONTROLS docs.
  */
 export function stitchProviderOverridesFromDocs(
-  docs: Array<Pick<ControlValuesEntity, 'providerId' | 'controls'>>
+  docs: Array<
+    Pick<ControlValuesEntity, 'providerId' | 'controls'> & Partial<Pick<ControlValuesEntity, 'integrationIdentifier'>>
+  >
 ): StepProviderOverrides | undefined {
   const stitched: StepProviderOverrides = {};
 
   for (const doc of docs) {
-    if (!doc.providerId || !isSupportedProviderOverrideId(doc.providerId)) {
+    if (!doc.providerId || doc.integrationIdentifier || !isSupportedProviderOverrideId(doc.providerId)) {
       continue;
     }
 
@@ -73,19 +84,52 @@ export function stitchProviderOverridesFromDocs(
 }
 
 /**
- * Merges stitched provider overrides into a controls object for bridge/preview execution.
+ * Rebuilds the runtime `integrationOverrides` map (providerId → identifier → blob) from
+ * STEP_INTEGRATION_CONTROLS docs.
+ */
+export function stitchIntegrationOverridesFromDocs(
+  docs: Array<Pick<ControlValuesEntity, 'providerId' | 'integrationIdentifier' | 'controls'>>
+): StepIntegrationOverrides | undefined {
+  const stitched: StepIntegrationOverrides = {};
+
+  for (const doc of docs) {
+    if (!doc.providerId || !doc.integrationIdentifier || !isSupportedProviderOverrideId(doc.providerId)) {
+      continue;
+    }
+
+    stitched[doc.providerId] = {
+      ...stitched[doc.providerId],
+      [doc.integrationIdentifier]: (doc.controls ?? {}) as Record<string, unknown>,
+    };
+  }
+
+  if (Object.keys(stitched).length === 0) {
+    return undefined;
+  }
+
+  return stitched;
+}
+
+function hasEntries(value: object | undefined): value is object {
+  return !!value && Object.keys(value).length > 0;
+}
+
+/**
+ * Merges stitched provider and integration overrides into a controls object for bridge/preview execution.
  */
 export function withStitchedProviderOverrides(
   controls: Record<string, unknown>,
-  providerOverrides: StepProviderOverrides | undefined
+  providerOverrides: StepProviderOverrides | undefined,
+  integrationOverrides?: StepIntegrationOverrides
 ): Record<string, unknown> {
-  if (!providerOverrides || Object.keys(providerOverrides).length === 0) {
+  if (!hasEntries(providerOverrides) && !hasEntries(integrationOverrides)) {
     return controls;
   }
 
   return {
     ...controls,
-    providerOverrides,
+    ...(hasEntries(providerOverrides) ? { providerOverrides } : {}),
+    ...(hasEntries(integrationOverrides) ? { integrationOverrides } : {}),
   };
 }
 
@@ -95,7 +139,7 @@ export function withStitchedProviderOverrides(
  */
 function resolveLiquidTolerantSchema(config: ProviderOverrideConfig): JSONSchemaDto {
   if (config.liquidTolerantSchema) {
-    return config.liquidTolerantSchema;
+    return toValidatorSchema(config.liquidTolerantSchema);
   }
 
   if (!config.schemaSubpath) {
@@ -112,8 +156,7 @@ function resolveLiquidTolerantSchema(config: ProviderOverrideConfig): JSONSchema
  */
 const validatorsBySchema = new Map<JSONSchemaDto, ReturnType<typeof createLiquidTolerantValidator>>();
 
-function getProviderOverrideValidator(config: ProviderOverrideConfig) {
-  const schema = resolveLiquidTolerantSchema(config);
+function getValidator(schema: JSONSchemaDto) {
   const cached = validatorsBySchema.get(schema);
   if (cached) {
     return cached;
@@ -125,9 +168,9 @@ function getProviderOverrideValidator(config: ProviderOverrideConfig) {
   return validate;
 }
 
-function unsupportedProviderIssue(path: string, providerId: string): RuntimeIssue {
+function unsupportedPropertyIssue(path: string, property: string): RuntimeIssue {
   return {
-    message: `"${providerId}" is not a supported property`,
+    message: `"${property}" is not a supported property`,
     issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
     variableName: path,
   };
@@ -241,24 +284,82 @@ export function processProviderOverridesIssues(
     const config = getProviderOverrideConfig(providerId);
 
     if (!config) {
-      controls[providerPath] = [unsupportedProviderIssue(providerPath, providerId)];
+      controls[providerPath] = [unsupportedPropertyIssue(providerPath, providerId)];
       continue;
     }
 
-    const schemaErrors = getProviderOverrideValidator(config)(override);
-    const exclusiveKeyGroups = config.exclusiveKeyGroups ?? [];
-    const providerIssues =
-      exclusiveKeyGroups.length > 0
-        ? mapExclusiveKeyGroupIssues(override, providerPath, schemaErrors, exclusiveKeyGroups)
-        : mapSchemaErrorsToControlIssues(schemaErrors, {
-            pathPrefix: providerPath,
-            collapseUrlFieldErrors: false,
-          }).controls;
+    collectSchemaIssues(
+      controls,
+      resolveLiquidTolerantSchema(config),
+      override,
+      providerPath,
+      config.exclusiveKeyGroups ?? []
+    );
+  }
 
-    for (const [path, pathIssues] of Object.entries(providerIssues ?? {})) {
-      controls[path] = [...(controls[path] ?? []), ...pathIssues];
+  return Object.keys(controls).length === 0 ? {} : { controls };
+}
+
+/**
+ * Validates each integration override against its provider's Liquid-tolerant schema and returns
+ * step issues namespaced as `integrationOverrides.<providerId>.<identifier>.<path>`.
+ */
+export function processIntegrationOverridesIssues(
+  integrationOverrides: StepIntegrationOverrides | null | undefined
+): ControlIssues {
+  if (!integrationOverrides) {
+    return {};
+  }
+
+  const controls: Record<string, RuntimeIssue[]> = {};
+
+  for (const [providerId, overridesByIdentifier] of Object.entries(integrationOverrides)) {
+    const providerPath = `integrationOverrides.${providerId}`;
+    const config = getProviderOverrideConfig(providerId);
+
+    if (!config) {
+      controls[providerPath] = [unsupportedPropertyIssue(providerPath, providerId)];
+      continue;
+    }
+
+    if (!isRecord(overridesByIdentifier)) {
+      collectSchemaIssues(controls, FREE_FORM_OBJECT_SCHEMA, overridesByIdentifier, providerPath);
+      continue;
+    }
+
+    const schema = resolveLiquidTolerantSchema(config);
+
+    for (const [identifier, override] of Object.entries(overridesByIdentifier)) {
+      collectSchemaIssues(controls, schema, override, `${providerPath}.${identifier}`, config.exclusiveKeyGroups ?? []);
     }
   }
 
   return Object.keys(controls).length === 0 ? {} : { controls };
+}
+
+function collectSchemaIssues(
+  controls: Record<string, RuntimeIssue[]>,
+  schema: JSONSchemaDto,
+  override: unknown,
+  pathPrefix: string,
+  exclusiveKeyGroups: readonly (readonly string[])[] = []
+): void {
+  const schemaErrors = getValidator(schema)(override);
+  const overrideIssues =
+    exclusiveKeyGroups.length > 0
+      ? mapExclusiveKeyGroupIssues(override, pathPrefix, schemaErrors, exclusiveKeyGroups)
+      : mapSchemaErrorsToControlIssues(schemaErrors, {
+          pathPrefix,
+          collapseUrlFieldErrors: false,
+        }).controls;
+
+  for (const [path, pathIssues] of Object.entries(overrideIssues ?? {})) {
+    controls[path] = [...(controls[path] ?? []), ...pathIssues];
+  }
+
+  // Free-form schemas accept any key, but this one is how the bridge carries integration overrides.
+  if (isRecord(override) && Object.prototype.hasOwnProperty.call(override, INTEGRATION_OVERRIDES_OUTPUT_KEY)) {
+    const reservedPath = `${pathPrefix}.${INTEGRATION_OVERRIDES_OUTPUT_KEY}`;
+    controls[reservedPath] = [unsupportedPropertyIssue(reservedPath, INTEGRATION_OVERRIDES_OUTPUT_KEY)];
+  }
 }

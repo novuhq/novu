@@ -12,6 +12,8 @@ export class ControlValuesEntity {
   _workflowId?: string;
   _stepId?: string;
   _layoutId?: string;
-  /** Set only for level=STEP_PROVIDER_CONTROLS docs; identifies the provider the controls belong to. */
+  /** Set only for STEP_PROVIDER_CONTROLS and STEP_INTEGRATION_CONTROLS docs; identifies the provider the controls belong to. */
   providerId?: string;
+  /** Set only for STEP_INTEGRATION_CONTROLS docs; the identifier of the integration the controls override. */
+  integrationIdentifier?: string;
 }

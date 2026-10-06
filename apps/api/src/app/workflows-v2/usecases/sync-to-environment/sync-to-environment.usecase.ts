@@ -176,7 +176,9 @@ export class SyncToEnvironmentUseCase {
         eventType: WebhookEventEnum.WORKFLOW_PUBLISHED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
+          // biome-ignore lint/plugin: webhook payloads carry the workflow DTO as a loose JSON object
           object: upsertedWorkflow as unknown as Record<string, unknown>,
+          // biome-ignore lint/plugin: webhook payloads carry the workflow DTO as a loose JSON object
           previousObject: sourceWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
@@ -360,6 +362,7 @@ export class SyncToEnvironmentUseCase {
       type: sourceStep.type,
       controlValues: sourceStep.controls?.values ?? {},
       providerOverrides: sourceStep.providerOverrides ?? null,
+      integrationOverrides: sourceStep.integrationOverrides ?? null,
     };
   }
 

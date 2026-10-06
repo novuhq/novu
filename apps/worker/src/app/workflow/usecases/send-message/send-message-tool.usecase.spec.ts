@@ -1,5 +1,6 @@
 import { ToolFactory } from '@novu/application-generic';
-import { ChannelTypeEnum, ToolProviderIdEnum } from '@novu/shared';
+import { ExecuteOutput } from '@novu/framework/internal';
+import { ChannelTypeEnum, INTEGRATION_OVERRIDES_OUTPUT_KEY, ToolProviderIdEnum } from '@novu/shared';
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -167,6 +168,12 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
     endpoint: { url: 'https://hooks.example.com/inbound' },
   };
 
+  const secondWebhookChannelData = {
+    type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+    identifier: 'webhook-endpoint-2',
+    endpoint: { url: 'https://hooks.example.com/second' },
+  };
+
   function buildWebhookIntegration(routingMode?: 'static' | 'dynamic', identifier = 'webhook-main') {
     return {
       _id: 'integration_1',
@@ -246,6 +253,37 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
     });
   }
 
+  /** Sends through a static webhook integration and a dynamic one fanned out to two endpoints, in that order. */
+  async function sendThroughStaticAndDynamicWebhooks(bridgeProviders: ExecuteOutput['providers']) {
+    const { usecase } = buildUsecase({
+      integration: [
+        buildWebhookIntegration('static', 'webhook-static'),
+        buildWebhookIntegration('dynamic', 'webhook-dynamic'),
+      ],
+      endpointGroups: [
+        {
+          integrationIdentifier: 'webhook-dynamic',
+          providerId: ToolProviderIdEnum.Webhook,
+          channelData: [webhookChannelData, secondWebhookChannelData],
+        },
+      ],
+    });
+    const sendStub = sinon.stub().resolves({ status: 200 });
+    sinon.stub(ToolFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+    const command = buildCommand();
+    if (!command.bridgeData) {
+      throw new Error('Expected bridge data');
+    }
+    command.bridgeData = { ...command.bridgeData, providers: bridgeProviders };
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.callCount(sendStub, 3);
+
+    return sendStub.getCalls().map((call) => call.args[0]);
+  }
+
   afterEach(() => {
     sinon.restore();
   });
@@ -306,18 +344,13 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
   });
 
   it('fans out one send per channel endpoint for dynamic routing', async () => {
-    const secondChannelData = {
-      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
-      identifier: 'webhook-endpoint-2',
-      endpoint: { url: 'https://hooks.example.com/second' },
-    };
     const { usecase } = buildUsecase({
       integration: buildWebhookIntegration('dynamic'),
       endpointGroups: [
         {
           integrationIdentifier: 'webhook-main',
           providerId: ToolProviderIdEnum.Webhook,
-          channelData: [webhookChannelData, secondChannelData],
+          channelData: [webhookChannelData, secondWebhookChannelData],
         },
       ],
     });
@@ -329,49 +362,39 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledTwice(sendStub);
     expect(sendStub.firstCall.args[0].channelData).to.deep.equal(webhookChannelData);
-    expect(sendStub.secondCall.args[0].channelData).to.deep.equal(secondChannelData);
+    expect(sendStub.secondCall.args[0].channelData).to.deep.equal(secondWebhookChannelData);
   });
 
   it('passes the same provider override to static integrations and dynamic endpoint fan-out', async () => {
-    const secondChannelData = {
-      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
-      identifier: 'webhook-endpoint-2',
-      endpoint: { url: 'https://hooks.example.com/second' },
-    };
-    const { usecase } = buildUsecase({
-      integration: [
-        buildWebhookIntegration('static', 'webhook-static'),
-        buildWebhookIntegration('dynamic', 'webhook-dynamic'),
-      ],
-      endpointGroups: [
-        {
-          integrationIdentifier: 'webhook-dynamic',
-          providerId: ToolProviderIdEnum.Webhook,
-          channelData: [webhookChannelData, secondChannelData],
-        },
-      ],
+    const sends = await sendThroughStaticAndDynamicWebhooks({
+      [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
     });
-    const sendStub = sinon.stub().resolves({ status: 200 });
-    sinon.stub(ToolFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
-    const command = buildCommand();
-    if (!command.bridgeData) {
-      throw new Error('Expected bridge data');
+
+    for (const send of sends) {
+      expect(send.bridgeProviderData).to.deep.equal({ alert_type: 'incident', priority: 'high' });
     }
-    command.bridgeData = {
-      ...command.bridgeData,
-      providers: {
-        [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
-      },
-    };
+  });
 
-    const result = await usecase.execute(command);
-
-    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
-    sinon.assert.callCount(sendStub, 3);
-    for (const call of sendStub.getCalls()) {
-      expect(call.args[0].bridgeProviderData).to.deep.equal({
+  it('layers each integration override over the provider override for sends through that integration only', async () => {
+    const [staticSend, ...dynamicSends] = await sendThroughStaticAndDynamicWebhooks({
+      [ToolProviderIdEnum.Webhook]: {
         alert_type: 'incident',
         priority: 'high',
+        [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+          'webhook-static': { priority: 'low' },
+          'webhook-dynamic': { priority: 'critical', team: 'sre' },
+        },
+      },
+    });
+
+    expect(staticSend.channelData).to.equal(undefined);
+    expect(staticSend.bridgeProviderData).to.deep.equal({ alert_type: 'incident', priority: 'low' });
+    expect(dynamicSends.map((send) => send.channelData)).to.deep.equal([webhookChannelData, secondWebhookChannelData]);
+    for (const dynamicSend of dynamicSends) {
+      expect(dynamicSend.bridgeProviderData).to.deep.equal({
+        alert_type: 'incident',
+        priority: 'critical',
+        team: 'sre',
       });
     }
   });
