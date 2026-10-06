@@ -52,8 +52,12 @@ export class HumanContactChannelDto {
 }
 
 export class HumanContactInviteDto {
-  @ApiProperty({ description: 'Invite page the contact opens to pick how the agent reaches them.' })
-  url: string;
+  @ApiPropertyOptional({
+    description:
+      'Invite page the contact opens to pick how the agent reaches them. The link works on its own, so it is only ' +
+      'returned to callers who may also create invites (`AGENT_WRITE`).',
+  })
+  url?: string;
 
   @ApiProperty({ description: 'ISO timestamp when the link stops working.' })
   expiresAt: string;

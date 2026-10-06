@@ -14,12 +14,22 @@ export const HUMAN_INVITE_LINK_TTL_SECONDS = 3 * 24 * 60 * 60;
 const TOKEN_FORMAT = /^[A-Za-z0-9]{32}$/;
 
 /**
- * Per-contact list of the invite links issued to them, so the contacts list can show a pending
- * invite again and removing a contact can retire its links. Kept a little longer than the links
- * themselves (their TTL is jittered); entries are re-checked against the link before use.
+ * Per-contact list of the newest invite links issued to them, so the contacts list can show a
+ * pending invite again. It is only for showing: it can miss a link (best effort, and capped), so
+ * retiring a contact's links never relies on it. Entries are re-checked against the link before use.
  */
 const PENDING_KEY_PREFIX = 'human_invite_pending:';
-const PENDING_TTL_SECONDS = Math.ceil(HUMAN_INVITE_LINK_TTL_SECONDS * 1.1);
+const MAX_PENDING_LINKS = 10;
+
+/**
+ * Per-contact marker written when the contact is removed. Every link issued to them up to that
+ * moment reads as declined, whether or not it was ever listed, so an old link can't bring a
+ * removed contact back. A link issued afterwards (a new invite) works.
+ */
+const REVOKED_KEY_PREFIX = 'human_invite_revoked:';
+
+// Redis keeps link keys up to 10% past their stated expiry (jittered TTL); these outlive them.
+const CONTACT_KEY_TTL_SECONDS = Math.ceil(HUMAN_INVITE_LINK_TTL_SECONDS * 1.2);
 
 export interface HumanInviteTokenPayload {
   /** Environment id. */
@@ -29,6 +39,8 @@ export interface HumanInviteTokenPayload {
   /** Relay agent `_id`. */
   agentId: string;
   subscriberId: string;
+  /** Epoch milliseconds when the link was issued. Missing on links issued before it was recorded. */
+  iat?: number;
 }
 
 export interface ActiveHumanInvite {
@@ -93,7 +105,7 @@ export class HumanInviteTokenService {
   }
 
   async issue(payload: HumanInviteTokenPayload): Promise<{ token: string; expiresAt: string }> {
-    const issued = await this.tokens.issue(payload);
+    const issued = await this.tokens.issue({ ...payload, iat: Date.now() });
     await this.rememberPending(payload, issued);
 
     return issued;
@@ -136,24 +148,28 @@ export class HumanInviteTokenService {
     return pending;
   }
 
-  /** Retires every link issued to the contact, so a link sent earlier can't reconnect them. */
+  /**
+   * Retires every link issued to the contact so far, so a link sent earlier can't reconnect them.
+   * The marker is what retires them; it doesn't depend on which links were listed.
+   */
   async revokeAll(ref: HumanInviteContactRef): Promise<void> {
     if (!this.cacheService.cacheEnabled()) {
       return;
     }
 
-    const key = pendingKey(ref);
+    try {
+      await this.cacheService.set(revokedKey(ref), String(Date.now()), {
+        ttl: CONTACT_KEY_TTL_SECONDS,
+        jitter: false,
+      });
+    } catch (err) {
+      throw toHttpError(new HumanInviteCacheUnavailableError('revoke', err));
+    }
 
     try {
-      for (const { token } of parsePending(await this.cacheService.get(key))) {
-        await this.tokens.claim(token);
-      }
-
-      await this.cacheService.del(key);
+      await this.cacheService.del(pendingKey(ref));
     } catch (err) {
-      throw toHttpError(
-        err instanceof HumanInviteCacheUnavailableError ? err : new HumanInviteCacheUnavailableError('revoke', err)
-      );
+      this.logger.warn({ err, subscriberId: ref.subscriberId }, 'Failed to clear the listed Human invite links');
     }
   }
 
@@ -162,11 +178,22 @@ export class HumanInviteTokenService {
     const outcome = await this.tokens.peek(token);
 
     switch (outcome.status) {
-      case 'active':
-        return {
-          payload: this.validatePayload(outcome.entry.payload),
-          expiresAt: new Date(outcome.entry.expiresAt * 1000).toISOString(),
-        };
+      case 'active': {
+        const { iat, ...payload } = this.validatePayload(outcome.entry.payload);
+        const expiresAtMs = outcome.entry.expiresAt * 1000;
+
+        // Redis may keep the key a little past the stated expiry (jittered TTL); the stated one decides.
+        if (expiresAtMs <= Date.now()) {
+          throw new InactiveHumanInviteError('expired');
+        }
+
+        // Links issued before `iat` was recorded carry no issue time; their expiry gives it.
+        if (await this.wasRevoked(payload, iat ?? expiresAtMs - HUMAN_INVITE_LINK_TTL_SECONDS * 1000)) {
+          throw new InactiveHumanInviteError('declined');
+        }
+
+        return { payload, expiresAt: new Date(expiresAtMs).toISOString() };
+      }
       case 'used':
         throw new InactiveHumanInviteError('declined');
       case 'missing':
@@ -217,28 +244,52 @@ export class HumanInviteTokenService {
     }
   }
 
-  /** A link can be declined or expire early (jittered TTL), so the remembered entry alone is not proof. */
+  /** A link can be declined, retired or expire early (jittered TTL), so the remembered entry alone is not proof. */
   private async newestActive(invites: PendingHumanInvite[]): Promise<PendingHumanInvite | undefined> {
     for (const invite of [...invites].reverse()) {
-      const outcome = await this.tokens.peek(invite.token);
+      try {
+        await this.peek(invite.token);
 
-      if (outcome.status === 'active') {
         return invite;
+      } catch (err) {
+        if (!(err instanceof InactiveHumanInviteError)) {
+          throw err;
+        }
       }
     }
 
     return undefined;
   }
 
-  /** Best effort: a link that could not be remembered still works, it just isn't listed. */
+  /** Whether the contact was removed after this link was issued. */
+  private async wasRevoked(ref: HumanInviteContactRef, issuedAt: number): Promise<boolean> {
+    let revokedAt: number;
+
+    try {
+      revokedAt = Number(await this.cacheService.get(revokedKey(ref)));
+    } catch (err) {
+      throw new HumanInviteCacheUnavailableError('peek', err);
+    }
+
+    if (!revokedAt) {
+      return false;
+    }
+
+    return issuedAt <= revokedAt;
+  }
+
+  /**
+   * Best effort: a link that could not be remembered still works, it just isn't listed. Two invites
+   * at the same moment can also drop one from the list. Only the newest few are kept.
+   */
   private async rememberPending(payload: HumanInviteTokenPayload, issued: PendingHumanInvite): Promise<void> {
     const key = pendingKey(payload);
 
     try {
       const earlier = parsePending(await this.cacheService.get(key));
 
-      await this.cacheService.set(key, JSON.stringify([...earlier, issued]), {
-        ttl: PENDING_TTL_SECONDS,
+      await this.cacheService.set(key, JSON.stringify([...earlier, issued].slice(-MAX_PENDING_LINKS)), {
+        ttl: CONTACT_KEY_TTL_SECONDS,
         jitter: false,
       });
     } catch (err) {
@@ -257,6 +308,10 @@ export class HumanInviteTokenService {
 
 function pendingKey({ env, agentId, subscriberId }: HumanInviteContactRef): string {
   return `${PENDING_KEY_PREFIX}${env}:${agentId}:${subscriberId}`;
+}
+
+function revokedKey({ env, agentId, subscriberId }: HumanInviteContactRef): string {
+  return `${REVOKED_KEY_PREFIX}${env}:${agentId}:${subscriberId}`;
 }
 
 /** The remembered links that have not passed their expiry, oldest first. */

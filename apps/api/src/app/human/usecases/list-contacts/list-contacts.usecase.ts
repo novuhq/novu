@@ -56,7 +56,9 @@ export class ListContacts {
     const reach = await this.describeReach(command, page.subscribers);
 
     return {
-      data: page.subscribers.map((subscriber) => toContact(subscriber, reach.get(subscriber.subscriberId))),
+      data: page.subscribers.map((subscriber) =>
+        toContact(subscriber, reach.get(subscriber.subscriberId), command.includeInviteLinks === true)
+      ),
       next: page.next,
     };
   }
@@ -111,7 +113,11 @@ export class ListContacts {
   }
 }
 
-function toContact(subscriber: SubscriberEntity, reach: ContactReach | undefined): HumanContactDto {
+function toContact(
+  subscriber: SubscriberEntity,
+  reach: ContactReach | undefined,
+  includeInviteLink: boolean
+): HumanContactDto {
   const channels = toChannels(reach?.targets ?? [], reach?.defaultVia);
 
   return {
@@ -125,7 +131,12 @@ function toContact(subscriber: SubscriberEntity, reach: ContactReach | undefined
     ...(reach?.defaultVia ? { defaultVia: reach.defaultVia } : {}),
     status: channels.length > 0 ? 'joined' : 'invite_sent',
     ...(reach?.invite
-      ? { invite: { url: buildHumanWebsiteUrl(`/invite/${reach.invite.token}`), expiresAt: reach.invite.expiresAt } }
+      ? {
+          invite: {
+            ...(includeInviteLink ? { url: buildHumanWebsiteUrl(`/invite/${reach.invite.token}`) } : {}),
+            expiresAt: reach.invite.expiresAt,
+          },
+        }
       : {}),
     createdAt: subscriber.createdAt,
     updatedAt: subscriber.updatedAt,

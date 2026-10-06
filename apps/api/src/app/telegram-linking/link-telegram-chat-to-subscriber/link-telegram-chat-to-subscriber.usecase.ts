@@ -73,6 +73,14 @@ export class LinkTelegramChatToSubscriber {
 
     if (existing) {
       if (existing.subscriberId === subscriber.subscriberId) {
+        // People change their Telegram username; linking again is the moment we hear the new one.
+        if (command.username && command.username !== existing.displayName) {
+          await this.channelEndpointRepository.update(
+            { _id: existing._id, _environmentId: command.environmentId, _organizationId: command.organizationId },
+            { $set: { displayName: command.username } }
+          );
+        }
+
         return {
           created: false,
           subscriberId: subscriber.subscriberId,

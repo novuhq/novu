@@ -151,6 +151,70 @@ describe('HumanInviteTokenService', () => {
       expect(reasons).to.deep.equal(['declined', 'declined']);
       expect((await service.findPending(lookup)).size).to.equal(0);
     });
+
+    it('retires a link on revokeAll even when it was never listed', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.set.onSecondCall().rejects(new Error('redis down'));
+      const { token } = await service.issue(payload);
+
+      await service.revokeAll(payload);
+
+      expect(await service.peek(token).catch((err: InactiveHumanInviteError) => err.reason)).to.equal('declined');
+    });
+
+    it('lets a link issued after revokeAll work, and leaves other contacts alone', async () => {
+      const clock = sinon.useFakeTimers({ now: Date.now(), toFake: ['Date'] });
+
+      try {
+        const { service } = makeService();
+        const bob = await service.issue({ ...payload, subscriberId: 'bob' });
+
+        await service.revokeAll(payload);
+        clock.tick(1);
+        const invitedAgain = await service.issue(payload);
+
+        expect((await service.peek(invitedAgain.token)).payload).to.deep.equal(payload);
+        expect((await service.peek(bob.token)).payload.subscriberId).to.equal('bob');
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('refuses to remove the contact when the links cannot be retired', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.set.rejects(new Error('redis down'));
+
+      const error = await service.revokeAll(payload).catch((err) => err);
+
+      expect(error).to.be.instanceOf(ServiceUnavailableException);
+    });
+
+    it('lists only the newest few links of a contact', async () => {
+      const { service, cacheStore } = makeService();
+
+      for (let count = 0; count < 12; count += 1) {
+        await service.issue(payload);
+      }
+
+      const listed = JSON.parse(cacheStore.get('human_invite_pending:env-1:agent-1:alice') ?? '[]');
+      expect(listed).to.have.length(10);
+    });
+
+    it('stops working at its stated expiry even if the key is still there', async () => {
+      const clock = sinon.useFakeTimers({ now: Date.now(), toFake: ['Date'] });
+
+      try {
+        const { service } = makeService();
+        const { token } = await service.issue(payload);
+
+        clock.tick(HUMAN_INVITE_LINK_TTL_SECONDS * 1000 + 1000);
+
+        expect(await service.peek(token).catch((err: InactiveHumanInviteError) => err.reason)).to.equal('expired');
+        expect((await service.findPending(lookup)).size).to.equal(0);
+      } finally {
+        clock.restore();
+      }
+    });
   });
 
   describe('requireActive', () => {

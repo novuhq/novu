@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -172,6 +172,7 @@ export class HumanInteractionsController {
         limit: query.limit,
         after: query.after,
         agentIdentifier: query.agentIdentifier,
+        includeInviteLinks: mayCreateInvites(user),
       })
     );
   }
@@ -260,4 +261,16 @@ export class HumanInteractionsController {
       })
     );
   }
+}
+
+/**
+ * Whoever may create an invite may also see the links of the ones still waiting. An environment's own
+ * key (the `human` CLI, the Human dashboard's server) always may; a signed-in member needs `AGENT_WRITE`.
+ */
+function mayCreateInvites(user: UserSessionData): boolean {
+  if (user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS) {
+    return true;
+  }
+
+  return user.permissions?.includes(PermissionsEnum.AGENT_WRITE) === true;
 }
