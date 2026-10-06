@@ -24,7 +24,6 @@ import {
 } from '@novu/application-generic';
 import {
   AgentRepository,
-  NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
   TenantRepository,
@@ -48,6 +47,7 @@ import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
+  TriggerWorkflow,
 } from './parse-event-request.command';
 
 const ajv = new Ajv({
@@ -127,7 +127,7 @@ export class ParseEventRequest {
         });
       }
 
-      const template: Pick<NotificationTemplateEntity, '_id' | 'active' | 'payloadSchema' | 'validatePayload'> | null =
+      const template =
         command.workflow ||
         (await this.getNotificationTemplateByTriggerIdentifier({
           environmentId: command.environmentId,
@@ -206,6 +206,14 @@ export class ParseEventRequest {
         return {
           acknowledged: true,
           status: TriggerEventStatusEnum.NOT_ACTIVE,
+          transactionId,
+        };
+      }
+
+      if (!template.steps?.length) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.NO_WORKFLOW_STEPS,
           transactionId,
         };
       }
@@ -485,13 +493,13 @@ export class ParseEventRequest {
   private async getNotificationTemplateByTriggerIdentifier(command: {
     triggerIdentifier: string;
     environmentId: string;
-  }): Promise<Pick<NotificationTemplateEntity, '_id' | 'active' | 'payloadSchema' | 'validatePayload'> | null> {
+  }): Promise<TriggerWorkflow | null> {
     return await this.notificationTemplateRepository.findOne(
       {
         _environmentId: command.environmentId,
         'triggers.identifier': command.triggerIdentifier,
       },
-      '_id active payloadSchema validatePayload',
+      '_id active payloadSchema validatePayload steps._id',
       { readPreference: 'secondaryPreferred' }
     );
   }

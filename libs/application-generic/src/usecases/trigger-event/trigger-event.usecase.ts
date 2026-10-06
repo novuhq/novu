@@ -225,7 +225,7 @@ export class TriggerEvent {
         organization: command.organizationId,
         triggerIdentifier: command.identifier,
         userId: command.userId,
-        error: e,
+        err: e,
       };
 
       if (isBadRequest) {

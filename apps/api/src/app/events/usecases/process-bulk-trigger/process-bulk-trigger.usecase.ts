@@ -3,7 +3,7 @@ import { IWorkflowBulkJobDto, WorkflowQueueService } from '@novu/application-gen
 import { NotificationTemplateRepository } from '@novu/dal';
 import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { TriggerEventResponseDto } from '../../dtos';
-import { ParseEventRequestMulticastCommand } from '../parse-event-request/parse-event-request.command';
+import { ParseEventRequestMulticastCommand, TriggerWorkflow } from '../parse-event-request/parse-event-request.command';
 import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
 import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 
@@ -25,12 +25,12 @@ export class ProcessBulkTrigger {
         _environmentId: command.environmentId,
         'triggers.identifier': { $in: uniqueWorkflowIdentifiers },
       },
-      '_id active payloadSchema validatePayload triggers',
+      '_id active payloadSchema validatePayload triggers steps._id',
       { readPreference: 'secondaryPreferred' }
     );
 
     // Create a map for quick lookup
-    const workflowMap = new Map();
+    const workflowMap = new Map<string, TriggerWorkflow>();
     for (const workflow of workflows) {
       const triggerIdentifier = workflow.triggers[0]?.identifier;
       if (triggerIdentifier) {
