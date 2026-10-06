@@ -96,7 +96,7 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
   }
 
   /** Stands in for the person finishing `/start` in Telegram. */
-  async function connectTelegram(subscriberId: string, integrationIdentifier: string, username?: string) {
+  async function connectTelegram(subscriberId: string, integrationIdentifier: string) {
     await channelEndpointRepository.create({
       identifier: `ce-contacts-e2e-${subscriberId}-${Date.now()}`,
       _environmentId: session.environment._id,
@@ -108,7 +108,6 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       contextKeys: [],
       type: ENDPOINT_TYPES.TELEGRAM_CHAT,
       endpoint: { chatId: '777003' },
-      ...(username ? { displayName: username } : {}),
     });
   }
 
@@ -256,7 +255,7 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
 
       const telegram = await linkTelegram(agentId);
       await linkIntegration(agentId, { providerId: EmailProviderIdEnum.NovuAgent, channel: ChannelTypeEnum.EMAIL });
-      await connectTelegram(joinedId, telegram.identifier, 'dima');
+      await connectTelegram(joinedId, telegram.identifier);
       const invite = await createInvite(invitedId);
 
       const contacts = await listContacts();
@@ -265,7 +264,7 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(joined?.status).to.equal('joined');
       expect(joined?.defaultVia).to.equal('telegram');
       expect(joined?.channels).to.have.length(1);
-      expect(joined?.channels[0]).to.deep.include({ via: 'telegram', handle: '@dima', isDefault: true });
+      expect(joined?.channels[0]).to.deep.include({ via: 'telegram', isDefault: true });
       expect(joined?.channels[0].connectedAt).to.be.a('string');
       expect(joined).to.not.have.property('invite');
 
@@ -278,7 +277,7 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       const email = contacts.get(emailId);
       expect(email?.status).to.equal('joined');
       expect(email?.defaultVia).to.equal('email');
-      expect(email?.channels).to.deep.equal([{ via: 'email', handle: 'erin@example.com', isDefault: true }]);
+      expect(email?.channels).to.deep.equal([{ via: 'email', isDefault: true }]);
     });
 
     it('shows the newest invite link that still works', async () => {

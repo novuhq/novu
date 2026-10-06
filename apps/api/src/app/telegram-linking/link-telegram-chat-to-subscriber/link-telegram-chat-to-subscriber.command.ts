@@ -27,11 +27,6 @@ export class LinkTelegramChatToSubscriberCommand extends EnvironmentCommand {
   @IsNotEmpty()
   chatId: string;
 
-  /** The sender's Telegram username (no `@`), when the `/start` update carried one. */
-  @IsOptional()
-  @IsString()
-  username?: string;
-
   /**
    * Optional context payload — resolved into keys when `contextKeys` are absent.
    */

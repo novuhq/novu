@@ -55,10 +55,6 @@ const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
       type: Schema.Types.Mixed,
       required: true,
     },
-    displayName: {
-      type: Schema.Types.String,
-      required: false,
-    },
   },
   schemaOptions
 );

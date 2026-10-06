@@ -49,8 +49,6 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   via: HumanChannelViaEnum;
   /** When the human connected it. Absent for email, whose identity lives on the subscriber. */
   connectedAt?: string;
-  /** How the human is known on the platform, when it was reported while they connected. */
-  displayName?: string;
 }
 
 /** Chat apps a human can connect themselves from the invite page. */
@@ -428,7 +426,6 @@ export class HumanDeliveryService {
       platformUserId,
       integrationIdentifier,
       connectedAt: endpoint.createdAt,
-      ...(endpoint.displayName ? { displayName: endpoint.displayName } : {}),
     };
   }
 }

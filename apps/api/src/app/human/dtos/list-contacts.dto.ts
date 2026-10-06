@@ -39,11 +39,6 @@ export class HumanContactChannelDto {
   @ApiProperty({ enum: HumanChannelViaEnum })
   via: HumanChannelViaEnum;
 
-  @ApiPropertyOptional({
-    description: 'How the contact is known on the channel, when Human knows it: the email address or `@username`.',
-  })
-  handle?: string;
-
   @ApiPropertyOptional({ description: 'ISO timestamp when the contact connected the channel. Absent for email.' })
   connectedAt?: string;
 

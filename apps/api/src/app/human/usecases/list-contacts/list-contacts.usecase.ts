@@ -152,31 +152,12 @@ function toChannels(targets: ReachableHumanTarget[], defaultVia?: HumanChannelVi
       continue;
     }
 
-    const handle = handleOf(target);
-
     channels.push({
       via: target.via,
-      ...(handle ? { handle } : {}),
       ...(target.connectedAt ? { connectedAt: target.connectedAt } : {}),
       isDefault: target.via === defaultVia,
     });
   }
 
   return channels;
-}
-
-/**
- * The email address, or the `@username` Telegram reported when the contact connected. A chat's
- * internal id is never a handle, so a contact without a username has none.
- */
-function handleOf(target: ReachableHumanTarget): string | undefined {
-  if (target.via === HumanChannelViaEnum.EMAIL) {
-    return target.platformUserId;
-  }
-
-  if (target.via === HumanChannelViaEnum.TELEGRAM && target.displayName) {
-    return `@${target.displayName}`;
-  }
-
-  return undefined;
 }

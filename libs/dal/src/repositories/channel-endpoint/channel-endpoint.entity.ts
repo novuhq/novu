@@ -26,12 +26,6 @@ export class ChannelEndpointEntity<T extends ChannelEndpointType = ChannelEndpoi
   type: T;
   endpoint: ChannelEndpointByType[T];
 
-  /**
-   * How the person is known on the platform (e.g. their Telegram username, without the `@`).
-   * Only set when the platform reported one at the moment the endpoint was linked.
-   */
-  displayName?: string;
-
   createdAt: string;
   updatedAt: string;
 }

@@ -37,7 +37,6 @@ describe('LinkTelegramChatToSubscriber', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findByPlatformIdentity ?? sinon.stub().resolves(null),
       delete: overrides.delete ?? sinon.stub().resolves({ acknowledged: true, deletedCount: 1 }),
-      update: sinon.stub().resolves({ matched: 1, modified: 1 }),
     };
     const createChannelEndpoint = {
       execute: overrides.createChannelEndpointExecute ?? sinon.stub().resolves({ identifier: 'chendp_123' }),
@@ -96,16 +95,6 @@ describe('LinkTelegramChatToSubscriber', () => {
     expect(cmd.integrationIdentifier).to.equal('telegram-main');
   });
 
-  it('keeps the Telegram username on the endpoint when the update carried one', async () => {
-    const { usecase, createChannelEndpoint } = makeUsecase();
-
-    await usecase.execute(LinkTelegramChatToSubscriberCommand.create({ ...baseCommand, username: 'dima' }));
-    await usecase.execute(LinkTelegramChatToSubscriberCommand.create(baseCommand));
-
-    expect(createChannelEndpoint.execute.firstCall.args[0].displayName).to.equal('dima');
-    expect(createChannelEndpoint.execute.secondCall.args[0].displayName).to.equal(undefined);
-  });
-
   it('passes pre-resolved contextKeys through to CreateChannelEndpoint', async () => {
     const { usecase, createChannelEndpoint } = makeUsecase();
 
@@ -151,26 +140,6 @@ describe('LinkTelegramChatToSubscriber', () => {
 
     expect(result.created).to.equal(false);
     expect(result.subscriberId).to.equal('subscriber-1');
-    expect(createChannelEndpoint.execute.called).to.equal(false);
-  });
-
-  it('refreshes the Telegram username when the same chat is linked again with a new one', async () => {
-    const { usecase, channelEndpointRepository, createChannelEndpoint } = makeUsecase({
-      findByPlatformIdentity: sinon
-        .stub()
-        .resolves({ _id: 'endpoint-1', subscriberId: 'subscriber-1', displayName: 'dima' }),
-    });
-
-    await usecase.execute(LinkTelegramChatToSubscriberCommand.create({ ...baseCommand, username: 'dima' }));
-    expect(channelEndpointRepository.update.called).to.equal(false);
-
-    await usecase.execute(LinkTelegramChatToSubscriberCommand.create({ ...baseCommand, username: 'dima_g' }));
-
-    expect(channelEndpointRepository.update.calledOnce).to.equal(true);
-    expect(channelEndpointRepository.update.firstCall.args).to.deep.equal([
-      { _id: 'endpoint-1', _environmentId: 'env-1', _organizationId: 'org-1' },
-      { $set: { displayName: 'dima_g' } },
-    ]);
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 

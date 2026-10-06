@@ -66,11 +66,6 @@ export class CreateChannelEndpointCommand<
   @IsBoolean()
   platformIdentityVerified?: boolean;
 
-  /** How the person is known on the platform, when the platform reported it while linking. */
-  @IsOptional()
-  @IsString()
-  displayName?: string;
-
   static create<T extends ChannelEndpointType>(data: {
     organizationId: string;
     environmentId: string;
@@ -84,7 +79,6 @@ export class CreateChannelEndpointCommand<
     type: T;
     endpoint: ChannelEndpointByType[T];
     platformIdentityVerified?: boolean;
-    displayName?: string;
   }): CreateChannelEndpointCommand<T> {
     // Call BaseCommand.create with the correct constructor to ensure full inheritance chain validation
     // biome-ignore lint/complexity/noThisInStatic: Required to maintain proper this context for validation

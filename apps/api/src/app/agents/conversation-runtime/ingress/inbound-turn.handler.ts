@@ -29,7 +29,6 @@ import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/l
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
-import { extractTelegramUsernameFromMessage } from '../../../telegram-linking/telegram-webhook.utils';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import {
@@ -1245,8 +1244,6 @@ export class AgentInboundHandler implements OnModuleInit {
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
-            // `author.userName` falls back to the first name, so read the raw Telegram message instead.
-            username: extractTelegramUsernameFromMessage(message.raw as Record<string, unknown> | undefined),
             context: payload.context,
             contextKeys: payload.contextKeys,
           })
