@@ -19,10 +19,11 @@ describe('mapToolset', () => {
   it('maps enabled builtin toolset configs to AgentToolDto entries', () => {
     const tools = mapToolset({
       type: 'agent_toolset_20260401',
+      default_config: { enabled: true, permission_policy: { type: 'always_ask' } },
       configs: [
-        { name: 'bash', enabled: true },
-        { name: 'read', enabled: false },
-        { name: 'web_search', enabled: true },
+        { type: 'bash', name: 'bash', enabled: true, permission_policy: { type: 'always_ask' } },
+        { type: 'read', name: 'read', enabled: false, permission_policy: { type: 'always_ask' } },
+        { type: 'web_search', name: 'web_search', enabled: true, permission_policy: { type: 'always_ask' } },
       ],
     });
 
@@ -36,6 +37,8 @@ describe('mapToolset', () => {
     const tools = mapToolset({
       type: 'mcp_toolset',
       mcp_server_name: 'HubSpot',
+      configs: [],
+      default_config: { enabled: true, permission_policy: { type: 'always_ask' } },
     });
 
     expect(tools).to.deep.equal([]);
