@@ -198,9 +198,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
    *
    * Counts every UTC day the half-open range `[startDate, endDate)` touches in full:
    * `date >= toDate(start) AND date <= toDate(end - 1ms)`. A midnight exclusive end (e.g. Stripe
-   * `current_period_end`) does not pull in the next day, but mid-day bounds over-count by the runs
-   * of the first and last day that fall outside the range. Use `getOrganizationUsageInExactRange`
-   * when the exact range matters.
+   * `current_period_end`) does not pull in the next day; with mid-day bounds the first and last day
+   * are still counted in full. Use `getOrganizationUsageInExactRange` when the exact range matters.
    */
   async getPlatformUsageByWholeUtcDays(
     startDate: Date,
@@ -351,7 +350,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
 
   /**
    * Processing workflow runs of one organization on the first and last UTC day of `[startDate, endDate)` that fall
-   * outside it: what a whole-day sum over the range over-counts by. Read from raw `traces`, since
+   * outside it, so they can be removed from a whole-day sum. Read from raw `traces`, since
    * `workflow_run_count` only has daily buckets.
    */
   private async countEdgeDayRunsOutsideRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
