@@ -4,12 +4,15 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
 import { toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
+import { TABLE_NAME as TRACES_TABLE_NAME } from '../trace-log/trace-log.schema';
 import {
   WORKFLOW_RUN_COUNT_ORDER_BY,
   WORKFLOW_RUN_COUNT_TABLE_NAME,
   WorkflowRunCount,
   workflowRunCountSchema,
 } from './workflow-run-count.schema';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class WorkflowRunCountRepository extends LogRepository<typeof workflowRunCountSchema, WorkflowRunCount> {
@@ -222,6 +225,61 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     });
 
     return result.data;
+  }
+
+  /**
+   * Exact processing-run count of one organization in the half-open range `[startDate, endDate)`, unlike the
+   * whole-UTC-day `getPlatformUsageByDateRange`, which it corrects by `getEdgeDayUsageOutsideRange`.
+   */
+  async getOrganizationUsageByDateRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
+    const [wholeDayRows, edgeDayUsageOutsideRange] = await Promise.all([
+      this.getPlatformUsageByDateRange(startDate, endDate, organizationId),
+      this.getEdgeDayUsageOutsideRange(organizationId, startDate, endDate),
+    ]);
+    const wholeDayUsage = wholeDayRows.length > 0 ? parseInt(wholeDayRows[0].count, 10) : 0;
+
+    return Math.max(wholeDayUsage - edgeDayUsageOutsideRange, 0);
+  }
+
+  /**
+   * Processing runs of one organization on the first and last UTC day of `[startDate, endDate)` that fall outside
+   * it: what a whole-day `workflow_run_count` sum over `toInclusiveUtcDays(startDate, endDate)` over-counts by.
+   * Read from `traces`, which keeps the exact `created_at`. Both slices lie before `startDate` or from `endDate` on,
+   * so the result does not grow while the range is still being filled.
+   */
+  async getEdgeDayUsageOutsideRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
+    const startDayStart = startOfUtcDay(startDate);
+    const endDayEnd = new Date(startOfUtcDay(new Date(endDate.getTime() - 1)).getTime() + DAY_MS);
+
+    if (startDayStart.getTime() === startDate.getTime() && endDayEnd.getTime() === endDate.getTime()) {
+      return 0;
+    }
+
+    const query = `
+      SELECT count() as count
+      FROM ${TRACES_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND entity_type = 'workflow_run'
+        AND event_type = 'workflow_run_status_processing'
+        AND (
+          (created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)})
+          OR (created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)})
+        )
+    `;
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params: {
+        organizationId,
+        startDayStart: LogRepository.formatDateTime64(startDayStart),
+        startDate: LogRepository.formatDateTime64(startDate),
+        endDate: LogRepository.formatDateTime64(endDate),
+        endDayEnd: LogRepository.formatDateTime64(endDayEnd),
+      },
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
   }
 
   /**
@@ -439,4 +497,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
 
     return result.data;
   }
+}
+
+function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }

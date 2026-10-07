@@ -113,6 +113,133 @@ describe('WorkflowRunCountRepository', () => {
     });
   });
 
+  describe('getEdgeDayUsageOutsideRange', () => {
+    it('counts the processing traces of the first and last UTC day that fall outside the range', async () => {
+      queryStub.resolves({ data: [{ count: '50577' }] });
+
+      const result = await repository.getEdgeDayUsageOutsideRange(
+        'org-a',
+        new Date('2026-09-30T15:06:44.000Z'),
+        new Date('2026-10-30T15:06:44.000Z')
+      );
+
+      expect(result).to.equal(50577);
+
+      const call = queryStub.firstCall.args[0];
+      expect(call.query).to.include('FROM traces');
+      expect(call.query).to.include('organization_id = {organizationId:String}');
+      expect(call.query).to.include("entity_type = 'workflow_run'");
+      expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
+      expect(call.query).to.include(
+        '(created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)})'
+      );
+      expect(call.query).to.include(
+        '(created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)})'
+      );
+      expect(call.params).to.deep.equal({
+        organizationId: 'org-a',
+        startDayStart: '2026-09-30T00:00:00.000',
+        startDate: '2026-09-30T15:06:44.000',
+        endDate: '2026-10-30T15:06:44.000',
+        endDayEnd: '2026-10-31T00:00:00.000',
+      });
+    });
+
+    it('bounds the last day by the day before a midnight exclusive end', async () => {
+      queryStub.resolves({ data: [{ count: '4' }] });
+
+      await repository.getEdgeDayUsageOutsideRange(
+        'org-a',
+        new Date('2026-09-30T15:06:44.000Z'),
+        new Date('2026-10-30T00:00:00.000Z')
+      );
+
+      expect(queryStub.firstCall.args[0].params).to.deep.include({
+        endDate: '2026-10-30T00:00:00.000',
+        endDayEnd: '2026-10-30T00:00:00.000',
+      });
+    });
+
+    it('returns 0 without querying when the range starts and ends at UTC midnight', async () => {
+      const result = await repository.getEdgeDayUsageOutsideRange(
+        'org-a',
+        new Date('2026-09-01T00:00:00.000Z'),
+        new Date('2026-10-01T00:00:00.000Z')
+      );
+
+      expect(result).to.equal(0);
+      expect(queryStub.called).to.equal(false);
+    });
+
+    it('returns 0 when ClickHouse has no rows', async () => {
+      queryStub.resolves({ data: [] });
+
+      const result = await repository.getEdgeDayUsageOutsideRange(
+        'org-a',
+        new Date('2026-09-30T15:06:44.000Z'),
+        new Date('2026-10-30T15:06:44.000Z')
+      );
+
+      expect(result).to.equal(0);
+    });
+  });
+
+  describe('getOrganizationUsageByDateRange', () => {
+    const respondTo = (wholeDayCount: string | null, edgeDayCount: string) => {
+      queryStub.callsFake(async ({ query }: { query: string }) => {
+        if (query.includes('FROM traces')) {
+          return { data: [{ count: edgeDayCount }] };
+        }
+
+        return { data: wholeDayCount === null ? [] : [{ organization_id: 'org-a', count: wholeDayCount }] };
+      });
+    };
+
+    it('subtracts the edge-day runs outside the range from the whole-day count', async () => {
+      respondTo('56918', '50577');
+
+      const result = await repository.getOrganizationUsageByDateRange(
+        'org-a',
+        new Date('2026-09-30T15:06:44.000Z'),
+        new Date('2026-10-30T15:06:44.000Z')
+      );
+
+      expect(result).to.equal(6341);
+      expect(queryStub.calledTwice).to.equal(true);
+
+      const wholeDayCall = queryStub.getCalls().find((call) => call.args[0].query.includes('FROM workflow_run_count'));
+      expect(wholeDayCall?.args[0].params).to.deep.equal({
+        startDate: '2026-09-30',
+        endDate: '2026-10-30',
+        organizationId: 'org-a',
+      });
+    });
+
+    it('returns 0 when the organization has no whole-day rows', async () => {
+      respondTo(null, '0');
+
+      const result = await repository.getOrganizationUsageByDateRange(
+        'org-a',
+        new Date('2026-09-30T15:06:44.000Z'),
+        new Date('2026-10-30T15:06:44.000Z')
+      );
+
+      expect(result).to.equal(0);
+    });
+
+    it('never returns a negative count when the two tables disagree', async () => {
+      respondTo('10', '12');
+
+      const result = await repository.getOrganizationUsageByDateRange(
+        'org-a',
+        new Date('2026-09-30T15:06:44.000Z'),
+        new Date('2026-10-30T15:06:44.000Z')
+      );
+
+      expect(result).to.equal(0);
+    });
+  });
+
   describe('getPlatformDailyUsageByDateRange', () => {
     it('queries daily processing rows for every organization when no minimum is provided', async () => {
       const startDate = new Date('2024-01-01T12:34:56.000Z');
