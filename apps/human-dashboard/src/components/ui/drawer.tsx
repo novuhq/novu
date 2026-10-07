@@ -24,15 +24,18 @@ type DrawerContentProps = {
   children: ReactNode;
 };
 
-/** A panel that slides in from the right over the page, used for the channel and connect flows. */
+/**
+ * A panel that slides in from the right over the page, used for the channel and connect flows.
+ * Radix keeps it mounted until the closing animation ends, so it slides back out too.
+ */
 export function DrawerContent({ title, description, eyebrow, icon, footer, className, children }: DrawerContentProps) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 animate-overlay-in bg-black/62 motion-reduce:animate-none" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/62 data-[state=closed]:animate-overlay-out data-[state=open]:animate-overlay-in motion-reduce:animate-none!" />
       <DialogPrimitive.Content
         aria-describedby={undefined}
         className={cn(
-          'fixed inset-y-0 right-0 z-50 flex w-full max-w-150 animate-drawer-in flex-col border-l border-border bg-subtle shadow-[0_16px_48px_rgb(0_0_0/0.5)] motion-reduce:animate-none',
+          'fixed inset-y-0 right-0 z-50 flex w-full max-w-150 flex-col border-l border-border bg-subtle shadow-[0_16px_48px_rgb(0_0_0/0.5)] data-[state=closed]:animate-drawer-out data-[state=open]:animate-drawer-in motion-reduce:animate-none!',
           className
         )}
       >
