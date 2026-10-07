@@ -178,6 +178,10 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
     const secretKey = language === 'shell' && canReadApiKeys && apiKey ? apiKey : undefined;
     const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload ?? {}, null, 2);
 
+    if (!snippetUtil) {
+      return '';
+    }
+
     return snippetUtil({ identifier, to: to ?? {}, payload: payloadString, secretKey });
   };
 

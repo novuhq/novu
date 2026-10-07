@@ -19,8 +19,8 @@ import { SetHumanInviteDefaultCommand } from './usecases/set-human-invite-defaul
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 
 /**
- * Public, unauthenticated endpoints behind the dashboard invite page
- * (`/agents/invite/:token`). The invite token is the only credential.
+ * Public, unauthenticated endpoints behind the invite page on the Human
+ * website (`/invite/:token`). The invite token is the only credential.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()

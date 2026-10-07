@@ -6,10 +6,16 @@ import { CreateHumanInviteCommand } from './create-human-invite.command';
 import { CreateHumanInvite } from './create-human-invite.usecase';
 
 describe('CreateHumanInvite', () => {
-  const originalDashboardUrl = process.env.DASHBOARD_URL;
+  const originalEnv = { HUMAN_DASHBOARD_URL: process.env.HUMAN_DASHBOARD_URL, NOVU_REGION: process.env.NOVU_REGION };
 
   afterEach(() => {
-    process.env.DASHBOARD_URL = originalDashboardUrl;
+    for (const [key, value] of Object.entries(originalEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
   });
 
   function setup(channels: Array<{ via: HumanChannelViaEnum; integrationIdentifier: string; connected: boolean }>) {
@@ -36,8 +42,9 @@ describe('CreateHumanInvite', () => {
     lastName: 'Chen',
   });
 
-  it('returns a dashboard invite link and the apps offered on it', async () => {
-    process.env.DASHBOARD_URL = 'https://eu.dashboard.novu.co/';
+  it('returns an invite link on the Human dashboard and the apps offered on it', async () => {
+    process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md/';
+    delete process.env.NOVU_REGION;
     const { usecase, setupHumanRelay, inviteTokens } = setup([
       { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false },
       { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack', connected: true },
@@ -46,7 +53,7 @@ describe('CreateHumanInvite', () => {
     const result = await usecase.execute(command);
 
     expect(result).to.deep.equal({
-      url: `https://eu.dashboard.novu.co/agents/invite/${'T'.repeat(32)}`,
+      url: `https://gethuman.md/invite/${'T'.repeat(32)}`,
       expiresAt: '2026-10-02T10:00:00.000Z',
       channels: [
         { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false },
@@ -60,6 +67,16 @@ describe('CreateHumanInvite', () => {
       agentId: 'relay1',
       subscriberId: 'alice',
     });
+  });
+
+  it('tags links from an EU deployment so the page calls the EU API', async () => {
+    process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
+    process.env.NOVU_REGION = 'eu-central-1';
+    const { usecase } = setup([{ via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false }]);
+
+    const { url } = await usecase.execute(command);
+
+    expect(url).to.equal(`https://gethuman.md/invite/${'T'.repeat(32)}?region=eu`);
   });
 
   it('refuses when the relay has no Telegram or Slack set up', async () => {

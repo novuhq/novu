@@ -1,8 +1,17 @@
-import { ChatProviderIdEnum, ResourceOriginEnum, Slug, StepTypeEnum, ToolProviderIdEnum } from '../../types';
+import {
+  ChatProviderIdEnum,
+  PushProviderIdEnum,
+  ResourceOriginEnum,
+  Slug,
+  StepTypeEnum,
+  ToolProviderIdEnum,
+} from '../../types';
 import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';
 
-export type StepProviderOverrides = Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum, Record<string, unknown>>>;
+export type StepProviderOverrides = Partial<
+  Record<ToolProviderIdEnum | ChatProviderIdEnum | PushProviderIdEnum, Record<string, unknown>>
+>;
 
 export type StepResponseDto = {
   controls: Controls;

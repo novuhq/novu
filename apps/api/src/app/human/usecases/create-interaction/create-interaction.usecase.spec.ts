@@ -317,10 +317,12 @@ describe('CreateInteraction', () => {
   describe('keyless demo cap', () => {
     let originalKeylessOrgId: string | undefined;
     let originalCap: string | undefined;
+    let originalDashboardUrl: string | undefined;
 
     beforeEach(() => {
       originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
       originalCap = process.env.KEYLESS_HUMAN_INTERACTION_CAP;
+      originalDashboardUrl = process.env.HUMAN_DASHBOARD_URL;
       process.env.KEYLESS_ORGANIZATION_ID = 'org1';
       process.env.KEYLESS_HUMAN_INTERACTION_CAP = '2';
     });
@@ -328,6 +330,7 @@ describe('CreateInteraction', () => {
     afterEach(() => {
       restoreEnv('KEYLESS_ORGANIZATION_ID', originalKeylessOrgId);
       restoreEnv('KEYLESS_HUMAN_INTERACTION_CAP', originalCap);
+      restoreEnv('HUMAN_DASHBOARD_URL', originalDashboardUrl);
     });
 
     function restoreEnv(name: string, value: string | undefined) {
@@ -360,6 +363,7 @@ describe('CreateInteraction', () => {
       } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
       humanInteractionRepository.count.resolves(2);
+      process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
 
       let thrown: unknown;
       try {
@@ -373,8 +377,9 @@ describe('CreateInteraction', () => {
       expect((thrown as HttpException).getStatus()).to.equal(429);
       expect(response.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
       expect(response.cap).to.equal(2);
-      expect(response.claimUrl).to.match(/\/connect\/claim\?token=tok$/);
+      expect(response.claimUrl).to.match(/\/claim\?token=tok$/);
       expect(response.message).to.include(response.claimUrl as string);
+      expect(response.browserLogin).to.equal(true);
 
       expect(humanInteractionRepository.create.called).to.equal(false);
       expect(deliveryService.deliver.called).to.equal(false);
@@ -433,7 +438,20 @@ describe('CreateInteraction', () => {
       expect(deliveryService.deliverContent.called).to.equal(false);
     });
 
+    it('tells the CLI there is no browser login where the Human dashboard is not configured', async () => {
+      delete process.env.HUMAN_DASHBOARD_URL;
+      const { usecase, command, agentRepository, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+      humanInteractionRepository.count.resolves(2);
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(429);
+      expect((thrown.getResponse() as Record<string, unknown>).browserLogin).to.equal(false);
+    });
+
     it('rejects a claimed keyless environment with a re-auth hint before looking up the agent', async () => {
+      process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
       const { usecase, command, agentRepository, connectClaimTokenService } = setup();
       connectClaimTokenService.isEnvironmentClaimed.resolves(true);
 
@@ -445,8 +463,19 @@ describe('CreateInteraction', () => {
       }
 
       expect(thrown?.getStatus()).to.equal(403);
-      expect(thrown?.message).to.include('human setup --secret-key');
+      expect(thrown?.message).to.include('human login');
       expect(agentRepository.findOne.called).to.equal(false);
+    });
+
+    it('asks for the secret key after a claim where the Human dashboard is not configured', async () => {
+      delete process.env.HUMAN_DASHBOARD_URL;
+      const { usecase, command, connectClaimTokenService } = setup();
+      connectClaimTokenService.isEnvironmentClaimed.resolves(true);
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(403);
+      expect(thrown.message).to.include('human setup --secret-key');
     });
 
     it('ignores the cap for non-keyless organizations', async () => {

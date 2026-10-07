@@ -30,9 +30,11 @@ import {
   IPreloadedEnvironmentContext,
 } from './build-available-variable-schema.command';
 
-type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'>;
+type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'> & {
+  level?: ControlValuesLevelEnum;
+};
 
-const SELECTED_CONTROL_VALUES_PROJECTION: Record<keyof SelectedControlValuesFields, 1> & { _id: 0 } = {
+const SELECTED_CONTROL_VALUES_PROJECTION = {
   controls: 1,
   _stepId: 1,
   _id: 0,
@@ -40,6 +42,13 @@ const SELECTED_CONTROL_VALUES_PROJECTION: Record<keyof SelectedControlValuesFiel
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
+  /**
+   * Concurrent callers in one request need the same environment document and variables.
+   * Share the in-flight read so that burst hits Mongo once, then drop it so the next
+   * request sees fresh data.
+   */
+  private readonly environmentContextInflight = new Map<string, Promise<IPreloadedEnvironmentContext>>();
+
   constructor(
     private readonly createVariablesObject: CreateVariablesObject,
     private readonly controlValuesRepository: ControlValuesRepository,
@@ -112,7 +121,7 @@ export class BuildVariableSchemaUsecase {
       ? { name: environmentContext.environment.name, type: environmentContext.environment.type }
       : {};
     const envVars = { ...resolveEnvironmentVariables(environmentContext.rawEnvVars), ...systemVars };
-    const controlValuesMap = buildControlValuesMap(controls, optimisticSteps);
+    const controlValuesMap = buildControlValuesMap(controls.filter(isStepControlValue), optimisticSteps);
 
     return {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -134,7 +143,27 @@ export class BuildVariableSchemaUsecase {
   }
 
   @Instrument()
-  async loadEnvironmentContext(organizationId: string, environmentId: string): Promise<IPreloadedEnvironmentContext> {
+  loadEnvironmentContext(organizationId: string, environmentId: string): Promise<IPreloadedEnvironmentContext> {
+    const key = `${organizationId}:${environmentId}`;
+    const inflight = this.environmentContextInflight.get(key);
+
+    if (inflight) {
+      return inflight;
+    }
+
+    const pending = this.fetchEnvironmentContext(organizationId, environmentId).finally(() => {
+      this.environmentContextInflight.delete(key);
+    });
+
+    this.environmentContextInflight.set(key, pending);
+
+    return pending;
+  }
+
+  private async fetchEnvironmentContext(
+    organizationId: string,
+    environmentId: string
+  ): Promise<IPreloadedEnvironmentContext> {
     const [rawEnvVars, environmentEntity] = await Promise.all([
       this.environmentVariableRepository.findByEnvironment(organizationId, environmentId),
       this.environmentRepository.findByIdAndOrganization(environmentId, organizationId),
@@ -236,6 +265,14 @@ export class BuildVariableSchemaUsecase {
       context: { ...((extracted.context as Record<string, unknown>) || {}), ...(previewData?.context || {}) },
     };
   }
+}
+
+function isStepControlValue(controlValue: { level?: ControlValuesLevelEnum | null }): boolean {
+  if (!controlValue.level) {
+    return true;
+  }
+
+  return controlValue.level === ControlValuesLevelEnum.STEP_CONTROLS;
 }
 
 function buildControlValuesMap(

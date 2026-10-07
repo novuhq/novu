@@ -253,6 +253,8 @@ const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 export interface KeylessCapDetails {
   claimUrl?: string;
   cap?: number;
+  /** The API has `human login` (the Human dashboard); self-hosted and older APIs need a secret key instead. */
+  browserLogin?: boolean;
 }
 
 /**
@@ -269,6 +271,7 @@ export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
     code?: unknown;
     claimUrl?: unknown;
     cap?: unknown;
+    browserLogin?: unknown;
   };
 
   if (body.code !== KEYLESS_CAP_CODE && !/keyless demo/i.test(err.message)) {
@@ -278,6 +281,7 @@ export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
   return {
     claimUrl: typeof body.claimUrl === 'string' ? body.claimUrl : undefined,
     cap: typeof body.cap === 'number' ? body.cap : undefined,
+    browserLogin: body.browserLogin === true,
   };
 }
 
@@ -285,13 +289,23 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
   const count = details.cap ? `${details.cap} free messages` : 'free messages';
   const lines = [`You've used the ${count} of this keyless demo.`];
 
-  if (details.claimUrl) {
-    lines.push(`Sign up to keep your channels and continue: ${details.claimUrl}`);
-  } else {
-    lines.push('Sign up for a free Novu account to keep your channels and continue.');
+  if (details.browserLogin) {
+    lines.push('To keep your channels and continue, run: human login');
+
+    if (details.claimUrl) {
+      lines.push(
+        `(Or sign up from this link, which we also sent to your linked channel, then run \`human login\`: ${details.claimUrl})`
+      );
+    }
+
+    return lines.join('\n');
   }
 
+  // Without `human login` (self-hosted or older APIs), the operator signs up and copies the environment's key.
   lines.push(
+    details.claimUrl
+      ? `Sign up to keep your channels and continue: ${details.claimUrl}`
+      : 'Sign up for a free Novu account to keep your channels and continue.',
     '(We also sent this link to you on your linked channel.)',
     'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
   );

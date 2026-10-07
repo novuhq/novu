@@ -13,7 +13,7 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@novu/thalamus": "0.1.0-alpha.18",
+    "@novu/thalamus": "0.1.0-alpha.19",
     "agents": "^0.21.0",
     "eventsource-parser": "^3.0.8"
   },

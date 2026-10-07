@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MAX_CONTACTS_LIMIT } from '../../dtos/list-contacts.dto';
 
@@ -12,4 +12,13 @@ export class ListContactsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   after?: string;
+
+  @IsOptional()
+  @IsString()
+  agentIdentifier?: string;
+
+  /** Invite links work on their own, so they are left out for callers who may only read. */
+  @IsOptional()
+  @IsBoolean()
+  includeInviteLinks?: boolean;
 }

@@ -112,5 +112,38 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.firstArg).to.be.null;
       expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
     });
+
+    describe('Human dashboard invite page', () => {
+      const humanDashboardOrigin = 'https://gethuman.md';
+
+      afterEach(() => {
+        delete process.env.HUMAN_DASHBOARD_URL;
+      });
+
+      // Requests come from the dashboard, so any Human dashboard origin in the result was added for the route.
+      function originsFor(url: string) {
+        const callbackSpy = spy();
+
+        corsOptionsDelegate({ url, headers: { origin: dashboardOrigin } }, callbackSpy);
+
+        return callbackSpy.firstCall.lastArg.origin as string[];
+      }
+
+      it('allows the Human dashboard on the public invite routes', () => {
+        process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md/';
+
+        expect(originsFor('/v1/human/invites/status?token=abc')).to.include(humanDashboardOrigin);
+        expect(originsFor('/v1/human/invites/connect')).to.include(humanDashboardOrigin);
+      });
+
+      it('falls back to gethuman.md when HUMAN_DASHBOARD_URL is not set', () => {
+        expect(originsFor('/v1/human/invites/decline')).to.include(humanDashboardOrigin);
+      });
+
+      it('does not allow the Human dashboard anywhere else', () => {
+        expect(originsFor('/v1/human/invites')).to.not.include(humanDashboardOrigin);
+        expect(originsFor('/v1/human/interactions')).to.not.include(humanDashboardOrigin);
+      });
+    });
   });
 });

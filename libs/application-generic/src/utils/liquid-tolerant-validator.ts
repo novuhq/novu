@@ -1,7 +1,13 @@
-import { LIQUID_TEMPLATE_PATTERN, selectDiscriminatedErrors } from '@novu/shared';
+import {
+  LIQUID_TEMPLATE_PATTERN,
+  selectDiscriminatedErrors,
+  type JSONSchemaDto as WorkflowJSONSchemaDto,
+} from '@novu/shared';
 import type { AnySchemaObject, ErrorObject } from 'ajv';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { createSchemaValidationAjv } from './issues';
+
+type LiquidTolerantSchema = JSONSchemaDto | WorkflowJSONSchemaDto;
 
 /**
  * Absolute location of every subschema object, so an error can be traced back to where its
@@ -11,7 +17,7 @@ import { createSchemaValidationAjv } from './issues';
  * silently attribute its errors to the wrong branch. Those are dropped from the index instead, so
  * their errors keep the path AJV reported: noisier output, never wrong output.
  */
-function buildSchemaPathIndex(schema: JSONSchemaDto): Map<object, string> {
+function buildSchemaPathIndex(schema: LiquidTolerantSchema): Map<object, string> {
   const index = new Map<object, string>();
   const ambiguous = new Set<object>();
 
@@ -48,12 +54,16 @@ function buildSchemaPathIndex(schema: JSONSchemaDto): Map<object, string> {
   return index;
 }
 
-function resolveSchemaPointer(schema: JSONSchemaDto, pointer: string): unknown {
+function resolveSchemaPointer(schema: LiquidTolerantSchema, pointer: string): object | undefined {
   if (!pointer.startsWith('#/')) {
-    return pointer === '#' ? schema : undefined;
+    if (pointer === '#') {
+      return schema;
+    }
+
+    return undefined;
   }
 
-  return pointer
+  const resolved = pointer
     .slice(2)
     .split('/')
     .reduce<unknown>((node, rawSegment) => {
@@ -63,6 +73,12 @@ function resolveSchemaPointer(schema: JSONSchemaDto, pointer: string): unknown {
 
       return (node as Record<string, unknown>)[rawSegment.replace(/~1/g, '/').replace(/~0/g, '~')];
     }, schema);
+
+  if (resolved === null || typeof resolved !== 'object') {
+    return undefined;
+  }
+
+  return resolved;
 }
 
 /**
@@ -73,7 +89,7 @@ function resolveSchemaPointer(schema: JSONSchemaDto, pointer: string): unknown {
  */
 function toAbsoluteSchemaPaths(
   errors: ErrorObject[],
-  schema: JSONSchemaDto,
+  schema: LiquidTolerantSchema,
   pathIndex: Map<object, string>
 ): ErrorObject[] {
   return errors.map((error) => {
@@ -153,7 +169,7 @@ function dedupe(errors: ErrorObject[]): ErrorObject[] {
  * The validator is stateful and expensive to build (the Slack schema is a few hundred kilobytes),
  * so callers are expected to build one per schema and keep it.
  */
-export function createLiquidTolerantValidator(schema: JSONSchemaDto): (value: unknown) => ErrorObject[] {
+export function createLiquidTolerantValidator(schema: LiquidTolerantSchema): (value: unknown) => ErrorObject[] {
   const validate = createSchemaValidationAjv({ verbose: true, schema }).compile(schema);
   const pathIndex = buildSchemaPathIndex(schema);
 
