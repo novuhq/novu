@@ -1,6 +1,6 @@
 import { currentUser, type User } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { DASHBOARD_HOME } from '@/components/dashboard/nav';
@@ -8,7 +8,7 @@ import { Sidebar, type SidebarAgent } from '@/components/dashboard/sidebar';
 import { TopBar } from '@/components/dashboard/top-bar';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { readHumanAccount } from '@/lib/human-account';
+import { requireHumanAccount } from '@/lib/human-account';
 import { getRelayAgent } from '@/lib/human-agent-api';
 
 const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up' };
@@ -52,17 +52,17 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 }
 
 /**
- * Who the sidebar says the agent is. It's set up once its relay exists, which the first channel setup
- * (here or with `human setup`) creates. A failed lookup shows the agent as not set up instead of taking
- * the whole dashboard down: an error in a layout has no error page of its own.
+ * Who the sidebar says the agent is. The account and its agent come from the sign-up webhook, but the
+ * first page after signing up usually loads before that webhook has run. So the shell asks for the
+ * account the same way the pages do, which sets it up on the spot when it isn't there yet, instead of
+ * showing "Not set up" until the next reload.
+ *
+ * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
+ * layout has no error page of its own.
  */
 async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
-  const account = readHumanAccount(user);
-  if (!account) {
-    return AGENT_NOT_SET_UP;
-  }
-
   try {
+    const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
     const agent = await getRelayAgent(account);
     if (!agent) {
       return AGENT_NOT_SET_UP;
@@ -73,6 +73,8 @@ async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
 
     return { name: name ?? AGENT_NOT_SET_UP.name, status: `${agent.name || DEFAULT_AGENT_NAME} agent` };
   } catch (error) {
+    // A redirect to sign-in travels as an error and has to keep going.
+    unstable_rethrow(error);
     console.error('Failed to load the agent for the sidebar', error);
 
     return AGENT_NOT_SET_UP;
