@@ -747,6 +747,131 @@ describe('Upsert Workflow #novu-v2', () => {
     });
   });
 
+  describe('step identity when names collide', () => {
+    const sharedStepName = 'HTTP Request Step';
+
+    it('should keep an existing step when a same-named step is inserted before it', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Same Name Insert Workflow',
+        workflowId: `same-name-insert-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: sharedStepName,
+            type: StepTypeEnum.TOOL,
+            controlValues: { body: 'existing body' },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: { severity: 'warning' },
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+      const existingStep = workflow.steps[0];
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [
+          {
+            name: sharedStepName,
+            type: StepTypeEnum.TOOL,
+            controlValues: { body: 'inserted body' },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: { severity: 'critical' },
+            },
+          },
+          {
+            _id: existingStep._id,
+            stepId: existingStep.stepId,
+            name: sharedStepName,
+            type: existingStep.type,
+            controlValues: { body: 'existing body' },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: { severity: 'warning' },
+            },
+          },
+        ],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      const steps = updateResponse.body.data.steps;
+      expect(steps).to.have.length(2);
+
+      const keptStep = steps.find((step) => step._id === existingStep._id);
+      const insertedStep = steps.find((step) => step._id !== existingStep._id);
+
+      expect(keptStep.controls.values.body).to.equal('existing body');
+      expect(keptStep.providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({ severity: 'warning' });
+      expect(insertedStep.controls.values.body).to.equal('inserted body');
+      expect(insertedStep.providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({ severity: 'critical' });
+    });
+
+    it('should match by stepId when a same-named step without an id comes first', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Step Id Over Name Workflow',
+        workflowId: `step-id-over-name-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: sharedStepName,
+            stepId: 'kept-step',
+            type: StepTypeEnum.TOOL,
+            controlValues: { body: 'original body' },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: { severity: 'info' },
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [
+          {
+            name: sharedStepName,
+            type: StepTypeEnum.TOOL,
+            controlValues: { body: 'from name' },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: { severity: 'critical' },
+            },
+          },
+          {
+            stepId: 'kept-step',
+            name: sharedStepName,
+            type: StepTypeEnum.TOOL,
+            controlValues: { body: 'from step id' },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: { severity: 'warning' },
+            },
+          },
+        ],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      const steps = updateResponse.body.data.steps;
+      expect(steps).to.have.length(2);
+
+      const matchedByStepId = steps.find((step) => step.stepId === 'kept-step');
+      const matchedByName = steps.find((step) => step.stepId !== 'kept-step');
+
+      expect(matchedByStepId.controls.values.body).to.equal('from step id');
+      expect(matchedByStepId.providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({
+        severity: 'warning',
+      });
+      expect(matchedByName.controls.values.body).to.equal('from name');
+      expect(matchedByName.providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({
+        severity: 'critical',
+      });
+    });
+  });
+
   describe('PUT /v2/workflows/:workflowId', () => {
     describe('single step workflows', () => {
       it('when step is deleted it should not remove variable if it is used in another step', async () => {
