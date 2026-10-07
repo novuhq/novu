@@ -18,8 +18,12 @@ import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { Field, Input } from '@/components/ui/input';
 import { Step, Stepper } from '@/components/ui/stepper';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
+import { cn } from '@/lib/utils';
 
 const BOTFATHER_URL = 'https://t.me/botfather';
+/** Two lines in one grid cell: the one that's out fades and slides a little while the other comes in. */
+const SWAP_LAYER =
+  'col-start-1 row-start-1 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none';
 const POLL_INTERVAL_MS = 2500;
 /** After this long the drawer stops asking on its own, so a forgotten tab doesn't poll forever. */
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
@@ -44,6 +48,9 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
   const [saving, startSaving] = useTransition();
 
   const found = findBotToken(pasted);
+  // Kept after the token is gone from the field, so the line still has its words while it fades out.
+  const [foundLabel, setFoundLabel] = useState('');
+  const showsFound = Boolean(found) && !error;
 
   // Reopening picks the setup up where the page says it is: a saved bot goes straight to "say hi".
   useEffect(() => {
@@ -210,49 +217,66 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
               </>
             }
           >
-            <Field
-              label="Bot token"
-              required
-              hint={
-                found && (
-                  <span className="flex items-center gap-1.5 text-success">
-                    <Check aria-hidden="true" className="size-3 shrink-0" strokeWidth={3} />
-                    {found.username ? `Found the token for @${found.username}` : 'Found the token'}
-                  </span>
-                )
-              }
-              error={
-                error && (
-                  <span className="flex items-start gap-1.5">
-                    <TriangleAlert aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
-                    {error}
-                  </span>
-                )
-              }
-            >
-              {(field) => (
-                <Input
-                  {...field}
-                  value={pasted}
-                  onChange={(event) => {
-                    setPasted(event.target.value);
-                    setError(undefined);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      saveToken();
-                    }
-                  }}
-                  placeholder="Done! Congratulations on your new bot…"
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="font-mono"
-                />
-              )}
-            </Field>
-            <p className="text-xs leading-4 text-muted">
-              Paste the whole BotFather message. We’ll find the token and store it encrypted.
-            </p>
+            <div className="flex flex-col gap-1.5">
+              <Field
+                label="Bot token"
+                required
+                error={
+                  error && (
+                    <span className="flex items-start gap-1.5">
+                      <TriangleAlert aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
+                      {error}
+                    </span>
+                  )
+                }
+              >
+                {(field) => (
+                  <Input
+                    {...field}
+                    value={pasted}
+                    onChange={(event) => {
+                      const next = findBotToken(event.target.value);
+                      if (next) {
+                        setFoundLabel(next.username ? `Found the token for @${next.username}` : 'Found the token');
+                      }
+
+                      setPasted(event.target.value);
+                      setError(undefined);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        saveToken();
+                      }
+                    }}
+                    placeholder="Done! Congratulations on your new bot…"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="font-mono"
+                  />
+                )}
+              </Field>
+              {/* The hint and the "found" line share one spot and cross-fade, so nothing below moves. */}
+              <div className="grid text-xs leading-4">
+                <p
+                  aria-hidden={showsFound}
+                  className={cn(SWAP_LAYER, 'text-muted', showsFound && '-translate-y-1 opacity-0')}
+                >
+                  Paste the whole BotFather message. We’ll find the token and store it encrypted.
+                </p>
+                <p
+                  aria-live="polite"
+                  aria-hidden={!showsFound}
+                  className={cn(
+                    SWAP_LAYER,
+                    'flex items-center gap-1.5 text-success',
+                    !showsFound && 'translate-y-1 opacity-0'
+                  )}
+                >
+                  <Check aria-hidden="true" className="size-3 shrink-0" strokeWidth={3} />
+                  {foundLabel}
+                </p>
+              </div>
+            </div>
           </Step>
 
           <Step
