@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { accountHasAgent } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
 
 export type ClaimFormState = { error?: string };
@@ -33,6 +34,11 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
     };
   }
 
+  // The page doesn't offer the move to an account with an agent; this is the same answer for a stale tab.
+  if (await accountHasAgent(user)) {
+    return { error: ACCOUNT_HAS_AGENT_MESSAGE };
+  }
+
   try {
     await ensureStoredBackingAccount(user, region);
     await claimKeylessSetup(
@@ -49,10 +55,12 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
   redirect('/account?claimed=1');
 }
 
+const ACCOUNT_HAS_AGENT_MESSAGE = 'Your Human account already has an agent, so this setup can’t be moved into it.';
+
 function describeClaimError(error: unknown): string {
   if (error instanceof HumanApiError) {
     if (error.code === 'claim_agent_exists') {
-      return 'Your Human account already has a setup, so this one can’t be added to it.';
+      return ACCOUNT_HAS_AGENT_MESSAGE;
     }
 
     // The claim's own messages ("already been used", "expired", …) are written for people.
