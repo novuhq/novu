@@ -1,6 +1,6 @@
 import { ApiServiceLevelEnum, type GetSubscriptionDto, UsageAlertRecipientsEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getUsageLimitsView, resolveUsageAlertsAllowanceOverride } from './usage-limits-view';
+import { getUsageLimitsView, isNearingOverageLimit, resolveUsageAlertsAllowanceOverride } from './usage-limits-view';
 
 type SubscriptionOverrides = {
   apiServiceLevel?: ApiServiceLevelEnum;
@@ -129,6 +129,35 @@ describe('getUsageLimitsView', () => {
     expect(getUsageLimitsView(buildSubscription(), true)?.canEdit).toBe(true);
     expect(getUsageLimitsView(buildSubscription(), false)?.canEdit).toBe(false);
     expect(getUsageLimitsView(notConfigurable, true)?.canEdit).toBe(false);
+  });
+
+  it('warns once 90% of the on-demand allowance is used and usage is not paused', () => {
+    const pausingAt10k = {
+      settings: {
+        workflowRuns: { onDemandLimit: 10_000 },
+        pauseAtLimit: true,
+        alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
+      },
+    };
+    const nearing = getUsageLimitsView(
+      buildSubscription({ events: { current: 39_000, limit: 40_000 }, usageLimits: pausingAt10k }),
+      true
+    );
+    const under = getUsageLimitsView(
+      buildSubscription({ events: { current: 38_999, limit: 40_000 }, usageLimits: pausingAt10k }),
+      true
+    );
+    const paused = getUsageLimitsView(
+      buildSubscription({
+        events: { current: 40_000, limit: 40_000, isPaused: true },
+        usageLimits: pausingAt10k,
+      }),
+      true
+    );
+
+    expect(nearing && isNearingOverageLimit(nearing)).toBe(true);
+    expect(under && isNearingOverageLimit(under)).toBe(false);
+    expect(paused && isNearingOverageLimit(paused)).toBe(false);
   });
 
   it('picks the paused experience by plan', () => {
