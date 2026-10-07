@@ -2,6 +2,7 @@ import {
   ApiServiceLevelEnum,
   IBrandEnrichment,
   IOrganizationEntity,
+  IOrganizationUsageLimits,
   OnboardingWorkflowsStatus,
   ProductUseCases,
 } from '@novu/shared';
@@ -39,6 +40,9 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   /** Lifecycle of AI-generated onboarding workflow templates (snapshots). */
   onboardingWorkflowsStatus?: OnboardingWorkflowsStatus;
+
+  /** Workflow-run usage limit and usage alert settings; absent until the organization changes them. */
+  usageLimits?: IOrganizationUsageLimits;
 
   createdAt: string;
 

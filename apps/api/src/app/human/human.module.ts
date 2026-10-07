@@ -20,6 +20,7 @@ import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard
 import { HumanAccountsController } from './human-accounts.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController } from './human-invites-public.controller';
+import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
@@ -78,6 +79,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     RemoveSubscriber,
     HumanInviteTokenService,
     HumanOperatorService,
+    HumanAccountAgentService,
     CreateHumanInvite,
     GetHumanInviteStatus,
     ConnectHumanInviteChannel,

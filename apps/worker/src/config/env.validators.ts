@@ -1,5 +1,6 @@
 import {
   assertQueueBackendConfig,
+  createThrowingEnvReporter,
   INBOUND_PARSE_RETRY_POLICY,
   isBullMqEnabled,
   requiresStandaloneRedis,
@@ -15,7 +16,7 @@ import { bool, CleanedEnv, cleanEnv, json, makeValidator, num, port, str, url, V
 import { getRequiredWorkerTopics } from './worker-topics';
 
 export function validateEnv() {
-  const env = cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('worker') });
 
   const topics = getRequiredWorkerTopics();
 
