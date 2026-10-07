@@ -35,6 +35,17 @@ const loadHumanAccount = cache(async (): Promise<HumanAccount | null> => {
   };
 });
 
+/**
+ * What the sign-up webhook runs for a new operator (`app/api/webhooks/clerk`): the account and its agent,
+ * remembered on the Clerk user. A dashboard visit that got there first leaves nothing to do.
+ */
+export async function ensureAccountForSignUp(humanUserId: string): Promise<void> {
+  const clerk = await clerkClient();
+  const user = await clerk.users.getUser(humanUserId);
+
+  await ensureStoredBackingAccount(user, DEFAULT_REGION, { withAgent: true });
+}
+
 /** How long to wait for an account that the sign-up webhook is creating at this very moment. */
 const BUSY_RETRIES = 5;
 const BUSY_RETRY_MS = 1000;
@@ -76,11 +87,10 @@ export function readStoredBackingAccount(user: User): StoredBackingAccount | nul
 }
 
 /**
- * Makes sure the dashboard knows the signed-in operator's backing organization. The sign-up webhook of
- * the Human Clerk app creates it together with the agent (`POST /v1/human/webhooks/clerk`); this is what
- * the dashboard does the first time it meets an operator, and never again once it's remembered. The calls
- * are the webhook's own two and safe to repeat, so a webhook that is late, or can't reach a local API at
- * all, leaves nothing missing.
+ * Makes sure an operator has a backing organization and the dashboard knows where it lives. The sign-up
+ * webhook runs this with the agent; so does the first dashboard visit of an operator it hasn't reached,
+ * and nothing does once the account is remembered. The two API calls are safe to repeat, so a webhook that
+ * is late, or can't reach a local dashboard at all, leaves nothing missing.
  *
  * A claim brings its own agent, so it asks for the account alone.
  */
