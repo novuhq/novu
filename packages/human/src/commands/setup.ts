@@ -132,12 +132,26 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     });
 
     // 2. Provision the relay agent + the human's subscriber row.
-    const subscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
+    const localSubscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
     const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
     const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
 
     info('Setting up your human relay...');
-    const relay = await setupHumanRelay(client, { subscriberId, agentIdentifier: relayIdentifier, ...name });
+    const relay = await setupHumanRelay(client, {
+      subscriberId: localSubscriberId,
+      operator: true,
+      agentIdentifier: relayIdentifier,
+      ...name,
+    });
+    // The account may already know you from the dashboard or another computer; that contact wins,
+    // so you stay one person everywhere. Older APIs just echo the id sent.
+    const subscriberId = relay.subscriberId || localSubscriberId;
+
+    const switchedContact = Boolean(existing?.subscriberId) && subscriberId !== existing?.subscriberId;
+
+    if (switchedContact) {
+      info('Your account already has you as a contact, so this computer now uses that one.');
+    }
 
     // 3. Channel linking — linked channels live on the server; locally we only
     // remember a default preference for when the caller does not pass `--via`.
@@ -148,7 +162,8 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
         : connectEmail(client, relay.agentIdentifier, subscriberId, options));
 
     // 4. Persist config — first setup becomes the default preference.
-    const defaultChannel = existing?.defaultChannel ?? channel;
+    // A default saved for another contact may be a channel this one never connected.
+    const defaultChannel = (switchedContact ? undefined : existing?.defaultChannel) ?? channel;
 
     const config: HumanCliConfig = {
       apiUrl,

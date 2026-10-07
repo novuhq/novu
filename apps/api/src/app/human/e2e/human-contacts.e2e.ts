@@ -160,6 +160,85 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
     });
   });
 
+  describe('the operator', () => {
+    async function getOperator() {
+      const res = await session.testAgent.get('/v1/human/operator');
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      return (res.body.data as { subscriberId?: string }).subscriberId;
+    }
+
+    it('has none before any setup, and inviting someone does not make them the operator', async () => {
+      expect(await getOperator()).to.equal(undefined);
+
+      await setup({ subscriberId: 'maya' });
+
+      expect(await getOperator()).to.equal(undefined);
+    });
+
+    it('records the first operator and hands the same one to every later caller', async () => {
+      const first = await setup({ subscriberId: 'human_aaaaaaaaaaaa', operator: true });
+      const second = await setup({ subscriberId: 'human_bbbbbbbbbbbb', operator: true });
+      const third = await setup({ operator: true });
+
+      expect(first.subscriberId).to.equal('human_aaaaaaaaaaaa');
+      expect(second.subscriberId).to.equal('human_aaaaaaaaaaaa');
+      expect(third.subscriberId).to.equal('human_aaaaaaaaaaaa');
+      expect(await getOperator()).to.equal('human_aaaaaaaaaaaa');
+      expect(await findSubscriber('human_bbbbbbbbbbbb')).to.equal(null);
+    });
+
+    it('makes up a contact for an operator who starts without one', async () => {
+      const { subscriberId } = await setup({ operator: true, firstName: 'Dima' });
+
+      expect(subscriberId).to.match(/^human_[0-9a-f]{12}$/);
+      expect((await findSubscriber(subscriberId))?.firstName).to.equal('Dima');
+      expect(await getOperator()).to.equal(subscriberId);
+    });
+
+    it('takes the contact an older `human setup` made as the operator', async () => {
+      await setup({ subscriberId: 'human_0123456789ab' });
+      await setup({ subscriberId: 'maya' });
+
+      expect(await getOperator()).to.equal('human_0123456789ab');
+      expect((await setup({ operator: true })).subscriberId).to.equal('human_0123456789ab');
+    });
+
+    it('gives a second relay agent the operator of the first', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const second = await setup({ subscriberId: 'someone-else', operator: true, agentIdentifier: 'second-relay' });
+
+      expect(second.subscriberId).to.equal('dima');
+      expect(await findSubscriber('someone-else')).to.equal(null);
+    });
+
+    it('still needs a subscriberId for anyone but the operator', async () => {
+      const res = await session.testAgent.post('/v1/human/setup').send({});
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+    });
+
+    it('refuses to remove the operator', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const res = await session.testAgent.delete('/v1/human/contacts/dima');
+
+      expect(res.status).to.equal(409, JSON.stringify(res.body));
+      expect(JSON.stringify(res.body)).to.contain('contact_is_operator');
+      expect(await getOperator()).to.equal('dima');
+      expect(await findSubscriber('dima')).to.not.equal(null);
+    });
+
+    it('refuses to remove the contact an older `human setup` made', async () => {
+      await setup({ subscriberId: 'human_0123456789ab' });
+
+      const res = await session.testAgent.delete('/v1/human/contacts/human_0123456789ab');
+
+      expect(res.status).to.equal(409, JSON.stringify(res.body));
+    });
+  });
+
   describe('GET /v1/human/contacts', () => {
     it('lists every subscriber in the environment with only contact fields', async () => {
       const stamp = Date.now();
