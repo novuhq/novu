@@ -166,6 +166,11 @@ export async function setupHumanRelay(
   client: HumanApiClient,
   input: {
     subscriberId: string;
+    /**
+     * Set up the account owner. The API answers with the operator it has on record, which can differ
+     * from `subscriberId` when the account was first set up elsewhere.
+     */
+    operator?: boolean;
     agentIdentifier?: string;
     email?: string;
     firstName?: string;
