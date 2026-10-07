@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
@@ -39,6 +40,12 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
     findOperatorContactId(account),
     loadAgentName(account),
   ]);
+
+  // The API answers a cursor it no longer knows (that contact was removed since) with an empty page.
+  // Step back a page rather than show an empty list while earlier contacts remain.
+  if (cursors.length > 0 && page.contacts.length === 0) {
+    redirect(pageHref(cursors.slice(0, -1)));
+  }
 
   return (
     <>

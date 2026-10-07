@@ -1,24 +1,15 @@
-import type { ReactNode } from 'react';
-
-import { cn } from '@/lib/utils';
-
 type DialogMarkProps = {
-  tone: 'accent' | 'danger';
-  children: ReactNode;
+  /** A check for something that worked, an exclamation mark for a warning. */
+  glyph: 'check' | 'warning';
 };
 
-/** The round dithered mark above a dialog's title: orange for something that worked, red for a warning. */
-export function DialogMark({ tone, children }: DialogMarkProps) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'relative flex size-10 items-center justify-center overflow-hidden rounded-full ring-1',
-        tone === 'accent' ? 'text-accent ring-accent/40' : 'text-danger ring-danger-border'
-      )}
-    >
-      <span className="absolute inset-0 bg-[radial-gradient(circle,currentColor_1px,transparent_1.5px)] bg-size-[4px_4px] opacity-40" />
-      <span className="relative flex size-5 items-center justify-center rounded-full bg-subtle">{children}</span>
-    </span>
-  );
+/** The Figma illustrations `Illustration/state-success` and `Illustration/state-error`, exported as they are. */
+const SOURCES: Record<DialogMarkProps['glyph'], string> = {
+  check: '/illustrations/state-success.svg',
+  warning: '/illustrations/state-error.svg',
+};
+
+/** The dotted, glowing mark above a dialog's title. */
+export function DialogMark({ glyph }: DialogMarkProps) {
+  return <img src={SOURCES[glyph]} alt="" width={56} height={56} className="size-14 shrink-0 self-start" />;
 }

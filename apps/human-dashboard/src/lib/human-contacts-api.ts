@@ -78,21 +78,6 @@ export async function listContactsPage(
   return { contacts: contacts.map(toContact), next: page?.next || null };
 }
 
-/** Every contact, following the cursor to the last page. */
-export async function listAllContacts(account: HumanAccount): Promise<Contact[]> {
-  const contacts: Contact[] = [];
-  let after: string | undefined;
-
-  do {
-    const page = await listContactsPage(account, { after, limit: MAX_PAGE_SIZE });
-    contacts.push(...page.contacts);
-    // A cursor that doesn't move would loop forever.
-    after = page.next && page.next !== after ? page.next : undefined;
-  } while (after);
-
-  return contacts;
-}
-
 /**
  * Removes a contact for good: their invite links stop working, the open questions to them are cancelled
  * and agents can no longer reach them.
