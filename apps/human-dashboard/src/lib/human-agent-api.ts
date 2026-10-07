@@ -1,8 +1,6 @@
 import 'server-only';
 
-import type { User } from '@clerk/nextjs/server';
-
-import { type HumanAccount, readHumanAccount } from './human-account';
+import type { HumanAccount } from './human-account';
 import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';
 
@@ -33,25 +31,5 @@ export async function getRelayAgent(account: HumanAccount): Promise<RelayAgent |
     }
 
     throw error;
-  }
-}
-
-/**
- * Whether the operator's account already has its agent. A setup made without an account can only move
- * into an account that has none, so the claim and CLI login pages check this before offering it.
- * A failed lookup counts as "no": the API refuses the move itself when there is one.
- */
-export async function accountHasAgent(user: User): Promise<boolean> {
-  const account = readHumanAccount(user);
-  if (!account) {
-    return false;
-  }
-
-  try {
-    return (await getRelayAgent(account)) !== null;
-  } catch (error) {
-    console.error('Failed to check whether the account has an agent', error);
-
-    return false;
   }
 }

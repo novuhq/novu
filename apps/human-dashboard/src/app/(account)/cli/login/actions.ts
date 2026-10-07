@@ -122,7 +122,7 @@ function describeLoginError(error: unknown): CliLoginFormState {
     if (error.code === 'claim_agent_exists') {
       return {
         error:
-          'Your Human account already has a setup, so the one on your computer can’t be added to it. You can still log in; that setup stays behind.',
+          'Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can still log in; that setup stays behind.',
         canSkipClaim: true,
       };
     }

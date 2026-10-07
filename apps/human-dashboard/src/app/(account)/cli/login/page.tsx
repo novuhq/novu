@@ -7,7 +7,7 @@ import { Command } from '@/components/site/command';
 import { Panel } from '@/components/site/panel';
 import { SiteFrame } from '@/components/site/site-frame';
 import type { HumanRegion } from '@/lib/human-accounts-api';
-import { accountHasAgent } from '@/lib/human-agent-api';
+import { isAccountAgentInUse } from '@/lib/human-claim';
 
 import { CliLoginForm } from './cli-login-form';
 
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
 /**
  * Opened by `human login` (`…/cli/login`, plus `?region=eu` from the EU API). The operator types the code the
  * terminal shows, so a link someone else sends can't log anyone in. When the CLI has a setup made without an
- * account, `claim=…` carries its claim token, so logging in also keeps that setup. An account that already
- * has an agent can't take that setup in: the page says so and only logs the CLI in.
+ * account, `claim=…` carries its claim token, so logging in also keeps that setup. An account whose agent
+ * is already in use can't take that setup in: the page says so and only logs the CLI in.
  */
 export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
   const searchParams = await props.searchParams;
@@ -38,7 +38,7 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
   }
 
   const email = user.primaryEmailAddress?.emailAddress;
-  const cannotKeepSetup = Boolean(claim) && (await accountHasAgent(user));
+  const cannotKeepSetup = Boolean(claim) && (await isAccountAgentInUse(user));
   const keepsSetup = Boolean(claim) && !cannotKeepSetup;
 
   return (
@@ -71,8 +71,8 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
             role="alert"
             className="mb-4 rounded-md bg-accent/10 px-3 py-2 text-sm tracking-tight text-foreground ring-1 ring-accent/40"
           >
-            Your Human account already has an agent, so the setup on your computer can’t be moved into it. You can still
-            log in: the CLI will then use your account’s agent, and that setup stays behind.
+            Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can
+            still log in: the CLI will then use your account’s agent, and that setup stays behind.
           </p>
         )}
         <CliLoginForm claim={keepsSetup ? claim : ''} region={region} />

@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation';
 
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
-import { accountHasAgent } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
+import { isAccountAgentInUse } from '@/lib/human-claim';
 
 export type ClaimFormState = { error?: string };
 
@@ -34,8 +34,8 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
     };
   }
 
-  // The page doesn't offer the move to an account with an agent; this is the same answer for a stale tab.
-  if (await accountHasAgent(user)) {
+  // The page doesn't offer the move once the agent is in use; this is the same answer for a stale tab.
+  if (await isAccountAgentInUse(user)) {
     return { error: ACCOUNT_HAS_AGENT_MESSAGE };
   }
 
@@ -55,7 +55,7 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
   redirect('/account?claimed=1');
 }
 
-const ACCOUNT_HAS_AGENT_MESSAGE = 'Your Human account already has an agent, so this setup can’t be moved into it.';
+const ACCOUNT_HAS_AGENT_MESSAGE = 'Your Human account’s agent is already in use, so this setup can’t be moved into it.';
 
 function describeClaimError(error: unknown): string {
   if (error instanceof HumanApiError) {
