@@ -4,7 +4,6 @@ import { currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
-import { ensureRelayAgent } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import {
   ensureTelegramChannel,
@@ -13,7 +12,7 @@ import {
   listChannels,
   saveTelegramBotToken,
 } from '@/lib/human-channels-api';
-import { findOperatorContactId, resolveOperatorContactId } from '@/lib/human-operator';
+import { ensureOperatorContact, findOperatorContactId } from '@/lib/human-operator';
 
 const CHANNELS_PATH = '/channels';
 
@@ -115,18 +114,14 @@ async function findTelegramChannel(account: HumanAccount): Promise<string | unde
 
 /** The operator's own contact, with the relay it's reached through. Both are made on the first setup. */
 async function prepareOperatorContact(account: HumanAccount): Promise<string> {
-  const existing = await findOperatorContactId(account);
-  if (existing) {
-    // The name on it may be one the operator chose in the CLI, so it's left alone.
-    await ensureRelayAgent(account, { contactId: existing });
-
-    return resolveOperatorContactId(account);
+  // A contact that exists keeps its name: the operator may have chosen it in the CLI.
+  if (await findOperatorContactId(account)) {
+    return ensureOperatorContact(account);
   }
 
-  const [contactId, user] = await Promise.all([resolveOperatorContactId(account), currentUser()]);
-  await ensureRelayAgent(account, { contactId, firstName: user?.firstName, lastName: user?.lastName });
+  const user = await currentUser();
 
-  return contactId;
+  return ensureOperatorContact(account, { firstName: user?.firstName, lastName: user?.lastName });
 }
 
 function describeSaveError(error: unknown): string {

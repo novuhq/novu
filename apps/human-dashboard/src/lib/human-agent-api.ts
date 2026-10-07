@@ -33,22 +33,3 @@ export async function getRelayAgent(account: HumanAccount): Promise<RelayAgent |
     throw error;
   }
 }
-
-/**
- * Makes sure the relay agent and the operator's own contact exist. It's what `human setup` runs first,
- * and running it again changes nothing. A name that's passed replaces the contact's; leaving it out keeps it.
- */
-export async function ensureRelayAgent(
-  account: HumanAccount,
-  operator: { contactId: string; firstName?: string | null; lastName?: string | null }
-): Promise<void> {
-  await requestForAccount(account, '/v1/human/setup', {
-    method: 'POST',
-    body: {
-      subscriberId: operator.contactId,
-      agentIdentifier: RELAY_AGENT_IDENTIFIER,
-      ...(operator.firstName ? { firstName: operator.firstName } : {}),
-      ...(operator.lastName ? { lastName: operator.lastName } : {}),
-    },
-  });
-}
