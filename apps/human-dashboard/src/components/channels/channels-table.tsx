@@ -57,7 +57,7 @@ export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; tel
                 key={row.via}
                 // The button in the row does the same for the keyboard; the row is the bigger target for a pointer.
                 onClick={hasSetup ? () => setOpenSetup(row.via) : undefined}
-                className={cn('group', hasSetup && 'cursor-pointer')}
+                className={cn(hasSetup && 'cursor-pointer')}
               >
                 <TableCell className="h-18">
                   <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; tel
 
 /**
  * The line under a channel's name. Every handle gets its own copy button, which fades in while the
- * pointer is over the row or the keyboard is on the button.
+ * pointer is over that handle or the keyboard is on the button.
  */
 function ChannelHandles({ row }: { row: ChannelRow }) {
   if (row.handles.length === 0) {
@@ -100,17 +100,19 @@ function ChannelHandles({ row }: { row: ChannelRow }) {
   return (
     <span className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] leading-4 text-muted">
       {row.handles.map((handle, index) => (
-        <span key={handle.label} className="flex min-w-0 items-center gap-1">
+        <span key={handle.label} className="flex min-w-0 items-center gap-1.5">
           {index > 0 && <span aria-hidden="true">·</span>}
-          <span className="truncate">{handle.value}</span>
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: only keeps the click from also opening the row's drawer */}
-          {/* biome-ignore lint/a11y/useKeyWithClickEvents: the button inside handles the keyboard */}
-          <span className="flex" onClick={(event) => event.stopPropagation()}>
-            <CopyButton
-              value={handle.value}
-              label={`Copy the ${row.name} ${handle.label}`}
-              className="size-5 opacity-0 transition-[opacity,color,background-color] duration-200 ease-out group-hover:opacity-100 focus-visible:opacity-100 motion-reduce:transition-none"
-            />
+          <span className="group/handle flex min-w-0 items-center gap-1">
+            <span className="truncate">{handle.value}</span>
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: only keeps the click from also opening the row's drawer */}
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: the button inside handles the keyboard */}
+            <span className="flex" onClick={(event) => event.stopPropagation()}>
+              <CopyButton
+                value={handle.value}
+                label={`Copy the ${row.name} ${handle.label}`}
+                className="size-5 opacity-0 transition-[opacity,color,background-color] duration-200 ease-out group-hover/handle:opacity-100 focus-visible:opacity-100 motion-reduce:transition-none"
+              />
+            </span>
           </span>
         </span>
       ))}
