@@ -8,6 +8,7 @@ import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
 import {
   type Channel,
   type ChannelVia,
+  findSlackWorkspaceName,
   hasChannelEndpoint,
   listChannels,
   slackAgentHandle,
@@ -50,25 +51,41 @@ async function loadChannels(account: HumanAccount): Promise<{ rows: ChannelRow[]
   const email = channelOf('email');
   const telegram = channelOf('telegram');
   const slack = channelOf('slack');
-  const [telegramConnected, slackConnected, telegramSetup] = await Promise.all([
+  const [telegramConnected, slackConnected, telegramSetup, slackWorkspace] = await Promise.all([
     isChatConnected(account, telegram, operatorContactId),
     isChatConnected(account, slack, operatorContactId),
     readTelegramSetup(account, telegram, operatorContactId),
+    // The name is a nicety: the row still says "Connected" when it can't be read.
+    slack ? findSlackWorkspaceName(account, slack.identifier).catch(() => undefined) : undefined,
   ]);
   const botUsername = telegramSetup.step === 'create' ? '' : telegramSetup.botUsername;
+  const slackHandle = slack && slackAgentHandle(slack);
 
   const rows: ChannelRow[] = [
-    { via: 'email', name: 'Email', detail: email?.address ?? 'Its own email address', connected: Boolean(email) },
+    {
+      via: 'email',
+      name: 'Email',
+      placeholder: 'Its own email address',
+      handles: email?.address ? [{ value: email.address, label: 'email address' }] : [],
+      connected: Boolean(email),
+    },
     {
       via: 'telegram',
       name: 'Telegram',
-      detail: telegramConnected && botUsername ? `@${botUsername}` : 'Its own Telegram bot',
+      placeholder: 'Its own Telegram bot',
+      handles: telegramConnected && botUsername ? [{ value: `@${botUsername}`, label: 'bot handle' }] : [],
       connected: telegramConnected,
     },
     {
       via: 'slack',
       name: 'Slack',
-      detail: (slack && slackConnected && slackAgentHandle(slack)) || 'Its own Slack app in your workspace',
+      placeholder: 'Its own Slack app in your workspace',
+      handles: slackConnected
+        ? [
+            ...(slackWorkspace ? [{ value: slackWorkspace, label: 'workspace' }] : []),
+            ...(slackHandle ? [{ value: slackHandle, label: 'agent handle' }] : []),
+          ]
+        : [],
       connected: slackConnected,
     },
   ];
