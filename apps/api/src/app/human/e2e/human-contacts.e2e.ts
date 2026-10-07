@@ -239,6 +239,28 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
     });
   });
 
+  describe("the relay's channels", () => {
+    async function listChannels() {
+      const res = await session.testAgent.get('/v1/agents/human-relay/integrations');
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      return res.body.data as Array<{ integration: { identifier: string }; hasChannelEndpoints?: boolean }>;
+    }
+
+    it('says a channel has endpoints once someone linked a chat on it', async () => {
+      const { agentId } = await setup({ subscriberId: 'maya' });
+      const telegram = await linkTelegram(agentId);
+
+      expect((await listChannels())[0]).to.not.have.property('hasChannelEndpoints');
+
+      await connectTelegram('maya', telegram.identifier);
+
+      const [channel] = await listChannels();
+      expect(channel.integration.identifier).to.equal(telegram.identifier);
+      expect(channel.hasChannelEndpoints).to.equal(true);
+    });
+  });
+
   describe('GET /v1/human/contacts', () => {
     it('lists every subscriber in the environment with only contact fields', async () => {
       const stamp = Date.now();

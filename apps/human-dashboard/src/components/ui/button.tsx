@@ -6,9 +6,9 @@ type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline' | 
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    'h-8 gap-1.5 rounded bg-accent px-3.5 text-[15px] font-medium tracking-tight text-on-accent hover:bg-accent/90 disabled:hover:bg-accent',
+    'h-8 gap-1.5 rounded bg-accent px-3 text-[13px] leading-4.5 font-medium text-background hover:bg-accent/90 disabled:hover:bg-accent',
   secondary:
-    'h-8 gap-1.5 rounded bg-background px-3 text-sm font-medium tracking-tight text-foreground ring-1 ring-border-strong hover:bg-raised disabled:hover:bg-background',
+    'h-8 gap-1.5 rounded bg-background px-3 text-[13px] leading-4.5 font-medium text-foreground ring-1 ring-border ring-inset hover:bg-raised disabled:hover:bg-background',
   danger:
     'h-8 gap-1.5 rounded bg-danger-strong px-3.5 text-[15px] font-medium tracking-tight text-on-accent hover:bg-danger-strong/90 disabled:hover:bg-danger-strong',
   ghost:
@@ -17,6 +17,9 @@ const VARIANTS: Record<ButtonVariant, string> = {
     'h-8 rounded-sm px-4 font-mono text-sm tracking-tight text-foreground ring-1 ring-border hover:bg-border disabled:hover:bg-transparent',
   text: 'h-8 px-2 font-mono text-sm tracking-tight text-foreground/50 underline-offset-4 hover:text-foreground hover:underline',
 };
+
+/** The 28px size of a button, for table rows and inline actions. Pass it as the `className`. */
+export const SMALL_BUTTON = 'h-7 px-2.5';
 
 /** Shared class names so links can look like buttons too. */
 export function buttonClassName(variant: ButtonVariant, className?: string): string {
