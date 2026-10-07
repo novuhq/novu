@@ -28,8 +28,10 @@ export function TableRow({ highlighted = false, className, ...rest }: TableRowPr
   return (
     <tr
       className={cn(
-        'hover:bg-raised hover:bg-linear-to-r hover:from-accent/12 hover:via-accent/3 hover:to-accent/0',
-        highlighted && 'bg-raised bg-linear-to-r from-accent/12 via-accent/3 to-accent/0',
+        // The gradient is always there with clear stops, so its colors can fade in instead of jumping.
+        'bg-linear-to-r from-accent/0 via-accent/0 to-accent/0 transition-[background-color,--tw-gradient-from,--tw-gradient-via] duration-200 ease-out motion-reduce:transition-none',
+        'hover:bg-raised hover:from-accent/12 hover:via-accent/3',
+        highlighted && 'bg-raised from-accent/12 via-accent/3',
         className
       )}
       {...rest}
