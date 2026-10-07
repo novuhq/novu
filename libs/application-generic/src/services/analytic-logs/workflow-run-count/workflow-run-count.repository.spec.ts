@@ -189,6 +189,7 @@ describe('WorkflowRunCountRepository', () => {
 
       const call = queryStub.firstCall.args[0];
       expect(call.query).to.include('FROM traces');
+      expect(call.query).to.not.include('FROM workflow_run_count');
       expect(call.query).to.include('organization_id = {organizationId:String}');
       expect(call.query).to.include("entity_type = 'workflow_run'");
       expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
@@ -232,21 +233,6 @@ describe('WorkflowRunCountRepository', () => {
 
       expect(result).to.equal(1500);
       expect(queryStub.called).to.equal(false);
-    });
-
-    it('subtracts from the passed count without running the whole-day query', async () => {
-      queryStub.resolves({ data: [{ count: '200' }] });
-
-      const result = await repository.excludeEdgeDayRunsOutsideRange(
-        'org-a',
-        700,
-        new Date('2026-09-26T09:24:00.000Z'),
-        new Date('2026-10-26T09:24:00.000Z')
-      );
-
-      expect(result).to.equal(500);
-      expect(queryStub.calledOnce).to.equal(true);
-      expect(queryStub.firstCall.args[0].query).to.not.include('FROM workflow_run_count');
     });
 
     it('leaves the last day empty when a mid-day period ends at UTC midnight', async () => {
