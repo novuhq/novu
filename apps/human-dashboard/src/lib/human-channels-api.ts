@@ -3,7 +3,7 @@ import 'server-only';
 import type { HumanAccount } from './human-account';
 import { RELAY_AGENT_IDENTIFIER } from './human-agent-api';
 import { HumanApiError, isHumanApiNotFound } from './human-api-error';
-import { requestForAccount, requestPageForAccount } from './human-api-key';
+import { requestForAccount } from './human-api-key';
 
 /** The most links the API returns at once; a relay has a handful. */
 const CHANNELS_LIMIT = 100;
@@ -13,6 +13,8 @@ export type ChannelVia = 'telegram' | 'slack' | 'email';
 export type Channel = {
   identifier: string;
   label: string;
+  /** The name the channel was made with, such as "Human". */
+  name?: string;
   active: boolean;
   /** Missing for a provider the relay isn't expected to have. */
   via?: ChannelVia;
@@ -25,6 +27,7 @@ export type Channel = {
 type AgentIntegrationLink = {
   integration: {
     identifier: string;
+    name?: string;
     providerId: string;
     channel?: string;
     active?: boolean;
@@ -69,6 +72,7 @@ export async function listChannels(account: HumanAccount): Promise<Channel[]> {
     return {
       identifier: integration.identifier,
       label: via ? CHANNEL_LABELS[via] : integration.providerId,
+      ...(integration.name ? { name: integration.name } : {}),
       active: integration.active !== false,
       via,
       ...(integration.sharedInboundAddress ? { address: integration.sharedInboundAddress } : {}),
@@ -90,18 +94,15 @@ export async function hasChannelEndpoint(
   return Array.isArray(endpoints) && endpoints.length > 0;
 }
 
-/** The Slack workspace a channel's app is installed in, once someone connected it. */
-export async function findSlackWorkspaceName(
-  account: HumanAccount,
-  channelIdentifier: string
-): Promise<string | undefined> {
-  const page = await requestPageForAccount<{ data?: Array<{ workspace?: { name?: string } }> }>(
-    account,
-    '/v1/channel-connections',
-    { query: { integrationIdentifier: channelIdentifier, limit: 1 } }
-  );
+/**
+ * How the agent's Slack app shows up in a workspace. The API creates the app under the channel's name
+ * minus the word "slack", which Slack doesn't allow in an app's name (`SlackQuickSetup`). The API doesn't
+ * hand the name back from Slack, so an app renamed there later still shows this one.
+ */
+export function slackAgentHandle(channel: Channel): string | undefined {
+  const name = channel.name?.replace(/slack/gi, '').trim();
 
-  return page?.data?.[0]?.workspace?.name || undefined;
+  return name ? `@${name}` : undefined;
 }
 
 /**
