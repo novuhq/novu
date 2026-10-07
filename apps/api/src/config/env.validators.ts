@@ -1,4 +1,8 @@
-import { assertQueueBackendConfig, requiresStandaloneRedis } from '@novu/application-generic';
+import {
+  assertQueueBackendConfig,
+  createThrowingEnvReporter,
+  requiresStandaloneRedis,
+} from '@novu/application-generic';
 import {
   DEFAULT_NOTIFICATION_RETENTION_DAYS,
   FeatureFlagsKeysEnum,
@@ -9,7 +13,7 @@ import {
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  const env = cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('api') });
 
   /*
    * The API only produces, and only to these three - inbound parse is enqueued
