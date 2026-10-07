@@ -633,19 +633,29 @@ export class UpsertWorkflowUseCase {
     updatedStep: NotificationStepEntity,
     commandSteps: UpsertStepDataCommand[]
   ): UpsertStepDataCommand | undefined {
-    return commandSteps.find((commandStepX) => {
-      const isStepUpdateDashboardDto = '_id' in commandStepX;
-      if (isStepUpdateDashboardDto) {
-        return commandStepX._id === updatedStep._templateId;
-      }
+    // Strongest identity wins, and a step that owns a stronger key is not a candidate for a weaker one.
+    // Otherwise a newly inserted step with the same name, placed earlier in the request, hijacks an
+    // existing step's control values. `in` checks stay so omitted keys still fall through.
+    const matchedById = commandSteps.find(
+      (commandStep) => '_id' in commandStep && commandStep._id === updatedStep._templateId
+    );
 
-      const isCreateBySyncToEnvironment = 'stepId' in commandStepX;
-      if (isCreateBySyncToEnvironment) {
-        return commandStepX.stepId === updatedStep.stepId;
-      }
+    if (matchedById) {
+      return matchedById;
+    }
 
-      return commandStepX.name === updatedStep.name;
-    });
+    const matchedByStepId = commandSteps.find(
+      (commandStep) =>
+        !('_id' in commandStep) && 'stepId' in commandStep && commandStep.stepId === updatedStep.stepId
+    );
+
+    if (matchedByStepId) {
+      return matchedByStepId;
+    }
+
+    return commandSteps.find(
+      (commandStep) => !('_id' in commandStep) && !('stepId' in commandStep) && commandStep.name === updatedStep.name
+    );
   }
 
   @Instrument()
