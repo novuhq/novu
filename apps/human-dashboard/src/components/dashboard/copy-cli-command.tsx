@@ -1,9 +1,10 @@
 'use client';
 
-import { Check, Terminal } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { buttonClassName } from '@/components/ui/button';
+import { CopiedIcon } from '@/components/ui/copy-button';
 import { toast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
 
@@ -33,8 +34,6 @@ export function CopyCliCommand({ command }: { command: string }) {
     }
   }
 
-  const Icon = copied ? Check : Terminal;
-
   return (
     <Tooltip label="Copy CLI command">
       <button
@@ -43,7 +42,7 @@ export function CopyCliCommand({ command }: { command: string }) {
         aria-label="Copy CLI command"
         className={buttonClassName('secondary', 'size-8 px-0 text-foreground')}
       >
-        <Icon aria-hidden="true" className="size-4" />
+        <CopiedIcon icon={Terminal} copied={copied} className="size-4" />
         <span aria-live="polite" className="sr-only">
           {copied ? 'Copied' : ''}
         </span>
