@@ -125,7 +125,9 @@ export class UpsertWorkflowUseCase {
         eventType: WebhookEventEnum.WORKFLOW_UPDATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
+          // biome-ignore lint/plugin: workflow webhook payload is a loose record
           object: updatedWorkflow as unknown as Record<string, unknown>,
+          // biome-ignore lint/plugin: workflow webhook payload is a loose record
           previousObject: existingWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
@@ -136,6 +138,7 @@ export class UpsertWorkflowUseCase {
         eventType: WebhookEventEnum.WORKFLOW_CREATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
+          // biome-ignore lint/plugin: workflow webhook payload is a loose record
           object: updatedWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
@@ -215,6 +218,7 @@ export class UpsertWorkflowUseCase {
       userId: user._id,
       name: workflowDto.name,
       steps,
+      // biome-ignore lint/plugin: update command rawData is the request DTO stored as a loose record
       rawData: workflowDto as unknown as Record<string, unknown>,
       type: ResourceTypeEnum.BRIDGE,
       description: workflowDto.description,
@@ -441,6 +445,7 @@ export class UpsertWorkflowUseCase {
   }
 
   @Instrument()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing control-value write path is outside this change
   private async executeControlValuesUpdate(
     {
       shouldDelete,
@@ -645,8 +650,7 @@ export class UpsertWorkflowUseCase {
     }
 
     const matchedByStepId = commandSteps.find(
-      (commandStep) =>
-        !('_id' in commandStep) && 'stepId' in commandStep && commandStep.stepId === updatedStep.stepId
+      (commandStep) => !('_id' in commandStep) && 'stepId' in commandStep && commandStep.stepId === updatedStep.stepId
     );
 
     if (matchedByStepId) {
