@@ -46,6 +46,7 @@
   --animate-drawer-in: drawer-in 300ms cubic-bezier(0.32, 0.72, 0, 1);
   --animate-drawer-out: drawer-out 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
   --animate-overlay-out: overlay-out 220ms ease-in forwards;
+  --animate-rise-in: rise-in 300ms ease-out both;
 
   @keyframes terminal-cursor {
     50% {
@@ -81,6 +82,13 @@
   @keyframes overlay-out {
     to {
       opacity: 0;
+    }
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
     }
   }
 }
