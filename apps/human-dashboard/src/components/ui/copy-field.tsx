@@ -22,7 +22,7 @@ export function CopyField({ value, label, display, command = false, action, clas
   return (
     <div
       className={cn(
-        'flex min-h-9 items-center gap-2 rounded bg-background py-0.5 pr-0.5 pl-3 ring-1 ring-border',
+        'flex min-h-9 items-center gap-2 rounded-md bg-background py-0.5 pr-0.5 pl-3 ring-1 ring-border ring-inset',
         className
       )}
     >
@@ -31,9 +31,7 @@ export function CopyField({ value, label, display, command = false, action, clas
           $
         </span>
       )}
-      <code className="min-w-0 flex-1 truncate font-mono text-sm tracking-tight text-foreground">
-        {display ?? value}
-      </code>
+      <code className="min-w-0 flex-1 truncate font-mono text-[13px] leading-5 text-default">{display ?? value}</code>
       <CopyButton value={value} label={label}>
         {action}
       </CopyButton>

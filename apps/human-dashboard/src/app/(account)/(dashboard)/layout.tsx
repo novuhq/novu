@@ -34,7 +34,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <Sidebar agent={{ name: 'Your agent', status: 'Not set up' }} />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar user={{ name, email, imageUrl: user.hasImage ? user.imageUrl : null }} />
-          <main className="mx-auto flex w-full max-w-230 flex-1 flex-col gap-6 px-6 py-6">{children}</main>
+          <main className="mx-auto flex w-full max-w-300 flex-1 flex-col gap-5 px-6 pt-7 pb-20 md:px-10">
+            {children}
+          </main>
         </div>
       </div>
       <Toaster />

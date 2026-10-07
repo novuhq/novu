@@ -33,30 +33,25 @@ export function Step({ index, title, status, summary, action, children, footer, 
   return (
     <li
       aria-current={open ? 'step' : undefined}
-      className={cn(
-        'rounded-lg border border-border bg-raised',
-        status === 'upcoming' && 'bg-transparent',
-        glow && open && 'dot-glow'
-      )}
+      className={cn('overflow-hidden rounded-[10px] border border-border bg-background', glow && open && 'dot-glow')}
     >
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-3 px-4.5 py-4">
         <StepMarker index={index} status={status} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h3
-            className={cn(
-              'text-sm font-medium tracking-tight',
-              status === 'upcoming' ? 'text-muted' : 'text-foreground'
-            )}
+            className={cn('text-sm leading-5.25 font-medium', status === 'upcoming' ? 'text-muted' : 'text-foreground')}
           >
             {title}
           </h3>
-          {status === 'done' && summary && <p className="truncate text-xs tracking-tight text-secondary">{summary}</p>}
+          {status === 'done' && summary && <p className="truncate text-xs leading-4 text-secondary">{summary}</p>}
         </div>
         {action}
       </div>
-      {open && children && <div className="flex flex-col gap-3 px-4 pb-4 pl-13">{children}</div>}
+      {open && children && <div className="flex flex-col gap-3.5 pt-0.5 pr-4.5 pb-4.5 pl-13">{children}</div>}
       {open && children && footer && (
-        <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">{footer}</div>
+        <div className="flex items-center justify-between gap-2 border-t border-border bg-background px-4.5 py-3">
+          {footer}
+        </div>
       )}
     </li>
   );
@@ -65,8 +60,8 @@ export function Step({ index, title, status, summary, action, children, footer, 
 function StepMarker({ index, status }: { index: number; status: StepStatus }) {
   if (status === 'done') {
     return (
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-success text-background">
-        <Check aria-hidden="true" className="size-3.5" strokeWidth={3} />
+      <span className="flex size-5.5 shrink-0 items-center justify-center rounded-full bg-success text-background">
+        <Check aria-hidden="true" className="size-3" strokeWidth={3} />
         <span className="sr-only">Done</span>
       </span>
     );
@@ -76,10 +71,10 @@ function StepMarker({ index, status }: { index: number; status: StepStatus }) {
     <span
       aria-hidden="true"
       className={cn(
-        'flex size-6 shrink-0 items-center justify-center rounded-full font-mono text-xs',
+        'flex size-5.5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] leading-4',
         status === 'current' && 'bg-foreground text-background',
         status === 'error' && 'bg-danger text-on-accent',
-        status === 'upcoming' && 'text-muted ring-1 ring-border-strong'
+        status === 'upcoming' && 'bg-raised text-muted'
       )}
     >
       {index}

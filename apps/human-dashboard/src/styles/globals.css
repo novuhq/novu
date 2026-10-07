@@ -14,6 +14,7 @@
 
   /* Text and icons. */
   --color-foreground: #ebe2d6;
+  --color-default: #c4bcb0;
   --color-secondary: #8f887d;
   --color-muted: #5c574f;
   --color-placeholder: #757575;
@@ -83,7 +84,10 @@
   }
 }
 
-/* The dithered orange glow behind highlighted cards and banners. Fades out from the top right corner. */
+/*
+ * The dithered orange glow behind highlighted cards and banners. Fades out from the top right corner.
+ * Set `--glow-color` for another color, such as green on a success card.
+ */
 @utility dot-glow {
   position: relative;
   isolation: isolate;
@@ -95,7 +99,7 @@
     border-radius: inherit;
     background-image: radial-gradient(
       circle,
-      color-mix(in srgb, var(--color-accent) 60%, transparent) 1px,
+      color-mix(in srgb, var(--glow-color, var(--color-accent)) 60%, transparent) 1px,
       transparent 1.5px
     );
     background-size: 5px 5px;

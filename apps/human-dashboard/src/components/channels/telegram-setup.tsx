@@ -11,10 +11,10 @@ import {
   saveTelegramTokenAction,
 } from '@/app/(account)/(dashboard)/channels/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
-import { Button, buttonClassName } from '@/components/ui/button';
+import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CopyField } from '@/components/ui/copy-field';
-import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { Field, Input } from '@/components/ui/input';
 import { Step, Stepper } from '@/components/ui/stepper';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -26,10 +26,9 @@ const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 
 type SetupStep = 'loading' | 'create' | 'token' | 'start' | 'connected';
 
-/** The "Set up" button of the Telegram row and the drawer that walks through connecting a bot. */
-export function TelegramSetup() {
+/** The drawer that walks through giving the agent a Telegram bot. The Channels table opens it. */
+export function TelegramSetup({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [step, setStep] = useState<SetupStep>('loading');
   const [bot, setBot] = useState({ username: '', startUrl: '' });
   const [pasted, setPasted] = useState('');
@@ -128,17 +127,20 @@ export function TelegramSetup() {
     step === current ? 'current' : done.includes(step) ? 'done' : 'upcoming';
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <Button variant="outline" onClick={() => setOpen(true)}>
-        Set up
-      </Button>
+    <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         title="Set up Telegram"
         description="Give your agent its own Telegram bot. Takes about a minute."
-        className="max-w-150"
+        footer={
+          step === 'connected' && (
+            <DrawerClose asChild>
+              <Button>Done</Button>
+            </DrawerClose>
+          )
+        }
       >
         {step === 'loading' ? (
-          <p aria-live="polite" className="text-sm tracking-tight text-secondary">
+          <p aria-live="polite" className="text-[13px] leading-4.5 text-secondary">
             Checking your setup…
           </p>
         ) : (
@@ -155,9 +157,9 @@ export function TelegramSetup() {
                 </>
               }
             >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div className="flex min-w-0 flex-1 flex-col gap-3">
-                  <p className="text-sm tracking-tight text-secondary">
+              <div className="flex flex-col gap-4.5 sm:flex-row sm:items-start">
+                <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+                  <p className="text-[13px] leading-4.5 text-secondary">
                     Open @BotFather in Telegram and send /newbot. Pick a name people will see, and a username ending in
                     “bot”.
                   </p>
@@ -166,23 +168,28 @@ export function TelegramSetup() {
                     href={BOTFATHER_URL}
                     target="_blank"
                     rel="noreferrer"
-                    className={buttonClassName('secondary', 'self-start')}
+                    className={buttonClassName('secondary', `${SMALL_BUTTON} self-start`)}
                   >
                     <ArrowUpRight aria-hidden="true" className="size-3.5" />
                     Open @BotFather
                   </a>
                 </div>
-                <figure className="flex shrink-0 flex-col items-center gap-2">
-                  <div className="rounded bg-[#eee5d8] p-2">
+                <figure className="flex shrink-0 flex-col items-center gap-1.5">
+                  <div className="relative rounded-md bg-foreground p-2">
                     <QRCode
                       value={BOTFATHER_URL}
-                      size={104}
-                      bgColor="#eee5d8"
-                      fgColor="#000000"
+                      size={96}
+                      level="H"
+                      bgColor="#ebe2d6"
+                      fgColor="#0a0908"
                       aria-label="QR code that opens @BotFather in Telegram"
                     />
+                    <ChannelIcon
+                      via="telegram"
+                      className="absolute top-1/2 left-1/2 size-6 -translate-1/2 ring-2 ring-foreground"
+                    />
                   </div>
-                  <figcaption className="text-xs tracking-tight text-muted">Scan to open on your phone</figcaption>
+                  <figcaption className="text-xs leading-4 text-muted">Scan to open on your phone</figcaption>
                 </figure>
               </div>
             </Step>
@@ -224,11 +231,18 @@ export function TelegramSetup() {
               <Field
                 label="Bot token"
                 required
-                hint="Paste the whole BotFather message. We’ll find the token and store it encrypted."
+                hint={
+                  found && (
+                    <span className="flex items-center gap-1.5 text-success">
+                      <Check aria-hidden="true" className="size-3 shrink-0" strokeWidth={3} />
+                      {found.username ? `Found the token for @${found.username}` : 'Found the token'}
+                    </span>
+                  )
+                }
                 error={
                   error && (
                     <span className="flex items-start gap-1.5">
-                      <TriangleAlert aria-hidden="true" className="mt-px size-3.5 shrink-0" />
+                      <TriangleAlert aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
                       {error}
                     </span>
                   )
@@ -254,12 +268,9 @@ export function TelegramSetup() {
                   />
                 )}
               </Field>
-              {found && !error && (
-                <p className="flex items-center gap-1.5 text-xs tracking-tight text-success">
-                  <Check aria-hidden="true" className="size-3.5" />
-                  {found.username ? `Found the token for @${found.username}` : 'Found the token'}
-                </p>
-              )}
+              <p className="text-xs leading-4 text-muted">
+                Paste the whole BotFather message. We’ll find the token and store it encrypted.
+              </p>
             </Step>
 
             <Step
@@ -269,7 +280,7 @@ export function TelegramSetup() {
               summary="Message received"
               glow
             >
-              <p className="text-sm tracking-tight text-secondary">
+              <p className="text-[13px] leading-4.5 text-secondary">
                 Open {botName} and tap Start. Telegram sends /start for you, and that’s how it learns where to reach
                 you.
               </p>
@@ -277,23 +288,23 @@ export function TelegramSetup() {
                 href={bot.startUrl}
                 target="_blank"
                 rel="noreferrer"
-                className={buttonClassName('secondary', 'self-start')}
+                className={buttonClassName('secondary', `${SMALL_BUTTON} self-start`)}
               >
                 <ArrowUpRight aria-hidden="true" className="size-3.5" />
                 Open {botName}
               </a>
               {waitedTooLong ? (
-                <p className="flex flex-wrap items-center gap-2 text-sm tracking-tight text-secondary">
+                <p className="flex flex-wrap items-center gap-2.5 text-xs leading-4 text-secondary">
                   No /start yet.
-                  <Button variant="secondary" onClick={() => setWaitedTooLong(false)}>
+                  <Button variant="secondary" className={SMALL_BUTTON} onClick={() => setWaitedTooLong(false)}>
                     Keep waiting
                   </Button>
                 </p>
               ) : (
-                <p aria-live="polite" className="flex items-center gap-2 text-sm tracking-tight text-secondary">
+                <p aria-live="polite" className="flex items-center gap-2.5 pl-1 text-xs leading-4 text-secondary">
                   <span
                     aria-hidden="true"
-                    className="size-2.5 animate-pulse rounded-full bg-accent ring-4 ring-accent/20 motion-reduce:animate-none"
+                    className="size-2 animate-pulse rounded-full bg-accent ring-4 ring-warning/45 motion-reduce:animate-none"
                   />
                   Waiting for /start…
                 </p>
@@ -302,13 +313,15 @@ export function TelegramSetup() {
 
             {step === 'connected' && (
               <li>
-                <Card aria-live="polite" className="flex items-center gap-3 bg-raised p-4">
+                <Card
+                  glow
+                  aria-live="polite"
+                  className="flex items-center gap-3 rounded-[10px] bg-background px-4.5 py-4 [--glow-color:var(--color-success)]"
+                >
                   <ChannelIcon via="telegram" />
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <p className="text-sm font-medium tracking-tight text-foreground">Telegram connected</p>
-                    <p className="text-xs tracking-tight text-secondary">
-                      Your agent can now reach people as {botName}.
-                    </p>
+                    <p className="text-sm leading-5.25 font-medium text-foreground">Telegram connected</p>
+                    <p className="text-xs leading-4 text-secondary">Your agent can now reach people as {botName}.</p>
                   </div>
                 </Card>
               </li>
