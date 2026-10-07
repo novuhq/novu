@@ -1,11 +1,17 @@
 import { HumanChannelViaEnum } from '@novu/shared';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
+  /** Only optional for the operator, who gets the stored subscriberId or a new one. */
+  @ValidateIf((command: SetupHumanRelayCommand) => !command.operator || command.subscriberId !== undefined)
   @IsString()
   @IsNotEmpty()
-  subscriberId: string;
+  subscriberId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  operator?: boolean;
 
   @IsOptional()
   @IsString()
