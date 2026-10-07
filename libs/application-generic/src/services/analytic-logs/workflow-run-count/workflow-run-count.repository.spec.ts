@@ -8,16 +8,18 @@ import { WorkflowRunCountRepository } from './workflow-run-count.repository';
 describe('WorkflowRunCountRepository', () => {
   let repository: WorkflowRunCountRepository;
   let queryStub: sinon.SinonStub;
+  let warnStub: sinon.SinonStub;
   let logger: Pick<PinoLogger, 'setContext' | 'debug' | 'info' | 'warn' | 'error'>;
 
   beforeEach(() => {
     queryStub = sinon.stub();
+    warnStub = sinon.stub();
 
     logger = {
       setContext: sinon.stub(),
       debug: sinon.stub(),
       info: sinon.stub(),
-      warn: sinon.stub(),
+      warn: warnStub,
       error: sinon.stub(),
     };
 
@@ -145,8 +147,8 @@ describe('WorkflowRunCountRepository', () => {
       const result = await repository.getOrganizationUsageInExactRange('org-a', startDate, endDate);
 
       expect(result).to.equal(0);
-      expect((logger.warn as sinon.SinonStub).calledOnce).to.equal(true);
-      expect((logger.warn as sinon.SinonStub).firstCall.args[0]).to.deep.equal({
+      expect(warnStub.calledOnce).to.equal(true);
+      expect(warnStub.firstCall.args[0]).to.deep.equal({
         organizationId: 'org-a',
         wholeDayCount: 100,
         edgeDayRunsOutside: 150,
@@ -159,7 +161,7 @@ describe('WorkflowRunCountRepository', () => {
       const result = await repository.getOrganizationUsageInExactRange('org-a', startDate, endDate);
 
       expect(result).to.equal(0);
-      expect((logger.warn as sinon.SinonStub).called).to.equal(false);
+      expect(warnStub.called).to.equal(false);
     });
 
     it('returns 0 when neither query has rows', async () => {
