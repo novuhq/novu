@@ -28,7 +28,7 @@ It’s helpful to distinguish between providers and integrations:
 
 You can have multiple integrations for the same provider, for example, using two different SendGrid accounts for staging and production environments. Novu allows you to manage these as separate, named integrations.
 
-Refer to this resource to see the full list of [providerIds used in Novu](https://github.com/novuhq/novu/blob/next/packages/framework/src/shared.ts#L103).
+Refer to this resource to see the full list of [providerIds used in Novu](https://github.com/novuhq/novu/blob/next/packages/shared/src/types/providers.ts).
 
 <Note>
   Novu also lets you use [Trigger Overrides](/platform/integrations/trigger-overrides) to modify the default behavior of a message during workflow trigger, such as overriding the notification title or content, or using a different integration than the primary integration. This works alongside integrations to fine-tune delivery behavior. 
