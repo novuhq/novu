@@ -2,6 +2,7 @@ import { Info } from 'lucide-react';
 import type { Metadata } from 'next';
 
 import { type ChannelRow, ChannelsTable } from '@/components/channels/channels-table';
+import { CopyCliCommand } from '@/components/dashboard/copy-cli-command';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { type Channel, type ChannelVia, hasChannelEndpoint, listChannels } from '@/lib/human-channels-api';
@@ -20,6 +21,7 @@ export default async function ChannelsPage() {
       <PageHeader
         title="Channels"
         description="How your agent shows up on each channel. People reply right where the message lands."
+        action={<CopyCliCommand command="npx @novu/human channels" />}
       />
       <ChannelsTable rows={rows} />
       <p className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-xs leading-4 text-secondary">
