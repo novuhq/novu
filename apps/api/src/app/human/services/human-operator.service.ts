@@ -53,7 +53,8 @@ export class HumanOperatorService {
     });
   }
 
-  private async findForAgent(scope: OperatorScope): Promise<string | null> {
+  /** The operator of one relay agent, by the agent's internal id. */
+  async findForAgent(scope: OperatorScope): Promise<string | null> {
     const stored = await this.humanContactRepository.findOperator(scope.environmentId, scope.agentId);
     if (stored) {
       return stored.subscriberId;

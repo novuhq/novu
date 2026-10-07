@@ -210,13 +210,23 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(res.status).to.equal(422, JSON.stringify(res.body));
     });
 
-    it('has no operator again once that contact is removed', async () => {
+    it('refuses to remove the operator', async () => {
       await setup({ subscriberId: 'dima', operator: true });
 
       const res = await session.testAgent.delete('/v1/human/contacts/dima');
-      expect(res.status).to.equal(200, JSON.stringify(res.body));
 
-      expect(await getOperator()).to.equal(undefined);
+      expect(res.status).to.equal(409, JSON.stringify(res.body));
+      expect(JSON.stringify(res.body)).to.contain('contact_is_operator');
+      expect(await getOperator()).to.equal('dima');
+      expect(await findSubscriber('dima')).to.not.equal(null);
+    });
+
+    it('refuses to remove the contact an older `human setup` made', async () => {
+      await setup({ subscriberId: 'human_0123456789ab' });
+
+      const res = await session.testAgent.delete('/v1/human/contacts/human_0123456789ab');
+
+      expect(res.status).to.equal(409, JSON.stringify(res.body));
     });
   });
 
