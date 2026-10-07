@@ -247,8 +247,8 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         AND entity_type = 'workflow_run'
         AND event_type = 'workflow_run_status_processing'
         AND (
-          (created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)})
-          OR (created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)})
+          (created_at >= {startDayStart:DateTime64(3, 'UTC')} AND created_at < {startDate:DateTime64(3, 'UTC')})
+          OR (created_at >= {endDate:DateTime64(3, 'UTC')} AND created_at < {endDayEnd:DateTime64(3, 'UTC')})
         )
     `;
 

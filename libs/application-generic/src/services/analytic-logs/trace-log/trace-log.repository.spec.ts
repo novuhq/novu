@@ -53,10 +53,10 @@ describe('TraceLogRepository', () => {
       expect(call.query).to.include("entity_type = 'workflow_run'");
       expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
       expect(call.query).to.include(
-        '(created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)})'
+        "(created_at >= {startDayStart:DateTime64(3, 'UTC')} AND created_at < {startDate:DateTime64(3, 'UTC')})"
       );
       expect(call.query).to.include(
-        '(created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)})'
+        "(created_at >= {endDate:DateTime64(3, 'UTC')} AND created_at < {endDayEnd:DateTime64(3, 'UTC')})"
       );
       expect(call.params).to.deep.equal({
         organizationId: 'org-a',
