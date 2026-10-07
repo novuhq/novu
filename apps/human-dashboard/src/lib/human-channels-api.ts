@@ -3,7 +3,7 @@ import 'server-only';
 import type { HumanAccount } from './human-account';
 import { RELAY_AGENT_IDENTIFIER } from './human-agent-api';
 import { HumanApiError, isHumanApiNotFound } from './human-api-error';
-import { requestForAccount } from './human-api-key';
+import { requestForAccount, requestPageForAccount } from './human-api-key';
 
 /** The most links the API returns at once; a relay has a handful. */
 const CHANNELS_LIMIT = 100;
@@ -88,6 +88,20 @@ export async function hasChannelEndpoint(
   });
 
   return Array.isArray(endpoints) && endpoints.length > 0;
+}
+
+/** The Slack workspace a channel's app is installed in, once someone connected it. */
+export async function findSlackWorkspaceName(
+  account: HumanAccount,
+  channelIdentifier: string
+): Promise<string | undefined> {
+  const page = await requestPageForAccount<{ data?: Array<{ workspace?: { name?: string } }> }>(
+    account,
+    '/v1/channel-connections',
+    { query: { integrationIdentifier: channelIdentifier, limit: 1 } }
+  );
+
+  return page?.data?.[0]?.workspace?.name || undefined;
 }
 
 /**

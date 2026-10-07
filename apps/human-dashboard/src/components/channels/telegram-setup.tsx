@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, Check, RefreshCw, TriangleAlert } from 'lucide-react';
+import { ArrowUpRight, Check, TriangleAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import QRCode from 'react-qr-code';
@@ -17,7 +17,6 @@ import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { Field, Input } from '@/components/ui/input';
 import { Step, Stepper } from '@/components/ui/stepper';
-import { Tooltip } from '@/components/ui/tooltip';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 
 const BOTFATHER_URL = 'https://t.me/botfather';
@@ -200,24 +199,6 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
             title="Paste the bot token"
             status={error && step === 'token' ? 'error' : stepStatus('token', ['start', 'connected'])}
             summary={`${botName} · token saved`}
-            action={
-              step === 'start' || step === 'connected' ? (
-                <Tooltip label="Use another bot token">
-                  <button
-                    type="button"
-                    aria-label="Use another bot token"
-                    className={buttonClassName('ghost', '-my-1 -mr-1')}
-                    onClick={() => {
-                      setPasted('');
-                      setError(undefined);
-                      setStep('token');
-                    }}
-                  >
-                    <RefreshCw aria-hidden="true" className="size-3.5" />
-                  </button>
-                </Tooltip>
-              ) : undefined
-            }
             footer={
               <>
                 <Button variant="secondary" disabled={saving} onClick={() => setStep('create')}>

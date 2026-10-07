@@ -5,7 +5,13 @@ import { type ChannelRow, ChannelsTable } from '@/components/channels/channels-t
 import { CopyCliCommand } from '@/components/dashboard/copy-cli-command';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
-import { type Channel, type ChannelVia, hasChannelEndpoint, listChannels } from '@/lib/human-channels-api';
+import {
+  type Channel,
+  type ChannelVia,
+  findSlackWorkspaceName,
+  hasChannelEndpoint,
+  listChannels,
+} from '@/lib/human-channels-api';
 import { findOperatorContactId } from '@/lib/human-operator';
 import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
 
@@ -44,16 +50,29 @@ async function loadChannels(account: HumanAccount): Promise<{ rows: ChannelRow[]
   const email = channelOf('email');
   const telegram = channelOf('telegram');
   const slack = channelOf('slack');
-  const [telegramConnected, slackConnected, telegramSetup] = await Promise.all([
+  const [telegramConnected, slackConnected, telegramSetup, slackWorkspace] = await Promise.all([
     isChatConnected(account, telegram, operatorContactId),
     isChatConnected(account, slack, operatorContactId),
     readTelegramSetup(account, telegram, operatorContactId),
+    // The name is a nicety: the row still says "Connected" when it can't be read.
+    slack ? findSlackWorkspaceName(account, slack.identifier).catch(() => undefined) : undefined,
   ]);
+  const botUsername = telegramSetup.step === 'create' ? '' : telegramSetup.botUsername;
 
   const rows: ChannelRow[] = [
     { via: 'email', name: 'Email', detail: email?.address ?? 'Its own email address', connected: Boolean(email) },
-    { via: 'telegram', name: 'Telegram', detail: 'Its own Telegram bot', connected: telegramConnected },
-    { via: 'slack', name: 'Slack', detail: 'Its own Slack app in your workspace', connected: slackConnected },
+    {
+      via: 'telegram',
+      name: 'Telegram',
+      detail: telegramConnected && botUsername ? `@${botUsername}` : 'Its own Telegram bot',
+      connected: telegramConnected,
+    },
+    {
+      via: 'slack',
+      name: 'Slack',
+      detail: (slackConnected && slackWorkspace) || 'Its own Slack app in your workspace',
+      connected: slackConnected,
+    },
   ];
 
   return { rows, telegramSetup };
