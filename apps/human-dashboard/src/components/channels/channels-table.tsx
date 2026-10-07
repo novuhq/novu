@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@/components/ui/table';
 import type { ChannelVia } from '@/lib/human-channels-api';
+import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 
 export type ChannelRow = {
@@ -23,7 +24,7 @@ export type ChannelRow = {
 const HAS_SETUP: Partial<Record<ChannelVia, true>> = { telegram: true };
 
 /** The agent's channels, one row each. A row opens the channel's setup drawer. */
-export function ChannelsTable({ rows }: { rows: ChannelRow[] }) {
+export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; telegramSetup: TelegramSetupState }) {
   const [openSetup, setOpenSetup] = useState<ChannelVia | null>(null);
 
   return (
@@ -69,7 +70,11 @@ export function ChannelsTable({ rows }: { rows: ChannelRow[] }) {
           })}
         </TableBody>
       </Table>
-      <TelegramSetup open={openSetup === 'telegram'} onOpenChange={(open) => setOpenSetup(open ? 'telegram' : null)} />
+      <TelegramSetup
+        setup={telegramSetup}
+        open={openSetup === 'telegram'}
+        onOpenChange={(open) => setOpenSetup(open ? 'telegram' : null)}
+      />
     </>
   );
 }

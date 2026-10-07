@@ -22,36 +22,31 @@ const BOT_TOKEN_PATTERN = /^\d+:[\w-]+$/;
 /** A token that was just saved can take a moment to be readable. */
 const START_LINK_ATTEMPTS_AFTER_SAVE = 3;
 
-/** Where the Telegram drawer opens: at the first step, at "say hi", or already done. */
-export type TelegramSetup =
-  | { step: 'create' }
-  | { step: 'start'; botUsername: string; startUrl: string }
-  | { step: 'connected'; botUsername: string };
-
 export type SaveTelegramTokenResult =
   | { ok: true; botUsername: string; startUrl: string }
   | { ok: false; error: string };
 
-/** Picks up a Telegram setup where it was left, so reopening the drawer doesn't ask for the token again. */
-export async function loadTelegramSetupAction(): Promise<TelegramSetup> {
+/**
+ * A fresh "say hi" link. The one that came with the page stops working after a while, so the drawer
+ * swaps it for a new one when it opens on that step. `null` when there's nothing to link yet.
+ */
+export async function refreshTelegramStartLinkAction(): Promise<{ botUsername: string; startUrl: string } | null> {
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
-  const channelIdentifier = await findTelegramChannel(account);
-  if (!channelIdentifier) {
-    return { step: 'create' };
+  const [channelIdentifier, contactId] = await Promise.all([
+    findTelegramChannel(account),
+    findOperatorContactId(account),
+  ]);
+  if (!channelIdentifier || !contactId) {
+    return null;
   }
-
-  const contactId = await prepareOperatorContact(account);
 
   try {
     const link = await issueTelegramStartLink(account, channelIdentifier, contactId);
 
-    return (await hasChannelEndpoint(account, channelIdentifier, contactId))
-      ? { step: 'connected', botUsername: link.botUsername }
-      : { step: 'start', botUsername: link.botUsername, startUrl: link.url };
+    return { botUsername: link.botUsername, startUrl: link.url };
   } catch (error) {
-    // No link means the channel has no working bot token yet. Anything else is a real failure.
-    if (error instanceof HumanApiError && error.status >= 400 && error.status < 500) {
-      return { step: 'create' };
+    if (error instanceof HumanApiError) {
+      return null;
     }
 
     throw error;
