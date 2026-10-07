@@ -294,29 +294,20 @@ describe('WorkflowRunCountRepository', () => {
       expect(result).to.equal(1500);
     });
 
-    it('counts the range exactly from ClickHouse, and warns, when the daily usage starts after its first day', async () => {
-      queryStub.callsFake(async ({ query }: { query: string }) =>
-        query.includes('FROM traces')
-          ? { data: [{ count: '500' }] }
-          : { data: [{ organization_id: 'org-a', count: '1600' }] }
-      );
+    it('rejects without querying when the daily usage starts after the first day of the range', async () => {
+      const error = await repository
+        .getOrganizationUsageInExactRangeFromDailyUsage({
+          organizationId: 'org-a',
+          dailyUsage,
+          dailyUsageFrom: new Date('2026-09-27T00:00:00.000Z'),
+          startDate: new Date('2026-09-26T09:24:00.000Z'),
+          endDate: new Date('2026-10-26T09:24:00.000Z'),
+        })
+        .catch((caught: Error) => caught);
 
-      const result = await repository.getOrganizationUsageInExactRangeFromDailyUsage({
-        organizationId: 'org-a',
-        dailyUsage,
-        dailyUsageFrom: new Date('2026-09-27T00:00:00.000Z'),
-        startDate: new Date('2026-09-26T09:24:00.000Z'),
-        endDate: new Date('2026-10-26T09:24:00.000Z'),
-      });
-
-      expect(result).to.equal(1100);
-      expect(queryStub.calledTwice).to.equal(true);
-      expect(warnStub.calledOnce).to.equal(true);
-      expect(warnStub.firstCall.args[0]).to.deep.equal({
-        organizationId: 'org-a',
-        dailyUsageFrom: new Date('2026-09-27T00:00:00.000Z'),
-        startDate: new Date('2026-09-26T09:24:00.000Z'),
-      });
+      expect(error).to.be.instanceOf(Error);
+      expect((error as Error).message).to.include('2026-09-26');
+      expect(queryStub.called).to.equal(false);
     });
   });
 

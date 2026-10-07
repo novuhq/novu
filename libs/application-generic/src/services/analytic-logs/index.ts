@@ -23,6 +23,7 @@ export * from './trace-rollup';
 export { StepType } from './types';
 export { WorkflowRun, WorkflowRunRepository, WorkflowRunStatusEnum } from './workflow-run';
 export {
+  DailyWorkflowRunUsage,
   ExactRangeFromDailyUsageQuery,
   WorkflowRunCount,
   WorkflowRunCountRepository,

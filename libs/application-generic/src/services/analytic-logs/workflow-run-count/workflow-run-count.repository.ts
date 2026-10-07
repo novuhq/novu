@@ -323,8 +323,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
 
   /**
    * Same count as `getOrganizationUsageInExactRange`, with the whole UTC days summed from rows the caller already
-   * read. Days after the end of that read are taken as empty. When the rows start after the range's first day,
-   * the range is counted from ClickHouse instead.
+   * read, so it stays consistent with anything the caller snapshotted right after that read. Days after the end of
+   * the read are taken as empty. Throws when the rows start after the range's first day.
    */
   async getOrganizationUsageInExactRangeFromDailyUsage({
     organizationId,
@@ -336,12 +336,9 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     const { start, end } = toInclusiveUtcDays(startDate, endDate);
 
     if (toUtcDay(dailyUsageFrom) > start) {
-      this.logger.warn(
-        { organizationId, dailyUsageFrom, startDate },
-        'Daily workflow run usage starts after the first day of the range; counting the range from ClickHouse'
+      throw new Error(
+        `Daily workflow run usage from ${toUtcDay(dailyUsageFrom)} does not cover the range's first day ${start}`
       );
-
-      return this.getOrganizationUsageInExactRange(organizationId, startDate, endDate);
     }
 
     const wholeDayCount = dailyUsage
