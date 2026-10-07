@@ -9,7 +9,8 @@ type OperatorScope = { environmentId: string; organizationId: string; agentId: s
 
 /**
  * Which contact is the account owner. The CLI and the Human dashboard both ask here, so an operator who
- * uses both is one contact, not two.
+ * uses both is one contact, not two. An account has one owner: a second relay agent in the same
+ * environment gets the operator of the first.
  */
 @Injectable()
 export class HumanOperatorService {
@@ -58,6 +59,11 @@ export class HumanOperatorService {
     const stored = await this.humanContactRepository.findOperator(scope.environmentId, scope.agentId);
     if (stored) {
       return stored.subscriberId;
+    }
+
+    const recordedElsewhere = await this.humanContactRepository.findOperatorInEnvironment(scope.environmentId);
+    if (recordedElsewhere) {
+      return recordedElsewhere.subscriberId;
     }
 
     const [madeByCli] = await this.subscriberRepository.find(

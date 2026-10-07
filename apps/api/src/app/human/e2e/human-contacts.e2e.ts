@@ -204,6 +204,15 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect((await setup({ operator: true })).subscriberId).to.equal('human_0123456789ab');
     });
 
+    it('gives a second relay agent the operator of the first', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const second = await setup({ subscriberId: 'someone-else', operator: true, agentIdentifier: 'second-relay' });
+
+      expect(second.subscriberId).to.equal('dima');
+      expect(await findSubscriber('someone-else')).to.equal(null);
+    });
+
     it('still needs a subscriberId for anyone but the operator', async () => {
       const res = await session.testAgent.post('/v1/human/setup').send({});
 

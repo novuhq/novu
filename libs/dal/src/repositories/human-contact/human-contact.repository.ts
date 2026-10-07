@@ -24,6 +24,16 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return this.findOne({ _environmentId: environmentId, _agentId: agentId, isOperator: true }, '*');
   }
 
+  /** The operator recorded on any relay agent of the environment, oldest first. */
+  async findOperatorInEnvironment(environmentId: string): Promise<HumanContactEntity | null> {
+    const [operator] = await this.find({ _environmentId: environmentId, isOperator: true }, '*', {
+      sort: { _id: 1 },
+      limit: 1,
+    });
+
+    return operator ?? null;
+  }
+
   /**
    * Records `subscriberId` as the operator unless the relay agent already has one, and returns whoever
    * the operator is afterwards. The first caller wins; everyone later gets that same contact back.

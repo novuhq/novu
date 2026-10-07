@@ -147,7 +147,9 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     // so you stay one person everywhere. Older APIs just echo the id sent.
     const subscriberId = relay.subscriberId || localSubscriberId;
 
-    if (existing?.subscriberId && subscriberId !== existing.subscriberId) {
+    const switchedContact = Boolean(existing?.subscriberId) && subscriberId !== existing?.subscriberId;
+
+    if (switchedContact) {
       info('Your account already has you as a contact, so this computer now uses that one.');
     }
 
@@ -160,7 +162,8 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
         : connectEmail(client, relay.agentIdentifier, subscriberId, options));
 
     // 4. Persist config — first setup becomes the default preference.
-    const defaultChannel = existing?.defaultChannel ?? channel;
+    // A default saved for another contact may be a channel this one never connected.
+    const defaultChannel = (switchedContact ? undefined : existing?.defaultChannel) ?? channel;
 
     const config: HumanCliConfig = {
       apiUrl,

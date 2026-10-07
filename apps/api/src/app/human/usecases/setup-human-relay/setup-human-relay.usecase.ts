@@ -4,6 +4,7 @@ import {
   AgentEntity,
   AgentRepository,
   HumanContactRepository,
+  isDuplicateKeyError,
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
@@ -132,13 +133,20 @@ export class SetupHumanRelay {
       return;
     }
 
-    await this.subscriberRepository.create({
-      subscriberId,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      ...(email ? { email } : {}),
-      ...(firstName ? { firstName } : {}),
-      ...(lastName ? { lastName } : {}),
-    });
+    try {
+      await this.subscriberRepository.create({
+        subscriberId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        ...(email ? { email } : {}),
+        ...(firstName ? { firstName } : {}),
+        ...(lastName ? { lastName } : {}),
+      });
+    } catch (err) {
+      // A setup running at the same moment created the same subscriber first; theirs stands.
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+    }
   }
 }
