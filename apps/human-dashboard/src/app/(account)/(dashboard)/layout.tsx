@@ -71,7 +71,7 @@ async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
     const ownName = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : undefined;
     const name = ownName ?? (user.firstName ? `${user.firstName}’s assistant` : undefined);
 
-    return name ? { name, status: 'Your agent' } : { name: 'Your agent', status: 'Set up' };
+    return { name: name ?? AGENT_NOT_SET_UP.name, status: `${agent.name || DEFAULT_AGENT_NAME} agent` };
   } catch (error) {
     console.error('Failed to load the agent for the sidebar', error);
 
