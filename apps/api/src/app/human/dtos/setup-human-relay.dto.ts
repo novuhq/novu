@@ -1,13 +1,37 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HumanChannelViaEnum } from '@novu/shared';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 
 export class SetupHumanRelayRequestDto {
-  @ApiProperty({ description: 'subscriberId that identifies the human being set up.' })
+  @ApiPropertyOptional({
+    description:
+      'subscriberId that identifies the human being set up. Required unless `operator` is set; for the operator ' +
+      'it is only a suggestion, used when the account has no operator yet.',
+  })
+  @ValidateIf((body: SetupHumanRelayRequestDto) => !body.operator || body.subscriberId !== undefined)
   @IsString()
   @IsNotEmpty()
   @MaxLength(128)
-  subscriberId: string;
+  subscriberId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Set up the account owner themselves. The response carries the operator’s subscriberId: the one already ' +
+      'recorded for the relay agent, otherwise the one passed here, otherwise a new one.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  operator?: boolean;
 
   @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
   @IsOptional()
@@ -56,4 +80,9 @@ export class SetupHumanRelayResponseDto {
 
   @ApiProperty()
   subscriberId: string;
+}
+
+export class HumanOperatorResponseDto {
+  @ApiPropertyOptional({ description: 'subscriberId of the account owner’s contact. Missing before any setup.' })
+  subscriberId?: string;
 }

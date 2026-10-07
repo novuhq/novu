@@ -23,6 +23,7 @@ import { HumanInvitesPublicController } from './human-invites-public.controller'
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
+import { HumanOperatorService } from './services/human-operator.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
@@ -76,6 +77,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     RemoveContact,
     RemoveSubscriber,
     HumanInviteTokenService,
+    HumanOperatorService,
     CreateHumanInvite,
     GetHumanInviteStatus,
     ConnectHumanInviteChannel,
