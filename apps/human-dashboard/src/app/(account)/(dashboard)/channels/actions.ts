@@ -1,6 +1,5 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
@@ -12,7 +11,7 @@ import {
   listChannels,
   saveTelegramBotToken,
 } from '@/lib/human-channels-api';
-import { ensureOperatorContact, findOperatorContactId } from '@/lib/human-operator';
+import { findOperatorContactId } from '@/lib/human-operator';
 
 const CHANNELS_PATH = '/channels';
 
@@ -63,15 +62,19 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
 
   try {
-    const contactId = await prepareOperatorContact(account);
+    // The agent and the operator's contact were made with the account, so they're only looked up here.
+    const contactId = await findOperatorContactId(account);
+    if (!contactId) {
+      return { ok: false, error: SAVE_FAILED_MESSAGE };
+    }
+
     const channelIdentifier = await ensureTelegramChannel(account);
     const { botUsername } = await saveTelegramBotToken(account, channelIdentifier, token);
     const link = await issueTelegramStartLink(account, channelIdentifier, contactId, {
       attempts: START_LINK_ATTEMPTS_AFTER_SAVE,
     });
 
-    // The first save creates the agent, which the sidebar shows, so the layout is refreshed as well.
-    revalidatePath('/', 'layout');
+    revalidatePath(CHANNELS_PATH);
 
     return { ok: true, botUsername: link.botUsername || botUsername, startUrl: link.url };
   } catch (error) {
@@ -100,24 +103,13 @@ export async function checkTelegramConnectedAction(): Promise<boolean> {
   return connected;
 }
 
+const SAVE_FAILED_MESSAGE = 'Something went wrong while saving the token. Please try again.';
 const INVALID_TOKEN_MESSAGE = 'Token isn’t valid. Copy it again from BotFather; it’s the line after “Use this token”.';
 
 async function findTelegramChannel(account: HumanAccount): Promise<string | undefined> {
   const channels = await listChannels(account);
 
   return channels.find((channel) => channel.via === 'telegram' && channel.active)?.identifier;
-}
-
-/** The operator's own contact, with the relay it's reached through. Both are made on the first setup. */
-async function prepareOperatorContact(account: HumanAccount): Promise<string> {
-  // A contact that exists keeps its name: the operator may have chosen it in the CLI.
-  if (await findOperatorContactId(account)) {
-    return ensureOperatorContact(account);
-  }
-
-  const user = await currentUser();
-
-  return ensureOperatorContact(account, { firstName: user?.firstName, lastName: user?.lastName });
 }
 
 function describeSaveError(error: unknown): string {
@@ -132,5 +124,5 @@ function describeSaveError(error: unknown): string {
     }
   }
 
-  return 'Something went wrong while saving the token. Please try again.';
+  return SAVE_FAILED_MESSAGE;
 }

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { ensureBackingAccount, type HumanRegion } from './human-accounts-api';
+import { ensureOperatorContact, findOperatorContactId } from './human-operator';
 
 /** Where the operator's backing organization lives, kept in the Human Clerk user's private metadata. */
 export type StoredBackingAccount = {
@@ -27,12 +28,40 @@ const loadHumanAccount = cache(async (): Promise<HumanAccount | null> => {
     return null;
   }
 
-  return { ...(await ensureStoredBackingAccount(user, DEFAULT_REGION)), humanUserId: user.id };
+  const account = { ...(await ensureStoredBackingAccount(user, DEFAULT_REGION)), humanUserId: user.id };
+
+  if (!isAgentSetUp(user)) {
+    await setUpAgent(user, account);
+  }
+
+  return account;
 });
 
 /**
- * The signed-in operator's backing account, created on their first visit so the dashboard never
- * opens on a missing one. Sends signed-out visitors to `/sign-in`, and back to `returnTo` afterwards.
+ * Gives a new account its relay agent and the operator's own contact, with the same call `human setup`
+ * starts with. It runs once: right after the account is created here, or on the first dashboard visit
+ * of an account that came from a claim or a CLI login. It's remembered only once it worked, so a failed
+ * attempt is made again on the next visit, and every later request skips it.
+ */
+async function setUpAgent(user: User, account: HumanAccount): Promise<void> {
+  // A contact that exists keeps its name: the operator may have chosen it in the CLI.
+  const hasContact = Boolean(await findOperatorContactId(account));
+  await ensureOperatorContact(account, hasContact ? {} : { firstName: user.firstName, lastName: user.lastName });
+
+  const clerk = await clerkClient();
+  // Clerk merges metadata, so the backing account under the same key stays as it is.
+  await clerk.users.updateUserMetadata(user.id, { privateMetadata: { [METADATA_KEY]: { agentSetUp: true } } });
+}
+
+function isAgentSetUp(user: User): boolean {
+  const stored = user.privateMetadata?.[METADATA_KEY] as { agentSetUp?: unknown } | undefined;
+
+  return stored?.agentSetUp === true;
+}
+
+/**
+ * The signed-in operator's backing account, created on their first visit together with its agent, so
+ * the dashboard never opens on a missing one. Sends signed-out visitors to `/sign-in`, and back to `returnTo` afterwards.
  *
  * Server components of one request share a single lookup, so each of them can call this.
  */
