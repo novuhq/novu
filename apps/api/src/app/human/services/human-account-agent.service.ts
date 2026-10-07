@@ -15,6 +15,7 @@ import { HumanOperatorService } from './human-operator.service';
 
 type AccountScope = { environmentId: string; organizationId: string; userId: string };
 type OperatorName = { firstName?: string; lastName?: string };
+type UntouchedAgent = { agentId: string; operator: string | null };
 
 /**
  * The relay agent every Human account gets at sign-up (the Human dashboard asks for it right after the
@@ -33,14 +34,18 @@ export class HumanAccountAgentService {
     private readonly setupHumanRelay: SetupHumanRelay
   ) {}
 
-  /** Gives the account its relay agent and the operator's contact. Safe to repeat. */
-  async setUp(account: AccountScope, name: OperatorName = {}): Promise<void> {
+  /**
+   * Gives the account its relay agent and the operator's contact. Safe to repeat. `subscriberId` is who
+   * the operator should be when the account has none on record.
+   */
+  async setUp(account: AccountScope, name: OperatorName = {}, subscriberId?: string): Promise<void> {
     await this.setupHumanRelay.execute(
       SetupHumanRelayCommand.create({
         environmentId: account.environmentId,
         organizationId: account.organizationId,
         userId: account.userId,
         operator: true,
+        subscriberId,
         firstName: name.firstName,
         lastName: name.lastName,
       })
@@ -48,17 +53,24 @@ export class HumanAccountAgentService {
   }
 
   /**
-   * Runs a claim with the account's untouched agent out of the way. When the claim fails, the account
-   * gets its agent back, so it is never left without one.
+   * Runs a claim with the account's untouched agent out of the way. When the claim fails, or the agent
+   * could only be removed halfway, the account gets its agent back with the same operator contact, so it
+   * is never left without one.
    */
   async claimOverUntouchedAgent<T>(account: AccountScope, name: OperatorName, claim: () => Promise<T>): Promise<T> {
-    const removed = await this.removeUntouchedAgent(account);
+    const untouched = await this.findUntouchedAgent(account);
+    let removing = false;
 
     try {
+      if (untouched) {
+        removing = true;
+        await this.remove(account, untouched);
+      }
+
       return await claim();
     } catch (error) {
-      if (removed) {
-        await this.setUp(account, name);
+      if (removing) {
+        await this.setUp(account, name, untouched?.operator ?? undefined);
       }
 
       throw error;
@@ -66,37 +78,48 @@ export class HumanAccountAgentService {
   }
 
   /**
-   * Removes the account's relay agent when nothing was done with it: no channel connected, nobody
-   * invited, nothing asked. Says whether it removed one.
+   * The account's relay agent when nothing was done with it: it's the only relay agent, no channel is
+   * connected, nobody is invited, nothing was asked, and the operator saved no email or default channel.
    */
-  private async removeUntouchedAgent(account: AccountScope): Promise<boolean> {
+  private async findUntouchedAgent(account: AccountScope): Promise<UntouchedAgent | null> {
     const scope = { _environmentId: account.environmentId, _organizationId: account.organizationId };
-    const agent = await this.agentRepository.findOne({ ...scope, identifier: DEFAULT_HUMAN_RELAY_IDENTIFIER }, [
-      '_id',
-      'runtime',
-    ]);
+    const relays = await this.agentRepository.find({ ...scope, runtime: 'human_relay' }, ['_id', 'identifier'], {
+      limit: 2,
+    });
+    const [agent] = relays;
 
-    if (!agent || agent.runtime !== 'human_relay') {
-      return false;
+    // Another relay agent shares the operator's contact, so it can't be taken away from under it.
+    if (relays.length !== 1 || agent.identifier !== DEFAULT_HUMAN_RELAY_IDENTIFIER) {
+      return null;
     }
 
     const operator = await this.humanOperator.findForAgent({ ...account, agentId: agent._id });
-    const [channels, interactions, otherContacts] = await Promise.all([
+    const [channels, interactions, otherContacts, operatorSubscriber, operatorContact] = await Promise.all([
       this.agentIntegrationRepository.count({ ...scope, _agentId: agent._id }),
       this.humanInteractionRepository.count({ ...scope, _agentId: agent._id }),
       this.subscriberRepository.count({ ...scope, ...(operator ? { subscriberId: { $ne: operator } } : {}) }),
+      operator ? this.subscriberRepository.findOne({ ...scope, subscriberId: operator }, 'email') : null,
+      operator ? this.humanContactRepository.findContact(account.environmentId, agent._id, operator) : null,
     ]);
 
     if (channels > 0 || interactions > 0 || otherContacts > 0) {
-      return false;
+      return null;
     }
 
-    await this.humanContactRepository.delete({ ...scope, _agentId: agent._id });
+    if (operatorSubscriber?.email || operatorContact?.defaultVia) {
+      return null;
+    }
+
+    return { agentId: agent._id, operator };
+  }
+
+  private async remove(account: AccountScope, { agentId, operator }: UntouchedAgent): Promise<void> {
+    const scope = { _environmentId: account.environmentId, _organizationId: account.organizationId };
+
+    await this.humanContactRepository.delete({ ...scope, _agentId: agentId });
     if (operator) {
       await this.subscriberRepository.delete({ ...scope, subscriberId: operator });
     }
-    await this.agentRepository.delete({ ...scope, _id: agent._id });
-
-    return true;
+    await this.agentRepository.delete({ ...scope, _id: agentId });
   }
 }

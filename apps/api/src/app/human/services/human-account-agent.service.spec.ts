@@ -8,16 +8,25 @@ describe('HumanAccountAgentService', () => {
   const name = { firstName: 'Dima' };
 
   function setup({
-    agent = { _id: 'relay1', runtime: 'human_relay' } as object | null,
+    relays = [{ _id: 'relay1', identifier: 'human-relay' }] as readonly object[],
     channels = 0,
     interactions = 0,
     otherContacts = 0,
+    operatorEmail = undefined as string | undefined,
+    defaultVia = undefined as string | undefined,
   } = {}) {
-    const agentRepository = { findOne: sinon.stub().resolves(agent), delete: sinon.stub().resolves() };
+    const agentRepository = { find: sinon.stub().resolves(relays), delete: sinon.stub().resolves() };
     const agentIntegrationRepository = { count: sinon.stub().resolves(channels) };
     const humanInteractionRepository = { count: sinon.stub().resolves(interactions) };
-    const humanContactRepository = { delete: sinon.stub().resolves() };
-    const subscriberRepository = { count: sinon.stub().resolves(otherContacts), delete: sinon.stub().resolves() };
+    const humanContactRepository = {
+      delete: sinon.stub().resolves(),
+      findContact: sinon.stub().resolves(defaultVia ? { defaultVia } : null),
+    };
+    const subscriberRepository = {
+      count: sinon.stub().resolves(otherContacts),
+      findOne: sinon.stub().resolves({ email: operatorEmail }),
+      delete: sinon.stub().resolves(),
+    };
     const humanOperator = { findForAgent: sinon.stub().resolves('human_aaaaaaaaaaaa') };
     const setupHumanRelay = { execute: sinon.stub().resolves() };
     const service = new HumanAccountAgentService(
@@ -65,6 +74,17 @@ describe('HumanAccountAgentService', () => {
     ['a channel', { channels: 1 }],
     ['an interaction', { interactions: 1 }],
     ['another contact', { otherContacts: 1 }],
+    ['an operator who saved their email', { operatorEmail: 'dima@example.com' }],
+    ['an operator who chose a default channel', { defaultVia: 'telegram' }],
+    [
+      'a second relay agent beside it',
+      {
+        relays: [
+          { _id: 'relay1', identifier: 'human-relay' },
+          { _id: 'relay2', identifier: 'second-relay' },
+        ],
+      },
+    ],
   ] as const) {
     it(`leaves an agent with ${what} alone`, async () => {
       const { service, agentRepository } = setup(used);
@@ -78,7 +98,7 @@ describe('HumanAccountAgentService', () => {
   }
 
   it('has nothing to remove for an account without an agent', async () => {
-    const { service, agentRepository } = setup({ agent: null });
+    const { service, agentRepository } = setup({ relays: [] });
 
     await service.claimOverUntouchedAgent(account, name, sinon.stub().resolves());
 
@@ -95,6 +115,23 @@ describe('HumanAccountAgentService', () => {
 
     expect(error).to.equal(failure);
     expect(setupHumanRelay.execute.calledOnce).to.equal(true);
-    expect(setupHumanRelay.execute.firstCall.args[0]).to.include({ operator: true, firstName: 'Dima' });
+    expect(setupHumanRelay.execute.firstCall.args[0]).to.include({
+      operator: true,
+      firstName: 'Dima',
+      subscriberId: 'human_aaaaaaaaaaaa',
+    });
+  });
+
+  it('gives the account its agent back when removing it fails halfway, without running the claim', async () => {
+    const { service, subscriberRepository, setupHumanRelay } = setup();
+    const failure = new Error('database down');
+    subscriberRepository.delete.rejects(failure);
+    const claim = sinon.stub().resolves();
+
+    const error = await service.claimOverUntouchedAgent(account, name, claim).catch((err) => err);
+
+    expect(error).to.equal(failure);
+    expect(claim.called).to.equal(false);
+    expect(setupHumanRelay.execute.calledOnce).to.equal(true);
   });
 });
