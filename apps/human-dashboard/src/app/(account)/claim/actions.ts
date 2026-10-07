@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
-import { isAccountAgentInUse } from '@/lib/human-claim';
+import { claimPastSignUp, isAccountAgentInUse } from '@/lib/human-claim';
 
 export type ClaimFormState = { error?: string };
 
@@ -41,10 +41,8 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
 
   try {
     await ensureStoredBackingAccount(user, region);
-    await claimKeylessSetup(
-      region,
-      { humanUserId: user.id, firstName: user.firstName, lastName: user.lastName },
-      token
+    await claimPastSignUp(user, () =>
+      claimKeylessSetup(region, { humanUserId: user.id, firstName: user.firstName, lastName: user.lastName }, token)
     );
   } catch (error) {
     console.error('Failed to claim the keyless setup', error);
