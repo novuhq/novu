@@ -26,7 +26,12 @@ import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
 import { ListContactsQueryDto, ListContactsResponseDto, RemoveContactResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
-import { SetupHumanRelayRequestDto, SetupHumanRelayResponseDto } from './dtos/setup-human-relay.dto';
+import {
+  HumanOperatorResponseDto,
+  SetupHumanRelayRequestDto,
+  SetupHumanRelayResponseDto,
+} from './dtos/setup-human-relay.dto';
+import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-human-invite.command';
@@ -44,7 +49,10 @@ import { ListInteractions } from './usecases/list-interactions/list-interactions
 import { RemoveContactCommand } from './usecases/remove-contact/remove-contact.command';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
-import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import {
+  DEFAULT_HUMAN_RELAY_IDENTIFIER,
+  SetupHumanRelay,
+} from './usecases/setup-human-relay/setup-human-relay.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @Controller('/human')
@@ -61,7 +69,8 @@ export class HumanInteractionsController {
     private readonly listContactsUsecase: ListContacts,
     private readonly removeContactUsecase: RemoveContact,
     private readonly createHumanInviteUsecase: CreateHumanInvite,
-    private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken
+    private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken,
+    private readonly humanOperator: HumanOperatorService
   ) {}
 
   @Post('/interactions')
@@ -214,6 +223,7 @@ export class HumanInteractionsController {
         organizationId: user.organizationId,
         userId: user._id,
         subscriberId: body.subscriberId,
+        operator: body.operator,
         agentIdentifier: body.agentIdentifier,
         email: body.email,
         firstName: body.firstName,
@@ -221,6 +231,24 @@ export class HumanInteractionsController {
         defaultVia: body.defaultVia,
       })
     );
+  }
+
+  /**
+   * The account owner's own contact, so the CLI and the Human dashboard treat the same person as "you".
+   * Nothing is created here; `POST /human/setup` with `operator` records one.
+   */
+  @Get('/operator')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  async getOperator(@UserSession() user: UserSessionData): Promise<HumanOperatorResponseDto> {
+    const subscriberId = await this.humanOperator.find({
+      environmentId: user.environmentId,
+      organizationId: user.organizationId,
+      agentIdentifier: DEFAULT_HUMAN_RELAY_IDENTIFIER,
+    });
+
+    return subscriberId ? { subscriberId } : {};
   }
 
   /**

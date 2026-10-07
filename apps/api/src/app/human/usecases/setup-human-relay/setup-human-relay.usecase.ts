@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
+import { HumanOperatorService } from '../../services/human-operator.service';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
 export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
@@ -24,7 +25,8 @@ export class SetupHumanRelay {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly humanContactRepository: HumanContactRepository
+    private readonly humanContactRepository: HumanContactRepository,
+    private readonly humanOperator: HumanOperatorService
   ) {}
 
   @InstrumentUsecase()
@@ -32,14 +34,15 @@ export class SetupHumanRelay {
     const identifier = command.agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER;
 
     const agent = await this.ensureRelayAgent(command, identifier);
-    await this.ensureSubscriber(command);
+    const subscriberId = await this.resolveSubscriberId(command, agent);
+    await this.ensureSubscriber(command, subscriberId);
 
     if (command.defaultVia) {
       await this.humanContactRepository.setDefaultVia({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         agentId: agent._id,
-        subscriberId: command.subscriberId,
+        subscriberId,
         via: command.defaultVia,
         setBy: 'inviter',
       });
@@ -48,8 +51,20 @@ export class SetupHumanRelay {
     return {
       agentId: agent._id,
       agentIdentifier: agent.identifier,
-      subscriberId: command.subscriberId,
+      subscriberId,
     };
+  }
+
+  /** Whoever the caller names, except for the operator: there the relay agent's recorded operator wins. */
+  private async resolveSubscriberId(command: SetupHumanRelayCommand, agent: AgentEntity): Promise<string> {
+    if (!command.operator) {
+      return command.subscriberId as string;
+    }
+
+    return this.humanOperator.resolve(
+      { environmentId: command.environmentId, organizationId: command.organizationId, agentId: agent._id },
+      command.subscriberId
+    );
   }
 
   private async ensureRelayAgent(command: SetupHumanRelayCommand, identifier: string): Promise<AgentEntity> {
@@ -87,13 +102,13 @@ export class SetupHumanRelay {
     });
   }
 
-  private async ensureSubscriber(command: SetupHumanRelayCommand): Promise<void> {
+  private async ensureSubscriber(command: SetupHumanRelayCommand, subscriberId: string): Promise<void> {
     const email = command.email?.trim().toLowerCase();
     const firstName = command.firstName?.trim() || undefined;
     const lastName = command.lastName?.trim() || undefined;
 
     const existing = await this.subscriberRepository.findOne({
-      subscriberId: command.subscriberId,
+      subscriberId,
       _environmentId: command.environmentId,
     });
 
@@ -109,7 +124,7 @@ export class SetupHumanRelay {
 
       if (Object.keys(updates).length > 0) {
         await this.subscriberRepository.update(
-          { subscriberId: command.subscriberId, _environmentId: command.environmentId },
+          { subscriberId, _environmentId: command.environmentId },
           { $set: updates }
         );
       }
@@ -118,7 +133,7 @@ export class SetupHumanRelay {
     }
 
     await this.subscriberRepository.create({
-      subscriberId: command.subscriberId,
+      subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       ...(email ? { email } : {}),

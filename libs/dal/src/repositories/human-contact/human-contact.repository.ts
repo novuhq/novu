@@ -19,6 +19,55 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return this.findOne({ _environmentId: environmentId, _agentId: agentId, subscriberId }, '*');
   }
 
+  /** The contact of the account owner, when one was recorded. */
+  async findOperator(environmentId: string, agentId: string): Promise<HumanContactEntity | null> {
+    return this.findOne({ _environmentId: environmentId, _agentId: agentId, isOperator: true }, '*');
+  }
+
+  /**
+   * Records `subscriberId` as the operator unless the relay agent already has one, and returns whoever
+   * the operator is afterwards. The first caller wins; everyone later gets that same contact back.
+   */
+  async claimOperator(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+  }): Promise<string> {
+    const existing = await this.findOperator(params.environmentId, params.agentId);
+    if (existing) {
+      return existing.subscriberId;
+    }
+
+    try {
+      await this.findOneAndUpdate(
+        { _environmentId: params.environmentId, _agentId: params.agentId, subscriberId: params.subscriberId },
+        { $set: { isOperator: true }, $setOnInsert: { _organizationId: params.organizationId } },
+        { upsert: true }
+      );
+
+      return params.subscriberId;
+    } catch (err) {
+      // Another request recorded an operator, or created this row, a moment earlier.
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+    }
+
+    const winner = await this.findOperator(params.environmentId, params.agentId);
+    if (winner) {
+      return winner.subscriberId;
+    }
+
+    // The row was only created meanwhile, with no operator recorded yet: mark it now.
+    await this.findOneAndUpdate(
+      { _environmentId: params.environmentId, _agentId: params.agentId, subscriberId: params.subscriberId },
+      { $set: { isOperator: true } }
+    );
+
+    return params.subscriberId;
+  }
+
   /**
    * Saves the human's default channel. An inviter's pick (`human invite --via`)
    * never replaces a default the person chose themselves on the invite page.

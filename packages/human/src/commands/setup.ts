@@ -132,12 +132,24 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     });
 
     // 2. Provision the relay agent + the human's subscriber row.
-    const subscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
+    const localSubscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
     const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
     const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
 
     info('Setting up your human relay...');
-    const relay = await setupHumanRelay(client, { subscriberId, agentIdentifier: relayIdentifier, ...name });
+    const relay = await setupHumanRelay(client, {
+      subscriberId: localSubscriberId,
+      operator: true,
+      agentIdentifier: relayIdentifier,
+      ...name,
+    });
+    // The account may already know you from the dashboard or another computer; that contact wins,
+    // so you stay one person everywhere. Older APIs just echo the id sent.
+    const subscriberId = relay.subscriberId || localSubscriberId;
+
+    if (existing?.subscriberId && subscriberId !== existing.subscriberId) {
+      info('Your account already has you as a contact, so this computer now uses that one.');
+    }
 
     // 3. Channel linking — linked channels live on the server; locally we only
     // remember a default preference for when the caller does not pass `--via`.
