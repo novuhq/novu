@@ -9,7 +9,10 @@ describe('SetupHumanRelay', () => {
     const agentRepository = {
       findOne: sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' }),
     };
-    const subscriberRepository = { findOne: sinon.stub().resolves({ subscriberId: 'alice' }), update: sinon.stub() };
+    const subscriberRepository: Record<string, sinon.SinonStub> = {
+      findOne: sinon.stub().resolves({ subscriberId: 'alice' }),
+      update: sinon.stub(),
+    };
     const humanContactRepository = { setDefaultVia: sinon.stub().resolves() };
     const humanOperator = { resolve: sinon.stub().resolves('dima') };
     const usecase = new SetupHumanRelay(
@@ -58,6 +61,18 @@ describe('SetupHumanRelay', () => {
     ]);
     expect(result.subscriberId).to.equal('dima');
     expect(subscriberRepository.findOne.firstCall.args[0].subscriberId).to.equal('dima');
+  });
+
+  it('still saves the email when another setup creates the subscriber first', async () => {
+    const { usecase, subscriberRepository } = setup();
+    subscriberRepository.findOne.onFirstCall().resolves(null);
+    subscriberRepository.create = sinon
+      .stub()
+      .rejects(Object.assign(new Error('E11000 duplicate key'), { code: 11000 }));
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...base, email: 'Alice@Example.com' }));
+
+    expect(subscriberRepository.update.firstCall.args[1]).to.deep.equal({ $set: { email: 'alice@example.com' } });
   });
 
   it('never asks who the operator is for anyone else', async () => {

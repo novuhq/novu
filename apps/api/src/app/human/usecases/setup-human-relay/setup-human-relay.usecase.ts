@@ -15,6 +15,8 @@ import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
 export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
 
+type ContactDetails = Partial<Pick<SubscriberEntity, 'email' | 'firstName' | 'lastName'>>;
+
 /**
  * Idempotent bootstrap behind `human setup`: ensures the environment has its
  * hidden `human_relay` system agent (the delivery/webhook anchor for all human
@@ -104,32 +106,13 @@ export class SetupHumanRelay {
   }
 
   private async ensureSubscriber(command: SetupHumanRelayCommand, subscriberId: string): Promise<void> {
-    const email = command.email?.trim().toLowerCase();
-    const firstName = command.firstName?.trim() || undefined;
-    const lastName = command.lastName?.trim() || undefined;
+    const details: ContactDetails = {
+      email: command.email?.trim().toLowerCase() || undefined,
+      firstName: command.firstName?.trim() || undefined,
+      lastName: command.lastName?.trim() || undefined,
+    };
 
-    const existing = await this.subscriberRepository.findOne({
-      subscriberId,
-      _environmentId: command.environmentId,
-    });
-
-    if (existing) {
-      // Email identity powers the email channel (delivery target + inbound
-      // reply resolution live on Subscriber.email — no ChannelEndpoint).
-      // Names are only ever set or replaced, never cleared: an invite that
-      // omits `--name` must not wipe a name captured earlier.
-      const updates: Partial<Pick<SubscriberEntity, 'email' | 'firstName' | 'lastName'>> = {};
-      if (email && existing.email !== email) updates.email = email;
-      if (firstName && existing.firstName !== firstName) updates.firstName = firstName;
-      if (lastName && existing.lastName !== lastName) updates.lastName = lastName;
-
-      if (Object.keys(updates).length > 0) {
-        await this.subscriberRepository.update(
-          { subscriberId, _environmentId: command.environmentId },
-          { $set: updates }
-        );
-      }
-
+    if (await this.updateExistingSubscriber(command, subscriberId, details)) {
       return;
     }
 
@@ -138,15 +121,52 @@ export class SetupHumanRelay {
         subscriberId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        ...(email ? { email } : {}),
-        ...(firstName ? { firstName } : {}),
-        ...(lastName ? { lastName } : {}),
+        ...(details.email ? { email: details.email } : {}),
+        ...(details.firstName ? { firstName: details.firstName } : {}),
+        ...(details.lastName ? { lastName: details.lastName } : {}),
       });
     } catch (err) {
-      // A setup running at the same moment created the same subscriber first; theirs stands.
       if (!isDuplicateKeyError(err)) {
         throw err;
       }
+
+      // A setup running at the same moment created the subscriber first. This request's email and
+      // name still have to land on it.
+      await this.updateExistingSubscriber(command, subscriberId, details);
     }
+  }
+
+  /** Saves the details on the subscriber when there is one, and says whether there was. */
+  private async updateExistingSubscriber(
+    command: SetupHumanRelayCommand,
+    subscriberId: string,
+    { email, firstName, lastName }: ContactDetails
+  ): Promise<boolean> {
+    const existing = await this.subscriberRepository.findOne({
+      subscriberId,
+      _environmentId: command.environmentId,
+    });
+
+    if (!existing) {
+      return false;
+    }
+
+    // Email identity powers the email channel (delivery target + inbound
+    // reply resolution live on Subscriber.email — no ChannelEndpoint).
+    // Names are only ever set or replaced, never cleared: an invite that
+    // omits `--name` must not wipe a name captured earlier.
+    const updates: ContactDetails = {};
+    if (email && existing.email !== email) updates.email = email;
+    if (firstName && existing.firstName !== firstName) updates.firstName = firstName;
+    if (lastName && existing.lastName !== lastName) updates.lastName = lastName;
+
+    if (Object.keys(updates).length > 0) {
+      await this.subscriberRepository.update(
+        { subscriberId, _environmentId: command.environmentId },
+        { $set: updates }
+      );
+    }
+
+    return true;
   }
 }
