@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
-import { toInclusiveUtcDays } from '../inclusive-utc-days';
+import { inclusiveUtcDayBounds, toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
+import { TABLE_NAME as TRACES_TABLE_NAME } from '../trace-log/trace-log.schema';
 import {
   WORKFLOW_RUN_COUNT_ORDER_BY,
   WORKFLOW_RUN_COUNT_TABLE_NAME,
@@ -174,15 +175,15 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 
   /**
-   * Platform usage from `workflow_run_count`, filtered to
-   * `event_type = workflow_run_status_processing`.
+   * Processing workflow runs per organization from the daily `workflow_run_count` buckets.
    *
-   * Callers pass a half-open Date range `[startDate, endDate)`. That maps to
-   * inclusive UTC calendar days: `date >= toDate(start) AND date <= toDate(end - 1ms)`,
-   * so a midnight exclusive period end (e.g. Stripe `current_period_end`) does not
-   * pull in the next period's first day.
+   * Counts every UTC day the half-open range `[startDate, endDate)` touches in full:
+   * `date >= toDate(start) AND date <= toDate(end - 1ms)`. A midnight exclusive end (e.g. Stripe
+   * `current_period_end`) does not pull in the next day, but mid-day bounds over-count by the runs
+   * of the first and last day that fall outside the range. Use `getOrganizationUsageInExactRange`
+   * when the exact range matters.
    */
-  async getPlatformUsageByDateRange(
+  async getPlatformUsageByWholeUtcDays(
     startDate: Date,
     endDate: Date,
     organizationId?: string
@@ -225,9 +226,10 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 
   /**
-   * Same source and half-open range semantics as `getPlatformUsageByDateRange`, but one row per
+   * Same source and whole-UTC-day semantics as `getPlatformUsageByWholeUtcDays`, but one row per
    * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
-   * `day` is the UTC calendar day as `YYYY-MM-DD`.
+   * `day` is the UTC calendar day as `YYYY-MM-DD`. Callers that need an exact mid-day range pass
+   * their in-memory sum to `excludeEdgeDayRunsOutsideRange`.
    *
    * When `minimumOrganizationTotal` is set, only organizations whose `sum(count)` over that same
    * window is at least the minimum are returned.
@@ -284,6 +286,86 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     });
 
     return result.data;
+  }
+
+  /**
+   * Processing workflow runs of one organization within exactly `[startDate, endDate)`: the whole-UTC-day count
+   * minus the runs on the first and last UTC day that fall outside the range.
+   */
+  async getOrganizationUsageInExactRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
+    const [wholeDayRows, edgeDayRunsOutside] = await Promise.all([
+      this.getPlatformUsageByWholeUtcDays(startDate, endDate, organizationId),
+      this.countEdgeDayRunsOutsideRange(organizationId, startDate, endDate),
+    ]);
+    const wholeDayCount = parseInt(wholeDayRows[0]?.count || '0', 10);
+
+    return this.subtractEdgeDayRuns(organizationId, wholeDayCount, edgeDayRunsOutside);
+  }
+
+  /**
+   * `wholeDayCount` (already summed over the whole UTC days of `[startDate, endDate)`) minus the organization's
+   * processing workflow runs on the first and last UTC day that fall outside the range.
+   */
+  async excludeEdgeDayRunsOutsideRange(
+    organizationId: string,
+    wholeDayCount: number,
+    startDate: Date,
+    endDate: Date
+  ): Promise<number> {
+    const edgeDayRunsOutside = await this.countEdgeDayRunsOutsideRange(organizationId, startDate, endDate);
+
+    return this.subtractEdgeDayRuns(organizationId, wholeDayCount, edgeDayRunsOutside);
+  }
+
+  /**
+   * Processing workflow runs of one organization on the first and last UTC day of `[startDate, endDate)` that fall
+   * outside it: what a whole-day sum over the range over-counts by. Read from raw `traces`, since
+   * `workflow_run_count` only has daily buckets.
+   */
+  private async countEdgeDayRunsOutsideRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
+    const { firstDayStart, lastDayEnd, isUtcDayAligned } = inclusiveUtcDayBounds(startDate, endDate);
+
+    if (isUtcDayAligned) {
+      return 0;
+    }
+
+    const query = `
+      SELECT count() as count
+      FROM ${TRACES_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND entity_type = 'workflow_run'
+        AND event_type = 'workflow_run_status_processing'
+        AND (
+          (created_at >= {firstDayStart:DateTime64(3, 'UTC')} AND created_at < {startDate:DateTime64(3, 'UTC')})
+          OR (created_at >= {endDate:DateTime64(3, 'UTC')} AND created_at < {lastDayEnd:DateTime64(3, 'UTC')})
+        )
+    `;
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params: {
+        organizationId,
+        firstDayStart: LogRepository.formatDateTime64(firstDayStart),
+        startDate: LogRepository.formatDateTime64(startDate),
+        endDate: LogRepository.formatDateTime64(endDate),
+        lastDayEnd: LogRepository.formatDateTime64(lastDayEnd),
+      },
+      clickhouse_settings: { log_comment: 'workflow_run_count_edge_day_correction' },
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
+  }
+
+  private subtractEdgeDayRuns(organizationId: string, wholeDayCount: number, edgeDayRunsOutside: number): number {
+    if (edgeDayRunsOutside > wholeDayCount) {
+      this.logger.warn(
+        { organizationId, wholeDayCount, edgeDayRunsOutside },
+        'Edge-day workflow runs outside the range exceed the whole-day count; the ClickHouse workflow_run_count and traces tables disagree'
+      );
+    }
+
+    return Math.max(wholeDayCount - edgeDayRunsOutside, 0);
   }
 
   async getActiveOrganizationIds(
