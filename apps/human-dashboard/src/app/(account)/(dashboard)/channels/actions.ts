@@ -70,7 +70,8 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
       attempts: START_LINK_ATTEMPTS_AFTER_SAVE,
     });
 
-    revalidatePath(CHANNELS_PATH);
+    // The first save creates the agent, which the sidebar shows, so the layout is refreshed as well.
+    revalidatePath('/', 'layout');
 
     return { ok: true, botUsername: link.botUsername || botUsername, startUrl: link.url };
   } catch (error) {
