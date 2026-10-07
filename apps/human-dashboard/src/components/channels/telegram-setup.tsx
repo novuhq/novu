@@ -2,11 +2,12 @@
 
 import { ArrowUpRight, Check, TriangleAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import QRCode from 'react-qr-code';
 
 import {
   checkTelegramConnectedAction,
+  loadTelegramSetupAction,
   refreshTelegramStartLinkAction,
   saveTelegramTokenAction,
 } from '@/app/(account)/(dashboard)/channels/actions';
@@ -28,7 +29,8 @@ const POLL_INTERVAL_MS = 2500;
 /** After this long the drawer stops asking on its own, so a forgotten tab doesn't poll forever. */
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 
-type SetupStep = 'create' | 'token' | 'start' | 'connected';
+/** `checking` and `unavailable` only happen when the page couldn't read the setup and the drawer has to. */
+type SetupStep = 'checking' | 'unavailable' | 'create' | 'token' | 'start' | 'connected';
 
 type TelegramSetupProps = {
   /** How far the setup got when the page loaded, so the drawer has something to show the moment it opens. */
@@ -40,7 +42,7 @@ type TelegramSetupProps = {
 /** The drawer that walks through giving the agent a Telegram bot. The Channels table opens it. */
 export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps) {
   const router = useRouter();
-  const [step, setStep] = useState<SetupStep>(setup.step);
+  const [step, setStep] = useState<SetupStep>(stepOf(setup));
   const [bot, setBot] = useState(botOf(setup));
   const [pasted, setPasted] = useState('');
   const [error, setError] = useState<string>();
@@ -52,36 +54,47 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
   const [foundLabel, setFoundLabel] = useState('');
   const showsFound = Boolean(found) && !error;
 
+  // A link stops working after ten minutes, so it's replaced quietly whenever the wait starts over.
+  const refreshLink = useCallback(async () => {
+    const fresh = await refreshTelegramStartLinkAction().catch(() => null);
+    if (fresh) {
+      setBot({ username: fresh.botUsername, startUrl: fresh.startUrl });
+    }
+  }, []);
+
+  const show = useCallback(
+    (next: TelegramSetupState) => {
+      setStep(stepOf(next));
+      setBot(botOf(next));
+
+      if (next.step === 'start') {
+        void refreshLink();
+      }
+    },
+    [refreshLink]
+  );
+
+  const check = useCallback(async () => {
+    setStep('checking');
+    show(await loadTelegramSetupAction().catch((): TelegramSetupState => ({ step: 'unknown' })));
+  }, [show]);
+
   // Reopening picks the setup up where the page says it is: a saved bot goes straight to "say hi".
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setStep(setup.step);
-    setBot(botOf(setup));
     setError(undefined);
     setPasted('');
     setWaitedTooLong(false);
 
-    if (setup.step !== 'start') {
-      return;
+    if (setup.step === 'unknown') {
+      void check();
+    } else {
+      show(setup);
     }
-
-    // The link that came with the page may have run out by now. A new one replaces it quietly.
-    let stale = false;
-    refreshTelegramStartLinkAction()
-      .then((fresh) => {
-        if (fresh && !stale) {
-          setBot({ username: fresh.botUsername, startUrl: fresh.startUrl });
-        }
-      })
-      .catch(() => undefined);
-
-    return () => {
-      stale = true;
-    };
-  }, [open, setup]);
+  }, [open, setup, show, check]);
 
   // Telegram tells the API when the operator presses Start; the drawer asks until that shows up.
   useEffect(() => {
@@ -131,6 +144,10 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
       setBot({ username: result.botUsername, startUrl: result.startUrl });
       setWaitedTooLong(false);
       setStep('start');
+
+      if (!result.startUrl) {
+        void refreshLink();
+      }
     });
   }
 
@@ -151,7 +168,21 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
           )
         }
       >
-        <Stepper>
+        {(step === 'checking' || step === 'unavailable') && (
+          <div aria-live="polite" className="flex flex-col items-start gap-3 text-[13px] leading-4.5 text-secondary">
+            {step === 'checking' ? (
+              <p>Checking your setup…</p>
+            ) : (
+              <>
+                <p>We couldn’t check your Telegram setup just now. Nothing was changed.</p>
+                <Button variant="secondary" className={SMALL_BUTTON} onClick={() => void check()}>
+                  Try again
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+        <Stepper className={step === 'checking' || step === 'unavailable' ? 'hidden' : undefined}>
           <Step
             index={1}
             title="Create a bot with BotFather"
@@ -289,19 +320,33 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
             <p className="text-[13px] leading-4.5 text-secondary">
               Open {botName} and tap Start. Telegram sends /start for you, and that’s how it learns where to reach you.
             </p>
-            <a
-              href={bot.startUrl}
-              target="_blank"
-              rel="noreferrer"
-              className={buttonClassName('secondary', `${SMALL_BUTTON} self-start`)}
-            >
-              <ArrowUpRight aria-hidden="true" className="size-3.5" />
-              Open {botName}
-            </a>
+            {bot.startUrl ? (
+              <a
+                href={bot.startUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonClassName('secondary', `${SMALL_BUTTON} self-start`)}
+              >
+                <ArrowUpRight aria-hidden="true" className="size-3.5" />
+                Open {botName}
+              </a>
+            ) : (
+              // The token is saved, but the link to the bot couldn't be made yet.
+              <Button variant="secondary" className={`${SMALL_BUTTON} self-start`} onClick={() => void refreshLink()}>
+                Get the link to {botName}
+              </Button>
+            )}
             {waitedTooLong ? (
               <p className="flex flex-wrap items-center gap-2.5 text-xs leading-4 text-secondary">
                 No /start yet.
-                <Button variant="secondary" className={SMALL_BUTTON} onClick={() => setWaitedTooLong(false)}>
+                <Button
+                  variant="secondary"
+                  className={SMALL_BUTTON}
+                  onClick={() => {
+                    setWaitedTooLong(false);
+                    void refreshLink();
+                  }}
+                >
                   Keep waiting
                 </Button>
               </p>
@@ -337,9 +382,13 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
   );
 }
 
+function stepOf(setup: TelegramSetupState): SetupStep {
+  return setup.step === 'unknown' ? 'unavailable' : setup.step;
+}
+
 function botOf(setup: TelegramSetupState) {
   return {
-    username: setup.step === 'create' ? '' : setup.botUsername,
+    username: 'botUsername' in setup ? setup.botUsername : '',
     startUrl: setup.step === 'start' ? setup.startUrl : '',
   };
 }

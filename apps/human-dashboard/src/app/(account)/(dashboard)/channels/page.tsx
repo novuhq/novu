@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   title: 'Channels',
 };
 
+/** The table doesn't wait longer than this for Telegram; the drawer then reads the setup when it opens. */
+const TELEGRAM_SETUP_TIMEOUT_MS = 4000;
+
 export default async function ChannelsPage() {
   const account = await requireHumanAccount({ returnTo: '/channels' });
   const { rows, telegramSetup } = await loadChannels(account);
@@ -54,11 +57,11 @@ async function loadChannels(account: HumanAccount): Promise<{ rows: ChannelRow[]
   const [telegramConnected, slackConnected, telegramSetup, slackWorkspace] = await Promise.all([
     isChatConnected(account, telegram, operatorContactId),
     isChatConnected(account, slack, operatorContactId),
-    readTelegramSetup(account, telegram, operatorContactId),
+    withinTime(readTelegramSetup(account, telegram, operatorContactId)),
     // The name is a nicety: the row still says "Connected" when it can't be read.
     slack ? findSlackWorkspaceName(account, slack.identifier).catch(() => undefined) : undefined,
   ]);
-  const botUsername = telegramSetup.step === 'create' ? '' : telegramSetup.botUsername;
+  const botUsername = 'botUsername' in telegramSetup ? telegramSetup.botUsername : '';
   const slackHandle = slack && slackAgentHandle(slack);
 
   const rows: ChannelRow[] = [
@@ -91,6 +94,16 @@ async function loadChannels(account: HumanAccount): Promise<{ rows: ChannelRow[]
   ];
 
   return { rows, telegramSetup };
+}
+
+/** Reading the setup asks Telegram who the bot is, which can hang; the page settles for `unknown` instead. */
+function withinTime(setup: Promise<TelegramSetupState>): Promise<TelegramSetupState> {
+  return Promise.race([
+    setup,
+    new Promise<TelegramSetupState>((resolve) => {
+      setTimeout(() => resolve({ step: 'unknown' }), TELEGRAM_SETUP_TIMEOUT_MS);
+    }),
+  ]);
 }
 
 /**
