@@ -13,9 +13,6 @@ import { getRelayAgent } from '@/lib/human-agent-api';
 
 const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up' };
 
-/** The name `human setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
-const DEFAULT_AGENT_NAME = 'Human';
-
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
@@ -68,10 +65,10 @@ async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
       return AGENT_NOT_SET_UP;
     }
 
-    const ownName = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : undefined;
-    const name = ownName ?? (user.firstName ? `${user.firstName}’s assistant` : undefined);
-
-    return name ? { name, status: 'Your agent' } : { name: 'Your agent', status: 'Set up' };
+    return {
+      name: agent.name ? `${agent.name} agent` : AGENT_NOT_SET_UP.name,
+      status: agent.active ? 'Active' : 'Paused',
+    };
   } catch (error) {
     console.error('Failed to load the agent for the sidebar', error);
 
