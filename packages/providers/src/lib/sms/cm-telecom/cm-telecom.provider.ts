@@ -5,6 +5,20 @@ import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
+interface ICmMessageResult {
+  to: string;
+  status: string;
+  reference?: string;
+  messageErrorCode: number;
+  messageDetails?: string | null;
+}
+
+interface ICmResponse {
+  details: string;
+  errorCode: number;
+  messages?: ICmMessageResult[];
+}
+
 export class CmTelecomSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.CmTelecom;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -42,15 +56,21 @@ export class CmTelecomSmsProvider extends BaseProvider implements ISmsProvider {
       },
     });
 
-    const { data } = await this.httpClient.post(this.BASE_URL, payload.body, {
+    const { data } = await this.httpClient.post<ICmResponse>(this.BASE_URL, payload.body, {
       headers: {
         'Content-Type': 'application/json',
         'X-CM-PRODUCTTOKEN': this.config.productToken,
       },
     });
 
+    const message = data.messages?.[0];
+
+    if (message && (message.status !== 'Accepted' || message.messageErrorCode !== 0)) {
+      throw new Error(`CM.com rejected the message: ${message.messageDetails || data.details}`);
+    }
+
     return {
-      id: data.details?.[0]?.reference || options.id || 'unknown',
+      id: message?.reference || options.id || 'unknown',
       date: new Date().toISOString(),
     };
   }

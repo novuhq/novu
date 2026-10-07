@@ -1,8 +1,11 @@
-export interface ITelnyxCLient {
+export interface ITelnyxClient {
   messages: {
     create: (options: ITelnyxSmsOptions) => Promise<ITelnyxMessageResponse>;
   };
 }
+
+/** @deprecated Use `ITelnyxClient` instead. */
+export type ITelnyxCLient = ITelnyxClient;
 
 export interface ITelnyxSmsOptions {
   to: string;

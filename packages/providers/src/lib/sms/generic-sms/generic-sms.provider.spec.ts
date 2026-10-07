@@ -11,7 +11,10 @@ const ORIGINAL_SELF_HOSTED = process.env.IS_SELF_HOSTED;
 let server: http.Server;
 let serverUrl: string;
 let directServerUrl: string;
-let lastRequest: { url: string; method: string; headers: http.IncomingHttpHeaders; body: string } | null = null;
+type RecordedRequest = { url: string; method: string; headers: http.IncomingHttpHeaders; body: string };
+
+let lastRequest: RecordedRequest | null = null;
+let allRequests: RecordedRequest[] = [];
 
 function restoreEnv(key: string, value: string | undefined) {
   if (value === undefined) {
@@ -23,6 +26,7 @@ function restoreEnv(key: string, value: string | undefined) {
 
 beforeEach(async () => {
   lastRequest = null;
+  allRequests = [];
   server = http.createServer((req, res) => {
     const chunks: Buffer[] = [];
     req.on('data', (c: Buffer) => chunks.push(c));
@@ -33,6 +37,15 @@ beforeEach(async () => {
         headers: req.headers,
         body: Buffer.concat(chunks).toString('utf8'),
       };
+      allRequests.push(lastRequest);
+
+      if (req.url === '/auth') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ data: { token: 'token-123' } }));
+
+        return;
+      }
+
       const messageId = crypto.randomUUID();
       const messageDate = new Date().toISOString();
       res.writeHead(200, { 'content-type': 'application/json' });
@@ -201,5 +214,55 @@ describe('without SSRF protection (self-hosted)', () => {
 
     expect(lastRequest).not.toBeNull();
     expect(result.id).toBeDefined();
+  });
+
+  test('should send _passthrough headers along with the api key header', async () => {
+    const provider = new GenericSmsProvider({
+      baseUrl: directServerUrl,
+      apiKeyRequestHeader: 'apiKey',
+      apiKey: '123456',
+      from: 'sender-id',
+    });
+
+    await provider.sendMessage(
+      {
+        to: '+1234567890',
+        content: 'SMS Content form Generic SMS Provider',
+      },
+      {
+        _passthrough: {
+          headers: {
+            'X-Custom': 'custom-value',
+          },
+        },
+      }
+    );
+
+    expect(lastRequest?.headers.apikey).toBe('123456');
+    expect(lastRequest?.headers['x-custom']).toBe('custom-value');
+  });
+
+  test('should send the api key header together with the token when authenticating by token', async () => {
+    const provider = new GenericSmsProvider({
+      baseUrl: directServerUrl,
+      apiKeyRequestHeader: 'apiKey',
+      apiKey: '123456',
+      from: 'sender-id',
+      authenticateByToken: true,
+      domain: `${directServerUrl}auth`,
+      authenticationTokenKey: 'token',
+    });
+
+    await provider.sendMessage({
+      to: '+1234567890',
+      content: 'SMS Content form Generic SMS Provider',
+    });
+
+    expect(allRequests).toHaveLength(2);
+    expect(allRequests[0].url).toBe('/auth');
+    expect(allRequests[0].headers.apikey).toBe('123456');
+    expect(allRequests[1].url).toBe('/');
+    expect(allRequests[1].headers.apikey).toBe('123456');
+    expect(allRequests[1].headers.token).toBe('token-123');
   });
 });

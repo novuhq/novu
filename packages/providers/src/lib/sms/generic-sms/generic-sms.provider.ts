@@ -71,27 +71,28 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       sender: options.from || this.config.from,
     });
 
+    let requestHeaders: Record<string, string> = { ...this.headers, ...data.headers };
+    const client = this.axiosInstance ?? createProviderHttpClient({ baseURL: this.config.baseUrl });
+
     if (this.config?.authenticateByToken) {
       const tokenAxiosInstance = await createProviderHttpClient().request({
         method: 'POST',
         baseURL: this.config.domain,
-        headers: this.headers,
+        headers: requestHeaders,
       });
 
       const token = tokenAxiosInstance.data.data[this.config.authenticationTokenKey!];
 
-      this.axiosInstance = createProviderHttpClient({
-        baseURL: this.config.baseUrl,
-        headers: {
-          [this.config.authenticationTokenKey!]: token,
-          ...data.headers,
-        },
-      });
+      requestHeaders = {
+        ...requestHeaders,
+        [this.config.authenticationTokenKey!]: token,
+      };
     }
 
-    const response = await this.axiosInstance!.request({
+    const response = await client.request({
       method: 'POST',
       data: data.body,
+      headers: requestHeaders,
     });
 
     const responseData = response.data as Record<string, unknown>;
