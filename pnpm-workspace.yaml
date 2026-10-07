@@ -113,7 +113,16 @@ overrides:
   # proxy bypass issues. All patched in 1.20.0.
   axios@>=1.0.0 <1.20.0: ^1.20.0
   '@slack/web-api': 7.17.0
-  seroval@<1.5.3: ^1.5.3
+  # GHSA-p6vx-979v-rg4c (critical): seroval `fromJSON()` Promise thenable
+  # assimilation invokes plugin-produced callables (bypass of
+  # GHSA-mv8w-475r-vwqw). Patched in 1.6.1. GHSA-jp82-f5mq-hwhp (high) adds
+  # memory exhaustion via unchecked TypedArray length in JSON deserialization,
+  # patched in 1.6.3. Widen the override to lift transitive consumers
+  # (apps/dashboard > @better-auth/sso/better-auth > solid-js > seroval and
+  # seroval-plugins) onto the 1.6.x patch line. solid-js@1.9.6 depends on
+  # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
+  # which stay satisfied on 1.6.x.
+  seroval@<1.6.3: ^1.6.3
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1
