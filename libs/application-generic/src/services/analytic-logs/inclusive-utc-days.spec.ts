@@ -32,10 +32,9 @@ describe('inclusiveUtcDayBounds', () => {
     expect(
       inclusiveUtcDayBounds(new Date('2026-09-30T15:06:44.000Z'), new Date('2026-10-30T15:06:44.000Z'))
     ).to.deep.equal({
-      start: '2026-09-30',
-      end: '2026-10-30',
-      startDayStart: new Date('2026-09-30T00:00:00.000Z'),
-      endDayEnd: new Date('2026-10-31T00:00:00.000Z'),
+      firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
+      lastDayEnd: new Date('2026-10-31T00:00:00.000Z'),
+      isUtcDayAligned: false,
     });
   });
 
@@ -43,18 +42,25 @@ describe('inclusiveUtcDayBounds', () => {
     expect(
       inclusiveUtcDayBounds(new Date('2026-09-30T15:06:44.000Z'), new Date('2026-10-30T00:00:00.000Z'))
     ).to.deep.equal({
-      start: '2026-09-30',
-      end: '2026-10-29',
-      startDayStart: new Date('2026-09-30T00:00:00.000Z'),
-      endDayEnd: new Date('2026-10-30T00:00:00.000Z'),
+      firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
+      lastDayEnd: new Date('2026-10-30T00:00:00.000Z'),
+      isUtcDayAligned: false,
     });
   });
 
-  it('is the calendar-day pair returned by toInclusiveUtcDays', () => {
-    const startDate = new Date('2024-01-01T00:00:00.000Z');
-    const endDate = new Date('2024-02-01T00:00:00.000Z');
-    const bounds = inclusiveUtcDayBounds(startDate, endDate);
+  it('is not UTC-day aligned when only the end is mid-day', () => {
+    expect(
+      inclusiveUtcDayBounds(new Date('2026-09-30T00:00:00.000Z'), new Date('2026-10-30T15:06:44.000Z')).isUtcDayAligned
+    ).to.equal(false);
+  });
 
-    expect(toInclusiveUtcDays(startDate, endDate)).to.deep.equal({ start: bounds.start, end: bounds.end });
+  it('is UTC-day aligned when both bounds are UTC midnights', () => {
+    expect(
+      inclusiveUtcDayBounds(new Date('2026-09-30T00:00:00.000Z'), new Date('2026-10-30T00:00:00.000Z'))
+    ).to.deep.equal({
+      firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
+      lastDayEnd: new Date('2026-10-30T00:00:00.000Z'),
+      isUtcDayAligned: true,
+    });
   });
 });
