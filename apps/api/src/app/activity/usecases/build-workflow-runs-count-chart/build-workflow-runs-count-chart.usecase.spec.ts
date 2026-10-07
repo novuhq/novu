@@ -1,5 +1,7 @@
+import { NotificationRepository } from '@novu/dal';
 import { expect } from 'chai';
-import { restore, stub } from 'sinon';
+import { restore, type SinonStub, stub } from 'sinon';
+import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { BuildWorkflowRunsCountChartCommand } from './build-workflow-runs-count-chart.command';
 import { BuildWorkflowRunsCountChart } from './build-workflow-runs-count-chart.usecase';
 
@@ -13,6 +15,9 @@ describe('BuildWorkflowRunsCountChart', () => {
 
   let workflowRunRepositoryMock;
   let workflowRunCountRepositoryMock;
+  let notificationRepository: NotificationRepository;
+  let countNotifications: SinonStub;
+  let subscriberRepositoryMock;
   let featureFlagsServiceMock;
   let loggerMock;
   let usecase: BuildWorkflowRunsCountChart;
@@ -23,6 +28,11 @@ describe('BuildWorkflowRunsCountChart', () => {
     };
     workflowRunCountRepositoryMock = {
       getTotalRunsCount: stub().resolves(9728),
+    };
+    notificationRepository = new NotificationRepository();
+    countNotifications = stub(notificationRepository, 'count').resolves(1);
+    subscriberRepositoryMock = {
+      searchSubscribers: stub().resolves(['mongo-subscriber-id']),
     };
     featureFlagsServiceMock = {
       getFlag: stub().resolves(true),
@@ -35,6 +45,8 @@ describe('BuildWorkflowRunsCountChart', () => {
     usecase = new BuildWorkflowRunsCountChart(
       workflowRunRepositoryMock,
       workflowRunCountRepositoryMock,
+      notificationRepository,
+      subscriberRepositoryMock,
       featureFlagsServiceMock,
       loggerMock
     );
@@ -49,10 +61,11 @@ describe('BuildWorkflowRunsCountChart', () => {
 
     expect(result).to.deep.equal({ count: 9728 });
     expect(workflowRunCountRepositoryMock.getTotalRunsCount.calledOnce).to.equal(true);
+    expect(countNotifications.called).to.equal(false);
     expect(workflowRunRepositoryMock.count.called).to.equal(false);
   });
 
-  it('counts from raw workflow runs when the flag is disabled', async () => {
+  it('counts from raw workflow runs when the flag is disabled and no filters are set', async () => {
     featureFlagsServiceMock.getFlag.resolves(false);
 
     const result = await usecase.execute(Object.assign(new BuildWorkflowRunsCountChartCommand(), baseCommand));
@@ -60,9 +73,10 @@ describe('BuildWorkflowRunsCountChart', () => {
     expect(result).to.deep.equal({ count: 1 });
     expect(workflowRunCountRepositoryMock.getTotalRunsCount.called).to.equal(false);
     expect(workflowRunRepositoryMock.count.calledOnce).to.equal(true);
+    expect(countNotifications.called).to.equal(false);
   });
 
-  it('counts from raw workflow runs when filtering by transaction id even if the flag is enabled', async () => {
+  it('counts notifications by transaction id even if the aggregated-count flag is enabled', async () => {
     const result = await usecase.execute(
       Object.assign(new BuildWorkflowRunsCountChartCommand(), {
         ...baseCommand,
@@ -72,33 +86,87 @@ describe('BuildWorkflowRunsCountChart', () => {
 
     expect(result).to.deep.equal({ count: 1 });
     expect(workflowRunCountRepositoryMock.getTotalRunsCount.called).to.equal(false);
+    expect(workflowRunRepositoryMock.count.called).to.equal(false);
     expect(featureFlagsServiceMock.getFlag.called).to.equal(false);
-    expect(workflowRunRepositoryMock.count.calledOnce).to.equal(true);
+    expect(countNotifications.calledOnce).to.equal(true);
 
-    const { where } = workflowRunRepositoryMock.count.firstCall.args[0];
-    expect(where.enforced).to.deep.equal({ environmentId: 'environment-id' });
-    expect(where.conditions).to.deep.include({
-      field: 'transaction_id',
-      operator: 'IN',
-      value: ['txn_6ac3fe5507qgi9gudtsc'],
+    const [query, limit, readPreference] = countNotifications.firstCall.args;
+    expect(limit).to.equal(undefined);
+    expect(readPreference).to.equal('secondaryPreferred');
+    expect(query).to.deep.equal({
+      _environmentId: 'environment-id',
+      transactionId: { $in: ['txn_6ac3fe5507qgi9gudtsc'] },
+      createdAt: {
+        $gte: '2026-01-01T00:00:00.000Z',
+        $lte: '2026-01-31T23:59:59.999Z',
+      },
     });
   });
 
-  const granularFilterCases: Array<Partial<BuildWorkflowRunsCountChartCommand>> = [
-    { workflowIds: ['workflow-id'] },
-    { subscriberIds: ['subscriber-id'] },
-    { channels: ['email'] },
-    { topicKey: 'topic-key' },
-  ];
+  it('resolves external subscriber ids before counting notifications', async () => {
+    await usecase.execute(
+      Object.assign(new BuildWorkflowRunsCountChartCommand(), {
+        ...baseCommand,
+        subscriberIds: ['external-subscriber-id'],
+      })
+    );
 
-  for (const filters of granularFilterCases) {
-    const [filterName] = Object.keys(filters);
-
-    it(`counts from raw workflow runs when filtering by ${filterName} even if the flag is enabled`, async () => {
-      await usecase.execute(Object.assign(new BuildWorkflowRunsCountChartCommand(), { ...baseCommand, ...filters }));
-
-      expect(workflowRunCountRepositoryMock.getTotalRunsCount.called).to.equal(false);
-      expect(workflowRunRepositoryMock.count.calledOnce).to.equal(true);
+    expect(
+      subscriberRepositoryMock.searchSubscribers.calledOnceWith('environment-id', ['external-subscriber-id'])
+    ).to.equal(true);
+    expect(countNotifications.firstCall.args[0]._subscriberId).to.deep.equal({
+      $in: ['mongo-subscriber-id'],
     });
-  }
+  });
+
+  it('returns zero when none of the subscriber ids exist', async () => {
+    subscriberRepositoryMock.searchSubscribers.resolves([]);
+
+    const result = await usecase.execute(
+      Object.assign(new BuildWorkflowRunsCountChartCommand(), {
+        ...baseCommand,
+        subscriberIds: ['missing-subscriber'],
+      })
+    );
+
+    expect(result).to.deep.equal({ count: 0 });
+    expect(countNotifications.called).to.equal(false);
+  });
+
+  it('counts notifications for a workflow, channel, and topic filter', async () => {
+    await usecase.execute(
+      Object.assign(new BuildWorkflowRunsCountChartCommand(), {
+        ...baseCommand,
+        workflowIds: ['workflow-id'],
+        channels: ['email'],
+        topicKey: 'topic-key',
+      })
+    );
+
+    expect(countNotifications.firstCall.args[0]._templateId).to.deep.equal({ $in: ['workflow-id'] });
+    expect(countNotifications.firstCall.args[0].channels).to.deep.equal({ $in: ['email'] });
+    expect(countNotifications.firstCall.args[0]['topics.topicKey']).to.equal('topic-key');
+    expect(workflowRunRepositoryMock.count.called).to.equal(false);
+  });
+
+  it('counts notifications by the recorded terminal workflow status', async () => {
+    await usecase.execute(
+      Object.assign(new BuildWorkflowRunsCountChartCommand(), {
+        ...baseCommand,
+        statuses: [WorkflowRunStatusDtoEnum.COMPLETED, WorkflowRunStatusDtoEnum.ERROR],
+      })
+    );
+
+    expect(countNotifications.firstCall.args[0].$and).to.deep.equal([
+      {
+        $or: [
+          {
+            lastEmittedWorkflowStatusEvent: {
+              $in: ['workflow_run_status_completed', 'workflow_run_status_error'],
+            },
+          },
+        ],
+      },
+    ]);
+  });
 });
