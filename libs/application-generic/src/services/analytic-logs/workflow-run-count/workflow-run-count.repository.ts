@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
-import { inclusiveUtcDayBounds, toInclusiveUtcDays } from '../inclusive-utc-days';
+import { inclusiveUtcDayBounds, toInclusiveUtcDays, toUtcDay } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
 import { TABLE_NAME as TRACES_TABLE_NAME } from '../trace-log/trace-log.schema';
 import {
@@ -11,6 +11,25 @@ import {
   WorkflowRunCount,
   workflowRunCountSchema,
 } from './workflow-run-count.schema';
+
+/** Tags the edge-day traces query in ClickHouse `system.query_log`. */
+export const EDGE_DAY_CORRECTION_LOG_COMMENT = 'workflow_run_count_edge_day_correction';
+
+export interface DailyWorkflowRunUsage {
+  /** UTC calendar day as `YYYY-MM-DD`. */
+  day: string;
+  count: number;
+}
+
+export interface ExactRangeFromDailyUsageQuery {
+  organizationId: string;
+  /** The organization's rows from `getPlatformDailyUsageByWholeUtcDays`, read over a range ending in the future. */
+  dailyUsage: DailyWorkflowRunUsage[];
+  /** `startDate` of the range `dailyUsage` was read over. */
+  dailyUsageFrom: Date;
+  startDate: Date;
+  endDate: Date;
+}
 
 @Injectable()
 export class WorkflowRunCountRepository extends LogRepository<typeof workflowRunCountSchema, WorkflowRunCount> {
@@ -229,12 +248,12 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
    * Same source and whole-UTC-day semantics as `getPlatformUsageByWholeUtcDays`, but one row per
    * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
    * `day` is the UTC calendar day as `YYYY-MM-DD`. Callers that need an exact mid-day range pass
-   * their in-memory sum to `excludeEdgeDayRunsOutsideRange`.
+   * an organization's rows to `getOrganizationUsageInExactRangeFromDailyUsage`.
    *
    * When `minimumOrganizationTotal` is set, only organizations whose `sum(count)` over that same
    * window is at least the minimum are returned.
    */
-  async getPlatformDailyUsageByDateRange(
+  async getPlatformDailyUsageByWholeUtcDays(
     startDate: Date,
     endDate: Date,
     minimumOrganizationTotal?: number
@@ -303,15 +322,31 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 
   /**
-   * `wholeDayCount` (already summed over the whole UTC days of `[startDate, endDate)`) minus the organization's
-   * processing workflow runs on the first and last UTC day that fall outside the range.
+   * Same count as `getOrganizationUsageInExactRange`, with the whole UTC days summed from rows the caller already
+   * read. Days after the end of that read are taken as empty. When the rows start after the range's first day,
+   * the range is counted from ClickHouse instead.
    */
-  async excludeEdgeDayRunsOutsideRange(
-    organizationId: string,
-    wholeDayCount: number,
-    startDate: Date,
-    endDate: Date
-  ): Promise<number> {
+  async getOrganizationUsageInExactRangeFromDailyUsage({
+    organizationId,
+    dailyUsage,
+    dailyUsageFrom,
+    startDate,
+    endDate,
+  }: ExactRangeFromDailyUsageQuery): Promise<number> {
+    const { start, end } = toInclusiveUtcDays(startDate, endDate);
+
+    if (toUtcDay(dailyUsageFrom) > start) {
+      this.logger.warn(
+        { organizationId, dailyUsageFrom, startDate },
+        'Daily workflow run usage starts after the first day of the range; counting the range from ClickHouse'
+      );
+
+      return this.getOrganizationUsageInExactRange(organizationId, startDate, endDate);
+    }
+
+    const wholeDayCount = dailyUsage
+      .filter(({ day }) => day >= start && day <= end)
+      .reduce((sum, { count }) => sum + count, 0);
     const edgeDayRunsOutside = await this.countEdgeDayRunsOutsideRange(organizationId, startDate, endDate);
 
     return this.subtractEdgeDayRuns(organizationId, wholeDayCount, edgeDayRunsOutside);
@@ -351,7 +386,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
         endDate: LogRepository.formatDateTime64(endDate),
         lastDayEnd: LogRepository.formatDateTime64(lastDayEnd),
       },
-      clickhouse_settings: { log_comment: 'workflow_run_count_edge_day_correction' },
+      settings: { log_comment: EDGE_DAY_CORRECTION_LOG_COMMENT },
     });
 
     return parseInt(result.data[0]?.count || '0', 10);

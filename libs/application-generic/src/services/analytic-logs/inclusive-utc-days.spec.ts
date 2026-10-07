@@ -33,6 +33,7 @@ describe('inclusiveUtcDayBounds', () => {
       inclusiveUtcDayBounds(new Date('2026-09-30T15:06:44.000Z'), new Date('2026-10-30T15:06:44.000Z'))
     ).to.deep.equal({
       firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
+      lastDayStart: new Date('2026-10-30T00:00:00.000Z'),
       lastDayEnd: new Date('2026-10-31T00:00:00.000Z'),
       isUtcDayAligned: false,
     });
@@ -43,6 +44,7 @@ describe('inclusiveUtcDayBounds', () => {
       inclusiveUtcDayBounds(new Date('2026-09-30T15:06:44.000Z'), new Date('2026-10-30T00:00:00.000Z'))
     ).to.deep.equal({
       firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
+      lastDayStart: new Date('2026-10-29T00:00:00.000Z'),
       lastDayEnd: new Date('2026-10-30T00:00:00.000Z'),
       isUtcDayAligned: false,
     });
@@ -59,6 +61,7 @@ describe('inclusiveUtcDayBounds', () => {
       inclusiveUtcDayBounds(new Date('2026-09-30T00:00:00.000Z'), new Date('2026-10-30T00:00:00.000Z'))
     ).to.deep.equal({
       firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
+      lastDayStart: new Date('2026-10-29T00:00:00.000Z'),
       lastDayEnd: new Date('2026-10-30T00:00:00.000Z'),
       isUtcDayAligned: true,
     });

@@ -10,7 +10,9 @@ export function toUtcDay(date: Date): string {
 export interface InclusiveUtcDayBounds {
   /** UTC midnight at the start of `startDate`'s day. */
   firstDayStart: Date;
-  /** UTC midnight after the day of `endDate - 1ms`: exclusive end of the last inclusive day. */
+  /** UTC midnight at the start of the day of `endDate - 1ms`: the last inclusive day. */
+  lastDayStart: Date;
+  /** UTC midnight after `lastDayStart`: exclusive end of the last inclusive day. */
   lastDayEnd: Date;
   /** `startDate` and `endDate` are both UTC midnights, so the inclusive days cover exactly the range. */
   isUtcDayAligned: boolean;
@@ -23,10 +25,12 @@ export interface InclusiveUtcDayBounds {
  */
 export function inclusiveUtcDayBounds(startDate: Date, endDate: Date): InclusiveUtcDayBounds {
   const firstDayStart = startOfUtcDay(startDate);
-  const lastDayEnd = new Date(startOfUtcDay(new Date(endDate.getTime() - 1)).getTime() + DAY_MS);
+  const lastDayStart = startOfUtcDay(new Date(endDate.getTime() - 1));
+  const lastDayEnd = new Date(lastDayStart.getTime() + DAY_MS);
 
   return {
     firstDayStart,
+    lastDayStart,
     lastDayEnd,
     isUtcDayAligned: firstDayStart.getTime() === startDate.getTime() && lastDayEnd.getTime() === endDate.getTime(),
   };
@@ -36,11 +40,11 @@ export function inclusiveUtcDayBounds(startDate: Date, endDate: Date): Inclusive
  * First and last inclusive UTC calendar day (`YYYY-MM-DD`) of `[startDate, endDate)`; see {@link inclusiveUtcDayBounds}.
  */
 export function toInclusiveUtcDays(startDate: Date, endDate: Date): { start: string; end: string } {
-  const { firstDayStart, lastDayEnd } = inclusiveUtcDayBounds(startDate, endDate);
+  const { firstDayStart, lastDayStart } = inclusiveUtcDayBounds(startDate, endDate);
 
   return {
     start: toUtcDay(firstDayStart),
-    end: toUtcDay(new Date(lastDayEnd.getTime() - DAY_MS)),
+    end: toUtcDay(lastDayStart),
   };
 }
 
