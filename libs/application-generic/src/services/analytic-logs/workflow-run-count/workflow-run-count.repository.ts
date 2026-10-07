@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
-import { toInclusiveUtcDays } from '../inclusive-utc-days';
+import { type InclusiveUtcDayBounds, inclusiveUtcDayBounds, toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
 import { TABLE_NAME as TRACES_TABLE_NAME } from '../trace-log/trace-log.schema';
 import {
@@ -11,8 +11,6 @@ import {
   WorkflowRunCount,
   workflowRunCountSchema,
 } from './workflow-run-count.schema';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class WorkflowRunCountRepository extends LogRepository<typeof workflowRunCountSchema, WorkflowRunCount> {
@@ -228,35 +226,78 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 
   /**
-   * Exact processing-run count of one organization in the half-open range `[startDate, endDate)`, unlike the
-   * whole-UTC-day `getPlatformUsageByDateRange`, which it corrects by `getEdgeDayUsageOutsideRange`.
+   * Processing-run count of one organization in the half-open range `[startDate, endDate)`.
+   * Full UTC days come from `workflow_run_count`. Each edge day of that rollup is reduced by the
+   * `traces` outside the range and clamped on its own, so a skew on one edge cannot zero the interior days.
+   * Those slices sit before `startDate` or from `endDate` on, and do not grow while the period is still open.
    */
   async getOrganizationUsageByDateRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
-    const [wholeDayRows, edgeDayUsageOutsideRange] = await Promise.all([
-      this.getPlatformUsageByDateRange(startDate, endDate, organizationId),
-      this.getEdgeDayUsageOutsideRange(organizationId, startDate, endDate),
-    ]);
-    const wholeDayUsage = wholeDayRows.length > 0 ? parseInt(wholeDayRows[0].count, 10) : 0;
+    const bounds = inclusiveUtcDayBounds(startDate, endDate);
+    const rangeIsWholeUtcDays =
+      bounds.startDayStart.getTime() === startDate.getTime() && bounds.endDayEnd.getTime() === endDate.getTime();
 
-    return Math.max(wholeDayUsage - edgeDayUsageOutsideRange, 0);
+    const [rollup, outside] = await Promise.all([
+      this.queryOrganizationPeriodRollup(organizationId, bounds),
+      rangeIsWholeUtcDays
+        ? Promise.resolve({ startOutside: 0, endOutside: 0 })
+        : this.queryEdgeTracesOutsideRange(organizationId, startDate, endDate, bounds),
+    ]);
+
+    return usageInsideRange(rollup, outside, bounds.start === bounds.end);
+  }
+
+  private async queryOrganizationPeriodRollup(
+    organizationId: string,
+    bounds: InclusiveUtcDayBounds
+  ): Promise<{ total: number; startDay: number; endDay: number }> {
+    const query = `
+      SELECT
+        sum(count) as total,
+        sumIf(count, date = {startDate:Date}) as start_day,
+        sumIf(count, date = {endDate:Date}) as end_day
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_status_processing'
+    `;
+
+    const result = await this.clickhouseService.query<{
+      total: string;
+      start_day: string;
+      end_day: string;
+    }>({
+      query,
+      params: {
+        organizationId,
+        startDate: bounds.start,
+        endDate: bounds.end,
+      },
+    });
+    const row = result.data[0];
+
+    return {
+      total: parseCount(row?.total),
+      startDay: parseCount(row?.start_day),
+      endDay: parseCount(row?.end_day),
+    };
   }
 
   /**
-   * Processing runs of one organization on the first and last UTC day of `[startDate, endDate)` that fall outside
-   * it: what a whole-day `workflow_run_count` sum over `toInclusiveUtcDays(startDate, endDate)` over-counts by.
-   * Read from `traces`, which keeps the exact `created_at`. Both slices lie before `startDate` or from `endDate` on,
-   * so the result does not grow while the range is still being filled.
+   * Processing traces on the first and last UTC day of `[startDate, endDate)` that fall outside it.
+   * `traces` keeps the exact `created_at` that `workflow_run_count` rolls up to a calendar day.
    */
-  async getEdgeDayUsageOutsideRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
-    const startDayStart = startOfUtcDay(startDate);
-    const endDayEnd = new Date(startOfUtcDay(new Date(endDate.getTime() - 1)).getTime() + DAY_MS);
-
-    if (startDayStart.getTime() === startDate.getTime() && endDayEnd.getTime() === endDate.getTime()) {
-      return 0;
-    }
-
+  private async queryEdgeTracesOutsideRange(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    bounds: InclusiveUtcDayBounds
+  ): Promise<{ startOutside: number; endOutside: number }> {
     const query = `
-      SELECT count() as count
+      SELECT
+        countIf(created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)}) as start_outside,
+        countIf(created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)}) as end_outside
       FROM ${TRACES_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
@@ -268,18 +309,25 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
         )
     `;
 
-    const result = await this.clickhouseService.query<{ count: string }>({
+    const result = await this.clickhouseService.query<{
+      start_outside: string;
+      end_outside: string;
+    }>({
       query,
       params: {
         organizationId,
-        startDayStart: LogRepository.formatDateTime64(startDayStart),
+        startDayStart: LogRepository.formatDateTime64(bounds.startDayStart),
         startDate: LogRepository.formatDateTime64(startDate),
         endDate: LogRepository.formatDateTime64(endDate),
-        endDayEnd: LogRepository.formatDateTime64(endDayEnd),
+        endDayEnd: LogRepository.formatDateTime64(bounds.endDayEnd),
       },
     });
+    const row = result.data[0];
 
-    return parseInt(result.data[0]?.count || '0', 10);
+    return {
+      startOutside: parseCount(row?.start_outside),
+      endOutside: parseCount(row?.end_outside),
+    };
   }
 
   /**
@@ -499,6 +547,22 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 }
 
-function startOfUtcDay(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+function usageInsideRange(
+  rollup: { total: number; startDay: number; endDay: number },
+  outside: { startOutside: number; endOutside: number },
+  sameDay: boolean
+): number {
+  if (sameDay) {
+    return Math.max(rollup.startDay - outside.startOutside - outside.endOutside, 0);
+  }
+
+  const interior = rollup.total - rollup.startDay - rollup.endDay;
+
+  return (
+    interior + Math.max(rollup.startDay - outside.startOutside, 0) + Math.max(rollup.endDay - outside.endOutside, 0)
+  );
+}
+
+function parseCount(value: string | undefined): number {
+  return parseInt(value || '0', 10);
 }

@@ -113,30 +113,52 @@ describe('WorkflowRunCountRepository', () => {
     });
   });
 
-  describe('getEdgeDayUsageOutsideRange', () => {
-    it('counts the processing traces of the first and last UTC day that fall outside the range', async () => {
-      queryStub.resolves({ data: [{ count: '50577' }] });
+  describe('getOrganizationUsageByDateRange', () => {
+    const respondTo = (
+      rollup: { total: string; start_day: string; end_day: string } | null,
+      outside: { start_outside: string; end_outside: string }
+    ) => {
+      queryStub.callsFake(async ({ query }: { query: string }) => {
+        if (query.includes('FROM traces')) {
+          return { data: [outside] };
+        }
 
-      const result = await repository.getEdgeDayUsageOutsideRange(
+        return { data: rollup === null ? [] : [rollup] };
+      });
+    };
+
+    it('subtracts each edge day outside traces from that day rollup and keeps the interior', async () => {
+      respondTo({ total: '100', start_day: '40', end_day: '25' }, { start_outside: '15', end_outside: '5' });
+
+      const result = await repository.getOrganizationUsageByDateRange(
         'org-a',
         new Date('2026-09-30T15:06:44.000Z'),
         new Date('2026-10-30T15:06:44.000Z')
       );
 
-      expect(result).to.equal(50577);
+      expect(result).to.equal(80);
+      expect(queryStub.calledTwice).to.equal(true);
 
-      const call = queryStub.firstCall.args[0];
-      expect(call.query).to.include('FROM traces');
-      expect(call.query).to.include('organization_id = {organizationId:String}');
-      expect(call.query).to.include("entity_type = 'workflow_run'");
-      expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
-      expect(call.query).to.include(
-        '(created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)})'
+      const wholeDayCall = queryStub.getCalls().find((call) => call.args[0].query.includes('FROM workflow_run_count'));
+      expect(wholeDayCall?.args[0].query).to.include('sumIf(count, date = {startDate:Date}) as start_day');
+      expect(wholeDayCall?.args[0].query).to.include('sumIf(count, date = {endDate:Date}) as end_day');
+      expect(wholeDayCall?.args[0].params).to.deep.equal({
+        startDate: '2026-09-30',
+        endDate: '2026-10-30',
+        organizationId: 'org-a',
+      });
+
+      const tracesCall = queryStub.getCalls().find((call) => call.args[0].query.includes('FROM traces'));
+      expect(tracesCall?.args[0].query).to.include('organization_id = {organizationId:String}');
+      expect(tracesCall?.args[0].query).to.include("entity_type = 'workflow_run'");
+      expect(tracesCall?.args[0].query).to.include("event_type = 'workflow_run_status_processing'");
+      expect(tracesCall?.args[0].query).to.include(
+        'countIf(created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)}) as start_outside'
       );
-      expect(call.query).to.include(
-        '(created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)})'
+      expect(tracesCall?.args[0].query).to.include(
+        'countIf(created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)}) as end_outside'
       );
-      expect(call.params).to.deep.equal({
+      expect(tracesCall?.args[0].params).to.deep.equal({
         organizationId: 'org-a',
         startDayStart: '2026-09-30T00:00:00.000',
         startDate: '2026-09-30T15:06:44.000',
@@ -146,77 +168,55 @@ describe('WorkflowRunCountRepository', () => {
     });
 
     it('bounds the last day by the day before a midnight exclusive end', async () => {
-      queryStub.resolves({ data: [{ count: '4' }] });
+      respondTo({ total: '4', start_day: '3', end_day: '1' }, { start_outside: '1', end_outside: '0' });
 
-      await repository.getEdgeDayUsageOutsideRange(
+      await repository.getOrganizationUsageByDateRange(
         'org-a',
         new Date('2026-09-30T15:06:44.000Z'),
         new Date('2026-10-30T00:00:00.000Z')
       );
 
-      expect(queryStub.firstCall.args[0].params).to.deep.include({
+      const tracesCall = queryStub.getCalls().find((call) => call.args[0].query.includes('FROM traces'));
+      expect(tracesCall?.args[0].params).to.deep.include({
         endDate: '2026-10-30T00:00:00.000',
         endDayEnd: '2026-10-30T00:00:00.000',
       });
+
+      const wholeDayCall = queryStub.getCalls().find((call) => call.args[0].query.includes('FROM workflow_run_count'));
+      expect(wholeDayCall?.args[0].params).to.deep.include({
+        startDate: '2026-09-30',
+        endDate: '2026-10-29',
+      });
     });
 
-    it('returns 0 without querying when the range starts and ends at UTC midnight', async () => {
-      const result = await repository.getEdgeDayUsageOutsideRange(
+    it('clamps both outside slices against the single UTC day they share', async () => {
+      respondTo({ total: '40', start_day: '40', end_day: '40' }, { start_outside: '5', end_outside: '8' });
+
+      const result = await repository.getOrganizationUsageByDateRange(
+        'org-a',
+        new Date('2026-09-30T10:00:00.000Z'),
+        new Date('2026-09-30T18:00:00.000Z')
+      );
+
+      expect(result).to.equal(27);
+    });
+
+    it('returns the rollup total without querying traces when the range is whole UTC days', async () => {
+      queryStub.resolves({ data: [{ total: '42', start_day: '1', end_day: '2' }] });
+
+      const result = await repository.getOrganizationUsageByDateRange(
         'org-a',
         new Date('2026-09-01T00:00:00.000Z'),
         new Date('2026-10-01T00:00:00.000Z')
       );
 
-      expect(result).to.equal(0);
-      expect(queryStub.called).to.equal(false);
+      expect(result).to.equal(42);
+      expect(queryStub.calledOnce).to.equal(true);
+      expect(queryStub.firstCall.args[0].query).to.include('FROM workflow_run_count');
     });
 
-    it('returns 0 when ClickHouse has no rows', async () => {
-      queryStub.resolves({ data: [] });
-
-      const result = await repository.getEdgeDayUsageOutsideRange(
-        'org-a',
-        new Date('2026-09-30T15:06:44.000Z'),
-        new Date('2026-10-30T15:06:44.000Z')
-      );
-
-      expect(result).to.equal(0);
-    });
-  });
-
-  describe('getOrganizationUsageByDateRange', () => {
-    const respondTo = (wholeDayCount: string | null, edgeDayCount: string) => {
-      queryStub.callsFake(async ({ query }: { query: string }) => {
-        if (query.includes('FROM traces')) {
-          return { data: [{ count: edgeDayCount }] };
-        }
-
-        return { data: wholeDayCount === null ? [] : [{ organization_id: 'org-a', count: wholeDayCount }] };
-      });
-    };
-
-    it('subtracts the edge-day runs outside the range from the whole-day count', async () => {
-      respondTo('56918', '50577');
-
-      const result = await repository.getOrganizationUsageByDateRange(
-        'org-a',
-        new Date('2026-09-30T15:06:44.000Z'),
-        new Date('2026-10-30T15:06:44.000Z')
-      );
-
-      expect(result).to.equal(6341);
-      expect(queryStub.calledTwice).to.equal(true);
-
-      const wholeDayCall = queryStub.getCalls().find((call) => call.args[0].query.includes('FROM workflow_run_count'));
-      expect(wholeDayCall?.args[0].params).to.deep.equal({
-        startDate: '2026-09-30',
-        endDate: '2026-10-30',
-        organizationId: 'org-a',
-      });
-    });
-
-    it('returns 0 when the organization has no whole-day rows', async () => {
-      respondTo(null, '0');
+    it('returns 0 when the organization has no rollup rows', async () => {
+      respondTo(null, { start_outside: '12', end_outside: '4' });
 
       const result = await repository.getOrganizationUsageByDateRange(
         'org-a',
@@ -227,8 +227,8 @@ describe('WorkflowRunCountRepository', () => {
       expect(result).to.equal(0);
     });
 
-    it('never returns a negative count when the two tables disagree', async () => {
-      respondTo('10', '12');
+    it('clamps a disagreeing edge day and keeps the days fully inside the range', async () => {
+      respondTo({ total: '100', start_day: '10', end_day: '20' }, { start_outside: '12', end_outside: '4' });
 
       const result = await repository.getOrganizationUsageByDateRange(
         'org-a',
@@ -236,7 +236,7 @@ describe('WorkflowRunCountRepository', () => {
         new Date('2026-10-30T15:06:44.000Z')
       );
 
-      expect(result).to.equal(0);
+      expect(result).to.equal(86);
     });
   });
 
