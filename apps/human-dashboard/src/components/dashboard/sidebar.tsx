@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 export type SidebarAgent = {
   name: string;
-  /** The line under the name: "Your agent", or "Not set up" before the first setup. */
+  /** The line under the name: "Not set up" before the first setup, then the agent's name, as in "Human agent". */
   status: string;
 };
 

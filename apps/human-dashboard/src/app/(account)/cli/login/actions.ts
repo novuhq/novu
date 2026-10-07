@@ -5,6 +5,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { readStoredBackingAccount, type StoredBackingAccount, storeBackingAccount } from '@/lib/human-account';
 import { approveCliLogin, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
+import { claimPastSignUp } from '@/lib/human-claim';
 
 export type CliLoginFormState = {
   approved?: boolean;
@@ -64,15 +65,18 @@ export async function approveCliLoginAction(
 
   let account: Awaited<ReturnType<typeof approveCliLogin>>;
   try {
-    account = await approveCliLogin(
-      region,
-      {
-        humanUserId: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.primaryEmailAddress?.emailAddress,
-      },
-      { userCode, claimToken: keepSetup ? claim : undefined }
+    // A refused claim leaves the login waiting, so trying again is safe.
+    account = await claimPastSignUp(user, () =>
+      approveCliLogin(
+        region,
+        {
+          humanUserId: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.primaryEmailAddress?.emailAddress,
+        },
+        { userCode, claimToken: keepSetup ? claim : undefined }
+      )
     );
   } catch (error) {
     console.error('Failed to approve the CLI login', error);
@@ -122,7 +126,7 @@ function describeLoginError(error: unknown): CliLoginFormState {
     if (error.code === 'claim_agent_exists') {
       return {
         error:
-          'Your Human account already has a setup, so the one on your computer can’t be added to it. You can still log in; that setup stays behind.',
+          'Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can still log in; that setup stays behind.',
         canSkipClaim: true,
       };
     }

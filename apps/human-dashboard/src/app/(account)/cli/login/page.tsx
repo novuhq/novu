@@ -7,6 +7,7 @@ import { Command } from '@/components/site/command';
 import { Panel } from '@/components/site/panel';
 import { SiteFrame } from '@/components/site/site-frame';
 import type { HumanRegion } from '@/lib/human-accounts-api';
+import { isAccountAgentInUse } from '@/lib/human-claim';
 
 import { CliLoginForm } from './cli-login-form';
 
@@ -20,7 +21,8 @@ export const metadata: Metadata = {
 /**
  * Opened by `human login` (`…/cli/login`, plus `?region=eu` from the EU API). The operator types the code the
  * terminal shows, so a link someone else sends can't log anyone in. When the CLI has a setup made without an
- * account, `claim=…` carries its claim token, so logging in also keeps that setup.
+ * account, `claim=…` carries its claim token, so logging in also keeps that setup. An account whose agent
+ * is already in use can't take that setup in: the page says so and only logs the CLI in.
  */
 export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
   const searchParams = await props.searchParams;
@@ -36,13 +38,15 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
   }
 
   const email = user.primaryEmailAddress?.emailAddress;
+  const cannotKeepSetup = Boolean(claim) && (await isAccountAgentInUse(user));
+  const keepsSetup = Boolean(claim) && !cannotKeepSetup;
 
   return (
     <SiteFrame className="px-4 py-14 md:px-8 md:py-20">
       <Panel
         eyebrow="human login"
         title={
-          claim ? (
+          keepsSetup ? (
             <>
               Keep your setup and <em className="font-display tracking-tight text-accent">log in</em>
             </>
@@ -54,7 +58,7 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
         }
         description={
           <>
-            {claim
+            {keepsSetup
               ? 'Moves the agent, channels and contacts you set up without an account into your Human account, and lets the human CLI on your computer use it.'
               : 'Lets the human CLI on your computer use your Human account, so your agents can reach you and your contacts.'}{' '}
             Enter the code <Command>human login</Command> shows in your terminal. If you didn&apos;t just run it
@@ -62,7 +66,16 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
           </>
         }
       >
-        <CliLoginForm claim={claim} region={region} />
+        {cannotKeepSetup && (
+          <p
+            role="alert"
+            className="mb-4 rounded-md bg-accent/10 px-3 py-2 text-sm tracking-tight text-foreground ring-1 ring-accent/40"
+          >
+            Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can
+            still log in: the CLI will then use your account’s agent, and that setup stays behind.
+          </p>
+        )}
+        <CliLoginForm claim={keepsSetup ? claim : ''} region={region} />
         {email && (
           <p className="mt-6 text-sm tracking-tight text-foreground/60">
             Signed in as {email}.{' '}
