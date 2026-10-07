@@ -4,6 +4,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { ClickHouseBatchService } from '../clickhouse-batch.service';
+import { inclusiveUtcDayBounds } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import {
@@ -222,6 +223,45 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     const result = await this.clickhouseService.query<{ count: string }>({
       query,
       params,
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
+  }
+
+  /**
+   * Processing workflow runs of one organization on the first and last UTC day of `[startDate, endDate)` that fall
+   * outside it: what a whole-day `workflow_run_count` sum over `toInclusiveUtcDays(startDate, endDate)` over-counts by.
+   */
+  async countEdgeDayWorkflowRunsOutsideRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
+    const { startDayStart, endDayEnd } = inclusiveUtcDayBounds(startDate, endDate);
+
+    if (startDayStart.getTime() === startDate.getTime() && endDayEnd.getTime() === endDate.getTime()) {
+      return 0;
+    }
+
+    const query = `
+      SELECT count() as count
+      FROM ${TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND entity_type = 'workflow_run'
+        AND event_type = 'workflow_run_status_processing'
+        AND (
+          (created_at >= {startDayStart:DateTime64(3)} AND created_at < {startDate:DateTime64(3)})
+          OR (created_at >= {endDate:DateTime64(3)} AND created_at < {endDayEnd:DateTime64(3)})
+        )
+    `;
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params: {
+        organizationId,
+        startDayStart: LogRepository.formatDateTime64(startDayStart),
+        startDate: LogRepository.formatDateTime64(startDate),
+        endDate: LogRepository.formatDateTime64(endDate),
+        endDayEnd: LogRepository.formatDateTime64(endDayEnd),
+      },
+      clickhouse_settings: { log_comment: 'billing_exact_period_start' },
     });
 
     return parseInt(result.data[0]?.count || '0', 10);

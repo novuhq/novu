@@ -90,9 +90,11 @@ export class ClickHouseService implements BeforeApplicationShutdown {
   async query<T>({
     query,
     params,
+    clickhouse_settings,
   }: {
     query: string;
     params: Record<string, unknown>;
+    clickhouse_settings?: ClickHouseSettings;
   }): Promise<{ data: T[]; rows: number }> {
     if (!this._client) {
       throw new Error('Query failed: ClickHouse client not initialized');
@@ -102,6 +104,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
       query,
       query_params: params,
       format: 'JSON',
+      clickhouse_settings,
     });
 
     const data = (await resultSet.json()) as {
