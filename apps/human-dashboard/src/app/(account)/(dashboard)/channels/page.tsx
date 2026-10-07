@@ -5,14 +5,7 @@ import { type ChannelRow, ChannelsTable } from '@/components/channels/channels-t
 import { CopyCliCommand } from '@/components/dashboard/copy-cli-command';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
-import {
-  type Channel,
-  type ChannelVia,
-  findSlackWorkspaceName,
-  hasChannelEndpoint,
-  listChannels,
-  slackAgentHandle,
-} from '@/lib/human-channels-api';
+import { type ChannelVia, findSlackWorkspaceName, listChannels, slackAgentHandle } from '@/lib/human-channels-api';
 import { findOperatorContactId } from '@/lib/human-operator';
 import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
 
@@ -54,9 +47,9 @@ async function loadChannels(account: HumanAccount): Promise<{ rows: ChannelRow[]
   const email = channelOf('email');
   const telegram = channelOf('telegram');
   const slack = channelOf('slack');
-  const [telegramConnected, slackConnected, telegramSetup, slackWorkspace] = await Promise.all([
-    isChatConnected(account, telegram, operatorContactId),
-    isChatConnected(account, slack, operatorContactId),
+  const telegramConnected = telegram?.connected === true;
+  const slackConnected = slack?.connected === true;
+  const [telegramSetup, slackWorkspace] = await Promise.all([
     withinTime(readTelegramSetup(account, telegram, operatorContactId)),
     // The name is a nicety: the row still says "Connected" when it can't be read.
     slack ? findSlackWorkspaceName(account, slack.identifier).catch(() => undefined) : undefined,
@@ -104,24 +97,4 @@ function withinTime(setup: Promise<TelegramSetupState>): Promise<TelegramSetupSt
       setTimeout(() => resolve({ step: 'unknown' }), TELEGRAM_SETUP_TIMEOUT_MS);
     }),
   ]);
-}
-
-/**
- * A bot or app only counts once a message can travel on it: a person has written to it, or the operator
- * linked their own chat. Until then the setup isn't finished, even though the channel exists.
- */
-async function isChatConnected(
-  account: HumanAccount,
-  channel: Channel | undefined,
-  operatorContactId: string | null
-): Promise<boolean> {
-  if (!channel) {
-    return false;
-  }
-
-  if (channel.connectedAt) {
-    return true;
-  }
-
-  return operatorContactId ? hasChannelEndpoint(account, channel.identifier, operatorContactId) : false;
 }

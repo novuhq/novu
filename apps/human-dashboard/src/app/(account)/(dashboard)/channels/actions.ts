@@ -7,7 +7,6 @@ import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { HumanApiError } from '@/lib/human-api-error';
 import {
   ensureTelegramChannel,
-  hasChannelEndpoint,
   issueTelegramStartLink,
   listChannels,
   saveTelegramBotToken,
@@ -104,18 +103,12 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
   }
 }
 
-/** Whether the operator has pressed Start in the bot. The drawer asks while it waits. */
+/** Whether someone has pressed Start in the bot. The drawer asks while it waits. */
 export async function checkTelegramConnectedAction(): Promise<boolean> {
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
-  const [channelIdentifier, contactId] = await Promise.all([
-    findTelegramChannel(account),
-    findOperatorContactId(account),
-  ]);
-  if (!channelIdentifier || !contactId) {
-    return false;
-  }
+  const channels = await listChannels(account);
+  const connected = channels.some((channel) => channel.via === 'telegram' && channel.active && channel.connected);
 
-  const connected = await hasChannelEndpoint(account, channelIdentifier, contactId);
   if (connected) {
     revalidatePath(CHANNELS_PATH);
   }

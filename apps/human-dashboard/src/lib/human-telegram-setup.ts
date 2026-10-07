@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { HumanAccount } from './human-account';
 import { HumanApiError } from './human-api-error';
-import { type Channel, hasChannelEndpoint, issueTelegramStartLink } from './human-channels-api';
+import { type Channel, issueTelegramStartLink } from './human-channels-api';
 
 /**
  * Where the Telegram drawer opens: at the first step, at "say hi", or already done. `unknown` means it
@@ -28,19 +28,17 @@ export async function readTelegramSetup(
     return { step: 'create' };
   }
 
-  const [link, linked] = await Promise.all([
-    issueTelegramStartLink(account, channel.identifier, operatorContactId).catch((error: unknown) => {
-      // The API turns the link down while the channel has no working bot token: the setup hasn't got that far.
-      return isRefusal(error) ? ('no-token' as const) : unreadable(error);
-    }),
-    hasChannelEndpoint(account, channel.identifier, operatorContactId).catch(unreadable),
-  ]);
+  // The link is asked for even on a connected channel: it's the only way to learn the bot's username.
+  const link = await issueTelegramStartLink(account, channel.identifier, operatorContactId).catch((error: unknown) => {
+    // The API turns the link down while the channel has no working bot token: the setup hasn't got that far.
+    return isRefusal(error) ? ('no-token' as const) : unreadable(error);
+  });
 
-  if (linked === true) {
+  if (channel.connected) {
     return { step: 'connected', botUsername: typeof link === 'object' ? link.botUsername : '' };
   }
 
-  if (linked === 'unreadable' || link === 'unreadable') {
+  if (link === 'unreadable') {
     return { step: 'unknown' };
   }
 

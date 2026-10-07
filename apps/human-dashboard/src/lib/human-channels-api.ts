@@ -20,8 +20,12 @@ export type Channel = {
   via?: ChannelVia;
   /** The agent's own email address, for the email channel. */
   address?: string;
-  /** When the first message from a person arrived on this channel. */
-  connectedAt?: string;
+  /**
+   * Whether the agent can reach someone on it. Email is connected as soon as the agent has its address.
+   * A bot or app only counts once a person wrote to it or linked their chat, so a channel whose setup
+   * stopped halfway still reads as not set up.
+   */
+  connected: boolean;
 };
 
 type AgentIntegrationLink = {
@@ -33,7 +37,10 @@ type AgentIntegrationLink = {
     active?: boolean;
     sharedInboundAddress?: string;
   };
+  /** When the first message from a person arrived on this channel. */
   connectedAt?: string | null;
+  /** Present, and true, once someone linked their chat on this channel. */
+  hasChannelEndpoints?: boolean;
 };
 
 type Integration = { identifier: string; providerId: string; channel?: string };
@@ -66,7 +73,7 @@ export async function listChannels(account: HumanAccount): Promise<Channel[]> {
     throw error;
   }
 
-  return (Array.isArray(links) ? links : []).map(({ integration, connectedAt }) => {
+  return (Array.isArray(links) ? links : []).map(({ integration, connectedAt, hasChannelEndpoints }) => {
     const via = channelVia(integration.providerId, integration.channel);
 
     return {
@@ -76,22 +83,9 @@ export async function listChannels(account: HumanAccount): Promise<Channel[]> {
       active: integration.active !== false,
       via,
       ...(integration.sharedInboundAddress ? { address: integration.sharedInboundAddress } : {}),
-      ...(connectedAt ? { connectedAt } : {}),
+      connected: via === 'email' || Boolean(connectedAt) || hasChannelEndpoints === true,
     };
   });
-}
-
-/** Whether a contact already linked their chat on a channel, which is when messages can reach them there. */
-export async function hasChannelEndpoint(
-  account: HumanAccount,
-  channelIdentifier: string,
-  contactId: string
-): Promise<boolean> {
-  const endpoints = await requestForAccount<unknown[]>(account, '/v1/channel-endpoints', {
-    query: { subscriberId: contactId, integrationIdentifier: channelIdentifier, limit: 1 },
-  });
-
-  return Array.isArray(endpoints) && endpoints.length > 0;
 }
 
 /** The Slack workspace a channel's app is installed in, once someone connected it. */
