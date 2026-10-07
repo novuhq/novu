@@ -10,7 +10,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary:
     'h-8 gap-1.5 rounded bg-background px-3 text-[13px] leading-4.5 font-medium text-foreground ring-1 ring-border ring-inset hover:bg-raised disabled:hover:bg-background',
   danger:
-    'h-8 gap-1.5 rounded bg-danger-strong px-3.5 text-[15px] font-medium tracking-tight text-on-accent hover:bg-danger-strong/90 disabled:hover:bg-danger-strong',
+    'h-8 gap-1.5 rounded bg-danger-strong px-3 text-[13px] leading-4.5 font-medium text-foreground hover:bg-danger-strong/90 disabled:hover:bg-danger-strong',
   ghost:
     'size-8 rounded text-secondary hover:bg-raised hover:text-foreground disabled:hover:bg-transparent disabled:hover:text-secondary',
   outline:
