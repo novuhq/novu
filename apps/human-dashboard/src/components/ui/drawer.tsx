@@ -34,8 +34,14 @@ export function DrawerContent({ title, description, eyebrow, icon, footer, class
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/62 data-[state=closed]:animate-overlay-out data-[state=open]:animate-overlay-in motion-reduce:animate-none!" />
       <DialogPrimitive.Content
         aria-describedby={undefined}
+        // Focus lands on the panel, not on its first button: the close button would light up its focus ring
+        // on every open. Tab still goes to it first.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement).focus();
+        }}
         className={cn(
-          'fixed inset-y-0 right-0 z-50 flex w-full max-w-150 flex-col border-l border-border bg-subtle shadow-[0_16px_48px_rgb(0_0_0/0.5)] data-[state=closed]:animate-drawer-out data-[state=open]:animate-drawer-in motion-reduce:animate-none!',
+          'fixed inset-y-0 right-0 z-50 flex w-full max-w-150 flex-col outline-none border-l border-border bg-subtle shadow-[0_16px_48px_rgb(0_0_0/0.5)] data-[state=closed]:animate-drawer-out data-[state=open]:animate-drawer-in motion-reduce:animate-none!',
           className
         )}
       >
