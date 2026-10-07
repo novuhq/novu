@@ -17,10 +17,12 @@ type CopyButtonProps = {
   children?: ReactNode;
   variant?: 'ghost' | 'secondary' | 'primary';
   className?: string;
+  /** Size of the icon, when the default 14px doesn't fit. */
+  iconClassName?: string;
 };
 
 /** Copies `value` to the clipboard and shows a check mark for a moment. */
-export function CopyButton({ value, label, children, variant, className }: CopyButtonProps) {
+export function CopyButton({ value, label, children, variant, className, iconClassName }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export function CopyButton({ value, label, children, variant, className }: CopyB
       title={children ? undefined : label}
       className={buttonClassName(variant ?? (children ? 'secondary' : 'ghost'), className)}
     >
-      <CopiedIcon icon={Copy} copied={copied} className="size-3.5" />
+      <CopiedIcon icon={Copy} copied={copied} className={iconClassName ?? 'size-3.5'} />
       {children}
       <span aria-live="polite" className="sr-only">
         {copied ? 'Copied' : ''}
