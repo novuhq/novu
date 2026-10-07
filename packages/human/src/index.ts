@@ -6,6 +6,7 @@ import { contactsCommand } from './commands/contacts';
 import { runInteraction } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { cancelCommand, listCommand } from './commands/list';
+import { loginCommand } from './commands/login';
 import { setupCommand } from './commands/setup';
 import { installSkillCommand } from './commands/skill';
 import { waitCommand } from './commands/wait';
@@ -23,7 +24,7 @@ program
 program.addHelpText(
   'after',
   '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
-    '  NOVU_SECRET_KEY    Novu API secret key (replaces `human setup` auth)\n' +
+    '  NOVU_SECRET_KEY    Novu API secret key (takes priority over `human login` and `human setup`)\n' +
     '  HUMAN_TO           default recipient subscriberId(s), comma-separated (as --to)\n' +
     '  HUMAN_VIA          default channel for HUMAN_TO: telegram, slack, or email (as --via; ignored when --to names someone else)\n' +
     '  NOVU_API_URL       Novu API URL override\n' +
@@ -135,6 +136,14 @@ program
   .option('--api-url <url>', 'Novu API URL override')
   .description('Cancel a pending interaction (disables its buttons)')
   .action(cancelCommand);
+
+program
+  .command('login')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description(
+    'Log in with your Human account in the browser, so you never copy a secret key (keeps a setup made without an account)'
+  )
+  .action(loginCommand);
 
 program
   .command('setup')

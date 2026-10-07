@@ -4,13 +4,17 @@ import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import {
+  ApproveHumanCliLoginRequestDto,
   ClaimHumanAccountRequestDto,
   EnsureHumanAccountRequestDto,
   type HumanAccountClaimResponseDto,
+  type HumanAccountCliLoginResponseDto,
   type HumanAccountResponseDto,
   type HumanAccountSecretKeyResponseDto,
 } from './dtos/human-account.dto';
-import { HumanWebsiteSecretGuard } from './guards/human-website-secret.guard';
+import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
+import { ApproveHumanCliLoginCommand } from './usecases/approve-human-cli-login/approve-human-cli-login.command';
+import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { ClaimForHumanAccountCommand } from './usecases/claim-for-human-account/claim-for-human-account.command';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { DeleteHumanAccountCommand } from './usecases/delete-human-account/delete-human-account.command';
@@ -21,7 +25,7 @@ import { GetBackingSecretKeyCommand } from './usecases/get-backing-secret-key/ge
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
 
 /**
- * Private endpoints for the Human website's server (gethuman.md), which signs operators in with its
+ * Private endpoints for the Human dashboard's server (gethuman.md), which signs operators in with its
  * own Clerk app. Each Human account is backed by a hidden Novu organization; see
  * packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md.
  */
@@ -29,13 +33,14 @@ import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backi
 @ApiCommonResponses()
 @Controller('/human/accounts')
 @ApiExcludeController()
-@UseGuards(HumanWebsiteSecretGuard)
+@UseGuards(HumanDashboardSecretGuard)
 export class HumanAccountsController {
   constructor(
     private readonly ensureBackingOrganizationUsecase: EnsureBackingOrganization,
     private readonly claimForHumanAccountUsecase: ClaimForHumanAccount,
     private readonly getBackingSecretKeyUsecase: GetBackingSecretKey,
-    private readonly deleteHumanAccountUsecase: DeleteHumanAccount
+    private readonly deleteHumanAccountUsecase: DeleteHumanAccount,
+    private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin
   ) {}
 
   @Post('/')
@@ -61,6 +66,24 @@ export class HumanAccountsController {
         firstName: body.firstName,
         lastName: body.lastName,
         token: body.token,
+      })
+    );
+  }
+
+  @Post('/cli-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Approve a `human login` with the Development key of a Human account, keeping its keyless setup',
+  })
+  approveCliLogin(@Body() body: ApproveHumanCliLoginRequestDto): Promise<HumanAccountCliLoginResponseDto> {
+    return this.approveHumanCliLoginUsecase.execute(
+      ApproveHumanCliLoginCommand.create({
+        humanUserId: body.humanUserId,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        email: body.email,
+        userCode: body.userCode,
+        claimToken: body.claimToken,
       })
     );
   }

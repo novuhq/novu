@@ -74,13 +74,22 @@ export function createHumanApiClient(input: {
     throw new Error('Missing credentials — run `npx @novu/human setup` or set NOVU_SECRET_KEY.');
   }
 
-  const headers = isKeyless
+  const headers: Record<string, string> = isKeyless
     ? {
         Authorization: `Keyless ${keylessIdentifier}`,
         'Novu-Application-Identifier': keylessIdentifier as string,
       }
     : { Authorization: `ApiKey ${input.secretKey}` };
 
+  return { axios: createAxios(baseURL, headers), apiUrl: baseURL, isKeyless };
+}
+
+/** For the few endpoints that need no credentials, such as starting `human login`. */
+export function createPublicApiClient(apiUrl: string): AxiosInstance {
+  return createAxios(apiUrl.replace(/\/$/, ''));
+}
+
+function createAxios(baseURL: string, headers: Record<string, string> = {}): AxiosInstance {
   const instance = axios.create({ baseURL, headers, timeout: 60_000, httpsAgent: loopbackHttpsAgent(baseURL) });
 
   instance.interceptors.response.use(
@@ -99,7 +108,7 @@ export function createHumanApiClient(input: {
     }
   );
 
-  return { axios: instance, apiUrl: baseURL, isKeyless };
+  return instance;
 }
 
 /** Unwraps Novu's `{ data: ... }` envelope (some endpoints return bare bodies). */

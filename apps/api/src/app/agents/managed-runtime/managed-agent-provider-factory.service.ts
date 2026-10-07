@@ -9,6 +9,7 @@ import {
 import { type AgentEntity, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { cloudflare, thalamus, type WebhookProvider } from '@novu/thalamus';
+import type { CloudflareEdgeObserver } from '@novu/thalamus/durable';
 import { LRUCache } from 'lru-cache';
 
 export interface ResolvedRuntime {
@@ -22,6 +23,7 @@ const PROVIDER_TTL_MS = 30 * 60 * 1000;
 @Injectable()
 export class ManagedAgentProviderFactory {
   private readonly providers: LRUCache<string, ResolvedRuntime>;
+  private observer?: CloudflareEdgeObserver;
 
   constructor(
     private readonly agentRepository: AgentRepository,
@@ -145,7 +147,7 @@ export class ManagedAgentProviderFactory {
     providerId: AgentRuntimeProviderIdEnum,
     config: { apiKey: string; agentId: string; environmentId: string }
   ): WebhookProvider {
-    const durable = this.buildDurableBackend();
+    const durable = this.getObserver();
 
     switch (providerId) {
       case AgentRuntimeProviderIdEnum.Anthropic:
@@ -164,7 +166,7 @@ export class ManagedAgentProviderFactory {
     agentId: string;
     environmentId: string;
   }): WebhookProvider {
-    const durable = this.buildDurableBackend();
+    const durable = this.getObserver();
 
     return thalamus.anthropic({
       agentId: config.agentId,
@@ -174,7 +176,14 @@ export class ManagedAgentProviderFactory {
     });
   }
 
-  private buildDurableBackend() {
+  /** The edge observer the managed sessions run on; also serves live reply text. */
+  getObserver(): CloudflareEdgeObserver {
+    this.observer ??= this.buildDurableBackend();
+
+    return this.observer;
+  }
+
+  private buildDurableBackend(): CloudflareEdgeObserver {
     const cfUrl = process.env.THALAMUS_CF_URL;
     if (!cfUrl) {
       throw new Error('THALAMUS_CF_URL is required for managed agents');

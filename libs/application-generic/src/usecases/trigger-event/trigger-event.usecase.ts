@@ -161,7 +161,8 @@ export class TriggerEvent {
           actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
             this.buildCommand(environmentId, organizationId, mappedCommand.actor)
           );
-        } catch (error: any) {
+        } catch (e) {
+          const error = e as Error;
           await this.createWorkflowTrace({
             command,
             eventType: 'workflow_actor_processing_failed',
@@ -174,13 +175,18 @@ export class TriggerEvent {
         }
       }
 
+      const template =
+        storedWorkflow ||
+        // biome-ignore lint/plugin: bridge workflows are discovered at runtime and only carry the fields the trigger commands read
+        (command.bridgeWorkflow as unknown as NotificationTemplateEntity);
+
       switch (mappedCommand.addressingType) {
         case AddressingTypeEnum.MULTICAST: {
           await this.triggerMulticast.execute(
             TriggerMulticastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
+              template,
             })
           );
           break;
@@ -190,7 +196,7 @@ export class TriggerEvent {
             TriggerBroadcastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
+              template,
             })
           );
           break;
@@ -201,7 +207,7 @@ export class TriggerEvent {
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
-              template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
+              template,
             })
           );
           break;
@@ -225,7 +231,7 @@ export class TriggerEvent {
         organization: command.organizationId,
         triggerIdentifier: command.identifier,
         userId: command.userId,
-        error: e,
+        err: e,
       };
 
       if (isBadRequest) {
@@ -319,7 +325,7 @@ export class TriggerEvent {
   private async getAndUpdateWorkflowById(command: {
     triggerIdentifier: string;
     environmentId: string;
-    payload: Record<string, any>;
+    payload: { __source?: string };
     organizationId: string;
     userId: string;
   }) {
