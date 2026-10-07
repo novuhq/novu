@@ -172,7 +172,7 @@
     "@novu/ee-auth": "workspace:*",
     "@novu/testing": "workspace:*",
     "@playwright/test": "^1.55.1",
-    "@sentry/vite-plugin": "^5.3.0",
+    "@sentry/vite-plugin": "^5.4.1",
     "@tiptap/core": "^2.11.5",
     "@types/json-schema": "^7.0.15",
     "@types/lodash.debounce": "^4.0.9",
@@ -185,7 +185,7 @@
     "@types/react-window": "^1.8.8",
     "@types/sanitize-html": "^2.11.0",
     "@types/uuid": "^8.3.4",
-    "@vitejs/plugin-react": "^4.7.0",
+    "@vitejs/plugin-react": "^6.1.2",
     "cross-fetch": "^4.0.0",
     "dotenv": "^16.6.1",
     "express": "^4.21.0",
@@ -196,9 +196,9 @@
     "rimraf": "^3.0.2",
     "tailwindcss": "^4.3.0",
     "typescript": "5.6.2",
-    "vite": "^6.4.3",
-    "vite-plugin-ejs": "^1.7.0",
-    "vite-plugin-static-copy": "^2.3.2"
+    "vite": "^8.3.3",
+    "vite-plugin-ejs": "^2.0.0",
+    "vite-plugin-static-copy": "^4.1.1"
   },
   "nx": {
     "tags": [
