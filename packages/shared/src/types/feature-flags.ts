@@ -40,6 +40,12 @@ export enum FeatureFlagsKeysEnum {
   /** Stops the usage-alerts cron before it reads usage. Default off, so the cron runs. */
   IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
   /**
+   * Organization-scoped: workflow-run usage limits (on-demand limit, pause at limit, alert settings) in the
+   * dashboard and `/billing/usage-limits`, paid-tier enforcement at the limit, and the usage-alerts cron honoring
+   * those settings.
+   */
+  IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED = 'IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED',
+  /**
    * Organization-scoped, read only when subscriber-process jobs are enqueued (`TriggerBase`): moves the usage
    * counter increment from enqueue to workflow-run creation (`CreateNotificationJobs`), matching what ClickHouse
    * counts. Transitional (NV-8853): remove with the enqueue-time increment and the job stamp once on for all
@@ -259,8 +265,9 @@ export enum FeatureFlagsKeysEnum {
   MAX_AGENTS_LIMIT_NUMBER = 'MAX_AGENTS_LIMIT_NUMBER',
   MAX_CUSTOM_EMAIL_DOMAINS_NUMBER = 'MAX_CUSTOM_EMAIL_DOMAINS_NUMBER',
   /**
-   * When greater than 0, replaces the tier-derived usage-alert cap and lowers the candidate
-   * query to 75% of this value. 0 keeps the real cap. Set it in the staging environment only.
+   * When greater than 0, stands in for the included events under an on-demand limit above them,
+   * replaces the tier-derived usage-alert cap otherwise, and lowers the candidate query to 75% of
+   * this value. 0 keeps the real cap. Set it in the staging environment only.
    */
   USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER = 'USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',

@@ -6,6 +6,7 @@ import { ApproveCliDeviceSession } from '../../../cli-auth/usecases/approve-cli-
 import { ClaimKeylessConnectCommand } from '../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.command';
 import { ClaimKeylessConnect } from '../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.usecase';
 import type { HumanAccountCliLoginResponseDto, HumanAccountResponseDto } from '../../dtos/human-account.dto';
+import { HumanAccountAgentService } from '../../services/human-account-agent.service';
 import { EnsureBackingOrganizationCommand } from '../ensure-backing-organization/ensure-backing-organization.command';
 import { EnsureBackingOrganization } from '../ensure-backing-organization/ensure-backing-organization.usecase';
 import { ApproveHumanCliLoginCommand } from './approve-human-cli-login.command';
@@ -28,7 +29,8 @@ export class ApproveHumanCliLogin {
     private readonly ensureBackingOrganization: EnsureBackingOrganization,
     private readonly claimKeylessConnect: ClaimKeylessConnect,
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
-    private readonly approveCliDeviceSession: ApproveCliDeviceSession
+    private readonly approveCliDeviceSession: ApproveCliDeviceSession,
+    private readonly humanAccountAgent: HumanAccountAgentService
   ) {}
 
   async execute(command: ApproveHumanCliLoginCommand): Promise<HumanAccountCliLoginResponseDto> {
@@ -47,7 +49,7 @@ export class ApproveHumanCliLogin {
     );
 
     if (command.claimToken) {
-      await this.keepSetup(command.claimToken, account);
+      await this.keepSetup(command.claimToken, account, { firstName: command.firstName, lastName: command.lastName });
     }
 
     const apiKey = await this.getDecryptedSecretKey.execute(
@@ -82,10 +84,17 @@ export class ApproveHumanCliLogin {
     return { ...account, keptSetup: Boolean(command.claimToken) };
   }
 
-  private async keepSetup(token: string, account: HumanAccountResponseDto): Promise<void> {
+  /** The agent the account got at sign-up makes way for the CLI's one, unless it's already in use. */
+  private async keepSetup(
+    token: string,
+    account: HumanAccountResponseDto,
+    name: { firstName?: string; lastName?: string }
+  ): Promise<void> {
     try {
-      await this.claimKeylessConnect.execute(
-        ClaimKeylessConnectCommand.create({ token, organizationId: account.organizationId, userId: account.userId })
+      await this.humanAccountAgent.claimOverUntouchedAgent(account, name, () =>
+        this.claimKeylessConnect.execute(
+          ClaimKeylessConnectCommand.create({ token, organizationId: account.organizationId, userId: account.userId })
+        )
       );
     } catch (error) {
       if (error instanceof HttpException && error.getStatus() < 500) {

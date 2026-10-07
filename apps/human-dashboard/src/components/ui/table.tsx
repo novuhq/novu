@@ -5,14 +5,14 @@ import { cn } from '@/lib/utils';
 /** The bordered list table used for channels and contacts. Scrolls sideways on narrow screens. */
 export function Table({ className, ...rest }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-subtle">
+    <div className="overflow-x-auto rounded-md border border-border bg-background">
       <table className={cn('w-full border-collapse text-left text-sm tracking-tight', className)} {...rest} />
     </div>
   );
 }
 
 export function TableHead({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn('border-b border-border', className)} {...rest} />;
+  return <thead className={cn('border-b border-border bg-subtle', className)} {...rest} />;
 }
 
 export function TableBody({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
@@ -28,8 +28,10 @@ export function TableRow({ highlighted = false, className, ...rest }: TableRowPr
   return (
     <tr
       className={cn(
-        'transition-colors hover:bg-raised motion-reduce:transition-none',
-        highlighted && 'bg-pending-subtle/40',
+        // The gradient is always there with clear stops, so its colors can fade in instead of jumping.
+        'bg-linear-to-r from-accent/0 via-accent/0 to-accent/0 transition-[background-color,--tw-gradient-from,--tw-gradient-via] duration-200 ease-out motion-reduce:transition-none',
+        'hover:bg-raised hover:from-accent/12 hover:via-accent/3',
+        highlighted && 'bg-raised from-accent/12 via-accent/3',
         className
       )}
       {...rest}
@@ -41,12 +43,15 @@ export function TableHeaderCell({ className, ...rest }: ThHTMLAttributes<HTMLTab
   return (
     <th
       scope="col"
-      className={cn('h-9 px-3 font-mono text-[11px] font-normal tracking-wider text-muted uppercase', className)}
+      className={cn(
+        'h-9 px-4 font-mono text-[11px] leading-4 font-medium tracking-[0.06em] text-muted uppercase',
+        className
+      )}
       {...rest}
     />
   );
 }
 
 export function TableCell({ className, ...rest }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn('h-14 px-3 text-foreground', className)} {...rest} />;
+  return <td className={cn('h-14 px-4 text-foreground', className)} {...rest} />;
 }
