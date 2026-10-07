@@ -92,14 +92,11 @@ describe('TraceLogRepository', () => {
       expect(queryStub.called).to.equal(false);
     });
 
-    const rollovers = [
-      { time: '00:30', startDate: '2026-09-26T00:30:00.000', endDate: '2026-10-26T00:30:00.000' },
-      { time: '09:24', startDate: '2026-09-26T09:24:00.000', endDate: '2026-10-26T09:24:00.000' },
-      { time: '23:59', startDate: '2026-09-26T23:59:00.000', endDate: '2026-10-26T23:59:00.000' },
-    ];
-
-    for (const { time, startDate, endDate } of rollovers) {
+    for (const time of ['00:30', '09:24', '23:59']) {
       it(`bounds both edge days of a period that rolls over at ${time} UTC`, async () => {
+        const startDate = `2026-09-26T${time}:00.000`;
+        const endDate = `2026-10-26T${time}:00.000`;
+
         queryStub.resolves({ data: [{ count: '1' }] });
 
         await repository.countEdgeDayWorkflowRunsOutsideRange(
@@ -132,6 +129,23 @@ describe('TraceLogRepository', () => {
         startDate: '2026-09-26T09:24:00.000',
         endDate: '2026-10-26T00:00:00.000',
         endDayEnd: '2026-10-26T00:00:00.000',
+      });
+    });
+
+    it('leaves the first day empty when a period that starts at UTC midnight ends mid-day', async () => {
+      queryStub.resolves({ data: [{ count: '4' }] });
+
+      await repository.countEdgeDayWorkflowRunsOutsideRange(
+        'org-a',
+        new Date('2026-09-26T00:00:00.000Z'),
+        new Date('2026-10-26T09:24:00.000Z')
+      );
+
+      expect(queryStub.firstCall.args[0].params).to.deep.include({
+        startDayStart: '2026-09-26T00:00:00.000',
+        startDate: '2026-09-26T00:00:00.000',
+        endDate: '2026-10-26T09:24:00.000',
+        endDayEnd: '2026-10-27T00:00:00.000',
       });
     });
 
