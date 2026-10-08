@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowUpRight, User } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 
 import { Badge } from '@/components/ui/badge';
@@ -89,6 +89,10 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   const [connectingVia, setConnectingVia] = useState<InviteChannelVia | null>(null);
   const [defaultingVia, setDefaultingVia] = useState<InviteChannelVia | null>(null);
   const [declining, setDeclining] = useState(false);
+  // Whether they pressed "Continue with Slack": before that there is nothing to wait for.
+  const [slackStarted, setSlackStarted] = useState(false);
+  // Counts the times they chose to go back, so a request from before that can tell it's stale.
+  const navigations = useRef(0);
 
   // Every view below is the same card, so it grows or shrinks to the next one instead of being swapped.
   if (inactiveReason) {
@@ -137,13 +141,21 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
       tab.opener = null;
     }
 
+    const navigation = navigations.current;
+
     setConnectingVia(via);
+    if (via === 'slack') {
+      setSlackStarted(true);
+    }
     try {
       const { url } = await connectInviteChannel(apiUrl, token, via);
 
       if (via === 'telegram') {
         setTelegramLink(url);
-        setView('telegram');
+        // Only when they are still where they asked for it: going back meanwhile is the newer choice.
+        if (navigation === navigations.current) {
+          setView('telegram');
+        }
       } else if (tab && !tab.closed) {
         tab.location.href = url;
       } else {
@@ -184,6 +196,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   };
 
   const showChannels = () => {
+    navigations.current += 1;
     setErrorMessage(null);
     setView('channels');
   };
@@ -195,15 +208,18 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   const error = errorMessage && <ErrorNote>{errorMessage}</ErrorNote>;
 
   if (view === 'done' && anyConnected) {
-    const defaultChannel = connectedChannels.find((channel) => channel.isDefault) ?? connectedChannels[0];
+    // No default among the apps here means asks go somewhere else by default, such as their email.
+    const defaultChannel = connectedChannels.find((channel) => channel.isDefault);
 
     return (
       <InviteCard step="done">
         <DoneCard
           agentName={status.agentName}
           inviteeName={status.inviteeName}
-          via={defaultChannel.via}
+          via={(defaultChannel ?? connectedChannels[0]).via}
+          isDefault={defaultChannel !== undefined}
           telegramBot={telegramBot}
+          onBack={showChannels}
         />
       </InviteCard>
     );
@@ -275,7 +291,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           <ArrowUpRight aria-hidden="true" className="size-3.5" />
           Continue with Slack
         </Button>
-        <WaitingLine>Waiting for Slack…</WaitingLine>
+        {slackStarted && <WaitingLine>Waiting for Slack…</WaitingLine>}
 
         {error}
         <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={showChannels}>
@@ -444,12 +460,16 @@ function TelegramQrCode({ url, bot }: { url: string; bot?: string }) {
 type DoneCardProps = {
   agentName: string;
   inviteeName: string;
-  /** The app the agent writes to first. */
+  /** The app shown in the example message. */
   via: InviteChannelVia;
+  /** Whether asks go to that app by default. */
+  isDefault: boolean;
   telegramBot?: string;
+  /** Back to the list of apps, to connect another one or change the default. */
+  onBack: () => void;
 };
 
-function DoneCard({ agentName, inviteeName, via, telegramBot }: DoneCardProps) {
+function DoneCard({ agentName, inviteeName, via, isDefault, telegramBot, onBack }: DoneCardProps) {
   const firstName = inviteeName.trim().split(/\s+/)[0];
   const sender = via === 'telegram' && telegramBot ? `@${telegramBot}` : APP_LABELS[via];
 
@@ -461,7 +481,7 @@ function DoneCard({ agentName, inviteeName, via, telegramBot }: DoneCardProps) {
         {firstName && <Accent>{firstName}</Accent>}
       </h1>
       <CardText>
-        {agentName} will message you on {APP_LABELS[via]} when it needs you. It looks like this:
+        {agentName} will message you{isDefault && ` on ${APP_LABELS[via]}`} when it needs you. It looks like this:
       </CardText>
 
       <figure
@@ -480,7 +500,17 @@ function DoneCard({ agentName, inviteeName, via, telegramBot }: DoneCardProps) {
         </div>
       </figure>
 
-      <p className="text-xs leading-4 text-muted">You can close this tab.</p>
+      <p className="text-xs leading-4 text-muted">
+        You can close this tab, or{' '}
+        <button
+          type="button"
+          className="cursor-pointer rounded-sm text-secondary underline underline-offset-4 transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+          onClick={onBack}
+        >
+          go back to your apps
+        </button>
+        .
+      </p>
     </>
   );
 }
