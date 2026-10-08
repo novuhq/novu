@@ -22,6 +22,9 @@ const SETTINGS_PATH = '/settings';
 /** What the relay agent is called until the operator names it (the Agent page, NV-8966). */
 const UNNAMED_AGENT_NAME = 'Human';
 
+/** How the dashboard calls an agent that has no name of its own yet, as in the sidebar. */
+const UNNAMED_AGENT_LABEL = 'Human assistant';
+
 /** How Clerk calls the sign-in services whose name isn't just the capitalized id. */
 const PROVIDER_NAMES: Record<string, string> = { github: 'GitHub', gitlab: 'GitLab', linkedin: 'LinkedIn' };
 
@@ -32,7 +35,7 @@ export default async function SettingsPage() {
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: SETTINGS_PATH })}`);
   }
 
-  const [apiKey, agentName] = await Promise.all([loadApiKey(account), loadAgentName(account, user)]);
+  const [apiKey, agentName] = await Promise.all([loadApiKey(account), loadAgentName(account)]);
   const email = user.primaryEmailAddress?.emailAddress;
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email || 'Your account';
 
@@ -81,17 +84,15 @@ async function loadApiKey(account: HumanAccount): Promise<string | null> {
 }
 
 /** The agent's name is only wording here, so the page still loads when it can't be read. */
-async function loadAgentName(account: HumanAccount, user: User): Promise<string> {
-  const fallback = user.firstName ? `${user.firstName}’s assistant` : 'your agent';
-
+async function loadAgentName(account: HumanAccount): Promise<string> {
   try {
     const name = (await getRelayAgent(account))?.name?.trim();
 
-    return name && name !== UNNAMED_AGENT_NAME ? name : fallback;
+    return name && name !== UNNAMED_AGENT_NAME ? name : UNNAMED_AGENT_LABEL;
   } catch (error) {
     console.error('Failed to load the relay agent for the Settings page', error);
 
-    return fallback;
+    return UNNAMED_AGENT_LABEL;
   }
 }
 

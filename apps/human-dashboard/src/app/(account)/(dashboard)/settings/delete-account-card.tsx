@@ -11,7 +11,7 @@ import { DIALOG_HEADER } from './api-key-card';
 import { CardHeading, SettingsCard } from './settings-card';
 
 type DeleteAccountCardProps = {
-  /** How the operator's agent is called in a sentence: "Dima’s assistant", "your agent". */
+  /** How the operator's agent is called in a sentence: its own name, or "Human assistant". */
   agentName: string;
 };
 
