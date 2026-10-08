@@ -19,7 +19,6 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
-    '/account/:path*',
     '/agent/:path*',
     '/channels/:path*',
     '/claim/:path*',

@@ -23,6 +23,8 @@ import { EnsureBackingOrganizationCommand } from './usecases/ensure-backing-orga
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKeyCommand } from './usecases/get-backing-secret-key/get-backing-secret-key.command';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { RegenerateBackingSecretKeyCommand } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.command';
+import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 
 /**
  * Private endpoints for the Human dashboard's server (gethuman.md), which signs operators in with its
@@ -39,6 +41,7 @@ export class HumanAccountsController {
     private readonly ensureBackingOrganizationUsecase: EnsureBackingOrganization,
     private readonly claimForHumanAccountUsecase: ClaimForHumanAccount,
     private readonly getBackingSecretKeyUsecase: GetBackingSecretKey,
+    private readonly regenerateBackingSecretKeyUsecase: RegenerateBackingSecretKey,
     private readonly deleteHumanAccountUsecase: DeleteHumanAccount,
     private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin
   ) {}
@@ -92,6 +95,13 @@ export class HumanAccountsController {
   @ApiOperation({ summary: 'Get the Development environment secret key of a Human account' })
   getSecretKey(@Param('humanUserId') humanUserId: string): Promise<HumanAccountSecretKeyResponseDto> {
     return this.getBackingSecretKeyUsecase.execute(GetBackingSecretKeyCommand.create({ humanUserId }));
+  }
+
+  @Post('/:humanUserId/secret-key/regenerate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Replace the Development environment secret key of a Human account' })
+  regenerateSecretKey(@Param('humanUserId') humanUserId: string): Promise<HumanAccountSecretKeyResponseDto> {
+    return this.regenerateBackingSecretKeyUsecase.execute(RegenerateBackingSecretKeyCommand.create({ humanUserId }));
   }
 
   @Delete('/:humanUserId')
