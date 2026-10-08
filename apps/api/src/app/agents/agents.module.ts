@@ -78,6 +78,7 @@ import { HumanInteractionSettlementService } from './human-relay/human-interacti
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
+import { LiveReplyStreamer } from './managed-runtime/live-reply-streamer.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
@@ -182,6 +183,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
+    LiveReplyStreamer,
     AgentEventSink,
     McpConnectionErrorHandler,
     ManagedAgentService,

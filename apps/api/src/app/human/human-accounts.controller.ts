@@ -4,13 +4,17 @@ import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import {
+  ApproveHumanCliLoginRequestDto,
   ClaimHumanAccountRequestDto,
   EnsureHumanAccountRequestDto,
   type HumanAccountClaimResponseDto,
+  type HumanAccountCliLoginResponseDto,
   type HumanAccountResponseDto,
   type HumanAccountSecretKeyResponseDto,
 } from './dtos/human-account.dto';
-import { HumanWebsiteSecretGuard } from './guards/human-website-secret.guard';
+import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
+import { ApproveHumanCliLoginCommand } from './usecases/approve-human-cli-login/approve-human-cli-login.command';
+import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { ClaimForHumanAccountCommand } from './usecases/claim-for-human-account/claim-for-human-account.command';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { DeleteHumanAccountCommand } from './usecases/delete-human-account/delete-human-account.command';
@@ -19,9 +23,11 @@ import { EnsureBackingOrganizationCommand } from './usecases/ensure-backing-orga
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKeyCommand } from './usecases/get-backing-secret-key/get-backing-secret-key.command';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { RegenerateBackingSecretKeyCommand } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.command';
+import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 
 /**
- * Private endpoints for the Human website's server (gethuman.md), which signs operators in with its
+ * Private endpoints for the Human dashboard's server (gethuman.md), which signs operators in with its
  * own Clerk app. Each Human account is backed by a hidden Novu organization; see
  * packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md.
  */
@@ -29,13 +35,15 @@ import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backi
 @ApiCommonResponses()
 @Controller('/human/accounts')
 @ApiExcludeController()
-@UseGuards(HumanWebsiteSecretGuard)
+@UseGuards(HumanDashboardSecretGuard)
 export class HumanAccountsController {
   constructor(
     private readonly ensureBackingOrganizationUsecase: EnsureBackingOrganization,
     private readonly claimForHumanAccountUsecase: ClaimForHumanAccount,
     private readonly getBackingSecretKeyUsecase: GetBackingSecretKey,
-    private readonly deleteHumanAccountUsecase: DeleteHumanAccount
+    private readonly regenerateBackingSecretKeyUsecase: RegenerateBackingSecretKey,
+    private readonly deleteHumanAccountUsecase: DeleteHumanAccount,
+    private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin
   ) {}
 
   @Post('/')
@@ -65,10 +73,35 @@ export class HumanAccountsController {
     );
   }
 
+  @Post('/cli-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Approve a `human login` with the Development key of a Human account, keeping its keyless setup',
+  })
+  approveCliLogin(@Body() body: ApproveHumanCliLoginRequestDto): Promise<HumanAccountCliLoginResponseDto> {
+    return this.approveHumanCliLoginUsecase.execute(
+      ApproveHumanCliLoginCommand.create({
+        humanUserId: body.humanUserId,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        email: body.email,
+        userCode: body.userCode,
+        claimToken: body.claimToken,
+      })
+    );
+  }
+
   @Get('/:humanUserId/secret-key')
   @ApiOperation({ summary: 'Get the Development environment secret key of a Human account' })
   getSecretKey(@Param('humanUserId') humanUserId: string): Promise<HumanAccountSecretKeyResponseDto> {
     return this.getBackingSecretKeyUsecase.execute(GetBackingSecretKeyCommand.create({ humanUserId }));
+  }
+
+  @Post('/:humanUserId/secret-key/regenerate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Replace the Development environment secret key of a Human account' })
+  regenerateSecretKey(@Param('humanUserId') humanUserId: string): Promise<HumanAccountSecretKeyResponseDto> {
+    return this.regenerateBackingSecretKeyUsecase.execute(RegenerateBackingSecretKeyCommand.create({ humanUserId }));
   }
 
   @Delete('/:humanUserId')

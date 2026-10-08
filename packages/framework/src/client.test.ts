@@ -309,12 +309,7 @@ describe('Novu Client', () => {
       expect(stepBackoffDigest.type).toBe('digest');
       expect(stepBackoffDigest.code).toContain(`amount: 1`);
       expect(stepBackoffDigest.code).toContain(`unit: "hours"`);
-      expect(stepBackoffDigest.code.trim()).toContain(
-        `lookBackWindow: {
-            amount: 1,
-            unit: "hours"
-          }`.trim()
-      );
+      expect(stepBackoffDigest.code.replace(/\s+/g, ' ')).toContain('lookBackWindow: { amount: 1, unit: "hours" }');
 
       const stepTimedDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'timed-digest');
       expect(stepTimedDigest).toBeDefined();

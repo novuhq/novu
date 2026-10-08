@@ -106,6 +106,17 @@ describe('Verify Payload Usecase', () => {
       );
     }).to.throw('payload is missing required key(s) and type(s): first (Value), second (Array), third (Boolean)');
   });
+
+  it('should return empty defaults when the workflow has no steps', () => {
+    const result = verifyPayload.execute(
+      VerifyPayloadCommand.create({
+        payload: { pollId: 'poll-123', status: 'complete' },
+        template: { steps: [] } as unknown as NotificationTemplateEntity,
+      })
+    );
+
+    expect(result).to.deep.equal({});
+  });
 });
 
 function createTemplate(variables: ITemplateVariable[]) {

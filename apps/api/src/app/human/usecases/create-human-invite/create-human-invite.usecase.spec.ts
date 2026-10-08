@@ -6,7 +6,7 @@ import { CreateHumanInviteCommand } from './create-human-invite.command';
 import { CreateHumanInvite } from './create-human-invite.usecase';
 
 describe('CreateHumanInvite', () => {
-  const originalEnv = { HUMAN_WEBSITE_URL: process.env.HUMAN_WEBSITE_URL, NOVU_REGION: process.env.NOVU_REGION };
+  const originalEnv = { HUMAN_DASHBOARD_URL: process.env.HUMAN_DASHBOARD_URL, NOVU_REGION: process.env.NOVU_REGION };
 
   afterEach(() => {
     for (const [key, value] of Object.entries(originalEnv)) {
@@ -42,8 +42,8 @@ describe('CreateHumanInvite', () => {
     lastName: 'Chen',
   });
 
-  it('returns an invite link on the Human website and the apps offered on it', async () => {
-    process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md/';
+  it('returns an invite link on the Human dashboard and the apps offered on it', async () => {
+    process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md/';
     delete process.env.NOVU_REGION;
     const { usecase, setupHumanRelay, inviteTokens } = setup([
       { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false },
@@ -70,7 +70,7 @@ describe('CreateHumanInvite', () => {
   });
 
   it('tags links from an EU deployment so the page calls the EU API', async () => {
-    process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md';
+    process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
     process.env.NOVU_REGION = 'eu-central-1';
     const { usecase } = setup([{ via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false }]);
 
