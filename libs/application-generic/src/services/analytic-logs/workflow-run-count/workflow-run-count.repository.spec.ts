@@ -62,8 +62,6 @@ describe('WorkflowRunCountRepository', () => {
         startDate: '2024-01-01',
         endDate: '2024-01-31',
       });
-      expect(call.query).to.not.include('organization_id = {organizationId:String}');
-      expect(call.params).to.not.have.property('organizationId');
     });
 
     it('maps a midnight exclusive endDate to the previous calendar day', async () => {
@@ -77,27 +75,6 @@ describe('WorkflowRunCountRepository', () => {
       expect(queryStub.firstCall.args[0].params).to.deep.equal({
         startDate: '2024-01-01',
         endDate: '2024-01-31',
-      });
-    });
-
-    it('adds organization_id filter and param when organizationId is provided', async () => {
-      const startDate = new Date('2024-02-01T00:00:00.000Z');
-      // Half-open end at start of March → last included day is Feb 29 2024
-      const endDate = new Date('2024-03-01T00:00:00.000Z');
-      const rows = [{ organization_id: 'org-only', count: '7' }];
-
-      queryStub.resolves({ data: rows });
-
-      const result = await repository.getPlatformUsageByWholeUtcDays(startDate, endDate, 'org-only');
-
-      expect(result).to.deep.equal(rows);
-
-      const call = queryStub.firstCall.args[0];
-      expect(call.query).to.include('organization_id = {organizationId:String}');
-      expect(call.params).to.deep.equal({
-        startDate: '2024-02-01',
-        endDate: '2024-02-29',
-        organizationId: 'org-only',
       });
     });
 

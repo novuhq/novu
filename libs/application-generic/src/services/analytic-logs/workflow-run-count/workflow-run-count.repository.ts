@@ -183,10 +183,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
    */
   async getPlatformUsageByWholeUtcDays(
     startDate: Date,
-    endDate: Date,
-    organizationId?: string
+    endDate: Date
   ): Promise<Array<{ organization_id: string; count: string }>> {
-    const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
     const { start, end } = toInclusiveUtcDays(startDate, endDate);
 
     const query = `
@@ -198,26 +196,19 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
         date >= {startDate:Date}
         AND date <= {endDate:Date}
         AND event_type = 'workflow_run_status_processing'
-        ${organizationFilter}
       GROUP BY organization_id
       ORDER BY organization_id
     `;
-
-    const params: Record<string, unknown> = {
-      startDate: start,
-      endDate: end,
-    };
-
-    if (organizationId) {
-      params.organizationId = organizationId;
-    }
 
     const result = await this.clickhouseService.query<{
       organization_id: string;
       count: string;
     }>({
       query,
-      params,
+      params: {
+        startDate: start,
+        endDate: end,
+      },
     });
 
     return result.data;
