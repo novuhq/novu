@@ -6,10 +6,10 @@ import {
   CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS,
   CLI_DEVICE_SESSION_NAME_HUMAN_CLI,
   CLI_USER_CODE_ALPHABET,
-  type CliDeviceSessionPollResponse,
   type CliDeviceSessionUser,
   type CreateCliDeviceSessionResponse,
   resolveCliDeviceSessionConfig,
+  type CliDeviceSessionPollResponse as SharedCliDeviceSessionPollResponse,
 } from '@novu/shared';
 
 import { buildHumanCliLoginUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
@@ -22,6 +22,22 @@ const USER_CODE_KEY_PREFIX = 'cli-device-session-user-code:';
 
 const USER_CODE_ATTEMPTS = 5;
 
+/** A denied session is kept this long, so the waiting CLI's next poll can tell it apart from an expired one. */
+const DENIED_SESSION_TTL_SECONDS = 5 * 60;
+
+/** Longest machine name kept with a session. Hostnames can be far longer than anyone reads on a page. */
+export const CLI_MACHINE_NAME_MAX_LENGTH = 64;
+
+/** `denied` is only ever answered to `human login`, the one CLI whose approval page has a Deny button. */
+export type CliDeviceSessionPollResponse = SharedCliDeviceSessionPollResponse | { status: 'denied' };
+
+/** A session still waiting for an answer, as the page that approves or denies it sees it. */
+export type PendingCliDeviceSession = {
+  deviceCode: string;
+  /** Name of the computer the CLI runs on, as that CLI reported it. Never verified: show it as plain text. */
+  machineName?: string;
+};
+
 export class CliDeviceSessionNotFoundError extends Error {
   constructor(message = 'CLI device session not found or expired') {
     super(message);
@@ -29,7 +45,7 @@ export class CliDeviceSessionNotFoundError extends Error {
   }
 }
 
-type CliDeviceSessionStatus = 'pending' | 'approved';
+type CliDeviceSessionStatus = 'pending' | 'approved' | 'denied';
 
 interface CliDeviceSessionRecord {
   status: CliDeviceSessionStatus;
@@ -47,9 +63,20 @@ interface CliDeviceSessionRecord {
   user?: CliDeviceSessionUser | null;
   approvedByUserId?: string;
   userCode?: string;
+  machineName?: string;
 }
 
 const APPROVE_IF_PENDING_SCRIPT = `
+local v = redis.call('get', KEYS[1])
+if not v then return 0 end
+local ok, payload = pcall(cjson.decode, v)
+if not ok or payload.status ~= 'pending' then return 0 end
+redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
+return 1
+`;
+
+/** Turns a pending session into a denied one that only says so: the poll that reads it gets no key. */
+const DENY_IF_PENDING_SCRIPT = `
 local v = redis.call('get', KEYS[1])
 if not v then return 0 end
 local ok, payload = pcall(cjson.decode, v)
@@ -87,6 +114,10 @@ if payload.status == 'approved' and payload.apiKey and payload.environmentId the
   redis.call('del', KEYS[1])
   return v
 end
+if payload.status == 'denied' then
+  redis.call('del', KEYS[1])
+  return 'DENIED'
+end
 redis.call('del', KEYS[1])
 return 'CORRUPT'
 `;
@@ -100,7 +131,7 @@ export class CliDeviceSessionService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async create(params: { name?: string }): Promise<CreateCliDeviceSessionResponse> {
+  async create(params: { name?: string; machineName?: string }): Promise<CreateCliDeviceSessionResponse> {
     const deviceCode = randomBytes(24).toString('base64url');
     const sessionConfig = resolveCliDeviceSessionConfig(params.name);
 
@@ -110,10 +141,13 @@ export class CliDeviceSessionService {
       throw new Error('Cache is required to issue CLI device sessions');
     }
 
-    // `human login` is approved on the Human dashboard by typing a short user code, so the device code the CLI
-    // polls with never reaches a browser, and a link alone can't approve anything.
-    const verificationUrl = params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI ? buildHumanCliLoginUrl() : undefined;
-    const userCode = verificationUrl ? await this.reserveUserCode(deviceCode, sessionConfig.ttlSeconds) : undefined;
+    // `human login` is approved on the Human dashboard under a short user code, so the device code the CLI polls
+    // with never reaches a browser. The link carries the user code for the page to show next to the terminal's;
+    // it approves nothing by itself: a signed-in person still has to press Approve there.
+    const isHumanLogin = params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI && Boolean(buildHumanCliLoginUrl());
+    const userCode = isHumanLogin ? await this.reserveUserCode(deviceCode, sessionConfig.ttlSeconds) : undefined;
+    const verificationUrl = userCode ? buildHumanCliLoginUrl(userCode) : undefined;
+    const machineName = isHumanLogin ? cleanMachineName(params.machineName) : undefined;
 
     const record: CliDeviceSessionRecord = {
       status: 'pending',
@@ -123,6 +157,7 @@ export class CliDeviceSessionService {
       sessionTtlSeconds: sessionConfig.ttlSeconds,
       slideTtlOnPoll: sessionConfig.slideTtlOnPoll,
       ...(userCode ? { userCode } : {}),
+      ...(machineName ? { machineName } : {}),
     };
 
     await this.cacheService.set(this.cacheKey(deviceCode), JSON.stringify(record), {
@@ -139,6 +174,11 @@ export class CliDeviceSessionService {
 
   /** The device code of the session still waiting for approval under this user code, if there is one. */
   async findPendingByUserCode(userCode: string): Promise<string | null> {
+    return (await this.getPendingByUserCode(userCode))?.deviceCode ?? null;
+  }
+
+  /** The session still waiting for an answer under this user code. Approved, denied and expired ones are gone. */
+  async getPendingByUserCode(userCode: string): Promise<PendingCliDeviceSession | null> {
     if (!userCode || !this.cacheService.cacheEnabled()) {
       return null;
     }
@@ -147,7 +187,38 @@ export class CliDeviceSessionService {
     const raw = deviceCode ? await this.cacheService.get(this.cacheKey(deviceCode)) : null;
     const record = raw ? this.parseRecord(raw) : null;
 
-    return deviceCode && record?.status === 'pending' && record.userCode === userCode ? deviceCode : null;
+    if (!deviceCode || record?.status !== 'pending' || record.userCode !== userCode) {
+      return null;
+    }
+
+    return { deviceCode, ...(record.machineName ? { machineName: record.machineName } : {}) };
+  }
+
+  /**
+   * Ends the session waiting under this user code without letting the CLI in: the code stops working at once,
+   * and the CLI's next poll is told it was denied. False when no session was waiting (anymore).
+   */
+  async denyByUserCode(userCode: string): Promise<boolean> {
+    const pending = await this.getPendingByUserCode(userCode);
+    if (!pending) {
+      return false;
+    }
+
+    const key = this.cacheKey(pending.deviceCode);
+    const existingRaw = await this.cacheService.get(key);
+    const existing = existingRaw ? this.parseRecord(existingRaw) : null;
+    if (!existing) {
+      return false;
+    }
+
+    const record: CliDeviceSessionRecord = { ...existing, status: 'denied' };
+    const denied = await this.cacheService.eval<number>(
+      DENY_IF_PENDING_SCRIPT,
+      [key],
+      [DENIED_SESSION_TTL_SECONDS, JSON.stringify(record)]
+    );
+
+    return denied === 1;
   }
 
   async poll(deviceCode: string): Promise<CliDeviceSessionPollResponse> {
@@ -183,6 +254,10 @@ export class CliDeviceSessionService {
 
     if (pollResult === 'EXPIRED' || pollResult === 'CORRUPT') {
       return { status: 'expired' };
+    }
+
+    if (pollResult === 'DENIED') {
+      return { status: 'denied' };
     }
 
     const record = this.parseRecord(pollResult);
@@ -274,6 +349,7 @@ export class CliDeviceSessionService {
         user: parsed.user,
         approvedByUserId: parsed.approvedByUserId,
         userCode: parsed.userCode,
+        machineName: parsed.machineName,
       };
     } catch {
       return null;
@@ -308,6 +384,22 @@ export class CliDeviceSessionService {
   private userCodeKey(userCode: string): string {
     return `${USER_CODE_KEY_PREFIX}${userCode}`;
   }
+}
+
+/**
+ * The machine name is whatever the CLI sent, so it's cut down to one short line of visible characters
+ * before it's kept. Pages still have to render it as text.
+ */
+function cleanMachineName(input: string | undefined): string | undefined {
+  const cleaned = (input ?? '')
+    // Control and invisible formatting characters (bidi overrides, zero-width joiners) could disguise the name.
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, CLI_MACHINE_NAME_MAX_LENGTH)
+    .trim();
+
+  return cleaned || undefined;
 }
 
 /** Eight letters, e.g. `BCDF-GHJK`: about 2.5e10 codes, against at most a handful waiting at once. */

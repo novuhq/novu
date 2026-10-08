@@ -3,63 +3,73 @@
 import { currentUser } from '@clerk/nextjs/server';
 
 import { readStoredBackingAccount, type StoredBackingAccount, storeBackingAccount } from '@/lib/human-account';
-import { approveCliLogin, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { approveCliLogin, denyCliLogin, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import { claimPastSignUp } from '@/lib/human-claim';
 
-export type CliLoginFormState = {
-  approved?: boolean;
-  /** The setup made without an account moved into the Human account on the way. */
-  keptSetup?: boolean;
-  error?: string;
-  /** That setup can't be kept, but logging in without it still works. */
-  canSkipClaim?: boolean;
-  /** The login worked, but the account page couldn't be told where the setup lives. */
-  accountPageBehind?: boolean;
-  /** What was typed, so the field keeps it after an error. */
-  userCode?: string;
+import { normalizeUserCode } from './user-code';
+
+export type CliLoginRequest = {
+  /** The code from the link, or what was typed when the link had none. */
+  userCode: string;
+  region: HumanRegion;
+  /** Claim token of the setup made without an account, when logging in should move it into the account. */
+  claim?: string;
 };
 
-/** Letters of the codes `human login` prints (`CLI_USER_CODE_ALPHABET` in `@novu/shared`). */
-const USER_CODE_LETTERS = /^[BCDFGHJKLMNPQRSTVWXZ]{8}$/;
+export type ApproveCliLoginResult =
+  | {
+      status: 'approved';
+      /** The setup made without an account moved into the Human account on the way. */
+      keptSetup: boolean;
+      /** The login worked, but the dashboard couldn't be told where the setup lives. */
+      accountPageBehind: boolean;
+    }
+  /** Nothing is waiting for the code anymore: it ran out, was denied, or was used. */
+  | { status: 'expired' }
+  | {
+      status: 'error';
+      message: string;
+      /** That setup can't be kept, but approving without it still works. */
+      canSkipClaim?: boolean;
+    };
+
+export type DenyCliLoginResult = { status: 'denied' } | { status: 'error'; message: string };
 
 /** Claim tokens are 32 URL-safe characters (`@novu/shared` `isConnectClaimTokenFormat`). */
 const CLAIM_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
 
-const GENERIC_ERROR = 'Something went wrong while logging in. Please try again.';
+const SESSION_ENDED = 'Your session has ended. Reload this page and sign in again.';
 
 /**
- * Approves the `human login` waiting for the code the operator typed. With a claim token, the CLI's setup made
- * without an account first moves into the Human account, so the CLI carries on with the same contacts and
- * channels. The API checks the code before it creates or moves anything.
+ * Approves the `human login` waiting for the code, so that CLI gets the key of the signed-in person's Human
+ * account. Only ever runs from the Approve button: the code in the link shows which login this is, it doesn't
+ * approve it. With a claim token, the CLI's setup made without an account first moves into the Human account,
+ * so the CLI carries on with the same contacts and channels. The API checks the code before it creates or
+ * moves anything.
  */
-export async function approveCliLoginAction(
-  _previous: CliLoginFormState,
-  formData: FormData
-): Promise<CliLoginFormState> {
+export async function approveCliLoginAction(request: CliLoginRequest): Promise<ApproveCliLoginResult> {
   const user = await currentUser();
   if (!user) {
-    return { error: 'Your session has ended. Sign in again to log in.' };
+    return { status: 'error', message: SESSION_ENDED };
   }
 
-  const typedCode = String(formData.get('userCode') ?? '');
-  const claim = String(formData.get('claim') ?? '');
-  const keepSetup = Boolean(claim) && formData.get('keepSetup') !== 'no';
-  const region: HumanRegion = formData.get('region') === 'eu' ? 'eu' : 'us';
-
-  const userCode = normalizeUserCode(typedCode);
+  const userCode = normalizeUserCode(String(request.userCode ?? ''));
   if (!userCode) {
-    return { error: 'Enter the 8-letter code from your terminal, like BCDF-GHJK.', userCode: typedCode };
+    return { status: 'error', message: 'Enter the 8-letter code from your terminal, like BCDF-GHJK.' };
   }
 
+  const claim = String(request.claim ?? '');
   if (claim && !CLAIM_TOKEN_PATTERN.test(claim)) {
-    return { error: 'This link isn’t valid. Run human login again for a new one.' };
+    return { status: 'error', message: 'This link isn’t valid. Run human login again for a new one.' };
   }
 
+  const region: HumanRegion = request.region === 'eu' ? 'eu' : 'us';
   const stored = readStoredBackingAccount(user);
   if (stored && stored.region !== region) {
     return {
-      error: `Your human CLI uses the ${REGION_NAMES[region]} region, but your Human account is in the ${REGION_NAMES[stored.region]} region. Point the CLI at the ${REGION_NAMES[stored.region]} API and run human login again.`,
+      status: 'error',
+      message: `Your human CLI uses the ${REGION_NAMES[region]} region, but your Human account is in the ${REGION_NAMES[stored.region]} region. Point the CLI at the ${REGION_NAMES[stored.region]} API and run human login again.`,
     };
   }
 
@@ -75,13 +85,13 @@ export async function approveCliLoginAction(
           lastName: user.lastName,
           email: user.primaryEmailAddress?.emailAddress,
         },
-        { userCode, claimToken: keepSetup ? claim : undefined }
+        { userCode, claimToken: claim || undefined }
       )
     );
   } catch (error) {
     console.error('Failed to approve the CLI login', error);
 
-    return { ...describeLoginError(error), userCode };
+    return describeApproveError(error);
   }
 
   // The CLI is logged in at this point, so a failed write here must not read as a failed login.
@@ -89,10 +99,37 @@ export async function approveCliLoginAction(
     Boolean(stored) ||
     (await rememberBackingAccount(user.id, { region, organizationId: account.organizationId, userId: account.userId }));
 
-  return { approved: true, keptSetup: account.keptSetup, accountPageBehind: !remembered };
+  return { status: 'approved', keptSetup: account.keptSetup, accountPageBehind: !remembered };
 }
 
-/** Tries twice, since the account page shows nothing until this is saved. */
+/**
+ * Ends the `human login` waiting for the code: the code stops working and the terminal is told it was denied.
+ * Nothing is created or moved. A login that is already gone counts as denied too, since nobody gets in with it.
+ */
+export async function denyCliLoginAction(request: Omit<CliLoginRequest, 'claim'>): Promise<DenyCliLoginResult> {
+  const user = await currentUser();
+  if (!user) {
+    return { status: 'error', message: SESSION_ENDED };
+  }
+
+  const userCode = normalizeUserCode(String(request.userCode ?? ''));
+  if (!userCode) {
+    // Without a code there's no login to end, and none that this page could approve by accident.
+    return { status: 'denied' };
+  }
+
+  try {
+    await denyCliLogin(request.region === 'eu' ? 'eu' : 'us', userCode);
+  } catch (error) {
+    console.error('Failed to deny the CLI login', error);
+
+    return { status: 'error', message: 'Couldn’t deny this login just now. Try again, or close your terminal.' };
+  }
+
+  return { status: 'denied' };
+}
+
+/** Tries twice, since the dashboard shows nothing until this is saved. */
 async function rememberBackingAccount(userId: string, account: StoredBackingAccount): Promise<boolean> {
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
@@ -107,35 +144,30 @@ async function rememberBackingAccount(userId: string, account: StoredBackingAcco
   return false;
 }
 
-/** Accepts the code however it's typed: any case, with or without the dash or spaces. */
-function normalizeUserCode(input: string): string | null {
-  const letters = input.toUpperCase().replace(/[^A-Z]/g, '');
-
-  return USER_CODE_LETTERS.test(letters) ? `${letters.slice(0, 4)}-${letters.slice(4)}` : null;
-}
-
-function describeLoginError(error: unknown): CliLoginFormState {
+function describeApproveError(error: unknown): ApproveCliLoginResult {
   if (error instanceof HumanApiError) {
     if (error.code === 'cli_login_not_found') {
-      return {
-        error:
-          'That code doesn’t match a login waiting in a terminal. Check it, or run human login again for a new one.',
-      };
+      return { status: 'expired' };
     }
 
     if (error.code === 'claim_agent_exists') {
       return {
-        error:
-          'Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can still log in; that setup stays behind.',
+        status: 'error',
+        message:
+          'Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can still approve; that setup stays behind.',
         canSkipClaim: true,
       };
     }
 
     // The claim's own messages ("already been used", "expired", …) are written for people.
     if (error.code.startsWith('claim_')) {
-      return { error: `${error.message} You can still log in without keeping that setup.`, canSkipClaim: true };
+      return {
+        status: 'error',
+        message: `${error.message} You can still approve without keeping that setup.`,
+        canSkipClaim: true,
+      };
     }
   }
 
-  return { error: GENERIC_ERROR };
+  return { status: 'error', message: 'Something went wrong while logging in. Please try again.' };
 }

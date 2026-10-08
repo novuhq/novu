@@ -1,3 +1,4 @@
+import { hostname } from 'node:os';
 import pc from 'picocolors';
 import { createHumanApiClient } from '../api/client';
 import {
@@ -37,6 +38,12 @@ export interface LoginResult {
 export const LOGIN_UNAVAILABLE_MESSAGE =
   'This Novu API has no browser login. Run `human setup --secret-key <key>` or set NOVU_SECRET_KEY instead.';
 
+export const LOGIN_DENIED_MESSAGE =
+  'This login was denied in the browser, so nothing changed. Run `human login` again if that was a mistake.';
+
+/** Matches the API's `CLI_MACHINE_NAME_MAX_LENGTH`; longer names are cut there anyway. */
+const MACHINE_NAME_MAX_LENGTH = 64;
+
 /** The API keeps a waiting request alive for up to an hour (`CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS`). */
 const MAX_WAIT_MS = 60 * 60 * 1000;
 
@@ -73,7 +80,7 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
   // Everything saved belongs to one API; it only carries over when logging in to that same API.
   const current = existing?.apiUrl === apiUrl ? existing : null;
 
-  const request = await startLoginRequest(apiUrl);
+  const request = await startLoginRequest(apiUrl, readMachineName());
   if (!request.verificationUrl || !request.userCode) {
     throw new Error(LOGIN_UNAVAILABLE_MESSAGE);
   }
@@ -84,15 +91,20 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
     : null;
   const loginUrl = withClaimToken(request.verificationUrl, claimToken);
 
+  // Newer APIs put the code in the link, so the page shows it; with older ones it's typed there.
+  const pageShowsCode = new URL(loginUrl).searchParams.get('code') === request.userCode;
+
   process.stdout.write(
     `\nLog in with your Human account in your browser (opening it now):\n\n  ${pc.underline(loginUrl)}\n\n` +
-      `Enter this code there:  ${pc.bold(request.userCode)}\n` +
+      (pageShowsCode
+        ? `Approve there only if the page shows this code:  ${pc.bold(request.userCode)}\n`
+        : `Enter this code there:  ${pc.bold(request.userCode)}\n`) +
       (claimToken ? 'The setup you made without an account moves into your Human account.\n' : '') +
       '\n'
   );
   openInBrowser(loginUrl);
 
-  const approved = await waitForApproval(apiUrl, request, request.userCode);
+  const approved = await waitForApproval(apiUrl, request, request.userCode, pageShowsCode);
   const client = createHumanApiClient({ apiUrl, secretKey: approved.apiKey });
   const subscriberId = current?.subscriberId;
   // The key is handed over only once, so a failed check must not lose it: keep the identity when unsure.
@@ -120,12 +132,27 @@ export function withClaimToken(verificationUrl: string, claimToken: string | nul
   return url.toString();
 }
 
+/** This computer's name, for the page to show. Left out when the system has none to give. */
+function readMachineName(): string | undefined {
+  try {
+    return hostname().trim().slice(0, MACHINE_NAME_MAX_LENGTH) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function waitForApproval(
   apiUrl: string,
   request: LoginRequest,
-  userCode: string
+  userCode: string,
+  pageShowsCode: boolean
 ): Promise<Extract<LoginRequestStatus, { status: 'approved' }>> {
-  const stopIndicator = startWaitIndicator(`Waiting for you to enter ${userCode} in your browser`, 'Ctrl-C cancels');
+  const stopIndicator = startWaitIndicator(
+    pageShowsCode
+      ? `Waiting for you to approve ${userCode} in your browser`
+      : `Waiting for you to enter ${userCode} in your browser`,
+    'Ctrl-C cancels'
+  );
   const deadline = Date.now() + MAX_WAIT_MS;
   let intervalMs = toIntervalMs(request.interval);
 
@@ -140,6 +167,10 @@ async function waitForApproval(
 
       if (status.status === 'expired') {
         throw new Error('This login request expired. Run `human login` again.');
+      }
+
+      if (status.status === 'denied') {
+        throw new Error(LOGIN_DENIED_MESSAGE);
       }
 
       intervalMs = toIntervalMs(status.interval);

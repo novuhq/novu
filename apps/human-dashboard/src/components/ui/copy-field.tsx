@@ -29,7 +29,7 @@ export function CopyField({ value, label, display, command = false, action, clas
       )}
     >
       {command && (
-        <span aria-hidden="true" className="font-mono text-sm text-accent select-none">
+        <span aria-hidden="true" className="font-mono text-[13px] leading-5 font-medium text-accent select-none">
           $
         </span>
       )}

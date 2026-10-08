@@ -8,6 +8,12 @@ const hasSubscriber = vi.fn();
 const loadConfig = vi.fn();
 const saveConfig = vi.fn();
 const openInBrowser = vi.fn();
+const hostname = vi.fn();
+
+vi.mock('node:os', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('node:os')>()),
+  hostname: () => hostname(),
+}));
 
 vi.mock('../api/login', () => ({
   startLoginRequest: (...args: unknown[]) => startLoginRequest(...args),
@@ -30,9 +36,11 @@ vi.mock('../open-browser', () => ({ openInBrowser: (...args: unknown[]) => openI
 vi.mock('../poll', () => ({ sleep: () => Promise.resolve() }));
 vi.mock('../spinner', () => ({ startWaitIndicator: () => () => undefined }));
 
-const { LOGIN_UNAVAILABLE_MESSAGE, runLogin, withClaimToken } = await import('./login');
+const { LOGIN_DENIED_MESSAGE, LOGIN_UNAVAILABLE_MESSAGE, runLogin, withClaimToken } = await import('./login');
 
-const LOGIN_URL = 'https://gethuman.md/cli/login';
+const LOGIN_URL = 'https://gethuman.md/cli/login?code=BCDF-GHJK';
+/** What APIs from before the page showed the code send: the operator types it there. */
+const LOGIN_URL_WITHOUT_CODE = 'https://gethuman.md/cli/login';
 
 const keylessConfig: HumanCliConfig = {
   apiUrl: 'https://api.novu.co',
@@ -51,6 +59,7 @@ describe('runLogin', () => {
     delete process.env.NOVU_API_URL;
     stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     loadConfig.mockReturnValue(null);
+    hostname.mockReturnValue('adas-macbook-pro');
     startLoginRequest.mockResolvedValue({
       deviceCode: 'device_code',
       expiresIn: 1800,
@@ -81,10 +90,12 @@ describe('runLogin', () => {
   it('logs a new user in and saves only the key', async () => {
     const result = await runLogin({});
 
-    expect(startLoginRequest).toHaveBeenCalledWith('https://api.novu.co');
+    // The page names this computer next to the code.
+    expect(startLoginRequest).toHaveBeenCalledWith('https://api.novu.co', 'adas-macbook-pro');
     expect(openInBrowser).toHaveBeenCalledWith(LOGIN_URL);
-    // The operator types the code on the page; the device code the CLI polls with is never printed.
+    // The page shows the same code to compare; the device code the CLI polls with is never printed.
     const printed = stdout.mock.calls.map(([text]) => String(text)).join('');
+    expect(printed).toContain('Approve there only if the page shows this code:');
     expect(printed).toContain('BCDF-GHJK');
     expect(printed).not.toContain('device_code');
     expect(checkLoginRequest).toHaveBeenCalledTimes(2);
@@ -102,7 +113,7 @@ describe('runLogin', () => {
 
     const result = await runLogin({});
 
-    expect(openInBrowser).toHaveBeenCalledWith(`${LOGIN_URL}?claim=claim_token`);
+    expect(openInBrowser).toHaveBeenCalledWith(`${LOGIN_URL}&claim=claim_token`);
     expect(hasSubscriber).toHaveBeenCalledWith(expect.anything(), 'human_abc');
     expect(saveConfig).toHaveBeenCalledWith({
       apiUrl: 'https://api.novu.co',
@@ -149,14 +160,14 @@ describe('runLogin', () => {
     loadConfig.mockReturnValue({ ...keylessConfig, apiUrl: 'https://eu.api.novu.co' });
 
     await runLogin({});
-    expect(startLoginRequest).toHaveBeenLastCalledWith('https://eu.api.novu.co');
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://eu.api.novu.co', 'adas-macbook-pro');
     expect(getKeylessClaimToken).toHaveBeenCalledTimes(1);
 
     getKeylessClaimToken.mockClear();
     checkLoginRequest.mockResolvedValue({ status: 'approved', apiKey: 'sk_local', environmentId: 'dev_env' });
     const result = await runLogin({ apiUrl: 'http://localhost:3000/' });
 
-    expect(startLoginRequest).toHaveBeenLastCalledWith('http://localhost:3000');
+    expect(startLoginRequest).toHaveBeenLastCalledWith('http://localhost:3000', 'adas-macbook-pro');
     expect(getKeylessClaimToken).not.toHaveBeenCalled();
     expect(result.config).not.toHaveProperty('subscriberId');
   });
@@ -170,11 +181,53 @@ describe('runLogin', () => {
       deviceCode: 'device_code',
       expiresIn: 300,
       interval: 2,
-      verificationUrl: `${LOGIN_URL}?code=device_code`,
+      verificationUrl: `${LOGIN_URL_WITHOUT_CODE}?code=device_code`,
     });
     await expect(runLogin({})).rejects.toThrow(LOGIN_UNAVAILABLE_MESSAGE);
 
     expect(openInBrowser).not.toHaveBeenCalled();
+    expect(saveConfig).not.toHaveBeenCalled();
+  });
+
+  it('asks to type the code when the API sends a link without it', async () => {
+    startLoginRequest.mockResolvedValue({
+      deviceCode: 'device_code',
+      expiresIn: 1800,
+      interval: 2,
+      verificationUrl: LOGIN_URL_WITHOUT_CODE,
+      userCode: 'BCDF-GHJK',
+    });
+
+    await runLogin({});
+
+    expect(openInBrowser).toHaveBeenCalledWith(LOGIN_URL_WITHOUT_CODE);
+    expect(stdout.mock.calls.map(([text]) => String(text)).join('')).toContain('Enter this code there:');
+  });
+
+  it('sends a long computer name cut short, and none when the system has none', async () => {
+    hostname.mockReturnValue(`  ${'x'.repeat(300)}  `);
+    await runLogin({});
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://api.novu.co', 'x'.repeat(64));
+
+    hostname.mockReturnValue('');
+    await runLogin({});
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://api.novu.co', undefined);
+
+    hostname.mockImplementation(() => {
+      throw new Error('no hostname');
+    });
+    await runLogin({});
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://api.novu.co', undefined);
+  });
+
+  it('stops without saving anything when the login is denied in the browser', async () => {
+    checkLoginRequest
+      .mockReset()
+      .mockResolvedValueOnce({ status: 'pending', expiresIn: 1800, interval: 2 })
+      .mockResolvedValue({ status: 'denied' });
+
+    await expect(runLogin({})).rejects.toThrow(LOGIN_DENIED_MESSAGE);
+    expect(checkLoginRequest).toHaveBeenCalledTimes(2);
     expect(saveConfig).not.toHaveBeenCalled();
   });
 
@@ -191,6 +244,7 @@ describe('withClaimToken', () => {
     expect(withClaimToken('https://gethuman.md/cli/login?region=eu', 'tok')).toBe(
       'https://gethuman.md/cli/login?region=eu&claim=tok'
     );
+    expect(withClaimToken(LOGIN_URL, 'tok')).toBe(`${LOGIN_URL}&claim=tok`);
     expect(withClaimToken(LOGIN_URL, null)).toBe(LOGIN_URL);
   });
 });

@@ -91,7 +91,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       const res = await session.testAgent
         .post('/v1/cli/device-sessions')
         .set('Authorization', '')
-        .send({ name: 'human-cli' });
+        .send({ name: 'human-cli', machineName: 'adas-macbook-pro' });
       expect(res.status).to.equal(201, JSON.stringify(res.body));
 
       return res.body.data;
@@ -103,6 +103,22 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
         .set('Authorization', '')
         .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ humanUserId: 'user_e2e', firstName: 'Ada', email: 'ada@example.com', ...body });
+    }
+
+    function lookUp(userCode: string) {
+      return session.testAgent
+        .post('/v1/human/accounts/cli-login/lookup')
+        .set('Authorization', '')
+        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .send({ userCode });
+    }
+
+    function deny(userCode: string) {
+      return session.testAgent
+        .post('/v1/human/accounts/cli-login/deny')
+        .set('Authorization', '')
+        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .send({ userCode });
     }
 
     function poll(deviceCode: string) {
@@ -119,8 +135,11 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
     it('starts requests that are approved on the Human dashboard with the code the CLI shows', async () => {
       const { deviceCode, userCode, verificationUrl } = await startLogin();
 
-      // The device code the CLI polls with is not in the link.
-      expect(verificationUrl).to.equal(`${process.env.HUMAN_DASHBOARD_URL?.replace(/\/$/, '')}/cli/login`);
+      // The link shows the code to compare with the terminal; the device code the CLI polls with is not in it.
+      expect(verificationUrl).to.equal(
+        `${process.env.HUMAN_DASHBOARD_URL?.replace(/\/$/, '')}/cli/login?code=${userCode}`
+      );
+      expect(verificationUrl).not.to.contain(deviceCode);
       expect(userCode).to.match(CLI_USER_CODE_PATTERN);
       expect((await poll(deviceCode)).body.data.status).to.equal('pending');
     });
@@ -142,6 +161,52 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       expect((await poll(deviceCode)).body.data.status).to.equal('expired');
 
       expect((await approve({ userCode })).status).to.equal(404);
+    });
+
+    it('shows the dashboard the computer a login waits on, only to the dashboard', async () => {
+      const { userCode } = await startLogin();
+
+      const found = await lookUp(userCode);
+      expect(found.status).to.equal(200, JSON.stringify(found.body));
+      expect(found.body.data).to.deep.equal({ userCode, machineName: 'adas-macbook-pro' });
+
+      const withoutSecret = await session.testAgent
+        .post('/v1/human/accounts/cli-login/lookup')
+        .set('Authorization', '')
+        .send({ userCode });
+      expect(withoutSecret.status).to.equal(401, JSON.stringify(withoutSecret.body));
+
+      const missing = await lookUp('BCDF-GHJK');
+      expect(missing.status).to.equal(404, JSON.stringify(missing.body));
+      expect(missing.body.code).to.equal('cli_login_not_found');
+      expect((await lookUp('not a code')).status).to.equal(422);
+    });
+
+    it('denies a login: the CLI is told once, gets no key, and the code stops working', async () => {
+      const { deviceCode, userCode } = await startLogin();
+
+      const denied = await deny(userCode);
+      expect(denied.status).to.equal(200, JSON.stringify(denied.body));
+      expect(denied.body.data).to.deep.equal({ denied: true });
+
+      expect((await lookUp(userCode)).status).to.equal(404);
+      expect((await approve({ userCode })).status).to.equal(404);
+      expect(ensureBackingOrganization.called).to.equal(false);
+
+      const first = await poll(deviceCode);
+      expect(first.body.data).to.deep.equal({ status: 'denied' });
+      expect((await poll(deviceCode)).body.data.status).to.equal('expired');
+
+      // Denying again changes nothing and is not an error.
+      expect((await deny(userCode)).body.data).to.deep.equal({ denied: false });
+    });
+
+    it('does not deny a login that was approved', async () => {
+      const { deviceCode, userCode } = await startLogin();
+      await approve({ userCode });
+
+      expect((await deny(userCode)).body.data).to.deep.equal({ denied: false });
+      expect((await poll(deviceCode)).body.data.status).to.equal('approved');
     });
 
     describe('from a computer with a keyless setup', () => {

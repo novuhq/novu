@@ -28,6 +28,13 @@ export class ClaimHumanAccountRequestDto extends EnsureHumanAccountRequestDto {
   token: string;
 }
 
+/** Names a `human login` by the code its terminal shows, e.g. `BCDF-GHJK`. */
+export class HumanCliLoginRequestDto {
+  @IsString()
+  @Matches(CLI_USER_CODE_PATTERN)
+  userCode: string;
+}
+
 export class ApproveHumanCliLoginRequestDto extends EnsureHumanAccountRequestDto {
   /** The code `human login` printed in the operator's terminal, e.g. `BCDF-GHJK`. */
   @IsString()
@@ -62,6 +69,18 @@ export interface HumanAccountClaimResponseDto {
 export interface HumanAccountCliLoginResponseDto extends HumanAccountResponseDto {
   /** The keyless setup moved into the account on the way. */
   keptSetup: boolean;
+}
+
+/** A `human login` still waiting to be approved or denied. */
+export interface HumanCliLoginResponseDto {
+  userCode: string;
+  /** Name of the computer the CLI runs on, as the CLI reported it. Not verified: render it as plain text. */
+  machineName?: string;
+}
+
+export interface HumanCliLoginDeniedResponseDto {
+  /** False when no login was waiting for the code anymore, which leaves it just as unusable. */
+  denied: boolean;
 }
 
 export interface HumanAccountSecretKeyResponseDto {

@@ -36,14 +36,16 @@ export function buildHumanDashboardUrl(path: string, params: Record<string, stri
 }
 
 /**
- * Page where an operator approves `human login` by typing the code their terminal shows. Approving goes
- * through the Human accounts endpoints, which only run where the Human dashboard is configured, so there's
- * no browser login without it.
+ * Page where an operator approves or denies `human login`. With the session's user code, the page shows it
+ * next to the name of the computer, to compare with the terminal; without one (older CLIs) it's typed there.
+ * The code in the link approves nothing: a signed-in person has to press Approve. Approving goes through the
+ * Human accounts endpoints, which only run where the Human dashboard is configured, so there's no browser
+ * login without it.
  */
-export function buildHumanCliLoginUrl(): string | undefined {
+export function buildHumanCliLoginUrl(userCode?: string): string | undefined {
   if (!process.env.HUMAN_DASHBOARD_URL?.trim()) {
     return undefined;
   }
 
-  return buildHumanDashboardUrl('/cli/login');
+  return buildHumanDashboardUrl('/cli/login', userCode ? { code: userCode } : {});
 }

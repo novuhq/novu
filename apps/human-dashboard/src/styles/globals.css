@@ -194,26 +194,6 @@
   }
 }
 
-/* The same dither across a whole screen, rising from the bottom right corner behind a centered card. */
-@utility stage-glow {
-  position: relative;
-  isolation: isolate;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-image: radial-gradient(
-      circle,
-      color-mix(in srgb, var(--color-accent) 35%, transparent) 1px,
-      transparent 1.5px
-    );
-    background-size: 6px 6px;
-    mask-image: radial-gradient(ellipse 60% 70% at 100% 100%, black, transparent 75%);
-    pointer-events: none;
-  }
-}
-
 @layer base {
   body {
     @apply bg-background font-sans text-foreground antialiased;

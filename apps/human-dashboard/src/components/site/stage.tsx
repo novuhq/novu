@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Brand } from '@/components/site/brand';
+import { Logo } from '@/components/site/brand';
 import { cn } from '@/lib/utils';
 
 type StageProps = {
@@ -16,11 +16,25 @@ type StageProps = {
 export function Stage({ aside, children }: StageProps) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border px-6">
-        <Brand />
-        {aside && <div className="font-mono text-xs tracking-tight text-secondary">{aside}</div>}
+      <header className="flex h-15 shrink-0 items-center justify-between gap-4 border-b border-border px-7">
+        <Logo />
+        {aside && <div className="min-w-0 truncate font-mono text-[11px] leading-4 text-secondary">{aside}</div>}
       </header>
-      <main className="stage-glow flex flex-1 items-center justify-center px-4 py-10">{children}</main>
+      <main className="relative isolate flex flex-1 items-center justify-center overflow-hidden px-4 py-10">
+        {/*
+          `Illustration/texture-glow`, exported as it is. At its own size against the bottom right corner, 80px
+          of it below the edge as in the design, so its pixel grid is never scaled.
+        */}
+        <img
+          src="/illustrations/texture-glow.svg"
+          alt=""
+          aria-hidden="true"
+          width={1728}
+          height={1152}
+          className="pointer-events-none absolute right-0 -bottom-20 -z-10 h-288 w-432 max-w-none opacity-55 select-none"
+        />
+        {children}
+      </main>
     </div>
   );
 }

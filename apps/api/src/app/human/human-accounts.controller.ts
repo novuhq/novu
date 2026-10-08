@@ -11,6 +11,9 @@ import {
   type HumanAccountCliLoginResponseDto,
   type HumanAccountResponseDto,
   type HumanAccountSecretKeyResponseDto,
+  type HumanCliLoginDeniedResponseDto,
+  HumanCliLoginRequestDto,
+  type HumanCliLoginResponseDto,
 } from './dtos/human-account.dto';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { ApproveHumanCliLoginCommand } from './usecases/approve-human-cli-login/approve-human-cli-login.command';
@@ -19,10 +22,13 @@ import { ClaimForHumanAccountCommand } from './usecases/claim-for-human-account/
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { DeleteHumanAccountCommand } from './usecases/delete-human-account/delete-human-account.command';
 import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human-account.usecase';
+import { DenyHumanCliLogin } from './usecases/deny-human-cli-login/deny-human-cli-login.usecase';
 import { EnsureBackingOrganizationCommand } from './usecases/ensure-backing-organization/ensure-backing-organization.command';
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKeyCommand } from './usecases/get-backing-secret-key/get-backing-secret-key.command';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
+import { HumanCliLoginCommand } from './usecases/get-human-cli-login/human-cli-login.command';
 
 /**
  * Private endpoints for the Human dashboard's server (gethuman.md), which signs operators in with its
@@ -40,7 +46,9 @@ export class HumanAccountsController {
     private readonly claimForHumanAccountUsecase: ClaimForHumanAccount,
     private readonly getBackingSecretKeyUsecase: GetBackingSecretKey,
     private readonly deleteHumanAccountUsecase: DeleteHumanAccount,
-    private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin
+    private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin,
+    private readonly getHumanCliLoginUsecase: GetHumanCliLogin,
+    private readonly denyHumanCliLoginUsecase: DenyHumanCliLogin
   ) {}
 
   @Post('/')
@@ -86,6 +94,20 @@ export class HumanAccountsController {
         claimToken: body.claimToken,
       })
     );
+  }
+
+  @Post('/cli-login/lookup')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Read the `human login` waiting for a code: the computer it was started on' })
+  getCliLogin(@Body() body: HumanCliLoginRequestDto): Promise<HumanCliLoginResponseDto> {
+    return this.getHumanCliLoginUsecase.execute(HumanCliLoginCommand.create({ userCode: body.userCode }));
+  }
+
+  @Post('/cli-login/deny')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deny a `human login`, so its code stops working and the waiting CLI is told' })
+  denyCliLogin(@Body() body: HumanCliLoginRequestDto): Promise<HumanCliLoginDeniedResponseDto> {
+    return this.denyHumanCliLoginUsecase.execute(HumanCliLoginCommand.create({ userCode: body.userCode }));
   }
 
   @Get('/:humanUserId/secret-key')
