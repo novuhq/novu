@@ -1,5 +1,8 @@
-/** The CLI's own default (`DEFAULT_API_URL` in `packages/human`); any other API has to be named. */
-const CLI_DEFAULT_API_URL = 'https://api.novu.co';
+/**
+ * The production APIs. The setup command names its API only when it is another one: staging, or a
+ * local API while developing.
+ */
+const PRODUCTION_API_URLS = ['https://api.novu.co', 'https://eu.api.novu.co'];
 
 const CLI = 'npx @novu/human';
 
@@ -84,7 +87,7 @@ function accountFlags(context: SetupContext): string {
 }
 
 function apiUrlFlag({ apiUrl }: SetupContext): string {
-  return apiUrl === CLI_DEFAULT_API_URL ? '' : ` --api-url=${apiUrl}`;
+  return PRODUCTION_API_URLS.includes(apiUrl) ? '' : ` --api-url=${apiUrl}`;
 }
 
 /** Single quotes keep a name such as O'Brien, or one with a `$` in it, from being read by the shell. */
