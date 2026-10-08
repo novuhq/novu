@@ -14,7 +14,11 @@ import { GitHubIcon, GoogleIcon } from './auth-icons';
 
 /** The 40px size these screens use for inputs and buttons, on top of the shared 32px components. */
 const AUTH_INPUT = 'h-10 px-3 text-sm leading-[21px] ring-border';
-export const AUTH_BUTTON = 'h-10 w-full px-4 text-sm leading-[21px]';
+/**
+ * The pending ellipsis takes no room here, so the centered label stays where it is while a request runs.
+ */
+export const AUTH_BUTTON =
+  'h-10 w-full px-4 text-sm leading-[21px] [&>span[aria-hidden]]:-ml-1.5 [&>span[aria-hidden]]:w-0';
 
 /** Room around the form for focus rings, which the height animation would otherwise clip. */
 const FOCUS_ROOM = 8;

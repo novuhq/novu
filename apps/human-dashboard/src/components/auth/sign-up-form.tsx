@@ -292,12 +292,18 @@ export function SignUpForm({ redirectPath, initialError }: SignUpFormProps) {
           )}
         </AuthField>
         <FormError>{firstErrorText(notice, globalError, errors.fields.captcha, errors.fields.code)}</FormError>
-        {/* Clerk puts its bot check here when it wants one. Empty otherwise. */}
-        {/* biome-ignore lint/correctness/useUniqueElementIds: Clerk looks the element up by this id */}
-        <div id="clerk-captcha" className="empty:hidden" />
-        <Button type="submit" className={AUTH_BUTTON} pending={busy === 'submit'} disabled={disabled}>
-          Create account
-        </Button>
+        {/*
+          Clerk puts its bot check here on submit. Most of the time that check is invisible: an element with
+          no height, which would still get the form's gap and push the button down. So it shares the button's
+          slot, and takes room (with Clerk's own margin under it) only when there is something to solve.
+        */}
+        <div className="flex flex-col">
+          {/* biome-ignore lint/correctness/useUniqueElementIds: Clerk looks the element up by this id */}
+          <div id="clerk-captcha" />
+          <Button type="submit" className={AUTH_BUTTON} pending={busy === 'submit'} disabled={disabled}>
+            Create account
+          </Button>
+        </div>
       </form>
       <SwitchForm question="Have an account?" href={authHref('/sign-in', redirectPath)}>
         Sign in
