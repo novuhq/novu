@@ -12,6 +12,8 @@ export type ChannelVia = 'telegram' | 'slack' | 'email';
 
 export type Channel = {
   identifier: string;
+  /** The channel's own id, which a few endpoints ask for instead of the identifier. */
+  id: string;
   label: string;
   /** The name the channel was made with, such as "Human". */
   name?: string;
@@ -30,6 +32,7 @@ export type Channel = {
 
 type AgentIntegrationLink = {
   integration: {
+    _id: string;
     identifier: string;
     name?: string;
     providerId: string;
@@ -43,14 +46,22 @@ type AgentIntegrationLink = {
   hasChannelEndpoints?: boolean;
 };
 
-type Integration = { identifier: string; providerId: string; channel?: string };
+type Integration = { _id: string; identifier: string; name?: string; providerId: string; channel?: string };
 
 /** The bot of a Telegram channel, and the link that opens it and presses Start for one contact. */
 export type TelegramStartLink = { botUsername: string; url: string };
 
 const TELEGRAM_PROVIDER_ID = 'telegram';
+const SLACK_PROVIDER_ID = 'slack';
 
-const START_LINK_RETRY_MS = 1000;
+/** The name a channel gets when the operator doesn't pick one, same as `human setup`. */
+const DEFAULT_CHANNEL_NAME = 'Human';
+
+const RETRY_MS = 1000;
+
+/** What `human setup` sends too, once a channel works. */
+const TEST_MESSAGE =
+  'You’re connected. Agents can now reach you here. Try `human approve "Deploy to production?"` in your terminal.';
 
 const CHANNEL_LABELS: Record<ChannelVia, string> = { telegram: 'Telegram', slack: 'Slack', email: 'Email' };
 
@@ -78,6 +89,7 @@ export async function listChannels(account: HumanAccount): Promise<Channel[]> {
 
     return {
       identifier: integration.identifier,
+      id: integration._id,
       label: via ? CHANNEL_LABELS[via] : integration.providerId,
       ...(integration.name ? { name: integration.name } : {}),
       active: integration.active !== false,
@@ -88,18 +100,22 @@ export async function listChannels(account: HumanAccount): Promise<Channel[]> {
   });
 }
 
-/** The Slack workspace a channel's app is installed in, once someone connected it. */
-export async function findSlackWorkspaceName(
+/** The Slack workspace a channel's app is installed in, and since when. */
+export type SlackWorkspace = { name?: string; connectedAt?: string };
+
+/** `undefined` until someone installed the app. */
+export async function findSlackWorkspace(
   account: HumanAccount,
   channelIdentifier: string
-): Promise<string | undefined> {
-  const page = await requestPageForAccount<{ data?: Array<{ workspace?: { name?: string } }> }>(
+): Promise<SlackWorkspace | undefined> {
+  const page = await requestPageForAccount<{ data?: Array<{ workspace?: { name?: string }; createdAt?: string }> }>(
     account,
     '/v1/channel-connections',
     { query: { integrationIdentifier: channelIdentifier, limit: 1 } }
   );
+  const connection = page?.data?.[0];
 
-  return page?.data?.[0]?.workspace?.name || undefined;
+  return connection && { name: connection.workspace?.name || undefined, connectedAt: connection.createdAt };
 }
 
 /**
@@ -118,20 +134,39 @@ export function slackAgentHandle(channel: Channel): string | undefined {
  * `human setup telegram`; the relay has to exist first.
  */
 export async function ensureTelegramChannel(account: HumanAccount): Promise<string> {
-  const linked = (await listChannels(account)).find((channel) => channel.via === 'telegram' && channel.active);
+  return (await ensureChatChannel(account, 'telegram', TELEGRAM_PROVIDER_ID)).identifier;
+}
+
+/**
+ * The relay's Slack channel, made under `name` and linked to the relay when it has none. Same steps as
+ * `human setup slack`. A channel that's there already keeps its name; `renameChannel` changes it.
+ */
+export function ensureSlackChannel(account: HumanAccount, name: string): Promise<LinkedChannel> {
+  return ensureChatChannel(account, 'slack', SLACK_PROVIDER_ID, name);
+}
+
+type LinkedChannel = { identifier: string; id: string; name?: string };
+
+async function ensureChatChannel(
+  account: HumanAccount,
+  via: ChannelVia,
+  providerId: string,
+  name = DEFAULT_CHANNEL_NAME
+): Promise<LinkedChannel> {
+  const linked = (await listChannels(account)).find((channel) => channel.via === via && channel.active);
   if (linked) {
-    return linked.identifier;
+    return { identifier: linked.identifier, id: linked.id, name: linked.name };
   }
 
   const integrations = await requestForAccount<Integration[]>(account, '/v1/integrations');
   const existing = (Array.isArray(integrations) ? integrations : []).find(
-    (integration) => integration.providerId === TELEGRAM_PROVIDER_ID && integration.channel === 'chat'
+    (integration) => integration.providerId === providerId && integration.channel === 'chat'
   );
   const integration =
     existing ??
     (await requestForAccount<Integration>(account, '/v1/integrations', {
       method: 'POST',
-      body: { providerId: TELEGRAM_PROVIDER_ID, channel: 'chat', name: 'Human', active: true, credentials: {} },
+      body: { providerId, channel: 'chat', name, active: true, credentials: {} },
     }));
 
   try {
@@ -146,7 +181,88 @@ export async function ensureTelegramChannel(account: HumanAccount): Promise<stri
     }
   }
 
-  return integration.identifier;
+  return { identifier: integration.identifier, id: integration._id, name: integration.name };
+}
+
+/** Gives a channel another name. For Slack it's the name its app is created under. */
+export async function renameChannel(account: HumanAccount, channelId: string, name: string): Promise<void> {
+  await requestForAccount(account, `/v1/integrations/${encodeURIComponent(channelId)}`, {
+    method: 'PUT',
+    body: { name },
+  });
+}
+
+/**
+ * Creates the agent's Slack app from our manifest, in the workspace the App Configuration Token belongs
+ * to, and saves the app's credentials on the channel. The API uses the token for this one call and
+ * doesn't keep it. A token Slack turns down comes back as a 400.
+ */
+export async function createSlackApp(
+  account: HumanAccount,
+  channelId: string,
+  { configToken, agentId }: { configToken: string; agentId: string }
+): Promise<void> {
+  await requestForAccount(account, `/v1/integrations/${encodeURIComponent(channelId)}/slack-quick-setup`, {
+    method: 'POST',
+    body: { configToken, agentId },
+  });
+}
+
+/**
+ * The Slack page where the operator installs the agent's app in their workspace. Installing also tells
+ * the agent which Slack user the contact is, and that's who it sends DMs to. The link works for five
+ * minutes. The API answers 404 while the channel has no app yet; a `attempts` above 1 waits for an app
+ * that was created a moment ago.
+ */
+export async function issueSlackInstallUrl(
+  account: HumanAccount,
+  channelIdentifier: string,
+  contactId: string,
+  { attempts = 1 }: { attempts?: number } = {}
+): Promise<string> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      const link = await requestForAccount<{ url?: string } | string>(
+        account,
+        '/v1/integrations/channel-connections/oauth',
+        {
+          method: 'POST',
+          body: {
+            integrationIdentifier: channelIdentifier,
+            subscriberId: contactId,
+            connectionMode: 'subscriber',
+            autoLinkUser: true,
+          },
+        }
+      );
+      const url = typeof link === 'string' ? link : link?.url;
+      if (!url) {
+        throw new HumanApiError(502, 'unavailable', 'Slack didn’t give us a link. Please try again.');
+      }
+
+      return url;
+    } catch (error) {
+      if (attempt >= attempts) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
+    }
+  }
+}
+
+/** Has the agent say hello on a channel that was just connected, so the operator sees it work. */
+export async function sendTestMessage(account: HumanAccount, contactId: string, via: ChannelVia): Promise<void> {
+  await requestForAccount(account, '/v1/human/interactions', {
+    method: 'POST',
+    body: {
+      kind: 'tell',
+      card: { title: TEST_MESSAGE },
+      to: contactId,
+      via,
+      agentIdentifier: RELAY_AGENT_IDENTIFIER,
+    },
+  });
 }
 
 /**
@@ -194,7 +310,7 @@ export async function issueTelegramStartLink(
         throw error;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, START_LINK_RETRY_MS));
+      await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
     }
   }
 }

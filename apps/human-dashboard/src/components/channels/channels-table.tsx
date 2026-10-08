@@ -4,12 +4,14 @@ import { Settings } from 'lucide-react';
 import { useState } from 'react';
 
 import { ChannelIcon } from '@/components/channels/channel-icon';
+import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@/components/ui/table';
 import type { ChannelVia } from '@/lib/human-channels-api';
+import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 
@@ -30,10 +32,18 @@ export type ChannelHandle = {
 };
 
 /** Channels whose setup drawer exists. The others are still set up with `human setup`. */
-const HAS_SETUP: Partial<Record<ChannelVia, true>> = { telegram: true };
+const HAS_SETUP: Partial<Record<ChannelVia, true>> = { telegram: true, slack: true };
+
+type ChannelsTableProps = {
+  rows: ChannelRow[];
+  telegramSetup: TelegramSetupState;
+  slackSetup: SlackSetupState;
+  /** What the agent is called, such as "Dima’s assistant". Missing when it has no name to go by. */
+  agentName?: string;
+};
 
 /** The agent's channels, one row each. A row opens the channel's setup drawer. */
-export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; telegramSetup: TelegramSetupState }) {
+export function ChannelsTable({ rows, telegramSetup, slackSetup, agentName }: ChannelsTableProps) {
   const [openSetup, setOpenSetup] = useState<ChannelVia | null>(null);
 
   return (
@@ -83,6 +93,12 @@ export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; tel
         setup={telegramSetup}
         open={openSetup === 'telegram'}
         onOpenChange={(open) => setOpenSetup(open ? 'telegram' : null)}
+      />
+      <SlackSetup
+        setup={slackSetup}
+        agentName={agentName}
+        open={openSetup === 'slack'}
+        onOpenChange={(open) => setOpenSetup(open ? 'slack' : null)}
       />
     </>
   );
