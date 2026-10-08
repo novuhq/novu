@@ -42,16 +42,14 @@ export class ApproveHumanCliLogin {
 
   async execute(command: ApproveHumanCliLoginCommand): Promise<HumanAccountCliLoginResponseDto> {
     // Held first, so a mistyped or expired code never creates an organization or moves a setup, and so the
-    // login can't be denied after this approval has started moving things. The hold is renewed for as long as
-    // the approval is at work, so it covers all of it, however slow.
+    // login isn't denied or approved a second time while this approval prepares the account.
     const hold = await this.holdLogin(command.userCode);
 
     try {
-      return await this.cliDeviceSessionService.whileRenewingApprovalHold(hold, () =>
-        this.approveHeldLogin(command, hold)
-      );
+      return await this.approveHeldLogin(command, hold);
     } catch (error) {
-      // Nothing was approved, so the login waits again. If this fails too, the hold runs out by itself.
+      // Nothing was approved, so the login waits again. If this fails too, the hold ends by itself: within a
+      // minute, or with the login once it was kept for a move.
       await this.cliDeviceSessionService.releaseApprovalHold(hold).catch(() => undefined);
 
       throw error;
@@ -82,8 +80,9 @@ export class ApproveHumanCliLogin {
     );
 
     if (command.claimToken) {
-      // A moved setup can't be moved back, so the move only starts while the login is still held for this approval.
-      if (!(await this.cliDeviceSessionService.renewApprovalHold(hold))) {
+      // A moved setup can't be moved back. So the move only starts while the login is still held for this
+      // approval, and from here the hold is kept: nothing else answers the login until this approval does.
+      if (!(await this.cliDeviceSessionService.keepApprovalHold(hold))) {
         throw loginNotFound();
       }
 
@@ -108,10 +107,11 @@ export class ApproveHumanCliLogin {
           userEmail: command.email ?? null,
           userFirstName: command.firstName ?? null,
           userLastName: command.lastName ?? null,
+          approvalHoldId: hold.holdId,
         })
       );
     } catch (error) {
-      // The request ran out while it was held.
+      // The request ran out while it was held, or the hold ran out and the login was answered elsewhere.
       if (error instanceof NotFoundException) {
         throw loginNotFound();
       }

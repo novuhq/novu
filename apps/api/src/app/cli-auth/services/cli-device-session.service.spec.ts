@@ -44,7 +44,7 @@ describe('CliDeviceSessionService', () => {
 
     const service = new CliDeviceSessionService(cacheService as any, logger as any);
 
-    return { service, cacheService, logger };
+    return { service, cacheService };
   }
 
   it('creates a longer pending session for novu connect', async () => {
@@ -220,7 +220,7 @@ describe('CliDeviceSessionService', () => {
       expect(hold).to.deep.equal({ deviceCode: 'device-code', holdId: held.approvalHoldId });
       expect(hold.holdId).to.match(/^[A-Za-z0-9_-]{16}$/);
       expect(holdKeys).to.deep.equal(['cli-device-session:device-code']);
-      // Still pending: the CLI keeps polling and the page keeps showing it. Unrenewed, the hold ends in a minute.
+      // Still pending: the CLI keeps polling and the page keeps showing it. Unless kept, the hold ends in a minute.
       expect(held.status).to.equal('pending');
       expect(held.approvalHeldUntilEpoch - holdArgs[2]).to.be.closeTo(60, 1);
       expect(holdArgs[0]).to.equal(300);
@@ -237,30 +237,32 @@ describe('CliDeviceSessionService', () => {
       expect(releaseArgs[2]).to.equal(hold.holdId);
     });
 
-    it('stay held for the same approval when it renews its hold', async () => {
+    it('stay held for the rest of their life once the approval keeps its hold', async () => {
       const { service, cacheService } = makeService();
       const hold = { deviceCode: 'device-code', holdId: 'this-approval' };
-      const lastMinute = Math.floor(Date.now() / 1000) - 60;
+      const now = Math.floor(Date.now() / 1000);
       // Held a while ago, so the hold is about to run out, or just did with nobody taking the session since.
       cacheService.get.withArgs('cli-device-session:device-code').resolves(
         pendingRecord({
           userCode: 'BCDF-GHJK',
+          sessionTtlSeconds: 1800,
           approvalHoldId: 'this-approval',
-          approvalHeldUntilEpoch: lastMinute,
+          approvalHeldUntilEpoch: now - 1,
         })
       );
       cacheService.eval.resolves(1);
 
-      expect(await service.renewApprovalHold(hold)).to.equal(true);
+      expect(await service.keepApprovalHold(hold)).to.equal(true);
 
       const [script, keys, args] = cacheService.eval.firstCall.args;
-      // Only the approval the hold belongs to renews it, and how long the session lives is left alone.
+      // Only the approval the hold belongs to keeps it, and how long the session lives is left alone.
       expect(script).to.contain('payload.approvalHoldId ~= ARGV[3]');
       expect(script).to.contain("redis.call('pttl', KEYS[1])");
       expect(keys).to.deep.equal(['cli-device-session:device-code']);
-      const renewed = JSON.parse(args[1]);
-      expect(renewed).to.deep.include({ status: 'pending', userCode: 'BCDF-GHJK', approvalHoldId: 'this-approval' });
-      expect(renewed.approvalHeldUntilEpoch - lastMinute).to.be.closeTo(120, 1);
+      const kept = JSON.parse(args[1]);
+      expect(kept).to.deep.include({ status: 'pending', userCode: 'BCDF-GHJK', approvalHoldId: 'this-approval' });
+      // Longer than polling can keep the session waiting (an hour, plus one more TTL): it never runs out first.
+      expect(kept.approvalHeldUntilEpoch - now).to.be.closeTo(60 * 60 + 30 * 60, 1);
       expect(args[2]).to.equal('this-approval');
     });
 
@@ -268,109 +270,58 @@ describe('CliDeviceSessionService', () => {
       const { service, cacheService } = makeService();
       const hold = { deviceCode: 'device-code', holdId: 'this-approval' };
 
-      // Ran out: nothing to renew.
-      expect(await service.renewApprovalHold(hold)).to.equal(false);
+      // Ran out: nothing to keep.
+      expect(await service.keepApprovalHold(hold)).to.equal(false);
       expect(cacheService.eval.called).to.equal(false);
 
       // Denied, approved or held by another approval since: the script refuses.
       cacheService.get.withArgs('cli-device-session:device-code').resolves(pendingRecord({ userCode: 'BCDF-GHJK' }));
       cacheService.eval.resolves(0);
-      expect(await service.renewApprovalHold(hold)).to.equal(false);
+      expect(await service.keepApprovalHold(hold)).to.equal(false);
     });
 
-    describe('while an approval is at work', () => {
-      let clock: sinon.SinonFakeTimers;
-      const hold = { deviceCode: 'device-code', holdId: 'this-approval' };
+    it('are approved by the approval that holds them, and by no other', async () => {
+      const { service, cacheService } = makeService();
+      const approval = { deviceCode: 'device-code', approvedByUserId: 'user_1', apiKey: 'sk_test', environmentId: 'e' };
+      cacheService.get.withArgs('cli-device-session:device-code').resolves(
+        pendingRecord({
+          userCode: 'BCDF-GHJK',
+          approvalHoldId: 'this-approval',
+          approvalHeldUntilEpoch: Math.floor(Date.now() / 1000) + 60,
+        })
+      );
+      cacheService.eval.resolves(1);
 
-      beforeEach(() => {
-        clock = sinon.useFakeTimers({ now: Date.now(), toFake: ['setInterval', 'clearInterval', 'Date'] });
+      await service.approve({ ...approval, approvalHoldId: 'this-approval' });
+
+      const [script, , args] = cacheService.eval.firstCall.args;
+      // The hold is checked in the same step that writes the approval.
+      expect(script).to.contain("ARGV[3] ~= '' and payload.approvalHoldId ~= ARGV[3]");
+      expect(args[2]).to.equal('this-approval');
+      const approved = JSON.parse(args[1]);
+      expect(approved).to.deep.include({ status: 'approved', apiKey: 'sk_test' });
+      expect(approved).not.to.have.any.keys('approvalHoldId', 'approvalHeldUntilEpoch');
+
+      // The hold went to a later approval: the script refuses, and this one lets nobody in.
+      cacheService.eval.resolves(0);
+      const stale = await service.approve({ ...approval, approvalHoldId: 'an-earlier-approval' }).catch((e) => e);
+      expect(stale).to.be.instanceOf(CliDeviceSessionNotFoundError);
+      expect(cacheService.eval.secondCall.args[2][2]).to.equal('an-earlier-approval');
+    });
+
+    it('are approved without a hold by the CLIs that never hold them', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.get.withArgs('cli-device-session:device-code').resolves(pendingRecord());
+      cacheService.eval.resolves(1);
+
+      await service.approve({
+        deviceCode: 'device-code',
+        approvedByUserId: 'u',
+        apiKey: 'sk_test',
+        environmentId: 'e',
       });
 
-      afterEach(() => {
-        clock.restore();
-      });
-
-      function heldSession() {
-        const made = makeService();
-        made.cacheService.get
-          .withArgs('cli-device-session:device-code')
-          .resolves(pendingRecord({ userCode: 'BCDF-GHJK', approvalHoldId: 'this-approval' }));
-        made.cacheService.eval.resolves(1);
-
-        return made;
-      }
-
-      function slowWork() {
-        let finish: (value: string) => void = () => undefined;
-        let fail: (error: Error) => void = () => undefined;
-        const work = new Promise<string>((resolve, reject) => {
-          finish = resolve;
-          fail = reject;
-        });
-
-        return { work: () => work, finish, fail };
-      }
-
-      it('have their hold renewed until the work is done, however long it takes', async () => {
-        const { service, cacheService } = heldSession();
-        const { work, finish } = slowWork();
-
-        const result = service.whileRenewingApprovalHold(hold, work);
-        expect(cacheService.eval.callCount).to.equal(0);
-
-        // Three times the hold's own minute: without the renewals it would have run out long ago.
-        await clock.tickAsync(180_000);
-        expect(cacheService.eval.callCount).to.equal(9);
-        const heldUntil = cacheService.eval.args.map(([, , args]) => JSON.parse(args[1]).approvalHeldUntilEpoch);
-        expect(heldUntil[8] - heldUntil[0]).to.equal(160);
-        expect(cacheService.eval.args.every(([, , args]) => args[2] === 'this-approval')).to.equal(true);
-
-        finish('approved');
-        expect(await result).to.equal('approved');
-
-        await clock.tickAsync(180_000);
-        expect(cacheService.eval.callCount).to.equal(9);
-      });
-
-      it('stop being renewed when the work fails, and pass the failure on', async () => {
-        const { service, cacheService } = heldSession();
-        const { work, fail } = slowWork();
-
-        const result = service.whileRenewingApprovalHold(hold, work).catch((caught) => caught);
-        await clock.tickAsync(20_000);
-        fail(new Error('The setup cannot be kept'));
-
-        expect((await result).message).to.equal('The setup cannot be kept');
-        await clock.tickAsync(180_000);
-        expect(cacheService.eval.callCount).to.equal(1);
-      });
-
-      it("stop being renewed once the hold is no longer this approval's", async () => {
-        const { service, cacheService } = heldSession();
-        const { work, finish } = slowWork();
-        cacheService.eval.onSecondCall().resolves(0);
-
-        const result = service.whileRenewingApprovalHold(hold, work);
-        await clock.tickAsync(180_000);
-
-        expect(cacheService.eval.callCount).to.equal(2);
-        finish('done');
-        await result;
-      });
-
-      it('keep being renewed after a renewal that failed', async () => {
-        const { service, cacheService, logger } = heldSession();
-        const { work, finish } = slowWork();
-        cacheService.eval.onFirstCall().rejects(new Error('Redis is down'));
-
-        const result = service.whileRenewingApprovalHold(hold, work);
-        await clock.tickAsync(40_000);
-
-        expect(cacheService.eval.callCount).to.equal(2);
-        expect(logger.warn.calledOnce).to.equal(true);
-        finish('done');
-        await result;
-      });
+      expect(cacheService.eval.firstCall.args[2][2]).to.equal('');
     });
 
     it('are not denied or held again while an approval holds them', async () => {

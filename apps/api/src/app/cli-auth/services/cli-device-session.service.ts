@@ -26,13 +26,11 @@ const USER_CODE_ATTEMPTS = 5;
 const DENIED_SESSION_TTL_SECONDS = 5 * 60;
 
 /**
- * How long an approval's hold on a session lasts unless it is renewed. An approval at work keeps renewing it,
- * and one that fails gives the session back at once; this only ends the hold of one that never came back.
+ * How long one approval may hold a session while it prepares the account, before anything that can't be undone.
+ * An approval that fails gives the session back at once; this only ends the hold of one that never came back.
+ * From the step that can't be undone on, the hold is kept instead: see `keepApprovalHold`.
  */
 const APPROVAL_HOLD_SECONDS = 60;
-
-/** How often an approval at work renews its hold. Two renewals in a row can fail before the hold runs out. */
-const APPROVAL_HOLD_RENEW_SECONDS = 20;
 
 /** Longest machine name kept with a session. Hostnames can be far longer than anyone reads on a page. */
 export const CLI_MACHINE_NAME_MAX_LENGTH = 64;
@@ -47,10 +45,10 @@ export type PendingCliDeviceSession = {
   machineName?: string;
 };
 
-/** A session held for one approval, which renews the hold and gives the session back with this. */
+/** A session held for one approval, which keeps the hold, approves the session or gives it back with this. */
 export type CliDeviceSessionApprovalHold = {
   deviceCode: string;
-  /** Tells this approval's hold from a later one's, however often either was renewed. */
+  /** Tells this approval's hold from a later one's. */
   holdId: string;
 };
 
@@ -93,11 +91,16 @@ interface CliDeviceSessionRecord {
   approvalHeldUntilEpoch?: number;
 }
 
+/**
+ * Approves a pending session. An approval that holds the session names its hold, and is only written while
+ * that hold is still the one on the session: one whose hold went to a later approval lets nobody in.
+ */
 const APPROVE_IF_PENDING_SCRIPT = `
 local v = redis.call('get', KEYS[1])
 if not v then return 0 end
 local ok, payload = pcall(cjson.decode, v)
 if not ok or payload.status ~= 'pending' then return 0 end
+if ARGV[3] ~= '' and payload.approvalHoldId ~= ARGV[3] then return 0 end
 redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
 return 1
 `;
@@ -120,7 +123,7 @@ return 1
 `;
 
 /**
- * Replaces a pending session that one approval holds, to renew that hold or to end it. A later approval's hold
+ * Replaces a pending session that one approval holds, to keep that hold or to end it. A later approval's hold
  * is left alone, even after this one's ran out. How long the session still lives stays as it is.
  */
 const REPLACE_IF_HELD_BY_SCRIPT = `
@@ -239,8 +242,7 @@ export class CliDeviceSessionService {
 
   /**
    * Holds the session waiting under this user code for one approval. Until that approval is written, the hold
-   * is released or it runs out unrenewed, the session can't be denied or held a second time. So no denial
-   * gets between an approval creating or moving things and that approval letting the CLI in.
+   * is released or `APPROVAL_HOLD_SECONDS` pass, the session can't be denied or held a second time.
    * Null when no session is waiting; throws `CliDeviceSessionBeingApprovedError` when another approval holds it.
    */
   async holdForApprovalByUserCode(userCode: string): Promise<CliDeviceSessionApprovalHold | null> {
@@ -251,44 +253,32 @@ export class CliDeviceSessionService {
 
     const { deviceCode, record } = pending;
     const hold: CliDeviceSessionApprovalHold = { deviceCode, holdId: randomBytes(12).toString('base64url') };
-    const held = await this.replacePendingUnlessHeld(deviceCode, heldBy(record, hold), record.sessionTtlSeconds);
+    const held = await this.replacePendingUnlessHeld(
+      deviceCode,
+      heldBy(record, hold, APPROVAL_HOLD_SECONDS),
+      record.sessionTtlSeconds
+    );
 
     return held ? hold : null;
   }
 
   /**
-   * Starts the hold's `APPROVAL_HOLD_SECONDS` again. False when the session is no longer held for this
-   * approval: it was approved, denied or ran out, or the hold ran out and another approval took the session.
+   * Keeps the hold for as long as the session lives, instead of `APPROVAL_HOLD_SECONDS`. For an approval
+   * about to do what can't be undone: from here on the session can't be denied or go to another approval,
+   * however long this one takes. Only this approval ends the hold, by approving the session or giving it back.
+   * False when the session is no longer held for this approval: it was approved, denied or ran out, or the
+   * hold ran out and another approval took the session.
    */
-  async renewApprovalHold(hold: CliDeviceSessionApprovalHold): Promise<boolean> {
+  async keepApprovalHold(hold: CliDeviceSessionApprovalHold): Promise<boolean> {
     const existing = await this.readRecord(hold.deviceCode);
-
-    return existing ? this.replaceHeldBy(hold, heldBy(existing, hold)) : false;
-  }
-
-  /**
-   * Runs `work` with the hold renewed every `APPROVAL_HOLD_RENEW_SECONDS`, so the hold lasts as long as the
-   * work does, however slow that is. Renewing ends with the work, or once the hold is no longer this approval's.
-   */
-  async whileRenewingApprovalHold<T>(hold: CliDeviceSessionApprovalHold, work: () => Promise<T>): Promise<T> {
-    const timer = setInterval(() => {
-      this.renewApprovalHold(hold).then(
-        (renewed) => {
-          if (!renewed) {
-            clearInterval(timer);
-          }
-        },
-        // The next round tries again, and the hold outlasts two rounds that fail.
-        (error) => this.logger.warn({ err: error }, 'Could not renew the approval hold of a CLI device session')
-      );
-    }, APPROVAL_HOLD_RENEW_SECONDS * 1000);
-    timer.unref();
-
-    try {
-      return await work();
-    } finally {
-      clearInterval(timer);
+    if (!existing) {
+      return false;
     }
+
+    // Polling keeps a session waiting for at most the polling window plus one more TTL, so this outlasts it.
+    const restOfTheSession = CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS + existing.sessionTtlSeconds;
+
+    return this.replaceHeldBy(hold, heldBy(existing, hold, restOfTheSession));
   }
 
   /**
@@ -387,6 +377,8 @@ export class CliDeviceSessionService {
     environmentName?: string | null;
     organizationId?: string | null;
     user?: CliDeviceSessionUser | null;
+    /** The hold of the approval doing this. It is then only written while that hold is still on the session. */
+    approvalHoldId?: string;
   }): Promise<void> {
     if (!params.deviceCode || !this.cacheService.cacheEnabled()) {
       throw new CliDeviceSessionNotFoundError();
@@ -416,7 +408,7 @@ export class CliDeviceSessionService {
     const approved = await this.cacheService.eval<number>(
       APPROVE_IF_PENDING_SCRIPT,
       [key],
-      [existing.sessionTtlSeconds, JSON.stringify(record)]
+      [existing.sessionTtlSeconds, JSON.stringify(record), params.approvalHoldId ?? '']
     );
 
     if (approved !== 1) {
@@ -549,12 +541,16 @@ export class CliDeviceSessionService {
   }
 }
 
-/** The session as `hold` has it from now on, for `APPROVAL_HOLD_SECONDS` unless that is renewed. */
-function heldBy(record: CliDeviceSessionRecord, hold: CliDeviceSessionApprovalHold): CliDeviceSessionRecord {
+/** The session as `hold` has it for the next `seconds`. */
+function heldBy(
+  record: CliDeviceSessionRecord,
+  hold: CliDeviceSessionApprovalHold,
+  seconds: number
+): CliDeviceSessionRecord {
   return {
     ...record,
     approvalHoldId: hold.holdId,
-    approvalHeldUntilEpoch: Math.floor(Date.now() / 1000) + APPROVAL_HOLD_SECONDS,
+    approvalHeldUntilEpoch: Math.floor(Date.now() / 1000) + seconds,
   };
 }
 
