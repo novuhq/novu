@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser, type User } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -21,8 +21,10 @@ export async function getRedirectPath(searchParams: SearchParams): Promise<strin
 export async function prepareAuthForm(searchParams: SearchParams) {
   const redirectPath = await getRedirectPath(searchParams);
 
+  // The session alone isn't enough: right after an account was deleted, its session token still reads
+  // as signed in for up to a minute, and the dashboard would have nobody to show.
   const { userId } = await auth();
-  if (userId) {
+  if (userId && (await findCurrentUser())) {
     redirect(redirectPath);
   }
 
@@ -32,4 +34,24 @@ export async function prepareAuthForm(searchParams: SearchParams) {
       ? 'Could not finish with that provider. Try again, or use your email and password.'
       : undefined,
   };
+}
+
+/**
+ * The signed-in user, or null when there is none. Also null when the session outlived its user: Clerk
+ * answers "not found" for a user that was just deleted, while the session token is still valid.
+ */
+export async function findCurrentUser(): Promise<User | null> {
+  try {
+    return await currentUser();
+  } catch (error) {
+    if (isNotFound(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+function isNotFound(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'status' in error && error.status === 404;
 }

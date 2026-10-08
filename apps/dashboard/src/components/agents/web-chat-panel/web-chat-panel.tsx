@@ -6,6 +6,7 @@ import { WebChatThread } from '@/components/agents/web-chat-panel/assistant-ui/t
 import { WebChatRuntimeProvider } from '@/components/agents/web-chat-panel/assistant-ui/web-chat-runtime';
 import { useWebChatConversationList } from '@/components/agents/web-chat-panel/use-web-chat-conversation-list';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -55,6 +56,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
       applicationIdentifier={currentEnvironment.identifier}
       apiUrl={apiHostnameManager.getHostname()}
       socketUrl={apiHostnameManager.getWebSocketHostname()}
+      socketOptions={SOCKET_OPTIONS}
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <WebChatSurface
