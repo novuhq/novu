@@ -325,9 +325,12 @@ describe('CreateUsageRecords #novu-v2', () => {
     ]);
   });
 
-  describe('when the period starts during the usage day', () => {
-    const periodStart = new Date('2026-09-26T09:24:00Z');
+  describe('around the billing period start', () => {
     const cronRunDate = new Date('2026-09-26T10:05:00Z');
+    const lateMidnightPeriodStart = new Date('2026-09-26T00:02:00Z');
+    const lateMidnightCronRunDate = new Date('2026-09-26T00:05:00Z');
+
+    const toStripeTimestamp = (date: Date) => date.getTime() / 1000;
 
     beforeEach(() => {
       getPlatformNotificationUsageStub.resolves([
@@ -337,59 +340,104 @@ describe('CreateUsageRecords #novu-v2', () => {
           notificationsCount: 1500,
         },
       ]);
-      givenSubscriptionPeriodStart(periodStart);
     });
 
-    it('should report only the runs since the period start when ClickHouse usage is enabled', async () => {
-      enableClickHouseUsage();
-      workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.resolves(1000);
+    describe('with ClickHouse usage enabled', () => {
+      beforeEach(() => {
+        enableClickHouseUsage();
+      });
 
-      await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+      it('should report only the runs since the period start when the period starts during the usage day', async () => {
+        const periodStart = new Date('2026-09-26T09:24:00Z');
+        givenSubscriptionPeriodStart(periodStart);
+        workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.resolves(1000);
 
-      expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.lastCall.args).to.deep.equal([
-        'organization_id',
-        periodStart,
-        new Date('2026-09-26T10:00:00Z'),
-      ]);
-      expect(createUsageRecordStub.lastCall.args).to.deep.equal([
-        'item_id_usage_notifications',
-        { quantity: 1000, timestamp: periodStart.getTime() / 1000, action: 'set' },
-      ]);
-      expect(analyticsServiceStub.track.lastCall.args[2].quantity).to.equal(1000);
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.lastCall.args).to.deep.equal([
+          'organization_id',
+          periodStart,
+          new Date('2026-09-26T10:00:00Z'),
+        ]);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1000, timestamp: toStripeTimestamp(periodStart), action: 'set' },
+        ]);
+        expect(analyticsServiceStub.track.lastCall.args[2].quantity).to.equal(1000);
+        expect(loggerStub.error.called).to.equal(false);
+      });
+
+      it('should skip the usage record on the late midnight run after the period start', async () => {
+        givenSubscriptionPeriodStart(lateMidnightPeriodStart);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: lateMidnightCronRunDate }));
+
+        expect(createUsageRecordStub.called).to.equal(false);
+        expect(analyticsServiceStub.track.called).to.equal(false);
+        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(loggerStub.info.calledWithMatch({ organizationId: 'organization_id' })).to.equal(true);
+        expect(loggerStub.error.called).to.equal(false);
+      });
+
+      it('should skip the usage record when the period starts right after the usage window ends', async () => {
+        givenSubscriptionPeriodStart(new Date('2026-09-26T10:00:00Z'));
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(createUsageRecordStub.called).to.equal(false);
+        expect(loggerStub.error.called).to.equal(false);
+      });
+
+      it('should report the whole-day count when the period starts at the usage day midnight', async () => {
+        const periodStart = new Date('2026-09-26T00:00:00Z');
+        givenSubscriptionPeriodStart(periodStart);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(periodStart), action: 'set' },
+        ]);
+      });
+
+      it('should report the whole-day count when the period started before the usage day', async () => {
+        givenSubscriptionPeriodStart(new Date('2026-09-01T09:24:00Z'));
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(new Date('2026-09-26T00:00:00Z')), action: 'set' },
+        ]);
+      });
     });
 
-    it('should report the whole-day count when ClickHouse usage is disabled', async () => {
-      await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+    describe('with ClickHouse usage disabled', () => {
+      it('should report the whole-day count at the period start when the period starts during the usage day', async () => {
+        const periodStart = new Date('2026-09-26T09:24:00Z');
+        givenSubscriptionPeriodStart(periodStart);
 
-      expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
-      expect(createUsageRecordStub.lastCall.args).to.deep.equal([
-        'item_id_usage_notifications',
-        { quantity: 1500, timestamp: periodStart.getTime() / 1000, action: 'set' },
-      ]);
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(periodStart), action: 'set' },
+        ]);
+      });
+
+      it('should still report the late midnight run at the period start', async () => {
+        givenSubscriptionPeriodStart(lateMidnightPeriodStart);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: lateMidnightCronRunDate }));
+
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(lateMidnightPeriodStart), action: 'set' },
+        ]);
+      });
     });
-  });
-
-  it('should skip the usage record when the whole usage day is before the period start and ClickHouse usage is enabled', async () => {
-    enableClickHouseUsage();
-    givenSubscriptionPeriodStart(new Date('2026-09-26T00:02:00Z'));
-
-    await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: new Date('2026-09-26T00:05:00Z') }));
-
-    expect(createUsageRecordStub.called).to.equal(false);
-    expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
-    expect(loggerStub.info.calledWithMatch({ organizationId: 'organization_id' })).to.equal(true);
-  });
-
-  it('should report the whole-day count when the period started before the usage day and ClickHouse usage is enabled', async () => {
-    enableClickHouseUsage();
-    givenSubscriptionPeriodStart(new Date('2026-09-01T09:24:00Z'));
-
-    await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: new Date('2026-09-26T10:05:00Z') }));
-
-    expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
-    expect(createUsageRecordStub.lastCall.args).to.deep.equal([
-      'item_id_usage_notifications',
-      { quantity: 100, timestamp: new Date('2026-09-26T00:00:00Z').getTime() / 1000, action: 'set' },
-    ]);
   });
 });
