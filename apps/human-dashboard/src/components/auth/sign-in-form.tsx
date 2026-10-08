@@ -1,7 +1,7 @@
 'use client';
 
 import { useSignIn } from '@clerk/nextjs';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { CodeInput } from '@/components/ui/code-input';
@@ -56,23 +56,35 @@ export function SignInForm({ redirectPath, initialError }: SignInFormProps) {
   /** A message of our own, for the cases Clerk reports no error for. */
   const [notice, setNotice] = useState<string | null>(initialError ?? null);
 
+  /** Set once the session exists and the browser is on its way to the next page. */
+  const leaving = useRef(false);
+
   const disabled = busy !== null;
 
   async function run(action: Action, request: () => Promise<void>) {
+    leaving.current = false;
     setBusy(action);
     setNotice(null);
     try {
       await request();
     } catch {
+      leaving.current = false;
       setNotice('Something went wrong. Check your connection and try again.');
     }
-    setBusy(null);
+    // Once signed in, the form stays busy until the next page has replaced it.
+    if (!leaving.current) {
+      setBusy(null);
+    }
   }
 
   /** Moves on from whatever Clerk says the sign-in still needs. */
   async function advance() {
     if (signIn.status === 'complete') {
-      await signIn.finalize({ navigate: enterApp });
+      leaving.current = true;
+      const { error } = await signIn.finalize({ navigate: enterApp });
+      if (error) {
+        leaving.current = false;
+      }
 
       return;
     }
