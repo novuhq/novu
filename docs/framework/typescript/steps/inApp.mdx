@@ -74,6 +74,10 @@ const { seen, read, lastSeenDate, lastReadDate } = await step.inApp('inbox', res
   - `url` (string, required): The URL to visit when clicking on the notification.
   - `target` (string): The target attribute specifies where the new window or tab will be opened. Defaults to `_blank`. Supported values: `_self, _blank, _parent, _top, _unfencedTop`.
 
+<Note>
+  For security, Novu only keeps redirect URLs that are an absolute `http`/`https` URL, a root-relative path that starts with `/` (for example, `/tasks/123`), or a URL built from Liquid variables (for example, `{{payload.url}}`). Other values - such as `javascript:`, `mailto:`, protocol-relative `//host` URLs, or custom app deep-link schemes (`myapp://...`) - are removed, and the notification renders without a redirect. This applies to the `redirect` URL above as well as the `primaryAction` and `secondaryAction` redirect URLs.
+</Note>
+
 ### primaryAction
 
 - **Type**: `object`
