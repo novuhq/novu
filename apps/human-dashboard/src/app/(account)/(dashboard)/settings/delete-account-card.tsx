@@ -1,5 +1,6 @@
 'use client';
 
+import { useClerk } from '@clerk/nextjs';
 import { useState, useTransition } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -44,17 +45,34 @@ export function DeleteAccountCard({ agentName }: DeleteAccountCardProps) {
 }
 
 function DeleteDialogContent({ agentName }: DeleteAccountCardProps) {
+  const { signOut } = useClerk();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Stays true once the account is gone, so the dialog keeps busy until the browser has left.
+  const [leaving, setLeaving] = useState(false);
 
   function handleDelete() {
     setError(null);
     startTransition(async () => {
-      // Only comes back when it failed: a deleted account leaves the dashboard.
       const result = await deleteAccountAction();
-      setError(result.error);
+      if (!result.ok) {
+        setError(result.error);
+
+        return;
+      }
+
+      setLeaving(true);
+      // The session belongs to a user that no longer exists. Ending it here keeps the next page from
+      // treating the browser as signed in; if Clerk can't, a full page load drops what is left of it.
+      try {
+        await signOut({ redirectUrl: '/' });
+      } catch {
+        window.location.assign('/');
+      }
     });
   }
+
+  const busy = pending || leaving;
 
   return (
     <DialogContent
@@ -62,16 +80,16 @@ function DeleteDialogContent({ agentName }: DeleteAccountCardProps) {
       headerClassName={DIALOG_HEADER}
       icon={<DialogMark glyph="warning" />}
       title="Delete your account?"
-      locked={pending}
+      locked={busy}
       description={`This deletes your Human account and ${agentName} with its channels, contacts and API key. Agents using the key can no longer reach anyone, and it can't be undone.`}
       footer={
         <>
           <DialogClose asChild>
-            <Button variant="secondary" disabled={pending}>
+            <Button variant="secondary" disabled={busy}>
               Cancel
             </Button>
           </DialogClose>
-          <Button variant="danger" pending={pending} onClick={handleDelete}>
+          <Button variant="danger" pending={busy} onClick={handleDelete}>
             Delete account
           </Button>
         </>

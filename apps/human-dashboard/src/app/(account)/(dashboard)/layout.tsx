@@ -1,4 +1,3 @@
-import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -8,6 +7,7 @@ import { Sidebar, type SidebarAgent } from '@/components/dashboard/sidebar';
 import { TopBar } from '@/components/dashboard/top-bar';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { findCurrentUser } from '@/lib/auth-page';
 import { requireHumanAccount } from '@/lib/human-account';
 import { getRelayAgent } from '@/lib/human-agent-api';
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
  * they asked for; the check here is the backstop if a request ever gets past it.
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const user = await currentUser();
+  const user = await findCurrentUser();
   if (!user) {
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: DASHBOARD_HOME })}`);
   }

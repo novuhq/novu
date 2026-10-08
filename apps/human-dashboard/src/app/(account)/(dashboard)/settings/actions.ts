@@ -2,11 +2,12 @@
 
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 import { forgetStoredBackingAccount, readHumanAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { deleteBackingAccount } from '@/lib/human-accounts-api';
 import { regenerateApiKey } from '@/lib/human-api-key';
+
+export type DeleteAccountResult = { ok: true } | { ok: false; error: string };
 
 export type RegenerateApiKeyResult = { ok: true; apiKey: string } | { ok: false; error: string };
 
@@ -40,10 +41,10 @@ export async function regenerateApiKeyAction(): Promise<RegenerateApiKeyResult> 
  * Every step can be repeated: deleting a missing backing organization is a no-op, and it's forgotten
  * before the Human account goes, so if that last step fails, trying again finishes the job.
  */
-export async function deleteAccountAction(): Promise<{ error: string }> {
+export async function deleteAccountAction(): Promise<DeleteAccountResult> {
   const user = await currentUser();
   if (!user) {
-    return { error: 'Your session has ended. Sign in again to delete your account.' };
+    return { ok: false, error: 'Your session has ended. Sign in again to delete your account.' };
   }
 
   try {
@@ -59,8 +60,9 @@ export async function deleteAccountAction(): Promise<{ error: string }> {
   } catch (error) {
     console.error('Failed to delete the Human account', error);
 
-    return { error: 'Something went wrong while deleting your account. Please try again.' };
+    return { ok: false, error: 'Something went wrong while deleting your account. Please try again.' };
   }
 
-  redirect('/');
+  // The browser still holds the session of the user that is gone now. It signs out itself, then leaves.
+  return { ok: true };
 }
