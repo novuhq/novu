@@ -1,5 +1,5 @@
+import { TagsFilterValidationError } from '@novu/shared';
 import { expect } from 'chai';
-
 import { parseTagsQueryValue } from './parse-tags-query';
 
 describe('parseTagsQueryValue', () => {
@@ -26,6 +26,45 @@ describe('parseTagsQueryValue', () => {
 
   it('parses indexed object with one group as flat string[]', () => {
     expect(parseTagsQueryValue({ 0: ['a', 'b'] })).to.deep.equal(['a', 'b']);
+  });
+
+  it('parses an indexed object of tags (qs array limit overflow) as a flat tag list', () => {
+    const tags = Array.from({ length: 21 }, (_, i) => `t${i}`);
+    const overflowed = Object.fromEntries(tags.map((tag, i) => [i, tag]));
+
+    expect(parseTagsQueryValue(overflowed)).to.deep.equal(tags);
+  });
+
+  it('parses an overflowed OR-group inside nested groups', () => {
+    const tags = Array.from({ length: 21 }, (_, i) => `t${i}`);
+    const overflowedGroup = Object.fromEntries(tags.map((tag, i) => [i, tag]));
+
+    expect(parseTagsQueryValue([overflowedGroup, ['z']])).to.deep.equal({
+      and: [{ or: tags }, { or: ['z'] }],
+    });
+  });
+
+  it('parses an overflowed OR-group inside an indexed object of groups', () => {
+    const tags = Array.from({ length: 21 }, (_, i) => `t${i}`);
+    const overflowedGroup = Object.fromEntries(tags.map((tag, i) => [i, tag]));
+
+    expect(parseTagsQueryValue({ 0: overflowedGroup, 1: ['z'] })).to.deep.equal({
+      and: [{ or: tags }, { or: ['z'] }],
+    });
+  });
+
+  it('parses explicit { and } with { or } and array entries', () => {
+    expect(parseTagsQueryValue({ and: [{ or: [1, 'a'] }, ['b']] })).to.deep.equal({
+      and: [{ or: ['1', 'a'] }, { or: ['b'] }],
+    });
+  });
+
+  it('rejects an { and } entry that is neither { or } nor an array', () => {
+    expect(() => parseTagsQueryValue({ and: ['a'] })).to.throw(TagsFilterValidationError);
+  });
+
+  it('rejects a filter with both "or" and "and"', () => {
+    expect(() => parseTagsQueryValue({ or: ['a'], and: [['b']] })).to.throw(TagsFilterValidationError);
   });
 
   it('parses explicit { or }', () => {
