@@ -47,9 +47,13 @@ export function SignUpForm({ redirectPath, initialError }: SignUpFormProps) {
 
   const [step, setStep] = useState<Step>('details');
   const [busy, setBusy] = useBusy<Action>();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
+  /** Our own check of the two names, which Clerk only asks for when its app is set to. */
+  const [nameErrors, setNameErrors] = useState<{ firstName?: string; lastName?: string }>({});
   /** A message of our own, for the cases Clerk reports no error for. */
   const [notice, setNotice] = useState<string | null>(initialError ?? null);
 
@@ -106,8 +110,24 @@ export function SignUpForm({ redirectPath, initialError }: SignUpFormProps) {
 
   function submitDetails(event: FormEvent) {
     event.preventDefault();
+
+    // Both names are needed: the account behind a Human account can't be created without them.
+    const missing = {
+      firstName: firstName.trim() ? undefined : 'Enter your first name.',
+      lastName: lastName.trim() ? undefined : 'Enter your last name.',
+    };
+    setNameErrors(missing);
+    if (missing.firstName || missing.lastName) {
+      return;
+    }
+
     void run('submit', async () => {
-      const { error } = await signUp.password({ emailAddress: email.trim(), password });
+      const { error } = await signUp.password({
+        emailAddress: email.trim(),
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      });
       if (!error) {
         await advance();
       }
@@ -214,6 +234,38 @@ export function SignUpForm({ redirectPath, initialError }: SignUpFormProps) {
         onSelect={continueWith}
       />
       <form noValidate className="flex flex-col gap-4.5" onSubmit={submitDetails}>
+        <div className="grid grid-cols-2 items-start gap-3">
+          <AuthField label="First name" error={nameErrors.firstName ?? errorText(errors.fields.firstName)}>
+            {(field) => (
+              <AuthInput
+                {...field}
+                name="given-name"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(event) => {
+                  setFirstName(event.target.value);
+                  setNameErrors((current) => ({ ...current, firstName: undefined }));
+                }}
+                disabled={disabled}
+              />
+            )}
+          </AuthField>
+          <AuthField label="Last name" error={nameErrors.lastName ?? errorText(errors.fields.lastName)}>
+            {(field) => (
+              <AuthInput
+                {...field}
+                name="family-name"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(event) => {
+                  setLastName(event.target.value);
+                  setNameErrors((current) => ({ ...current, lastName: undefined }));
+                }}
+                disabled={disabled}
+              />
+            )}
+          </AuthField>
+        </div>
         <AuthField label="Email" error={errorText(errors.fields.emailAddress)}>
           {(field) => (
             <AuthInput
