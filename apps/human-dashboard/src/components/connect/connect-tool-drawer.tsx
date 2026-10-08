@@ -10,6 +10,7 @@ import { Button, buttonClassName } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
 import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
+import { MascotFace } from '@/components/ui/mascot-face';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
 import { type AiTool, cursorInstallLink, cursorMcpConfig, type ToolId } from '@/lib/ai-tools';
@@ -241,7 +242,7 @@ function Step({ index, title, extra, children }: StepProps) {
 function Connected({ tool }: { tool: AiTool }) {
   return (
     <div className="flex flex-col items-center pt-20 text-center">
-      <img src="/illustrations/mascot-happy.svg" alt="" width={140} height={140} className="size-35" />
+      <MascotFace art="waiting" mood="happy" className="size-35" />
       <h3 className="mt-5 text-base leading-6 font-medium text-foreground">{tool.name} is connected</h3>
       <p className="mt-2.5 text-[13px] leading-4.5 text-secondary">
         Try asking {tool.name}: “{tool.example}”

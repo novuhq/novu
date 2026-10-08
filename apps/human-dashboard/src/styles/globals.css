@@ -196,6 +196,38 @@
   }
 }
 
+/*
+ * The same slow swell as `animate-breathe`, for the dither of `dither-side` and the glow of `dot-glow`:
+ * both are drawn by pseudo-elements, which an animation on the element itself wouldn't reach.
+ */
+@utility dither-breathe {
+  &::before,
+  &::after {
+    animation: dither-breathe 4s ease-in-out infinite alternate;
+  }
+}
+
+@utility glow-breathe {
+  &::after {
+    animation: breathe 4s ease-in-out infinite alternate;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dither-breathe::before,
+  .dither-breathe::after,
+  .glow-breathe::after {
+    animation: none;
+  }
+}
+
+/* Swells up to the dither's own opacity, whatever `--dither-opacity` sets it to, from half of it. */
+@keyframes dither-breathe {
+  from {
+    opacity: calc(var(--dither-opacity, 0.55) * 0.5);
+  }
+}
+
 @layer base {
   body {
     @apply bg-background font-sans text-foreground antialiased;

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { CopyField } from '@/components/ui/copy-field';
+import { MascotFace } from '@/components/ui/mascot-face';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
 import { AI_TOOLS, type AiTool, type ToolId } from '@/lib/ai-tools';
@@ -163,7 +164,7 @@ function SetupHero({ setup, docsUrl }: { setup: AgentSetupTexts; docsUrl: string
         />
       </div>
       <div className="hidden w-100 shrink-0 flex-col items-center gap-[19px] bg-subtle pt-[29px] lg:flex">
-        <img src="/illustrations/mascot-waiting.svg" alt="" width={230} height={230} className="size-57.5" />
+        <MascotFace art="waiting" className="size-57.5" />
         <p className="flex gap-2.5 font-mono text-[11px] leading-4 text-muted">
           <span>fig. 01</span>
           <span>waiting to be set up</span>
@@ -216,7 +217,7 @@ function AgentCard({ agent, channels, finishPrompt }: AgentCardProps) {
         <Badge variant={agent.active ? 'success' : 'pending'}>{agent.active ? 'Active' : 'Paused'}</Badge>
       </div>
       <Collapse open={incomplete}>
-        <div className="dither-side flex flex-wrap items-center gap-x-3.5 gap-y-3 border-t border-border px-6 py-4.25 [--dither-opacity:0.75]">
+        <div className="dither-side dither-breathe flex flex-wrap items-center gap-x-3.5 gap-y-3 border-t border-border px-6 py-4.25 [--dither-opacity:0.75]">
           <Terminal aria-hidden="true" className="size-4 shrink-0 text-foreground" />
           <div className="flex min-w-56 flex-1 flex-col">
             <h3 className="text-[13px] leading-4.5 font-medium text-foreground">Finish setup in your agent</h3>
@@ -244,7 +245,7 @@ function Dither({ shown }: { shown: boolean }) {
         !shown && 'opacity-0'
       )}
     >
-      <div className="dither-side size-full [--dither-opacity:0.75]" />
+      <div className="dither-side dither-breathe size-full [--dither-opacity:0.75]" />
     </div>
   );
 }

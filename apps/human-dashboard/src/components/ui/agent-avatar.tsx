@@ -1,12 +1,8 @@
+import { MascotFace } from '@/components/ui/mascot-face';
 import { cn } from '@/lib/utils';
 
 /** `asleep` until the agent is set up, `idle` once it is. */
 export type AgentAvatarMood = 'idle' | 'asleep';
-
-const FACES: Record<AgentAvatarMood, string> = {
-  idle: '/illustrations/mascot-idle.svg',
-  asleep: '/illustrations/mascot-asleep.svg',
-};
 
 type AgentAvatarProps = {
   mood?: AgentAvatarMood;
@@ -16,9 +12,12 @@ type AgentAvatarProps = {
 
 /**
  * The agent's picture (`Mascot` in Figma, drawn on a 48px grid): the dithered orb on its dark red glow.
- * Both faces are always there, so one fades into the other when the agent wakes up.
+ * Awake, it turns towards the pointer and blinks. Both faces are always there, so one fades into the
+ * other when the agent wakes up.
  */
 export function AgentAvatar({ mood = 'idle', className }: AgentAvatarProps) {
+  const face = 'absolute inset-0 size-full transition-opacity duration-300 ease-out motion-reduce:transition-none';
+
   return (
     <span
       aria-hidden="true"
@@ -29,17 +28,8 @@ export function AgentAvatar({ mood = 'idle', className }: AgentAvatarProps) {
         className
       )}
     >
-      {(Object.keys(FACES) as AgentAvatarMood[]).map((face) => (
-        <img
-          key={face}
-          src={FACES[face]}
-          alt=""
-          className={cn(
-            'absolute inset-0 size-full transition-opacity duration-300 ease-out motion-reduce:transition-none',
-            face !== mood && 'opacity-0'
-          )}
-        />
-      ))}
+      <MascotFace art="idle" still={mood !== 'idle'} className={cn(face, mood !== 'idle' && 'opacity-0')} />
+      <MascotFace art="idle" mood="asleep" className={cn(face, mood !== 'asleep' && 'opacity-0')} />
     </span>
   );
 }

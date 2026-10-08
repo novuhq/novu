@@ -4,9 +4,10 @@ import { ArrowUpRight, User } from 'lucide-react';
 import { type ReactNode, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
-import { Mascot } from '@/components/ui/mascot';
+import { MascotFace } from '@/components/ui/mascot-face';
 import { useInviteStatus } from '@/hooks/use-invite-status';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import {
@@ -475,7 +476,7 @@ function DoneCard({ agentName, inviteeName, via, isDefault, telegramBot, onBack 
 
   return (
     <>
-      <img src="/illustrations/mascot-happy.svg" alt="" width={140} height={140} className="size-35" />
+      <MascotFace art="waiting" mood="happy" className="size-35" />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         You&apos;re in{firstName && ', '}
         {firstName && <Accent>{firstName}</Accent>}
@@ -605,7 +606,7 @@ function InviterLine({ name }: { name?: string }) {
         <span className="flex size-8 items-center justify-center rounded-full border border-border bg-raised text-secondary">
           <User className="size-4" />
         </span>
-        <Mascot className="-ml-2.5 size-8 rounded-full ring-2 ring-background" />
+        <AgentAvatar className="-ml-2.5 size-8 rounded-full ring-2 ring-background" />
       </span>
       <p className="text-[13px] leading-4.5 text-secondary">{name ? `${name} invited you` : "You've been invited"}</p>
     </div>

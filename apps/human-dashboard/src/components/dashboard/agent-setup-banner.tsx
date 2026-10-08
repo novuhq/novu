@@ -11,7 +11,7 @@ import { buttonClassName } from '@/components/ui/button';
  */
 export function AgentSetupBanner({ children }: { children: ReactNode }) {
   return (
-    <section className="dither-side flex animate-rise-in flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-background px-5 py-4.5 motion-reduce:animate-none">
+    <section className="dither-side dither-breathe flex animate-rise-in flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-background px-5 py-4.5 motion-reduce:animate-none">
       <span
         aria-hidden="true"
         className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-raised text-foreground"
