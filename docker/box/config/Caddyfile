@@ -1,0 +1,30 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:4200 {
+	encode gzip
+	header X-XSS-Protection "1; mode=block"
+	header Referrer-Policy "no-referrer-when-downgrade"
+	header X-Content-Type-Options "nosniff"
+
+	# Stands in for the CDN (CDN_URL) in front of the uploads bucket; versitygw stores objects as plain files.
+	handle_path /cdn/* {
+		root * /data/s3/{$S3_BUCKET_NAME}
+		file_server
+	}
+
+	handle {
+		root * /data/run/dashboard
+		# Same caching as apps/dashboard/netlify.toml. A PR box keeps its URL across pushes,
+		# so index.html must never be cached or reviewers keep loading the previous build.
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+		header /auth/* Cache-Control "private, no-cache, no-store, must-revalidate"
+		@app not path /assets/* /auth/*
+		header @app Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

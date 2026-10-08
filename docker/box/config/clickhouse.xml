@@ -1,0 +1,65 @@
+<clickhouse>
+    <logger>
+        <level>warning</level>
+        <console>true</console>
+    </logger>
+
+    <!-- The Cloudflare container hostname doesn't resolve; never look it up. -->
+    <display_name>novu-box</display_name>
+    <interserver_http_host>127.0.0.1</interserver_http_host>
+    <listen_host>127.0.0.1</listen_host>
+    <http_port>8123</http_port>
+    <tcp_port>9000</tcp_port>
+
+    <path>/data/clickhouse/</path>
+    <tmp_path>/data/clickhouse/tmp/</tmp_path>
+    <user_files_path>/data/clickhouse/user_files/</user_files_path>
+    <format_schema_path>/data/clickhouse/format_schemas/</format_schema_path>
+    <user_directories>
+        <users_xml>
+            <path>clickhouse-users.xml</path>
+        </users_xml>
+    </user_directories>
+    <default_profile>default</default_profile>
+    <default_database>default</default_database>
+
+    <!-- Low-memory settings for a box with a few GB of RAM. -->
+    <max_server_memory_usage>1500000000</max_server_memory_usage>
+    <mark_cache_size>268435456</mark_cache_size>
+    <uncompressed_cache_size>0</uncompressed_cache_size>
+    <index_mark_cache_size>0</index_mark_cache_size>
+    <mmap_cache_size>64</mmap_cache_size>
+    <max_concurrent_queries>50</max_concurrent_queries>
+    <background_pool_size>2</background_pool_size>
+    <background_schedule_pool_size>4</background_schedule_pool_size>
+    <background_common_pool_size>2</background_common_pool_size>
+    <background_move_pool_size>1</background_move_pool_size>
+    <background_fetches_pool_size>1</background_fetches_pool_size>
+    <background_buffer_flush_schedule_pool_size>1</background_buffer_flush_schedule_pool_size>
+    <background_message_broker_schedule_pool_size>1</background_message_broker_schedule_pool_size>
+    <background_distributed_schedule_pool_size>1</background_distributed_schedule_pool_size>
+    <tables_loader_foreground_pool_size>2</tables_loader_foreground_pool_size>
+    <tables_loader_background_pool_size>1</tables_loader_background_pool_size>
+    <!-- Must fit the small merge pool above (background_pool_size x concurrency ratio 2). -->
+    <merge_tree>
+        <number_of_free_entries_in_pool_to_execute_mutation>2</number_of_free_entries_in_pool_to_execute_mutation>
+        <number_of_free_entries_in_pool_to_lower_max_size_of_merge>2</number_of_free_entries_in_pool_to_lower_max_size_of_merge>
+        <number_of_free_entries_in_pool_to_execute_optimize_entire_partition>2</number_of_free_entries_in_pool_to_execute_optimize_entire_partition>
+    </merge_tree>
+
+    <!-- System log tables only cost RAM and disk in a preview box. -->
+    <query_log remove="1" />
+    <query_thread_log remove="1" />
+    <query_views_log remove="1" />
+    <part_log remove="1" />
+    <trace_log remove="1" />
+    <metric_log remove="1" />
+    <asynchronous_metric_log remove="1" />
+    <session_log remove="1" />
+    <text_log remove="1" />
+    <opentelemetry_span_log remove="1" />
+    <processors_profile_log remove="1" />
+    <asynchronous_insert_log remove="1" />
+    <backup_log remove="1" />
+    <error_log remove="1" />
+</clickhouse>
