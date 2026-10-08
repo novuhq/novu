@@ -1,10 +1,12 @@
-// biome-ignore lint/style/noRestrictedImports: <explanation>
-import { Logger } from '@nestjs/common';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 const { StripeUsageTypeEnum } = require('@novu/ee-billing/src/stripe/types');
+
+interface UsecaseStub {
+  execute: () => Promise<unknown>;
+}
 
 const mockMonthlyBusinessSubscription = {
   id: 'subscription_id',
@@ -37,9 +39,15 @@ describe('CreateUsageRecords #novu-v2', () => {
   const analyticsServiceStub = {
     track: sinon.stub(),
   };
-  const createSubscriptionUsecase = { execute: () => Promise.resolve() };
-  const getOrCreateCustomerUsecase = { execute: () => Promise.resolve() };
-  const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
+  const loggerStub = {
+    setContext: sinon.stub(),
+    debug: sinon.stub(),
+    info: sinon.stub(),
+    error: sinon.stub(),
+  };
+  const createSubscriptionUsecase: UsecaseStub = { execute: () => Promise.resolve() };
+  const getOrCreateCustomerUsecase: UsecaseStub = { execute: () => Promise.resolve() };
+  const getPlatformNotificationUsageUsecase: UsecaseStub = { execute: () => Promise.resolve() };
   let createUsageRecordStub: sinon.SinonStub;
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let createSubscriptionStub: sinon.SinonStub;
@@ -56,10 +64,10 @@ describe('CreateUsageRecords #novu-v2', () => {
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
         notificationsCount: 100,
       },
-    ] as any);
+    ]);
     createSubscriptionStub = sinon.stub(createSubscriptionUsecase, 'execute').resolves({
       id: 'subscription_id',
-    } as any);
+    });
     getOrCreateCustomerStub = sinon.stub(getOrCreateCustomerUsecase, 'execute').resolves({
       id: 'customer_id',
       deleted: false,
@@ -69,7 +77,7 @@ describe('CreateUsageRecords #novu-v2', () => {
       subscriptions: {
         data: [mockMonthlyBusinessSubscription],
       },
-    } as any);
+    });
   });
 
   afterEach(() => {
@@ -78,6 +86,10 @@ describe('CreateUsageRecords #novu-v2', () => {
     createSubscriptionStub.reset();
     getPlatformNotificationUsageStub.reset();
     analyticsServiceStub.track.reset();
+    loggerStub.setContext.reset();
+    loggerStub.debug.reset();
+    loggerStub.info.reset();
+    loggerStub.error.reset();
   });
 
   const createUseCase = () => {
@@ -86,7 +98,8 @@ describe('CreateUsageRecords #novu-v2', () => {
       getOrCreateCustomerUsecase,
       createSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
-      analyticsServiceStub
+      analyticsServiceStub,
+      loggerStub
     );
 
     return useCase;
@@ -202,7 +215,6 @@ describe('CreateUsageRecords #novu-v2', () => {
   });
 
   it('should log an error if the usage subscription item is not found on the subscription', async () => {
-    const logStub = sinon.spy(Logger, 'error');
     getPlatformNotificationUsageStub.resolves([
       {
         _id: 'organization_id_1',
@@ -234,11 +246,9 @@ describe('CreateUsageRecords #novu-v2', () => {
       })
     );
 
-    expect(logStub.lastCall.args[0].message).to.equal(
+    expect(loggerStub.error.lastCall.args[0].err.message).to.equal(
       "No metered subscription found for organizationId: 'organization_id_1'"
     );
-
-    logStub.restore();
   });
 
   it('should create a usage record for each organization', async () => {
