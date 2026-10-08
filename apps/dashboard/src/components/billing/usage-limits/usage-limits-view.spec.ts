@@ -160,6 +160,35 @@ describe('getUsageLimitsView', () => {
     expect(paused && isNearingOverageLimit(paused)).toBe(false);
   });
 
+  it('warns from the included runs when a usage alert allowance override is set', () => {
+    const pausingAt10k = {
+      settings: {
+        workflowRuns: { onDemandLimit: 10_000 },
+        pauseAtLimit: true,
+        alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
+      },
+    };
+    const atOverride = getUsageLimitsView(
+      buildSubscription({ events: { current: 9_020, limit: 40_000 }, usageLimits: pausingAt10k }),
+      true,
+      20
+    );
+    const underPause = getUsageLimitsView(
+      buildSubscription({ events: { current: 38_999, limit: 40_000 }, usageLimits: pausingAt10k }),
+      true,
+      20
+    );
+    const nearingPause = getUsageLimitsView(
+      buildSubscription({ events: { current: 39_000, limit: 40_000 }, usageLimits: pausingAt10k }),
+      true,
+      20
+    );
+
+    expect(atOverride && isNearingOverageLimit(atOverride)).toBe(false);
+    expect(underPause && isNearingOverageLimit(underPause)).toBe(false);
+    expect(nearingPause && isNearingOverageLimit(nearingPause)).toBe(true);
+  });
+
   it('picks the paused experience by plan', () => {
     const paused = { isPaused: true };
 

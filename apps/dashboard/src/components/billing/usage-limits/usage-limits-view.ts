@@ -96,7 +96,10 @@ function getWorkflowRunsUsageState({ events }: SubscriptionUsage, onDemandFrom: 
 
 const OVERAGE_WARNING_RATIO = 0.9;
 
-/** Paid plans that pause at the limit, once 90% of the on-demand allowance is used and usage is not paused yet. */
+/**
+ * Paid plans that pause at the limit, once 90% of the on-demand allowance is used and usage is not paused yet.
+ * The pause point stays `included + onDemandLimit`; the usage-alert allowance override does not move it.
+ */
 export function isNearingOverageLimit(view: Pick<UsageLimitsView, 'usage' | 'settings'>): boolean {
   const { usage, settings } = view;
 
@@ -110,7 +113,7 @@ export function isNearingOverageLimit(view: Pick<UsageLimitsView, 'usage' | 'set
     return false;
   }
 
-  const overageStart = usage.allowanceOverride ?? usage.included;
+  const overageStart = usage.included;
 
   return usage.current - overageStart >= onDemandLimit * OVERAGE_WARNING_RATIO;
 }
