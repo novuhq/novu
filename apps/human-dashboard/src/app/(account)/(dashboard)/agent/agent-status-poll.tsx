@@ -5,6 +5,9 @@ import { useEffect, useRef } from 'react';
 
 import { readAgentStatusAction } from './actions';
 
+/** How long a reload gets to show the new status before it's asked for once more. */
+const RELOAD_AGAIN_AFTER_MS = 15_000;
+
 type AgentStatusPollProps = {
   /** How far the setup got when the page was rendered (`describeAgentStatus`). */
   status: string;
@@ -19,8 +22,9 @@ type AgentStatusPollProps = {
  */
 export function AgentStatusPoll({ status, everyMs }: AgentStatusPollProps) {
   const router = useRouter();
-  // The answer the page was last reloaded for, so one that can't be shown isn't reloaded over and over.
-  const reloadedFor = useRef<string | null>(null);
+  // The answer the page was last reloaded for, and when. An answer the page can't show isn't reloaded on
+  // every tick, but a reload that failed gets another go after a while.
+  const reloaded = useRef<{ status: string; at: number } | null>(null);
 
   useEffect(() => {
     let stopped = false;
@@ -34,8 +38,10 @@ export function AgentStatusPoll({ status, everyMs }: AgentStatusPollProps) {
       asking = true;
       try {
         const latest = await readAgentStatusAction();
-        if (!stopped && latest !== status && latest !== reloadedFor.current) {
-          reloadedFor.current = latest;
+        const last = reloaded.current;
+        const triedJustNow = last?.status === latest && Date.now() - last.at < RELOAD_AGAIN_AFTER_MS;
+        if (!stopped && latest !== status && !triedJustNow) {
+          reloaded.current = { status: latest, at: Date.now() };
           router.refresh();
         }
       } catch {
