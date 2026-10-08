@@ -40,8 +40,6 @@ class NotImplementedError extends Error {
   }
 }
 
-type MessageConstructor = new (data: unknown) => Message<WebChatRawMessage>;
-
 const JSON_HEADERS = { 'content-type': 'application/json' } as const;
 
 type IngressKind =
@@ -92,7 +90,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
 
   private readonly config: WebChatAdapterConfig;
   private chat: ChatInstance | null = null;
-  private MessageClass: MessageConstructor | null = null;
+  private MessageClass: typeof Message | null = null;
   private parseMarkdownFn: ((md: string) => Root) | null = null;
 
   constructor(config: WebChatAdapterConfig) {
@@ -103,8 +101,16 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   async initialize(chat: ChatInstance): Promise<void> {
     this.chat = chat;
     const chatModule = await import('chat');
-    this.MessageClass = chatModule.Message as unknown as MessageConstructor;
+    this.MessageClass = chatModule.Message;
     this.parseMarkdownFn = chatModule.parseMarkdown;
+  }
+
+  private requireChat(): ChatInstance {
+    if (!this.chat) {
+      throw new Error('Adapter not initialized. Call initialize() first.');
+    }
+
+    return this.chat;
   }
 
   encodeThreadId(data: WebChatThreadId): string {
@@ -278,7 +284,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     });
 
     try {
-      await this.chat!.processMessage(this, threadId, message, options);
+      await this.requireChat().processMessage(this, threadId, message, options);
     } catch (error) {
       await this.releaseInboundClaim(session, clientMessageId, conversationId, claim?.claimToken);
 
@@ -330,7 +336,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     };
 
     try {
-      await this.chat!.processAction(
+      await this.requireChat().processAction(
         {
           adapter: this,
           actionId: kind.actionId,
