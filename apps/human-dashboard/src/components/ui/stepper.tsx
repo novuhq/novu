@@ -25,12 +25,24 @@ type StepProps = {
   footer?: ReactNode;
   /** Adds the dithered orange glow, for a step that waits on something outside the page. */
   glow?: boolean;
+  /** Lays the body out differently, such as centered across the whole card instead of under the title. */
+  bodyClassName?: string;
 };
 
 /** How a step's parts move when the flow goes from one step to the next. */
 const EASE = 'duration-300 ease-out motion-reduce:transition-none';
 
-export function Step({ index, title, status, summary, action, children, footer, glow = false }: StepProps) {
+export function Step({
+  index,
+  title,
+  status,
+  summary,
+  action,
+  children,
+  footer,
+  glow = false,
+  bodyClassName,
+}: StepProps) {
   const open = status === 'current' || status === 'error';
   const hasBody = Boolean(children);
 
@@ -62,7 +74,7 @@ export function Step({ index, title, status, summary, action, children, footer, 
       {/* Kept in the page while closed, so the step can grow open and fold shut instead of popping. */}
       {hasBody && (
         <Fold open={open}>
-          <div className="flex flex-col gap-3.5 pt-0.5 pr-4.5 pb-4.5 pl-13">{children}</div>
+          <div className={cn('flex flex-col gap-3.5 pt-0.5 pr-4.5 pb-4.5 pl-13', bodyClassName)}>{children}</div>
           {footer && (
             <div className="flex items-center justify-between gap-2 border-t border-border bg-background px-4.5 py-3">
               {footer}
@@ -78,7 +90,7 @@ export function Step({ index, title, status, summary, action, children, footer, 
  * Grows its content open and folds it shut. While shut the content is still there but out of reach:
  * `inert` keeps the keyboard and screen readers away from a step that isn't the current one.
  */
-function Fold({ open, children }: { open: boolean; children: ReactNode }) {
+export function Fold({ open, children }: { open: boolean; children: ReactNode }) {
   return (
     <div
       inert={!open}

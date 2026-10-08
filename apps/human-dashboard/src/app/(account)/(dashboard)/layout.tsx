@@ -9,15 +9,9 @@ import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { findCurrentUser } from '@/lib/auth-page';
 import { requireHumanAccount } from '@/lib/human-account';
-import { getRelayAgent } from '@/lib/human-agent-api';
+import { agentDisplayName, getRelayAgent, UNNAMED_AGENT_LABEL } from '@/lib/human-agent-api';
 
-/** What the agent is called until the operator gives it a name of its own (NV-8914). */
-const UNNAMED_AGENT = 'Human assistant';
-
-const AGENT_NOT_SET_UP: SidebarAgent = { name: UNNAMED_AGENT, status: 'Not set up' };
-
-/** The name `human setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
-const DEFAULT_AGENT_NAME = 'Human';
+const AGENT_NOT_SET_UP: SidebarAgent = { name: UNNAMED_AGENT_LABEL, status: 'Not set up' };
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -71,9 +65,7 @@ async function loadSidebarAgent(): Promise<SidebarAgent> {
       return AGENT_NOT_SET_UP;
     }
 
-    const ownName = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : undefined;
-
-    return { name: ownName ?? UNNAMED_AGENT, status: 'Your agent' };
+    return { name: agentDisplayName(agent), status: 'Your agent' };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);
