@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { HumanAccount } from './human-account';
-import { HumanApiError } from './human-api-error';
+import { HumanApiError, isHumanApiRefusal } from './human-api-error';
 import { type Channel, issueTelegramStartLink } from './human-channels-api';
 
 /**
@@ -31,7 +31,7 @@ export async function readTelegramSetup(
   // The link is asked for even on a connected channel: it's the only way to learn the bot's username.
   const link = await issueTelegramStartLink(account, channel.identifier, operatorContactId).catch((error: unknown) => {
     // The API turns the link down while the channel has no working bot token: the setup hasn't got that far.
-    return isRefusal(error) ? ('no-token' as const) : unreadable(error);
+    return isHumanApiRefusal(error) ? ('no-token' as const) : unreadable(error);
   });
 
   if (channel.connected) {
@@ -45,10 +45,6 @@ export async function readTelegramSetup(
   return link === 'no-token'
     ? { step: 'create' }
     : { step: 'start', botUsername: link.botUsername, startUrl: link.url };
-}
-
-function isRefusal(error: unknown): boolean {
-  return error instanceof HumanApiError && error.status >= 400 && error.status < 500;
 }
 
 /** An answer the API couldn't give is not a reason to fail; anything else is a bug and keeps going. */
