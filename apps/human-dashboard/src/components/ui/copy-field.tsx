@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +13,7 @@ type CopyFieldProps = {
   display?: ReactNode;
   /** Adds the terminal prompt in front, for commands. */
   command?: boolean;
-  /** Text on the copy button. Without it the button is icon only. */
+  /** Text on the copy button, which makes the field taller around it. Without it the button is icon only. */
   action?: string;
   className?: string;
 };
@@ -22,7 +23,8 @@ export function CopyField({ value, label, display, command = false, action, clas
   return (
     <div
       className={cn(
-        'flex min-h-9 items-center gap-2 rounded bg-background py-0.5 pr-0.5 pl-3 ring-1 ring-border',
+        'flex min-h-9 items-center gap-2.5 rounded-md bg-background pl-3 ring-1 ring-border ring-inset',
+        action ? 'py-2 pr-2' : 'py-0.5 pr-0.5',
         className
       )}
     >
@@ -31,10 +33,8 @@ export function CopyField({ value, label, display, command = false, action, clas
           $
         </span>
       )}
-      <code className="min-w-0 flex-1 truncate font-mono text-sm tracking-tight text-foreground">
-        {display ?? value}
-      </code>
-      <CopyButton value={value} label={label}>
+      <code className="min-w-0 flex-1 truncate font-mono text-[13px] leading-5 text-default">{display ?? value}</code>
+      <CopyButton value={value} label={label} className={action ? SMALL_BUTTON : undefined}>
         {action}
       </CopyButton>
     </div>

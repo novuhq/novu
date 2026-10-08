@@ -13,13 +13,18 @@ describe('ApproveHumanCliLogin', () => {
     const claimKeylessConnect = { execute: sinon.stub().resolves({ environmentId: 'dev_env' }) };
     const getDecryptedSecretKey = { execute: sinon.stub().resolves('sk_test') };
     const approveCliDeviceSession = { execute: sinon.stub().resolves({ ok: true }) };
+    // Stands aside: whether an untouched agent is replaced has its own tests.
+    const humanAccountAgent = {
+      claimOverUntouchedAgent: (_account: unknown, _name: unknown, claim: () => Promise<unknown>) => claim(),
+    };
 
     const usecase = new ApproveHumanCliLogin(
       cliDeviceSessionService as never,
       ensureBackingOrganization as never,
       claimKeylessConnect as never,
       getDecryptedSecretKey as never,
-      approveCliDeviceSession as never
+      approveCliDeviceSession as never,
+      humanAccountAgent as never
     );
 
     return {

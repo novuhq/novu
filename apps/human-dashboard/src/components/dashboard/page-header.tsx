@@ -11,9 +11,9 @@ type PageHeaderProps = {
 export function PageHeader({ title, description, action }: PageHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-[22px] leading-tight tracking-tight text-foreground">{title}</h1>
-        {description && <p className="text-sm tracking-tight text-secondary">{description}</p>}
+      <div className="flex flex-col gap-1.5 pb-1">
+        <h1 className="text-2xl leading-7.5 tracking-tight text-foreground">{title}</h1>
+        {description && <p className="text-[13px] leading-4.5 text-secondary">{description}</p>}
       </div>
       {action}
     </div>
