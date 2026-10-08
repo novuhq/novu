@@ -61,6 +61,23 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
     expect(res.status).to.equal(422, JSON.stringify(res.body));
   });
 
+  it('keeps regenerating the secret key behind the shared secret too', async () => {
+    const regenerate = (secret: string) =>
+      session.testAgent
+        .post('/v1/human/accounts/user_e2e/secret-key/regenerate')
+        .set('Authorization', '')
+        .set(HUMAN_DASHBOARD_SECRET_HEADER, secret);
+
+    delete process.env.HUMAN_DASHBOARD_API_SECRET;
+    expect((await regenerate('')).status).to.equal(404);
+
+    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
+    expect((await regenerate('wrong')).status).to.equal(401);
+
+    const dashboardSession = await session.testAgent.post('/v1/human/accounts/user_e2e/secret-key/regenerate');
+    expect(dashboardSession.status).to.equal(401, JSON.stringify(dashboardSession.body));
+  });
+
   describe('human login', () => {
     const SECRET = 'e2e-human-dashboard-secret';
     const originalKeylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;

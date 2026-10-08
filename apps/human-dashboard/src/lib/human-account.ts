@@ -141,7 +141,7 @@ async function ensureBackingAccountWhenFree(...args: Parameters<typeof ensureBac
   }
 }
 
-/** Remembers where the operator's backing organization lives, for the account page. */
+/** Remembers where the operator's backing organization lives, for the dashboard. */
 export async function storeBackingAccount(userId: string, account: StoredBackingAccount) {
   const clerk = await clerkClient();
   await clerk.users.updateUserMetadata(userId, { privateMetadata: { [METADATA_KEY]: account } });
