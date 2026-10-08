@@ -79,7 +79,7 @@ function ConversationFigure() {
       <ChatBubble
         from="Agent"
         avatar={{ src: '/illustrations/avatar-agent.svg', width: 12 }}
-        className="top-17.5 left-[0.5px] w-67.25 border border-border bg-raised text-foreground"
+        className="top-17.5 left-[0.5px] w-67.25 border border-border bg-raised text-foreground [animation-delay:300ms]"
       >
         The next step needs your decision.
         <br />
@@ -88,7 +88,7 @@ function ConversationFigure() {
       <ChatBubble
         from="Human"
         avatar={{ src: '/illustrations/avatar-human.svg', width: 10.15 }}
-        className="top-47.5 left-97.5 w-55 bg-foreground text-background [animation-delay:500ms]"
+        className="top-47.5 left-97.5 w-55 bg-foreground text-background [animation-delay:1200ms]"
       >
         Approved! Keep going.
       </ChatBubble>
@@ -107,7 +107,8 @@ function ChatBubble({ from, avatar, className, children }: ChatBubbleProps) {
   return (
     <div
       className={cn(
-        'absolute flex animate-rise-in flex-col gap-1 rounded-md px-3 py-2.5 shadow-[0_8px_24px_rgb(0_0_0/0.35)] motion-reduce:animate-none',
+        // Slower than the usual rise: the two take their turns, like a question and its answer.
+        'absolute flex animate-rise-in flex-col gap-1 rounded-md px-3 py-2.5 shadow-[0_8px_24px_rgb(0_0_0/0.35)] [animation-duration:700ms] motion-reduce:animate-none',
         className
       )}
     >
