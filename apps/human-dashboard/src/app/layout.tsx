@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: {
-    default: 'gethuman.md',
-    template: '%s · gethuman.md',
+    default: 'human.md',
+    template: '%s · human.md',
   },
   description: 'Human lets your AI agents reach you for a decision, over the apps you already use.',
 };
