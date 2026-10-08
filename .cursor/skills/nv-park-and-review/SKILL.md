@@ -4,8 +4,9 @@ description: >-
   Commit local changes as a baseline, hop into a lightweight review worktree, run a
   thermo-nuclear code quality review scoped to ONLY that commit, commit the resulting
   refactor as a separate follow-up commit, then land it back and tear the worktree
-  down. Use when the user asks to review their local/uncommitted changes for AI slop
-  and redundant code, or invokes nv-park-and-review.
+  down. Parks the monorepo and the `.source` enterprise submodule when either has
+  related changes. Use when the user asks to review their local/uncommitted changes
+  for AI slop and redundant code, or invokes nv-park-and-review.
 disable-model-invocation: true
 ---
 
@@ -17,8 +18,33 @@ land the cleanup as its own follow-up commit. Keeps the feature diff and the
 review-driven refactor separately reviewable, and frees the main checkout the moment
 the baseline is committed.
 
-Invoking this skill authorizes the two commits it creates (steps 1 and 4). Do not amend
-or squash the baseline commit.
+Invoking this skill authorizes the commits it creates (baseline and, when needed, the
+refactor) in the monorepo and in `.source`. Do not amend or squash a baseline commit.
+
+## Submodule
+
+`.source` is a separate git repo (`packages-enterprise`). `enterprise/packages/*/src` symlinks into it, and a plain `git status` in the monorepo hides it.
+
+Inspect both before staging:
+
+```bash
+git status --ignore-submodules=none
+git -C .source status
+git -C .source diff
+git -C .source log --oneline -15
+```
+
+When `.source` has changes that belong to this work, commit the submodule first, then the monorepo. The monorepo commit includes the `.source` gitlink. A gitlink-only monorepo commit is `chore(enterprise): bump submodule to <why>`.
+
+This repo sets `diff.ignoreSubmodules=all`, so `git commit` and lint-staged do not see a gitlink-only index. Stage `.source` and commit with `git -c diff.ignoreSubmodules=none commit`. Do not change git config.
+
+Review the commit that contains the code. A monorepo commit that only moves the gitlink is not a review target. The submodule review worktree is a sibling of the monorepo:
+
+```bash
+git -C .source worktree add -b review/<branch>-<SOURCE_SHA:0:7> ../../review-source-<SOURCE_SHA:0:7> <SOURCE_SHA>
+```
+
+Land that worktree from `.source` with the same fast-forward and `git worktree remove`. If the landed SHA moved past the gitlink already committed in the monorepo, add a second monorepo bump. Do not amend the first bump.
 
 ## Workflow
 
@@ -32,7 +58,7 @@ or squash the baseline commit.
 
 ### 1. Baseline commit
 
-- Inspect first (parallel): `git status`, `git diff` (staged + unstaged), `git log --oneline -15` for message style.
+- Inspect first (parallel), including `.source` as in Submodule: `git status --ignore-submodules=none`, `git diff` (staged + unstaged), `git log --oneline -15` for message style.
 - Stage the cohesive change only: if the user already staged files, commit those; otherwise stage the related modified files. Exclude unrelated local edits.
 - Commit with the repo's conventional style — `type(scope): concise why` (scopes: `dashboard`, `api-service`, `worker`, `shared`, …). Use a HEREDOC for the message.
 - `lint-staged` + `biome check --write` run on commit and may auto-format staged files; the commit still succeeds. If a hook *fails*, fix and make a new commit (never `--amend`).
