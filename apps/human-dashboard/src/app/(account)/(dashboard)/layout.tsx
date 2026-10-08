@@ -1,4 +1,4 @@
-import { currentUser, type User } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -11,7 +11,10 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { requireHumanAccount } from '@/lib/human-account';
 import { getRelayAgent } from '@/lib/human-agent-api';
 
-const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up' };
+/** What the agent is called until the operator gives it a name of its own (NV-8914). */
+const UNNAMED_AGENT = 'Human assistant';
+
+const AGENT_NOT_SET_UP: SidebarAgent = { name: UNNAMED_AGENT, status: 'Not set up' };
 
 /** The name `human setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
 const DEFAULT_AGENT_NAME = 'Human';
@@ -31,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: DASHBOARD_HOME })}`);
   }
 
-  const agent = await loadSidebarAgent(user);
+  const agent = await loadSidebarAgent();
   const email = user.primaryEmailAddress?.emailAddress ?? null;
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email || 'Your account';
 
@@ -60,7 +63,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
  * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
  * layout has no error page of its own.
  */
-async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
+async function loadSidebarAgent(): Promise<SidebarAgent> {
   try {
     const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
     const agent = await getRelayAgent(account);
@@ -69,9 +72,8 @@ async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
     }
 
     const ownName = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : undefined;
-    const name = ownName ?? (user.firstName ? `${user.firstName}’s assistant` : undefined);
 
-    return { name: name ?? AGENT_NOT_SET_UP.name, status: `${agent.name || DEFAULT_AGENT_NAME} agent` };
+    return { name: ownName ?? UNNAMED_AGENT, status: 'Your agent' };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);
