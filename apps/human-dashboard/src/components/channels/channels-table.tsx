@@ -38,7 +38,7 @@ type ChannelsTableProps = {
   rows: ChannelRow[];
   telegramSetup: TelegramSetupState;
   slackSetup: SlackSetupState;
-  /** What the agent is called, such as "Dima’s assistant". Missing when it has no name to go by. */
+  /** What the agent is called: its own name, or "Human assistant". Missing when there is no agent yet. */
   agentName?: string;
 };
 

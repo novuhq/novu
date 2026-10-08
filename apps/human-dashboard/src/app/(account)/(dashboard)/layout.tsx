@@ -1,4 +1,4 @@
-import { currentUser, type User } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -9,9 +9,9 @@ import { TopBar } from '@/components/dashboard/top-bar';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { requireHumanAccount } from '@/lib/human-account';
-import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent } from '@/lib/human-agent-api';
+import { agentDisplayName, getRelayAgent, UNNAMED_AGENT_LABEL } from '@/lib/human-agent-api';
 
-const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up' };
+const AGENT_NOT_SET_UP: SidebarAgent = { name: UNNAMED_AGENT_LABEL, status: 'Not set up' };
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: DASHBOARD_HOME })}`);
   }
 
-  const agent = await loadSidebarAgent(user);
+  const agent = await loadSidebarAgent();
   const email = user.primaryEmailAddress?.emailAddress ?? null;
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email || 'Your account';
 
@@ -57,7 +57,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
  * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
  * layout has no error page of its own.
  */
-async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
+async function loadSidebarAgent(): Promise<SidebarAgent> {
   try {
     const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
     const agent = await getRelayAgent(account);
@@ -65,10 +65,7 @@ async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
       return AGENT_NOT_SET_UP;
     }
 
-    return {
-      name: agentDisplayName(agent, user.firstName) ?? AGENT_NOT_SET_UP.name,
-      status: `${agent.name || DEFAULT_AGENT_NAME} agent`,
-    };
+    return { name: agentDisplayName(agent), status: 'Your agent' };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);

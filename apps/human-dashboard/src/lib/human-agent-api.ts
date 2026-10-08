@@ -37,12 +37,13 @@ export async function getRelayAgent(account: HumanAccount): Promise<RelayAgent |
   }
 }
 
-/**
- * What the dashboard calls the agent: the name the operator gave it, or "Dima’s assistant" while it
- * still has the default one. `undefined` when there's neither, so the caller says "your agent".
- */
-export function agentDisplayName(agent: RelayAgent, operatorFirstName?: string | null): string | undefined {
-  const ownName = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : undefined;
+/** How the dashboard calls an agent that has no name of its own yet (NV-8914). */
+export const UNNAMED_AGENT_LABEL = 'Human assistant';
 
-  return ownName ?? (operatorFirstName ? `${operatorFirstName}’s assistant` : undefined);
+/**
+ * What the dashboard calls the agent: the name the operator gave it, or "Human assistant" while it
+ * still has the default one.
+ */
+export function agentDisplayName(agent: RelayAgent): string {
+  return agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : UNNAMED_AGENT_LABEL;
 }

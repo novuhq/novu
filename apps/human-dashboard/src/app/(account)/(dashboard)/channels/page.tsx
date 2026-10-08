@@ -1,4 +1,3 @@
-import { currentUser } from '@clerk/nextjs/server';
 import { Info } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -23,7 +22,7 @@ type LoadedChannels = {
   rows: ChannelRow[];
   telegramSetup: TelegramSetupState;
   slackSetup: SlackSetupState;
-  /** What the agent is called, such as "Dima’s assistant". Missing when it has no name to go by. */
+  /** What the agent is called: its own name, or "Human assistant". Missing when there is no agent yet. */
   agentName?: string;
 };
 
@@ -107,9 +106,9 @@ async function loadChannels(account: HumanAccount): Promise<LoadedChannels> {
 }
 
 async function loadAgentName(account: HumanAccount): Promise<string | undefined> {
-  const [agent, user] = await Promise.all([getRelayAgent(account), currentUser()]);
+  const agent = await getRelayAgent(account);
 
-  return agent ? agentDisplayName(agent, user?.firstName) : undefined;
+  return agent ? agentDisplayName(agent) : undefined;
 }
 
 /**

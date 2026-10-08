@@ -50,7 +50,7 @@ type StepStatus = ComponentProps<typeof Step>['status'];
 type SlackSetupProps = {
   /** How far the setup got when the page loaded, so the drawer has something to show the moment it opens. */
   setup: SlackSetupState;
-  /** What the agent is called, such as "Dima’s assistant". Without it the drawer says "your agent". */
+  /** What the agent is called: its own name, or "Human assistant". Without it the drawer says "your agent". */
   agentName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -252,7 +252,7 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
 
 type NameStepProps = {
   status: StepStatus;
-  /** The agent's name inside a sentence: "Dima’s assistant", or "your agent". */
+  /** The agent's name inside a sentence: its own name, "Human assistant", or "your agent". */
   agent: string;
   appName: string;
   summary: string;
