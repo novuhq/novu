@@ -334,6 +334,29 @@ messageSchema.index({
 });
 
 /*
+ * This index was initially created to optimize:
+ *
+ * Path: apps/api/src/app/messages/usecases/get-messages/get-messages.usecase.ts
+ * Context: execute()
+ * Query: find({
+ *   _environmentId: command.environmentId,
+ *   channel?: command.channel,
+ *   transactionId?: { $in: command.transactionIds },
+ *   contextKeys?: command.contextKeys,
+ * }).sort({ createdAt: -1 })
+ *
+ * Without it, GET /v1/messages calls that omit subscriberId fall back to walking the
+ * collection-wide { createdAt: 1 } index and filtering every environment's messages.
+ * channel trails createdAt so the sort is still served when channel is omitted, while
+ * a channel filter is applied on index keys instead of fetching every document.
+ */
+messageSchema.index({
+  _environmentId: 1,
+  createdAt: -1,
+  channel: 1,
+});
+
+/*
  * This index was created to push entries to Online Archive
  */
 messageSchema.index({ createdAt: 1 });
