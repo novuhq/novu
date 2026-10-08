@@ -48,6 +48,7 @@ const {
   introduceYourself,
   LOGIN_DENIED_MESSAGE,
   LOGIN_UNAVAILABLE_MESSAGE,
+  loginCommand,
   runLogin,
   withClaimToken,
 } = await import('./login');
@@ -336,10 +337,11 @@ describe('introduceYourself', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    setupHumanRelay.mockResolvedValue({
+    // The account answers with the owner it has on record, here one it already knew.
+    setupHumanRelay.mockReset().mockResolvedValue({
       agentId: 'agent_1',
       agentIdentifier: 'human-relay',
-      subscriberId: 'human_new',
+      subscriberId: 'human_owner',
     });
   });
 
@@ -362,8 +364,21 @@ describe('introduceYourself', () => {
       lastName: 'Hopper',
     });
     // What the API answers is saved: an owner it already knew wins over the id suggested here.
-    expect(saveConfig).toHaveBeenCalledWith({ ...config, subscriberId: 'human_new' });
-    expect(result.subscriberId).toBe('human_new');
+    expect(saveConfig).toHaveBeenCalledWith({ ...config, subscriberId: 'human_owner' });
+    expect(result).toEqual({ config: { ...config, subscriberId: 'human_owner' }, isNewContact: false });
+  });
+
+  it('says when the contact was made just now, with the id it suggested', async () => {
+    setupHumanRelay.mockImplementation(async (_client: unknown, input: { subscriberId: string }) => ({
+      agentId: 'agent_1',
+      agentIdentifier: 'human-relay',
+      subscriberId: input.subscriberId,
+    }));
+
+    const result = await introduceYourself({ config, name }, { isTTY: false, prompt: vi.fn() });
+
+    expect(result.config.subscriberId).toMatch(/^human_[0-9a-f]{12}$/);
+    expect(result.isNewContact).toBe(true);
   });
 
   it('takes the name on the Human account when the answer is empty', async () => {
@@ -379,7 +394,7 @@ describe('introduceYourself', () => {
 
     expect(prompt).not.toHaveBeenCalled();
     expect(setupHumanRelay.mock.calls[0][1]).toMatchObject({ operator: true, firstName: 'Ada', lastName: 'Lovelace' });
-    expect(result.subscriberId).toBe('human_new');
+    expect(result.config.subscriberId).toBe('human_owner');
   });
 
   it('leaves the name out when nobody gave one', async () => {
@@ -396,7 +411,8 @@ describe('introduceYourself', () => {
 
     const result = await introduceYourself({ config }, { isTTY: false, prompt: vi.fn() });
 
-    expect(result.subscriberId).toBe(setupHumanRelay.mock.calls[0][1].subscriberId);
+    expect(result.config.subscriberId).toBe(setupHumanRelay.mock.calls[0][1].subscriberId);
+    expect(result.isNewContact).toBe(true);
   });
 
   it('leaves the login as it is when the contact cannot be made', async () => {
@@ -405,7 +421,7 @@ describe('introduceYourself', () => {
     const result = await introduceYourself({ config, name }, { isTTY: false, prompt: vi.fn() });
 
     // Logged in either way; `human setup` makes the contact later.
-    expect(result).toEqual(config);
+    expect(result).toEqual({ config, isNewContact: false });
     expect(saveConfig).not.toHaveBeenCalled();
     expect(stdout.mock.calls.map(([text]) => String(text)).join('')).toContain('network down');
   });
@@ -433,6 +449,123 @@ describe('describeNextStep', () => {
 
   it('sends a computer that knows nobody to human setup', () => {
     expect(describeNextStep({ config, keptSetup: false })).toContain('Next, connect a channel');
+  });
+
+  it('sends someone whose contact was made just now to human setup, as it has no channel yet', () => {
+    const text = describeNextStep({
+      config: { ...config, subscriberId: 'human_new' },
+      keptSetup: false,
+      isNewContact: true,
+    });
+
+    expect(text).toContain('Next, connect a channel');
+    expect(text).not.toContain("your account's channels");
+  });
+});
+
+describe('loginCommand', () => {
+  let printed: string;
+  let exit: MockInstance;
+  const originalIsTTY = process.stdin.isTTY;
+  const originalSecretKey = process.env.NOVU_SECRET_KEY;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    printed = '';
+    delete process.env.NOVU_SECRET_KEY;
+    // No terminal to ask in: who you are comes from the name on the Human account.
+    Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
+    vi.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array) => {
+      printed += String(chunk);
+
+      return true;
+    });
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    exit = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+    loadConfig.mockReturnValue(null);
+    hostname.mockReturnValue('adas-macbook-pro');
+    startLoginRequest.mockResolvedValue({
+      deviceCode: 'device_code',
+      expiresIn: 1800,
+      interval: 2,
+      verificationUrl: LOGIN_URL,
+      userCode: 'BCDF-GHJK',
+    });
+    checkLoginRequest.mockReset().mockResolvedValue({
+      status: 'approved',
+      apiKey: 'sk_account',
+      environmentId: 'dev_env',
+      user: { email: 'ada@example.com', firstName: 'Ada', lastName: 'Lovelace' },
+    });
+    hasSubscriber.mockResolvedValue(true);
+    findOperator.mockReset().mockResolvedValue(undefined);
+    setupHumanRelay.mockReset().mockImplementation(async (_client: unknown, input: { subscriberId: string }) => ({
+      agentId: 'agent_1',
+      agentIdentifier: 'human-relay',
+      subscriberId: input.subscriberId,
+    }));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    Object.defineProperty(process.stdin, 'isTTY', { value: originalIsTTY, configurable: true });
+
+    if (originalSecretKey === undefined) {
+      delete process.env.NOVU_SECRET_KEY;
+    } else {
+      process.env.NOVU_SECRET_KEY = originalSecretKey;
+    }
+  });
+
+  it('reaches the contact the account has for its owner, without asking who you are', async () => {
+    findOperator.mockResolvedValue('human_owner');
+
+    await loginCommand({});
+
+    expect(setupHumanRelay).not.toHaveBeenCalled();
+    expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ subscriberId: 'human_owner' }));
+    expect(printed).toContain('Logged in as');
+    expect(printed).toContain("now reach you on your account's channels");
+    expect(exit).toHaveBeenCalledWith(0);
+  });
+
+  it('makes the contact when the account has none, and sends you on to connect a channel', async () => {
+    await loginCommand({});
+
+    expect(setupHumanRelay.mock.calls[0][1]).toMatchObject({ operator: true, firstName: 'Ada', lastName: 'Lovelace' });
+    expect(saveConfig).toHaveBeenLastCalledWith(
+      expect.objectContaining({ subscriberId: setupHumanRelay.mock.calls[0][1].subscriberId })
+    );
+    // Made a moment ago, so it has no channel yet.
+    expect(printed).toContain('Next, connect a channel');
+    expect(exit).toHaveBeenCalledWith(0);
+  });
+
+  it('does not send you to set up again when the account had your contact after all', async () => {
+    // The first lookup failed, but making the contact answered with the one the account has.
+    findOperator.mockRejectedValue(new Error('network down'));
+    setupHumanRelay.mockResolvedValue({
+      agentId: 'agent_1',
+      agentIdentifier: 'human-relay',
+      subscriberId: 'human_owner',
+    });
+
+    await loginCommand({});
+
+    expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ subscriberId: 'human_owner' }));
+    expect(printed).toContain("now reach you on your account's channels");
+    expect(printed).not.toContain('Next, connect a channel');
+  });
+
+  it('stays logged in and points at human setup when the contact cannot be made', async () => {
+    setupHumanRelay.mockRejectedValue(new Error('network down'));
+
+    await loginCommand({});
+
+    expect(printed).toContain("Couldn't save who you are just now (network down).");
+    expect(printed).toContain('Next, connect a channel');
+    expect(saveConfig).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(0);
   });
 });
 

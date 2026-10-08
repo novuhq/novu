@@ -61,12 +61,15 @@ export async function loginCommand(options: LoginOptions): Promise<never> {
     process.stdout.write(`\n${pc.green('✔')} Logged in${who}.\n`);
     info(`Saved to ${configPath()}.`);
 
+    let { config } = result;
+    let isNewContact = false;
+
     // Asked only now that the key is saved, so stopping at the question loses nothing.
-    if (!result.config.subscriberId) {
-      await introduceYourself(result);
+    if (!config.subscriberId) {
+      ({ config, isNewContact } = await introduceYourself(result));
     }
 
-    process.stdout.write(`${describeNextStep(result)}\n`);
+    process.stdout.write(`${describeNextStep({ config, keptSetup: result.keptSetup, isNewContact })}\n`);
 
     if (process.env.NOVU_SECRET_KEY?.trim()) {
       info('NOVU_SECRET_KEY is set in this shell, and it takes priority over this login.');
@@ -167,6 +170,7 @@ async function isStillYou(
  * Asks who that is, makes the contact the way `human setup` and the dashboard do, and saves it as who this
  * computer reaches. Where there is no terminal to ask in, the name on the Human account is used. The login
  * is saved by now, so failing here only leaves this step to `human setup`.
+ * `isNewContact` tells a contact made here from one the account turned out to have after all.
  */
 export async function introduceYourself(
   { config, name }: Pick<LoginResult, 'config' | 'name'>,
@@ -174,7 +178,7 @@ export async function introduceYourself(
     isTTY: Boolean(process.stdin.isTTY),
     prompt: promptLine,
   }
-): Promise<HumanCliConfig> {
+): Promise<{ config: HumanCliConfig; isNewContact: boolean }> {
   const accountName = [name?.firstName, name?.lastName].filter(Boolean).join(' ');
   const answer = io.isTTY
     ? await io.prompt(
@@ -192,24 +196,30 @@ export async function introduceYourself(
       agentIdentifier: config.relayAgentIdentifier,
       ...splitName(answer.trim() || accountName),
     });
-    const introduced: HumanCliConfig = { ...config, subscriberId: relay.subscriberId || suggestedId };
+    const subscriberId = relay.subscriberId || suggestedId;
+    const introduced: HumanCliConfig = { ...config, subscriberId };
     saveConfig(introduced);
 
-    return introduced;
+    return { config: introduced, isNewContact: subscriberId === suggestedId };
   } catch (err) {
     info(`Couldn't save who you are just now (${err instanceof Error ? err.message : String(err)}).`);
 
-    return config;
+    return { config, isNewContact: false };
   }
 }
 
 /** What to do after logging in, which depends on whether agents on this computer know who to reach. */
-export function describeNextStep({ config, keptSetup }: Pick<LoginResult, 'config' | 'keptSetup'>): string {
+export function describeNextStep({
+  config,
+  keptSetup,
+  isNewContact = false,
+}: Pick<LoginResult, 'config' | 'keptSetup'> & { isNewContact?: boolean }): string {
   if (keptSetup) {
     return 'Your agents on this computer keep reaching you as before.';
   }
 
-  if (config.subscriberId) {
+  // A contact made a moment ago has no channel yet; one the account already had may have some.
+  if (config.subscriberId && !isNewContact) {
     return `Agents on this computer now reach you on your account's channels. None connected yet? Run: ${pc.bold('human setup')}`;
   }
 
