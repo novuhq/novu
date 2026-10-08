@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { type HumanCliConfig, loadConfig, resolveConfig, resolveVia, saveConfig } from './config';
+import { type HumanCliConfig, loadConfig, resolveConfig, resolveTargetApiUrl, resolveVia, saveConfig } from './config';
 
 const base: HumanCliConfig = {
   apiUrl: 'https://api.novu.co',
@@ -14,6 +14,7 @@ afterEach(() => {
   delete process.env.NOVU_HUMAN_CONFIG;
   delete process.env.NOVU_SECRET_KEY;
   delete process.env.HUMAN_VIA;
+  delete process.env.NOVU_API_URL;
 });
 
 describe('config migration', () => {
@@ -141,5 +142,24 @@ describe('resolveConfig', () => {
       relayAgentIdentifier: 'human-relay',
       auth: { mode: 'apiKey', secretKey: 'api_key_private' },
     });
+  });
+});
+
+describe('resolveTargetApiUrl', () => {
+  it('prefers --api-url, then NOVU_API_URL, then the API the config belongs to', () => {
+    const eu = { ...base, apiUrl: 'https://eu.api.novu.co' };
+
+    expect(resolveTargetApiUrl('http://localhost:3000/', eu)).toBe('http://localhost:3000');
+    process.env.NOVU_API_URL = 'http://127.0.0.1:3000';
+    expect(resolveTargetApiUrl(undefined, eu)).toBe('http://127.0.0.1:3000');
+    delete process.env.NOVU_API_URL;
+    expect(resolveTargetApiUrl(undefined, eu)).toBe('https://eu.api.novu.co');
+    expect(resolveTargetApiUrl(undefined, null)).toBe('https://api.novu.co');
+  });
+
+  it('ignores an empty NOVU_API_URL', () => {
+    process.env.NOVU_API_URL = ' ';
+
+    expect(resolveTargetApiUrl(undefined, base)).toBe('https://api.novu.co');
   });
 });

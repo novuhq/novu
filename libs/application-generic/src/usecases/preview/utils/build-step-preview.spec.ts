@@ -52,7 +52,7 @@ describe('mapProvidersToPreviewOverrides', () => {
 });
 
 describe('buildStepPreview', () => {
-  it('merges mapped providers onto chat and tool preview', () => {
+  it('merges mapped providers onto chat, tool, and push preview', () => {
     const executeOutput = {
       outputs: { body: 'hello' },
       providers: { slack: { text: 'override' } },
@@ -66,9 +66,13 @@ describe('buildStepPreview', () => {
       body: 'hello',
       providerOverrides: { slack: { text: 'override' } },
     });
+    expect(buildStepPreview(StepTypeEnum.PUSH, executeOutput)).toEqual({
+      body: 'hello',
+      providerOverrides: { slack: { text: 'override' } },
+    });
   });
 
-  it('leaves non-chat/tool preview as outputs only', () => {
+  it('leaves channels without content overrides as outputs only', () => {
     const executeOutput = {
       outputs: { body: 'hello' },
       providers: { slack: { text: 'override' } },

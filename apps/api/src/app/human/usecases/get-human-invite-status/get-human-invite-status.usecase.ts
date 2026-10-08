@@ -8,6 +8,7 @@ import {
   InactiveHumanInviteError,
   toHttpError,
 } from '../../services/human-invite-token.service';
+import { HumanOperatorService } from '../../services/human-operator.service';
 import { GetHumanInviteStatusCommand } from './get-human-invite-status.command';
 
 /** What the public invite page renders. Read-only, so link scanners can't change anything. */
@@ -17,7 +18,8 @@ export class GetHumanInviteStatus {
     private readonly inviteTokens: HumanInviteTokenService,
     private readonly deliveryService: HumanDeliveryService,
     private readonly agentRepository: AgentRepository,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly operatorService: HumanOperatorService
   ) {}
 
   async execute(command: GetHumanInviteStatusCommand): Promise<HumanInviteStatusResult> {
@@ -42,7 +44,7 @@ export class GetHumanInviteStatus {
       return { valid: false, reason: 'invalid' };
     }
 
-    const [channels, subscriber] = await Promise.all([
+    const [channels, subscriber, inviterName] = await Promise.all([
       this.deliveryService.describeInviteChannels({
         environmentId: payload.env,
         organizationId: payload.org,
@@ -53,15 +55,40 @@ export class GetHumanInviteStatus {
         { _environmentId: payload.env, subscriberId: payload.subscriberId },
         'firstName lastName'
       ),
+      this.findInviterName(payload),
     ]);
-    const displayName = [subscriber?.firstName, subscriber?.lastName].filter(Boolean).join(' ');
+    const displayName = fullName(subscriber);
 
     return {
       valid: true,
       agentName: agent.name,
+      ...(inviterName ? { inviterName } : {}),
       inviteeName: displayName || payload.subscriberId,
       expiresAt: invite.expiresAt,
       channels: channels.map(({ via, connected, isDefault }) => ({ via, connected, isDefault })),
     };
   }
+
+  /** The account owner's name, when they have one: they are who the agent asks for, so the invite is theirs. */
+  private async findInviterName(payload: ActiveHumanInvite['payload']): Promise<string | undefined> {
+    const operatorId = await this.operatorService.findForAgent({
+      environmentId: payload.env,
+      organizationId: payload.org,
+      agentId: payload.agentId,
+    });
+    if (!operatorId) {
+      return undefined;
+    }
+
+    const operator = await this.subscriberRepository.findOne(
+      { _environmentId: payload.env, subscriberId: operatorId },
+      'firstName lastName'
+    );
+
+    return fullName(operator) || undefined;
+  }
+}
+
+function fullName(person: { firstName?: string; lastName?: string } | null | undefined): string {
+  return [person?.firstName, person?.lastName].filter(Boolean).join(' ');
 }

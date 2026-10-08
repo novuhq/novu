@@ -22,9 +22,14 @@ import {
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 import { resolveChatEditorType } from './resolve-chat-editor-type';
 
-// Cast input T_Type to trigger Ajv validation errors - possible undefined
-function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
-  return isEmpty(input) ? defaultValue : input;
+function sanitizeEmptyInput<TValue>(input: TValue, defaultValue: TValue): TValue;
+function sanitizeEmptyInput<TValue>(input: TValue): TValue | undefined;
+function sanitizeEmptyInput<TValue>(input: TValue, defaultValue?: TValue): TValue | undefined {
+  if (isEmpty(input)) {
+    return defaultValue;
+  }
+
+  return input;
 }
 
 export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
@@ -113,16 +118,6 @@ function sanitizeSms(controlValues: SmsControlType) {
   return filterNullishValues(mappedValues);
 }
 
-function sanitizePush(controlValues: PushControlType) {
-  const mappedValues: PushControlType = {
-    subject: sanitizeEmptyInput(controlValues.subject),
-    body: sanitizeEmptyInput(controlValues.body),
-    skip: controlValues.skip,
-  };
-
-  return filterNullishValues(mappedValues);
-}
-
 type WithProviderOverrides<T> = T & { providerOverrides?: Record<string, unknown> };
 
 /**
@@ -138,6 +133,16 @@ function keepProviderOverrides(
   }
 
   return { ...sanitized, providerOverrides: controlValues.providerOverrides };
+}
+
+function sanitizePush(controlValues: WithProviderOverrides<PushControlType>) {
+  const mappedValues: PushControlType = {
+    subject: sanitizeEmptyInput(controlValues.subject),
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+  };
+
+  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
 function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
@@ -197,10 +202,12 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
 
   const anyControlValues = controlValues as Record<string, unknown>;
   const lookBackWindow = (anyControlValues.lookBackWindow as LookBackWindowType)?.amount;
+  const rawAmount = anyControlValues.amount;
+  const amount = typeof rawAmount === 'number' || typeof rawAmount === 'string' ? rawAmount : undefined;
 
   return filterNullishValues({
     // Cast to trigger Ajv validation errors - possible undefined
-    ...(parseAmount(anyControlValues.amount) as { amount?: number }),
+    ...(parseAmount(amount) as { amount?: number }),
     unit: anyControlValues.unit,
     digestKey: anyControlValues.digestKey,
     skip: anyControlValues.skip,
@@ -275,17 +282,17 @@ function sanitizeLayout(controlValues: LayoutControlType) {
   };
 }
 
-function parseAmount(amount?: unknown) {
+function parseAmount(amount?: number | string): { amount?: number } | number | string {
   try {
     if (!isNumber(amount)) {
       return {};
     }
 
-    const numberAmount = typeof amount === 'string' ? parseInt(amount, 10) : amount;
+    const numberAmount = typeof amount === 'string' ? Number.parseInt(amount, 10) : amount;
 
     return { amount: numberAmount };
-  } catch (error) {
-    return amount;
+  } catch {
+    return amount ?? {};
   }
 }
 
@@ -360,7 +367,7 @@ export function dashboardSanitizeControlValues(
         normalizedValues = sanitizeSms(controlValues as SmsControlType);
         break;
       case StepTypeEnum.PUSH:
-        normalizedValues = sanitizePush(controlValues as PushControlType);
+        normalizedValues = sanitizePush(controlValues as WithProviderOverrides<PushControlType>);
         break;
       case StepTypeEnum.CHAT:
         normalizedValues = sanitizeChat(controlValues as WithProviderOverrides<ChatControlType>);

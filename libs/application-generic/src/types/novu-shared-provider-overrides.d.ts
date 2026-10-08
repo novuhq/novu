@@ -34,3 +34,13 @@ declare module '@novu/shared/provider-overrides/whatsapp' {
   export const WHATSAPP_PRIMARY_CONTENT_KEY: string;
   export const WHATSAPP_OVERRIDE_SCHEMA_SUBPATH: string;
 }
+
+declare module '@novu/shared/provider-overrides/fcm' {
+  import type { JSONSchemaDto } from '@novu/shared';
+
+  export const fcmOverrideJsonSchema: JSONSchemaDto;
+  export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto;
+  export const FCM_OVERRIDE_KEYS: readonly string[];
+  export const FCM_PRIMARY_CONTENT_KEY: string;
+  export const FCM_OVERRIDE_SCHEMA_SUBPATH: string;
+}
