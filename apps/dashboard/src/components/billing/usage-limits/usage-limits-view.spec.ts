@@ -1,6 +1,11 @@
 import { ApiServiceLevelEnum, type GetSubscriptionDto, UsageAlertRecipientsEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getUsageLimitsView, isNearingOverageLimit, resolveUsageAlertsAllowanceOverride } from './usage-limits-view';
+import {
+  getUsageLimitsView,
+  isNearingOverageLimit,
+  resolveUsageAlertsAllowanceOverride,
+  type UsageLimitsView,
+} from './usage-limits-view';
 
 type SubscriptionOverrides = {
   apiServiceLevel?: ApiServiceLevelEnum;
@@ -39,6 +44,22 @@ function buildSubscription({
     cancelAt: null,
   };
 }
+
+function requireView(view: UsageLimitsView | null): UsageLimitsView {
+  if (!view) {
+    throw new Error('Expected a usage limits view');
+  }
+
+  return view;
+}
+
+const pausingAt10k = {
+  settings: {
+    workflowRuns: { onDemandLimit: 10_000 },
+    pauseAtLimit: true,
+    alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
+  },
+};
 
 describe('getUsageLimitsView', () => {
   it('is null until the subscription loads and while usage limits are off', () => {
@@ -132,13 +153,6 @@ describe('getUsageLimitsView', () => {
   });
 
   it('warns once 90% of the on-demand allowance is used and usage is not paused', () => {
-    const pausingAt10k = {
-      settings: {
-        workflowRuns: { onDemandLimit: 10_000 },
-        pauseAtLimit: true,
-        alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
-      },
-    };
     const nearing = getUsageLimitsView(
       buildSubscription({ events: { current: 39_000, limit: 40_000 }, usageLimits: pausingAt10k }),
       true
@@ -155,19 +169,46 @@ describe('getUsageLimitsView', () => {
       true
     );
 
-    expect(nearing && isNearingOverageLimit(nearing)).toBe(true);
-    expect(under && isNearingOverageLimit(under)).toBe(false);
-    expect(paused && isNearingOverageLimit(paused)).toBe(false);
+    expect(isNearingOverageLimit(requireView(nearing))).toBe(true);
+    expect(isNearingOverageLimit(requireView(under))).toBe(false);
+    expect(isNearingOverageLimit(requireView(paused))).toBe(false);
   });
 
-  it('warns from the included runs when a usage alert allowance override is set', () => {
-    const pausingAt10k = {
-      settings: {
-        workflowRuns: { onDemandLimit: 10_000 },
-        pauseAtLimit: true,
-        alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
-      },
-    };
+  it('does not warn unless usage pauses at a positive on-demand limit', () => {
+    const nearingWith = (pauseAtLimit: boolean, onDemandLimit: number | null) =>
+      getUsageLimitsView(
+        buildSubscription({
+          events: { current: 39_000, limit: 40_000 },
+          usageLimits: {
+            settings: {
+              workflowRuns: { onDemandLimit },
+              pauseAtLimit,
+              alerts: { enabled: true, sendTo: UsageAlertRecipientsEnum.ADMINS },
+            },
+          },
+        }),
+        true
+      );
+
+    expect(isNearingOverageLimit(requireView(nearingWith(false, 10_000)))).toBe(false);
+    expect(isNearingOverageLimit(requireView(nearingWith(true, null)))).toBe(false);
+    expect(isNearingOverageLimit(requireView(nearingWith(true, 0)))).toBe(false);
+  });
+
+  it('does not warn on plans whose usage limits are not configurable', () => {
+    const view = getUsageLimitsView(
+      buildSubscription({
+        apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE,
+        events: { current: 39_000, limit: 40_000 },
+        usageLimits: { ...pausingAt10k, isConfigurable: false },
+      }),
+      true
+    );
+
+    expect(isNearingOverageLimit(requireView(view))).toBe(false);
+  });
+
+  it('ignores the usage alert allowance override when warning', () => {
     const atOverride = getUsageLimitsView(
       buildSubscription({ events: { current: 9_020, limit: 40_000 }, usageLimits: pausingAt10k }),
       true,
@@ -184,9 +225,9 @@ describe('getUsageLimitsView', () => {
       20
     );
 
-    expect(atOverride && isNearingOverageLimit(atOverride)).toBe(false);
-    expect(underPause && isNearingOverageLimit(underPause)).toBe(false);
-    expect(nearingPause && isNearingOverageLimit(nearingPause)).toBe(true);
+    expect(isNearingOverageLimit(requireView(atOverride))).toBe(false);
+    expect(isNearingOverageLimit(requireView(underPause))).toBe(false);
+    expect(isNearingOverageLimit(requireView(nearingPause))).toBe(true);
   });
 
   it('picks the paused experience by plan', () => {
