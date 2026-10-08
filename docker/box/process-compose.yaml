@@ -1,0 +1,223 @@
+# What runs in a Novu Box, in what order. `box start` runs this with config/box.env
+# loaded into the environment. Databases start first, then the `migrate` gate,
+# then the apps. With ordered_shutdown, stop runs in reverse dependency order.
+# Off on purpose, like the README says: legacy ws, webhook, inbound-mail, step-resolver.
+version: "0.5"
+log_location: /data/logs/process-compose.log
+log_level: info
+ordered_shutdown: true
+
+processes:
+  mongo:
+    command: mongod --config /opt/box/config/mongod.conf
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/27017'
+      period_seconds: 1
+      failure_threshold: 120
+    shutdown:
+      signal: 15
+      timeout_seconds: 60
+    availability:
+      restart: on_failure
+
+  redis-7000: &redis
+    command: redis-server /opt/box/config/redis.conf --tls-port 7000 --dir /data/redis/7000
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/7000'
+      period_seconds: 1
+      failure_threshold: 60
+    shutdown:
+      signal: 15
+      timeout_seconds: 30
+    availability:
+      restart: on_failure
+
+  redis-7001:
+    <<: *redis
+    command: redis-server /opt/box/config/redis.conf --tls-port 7001 --dir /data/redis/7001
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/7001'
+      period_seconds: 1
+      failure_threshold: 60
+
+  redis-7002:
+    <<: *redis
+    command: redis-server /opt/box/config/redis.conf --tls-port 7002 --dir /data/redis/7002
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/7002'
+      period_seconds: 1
+      failure_threshold: 60
+
+  clickhouse:
+    command: clickhouse server --config-file=/opt/box/config/clickhouse.xml
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 8123
+        path: /ping
+      period_seconds: 1
+      failure_threshold: 120
+    shutdown:
+      signal: 15
+      timeout_seconds: 60
+    availability:
+      restart: on_failure
+
+  s3:
+    # Same keys as the API and Worker; box.mjs generates them on every start.
+    command: ROOT_ACCESS_KEY=$AWS_ACCESS_KEY_ID ROOT_SECRET_KEY=$AWS_SECRET_ACCESS_KEY exec versitygw --port :4566 posix /data/s3
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/4566'
+      period_seconds: 1
+      failure_threshold: 60
+    availability:
+      restart: on_failure
+
+  # SQS API for QUEUE_BACKEND=sqs_bullmq; queues and their settings are in config/elasticmq.conf.
+  sqs:
+    command: elasticmq -Dconfig.file=/opt/box/config/elasticmq.conf
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/9324'
+      period_seconds: 1
+      failure_threshold: 60
+    shutdown:
+      signal: 15
+      timeout_seconds: 30
+    availability:
+      restart: on_failure
+
+  mail:
+    command: mailpit --smtp 127.0.0.1:1025 --listen :8025 --database /data/mail/mailpit.db
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/1025'
+      period_seconds: 1
+      failure_threshold: 30
+    availability:
+      restart: on_failure
+
+  # Data store setup: replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket.
+  # Waits for SQS too, so the API and Worker never start before their queues exist.
+  migrate:
+    command: node /opt/box/box.mjs migrate
+    depends_on:
+      mongo:
+        condition: process_healthy
+      redis-7000:
+        condition: process_healthy
+      redis-7001:
+        condition: process_healthy
+      redis-7002:
+        condition: process_healthy
+      clickhouse:
+        condition: process_healthy
+      s3:
+        condition: process_healthy
+      sqs:
+        condition: process_healthy
+    availability:
+      restart: exit_on_failure
+
+  # Same as the production images: pnpm deploy output plus dist, run by pm2-runtime in cluster mode.
+  # A fresh PM2_HOME per start: on a restart the old pm2-runtime is still shutting down, and on exit it
+  # deletes the sockets in its PM2_HOME, which would orphan a new one sharing the folder.
+  api:
+    command: PM2_HOME=$(mktemp -d /data/run/pm2-api.XXXXXX) exec pm2-runtime start dist/main.js -i $PM2_INSTANCES
+    working_dir: /data/deploy/api
+    environment:
+      - PORT=3000
+    depends_on:
+      migrate:
+        condition: process_completed_successfully
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 3000
+        path: /v1/health-check
+      period_seconds: 1
+      timeout_seconds: 5
+      failure_threshold: 180
+    availability:
+      restart: on_failure
+      backoff_seconds: 2
+
+  worker:
+    command: PM2_HOME=$(mktemp -d /data/run/pm2-worker.XXXXXX) exec pm2-runtime start dist/main.js -i $PM2_INSTANCES
+    working_dir: /data/deploy/worker
+    environment:
+      - PORT=3004
+    depends_on:
+      migrate:
+        condition: process_completed_successfully
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 3004
+        path: /v1/health-check
+      period_seconds: 1
+      timeout_seconds: 5
+      failure_threshold: 180
+    availability:
+      restart: on_failure
+      backoff_seconds: 2
+
+  # Stripe webhooks without a public URL: the CLI keeps an outbound connection to Stripe and posts the events
+  # the billing handlers know to the API, signed with STRIPE_CONNECT_SECRET. Every box gets every event of the
+  # sandbox; the handlers skip customers whose org isn't in this box. sed keeps the secret out of the logs.
+  stripe:
+    command: >-
+      set -o pipefail; stripe listen --skip-update --color off
+      --forward-to http://127.0.0.1:3000/v1/webhooks/stripe
+      --events checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.payment_succeeded,invoice.payment_failed,customer.deleted,billing.alert.triggered
+      2>&1 | sed -u -E 's/whsec_[A-Za-z0-9]+/whsec_***/g'
+    depends_on:
+      api:
+        condition: process_healthy
+    availability:
+      restart: on_failure
+      backoff_seconds: 2
+
+  socket:
+    command: node_modules/.bin/wrangler dev --env local --ip 0.0.0.0 --port 8887 --inspector-port 9329 --log-level warn
+    working_dir: /data/novu/enterprise/workers/socket
+    environment:
+      - NODE_OPTIONS=
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/8887'
+      period_seconds: 1
+      failure_threshold: 120
+    availability:
+      restart: on_failure
+      backoff_seconds: 2
+
+  dashboard:
+    command: caddy run --config /opt/box/config/Caddyfile --adapter caddyfile
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 4200
+        path: /
+      period_seconds: 1
+      failure_threshold: 30
+    availability:
+      restart: on_failure
+
+  # Agent PRs only. Turned on with `process-compose process start thalamus`.
+  thalamus:
+    disabled: true
+    command: node_modules/.bin/wrangler dev --env local --ip 0.0.0.0 --port 8788 --inspector-port 9330 --log-level warn
+    working_dir: /data/novu/enterprise/workers/thalamus-observer
+    environment:
+      - NODE_OPTIONS=
+    readiness_probe:
+      exec:
+        command: bash -c '</dev/tcp/127.0.0.1/8788'
+      period_seconds: 1
+      failure_threshold: 120

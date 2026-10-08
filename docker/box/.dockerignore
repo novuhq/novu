@@ -1,0 +1,2 @@
+# Local runtime secrets; they are passed with --env-file and must never be in the image.
+.env
