@@ -4,6 +4,12 @@
 	persist_config off
 }
 
+# API_ROOT_URL is the browser-facing URL (host port 13000), but the thalamus observer and self-hosted agents
+# inside the box call it too, so the same port must reach the API here.
+:13000 {
+	reverse_proxy 127.0.0.1:3000
+}
+
 :4200 {
 	encode gzip
 	header X-XSS-Protection "1; mode=block"

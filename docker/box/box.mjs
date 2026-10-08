@@ -29,6 +29,7 @@ const REDIS_TLS = `${DATA}/redis/tls`;
 const REDIS_PORTS = [7000, 7001, 7002];
 const MAIL_HOST = 'mail.box.internal';
 const SINK_URL = 'http://sink.box.internal:8026';
+const BRIDGE_HOST = 'bridge.box.internal';
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
 const APPS = ['api', 'worker', 'socket', 'dashboard'];
 const DATABASES = ['mongo', ...REDIS_PORTS.map((port) => `redis-${port}`), 'clickhouse', 's3', 'mail'];
@@ -234,10 +235,10 @@ function prepareRuntime() {
   // The signing secret of `stripe listen` (the `stripe` process) for this key; Stripe returns the same one every time.
   env.STRIPE_CONNECT_SECRET = output('stripe', ['listen', '--print-secret', '--skip-update']);
 
-  // The SSRF guards reject literal private IPs, so Mailpit and the sink are reached by names in
-  // NOVU_SAFE_OUTBOUND_ALLOW.
+  // The SSRF guards reject localhost and literal private IPs, so Mailpit, the sink and the bridge app are
+  // reached by names in NOVU_SAFE_OUTBOUND_ALLOW.
   const hosts = fs.readFileSync('/etc/hosts', 'utf8');
-  for (const host of [MAIL_HOST, new URL(SINK_URL).hostname]) {
+  for (const host of [MAIL_HOST, new URL(SINK_URL).hostname, BRIDGE_HOST]) {
     if (!hosts.includes(` ${host}`)) fs.appendFileSync('/etc/hosts', `127.0.0.1 ${host}\n`);
   }
 
