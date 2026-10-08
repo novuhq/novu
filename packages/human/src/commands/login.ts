@@ -1,15 +1,18 @@
+import { randomBytes } from 'node:crypto';
 import { hostname } from 'node:os';
 import pc from 'picocolors';
-import { createHumanApiClient } from '../api/client';
+import { createHumanApiClient, type HumanApiClient } from '../api/client';
+import { setupHumanRelay } from '../api/human';
 import {
   checkLoginRequest,
+  findOperator,
   getKeylessClaimToken,
   hasSubscriber,
   type LoginRequest,
   type LoginRequestStatus,
   startLoginRequest,
 } from '../api/login';
-import { info } from '../cli-io';
+import { info, promptLine } from '../cli-io';
 import {
   configPath,
   DEFAULT_RELAY_AGENT_IDENTIFIER,
@@ -22,6 +25,7 @@ import { openInBrowser } from '../open-browser';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 import { handleError } from './interact';
+import { splitName } from './invite';
 
 interface LoginOptions {
   apiUrl?: string;
@@ -31,6 +35,8 @@ export interface LoginResult {
   config: HumanCliConfig;
   /** The Human account's email, when the website passed it on. */
   email?: string;
+  /** The name on the Human account, when the website passed it on. */
+  name?: { firstName: string; lastName?: string };
   /** The operator on this computer still reaches the same contact and channels after logging in. */
   keptSetup: boolean;
 }
@@ -54,11 +60,13 @@ export async function loginCommand(options: LoginOptions): Promise<never> {
 
     process.stdout.write(`\n${pc.green('✔')} Logged in${who}.\n`);
     info(`Saved to ${configPath()}.`);
-    process.stdout.write(
-      result.keptSetup
-        ? 'Your agents on this computer keep reaching you as before.\n'
-        : `Next, connect a channel so agents can reach you: ${pc.bold('human setup')}\n`
-    );
+
+    // Asked only now that the key is saved, so stopping at the question loses nothing.
+    if (!result.config.subscriberId) {
+      await introduceYourself(result);
+    }
+
+    process.stdout.write(`${describeNextStep(result)}\n`);
 
     if (process.env.NOVU_SECRET_KEY?.trim()) {
       info('NOVU_SECRET_KEY is set in this shell, and it takes priority over this login.');
@@ -106,19 +114,106 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
 
   const approved = await waitForApproval(apiUrl, request, request.userCode, pageShowsCode);
   const client = createHumanApiClient({ apiUrl, secretKey: approved.apiKey });
-  const subscriberId = current?.subscriberId;
-  // The key is handed over only once, so a failed check must not lose it: keep the identity when unsure.
-  const keptSetup = subscriberId ? await hasSubscriber(client, subscriberId).catch(() => true) : false;
+  const savedId = current?.subscriberId;
+  // Who agents on this computer reach by default is the contact the account has for its owner, so "you" is
+  // one person here, on the dashboard and on any other computer. The key is handed over only once, so a
+  // failed lookup must not fail the login.
+  const operatorId = await findOperator(client).catch(() => undefined);
+  const keptSetup = await isStillYou(client, savedId, operatorId);
 
   const config: HumanCliConfig = {
     apiUrl,
     auth: { mode: 'apiKey', secretKey: approved.apiKey },
     relayAgentIdentifier: current?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER,
-    ...(keptSetup ? { subscriberId, defaultChannel: current?.defaultChannel } : {}),
+    // The default channel saved here is that contact's own preference, so it only stays with them.
+    ...(keptSetup ? { subscriberId: savedId, defaultChannel: current?.defaultChannel } : {}),
+    ...(operatorId && !keptSetup ? { subscriberId: operatorId } : {}),
   };
   saveConfig(config);
 
-  return { config, email: approved.user?.email ?? undefined, keptSetup };
+  const { email, firstName, lastName } = approved.user ?? {};
+
+  return {
+    config,
+    email: email ?? undefined,
+    ...(firstName ? { name: { firstName, ...(lastName ? { lastName } : {}) } } : {}),
+    keptSetup,
+  };
+}
+
+/**
+ * Whether the contact saved on this computer is still who agents here reach. The account's word wins.
+ * When it has no owner on record, or can't be asked, the saved contact stays unless the account certainly
+ * doesn't have it: a failed check must not cost someone their identity.
+ */
+async function isStillYou(
+  client: HumanApiClient,
+  savedId: string | undefined,
+  operatorId: string | undefined
+): Promise<boolean> {
+  if (!savedId) {
+    return false;
+  }
+
+  if (operatorId) {
+    return operatorId === savedId;
+  }
+
+  return hasSubscriber(client, savedId).catch(() => true);
+}
+
+/**
+ * The account has no contact for its owner yet, so agents on this computer would have nobody to reach.
+ * Asks who that is, makes the contact the way `human setup` and the dashboard do, and saves it as who this
+ * computer reaches. Where there is no terminal to ask in, the name on the Human account is used. The login
+ * is saved by now, so failing here only leaves this step to `human setup`.
+ */
+export async function introduceYourself(
+  { config, name }: Pick<LoginResult, 'config' | 'name'>,
+  io: { isTTY: boolean; prompt: (question: string) => Promise<string> } = {
+    isTTY: Boolean(process.stdin.isTTY),
+    prompt: promptLine,
+  }
+): Promise<HumanCliConfig> {
+  const accountName = [name?.firstName, name?.lastName].filter(Boolean).join(' ');
+  const answer = io.isTTY
+    ? await io.prompt(
+        `Who are you? Your name, as agents will see it${accountName ? ` [${accountName}]` : ' (optional)'}: `
+      )
+    : '';
+  // Only a suggestion: an owner the account already knows wins, and is what comes back.
+  const suggestedId = `human_${randomBytes(6).toString('hex')}`;
+
+  try {
+    const client = createHumanApiClient({ apiUrl: config.apiUrl, secretKey: config.auth.secretKey });
+    const relay = await setupHumanRelay(client, {
+      subscriberId: suggestedId,
+      operator: true,
+      agentIdentifier: config.relayAgentIdentifier,
+      ...splitName(answer.trim() || accountName),
+    });
+    const introduced: HumanCliConfig = { ...config, subscriberId: relay.subscriberId || suggestedId };
+    saveConfig(introduced);
+
+    return introduced;
+  } catch (err) {
+    info(`Couldn't save who you are just now (${err instanceof Error ? err.message : String(err)}).`);
+
+    return config;
+  }
+}
+
+/** What to do after logging in, which depends on whether agents on this computer know who to reach. */
+export function describeNextStep({ config, keptSetup }: Pick<LoginResult, 'config' | 'keptSetup'>): string {
+  if (keptSetup) {
+    return 'Your agents on this computer keep reaching you as before.';
+  }
+
+  if (config.subscriberId) {
+    return `Agents on this computer now reach you on your account's channels. None connected yet? Run: ${pc.bold('human setup')}`;
+  }
+
+  return `Next, connect a channel so agents can reach you: ${pc.bold('human setup')}`;
 }
 
 export function withClaimToken(verificationUrl: string, claimToken: string | null): string {

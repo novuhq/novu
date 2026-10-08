@@ -29,7 +29,7 @@ export type LoginRequestStatus =
       status: 'approved';
       apiKey: string;
       environmentId: string;
-      user?: { email?: string | null; firstName?: string | null } | null;
+      user?: { email?: string | null; firstName?: string | null; lastName?: string | null } | null;
     };
 
 /**
@@ -86,6 +86,26 @@ export async function hasSubscriber(client: HumanApiClient, subscriberId: string
   } catch (err) {
     if (err instanceof HumanApiError && err.status === 404) {
       return false;
+    }
+
+    throw err;
+  }
+}
+
+/**
+ * The contact the account behind `client` has for its owner: made by `human setup` on any computer, or on
+ * the Human dashboard. Undefined when the account has none yet. APIs from before it was recorded answer 404.
+ */
+export async function findOperator(client: HumanApiClient): Promise<string | undefined> {
+  try {
+    const res = await client.axios.get<{ data?: { subscriberId?: string } } | { subscriberId?: string }>(
+      '/v1/human/operator'
+    );
+
+    return unwrap(res.data)?.subscriberId || undefined;
+  } catch (err) {
+    if (err instanceof HumanApiError && err.status === 404) {
+      return undefined;
     }
 
     throw err;
