@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, ChevronsUpDown, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, ChevronsUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ComponentProps, useCallback, useEffect, useState, useTransition } from 'react';
 
@@ -68,7 +68,6 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
   // Only true when the DM went out while this drawer was open: reopening it later sends nothing.
   const [testSent, setTestSent] = useState(false);
   const [creating, startCreating] = useTransition();
-  const [rechecking, startRecheck] = useTransition();
 
   const show = useCallback((next: SlackSetupState) => {
     setStep(stepOf(next));
@@ -144,21 +143,6 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
     });
   }
 
-  function recheck() {
-    startRecheck(async () => {
-      const next = await loadSlackSetupAction().catch((): SlackSetupState => ({ step: 'unknown' }));
-
-      if (next.step === 'unknown') {
-        toast('We couldn’t check Slack just now. Please try again.', 'error');
-
-        return;
-      }
-
-      show(next);
-      router.refresh();
-    });
-  }
-
   const connected = step === 'connected';
   const unread = step === 'checking' || step === 'unavailable';
   const agent = agentName ?? 'your agent';
@@ -218,11 +202,9 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
               name={name}
               workspace={workspace}
               connected={connected}
-              rechecking={rechecking}
               waitedTooLong={waitedTooLong}
               onKeepWaiting={keepWaiting}
               onBack={() => setStep('app')}
-              onRecheck={recheck}
             />
             {connected && (
               <ConnectedCard
@@ -382,24 +364,12 @@ type InstallStepProps = {
   /** Where the app ended up, once it's installed. */
   workspace: SlackWorkspace;
   connected: boolean;
-  rechecking: boolean;
   waitedTooLong: boolean;
   onKeepWaiting: () => void;
   onBack: () => void;
-  onRecheck: () => void;
 };
 
-function InstallStep({
-  status,
-  name,
-  workspace,
-  connected,
-  rechecking,
-  waitedTooLong,
-  onKeepWaiting,
-  onBack,
-  onRecheck,
-}: InstallStepProps) {
+function InstallStep({ status, name, workspace, connected, waitedTooLong, onKeepWaiting, onBack }: InstallStepProps) {
   const [opening, setOpening] = useState(false);
 
   async function openSlack() {
@@ -437,29 +407,6 @@ function InstallStep({
         ) : (
           'App installed'
         )
-      }
-      action={
-        // Always there, so it can fade in; out of reach until there's a connection to check.
-        <button
-          type="button"
-          inert={!connected}
-          aria-label="Check the connection again"
-          title="Check the connection again"
-          disabled={rechecking}
-          onClick={onRecheck}
-          className={buttonClassName(
-            'ghost',
-            cn(
-              '-my-1.25 self-center text-foreground transition-[opacity,color,background-color] duration-300 ease-out',
-              !connected && 'opacity-0'
-            )
-          )}
-        >
-          <RefreshCw
-            aria-hidden="true"
-            className={cn('size-4', rechecking && 'animate-spin motion-reduce:animate-none')}
-          />
-        </button>
       }
       bodyClassName="items-center px-4.5 py-3 text-center"
       footer={
