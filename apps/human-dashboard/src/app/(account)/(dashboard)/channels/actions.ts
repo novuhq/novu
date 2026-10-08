@@ -4,6 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
+import { AGENT_NOT_SET_UP_MESSAGE, getRelayAgent } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import {
   type ChannelVia,
@@ -93,6 +94,10 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
 
   try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
     const contactId = await findOrCreateOperatorContact(account);
     const channelIdentifier = await ensureTelegramChannel(account);
     const { botUsername } = await saveTelegramBotToken(account, channelIdentifier, token);
@@ -167,6 +172,10 @@ export async function createSlackAppAction(appName: string, configToken: string)
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
 
   try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, field: 'token', error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
     const { agentId } = await ensureRelayWithOperator(account);
     const channel = await ensureSlackChannel(account, name);
 
@@ -271,9 +280,9 @@ async function findChannel(account: HumanAccount, via: ChannelVia): Promise<stri
 }
 
 /**
- * The operator's own contact. It's made with the account, so this is a lookup; only an account from
- * before that (remembered by an older dashboard, or made by a CLI login that never ran `human setup`)
- * has none and gets its agent and contact here.
+ * The operator's own contact. `human setup` makes it with the agent, so this is a lookup; only an agent
+ * that has no operator on record yet gets one here. Callers check that the agent exists first: this must
+ * never be what creates it.
  */
 async function findOrCreateOperatorContact(account: HumanAccount): Promise<string> {
   const existing = await findOperatorContactId(account);
@@ -286,7 +295,7 @@ async function findOrCreateOperatorContact(account: HumanAccount): Promise<strin
   return ensureOperatorContact(account, { firstName: user?.firstName, lastName: user?.lastName });
 }
 
-/** The relay agent and the operator's contact, for a step that needs the agent's own id too. */
+/** The relay agent and the operator's contact, for a step that needs the agent's own id too. Same rule: the agent exists already. */
 async function ensureRelayWithOperator(account: HumanAccount): Promise<{ agentId: string; contactId: string }> {
   if (await findOperatorContactId(account)) {
     return ensureRelay(account);

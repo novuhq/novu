@@ -6,14 +6,16 @@ import { usePathname } from 'next/navigation';
 
 import { DASHBOARD_HOME, FOOTER_NAV, findNavItem, MAIN_NAV, type NavItem } from '@/components/dashboard/nav';
 import { Brand } from '@/components/site/brand';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
-import { Mascot } from '@/components/ui/mascot';
 import { cn } from '@/lib/utils';
 
 export type SidebarAgent = {
   name: string;
   /** The line under the name: "Not set up" before the first setup, then "Your agent". */
   status: string;
+  /** Whether `human setup` has made the agent yet. Its picture sleeps until then. */
+  setUp: boolean;
 };
 
 export function Sidebar({ agent }: { agent: SidebarAgent }) {
@@ -26,9 +28,10 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
         <Badge variant="accent">Beta</Badge>
       </div>
 
-      <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-2.5 py-2">
-        <Mascot />
-        <div className="flex min-w-0 flex-col">
+      <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-2.5 py-[10.5px]">
+        <AgentAvatar mood={agent.setUp ? 'idle' : 'asleep'} className="size-8 rounded-[9px]" />
+        {/* A new key when the agent is set up, so its name fades in instead of jumping. */}
+        <div key={agent.name} className="flex min-w-0 animate-overlay-in flex-col motion-reduce:animate-none">
           <span className="truncate font-mono text-xs tracking-tight text-foreground">{agent.name}</span>
           <span className="truncate text-xs tracking-tight text-muted">{agent.status}</span>
         </div>

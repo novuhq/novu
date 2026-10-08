@@ -9,9 +9,9 @@ import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { findCurrentUser } from '@/lib/auth-page';
 import { requireHumanAccount } from '@/lib/human-account';
-import { agentDisplayName, getRelayAgent, UNNAMED_AGENT_LABEL } from '@/lib/human-agent-api';
+import { agentDisplayName, getRelayAgent } from '@/lib/human-agent-api';
 
-const AGENT_NOT_SET_UP: SidebarAgent = { name: UNNAMED_AGENT_LABEL, status: 'Not set up' };
+const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up', setUp: false };
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -49,10 +49,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 }
 
 /**
- * Who the sidebar says the agent is. The account and its agent come from the sign-up webhook, but the
- * first page after signing up usually loads before that webhook has run. So the shell asks for the
- * account the same way the pages do, which sets it up on the spot when it isn't there yet, instead of
- * showing "Not set up" until the next reload.
+ * Who the sidebar says the agent is: "Not set up" until the operator has run `human setup`. The account
+ * comes from the sign-up webhook, but the first page after signing up usually loads before that webhook
+ * has run. So the shell asks for the account the same way the pages do, which creates it on the spot
+ * when it isn't there yet.
  *
  * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
  * layout has no error page of its own.
@@ -65,7 +65,7 @@ async function loadSidebarAgent(): Promise<SidebarAgent> {
       return AGENT_NOT_SET_UP;
     }
 
-    return { name: agentDisplayName(agent), status: 'Your agent' };
+    return { name: agentDisplayName(agent), status: 'Your agent', setUp: true };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);

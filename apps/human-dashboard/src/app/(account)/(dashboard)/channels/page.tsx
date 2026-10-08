@@ -1,34 +1,26 @@
 import { Info } from 'lucide-react';
 import type { Metadata } from 'next';
 
-import { type ChannelRow, ChannelsTable } from '@/components/channels/channels-table';
+import { ChannelsTable } from '@/components/channels/channels-table';
+import { AgentSetupBanner } from '@/components/dashboard/agent-setup-banner';
 import { CopyCliCommand } from '@/components/dashboard/copy-cli-command';
 import { PageHeader } from '@/components/dashboard/page-header';
-import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
+import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName, getRelayAgent } from '@/lib/human-agent-api';
-import { type ChannelVia, listChannels, slackAgentHandle } from '@/lib/human-channels-api';
-import { findOperatorContactId } from '@/lib/human-operator';
-import { readSlackSetup, type SlackSetupState } from '@/lib/human-slack-setup';
-import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
+import { channelsBeforeSetup, loadChannelsOverview } from '@/lib/human-channels-overview';
 
 export const metadata: Metadata = {
   title: 'Channels',
 };
 
-/** The table doesn't wait longer than this for a channel's setup; its drawer then reads it when it opens. */
-const SETUP_TIMEOUT_MS = 4000;
-
-type LoadedChannels = {
-  rows: ChannelRow[];
-  telegramSetup: TelegramSetupState;
-  slackSetup: SlackSetupState;
-  /** What the agent is called: its own name, or "Human assistant". Missing when there is no agent yet. */
-  agentName?: string;
-};
-
+/**
+ * The agent's channels. Until `human setup` has made the agent there is nothing to connect a channel to,
+ * so the rows are switched off and a banner sends the operator to the Agent page.
+ */
 export default async function ChannelsPage() {
   const account = await requireHumanAccount({ returnTo: '/channels' });
-  const { rows, telegramSetup, slackSetup, agentName } = await loadChannels(account);
+  const agent = await getRelayAgent(account);
+  const { rows, telegramSetup, slackSetup } = agent ? await loadChannelsOverview(account) : channelsBeforeSetup();
 
   return (
     <>
@@ -37,89 +29,22 @@ export default async function ChannelsPage() {
         description="How your agent shows up on each channel. People reply right where the message lands."
         action={<CopyCliCommand command="npx @novu/human channels" />}
       />
-      <ChannelsTable rows={rows} telegramSetup={telegramSetup} slackSetup={slackSetup} agentName={agentName} />
+      {!agent && (
+        <AgentSetupBanner>
+          Channels belong to your agent. Once it&apos;s set up, you connect them here.
+        </AgentSetupBanner>
+      )}
+      <ChannelsTable
+        rows={rows}
+        telegramSetup={telegramSetup}
+        slackSetup={slackSetup}
+        agentName={agent ? agentDisplayName(agent) : undefined}
+        disabled={!agent}
+      />
       <p className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-xs leading-4 text-secondary">
         <Info aria-hidden="true" className="size-3.5 shrink-0" />
         Every channel belongs to your agent: its own address, bot and app. One account, one agent.
       </p>
     </>
   );
-}
-
-/**
- * Email, Telegram and Slack, in that order, whether or not the agent has them yet. The Telegram and
- * Slack setups are read here too, so their drawers open without asking the API again.
- */
-async function loadChannels(account: HumanAccount): Promise<LoadedChannels> {
-  const [channels, operatorContactId, agentName] = await Promise.all([
-    listChannels(account),
-    findOperatorContactId(account),
-    // Only wording depends on the name, so the page does without it when it can't be read.
-    loadAgentName(account).catch(() => undefined),
-  ]);
-  const channelOf = (via: ChannelVia) => channels.find((channel) => channel.via === via && channel.active);
-
-  const email = channelOf('email');
-  const telegram = channelOf('telegram');
-  const slack = channelOf('slack');
-  const telegramConnected = telegram?.connected === true;
-  const slackConnected = slack?.connected === true;
-  const [telegramSetup, slackSetup] = await Promise.all([
-    withinTime<TelegramSetupState>(readTelegramSetup(account, telegram, operatorContactId)),
-    withinTime<SlackSetupState>(readSlackSetup(account, slack, operatorContactId)),
-  ]);
-  // The workspace's name is a nicety: the row still says "Connected" when it couldn't be read.
-  const slackWorkspace = slackSetup.step === 'connected' ? slackSetup.workspace : undefined;
-  const botUsername = 'botUsername' in telegramSetup ? telegramSetup.botUsername : '';
-  const slackHandle = slack && slackAgentHandle(slack);
-
-  const rows: ChannelRow[] = [
-    {
-      via: 'email',
-      name: 'Email',
-      placeholder: 'Its own email address',
-      handles: email?.address ? [{ value: email.address, label: 'email address' }] : [],
-      connected: Boolean(email),
-    },
-    {
-      via: 'telegram',
-      name: 'Telegram',
-      placeholder: 'Its own Telegram bot',
-      handles: telegramConnected && botUsername ? [{ value: `@${botUsername}`, label: 'bot handle' }] : [],
-      connected: telegramConnected,
-    },
-    {
-      via: 'slack',
-      name: 'Slack',
-      placeholder: 'Its own Slack app in your workspace',
-      handles: slackConnected
-        ? [
-            ...(slackWorkspace ? [{ value: slackWorkspace, label: 'workspace' }] : []),
-            ...(slackHandle ? [{ value: slackHandle, label: 'agent handle' }] : []),
-          ]
-        : [],
-      connected: slackConnected,
-    },
-  ];
-
-  return { rows, telegramSetup, slackSetup, agentName };
-}
-
-async function loadAgentName(account: HumanAccount): Promise<string | undefined> {
-  const agent = await getRelayAgent(account);
-
-  return agent ? agentDisplayName(agent) : undefined;
-}
-
-/**
- * Reading a setup can hang (Telegram's asks Telegram who the bot is); the page settles for `unknown`
- * instead.
- */
-function withinTime<State extends { step: string }>(setup: Promise<State>): Promise<State | { step: 'unknown' }> {
-  return Promise.race([
-    setup,
-    new Promise<{ step: 'unknown' }>((resolve) => {
-      setTimeout(() => resolve({ step: 'unknown' }), SETUP_TIMEOUT_MS);
-    }),
-  ]);
 }
