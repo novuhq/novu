@@ -1,10 +1,8 @@
 import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { Brand } from '@/components/site/brand';
 import { cn } from '@/lib/utils';
-
-import { Logomark } from './auth-icons';
 
 /**
  * The split screen of sign-in and sign-up: the brand panel on the left, the form in the middle of the
@@ -20,7 +18,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <BrandPanel />
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="px-6 py-9 xl:hidden">
-            <Logo />
+            <Brand className="w-fit" />
           </div>
           <div className="flex flex-1 flex-col items-center justify-center px-4 pt-4 pb-16 xl:py-9">{children}</div>
         </main>
@@ -29,20 +27,11 @@ export function AuthShell({ children }: { children: ReactNode }) {
   );
 }
 
-function Logo() {
-  return (
-    <Link href="/" aria-label="human.md" className="flex w-fit items-center gap-2.5 rounded-sm">
-      <Logomark className="size-5.5" />
-      <span className="font-mono text-[15px] leading-5 tracking-[-0.3px] text-foreground">human.md</span>
-    </Link>
-  );
-}
-
 function BrandPanel() {
   return (
     // On screens wider than the column, the panel's color carries on to the left edge of the screen.
     <aside className="relative hidden w-1/2 shrink-0 flex-col justify-between border-r border-border bg-subtle px-12 py-9 before:absolute before:inset-y-0 before:right-full before:w-screen before:bg-subtle xl:flex">
-      <Logo />
+      <Brand className="w-fit" />
       <div className="flex flex-col items-center gap-5.5">
         <p className="font-mono text-[11px] leading-4 text-accent">the human API for agents</p>
         <h2 className="text-center text-[30px] leading-9.5 tracking-[-0.75px] text-foreground">

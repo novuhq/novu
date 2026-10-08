@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Logo } from '@/components/site/brand';
+import { Brand } from '@/components/site/brand';
 import { cn } from '@/lib/utils';
 
 type StageProps = {
@@ -17,7 +17,7 @@ export function Stage({ aside, children }: StageProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex h-15 shrink-0 items-center justify-between gap-4 border-b border-border px-7">
-        <Logo />
+        <Brand />
         {aside && <div className="min-w-0 truncate font-mono text-[11px] leading-4 text-secondary">{aside}</div>}
       </header>
       <main className="relative isolate flex flex-1 items-center justify-center overflow-hidden px-4 py-10">
