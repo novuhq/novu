@@ -6,6 +6,18 @@ export const AUTOCOMPLETE_PASSWORD_MANAGERS_OFF = {
   'data-form-type': 'other',
 };
 
+/**
+ * Cancels `AUTOCOMPLETE_PASSWORD_MANAGERS_OFF` on auth form inputs (sign-in/sign-up/forgot/
+ * reset password) so browsers and password managers can autofill and save credentials again.
+ * The `undefined` values remove the suppression attributes from the rendered element; spread
+ * this BEFORE the field's own `name` / `autoComplete` tokens so they take precedence.
+ */
+export const AUTOCOMPLETE_PASSWORD_MANAGERS_ON = {
+  autoComplete: undefined,
+  'data-1p-ignore': undefined,
+  'data-form-type': undefined,
+};
+
 export const INLINE_CONFIGURABLE_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.DELAY,
   StepTypeEnum.DIGEST,
