@@ -30,12 +30,27 @@ export async function readSlackSetup(
 
   const appName = channel.name ?? '';
 
-  // Another contact can have linked Slack before the operator did; the operator still has their install to do.
-  if (channel.connected && (await hasLinkedChannel(account, channel.identifier, operatorContactId))) {
-    // The workspace's name is a nicety: the drawer still says "connected" when it can't be read.
-    const workspace = await findSlackWorkspace(account, channel.identifier).catch(() => undefined);
+  if (channel.connected) {
+    // Another contact can have linked Slack before the operator did; the operator still has their install to do.
+    const linked = await hasLinkedChannel(account, channel.identifier, operatorContactId).catch((error: unknown) => {
+      // An answer the API couldn't give is not a reason to fail the page; anything else is a bug and keeps going.
+      if (!(error instanceof HumanApiError)) {
+        throw error;
+      }
 
-    return { step: 'connected', appName, workspace: workspace?.name, connectedAt: workspace?.connectedAt };
+      return 'unreadable' as const;
+    });
+
+    if (linked === 'unreadable') {
+      return { step: 'unknown' };
+    }
+
+    if (linked) {
+      // The workspace's name is a nicety: the drawer still says "connected" when it can't be read.
+      const workspace = await findSlackWorkspace(account, channel.identifier).catch(() => undefined);
+
+      return { step: 'connected', appName, workspace: workspace?.name, connectedAt: workspace?.connectedAt };
+    }
   }
 
   // Only a channel that has its app can make an install link, so asking for one tells the two apart.
