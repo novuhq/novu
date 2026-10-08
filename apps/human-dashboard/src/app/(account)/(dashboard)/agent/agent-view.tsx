@@ -446,7 +446,7 @@ function ToolTile({ tool, connected, active, external }: ToolTileProps) {
       <ToolIcon tool={tool} className="size-8 rounded-[7px]" />
       <span className="relative flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate text-[13px] leading-4.5 font-medium text-foreground">{tool.name}</span>
-        <span className="truncate text-xs leading-4 text-muted">{connected ? 'MCP server' : 'MCP + skills'}</span>
+        <span className="truncate text-xs leading-4 text-muted">{tool.label}</span>
       </span>
       {/* A new key when the tool connects, so the badge fades in where the arrow was. */}
       <span key={String(connected)} className="relative flex animate-overlay-in motion-reduce:animate-none">

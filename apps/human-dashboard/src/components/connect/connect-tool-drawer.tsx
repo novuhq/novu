@@ -130,14 +130,14 @@ function Steps({ tool, mcpUrl }: { tool: ToolId; mcpUrl: string }) {
 function ChatGptSteps({ mcpUrl }: { mcpUrl: string }) {
   return (
     <>
-      <Intro>Add Human as a connector so ChatGPT can ask you before it acts.</Intro>
+      <Intro>Add Human as an MCP App so ChatGPT can ask you before it acts.</Intro>
       <StepList>
-        <Step index={1} title="Turn on developer mode">
-          In ChatGPT, open Settings › Apps &amp; Connectors › Advanced and switch on Developer mode.
+        <Step index={1} title="Add MCP Server">
+          In ChatGPT, open Settings › Plugins › Add › Add MCP Server.
         </Step>
         <Step
           index={2}
-          title="Create a connector"
+          title="Connect to a custom MCP"
           extra={
             <CopyField
               value={mcpUrl}
@@ -147,7 +147,7 @@ function ChatGptSteps({ mcpUrl }: { mcpUrl: string }) {
             />
           }
         >
-          Name it Human and paste this URL.
+          Name it Human, switch to Streamable HTTP and paste this URL.
         </Step>
         <Step index={3} title="Sign in to Human">
           ChatGPT opens a sign-in window. Approve it and you are done.
@@ -163,14 +163,16 @@ function ClaudeSteps({ mcpUrl }: { mcpUrl: string }) {
     <>
       <Intro>Works in Claude on the web, desktop and mobile.</Intro>
       <StepList>
-        <Step index={1} title="Add a custom connector">
+        <Step index={1} title="Open your connectors">
           In Claude, open Settings › Connectors and choose Add custom connector.
         </Step>
         <Step
           index={2}
-          title="Paste the URL"
+          title="Add custom connector"
           extra={<CopyField value={mcpUrl} label="Copy the Human MCP URL" className="pl-3.25" />}
-        />
+        >
+          Name it Human and paste this URL.
+        </Step>
         <Step index={3} title="Connect and sign in">
           Click Connect, then approve Human in the window that opens.
         </Step>

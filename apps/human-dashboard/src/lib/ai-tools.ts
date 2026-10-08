@@ -4,6 +4,8 @@ export type ToolId = 'cursor' | 'claude' | 'chatgpt';
 export type AiTool = {
   id: ToolId;
   name: string;
+  /** How Human gets into the tool, under its name on the tile: "MCP", "Custom Connector". */
+  label: string;
   /** The tool's logo, as exported from the design. */
   icon: string;
   /** Where the tool's connector settings are, for the two that are set up there. */
@@ -16,10 +18,11 @@ export type AiTool = {
 
 /** In the order of the tiles on the Agent page. */
 export const AI_TOOLS: AiTool[] = [
-  { id: 'cursor', name: 'Cursor', icon: '/tools/cursor.png', example: 'Ask me before you deploy.' },
+  { id: 'cursor', name: 'Cursor', label: 'MCP', icon: '/tools/cursor.png', example: 'Ask me before you deploy.' },
   {
     id: 'claude',
     name: 'Claude',
+    label: 'Custom Connector',
     icon: '/tools/claude.png',
     settingsUrl: 'https://claude.ai/settings/connectors',
     appUrl: 'https://claude.ai',
@@ -28,8 +31,9 @@ export const AI_TOOLS: AiTool[] = [
   {
     id: 'chatgpt',
     name: 'ChatGPT',
+    label: 'Create MCP App',
     icon: '/tools/chatgpt.png',
-    settingsUrl: 'https://chatgpt.com/#settings/Connectors',
+    settingsUrl: 'https://chatgpt.com/#settings',
     appUrl: 'https://chatgpt.com',
     example: 'Check with me before you send this.',
   },
