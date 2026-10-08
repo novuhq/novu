@@ -9,17 +9,22 @@ import { Logomark } from './auth-icons';
 /**
  * The split screen of sign-in and sign-up: the brand panel on the left, the form in the middle of the
  * right half. The panel needs room for its 620px illustration, so narrower screens get the form alone.
+ *
+ * Both halves sit in one column as wide as the design (1728px), centered on wider screens, so they stay
+ * next to each other instead of drifting apart.
  */
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh">
-      <BrandPanel />
-      <main className="flex min-w-0 flex-1 flex-col">
-        <div className="px-6 py-9 xl:hidden">
-          <Logo />
-        </div>
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-4 pb-16 xl:py-9">{children}</div>
-      </main>
+    <div className="flex min-h-dvh justify-center overflow-x-clip">
+      <div className="flex w-full max-w-432">
+        <BrandPanel />
+        <main className="flex min-w-0 flex-1 flex-col">
+          <div className="px-6 py-9 xl:hidden">
+            <Logo />
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center px-4 pt-4 pb-16 xl:py-9">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }
@@ -35,7 +40,8 @@ function Logo() {
 
 function BrandPanel() {
   return (
-    <aside className="hidden w-205 shrink-0 flex-col justify-between border-r border-border bg-subtle px-12 py-9 xl:flex">
+    // On screens wider than the column, the panel's color carries on to the left edge of the screen.
+    <aside className="relative hidden w-205 shrink-0 flex-col justify-between border-r border-border bg-subtle px-12 py-9 before:absolute before:inset-y-0 before:right-full before:w-screen before:bg-subtle xl:flex">
       <Logo />
       <div className="flex flex-col items-center gap-5.5">
         <p className="font-mono text-[11px] leading-4 text-accent">the human API for agents</p>
