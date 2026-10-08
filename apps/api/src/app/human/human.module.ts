@@ -1,11 +1,15 @@
 import { forwardRef, Module } from '@nestjs/common';
 import {
   AgentIntegrationRepository,
+  AgentMcpServerRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
   HumanContactRepository,
   HumanInteractionRepository,
   IntegrationRepository,
+  McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
@@ -71,6 +75,10 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     ChannelEndpointRepository,
     IntegrationRepository,
     SubscriberRepository,
+    ConversationRepository,
+    ConversationActivityRepository,
+    AgentMcpServerRepository,
+    McpConnectionRepository,
     HumanDeliveryService,
     CreateInteraction,
     GetInteraction,

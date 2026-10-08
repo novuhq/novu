@@ -1,20 +1,26 @@
 import { InMemoryLRUCacheStore } from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { DeleteHumanAccountCommand } from './delete-human-account.command';
 import { DeleteHumanAccount } from './delete-human-account.usecase';
 
 describe('DeleteHumanAccount', () => {
-  function model(scopedByOrganization: boolean) {
-    return {
-      schema: { path: (name: string) => (scopedByOrganization && name === '_organizationId' ? {} : undefined) },
-      deleteMany: sinon.stub().resolves({ deletedCount: 1 }),
-    };
-  }
+  /** The collections that hold Human's data, in the order the use case takes its repositories. */
+  const HUMAN_COLLECTIONS = [
+    'agentIntegration',
+    'channelConnection',
+    'channelEndpoint',
+    'conversation',
+    'conversationActivity',
+    'agentMcpServer',
+    'mcpConnection',
+    'humanInteraction',
+    'humanContact',
+  ] as const;
 
   function setup(account: { clerkUserId: string; clerkOrganizationId?: string } | null = null) {
     const steps: string[] = [];
-    const models = { Agent: model(true), Subscriber: model(true), Organization: model(false), User: model(false) };
 
     const humanBackingAccounts = {
       find: sinon.stub().resolves(account),
@@ -30,34 +36,52 @@ describe('DeleteHumanAccount', () => {
         { _id: 'dev_env', apiKeys: [{ hash: 'dev_hash' }] },
         { _id: 'prod_env', apiKeys: [{ hash: 'prod_hash' }, {}] },
       ]),
-      _model: { db: { models } },
+      delete: sinon.stub().resolves(),
     };
     const agentRepository = {
       find: sinon.stub().resolves([{ _id: 'relay_agent', _environmentId: 'dev_env' }]),
+      delete: sinon.stub().resolves(),
       withTransaction: sinon.stub().callsFake(async (fn: (session: unknown) => Promise<void>) => {
         steps.push('transaction');
         await fn('session');
       }),
     };
+    const integrationRepository = { _model: { deleteMany: sinon.stub().resolves() }, delete: sinon.stub().resolves() };
     const subscriberRepository = {
       find: sinon.stub().resolves([
         { subscriberId: 'maya', _environmentId: 'dev_env' },
         { subscriberId: 'someone-in-prod', _environmentId: 'prod_env' },
       ]),
+      delete: sinon.stub().resolves(),
     };
+    const others = Object.fromEntries(HUMAN_COLLECTIONS.map((name) => [name, { delete: sinon.stub().resolves() }]));
     const inviteTokens = {
       revokeAll: sinon.stub().callsFake(async () => {
         steps.push('revoke');
       }),
     };
     const invalidateCache = { invalidateByKey: sinon.stub().resolves(), invalidateQuery: sinon.stub().resolves() };
-    const inMemoryLRUCacheService = { invalidate: sinon.stub() };
+    const inMemoryLRUCacheService = {
+      invalidate: sinon.stub().callsFake(() => {
+        steps.push('forget-key');
+      }),
+    };
 
     const usecase = new DeleteHumanAccount(
       humanBackingAccounts as never,
       communityOrganizationRepository as never,
       environmentRepository as never,
       agentRepository as never,
+      others.agentIntegration as never,
+      integrationRepository as never,
+      others.channelConnection as never,
+      others.channelEndpoint as never,
+      others.conversation as never,
+      others.conversationActivity as never,
+      others.agentMcpServer as never,
+      others.mcpConnection as never,
+      others.humanInteraction as never,
+      others.humanContact as never,
       subscriberRepository as never,
       inviteTokens as never,
       invalidateCache as never,
@@ -67,10 +91,13 @@ describe('DeleteHumanAccount', () => {
     return {
       usecase,
       steps,
-      models,
+      others,
       humanBackingAccounts,
       communityOrganizationRepository,
+      environmentRepository,
       agentRepository,
+      integrationRepository,
+      subscriberRepository,
       inviteTokens,
       invalidateCache,
       inMemoryLRUCacheService,
@@ -79,41 +106,53 @@ describe('DeleteHumanAccount', () => {
 
   const command = DeleteHumanAccountCommand.create({ humanUserId: 'user_2AbC' });
   const existing = { clerkUserId: 'clerk_user', clerkOrganizationId: 'clerk_org' };
+  const scope = { _organizationId: 'novu_org' };
 
-  it('deletes everything under the organization in one transaction, and nothing else', async () => {
-    const { usecase, models, agentRepository, communityOrganizationRepository } = setup(existing);
+  it("deletes Human's data of the organization in one transaction", async () => {
+    const { usecase, others, agentRepository, subscriberRepository, communityOrganizationRepository } = setup(existing);
 
     await usecase.execute(command);
 
     expect(communityOrganizationRepository.findOne.firstCall.args[0]).to.deep.equal({ externalId: 'clerk_org' });
     expect(agentRepository.withTransaction.calledOnce).to.equal(true);
-    for (const scoped of [models.Agent, models.Subscriber]) {
-      expect(scoped.deleteMany.calledOnceWithExactly({ _organizationId: 'novu_org' }, { session: 'session' })).to.equal(
-        true
-      );
+    for (const repository of [...Object.values(others), agentRepository, subscriberRepository]) {
+      expect(repository.delete.calledOnceWithExactly(scope, { session: 'session' })).to.equal(true);
     }
-    // Collections that aren't scoped to an organization hold other accounts' documents too.
-    expect(models.Organization.deleteMany.called).to.equal(false);
-    expect(models.User.deleteMany.called).to.equal(false);
   });
 
-  it('retires the invite links first, then deletes the data, then the organization itself', async () => {
-    const { usecase, steps, inviteTokens } = setup(existing);
+  it('removes the channels with their credentials for real, and leaves the in-app integration', async () => {
+    const { usecase, integrationRepository } = setup(existing);
 
     await usecase.execute(command);
 
-    expect(steps).to.deep.equal(['revoke', 'transaction', 'shell']);
+    // The repository's own delete only marks an integration as deleted, and its secrets stay.
+    expect(integrationRepository.delete.called).to.equal(false);
+    expect(
+      integrationRepository._model.deleteMany.calledOnceWithExactly(
+        { ...scope, channel: { $ne: ChannelTypeEnum.IN_APP } },
+        { session: 'session' }
+      )
+    ).to.equal(true);
+  });
+
+  it('leaves what Novu sets up for every organization', async () => {
+    const { usecase, environmentRepository } = setup(existing);
+
+    await usecase.execute(command);
+
+    expect(environmentRepository.delete.called).to.equal(false);
+  });
+
+  it('retires the invite links, deletes the data, then the organization, then forgets its API keys', async () => {
+    const { usecase, steps, inviteTokens, inMemoryLRUCacheService, invalidateCache } = setup(existing);
+
+    await usecase.execute(command);
+
+    expect(steps).to.deep.equal(['revoke', 'transaction', 'shell', 'forget-key', 'forget-key']);
     // Only contacts of the relay agent's own environment have links.
     expect(
       inviteTokens.revokeAll.calledOnceWithExactly({ env: 'dev_env', agentId: 'relay_agent', subscriberId: 'maya' })
     ).to.equal(true);
-  });
-
-  it('forgets the cached API keys and contacts once the data is gone', async () => {
-    const { usecase, inMemoryLRUCacheService, invalidateCache } = setup(existing);
-
-    await usecase.execute(command);
-
     expect(inMemoryLRUCacheService.invalidate.args).to.deep.equal([
       [InMemoryLRUCacheStore.API_KEY_USER, 'dev_hash'],
       [InMemoryLRUCacheStore.API_KEY_USER, 'prod_hash'],
