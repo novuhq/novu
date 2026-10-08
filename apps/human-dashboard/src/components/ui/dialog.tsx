@@ -1,8 +1,9 @@
 'use client';
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
+import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { cn } from '@/lib/utils';
 
 export const Dialog = DialogPrimitive.Root;
@@ -107,26 +108,4 @@ export function DialogContent({
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
-}
-
-/** The height of an element as it changes, so its fixed-height parent can animate to it. */
-function useMeasuredHeight() {
-  // State, not a ref object: the element only exists while the dialog is open.
-  const [element, setElement] = useState<HTMLDivElement | null>(null);
-  const [height, setHeight] = useState<number>();
-
-  useEffect(() => {
-    if (!element) {
-      setHeight(undefined);
-
-      return;
-    }
-
-    const observer = new ResizeObserver(() => setHeight(element.offsetHeight));
-    observer.observe(element);
-
-    return () => observer.disconnect();
-  }, [element]);
-
-  return { ref: setElement, height };
 }

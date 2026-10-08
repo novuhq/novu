@@ -18,6 +18,8 @@ export type InviteStatus =
   | {
       valid: true;
       agentName: string;
+      /** Who invited them: the account owner's name. Missing when they haven't given one. */
+      inviterName?: string;
       /** Display name of the invited person, falling back to their subscriberId. */
       inviteeName: string;
       /** ISO timestamp when the invite link expires. */

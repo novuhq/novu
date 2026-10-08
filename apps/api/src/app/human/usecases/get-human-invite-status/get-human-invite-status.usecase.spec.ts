@@ -11,7 +11,11 @@ describe('GetHumanInviteStatus', () => {
     expiresAt: '2026-10-02T10:00:00.000Z',
   };
 
-  function setup({ subscriber = { firstName: 'Alice', lastName: 'Chen' } as object | null } = {}) {
+  function setup({
+    subscriber = { firstName: 'Alice', lastName: 'Chen' } as object | null,
+    operator = { firstName: 'Dima', lastName: 'Grossman' } as object | null,
+    operatorId = 'dima' as string | null,
+  } = {}) {
     const inviteTokens = { peek: sinon.stub().resolves(invite) };
     const deliveryService = {
       describeInviteChannels: sinon.stub().resolves([
@@ -20,12 +24,16 @@ describe('GetHumanInviteStatus', () => {
       ]),
     };
     const agentRepository = { findOne: sinon.stub().resolves({ name: 'Deploy bot' }) };
-    const subscriberRepository = { findOne: sinon.stub().resolves(subscriber) };
+    const subscriberRepository = { findOne: sinon.stub() };
+    subscriberRepository.findOne.withArgs(sinon.match({ subscriberId: 'alice' })).resolves(subscriber);
+    subscriberRepository.findOne.withArgs(sinon.match({ subscriberId: 'dima' })).resolves(operator);
+    const operatorService = { findForAgent: sinon.stub().resolves(operatorId) };
     const usecase = new GetHumanInviteStatus(
       inviteTokens as never,
       deliveryService as never,
       agentRepository as never,
-      subscriberRepository as never
+      subscriberRepository as never,
+      operatorService as never
     );
 
     return { usecase, inviteTokens, agentRepository };
@@ -39,6 +47,7 @@ describe('GetHumanInviteStatus', () => {
     expect(await usecase.execute(command)).to.deep.equal({
       valid: true,
       agentName: 'Deploy bot',
+      inviterName: 'Dima Grossman',
       inviteeName: 'Alice Chen',
       expiresAt: '2026-10-02T10:00:00.000Z',
       channels: [
@@ -54,6 +63,11 @@ describe('GetHumanInviteStatus', () => {
     const status = await usecase.execute(command);
 
     expect(status).to.include({ inviteeName: 'alice' });
+  });
+
+  it('leaves the inviter out when the account owner has no contact or no name', async () => {
+    expect(await setup({ operatorId: null }).usecase.execute(command)).to.not.have.property('inviterName');
+    expect(await setup({ operator: {} }).usecase.execute(command)).to.not.have.property('inviterName');
   });
 
   it('reports inactive links instead of throwing', async () => {
