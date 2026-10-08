@@ -48,8 +48,8 @@ describe('CreateUsageRecords #novu-v2', () => {
   const featureFlagsServiceStub = {
     getFlag: sinon.stub(),
   };
-  const workflowRunCountRepositoryStub = {
-    getOrganizationUsageInExactRange: sinon.stub(),
+  const traceLogRepositoryStub = {
+    getOrganizationWorkflowRunsCount: sinon.stub(),
   };
   const createSubscriptionUsecase: UsecaseStub = { execute: () => Promise.resolve() };
   const getOrCreateCustomerUsecase: UsecaseStub = { execute: () => Promise.resolve() };
@@ -98,7 +98,7 @@ describe('CreateUsageRecords #novu-v2', () => {
     loggerStub.info.reset();
     loggerStub.error.reset();
     featureFlagsServiceStub.getFlag.reset();
-    workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.reset();
+    traceLogRepositoryStub.getOrganizationWorkflowRunsCount.reset();
   });
 
   const createUseCase = () => {
@@ -109,7 +109,7 @@ describe('CreateUsageRecords #novu-v2', () => {
       getPlatformNotificationUsageUsecase,
       analyticsServiceStub,
       featureFlagsServiceStub,
-      workflowRunCountRepositoryStub,
+      traceLogRepositoryStub,
       loggerStub
     );
 
@@ -350,11 +350,11 @@ describe('CreateUsageRecords #novu-v2', () => {
       it('should report only the runs since the period start when the period starts during the usage day', async () => {
         const periodStart = new Date('2026-09-26T09:24:00Z');
         givenSubscriptionPeriodStart(periodStart);
-        workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.resolves(1000);
+        traceLogRepositoryStub.getOrganizationWorkflowRunsCount.resolves(1000);
 
         await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
 
-        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.lastCall.args).to.deep.equal([
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.lastCall.args).to.deep.equal([
           'organization_id',
           periodStart,
           new Date('2026-09-26T10:00:00Z'),
@@ -374,7 +374,7 @@ describe('CreateUsageRecords #novu-v2', () => {
 
         expect(createUsageRecordStub.called).to.equal(false);
         expect(analyticsServiceStub.track.called).to.equal(false);
-        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
         expect(loggerStub.info.calledWithMatch({ organizationId: 'organization_id' })).to.equal(true);
         expect(loggerStub.error.called).to.equal(false);
       });
@@ -394,7 +394,7 @@ describe('CreateUsageRecords #novu-v2', () => {
 
         await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
 
-        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
         expect(createUsageRecordStub.lastCall.args).to.deep.equal([
           'item_id_usage_notifications',
           { quantity: 1500, timestamp: toStripeTimestamp(periodStart), action: 'set' },
@@ -406,7 +406,7 @@ describe('CreateUsageRecords #novu-v2', () => {
 
         await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
 
-        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
         expect(createUsageRecordStub.lastCall.args).to.deep.equal([
           'item_id_usage_notifications',
           { quantity: 1500, timestamp: toStripeTimestamp(new Date('2026-09-26T00:00:00Z')), action: 'set' },
@@ -421,7 +421,7 @@ describe('CreateUsageRecords #novu-v2', () => {
 
         await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
 
-        expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
         expect(createUsageRecordStub.lastCall.args).to.deep.equal([
           'item_id_usage_notifications',
           { quantity: 1500, timestamp: toStripeTimestamp(periodStart), action: 'set' },

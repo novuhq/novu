@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { inclusiveUtcDayBounds, toInclusiveUtcDays, toUtcDay } from './inclusive-utc-days';
+import { toInclusiveUtcDays, toUtcDay } from './inclusive-utc-days';
 
 describe('toUtcDay', () => {
   it('returns the UTC calendar day', () => {
@@ -23,47 +23,6 @@ describe('toInclusiveUtcDays', () => {
     ).to.deep.equal({
       start: '2026-09-01',
       end: '2026-10-01',
-    });
-  });
-});
-
-describe('inclusiveUtcDayBounds', () => {
-  it('bounds a mid-day range by the UTC midnights around its inclusive days', () => {
-    expect(
-      inclusiveUtcDayBounds(new Date('2026-09-30T15:06:44.000Z'), new Date('2026-10-30T15:06:44.000Z'))
-    ).to.deep.equal({
-      firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
-      lastDayStart: new Date('2026-10-30T00:00:00.000Z'),
-      lastDayEnd: new Date('2026-10-31T00:00:00.000Z'),
-      isUtcDayAligned: false,
-    });
-  });
-
-  it('closes the last day at a midnight exclusive end', () => {
-    expect(
-      inclusiveUtcDayBounds(new Date('2026-09-30T15:06:44.000Z'), new Date('2026-10-30T00:00:00.000Z'))
-    ).to.deep.equal({
-      firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
-      lastDayStart: new Date('2026-10-29T00:00:00.000Z'),
-      lastDayEnd: new Date('2026-10-30T00:00:00.000Z'),
-      isUtcDayAligned: false,
-    });
-  });
-
-  it('is not UTC-day aligned when only the end is mid-day', () => {
-    expect(
-      inclusiveUtcDayBounds(new Date('2026-09-30T00:00:00.000Z'), new Date('2026-10-30T15:06:44.000Z')).isUtcDayAligned
-    ).to.equal(false);
-  });
-
-  it('is UTC-day aligned when both bounds are UTC midnights', () => {
-    expect(
-      inclusiveUtcDayBounds(new Date('2026-09-30T00:00:00.000Z'), new Date('2026-10-30T00:00:00.000Z'))
-    ).to.deep.equal({
-      firstDayStart: new Date('2026-09-30T00:00:00.000Z'),
-      lastDayStart: new Date('2026-10-29T00:00:00.000Z'),
-      lastDayEnd: new Date('2026-10-30T00:00:00.000Z'),
-      isUtcDayAligned: true,
     });
   });
 });

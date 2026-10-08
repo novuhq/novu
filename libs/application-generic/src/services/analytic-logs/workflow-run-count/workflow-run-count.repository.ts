@@ -2,34 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
-import { inclusiveUtcDayBounds, toInclusiveUtcDays } from '../inclusive-utc-days';
+import { toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
-import { TABLE_NAME as TRACES_TABLE_NAME } from '../trace-log/trace-log.schema';
 import {
   WORKFLOW_RUN_COUNT_ORDER_BY,
   WORKFLOW_RUN_COUNT_TABLE_NAME,
   WorkflowRunCount,
   workflowRunCountSchema,
 } from './workflow-run-count.schema';
-
-/** Tags the edge-day traces query in ClickHouse `system.query_log`. */
-export const EDGE_DAY_CORRECTION_LOG_COMMENT = 'workflow_run_count_edge_day_correction';
-
-export interface DailyWorkflowRunUsage {
-  /** UTC calendar day as `YYYY-MM-DD`. */
-  day: string;
-  count: number;
-}
-
-/**
- * Sum of the daily rows on every UTC day `[startDate, endDate)` touches, with the same whole-day semantics as
- * `getPlatformUsageByWholeUtcDays`. Days missing from `dailyUsage` count as empty.
- */
-export function sumWholeUtcDayUsage(dailyUsage: DailyWorkflowRunUsage[], startDate: Date, endDate: Date): number {
-  const { start, end } = toInclusiveUtcDays(startDate, endDate);
-
-  return dailyUsage.filter(({ day }) => day >= start && day <= end).reduce((sum, { count }) => sum + count, 0);
-}
 
 @Injectable()
 export class WorkflowRunCountRepository extends LogRepository<typeof workflowRunCountSchema, WorkflowRunCount> {
@@ -199,7 +179,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
    * Counts every UTC day the half-open range `[startDate, endDate)` touches in full:
    * `date >= toDate(start) AND date <= toDate(end - 1ms)`. A midnight exclusive end (e.g. Stripe
    * `current_period_end`) does not pull in the next day; with mid-day bounds the first and last day
-   * are still counted in full. Use `getOrganizationUsageInExactRange` when the exact range matters.
+   * are still counted in full. Use `TraceLogRepository.getOrganizationWorkflowRunsCount` when the exact range matters.
    */
   async getPlatformUsageByWholeUtcDays(
     startDate: Date,
@@ -246,8 +226,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   /**
    * Same source and whole-UTC-day semantics as `getPlatformUsageByWholeUtcDays`, but one row per
    * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
-   * `day` is the UTC calendar day as `YYYY-MM-DD`. Callers that need an exact mid-day range pass
-   * `sumWholeUtcDayUsage` of an organization's rows to `getOrganizationUsageInExactRange`.
+   * `day` is the UTC calendar day as `YYYY-MM-DD`.
    *
    * When `minimumOrganizationTotal` is set, only organizations whose `sum(count)` over that same
    * window is at least the minimum are returned.
@@ -304,84 +283,6 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     });
 
     return result.data;
-  }
-
-  /**
-   * Processing workflow runs of one organization within exactly `[startDate, endDate)`: the whole-UTC-day count
-   * minus the runs on the first and last UTC day that fall outside the range.
-   *
-   * Pass `wholeDayCount` when the caller already holds the organization's count over those whole UTC days (e.g. from
-   * `sumWholeUtcDayUsage`), so the result stays consistent with what the caller read; otherwise it is read here.
-   */
-  async getOrganizationUsageInExactRange(
-    organizationId: string,
-    startDate: Date,
-    endDate: Date,
-    wholeDayCount?: number
-  ): Promise<number> {
-    const [resolvedWholeDayCount, edgeDayRunsOutside] = await Promise.all([
-      wholeDayCount ?? this.countOrganizationWholeUtcDays(organizationId, startDate, endDate),
-      this.countEdgeDayRunsOutsideRange(organizationId, startDate, endDate),
-    ]);
-
-    return this.subtractEdgeDayRuns(organizationId, resolvedWholeDayCount, edgeDayRunsOutside);
-  }
-
-  private async countOrganizationWholeUtcDays(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
-    const [row] = await this.getPlatformUsageByWholeUtcDays(startDate, endDate, organizationId);
-
-    return parseInt(row?.count || '0', 10);
-  }
-
-  /**
-   * Processing workflow runs of one organization on the first and last UTC day of `[startDate, endDate)` that fall
-   * outside it, so they can be removed from a whole-day sum. Read from raw `traces`, since
-   * `workflow_run_count` only has daily buckets.
-   */
-  private async countEdgeDayRunsOutsideRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
-    const { firstDayStart, lastDayEnd, isUtcDayAligned } = inclusiveUtcDayBounds(startDate, endDate);
-
-    if (isUtcDayAligned) {
-      return 0;
-    }
-
-    const query = `
-      SELECT count() as count
-      FROM ${TRACES_TABLE_NAME}
-      WHERE
-        organization_id = {organizationId:String}
-        AND entity_type = 'workflow_run'
-        AND event_type = 'workflow_run_status_processing'
-        AND (
-          (created_at >= {firstDayStart:DateTime64(3, 'UTC')} AND created_at < {startDate:DateTime64(3, 'UTC')})
-          OR (created_at >= {endDate:DateTime64(3, 'UTC')} AND created_at < {lastDayEnd:DateTime64(3, 'UTC')})
-        )
-    `;
-
-    const result = await this.clickhouseService.query<{ count: string }>({
-      query,
-      params: {
-        organizationId,
-        firstDayStart: LogRepository.formatDateTime64(firstDayStart),
-        startDate: LogRepository.formatDateTime64(startDate),
-        endDate: LogRepository.formatDateTime64(endDate),
-        lastDayEnd: LogRepository.formatDateTime64(lastDayEnd),
-      },
-      settings: { log_comment: EDGE_DAY_CORRECTION_LOG_COMMENT },
-    });
-
-    return parseInt(result.data[0]?.count || '0', 10);
-  }
-
-  private subtractEdgeDayRuns(organizationId: string, wholeDayCount: number, edgeDayRunsOutside: number): number {
-    if (edgeDayRunsOutside > wholeDayCount) {
-      this.logger.warn(
-        { organizationId, wholeDayCount, edgeDayRunsOutside },
-        'Edge-day workflow runs outside the range exceed the whole-day count; the ClickHouse workflow_run_count and traces tables disagree'
-      );
-    }
-
-    return Math.max(wholeDayCount - edgeDayRunsOutside, 0);
   }
 
   async getActiveOrganizationIds(

@@ -125,8 +125,8 @@ describe('GetOrganizationPeriodUsage #novu-v2', () => {
   const environmentRepo = new EnvironmentRepository();
   const notificationRepo = new NotificationRepository();
 
-  const mockWorkflowRunCountRepository = {
-    getOrganizationUsageInExactRange: sinon.stub().resolves(0),
+  const mockTraceLogRepository = {
+    getOrganizationWorkflowRunsCount: sinon.stub().resolves(0),
   };
 
   const mockFeatureFlagsService = {
@@ -140,7 +140,7 @@ describe('GetOrganizationPeriodUsage #novu-v2', () => {
 
   const createUseCase = () => {
     return new GetOrganizationPeriodUsage(
-      mockWorkflowRunCountRepository,
+      mockTraceLogRepository,
       environmentRepo,
       notificationRepo,
       mockFeatureFlagsService,
