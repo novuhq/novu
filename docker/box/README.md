@@ -29,6 +29,7 @@ process-compose supervises everything under tini (`process-compose.yaml`):
 | `socket` | The socket worker (Cloudflare Worker) under `wrangler dev`, for realtime Inbox |
 | `dashboard` | The built dashboard served by Caddy, with runtime env injected into `index.html` |
 | `stripe` | `stripe listen`, forwarding sandbox webhooks to the API |
+| `bridge` | `bridge/server.mjs`: a self-hosted Novu app with code-first workflows (`bridge/workflows.mjs`) on the checkout's `@novu/framework`, at `http://bridge.box.internal:4000/api/novu` |
 
 Settings shared by every box are in `config/box.env`. Secrets come only from the `docker run` environment.
 
@@ -97,9 +98,10 @@ GITHUB_TOKEN=$(gh auth token) docker exec -e GITHUB_TOKEN novu-box node /opt/box
 
 `apply-pr` merges the PR onto the baked commit (like CI's merge ref) and stops if the two conflict. It then
 reinstalls if the lockfile changed, builds the projects `nx affected` reports, redeploys the API and worker,
-runs migrations and restarts what changed.
+runs migrations and restarts what changed. A PR that changes `@novu/framework` also restarts the bridge app and
+syncs it again, so its workflows run on the PR's framework.
 
-Run the smoke test from the host (19 checks, about 15 seconds; writes `smoke.json` to the directory given):
+Run the smoke test from the host (27 checks, about 40 seconds; writes `smoke.json` to the directory given):
 
 ```sh
 node --env-file=docker/box/.env docker/box/smoke.mjs /tmp/box-smoke
@@ -108,12 +110,17 @@ node --env-file=docker/box/.env docker/box/smoke.mjs /tmp/box-smoke
 It signs in through Clerk, checks the Team plan, creates a workflow with in-app, email, SMS, push and chat
 steps, triggers it, and checks the activity feed (Mongo), the Inbox and its realtime event, the run log
 (ClickHouse), Mailpit for the email and the three sink messages, a delay step through SQS, and an S3 upload.
+Then it runs the bridge app's workflows: sync status, a preview with controls, every channel with a skipped step,
+a delay feeding a custom step's output into an email, a digest, Local mode discovery, the `localhost` guard,
+and a throttle.
 
 Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 
 - `status` lists processes. Logs are in `/data/logs/process-compose.log`.
 - `quiesce` stops the apps, then the databases, leaving the supervisor up for a snapshot.
 - `seed-channels` adds the SMS, push and chat integrations to a box baked before the sink existed.
+- `seed-bridge` does the same for the bridge app. Every `start` syncs the bridge again, so new workflows in a new
+  image show up.
 
 ## What the bake seeds
 
@@ -121,6 +128,8 @@ Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 - Mailpit (`nodemailer` over SMTP) as the primary email integration in every environment.
 - `generic-sms`, `push-webhook` and `chat-webhook` integrations pointing at the sink, and a phone number, push
   token and chat webhook on the seed user's subscriber, so the dashboard's Test Workflow reaches every channel.
+- The bridge app synced to the Development environment. It signs with that environment's secret key, which the
+  bake writes to `/data/bridge/secret-key`.
 - The org on the Team plan: a test card on its Stripe customer and its subscription moved to the Team prices.
   Novu's own webhook handler, fed by `stripe listen`, then sets the tier. For checkout by hand, use the test card
   `4242 4242 4242 4242`.

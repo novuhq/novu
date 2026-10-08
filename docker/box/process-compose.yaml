@@ -225,6 +225,23 @@ processes:
     availability:
       restart: on_failure
 
+  # Self-hosted Novu app (bridge/server.mjs): code-first workflows on the checkout's @novu/framework, synced to
+  # the Development environment by box.mjs. NODE_ENV=production keeps the HMAC signature check on.
+  bridge:
+    command: node /opt/box/bridge/server.mjs
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=
+      - NOVU_API_URL=http://127.0.0.1:3000
+    readiness_probe:
+      exec:
+        command: curl -sf 'http://127.0.0.1:4000/api/novu?action=health-check'
+      period_seconds: 1
+      failure_threshold: 600
+    availability:
+      restart: on_failure
+      backoff_seconds: 2
+
   # Agent PRs only. Turned on with `process-compose process start thalamus`.
   thalamus:
     disabled: true

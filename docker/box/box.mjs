@@ -13,6 +13,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { dirname } from 'node:path';
 import { clerk, findSeedUser, SEED, seedUserToken } from './clerk.mjs';
 
 const BOX = process.env.BOX_HOME ?? '/opt/box';
@@ -29,11 +30,19 @@ const REDIS_TLS = `${DATA}/redis/tls`;
 const REDIS_PORTS = [7000, 7001, 7002];
 const MAIL_HOST = 'mail.box.internal';
 const SINK_URL = 'http://sink.box.internal:8026';
-const BRIDGE_HOST = 'bridge.box.internal';
+const BRIDGE_URL = 'http://bridge.box.internal:4000/api/novu';
+const BRIDGE_SECRET = `${DATA}/bridge/secret-key`;
+// The bridge app's imports, resolved from packages/framework so they follow the checkout.
+const BRIDGE_MODULES = ['express', 'zod'];
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
-const APPS = ['api', 'worker', 'socket', 'dashboard'];
+const APPS = ['api', 'worker', 'socket', 'dashboard', 'bridge'];
 const DATABASES = ['mongo', ...REDIS_PORTS.map((port) => `redis-${port}`), 'clickhouse', 's3', 'mail'];
-const PROJECT_PROCESSES = { '@novu/api-service': 'api', '@novu/worker': 'worker', '@novu/dashboard': 'dashboard' };
+const PROJECT_PROCESSES = {
+  '@novu/api-service': 'api',
+  '@novu/worker': 'worker',
+  '@novu/dashboard': 'dashboard',
+  '@novu/framework': 'bridge',
+};
 const DEPLOYED_APPS = { api: '@novu/api-service', worker: '@novu/worker' };
 
 const env = loadEnv();
@@ -238,16 +247,29 @@ function prepareRuntime() {
   // The SSRF guards reject localhost and literal private IPs, so Mailpit, the sink and the bridge app are
   // reached by names in NOVU_SAFE_OUTBOUND_ALLOW.
   const hosts = fs.readFileSync('/etc/hosts', 'utf8');
-  for (const host of [MAIL_HOST, new URL(SINK_URL).hostname, BRIDGE_HOST]) {
+  for (const host of [MAIL_HOST, new URL(SINK_URL).hostname, new URL(BRIDGE_URL).hostname]) {
     if (!hosts.includes(` ${host}`)) fs.appendFileSync('/etc/hosts', `127.0.0.1 ${host}\n`);
   }
 
+  linkBridgeModules();
   prepareDashboard();
 
   fs.writeFileSync(
     `${REPO}/enterprise/workers/socket/.dev.vars`,
     `JWT_SECRET=${env.JWT_SECRET}\nINTERNAL_API_KEY=${env.INTERNAL_SERVICES_API_KEY}\n`
   );
+}
+
+// The bridge app lives in the image, outside the workspace, so its node_modules point into the checkout:
+// @novu/framework itself, and the packages it has installed for its own adapters.
+function linkBridgeModules() {
+  const modules = `${BOX}/bridge/node_modules`;
+  const framework = `${REPO}/packages/framework`;
+  fs.rmSync(modules, { recursive: true, force: true });
+  for (const [name, source] of [['@novu/framework', framework], ...BRIDGE_MODULES.map((name) => [name, `${framework}/node_modules/${name}`])]) {
+    fs.mkdirSync(dirname(`${modules}/${name}`), { recursive: true });
+    fs.symlinkSync(fs.realpathSync(source), `${modules}/${name}`);
+  }
 }
 
 // Same job as apps/dashboard/docker-entrypoint.sh: expose VITE_* runtime env as window._env_.
@@ -309,6 +331,7 @@ async function bake(ref = 'next') {
   const token = await step('seed Clerk user and org', seedClerk);
   await step('seed Mailpit email integration', () => seedEmailIntegration(token));
   await step('seed SMS, push and chat (sink)', () => seedChannels(token));
+  await step('seed bridge app (framework)', () => seedBridge(token));
   await step('seed Team tier (Stripe)', () => seedTeamTier(token));
   await step('shutdown', async () => {
     supervisor.kill('SIGTERM');
@@ -333,6 +356,8 @@ async function start() {
     `${JSON.stringify({ at: new Date().toISOString(), command: 'start', step: 'api+worker healthy', seconds })}\n`
   );
   log(`box ready in ${seconds.toFixed(1)}s`);
+  // The workflows ship in the image, so a new image may bring new ones.
+  if (fs.existsSync(BRIDGE_SECRET)) await syncBridge().catch((error) => log(`WARN: bridge sync failed: ${error.message}`));
 }
 
 async function api(path, { headers = {}, ...init } = {}) {
@@ -440,6 +465,27 @@ async function seedChannels(token) {
     }
     log(`SMS, push and chat go to the sink in ${environment.name}`);
   }
+}
+
+// The bridge app serves the Development environment, so it signs with that environment's secret key. The key
+// belongs to this box's own Mongo data, like every other seeded record.
+async function seedBridge(token) {
+  const { body: environments } = await api('/v1/environments', { headers: { Authorization: `Bearer ${token}` } });
+  const development = environments.data.find((environment) => environment.name === 'Development');
+  fs.mkdirSync(dirname(BRIDGE_SECRET), { recursive: true });
+  fs.writeFileSync(BRIDGE_SECRET, development.apiKeys[0].key, { mode: 0o600 });
+  await syncBridge();
+}
+
+// Same request as `npx novu sync`: the API discovers the workflows from the bridge, signed, and stores them.
+async function syncBridge() {
+  await waitForHttp(`${BRIDGE_URL}?action=health-check`, 120);
+  const { body } = await api('/v1/bridge/sync?source=box', {
+    method: 'POST',
+    headers: { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` },
+    body: JSON.stringify({ bridgeUrl: BRIDGE_URL }),
+  });
+  log(`bridge synced: ${body.data.length} workflows from ${BRIDGE_URL}`);
 }
 
 async function stripe(path, body) {
@@ -621,6 +667,8 @@ async function applyPr(ref) {
     for (const name of restart) pc(['process', 'restart', name]);
   });
   await waitForHttp('http://127.0.0.1:3000/v1/health-check', 300);
+  // A new framework can discover the same workflows differently (schemas, step options).
+  if (restart.has('bridge')) await step('sync bridge', syncBridge);
   log(`applied ${ref} at ${head}`);
 }
 
@@ -638,6 +686,11 @@ const commands = {
   'seed-channels': async () => {
     const { user, org } = await findSeedUser();
     await seedChannels(await seedUserToken({ userId: user.id, orgId: org.id }));
+  },
+  // For boxes baked before the bridge app existed.
+  'seed-bridge': async () => {
+    const { user, org } = await findSeedUser();
+    await seedBridge(await seedUserToken({ userId: user.id, orgId: org.id }));
   },
   quiesce,
   status: () => pc(['process', 'list']),
