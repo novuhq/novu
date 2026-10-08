@@ -11,8 +11,7 @@ import { Logomark } from './auth-icons';
  * right half. The panel needs room for its 620px illustration, so narrower screens get the form alone.
  *
  * Both halves sit in one column as wide as the design (1728px), centered on wider screens, so they stay
- * next to each other instead of drifting apart. On narrower ones both halves give up
- * the same number of pixels: the panel stays 88px narrower than the form's half, as 820 is to 908.
+ * next to each other instead of drifting apart. The two halves are always the same width.
  */
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -42,7 +41,7 @@ function Logo() {
 function BrandPanel() {
   return (
     // On screens wider than the column, the panel's color carries on to the left edge of the screen.
-    <aside className="relative hidden w-[calc(50%-44px)] shrink-0 flex-col justify-between border-r border-border bg-subtle px-12 py-9 before:absolute before:inset-y-0 before:right-full before:w-screen before:bg-subtle xl:flex">
+    <aside className="relative hidden w-1/2 shrink-0 flex-col justify-between border-r border-border bg-subtle px-12 py-9 before:absolute before:inset-y-0 before:right-full before:w-screen before:bg-subtle xl:flex">
       <Logo />
       <div className="flex flex-col items-center gap-5.5">
         <p className="font-mono text-[11px] leading-4 text-accent">the human API for agents</p>
