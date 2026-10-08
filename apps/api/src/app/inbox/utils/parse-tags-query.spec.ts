@@ -1,5 +1,6 @@
-import { TagsFilterValidationError } from '@novu/shared';
+import { buildTagsQuery, normalizeTagGroups, TagsFilterValidationError } from '@novu/shared';
 import { expect } from 'chai';
+import express from 'express';
 import { parseTagsQueryValue } from './parse-tags-query';
 
 describe('parseTagsQueryValue', () => {
@@ -69,5 +70,39 @@ describe('parseTagsQueryValue', () => {
 
   it('parses explicit { or }', () => {
     expect(parseTagsQueryValue({ or: [1, 'x'] })).to.deep.equal({ or: ['1', 'x'] });
+  });
+});
+
+describe('parseTagsQueryValue with the API query parser', () => {
+  const app = express();
+  app.set('query parser', 'extended');
+  const parseQueryString: (queryString: string) => Record<string, unknown> = app.get('query parser fn');
+
+  const tags = Array.from({ length: 31 }, (_, i) => `t${i}`);
+  const flatQuery = (count: number) =>
+    tags
+      .slice(0, count)
+      .map((tag) => `tags[]=${tag}`)
+      .join('&');
+  const tagsMongoQuery = (queryString: string) =>
+    buildTagsQuery(normalizeTagGroups(parseTagsQueryValue(parseQueryString(queryString).tags as unknown)));
+
+  it('matches any of 21 flat tags', () => {
+    expect(tagsMongoQuery(flatQuery(21))).to.deep.equal({ tags: { $in: tags.slice(0, 21) } });
+  });
+
+  it('matches any of 31 flat tags', () => {
+    expect(tagsMongoQuery(flatQuery(31))).to.deep.equal({ tags: { $in: tags } });
+  });
+
+  it('matches an overflowed OR-group together with a second group', () => {
+    const groupQuery = tags
+      .slice(0, 21)
+      .map((tag) => `tags[0][]=${tag}`)
+      .join('&');
+
+    expect(tagsMongoQuery(`${groupQuery}&tags[1][]=z`)).to.deep.equal({
+      $and: [{ tags: { $in: tags.slice(0, 21) } }, { tags: { $in: ['z'] } }],
+    });
   });
 });
