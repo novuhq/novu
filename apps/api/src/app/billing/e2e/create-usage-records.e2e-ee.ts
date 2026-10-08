@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, StripeBillingIntervalEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -45,6 +45,12 @@ describe('CreateUsageRecords #novu-v2', () => {
     info: sinon.stub(),
     error: sinon.stub(),
   };
+  const featureFlagsServiceStub = {
+    getFlag: sinon.stub(),
+  };
+  const workflowRunCountRepositoryStub = {
+    getOrganizationUsageInExactRange: sinon.stub(),
+  };
   const createSubscriptionUsecase: UsecaseStub = { execute: () => Promise.resolve() };
   const getOrCreateCustomerUsecase: UsecaseStub = { execute: () => Promise.resolve() };
   const getPlatformNotificationUsageUsecase: UsecaseStub = { execute: () => Promise.resolve() };
@@ -78,6 +84,7 @@ describe('CreateUsageRecords #novu-v2', () => {
         data: [mockMonthlyBusinessSubscription],
       },
     });
+    featureFlagsServiceStub.getFlag.resolves(false);
   });
 
   afterEach(() => {
@@ -90,6 +97,8 @@ describe('CreateUsageRecords #novu-v2', () => {
     loggerStub.debug.reset();
     loggerStub.info.reset();
     loggerStub.error.reset();
+    featureFlagsServiceStub.getFlag.reset();
+    workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.reset();
   });
 
   const createUseCase = () => {
@@ -99,10 +108,31 @@ describe('CreateUsageRecords #novu-v2', () => {
       createSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
       analyticsServiceStub,
+      featureFlagsServiceStub,
+      workflowRunCountRepositoryStub,
       loggerStub
     );
 
     return useCase;
+  };
+
+  const enableClickHouseUsage = () => {
+    featureFlagsServiceStub.getFlag
+      .withArgs(sinon.match({ key: FeatureFlagsKeysEnum.IS_BILLING_USAGE_CLICKHOUSE_ENABLED }))
+      .resolves(true);
+  };
+
+  const givenSubscriptionPeriodStart = (periodStart: Date) => {
+    getOrCreateCustomerStub.resolves({
+      subscriptions: {
+        data: [
+          {
+            ...mockMonthlyBusinessSubscription,
+            current_period_start: periodStart.getTime() / 1000,
+          },
+        ],
+      },
+    });
   };
 
   it('should fetch the platform usage records with usage dates between the start and end date of the previous day', async () => {
@@ -292,6 +322,74 @@ describe('CreateUsageRecords #novu-v2', () => {
           action: 'set',
         },
       ],
+    ]);
+  });
+
+  describe('when the period starts during the usage day', () => {
+    const periodStart = new Date('2026-09-26T09:24:00Z');
+    const cronRunDate = new Date('2026-09-26T10:05:00Z');
+
+    beforeEach(() => {
+      getPlatformNotificationUsageStub.resolves([
+        {
+          _id: 'organization_id',
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          notificationsCount: 1500,
+        },
+      ]);
+      givenSubscriptionPeriodStart(periodStart);
+    });
+
+    it('should report only the runs since the period start when ClickHouse usage is enabled', async () => {
+      enableClickHouseUsage();
+      workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.resolves(1000);
+
+      await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+      expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.lastCall.args).to.deep.equal([
+        'organization_id',
+        periodStart,
+        new Date('2026-09-26T10:00:00Z'),
+      ]);
+      expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+        'item_id_usage_notifications',
+        { quantity: 1000, timestamp: periodStart.getTime() / 1000, action: 'set' },
+      ]);
+      expect(analyticsServiceStub.track.lastCall.args[2].quantity).to.equal(1000);
+    });
+
+    it('should report the whole-day count when ClickHouse usage is disabled', async () => {
+      await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+      expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+      expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+        'item_id_usage_notifications',
+        { quantity: 1500, timestamp: periodStart.getTime() / 1000, action: 'set' },
+      ]);
+    });
+  });
+
+  it('should skip the usage record when the whole usage day is before the period start and ClickHouse usage is enabled', async () => {
+    enableClickHouseUsage();
+    givenSubscriptionPeriodStart(new Date('2026-09-26T00:02:00Z'));
+
+    await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: new Date('2026-09-26T00:05:00Z') }));
+
+    expect(createUsageRecordStub.called).to.equal(false);
+    expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+    expect(loggerStub.info.calledWithMatch({ organizationId: 'organization_id' })).to.equal(true);
+  });
+
+  it('should report the whole-day count when the period started before the usage day and ClickHouse usage is enabled', async () => {
+    enableClickHouseUsage();
+    givenSubscriptionPeriodStart(new Date('2026-09-01T09:24:00Z'));
+
+    await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: new Date('2026-09-26T10:05:00Z') }));
+
+    expect(workflowRunCountRepositoryStub.getOrganizationUsageInExactRange.called).to.equal(false);
+    expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+      'item_id_usage_notifications',
+      { quantity: 100, timestamp: new Date('2026-09-26T00:00:00Z').getTime() / 1000, action: 'set' },
     ]);
   });
 });
