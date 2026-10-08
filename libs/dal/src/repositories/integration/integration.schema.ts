@@ -95,6 +95,9 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       externalEnvironmentId: Schema.Types.String,
       externalVaultId: Schema.Types.String,
       externalWorkspaceId: Schema.Types.String,
+      serviceId: Schema.Types.String,
+      servicePassword: Schema.Types.String,
+      spaceId: Schema.Types.String,
       isNovuManaged: Schema.Types.Boolean,
     },
     configurations: {

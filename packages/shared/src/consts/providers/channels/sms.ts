@@ -29,6 +29,7 @@ import {
   ringCentralConfig,
   ruachSmsConfig,
   sendchampConfig,
+  sfrSmsConfig,
   simpleTextingConfig,
   sinchConfig,
   sms77Config,
@@ -358,5 +359,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: ruachSmsConfig,
     docReference: `https://docs.novu.co/platform/integrations/sms/ruach-sms${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'ruach-sms.svg', dark: 'ruach-sms.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.SfrSms,
+    displayName: 'SFR',
+    channel: ChannelTypeEnum.SMS,
+    credentials: sfrSmsConfig,
+    docReference: 'https://www.sfrbusiness.fr/relation-client/diffusion-multi-canal',
+    logoFileName: { light: 'sfr-sms.svg', dark: 'sfr-sms.svg' },
   },
 ];

@@ -27,6 +27,7 @@ export * from './plivo.handler';
 export * from './ring-central.handler';
 export * from './ruach-sms.handler';
 export * from './sendchamp.handler';
+export * from './sfr-sms.handler';
 export * from './simpletexting.handler';
 export * from './sinch.handler';
 export * from './sms-central.handler';
