@@ -8,8 +8,10 @@
 // notification reached the activity feed (Mongo), the workflow-run log
 // (ClickHouse), the subscriber's inbox, the socket (socket worker) and Mailpit
 // (SMTP), checks SMS, push and chat reached the sink (shown in Mailpit), runs a
-// delay step through the queue backend (SQS), then uploads a file through a
-// presigned S3 URL.
+// delay step through the queue backend (SQS), uploads a file through a
+// presigned S3 URL, then runs the bridge app's code-first workflows
+// (@novu/framework): sync, preview, every channel, skip, delay with a custom
+// step, digest, throttle, Local mode discovery and the bridge URL guard.
 // Writes smoke.json with every check and its timing into the artifact dir.
 
 import fs from 'node:fs';
@@ -308,6 +310,127 @@ try {
     if (!get.ok) throw new Error(`GET ${body.data.path} -> ${get.status}`);
 
     return { path: body.data.path, bytes: (await get.arrayBuffer()).byteLength };
+  });
+
+  // Code-first workflows from the box's bridge app (bridge/workflows.mjs), served by @novu/framework.
+  const bridgeAuth = { ...auth(), 'Novu-Environment-Id': env.id };
+  const run = `r${Date.now()}`;
+  const triggerBridge = async (name, payload) =>
+    (
+      await call('/v1/events/trigger', {
+        method: 'POST',
+        headers: keyAuth,
+        body: JSON.stringify({ name, to: { subscriberId, email, phone: '+15550002' }, payload }),
+      })
+    ).body.data.transactionId;
+  const mailpit = async (query) =>
+    (await (await fetch(`${MAIL}/api/v1/search?query=${encodeURIComponent(query)}`)).json()).messages ?? [];
+  const inbox = async () =>
+    (await call('/v1/inbox/notifications?limit=50', { headers: { Authorization: `Bearer ${subscriberToken}` } })).body.data;
+
+  await check('bridge app is synced (framework)', async () => {
+    const { body: status } = await call('/v1/bridge/status', { headers: bridgeAuth });
+    if (status.data.status !== 'ok') throw new Error(`bridge status ${status.data.status}`);
+    const { body } = await call('/v2/workflows?query=box-bridge&limit=10', { headers: keyAuth });
+    const external = body.data.workflows.filter((workflow) => workflow.origin === 'external').map((workflow) => workflow.workflowId);
+    if (external.length !== 4) throw new Error(`external workflows: ${external.join(', ')}`);
+
+    return { sdkVersion: status.data.sdkVersion, discovered: status.data.discovered, workflows: external };
+  });
+
+  await check('bridge preview renders a code step with controls', async () => {
+    const { body } = await call('/v1/bridge/preview/box-bridge-all-channels/email', {
+      method: 'POST',
+      headers: bridgeAuth,
+      body: JSON.stringify({ controls: { subject: 'Preview' }, payload: { name: 'P' } }),
+    });
+    if (body.data.outputs.subject !== 'Preview P') throw new Error(`subject ${body.data.outputs.subject}`);
+
+    return body.data.outputs;
+  });
+
+  await check('bridge workflow reaches every channel and skips push (signed)', async () => {
+    const transaction = await triggerBridge('box-bridge-all-channels', { name: run, skipPush: true });
+
+    return until('bridge deliveries', async () => {
+      const [emailMessage] = await mailpit(`subject:"Bridge email ${run}"`);
+      if (!emailMessage) throw new Error('no email yet');
+      for (const channel of ['sms', 'chat']) {
+        if (!(await mailpit(`tag:${channel} "${run}"`)).length) throw new Error(`no ${channel} yet`);
+      }
+      if (!(await inbox()).some((message) => message.body === `Bridge in-app for ${run}`)) throw new Error('no in-app yet');
+      const { body } = await call(`/v1/notifications?page=0&transactionId=${transaction}`, { headers: keyAuth });
+      const jobs = body.data.find((entry) => entry.transactionId === transaction)?.jobs ?? [];
+      // A step skipped by the bridge ends as a canceled job, and nothing reaches the provider.
+      const push = jobs.find((job) => job.type === 'push')?.status;
+      if (push !== 'canceled') throw new Error(`push job ${push}`);
+      if ((await mailpit(`tag:push "${run}"`)).length) throw new Error('skipped push reached the sink');
+
+      return { email: emailMessage.Subject, push };
+    });
+  });
+
+  await check('bridge custom step output reaches an email after a delay', async () => {
+    await triggerBridge('box-bridge-delay-custom', { name: run });
+    const subject = `Bridge code BOX-${run.toUpperCase()}`;
+
+    return until('custom output email', async () => {
+      if (!(await mailpit(`subject:"${subject}"`)).length) throw new Error('no email yet');
+
+      return subject;
+    });
+  });
+
+  await check('bridge digest batches 3 triggers into 1 email', async () => {
+    for (const n of [1, 2, 3]) await triggerBridge('box-bridge-digest', { run, n });
+
+    return until('digest email', async () => {
+      const messages = await mailpit(`subject:"Bridge digest ${run}"`);
+      if (messages.length !== 1 || !messages[0].Subject.endsWith(': 3 events')) {
+        throw new Error(messages.map((message) => message.Subject).join(' | ') || 'no digest email yet');
+      }
+
+      return messages[0].Subject;
+    });
+  });
+
+  await check('Local mode discovers the bridge without syncing (stateless)', async () => {
+    const { body } = await call('/v1/bridge/stateless/discover', {
+      method: 'POST',
+      headers: bridgeAuth,
+      body: JSON.stringify({ bridgeUrl: 'http://bridge.box.internal:4000/api/novu' }),
+    });
+
+    return body.data.workflows.map((workflow) => workflow.workflowId);
+  });
+
+  await check('bridge URL guard rejects localhost', async () => {
+    const { body } = await call('/v1/bridge/validate', {
+      method: 'POST',
+      headers: keyAuth,
+      body: JSON.stringify({ bridgeUrl: 'http://localhost:4000/api/novu' }),
+    });
+    if (body.data.isValid !== false) throw new Error('localhost bridge URL accepted');
+
+    return body.data.error;
+  });
+
+  // Last: RedisThrottleService loads its Lua script on one Redis Cluster node only, so this fails whenever the
+  // throttle key lands on a node without it (FIDELITY.md, "Bugs found").
+  await check('bridge throttle lets 1 of 2 triggers through', async () => {
+    for (const n of [1, 2]) await triggerBridge('box-bridge-throttle', { run, n });
+    const throttled = async () => (await inbox()).filter((message) => message.body.startsWith(`Bridge throttle ${run}`));
+    await until('first throttle message', async () => {
+      const messages = await throttled();
+      if (!messages.length) throw new Error('no in-app yet');
+
+      return messages;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const delivered = (await throttled()).map((message) => message.body);
+    if (delivered.length !== 1) throw new Error(`delivered ${delivered.join(', ')}`);
+
+    return delivered;
   });
 } catch {
   exitCode = 1;

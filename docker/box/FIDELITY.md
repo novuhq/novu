@@ -39,6 +39,19 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 | Novu demo providers | Absent (`NOVU_EMAIL_INTEGRATION_API_KEY`, `NOVU_SMS_INTEGRATION_*`) | - | The "Novu" email/SMS demo integrations |
 | Inbox | Real (socket worker, `VITE_WEBSOCKET_TYPE=cloud`) | Realtime, feed, preferences | - |
 
+## Code-first workflows (bridge app)
+
+The `bridge` process serves workflows with the checkout's `@novu/framework`, signed with the Development secret key,
+through the same SSRF guard as a customer's bridge (allow-listed as `bridge.box.internal`).
+
+| Area | Difference |
+|---|---|
+| Environments | Only Development is synced; Production would need its own secret key and a second sync |
+| Bridge app dependencies | `express` and `zod` come from `packages/framework`'s own dev dependencies, so they follow the PR |
+| Content renderers | No react-email, Vue or Svelte templates; they render inside the customer's app, outside Novu |
+| `novu dev` tunnel (novu.sh) | Not used; Local mode is tested by pointing it at the bridge directly |
+| Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same `POST /v1/bridge/sync` they make |
+
 ## Auth, billing and flags
 
 | Area | Box | Difference from staging |
@@ -64,3 +77,10 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 
 - `subscribers` declares two indexes named `unique_subscriber_per_environment` with different key orders; `syncIndexes`
   skips one with a warning. Not fixed in the box; to report.
+- Throttle steps fail on a Redis Cluster with more than one node. `RedisThrottleService`
+  (`libs/application-generic/src/services/throttle/redis-throttle.service.ts`) runs `SCRIPT LOAD` through the
+  cluster client, which sends it to one node, then `EVALSHA` on the node that owns the throttle key. When that node
+  lacks the script, the NOSCRIPT retry loads it the same way and usually fails again, so the job is `failed`.
+  Seen in the box: the key's slot (15376) was on node 7002, which was the only node without the script. It stays
+  broken until the script happens to reach every node, and again after every Redis restart or failover.
+  `smoke.mjs` runs the throttle check last for this reason. Not fixed; to report.
