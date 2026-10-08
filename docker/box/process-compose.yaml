@@ -102,6 +102,22 @@ processes:
     availability:
       restart: on_failure
 
+  # SMS, push and chat catcher (sink.mjs): forwards what Novu's HTTP providers send to Mailpit.
+  sink:
+    command: node /opt/box/sink.mjs
+    depends_on:
+      mail:
+        condition: process_healthy
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 8026
+        path: /health
+      period_seconds: 1
+      failure_threshold: 30
+    availability:
+      restart: on_failure
+
   # Data store setup: replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket.
   # Waits for SQS too, so the API and Worker never start before their queues exist.
   migrate:

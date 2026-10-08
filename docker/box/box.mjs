@@ -28,6 +28,7 @@ const BULLMQ_PRO = `${DATA}/bullmq-pro`;
 const REDIS_TLS = `${DATA}/redis/tls`;
 const REDIS_PORTS = [7000, 7001, 7002];
 const MAIL_HOST = 'mail.box.internal';
+const SINK_URL = 'http://sink.box.internal:8026';
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
 const APPS = ['api', 'worker', 'socket', 'dashboard'];
 const DATABASES = ['mongo', ...REDIS_PORTS.map((port) => `redis-${port}`), 'clickhouse', 's3', 'mail'];
@@ -233,9 +234,12 @@ function prepareRuntime() {
   // The signing secret of `stripe listen` (the `stripe` process) for this key; Stripe returns the same one every time.
   env.STRIPE_CONNECT_SECRET = output('stripe', ['listen', '--print-secret', '--skip-update']);
 
-  // The SMTP SSRF guard rejects literal private IPs, so Mailpit is reached by a name in NOVU_SAFE_OUTBOUND_ALLOW.
+  // The SSRF guards reject literal private IPs, so Mailpit and the sink are reached by names in
+  // NOVU_SAFE_OUTBOUND_ALLOW.
   const hosts = fs.readFileSync('/etc/hosts', 'utf8');
-  if (!hosts.includes(` ${MAIL_HOST}`)) fs.appendFileSync('/etc/hosts', `127.0.0.1 ${MAIL_HOST}\n`);
+  for (const host of [MAIL_HOST, new URL(SINK_URL).hostname]) {
+    if (!hosts.includes(` ${host}`)) fs.appendFileSync('/etc/hosts', `127.0.0.1 ${host}\n`);
+  }
 
   prepareDashboard();
 
@@ -303,6 +307,7 @@ async function bake(ref = 'next') {
   await step('first boot', () => waitForHttp('http://127.0.0.1:3000/v1/health-check', 300));
   const token = await step('seed Clerk user and org', seedClerk);
   await step('seed Mailpit email integration', () => seedEmailIntegration(token));
+  await step('seed SMS, push and chat (sink)', () => seedChannels(token));
   await step('seed Team tier (Stripe)', () => seedTeamTier(token));
   await step('shutdown', async () => {
     supervisor.kill('SIGTERM');
@@ -385,6 +390,54 @@ async function seedEmailIntegration(token) {
     });
     await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
     log(`Mailpit is the primary email integration in ${environment.name}`);
+  }
+}
+
+// SMS, push and chat go to sink.mjs, which shows them in Mailpit. Every environment gets the three HTTP
+// providers, and the seeded user's subscriber (the default target of the dashboard's Test Workflow) gets
+// a phone number, a push device token and a chat webhook, so a test run reaches all channels.
+async function seedChannels(token) {
+  const auth = { Authorization: `Bearer ${token}` };
+  const { body: me } = await api('/v1/users/me', { headers: auth });
+  const { body: environments } = await api('/v1/environments', { headers: auth });
+  const integrations = [
+    {
+      providerId: 'generic-sms',
+      channel: 'sms',
+      name: 'Box SMS (sink)',
+      identifier: 'box-sms',
+      credentials: { baseUrl: `${SINK_URL}/sms`, apiKeyRequestHeader: 'x-box-key', apiKey: 'box', idPath: 'id', datePath: 'date', from: 'Novu Box' },
+    },
+    { providerId: 'push-webhook', channel: 'push', name: 'Box Push (sink)', identifier: 'box-push', credentials: { webhookUrl: `${SINK_URL}/push`, secretKey: 'box-fake-push-hmac' } },
+    { providerId: 'chat-webhook', channel: 'chat', name: 'Box Chat (sink)', identifier: 'box-chat', credentials: { secretKey: 'box-fake-chat-hmac' } },
+  ];
+
+  for (const environment of environments.data) {
+    const headers = { Authorization: `ApiKey ${environment.apiKeys[0].key}` };
+    const { body: existing } = await api('/v1/integrations', { headers });
+    for (const integration of integrations) {
+      if (existing.data.some((item) => item.identifier === integration.identifier && item._environmentId === environment._id)) continue;
+      const { body } = await api('/v1/integrations', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ...integration, active: true, check: false }),
+      });
+      if (integration.channel === 'sms') await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
+    }
+
+    const subscriberId = me.data._id;
+    await api('/v1/subscribers', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ subscriberId, email: me.data.email, firstName: me.data.firstName, lastName: me.data.lastName, phone: '+15550001' }),
+    });
+    for (const [providerId, credentials] of [
+      ['push-webhook', { deviceTokens: ['box-device-token'] }],
+      ['chat-webhook', { webhookUrl: `${SINK_URL}/chat` }],
+    ]) {
+      await api(`/v1/subscribers/${subscriberId}/credentials`, { method: 'PUT', headers, body: JSON.stringify({ providerId, credentials }) });
+    }
+    log(`SMS, push and chat go to the sink in ${environment.name}`);
   }
 }
 
@@ -580,6 +633,11 @@ const commands = {
   start,
   migrate,
   'apply-pr': () => applyPr(process.argv[3]),
+  // For boxes baked before the sink existed; a new bake runs it already.
+  'seed-channels': async () => {
+    const { user, org } = await findSeedUser();
+    await seedChannels(await seedUserToken({ userId: user.id, orgId: org.id }));
+  },
   quiesce,
   status: () => pc(['process', 'list']),
 };

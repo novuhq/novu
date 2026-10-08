@@ -7,8 +7,9 @@
 // socket as a subscriber, triggers the workflow, then checks that the
 // notification reached the activity feed (Mongo), the workflow-run log
 // (ClickHouse), the subscriber's inbox, the socket (socket worker) and Mailpit
-// (SMTP), runs a delay step through the queue backend (SQS), then uploads a file
-// through a presigned S3 URL.
+// (SMTP), checks SMS, push and chat reached the sink (shown in Mailpit), runs a
+// delay step through the queue backend (SQS), then uploads a file through a
+// presigned S3 URL.
 // Writes smoke.json with every check and its timing into the artifact dir.
 
 import fs from 'node:fs';
@@ -106,7 +107,7 @@ try {
   checks.at(-1).detail = { id: env.id, identifier: env.identifier };
 
   const workflowId = `box-smoke-${Date.now()}`;
-  await check('create in-app workflow', async () => {
+  await check('create workflow (in-app, email, SMS, push, chat)', async () => {
     await call('/v2/workflows', {
       method: 'POST',
       headers: keyAuth,
@@ -121,6 +122,13 @@ try {
             type: 'email',
             controlValues: { subject: 'Box smoke {{payload.n}}', body: '<p>Box smoke email</p>', editorType: 'html' },
           },
+          { name: 'SMS', type: 'sms', controlValues: { body: 'Box smoke SMS {{subscriber.subscriberId}}' } },
+          {
+            name: 'Push',
+            type: 'push',
+            controlValues: { subject: 'Box smoke push', body: 'Box smoke push {{subscriber.subscriberId}}' },
+          },
+          { name: 'Chat', type: 'chat', controlValues: { body: 'Box smoke chat {{subscriber.subscriberId}}' } },
         ],
       }),
     });
@@ -140,6 +148,21 @@ try {
   });
   checks.at(-1).detail = { subscriberId };
 
+  await check('give the subscriber a push token and a chat webhook', async () => {
+    for (const [providerId, credentials] of [
+      ['push-webhook', { deviceTokens: ['box-smoke-device'] }],
+      ['chat-webhook', { webhookUrl: 'http://sink.box.internal:8026/chat' }],
+    ]) {
+      await call(`/v1/subscribers/${subscriberId}/credentials`, {
+        method: 'PUT',
+        headers: keyAuth,
+        body: JSON.stringify({ providerId, credentials }),
+      });
+    }
+
+    return 'push-webhook, chat-webhook';
+  });
+
   const socketMessages = [];
   const socket = await check('connect realtime socket', async () => {
     const ws = new WebSocket(`${SOCKET}/?token=${subscriberToken}`);
@@ -157,7 +180,7 @@ try {
     const res = await call('/v1/events/trigger', {
       method: 'POST',
       headers: keyAuth,
-      body: JSON.stringify({ name: workflowId, to: { subscriberId, email }, payload: { n: 1 } }),
+      body: JSON.stringify({ name: workflowId, to: { subscriberId, email, phone: '+15550002' }, payload: { n: 1 } }),
     });
 
     return res.body.data.transactionId;
@@ -215,6 +238,20 @@ try {
       if (!messages?.length) throw new Error('no email yet');
 
       return { subject: messages[0].Subject, from: messages[0].From?.Address };
+    })
+  );
+
+  await check('SMS, push and chat reached the sink (Mailpit)', () =>
+    until('sink messages', async () => {
+      const found = {};
+      for (const channel of ['sms', 'push', 'chat']) {
+        const query = encodeURIComponent(`tag:${channel} "${subscriberId}"`);
+        const { messages } = await (await fetch(`${MAIL}/api/v1/search?query=${query}`)).json();
+        if (!messages?.length) throw new Error(`no ${channel} message yet`);
+        found[channel] = messages[0].Subject;
+      }
+
+      return found;
     })
   );
 
