@@ -1,9 +1,10 @@
-import { currentUser, type User } from '@clerk/nextjs/server';
+import type { User } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { Badge } from '@/components/ui/badge';
+import { findCurrentUser } from '@/lib/auth-page';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { getRelayAgent } from '@/lib/human-agent-api';
 import { readApiKey } from '@/lib/human-api-key';
@@ -30,10 +31,13 @@ const PROVIDER_NAMES: Record<string, string> = { github: 'GitHub', gitlab: 'GitL
 
 /** The operator, their API key, their plan and the way out. */
 export default async function SettingsPage() {
-  const [user, account] = await Promise.all([currentUser(), requireHumanAccount({ returnTo: SETTINGS_PATH })]);
+  // The user first: with a session that outlived its user, there is no account to ask for.
+  const user = await findCurrentUser();
   if (!user) {
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: SETTINGS_PATH })}`);
   }
+
+  const account = await requireHumanAccount({ returnTo: SETTINGS_PATH });
 
   const [apiKey, agentName] = await Promise.all([loadApiKey(account), loadAgentName(account)]);
   const email = user.primaryEmailAddress?.emailAddress;

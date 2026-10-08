@@ -1,7 +1,6 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
@@ -45,34 +44,30 @@ export function DeleteAccountCard({ agentName }: DeleteAccountCardProps) {
 }
 
 function DeleteDialogContent({ agentName }: DeleteAccountCardProps) {
-  const { signOut } = useClerk();
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
   // Stays true once the account is gone, so the dialog keeps busy until the browser has left.
-  const [leaving, setLeaving] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  function handleDelete() {
+  async function handleDelete() {
     setError(null);
-    startTransition(async () => {
-      const result = await deleteAccountAction();
-      if (!result.ok) {
-        setError(result.error);
+    setBusy(true);
 
-        return;
-      }
+    const result = await deleteAccountAction().catch(() => ({
+      ok: false as const,
+      error: 'Something went wrong while deleting your account. Please try again.',
+    }));
+    if (!result.ok) {
+      setError(result.error);
+      setBusy(false);
 
-      setLeaving(true);
-      // The session belongs to a user that no longer exists. Ending it here keeps the next page from
-      // treating the browser as signed in; if Clerk can't, a full page load drops what is left of it.
-      try {
-        await signOut({ redirectUrl: '/' });
-      } catch {
-        window.location.assign('/');
-      }
-    });
+      return;
+    }
+
+    // A full page load, not a move inside the app: this page belongs to a user that no longer exists, and
+    // rendering it again (which signing out through Clerk does) has nobody to show. Clerk drops what is
+    // left of the session when it loads on the next page.
+    window.location.assign('/');
   }
-
-  const busy = pending || leaving;
 
   return (
     <DialogContent
