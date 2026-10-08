@@ -10,7 +10,6 @@ export const geist = Geist({
 
 export const geistMono = Geist_Mono({
   subsets: ['latin'],
-  weight: '400',
   variable: '--font-geist-mono',
   display: 'swap',
 });
