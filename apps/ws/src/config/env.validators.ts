@@ -1,9 +1,13 @@
-import { assertQueueBackendConfig } from '@novu/application-generic';
+import {
+  assertQueueBackendConfig,
+  createThrowingEnvReporter,
+  requiresStandaloneRedis,
+} from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend, StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  const env = cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('ws') });
 
   // Sockets are the only topic this service touches, and they never carry a
   // delay, so no scheduler config is required here.
@@ -23,8 +27,19 @@ export const envValidators = {
   MONGO_URL: str(),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
   PORT: port(),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  /*
+   * Standalone Redis. Cluster mode uses ElastiCache for the socket adapter, and
+   * SQS-only does not open the BullMQ Redis (MemoryDB), so REDIS_HOST is not required.
+   */
+  ...(requiresStandaloneRedis()
+    ? {
+        REDIS_HOST: str(),
+        REDIS_PORT: port(),
+      }
+    : {
+        REDIS_HOST: str({ default: undefined }),
+        REDIS_PORT: str({ default: undefined }),
+      }),
   REDIS_TLS: json({ default: undefined }),
   IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
   REDIS_CLUSTER_SERVICE_HOST: str({ default: undefined }),

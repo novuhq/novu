@@ -11,7 +11,7 @@ The appearance prop supports the following keys:
 - `variables`: Define global styling properties (for example, colors, fonts).
 - `elements`: Style individual UI components.
 - `icons`: Replace default icons with custom ones.
-- `animations`: Enable or disable UI animations.
+- `animations`: Enable or disable UI animations. They're on by default. See [Customize animations](#customize-animations).
 
 <Note>
   Check out the [Inbox Playground](https://inbox.novu.co) to see how the Inbox looks with common design presets. It showcases pre-styled variants like Notion and Reddit, which is helpful for seeing what’s possible before you start customizing.
@@ -133,6 +133,7 @@ Here's a list of some available elements that can be styled using the elements o
 | Time select drop-down list         | `timeSelect__dropdownTrigger`           |
 | Time select list             | `timeSelect__dropdownContent`           |
 | Inbox popover content        | `inbox__popoverContent`                 |
+| Inbox page (notifications or preferences) | `inboxPage`                  |
 
 <Note>
   **How to find other elements?**
@@ -491,6 +492,45 @@ This table lists severity element keys:
 | `severityHigh__notificationBar`        | Styles the notification bar for high severity    |
 | `severityMedium__notificationBar`      | Styles the notification bar for medium severity  |
 | `severityLow__notificationBar`         | Styles the notification bar for low severity     |
+
+## Customize animations
+
+The Inbox animates its state changes. Menus and the Inbox popover grow out of the button that opened them and shrink back into it. When you switch between the notifications and preferences pages, or between tabs, the old view fades out and the new one fades in from the side it came from. The tab underline moves over to the selected tab. A notification you archive or snooze collapses out of the list instead of disappearing, and actions such as **Archive all** sweep the notifications out one after another. When the status filter changes, the list fades out and the new one fades in. Unread counts roll to their new value.
+
+Set `animations` to `false` to turn every transition off:
+
+```tsx
+<Inbox appearance={{ animations: false }} />
+```
+
+When a subscriber's operating system asks for reduced motion, the Inbox keeps only short fades and skips slides, scaling, and collapsing. Setting `animations` to `true` doesn't override that preference.
+
+To retune the motion, override its CSS variables on the `.novu` root in a global stylesheet:
+
+```css
+.novu {
+  --nv-motion-duration-fast: 100ms; /* exits and small changes */
+  --nv-motion-duration-base: 140ms; /* menus, tooltips, badges */
+  --nv-motion-duration-slow: 200ms; /* the Inbox popover, page changes, list items */
+  --nv-motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --nv-motion-distance-sm: 4px; /* how far menus and hover actions travel */
+}
+```
+
+Animated elements carry `data-state="open"` while they enter and `data-state="closed"` while they leave. Tab panels use `active` and `inactive` instead. Your styles take precedence over the built-in motion, so to remove the animation from a single element, set `animation: 'none'` for its key in `appearance.elements`:
+
+```tsx
+<Inbox
+  appearance={{
+    elements: {
+      inbox__popoverContent: { animation: 'none' },
+      notificationDot: { animation: 'none' },
+    },
+  }}
+/>
+```
+
+Notifications that leave or join the list, the list fade on a status change, and the tab underline animate from code rather than CSS; turn those off with `animations: false`.
 
 ## Responsive Inbox using CSS media queries
 

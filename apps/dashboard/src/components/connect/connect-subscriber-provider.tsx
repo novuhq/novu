@@ -1,6 +1,7 @@
 import { NovuProvider } from '@novu/react';
 import { type ComponentProps, createContext, type ReactNode, useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
+import { SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -58,6 +59,7 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
         applicationIdentifier={currentEnvironment.identifier}
         apiUrl={apiHostnameManager.getHostname()}
         socketUrl={apiHostnameManager.getWebSocketHostname()}
+        socketOptions={SOCKET_OPTIONS}
       >
         {routedContent}
       </NovuProvider>

@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, JSX, Show } from 'solid-js';
+import { batch, createMemo, createSignal, For, JSX, Show } from 'solid-js';
 import type { Notification } from '../../../notifications';
 import { useInboxContext, useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
@@ -152,7 +152,15 @@ const SnoozeDropdownItem = (props: {
 export const ToggleReadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const isRead = () => props.notification.isRead;
+  // A memo, so a new snapshot with the same value is not a flip.
+  const isRead = createMemo(() => props.notification.isRead);
+  // Counts the flips, so the swapped icon pops in but the icon rendered with the item doesn't.
+  const flips = createMemo<number>((count) => {
+    isRead();
+
+    return count + 1;
+  }, -1);
+  const iconMotionClass = 'nt-motion-pop nt-inline-flex [--nv-motion-pop-scale:0.5]';
   const iconClass = () =>
     style({
       key: isRead() ? 'notificationUnread__icon' : 'notificationRead__icon',
@@ -177,18 +185,22 @@ export const ToggleReadButton = (props: { notification: Notification }) => {
             <Show
               when={isRead()}
               fallback={
-                <IconRendererWrapper
-                  iconKey="markAsRead"
-                  class={iconClass()}
-                  fallback={<DefaultMarkAsRead class={iconClass()} />}
-                />
+                <span class={iconMotionClass} data-state={flips() > 0 ? 'open' : undefined}>
+                  <IconRendererWrapper
+                    iconKey="markAsRead"
+                    class={iconClass()}
+                    fallback={<DefaultMarkAsRead class={iconClass()} />}
+                  />
+                </span>
               }
             >
-              <IconRendererWrapper
-                iconKey="markAsUnread"
-                class={iconClass()}
-                fallback={<DefaultMarkAsUnread class={iconClass()} />}
-              />
+              <span class={iconMotionClass} data-state={flips() > 0 ? 'open' : undefined}>
+                <IconRendererWrapper
+                  iconKey="markAsUnread"
+                  class={iconClass()}
+                  fallback={<DefaultMarkAsUnread class={iconClass()} />}
+                />
+              </span>
             </Show>
           </Button>
         )}
@@ -320,7 +332,15 @@ export const SnoozeButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
   const { maxSnoozeDurationHours } = useInboxContext();
+  const [isSnoozeMenuOpen, setIsSnoozeMenuOpen] = createSignal(false);
   const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
+  // The item animates out after a snooze instead of vanishing, so its menu has to close itself.
+  const closeSnoozeMenu = () => {
+    batch(() => {
+      setIsSnoozeDateTimePickerOpen(false);
+      setIsSnoozeMenuOpen(false);
+    });
+  };
   const snoozeButtonIconClass = style({
     key: 'notificationSnooze__icon',
     className: 'nt-size-3',
@@ -337,7 +357,10 @@ export const SnoozeButton = (props: { notification: Notification }) => {
     <Tooltip.Root>
       <Tooltip.Trigger
         asChild={(tooltipProps) => (
-          <Dropdown.Root>
+          <Dropdown.Root
+            open={isSnoozeMenuOpen()}
+            onOpenChange={(isOpen) => (isOpen ? setIsSnoozeMenuOpen(true) : closeSnoozeMenu())}
+          >
             <Dropdown.Trigger
               {...tooltipProps}
               asChild={(popoverProps) => (
@@ -405,6 +428,7 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                   <SnoozeDateTimePicker
                     maxDurationHours={maxSnoozeDurationHours()}
                     onSelect={async (date) => {
+                      closeSnoozeMenu();
                       await props.notification.snooze(date.toISOString());
                     }}
                     onCancel={() => {

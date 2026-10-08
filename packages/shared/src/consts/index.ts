@@ -25,4 +25,5 @@ export * from './topic-subscription';
 export * from './translation';
 export * from './twilio-sms-regions';
 export * from './upsert-validation-constants';
+export * from './usage-limits';
 export * from './validIdRegex';

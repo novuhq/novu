@@ -16,7 +16,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { MessagesStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import { MessagesStatusEnum, sanitizeMessageCta, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';
 import { MessageResponseDto } from '../../dtos/message-response.dto';
 import { MarkMessageAsByMarkCommand } from './mark-message-as-by-mark.command';
@@ -174,7 +174,7 @@ function mapMessageEntityToResponseDto(entity: MessageEntity): MessageResponseDt
   responseDto.providerId = entity.providerId;
   responseDto.deviceTokens = entity.deviceTokens;
   responseDto.title = entity.title;
-  responseDto.cta = entity.cta; // Assuming cta can be directly assigned
+  responseDto.cta = sanitizeMessageCta(entity.cta);
   responseDto._feedId = entity._feedId ?? null; // Handle optional _feedId
   responseDto.status = entity.status;
   responseDto.errorId = entity.errorId;

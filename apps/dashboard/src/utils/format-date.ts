@@ -1,5 +1,12 @@
 import { formatDistance, isAfter, subDays } from 'date-fns';
 
+const shortDateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+/** `Oct 31, 2026` */
+export function formatShortDate(date: string | number | Date): string {
+  return shortDateFormatter.format(new Date(date));
+}
+
 export function formatDateSimple(
   date: string,
   options: Intl.DateTimeFormatOptions = {

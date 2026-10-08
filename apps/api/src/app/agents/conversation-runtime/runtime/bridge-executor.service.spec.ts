@@ -2,6 +2,7 @@ import { AgentEventEnum } from '@novu/framework/internal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { esmImport } from '../../shared/util/esm-import';
 import { resolveInboundReplyTo } from '../ingress/workflow-origin.helpers';
 import { BridgeExecutorService } from './bridge-executor.service';
 
@@ -396,6 +397,50 @@ describe('BridgeExecutorService', () => {
   });
 
   describe('mapMessage', () => {
+    /** Real `@chat-adapter/slack` parsing; only the Slack `users.info` lookup is stubbed. */
+    async function parseSlackEvent(event: Record<string, unknown>) {
+      const { SlackAdapter } = await esmImport('@chat-adapter/slack');
+      const adapter = new SlackAdapter({ signingSecret: 'test-secret', botToken: 'xoxb-test', botUserId: 'UBOT' });
+      sinon
+        .stub(adapter, 'lookupUser')
+        .callsFake(async (userId: string) => ({ displayName: userId, realName: userId }));
+
+      return adapter.parseSlackMessage({ channel: 'C1', ts: '1767225600.000100', ...event }, 'slack:C1:');
+    }
+
+    it('should flag Slackbot notices from USLACK as system messages without an email', async () => {
+      const { service } = makeService();
+      const message = await parseSlackEvent({ user: 'USLACK', text: 'Reminder: standup in 5 minutes' });
+
+      const mapped = await (service as any).mapMessage(message);
+
+      expect(mapped.author.isSystem).to.equal(true);
+      expect(mapped.author).to.not.have.property('email');
+    });
+
+    it('should omit markdown for plain prose so the brain never reads Markdown escapes', async () => {
+      const { service } = makeService();
+      const message = await parseSlackEvent({ user: 'UALICE', text: 'run deploy_prod_eu at 5 * 3 minutes [draft]' });
+
+      const mapped = await (service as any).mapMessage(message);
+
+      expect(mapped.text).to.equal('run deploy_prod_eu at 5 * 3 minutes [draft]');
+      expect(mapped).to.not.have.property('markdown');
+    });
+
+    it('should send plain text only when the formatted AST cannot be rendered', async () => {
+      const { service, logger } = makeService();
+
+      const mapped = await (service as any).mapMessage({
+        ...makeMessage(),
+        formatted: { type: 'root', children: [{ type: 'not-a-markdown-node' }] },
+      });
+
+      expect(mapped.text).to.equal('hello');
+      expect(mapped).to.not.have.property('markdown');
+      expect(logger.warn.calledOnce).to.equal(true);
+    });
+
     it('should re-sign stored attachments instead of reusing stored urls', async () => {
       const { service, attachmentStorage } = makeService({
         attachmentStorage: { signRead: sinon.stub().resolves('https://fresh-signed/read') },

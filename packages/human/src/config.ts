@@ -62,6 +62,14 @@ export function saveConfig(config: HumanCliConfig): void {
 }
 
 /**
+ * The API that `human setup` and `human login` save credentials for: `--api-url`, then NOVU_API_URL,
+ * then the API the saved config already belongs to, so a later run keeps using the same region.
+ */
+export function resolveTargetApiUrl(apiUrlFlag: string | undefined, saved: HumanCliConfig | null): string {
+  return (apiUrlFlag || process.env.NOVU_API_URL?.trim() || saved?.apiUrl || DEFAULT_API_URL).replace(/\/$/, '');
+}
+
+/**
  * Resolve the effective config for a command run. Environment variables win
  * over the config file so agents can run headless without `human setup`
  * having been executed on the same machine (e.g. CI with NOVU_SECRET_KEY).
@@ -99,16 +107,21 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
 }
 
 /**
- * Channel preference for create: `--via` wins, then HUMAN_VIA, then the
- * configured default. When none is set, returns undefined and the API picks
- * the sole linked channel (or errors if several are linked).
+ * Channel preference for create: `--via` wins, then HUMAN_VIA, then the saved
+ * default channel. The caller decides which defaults apply to the recipients
+ * (see `channelDefaultsFor`); for anyone else the API uses that person's own
+ * default channel. When none applies, returns undefined and the API picks.
  */
-export function resolveVia(config: HumanCliConfig, via?: string): HumanChannelPlatform | undefined {
+export function resolveVia(
+  config: HumanCliConfig,
+  via?: string,
+  { useEnvVia = true, useSavedDefault = true }: { useEnvVia?: boolean; useSavedDefault?: boolean } = {}
+): HumanChannelPlatform | undefined {
   if (via) {
     return via.toLowerCase();
   }
 
-  const envVia = process.env.HUMAN_VIA?.trim().toLowerCase();
+  const envVia = useEnvVia ? process.env.HUMAN_VIA?.trim().toLowerCase() : undefined;
   if (envVia) {
     if (!(SUPPORTED_CHANNELS as readonly string[]).includes(envVia)) {
       throw new Error(`Invalid HUMAN_VIA "${envVia}". Use one of: ${SUPPORTED_CHANNELS.join(', ')}.`);
@@ -117,5 +130,5 @@ export function resolveVia(config: HumanCliConfig, via?: string): HumanChannelPl
     return envVia;
   }
 
-  return config.defaultChannel;
+  return useSavedDefault ? config.defaultChannel : undefined;
 }

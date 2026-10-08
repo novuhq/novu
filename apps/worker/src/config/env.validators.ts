@@ -1,4 +1,10 @@
-import { assertQueueBackendConfig, INBOUND_PARSE_RETRY_POLICY } from '@novu/application-generic';
+import {
+  assertQueueBackendConfig,
+  createThrowingEnvReporter,
+  INBOUND_PARSE_RETRY_POLICY,
+  isBullMqEnabled,
+  requiresStandaloneRedis,
+} from '@novu/application-generic';
 import {
   DEFAULT_NOTIFICATION_RETENTION_DAYS,
   FeatureFlagsKeysEnum,
@@ -10,7 +16,7 @@ import { bool, CleanedEnv, cleanEnv, json, makeValidator, num, port, str, url, V
 import { getRequiredWorkerTopics } from './worker-topics';
 
 export function validateEnv() {
-  const env = cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('worker') });
 
   const topics = getRequiredWorkerTopics();
 
@@ -76,11 +82,23 @@ export const envValidators = {
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
   STORAGE_SERVICE: str({ default: undefined }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  /*
+   * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
+   * does not open the BullMQ Redis (MemoryDB), so REDIS_HOST is not required.
+   * REDIS_DB_INDEX is the BullMQ database and is unused once BullMQ is retired.
+   */
+  ...(requiresStandaloneRedis()
+    ? {
+        REDIS_HOST: str(),
+        REDIS_PORT: port(),
+      }
+    : {
+        REDIS_HOST: str({ default: undefined }),
+        REDIS_PORT: str({ default: undefined }),
+      }),
   REDIS_PASSWORD: str({ default: undefined }),
   REDIS_TLS: json({ default: undefined }),
-  REDIS_DB_INDEX: num(),
+  ...(isBullMqEnabled() ? { REDIS_DB_INDEX: num() } : { REDIS_DB_INDEX: num({ default: undefined }) }),
   REDIS_CACHE_SERVICE_HOST: str({ default: undefined }),
   REDIS_CACHE_SERVICE_PORT: str({ default: undefined }),
   REDIS_CACHE_TTL: str({ default: undefined }),

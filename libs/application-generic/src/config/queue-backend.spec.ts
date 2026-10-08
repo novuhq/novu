@@ -5,11 +5,27 @@ import {
   getQueueBackend,
   isBullMqEnabled,
   isSqsPrimary,
+  requiresStandaloneRedis,
 } from './queue-backend';
 import { restoreQueueBackendEnv } from './queue-backend.test-helpers';
 
 describe('queue backend config', () => {
+  const originalClusterFlags = {
+    IS_IN_MEMORY_CLUSTER_MODE_ENABLED: process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED,
+    IN_MEMORY_CLUSTER_MODE_ENABLED: process.env.IN_MEMORY_CLUSTER_MODE_ENABLED,
+  };
+
   afterEach(restoreQueueBackendEnv());
+
+  afterEach(() => {
+    for (const [key, value] of Object.entries(originalClusterFlags)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  });
 
   describe('getQueueBackend', () => {
     it('should default to bullmq when unset', () => {
@@ -47,6 +63,24 @@ describe('queue backend config', () => {
 
       process.env.QUEUE_BACKEND = QueueBackend.SQS;
       expect(isBullMqEnabled()).toBe(false);
+    });
+
+    it('should not require standalone Redis for an SQS-only cluster deployment', () => {
+      process.env.QUEUE_BACKEND = QueueBackend.SQS;
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+
+      expect(requiresStandaloneRedis()).toBe(false);
+    });
+
+    it('should require standalone Redis while BullMQ runs or cluster mode is off', () => {
+      process.env.QUEUE_BACKEND = QueueBackend.SQS_BULLMQ;
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+      expect(requiresStandaloneRedis()).toBe(true);
+
+      process.env.QUEUE_BACKEND = QueueBackend.SQS;
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+      expect(requiresStandaloneRedis()).toBe(true);
     });
 
     it('should treat SQS as primary in sqs_bullmq and sqs only', () => {
