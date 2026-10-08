@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
-import { inclusiveUtcDayBounds, toInclusiveUtcDays, toUtcDay } from '../inclusive-utc-days';
+import { inclusiveUtcDayBounds, toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
 import { TABLE_NAME as TRACES_TABLE_NAME } from '../trace-log/trace-log.schema';
 import {
@@ -21,14 +21,14 @@ export interface DailyWorkflowRunUsage {
   count: number;
 }
 
-export interface ExactRangeFromDailyUsageQuery {
-  organizationId: string;
-  /** The organization's rows from `getPlatformDailyUsageByWholeUtcDays`, read over a range ending in the future. */
-  dailyUsage: DailyWorkflowRunUsage[];
-  /** `startDate` of the range `dailyUsage` was read over. */
-  dailyUsageFrom: Date;
-  startDate: Date;
-  endDate: Date;
+/**
+ * Sum of the daily rows on every UTC day `[startDate, endDate)` touches, with the same whole-day semantics as
+ * `getPlatformUsageByWholeUtcDays`. Days missing from `dailyUsage` count as empty.
+ */
+export function sumWholeUtcDayUsage(dailyUsage: DailyWorkflowRunUsage[], startDate: Date, endDate: Date): number {
+  const { start, end } = toInclusiveUtcDays(startDate, endDate);
+
+  return dailyUsage.filter(({ day }) => day >= start && day <= end).reduce((sum, { count }) => sum + count, 0);
 }
 
 @Injectable()
@@ -247,7 +247,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
    * Same source and whole-UTC-day semantics as `getPlatformUsageByWholeUtcDays`, but one row per
    * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
    * `day` is the UTC calendar day as `YYYY-MM-DD`. Callers that need an exact mid-day range pass
-   * an organization's rows to `getOrganizationUsageInExactRangeFromDailyUsage`.
+   * `sumWholeUtcDayUsage` of an organization's rows to `getOrganizationUsageInExactRange`.
    *
    * When `minimumOrganizationTotal` is set, only organizations whose `sum(count)` over that same
    * window is at least the minimum are returned.
@@ -309,43 +309,28 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   /**
    * Processing workflow runs of one organization within exactly `[startDate, endDate)`: the whole-UTC-day count
    * minus the runs on the first and last UTC day that fall outside the range.
+   *
+   * Pass `wholeDayCount` when the caller already holds the organization's count over those whole UTC days (e.g. from
+   * `sumWholeUtcDayUsage`), so the result stays consistent with what the caller read; otherwise it is read here.
    */
-  async getOrganizationUsageInExactRange(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
-    const [wholeDayRows, edgeDayRunsOutside] = await Promise.all([
-      this.getPlatformUsageByWholeUtcDays(startDate, endDate, organizationId),
+  async getOrganizationUsageInExactRange(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    wholeDayCount?: number
+  ): Promise<number> {
+    const [resolvedWholeDayCount, edgeDayRunsOutside] = await Promise.all([
+      wholeDayCount ?? this.countOrganizationWholeUtcDays(organizationId, startDate, endDate),
       this.countEdgeDayRunsOutsideRange(organizationId, startDate, endDate),
     ]);
-    const wholeDayCount = parseInt(wholeDayRows[0]?.count || '0', 10);
 
-    return this.subtractEdgeDayRuns(organizationId, wholeDayCount, edgeDayRunsOutside);
+    return this.subtractEdgeDayRuns(organizationId, resolvedWholeDayCount, edgeDayRunsOutside);
   }
 
-  /**
-   * Same count as `getOrganizationUsageInExactRange`, with the whole UTC days summed from rows the caller already
-   * read, so it stays consistent with anything the caller snapshotted right after that read. Days after the end of
-   * the read are taken as empty. Throws when the rows start after the range's first day.
-   */
-  async getOrganizationUsageInExactRangeFromDailyUsage({
-    organizationId,
-    dailyUsage,
-    dailyUsageFrom,
-    startDate,
-    endDate,
-  }: ExactRangeFromDailyUsageQuery): Promise<number> {
-    const { start, end } = toInclusiveUtcDays(startDate, endDate);
+  private async countOrganizationWholeUtcDays(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
+    const [row] = await this.getPlatformUsageByWholeUtcDays(startDate, endDate, organizationId);
 
-    if (toUtcDay(dailyUsageFrom) > start) {
-      throw new Error(
-        `Daily workflow run usage from ${toUtcDay(dailyUsageFrom)} does not cover the range's first day ${start}`
-      );
-    }
-
-    const wholeDayCount = dailyUsage
-      .filter(({ day }) => day >= start && day <= end)
-      .reduce((sum, { count }) => sum + count, 0);
-    const edgeDayRunsOutside = await this.countEdgeDayRunsOutsideRange(organizationId, startDate, endDate);
-
-    return this.subtractEdgeDayRuns(organizationId, wholeDayCount, edgeDayRunsOutside);
+    return parseInt(row?.count || '0', 10);
   }
 
   /**

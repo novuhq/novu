@@ -24,7 +24,7 @@ export { StepType } from './types';
 export { WorkflowRun, WorkflowRunRepository, WorkflowRunStatusEnum } from './workflow-run';
 export {
   DailyWorkflowRunUsage,
-  ExactRangeFromDailyUsageQuery,
+  sumWholeUtcDayUsage,
   WorkflowRunCount,
   WorkflowRunCountRepository,
 } from './workflow-run-count';

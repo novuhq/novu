@@ -3,7 +3,11 @@ import { PinoLogger } from 'nestjs-pino';
 import sinon from 'sinon';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
-import { EDGE_DAY_CORRECTION_LOG_COMMENT, WorkflowRunCountRepository } from './workflow-run-count.repository';
+import {
+  EDGE_DAY_CORRECTION_LOG_COMMENT,
+  sumWholeUtcDayUsage,
+  WorkflowRunCountRepository,
+} from './workflow-run-count.repository';
 
 describe('WorkflowRunCountRepository', () => {
   let repository: WorkflowRunCountRepository;
@@ -120,9 +124,17 @@ describe('WorkflowRunCountRepository', () => {
     const endDate = new Date('2026-10-26T09:24:00.000Z');
 
     function stubCounts(wholeDayRows: Array<{ organization_id: string; count: string }>, edgeDayCount: string) {
-      queryStub.callsFake(async ({ query }: { query: string }) =>
-        query.includes('FROM traces') ? { data: [{ count: edgeDayCount }] } : { data: wholeDayRows }
+      queryStub.callsFake(async ({ settings }: { settings?: { log_comment?: string } }) =>
+        settings?.log_comment === EDGE_DAY_CORRECTION_LOG_COMMENT
+          ? { data: [{ count: edgeDayCount }] }
+          : { data: wholeDayRows }
       );
+    }
+
+    function edgeDayCall() {
+      return queryStub
+        .getCalls()
+        .find((call) => call.args[0].settings?.log_comment === EDGE_DAY_CORRECTION_LOG_COMMENT);
     }
 
     it('subtracts the edge-day runs outside the range from the whole-day count', async () => {
@@ -133,11 +145,83 @@ describe('WorkflowRunCountRepository', () => {
       expect(result).to.equal(1000);
       expect(queryStub.calledTwice).to.equal(true);
 
-      const wholeDayCall = queryStub.getCalls().find((call) => call.args[0].query.includes('FROM workflow_run_count'));
+      const wholeDayCall = queryStub.getCalls().find((call) => call !== edgeDayCall());
+      expect(wholeDayCall?.args[0].query).to.include('FROM workflow_run_count');
       expect(wholeDayCall?.args[0].params).to.deep.equal({
         startDate: '2026-09-26',
         endDate: '2026-10-26',
         organizationId: 'org-a',
+      });
+    });
+
+    it('counts the edge-day runs outside the range from processing traces', async () => {
+      stubCounts([{ organization_id: 'org-a', count: '1500' }], '500');
+
+      await repository.getOrganizationUsageInExactRange('org-a', startDate, endDate);
+
+      const call = edgeDayCall()?.args[0];
+      expect(call.query).to.include('FROM traces');
+      expect(call.query).to.include('organization_id = {organizationId:String}');
+      expect(call.query).to.include("entity_type = 'workflow_run'");
+      expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
+      expect(call.query).to.include("{firstDayStart:DateTime64(3, 'UTC')}");
+      expect(call.query).to.include("{lastDayEnd:DateTime64(3, 'UTC')}");
+      expect(call.params).to.deep.equal({
+        organizationId: 'org-a',
+        firstDayStart: '2026-09-26T00:00:00.000',
+        startDate: '2026-09-26T09:24:00.000',
+        endDate: '2026-10-26T09:24:00.000',
+        lastDayEnd: '2026-10-27T00:00:00.000',
+      });
+    });
+
+    it('subtracts the edge-day runs from the whole-day count the caller passes, without reading workflow_run_count', async () => {
+      stubCounts([], '500');
+
+      const result = await repository.getOrganizationUsageInExactRange('org-a', startDate, endDate, 1500);
+
+      expect(result).to.equal(1000);
+      expect(queryStub.calledOnce).to.equal(true);
+      expect(edgeDayCall()).to.not.equal(undefined);
+    });
+
+    it('skips the edge-day query when the range starts and ends at UTC midnight', async () => {
+      stubCounts([{ organization_id: 'org-a', count: '1400' }], '500');
+
+      const result = await repository.getOrganizationUsageInExactRange(
+        'org-a',
+        new Date('2026-09-26T00:00:00.000Z'),
+        new Date('2026-10-26T00:00:00.000Z')
+      );
+
+      expect(result).to.equal(1400);
+      expect(queryStub.calledOnce).to.equal(true);
+      expect(edgeDayCall()).to.equal(undefined);
+    });
+
+    it('leaves the last day empty when a mid-day range ends at UTC midnight', async () => {
+      stubCounts([], '4');
+
+      await repository.getOrganizationUsageInExactRange('org-a', startDate, new Date('2026-10-26T00:00:00.000Z'), 1500);
+
+      expect(edgeDayCall()?.args[0].params).to.deep.include({
+        firstDayStart: '2026-09-26T00:00:00.000',
+        startDate: '2026-09-26T09:24:00.000',
+        endDate: '2026-10-26T00:00:00.000',
+        lastDayEnd: '2026-10-26T00:00:00.000',
+      });
+    });
+
+    it('leaves the first day empty when a range that starts at UTC midnight ends mid-day', async () => {
+      stubCounts([], '4');
+
+      await repository.getOrganizationUsageInExactRange('org-a', new Date('2026-09-26T00:00:00.000Z'), endDate, 1500);
+
+      expect(edgeDayCall()?.args[0].params).to.deep.include({
+        firstDayStart: '2026-09-26T00:00:00.000',
+        startDate: '2026-09-26T00:00:00.000',
+        endDate: '2026-10-26T09:24:00.000',
+        lastDayEnd: '2026-10-27T00:00:00.000',
       });
     });
 
@@ -173,8 +257,7 @@ describe('WorkflowRunCountRepository', () => {
     });
   });
 
-  describe('getOrganizationUsageInExactRangeFromDailyUsage', () => {
-    const dailyUsageFrom = new Date('2026-09-25T00:00:00.000Z');
+  describe('sumWholeUtcDayUsage', () => {
     const dailyUsage = [
       { day: '2026-09-25', count: 7 },
       { day: '2026-09-26', count: 1000 },
@@ -183,131 +266,16 @@ describe('WorkflowRunCountRepository', () => {
       { day: '2026-10-27', count: 9 },
     ];
 
-    it('sums the daily usage of the inclusive UTC days of the range, minus the edge-day runs outside it', async () => {
-      queryStub.resolves({ data: [{ count: '500' }] });
-
-      const result = await repository.getOrganizationUsageInExactRangeFromDailyUsage({
-        organizationId: 'org-a',
-        dailyUsage,
-        dailyUsageFrom,
-        startDate: new Date('2026-09-26T09:24:00.000Z'),
-        endDate: new Date('2026-10-26T09:24:00.000Z'),
-      });
-
-      expect(result).to.equal(1000);
-      expect(queryStub.calledOnce).to.equal(true);
-
-      const call = queryStub.firstCall.args[0];
-      expect(call.query).to.include('FROM traces');
-      expect(call.query).to.include('organization_id = {organizationId:String}');
-      expect(call.query).to.include("entity_type = 'workflow_run'");
-      expect(call.query).to.include("event_type = 'workflow_run_status_processing'");
-      expect(call.query).to.include("{firstDayStart:DateTime64(3, 'UTC')}");
-      expect(call.query).to.include("{lastDayEnd:DateTime64(3, 'UTC')}");
-      expect(call.params).to.deep.equal({
-        organizationId: 'org-a',
-        firstDayStart: '2026-09-26T00:00:00.000',
-        startDate: '2026-09-26T09:24:00.000',
-        endDate: '2026-10-26T09:24:00.000',
-        lastDayEnd: '2026-10-27T00:00:00.000',
-      });
+    it('sums every UTC day a mid-day range touches in full', () => {
+      expect(
+        sumWholeUtcDayUsage(dailyUsage, new Date('2026-09-26T09:24:00.000Z'), new Date('2026-10-26T09:24:00.000Z'))
+      ).to.equal(1500);
     });
 
-    it('tags the edge-day query with a log comment so its load can be found in system.query_log', async () => {
-      queryStub.resolves({ data: [{ count: '500' }] });
-
-      await repository.getOrganizationUsageInExactRangeFromDailyUsage({
-        organizationId: 'org-a',
-        dailyUsage,
-        dailyUsageFrom,
-        startDate: new Date('2026-09-26T09:24:00.000Z'),
-        endDate: new Date('2026-10-26T09:24:00.000Z'),
-      });
-
-      expect(queryStub.firstCall.args[0].settings).to.deep.equal({
-        log_comment: EDGE_DAY_CORRECTION_LOG_COMMENT,
-      });
-    });
-
-    it('sums the whole days without querying when the range starts and ends at UTC midnight', async () => {
-      const result = await repository.getOrganizationUsageInExactRangeFromDailyUsage({
-        organizationId: 'org-a',
-        dailyUsage,
-        dailyUsageFrom,
-        startDate: new Date('2026-09-26T00:00:00.000Z'),
-        endDate: new Date('2026-10-26T00:00:00.000Z'),
-      });
-
-      expect(result).to.equal(1400);
-      expect(queryStub.called).to.equal(false);
-    });
-
-    it('leaves the last day empty when a mid-day range ends at UTC midnight', async () => {
-      queryStub.resolves({ data: [{ count: '4' }] });
-
-      await repository.getOrganizationUsageInExactRangeFromDailyUsage({
-        organizationId: 'org-a',
-        dailyUsage,
-        dailyUsageFrom,
-        startDate: new Date('2026-09-26T09:24:00.000Z'),
-        endDate: new Date('2026-10-26T00:00:00.000Z'),
-      });
-
-      expect(queryStub.firstCall.args[0].params).to.deep.include({
-        firstDayStart: '2026-09-26T00:00:00.000',
-        startDate: '2026-09-26T09:24:00.000',
-        endDate: '2026-10-26T00:00:00.000',
-        lastDayEnd: '2026-10-26T00:00:00.000',
-      });
-    });
-
-    it('leaves the first day empty when a range that starts at UTC midnight ends mid-day', async () => {
-      queryStub.resolves({ data: [{ count: '4' }] });
-
-      await repository.getOrganizationUsageInExactRangeFromDailyUsage({
-        organizationId: 'org-a',
-        dailyUsage,
-        dailyUsageFrom,
-        startDate: new Date('2026-09-26T00:00:00.000Z'),
-        endDate: new Date('2026-10-26T09:24:00.000Z'),
-      });
-
-      expect(queryStub.firstCall.args[0].params).to.deep.include({
-        firstDayStart: '2026-09-26T00:00:00.000',
-        startDate: '2026-09-26T00:00:00.000',
-        endDate: '2026-10-26T09:24:00.000',
-        lastDayEnd: '2026-10-27T00:00:00.000',
-      });
-    });
-
-    it('subtracts nothing when the edge-day query has no rows', async () => {
-      queryStub.resolves({ data: [] });
-
-      const result = await repository.getOrganizationUsageInExactRangeFromDailyUsage({
-        organizationId: 'org-a',
-        dailyUsage,
-        dailyUsageFrom,
-        startDate: new Date('2026-09-26T09:24:00.000Z'),
-        endDate: new Date('2026-10-26T09:24:00.000Z'),
-      });
-
-      expect(result).to.equal(1500);
-    });
-
-    it('rejects without querying when the daily usage starts after the first day of the range', async () => {
-      const error = await repository
-        .getOrganizationUsageInExactRangeFromDailyUsage({
-          organizationId: 'org-a',
-          dailyUsage,
-          dailyUsageFrom: new Date('2026-09-27T00:00:00.000Z'),
-          startDate: new Date('2026-09-26T09:24:00.000Z'),
-          endDate: new Date('2026-10-26T09:24:00.000Z'),
-        })
-        .catch((caught: Error) => caught);
-
-      expect(error).to.be.instanceOf(Error);
-      expect((error as Error).message).to.include('2026-09-26');
-      expect(queryStub.called).to.equal(false);
+    it('does not pull in the day after a midnight exclusive end', () => {
+      expect(
+        sumWholeUtcDayUsage(dailyUsage, new Date('2026-09-26T00:00:00.000Z'), new Date('2026-10-26T00:00:00.000Z'))
+      ).to.equal(1400);
     });
   });
 
