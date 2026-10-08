@@ -79,7 +79,7 @@ export interface HumanCliLoginResponseDto {
 }
 
 export interface HumanCliLoginDeniedResponseDto {
-  /** False when no login was waiting for the code anymore, which leaves it just as unusable. */
+  /** False when no login was waiting for the code anymore: it ran out, was denied before, or was approved. */
   denied: boolean;
 }
 

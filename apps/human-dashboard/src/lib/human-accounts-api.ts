@@ -76,7 +76,10 @@ export function findCliLogin(region: HumanRegion, userCode: string): Promise<Pen
   return request(region, '/v1/human/accounts/cli-login/lookup', { method: 'POST', body: { userCode } });
 }
 
-/** Ends the `human login` waiting for this code. `denied` is false when it was already gone. */
+/**
+ * Ends the `human login` waiting for this code. `denied` is false when it was already gone, which says nothing
+ * about how: it may have been approved. Throws `cli_login_being_approved` while an approval is at work on it.
+ */
 export function denyCliLogin(region: HumanRegion, userCode: string): Promise<{ denied: boolean }> {
   return request(region, '/v1/human/accounts/cli-login/deny', { method: 'POST', body: { userCode } });
 }

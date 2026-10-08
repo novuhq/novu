@@ -122,6 +122,15 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
   const keepsSetup = Boolean(claim) && !cannotKeepSetup && !skipClaim;
   const code = userCode || typedCode;
 
+  /** Nothing waits for the code: one from the link has run its course, a typed one may just be mistyped. */
+  function showNothingWaiting() {
+    if (userCode) {
+      onDone({ name: 'expired' });
+    } else {
+      setError('That code doesn’t match a login waiting in a terminal. Check it, or run human login again.');
+    }
+  }
+
   function approve() {
     if (!normalizeUserCode(code)) {
       setError('Enter the 8-letter code from your terminal, like BCDF-GHJK.');
@@ -136,10 +145,8 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
 
       if (result.status === 'approved') {
         onDone({ name: 'signed-in', keptSetup: result.keptSetup, accountPageBehind: result.accountPageBehind });
-      } else if (result.status === 'expired' && userCode) {
-        onDone({ name: 'expired' });
       } else if (result.status === 'expired') {
-        setError('That code doesn’t match a login waiting in a terminal. Check it, or run human login again.');
+        showNothingWaiting();
       } else {
         setError(result.message);
         setSkipClaim((skipped) => skipped || Boolean(result.canSkipClaim));
@@ -155,6 +162,9 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
 
       if (result.status === 'denied') {
         onDone({ name: 'denied' });
+      } else if (result.status === 'expired') {
+        // Not denied: it was already over, perhaps approved in another tab. The card must not say "denied".
+        showNothingWaiting();
       } else {
         setError(result.message);
       }

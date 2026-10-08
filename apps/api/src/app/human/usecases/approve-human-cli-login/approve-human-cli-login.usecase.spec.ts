@@ -1,14 +1,24 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { CliDeviceSessionBeingApprovedError } from '../../../cli-auth/services/cli-device-session.service';
 import { ApproveHumanCliLoginCommand } from './approve-human-cli-login.command';
-import { ApproveHumanCliLogin, CLAIM_FAILED_CODE, CLI_LOGIN_NOT_FOUND_CODE } from './approve-human-cli-login.usecase';
+import {
+  ApproveHumanCliLogin,
+  CLAIM_FAILED_CODE,
+  CLI_LOGIN_BEING_APPROVED_CODE,
+  CLI_LOGIN_NOT_FOUND_CODE,
+} from './approve-human-cli-login.usecase';
 
 describe('ApproveHumanCliLogin', () => {
   const account = { organizationId: 'novu_org', userId: 'novu_user', environmentId: 'dev_env', region: 'us' };
+  const hold = { deviceCode: 'device_code', heldUntilEpoch: 1_800_000_000 };
 
   function setup() {
-    const cliDeviceSessionService = { findPendingByUserCode: sinon.stub().resolves('device_code') };
+    const cliDeviceSessionService = {
+      holdForApprovalByUserCode: sinon.stub().resolves(hold),
+      releaseApprovalHold: sinon.stub().resolves(),
+    };
     const ensureBackingOrganization = { execute: sinon.stub().resolves(account) };
     const claimKeylessConnect = { execute: sinon.stub().resolves({ environmentId: 'dev_env' }) };
     const getDecryptedSecretKey = { execute: sinon.stub().resolves('sk_test') };
@@ -52,7 +62,7 @@ describe('ApproveHumanCliLogin', () => {
       setup();
 
     expect(await usecase.execute(command())).to.deep.equal({ ...account, keptSetup: false });
-    expect(cliDeviceSessionService.findPendingByUserCode.firstCall.args[0]).to.equal('BCDF-GHJK');
+    expect(cliDeviceSessionService.holdForApprovalByUserCode.firstCall.args[0]).to.equal('BCDF-GHJK');
     expect(getDecryptedSecretKey.execute.firstCall.args[0]).to.deep.include({
       environmentId: 'dev_env',
       organizationId: 'novu_org',
@@ -68,11 +78,13 @@ describe('ApproveHumanCliLogin', () => {
       userLastName: null,
     });
     expect(claimKeylessConnect.execute.called).to.equal(false);
+    // Approved, so there's nothing to give back.
+    expect(cliDeviceSessionService.releaseApprovalHold.called).to.equal(false);
   });
 
   it('touches nothing when no login is waiting for the code', async () => {
     const { usecase, cliDeviceSessionService, ensureBackingOrganization, claimKeylessConnect } = setup();
-    cliDeviceSessionService.findPendingByUserCode.resolves(null);
+    cliDeviceSessionService.holdForApprovalByUserCode.resolves(null);
 
     const error = await usecase.execute(command({ claimToken: 'claim_token' })).catch((caught) => caught);
 
@@ -82,8 +94,28 @@ describe('ApproveHumanCliLogin', () => {
     expect(claimKeylessConnect.execute.called).to.equal(false);
   });
 
+  it('touches nothing while another approval is at work on the login', async () => {
+    const { usecase, cliDeviceSessionService, ensureBackingOrganization, claimKeylessConnect } = setup();
+    cliDeviceSessionService.holdForApprovalByUserCode.rejects(new CliDeviceSessionBeingApprovedError());
+
+    const error = await usecase.execute(command({ claimToken: 'claim_token' })).catch((caught) => caught);
+
+    expect(error).to.be.instanceOf(ConflictException);
+    expect((error as ConflictException).getResponse()).to.deep.include({ code: CLI_LOGIN_BEING_APPROVED_CODE });
+    expect(ensureBackingOrganization.execute.called).to.equal(false);
+    expect(claimKeylessConnect.execute.called).to.equal(false);
+    // The hold is the other approval's to give back.
+    expect(cliDeviceSessionService.releaseApprovalHold.called).to.equal(false);
+  });
+
   it('moves the keyless setup into the account before letting the CLI in', async () => {
-    const { usecase, claimKeylessConnect, approveCliDeviceSession } = setup();
+    const {
+      usecase,
+      cliDeviceSessionService,
+      ensureBackingOrganization,
+      claimKeylessConnect,
+      approveCliDeviceSession,
+    } = setup();
 
     expect(await usecase.execute(command({ claimToken: 'claim_token' }))).to.deep.include({ keptSetup: true });
     expect(claimKeylessConnect.execute.firstCall.args[0]).to.deep.include({
@@ -92,10 +124,14 @@ describe('ApproveHumanCliLogin', () => {
       userId: 'novu_user',
     });
     expect(claimKeylessConnect.execute.calledBefore(approveCliDeviceSession.execute)).to.equal(true);
+    // The login is held before anything is created or moved, so it can't be denied halfway.
+    expect(cliDeviceSessionService.holdForApprovalByUserCode.calledBefore(ensureBackingOrganization.execute)).to.equal(
+      true
+    );
   });
 
   it('does not log in when the setup cannot be kept, and says why with a claim code', async () => {
-    const { usecase, claimKeylessConnect, approveCliDeviceSession } = setup();
+    const { usecase, cliDeviceSessionService, claimKeylessConnect, approveCliDeviceSession } = setup();
 
     claimKeylessConnect.execute.rejects(
       new ConflictException({ message: 'Your account already has a setup.', code: 'claim_agent_exists' })
@@ -113,6 +149,8 @@ describe('ApproveHumanCliLogin', () => {
     });
 
     expect(approveCliDeviceSession.execute.called).to.equal(false);
+    // Each failed approval gave the login back, so it can be approved without the setup, or denied.
+    expect(cliDeviceSessionService.releaseApprovalHold.args).to.deep.equal([[hold], [hold]]);
   });
 
   it('reports a login that ran out while it was being approved', async () => {
@@ -122,5 +160,15 @@ describe('ApproveHumanCliLogin', () => {
     const error = await usecase.execute(command()).catch((caught) => caught);
 
     expect((error as NotFoundException).getResponse()).to.deep.include({ code: CLI_LOGIN_NOT_FOUND_CODE });
+  });
+
+  it('reports why the approval failed, even when the login cannot be given back', async () => {
+    const { usecase, cliDeviceSessionService, ensureBackingOrganization } = setup();
+    ensureBackingOrganization.execute.rejects(new Error('Clerk is down'));
+    cliDeviceSessionService.releaseApprovalHold.rejects(new Error('Redis is down'));
+
+    const error = await usecase.execute(command()).catch((caught) => caught);
+
+    expect((error as Error).message).to.equal('Clerk is down');
   });
 });

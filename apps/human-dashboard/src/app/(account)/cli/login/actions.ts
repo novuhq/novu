@@ -34,12 +34,19 @@ export type ApproveCliLoginResult =
       canSkipClaim?: boolean;
     };
 
-export type DenyCliLoginResult = { status: 'denied' } | { status: 'error'; message: string };
+export type DenyCliLoginResult =
+  | { status: 'denied' }
+  /** Nothing waited for the code anymore, so nothing was denied: it ran out, was denied before, or was approved. */
+  | { status: 'expired' }
+  | { status: 'error'; message: string };
 
 /** Claim tokens are 32 URL-safe characters (`@novu/shared` `isConnectClaimTokenFormat`). */
 const CLAIM_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
 
 const SESSION_ENDED = 'Your session has ended. Reload this page and sign in again.';
+
+/** An approval is at work on the login. Moments later it's either approved, or waiting again. */
+const BEING_APPROVED = 'This login is being approved somewhere else right now. Try again in a moment.';
 
 /**
  * Approves the `human login` waiting for the code, so that CLI gets the key of the signed-in person's Human
@@ -104,7 +111,8 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
 
 /**
  * Ends the `human login` waiting for the code: the code stops working and the terminal is told it was denied.
- * Nothing is created or moved. A login that is already gone counts as denied too, since nobody gets in with it.
+ * Nothing is created or moved. A login that is already gone is not reported as denied: it may be gone because
+ * it was approved in another tab, and then the terminal was let in.
  */
 export async function denyCliLoginAction(request: Omit<CliLoginRequest, 'claim'>): Promise<DenyCliLoginResult> {
   const user = await currentUser();
@@ -118,15 +126,22 @@ export async function denyCliLoginAction(request: Omit<CliLoginRequest, 'claim'>
     return { status: 'denied' };
   }
 
+  let denied: boolean;
   try {
-    await denyCliLogin(request.region === 'eu' ? 'eu' : 'us', userCode);
+    ({ denied } = await denyCliLogin(request.region === 'eu' ? 'eu' : 'us', userCode));
   } catch (error) {
     console.error('Failed to deny the CLI login', error);
 
-    return { status: 'error', message: 'Couldn’t deny this login just now. Try again, or close your terminal.' };
+    return {
+      status: 'error',
+      message:
+        error instanceof HumanApiError && error.code === 'cli_login_being_approved'
+          ? BEING_APPROVED
+          : 'Couldn’t deny this login just now. Try again, or close your terminal.',
+    };
   }
 
-  return { status: 'denied' };
+  return denied ? { status: 'denied' } : { status: 'expired' };
 }
 
 /** Tries twice, since the dashboard shows nothing until this is saved. */
@@ -148,6 +163,10 @@ function describeApproveError(error: unknown): ApproveCliLoginResult {
   if (error instanceof HumanApiError) {
     if (error.code === 'cli_login_not_found') {
       return { status: 'expired' };
+    }
+
+    if (error.code === 'cli_login_being_approved') {
+      return { status: 'error', message: BEING_APPROVED };
     }
 
     if (error.code === 'claim_agent_exists') {

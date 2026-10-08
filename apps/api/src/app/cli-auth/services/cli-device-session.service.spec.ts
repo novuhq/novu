@@ -8,6 +8,7 @@ import sinon from 'sinon';
 
 import {
   CLI_MACHINE_NAME_MAX_LENGTH,
+  CliDeviceSessionBeingApprovedError,
   CliDeviceSessionNotFoundError,
   CliDeviceSessionService,
 } from './cli-device-session.service';
@@ -122,13 +123,13 @@ describe('CliDeviceSessionService', () => {
       cacheService.get.withArgs('cli-device-session-user-code:BCDF-GHJK').resolves('device-code');
       cacheService.get.withArgs('cli-device-session:device-code').resolves(pendingRecord({ userCode: 'BCDF-GHJK' }));
 
-      expect(await service.findPendingByUserCode('BCDF-GHJK')).to.equal('device-code');
-      expect(await service.findPendingByUserCode('BCDF-GHJL')).to.equal(null);
+      expect(await service.getPendingByUserCode('BCDF-GHJK')).to.deep.equal({ deviceCode: 'device-code' });
+      expect(await service.getPendingByUserCode('BCDF-GHJL')).to.equal(null);
 
       cacheService.get
         .withArgs('cli-device-session:device-code')
         .resolves(pendingRecord({ userCode: 'BCDF-GHJK', status: 'approved' }));
-      expect(await service.findPendingByUserCode('BCDF-GHJK')).to.equal(null);
+      expect(await service.getPendingByUserCode('BCDF-GHJK')).to.equal(null);
     });
 
     it('keep the name of the computer as one short line of visible text', async () => {
@@ -185,7 +186,8 @@ describe('CliDeviceSessionService', () => {
 
       // Once denied, the code finds nothing to approve or deny.
       cacheService.get.withArgs('cli-device-session:device-code').resolves(JSON.stringify(denied));
-      expect(await service.findPendingByUserCode('BCDF-GHJK')).to.equal(null);
+      expect(await service.getPendingByUserCode('BCDF-GHJK')).to.equal(null);
+      expect(await service.holdForApprovalByUserCode('BCDF-GHJK')).to.equal(null);
       expect(await service.denyByUserCode('BCDF-GHJK')).to.equal(false);
     });
 
@@ -200,6 +202,57 @@ describe('CliDeviceSessionService', () => {
       cacheService.eval.resolves(0);
 
       expect(await service.denyByUserCode('BCDF-GHJK')).to.equal(false);
+    });
+
+    it('are held for one approval, and given back when it fails', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.get.withArgs('cli-device-session-user-code:BCDF-GHJK').resolves('device-code');
+      cacheService.get.withArgs('cli-device-session:device-code').resolves(pendingRecord({ userCode: 'BCDF-GHJK' }));
+      cacheService.eval.resolves(1);
+
+      const hold = await service.holdForApprovalByUserCode('BCDF-GHJK');
+      if (!hold) {
+        throw new Error('Expected the session to be held');
+      }
+
+      const [, holdKeys, holdArgs] = cacheService.eval.firstCall.args;
+      const held = JSON.parse(holdArgs[1]);
+      expect(hold).to.deep.equal({ deviceCode: 'device-code', heldUntilEpoch: held.approvalHeldUntilEpoch });
+      expect(holdKeys).to.deep.equal(['cli-device-session:device-code']);
+      // Still pending: the CLI keeps polling and the page keeps showing it. The hold ends by itself in a minute.
+      expect(held.status).to.equal('pending');
+      expect(held.approvalHeldUntilEpoch - holdArgs[2]).to.be.closeTo(60, 1);
+      expect(holdArgs[0]).to.equal(300);
+
+      // Given back: the session is written without the hold, and only where this hold is still the one on it.
+      cacheService.get.withArgs('cli-device-session:device-code').resolves(holdArgs[1]);
+      await service.releaseApprovalHold(hold);
+
+      const [releaseScript, releaseKeys, releaseArgs] = cacheService.eval.secondCall.args;
+      expect(releaseScript).to.contain('tonumber(payload.approvalHeldUntilEpoch) ~= tonumber(ARGV[3])');
+      expect(releaseKeys).to.deep.equal(['cli-device-session:device-code']);
+      expect(JSON.parse(releaseArgs[1])).to.deep.include({ status: 'pending', userCode: 'BCDF-GHJK' });
+      expect(JSON.parse(releaseArgs[1])).not.to.have.property('approvalHeldUntilEpoch');
+      expect(releaseArgs[2]).to.equal(hold.heldUntilEpoch);
+    });
+
+    it('are not denied or held again while an approval holds them', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.get.withArgs('cli-device-session-user-code:BCDF-GHJK').resolves('device-code');
+      cacheService.get.withArgs('cli-device-session:device-code').resolves(pendingRecord({ userCode: 'BCDF-GHJK' }));
+      // What the script answers for a pending session whose hold hasn't run out.
+      cacheService.eval.resolves(2);
+
+      const denial = await service.denyByUserCode('BCDF-GHJK').catch((caught) => caught);
+      const secondHold = await service.holdForApprovalByUserCode('BCDF-GHJK').catch((caught) => caught);
+
+      expect(denial).to.be.instanceOf(CliDeviceSessionBeingApprovedError);
+      expect(secondHold).to.be.instanceOf(CliDeviceSessionBeingApprovedError);
+      // One script decides both, from the hold kept with the session and the time it is given.
+      const [denyScript, , denyArgs] = cacheService.eval.firstCall.args;
+      expect(denyScript).to.equal(cacheService.eval.secondCall.args[0]);
+      expect(denyScript).to.contain('(tonumber(payload.approvalHeldUntilEpoch) or 0) > tonumber(ARGV[3])');
+      expect(denyArgs[2]).to.be.closeTo(Date.now() / 1000, 2);
     });
 
     it('tell the waiting CLI they were denied', async () => {

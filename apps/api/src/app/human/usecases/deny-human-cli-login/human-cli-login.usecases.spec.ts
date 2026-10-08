@@ -1,7 +1,11 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { CLI_LOGIN_NOT_FOUND_CODE } from '../approve-human-cli-login/approve-human-cli-login.usecase';
+import { CliDeviceSessionBeingApprovedError } from '../../../cli-auth/services/cli-device-session.service';
+import {
+  CLI_LOGIN_BEING_APPROVED_CODE,
+  CLI_LOGIN_NOT_FOUND_CODE,
+} from '../approve-human-cli-login/approve-human-cli-login.usecase';
 import { GetHumanCliLogin } from '../get-human-cli-login/get-human-cli-login.usecase';
 import { HumanCliLoginCommand } from '../get-human-cli-login/human-cli-login.command';
 import { DenyHumanCliLogin } from './deny-human-cli-login.usecase';
@@ -53,10 +57,19 @@ describe('Human CLI login lookup and denial', () => {
       expect(sessions.denyByUserCode.firstCall.args[0]).to.equal('BCDF-GHJK');
     });
 
-    it('is not an error when the login is already gone', async () => {
+    it('is not an error when the login is already gone, but says nothing was denied', async () => {
       const sessions = { denyByUserCode: sinon.stub().resolves(false) };
 
       expect(await new DenyHumanCliLogin(sessions as never).execute(command())).to.deep.equal({ denied: false });
+    });
+
+    it('answers 409 while the login is being approved, since that approval may still let the CLI in', async () => {
+      const sessions = { denyByUserCode: sinon.stub().rejects(new CliDeviceSessionBeingApprovedError()) };
+
+      const error = await new DenyHumanCliLogin(sessions as never).execute(command()).catch((caught) => caught);
+
+      expect(error).to.be.instanceOf(ConflictException);
+      expect((error as ConflictException).getResponse()).to.deep.include({ code: CLI_LOGIN_BEING_APPROVED_CODE });
     });
   });
 });

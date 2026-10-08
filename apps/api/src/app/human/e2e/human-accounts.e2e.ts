@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CLI_USER_CODE_PATTERN } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -85,14 +86,20 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
 
     beforeEach(() => {
       process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
-      // The test session's own organization stands in for the backing organization, so Clerk isn't needed.
-      ensureBackingOrganization = sinon.stub(testServer.getService(EnsureBackingOrganization), 'execute').resolves({
+      ensureBackingOrganization = sinon
+        .stub(testServer.getService(EnsureBackingOrganization), 'execute')
+        .resolves(backingAccount());
+    });
+
+    /** The test session's own organization stands in for the backing organization, so Clerk isn't needed. */
+    function backingAccount() {
+      return {
         organizationId: session.organization._id,
         userId: session.user._id,
         environmentId: session.environment._id,
         region: 'us',
-      });
-    });
+      };
+    }
 
     afterEach(() => {
       ensureBackingOrganization.restore();
@@ -140,6 +147,31 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
 
     function poll(deviceCode: string) {
       return session.testAgent.post(`/v1/cli/device-sessions/${deviceCode}/poll`).set('Authorization', '');
+    }
+
+    /**
+     * Starts an approval and stops it where it prepares the account: it holds the login by then, and has
+     * moved nothing yet. `letGo` lets it carry on, or fail there with the error it is given.
+     */
+    async function pauseApproval(body: Record<string, string>) {
+      let letGo: (failure?: Error) => void = () => undefined;
+      const account = new Promise<ReturnType<typeof backingAccount>>((resolve, reject) => {
+        letGo = (failure) => (failure ? reject(failure) : resolve(backingAccount()));
+      });
+      ensureBackingOrganization.onFirstCall().returns(account);
+
+      let answered = false;
+      const approving = approve(body).then((res) => {
+        answered = true;
+
+        return res;
+      });
+      while (!ensureBackingOrganization.called && !answered) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      expect(ensureBackingOrganization.called).to.equal(true, 'the approval was answered before it got to the account');
+
+      return { approving, letGo };
     }
 
     it('validates the login request before touching Clerk', async () => {
@@ -226,6 +258,26 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       expect((await poll(deviceCode)).body.data.status).to.equal('approved');
     });
 
+    it('holds a login while it is being approved, and gives it back when that approval fails', async () => {
+      const { deviceCode, userCode } = await startLogin();
+      const { approving, letGo } = await pauseApproval({ userCode });
+
+      // Neither a denial nor a second approval gets in between; the CLI just keeps waiting.
+      const denied = await deny(userCode);
+      expect(denied.status).to.equal(409, JSON.stringify(denied.body));
+      expect(denied.body.code).to.equal('cli_login_being_approved');
+      expect((await approve({ userCode })).status).to.equal(409);
+      expect((await lookUp(userCode)).status).to.equal(200);
+      expect((await poll(deviceCode)).body.data.status).to.equal('pending');
+
+      letGo(new BadRequestException('The account could not be prepared.'));
+      expect((await approving).status).to.equal(400);
+
+      // Nothing was approved, so the login waits again and can be denied right away.
+      expect((await deny(userCode)).body.data).to.deep.equal({ denied: true });
+      expect((await poll(deviceCode)).body.data).to.deep.equal({ status: 'denied' });
+    });
+
     describe('from a computer with a keyless setup', () => {
       let keylessSession: UserSession;
       let claimToken: string;
@@ -252,6 +304,26 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
         expect(approved.status).to.equal(200, JSON.stringify(approved.body));
         expect(approved.body.data.keptSetup).to.equal(true);
         expect(await claimTokens().isEnvironmentClaimed(keylessSession.environment._id)).to.equal(true);
+        expect((await poll(deviceCode)).body.data.status).to.equal('approved');
+      });
+
+      it('is not denied halfway through an approval: the setup moves and the CLI is let in', async () => {
+        const { deviceCode, userCode } = await startLogin();
+        const { approving, letGo } = await pauseApproval({ userCode, claimToken });
+
+        // Denied now, the setup would still move while the CLI is told that nothing changed.
+        const denied = await deny(userCode);
+        expect(denied.status).to.equal(409, JSON.stringify(denied.body));
+        expect(denied.body.code).to.equal('cli_login_being_approved');
+
+        letGo();
+        const approved = await approving;
+        expect(approved.status).to.equal(200, JSON.stringify(approved.body));
+        expect(approved.body.data.keptSetup).to.equal(true);
+        expect(await claimTokens().isEnvironmentClaimed(keylessSession.environment._id)).to.equal(true);
+
+        // Denying afterwards finds nothing waiting, and says so instead of claiming a denial.
+        expect((await deny(userCode)).body.data).to.deep.equal({ denied: false });
         expect((await poll(deviceCode)).body.data.status).to.equal('approved');
       });
 

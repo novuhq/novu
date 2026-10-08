@@ -1,6 +1,10 @@
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
-import { CliDeviceSessionService } from '../../../cli-auth/services/cli-device-session.service';
+import {
+  type CliDeviceSessionApprovalHold,
+  CliDeviceSessionBeingApprovedError,
+  CliDeviceSessionService,
+} from '../../../cli-auth/services/cli-device-session.service';
 import { ApproveCliDeviceSessionCommand } from '../../../cli-auth/usecases/approve-cli-device-session/approve-cli-device-session.command';
 import { ApproveCliDeviceSession } from '../../../cli-auth/usecases/approve-cli-device-session/approve-cli-device-session.usecase';
 import { ClaimKeylessConnectCommand } from '../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.command';
@@ -13,6 +17,9 @@ import { ApproveHumanCliLoginCommand } from './approve-human-cli-login.command';
 
 /** Machine-readable code on the 404, so the Human dashboard can tell a wrong or expired code from a failed claim. */
 export const CLI_LOGIN_NOT_FOUND_CODE = 'cli_login_not_found';
+
+/** Code on the 409 for a login that another request is approving right now. It settles within moments. */
+export const CLI_LOGIN_BEING_APPROVED_CODE = 'cli_login_being_approved';
 
 /** Claim failures keep their `claim_*` code, or get this one, so the website can offer to log in without the setup. */
 export const CLAIM_FAILED_CODE = 'claim_failed';
@@ -34,12 +41,35 @@ export class ApproveHumanCliLogin {
   ) {}
 
   async execute(command: ApproveHumanCliLoginCommand): Promise<HumanAccountCliLoginResponseDto> {
-    // Checked first, so a mistyped or expired code never creates an organization or moves a setup.
-    const deviceCode = await this.cliDeviceSessionService.findPendingByUserCode(command.userCode);
-    if (!deviceCode) {
+    // Held first, so a mistyped or expired code never creates an organization or moves a setup, and so the
+    // login can't be denied after this approval has started moving things.
+    const hold = await this.holdLogin(command.userCode);
+
+    try {
+      return await this.approveHeldLogin(command, hold.deviceCode);
+    } catch (error) {
+      // Nothing was approved, so the login waits again. If this fails too, the hold runs out by itself.
+      await this.cliDeviceSessionService.releaseApprovalHold(hold).catch(() => undefined);
+
+      throw error;
+    }
+  }
+
+  private async holdLogin(userCode: string): Promise<CliDeviceSessionApprovalHold> {
+    const hold = await this.cliDeviceSessionService.holdForApprovalByUserCode(userCode).catch((error) => {
+      throw error instanceof CliDeviceSessionBeingApprovedError ? loginBeingApproved() : error;
+    });
+    if (!hold) {
       throw loginNotFound();
     }
 
+    return hold;
+  }
+
+  private async approveHeldLogin(
+    command: ApproveHumanCliLoginCommand,
+    deviceCode: string
+  ): Promise<HumanAccountCliLoginResponseDto> {
     const account = await this.ensureBackingOrganization.execute(
       EnsureBackingOrganizationCommand.create({
         humanUserId: command.humanUserId,
@@ -73,7 +103,7 @@ export class ApproveHumanCliLogin {
         })
       );
     } catch (error) {
-      // The request ran out after the check above.
+      // The request ran out while it was held.
       if (error instanceof NotFoundException) {
         throw loginNotFound();
       }
@@ -113,6 +143,14 @@ function loginNotFound(): NotFoundException {
   return new NotFoundException({
     message: 'No login is waiting for this code. Check the code in your terminal, or run `human login` again.',
     code: CLI_LOGIN_NOT_FOUND_CODE,
+  });
+}
+
+/** Answers both approving and denying a login that an approval holds: nobody knows yet how that approval ends. */
+export function loginBeingApproved(): ConflictException {
+  return new ConflictException({
+    message: 'This login is being approved right now. Try again in a moment.',
+    code: CLI_LOGIN_BEING_APPROVED_CODE,
   });
 }
 
