@@ -28,7 +28,10 @@ export function safeRedirectPath(value: string | string[] | undefined | null, ho
   }
 
   const isThisSite = url.host === host && (url.protocol === 'http:' || url.protocol === 'https:');
-  if (!isThisSite || isAuthPath(url.pathname)) {
+  // A path can itself start with `//` (`https://this-site//other.example`), and a browser reads that
+  // as the address of another site.
+  const leavesSite = url.pathname.startsWith('//');
+  if (!isThisSite || leavesSite || isAuthPath(url.pathname)) {
     return DASHBOARD_HOME;
   }
 
