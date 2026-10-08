@@ -12,11 +12,14 @@ import {
 
 describe('ApproveHumanCliLogin', () => {
   const account = { organizationId: 'novu_org', userId: 'novu_user', environmentId: 'dev_env', region: 'us' };
-  const hold = { deviceCode: 'device_code', heldUntilEpoch: 1_800_000_000 };
+  const hold = { deviceCode: 'device_code', holdId: 'this_approval' };
 
   function setup() {
     const cliDeviceSessionService = {
       holdForApprovalByUserCode: sinon.stub().resolves(hold),
+      renewApprovalHold: sinon.stub().resolves(true),
+      // Renewing on a timer has its own tests; here the work just runs.
+      whileRenewingApprovalHold: sinon.spy((_hold: unknown, work: () => Promise<unknown>) => work()),
       releaseApprovalHold: sinon.stub().resolves(),
     };
     const ensureBackingOrganization = { execute: sinon.stub().resolves(account) };
@@ -128,6 +131,55 @@ describe('ApproveHumanCliLogin', () => {
     expect(cliDeviceSessionService.holdForApprovalByUserCode.calledBefore(ensureBackingOrganization.execute)).to.equal(
       true
     );
+    // And the hold is checked once more right before the move, the one step that can't be taken back.
+    expect(cliDeviceSessionService.renewApprovalHold.args).to.deep.equal([[hold]]);
+    expect(cliDeviceSessionService.renewApprovalHold.calledAfter(ensureBackingOrganization.execute)).to.equal(true);
+    expect(cliDeviceSessionService.renewApprovalHold.calledBefore(claimKeylessConnect.execute)).to.equal(true);
+  });
+
+  it('keeps the login held for as long as it is at work on it', async () => {
+    const { usecase, cliDeviceSessionService, ensureBackingOrganization, approveCliDeviceSession } = setup();
+    let renewing = false;
+    const atWorkWhile: boolean[] = [];
+    cliDeviceSessionService.whileRenewingApprovalHold = sinon.spy(
+      async (_hold: unknown, work: () => Promise<unknown>) => {
+        renewing = true;
+        try {
+          return await work();
+        } finally {
+          renewing = false;
+        }
+      }
+    );
+    ensureBackingOrganization.execute.callsFake(async () => {
+      atWorkWhile.push(renewing);
+
+      return account;
+    });
+    approveCliDeviceSession.execute.callsFake(async () => {
+      atWorkWhile.push(renewing);
+
+      return { ok: true };
+    });
+
+    await usecase.execute(command({ claimToken: 'claim_token' }));
+
+    // From preparing the account to letting the CLI in, all of it runs with the hold being renewed.
+    expect(cliDeviceSessionService.whileRenewingApprovalHold.firstCall.args[0]).to.equal(hold);
+    expect(atWorkWhile).to.deep.equal([true, true]);
+  });
+
+  it('moves nothing when the login is no longer held for this approval', async () => {
+    const { usecase, cliDeviceSessionService, claimKeylessConnect, approveCliDeviceSession } = setup();
+    // The hold ran out while the account was prepared, and the login was denied or approved elsewhere since.
+    cliDeviceSessionService.renewApprovalHold.resolves(false);
+
+    const error = await usecase.execute(command({ claimToken: 'claim_token' })).catch((caught) => caught);
+
+    expect(error).to.be.instanceOf(NotFoundException);
+    expect((error as NotFoundException).getResponse()).to.deep.include({ code: CLI_LOGIN_NOT_FOUND_CODE });
+    expect(claimKeylessConnect.execute.called).to.equal(false);
+    expect(approveCliDeviceSession.execute.called).to.equal(false);
   });
 
   it('does not log in when the setup cannot be kept, and says why with a claim code', async () => {

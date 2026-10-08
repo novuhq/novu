@@ -42,11 +42,14 @@ export class ApproveHumanCliLogin {
 
   async execute(command: ApproveHumanCliLoginCommand): Promise<HumanAccountCliLoginResponseDto> {
     // Held first, so a mistyped or expired code never creates an organization or moves a setup, and so the
-    // login can't be denied after this approval has started moving things.
+    // login can't be denied after this approval has started moving things. The hold is renewed for as long as
+    // the approval is at work, so it covers all of it, however slow.
     const hold = await this.holdLogin(command.userCode);
 
     try {
-      return await this.approveHeldLogin(command, hold.deviceCode);
+      return await this.cliDeviceSessionService.whileRenewingApprovalHold(hold, () =>
+        this.approveHeldLogin(command, hold)
+      );
     } catch (error) {
       // Nothing was approved, so the login waits again. If this fails too, the hold runs out by itself.
       await this.cliDeviceSessionService.releaseApprovalHold(hold).catch(() => undefined);
@@ -68,7 +71,7 @@ export class ApproveHumanCliLogin {
 
   private async approveHeldLogin(
     command: ApproveHumanCliLoginCommand,
-    deviceCode: string
+    hold: CliDeviceSessionApprovalHold
   ): Promise<HumanAccountCliLoginResponseDto> {
     const account = await this.ensureBackingOrganization.execute(
       EnsureBackingOrganizationCommand.create({
@@ -79,6 +82,11 @@ export class ApproveHumanCliLogin {
     );
 
     if (command.claimToken) {
+      // A moved setup can't be moved back, so the move only starts while the login is still held for this approval.
+      if (!(await this.cliDeviceSessionService.renewApprovalHold(hold))) {
+        throw loginNotFound();
+      }
+
       await this.keepSetup(command.claimToken, account, { firstName: command.firstName, lastName: command.lastName });
     }
 
@@ -92,7 +100,7 @@ export class ApproveHumanCliLogin {
     try {
       await this.approveCliDeviceSession.execute(
         ApproveCliDeviceSessionCommand.create({
-          deviceCode,
+          deviceCode: hold.deviceCode,
           userId: account.userId,
           organizationId: account.organizationId,
           apiKey,
