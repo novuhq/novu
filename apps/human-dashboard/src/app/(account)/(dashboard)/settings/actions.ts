@@ -1,10 +1,37 @@
 'use server';
 
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { forgetStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
+import { forgetStoredBackingAccount, readHumanAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { deleteBackingAccount } from '@/lib/human-accounts-api';
+import { regenerateApiKey } from '@/lib/human-api-key';
+
+export type RegenerateApiKeyResult = { ok: true; apiKey: string } | { ok: false; error: string };
+
+/**
+ * Replaces the operator's API key and hands back the new one, for the dialog that shows it. The account
+ * comes from the session only, so nobody can replace someone else's key through this action.
+ */
+export async function regenerateApiKeyAction(): Promise<RegenerateApiKeyResult> {
+  const user = await currentUser();
+  const account = user && readHumanAccount(user);
+  if (!account) {
+    return { ok: false, error: 'Your session has ended. Sign in again to regenerate the key.' };
+  }
+
+  try {
+    const apiKey = await regenerateApiKey(account);
+    revalidatePath('/settings');
+
+    return { ok: true, apiKey };
+  } catch (error) {
+    console.error('Failed to regenerate the API key', error);
+
+    return { ok: false, error: 'Something went wrong while regenerating the key. Please try again.' };
+  }
+}
 
 /**
  * Deletes the operator's backing organization in Novu, then their Human account. The identity comes

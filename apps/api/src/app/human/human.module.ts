@@ -12,6 +12,8 @@ import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { CliAuthModule } from '../cli-auth/cli-auth.module';
 import { ConnectModule } from '../connect/connect.module';
+import { GenerateUniqueApiKey } from '../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { RegenerateApiKeys } from '../environments-v1/usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
 import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/remove-subscriber.usecase';
@@ -40,6 +42,7 @@ import { GetInteraction } from './usecases/get-interaction/get-interaction.useca
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
@@ -90,6 +93,9 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     EnsureBackingOrganization,
     ClaimForHumanAccount,
     GetBackingSecretKey,
+    GenerateUniqueApiKey,
+    RegenerateApiKeys,
+    RegenerateBackingSecretKey,
     DeleteHumanAccount,
     ApproveHumanCliLogin,
     GetKeylessClaimToken,
