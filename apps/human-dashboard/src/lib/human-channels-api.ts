@@ -119,6 +119,22 @@ export async function findSlackWorkspace(
 }
 
 /**
+ * Whether a contact has linked the channel themselves. A channel counts as connected as soon as anyone
+ * has, so this is how to tell that the operator did, the way `human setup` waits for it.
+ */
+export async function hasLinkedChannel(
+  account: HumanAccount,
+  channelIdentifier: string,
+  contactId: string
+): Promise<boolean> {
+  const page = await requestPageForAccount<{ data?: unknown[] }>(account, '/v1/channel-endpoints', {
+    query: { subscriberId: contactId, integrationIdentifier: channelIdentifier, limit: 1 },
+  });
+
+  return (page?.data?.length ?? 0) > 0;
+}
+
+/**
  * How the agent's Slack app shows up in a workspace. The API creates the app under the channel's name
  * minus the word "slack", which Slack doesn't allow in an app's name (`SlackQuickSetup`). The API doesn't
  * hand the name back from Slack, so an app renamed there later still shows this one.

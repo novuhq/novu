@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { HumanAccount } from './human-account';
 import { HumanApiError, isHumanApiRefusal } from './human-api-error';
-import { type Channel, findSlackWorkspace, issueSlackInstallUrl } from './human-channels-api';
+import { type Channel, findSlackWorkspace, hasLinkedChannel, issueSlackInstallUrl } from './human-channels-api';
 
 /**
  * Where the Slack drawer opens: at the first step, at the install, or already done. `unknown` means it
@@ -30,7 +30,8 @@ export async function readSlackSetup(
 
   const appName = channel.name ?? '';
 
-  if (channel.connected) {
+  // Another contact can have linked Slack before the operator did; the operator still has their install to do.
+  if (channel.connected && (await hasLinkedChannel(account, channel.identifier, operatorContactId))) {
     // The workspace's name is a nicety: the drawer still says "connected" when it can't be read.
     const workspace = await findSlackWorkspace(account, channel.identifier).catch(() => undefined);
 

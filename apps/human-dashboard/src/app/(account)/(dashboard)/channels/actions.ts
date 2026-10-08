@@ -11,6 +11,7 @@ import {
   ensureSlackChannel,
   ensureTelegramChannel,
   findSlackWorkspace,
+  hasLinkedChannel,
   issueSlackInstallUrl,
   issueTelegramStartLink,
   listChannels,
@@ -213,14 +214,15 @@ export async function getSlackInstallUrlAction(): Promise<string | null> {
 }
 
 /**
- * The workspace the app was installed in, or `null` while nobody has installed it. The drawer asks while
- * it waits.
+ * The workspace the app was installed in, or `null` while the operator hasn't installed and linked it.
+ * The drawer asks while it waits. Another contact linking Slack first doesn't count: the drawer is about
+ * the operator's own Slack.
  */
 export async function checkSlackConnectedAction(): Promise<SlackWorkspace | null> {
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
-  const channels = await listChannels(account);
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
   const slack = channels.find((channel) => channel.via === 'slack' && channel.active && channel.connected);
-  if (!slack) {
+  if (!slack || !contactId || !(await hasLinkedChannel(account, slack.identifier, contactId))) {
     return null;
   }
 

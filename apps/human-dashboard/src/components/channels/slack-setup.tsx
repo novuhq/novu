@@ -204,7 +204,6 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
               connected={connected}
               waitedTooLong={waitedTooLong}
               onKeepWaiting={keepWaiting}
-              onBack={() => setStep('app')}
             />
             {connected && (
               <ConnectedCard
@@ -366,10 +365,13 @@ type InstallStepProps = {
   connected: boolean;
   waitedTooLong: boolean;
   onKeepWaiting: () => void;
-  onBack: () => void;
 };
 
-function InstallStep({ status, name, workspace, connected, waitedTooLong, onKeepWaiting, onBack }: InstallStepProps) {
+/**
+ * No way back from here: the app exists by now, and creating it again would make a second app in Slack and
+ * swap the channel's credentials under an install that is already on its way.
+ */
+function InstallStep({ status, name, workspace, connected, waitedTooLong, onKeepWaiting }: InstallStepProps) {
   const [opening, setOpening] = useState(false);
 
   async function openSlack() {
@@ -409,14 +411,6 @@ function InstallStep({ status, name, workspace, connected, waitedTooLong, onKeep
         )
       }
       bodyClassName="items-center px-4.5 py-3 text-center"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onBack}>
-            Back
-          </Button>
-          <span />
-        </>
-      }
     >
       <div aria-hidden="true" className="flex">
         <span className={BADGE}>
