@@ -90,14 +90,24 @@ export class WebChatPlatformDeliveryService {
       this.deliveryInfo.report({ sequence });
 
       if (conversation && sequence !== undefined) {
-        const envelope = this.eventFactory.createEditEnvelope({
+        // No saved message has this id yet, so this finalizes a live preview: send a full
+        // `message`, which also creates the reply for readers that missed the preview.
+        const isPreview = !(await this.conversationService.findByPlatformMessageId(
+          context.config.environmentId,
+          conversation._id,
+          messageId
+        ));
+        const envelopeParams = {
           conversationId: conversation._id,
           conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
           content: messageContentFromStored({ content, richContent }),
           sequence,
-        });
+        };
+        const envelope = isPreview
+          ? this.eventFactory.createMessageEnvelope(envelopeParams)
+          : this.eventFactory.createEditEnvelope(envelopeParams);
         await this.emitBestEffort(context, conversation, envelope);
       }
 
