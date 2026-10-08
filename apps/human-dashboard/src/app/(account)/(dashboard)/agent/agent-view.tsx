@@ -1,18 +1,21 @@
 'use client';
 
 import { ChevronRight, Plus, Terminal } from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { ChannelIcon } from '@/components/channels/channel-icon';
 import type { ChannelRow } from '@/components/channels/channels-table';
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
+import { ConnectToolDrawer, ToolIcon } from '@/components/connect/connect-tool-drawer';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { CopyField } from '@/components/ui/copy-field';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
+import { useSwap } from '@/hooks/use-swap';
+import { AI_TOOLS, type AiTool, type ToolId } from '@/lib/ai-tools';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
@@ -53,6 +56,10 @@ type AgentViewProps = {
   slackSetup: SlackSetupState;
   setup: AgentSetupTexts;
   docsUrl: string;
+  /** The hosted Human MCP server the tool tiles connect to, or `null` while there is none. */
+  mcpUrl: string | null;
+  /** The AI tools that have signed in to the account. */
+  connectedTools: ToolId[];
 };
 
 /**
@@ -60,14 +67,23 @@ type AgentViewProps = {
  * ready. The operator does the setup in a terminal and the page is reloaded with what changed
  * (`AgentStatusPoll`), so every state fades or folds into the next one.
  */
-export function AgentView({ agent, channels, telegramSetup, slackSetup, setup, docsUrl }: AgentViewProps) {
+export function AgentView({
+  agent,
+  channels,
+  telegramSetup,
+  slackSetup,
+  setup,
+  docsUrl,
+  mcpUrl,
+  connectedTools,
+}: AgentViewProps) {
   // The last agent there was, so its card keeps its words while it fades out.
   const [knownAgent, setKnownAgent] = useState(agent);
   if (agent && agent !== knownAgent) {
     setKnownAgent(agent);
   }
 
-  const { shown, leaving } = useSwap(agent ? 'agent' : 'setup');
+  const { shown, leaving } = useSwap(agent ? 'agent' : 'setup', SWAP_MS);
   const { ref, height } = useMeasuredHeight();
 
   return (
@@ -106,27 +122,9 @@ export function AgentView({ agent, channels, telegramSetup, slackSetup, setup, d
           </div>
         </div>
       </div>
-      <StartFrom docsUrl={docsUrl} />
+      <StartFrom docsUrl={docsUrl} mcpUrl={mcpUrl} connectedTools={connectedTools} />
     </>
   );
-}
-
-/** Shows `target`, but only after what was shown before has had `SWAP_MS` to fade out. */
-function useSwap<View extends string>(target: View) {
-  const [shown, setShown] = useState(target);
-  const leaving = shown !== target;
-
-  useEffect(() => {
-    if (!leaving) {
-      return;
-    }
-
-    const timer = setTimeout(() => setShown(target), SWAP_MS);
-
-    return () => clearTimeout(timer);
-  }, [leaving, target]);
-
-  return { shown, leaving };
 }
 
 /** No agent yet: how to make one, by handing a prompt to a coding agent or by running the command. */
@@ -366,49 +364,102 @@ function ChannelCard({ channel, onSetUp }: { channel: ChannelRow; onSetUp: () =>
   );
 }
 
-const TOOLS = [
-  { name: 'Cursor', icon: '/tools/cursor.png' },
-  { name: 'Claude', icon: '/tools/claude.png' },
-  { name: 'ChatGPT', icon: '/tools/chatgpt.png' },
-];
+type StartFromProps = {
+  docsUrl: string;
+  /** The hosted Human MCP server, or `null` while there is none to connect a tool to. */
+  mcpUrl: string | null;
+  connectedTools: ToolId[];
+};
 
-/** "Or start from": the AI tools Human works in. They open the docs until each has its own connect drawer. */
-function StartFrom({ docsUrl }: { docsUrl: string }) {
+/**
+ * "Or start from": the AI tools Human works in. A tile opens the tool's connect drawer; while there is no
+ * MCP server to connect to, it opens the docs instead.
+ */
+function StartFrom({ docsUrl, mcpUrl, connectedTools }: StartFromProps) {
+  const [openTool, setOpenTool] = useState<ToolId | null>(null);
+  // The tool whose drawer was opened last, so the drawer keeps its words while it slides shut.
+  const [drawerTool, setDrawerTool] = useState<AiTool>(AI_TOOLS[0]);
+
+  function open(tool: AiTool) {
+    setDrawerTool(tool);
+    setOpenTool(tool.id);
+  }
+
   return (
     <section className="flex flex-col gap-2.5">
       <h2 className={SECTION_LABEL}>Or start from</h2>
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {TOOLS.map((tool) => (
-          <li key={tool.name}>
-            <a
-              href={docsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className={cn(
-                buttonClassName('secondary'),
-                'group h-auto w-full justify-start gap-3 rounded-lg px-[17px] py-[15px] text-left font-normal'
+        {AI_TOOLS.map((tool) => {
+          const connected = connectedTools.includes(tool.id);
+          const tile = (
+            <ToolTile tool={tool} connected={connected} active={openTool === tool.id} external={mcpUrl === null} />
+          );
+
+          return (
+            <li key={tool.id}>
+              {mcpUrl === null ? (
+                <a href={docsUrl} target="_blank" rel="noreferrer" className={TOOL_TILE}>
+                  {tile}
+                </a>
+              ) : (
+                <button type="button" onClick={() => open(tool)} className={TOOL_TILE}>
+                  {tile}
+                </button>
               )}
-            >
-              <img
-                src={tool.icon}
-                alt=""
-                width={32}
-                height={32}
-                className="size-8 shrink-0 rounded-[7px] ring-1 ring-white/8 ring-inset"
-              />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-[13px] leading-4.5 font-medium text-foreground">{tool.name}</span>
-                <span className="truncate text-xs leading-4 text-muted">MCP + skills</span>
-              </span>
-              <ChevronRight
-                aria-hidden="true"
-                className="size-4 shrink-0 text-muted transition-transform duration-150 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
-              />
-              <span className="sr-only">(opens the docs in a new tab)</span>
-            </a>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
+      {mcpUrl !== null && (
+        <ConnectToolDrawer
+          // Each tool gets a drawer of its own, so what one learned about its connection stays with it.
+          key={drawerTool.id}
+          tool={drawerTool}
+          mcpUrl={mcpUrl}
+          connected={connectedTools.includes(drawerTool.id)}
+          open={openTool !== null}
+          onOpenChange={(isOpen) => setOpenTool(isOpen ? drawerTool.id : null)}
+        />
+      )}
     </section>
+  );
+}
+
+const TOOL_TILE = cn(
+  buttonClassName('secondary'),
+  'group relative h-auto w-full justify-start gap-3 overflow-hidden rounded-lg px-[17px] py-[15px] text-left font-normal'
+);
+
+type ToolTileProps = {
+  tool: AiTool;
+  connected: boolean;
+  /** Its drawer is open: the tile glows. */
+  active: boolean;
+  /** The tile leaves the dashboard for the docs. */
+  external: boolean;
+};
+
+function ToolTile({ tool, connected, active, external }: ToolTileProps) {
+  return (
+    <>
+      <Dither shown={active} />
+      <ToolIcon tool={tool} className="size-8 rounded-[7px]" />
+      <span className="relative flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-[13px] leading-4.5 font-medium text-foreground">{tool.name}</span>
+        <span className="truncate text-xs leading-4 text-muted">{connected ? 'MCP server' : 'MCP + skills'}</span>
+      </span>
+      {/* A new key when the tool connects, so the badge fades in where the arrow was. */}
+      <span key={String(connected)} className="relative flex animate-overlay-in motion-reduce:animate-none">
+        {connected ? (
+          <Badge variant="success">Connected</Badge>
+        ) : (
+          <ChevronRight
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted transition-transform duration-150 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+          />
+        )}
+      </span>
+      {external && <span className="sr-only">(opens the docs in a new tab)</span>}
+    </>
   );
 }

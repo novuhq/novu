@@ -21,6 +21,10 @@ type DrawerContentProps = {
   /** Actions on the right of the bottom bar. */
   footer?: ReactNode;
   className?: string;
+  /** Other spacing for the header, the body or the bottom bar, when a flow's design differs. */
+  headerClassName?: string;
+  bodyClassName?: string;
+  footerClassName?: string;
   children: ReactNode;
 };
 
@@ -28,7 +32,18 @@ type DrawerContentProps = {
  * A panel that slides in from the right over the page, used for the channel and connect flows.
  * Radix keeps it mounted until the closing animation ends, so it slides back out too.
  */
-export function DrawerContent({ title, description, eyebrow, icon, footer, className, children }: DrawerContentProps) {
+export function DrawerContent({
+  title,
+  description,
+  eyebrow,
+  icon,
+  footer,
+  className,
+  headerClassName,
+  bodyClassName,
+  footerClassName,
+  children,
+}: DrawerContentProps) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/62 data-[state=closed]:animate-overlay-out data-[state=open]:animate-overlay-in motion-reduce:animate-none!" />
@@ -45,7 +60,7 @@ export function DrawerContent({ title, description, eyebrow, icon, footer, class
           className
         )}
       >
-        <header className="flex items-start gap-3 px-6 pt-5.5 pb-2">
+        <header className={cn('flex items-start gap-3 px-6 pt-5.5 pb-2', headerClassName)}>
           {icon && <div className="shrink-0">{icon}</div>}
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             {eyebrow && <p className="font-mono text-[11px] tracking-wider text-muted uppercase">{eyebrow}</p>}
@@ -62,9 +77,13 @@ export function DrawerContent({ title, description, eyebrow, icon, footer, class
             <X aria-hidden="true" className="size-4" />
           </DialogPrimitive.Close>
         </header>
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 pt-3 pb-6">{children}</div>
+        <div className={cn('flex flex-1 flex-col gap-3 overflow-y-auto px-6 pt-3 pb-6', bodyClassName)}>{children}</div>
         {footer && (
-          <footer className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">{footer}</footer>
+          <footer
+            className={cn('flex items-center justify-end gap-2 border-t border-border px-6 py-3', footerClassName)}
+          >
+            {footer}
+          </footer>
         )}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>

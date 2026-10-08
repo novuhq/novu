@@ -14,6 +14,7 @@ import { agentDisplayName, getRelayAgent } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
 import { readApiKey } from '@/lib/human-api-key';
 import { channelsBeforeSetup, loadChannelsOverview } from '@/lib/human-channels-overview';
+import { listConnectedTools, readMcpUrl } from '@/lib/human-tools-api';
 import { resolveNovuApiUrl } from '@/lib/novu-api';
 
 import { AgentStatusPoll } from './agent-status-poll';
@@ -35,7 +36,13 @@ const CHANNELS_POLL_MS = 5000;
  */
 export default async function AgentPage() {
   const account = await requireHumanAccount({ returnTo: '/agent' });
-  const [agent, secretKey, user] = await Promise.all([getRelayAgent(account), loadApiKey(account), findCurrentUser()]);
+  const mcpUrl = readMcpUrl();
+  const [agent, secretKey, user, connectedTools] = await Promise.all([
+    getRelayAgent(account),
+    loadApiKey(account),
+    findCurrentUser(),
+    mcpUrl ? listConnectedTools(account) : [],
+  ]);
   const { rows, telegramSetup, slackSetup } = agent ? await loadChannelsOverview(account) : channelsBeforeSetup();
 
   const context: SetupContext = { secretKey, apiUrl: resolveNovuApiUrl(account.region) };
@@ -65,6 +72,8 @@ export default async function AgentPage() {
           finishPrompt: buildFinishSetupPrompt(context, missing),
         }}
         docsUrl={DOCS_URL}
+        mcpUrl={mcpUrl}
+        connectedTools={connectedTools}
       />
     </>
   );
