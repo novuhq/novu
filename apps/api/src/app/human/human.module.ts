@@ -39,8 +39,10 @@ import { CreateHumanInvite } from './usecases/create-human-invite/create-human-i
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
 import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human-account.usecase';
+import { DenyHumanCliLogin } from './usecases/deny-human-cli-login/deny-human-cli-login.usecase';
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
@@ -106,6 +108,8 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     RegenerateBackingSecretKey,
     DeleteHumanAccount,
     ApproveHumanCliLogin,
+    GetHumanCliLogin,
+    DenyHumanCliLogin,
     GetKeylessClaimToken,
   ],
 })

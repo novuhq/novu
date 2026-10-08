@@ -1,92 +1,85 @@
-import { SignOutButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { Command } from '@/components/site/command';
-import { Panel } from '@/components/site/panel';
-import { SiteFrame } from '@/components/site/site-frame';
-import type { HumanRegion } from '@/lib/human-accounts-api';
+import { Stage } from '@/components/site/stage';
+import { findCliLogin, type HumanRegion, type PendingCliLogin } from '@/lib/human-accounts-api';
+import { HumanApiError } from '@/lib/human-api-error';
 import { isAccountAgentInUse } from '@/lib/human-claim';
 
-import { CliLoginForm } from './cli-login-form';
+import { CliLogin } from './cli-login';
+import { normalizeUserCode } from './user-code';
 
 export const metadata: Metadata = {
-  title: 'Log in to human',
+  title: 'Authorize the human CLI',
   robots: { index: false, follow: false },
-  // A claim token can be in the URL; keep it out of the Referer.
+  // The login code and a claim token can be in the URL; keep them out of the Referer.
   referrer: 'origin',
 };
 
 /**
- * Opened by `human login` (`…/cli/login`, plus `?region=eu` from the EU API). The operator types the code the
- * terminal shows, so a link someone else sends can't log anyone in. When the CLI has a setup made without an
- * account, `claim=…` carries its claim token, so logging in also keeps that setup. An account whose agent
- * is already in use can't take that setup in: the page says so and only logs the CLI in.
+ * Opened by `human login` (`…/cli/login?code=BCDF-GHJK`, plus `&region=eu` from the EU API). The page shows
+ * the code and the computer's name to compare with the terminal, and the signed-in person approves or denies.
+ * The code in the link only says which login this is: opening the page approves nothing, and a code that was
+ * denied, used or ran out shows the expired card. Links from older CLIs have no code; it's typed then.
+ * When the CLI has a setup made without an account, `claim=…` carries its claim token, so approving also
+ * keeps that setup. An account whose agent is already in use can't take that setup in: the page says so
+ * and approving only logs the CLI in.
  */
 export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
   const searchParams = await props.searchParams;
+  const linkedCode = typeof searchParams.code === 'string' ? searchParams.code : '';
   const claim = typeof searchParams.claim === 'string' ? searchParams.claim : '';
   const region: HumanRegion = searchParams.region === 'eu' ? 'eu' : 'us';
-  const query = new URLSearchParams({ ...(claim ? { claim } : {}), ...(region === 'eu' ? { region } : {}) });
-  const loginPath = query.size > 0 ? `/cli/login?${query}` : '/cli/login';
 
   const user = await currentUser();
   if (!user) {
+    const query = new URLSearchParams({
+      ...(linkedCode ? { code: linkedCode } : {}),
+      ...(claim ? { claim } : {}),
+      ...(region === 'eu' ? { region } : {}),
+    });
+    const loginPath = query.size > 0 ? `/cli/login?${query}` : '/cli/login';
+
     // Someone keeping a setup made without an account is usually new; anyone else likely has an account.
     redirect(`${claim ? '/sign-up' : '/sign-in'}?${new URLSearchParams({ redirect_url: loginPath })}`);
   }
 
-  const email = user.primaryEmailAddress?.emailAddress;
-  const cannotKeepSetup = Boolean(claim) && (await isAccountAgentInUse(user));
-  const keepsSetup = Boolean(claim) && !cannotKeepSetup;
+  // Anything in `code` that isn't a code is never shown or sent on: such a link has nothing to approve.
+  const userCode = normalizeUserCode(linkedCode);
+  const login = userCode ? await readLogin(region, userCode) : null;
+  const expired = Boolean(linkedCode) && !login;
+  const cannotKeepSetup = !expired && Boolean(claim) && (await isAccountAgentInUse(user));
 
   return (
-    <SiteFrame className="px-4 py-14 md:px-8 md:py-20">
-      <Panel
-        eyebrow="human login"
-        title={
-          keepsSetup ? (
-            <>
-              Keep your setup and <em className="font-display tracking-tight text-accent">log in</em>
-            </>
-          ) : (
-            <>
-              Log in to <em className="font-display tracking-tight text-accent">human</em>
-            </>
-          )
-        }
-        description={
-          <>
-            {keepsSetup
-              ? 'Moves the agent, channels and contacts you set up without an account into your Human account, and lets the human CLI on your computer use it.'
-              : 'Lets the human CLI on your computer use your Human account, so your agents can reach you and your contacts.'}{' '}
-            Enter the code <Command>human login</Command> shows in your terminal. If you didn&apos;t just run it
-            yourself, close this page.
-          </>
-        }
-      >
-        {cannotKeepSetup && (
-          <p
-            role="alert"
-            className="mb-4 rounded-md bg-accent/10 px-3 py-2 text-sm tracking-tight text-foreground ring-1 ring-accent/40"
-          >
-            Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can
-            still log in: the CLI will then use your account’s agent, and that setup stays behind.
-          </p>
-        )}
-        <CliLoginForm claim={keepsSetup ? claim : ''} region={region} />
-        {email && (
-          <p className="mt-6 text-sm tracking-tight text-foreground/60">
-            Signed in as {email}.{' '}
-            <SignOutButton redirectUrl={loginPath}>
-              <button type="button" className="cursor-pointer underline underline-offset-4 hover:text-foreground">
-                Use another account
-              </button>
-            </SignOutButton>
-          </p>
-        )}
-      </Panel>
-    </SiteFrame>
+    <Stage aside={user.primaryEmailAddress?.emailAddress}>
+      <CliLogin
+        userCode={login?.userCode ?? ''}
+        machineName={login?.machineName}
+        region={region}
+        claim={cannotKeepSetup ? '' : claim}
+        cannotKeepSetup={cannotKeepSetup}
+        email={user.primaryEmailAddress?.emailAddress}
+        expired={expired}
+      />
+    </Stage>
   );
+}
+
+/**
+ * The login waiting for the code, or null once nothing waits for it. When the API can't be asked, the card
+ * is still shown, without the computer's name: Approve asks again, and says so if the login is gone.
+ */
+async function readLogin(region: HumanRegion, userCode: string): Promise<PendingCliLogin | null> {
+  try {
+    return await findCliLogin(region, userCode);
+  } catch (error) {
+    if (error instanceof HumanApiError && error.code === 'cli_login_not_found') {
+      return null;
+    }
+
+    console.error('Failed to look up the CLI login', error);
+
+    return { userCode };
+  }
 }
