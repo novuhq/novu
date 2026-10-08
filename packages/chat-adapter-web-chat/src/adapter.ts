@@ -7,11 +7,13 @@ import type {
   Message,
   RawMessage,
   Root,
+  StreamChunk,
   ThreadInfo,
   WebhookOptions,
 } from 'chat';
 import type {
   WebChatAdapterConfig,
+  WebChatDeliverMessageResult,
   WebChatRawMessage,
   WebChatRequestBody,
   WebChatSession,
@@ -48,6 +50,28 @@ type IngressKind =
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
+
+/** Web chat renders text only; task and plan chunks are Slack-specific. */
+function chunkText(chunk: string | StreamChunk): string {
+  if (typeof chunk === 'string') {
+    return chunk;
+  }
+
+  return chunk.type === 'markdown_text' ? chunk.text : '';
+}
+
+function toRawMessage(message: WebChatDeliverMessageResult, text: string): RawMessage<WebChatRawMessage> {
+  return {
+    id: message.id,
+    threadId: message.threadId,
+    raw: {
+      id: message.id,
+      text,
+      subscriberId: '',
+      createdAt: new Date().toISOString(),
+    },
+  };
 }
 
 /**
@@ -493,16 +517,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     const { content, richContent, messageId } = parsePostableMessage(message);
     const delivered = await this.config.deliverMessage({ threadId, content, richContent, messageId });
 
-    return {
-      id: delivered.id,
-      threadId: delivered.threadId,
-      raw: {
-        id: delivered.id,
-        text: content,
-        subscriberId: '',
-        createdAt: new Date().toISOString(),
-      },
-    };
+    return toRawMessage(delivered, content);
   }
 
   async editMessage(
@@ -513,16 +528,27 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     const { content, richContent } = parsePostableMessage(message);
     const edited = await this.config.editMessage({ threadId, messageId, content, richContent });
 
-    return {
-      id: edited.id,
-      threadId: edited.threadId,
-      raw: {
-        id: edited.id,
-        text: content,
-        subscriberId: '',
-        createdAt: new Date().toISOString(),
-      },
-    };
+    return toRawMessage(edited, content);
+  }
+
+  /** Native Chat SDK streaming; without it the SDK posts a placeholder and edits it every 500ms. */
+  async stream(
+    threadId: string,
+    textStream: AsyncIterable<string | StreamChunk>
+  ): Promise<RawMessage<WebChatRawMessage>> {
+    let text = '';
+    async function* textOnly(): AsyncIterable<string> {
+      for await (const chunk of textStream) {
+        const piece = chunkText(chunk);
+        if (piece) {
+          text += piece;
+          yield piece;
+        }
+      }
+    }
+    const streamed = await this.config.streamMessage({ threadId, textStream: textOnly() });
+
+    return toRawMessage(streamed, text);
   }
 
   async deleteMessage(threadId: string, messageId: string): Promise<void> {

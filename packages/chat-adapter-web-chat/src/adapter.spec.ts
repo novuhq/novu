@@ -31,6 +31,7 @@ function createConfig(overrides: Partial<WebChatAdapterConfig> = {}): WebChatAda
     verifySession: vi.fn(async () => SESSION),
     deliverMessage: vi.fn(async ({ threadId }) => ({ id: 'act_delivered1ab', threadId })),
     editMessage: vi.fn(async ({ threadId, messageId }) => ({ id: messageId, threadId })),
+    streamMessage: vi.fn(async ({ threadId }) => ({ id: 'act_streamed1ab', threadId })),
     deleteMessage: vi.fn(async () => undefined),
     startTyping: vi.fn(async () => undefined),
     ...overrides,
@@ -605,6 +606,34 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(config.deleteMessage).toHaveBeenCalledWith({
       threadId: 'web_chat:conv_abcdefghijkl',
       messageId: 'act_message0001',
+    });
+  });
+
+  it('stream forwards only text to streamMessage and returns the full text on the streamed message', async () => {
+    const received: string[] = [];
+    const config = createConfig({
+      streamMessage: vi.fn(async ({ threadId, textStream }) => {
+        for await (const text of textStream) received.push(text);
+
+        return { id: 'act_streamed1ab', threadId };
+      }),
+    });
+    const { adapter } = await createAdapter(config);
+
+    async function* chunks() {
+      yield 'Checking';
+      yield { type: 'task_update' as const, id: 't1', title: 'Look up order', status: 'in_progress' as const };
+      yield { type: 'markdown_text' as const, text: ' your order' };
+      yield '';
+      yield '.';
+    }
+    const sent = await adapter.stream('web_chat:conv_abcdefghijkl', chunks());
+
+    expect(received).toEqual(['Checking', ' your order', '.']);
+    expect(sent).toMatchObject({
+      id: 'act_streamed1ab',
+      threadId: 'web_chat:conv_abcdefghijkl',
+      raw: { text: 'Checking your order.' },
     });
   });
 

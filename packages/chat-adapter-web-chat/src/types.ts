@@ -29,6 +29,11 @@ export type WebChatEditMessageParams = {
   richContent?: Record<string, unknown>;
 };
 
+export type WebChatStreamMessageParams = {
+  threadId: string;
+  textStream: AsyncIterable<string>;
+};
+
 export type WebChatDeleteMessageParams = {
   threadId: string;
   messageId: string;
@@ -96,6 +101,8 @@ export type WebChatAdapterConfig = {
   completeInbound?: (params: WebChatClaimInboundParams & { claimToken: string; messageId?: string }) => Promise<void>;
   deliverMessage: (params: WebChatDeliverMessageParams) => Promise<WebChatDeliverMessageResult>;
   editMessage: (params: WebChatEditMessageParams) => Promise<WebChatDeliverMessageResult>;
+  /** Live-only preview, resolved with its id. If `textStream` throws, removes the preview and rejects. */
+  streamMessage: (params: WebChatStreamMessageParams) => Promise<WebChatDeliverMessageResult>;
   deleteMessage: (params: WebChatDeleteMessageParams) => Promise<void>;
   /** Live typing egress — Nest emits an ephemeral `channel.typing` envelope. */
   startTyping: (params: WebChatStartTypingParams) => Promise<void>;
