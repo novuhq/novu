@@ -16,13 +16,13 @@ export function InviteFrame({ children }: { children: ReactNode }) {
         <Brand href={HUMAN_SITE_URL} />
         <a
           href={HUMAN_SITE_URL}
-          className="rounded-sm text-sm tracking-tight text-secondary transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+          className="rounded-sm text-[13px] leading-4.5 text-secondary transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
         >
           What is Human?
         </a>
       </header>
       <main className="flex flex-1 items-center justify-center px-4 py-8">{children}</main>
-      <footer className="px-4 pb-6 text-center text-xs leading-normal tracking-tight text-secondary">
+      <footer className="px-4 pb-6 text-center text-xs leading-4 text-muted">
         Human lets agents ask people before they act. Built by{' '}
         <a href="https://novu.co/" className="rounded-sm underline-offset-4 hover:text-foreground hover:underline">
           Novu
