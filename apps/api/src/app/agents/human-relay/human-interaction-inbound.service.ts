@@ -399,11 +399,12 @@ export class HumanInteractionInboundService {
     // Asks addressed to this person, plus asks sent into this thread for anyone in it to answer.
     // The second kind is the only one a stranger can have, since a stranger is not a subscriber.
     const subscriberId = turn.subscriber?.subscriberId;
+    const none: HumanInteractionEntity[] = [];
     const [addressed, inThread] = await Promise.all([
-      subscriberId ? this.humanInteractionRepository.findPendingAsks(environmentId, subscriberId) : [],
+      subscriberId ? this.humanInteractionRepository.findPendingAsks(environmentId, subscriberId) : none,
       turn.conversation?._id
         ? this.humanInteractionRepository.findPendingAsksByConversation(environmentId, turn.conversation._id)
-        : [],
+        : none,
     ]);
     const openInThread = inThread.filter(
       (ask) => isOpenThreadInteraction(ask) && !addressed.some((mine) => mine._id === ask._id)
