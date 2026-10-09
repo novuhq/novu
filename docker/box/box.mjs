@@ -34,6 +34,7 @@ const BRIDGE_URL = 'http://bridge.box.internal:4000/api/novu';
 const BRIDGE_SECRET = `${DATA}/bridge/secret-key`;
 // The bridge app's imports, resolved from packages/framework so they follow the checkout.
 const BRIDGE_MODULES = ['express', 'zod', 'ai', 'langchain', '@langchain/core'];
+const MANAGED_AGENT = 'box-managed';
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
 const APPS = ['api', 'worker', 'socket', 'dashboard', 'bridge'];
 const DATABASES = ['mongo', ...REDIS_PORTS.map((port) => `redis-${port}`), 'clickhouse', 's3', 'mail'];
@@ -258,6 +259,7 @@ function prepareRuntime() {
     `${REPO}/enterprise/workers/socket/.dev.vars`,
     `JWT_SECRET=${env.JWT_SECRET}\nINTERNAL_API_KEY=${env.INTERNAL_SERVICES_API_KEY}\n`
   );
+  fs.writeFileSync(`${REPO}/enterprise/workers/thalamus-observer/.dev.vars`, `API_KEY=${env.THALAMUS_CF_API_KEY}\n`);
 }
 
 // The bridge app lives in the image, outside the workspace, so its node_modules point into the checkout:
@@ -358,6 +360,9 @@ async function start() {
   log(`box ready in ${seconds.toFixed(1)}s`);
   // The workflows ship in the image, so a new image may bring new ones.
   if (fs.existsSync(BRIDGE_SECRET)) await syncBridge().catch((error) => log(`WARN: bridge sync failed: ${error.message}`));
+  if (env.NOVU_MANAGED_CLAUDE_API_KEY) {
+    await seedManagedAgent().catch((error) => log(`WARN: managed agent seed failed: ${error.message}`));
+  }
 }
 
 async function api(path, { headers = {}, ...init } = {}) {
@@ -495,6 +500,46 @@ async function syncBridge() {
     await api(`/v1/agents/${agentId}/bridge`, { method: 'PUT', headers, body: JSON.stringify({ bridgeUrl: BRIDGE_URL }) });
   }
   log(`bridge synced: ${body.data.length} workflows and ${agents.length} agents from ${BRIDGE_URL}`);
+}
+
+// Managed agents run on Anthropic with the key from the start env, so this runs at start, not at bake, and only
+// with a key. The Novu-managed Claude integration is the one Novu adds to new Development environments when the
+// key is set; it stores no key. The agent gets Haiku and only the bash tool, which asks for approval before it runs.
+async function seedManagedAgent() {
+  pc(['process', 'start', 'thalamus']);
+  await waitForHttp('http://127.0.0.1:8788/health', 120);
+  const headers = { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` };
+  if (await api(`/v1/agents/${MANAGED_AGENT}`, { headers }).then(() => true, () => false)) return;
+  const { body: environment } = await api('/v1/environments/me', { headers });
+  const { body: integrations } = await api('/v1/integrations', { headers });
+  let integration = integrations.data.find(
+    (item) => item.providerId === 'novu-anthropic' && item._environmentId === environment.data._id
+  );
+  integration ??= (
+    await api('/v1/integrations', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ providerId: 'novu-anthropic', kind: 'agent', name: 'Novu Managed Claude', active: true, check: false }),
+    })
+  ).body.data;
+  await api('/v1/agents', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      name: 'Box managed agent',
+      identifier: MANAGED_AGENT,
+      runtime: 'managed',
+      managedRuntime: {
+        providerId: 'novu-anthropic',
+        integrationId: integration._id,
+        model: 'claude-haiku-4-5',
+        systemPrompt: 'You are the Novu Box test agent. Keep answers to one short sentence.',
+        tools: ['bash'],
+      },
+    }),
+  });
+  await api(`/v1/agents/${MANAGED_AGENT}/integrations`, { method: 'POST', headers, body: JSON.stringify({ providerId: 'novu-web-chat' }) });
+  log(`managed agent ${MANAGED_AGENT} is on web chat`);
 }
 
 // The CLI calls discover unsigned, which a bridge with strictAuthentication rejects; the box signs it like the API.

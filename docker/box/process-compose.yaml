@@ -242,7 +242,7 @@ processes:
       restart: on_failure
       backoff_seconds: 2
 
-  # Agent PRs only. Turned on with `process-compose process start thalamus`.
+  # Managed agents only: `box start` starts it when NOVU_MANAGED_CLAUDE_API_KEY is set.
   thalamus:
     disabled: true
     command: node_modules/.bin/wrangler dev --env local --ip 0.0.0.0 --port 8788 --inspector-port 9330 --log-level warn

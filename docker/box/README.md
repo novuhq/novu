@@ -60,6 +60,7 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | `STRIPE_API_KEY` | Stripe sandbox `Novu Box` | Bake (puts the org on Team), `stripe listen`, API |
 | `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply-pr` only; pass it with `-e`, it's never written to disk |
 | `BULL_MQ_PRO_NPM_TOKEN` (optional) | Taskforce.sh registry | Bake; without it the box runs open-source BullMQ |
+| `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API |
 
 The dashboard signs in as `agent@novu.co` / `Agent123!@#` (a Clerk test user, `*@novu.co` only). All boxes share
 the Clerk development instance and its one seed org, and every bake re-links that org to the new box. Older
@@ -119,6 +120,13 @@ resolving the conversation, then a tool approval on the AI SDK and the LangChain
 The agents are `box-vanilla` (`agent()` from `@novu/framework`), `box-ai-sdk` and `box-langchain`. Their models
 are scripted fakes, so they need no LLM key: `weather <city>` asks to run a gated `get_weather` tool, and anything
 else is echoed. The vanilla agent also answers `card`, `remember <text>`, `recall`, `notify <name>` and `done`.
+
+With `NOVU_MANAGED_CLAUDE_API_KEY`, `start` also runs the thalamus observer and seeds `box-managed`, a managed
+agent on the Novu-managed Claude integration (Claude Haiku, only the `bash` tool, which asks before it runs).
+The smoke test then adds 3 checks: a reply, a `bash` run after approval, and the demo quota. They call Anthropic
+for real; Novu's own caps still apply (10 managed-Claude conversations per org per month, 100,000 tokens per
+conversation). Each run uses 2 conversations, so a box passes these checks 5 times, then hits the cap like a real
+org would.
 
 Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 
