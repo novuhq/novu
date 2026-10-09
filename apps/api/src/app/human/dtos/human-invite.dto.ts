@@ -76,6 +76,8 @@ export type HumanInviteStatusResult =
   | {
       valid: true;
       agentName: string;
+      /** Where the agent's picture can be loaded. Missing when it has none. */
+      agentPictureUrl?: string;
       /** The account owner's name. Missing when they haven't given one. */
       inviterName?: string;
       /** Display name, falling back to the subscriberId. */

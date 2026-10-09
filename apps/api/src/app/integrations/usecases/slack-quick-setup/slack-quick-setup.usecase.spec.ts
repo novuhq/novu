@@ -26,11 +26,17 @@ function buildHarness() {
     findOne: sinon.stub().resolves(null),
     createOrReviveLink: sinon.stub().resolves({}),
   };
+  const agentRepository = { findOne: sinon.stub().resolves({ _id: MOCK_AGENT_ID, runtime: 'self-hosted' }) };
   const logger = { setContext: sinon.stub(), info: sinon.stub() };
 
-  const usecase = new SlackQuickSetup(integrationRepository as any, agentIntegrationRepository as any, logger as any);
+  const usecase = new SlackQuickSetup(
+    integrationRepository as any,
+    agentIntegrationRepository as any,
+    agentRepository as any,
+    logger as any
+  );
 
-  return { usecase, integrationRepository };
+  return { usecase, integrationRepository, agentRepository };
 }
 
 function buildCommand(overrides: Partial<SlackQuickSetupCommand> = {}): SlackQuickSetupCommand {
@@ -81,5 +87,29 @@ describe('SlackQuickSetup', () => {
 
     const manifest = parseSentManifest(axiosPost);
     expect(manifest.settings.token_rotation_enabled).to.equal(true);
+  });
+
+  it("describes a Human agent's app with the description its operator gave it", async () => {
+    const { usecase, agentRepository } = buildHarness();
+    agentRepository.findOne.resolves({
+      _id: MOCK_AGENT_ID,
+      runtime: 'human_relay',
+      description: 'Asks before it ships.',
+    });
+
+    await usecase.execute(buildCommand());
+
+    const manifest = parseSentManifest(axiosPost);
+    expect(manifest.display_information.description).to.equal('Asks before it ships.');
+    expect(manifest.features.agent_view.agent_description).to.equal('Asks before it ships.');
+  });
+
+  it('keeps the default description for any other agent', async () => {
+    const { usecase, agentRepository } = buildHarness();
+    agentRepository.findOne.resolves({ _id: MOCK_AGENT_ID, runtime: 'self-hosted', description: 'Mine.' });
+
+    await usecase.execute(buildCommand());
+
+    expect(parseSentManifest(axiosPost).display_information.description).to.equal('Agent built with Novu');
   });
 });

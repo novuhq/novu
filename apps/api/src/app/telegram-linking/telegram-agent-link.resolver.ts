@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
+import { AgentIntegrationRepository, type AgentPicture, AgentRepository } from '@novu/dal';
+import type { AgentRuntime } from '@novu/shared';
 import Axios from 'axios';
 
 import { buildTelegramBotApiUrl } from './telegram-webhook.utils';
@@ -11,6 +12,9 @@ export interface ResolvedTelegramAgent {
   agentId: string;
   agentIdentifier: string;
   agentName: string;
+  agentDescription?: string;
+  agentRuntime?: AgentRuntime;
+  agentPicture?: AgentPicture;
 }
 
 interface TelegramGetWebhookInfoResponse {
@@ -96,14 +100,21 @@ export class TelegramAgentLinkResolver {
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
       },
-      ['_id', 'identifier', 'name']
+      ['_id', 'identifier', 'name', 'description', 'runtime', 'picture']
     );
 
     if (!agent) {
       throw new NotFoundException('The agent linked to this Telegram integration was not found.');
     }
 
-    return { agentId: agent._id, agentIdentifier: agent.identifier, agentName: agent.name };
+    return {
+      agentId: agent._id,
+      agentIdentifier: agent.identifier,
+      agentName: agent.name,
+      agentDescription: agent.description,
+      agentRuntime: agent.runtime,
+      ...(agent.picture?.storageKey ? { agentPicture: agent.picture } : {}),
+    };
   }
 
   private async disambiguateByWebhookOwner(candidateAgentIds: string[], botToken?: string): Promise<string> {

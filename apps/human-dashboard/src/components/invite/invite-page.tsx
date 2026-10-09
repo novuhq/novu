@@ -233,7 +233,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   if (stepsFor === 'telegram' && telegramLink) {
     return (
       <InviteCard step="telegram">
-        <InviterLine name={status.inviterName} />
+        <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
         <AppIcon via="telegram" size="large" />
         <StepTitle>Open the bot and press Start</StepTitle>
         <CardText>
@@ -278,7 +278,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   if (stepsFor === 'slack') {
     return (
       <InviteCard step="slack">
-        <InviterLine name={status.inviterName} />
+        <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
         <AppIcon via="slack" size="large" />
         <StepTitle>Confirm your Slack account</StepTitle>
         <CardText>Sign in to Slack so {status.agentName} knows where to DM you. Nothing else to set up.</CardText>
@@ -304,7 +304,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
 
   return (
     <InviteCard step="channels">
-      <InviterLine name={status.inviterName} />
+      <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         Get <Accent>asks</Accent> from {status.agentName}
       </h1>
@@ -599,14 +599,14 @@ function Accent({ children }: { children: ReactNode }) {
 }
 
 /** Who is asking: a person and their agent. An account owner who never gave a name isn't named. */
-function InviterLine({ name }: { name?: string }) {
+function InviterLine({ name, agentPictureUrl }: { name?: string; agentPictureUrl?: string }) {
   return (
     <div className="flex h-8 items-center gap-2.5">
       <span aria-hidden="true" className="flex shrink-0 items-center">
         <span className="flex size-8 items-center justify-center rounded-full border border-border bg-raised text-secondary">
           <User className="size-4" />
         </span>
-        <AgentAvatar className="-ml-2.5 size-8 rounded-full ring-2 ring-background" />
+        <AgentAvatar src={agentPictureUrl} className="-ml-2.5 size-8 rounded-full ring-2 ring-background" />
       </span>
       <p className="text-[13px] leading-4.5 text-secondary">{name ? `${name} invited you` : "You've been invited"}</p>
     </div>

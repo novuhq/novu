@@ -20,11 +20,13 @@ export type RelayAgent = {
   name: string;
   active: boolean;
   description?: string;
+  /** Where the picture the operator gave it can be loaded. Missing when it has none. */
+  pictureUrl?: string;
   /** ISO timestamp of the `human setup` that made it. */
   createdAt?: string;
 };
 
-type ApiAgent = Omit<RelayAgent, 'id'> & { _id: string };
+type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl'> & { _id: string };
 
 /**
  * The agent that carries messages between the operator's agents and their contacts, or `null` until
@@ -34,7 +36,10 @@ type ApiAgent = Omit<RelayAgent, 'id'> & { _id: string };
  */
 export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayAgent | null> => {
   try {
-    const agent = await requestForAccount<ApiAgent>(account, `/v1/agents/${RELAY_AGENT_IDENTIFIER}`);
+    const [agent, pictureUrl] = await Promise.all([
+      requestForAccount<ApiAgent>(account, `/v1/agents/${RELAY_AGENT_IDENTIFIER}`),
+      loadPictureUrl(account),
+    ]);
 
     return {
       id: agent._id,
@@ -42,6 +47,7 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
       name: agent.name,
       active: agent.active !== false,
       description: agent.description,
+      pictureUrl,
       createdAt: agent.createdAt,
     };
   } catch (error) {
@@ -52,6 +58,17 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
     throw error;
   }
 });
+
+/** The picture is a nicety: when it can't be read, the agent is shown with the mascot. */
+async function loadPictureUrl(account: HumanAccount): Promise<string | undefined> {
+  try {
+    const agent = await requestForAccount<{ pictureUrl?: string }>(account, '/v1/human/agent');
+
+    return agent.pictureUrl;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * What a server action answers when it needs the agent and there is none. The pages already keep the
