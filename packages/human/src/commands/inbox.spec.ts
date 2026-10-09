@@ -31,7 +31,9 @@ vi.mock('./interact', async (importOriginal) => {
 
 const { inboxListCommand, inboxReplyCommand, inboxShowCommand, parseWait, runInboxInteraction, waitForThreads } =
   await import('./inbox');
-const { formatInboxThreadLine, formatInboxThreadView, formatRelativeTime } = await import('../output');
+const { formatInboxThreadLine, formatInboxThreadView, formatRelativeTime, stripTerminalControls } = await import(
+  '../output'
+);
 
 const config: HumanCliConfig = {
   apiUrl: 'https://api.novu.co',
@@ -135,6 +137,37 @@ describe('formatters', () => {
     expect(line).toContain('you: "done"');
     expect(line).toContain('(resolved)');
     expect(line).not.toContain('unread');
+  });
+
+  it('strips terminal control sequences from contact-authored text', () => {
+    expect(stripTerminalControls('\u001b[2J\u001b[Hhi\u001b]0;title\u0007 there\u0008\r')).toBe('hi there');
+    expect(stripTerminalControls('line one\n\tline two')).toBe('line one\n\tline two');
+
+    const view = formatInboxThreadView({
+      thread: thread({ from: { subscriberId: 'ada', name: 'Ada\u001b[31m' } }),
+      hasMore: false,
+      messages: [
+        {
+          id: 'act_1',
+          from: 'human',
+          senderName: '\u001b[2JAda',
+          text: '\u001b[2J\u001b[Hfake history',
+          attachments: [{ name: 'x\u001b[1Ay.png' }],
+          at: '2026-10-09T11:50:00.000Z',
+        },
+      ],
+    });
+    const line = formatInboxThreadLine(
+      thread({ lastMessage: { text: '\u001b[2Jhello', at: '2026-10-09T11:57:00.000Z', from: 'human' } }),
+      NOW
+    );
+
+    expect(view).not.toContain('\u001b[2J');
+    expect(view).not.toContain('\u001b[1A');
+    expect(view).toContain('fake history');
+    expect(view).toContain('xy.png');
+    expect(line).not.toContain('\u001b[2J');
+    expect(line).toContain('"hello"');
   });
 
   it('renders a thread view with interactions and an older-messages hint', () => {

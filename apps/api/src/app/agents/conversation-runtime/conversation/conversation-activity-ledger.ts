@@ -93,6 +93,15 @@ export class ConversationActivityLedger {
     });
   }
 
+  async countInboundMessagesSince(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    since?: string;
+  }): Promise<number> {
+    return this.activityRepository.countInboundMessagesSince(params);
+  }
+
   async mint(params: { environmentId: string; organizationId: string; conversationId: string }): Promise<number> {
     return this.eventSequenceService.mint(params);
   }

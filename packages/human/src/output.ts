@@ -82,8 +82,23 @@ export function emitResult(interaction: Interaction, asJson: boolean): number {
 
 const PREVIEW_LENGTH = 60;
 
+/** ANSI CSI / OSC escape sequences, then any remaining C0/C1 control character except tab and newline. */
+const TERMINAL_CONTROL_PATTERN = new RegExp(
+  [
+    '\\u001b\\[[0-?]*[ -/]*[@-~]',
+    '\\u001b\\][^\\u0007\\u001b]*(?:\\u0007|\\u001b\\\\)',
+    '[\\u0000-\\u0008\\u000b-\\u001f\\u007f-\\u009f]',
+  ].join('|'),
+  'g'
+);
+
+/** Contact-authored text must not be able to drive the operator's terminal (clear screen, rewrite lines). */
+export function stripTerminalControls(text: string): string {
+  return text.replace(TERMINAL_CONTROL_PATTERN, '');
+}
+
 function truncate(text: string, length: number): string {
-  const singleLine = text.replace(/\s+/g, ' ').trim();
+  const singleLine = stripTerminalControls(text).replace(/\s+/g, ' ').trim();
 
   return singleLine.length > length ? `${singleLine.slice(0, length - 1)}…` : singleLine;
 }
@@ -99,7 +114,7 @@ export function formatRelativeTime(iso: string, now: number = Date.now()): strin
 }
 
 function threadSender(thread: InboxThread): string {
-  return thread.from?.name ?? thread.from?.subscriberId ?? 'unknown';
+  return stripTerminalControls(thread.from?.name ?? thread.from?.subscriberId ?? 'unknown');
 }
 
 /** `● conv_x  telegram  Ada  2 unread  "preview"  3m ago` — one line per thread. */
@@ -118,7 +133,8 @@ export function formatInboxThreadLine(thread: InboxThread, now: number = Date.no
 
 function formatInboxMessage(message: InboxMessage): string {
   const at = pc.dim(new Date(message.at).toLocaleString());
-  const who = message.from === 'human' ? pc.bold(message.senderName ?? 'human') : pc.dim(message.from);
+  const who =
+    message.from === 'human' ? pc.bold(stripTerminalControls(message.senderName ?? 'human')) : pc.dim(message.from);
   const lines = [`${at}  ${who}`];
 
   if (message.interaction) {
@@ -127,11 +143,15 @@ function formatInboxMessage(message: InboxMessage): string {
   }
 
   if (message.text) {
-    lines.push(...message.text.split('\n').map((line) => `  ${line}`));
+    lines.push(
+      ...stripTerminalControls(message.text)
+        .split('\n')
+        .map((line) => `  ${line}`)
+    );
   }
 
   for (const attachment of message.attachments ?? []) {
-    lines.push(pc.dim(`  📎 ${attachment.name ?? attachment.type ?? 'attachment'}`));
+    lines.push(pc.dim(`  📎 ${stripTerminalControls(attachment.name ?? attachment.type ?? 'attachment')}`));
   }
 
   return lines.join('\n');

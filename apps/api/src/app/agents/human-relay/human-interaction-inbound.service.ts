@@ -18,6 +18,7 @@ import {
   humanInteractionRecipientIds,
 } from '@novu/shared';
 import { isKnownHumanContentOption } from '../../human/services/human-interaction-lifecycle';
+import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
@@ -52,7 +53,8 @@ export class HumanInteractionInboundService {
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly logger: PinoLogger,
     private readonly featureFlagsService: FeatureFlagsService,
-    private readonly conversationRepository: ConversationRepository
+    private readonly conversationRepository: ConversationRepository,
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -271,23 +273,51 @@ export class HumanInteractionInboundService {
     return { approvalId: managed.toolUseId, approved: managed.approved, optionId };
   }
 
-  /**
-   * A message this service handled (a card answer, a disambiguation, a rejected responder) is already
-   * delivered, so it moves the Human inbox read cursor past itself instead of showing up as unread.
-   */
   async tryHandleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
     const result = await this.handleMessage(turn, mode);
 
     if (result.outcome !== 'ignored' && turn.conversation?._id) {
-      await this.conversationRepository.markRead(
-        turn.config.environmentId,
-        turn.config.organizationId,
-        turn.conversation._id,
-        new Date().toISOString()
-      );
+      await this.markHandledMessageRead(turn.config.environmentId, turn.config.organizationId, turn.conversation._id);
     }
 
     return result;
+  }
+
+  /**
+   * A message this service handled (a card answer, a disambiguation, a rejected responder) is already
+   * delivered, so it should not show up as unread in the Human inbox. The cursor only moves when that
+   * message is the sole unread one, and only up to it, so unrelated messages are never hidden.
+   */
+  private async markHandledMessageRead(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string
+  ): Promise<void> {
+    const conversation = await this.conversationRepository.findOne(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      ['lastReadAt', 'lastHumanMessageAt'],
+      { readPreference: 'primary' }
+    );
+    if (!conversation?.lastHumanMessageAt) {
+      return;
+    }
+
+    const unread = await this.conversationService.countInboundMessagesSince({
+      environmentId,
+      organizationId,
+      conversationId,
+      since: conversation.lastReadAt,
+    });
+    if (unread > 1) {
+      return;
+    }
+
+    await this.conversationRepository.markRead(
+      environmentId,
+      organizationId,
+      conversationId,
+      conversation.lastHumanMessageAt
+    );
   }
 
   private async handleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
