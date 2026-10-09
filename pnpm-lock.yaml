@@ -571,6 +571,9 @@ importers:
       es-toolkit:
         specifier: ^1.47.0
         version: 1.47.0
+      eventsource-parser:
+        specifier: ^3.1.0
+        version: 3.1.0
       express:
         specifier: ^5.2.1
         version: 5.2.1

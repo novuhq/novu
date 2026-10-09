@@ -262,6 +262,19 @@ export interface SafeOutboundResponse {
   body: Buffer;
 }
 
+export interface SafeOutboundStreamRequestOptions extends Omit<SafeOutboundRequestOptions, 'maxResponseBytes'> {
+  /** Socket idle timeout once the response headers arrived; `timeoutMs` applies until then. */
+  idleTimeoutMs?: number;
+}
+
+export interface SafeOutboundStreamResponse {
+  statusCode: number;
+  statusMessage: string;
+  headers: http.IncomingHttpHeaders;
+  /** Unread response body; consume or `resume()` it so the socket is released. */
+  body: Readable;
+}
+
 export interface SafeOutboundJsonResponse<T = unknown> {
   statusCode: number;
   statusMessage: string;
@@ -368,18 +381,19 @@ interface PinnedRequestParams {
   headers: Record<string, string | undefined>;
   body: SafeOutboundRequestOptions['body'];
   timeoutMs: number;
-  maxResponseBytes: number;
+  idleTimeoutMs?: number;
   rejectUnauthorized: boolean;
 }
 
-function performPinnedRequest(params: PinnedRequestParams): Promise<SafeOutboundResponse> {
-  const { parsed, address, method, headers, body, timeoutMs, maxResponseBytes, rejectUnauthorized } = params;
+/** Resolves once the response headers arrive; the body is left unread. */
+function openPinnedRequest(params: PinnedRequestParams): Promise<http.IncomingMessage> {
+  const { parsed, address, method, headers, body, timeoutMs, idleTimeoutMs, rejectUnauthorized } = params;
   const isHttps = parsed.protocol === 'https:';
   const transport = isHttps ? https : http;
 
   const requestHeaders = buildOutboundHeaders(headers, parsed, body);
 
-  return new Promise<SafeOutboundResponse>((resolve, reject) => {
+  return new Promise<http.IncomingMessage>((resolve, reject) => {
     const requestOptions: http.RequestOptions & { servername?: string; rejectUnauthorized?: boolean } = {
       protocol: parsed.protocol,
       hostname: address.address,
@@ -396,42 +410,20 @@ function performPinnedRequest(params: PinnedRequestParams): Promise<SafeOutbound
       requestOptions.rejectUnauthorized = rejectUnauthorized;
     }
 
+    let activeTimeoutMs = timeoutMs;
     const req = transport.request(requestOptions, (res) => {
-      const chunks: Buffer[] = [];
-      let total = 0;
-      let aborted = false;
-
-      res.on('data', (chunk: Buffer) => {
-        if (aborted) return;
-        total += chunk.length;
-        if (total > maxResponseBytes) {
-          aborted = true;
-          res.destroy();
-          reject(new Error(`Response exceeded maximum size of ${maxResponseBytes} bytes.`));
-
-          return;
-        }
-        chunks.push(chunk);
-      });
-
-      res.on('end', () => {
-        if (aborted) return;
-        resolve({
-          statusCode: res.statusCode ?? 0,
-          statusMessage: res.statusMessage ?? '',
-          headers: res.headers,
-          body: Buffer.concat(chunks, total),
-        });
-      });
-
-      res.on('error', reject);
+      if (idleTimeoutMs !== undefined) {
+        activeTimeoutMs = idleTimeoutMs;
+        req.setTimeout(idleTimeoutMs);
+      }
+      resolve(res);
     });
 
     stripTracePropagationHeaders(req);
 
     req.on('timeout', () => {
       const timeoutError: NodeJS.ErrnoException = new Error(
-        `Request to ${parsed.hostname} timed out after ${timeoutMs}ms.`
+        `Request to ${parsed.hostname} timed out after ${activeTimeoutMs}ms.`
       );
       // Tag the error so callers (e.g. HttpClientService retry logic) can treat
       // socket timeouts as a retryable transport failure, matching the `got` path.
@@ -462,15 +454,46 @@ function performPinnedRequest(params: PinnedRequestParams): Promise<SafeOutbound
   });
 }
 
+function readBody(res: Readable, maxResponseBytes: number): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    let aborted = false;
+
+    res.on('data', (chunk: Buffer) => {
+      if (aborted) return;
+      total += chunk.length;
+      if (total > maxResponseBytes) {
+        aborted = true;
+        res.destroy();
+        reject(new Error(`Response exceeded maximum size of ${maxResponseBytes} bytes.`));
+
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    res.on('end', () => {
+      if (aborted) return;
+      resolve(Buffer.concat(chunks, total));
+    });
+
+    res.on('error', reject);
+  });
+}
+
 export async function safeOutboundRequest(options: SafeOutboundRequestOptions): Promise<SafeOutboundResponse> {
+  const { body, ...response } = await safeOutboundStreamRequest(options);
+
+  return { ...response, body: await readBody(body, options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES) };
+}
+
+/** Like `safeOutboundRequest`, but resolves on the response headers with the body unread (e.g. for SSE). */
+export async function safeOutboundStreamRequest(
+  options: SafeOutboundStreamRequestOptions
+): Promise<SafeOutboundStreamResponse> {
   const maxRedirects = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
-  const initialOriginHost = (() => {
-    try {
-      return new URL(options.url as string | URL).host.toLowerCase();
-    } catch {
-      return null;
-    }
-  })();
+  const initialOriginHost = originHost(options.url);
 
   let currentUrl: string | URL = options.url;
   let currentMethod: SafeOutboundMethod = options.method ?? 'GET';
@@ -485,24 +508,22 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
       currentBody = undefined;
     }
 
-    const addresses = await resolvePublicAddresses(parsed.hostname);
-    const chosen = addresses[0];
-    if (!chosen) {
-      throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${parsed.hostname}".`, {
-        hostname: parsed.hostname,
-      });
-    }
-
-    const response = await performPinnedRequest({
+    const res = await openPinnedRequest({
       parsed,
-      address: chosen,
+      address: await resolvePinnedAddress(parsed.hostname),
       method: currentMethod,
       headers: currentHeaders,
       body: currentBody,
       timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-      maxResponseBytes: options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES,
+      idleTimeoutMs: options.idleTimeoutMs,
       rejectUnauthorized: options.rejectUnauthorized ?? true,
     });
+    const response: SafeOutboundStreamResponse = {
+      statusCode: res.statusCode ?? 0,
+      statusMessage: res.statusMessage ?? '',
+      headers: res.headers,
+      body: res,
+    };
 
     const status = response.statusCode;
 
@@ -513,25 +534,13 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
         return response;
       }
 
+      res.destroy();
       const nextUrl = new URL(location, parsed.toString());
-
-      // 307 and 308 are method-preserving redirects: the upstream is asking us
-      // to replay the original method+body against the new target. If the new
-      // target is on a different origin, we cannot safely strip the body or
-      // downgrade the method without changing semantics, and silently blanking
-      // the body would mask the cross-origin attempt from the caller. Treat it
-      // as a hard stop so the caller can decide what to do.
-      if ((status === 307 || status === 308) && initialOriginHost && nextUrl.host.toLowerCase() !== initialOriginHost) {
-        throw new SsrfBlockedError(
-          'CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT',
-          `Refusing to follow ${status} redirect from ${parsed.host} to ${nextUrl.host}: method-preserving redirects across origin boundaries are not allowed.`,
-          { hostname: nextUrl.hostname }
-        );
-      }
+      assertNoCrossOriginMethodPreservingRedirect(status, parsed, nextUrl, initialOriginHost);
 
       currentUrl = nextUrl;
 
-      if (status === 303 || ((status === 301 || status === 302) && currentMethod === 'POST')) {
+      if (redirectsToGet(status, currentMethod)) {
         currentMethod = 'GET';
         currentBody = undefined;
       }
@@ -543,6 +552,51 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
   }
 
   throw new SsrfBlockedError('INVALID_URL', `Maximum redirect count (${maxRedirects}) exceeded.`);
+}
+
+async function resolvePinnedAddress(hostname: string) {
+  const [chosen] = await resolvePublicAddresses(hostname);
+  if (!chosen) {
+    throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${hostname}".`, { hostname });
+  }
+
+  return chosen;
+}
+
+function originHost(url: string | URL): string | null {
+  try {
+    return new URL(url).host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+// 307 and 308 are method-preserving redirects: the upstream is asking us
+// to replay the original method+body against the new target. If the new
+// target is on a different origin, we cannot safely strip the body or
+// downgrade the method without changing semantics, and silently blanking
+// the body would mask the cross-origin attempt from the caller. Treat it
+// as a hard stop so the caller can decide what to do.
+function assertNoCrossOriginMethodPreservingRedirect(
+  status: number,
+  current: URL,
+  nextUrl: URL,
+  initialOriginHost: string | null
+): void {
+  const preservesMethod = status === 307 || status === 308;
+  if (!preservesMethod || !initialOriginHost || nextUrl.host.toLowerCase() === initialOriginHost) {
+    return;
+  }
+
+  throw new SsrfBlockedError(
+    'CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT',
+    `Refusing to follow ${status} redirect from ${current.host} to ${nextUrl.host}: method-preserving redirects across origin boundaries are not allowed.`,
+    { hostname: nextUrl.hostname }
+  );
+}
+
+function redirectsToGet(status: number, method: SafeOutboundMethod): boolean {
+  return status === 303 || ((status === 301 || status === 302) && method === 'POST');
 }
 
 export async function safeOutboundJsonRequest<T = unknown>(

@@ -8,6 +8,7 @@ import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from './agent-runtime.port';
 import { type AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './bridge-expire-superseded-approvals.service';
+import { BridgeLiveReplies } from './bridge-live-replies.service';
 import { buildAgentDashboardOverviewUrl, buildNoBridgeReply } from './bridge-no-bridge-reply';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from './build-platform-context.util';
 import type { ConversationTurn } from './conversation-turn';
@@ -25,6 +26,7 @@ export class BridgeRuntime implements AgentRuntime {
     private readonly conversationService: AgentConversationService,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly expireSupersededApprovals: BridgeExpireSupersededApprovalsService,
+    private readonly bridgeLiveReplies: BridgeLiveReplies,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -103,6 +105,7 @@ export class BridgeRuntime implements AgentRuntime {
           }
         );
       },
+      onEventStream: this.bridgeLiveReplies.readerFor(turn.config, turn.conversation, turn.platformThreadId),
     };
   }
 

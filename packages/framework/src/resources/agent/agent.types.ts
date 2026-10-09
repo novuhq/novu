@@ -367,6 +367,16 @@ export interface FileRef {
  */
 export type MessageContent = string | ChatElement;
 
+/**
+ * Reply text as it is generated, e.g. an AI SDK `textStream`. Accepted by ctx.reply() and as an
+ * `onMessage` return value: channels that support it show the reply growing, others get it whole.
+ */
+export type ReplyStream = AsyncIterable<string>;
+
+export function isReplyStream(value: unknown): value is ReplyStream {
+  return typeof value === 'object' && value !== null && Symbol.asyncIterator in value;
+}
+
 /** Platform message id or an inbound message to quote in the outbound reply. */
 export type QuoteReplyTarget = { messageId: string } | Pick<AgentMessage, 'platformMessageId'>;
 
@@ -628,8 +638,11 @@ export interface AgentHandlerContext {
    *
    * @example quote-reply to the triggering inbound message
    *   await ctx.reply('answer', { quoteReply: message });
+   *
+   * @example stream the reply as the model writes it (resolves once the stream ends)
+   *   await ctx.reply(result.textStream);
    */
-  reply(content: MessageContent, options?: AgentReplyOptions): Promise<ReplyHandle>;
+  reply(content: MessageContent | ReplyStream, options?: AgentReplyOptions): Promise<ReplyHandle>;
   /**
    * Gate tool calls that need user approval before they run.
    *
@@ -841,10 +854,13 @@ export interface AgentHandlers {
    * @param message - The incoming message that triggered this handler.
    * @param ctx - Conversation history, subscriber, metadata, and reply/trigger methods.
    *
-   * Return a string or JSX card to reply, or call `ctx.reply()` directly
+   * Return a string, JSX card or {@link ReplyStream} to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  onMessage: (
+    message: AgentMessage,
+    ctx: AgentMessageContext
+  ) => Awaitable<MessageContent | ReplyStream | AgentHandlerReply | void>;
   /**
    * Fires when the user edits a previously sent message. Does not re-run `onMessage`.
    *
