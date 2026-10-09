@@ -146,15 +146,27 @@ function pnpmInstall() {
   run('pnpm', ['symlink:submodules']);
 }
 
-// The dashboard builds on its own so `--sourcemap false` reaches only vite: sourcemaps take its peak from ~2.5 GB to ~4 GB.
-// Its dependency chain runs serially: parallel tsup DTS builds next to the running services get OOM-killed in 8 GB.
+// The API and the dashboard build in their own runs to get their own arguments (`--sourcemap false` takes vite's peak
+// from ~4 GB to ~2.5 GB). Their dependencies build once, in the first run: the enterprise packages never hit the nx cache.
 function build(projects) {
   const nx = (args) => run('pnpm', ['nx', ...args], { env: { ...env, NODE_OPTIONS: '' } });
-  const others = projects.filter((project) => !['@novu/api-service', '@novu/dashboard'].includes(project));
-  if (others.length) nx(['run-many', '-t', 'build', `--projects=${others.join(',')}`, '--parallel=2']);
-  if (projects.includes('@novu/api-service')) nx(['run', '@novu/api-service:build', '--', '-c', apiNestConfig()]);
-  if (projects.includes('@novu/dashboard'))
-    nx(['run', '@novu/dashboard:build', '--parallel=1', '--', '--sourcemap', 'false']);
+  const own = ['@novu/api-service', '@novu/dashboard'].filter((project) => projects.includes(project));
+  const first = new Set(projects.filter((project) => !own.includes(project)));
+  if (own.length) {
+    const graph = projectGraph();
+    for (const project of own) {
+      const { devDependencies = {} } = readJson(`${REPO}/${graph.nodes[project].data.root}/package.json`);
+      for (const { target } of graph.dependencies[project])
+        if (graph.nodes[target] && !(target in devDependencies)) first.add(target);
+    }
+  }
+  if (first.size) nx(['run-many', '-t', 'build', `--projects=${[...first].join(',')}`, '--parallel=2']);
+  if (own.includes('@novu/api-service')) {
+    nx(['run', '@novu/api-service:build-metadata', '--excludeTaskDependencies']);
+    nx(['run', '@novu/api-service:build', '--excludeTaskDependencies', '--', '-c', apiNestConfig()]);
+  }
+  if (own.includes('@novu/dashboard'))
+    nx(['run', '@novu/dashboard:build', '--excludeTaskDependencies', '--', '--sourcemap', 'false']);
 }
 
 // The API's nest-cli.json without `typeCheck`: the same output, but ~6 s instead of ~57 s. CI's build type-checks every PR.
@@ -165,6 +177,14 @@ function apiNestConfig() {
   fs.writeFileSync(`${RUN}/nest-cli.json`, JSON.stringify(config));
 
   return relative(`${REPO}/apps/api`, `${RUN}/nest-cli.json`);
+}
+
+function projectGraph() {
+  const file = `${RUN}/nx-graph.json`;
+  fs.mkdirSync(RUN, { recursive: true });
+  output('pnpm', ['-s', 'nx', 'graph', `--file=${file}`]);
+
+  return readJson(file).graph;
 }
 
 function workspacePackages() {
