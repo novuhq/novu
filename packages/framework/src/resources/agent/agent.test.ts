@@ -3077,6 +3077,52 @@ describe('tool approval', () => {
     ).toBeUndefined();
   });
 
+  it.each([
+    [true, ['tc']],
+    [false, []],
+  ])(
+    'records a tool result for agent() only when the gated tool was approved (approved=%s)',
+    async (approved, toolUseIds) => {
+      const posts: any[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url, init: any) => {
+          posts.push(JSON.parse(init.body));
+
+          return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+        })
+      );
+
+      await dispatchAgentEvent({
+        agent: agent('a', {
+          onMessage: () => undefined,
+          onToolApproval: (decision) => (decision.approved ? 'Sunny in Berlin' : 'Skipped'),
+        }),
+        event: 'onAction',
+        bridge: approvalBridge({
+          event: 'onAction',
+          message: null,
+          history: [
+            {
+              role: 'agent',
+              type: 'tool_approval_request',
+              content: '',
+              toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'get_weather', input: { city: 'Berlin' } },
+              createdAt: '1',
+            },
+          ],
+          action: { id: buildApprovalActionId(approved ? 'approve' : 'deny', 'tc'), sourceMessageId: 'm_prev' },
+        }),
+        secretKey: 's',
+      });
+
+      const results = posts
+        .flatMap((post) => post.events ?? [])
+        .filter((envelope) => envelope.event.type === 'tool-use-result');
+      expect(results.map((envelope) => envelope.event.toolUseId)).toEqual(toolUseIds);
+    }
+  );
+
   it('routes a HITL tool-gate settlement to onToolApproval from humanResponse', async () => {
     const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};
     const testAgent = {
