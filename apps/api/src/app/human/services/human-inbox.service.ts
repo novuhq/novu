@@ -14,6 +14,7 @@ import {
 } from '@novu/dal';
 import type { InboxMessageDto, InboxSender, InboxThreadDto } from '../dtos/human-inbox.dto';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../usecases/setup-human-relay/setup-human-relay.usecase';
+import { HumanKeylessCapService } from './human-keyless-cap.service';
 
 export type InboxScope = { environmentId: string; organizationId: string };
 
@@ -30,8 +31,20 @@ export class HumanInboxService {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly keylessCap: HumanKeylessCapService
   ) {}
+
+  /** Inbox sends draw on the same keyless demo allowance as `POST /human/interactions`. */
+  async assertCanSend(scope: InboxScope, agent: InboxRelayAgent, conversation: ConversationEntity): Promise<void> {
+    const subscriberId = subscriberIdOf(conversation);
+
+    await this.keylessCap.assertWithinCap({
+      ...scope,
+      agentId: agent._id,
+      subscriberIds: subscriberId ? [subscriberId] : [],
+    });
+  }
 
   async resolveRelayAgent(scope: InboxScope, agentIdentifier?: string): Promise<InboxRelayAgent> {
     const identifier = agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER;

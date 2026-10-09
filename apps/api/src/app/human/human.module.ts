@@ -32,6 +32,7 @@ import { HumanBackingAccounts } from './services/human-backing-accounts.service'
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanInboxService } from './services/human-inbox.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
+import { HumanKeylessCapService } from './services/human-keyless-cap.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -95,6 +96,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     AgentMcpServerRepository,
     McpConnectionRepository,
     HumanDeliveryService,
+    HumanKeylessCapService,
     CreateInteraction,
     GetInteraction,
     ListInteractions,

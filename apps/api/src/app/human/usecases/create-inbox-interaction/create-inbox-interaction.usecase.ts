@@ -22,6 +22,7 @@ export class CreateInboxInteraction {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const agent = await this.inbox.resolveRelayAgent(scope, command.agentIdentifier);
     const conversation = await this.inbox.findThread(scope, agent, command.identifier);
+    await this.inbox.assertCanSend(scope, agent, conversation);
     const channel = this.inbox.primaryChannel(conversation);
     const integrationIdentifier = await this.inbox.resolveIntegrationIdentifier(scope, channel);
 
