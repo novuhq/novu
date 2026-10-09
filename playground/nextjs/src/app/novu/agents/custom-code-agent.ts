@@ -131,9 +131,7 @@ export const customCodeAgent = agent('custom-code-agent', {
 
         return 'Posted a one-way notice. Nothing to wait on.';
       case 'weather':
-        await ctx.toolApproval.request({ id: `weather-${Date.now()}`, name: 'get_weather', input: { city: arg || 'Berlin' } });
-
-        return;
+        return ctx.toolApproval.request({ id: `weather-${Date.now()}`, name: 'get_weather', input: { city: arg || 'Berlin' } });
       default:
         return HELP;
     }
