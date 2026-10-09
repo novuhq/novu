@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { createHmac } from 'crypto';
 import { afterEach, describe, expect, it, MockedFunction, vi } from 'vitest';
 
 import { buildSignature, sync } from './sync';
@@ -39,6 +40,19 @@ describe('sync command', () => {
         expect.objectContaining({ headers: { Authorization: expect.any(String), 'Content-Type': 'application/json' } })
       );
       expect(response).toEqual(syncData);
+    });
+
+    it('signs agent discovery so bridges with strict authentication accept it', async () => {
+      const secretKey = 'your-api-key';
+      (axios.post as MockedFunction<typeof axios.post>).mockResolvedValueOnce({ data: {} });
+      (axios.get as MockedFunction<typeof axios.get>).mockResolvedValueOnce({ data: { workflows: [] } });
+
+      await sync('https://bridge.novu.co', secretKey, 'https://api.novu.co');
+
+      const [url, config] = (axios.get as MockedFunction<typeof axios.get>).mock.calls[0];
+      const [, timestamp, hmac] = config?.headers?.['novu-signature'].match(/^t=(\d+),v1=([0-9a-f]{64})$/);
+      expect(url).toBe('https://bridge.novu.co?action=discover');
+      expect(hmac).toBe(createHmac('sha256', secretKey).update(`${timestamp}.{}`).digest('hex'));
     });
 
     it('syncState - network error on sync', async () => {
