@@ -129,15 +129,15 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       });
 
       if (stream && actions.transformStreamResponse) {
-        return actions.transformStreamResponse({
-          status: actionResponse.status,
-          headers: {
-            ...actionResponse.headers,
-            [HttpHeaderKeysEnum.CONTENT_TYPE]: 'text/event-stream',
-            [HttpHeaderKeysEnum.CACHE_CONTROL]: 'no-cache',
-          },
-          body: stream,
-        });
+        const headers: Record<string, string> = {
+          ...actionResponse.headers,
+          [HttpHeaderKeysEnum.CONTENT_TYPE]: 'text/event-stream',
+          [HttpHeaderKeysEnum.CACHE_CONTROL]: 'no-cache',
+        };
+        // Only Novu reads live replies, server to server; no browser origin may read them.
+        delete headers[HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN];
+
+        return actions.transformStreamResponse({ status: actionResponse.status, headers, body: stream });
       }
 
       return actions.transformResponse(actionResponse);

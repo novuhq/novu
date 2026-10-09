@@ -277,6 +277,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     const result = await handler.createHandler()();
 
     expect(result.headers['content-type']).toBe('text/event-stream');
+    expect(result.headers['access-control-allow-origin']).toBeUndefined();
     const live = (await new Response(result.body).text())
       .split('\n\n')
       .filter((frame) => frame.startsWith('data: '))
