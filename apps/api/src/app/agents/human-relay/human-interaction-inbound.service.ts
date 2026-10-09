@@ -18,7 +18,6 @@ import {
   humanInteractionRecipientIds,
 } from '@novu/shared';
 import { isKnownHumanContentOption } from '../../human/services/human-interaction-lifecycle';
-import { isOpenThreadInteraction } from '../../human/services/inbox-thread-request-id';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
@@ -407,7 +406,7 @@ export class HumanInteractionInboundService {
         : none,
     ]);
     const openInThread = inThread.filter(
-      (ask) => isOpenThreadInteraction(ask) && !addressed.some((mine) => mine._id === ask._id)
+      (ask) => ask.anyoneMayAnswer && !addressed.some((mine) => mine._id === ask._id)
     );
 
     if (!subscriberId && openInThread.length === 0) {
@@ -523,7 +522,7 @@ export class HumanInteractionInboundService {
 
   private async isAddressedHuman(turn: ConversationTurn, interaction: HumanInteractionEntity): Promise<boolean> {
     // Sent into this thread for anyone in it to answer.
-    if (isOpenThreadInteraction(interaction) && interaction._conversationId === turn.conversation?._id) {
+    if (interaction.anyoneMayAnswer && interaction._conversationId === turn.conversation?._id) {
       return true;
     }
 

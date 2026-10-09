@@ -72,8 +72,8 @@ export class CreateConversationInteraction {
         `Subscriber "${subscriberId}" already has ${pendingCount} pending interactions (cap ${cap}).`,
     });
 
-    const interaction = await this.humanInteractionRepository.create(
-      buildPendingHumanInteraction({
+    const interaction = await this.humanInteractionRepository.create({
+      ...buildPendingHumanInteraction({
         kind: command.kind,
         content: toStoredContent(command.kind, persistableIncoming(command)),
         from: command.from,
@@ -84,8 +84,9 @@ export class CreateConversationInteraction {
         ttlSeconds: command.ttlSeconds,
         requestId: command.requestId,
         conversationId: command.conversation._id,
-      })
-    );
+      }),
+      ...(command.anyoneMayAnswer ? { anyoneMayAnswer: true } : {}),
+    });
 
     if (command.skipDelivery) {
       await this.activityRecorder.recordRequest(interaction);

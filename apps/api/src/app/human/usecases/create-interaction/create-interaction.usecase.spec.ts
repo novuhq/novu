@@ -180,7 +180,7 @@ describe('CreateInteraction', () => {
       expect(deliveryService.deliver.called).to.equal(false);
       expect(inbox.findThread.firstCall.args[2]).to.equal('conv_abc');
       expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-2']);
-      expect(createConversationInteraction.execute.firstCall.args[0].requestId).to.match(/^inbox_any_/);
+      expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(true);
       expect(inbox.findStrangers.called).to.equal(false);
       expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 1 }]);
     });
@@ -192,7 +192,7 @@ describe('CreateInteraction', () => {
       await usecase.execute({ ...command, to: 'sub-2', thread: 'conv_abc' } as any);
 
       expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-2']);
-      expect(createConversationInteraction.execute.firstCall.args[0].requestId).to.not.match(/^inbox_any_/);
+      expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
     });
 
     it('rejects `via` together with `thread`', async () => {

@@ -55,6 +55,11 @@ export class CreateConversationInteractionCommand extends EnvironmentWithUserCom
   @IsBoolean()
   skipDelivery?: boolean;
 
+  /** Whoever is in the conversation may settle, not only the people in `to`. */
+  @IsOptional()
+  @IsBoolean()
+  anyoneMayAnswer?: boolean;
+
   @IsOptional()
   @IsObject()
   slackNative?: SlackNativeDelivery;

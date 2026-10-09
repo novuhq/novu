@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, shortId } from '@novu/application-generic';
 import {
   AgentEntity,
   AgentRepository,
@@ -28,7 +28,6 @@ import {
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
-import { buildInboxThreadRequestId } from '../../services/inbox-thread-request-id';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -238,7 +237,8 @@ export class CreateInteraction {
         agentName: relay.name,
         integrationIdentifier,
         kind: command.kind,
-        requestId: buildInboxThreadRequestId(to.length === 0),
+        requestId: `inbox_${shortId(12)}`,
+        anyoneMayAnswer: to.length === 0,
         card: command.card,
         from: command.from,
         ttlSeconds: command.ttlSeconds,
