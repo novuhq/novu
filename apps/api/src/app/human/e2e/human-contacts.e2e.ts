@@ -381,6 +381,17 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(email?.channels).to.deep.equal([{ via: 'email', isDefault: true }]);
     });
 
+    it('returns only the contact asked for by subscriberId', async () => {
+      await setup({ subscriberId: 'only-alice' });
+      await setup({ subscriberId: 'only-alice-2' });
+
+      const res = await session.testAgent.get('/v1/human/contacts?subscriberId=only-alice');
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.map((contact: { id: string }) => contact.id)).to.deep.equal(['only-alice']);
+      expect(res.body.next).to.equal(null);
+    });
+
     it('shows the newest invite link that still works', async () => {
       const subscriberId = `invitee-${Date.now()}`;
       const { agentId } = await setup({ subscriberId });

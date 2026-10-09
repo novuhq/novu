@@ -266,7 +266,8 @@ const channel = program.command('channel').description('Where your agent reaches
 channel
   .command('list')
   .option('--json', 'print JSON')
-  .description('Show your default channel (used when a message goes to you)')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('List the channels you connected and which one is your default')
   .action(channelListCommand);
 
 channel

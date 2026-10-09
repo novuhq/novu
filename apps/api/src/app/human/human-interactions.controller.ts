@@ -198,6 +198,7 @@ export class HumanInteractionsController {
         userId: user._id,
         limit: query.limit,
         after: query.after,
+        subscriberId: query.subscriberId,
         agentIdentifier: query.agentIdentifier,
         includeInviteLinks: mayCreateInvites(user),
       })

@@ -300,8 +300,19 @@ export interface Contact {
   email?: string;
   phone?: string;
   data?: Record<string, unknown>;
+  /** Channels the agent can reach the contact on. */
+  channels?: ContactChannel[];
+  /** Channel used when a message to the contact names none. */
+  defaultVia?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ContactChannel {
+  via: string;
+  /** Absent for email, which needs no connecting. */
+  connectedAt?: string;
+  isDefault: boolean;
 }
 
 export interface ContactsPage {
@@ -311,7 +322,7 @@ export interface ContactsPage {
 
 export async function listContacts(
   client: HumanApiClient,
-  params: { limit?: number; after?: string } = {}
+  params: { limit?: number; after?: string; subscriberId?: string } = {}
 ): Promise<ContactsPage> {
   const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', { params });
   const body = res.data;

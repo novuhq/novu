@@ -222,7 +222,7 @@ other useful work to do while you wait.
   (first valid answer wins, max 50). `--via` on ask/approve is only a
   per-call delivery override; without it each human gets their own default
   channel (`HUMAN_VIA` goes with the `HUMAN_TO` default recipients, and
-  `human channel list --default` only applies when messaging yourself). If they
+  the default shown by `human channel list` only applies when messaging yourself). If they
   have no endpoint yet, the API error names the
   `human contact invite` command to run.
 - `--ttl 2h` — how long the request stays answerable before it expires
