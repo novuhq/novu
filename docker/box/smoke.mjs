@@ -539,14 +539,49 @@ try {
     });
   });
 
-  await check('custom-code agent resolves the conversation', async () => {
-    await chat('custom-code-agent', customCode, { text: 'done' }, 'Resolving');
+  // Web chat shows edits, deletes and custom events; it rejects files and drops agent reactions and quotes.
+  await check('custom-code agent edits and deletes its replies', async () => {
+    const { event: edited } = await chat('custom-code-agent', customCode, { text: 'progress' }, 'Working on it…');
+    await waitForEvent(
+      customCode,
+      'channel.edit',
+      (item) => item.type === 'channel.edit' && item.messageId === edited.messageId
+    );
+    const { event: deleted } = await chat(
+      'custom-code-agent',
+      customCode,
+      { text: 'delete' },
+      'This message deletes itself.'
+    );
+    await waitForEvent(
+      customCode,
+      'channel.delete',
+      (item) => item.type === 'channel.delete' && item.messageId === deleted.messageId
+    );
 
-    return until('resolved conversation', async () => {
+    return { edited: edited.messageId, deleted: deleted.messageId };
+  });
+
+  await check('custom-code agent emits a custom event', async () => {
+    await chat('custom-code-agent', customCode, { text: 'emit' }, 'Emitted a custom progress event');
+
+    return waitForEvent(customCode, 'custom event', (item) => item.type === 'custom' && item.name === 'progress');
+  });
+
+  await check('custom-code agent resolves the conversation, then onResolve triggers a workflow', async () => {
+    await chat('custom-code-agent', customCode, { text: 'done' }, 'Resolving');
+    await until('resolved conversation', async () => {
       const { body } = await call(`/v1/web-chat/conversations/${customCode}`, { headers: subscriberAuth });
       if (body.data.status !== 'resolved') throw new Error(`status ${body.data.status}`);
 
       return body.data.status;
+    });
+
+    return until('onResolve in-app', async () => {
+      const message = (await inbox()).find((item) => item.body === `Bridge in-app for resolved ${run}`);
+      if (!message) throw new Error('no in-app yet');
+
+      return message.body;
     });
   });
 
