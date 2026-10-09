@@ -514,6 +514,38 @@ try {
   await check('AI SDK agent runs a tool after approval (scripted model)', () => approveTool('box-ai-sdk', 'Lima'));
   await check('LangChain agent runs a tool after approval (scripted model)', () => approveTool('box-langchain', 'Oslo'));
 
+  // The managed agent exists only on a box started with NOVU_MANAGED_CLAUDE_API_KEY. It calls Anthropic for real.
+  if (await call('/v1/agents/box-managed', { headers: keyAuth }).then(() => true, () => false)) {
+    const managedReply = (text) => (item) => item.content?.markdown?.includes(text);
+    await check('managed agent replies (Claude Haiku through thalamus)', async () => {
+      const { conversation, event } = await chat('box-managed', null, { text: 'Reply with exactly: BOX-OK' }, managedReply('BOX-OK'));
+
+      return { conversation, reply: event.content.markdown };
+    });
+
+    await check('managed agent runs bash after approval', async () => {
+      const { body } = await call('/v1/web-chat/conversations', {
+        method: 'POST',
+        headers: subscriberAuth,
+        body: JSON.stringify({ agentId: 'box-managed', text: 'Use the bash tool to run: echo BOX-$((6*7)) Then reply with only its output.' }),
+      });
+      const conversation = body.data.identifier;
+      const request = await waitForEvent(conversation, 'tool approval request', (item) => item.type === 'tool-approval-request');
+      await chat('box-managed', conversation, { actionId: request.approveActionId }, managedReply('BOX-42'));
+
+      return { conversation, tool: request.toolName, input: request.input };
+    });
+
+    await check('managed agent counts against the demo quota', async () => {
+      const { body } = await call('/v1/agents/box-managed/demo-quota', { headers: bridgeAuth });
+      if (!body.data?.conversations?.count) throw new Error(`quota ${JSON.stringify(body.data)}`);
+
+      return body.data.conversations;
+    });
+  } else {
+    console.log('skip managed agent checks: no box-managed agent (start the box with NOVU_MANAGED_CLAUDE_API_KEY)');
+  }
+
   // Last: RedisThrottleService loads its Lua script on one Redis Cluster node only, so this fails whenever the
   // throttle key lands on a node without it (FIDELITY.md, "Bugs found").
   await check('bridge throttle lets 1 of 2 triggers through', async () => {

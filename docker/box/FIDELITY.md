@@ -28,7 +28,7 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 | Provider status webhooks (`apps/webhook`) | No delivery receipts from providers | Inactive app; the fake providers send none anyway |
 | Inbound email (`apps/inbound-mail`) | Reply-to-email and inbound parse don't work | Service plus DNS; off by decision |
 | Step resolver (Cloudflare dispatch) | Custom-code steps that need it don't run | `STEP_RESOLVER_*`; off by decision |
-| Thalamus | Off unless started for agent PRs (`process-compose process start thalamus`) | - |
+| Thalamus | Off unless the box starts with `NOVU_MANAGED_CLAUDE_API_KEY`; then it runs under `wrangler dev` | - |
 
 ## Channels
 
@@ -71,7 +71,9 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Keyless trial (`KEYLESS_ORGANIZATION_ID`, `KEYLESS_USER_EMAIL`) | Try-before-signup Inbox and keyless Connect don't work | Creating a keyless environment also needs `NOVU_MANAGED_CLAUDE_API_KEY` and the flags `IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED` and `IS_DEMO_MANAGED_CLAUDE_ENABLED`; that key also adds a Novu-managed Claude integration to every new Development environment while that flag is on |
 | Blueprints (`BLUEPRINT_CREATOR`) | Template gallery of the old `/blueprints` API is empty | The current dashboard doesn't use it |
 | Sanity CMS | Changelog cards and agent-template deep links fail (CORS) | `http://localhost:14200` isn't in the project's CORS origins |
-| AI (`AI_LLM_*`, `NOVU_MANAGED_CLAUDE_API_KEY`, `CONTEXT_DEV_API_KEY`) | AI features and managed agents fail; self-hosted agents work (scripted models in the bridge app) | Needs keys with spend limits. `OPENAI_API_KEY` isn't read by the API or worker, only by the CLI |
+| AI (`AI_LLM_*`, `CONTEXT_DEV_API_KEY`) | AI features fail; self-hosted agents work (scripted models in the bridge app) | Needs keys with spend limits. `OPENAI_API_KEY` isn't read by the API or worker, only by the CLI |
+| Managed agents (`NOVU_MANAGED_CLAUDE_API_KEY`) | Without the key they fail. With it, only the Novu-managed Claude integration is seeded (not bring-your-own-key `anthropic` or `anthropic-aws`) | Bring-your-own keys would be stored in Mongo, and the box keeps no secrets under `/data` |
+| Managed-agent MCP servers | Not seeded | Every catalog server needs OAuth with a real account (DCR or the provider's vault), and the Novu-managed integration drops provider-vault ones; connecting a DCR server by hand from the dashboard isn't tried yet |
 | Partner apps (Slack, WhatsApp, Azure, GitHub MCP, Vercel) | Connecting them fails | Needs each app's credentials |
 | Custom domains (`DOMAIN_CONNECT_PRIVATE_KEY`) | Domain Connect fails | No key; could generate a box-only one |
 | Monitoring and marketing (New Relic, Sentry, Segment, Mixpanel, HubSpot, Intercom, Plain) | Off; `/v1/telemetry/measure` returns 404 | Box traffic must not reach real dashboards |
