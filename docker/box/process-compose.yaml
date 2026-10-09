@@ -225,15 +225,20 @@ processes:
     availability:
       restart: on_failure
 
-  # Self-hosted Novu app (bridge/server.mjs): code-first workflows on the checkout's @novu/framework, synced to
-  # the Development environment by box.mjs. NODE_ENV=production keeps the HMAC signature check on.
-  # With the Anthropic key, its AI SDK and LangChain agents run on Claude instead of scripted fakes.
+  # Self-hosted Novu app: the playground's code-first workflows and agents on the checkout's @novu/framework,
+  # synced to the Development environment by box.mjs. `next dev` because the playground doesn't pass
+  # `next build`; the signature check stays on. With the Anthropic key, its agents run on Claude.
   bridge:
-    command: ANTHROPIC_API_KEY=$NOVU_MANAGED_CLAUDE_API_KEY exec node /opt/box/bridge/server.mjs
+    command: >-
+      while [ ! -s /data/bridge/secret-key ]; do sleep 1; done;
+      NOVU_SECRET_KEY=$(cat /data/bridge/secret-key) ANTHROPIC_API_KEY=$NOVU_MANAGED_CLAUDE_API_KEY
+      exec node_modules/.bin/next dev -p 4000 -H 127.0.0.1
+    working_dir: /data/novu/playground/nextjs
     environment:
-      - NODE_ENV=production
       - NODE_OPTIONS=
+      - NOVU_STRICT_AUTHENTICATION_ENABLED=true
       - NOVU_API_URL=http://127.0.0.1:3000
+      - NEXT_TELEMETRY_DISABLED=1
     readiness_probe:
       exec:
         command: curl -sf 'http://127.0.0.1:4000/api/novu?action=health-check'

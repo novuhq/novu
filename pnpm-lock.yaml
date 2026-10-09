@@ -4650,6 +4650,9 @@ importers:
 
   playground/nextjs:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: 3.0.13
+        version: 3.0.13(zod@4.4.3)
       '@ai-sdk/openai':
         specifier: 4.0.34
         version: 4.0.34(zod@4.4.3)
@@ -30280,6 +30283,12 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.51(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/anthropic@3.0.13(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.3
+      '@ai-sdk/provider-utils': 4.0.51(zod@4.4.3)
+      zod: 4.4.3
+
   '@ai-sdk/gateway@3.0.14(zod@4.3.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.3
@@ -30387,6 +30396,14 @@ snapshots:
       eventsource-parser: 3.1.0
       undici: 6.29.0
       zod: 4.3.5
+
+  '@ai-sdk/provider-utils@4.0.51(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.16
+      '@standard-schema/spec': 1.1.0
+      eventsource-parser: 3.1.0
+      undici: 6.29.0
+      zod: 4.4.3
 
   '@ai-sdk/provider-utils@5.0.11(zod@3.25.20)':
     dependencies:

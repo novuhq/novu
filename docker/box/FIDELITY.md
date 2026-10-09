@@ -41,14 +41,15 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 
 ## Code-first workflows and agents (bridge app)
 
-The `bridge` process serves workflows and three self-hosted agents with the checkout's `@novu/framework`, signed
+The `bridge` process runs `playground/nextjs`, which serves workflows and five self-hosted agents with the
+checkout's `@novu/framework`, signed
 with the Development secret key, through the same SSRF guard as a customer's bridge (allow-listed as
 `bridge.box.internal`). Agents reply through the public API URL, which Caddy also serves inside the box.
 
 | Area | Difference |
 |---|---|
 | Environments | Only Development is synced; Production would need its own secret key and a second sync |
-| Bridge app dependencies | `express`, `zod`, `ai`, `langchain` and `@langchain/core` come from `packages/framework`'s own dependencies, so they follow the PR. `@ai-sdk/anthropic` and `@langchain/anthropic` come from `enterprise/packages/ai`; that `@ai-sdk/anthropic` (3.x) implements the `v3` model spec, which `ai` 7 accepts |
+| Bridge app server | `next dev`, not a production build: `next build` of the playground fails its type check and needs more memory than the box has. Each route compiles on its first request (a few seconds), and the HMAC signature check stays on (`NOVU_STRICT_AUTHENTICATION_ENABLED`) |
 | Content renderers | No react-email, Vue or Svelte templates; they render inside the customer's app, outside Novu |
 | `novu dev` tunnel (novu.sh) | Not used; Local mode is tested by pointing it at the bridge directly |
 | Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same requests they make (`POST /v1/bridge/sync`, then `PUT /v1/agents/:id/bridge`), but signs the agent discovery (see "Bugs found") |
@@ -97,4 +98,4 @@ with the Development secret key, through the same SSRF guard as a customer's bri
   runs the tool, no tool result is recorded (`emitToolResult` is internal; only the AI SDK and LangChain
   adapters call it), so `findOrphanedApprovedToolApprovalRequests`
   (`apps/api/src/app/agents/shared/tool-approval/unresolved-approvals.ts`) takes the approval for a crashed
-  resume and appends a `denied` decision. Seen in the box's `box-vanilla` history. Not fixed; to report.
+  resume and appends a `denied` decision. Seen in the box's `custom-code-agent` history. Not fixed; to report.
