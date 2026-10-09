@@ -242,6 +242,11 @@ export class HumanInboxService {
   }
 
   /** Everyone in the thread: who a message sent into it without `to` is for. */
+  /** The contact a question in the thread goes to when the host names nobody. */
+  firstContactId(conversation: ConversationEntity): string | undefined {
+    return subscriberIdsOf(conversation)[0];
+  }
+
   peopleIds(conversation: ConversationEntity): string[] {
     return [...subscriberIdsOf(conversation), ...platformUserIdsOf(conversation)];
   }

@@ -54,11 +54,12 @@ human inbox resolve conv_123              # finished; opens again when anyone wr
 |---|---|---|
 | neither | a new thread with you | you |
 | `--to alice` | a new thread with Alice | Alice |
-| `--thread conv_123` | that thread | anyone in it |
+| `--thread conv_123` | that thread | the contact it belongs to |
 | `--thread conv_123 --to alice` | that thread | only Alice |
+| `--thread conv_123 --anyone` | that thread | anyone in it, strangers included |
 
 - A thread is unread when someone wrote something that was not an answer to a question, and your agent has not responded since. Sending into a thread, `read` and `resolve` mark it read; `show` does not.
-- `--to` reaches contacts only. A stranger (someone who wrote without being a contact) is answered with `--thread`.
+- `--to` reaches contacts only. A stranger (someone who wrote without being a contact) is answered with `--thread`; a question to a stranger also needs `--anyone`.
 - `tell` sends plain text. It becomes a card when you pass `--subtitle`, `--body` or `--icon`.
 - Every send prints the thread it landed in, and warns when that thread had unread messages.
 

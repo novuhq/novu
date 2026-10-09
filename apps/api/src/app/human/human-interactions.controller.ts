@@ -111,6 +111,7 @@ export class HumanInteractionsController {
         card: body.card,
         to: body.to,
         thread: body.thread,
+        anyoneMayAnswer: body.anyoneMayAnswer,
         via: body.via,
         agentIdentifier: body.agentIdentifier,
         from: body.from,

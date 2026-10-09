@@ -17,6 +17,8 @@ export interface InteractOptions {
   to?: string;
   /** Inbox thread to send into, instead of starting a new one with `to`. */
   thread?: string;
+  /** With `thread`: anyone in it may answer, not only the contact it belongs to. */
+  anyone?: boolean;
   via?: string;
   from?: string;
   option?: string[];
@@ -153,13 +155,18 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
 }
 
 /**
- * Where a send goes. `--thread` continues a thread, and `--to` then only says who may answer.
- * Without `--thread`, the message starts a new thread with `--to`, or with you when nobody is named.
+ * Where a send goes. `--thread` continues a thread; its contact may answer, unless `--to` names
+ * someone else or `--anyone` opens it to everyone there. Without `--thread`, the message starts a
+ * new thread with `--to`, or with you when nobody is named.
  */
 export function resolveAddress(
   config: HumanCliConfig,
-  options: Pick<InteractOptions, 'to' | 'thread' | 'via'>
-): Pick<CreateInteractionInput, 'to' | 'thread' | 'via'> {
+  options: Pick<InteractOptions, 'to' | 'thread' | 'via' | 'anyone'>
+): Pick<CreateInteractionInput, 'to' | 'thread' | 'via' | 'anyoneMayAnswer'> {
+  if (options.anyone && options.thread === undefined) {
+    fail('`--anyone` needs `--thread`: it is about who may answer in a thread.');
+  }
+
   if (options.thread !== undefined) {
     const thread = options.thread.trim();
 
@@ -171,7 +178,15 @@ export function resolveAddress(
       fail('`--via` cannot be combined with `--thread`: a thread already lives on one channel.');
     }
 
-    return { thread, ...(options.to ? { to: parseHumanToOption(options.to) } : {}) };
+    if (options.anyone && options.to) {
+      fail('`--anyone` cannot be combined with `--to`: name who may answer, or let anyone.');
+    }
+
+    return {
+      thread,
+      ...(options.to ? { to: parseHumanToOption(options.to) } : {}),
+      ...(options.anyone ? { anyoneMayAnswer: true } : {}),
+    };
   }
 
   const to = resolveTo(config, options.to);

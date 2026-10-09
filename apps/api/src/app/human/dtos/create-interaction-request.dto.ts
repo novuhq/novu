@@ -8,6 +8,7 @@ import {
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsObject,
@@ -95,12 +96,20 @@ export class CreateInteractionRequestDto {
 
   @ApiPropertyOptional({
     description:
-      'Identifier of the inbox thread to send into. Anyone in the thread may answer unless `to` is set. Cannot be combined with `via`.',
+      'Identifier of the inbox thread to send into. The contact the thread belongs to may answer, unless `to` or `anyoneMayAnswer` says otherwise. Cannot be combined with `via`.',
   })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   thread?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Let anyone in the thread answer, including people who are not contacts. Needs `thread` and cannot be combined with `to`.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  anyoneMayAnswer?: boolean;
 
   @ApiPropertyOptional({
     enum: HumanChannelViaEnum,

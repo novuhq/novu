@@ -63,7 +63,11 @@ function withCommonOptions(command: Command): Command {
     )
     .option(
       '--thread <id>',
-      'send into an existing thread (conv_...). Anyone in it may answer unless --to is given. The way to reply to a stranger'
+      'send into an existing thread (conv_...). Its contact may answer, unless --to or --anyone says otherwise. The way to reply to a stranger'
+    )
+    .option(
+      '--anyone',
+      'with --thread: let anyone in the thread answer, including strangers. Needed for a question in a thread with no contact. Not with --to'
     )
     .option(
       '--via <platform>',

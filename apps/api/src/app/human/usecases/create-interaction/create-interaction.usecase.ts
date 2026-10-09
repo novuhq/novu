@@ -3,11 +3,17 @@ import { InstrumentUsecase, PinoLogger, shortId } from '@novu/application-generi
 import {
   AgentEntity,
   AgentRepository,
+  ConversationEntity,
   ConversationParticipantTypeEnum,
   HumanInteractionEntity,
   HumanInteractionRepository,
 } from '@novu/dal';
-import { HumanInteractionStatusEnum, humanInteractionCardTitle, normalizeHumanTo } from '@novu/shared';
+import {
+  HumanInteractionKindEnum,
+  HumanInteractionStatusEnum,
+  humanInteractionCardTitle,
+  normalizeHumanTo,
+} from '@novu/shared';
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
@@ -86,6 +92,10 @@ export class CreateInteraction {
 
     if (command.thread) {
       return this.sendIntoThread(command, agent, to);
+    }
+
+    if (command.anyoneMayAnswer) {
+      throw new BadRequestException('`anyoneMayAnswer` needs `thread`: it is about who may answer in a thread.');
     }
 
     if (to.length === 0) {
@@ -208,7 +218,7 @@ export class CreateInteraction {
     }
   }
 
-  /** Into an existing thread: anyone in it may answer, unless `to` narrows that down. */
+  /** Into an existing thread: its contact may answer, unless `to` or `anyoneMayAnswer` says otherwise. */
   private async sendIntoThread(
     command: CreateInteractionCommand,
     agent: AgentEntity,
@@ -218,10 +228,16 @@ export class CreateInteraction {
       throw new BadRequestException('`via` cannot be combined with `thread`: a thread already lives on one channel.');
     }
 
+    if (command.anyoneMayAnswer && to.length > 0) {
+      throw new BadRequestException(
+        '`anyoneMayAnswer` cannot be combined with `to`: name who may answer, or let anyone.'
+      );
+    }
+
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const relay = await this.inbox.resolveRelayAgent(scope, agent.identifier);
     const conversation = await this.inbox.findThread(scope, relay, command.thread as string);
-    const recipients = to.length > 0 ? to : this.inbox.peopleIds(conversation);
+    const recipients = to.length > 0 ? to : this.threadRecipients(command, conversation);
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
@@ -238,7 +254,7 @@ export class CreateInteraction {
         integrationIdentifier,
         kind: command.kind,
         requestId: `inbox_${shortId(12)}`,
-        anyoneMayAnswer: to.length === 0,
+        anyoneMayAnswer: command.anyoneMayAnswer === true,
         card: command.card,
         from: command.from,
         ttlSeconds: command.ttlSeconds,
@@ -249,6 +265,27 @@ export class CreateInteraction {
     const unreadBefore = await this.inbox.markSentInto(scope, conversation);
 
     return toInteractionResponse(interaction, undefined, [{ id: conversation.identifier, unreadBefore }]);
+  }
+
+  /**
+   * Who a send into a thread goes to when the host names nobody. A question goes to the contact the
+   * thread belongs to, the same as on any other agent; everyone in the thread only when the host says so.
+   * A `tell` waits for no answer, so it is for everyone there.
+   */
+  private threadRecipients(command: CreateInteractionCommand, conversation: ConversationEntity): string[] {
+    if (command.anyoneMayAnswer || command.kind === HumanInteractionKindEnum.TELL) {
+      return this.inbox.peopleIds(conversation);
+    }
+
+    const contact = this.inbox.firstContactId(conversation);
+
+    if (!contact) {
+      throw new BadRequestException(
+        'This thread has no contact in it, so nobody could answer. Pass `anyoneMayAnswer` (`--anyone`) to let anyone in the thread answer.'
+      );
+    }
+
+    return [contact];
   }
 
   private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, subscriberIds: string[]) {

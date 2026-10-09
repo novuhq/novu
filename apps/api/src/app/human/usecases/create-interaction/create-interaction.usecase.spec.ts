@@ -65,6 +65,7 @@ describe('CreateInteraction', () => {
       resolveRelayAgent: sinon.stub().resolves({ _id: 'agent-relay', identifier: 'human-relay', name: 'Human' }),
       findThread: sinon.stub().resolves(conversation),
       peopleIds: sinon.stub().returns(['sub-1', 'sub-2']),
+      firstContactId: sinon.stub().returns('sub-1'),
       primaryChannel: sinon.stub().returns(conversation.channels[0]),
       resolveIntegrationIdentifier: sinon.stub().resolves('telegram-main'),
     };
@@ -170,7 +171,7 @@ describe('CreateInteraction', () => {
       }
     });
 
-    it('sends into a thread where anyone in it may answer', async () => {
+    it('sends a question into a thread to the contact it belongs to', async () => {
       const { usecase, command, agentRepository, inbox, createConversationInteraction, deliveryService } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       inbox.markSentInto.resolves(1);
@@ -179,10 +180,50 @@ describe('CreateInteraction', () => {
 
       expect(deliveryService.deliver.called).to.equal(false);
       expect(inbox.findThread.firstCall.args[2]).to.equal('conv_abc');
-      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-2']);
-      expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(true);
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1']);
+      expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
       expect(inbox.findStrangers.called).to.equal(false);
       expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 1 }]);
+    });
+
+    it('lets anyone in the thread answer when asked to', async () => {
+      const { usecase, command, agentRepository, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      await usecase.execute({ ...command, to: undefined, thread: 'conv_abc', anyoneMayAnswer: true } as any);
+
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-2']);
+      expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(true);
+    });
+
+    it('refuses a question in a thread without a contact unless anyone may answer', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.firstContactId.returns(undefined);
+
+      try {
+        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+        expect.fail('expected BadRequestException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as Error).message).to.contain('--anyone');
+      }
+      expect(createConversationInteraction.execute.called).to.equal(false);
+    });
+
+    it('tells everyone in the thread, contact or not', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.firstContactId.returns(undefined);
+
+      await usecase.execute({
+        ...command,
+        kind: HumanInteractionKindEnum.TELL,
+        to: undefined,
+        thread: 'conv_abc',
+      } as any);
+
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-2']);
     });
 
     it('limits who may answer in a thread to `to`', async () => {
@@ -193,6 +234,22 @@ describe('CreateInteraction', () => {
 
       expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-2']);
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
+    });
+
+    it('rejects `anyoneMayAnswer` with `to`, and without `thread`', async () => {
+      const { usecase, command, agentRepository, createConversationInteraction, deliveryService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      for (const address of [{ thread: 'conv_abc' }, {}]) {
+        try {
+          await usecase.execute({ ...command, ...address, anyoneMayAnswer: true } as any);
+          expect.fail('expected BadRequestException');
+        } catch (err) {
+          expect(err).to.be.instanceOf(BadRequestException);
+        }
+      }
+      expect(createConversationInteraction.execute.called).to.equal(false);
+      expect(deliveryService.deliver.called).to.equal(false);
     });
 
     it('rejects `via` together with `thread`', async () => {

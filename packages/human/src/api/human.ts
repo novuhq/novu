@@ -132,6 +132,8 @@ export interface CreateInteractionInput {
   to?: string | string[];
   /** Inbox thread to send into. */
   thread?: string;
+  /** With `thread` and no `to`: anyone in the thread may answer. */
+  anyoneMayAnswer?: boolean;
   via?: string;
   agentIdentifier?: string;
   from?: string;

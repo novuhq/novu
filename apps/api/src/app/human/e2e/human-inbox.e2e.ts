@@ -357,13 +357,19 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     expect((await listInbox({ senders: 'all', filter: 'unread' })).data).to.have.length(0);
   });
 
-  it('lets a stranger answer a question sent into their thread', async () => {
+  it('lets a stranger answer a question sent into their thread only when anyone may answer', async () => {
     await sendMessageToRelay('can I get access?', STRANGER_CHAT_ID);
     const { data } = await listInbox({ senders: 'all' });
 
-    const askRes = await session.testAgent
+    const closedRes = await session.testAgent
       .post('/v1/human/interactions')
       .send({ kind: 'ask', card: { title: 'Which project?' }, thread: data[0].id });
+    expect(closedRes.status).to.equal(400, JSON.stringify(closedRes.body));
+    expect(closedRes.body.message).to.contain('--anyone');
+
+    const askRes = await session.testAgent
+      .post('/v1/human/interactions')
+      .send({ kind: 'ask', card: { title: 'Which project?' }, thread: data[0].id, anyoneMayAnswer: true });
     expect(askRes.status).to.equal(201, JSON.stringify(askRes.body));
 
     await sendMessageToRelay('the billing one', STRANGER_CHAT_ID);

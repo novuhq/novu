@@ -92,7 +92,14 @@ describe('resolveAddress', () => {
     expect(resolveAddress(config, { to: 'ada, bob' })).toEqual({ to: ['ada', 'bob'] });
   });
 
-  it('sends into a thread for anyone in it, ignoring the default recipient', () => {
+  it('opens a thread question to anyone with --anyone', () => {
+    expect(resolveAddress(config, { thread: 'conv_1', anyone: true })).toEqual({
+      thread: 'conv_1',
+      anyoneMayAnswer: true,
+    });
+  });
+
+  it('sends into a thread without naming anyone, ignoring the default recipient', () => {
     vi.stubEnv('HUMAN_TO', 'someone');
 
     expect(resolveAddress(config, { thread: ' conv_1 ' })).toEqual({ thread: 'conv_1' });
