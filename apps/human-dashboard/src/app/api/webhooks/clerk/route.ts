@@ -7,8 +7,7 @@ const SIGN_UP_EVENT = 'user.created';
 
 /**
  * Webhook of the Human Clerk app. A sign-up gets its account here, before the operator opens any page:
- * the backing organization (`POST /v1/human/accounts`), then the agent with the operator's own contact
- * (`POST /v1/human/setup`).
+ * the backing organization (`POST /v1/human/accounts`). The agent comes later, from `human setup`.
  *
  * The signature is the only credential: Clerk signs every delivery with `CLERK_WEBHOOK_SIGNING_SECRET`.
  * Without that secret the endpoint answers 404, and the first dashboard visit does the same work instead.

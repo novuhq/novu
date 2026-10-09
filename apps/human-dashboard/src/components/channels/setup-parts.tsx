@@ -141,7 +141,7 @@ export function ConnectedCard({ via, title, children }: ConnectedCardProps) {
       <Card
         glow
         aria-live="polite"
-        className="flex animate-rise-in items-center gap-3 rounded-[10px] bg-background px-4.5 py-4 [--glow-color:var(--color-success)] motion-reduce:animate-none"
+        className="glow-breathe flex animate-rise-in items-center gap-3 rounded-[10px] bg-background px-4.5 py-4 [--glow-color:var(--color-success)] motion-reduce:animate-none"
       >
         <ChannelIcon via={via} />
         <div className="flex min-w-0 flex-col gap-0.5">

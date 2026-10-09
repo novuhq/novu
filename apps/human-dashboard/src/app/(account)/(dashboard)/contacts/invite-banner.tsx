@@ -27,7 +27,7 @@ export function InviteBanner() {
   }
 
   return (
-    <section className="dither-side flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-background px-5 py-4.5">
+    <section className="dither-side dither-breathe flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-background px-5 py-4.5">
       <span
         aria-hidden="true"
         className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-raised text-foreground"
