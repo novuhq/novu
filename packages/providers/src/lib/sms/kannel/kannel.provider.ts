@@ -7,6 +7,24 @@ import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
+export function buildKannelBaseUrl(host: string, port: string): string {
+  const trimmedHost = String(host).trim().replace(/\/+$/, '');
+  const trimmedPort = String(port ?? '').trim();
+
+  if (!/^https?:\/\//i.test(trimmedHost)) {
+    return `http://${trimmedHost}:${trimmedPort}/cgi-bin`;
+  }
+
+  const url = new URL(trimmedHost);
+  if (!url.port && trimmedPort) {
+    url.port = trimmedPort;
+  }
+
+  const pathname = url.pathname.replace(/\/+$/, '');
+
+  return `${url.origin}${pathname}${pathname.endsWith('/cgi-bin') ? '' : '/cgi-bin'}`;
+}
+
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Kannel;
   apiBaseUrl: string;
@@ -24,7 +42,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
-    this.apiBaseUrl = `http://${config.host}:${config.port}/cgi-bin`;
+    this.apiBaseUrl = buildKannelBaseUrl(config.host, config.port);
     this.axiosInstance = createProviderHttpClient();
   }
 
