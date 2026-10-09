@@ -1,32 +1,27 @@
 import type { HumanApiClient } from '../api/client';
-import type { InteractionKind } from '../api/human';
 import {
-  createInboxInteraction,
   getInboxThread,
   INBOX_MAX_SERVER_WAIT_SECONDS,
+  INBOX_READ_FILTERS,
+  INBOX_SENDERS_FILTERS,
+  INBOX_STATUS_FILTERS,
   type InboxPage,
   type ListInboxQuery,
   listInbox,
   markInboxRead,
-  replyInboxThread,
   resolveInboxThread,
 } from '../api/inbox';
-import { EXIT_OK, EXIT_TIMEOUT, emitResult, fail, formatInboxThreadLine, formatInboxThreadView } from '../output';
-import {
-  buildInteractionCard,
-  clientFromConfig,
-  handleError,
-  type InteractOptions,
-  parseDuration,
-  parseIdLabelOption,
-  waitForResolution,
-} from './interact';
+import { EXIT_OK, EXIT_TIMEOUT, fail, formatInboxThreadLine, formatInboxThreadView } from '../output';
+import { clientFromConfig, handleError, parseDuration } from './interact';
 
 export interface InboxListOptions {
-  unread?: boolean;
-  all?: boolean;
-  /** `true` when `--wait` is given without a duration: block until something arrives. */
-  wait?: string | boolean;
+  filter?: string;
+  status?: string;
+  senders?: string;
+  /** Block until a thread matches the filters. */
+  wait?: boolean;
+  /** How long `--wait` blocks; forever when absent. */
+  timeout?: string;
   limit?: string;
   after?: string;
   json?: boolean;
@@ -38,19 +33,17 @@ export interface InboxThreadOptions {
   apiUrl?: string;
 }
 
-export type InboxInteractionOptions = Omit<InteractOptions, 'to' | 'via'>;
-
 export function inboxListCommand(options: InboxListOptions): Promise<never> {
   return runCommand(async () => {
+    const filters = parseListFilters(options);
+    const waitSeconds = parseWait(options);
     const { client, config } = clientFromConfig(options.apiUrl);
     const query: ListInboxQuery = {
-      ...(options.unread ? { unread: true } : {}),
-      ...(options.all ? { all: true } : {}),
+      ...filters,
       ...(options.limit ? { limit: parsePositiveInt(options.limit, '--limit') } : {}),
       ...(options.after ? { after: options.after } : {}),
       agentIdentifier: config.relayAgentIdentifier,
     };
-    const waitSeconds = parseWait(options.wait);
     const page =
       waitSeconds === undefined ? await listInbox(client, query) : await waitForThreads(client, query, waitSeconds);
 
@@ -109,69 +102,10 @@ export function inboxResolveCommand(id: string, options: InboxThreadOptions): Pr
     if (options.json) {
       printJson(thread);
     } else {
-      process.stdout.write(`Thread ${thread.id} resolved. A new message from them reopens it.\n`);
+      process.stdout.write(`Thread ${thread.id} resolved. It opens again when anyone writes in it.\n`);
     }
 
     return EXIT_OK;
-  });
-}
-
-export function inboxReplyCommand(id: string, text: string, options: InboxThreadOptions): Promise<never> {
-  return runCommand(async () => {
-    if (!text.trim()) {
-      fail('Reply text is empty.');
-    }
-
-    const { client, config } = clientFromConfig(options.apiUrl);
-    const result = await replyInboxThread(client, id, text, config.relayAgentIdentifier);
-
-    if (options.json) {
-      printJson(result);
-    } else {
-      process.stdout.write(`Replied on ${result.thread.channel} in ${result.thread.id}.\n`);
-    }
-
-    return EXIT_OK;
-  });
-}
-
-/** ask / approve / choose / tell posted into an inbox thread instead of a fresh DM. */
-export function runInboxInteraction(
-  kind: InteractionKind,
-  id: string,
-  prompt: string,
-  options: InboxInteractionOptions
-): Promise<never> {
-  return runCommand(async () => {
-    const { client, config } = clientFromConfig(options.apiUrl);
-    const card = buildInteractionCard({
-      title: prompt,
-      icon: options.icon,
-      subtitle: options.subtitle,
-      body: options.body,
-      approveLabel: options.approveLabel,
-      denyLabel: options.denyLabel,
-      extraActions: options.extraAction?.map(parseIdLabelOption),
-      options: options.option?.map(parseIdLabelOption),
-    });
-
-    const created = await createInboxInteraction(
-      client,
-      id,
-      {
-        kind,
-        card,
-        ...(options.from ? { from: options.from } : {}),
-        ...(options.ttl ? { ttlSeconds: parseDuration(options.ttl) } : {}),
-      },
-      config.relayAgentIdentifier
-    );
-
-    if (kind === 'tell' || options.async) {
-      return emitResult(created, Boolean(options.json));
-    }
-
-    return waitForResolution(client, created, options);
   });
 }
 
@@ -197,17 +131,39 @@ export async function waitForThreads(
   }
 }
 
-/** `--wait` alone waits forever; `--wait 90s` / `--wait 90` waits that long. */
-export function parseWait(wait: string | boolean | undefined): number | undefined {
-  if (wait === undefined || wait === false) {
+/** `--wait` alone waits forever; `--timeout 90s` bounds it. Undefined means the list does not block. */
+export function parseWait(options: Pick<InboxListOptions, 'wait' | 'timeout'>): number | undefined {
+  if (!options.wait) {
+    if (options.timeout !== undefined) {
+      fail('`--timeout` only applies together with `--wait`.');
+    }
+
     return undefined;
   }
 
-  if (wait === true) {
-    return Infinity;
+  return options.timeout === undefined ? Infinity : parseDuration(options.timeout);
+}
+
+/** Defaults live on the server (`all`, `open`, `contacts`), so only what was passed is sent. */
+export function parseListFilters(
+  options: Pick<InboxListOptions, 'filter' | 'status' | 'senders'>
+): Pick<ListInboxQuery, 'filter' | 'status' | 'senders'> {
+  return {
+    ...(options.filter ? { filter: parseChoice(options.filter, INBOX_READ_FILTERS, '--filter') } : {}),
+    ...(options.status ? { status: parseChoice(options.status, INBOX_STATUS_FILTERS, '--status') } : {}),
+    ...(options.senders ? { senders: parseChoice(options.senders, INBOX_SENDERS_FILTERS, '--senders') } : {}),
+  };
+}
+
+function parseChoice<T extends string>(raw: string, choices: readonly T[], label: string): T {
+  const value = raw.trim().toLowerCase();
+  const match = choices.find((choice) => choice === value);
+
+  if (!match) {
+    fail(`${label} must be one of: ${choices.join(', ')}.`);
   }
 
-  return parseDuration(wait);
+  return match;
 }
 
 async function runCommand(body: () => Promise<number>): Promise<never> {
@@ -235,9 +191,19 @@ function parsePositiveInt(raw: string, label: string): number {
   return value;
 }
 
+/** The flags that reproduce this listing, for the "next page" hint. */
+function filterFlags(options: InboxListOptions): string {
+  return [
+    options.filter ? ` --filter ${options.filter}` : '',
+    options.status ? ` --status ${options.status}` : '',
+    options.senders ? ` --senders ${options.senders}` : '',
+  ].join('');
+}
+
 function printThreads(page: InboxPage, options: InboxListOptions): void {
   if (page.data.length === 0) {
-    process.stdout.write(options.unread ? 'No unread threads.\n' : 'Inbox is empty.\n');
+    const hint = options.senders === 'all' ? '' : ' Threads from strangers are hidden: add --senders all.';
+    process.stdout.write(`No threads match.${hint}\n`);
 
     return;
   }
@@ -247,6 +213,6 @@ function printThreads(page: InboxPage, options: InboxListOptions): void {
   }
 
   if (page.next) {
-    process.stdout.write(`\nMore: human inbox${options.unread ? ' unread' : ''} --after ${page.next}\n`);
+    process.stdout.write(`\nMore: human inbox list${filterFlags(options)} --after ${page.next}\n`);
   }
 }

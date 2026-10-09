@@ -51,17 +51,37 @@ export function parseAgentChanges(options: Pick<AgentOptions, 'name' | 'descript
 }
 
 export function renderAgent(agent: HumanAgent): string {
-  const description = agent.description ?? pc.dim('— (add one: human agent --description "...")');
+  const description = agent.description ?? pc.dim('— (add one: human agent update --description "...")');
 
-  const picture = agent.pictureUrl ?? pc.dim('— (add one: human agent --picture ./avatar.png)');
+  const picture = agent.pictureUrl ?? pc.dim('— (add one: human agent update --picture ./avatar.png)');
 
   return `Name:        ${pc.bold(agent.name)}\nDescription: ${description}\nPicture:     ${picture}\n`;
 }
 
-export async function agentCommand(options: AgentOptions): Promise<never> {
+/** `human agent show [id]`: read-only, whatever flags a script passes by mistake. */
+export function agentShowCommand(
+  id: string | undefined,
+  options: Pick<AgentOptions, 'json' | 'apiUrl'>
+): Promise<never> {
+  return printAgent(() => runAgent(id, { json: options.json, apiUrl: options.apiUrl }));
+}
+
+export function agentUpdateCommand(id: string | undefined, options: AgentOptions): Promise<never> {
+  return printAgent(async () => {
+    const changes = parseAgentChanges(options);
+
+    if (Object.keys(changes).length === 0 && options.picture === undefined && !options.removePicture) {
+      throw new Error('Nothing to update. Pass --name, --description, --picture or --remove-picture.');
+    }
+
+    return runAgent(id, options);
+  });
+}
+
+async function printAgent(run: () => Promise<string>): Promise<never> {
   let output: string;
   try {
-    output = await runAgent(options);
+    output = await run();
   } catch (err) {
     return handleError(err);
   }
@@ -70,7 +90,8 @@ export async function agentCommand(options: AgentOptions): Promise<never> {
   process.exit(0);
 }
 
-async function runAgent(options: AgentOptions): Promise<string> {
+/** Without an id, the agent this computer was set up with. */
+async function runAgent(id: string | undefined, options: AgentOptions): Promise<string> {
   const changes = parseAgentChanges(options);
   if (options.picture !== undefined && options.removePicture) {
     throw new Error('Pass --picture or --remove-picture, not both.');
@@ -79,19 +100,18 @@ async function runAgent(options: AgentOptions): Promise<string> {
   // Read before anything is saved, so a wrong file changes nothing.
   const picture = options.picture !== undefined ? await loadPicture(options.picture) : undefined;
   const { client, config } = clientFromConfig(options.apiUrl);
+  const agentIdentifier = id?.trim() || config.relayAgentIdentifier;
   const changing = Object.keys(changes).length > 0 || picture !== undefined || Boolean(options.removePicture);
 
-  let agent = Object.keys(changes).length
-    ? await updateHumanAgent(client, { agentIdentifier: config.relayAgentIdentifier, ...changes })
-    : undefined;
+  let agent = Object.keys(changes).length ? await updateHumanAgent(client, { agentIdentifier, ...changes }) : undefined;
 
   if (picture) {
-    agent = await setHumanAgentPicture(client, picture, config.relayAgentIdentifier);
+    agent = await setHumanAgentPicture(client, picture, agentIdentifier);
   } else if (options.removePicture) {
-    agent = await removeHumanAgentPicture(client, config.relayAgentIdentifier);
+    agent = await removeHumanAgentPicture(client, agentIdentifier);
   }
 
-  agent ??= await getHumanAgent(client, config.relayAgentIdentifier);
+  agent ??= await getHumanAgent(client, agentIdentifier);
 
   if (options.json) {
     return `${JSON.stringify(agent, null, 2)}\n`;

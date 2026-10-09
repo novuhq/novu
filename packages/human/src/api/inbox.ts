@@ -1,16 +1,36 @@
 import { type HumanApiClient, unwrap } from './client';
-import type { CreateInteractionCard, Interaction, InteractionKind } from './human';
 
 /** The server holds a `?wait=` long-poll at most this long; the CLI re-issues it until its own deadline. */
 export const INBOX_MAX_SERVER_WAIT_SECONDS = 25;
 
+export const INBOX_READ_FILTERS = ['unread', 'read', 'all'] as const;
+export type InboxReadFilter = (typeof INBOX_READ_FILTERS)[number];
+
+export const INBOX_STATUS_FILTERS = ['open', 'resolved', 'all'] as const;
+export type InboxStatusFilter = (typeof INBOX_STATUS_FILTERS)[number];
+
+export const INBOX_SENDERS_FILTERS = ['contacts', 'all'] as const;
+export type InboxSendersFilter = (typeof INBOX_SENDERS_FILTERS)[number];
+
 export type InboxSender = 'human' | 'agent' | 'system';
+
+/** A contact is someone you added; a stranger wrote to your agent without being one. */
+export type InboxPersonKind = 'contact' | 'stranger';
+
+export interface InboxPerson {
+  /** A contact's id for `--to`. A stranger has none: theirs is the channel's own id for them. */
+  id: string;
+  name?: string;
+  kind: InboxPersonKind;
+}
 
 export interface InboxThread {
   id: string;
   channel: string;
-  from: { subscriberId: string; name?: string } | null;
-  status: 'active' | 'resolved';
+  /** `contact` once at least one contact is in the thread. */
+  kind: InboxPersonKind;
+  people: InboxPerson[];
+  status: 'open' | 'resolved';
   unreadCount: number;
   lastMessage: { text: string; at: string; from: InboxSender } | null;
   isDirectMessage: boolean;
@@ -20,6 +40,8 @@ export interface InboxThread {
 export interface InboxMessage {
   id: string;
   from: InboxSender;
+  /** Set on messages from a human. */
+  senderKind?: InboxPersonKind;
   senderName?: string;
   text: string;
   attachments?: Array<{ type?: string; name?: string; mimeType?: string }>;
@@ -39,19 +61,13 @@ export interface InboxThreadView {
 }
 
 export interface ListInboxQuery {
-  unread?: boolean;
-  all?: boolean;
+  filter?: InboxReadFilter;
+  status?: InboxStatusFilter;
+  senders?: InboxSendersFilter;
   limit?: number;
   after?: string;
   wait?: number;
   agentIdentifier?: string;
-}
-
-export interface CreateInboxInteractionInput {
-  kind: InteractionKind;
-  card: CreateInteractionCard;
-  from?: string;
-  ttlSeconds?: number;
 }
 
 function threadPath(id: string, suffix = ''): string {
@@ -102,32 +118,6 @@ export async function resolveInboxThread(
     {},
     { params: { agentIdentifier } }
   );
-
-  return unwrap(res.data);
-}
-
-export async function replyInboxThread(
-  client: HumanApiClient,
-  id: string,
-  text: string,
-  agentIdentifier?: string
-): Promise<{ thread: InboxThread; messageId: string }> {
-  const res = await client.axios.post<
-    { data?: { thread: InboxThread; messageId: string } } | { thread: InboxThread; messageId: string }
-  >(threadPath(id, '/reply'), { text }, { params: { agentIdentifier } });
-
-  return unwrap(res.data);
-}
-
-export async function createInboxInteraction(
-  client: HumanApiClient,
-  id: string,
-  input: CreateInboxInteractionInput,
-  agentIdentifier?: string
-): Promise<Interaction> {
-  const res = await client.axios.post<{ data?: Interaction } | Interaction>(threadPath(id, '/interactions'), input, {
-    params: { agentIdentifier },
-  });
 
   return unwrap(res.data);
 }

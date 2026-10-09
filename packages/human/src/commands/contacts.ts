@@ -42,7 +42,7 @@ export function displayName(contact: Contact): string {
 
 export function renderContactsTable(rows: ContactRow[], next: string | null): string {
   if (rows.length === 0) {
-    return 'No contacts found. Run `human setup` or `human invite <id> --via <channel>` to add people.\n';
+    return 'No contacts found. Run `human setup` or `human contact invite <id> --via <channel>` to add people.\n';
   }
 
   const idWidth = Math.max(...rows.map((row) => row.id.length), 'ID'.length);
@@ -57,7 +57,7 @@ export function renderContactsTable(rows: ContactRow[], next: string | null): st
   }
 
   if (next) {
-    lines.push(pc.dim(`More contacts — next page: human contacts --after ${next}`));
+    lines.push(pc.dim(`More contacts — next page: human contact list --after ${next}`));
   }
 
   return `${lines.join('\n')}\n`;

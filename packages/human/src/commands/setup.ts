@@ -110,7 +110,7 @@ function channelNameFor(relay: { agentName?: string }): string {
   return relay.agentName || DEFAULT_AGENT_NAME;
 }
 
-interface SetupOptions {
+export interface SetupOptions {
   apiUrl?: string;
   secretKey?: string;
   telegramBotToken?: string;
@@ -230,16 +230,14 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     info(`Saved config to ${configPath()}.`);
 
     if (defaultChannel !== channel) {
-      info(
-        `Your default channel is still ${pc.bold(defaultChannel)} — switch with: human channels --default ${channel}`
-      );
+      info(`Your default channel is still ${pc.bold(defaultChannel)} — switch with: human channel default ${channel}`);
     }
 
     // 5. Smoke test on the channel that was just linked.
     await createInteraction(client, {
       kind: 'tell',
       card: {
-        title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`human approve "Deploy to production?"\`.`,
+        title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`human inbox approve "Deploy to production?"\`.`,
       },
       to: subscriberId,
       via: channel,
@@ -248,9 +246,9 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
 
     process.stdout.write(
       `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
-        `  ${pc.bold('human ask "Which environment should I target?"')}\n` +
-        `  ${pc.bold('human approve "Deploy to production?"')}\n` +
-        `  ${pc.bold('human tell "Build finished."')}\n`
+        `  ${pc.bold('human inbox ask "Which environment should I target?"')}\n` +
+        `  ${pc.bold('human inbox approve "Deploy to production?"')}\n` +
+        `  ${pc.bold('human inbox tell "Build finished."')}\n`
     );
 
     if (auth.mode === 'keyless') {

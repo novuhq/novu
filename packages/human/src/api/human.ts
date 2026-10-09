@@ -61,8 +61,15 @@ export interface Interaction {
     respondedAt: string;
   };
   failedTo?: string[];
+  /** On create: the inbox thread each message landed in, and how many messages in it were unread. */
+  threads?: InteractionThread[];
   expiresAt: string;
   createdAt: string;
+}
+
+export interface InteractionThread {
+  id: string;
+  unreadBefore: number;
 }
 
 export function isInteractionChrome(content: InteractionContent): content is { cardChrome: InteractionCard } {
@@ -121,7 +128,10 @@ export function interactionOptions(interaction: Interaction): HumanInteractionOp
 export interface CreateInteractionInput {
   kind: InteractionKind;
   card: CreateInteractionCard;
-  to: string | string[];
+  /** Starts a new thread with each contact; with `thread`, limits who may answer. */
+  to?: string | string[];
+  /** Inbox thread to send into. */
+  thread?: string;
   via?: string;
   agentIdentifier?: string;
   from?: string;

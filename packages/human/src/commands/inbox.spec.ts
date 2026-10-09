@@ -4,8 +4,6 @@ import type { HumanCliConfig } from '../config';
 
 const listInbox = vi.fn();
 const getInboxThread = vi.fn();
-const replyInboxThread = vi.fn();
-const createInboxInteraction = vi.fn();
 const clientFromConfig = vi.fn();
 
 vi.mock('../api/inbox', async (importOriginal) => {
@@ -15,8 +13,6 @@ vi.mock('../api/inbox', async (importOriginal) => {
     ...original,
     listInbox: (...args: unknown[]) => listInbox(...args),
     getInboxThread: (...args: unknown[]) => getInboxThread(...args),
-    replyInboxThread: (...args: unknown[]) => replyInboxThread(...args),
-    createInboxInteraction: (...args: unknown[]) => createInboxInteraction(...args),
   };
 });
 
@@ -29,8 +25,8 @@ vi.mock('./interact', async (importOriginal) => {
   };
 });
 
-const { inboxListCommand, inboxReplyCommand, inboxShowCommand, parseWait, runInboxInteraction, waitForThreads } =
-  await import('./inbox');
+const { inboxListCommand, inboxShowCommand, parseListFilters, parseWait, waitForThreads } = await import('./inbox');
+const { formatThreadReport, resolveAddress } = await import('./interact');
 const { formatInboxThreadLine, formatInboxThreadView, formatRelativeTime, stripTerminalControls } = await import(
   '../output'
 );
@@ -48,8 +44,9 @@ function thread(overrides: Partial<InboxThread> = {}): InboxThread {
   return {
     id: 'conv_1',
     channel: 'telegram',
-    from: { subscriberId: 'ada', name: 'Ada' },
-    status: 'active',
+    kind: 'contact',
+    people: [{ id: 'ada', name: 'Ada', kind: 'contact' }],
+    status: 'open',
     unreadCount: 2,
     lastMessage: { text: 'is the deploy done?', at: '2026-10-09T11:57:00.000Z', from: 'human' },
     isDirectMessage: true,
@@ -64,10 +61,63 @@ function page(data: InboxThread[], next: string | null = null): InboxPage {
 
 describe('parseWait', () => {
   it('distinguishes no wait, wait forever and a bounded wait', () => {
-    expect(parseWait(undefined)).toBeUndefined();
-    expect(parseWait(true)).toBe(Infinity);
-    expect(parseWait('90s')).toBe(90);
-    expect(parseWait('2m')).toBe(120);
+    expect(parseWait({})).toBeUndefined();
+    expect(parseWait({ wait: true })).toBe(Infinity);
+    expect(parseWait({ wait: true, timeout: '90s' })).toBe(90);
+    expect(parseWait({ wait: true, timeout: '2m' })).toBe(120);
+  });
+});
+
+describe('parseListFilters', () => {
+  it('sends only the filters that were passed, so the server defaults apply', () => {
+    expect(parseListFilters({})).toEqual({});
+    expect(parseListFilters({ filter: 'Unread', status: 'all', senders: 'all' })).toEqual({
+      filter: 'unread',
+      status: 'all',
+      senders: 'all',
+    });
+  });
+});
+
+describe('resolveAddress', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('starts a new thread with you when nobody is named', () => {
+    expect(resolveAddress(config, {})).toEqual({ to: 'human_me' });
+  });
+
+  it('starts a new thread with the named contacts', () => {
+    expect(resolveAddress(config, { to: 'ada, bob' })).toEqual({ to: ['ada', 'bob'] });
+  });
+
+  it('sends into a thread for anyone in it, ignoring the default recipient', () => {
+    vi.stubEnv('HUMAN_TO', 'someone');
+
+    expect(resolveAddress(config, { thread: ' conv_1 ' })).toEqual({ thread: 'conv_1' });
+  });
+
+  it('limits who may answer in a thread with --to', () => {
+    expect(resolveAddress(config, { thread: 'conv_1', to: 'ada' })).toEqual({ thread: 'conv_1', to: ['ada'] });
+  });
+});
+
+describe('formatThreadReport', () => {
+  it('names the thread a send landed in', () => {
+    expect(formatThreadReport({ threads: [{ id: 'conv_1', unreadBefore: 0 }] }, false)).toEqual(['thread: conv_1']);
+    expect(formatThreadReport({}, false)).toEqual([]);
+  });
+
+  it('warns when a send to a contact landed in a thread with unread messages', () => {
+    const lines = formatThreadReport({ threads: [{ id: 'conv_1', unreadBefore: 2 }] }, false);
+
+    expect(lines[1]).toContain('had 2 unread messages');
+    expect(lines[1]).toContain('human inbox show conv_1');
+  });
+
+  it('does not warn when the host chose the thread itself', () => {
+    expect(formatThreadReport({ threads: [{ id: 'conv_1', unreadBefore: 2 }] }, true)).toEqual(['thread: conv_1']);
   });
 });
 
@@ -82,11 +132,11 @@ describe('waitForThreads', () => {
   it('re-issues capped server waits until a thread arrives', async () => {
     listInbox.mockResolvedValueOnce(page([])).mockResolvedValueOnce(page([thread()]));
 
-    const result = await waitForThreads({} as never, { unread: true }, Infinity);
+    const result = await waitForThreads({} as never, { filter: 'unread' }, Infinity);
 
     expect(result.data).toHaveLength(1);
     expect(listInbox).toHaveBeenCalledTimes(2);
-    expect(listInbox).toHaveBeenNthCalledWith(1, {}, { unread: true, wait: 25 });
+    expect(listInbox).toHaveBeenNthCalledWith(1, {}, { filter: 'unread', wait: 25 });
   });
 
   it('stops at the deadline and asks only for the remaining time', async () => {
@@ -113,7 +163,7 @@ describe('formatters', () => {
     expect(formatRelativeTime('2026-10-07T12:00:00.000Z', NOW)).toBe('2d ago');
   });
 
-  it('renders the channel, sender, unread count and preview on one line', () => {
+  it('renders the channel, people, unread count and preview on one line', () => {
     const line = formatInboxThreadLine(thread(), NOW);
 
     expect(line).toContain('conv_1');
@@ -139,12 +189,33 @@ describe('formatters', () => {
     expect(line).not.toContain('unread');
   });
 
+  it('marks strangers in the list and in the thread view', () => {
+    const stranger = thread({ kind: 'stranger', people: [{ id: 'telegram:888', kind: 'stranger' }] });
+    const view = formatInboxThreadView({
+      thread: stranger,
+      hasMore: false,
+      messages: [
+        {
+          id: 'act_1',
+          from: 'human',
+          senderKind: 'stranger',
+          senderName: 'Eve',
+          text: 'hi',
+          at: '2026-10-09T11:50:00.000Z',
+        },
+      ],
+    });
+
+    expect(formatInboxThreadLine(stranger, NOW)).toContain('telegram:888 (stranger)');
+    expect(view).toContain('Eve (stranger)');
+  });
+
   it('strips terminal control sequences from contact-authored text', () => {
     expect(stripTerminalControls('\u001b[2J\u001b[Hhi\u001b]0;title\u0007 there\u0008\r')).toBe('hi there');
     expect(stripTerminalControls('line one\n\tline two')).toBe('line one\n\tline two');
 
     const view = formatInboxThreadView({
-      thread: thread({ from: { subscriberId: 'ada', name: 'Ada\u001b[31m' } }),
+      thread: thread({ people: [{ id: 'ada', name: 'Ada\u001b[31m', kind: 'contact' }] }),
       hasMore: false,
       messages: [
         {
@@ -199,8 +270,6 @@ describe('inbox commands', () => {
     stdout = '';
     listInbox.mockReset();
     getInboxThread.mockReset();
-    replyInboxThread.mockReset();
-    createInboxInteraction.mockReset();
     clientFromConfig.mockReset();
     clientFromConfig.mockReturnValue({ client: {}, config });
     vi.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array) => {
@@ -221,37 +290,46 @@ describe('inbox commands', () => {
   it('prints { data, next } JSON scoped to the relay agent', async () => {
     listInbox.mockResolvedValue(page([thread()], 'conv_1'));
 
-    await expect(inboxListCommand({ unread: true, json: true, limit: '5' })).rejects.toThrow('exit:0');
+    await expect(inboxListCommand({ filter: 'unread', json: true, limit: '5' })).rejects.toThrow('exit:0');
 
-    expect(listInbox).toHaveBeenCalledWith({}, { unread: true, limit: 5, agentIdentifier: 'human-relay' });
+    expect(listInbox).toHaveBeenCalledWith({}, { filter: 'unread', limit: 5, agentIdentifier: 'human-relay' });
     expect(JSON.parse(stdout)).toEqual({ data: [thread()], next: 'conv_1' });
   });
 
   it('exits 11 with an empty page when --wait times out', async () => {
     listInbox.mockResolvedValue(page([]));
 
-    await expect(inboxListCommand({ unread: true, wait: '0', json: true })).rejects.toThrow('exit:11');
+    await expect(inboxListCommand({ filter: 'unread', wait: true, timeout: '0', json: true })).rejects.toThrow(
+      'exit:11'
+    );
 
-    expect(listInbox).toHaveBeenCalledWith({}, { unread: true, agentIdentifier: 'human-relay', wait: 0 });
+    expect(listInbox).toHaveBeenCalledWith({}, { filter: 'unread', agentIdentifier: 'human-relay', wait: 0 });
     expect(JSON.parse(stdout)).toEqual({ data: [], next: null });
   });
 
   it('exits 0 when --wait returns threads', async () => {
     listInbox.mockResolvedValue(page([thread()]));
 
-    await expect(inboxListCommand({ unread: true, wait: true })).rejects.toThrow('exit:0');
+    await expect(inboxListCommand({ filter: 'unread', wait: true })).rejects.toThrow('exit:0');
 
     expect(stdout).toContain('conv_1');
   });
 
-  it('prints the empty state and a next-page hint in human mode', async () => {
+  it('prints the empty state and a next-page hint that keeps the filters', async () => {
     listInbox.mockResolvedValueOnce(page([])).mockResolvedValueOnce(page([thread()], 'conv_1'));
 
-    await expect(inboxListCommand({ unread: true })).rejects.toThrow('exit:0');
-    expect(stdout).toContain('No unread threads.');
+    await expect(inboxListCommand({ filter: 'unread' })).rejects.toThrow('exit:0');
+    expect(stdout).toContain('No threads match.');
+    expect(stdout).toContain('--senders all');
 
-    await expect(inboxListCommand({})).rejects.toThrow('exit:0');
-    expect(stdout).toContain('human inbox --after conv_1');
+    await expect(inboxListCommand({ status: 'all' })).rejects.toThrow('exit:0');
+    expect(stdout).toContain('human inbox list --status all --after conv_1');
+  });
+
+  it('rejects an unknown filter value and --timeout without --wait', async () => {
+    await expect(inboxListCommand({ filter: 'new' })).rejects.toThrow('exit:1');
+    await expect(inboxListCommand({ timeout: '10s' })).rejects.toThrow('exit:1');
+    expect(listInbox).not.toHaveBeenCalled();
   });
 
   it('rejects a bad --limit with exit 1', async () => {
@@ -266,36 +344,5 @@ describe('inbox commands', () => {
 
     expect(getInboxThread).toHaveBeenCalledWith({}, 'conv_1', { before: 'act_9', agentIdentifier: 'human-relay' });
     expect(JSON.parse(stdout).thread.id).toBe('conv_1');
-  });
-
-  it('replies on the thread channel and refuses empty text', async () => {
-    replyInboxThread.mockResolvedValue({ thread: thread(), messageId: 'act_2' });
-
-    await expect(inboxReplyCommand('conv_1', 'on it', {})).rejects.toThrow('exit:0');
-    expect(replyInboxThread).toHaveBeenCalledWith({}, 'conv_1', 'on it', 'human-relay');
-    expect(stdout).toContain('Replied on telegram in conv_1.');
-
-    await expect(inboxReplyCommand('conv_1', '   ', {})).rejects.toThrow('exit:1');
-    expect(replyInboxThread).toHaveBeenCalledTimes(1);
-  });
-
-  it('posts an async in-thread card and returns it still pending (exit 11)', async () => {
-    createInboxInteraction.mockResolvedValue({ id: 'hint_1', kind: 'approve', status: 'pending' });
-
-    await expect(
-      runInboxInteraction('approve', 'conv_1', 'Deploy to prod?', { async: true, json: true, ttl: '10m' })
-    ).rejects.toThrow('exit:11');
-
-    expect(createInboxInteraction).toHaveBeenCalledWith(
-      {},
-      'conv_1',
-      expect.objectContaining({
-        kind: 'approve',
-        ttlSeconds: 600,
-        card: expect.objectContaining({ title: 'Deploy to prod?' }),
-      }),
-      'human-relay'
-    );
-    expect(JSON.parse(stdout).id).toBe('hint_1');
   });
 });
