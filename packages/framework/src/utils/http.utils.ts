@@ -1,5 +1,4 @@
 import { BridgeError, MissingSecretKeyError, PlatformError } from '../errors';
-import type { IActionStreamResponse } from '../handler';
 import { checkIsResponseError } from '../shared';
 
 /** The Node `ServerResponse` surface that Express, Nest and Next.js pages responses share. */
@@ -13,7 +12,10 @@ interface NodeResponse {
 }
 
 /** Writes a streamed action response to a Node response, stopping when the client disconnects. */
-export async function pipeToNodeResponse(response: NodeResponse, { status, headers, body }: IActionStreamResponse) {
+export async function pipeToNodeResponse(
+  response: NodeResponse,
+  { status, headers, body }: { status: number; headers: Record<string, string>; body: ReadableStream<Uint8Array> }
+) {
   response.statusCode = status;
   for (const [name, value] of Object.entries(headers)) {
     response.setHeader(name, value);
