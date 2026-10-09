@@ -33,7 +33,13 @@ overrides:
   body-parser@<1.20.6: ^1.20.6
   deepmerge-ts@<8.0.0: ^8.0.0
   body-parser@>=2.0.0 <2.3.0: ^2.3.0
-  handlebars@<4.7.9: 4.7.9
+  # GHSA-8r5x-fm3f-whwj (critical): Handlebars JavaScript injection via AST
+  # type confusion in compile (bypass of CVE-2026-33937).
+  # GHSA-p8wg-vrv2-v86f (critical): Handlebars JavaScript injection via own
+  # property check bypass. GHSA-xw65-4hp5-5hc7 (moderate): JavaScript
+  # injection via unsafe inline embedding of precompiled templates.
+  # All three are patched in 4.7.10 (patch bump within the 4.7.x line).
+  handlebars@<4.7.10: ^4.7.10
   braces@<3.0.3: ^3.0.3
   file-type@>=13.0.0 <16.5.4: ^16.5.4
   file-type@>=17.0.0 <21.3.4: ^21.3.4
