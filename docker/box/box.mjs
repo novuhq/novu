@@ -124,8 +124,14 @@ function mergeOntoBaked(ref, prHead) {
   const baked = readJson(BAKED).sha;
   if (spawnSync('git', ['merge-base', '--is-ancestor', baked, prHead], { cwd: REPO }).status === 0) return prHead;
   const merge = spawnSync('git', ['merge-tree', '--write-tree', baked, prHead], { encoding: 'utf8', env, cwd: REPO });
-  if (merge.status !== 0) throw new Error(`${ref} conflicts with the baked ${baked.slice(0, 10)}; rebase it:\n${merge.stdout}`);
-  const identity = { GIT_AUTHOR_NAME: 'box', GIT_AUTHOR_EMAIL: 'box@box.internal', GIT_COMMITTER_NAME: 'box', GIT_COMMITTER_EMAIL: 'box@box.internal' };
+  if (merge.status !== 0)
+    throw new Error(`${ref} conflicts with the baked ${baked.slice(0, 10)}; rebase it:\n${merge.stdout}`);
+  const identity = {
+    GIT_AUTHOR_NAME: 'box',
+    GIT_AUTHOR_EMAIL: 'box@box.internal',
+    GIT_COMMITTER_NAME: 'box',
+    GIT_COMMITTER_EMAIL: 'box@box.internal',
+  };
   const tree = merge.stdout.split('\n')[0];
 
   return output('git', ['commit-tree', tree, '-p', baked, '-p', prHead, '-m', `box: ${ref} on ${baked.slice(0, 10)}`], {
@@ -145,7 +151,8 @@ function pnpmInstall() {
 function build(projects) {
   const others = projects.filter((project) => project !== '@novu/dashboard');
   const buildEnv = { env: { ...env, NODE_OPTIONS: '' } };
-  if (others.length) run('pnpm', ['nx', 'run-many', '-t', 'build', `--projects=${others.join(',')}`, '--parallel=2'], buildEnv);
+  if (others.length)
+    run('pnpm', ['nx', 'run-many', '-t', 'build', `--projects=${others.join(',')}`, '--parallel=2'], buildEnv);
   if (others.length < projects.length) {
     run('pnpm', ['nx', 'run', '@novu/dashboard:build', '--parallel=1', '--', '--sourcemap', 'false'], buildEnv);
   }
@@ -158,9 +165,13 @@ function deployApp(name) {
   const dist = `${target}/dist`;
   const src = `${REPO}/apps/${name}/src`;
   fs.rmSync(target, { recursive: true, force: true });
-  run('pnpm', ['--filter', DEPLOYED_APPS[name], 'deploy', '--legacy', '--prod', '--store-dir', `${DATA}/pnpm-store`, target], {
-    env: { ...env, NODE_OPTIONS: '--max-old-space-size=4096', CI: 'true', HUSKY: '0' },
-  });
+  run(
+    'pnpm',
+    ['--filter', DEPLOYED_APPS[name], 'deploy', '--legacy', '--prod', '--store-dir', `${DATA}/pnpm-store`, target],
+    {
+      env: { ...env, NODE_OPTIONS: '--max-old-space-size=4096', CI: 'true', HUSKY: '0' },
+    }
+  );
   fs.cpSync(`${REPO}/apps/${name}/dist`, dist, { recursive: true });
   fs.copyFileSync(`${src}/.example.env`, `${dist}/.env`);
   fs.copyFileSync(`${src}/.env.development`, `${dist}/.env.development`);
@@ -208,19 +219,73 @@ function ensureRedisTls() {
   if (fs.existsSync(`${REDIS_TLS}/redis.crt`)) return;
   fs.mkdirSync(REDIS_TLS, { recursive: true });
   const openssl = (args) => run('openssl', args, { cwd: REDIS_TLS, stdio: 'ignore' });
-  openssl(['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '3650', '-subj', '/CN=novu-box-ca', '-keyout', 'ca.key', '-out', 'ca.crt']);
-  openssl(['req', '-newkey', 'rsa:2048', '-nodes', '-subj', '/CN=localhost', '-keyout', 'redis.key', '-out', 'redis.csr']);
+  openssl([
+    'req',
+    '-x509',
+    '-newkey',
+    'rsa:2048',
+    '-nodes',
+    '-days',
+    '3650',
+    '-subj',
+    '/CN=novu-box-ca',
+    '-keyout',
+    'ca.key',
+    '-out',
+    'ca.crt',
+  ]);
+  openssl([
+    'req',
+    '-newkey',
+    'rsa:2048',
+    '-nodes',
+    '-subj',
+    '/CN=localhost',
+    '-keyout',
+    'redis.key',
+    '-out',
+    'redis.csr',
+  ]);
   fs.writeFileSync(`${REDIS_TLS}/san.ext`, 'subjectAltName=IP:127.0.0.1,DNS:localhost\n');
-  openssl(['x509', '-req', '-in', 'redis.csr', '-CA', 'ca.crt', '-CAkey', 'ca.key', '-CAcreateserial', '-days', '3650', '-extfile', 'san.ext', '-out', 'redis.crt']);
+  openssl([
+    'x509',
+    '-req',
+    '-in',
+    'redis.csr',
+    '-CA',
+    'ca.crt',
+    '-CAkey',
+    'ca.key',
+    '-CAcreateserial',
+    '-days',
+    '3650',
+    '-extfile',
+    'san.ext',
+    '-out',
+    'redis.crt',
+  ]);
 }
 
 function prepareRuntime() {
-  for (const dir of ['logs', 'run', 'mongo', ...REDIS_PORTS.map((port) => `redis/${port}`), 'clickhouse', 's3', 'sqs', 'mail', 'pnpm-store']) {
+  for (const dir of [
+    'logs',
+    'run',
+    'mongo',
+    ...REDIS_PORTS.map((port) => `redis/${port}`),
+    'clickhouse',
+    's3',
+    'sqs',
+    'mail',
+    'pnpm-store',
+  ]) {
     fs.mkdirSync(`${DATA}/${dir}`, { recursive: true });
   }
 
   // A filesystem snapshot keeps lock and socket files of processes that are no longer running.
-  const pm2Homes = fs.readdirSync(RUN).filter((name) => name.startsWith('pm2-')).map((name) => `${RUN}/${name}`);
+  const pm2Homes = fs
+    .readdirSync(RUN)
+    .filter((name) => name.startsWith('pm2-'))
+    .map((name) => `${RUN}/${name}`);
   for (const file of [`${DATA}/mongo/mongod.lock`, `${DATA}/clickhouse/status`, PC_SOCKET, ...pm2Homes]) {
     fs.rmSync(file, { recursive: true, force: true });
   }
@@ -230,8 +295,10 @@ function prepareRuntime() {
   const platformCa = process.env.NODE_EXTRA_CA_CERTS;
   fs.writeFileSync(
     bundle,
-    [fs.readFileSync(`${REDIS_TLS}/ca.crt`, 'utf8'), platformCa && fs.existsSync(platformCa) ? fs.readFileSync(platformCa, 'utf8') : '']
-      .join('\n')
+    [
+      fs.readFileSync(`${REDIS_TLS}/ca.crt`, 'utf8'),
+      platformCa && fs.existsSync(platformCa) ? fs.readFileSync(platformCa, 'utf8') : '',
+    ].join('\n')
   );
   env.NODE_EXTRA_CA_CERTS = bundle;
 
@@ -276,7 +343,16 @@ function prepareDashboard() {
 function startSupervisor() {
   const child = spawn(
     'process-compose',
-    ['up', '--tui=false', '--keep-project', '--config', `${BOX}/process-compose.yaml`, '--use-uds', '--unix-socket', PC_SOCKET],
+    [
+      'up',
+      '--tui=false',
+      '--keep-project',
+      '--config',
+      `${BOX}/process-compose.yaml`,
+      '--use-uds',
+      '--unix-socket',
+      PC_SOCKET,
+    ],
     { stdio: 'inherit', env, cwd: RUN }
   );
   for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => child.kill(signal));
@@ -301,7 +377,8 @@ async function bake(ref = 'next') {
   let sha;
   await step('clone', () => {
     fs.mkdirSync(DATA, { recursive: true });
-    if (!fs.existsSync(`${REPO}/.git`)) run('git', ['clone', '--filter=blob:none', '--no-checkout', REPO_URL, REPO], { cwd: DATA });
+    if (!fs.existsSync(`${REPO}/.git`))
+      run('git', ['clone', '--filter=blob:none', '--no-checkout', REPO_URL, REPO], { cwd: DATA });
     sha = fetchRef(ref);
     run('git', ['checkout', '--force', '--detach', sha]);
   });
@@ -344,7 +421,8 @@ async function start() {
   );
   log(`box ready in ${seconds.toFixed(1)}s`);
   // The workflows ship in the image, so a new image may bring new ones.
-  if (fs.existsSync(BRIDGE_SECRET)) await syncBridge().catch((error) => log(`WARN: bridge sync failed: ${error.message}`));
+  if (fs.existsSync(BRIDGE_SECRET))
+    await syncBridge().catch((error) => log(`WARN: bridge sync failed: ${error.message}`));
   if (env.NOVU_MANAGED_CLAUDE_API_KEY) {
     await seedManagedAgent().catch((error) => log(`WARN: managed agent seed failed: ${error.message}`));
   }
@@ -378,7 +456,10 @@ async function seedClerk() {
     },
   });
   org ??= await clerk('/organizations', { method: 'POST', body: { name: SEED.orgName, created_by: user.id } });
-  await clerk(`/organizations/${org.id}/metadata`, { method: 'PATCH', body: { public_metadata: { externalOrgId: null } } });
+  await clerk(`/organizations/${org.id}/metadata`, {
+    method: 'PATCH',
+    body: { public_metadata: { externalOrgId: null } },
+  });
   const token = await seedUserToken({ userId: user.id, orgId: org.id });
   const { body } = await api('/v1/organizations/me', { headers: { Authorization: `Bearer ${token}` } });
   log(`seeded ${SEED.email} in ${body.data.name} (${body.data._id})`);
@@ -401,7 +482,14 @@ async function seedEmailIntegration(token) {
         identifier: 'mailpit',
         active: true,
         check: false,
-        credentials: { host: MAIL_HOST, port: '1025', secure: false, ignoreTls: true, from: 'no-reply@novu-box.local', senderName: 'Novu Box' },
+        credentials: {
+          host: MAIL_HOST,
+          port: '1025',
+          secure: false,
+          ignoreTls: true,
+          from: 'no-reply@novu-box.local',
+          senderName: 'Novu Box',
+        },
       }),
     });
     await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
@@ -422,36 +510,71 @@ async function seedChannels(token) {
       channel: 'sms',
       name: 'Box SMS (sink)',
       identifier: 'box-sms',
-      credentials: { baseUrl: `${SINK_URL}/sms`, apiKeyRequestHeader: 'x-box-key', apiKey: 'box', idPath: 'id', datePath: 'date', from: 'Novu Box' },
+      credentials: {
+        baseUrl: `${SINK_URL}/sms`,
+        apiKeyRequestHeader: 'x-box-key',
+        apiKey: 'box',
+        idPath: 'id',
+        datePath: 'date',
+        from: 'Novu Box',
+      },
     },
-    { providerId: 'push-webhook', channel: 'push', name: 'Box Push (sink)', identifier: 'box-push', credentials: { webhookUrl: `${SINK_URL}/push`, secretKey: 'box-fake-push-hmac' } },
-    { providerId: 'chat-webhook', channel: 'chat', name: 'Box Chat (sink)', identifier: 'box-chat', credentials: { secretKey: 'box-fake-chat-hmac' } },
+    {
+      providerId: 'push-webhook',
+      channel: 'push',
+      name: 'Box Push (sink)',
+      identifier: 'box-push',
+      credentials: { webhookUrl: `${SINK_URL}/push`, secretKey: 'box-fake-push-hmac' },
+    },
+    {
+      providerId: 'chat-webhook',
+      channel: 'chat',
+      name: 'Box Chat (sink)',
+      identifier: 'box-chat',
+      credentials: { secretKey: 'box-fake-chat-hmac' },
+    },
   ];
 
   for (const environment of environments.data) {
     const headers = { Authorization: `ApiKey ${environment.apiKeys[0].key}` };
     const { body: existing } = await api('/v1/integrations', { headers });
     for (const integration of integrations) {
-      if (existing.data.some((item) => item.identifier === integration.identifier && item._environmentId === environment._id)) continue;
+      if (
+        existing.data.some(
+          (item) => item.identifier === integration.identifier && item._environmentId === environment._id
+        )
+      )
+        continue;
       const { body } = await api('/v1/integrations', {
         method: 'POST',
         headers,
         body: JSON.stringify({ ...integration, active: true, check: false }),
       });
-      if (integration.channel === 'sms') await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
+      if (integration.channel === 'sms')
+        await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
     }
 
     const subscriberId = me.data._id;
     await api('/v1/subscribers', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ subscriberId, email: me.data.email, firstName: me.data.firstName, lastName: me.data.lastName, phone: '+15550001' }),
+      body: JSON.stringify({
+        subscriberId,
+        email: me.data.email,
+        firstName: me.data.firstName,
+        lastName: me.data.lastName,
+        phone: '+15550001',
+      }),
     });
     for (const [providerId, credentials] of [
       ['push-webhook', { deviceTokens: ['box-device-token'] }],
       ['chat-webhook', { webhookUrl: `${SINK_URL}/chat` }],
     ]) {
-      await api(`/v1/subscribers/${subscriberId}/credentials`, { method: 'PUT', headers, body: JSON.stringify({ providerId, credentials }) });
+      await api(`/v1/subscribers/${subscriberId}/credentials`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ providerId, credentials }),
+      });
     }
     log(`SMS, push and chat go to the sink in ${environment.name}`);
   }
@@ -473,14 +596,35 @@ async function seedBridge(token) {
 async function syncBridge() {
   const headers = { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` };
   const { agents = [] } = await discoverBridge();
-  const { body } = await api('/v1/bridge/sync?source=box', { method: 'POST', headers, body: JSON.stringify({ bridgeUrl: BRIDGE_URL }) });
+  const { body } = await api('/v1/bridge/sync?source=box', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ bridgeUrl: BRIDGE_URL }),
+  });
   for (const { agentId } of agents) {
-    if (!(await api(`/v1/agents/${agentId}`, { headers }).then(() => true, () => false))) {
-      await api('/v1/agents', { method: 'POST', headers, body: JSON.stringify({ name: agentId, identifier: agentId }) });
-      await api(`/v1/agents/${agentId}/integrations`, { method: 'POST', headers, body: JSON.stringify({ providerId: 'novu-web-chat' }) });
+    if (
+      !(await api(`/v1/agents/${agentId}`, { headers }).then(
+        () => true,
+        () => false
+      ))
+    ) {
+      await api('/v1/agents', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name: agentId, identifier: agentId }),
+      });
+      await api(`/v1/agents/${agentId}/integrations`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ providerId: 'novu-web-chat' }),
+      });
       log(`agent ${agentId} is on web chat`);
     }
-    await api(`/v1/agents/${agentId}/bridge`, { method: 'PUT', headers, body: JSON.stringify({ bridgeUrl: BRIDGE_URL }) });
+    await api(`/v1/agents/${agentId}/bridge`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ bridgeUrl: BRIDGE_URL }),
+    });
   }
   log(`bridge synced: ${body.data.length} workflows and ${agents.length} agents from ${BRIDGE_URL}`);
 }
@@ -492,7 +636,13 @@ async function seedManagedAgent() {
   pc(['process', 'start', 'thalamus']);
   await waitForHttp('http://127.0.0.1:8788/health', 120);
   const headers = { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` };
-  if (await api(`/v1/agents/${MANAGED_AGENT}`, { headers }).then(() => true, () => false)) return;
+  if (
+    await api(`/v1/agents/${MANAGED_AGENT}`, { headers }).then(
+      () => true,
+      () => false
+    )
+  )
+    return;
   const { body: environment } = await api('/v1/environments/me', { headers });
   const { body: integrations } = await api('/v1/integrations', { headers });
   let integration = integrations.data.find(
@@ -502,7 +652,13 @@ async function seedManagedAgent() {
     await api('/v1/integrations', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ providerId: 'novu-anthropic', kind: 'agent', name: 'Novu Managed Claude', active: true, check: false }),
+      body: JSON.stringify({
+        providerId: 'novu-anthropic',
+        kind: 'agent',
+        name: 'Novu Managed Claude',
+        active: true,
+        check: false,
+      }),
     })
   ).body.data;
   await api('/v1/agents', {
@@ -521,7 +677,11 @@ async function seedManagedAgent() {
       },
     }),
   });
-  await api(`/v1/agents/${MANAGED_AGENT}/integrations`, { method: 'POST', headers, body: JSON.stringify({ providerId: 'novu-web-chat' }) });
+  await api(`/v1/agents/${MANAGED_AGENT}/integrations`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ providerId: 'novu-web-chat' }),
+  });
   log(`managed agent ${MANAGED_AGENT} is on web chat`);
 }
 
@@ -529,8 +689,12 @@ async function seedManagedAgent() {
 async function discoverBridge() {
   await waitForHttp(`${BRIDGE_URL}?action=health-check`, 120);
   const timestamp = Date.now();
-  const signature = createHmac('sha256', fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()).update(`${timestamp}.{}`).digest('hex');
-  const res = await fetch(`${BRIDGE_URL}?action=discover`, { headers: { 'novu-signature': `t=${timestamp},v1=${signature}` } });
+  const signature = createHmac('sha256', fs.readFileSync(BRIDGE_SECRET, 'utf8').trim())
+    .update(`${timestamp}.{}`)
+    .digest('hex');
+  const res = await fetch(`${BRIDGE_URL}?action=discover`, {
+    headers: { 'novu-signature': `t=${timestamp},v1=${signature}` },
+  });
   if (!res.ok) throw new Error(`bridge discover -> ${res.status}: ${(await res.text()).slice(0, 300)}`);
 
   return res.json();
@@ -555,17 +719,23 @@ async function seedTeamTier(token) {
   const { body: org } = await api('/v1/organizations/me', auth);
   // Creates the Stripe customer and its Pro trial if creating the org didn't.
   await api('/v1/billing/subscription', auth);
-  const { data: customers } = await stripe(`/customers?email=${encodeURIComponent(SEED.email)}&limit=100&expand[]=data.subscriptions`);
+  const { data: customers } = await stripe(
+    `/customers?email=${encodeURIComponent(SEED.email)}&limit=100&expand[]=data.subscriptions`
+  );
   const customer = customers.find((candidate) => candidate.metadata.organizationId === org.data._id);
   const [subscription] = customer.subscriptions.data;
-  const { data: prices } = await stripe('/prices?lookup_keys[]=business_flat_monthly&lookup_keys[]=business_usage_notifications');
+  const { data: prices } = await stripe(
+    '/prices?lookup_keys[]=business_flat_monthly&lookup_keys[]=business_usage_notifications'
+  );
 
   const card = await stripe('/payment_methods/pm_card_visa/attach', { customer: customer.id });
   await stripe(`/customers/${customer.id}`, { 'invoice_settings[default_payment_method]': card.id });
   const items = {};
   subscription.items.data.forEach((item, index) => {
     items[`items[${index}][id]`] = item.id;
-    items[`items[${index}][price]`] = prices.find((price) => price.recurring.usage_type === item.price.recurring.usage_type).id;
+    items[`items[${index}][price]`] = prices.find(
+      (price) => price.recurring.usage_type === item.price.recurring.usage_type
+    ).id;
   });
   await stripe(`/subscriptions/${subscription.id}`, { ...items, trial_end: 'now', proration_behavior: 'none' });
 
@@ -577,7 +747,8 @@ async function seedTeamTier(token) {
       return;
     }
     // The first event can go out before `stripe listen` is connected; any update sends a new one.
-    if (second % 15 === 0) await stripe(`/subscriptions/${subscription.id}`, { 'metadata[box_seeded_at]': new Date().toISOString() });
+    if (second % 15 === 0)
+      await stripe(`/subscriptions/${subscription.id}`, { 'metadata[box_seeded_at]': new Date().toISOString() });
   }
   throw new Error('the org is not on Team after 60s; check the stripe process in /data/logs/process-compose.log');
 }
@@ -602,10 +773,18 @@ async function initReplicaSet(MongoClient) {
 }
 
 async function createRedisCluster() {
-  const cli = (port, args) => output('redis-cli', ['--tls', '--cacert', `${REDIS_TLS}/ca.crt`, '-p', String(port), ...args], { cwd: RUN });
+  const cli = (port, args) =>
+    output('redis-cli', ['--tls', '--cacert', `${REDIS_TLS}/ca.crt`, '-p', String(port), ...args], { cwd: RUN });
   if (/cluster_slots_assigned:0\b/.test(cli(REDIS_PORTS[0], ['cluster', 'info']))) {
     log('creating Redis Cluster');
-    cli(REDIS_PORTS[0], ['--cluster', 'create', ...REDIS_PORTS.map((port) => `127.0.0.1:${port}`), '--cluster-replicas', '0', '--cluster-yes']);
+    cli(REDIS_PORTS[0], [
+      '--cluster',
+      'create',
+      ...REDIS_PORTS.map((port) => `127.0.0.1:${port}`),
+      '--cluster-replicas',
+      '0',
+      '--cluster-yes',
+    ]);
   }
   for (let attempt = 0; !/cluster_state:ok/.test(cli(REDIS_PORTS[0], ['cluster', 'info'])); attempt++) {
     if (attempt === 60) throw new Error('Redis Cluster not ok after 30s');
@@ -683,7 +862,8 @@ async function applyPr(ref) {
     files = output('git', ['diff', '--name-only', base, head]).split('\n').filter(Boolean);
   });
   log(`${files.length} files changed between ${base.slice(0, 10)} and ${head.slice(0, 10)}`);
-  if (files.some((file) => file.startsWith('docker/box/'))) log('WARN: docker/box changed; this PR needs a new base image');
+  if (files.some((file) => file.startsWith('docker/box/')))
+    log('WARN: docker/box changed; this PR needs a new base image');
 
   const restart = new Set();
   await step('checkout', () => {
@@ -701,19 +881,29 @@ async function applyPr(ref) {
       output('pnpm', ['-s', 'nx', 'show', 'projects', '--affected', `--base=${base}`, `--head=${head}`, '--json'])
     ).filter((project) => PROJECT_PROCESSES[project]);
   });
-  if (affected.length) await step(`build ${affected.join(' ')}`, () => build(affected));
   affected.forEach((project) => restart.add(PROJECT_PROCESSES[project]));
   if (files.some((file) => file.startsWith('enterprise/workers/socket/'))) restart.add('socket');
   // playground/ is in .nxignore, so nx never lists the bridge app itself.
   if (files.some((file) => file.startsWith('playground/nextjs/'))) restart.add('bridge');
+  // Building next to the running apps gets OOM-killed in 8 GB. The dashboard is static files, so it keeps serving.
+  const stop = [...restart].filter((name) => name !== 'dashboard');
+  if (stop.length) await step(`stop ${stop.join(' ')}`, () => pc(['process', 'stop', ...stop]));
+  if (affected.length) await step(`build ${affected.join(' ')}`, () => build(affected));
   const redeploy = Object.keys(DEPLOYED_APPS).filter((name) => restart.has(name));
   if (redeploy.length) await step(`deploy ${redeploy.join(' ')}`, () => redeploy.forEach(deployApp));
   await step('migrate', migrate);
 
-  fs.writeFileSync(APPLIED, JSON.stringify({ ref, sha: head, prHead, base, files: files.length, at: new Date().toISOString() }, null, 2));
+  fs.writeFileSync(
+    APPLIED,
+    JSON.stringify({ ref, sha: head, prHead, base, files: files.length, at: new Date().toISOString() }, null, 2)
+  );
   await step(`restart ${[...restart].join(' ') || 'nothing'}`, () => {
     if (restart.delete('dashboard')) prepareDashboard();
-    else fs.writeFileSync(`${RUN}/dashboard/__box.json`, JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) }));
+    else
+      fs.writeFileSync(
+        `${RUN}/dashboard/__box.json`,
+        JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
+      );
     for (const name of restart) pc(['process', 'restart', name]);
   });
   await waitForHttp('http://127.0.0.1:3000/v1/health-check', 300);
