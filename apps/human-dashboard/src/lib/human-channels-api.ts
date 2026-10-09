@@ -61,7 +61,7 @@ const RETRY_MS = 1000;
 
 /** What `human setup` sends too, once a channel works. */
 const TEST_MESSAGE =
-  'You’re connected. Agents can now reach you here. Try `human approve "Deploy to production?"` in your terminal.';
+  'You’re connected. Agents can now reach you here. Try `human inbox approve "Deploy to production?"` in your terminal.';
 
 const CHANNEL_LABELS: Record<ChannelVia, string> = { telegram: 'Telegram', slack: 'Slack', email: 'Email' };
 

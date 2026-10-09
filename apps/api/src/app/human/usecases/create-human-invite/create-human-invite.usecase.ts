@@ -9,7 +9,7 @@ import { SetupHumanRelay } from '../setup-human-relay/setup-human-relay.usecase'
 import { CreateHumanInviteCommand } from './create-human-invite.command';
 
 /**
- * Behind `human invite <id>` without `--via`: mints a link to the invite page
+ * Behind `human contact invite <id>` without `--via`: mints a link to the invite page
  * on the Human dashboard, where the human connects any of the relay's chat apps
  * and picks their default. The page only ever offers apps the inviter set up.
  */

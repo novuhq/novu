@@ -391,14 +391,14 @@ describe('CreateInteraction', () => {
     });
     deliveryService.resolveChannel
       .onSecondCall()
-      .rejects(new NotFoundException('Human "sub-2" has no linked channel. Run `human invite sub-2`.'));
+      .rejects(new NotFoundException('Human "sub-2" has no linked channel. Run `human contact invite sub-2`.'));
 
     try {
       await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('human invite');
+      expect((err as NotFoundException).message).to.include('human contact invite');
     }
     expect(humanInteractionRepository.create.called).to.equal(false);
   });

@@ -529,7 +529,7 @@
     <div class="terminal" aria-label="Terminal session">
       <div class="terminal-bar"><span>agent — deploy.sh</span><span>tty</span></div>
       <div class="terminal-body">
-        <div class="line"><span class="p">$</span> <span class="c">human approve <span class="d">"Ship v2.4.1 to production?"</span> \</span></div>
+        <div class="line"><span class="p">$</span> <span class="c">human inbox approve <span class="d">"Ship v2.4.1 to production?"</span> \</span></div>
         <div class="line"><span class="c">    --from deploy-bot --timeout 15m</span></div>
         <div class="line"><span class="wait">⠿ waiting for a human on telegram (hi_x8f2k1) · 47s</span></div>
         <div class="line"><span class="ok">✓ Approved by dima at 14:02</span></div>
@@ -564,22 +564,22 @@
     <div class="session-copy">
       <h2>More than one human.<br /><em>Look first.</em></h2>
       <p>Agents can list everyone they can address with
-      <code>human contacts</code> — a directory of people in the
+      <code>human contact list</code> — a directory of people in the
       environment, not a guarantee they have a channel linked yet.</p>
       <p>Your row is marked <em>(you)</em>. Invite someone new with
-      <code>human invite alice --via slack --name "Alice Chen"</code>,
+      <code>human contact invite alice --via slack --name "Alice Chen"</code>,
       then pass their id to <code>--to</code>.</p>
     </div>
     <div class="terminal" aria-label="Contacts directory">
       <div class="terminal-bar"><span>agent — who can I reach</span><span>tty</span></div>
       <div class="terminal-body">
-        <div class="line"><span class="p">$</span> <span class="c">human contacts</span></div>
+        <div class="line"><span class="p">$</span> <span class="c">human contact list</span></div>
         <div class="line"><span class="hdr">ID     NAME         EMAIL</span></div>
         <div class="line"><span class="c">dima   Dima Groza   dima@novu.co</span><span class="you"> (you)</span></div>
         <div class="line"><span class="c">alice  Alice Chen   alice@acme.com</span></div>
         <div class="line"><span class="c">bob    Bob          —</span></div>
         <div class="line">&nbsp;</div>
-        <div class="line"><span class="p">$</span> <span class="c">human approve <span class="d">"Ship the pricing change?"</span> --to alice</span></div>
+        <div class="line"><span class="p">$</span> <span class="c">human inbox approve <span class="d">"Ship the pricing change?"</span> --to alice</span></div>
         <div class="line"><span class="cursor"></span></div>
       </div>
     </div>
@@ -597,8 +597,8 @@
       <div class="step">
         <span class="num">02</span>
         <h3>Your agents start asking</h3>
-        <p>Any script or agent calls <code>human ask</code> or
-        <code>human approve</code> instead of guessing — and genuinely waits.</p>
+        <p>Any script or agent calls <code>human inbox ask</code> or
+        <code>human inbox approve</code> instead of guessing — and genuinely waits.</p>
       </div>
       <div class="step">
         <span class="num">03</span>

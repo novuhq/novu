@@ -79,7 +79,7 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Saves the human's default channel. An inviter's pick (`human invite --via`)
+   * Saves the human's default channel. An inviter's pick (`human contact invite --via`)
    * never replaces a default the person chose themselves on the invite page.
    */
   async setDefaultVia(params: {
