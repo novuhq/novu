@@ -42,7 +42,6 @@ import { CancelInteraction } from './usecases/cancel-interaction/cancel-interact
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
-import { CreateInboxInteraction } from './usecases/create-inbox-interaction/create-inbox-interaction.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
 import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human-account.usecase';
@@ -60,7 +59,6 @@ import { ListInteractions } from './usecases/list-interactions/list-interactions
 import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
-import { ReplyInboxThread } from './usecases/reply-inbox-thread/reply-inbox-thread.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
@@ -139,8 +137,6 @@ import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-age
     GetInboxThread,
     MarkInboxRead,
     ResolveInboxThread,
-    ReplyInboxThread,
-    CreateInboxInteraction,
   ],
 })
 export class HumanModule {}

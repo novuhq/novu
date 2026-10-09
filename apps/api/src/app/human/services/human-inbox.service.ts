@@ -9,16 +9,37 @@ import {
   ConversationEntity,
   ConversationParticipantTypeEnum,
   ConversationRepository,
+  ConversationStatusEnum,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import type { InboxMessageDto, InboxSender, InboxThreadDto } from '../dtos/human-inbox.dto';
+import { isAgentProvisionedSubscriber } from '../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
+import type {
+  InboxMessageDto,
+  InboxPersonDto,
+  InboxPersonKind,
+  InboxSender,
+  InboxSendersFilter,
+  InboxThreadDto,
+} from '../dtos/human-inbox.dto';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../usecases/setup-human-relay/setup-human-relay.usecase';
-import { HumanKeylessCapService } from './human-keyless-cap.service';
 
 export type InboxScope = { environmentId: string; organizationId: string };
 
 export type InboxRelayAgent = { _id: string; identifier: string; name: string };
+
+type InboxPeople = Map<string, InboxPersonDto>;
+
+export interface InboxListFilters {
+  read?: 'unread' | 'read';
+  status?: ConversationStatusEnum;
+  senders: InboxSendersFilter;
+  limit: number;
+  after?: string;
+}
+
+/** Pages scanned past filtered-out stranger threads before a page is returned short. */
+const MAX_CONTACT_FILTER_SCANS = 5;
 
 /**
  * The Human inbox: the conversations of a `human_relay` agent, read as threads an agent pulls,
@@ -31,20 +52,8 @@ export class HumanInboxService {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly integrationRepository: IntegrationRepository,
-    private readonly keylessCap: HumanKeylessCapService
+    private readonly integrationRepository: IntegrationRepository
   ) {}
-
-  /** Inbox sends draw on the same keyless demo allowance as `POST /human/interactions`. */
-  async assertCanSend(scope: InboxScope, agent: InboxRelayAgent, conversation: ConversationEntity): Promise<void> {
-    const subscriberId = subscriberIdOf(conversation);
-
-    await this.keylessCap.assertWithinCap({
-      ...scope,
-      agentId: agent._id,
-      subscriberIds: subscriberId ? [subscriberId] : [],
-    });
-  }
 
   async resolveRelayAgent(scope: InboxScope, agentIdentifier?: string): Promise<InboxRelayAgent> {
     const identifier = agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER;
@@ -101,6 +110,23 @@ export class HumanInboxService {
     return integration.identifier;
   }
 
+  async findIntegrationId(scope: InboxScope, integrationIdentifier: string): Promise<string> {
+    const integration = await this.integrationRepository.findOne(
+      {
+        identifier: integrationIdentifier,
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+      },
+      '_id'
+    );
+
+    if (!integration) {
+      throw new NotFoundException(`Integration "${integrationIdentifier}" no longer exists.`);
+    }
+
+    return integration._id;
+  }
+
   /**
    * Reads the thread up to the human message it had when it was loaded, so a message that arrives
    * while the agent is looking stays unread.
@@ -118,9 +144,75 @@ export class HumanInboxService {
     }
   }
 
+  /**
+   * What every send does to the thread it lands in: the thread is read, and open again if it was
+   * resolved. Returns how many messages were unread, so the caller can tell the host what it skipped.
+   */
+  async markSentInto(scope: InboxScope, conversation: ConversationEntity): Promise<number> {
+    const unreadBefore = await this.countUnread(scope, conversation);
+
+    if (conversation.status === ConversationStatusEnum.RESOLVED) {
+      await this.conversationRepository.updateStatus(
+        scope.environmentId,
+        scope.organizationId,
+        conversation._id,
+        ConversationStatusEnum.ACTIVE
+      );
+      conversation.status = ConversationStatusEnum.ACTIVE;
+    }
+
+    await this.markRead(scope, conversation);
+
+    return unreadBefore;
+  }
+
+  /**
+   * One page of threads. Whether a thread has a contact in it lives on the subscribers, not on the
+   * conversation, so the `contacts` filter is applied after the query and the scan continues until
+   * the page is full.
+   */
+  async listThreads(
+    scope: InboxScope,
+    agent: InboxRelayAgent,
+    filters: InboxListFilters
+  ): Promise<{ data: InboxThreadDto[]; next: string | null }> {
+    const threads: InboxThreadDto[] = [];
+    let after = filters.after;
+
+    for (let scan = 0; scan < MAX_CONTACT_FILTER_SCANS; scan += 1) {
+      const page = await this.conversationRepository.findInboxThreads({
+        ...scope,
+        agentId: agent._id,
+        read: filters.read,
+        status: filters.status,
+        limit: filters.limit,
+        after,
+      });
+      const pageThreads = await this.toThreads(scope, page.data);
+      const matching =
+        filters.senders === 'contacts' ? pageThreads.filter((thread) => thread.kind === 'contact') : pageThreads;
+
+      threads.push(...matching);
+
+      if (threads.length >= filters.limit) {
+        const data = threads.slice(0, filters.limit);
+        const hasMore = threads.length > filters.limit || page.next !== null;
+
+        return { data, next: hasMore ? (data[data.length - 1]?.id ?? null) : null };
+      }
+
+      if (!page.next) {
+        break;
+      }
+
+      after = page.next;
+    }
+
+    return { data: threads, next: null };
+  }
+
   async toThreads(scope: InboxScope, conversations: ConversationEntity[]): Promise<InboxThreadDto[]> {
-    const subscriberIds = [...new Set(conversations.flatMap((conversation) => subscriberIdOf(conversation) ?? []))];
-    const names = await this.loadSubscriberNames(scope, subscriberIds);
+    const people = await this.loadPeople(scope, [...new Set(conversations.flatMap(subscriberIdsOf))]);
 
     return Promise.all(
       conversations.map(async (conversation) => {
@@ -129,7 +221,7 @@ export class HumanInboxService {
           this.activityRepository.findInboxMessages({ ...scope, conversationId: conversation._id, limit: 1 }),
         ]);
 
-        return toThread(conversation, names, unreadCount, latest.data[0]);
+        return toThread(conversation, people, unreadCount, latest.data[0]);
       })
     );
   }
@@ -140,7 +232,28 @@ export class HumanInboxService {
     return thread;
   }
 
-  private async countUnread(scope: InboxScope, conversation: ConversationEntity): Promise<number> {
+  /** The thread's messages, oldest first, each human message labelled contact or stranger. */
+  async toMessages(scope: InboxScope, activities: ConversationActivityEntity[]): Promise<InboxMessageDto[]> {
+    const rows = withoutDuplicateInteractionCards(activities);
+    const senderIds = rows.filter(isFromSubscriber).map((activity) => activity.senderId);
+    const people = await this.loadPeople(scope, [...new Set(senderIds)]);
+
+    return rows.map((activity) => toInboxMessage(activity, people)).reverse();
+  }
+
+  /** Everyone in the thread: who a message sent into it without `to` is for. */
+  peopleIds(conversation: ConversationEntity): string[] {
+    return [...subscriberIdsOf(conversation), ...platformUserIdsOf(conversation)];
+  }
+
+  /** `to` reaches contacts only; a stranger is answered in the thread they wrote in. */
+  async findStrangers(scope: InboxScope, subscriberIds: string[]): Promise<string[]> {
+    const people = await this.loadPeople(scope, subscriberIds);
+
+    return subscriberIds.filter((subscriberId) => people.get(subscriberId)?.kind === 'stranger');
+  }
+
+  async countUnread(scope: InboxScope, conversation: ConversationEntity): Promise<number> {
     if (!conversation.lastHumanMessageAt) {
       return 0;
     }
@@ -156,7 +269,7 @@ export class HumanInboxService {
     });
   }
 
-  private async loadSubscriberNames(scope: InboxScope, subscriberIds: string[]): Promise<Map<string, string>> {
+  private async loadPeople(scope: InboxScope, subscriberIds: string[]): Promise<InboxPeople> {
     if (subscriberIds.length === 0) {
       return new Map();
     }
@@ -167,26 +280,29 @@ export class HumanInboxService {
         _organizationId: scope.organizationId,
         subscriberId: { $in: subscriberIds },
       },
-      'subscriberId firstName lastName'
+      'subscriberId firstName lastName data'
     );
 
     return new Map(
-      subscribers.flatMap((subscriber) => {
+      subscribers.map((subscriber) => {
         const name = [subscriber.firstName, subscriber.lastName].filter(Boolean).join(' ').trim();
+        const kind: InboxPersonKind = isAgentProvisionedSubscriber(subscriber) ? 'stranger' : 'contact';
 
-        return name ? [[subscriber.subscriberId, name] as [string, string]] : [];
+        return [subscriber.subscriberId, { id: subscriber.subscriberId, ...(name ? { name } : {}), kind }];
       })
     );
   }
 }
 
-export function toInboxMessage(activity: ConversationActivityEntity): InboxMessageDto {
+function toInboxMessage(activity: ConversationActivityEntity, people: InboxPeople): InboxMessageDto {
   const interaction = readHumanInteraction(activity);
   const attachments = readAttachments(activity);
+  const from = senderOf(activity);
 
   return {
     id: activity.identifier,
-    from: senderOf(activity),
+    from,
+    ...(from === 'human' ? { senderKind: personKindOf(activity, people) } : {}),
     ...(activity.senderName ? { senderName: activity.senderName } : {}),
     text: activity.content ?? '',
     ...(attachments.length ? { attachments } : {}),
@@ -197,18 +313,24 @@ export function toInboxMessage(activity: ConversationActivityEntity): InboxMessa
 
 function toThread(
   conversation: ConversationEntity,
-  names: Map<string, string>,
+  people: InboxPeople,
   unreadCount: number,
   latest: ConversationActivityEntity | undefined
 ): InboxThreadDto {
-  const subscriberId = subscriberIdOf(conversation);
-  const name = subscriberId ? names.get(subscriberId) : undefined;
+  // A subscriber whose row is gone can no longer be told apart from a stranger.
+  const threadPeople = [
+    ...subscriberIdsOf(conversation).map(
+      (subscriberId): InboxPersonDto => people.get(subscriberId) ?? { id: subscriberId, kind: 'stranger' }
+    ),
+    ...platformUserIdsOf(conversation).map((id): InboxPersonDto => ({ id, kind: 'stranger' })),
+  ];
 
   return {
     id: conversation.identifier,
     channel: conversation.channels?.[0]?.platform ?? 'unknown',
-    from: subscriberId ? { subscriberId, ...(name ? { name } : {}) } : null,
-    status: conversation.status,
+    kind: threadPeople.some((person) => person.kind === 'contact') ? 'contact' : 'stranger',
+    people: threadPeople,
+    status: conversation.status === ConversationStatusEnum.RESOLVED ? 'resolved' : 'open',
     unreadCount,
     lastMessage: latest
       ? { text: latest.content ?? '', at: new Date(latest.createdAt).toISOString(), from: senderOf(latest) }
@@ -218,10 +340,50 @@ function toThread(
   };
 }
 
-function subscriberIdOf(conversation: ConversationEntity): string | undefined {
-  return conversation.participants?.find(
-    (participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER
-  )?.id;
+function subscriberIdsOf(conversation: ConversationEntity): string[] {
+  return (conversation.participants ?? [])
+    .filter((participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER)
+    .map((participant) => participant.id);
+}
+
+/** People the channel could not tie to a subscriber, as `<platform>:<their id on it>`. */
+function platformUserIdsOf(conversation: ConversationEntity): string[] {
+  return (conversation.participants ?? [])
+    .filter((participant) => participant.type === ConversationParticipantTypeEnum.PLATFORM_USER)
+    .map((participant) => participant.id);
+}
+
+function isFromSubscriber(activity: ConversationActivityEntity): boolean {
+  return activity.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER;
+}
+
+/** A sender the platform could not tie to a subscriber is nobody's contact. */
+function personKindOf(activity: ConversationActivityEntity, people: InboxPeople): InboxPersonKind {
+  if (!isFromSubscriber(activity)) {
+    return 'stranger';
+  }
+
+  return people.get(activity.senderId)?.kind ?? 'stranger';
+}
+
+/**
+ * A card sent into a thread is stored twice: as the agent's message and as the interaction request.
+ * The request row carries the interaction, so the plain message copy is dropped.
+ */
+function withoutDuplicateInteractionCards(activities: ConversationActivityEntity[]): ConversationActivityEntity[] {
+  const requestMessageIds = new Set(
+    activities
+      .filter((activity) => activity.type === ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST)
+      .flatMap((activity) => activity.platformMessageId ?? [])
+  );
+
+  return activities.filter(
+    (activity) =>
+      activity.type !== ConversationActivityTypeEnum.MESSAGE ||
+      activity.senderType !== ConversationActivitySenderTypeEnum.AGENT ||
+      !activity.platformMessageId ||
+      !requestMessageIds.has(activity.platformMessageId)
+  );
 }
 
 function senderOf(activity: ConversationActivityEntity): InboxSender {

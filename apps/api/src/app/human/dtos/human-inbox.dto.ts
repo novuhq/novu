@@ -1,52 +1,42 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { HUMAN_INTERACTION_MAX_TTL_SECONDS, HumanInteractionKindEnum } from '@novu/shared';
-import { Transform, Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from 'class-validator';
-import { HumanInteractionCardDto } from './create-interaction-request.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 /** Longest a `?wait=` long-poll holds the request, so it stays under proxy and load-balancer timeouts. */
 export const HUMAN_INBOX_MAX_WAIT_SECONDS = 25;
 
-function toBoolean({ value }: { value: unknown }): boolean | string | undefined {
-  if (typeof value === 'boolean') {
-    return value;
-  }
+export const INBOX_READ_FILTERS = ['unread', 'read', 'all'] as const;
+export type InboxReadFilter = (typeof INBOX_READ_FILTERS)[number];
 
-  if (value === 'true' || value === '1' || value === '') {
-    return true;
-  }
+export const INBOX_STATUS_FILTERS = ['open', 'resolved', 'all'] as const;
+export type InboxStatusFilter = (typeof INBOX_STATUS_FILTERS)[number];
 
-  if (value === 'false' || value === '0') {
-    return false;
-  }
-
-  return typeof value === 'string' ? value : undefined;
-}
+export const INBOX_SENDERS_FILTERS = ['contacts', 'all'] as const;
+export type InboxSendersFilter = (typeof INBOX_SENDERS_FILTERS)[number];
 
 export class ListInboxQueryDto {
-  @ApiPropertyOptional({ description: 'Only threads with a human message newer than the read cursor.' })
+  @ApiPropertyOptional({
+    enum: INBOX_READ_FILTERS,
+    default: 'all',
+    description: 'Unread threads, read threads, or both.',
+  })
   @IsOptional()
-  @Transform(toBoolean)
-  @IsBoolean()
-  unread?: boolean;
+  @IsIn(INBOX_READ_FILTERS)
+  filter?: InboxReadFilter;
 
-  @ApiPropertyOptional({ description: 'Include resolved threads.' })
+  @ApiPropertyOptional({ enum: INBOX_STATUS_FILTERS, default: 'open' })
   @IsOptional()
-  @Transform(toBoolean)
-  @IsBoolean()
-  all?: boolean;
+  @IsIn(INBOX_STATUS_FILTERS)
+  status?: InboxStatusFilter;
+
+  @ApiPropertyOptional({
+    enum: INBOX_SENDERS_FILTERS,
+    default: 'contacts',
+    description: 'Threads a contact has written in, or every thread including those from strangers.',
+  })
+  @IsOptional()
+  @IsIn(INBOX_SENDERS_FILTERS)
+  senders?: InboxSendersFilter;
 
   @ApiPropertyOptional({ default: 20, maximum: 100 })
   @IsOptional()
@@ -104,46 +94,27 @@ export class InboxThreadActionQueryDto {
   agentIdentifier?: string;
 }
 
-export class ReplyInboxThreadRequestDto {
-  @ApiProperty({ description: 'Markdown text posted into the thread.' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(4000)
-  text: string;
-}
-
-export class CreateInboxInteractionRequestDto {
-  @ApiProperty({ enum: HumanInteractionKindEnum, description: 'Interaction verb.' })
-  @IsEnum(HumanInteractionKindEnum)
-  kind: HumanInteractionKindEnum;
-
-  @ApiProperty({ description: 'Kind-specific card. `title` is required. Choose must set `card.options` (2–10).' })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => HumanInteractionCardDto)
-  card: HumanInteractionCardDto;
-
-  @ApiPropertyOptional({ description: 'Attribution label of the calling agent, rendered in the message.' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  from?: string;
-
-  @ApiPropertyOptional({ description: 'Seconds until the interaction expires. Default 86400 (24h).' })
-  @IsOptional()
-  @IsInt()
-  @Min(60)
-  @Max(HUMAN_INTERACTION_MAX_TTL_SECONDS)
-  ttlSeconds?: number;
-}
-
 export type InboxSender = 'human' | 'agent' | 'system';
+
+/** A contact is someone the operator added; a stranger wrote to the agent without being one. */
+export type InboxPersonKind = 'contact' | 'stranger';
+
+export type InboxThreadStatus = 'open' | 'resolved';
+
+export interface InboxPersonDto {
+  /** The contact's subscriberId. A stranger has no subscriber, so theirs is the channel's own id for them. */
+  id: string;
+  name?: string;
+  kind: InboxPersonKind;
+}
 
 export interface InboxThreadDto {
   id: string;
   channel: string;
-  from: { subscriberId: string; name?: string } | null;
-  status: string;
+  /** `contact` once at least one contact is in the thread. */
+  kind: InboxPersonKind;
+  people: InboxPersonDto[];
+  status: InboxThreadStatus;
   unreadCount: number;
   lastMessage: { text: string; at: string; from: InboxSender } | null;
   isDirectMessage: boolean;
@@ -153,6 +124,8 @@ export interface InboxThreadDto {
 export interface InboxMessageDto {
   id: string;
   from: InboxSender;
+  /** Set on messages from a human. */
+  senderKind?: InboxPersonKind;
   senderName?: string;
   text: string;
   attachments?: Array<{ type?: string; name?: string; mimeType?: string }>;
@@ -169,9 +142,4 @@ export interface GetInboxThreadResponseDto {
   thread: InboxThreadDto;
   messages: InboxMessageDto[];
   hasMore: boolean;
-}
-
-export interface ReplyInboxThreadResponseDto {
-  thread: InboxThreadDto;
-  messageId: string;
 }

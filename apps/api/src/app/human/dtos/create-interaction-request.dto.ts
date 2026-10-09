@@ -81,16 +81,26 @@ export class CreateInteractionRequestDto {
   @Type(() => HumanInteractionCardDto)
   card: HumanInteractionCardDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
-      'subscriberId of the human to reach, or an array of subscriberIds. Any listed subscriber may settle (first valid answer wins).',
+      'subscriberId of the contact to reach, or an array of subscriberIds. Any listed subscriber may settle (first valid answer wins). Without `thread` it starts a new thread with each of them; with `thread` it limits who may answer. Required unless `thread` is set.',
     oneOf: [
       { type: 'string', example: 'alice' },
       { type: 'array', items: { type: 'string' }, example: ['alice', 'bob'] },
     ],
   })
+  @IsOptional()
   @Validate(IsValidHumanTo)
-  to: string | string[];
+  to?: string | string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Identifier of the inbox thread to send into. Anyone in the thread may answer unless `to` is set. Cannot be combined with `via`.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  thread?: string;
 
   @ApiPropertyOptional({
     enum: HumanChannelViaEnum,

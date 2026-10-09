@@ -11,8 +11,14 @@ export class CreateInteractionCommand extends EnvironmentWithUserCommand {
   @IsObject()
   card: HumanInteractionCardInput;
 
+  @IsOptional()
   @Validate(IsValidHumanTo)
-  to: string | string[];
+  to?: string | string[];
+
+  /** Inbox thread to send into, instead of starting a new one with each `to`. */
+  @IsOptional()
+  @IsString()
+  thread?: string;
 
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)

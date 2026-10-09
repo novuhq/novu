@@ -255,8 +255,8 @@ export class ConversationRepository extends BaseRepositoryV2<
     environmentId: string;
     organizationId: string;
     agentId: string;
-    unreadOnly?: boolean;
-    includeResolved?: boolean;
+    read?: 'unread' | 'read';
+    status?: ConversationStatusEnum;
     limit: number;
     after?: string;
   }): Promise<{ data: ConversationEntity[]; next: string | null }> {
@@ -264,13 +264,19 @@ export class ConversationRepository extends BaseRepositoryV2<
     const query: FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds = { ...scope, _agentId: params.agentId };
     const and: FilterQuery<ConversationDBModel>[] = [];
 
-    if (!params.includeResolved) {
-      query.status = ConversationStatusEnum.ACTIVE;
+    if (params.status) {
+      query.status = params.status;
     }
 
-    if (params.unreadOnly) {
+    if (params.read === 'unread') {
       query.lastHumanMessageAt = { $exists: true };
       and.push({ $expr: { $lt: ['$lastReadAt', '$lastHumanMessageAt'] } });
+    }
+
+    if (params.read === 'read') {
+      and.push({
+        $or: [{ lastHumanMessageAt: { $exists: false } }, { $expr: { $gte: ['$lastReadAt', '$lastHumanMessageAt'] } }],
+      });
     }
 
     if (params.after) {

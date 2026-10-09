@@ -110,6 +110,7 @@ export class HumanInteractionsController {
         kind: body.kind,
         card: body.card,
         to: body.to,
+        thread: body.thread,
         via: body.via,
         agentIdentifier: body.agentIdentifier,
         from: body.from,

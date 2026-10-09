@@ -18,6 +18,7 @@ import {
   humanInteractionRecipientIds,
 } from '@novu/shared';
 import { isKnownHumanContentOption } from '../../human/services/human-interaction-lifecycle';
+import { isOpenThreadInteraction } from '../../human/services/inbox-thread-request-id';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
@@ -395,12 +396,24 @@ export class HumanInteractionInboundService {
       );
     }
 
+    // Asks addressed to this person, plus asks sent into this thread for anyone in it to answer.
+    // The second kind is the only one a stranger can have, since a stranger is not a subscriber.
     const subscriberId = turn.subscriber?.subscriberId;
-    if (!subscriberId) {
+    const [addressed, inThread] = await Promise.all([
+      subscriberId ? this.humanInteractionRepository.findPendingAsks(environmentId, subscriberId) : [],
+      turn.conversation?._id
+        ? this.humanInteractionRepository.findPendingAsksByConversation(environmentId, turn.conversation._id)
+        : [],
+    ]);
+    const openInThread = inThread.filter(
+      (ask) => isOpenThreadInteraction(ask) && !addressed.some((mine) => mine._id === ask._id)
+    );
+
+    if (!subscriberId && openInThread.length === 0) {
       return null;
     }
 
-    return this.expireOverdue(await this.humanInteractionRepository.findPendingAsks(environmentId, subscriberId));
+    return this.expireOverdue([...addressed, ...openInThread]);
   }
 
   private async handleDisambiguationPick(
@@ -508,6 +521,11 @@ export class HumanInteractionInboundService {
   }
 
   private async isAddressedHuman(turn: ConversationTurn, interaction: HumanInteractionEntity): Promise<boolean> {
+    // Sent into this thread for anyone in it to answer.
+    if (isOpenThreadInteraction(interaction) && interaction._conversationId === turn.conversation?._id) {
+      return true;
+    }
+
     const responder = turn.subscriber?.subscriberId;
     if (!responder) {
       return false;

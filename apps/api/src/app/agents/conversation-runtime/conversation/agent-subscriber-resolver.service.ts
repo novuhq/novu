@@ -780,7 +780,7 @@ function escapeRegExp(value: string): string {
  * rather than by the customer's API/dashboard. Used to prefer real subscribers
  * over phantoms and to target phantoms for adoption.
  */
-function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>): boolean {
+export function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>): boolean {
   return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
 }
 

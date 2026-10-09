@@ -46,6 +46,32 @@ describe('CreateInteraction', () => {
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const activityRecorder = { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() };
+    const conversation = {
+      _id: 'conv1',
+      _agentId: 'agent-relay',
+      identifier: 'conv_abc',
+      status: 'active',
+      participants: [
+        { type: 'subscriber', id: 'sub-1' },
+        { type: 'subscriber', id: 'sub-2' },
+        { type: 'agent', id: 'agent-relay' },
+      ],
+      channels: [{ platform: 'telegram', _integrationId: 'int1', platformThreadId: 'telegram:777' }],
+    };
+    const inbox = {
+      findStrangers: sinon.stub().resolves([]),
+      findIntegrationId: sinon.stub().resolves('int1'),
+      markSentInto: sinon.stub().resolves(0),
+      resolveRelayAgent: sinon.stub().resolves({ _id: 'agent-relay', identifier: 'human-relay', name: 'Human' }),
+      findThread: sinon.stub().resolves(conversation),
+      peopleIds: sinon.stub().returns(['sub-1', 'sub-2']),
+      primaryChannel: sinon.stub().returns(conversation.channels[0]),
+      resolveIntegrationIdentifier: sinon.stub().resolves('telegram-main'),
+    };
+    const conversationService = { createOrGetConversation: sinon.stub().resolves(conversation) };
+    const createConversationInteraction = {
+      execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -58,7 +84,10 @@ describe('CreateInteraction', () => {
         deliveryService as any,
         connectClaimTokenService as any,
         logger as any
-      )
+      ),
+      inbox as any,
+      conversationService as any,
+      createConversationInteraction as any
     );
     const command = {
       userId: 'user1',
@@ -78,8 +107,107 @@ describe('CreateInteraction', () => {
       deliveryService,
       humanInteractionRepository,
       connectClaimTokenService,
+      inbox,
+      conversationService,
+      createConversationInteraction,
     };
   }
+
+  describe('threads', () => {
+    it('files a send to a contact under their thread, marks it read and reports what was unread', async () => {
+      const { usecase, command, agentRepository, inbox, conversationService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.markSentInto.resolves(2);
+
+      const result = await usecase.execute(command as any);
+
+      expect(conversationService.createOrGetConversation.firstCall.args[0]).to.include({
+        platformThreadId: 'thread-1',
+        participantId: 'sub-1',
+        integrationId: 'int1',
+        isDirectMessage: true,
+      });
+      expect(inbox.markSentInto.calledOnce).to.equal(true);
+      expect(humanInteractionRepository.stampDelivery.firstCall.args[2]._conversationId).to.equal('conv1');
+      expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 2 }]);
+    });
+
+    it('still delivers when the message cannot be filed under a thread', async () => {
+      const { usecase, command, agentRepository, conversationService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      conversationService.createOrGetConversation.rejects(new Error('mongo down'));
+
+      const result = await usecase.execute(command as any);
+
+      expect(result.id).to.equal('hi_1');
+      expect(result.threads).to.equal(undefined);
+    });
+
+    it('refuses to start a thread with a stranger', async () => {
+      const { usecase, command, agentRepository, inbox, deliveryService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.findStrangers.resolves(['sub-1']);
+
+      try {
+        await usecase.execute(command as any);
+        expect.fail('expected BadRequestException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as Error).message).to.contain('--thread');
+      }
+      expect(deliveryService.deliver.called).to.equal(false);
+    });
+
+    it('requires `to` or `thread`', async () => {
+      const { usecase, command, agentRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      try {
+        await usecase.execute({ ...command, to: undefined } as any);
+        expect.fail('expected BadRequestException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+      }
+    });
+
+    it('sends into a thread where anyone in it may answer', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction, deliveryService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.markSentInto.resolves(1);
+
+      const result = await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+
+      expect(deliveryService.deliver.called).to.equal(false);
+      expect(inbox.findThread.firstCall.args[2]).to.equal('conv_abc');
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-2']);
+      expect(createConversationInteraction.execute.firstCall.args[0].requestId).to.match(/^inbox_any_/);
+      expect(inbox.findStrangers.called).to.equal(false);
+      expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 1 }]);
+    });
+
+    it('limits who may answer in a thread to `to`', async () => {
+      const { usecase, command, agentRepository, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      await usecase.execute({ ...command, to: 'sub-2', thread: 'conv_abc' } as any);
+
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-2']);
+      expect(createConversationInteraction.execute.firstCall.args[0].requestId).to.not.match(/^inbox_any_/);
+    });
+
+    it('rejects `via` together with `thread`', async () => {
+      const { usecase, command, agentRepository, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      try {
+        await usecase.execute({ ...command, thread: 'conv_abc', via: 'telegram' } as any);
+        expect.fail('expected BadRequestException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+      }
+      expect(createConversationInteraction.execute.called).to.equal(false);
+    });
+  });
 
   it('resolves the named agent, creates the interaction, and DMs that agent', async () => {
     const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();

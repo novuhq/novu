@@ -1,15 +1,27 @@
-import { IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { HUMAN_INBOX_MAX_WAIT_SECONDS } from '../../dtos/human-inbox.dto';
+import {
+  HUMAN_INBOX_MAX_WAIT_SECONDS,
+  INBOX_READ_FILTERS,
+  INBOX_SENDERS_FILTERS,
+  INBOX_STATUS_FILTERS,
+  type InboxReadFilter,
+  type InboxSendersFilter,
+  type InboxStatusFilter,
+} from '../../dtos/human-inbox.dto';
 
 export class ListInboxThreadsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
-  @IsBoolean()
-  unreadOnly?: boolean;
+  @IsIn(INBOX_READ_FILTERS)
+  filter?: InboxReadFilter;
 
   @IsOptional()
-  @IsBoolean()
-  includeResolved?: boolean;
+  @IsIn(INBOX_STATUS_FILTERS)
+  status?: InboxStatusFilter;
+
+  @IsOptional()
+  @IsIn(INBOX_SENDERS_FILTERS)
+  senders?: InboxSendersFilter;
 
   @IsOptional()
   @IsInt()
