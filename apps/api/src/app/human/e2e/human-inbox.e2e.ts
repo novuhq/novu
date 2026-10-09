@@ -124,7 +124,7 @@ describe('Human inbox (list → show → reply → resolve) #novu-v2', () => {
     return res.body as { data: Array<Record<string, any>>; next: string | null };
   }
 
-  async function onlyThreadId(): Promise<string> {
+  async function soleThreadId(): Promise<string> {
     const { data } = await listInbox();
     expect(data).to.have.length(1);
 
@@ -146,7 +146,7 @@ describe('Human inbox (list → show → reply → resolve) #novu-v2', () => {
   it('shows the thread history and marks it read', async () => {
     await sendMessageToRelay('first');
     await sendMessageToRelay('second');
-    const threadId = await onlyThreadId();
+    const threadId = await soleThreadId();
 
     const showRes = await session.testAgent.get(`/v1/human/inbox/${threadId}`);
     expect(showRes.status).to.equal(200, JSON.stringify(showRes.body));
@@ -165,7 +165,7 @@ describe('Human inbox (list → show → reply → resolve) #novu-v2', () => {
 
   it('replies on the channel the thread came from and records the agent message', async () => {
     await sendMessageToRelay('ping');
-    const threadId = await onlyThreadId();
+    const threadId = await soleThreadId();
 
     const replyRes = await session.testAgent
       .post(`/v1/human/inbox/${threadId}/reply`)
@@ -205,7 +205,7 @@ describe('Human inbox (list → show → reply → resolve) #novu-v2', () => {
 
   it('asks in the thread, and the answer settles it without leaving the thread unread', async () => {
     await sendMessageToRelay('need a decision');
-    const threadId = await onlyThreadId();
+    const threadId = await soleThreadId();
 
     const askRes = await session.testAgent
       .post(`/v1/human/inbox/${threadId}/interactions`)
@@ -237,7 +237,7 @@ describe('Human inbox (list → show → reply → resolve) #novu-v2', () => {
 
   it('resolves a thread, hides it by default, and reopens it on a new message', async () => {
     await sendMessageToRelay('done soon');
-    const threadId = await onlyThreadId();
+    const threadId = await soleThreadId();
 
     const resolveRes = await session.testAgent.post(`/v1/human/inbox/${threadId}/resolve`);
     expect(resolveRes.status).to.equal(200, JSON.stringify(resolveRes.body));
@@ -255,7 +255,7 @@ describe('Human inbox (list → show → reply → resolve) #novu-v2', () => {
 
   it('marks a thread read without replying', async () => {
     await sendMessageToRelay('fyi');
-    const threadId = await onlyThreadId();
+    const threadId = await soleThreadId();
 
     const readRes = await session.testAgent.post(`/v1/human/inbox/${threadId}/read`);
     expect(readRes.status).to.equal(200, JSON.stringify(readRes.body));
