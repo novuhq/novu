@@ -160,18 +160,22 @@ function build(projects) {
 
 // Same layout as the production images: `pnpm deploy --prod` output, dist with its .env files,
 // metadata.js paths rewritten for the flat layout, and BullMQ Pro dropped in when it was installed.
-function deployApp(name) {
+function deployApp(name, { dependenciesChanged = true } = {}) {
   const target = `${DEPLOY}/${name}`;
   const dist = `${target}/dist`;
   const src = `${REPO}/apps/${name}/src`;
-  fs.rmSync(target, { recursive: true, force: true });
-  run(
-    'pnpm',
-    ['--filter', DEPLOYED_APPS[name], 'deploy', '--legacy', '--prod', '--store-dir', `${DATA}/pnpm-store`, target],
-    {
-      env: { ...env, NODE_OPTIONS: '--max-old-space-size=4096', CI: 'true', HUSKY: '0' },
-    }
-  );
+  if (!dependenciesChanged && fs.existsSync(`${target}/node_modules/.pnpm`)) refreshWorkspacePackages(target);
+  else {
+    fs.rmSync(target, { recursive: true, force: true });
+    run(
+      'pnpm',
+      ['--filter', DEPLOYED_APPS[name], 'deploy', '--legacy', '--prod', '--store-dir', `${DATA}/pnpm-store`, target],
+      {
+        env: { ...env, NODE_OPTIONS: '--max-old-space-size=4096', CI: 'true', HUSKY: '0' },
+      }
+    );
+  }
+  fs.rmSync(dist, { recursive: true, force: true });
   fs.cpSync(`${REPO}/apps/${name}/dist`, dist, { recursive: true });
   fs.copyFileSync(`${src}/.example.env`, `${dist}/.env`);
   fs.copyFileSync(`${src}/.env.development`, `${dist}/.env.development`);
@@ -199,6 +203,24 @@ function deployApp(name) {
       recursive: true,
       filter: (source) => !source.startsWith(`${BULLMQ_PRO}/node_modules/@taskforcesh`),
     });
+  }
+}
+
+// With the same dependencies, a new `pnpm deploy` (~60 s: it re-resolves the whole workspace) differs from the
+// previous one only in the workspace packages it copied in, so re-copy just those (`file+<path>` entries).
+function refreshWorkspacePackages(target) {
+  const workspace = new Map(
+    JSON.parse(output('pnpm', ['-s', 'ls', '-r', '--depth', '-1', '--json'])).map((pkg) => [pkg.name, pkg.path])
+  );
+  const store = `${target}/node_modules/.pnpm`;
+  for (const entry of fs.readdirSync(store).filter((name) => name.includes('@file+'))) {
+    const name = entry.slice(0, entry.indexOf('@file+', 1)).replace('+', '/');
+    const copy = `${store}/${entry}/node_modules/${name}`;
+    for (const file of fs.readdirSync(copy).filter((file) => file !== 'node_modules')) {
+      const source = `${workspace.get(name)}/${file}`;
+      fs.rmSync(`${copy}/${file}`, { recursive: true, force: true });
+      if (fs.existsSync(source)) fs.cpSync(source, `${copy}/${file}`, { recursive: true });
+    }
   }
 }
 
@@ -387,7 +409,7 @@ async function bake(ref = 'next') {
   if (env.BULL_MQ_PRO_NPM_TOKEN) await step('bullmq pro', installBullMqPro);
   else log('WARN: no BULL_MQ_PRO_NPM_TOKEN; the box runs open-source BullMQ without NOVU_MANAGED_SERVICE');
   await step('build', () => build(Object.keys(PROJECT_PROCESSES)));
-  await step('deploy api worker', () => Object.keys(DEPLOYED_APPS).forEach(deployApp));
+  await step('deploy api worker', () => Object.keys(DEPLOYED_APPS).forEach((name) => deployApp(name)));
   prepareRuntime();
 
   const supervisor = startSupervisor();
@@ -870,7 +892,10 @@ async function applyPr(ref) {
     run('git', ['checkout', '--force', '--detach', head]);
     if (files.includes('.source')) gitWithToken(['submodule', 'update', '--init', '--depth', '1', '.source']);
   });
-  if (files.some((file) => file === 'pnpm-lock.yaml' || file.endsWith('package.json') || file === '.source')) {
+  const dependenciesChanged = files.some(
+    (file) => file === 'pnpm-lock.yaml' || file.endsWith('package.json') || file === '.source'
+  );
+  if (dependenciesChanged) {
     await step('pnpm install', pnpmInstall);
     APPS.forEach((name) => restart.add(name));
   }
@@ -890,7 +915,10 @@ async function applyPr(ref) {
   if (stop.length) await step(`stop ${stop.join(' ')}`, () => pc(['process', 'stop', ...stop]));
   if (affected.length) await step(`build ${affected.join(' ')}`, () => build(affected));
   const redeploy = Object.keys(DEPLOYED_APPS).filter((name) => restart.has(name));
-  if (redeploy.length) await step(`deploy ${redeploy.join(' ')}`, () => redeploy.forEach(deployApp));
+  if (redeploy.length)
+    await step(`deploy ${redeploy.join(' ')}`, () =>
+      redeploy.forEach((name) => deployApp(name, { dependenciesChanged }))
+    );
   await step('migrate', migrate);
 
   fs.writeFileSync(
