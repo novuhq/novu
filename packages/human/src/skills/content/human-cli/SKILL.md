@@ -217,6 +217,51 @@ human choose "Which environment?" \
   --subtitle "This cannot be undone"
 ```
 
+## The inbox: messages humans send you first
+
+Your contacts can also message you without being asked — on Telegram, Slack, or
+email, whatever they connected. Each conversation is one inbox thread, tagged
+with the `channel` it came from. Nothing is lost while you're not looking: a
+message that doesn't answer a pending ask/approve/choose stays unread in the
+inbox, and they get no automatic reply.
+
+The loop for an unattended agent:
+
+```bash
+human inbox unread --wait 25 --json   # block up to 25s for unread threads
+human inbox show conv_123 --json      # full thread, oldest first; marks it read
+human inbox reply conv_123 "On it — deploying now."
+human inbox resolve conv_123          # done; a new message from them reopens it
+```
+
+- `human inbox unread --wait <duration> --json` returns `{ data, next }`. Each
+  thread has `id`, `channel`, `from` (`subscriberId`, `name`), `unreadCount`,
+  `lastMessage` (`text`, `at`, `from`: `human` | `agent`) and `status`. With
+  `--wait` and nothing arriving, it prints an empty page and exits `11`, so
+  you can loop on it. `--wait` alone waits forever.
+- `human inbox` (no subcommand) lists every open thread; add `--all` to include
+  resolved ones. Pages are 20 threads by default. When `next` is non-null,
+  pass `--after <next>`.
+- `human inbox show <id>` returns `{ thread, messages, hasMore }`. Each
+  message has `from` (`human` | `agent` | `system`), `text`, `at`, and
+  `interaction` (`id`, `kind`, `status`) on ask/approve cards. When `hasMore`
+  is true, page back with `--before <messages[0].id>`. Showing a thread
+  marks it read. Use `human inbox read <id>` to do that without fetching it.
+- `human inbox reply <id> "<text>"` posts plain markdown on the thread's own
+  channel and marks it read.
+- `human inbox ask|approve|choose|tell <id> "<prompt>"` posts the same cards
+  as the top-level commands, but inside that thread instead of a new DM.
+  They take the same card flags, `--from`, `--ttl`, `--timeout`, `--async`
+  and `--json`, but no `--to`/`--via`: the thread decides who and where. Exit
+  codes match the table above.
+- When the human taps a button or types an answer that settles a card, it
+  doesn't show up as unread. The blocking command (or `human wait <id>`)
+  already gives you that answer. It still appears in `show` history.
+
+Only reply when you have something to say: there is no auto-acknowledgement,
+so a thread you `read` and leave sits silent on their side. Resolve threads
+you've finished with so `human inbox` stays a to-do list.
+
 ## Checking in without asking something new
 
 - `human list` — see pending/recent interactions (useful before creating a

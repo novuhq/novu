@@ -1,13 +1,10 @@
-import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentEntity, AgentRepository, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionStatusEnum, normalizeHumanTo } from '@novu/shared';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
-import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-payload.dto';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
-import { resolveKeylessHumanInteractionCap } from '../../../keyless/keyless-abuse.constants';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
-import { buildHumanClaimUrl, buildKeylessHumanSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
@@ -18,16 +15,9 @@ import {
   type HumanDeliveryTarget,
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
+import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { CreateInteractionCommand } from './create-interaction.command';
-
-/** Machine-readable code on the 429 body so `@novu/human` can branch without parsing prose. */
-export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
-
-/** `human login` is approved on the Human dashboard, so it only works where one is configured (not self-hosted). */
-function isHumanBrowserLoginAvailable(): boolean {
-  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
-}
 
 /**
  * Where the Human dashboard runs, setups are claimed there and the CLI continues with `human login`.
@@ -49,7 +39,8 @@ export class CreateInteraction {
     private readonly deliveryService: HumanDeliveryService,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly logger: PinoLogger,
-    private readonly activityRecorder: HumanInteractionActivityRecorder
+    private readonly activityRecorder: HumanInteractionActivityRecorder,
+    private readonly keylessCap: HumanKeylessCapService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -63,11 +54,12 @@ export class CreateInteraction {
 
     assertHumanCardActions(command.kind, command.card);
 
-    const isKeyless = isKeylessOrganization(command.organizationId);
-
     // Once claimed, the relay agent and channels live in the user's own
     // environment; a stale keyless credential must not read as "run setup".
-    if (isKeyless && (await this.connectClaimTokenService.isEnvironmentClaimed(command.environmentId))) {
+    if (
+      isKeylessOrganization(command.organizationId) &&
+      (await this.connectClaimTokenService.isEnvironmentClaimed(command.environmentId))
+    ) {
       throw new ForbiddenException(keylessHumanClaimedMessage());
     }
 
@@ -77,9 +69,13 @@ export class CreateInteraction {
       throw new BadRequestException('`to` must include at least one subscriberId');
     }
 
-    if (isKeyless) {
-      await this.assertKeylessHumanCap(command, agent, subscriberIds);
-    }
+    await this.keylessCap.assertWithinCap({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId: agent._id,
+      subscriberIds,
+      via: command.via,
+    });
 
     await assertHumanPendingCap(this.humanInteractionRepository, {
       environmentId: command.environmentId,
@@ -137,105 +133,6 @@ export class CreateInteraction {
         }),
       }))
     );
-  }
-
-  /**
-   * Keyless demo cap (`KEYLESS_HUMAN_INTERACTION_CAP`, counted across every
-   * interaction the environment ever created). Past it, the human gets the
-   * sign-up card on the channel the prompt would have used — once per
-   * environment, so a retrying agent does not spam them — and the caller gets
-   * a 429 carrying the same claim link.
-   */
-  private async assertKeylessHumanCap(
-    command: CreateInteractionCommand,
-    agent: AgentEntity,
-    subscriberIds: string[]
-  ): Promise<void> {
-    const cap = resolveKeylessHumanInteractionCap();
-    const used = await this.humanInteractionRepository.count({ _environmentId: command.environmentId });
-
-    if (used < cap) {
-      return;
-    }
-
-    const claimUrl = await this.resolveClaimUrl(command);
-    await this.postKeylessSignupCta(command, agent, subscriberIds, claimUrl);
-
-    const message = claimUrl
-      ? `You've used the ${cap} free messages of this keyless demo. Sign up for a free Novu account to keep your channels and continue: ${claimUrl}`
-      : `You've used the ${cap} free messages of this keyless demo. Sign up for a free Novu account to keep your channels and continue.`;
-
-    throw new HttpException(
-      {
-        statusCode: 429,
-        message,
-        code: KEYLESS_HUMAN_CAP_REACHED_CODE,
-        cap,
-        ...(claimUrl ? { claimUrl } : {}),
-        // Tells `@novu/human` whether `human login` works here, or the operator needs a secret key instead.
-        browserLogin: isHumanBrowserLoginAvailable(),
-      },
-      429
-    );
-  }
-
-  private async resolveClaimUrl(command: CreateInteractionCommand): Promise<string | undefined> {
-    try {
-      const { token } = await this.connectClaimTokenService.issueOrGetForEnvironment({
-        env: command.environmentId,
-        org: command.organizationId,
-      });
-
-      return buildHumanClaimUrl(token);
-    } catch (err) {
-      this.logger.warn({ err, environmentId: command.environmentId }, 'Failed to issue keyless claim token');
-
-      return undefined;
-    }
-  }
-
-  private async postKeylessSignupCta(
-    command: CreateInteractionCommand,
-    agent: AgentEntity,
-    subscriberIds: string[],
-    claimUrl: string | undefined
-  ): Promise<void> {
-    if (!claimUrl) {
-      return;
-    }
-
-    const ctaKey = `human:${command.environmentId}`;
-
-    try {
-      if (await this.connectClaimTokenService.isSignupCtaPosted(ctaKey)) {
-        return;
-      }
-
-      const content = { card: buildKeylessHumanSignupCard(claimUrl) } as ReplyContentDto;
-      let deliveredCount = 0;
-
-      for (const subscriberId of subscriberIds) {
-        try {
-          const target = await this.deliveryService.resolveChannel({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            agentId: agent._id,
-            subscriberId,
-            via: command.via,
-          });
-          await this.deliveryService.deliverContent(agent._id, target, content);
-          deliveredCount += 1;
-        } catch (err) {
-          this.logger.warn({ err, subscriberId }, 'Failed to deliver keyless signup CTA to one human');
-        }
-      }
-
-      if (deliveredCount > 0) {
-        await this.connectClaimTokenService.tryMarkSignupCtaPosted(ctaKey);
-      }
-    } catch (err) {
-      this.logger.warn({ err, environmentId: command.environmentId }, 'Failed to post keyless signup CTA');
-    }
   }
 
   private async resolveAgent(command: CreateInteractionCommand): Promise<AgentEntity> {

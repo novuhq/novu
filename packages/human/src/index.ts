@@ -4,6 +4,14 @@ import { version } from '../package.json';
 import { agentCommand } from './commands/agent';
 import { channelsCommand } from './commands/channels';
 import { contactsCommand } from './commands/contacts';
+import {
+  inboxListCommand,
+  inboxReadCommand,
+  inboxReplyCommand,
+  inboxResolveCommand,
+  inboxShowCommand,
+  runInboxInteraction,
+} from './commands/inbox';
 import { runInteraction } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { cancelCommand, listCommand } from './commands/list';
@@ -13,6 +21,9 @@ import { installSkillCommand } from './commands/skill';
 import { waitCommand } from './commands/wait';
 
 const program = new Command();
+
+// Lets `human inbox show <id> --json` hand `--json` to `show` instead of the `inbox` list command.
+program.enablePositionalOptions();
 
 program
   .name('human')
@@ -137,6 +148,125 @@ program
   .option('--api-url <url>', 'Novu API URL override')
   .description('Cancel a pending interaction (disables its buttons)')
   .action(cancelCommand);
+
+function withInboxInteractionOptions(command: Command): Command {
+  return command
+    .option('--from <name>', 'attribution label shown to the human (e.g. "deploy-bot")')
+    .option('--ttl <duration>', 'time until the request expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
+    .option('--timeout <duration>', 'max time to block waiting (default: block until answered/expired)')
+    .option('--async', 'return the interaction id immediately instead of blocking')
+    .option('--json', 'print the full interaction object as JSON')
+    .option('--api-url <url>', 'Novu API URL override');
+}
+
+const inbox = program
+  .command('inbox')
+  .enablePositionalOptions()
+  .option('--unread', 'only threads with messages you have not read')
+  .option('--all', 'include resolved threads')
+  .option('--wait [duration]', 'block until a thread matches (alone: forever; or e.g. 90s, 10m). Exit 11 on timeout')
+  .option('--limit <n>', 'max threads per page (default 20, max 100)')
+  .option('--after <id>', 'continue after this thread id (from a previous page)')
+  .option('--json', 'print JSON ({ data, next })')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description(
+    'Messages your contacts send you on Telegram, Slack or email, one thread per conversation. Pull, reply, resolve.'
+  )
+  .action(inboxListCommand);
+
+inbox
+  .command('unread')
+  .option(
+    '--wait [duration]',
+    'block until an unread thread arrives (alone: forever; or e.g. 90s, 10m). Exit 11 on timeout'
+  )
+  .option('--all', 'include resolved threads')
+  .option('--limit <n>', 'max threads per page (default 20, max 100)')
+  .option('--after <id>', 'continue after this thread id (from a previous page)')
+  .option('--json', 'print JSON ({ data, next })')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('List threads with unread messages (same as `human inbox --unread`)')
+  .action((options) => inboxListCommand({ ...options, unread: true }));
+
+inbox
+  .command('show')
+  .argument('<id>', 'thread id (conv_...)')
+  .option('--limit <n>', 'max messages (default 20, max 100)')
+  .option('--before <messageId>', 'older messages, before this message id')
+  .option('--json', 'print JSON ({ thread, messages, hasMore })')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('Show a thread, oldest message first, and mark it read')
+  .action(inboxShowCommand);
+
+inbox
+  .command('read')
+  .argument('<id>', 'thread id (conv_...)')
+  .option('--json', 'print JSON')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('Mark a thread read without replying')
+  .action(inboxReadCommand);
+
+inbox
+  .command('resolve')
+  .argument('<id>', 'thread id (conv_...)')
+  .option('--json', 'print JSON')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('Close a thread; a new message from them reopens it')
+  .action(inboxResolveCommand);
+
+inbox
+  .command('reply')
+  .argument('<id>', 'thread id (conv_...)')
+  .argument('<text>', 'the reply (markdown)')
+  .option('--json', 'print JSON')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('Reply in the thread, on the channel it came from')
+  .action(inboxReplyCommand);
+
+withCardOptions(
+  withInboxInteractionOptions(
+    inbox
+      .command('ask')
+      .argument('<id>', 'thread id (conv_...)')
+      .argument('<question>', 'the question to ask')
+      .description('Ask a question in the thread and block until they reply')
+  ),
+  'ask'
+).action((id, question, options) => runInboxInteraction('ask', id, question, options));
+
+withCardOptions(
+  withInboxInteractionOptions(
+    inbox
+      .command('approve')
+      .argument('<id>', 'thread id (conv_...)')
+      .argument('<action>', 'description of the action needing approval')
+      .description('Ask for approval in the thread and block until decided')
+  ),
+  'approve'
+).action((id, action, options) => runInboxInteraction('approve', id, action, options));
+
+withCardOptions(
+  withInboxInteractionOptions(
+    inbox
+      .command('choose')
+      .argument('<id>', 'thread id (conv_...)')
+      .argument('<question>', 'the question to ask')
+      .requiredOption('--option <label...>', 'a choice (repeat for each option, 2-10). Also accepts id:label')
+      .description('Ask them to pick one of several options in the thread')
+  ),
+  'choose'
+).action((id, question, options) => runInboxInteraction('choose', id, question, options));
+
+withCardOptions(
+  withInboxInteractionOptions(
+    inbox
+      .command('tell')
+      .argument('<id>', 'thread id (conv_...)')
+      .argument('<message>', 'the message to deliver')
+      .description('Post a one-way card in the thread (no waiting)')
+  ),
+  'tell'
+).action((id, message, options) => runInboxInteraction('tell', id, message, options));
 
 program
   .command('login')
