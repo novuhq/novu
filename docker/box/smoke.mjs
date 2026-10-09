@@ -11,7 +11,9 @@
 // delay step through the queue backend (SQS), uploads a file through a
 // presigned S3 URL, then runs the bridge app's code-first workflows
 // (@novu/framework): sync, preview, every channel, skip, delay with a custom
-// step, digest, throttle, Local mode discovery and the bridge URL guard.
+// step, digest, throttle, Local mode discovery and the bridge URL guard, and
+// chats with its agents over web chat (cards, actions, metadata, tool
+// approval, workflow trigger, resolve; vanilla, AI SDK and LangChain).
 // Writes smoke.json with every check and its timing into the artifact dir.
 
 import fs from 'node:fs';
@@ -414,6 +416,103 @@ try {
 
     return body.data.error;
   });
+
+  // Self-hosted agents from the bridge app (bridge/agents.mjs), chatting over web chat as the subscriber above.
+  const subscriberAuth = { Authorization: `Bearer ${subscriberToken}` };
+  const agentEvents = async (conversation) =>
+    (await call(`/v1/web-chat/conversations/${conversation}/events?limit=100`, { headers: subscriberAuth })).body.data.events.map(
+      (envelope) => envelope.event
+    );
+  const waitForEvent = (conversation, what, predicate) =>
+    until(what, async () => {
+      const event = (await agentEvents(conversation)).findLast(predicate);
+      if (!event) throw new Error(`no ${what} yet`);
+
+      return event;
+    });
+  // Sends a message or an action, then waits for the agent's reply, so turns never overlap.
+  const chat = async (agentId, conversation, body, reply) => {
+    const { body: sent } = await call('/v1/web-chat/conversations', {
+      method: 'POST',
+      headers: subscriberAuth,
+      body: JSON.stringify({ agentId, ...(conversation ? { conversationIdentifier: conversation } : {}), ...body }),
+    });
+    const event = await waitForEvent(sent.data.identifier, `reply "${reply}"`, (item) =>
+      item.type === 'message' && item.role === 'assistant' && (typeof reply === 'string' ? item.content?.markdown === reply : reply(item))
+    );
+
+    return { conversation: sent.data.identifier, event };
+  };
+
+  await check('agents are synced with the bridge URL (framework)', async () => {
+    const urls = {};
+    for (const agentId of ['box-vanilla', 'box-ai-sdk', 'box-langchain']) {
+      const { body } = await call(`/v1/agents/${agentId}`, { headers: keyAuth });
+      if (body.data.bridgeUrl !== 'http://bridge.box.internal:4000/api/novu') throw new Error(`${agentId} bridgeUrl ${body.data.bridgeUrl}`);
+      urls[agentId] = body.data.bridgeUrl;
+    }
+
+    return urls;
+  });
+
+  let vanilla;
+  await check('vanilla agent replies with a card (table, chart, buttons)', async () => {
+    const { conversation, event } = await chat('box-vanilla', null, { text: 'card' }, (item) => item.content?.card);
+    vanilla = conversation;
+    const types = event.content.card.children.map((child) => child.type);
+    for (const type of ['table', 'chart', 'link', 'actions']) if (!types.includes(type)) throw new Error(`card has ${types.join(', ')}`);
+    await chat('box-vanilla', vanilla, { actionId: 'pick', sourceMessageId: event.messageId, value: 'blue' }, 'Clicked pick = blue');
+
+    return { conversation, children: types, clicked: 'pick = blue' };
+  });
+
+  await check('vanilla agent keeps conversation metadata', async () => {
+    await chat('box-vanilla', vanilla, { text: `remember ${run}` }, `Noted: ${run}`);
+    await chat('box-vanilla', vanilla, { text: 'recall' }, `You asked me to remember: ${run}`);
+
+    return run;
+  });
+
+  // Approve over web chat, the way the Inbox's approval card does: echo the server-minted action id.
+  const approveTool = async (agentId, city) => {
+    const { conversation } = await chat(agentId, null, { text: 'hello' }, (item) => item.content?.markdown?.includes('echo: hello'));
+    await call('/v1/web-chat/conversations', {
+      method: 'POST',
+      headers: subscriberAuth,
+      body: JSON.stringify({ agentId, conversationIdentifier: conversation, text: `weather ${city}` }),
+    });
+    const request = await waitForEvent(conversation, 'tool approval request', (item) => item.type === 'tool-approval-request');
+    await chat(agentId, conversation, { actionId: request.approveActionId }, `Sunny, 21°C in ${city}`);
+
+    return { conversation, tool: request.toolName, input: request.input };
+  };
+
+  await check('vanilla agent runs a tool after approval', () => approveTool('box-vanilla', 'Paris'));
+
+  await check('vanilla agent triggers a workflow for the subscriber', async () => {
+    await chat('box-vanilla', vanilla, { text: `notify ${run}-agent` }, 'Triggered box-bridge-all-channels');
+
+    return until('agent-triggered in-app', async () => {
+      const message = (await inbox()).find((item) => item.body === `Bridge in-app for ${run}-agent`);
+      if (!message) throw new Error('no in-app yet');
+
+      return message.body;
+    });
+  });
+
+  await check('vanilla agent resolves the conversation', async () => {
+    await chat('box-vanilla', vanilla, { text: 'done' }, 'Resolving');
+
+    return until('resolved conversation', async () => {
+      const { body } = await call(`/v1/web-chat/conversations/${vanilla}`, { headers: subscriberAuth });
+      if (body.data.status !== 'resolved') throw new Error(`status ${body.data.status}`);
+
+      return body.data.status;
+    });
+  });
+
+  await check('AI SDK agent runs a tool after approval (scripted model)', () => approveTool('box-ai-sdk', 'Lima'));
+  await check('LangChain agent runs a tool after approval (scripted model)', () => approveTool('box-langchain', 'Oslo'));
 
   // Last: RedisThrottleService loads its Lua script on one Redis Cluster node only, so this fails whenever the
   // throttle key lands on a node without it (FIDELITY.md, "Bugs found").

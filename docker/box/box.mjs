@@ -10,7 +10,7 @@
 //                       (run by process-compose before the apps)
 
 import { spawn, spawnSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
@@ -33,7 +33,7 @@ const SINK_URL = 'http://sink.box.internal:8026';
 const BRIDGE_URL = 'http://bridge.box.internal:4000/api/novu';
 const BRIDGE_SECRET = `${DATA}/bridge/secret-key`;
 // The bridge app's imports, resolved from packages/framework so they follow the checkout.
-const BRIDGE_MODULES = ['express', 'zod'];
+const BRIDGE_MODULES = ['express', 'zod', 'ai', 'langchain', '@langchain/core'];
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
 const APPS = ['api', 'worker', 'socket', 'dashboard', 'bridge'];
 const DATABASES = ['mongo', ...REDIS_PORTS.map((port) => `redis-${port}`), 'clickhouse', 's3', 'mail'];
@@ -468,24 +468,44 @@ async function seedChannels(token) {
 }
 
 // The bridge app serves the Development environment, so it signs with that environment's secret key. The key
-// belongs to this box's own Mongo data, like every other seeded record.
+// belongs to this box's own Mongo data, like every other seeded record. Each of its agents is created and
+// published to web chat, as a customer does in the dashboard before running `npx novu sync`.
 async function seedBridge(token) {
   const { body: environments } = await api('/v1/environments', { headers: { Authorization: `Bearer ${token}` } });
   const development = environments.data.find((environment) => environment.name === 'Development');
   fs.mkdirSync(dirname(BRIDGE_SECRET), { recursive: true });
   fs.writeFileSync(BRIDGE_SECRET, development.apiKeys[0].key, { mode: 0o600 });
+  const headers = { Authorization: `ApiKey ${development.apiKeys[0].key}` };
+  for (const { agentId } of (await discoverBridge()).agents ?? []) {
+    if (await api(`/v1/agents/${agentId}`, { headers }).then(() => true, () => false)) continue;
+    await api('/v1/agents', { method: 'POST', headers, body: JSON.stringify({ name: agentId, identifier: agentId }) });
+    await api(`/v1/agents/${agentId}/integrations`, { method: 'POST', headers, body: JSON.stringify({ providerId: 'novu-web-chat' }) });
+    log(`agent ${agentId} is on web chat`);
+  }
   await syncBridge();
 }
 
-// Same request as `npx novu sync`: the API discovers the workflows from the bridge, signed, and stores them.
+// Same requests as `npx novu sync`: the API discovers the workflows from the bridge and stores them, then
+// every agent the bridge serves gets the bridge URL.
 async function syncBridge() {
+  const headers = { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` };
+  const { agents = [] } = await discoverBridge();
+  const { body } = await api('/v1/bridge/sync?source=box', { method: 'POST', headers, body: JSON.stringify({ bridgeUrl: BRIDGE_URL }) });
+  for (const { agentId } of agents) {
+    await api(`/v1/agents/${agentId}/bridge`, { method: 'PUT', headers, body: JSON.stringify({ bridgeUrl: BRIDGE_URL }) });
+  }
+  log(`bridge synced: ${body.data.length} workflows and ${agents.length} agents from ${BRIDGE_URL}`);
+}
+
+// The CLI calls discover unsigned, which a bridge with strictAuthentication rejects; the box signs it like the API.
+async function discoverBridge() {
   await waitForHttp(`${BRIDGE_URL}?action=health-check`, 120);
-  const { body } = await api('/v1/bridge/sync?source=box', {
-    method: 'POST',
-    headers: { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` },
-    body: JSON.stringify({ bridgeUrl: BRIDGE_URL }),
-  });
-  log(`bridge synced: ${body.data.length} workflows from ${BRIDGE_URL}`);
+  const timestamp = Date.now();
+  const signature = createHmac('sha256', fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()).update(`${timestamp}.{}`).digest('hex');
+  const res = await fetch(`${BRIDGE_URL}?action=discover`, { headers: { 'novu-signature': `t=${timestamp},v1=${signature}` } });
+  if (!res.ok) throw new Error(`bridge discover -> ${res.status}: ${(await res.text()).slice(0, 300)}`);
+
+  return res.json();
 }
 
 async function stripe(path, body) {
