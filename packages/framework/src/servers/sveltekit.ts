@@ -51,12 +51,17 @@ export const serve = (
         headers: (key) => event.request.headers.get(key),
         url: () => {
           const protocol =
-            process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev' ? 'http' : 'https';
+            process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as string) === 'dev' ? 'http' : 'https';
 
           return new URL(event.request.url, `${protocol}://${event.request.headers.get('host') || ''}`);
         },
         transformResponse: ({ body, headers, status }) => {
           // Handle Response polyfills
+          const Res = getResponse();
+
+          return new Res(body, { status, headers });
+        },
+        transformStreamResponse: ({ body, headers, status }) => {
           const Res = getResponse();
 
           return new Res(body, { status, headers });

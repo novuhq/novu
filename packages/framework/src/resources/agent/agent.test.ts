@@ -247,6 +247,61 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyHeaders.Authorization).toBe('ApiKey test-secret-key');
   });
 
+  it('streams a returned reply stream over SSE, then sends the reply marked as streamed', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async function* () {
+        yield 'Hello ';
+        yield 'world';
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: (key: string) => (key === 'accept' ? 'text/event-stream, application/json' : null),
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+          transformStreamResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+
+    expect(result.headers['content-type']).toBe('text/event-stream');
+    const live = (await new Response(result.body).text())
+      .split('\n\n')
+      .filter((frame) => frame.startsWith('data: '))
+      .map((frame) => JSON.parse(frame.replace(/^data: /, '')));
+    expect(live.map((envelope) => envelope.event.type)).toEqual([
+      'message-start',
+      'message-delta',
+      'message-delta',
+      'message-end',
+    ]);
+    expect(live.every((envelope) => envelope.conversationId === 'conv-456')).toBe(true);
+
+    const sentMessages = () =>
+      ingestBatchesFromFetch(fetchMock)
+        .flatMap((batch) => batch.events ?? [])
+        .map((envelope) => envelope.event)
+        .filter((event) => event.type === 'message');
+    await vi.waitFor(() => expect(sentMessages()).toHaveLength(1));
+    expect(sentMessages()[0]).toMatchObject({
+      messageId: live[0].event.messageId,
+      streamed: true,
+      content: { markdown: 'Hello world' },
+    });
+  });
+
   it('should return 404 for unknown agent', async () => {
     const handler = new NovuRequestHandler({
       frameworkName: 'test',

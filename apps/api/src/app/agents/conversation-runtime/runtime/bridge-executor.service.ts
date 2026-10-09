@@ -1,4 +1,5 @@
 import { isIP } from 'node:net';
+import type { Readable } from 'node:stream';
 import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
@@ -7,8 +8,9 @@ import {
   GetDecryptedSecretKeyCommand,
   PinoLogger,
   resolvePublicAddresses,
+  type SafeOutboundStreamResponse,
   SsrfBlockedError,
-  safeOutboundJsonRequest,
+  safeOutboundStreamRequest,
 } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
@@ -39,6 +41,8 @@ import {
 } from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
+/** Bridges send an SSE comment every 15s while a turn runs, so a longer silence means the bridge is gone. */
+const LIVE_REPLY_IDLE_TIMEOUT_MS = 60_000;
 
 /**
  * True for `https://` URLs whose host is loopback (`localhost`, `*.localhost`,
@@ -165,6 +169,8 @@ export interface AgentExecutionParams {
   platformThreadId?: string;
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
+  /** When set, the bridge is asked for SSE; an SSE response body is handed here instead of being discarded. */
+  onEventStream?: (body: Readable) => void;
 }
 
 export class NoBridgeUrlError extends Error {
@@ -204,23 +210,33 @@ export class BridgeExecutorService {
       );
 
       const payload = await this.buildPayload(params);
+      const { onEventStream } = params;
 
-      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
-        this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
-        captureAgentException(err, {
-          component: 'bridge-executor',
-          operation: 'bridge-delivery',
-          agentIdentifier,
-        });
-        params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
-          this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
-          captureAgentWarning(callbackErr, {
+      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier, !!onEventStream)
+        .then((response) => {
+          const isEventStream = String(response.headers['content-type'] ?? '').startsWith('text/event-stream');
+          if (onEventStream && isEventStream) {
+            onEventStream(response.body);
+          } else {
+            response.body.resume();
+          }
+        })
+        .catch((err) => {
+          this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+          captureAgentException(err, {
             component: 'bridge-executor',
-            operation: 'on-bridge-failure-callback',
+            operation: 'bridge-delivery',
             agentIdentifier,
           });
+          params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
+            this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+            captureAgentWarning(callbackErr, {
+              component: 'bridge-executor',
+              operation: 'on-bridge-failure-callback',
+              agentIdentifier,
+            });
+          });
         });
-      });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
         throw err;
@@ -239,13 +255,15 @@ export class BridgeExecutorService {
     url: string,
     payload: AgentBridgeRequest,
     secretKey: string,
-    agentIdentifier: string
-  ): Promise<void> {
+    agentIdentifier: string,
+    streamReply: boolean
+  ): Promise<SafeOutboundStreamResponse> {
     let lastError: Error | undefined;
+    const accept = streamReply ? 'text/event-stream, application/json' : 'application/json';
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       // Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
-      // safeOutboundJsonRequest call performs the connect-time DNS guard and
+      // safeOutboundStreamRequest call performs the connect-time DNS guard and
       // re-validates every redirect target.
       try {
         assertSafeOutboundUrl(url);
@@ -262,11 +280,12 @@ export class BridgeExecutorService {
       const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
 
       try {
-        const response = await safeOutboundJsonRequest({
+        const response = await safeOutboundStreamRequest({
           url,
           method: 'POST',
           headers: {
             'content-type': 'application/json',
+            accept,
             // Must match HttpHeaderKeysEnum.NOVU_SIGNATURE — the framework SDK reads
             // this exact header to verify the HMAC. Sending any other name (e.g.
             // `x-novu-signature`) silently disables signature verification on the
@@ -274,22 +293,21 @@ export class BridgeExecutorService {
             // via an attacker-controlled `replyUrl`.
             [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
           },
-          body: payload,
+          body: JSON.stringify(payload),
+          idleTimeoutMs: LIVE_REPLY_IDLE_TIMEOUT_MS,
         });
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
-          return;
+          return response;
         }
 
+        response.body.resume();
         lastError = new Error(`Bridge returned ${response.statusCode}: ${response.statusMessage}`);
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.statusCode}`
         );
       } catch (err) {
-        if (err instanceof SsrfBlockedError) {
-          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
-        }
-        lastError = err instanceof Error ? err : new Error(String(err));
+        lastError = this.retryableError(err, streamReply);
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`
         );
@@ -301,6 +319,20 @@ export class BridgeExecutorService {
     }
 
     throw lastError ?? new Error('Bridge call failed');
+  }
+
+  private retryableError(err: unknown, streamReply: boolean): Error {
+    if (err instanceof SsrfBlockedError) {
+      throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+    }
+
+    const error = err instanceof Error ? err : new Error(String(err));
+    // A host that buffers the SSE response holds its headers while the turn runs; a retry would run it twice.
+    if (streamReply && (err as NodeJS.ErrnoException).code === 'ETIMEDOUT') {
+      throw error;
+    }
+
+    return error;
   }
 
   private delay(ms: number): Promise<void> {

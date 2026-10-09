@@ -1,5 +1,5 @@
 import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
-import type { ToolApprovalConfig } from '../../resources/agent/agent.types';
+import type { ReplyStream, ToolApprovalConfig } from '../../resources/agent/agent.types';
 import { isCardElement } from '../../resources/agent/guards';
 import { postToolApprovalCard } from '../../resources/agent/tool-approval/post-card';
 import type { AiSdkApprovalRequestPart, AiSdkGenerateResult, AiSdkResult, AiSdkStreamResult } from '../types';
@@ -50,44 +50,81 @@ async function collectApprovalRequests(result: AiSdkResult): Promise<AiSdkApprov
   return (content as unknown[]).filter(isManualToolApprovalRequestPart);
 }
 
-/** Route an AI SDK result: pause (post approval card) if gated, else deliver the text. */
+/**
+ * Every step's text as the model writes it, steps separated as paragraphs. Once the stream ends it
+ * queues the executed tool results, so they are recorded before the reply that carries them.
+ */
+async function* streamedText(result: AiSdkStreamResult, ctx: AgentRuntimeContext): ReplyStream {
+  let wroteText = false;
+  let separateStep = false;
+
+  for await (const part of result.fullStream) {
+    if (part.type === 'error') {
+      throw part.error;
+    }
+    if (part.type === 'start-step') {
+      separateStep = wroteText;
+    }
+    if (part.type === 'text-delta' && part.text) {
+      if (separateStep) {
+        separateStep = false;
+        yield '\n\n';
+      }
+      wroteText = true;
+      yield part.text;
+    }
+  }
+
+  await emitExecutedToolResults(result, ctx);
+}
+
+/**
+ * Route an AI SDK result: a `streamText` result is replied as it streams, then the approval card
+ * follows if a tool is gated. A `generateText` result posts the card if gated, else its text.
+ */
 export async function handleAiSdkResult(
   result: AiSdkResult,
   ctx: AgentRuntimeContext,
   config: ToolApprovalConfig | undefined
 ): Promise<void> {
   if (isStreamResult(result)) {
-    await result.consumeStream({
-      onError: (err) => {
-        throw err;
-      },
-    });
+    await ctx.reply(streamedText(result, ctx));
+    await postFirstApprovalCard(result, ctx, config);
+
+    return;
   }
 
   // save executed tool results to Novu history
   await emitExecutedToolResults(result, ctx);
 
-  const requests = await collectApprovalRequests(result);
-
-  if (requests.length > 0) {
-    const request = requests[0];
-    const toolCall = {
-      id: request.toolCall.toolCallId,
-      name: request.toolCall.toolName,
-      input: request.toolCall.input,
-    };
-
-    // One card at a time — multi-tool turns surface sequentially.
-    await postToolApprovalCard(ctx, toolCall, config, request.approvalId);
-
-    return;
+  if (!(await postFirstApprovalCard(result, ctx, config))) {
+    await deliverText(result, ctx);
   }
-
-  await deliverResult(result, ctx);
 }
 
-export async function deliverResult(result: AiSdkResult, ctx: AgentRuntimeContext): Promise<void> {
-  const text = (await Promise.resolve(result.text)).trim();
+/** One card at a time — multi-tool turns surface sequentially. */
+async function postFirstApprovalCard(
+  result: AiSdkResult,
+  ctx: AgentRuntimeContext,
+  config: ToolApprovalConfig | undefined
+): Promise<boolean> {
+  const [request] = await collectApprovalRequests(result);
+  if (!request) {
+    return false;
+  }
+
+  const toolCall = {
+    id: request.toolCall.toolCallId,
+    name: request.toolCall.toolName,
+    input: request.toolCall.input,
+  };
+  await postToolApprovalCard(ctx, toolCall, config, request.approvalId);
+
+  return true;
+}
+
+async function deliverText(result: AiSdkGenerateResult, ctx: AgentRuntimeContext): Promise<void> {
+  const text = result.text.trim();
 
   if (!text) {
     await ctx.typing.stop();

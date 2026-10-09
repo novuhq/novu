@@ -3,6 +3,7 @@ import { type Request, type Response } from 'express';
 
 import { NovuRequestHandler, ServeHandlerOptions } from '../handler';
 import { Either, type SupportedFrameworkName } from '../types';
+import { pipeToNodeResponse } from '../utils';
 
 /*
  * Re-export all top level exports from the main package.
@@ -42,6 +43,7 @@ export const frameworkName: SupportedFrameworkName = 'express';
  * );
  * ```
  */
+// biome-ignore lint/suspicious/noExplicitAny: see the return type note above
 export const serve = (options: ServeHandlerOptions): any => {
   const novuHandler = new NovuRequestHandler({
     frameworkName,
@@ -79,6 +81,8 @@ export const serve = (options: ServeHandlerOptions): any => {
 
         return response.status(status).send(body);
       },
+      transformStreamResponse: (streamResponse): Response | Promise<void> =>
+        pipeToNodeResponse(response, streamResponse),
     }),
   });
 

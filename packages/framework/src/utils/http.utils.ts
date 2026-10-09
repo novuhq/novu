@@ -1,5 +1,36 @@
 import { BridgeError, MissingSecretKeyError, PlatformError } from '../errors';
+import type { IActionStreamResponse } from '../handler';
 import { checkIsResponseError } from '../shared';
+
+/** The Node `ServerResponse` surface that Express, Nest and Next.js pages responses share. */
+interface NodeResponse {
+  statusCode: number;
+  setHeader(name: string, value: string): unknown;
+  flushHeaders(): void;
+  write(chunk: Uint8Array): unknown;
+  end(): unknown;
+  on(event: 'close', listener: () => void): unknown;
+}
+
+/** Writes a streamed action response to a Node response, stopping when the client disconnects. */
+export async function pipeToNodeResponse(response: NodeResponse, { status, headers, body }: IActionStreamResponse) {
+  response.statusCode = status;
+  for (const [name, value] of Object.entries(headers)) {
+    response.setHeader(name, value);
+  }
+  // Novu waits for the headers with a timeout, and the first write may come after a long tool call.
+  response.flushHeaders();
+
+  const reader = body.getReader();
+  response.on('close', () => {
+    reader.cancel().catch(() => {});
+  });
+
+  for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+    response.write(chunk.value);
+  }
+  response.end();
+}
 
 export const initApiClient = (secretKey: string, apiUrl: string) => {
   if (!secretKey) {

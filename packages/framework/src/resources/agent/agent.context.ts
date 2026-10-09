@@ -50,6 +50,7 @@ import type {
   QuoteReplyTarget,
   ReplyContent,
   ReplyHandle,
+  ReplyStream,
   SentMessageInfo,
   Signal,
   ToolApprovalCard,
@@ -61,9 +62,10 @@ import type {
   TypingControl,
   TypingOp,
 } from './agent.types';
-import { AgentEventEnum, PendingApproval } from './agent.types';
+import { AgentEventEnum, isReplyStream, PendingApproval } from './agent.types';
 import { serializeContent } from './agent-content-serialization';
 import { AgentEventOutbox } from './agent-event-outbox';
+import type { AgentLiveStream } from './agent-live-stream';
 import { isCardElement, isHumanChrome } from './guards';
 import { buildHumanApproveActionId, buildHumanDenyActionId, buildHumanOptionActionId } from './human/action-id';
 import {
@@ -271,14 +273,28 @@ function toSideEffectEvents(
 
 /** Maps handler delivery calls onto `AgentEvent`s and flushes them through the run outbox. */
 class EventOutboxTransport {
-  constructor(private readonly outbox: AgentEventOutbox) {}
+  constructor(
+    private readonly outbox: AgentEventOutbox,
+    private readonly live?: AgentLiveStream
+  ) {}
 
+  get streamsLive(): boolean {
+    return this.live !== undefined;
+  }
+
+  /** Writes to the bridge response, which only Novu's live reader sees; durable events go through the outbox. */
+  writeLive(event: AgentEvent): void {
+    this.live?.write(this.outbox.envelope(event));
+  }
+
+  /** `streamedMessageId` marks a reply whose text was written live under that id. */
   async sendReply(
     reply: ReplyContent,
     sideEffects: SideEffectsSnapshot,
-    quoteReply?: AgentQuoteReplyContext
+    quoteReply?: AgentQuoteReplyContext,
+    streamedMessageId?: string
   ): Promise<SentMessageInfo | null> {
-    const messageId = mint('msg');
+    const messageId = streamedMessageId ?? mint('msg');
     const events = toSideEffectEvents(sideEffects);
     events.push({
       type: 'message',
@@ -287,6 +303,7 @@ class EventOutboxTransport {
       content: toAgentMessageContent(reply),
       files: toAgentFileRefs(reply.files),
       ...(quoteReply ? { quoteReply } : {}),
+      ...(streamedMessageId ? { streamed: true } : {}),
     });
     await this._emitAndFlush(events);
 
@@ -453,7 +470,12 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private readonly _transport: EventOutboxTransport;
   private _pendingHumanRenders: Array<() => Promise<void>> = [];
 
-  constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
+  constructor(
+    request: AgentBridgeRequest,
+    secretKey: string,
+    toolApprovalConfig?: ToolApprovalConfig,
+    live?: AgentLiveStream
+  ) {
     this.event = request.event as AgentEventEnum;
     this.action = request.action ?? null;
     this.message = request.message;
@@ -481,7 +503,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
         conversationId: request.conversationId,
         agentId: request.agentId,
         turnId: request.deliveryId,
-      })
+      }),
+      live
     );
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
@@ -527,12 +550,57 @@ export class AgentContextImpl implements AgentRuntimeContext {
     return this as AgentMessageContext;
   }
 
-  async reply(content: MessageContent, options?: AgentReplyOptions): Promise<ReplyHandle> {
+  async reply(content: MessageContent | ReplyStream, options?: AgentReplyOptions): Promise<ReplyHandle> {
+    if (isReplyStream(content)) {
+      return this.replyStream(content, options);
+    }
+
+    return this.sendReply(content, options);
+  }
+
+  /**
+   * Writes the text live when Novu asked for it, then sends the reply. Live text has no files or
+   * quote, so such replies are sent whole. An empty stream sends nothing.
+   */
+  private async replyStream(stream: ReplyStream, options?: AgentReplyOptions): Promise<ReplyHandle> {
+    const messageId = mint('msg');
+    const streamLive = this._transport.streamsLive && !options?.files?.length && !options?.quoteReply;
+    let text = '';
+    let completed = false;
+
+    try {
+      for await (const delta of stream) {
+        if (!delta) continue;
+        if (streamLive && !text) this._transport.writeLive({ type: 'message-start', messageId });
+        text += delta;
+        if (streamLive) this._transport.writeLive({ type: 'message-delta', messageId, delta });
+      }
+      completed = true;
+    } finally {
+      if (streamLive && text) {
+        // Without final text, Novu removes the preview instead of keeping a partial reply.
+        const content = completed && text.trim() ? { markdown: text } : undefined;
+        this._transport.writeLive({ type: 'message-end', messageId, content });
+      }
+    }
+
+    if (!text.trim()) {
+      return new NoopReplyHandle();
+    }
+
+    return this.sendReply(text, options, streamLive ? messageId : undefined);
+  }
+
+  private async sendReply(
+    content: MessageContent,
+    options?: AgentReplyOptions,
+    streamedMessageId?: string
+  ): Promise<ReplyHandle> {
     await this.materializePendingHumanRenders();
     const reply = await serializeContent(content, options?.files);
     const sideEffects = this._drainSideEffectsSnapshot();
     const quoteReply = options?.quoteReply ? resolveQuoteReply(options.quoteReply) : undefined;
-    const info = await this._transport.sendReply(reply, sideEffects, quoteReply);
+    const info = await this._transport.sendReply(reply, sideEffects, quoteReply, streamedMessageId);
 
     if (!info) {
       throw new Error('Agent reply did not return a message handle');

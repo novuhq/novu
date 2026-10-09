@@ -194,6 +194,7 @@ describe('AgentInboundHandler', () => {
       conversationService as any,
       environmentRepository as any,
       expireSupersededApprovals as any,
+      { readerFor: () => undefined } as any,
       logger as any
     );
     const managedRuntime = new ManagedRuntime(

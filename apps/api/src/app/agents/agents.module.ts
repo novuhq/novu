@@ -64,6 +64,7 @@ import { AgentReplyController } from './conversation-runtime/reply/agent-reply.c
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
+import { BridgeLiveReplies } from './conversation-runtime/runtime/bridge-live-replies.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
 import { NovuCopilotBridgeModule } from './copilot-bridge/novu-copilot-bridge.module';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
@@ -173,6 +174,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     BridgeExecutorService,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
+    BridgeLiveReplies,
     ManagedRuntime,
     HumanRelayRuntime,
     HumanConversationInboundInterceptor,
