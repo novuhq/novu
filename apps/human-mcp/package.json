@@ -1,0 +1,35 @@
+{
+  "name": "@novu/human-mcp",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The hosted Human MCP server: lets ChatGPT, Claude and Cursor ask a human before they act.",
+  "scripts": {
+    "dev": "wrangler dev --env local --port 8790",
+    "start": "wrangler dev --env local --port 8790",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250424.0",
+    "typescript": "^5.5.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.49.0"
+  },
+  "nx": {
+    "tags": [
+      "type:app"
+    ],
+    "targets": {
+      "lint": {
+        "command": "npx biome lint apps/human-mcp"
+      }
+    }
+  }
+}
