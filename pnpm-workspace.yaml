@@ -33,7 +33,11 @@ overrides:
   body-parser@<1.20.6: ^1.20.6
   deepmerge-ts@<8.0.0: ^8.0.0
   body-parser@>=2.0.0 <2.3.0: ^2.3.0
-  handlebars@<4.7.9: 4.7.9
+  # GHSA-8r5x-fm3f-whwj / GHSA-p8wg-vrv2-v86f (critical): handlebars JavaScript
+  # injection via AST type confusion in compile and own-property check bypass.
+  # Patched in 4.7.10 (patch bump within the 4.7.x line). Transitive via
+  # verdaccio (@nx/js dev tooling).
+  handlebars@<4.7.10: ^4.7.10
   braces@<3.0.3: ^3.0.3
   file-type@>=13.0.0 <16.5.4: ^16.5.4
   file-type@>=17.0.0 <21.3.4: ^21.3.4
@@ -69,6 +73,14 @@ overrides:
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
   '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  # GHSA-7mx3-vvmw-hjmv (high): @graphql-tools/utils prototype pollution in
+  # `mergeDeep`. Patched in 12.0.1 (patch bump within the 12.0.x line).
+  # Transitive via `@nestjs/graphql` in apps/api and apps/webhook.
+  '@graphql-tools/utils@<12.0.1': ^12.0.1
+  # GHSA-c8x8-7fp4-3x9w (high): prosemirror-view XSS in paste handling.
+  # Patched in 1.42.3 (minor bump within the 1.x line). Transitive via
+  # `@tiptap/react > @tiptap/core > @tiptap/pm` in apps/dashboard.
+  prosemirror-view@<1.42.3: ^1.42.3
   # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
   # via `__proto__` in custom message language and `object().rename()` with a
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
