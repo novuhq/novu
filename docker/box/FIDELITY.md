@@ -15,7 +15,7 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 | Redis | MemoryDB / ElastiCache cluster | 3-node Redis 7.2 cluster, TLS with a self-signed CA, one host | Network partitions, failover | - |
 | Mongo | Atlas cluster, online archive | Single-node replica set `rs0` | Failover, archive | - |
 | ClickHouse, S3 | Managed ClickHouse, AWS S3 | Single-node ClickHouse, versitygw (S3 API), random keys per start | Managed-service behaviour | - |
-| Processes | Autoscaled API, separate internal API, one worker service per queue | API and worker, 2 pm2 instances each | Scaling, per-queue worker isolation | - |
+| Processes | Autoscaled API, separate internal API, one worker service per queue | API and worker, 1 pm2 instance each (cluster mode) | Scaling, per-queue worker isolation, races between processes | `PM2_INSTANCES=2`: boot takes ~49 s instead of ~29 s and 1.7 GB more |
 | Legacy `ws` service | Running | Off; the socket worker (PartySocket) serves realtime | Jobs pile up unread in the `novu-web-sockets` queue | - |
 | `NODE_ENV` | `dev` on staging, `production` in production | `production` (matches production) | Staging-only `dev` behaviour (Swagger explorer, http profile URLs, popular-template IDs) | - |
 | `NOVU_REGION` | `eu-west-2` (staging) | Unset | LaunchDarkly region targeting, EU/US Human dashboard URL, Plain cards key | One line in `box.env` |
