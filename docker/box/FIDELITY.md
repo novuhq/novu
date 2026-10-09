@@ -99,8 +99,8 @@ with the Development secret key, through the same SSRF guard as a customer's bri
   adapters call it), so `findOrphanedApprovedToolApprovalRequests`
   (`apps/api/src/app/agents/shared/tool-approval/unresolved-approvals.ts`) takes the approval for a crashed
   resume and appends a `denied` decision. Seen in the box's `custom-code-agent` history. Not fixed; to report.
-- The AI SDK and LangChain adapters don't continue after a HITL answer. After a tool approval they re-run
-  `onMessage`, but after an approve or choose answer they only pass `onAction` through, and the answer
-  (`ctx.humanResponse`) isn't part of `toModelMessages` or `toLangChainMessages`, so the model never learns it.
-  The playground's `ai-sdk-agent` and `langchain-agent` call the model again in `onAction` with the answer
-  added. Not fixed; to report.
+- HITL is only half wired into the AI SDK and LangChain adapters. `ctx.approve`/`ask`/`choose` post the card
+  and the answer reaches `onAction`, but the adapters don't call the model again (they do after a tool
+  approval), and the answer (`ctx.humanResponse`) isn't part of `toModelMessages` or `toLangChainMessages`.
+  Nothing documents HITL for these runtimes, so the playground keeps HITL on `custom-code-agent` only. To ask
+  the framework owners whether it's meant to work.

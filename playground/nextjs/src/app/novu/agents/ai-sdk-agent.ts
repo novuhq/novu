@@ -1,7 +1,7 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { agent, hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';
 import { generateText, stepCountIs, tool } from 'ai';
-import { agentTools, describeAction, formatHumanResponse, MODEL, SYSTEM } from './features';
+import { agentTools, describeAction, MODEL, SYSTEM } from './features';
 import { scriptedAiSdkModel } from './scripted-models';
 
 const model = () => (process.env.ANTHROPIC_API_KEY ? anthropic(MODEL) : scriptedAiSdkModel);
@@ -26,16 +26,5 @@ export const aiSdkAgent = agent('ai-sdk-agent', {
         ])
       ),
     }),
-  // Novu calls the model again after a tool approval, but not after an approve/choose answer, and the
-  // answer isn't part of `toModelMessages`, so it's handed to the model here.
-  onAction: async (action, ctx) => {
-    if (!ctx.humanResponse) return describeAction(action);
-    const { text } = await generateText({
-      model: model(),
-      system: SYSTEM,
-      messages: [...toModelMessages(ctx), { role: 'user', content: formatHumanResponse(ctx.humanResponse) }],
-    });
-
-    return text;
-  },
+  onAction: (action) => describeAction(action),
 });

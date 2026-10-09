@@ -102,7 +102,7 @@ reinstalls if the lockfile changed, builds the projects `nx affected` reports, r
 runs migrations and restarts what changed. A PR that changes `@novu/framework` or `playground/nextjs` also
 restarts the bridge app and syncs it again, so the PR's workflows and agents run on the PR's framework.
 
-Run the smoke test from the host (36 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
+Run the smoke test from the host (36 checks, 41 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):
 
 ```sh
@@ -123,12 +123,13 @@ The playground has one agent per `novu connect` runtime, all built on the same f
 
 - `custom-code-agent` (`agent()` from `@novu/framework`) has no model. Each feature is a typed command (`card`,
   `remember <text>`, `recall`, `notify <name>`, `done`, `approve`, `multi-approve`, `ask`, `choose`, `tell`,
-  `weather <city>`); anything else lists them. It works the same with or without the key.
-- `ai-sdk-agent` and `langchain-agent` get every feature as a tool and, with `NOVU_MANAGED_CLAUDE_API_KEY`, run
-  on Claude Haiku, which picks the tools from plain sentences and also reads attached images and PDFs (this
-  spends from the key's workspace, not Novu's managed-Claude quota). The smoke test then adds 4 checks: a card
-  and a HITL approval on each. Without the key they run on scripted fakes that only know the gated
-  `get_weather` tool.
+  `weather <city>`); anything else lists them. It works the same with or without the key. It's the only agent
+  with HITL (`approve`, `ask`, `choose`, `tell`), because only plain `agent()` handles the answer.
+- `ai-sdk-agent` and `langchain-agent` get every other feature as a tool and, with
+  `NOVU_MANAGED_CLAUDE_API_KEY`, run on Claude Haiku, which picks the tools from plain sentences and also reads
+  attached images and PDFs (this spends from the key's workspace, not Novu's managed-Claude quota). The smoke
+  test then adds 2 checks: a card from a tool on each. Without the key they run on scripted fakes that only know
+  the gated `get_weather` tool.
 
 With `NOVU_MANAGED_CLAUDE_API_KEY`, `start` also runs the thalamus observer and seeds `box-managed`, a managed
 agent on the Novu-managed Claude integration (Claude Haiku, only the `bash` tool, which asks before it runs).

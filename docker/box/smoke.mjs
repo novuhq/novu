@@ -558,6 +558,7 @@ try {
   );
 
   // ctx.approve posts a card whose buttons carry `human:<id>:approve|deny`; the answer comes back on onAction.
+  // HITL is only on the plain agent(): the AI SDK and LangChain adapters don't call the model again after it.
   const approveHuman = async (agentId, text, reply) => {
     const { body } = await call('/v1/web-chat/conversations', {
       method: 'POST',
@@ -612,11 +613,6 @@ try {
 
         return { conversation };
       });
-      await check(`${name} agent continues after a HITL approval (Claude)`, () =>
-        approveHuman(agentId, 'Please get my approval before deploying v2 to production', (item) =>
-          Boolean(item.content?.markdown)
-        )
-      );
     }
   }
 

@@ -1,7 +1,6 @@
 import {
   Actions,
   type AgentAction,
-  type AgentHumanResponse,
   type AgentMessageContext,
   Button,
   Card,
@@ -16,21 +15,19 @@ import {
 import z from 'zod';
 
 /**
- * Everything the playground agents can do, written once over `ctx`. `custom-code-agent` calls these
- * from typed commands; `ai-sdk-agent` and `langchain-agent` get them as tools (`agentTools`) and
- * Claude decides when to call them.
+ * What every playground agent can do, written once over `ctx`. `custom-code-agent` calls these from
+ * typed commands; `ai-sdk-agent` and `langchain-agent` get them as tools (`agentTools`) and Claude
+ * decides when to call them. HITL (`ctx.approve`/`ask`/`choose`/`tell`) is only in `custom-code-agent`:
+ * the AI SDK and LangChain adapters don't call the model again after the answer.
  */
 
 export const MODEL = 'claude-haiku-4-5';
 export const SYSTEM = [
   'You are the Novu playground agent.',
-  'Use your tools to show cards, remember notes, send notifications, ask people for approval or input,',
-  'post notices, close the conversation and check the weather.',
+  'Use your tools to show cards, remember notes, send notifications, close the conversation and check the weather.',
   'When the user attaches an image or a PDF, describe or summarize it.',
   'Keep answers to one or two short sentences.',
 ].join(' ');
-
-const DEPLOY_QUESTION = 'Deploy v2.4.1 to production?';
 
 export function demoCard() {
   return Card({
@@ -96,79 +93,9 @@ export function resolve(ctx: AgentMessageContext) {
   return 'Resolving';
 }
 
-/** `to` takes subscriber IDs; without it the card goes to this conversation. */
-export function approve(ctx: AgentMessageContext, question = DEPLOY_QUESTION, to?: string[]) {
-  ctx.approve(question, to?.length ? { to } : undefined);
-
-  return 'Sent an approval card. Approve or deny it to continue.';
-}
-
-export function approveWithCustomCard(ctx: AgentMessageContext) {
-  ctx.approve({
-    render: ({ actionIds }) =>
-      Card({
-        title: DEPLOY_QUESTION,
-        subtitle: 'From Deployment Agent',
-        children: [
-          Actions([
-            Button({ label: 'Yes', id: actionIds.approve, actionType: 'action', style: 'primary' }),
-            Button({ label: 'No', id: actionIds.deny, actionType: 'action' }),
-          ]),
-        ],
-      }),
-  });
-
-  return 'Sent a custom approval card. Approve or deny it to continue.';
-}
-
-export function approveWithCustomChrome(ctx: AgentMessageContext) {
-  ctx.approve({
-    card: {
-      title: DEPLOY_QUESTION,
-      subtitle: 'From Deployment Agent',
-      body: 'This is a custom chrome approval card.',
-      approveLabel: 'Yes',
-      denyLabel: 'No',
-    },
-  });
-
-  return 'Sent a custom chrome approval card. Approve or deny it to continue.';
-}
-
-export function ask(ctx: AgentMessageContext, question = 'What environment should we deploy to?') {
-  ctx.ask(question);
-
-  return 'Asked a question. Reply in this thread.';
-}
-
-export function choose(
-  ctx: AgentMessageContext,
-  question = 'Which region should we deploy to?',
-  options = ['us-east', 'eu-west', 'ap-south']
-) {
-  ctx.choose(question, options);
-
-  return 'Sent a card with options. Pick one to continue.';
-}
-
-export function tell(ctx: AgentMessageContext, text = 'Deploy finished. v2.4.1 is live.') {
-  ctx.tell(text);
-
-  return 'Posted a one-way notice. Nothing to wait on.';
-}
-
 export const weather = (city: string) => `Sunny, 21°C in ${city}`;
 
 export const describeAction = (action: AgentAction) => `Clicked ${action.id}${action.value ? ` = ${action.value}` : ''}`;
-
-export function formatHumanResponse(response: AgentHumanResponse) {
-  if (response.expired) return `That ${response.kind} request expired before I got an answer.`;
-  const detail = response.text ?? response.optionId;
-
-  return detail
-    ? `Got it — ${response.kind} is **${response.status}** (${detail}).`
-    : `Got it — ${response.kind} is **${response.status}**.`;
-}
 
 export interface AgentTool {
   description: string;
@@ -187,11 +114,6 @@ function defineTool<S extends z.ZodObject>(
 }
 
 export function agentTools(ctx: AgentMessageContext): Record<string, AgentTool> {
-  const recipients = z
-    .array(z.string())
-    .optional()
-    .describe('Subscriber IDs to ask instead. Leave empty to ask the current user, which is the usual case');
-
   return {
     show_card: defineTool('Show a demo card with a table, a chart, a button and a select', z.object({}), () =>
       showCard(ctx)
@@ -206,22 +128,6 @@ export function agentTools(ctx: AgentMessageContext): Record<string, AgentTool> 
       ({ name }) => notify(ctx, name)
     ),
     resolve: defineTool('Close this conversation when the user is done', z.object({}), () => resolve(ctx)),
-    request_approval: defineTool(
-      'Ask for approval of an action with an Approve/Deny card. Sent to the current user unless `to` is given',
-      z.object({ question: z.string(), to: recipients }),
-      ({ question, to }) => approve(ctx, question, to)
-    ),
-    ask_user: defineTool('Ask a free-text question and wait for the answer', z.object({ question: z.string() }), ({ question }) =>
-      ask(ctx, question)
-    ),
-    choose_option: defineTool(
-      'Let the user pick one of several options',
-      z.object({ question: z.string(), options: z.array(z.string()).min(2) }),
-      ({ question, options }) => choose(ctx, question, options)
-    ),
-    tell: defineTool('Post a one-way notice that needs no answer', z.object({ text: z.string() }), ({ text }) =>
-      tell(ctx, text)
-    ),
     get_weather: defineTool(
       'Current weather for a city',
       z.object({ city: z.string() }),

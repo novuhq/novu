@@ -1,4 +1,4 @@
-import { agent } from '@novu/framework';
+import { Actions, type AgentHumanResponse, type AgentMessageContext, agent, Button, Card } from '@novu/framework';
 import * as features from './features';
 
 const HELP = [
@@ -13,10 +13,60 @@ const HELP = [
   '- `weather <city>` — a `get_weather` tool call gated by `ctx.toolApproval`',
 ].join('\n');
 
-/** Every feature from `features.ts` behind a typed command, so it behaves the same on every run. */
+const DEPLOY_QUESTION = 'Deploy v2.4.1 to production?';
+
+// HITL lives here only: plain `agent()` handles the answer itself in onAction/onMessage.
+function approve(ctx: AgentMessageContext, to?: string[]) {
+  ctx.approve(DEPLOY_QUESTION, to ? { to } : undefined);
+
+  return 'Sent an approval card. Approve or deny it to continue.';
+}
+
+function approveWithCustomCard(ctx: AgentMessageContext) {
+  ctx.approve({
+    render: ({ actionIds }) =>
+      Card({
+        title: DEPLOY_QUESTION,
+        subtitle: 'From Deployment Agent',
+        children: [
+          Actions([
+            Button({ label: 'Yes', id: actionIds.approve, actionType: 'action', style: 'primary' }),
+            Button({ label: 'No', id: actionIds.deny, actionType: 'action' }),
+          ]),
+        ],
+      }),
+  });
+
+  return 'Sent a custom approval card. Approve or deny it to continue.';
+}
+
+function approveWithCustomChrome(ctx: AgentMessageContext) {
+  ctx.approve({
+    card: {
+      title: DEPLOY_QUESTION,
+      subtitle: 'From Deployment Agent',
+      body: 'This is a custom chrome approval card.',
+      approveLabel: 'Yes',
+      denyLabel: 'No',
+    },
+  });
+
+  return 'Sent a custom chrome approval card. Approve or deny it to continue.';
+}
+
+function formatHumanResponse(response: AgentHumanResponse) {
+  if (response.expired) return `That ${response.kind} request expired before I got an answer.`;
+  const detail = response.text ?? response.optionId;
+
+  return detail
+    ? `Got it — ${response.kind} is **${response.status}** (${detail}).`
+    : `Got it — ${response.kind} is **${response.status}**.`;
+}
+
+/** Every feature behind a typed command, so it behaves the same on every run. */
 export const customCodeAgent = agent('custom-code-agent', {
   onMessage: async (message, ctx) => {
-    if (ctx.humanResponse) return features.formatHumanResponse(ctx.humanResponse);
+    if (ctx.humanResponse) return formatHumanResponse(ctx.humanResponse);
 
     const [command = '', ...rest] = message.text.trim().split(/\s+/);
     const arg = rest.join(' ');
@@ -34,19 +84,25 @@ export const customCodeAgent = agent('custom-code-agent', {
       case 'done':
         return features.resolve(ctx);
       case 'approve':
-        return features.approve(ctx);
+        return approve(ctx);
       case 'multi-approve':
-        return features.approve(ctx, undefined, ['alice', 'bob']);
+        return approve(ctx, ['alice', 'bob']);
       case 'custom-approve':
-        return features.approveWithCustomCard(ctx);
+        return approveWithCustomCard(ctx);
       case 'custom-chrome-approve':
-        return features.approveWithCustomChrome(ctx);
+        return approveWithCustomChrome(ctx);
       case 'ask':
-        return features.ask(ctx);
+        ctx.ask('What environment should we deploy to?');
+
+        return 'Asked a question. Reply in this thread.';
       case 'choose':
-        return features.choose(ctx);
+        ctx.choose('Which region should we deploy to?', ['us-east', 'eu-west', 'ap-south']);
+
+        return 'Sent a card with options. Pick one to continue.';
       case 'tell':
-        return features.tell(ctx);
+        ctx.tell('Deploy finished. v2.4.1 is live.');
+
+        return 'Posted a one-way notice. Nothing to wait on.';
       case 'weather':
         await ctx.toolApproval.request({ id: `weather-${Date.now()}`, name: 'get_weather', input: { city: arg || 'Berlin' } });
 
@@ -56,7 +112,7 @@ export const customCodeAgent = agent('custom-code-agent', {
     }
   },
   onAction: (action, ctx) =>
-    ctx.humanResponse ? features.formatHumanResponse(ctx.humanResponse) : features.describeAction(action),
+    ctx.humanResponse ? formatHumanResponse(ctx.humanResponse) : features.describeAction(action),
   onToolApproval: ({ toolCall, approved }) =>
     approved ? features.weather(String((toolCall.input as { city?: string }).city)) : `Skipped ${toolCall.name}`,
 });
