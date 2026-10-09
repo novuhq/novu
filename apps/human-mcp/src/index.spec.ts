@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toolOf } from './connections';
 import type { Env } from './env';
+import { HumanApiError } from './human-api';
 import worker from './index';
-import { describeOutcome, type Interaction, waitForAnswer } from './interactions';
+import { describeOutcome, type Interaction, sendInteraction, waitForAnswer } from './interactions';
 
 const ISSUER = 'https://clerk.example.test';
 const API = 'https://api.example.test';
@@ -288,6 +289,25 @@ describe('waiting for an answer', () => {
     const [, , timeoutMs] = api.get.mock.calls[0] as unknown as [string, undefined, number];
     expect(timeoutMs).toBeGreaterThan(0);
     expect(timeoutMs).toBeLessThanOrEqual(3000);
+  });
+
+  it('gives sending longer than other calls, and says a send without an answer may still arrive', async () => {
+    const post = vi.fn().mockRejectedValue(new HumanApiError(0, 'Could not reach the Human API.'));
+    const api = { get: vi.fn(), post };
+
+    await expect(
+      sendInteraction(api as never, { kind: 'approve', card: { title: 'Deploy?' }, to: 'alice' })
+    ).rejects.toThrow('do not send it again right away');
+    expect(post.mock.calls[0][2]).toBeGreaterThan(15_000);
+  });
+
+  it('counts the wait from when the call began, so a slow send does not add to it', async () => {
+    const api = { get: vi.fn(async () => ({ id: 'hi_1', kind: 'ask', status: 'pending' })), post: vi.fn() };
+    const sent: Interaction = { id: 'hi_1', kind: 'ask', status: 'pending' };
+
+    await waitForAnswer(api as never, sent, 30, undefined, Date.now() - 30_000);
+
+    expect(api.get).not.toHaveBeenCalled();
   });
 
   it('says which option was chosen by its label', () => {

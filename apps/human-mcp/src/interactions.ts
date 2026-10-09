@@ -27,6 +27,13 @@ export const MAX_WAIT_SECONDS = 50;
 export const DEFAULT_WAIT_SECONDS = 45;
 const POLL_EVERY_MS = 2_000;
 
+/**
+ * Sending waits for the message to reach the person's channel, which can be slow, and its answer is the
+ * only place the request's id comes from. So it gets longer than other calls, and still ends before the
+ * AI tool gives up on the whole call.
+ */
+const SEND_TIMEOUT_MS = 30_000;
+
 /** Who gets the message when the tool names nobody: the account's owner. */
 export async function resolveRecipient(api: HumanApi, to: string | undefined): Promise<string> {
   if (to?.trim()) {
@@ -46,12 +53,23 @@ export async function sendInteraction(
   input: { kind: InteractionKind; card: Card; to?: string; from?: string }
 ): Promise<Interaction> {
   const to = await resolveRecipient(api, input.to);
-  const created = await api.post<Interaction>('/v1/human/interactions', {
-    kind: input.kind,
-    card: input.card,
-    to,
-    ...(input.from ? { from: input.from } : {}),
-  });
+  const created = await api
+    .post<Interaction>(
+      '/v1/human/interactions',
+      { kind: input.kind, card: input.card, to, ...(input.from ? { from: input.from } : {}) },
+      SEND_TIMEOUT_MS
+    )
+    .catch((error) => {
+      // No answer is not a "no": the API may have taken the message and still deliver it.
+      if (error instanceof HumanApiError && error.status === 0) {
+        throw new HumanApiError(
+          0,
+          'The Human API did not confirm the message in time. It may still reach the person, so do not send it again right away: tell the user it is unconfirmed, and send it again only if they ask.'
+        );
+      }
+
+      throw error;
+    });
 
   if (created.failedTo?.length) {
     throw new HumanApiError(
@@ -71,14 +89,17 @@ const SHORTEST_CHECK_MS = 1_000;
  * is then. Given the interaction that was just sent, it always returns one: a check that fails or takes
  * too long leaves the request open, and the tool still gets its id to wait on. Given only an id, the
  * first check has to succeed, because nothing is known about the request yet.
+ *
+ * `since` is when the tool's call began. Counting from there keeps a slow send from adding to the wait.
  */
 export async function waitForAnswer(
   api: HumanApi,
   sent: Interaction | string,
   seconds: number,
-  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  since: number = Date.now()
 ): Promise<Interaction> {
-  const deadline = Date.now() + Math.min(Math.max(seconds, 0), MAX_WAIT_SECONDS) * 1000;
+  const deadline = since + Math.min(Math.max(seconds, 0), MAX_WAIT_SECONDS) * 1000;
   const id = typeof sent === 'string' ? sent : sent.id;
   // No check takes longer than what is left of the wait.
   const check = () =>
