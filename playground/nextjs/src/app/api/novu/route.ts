@@ -1,7 +1,7 @@
 import { serve } from '@novu/framework/next';
-import { humanHitlAgent } from '@/app/novu/agents';
-import { langchainVisionAgent } from '@/app/novu/langchain-vision';
-import { aiSdkRuntimeAgent, customCodeAgent, langchainRuntimeAgent } from '@/app/novu/runtime-agents';
+import { aiSdkAgent } from '@/app/novu/agents/ai-sdk-agent';
+import { customCodeAgent } from '@/app/novu/agents/custom-code-agent';
+import { langchainAgent } from '@/app/novu/agents/langchain-agent';
 import {
   allChannelsWorkflow,
   delayCustomWorkflow,
@@ -12,5 +12,5 @@ import {
 
 export const { GET, POST, OPTIONS } = serve({
   workflows: [welcomeWorkflow, allChannelsWorkflow, delayCustomWorkflow, digestWorkflow, throttleWorkflow],
-  agents: [langchainVisionAgent, humanHitlAgent, customCodeAgent, aiSdkRuntimeAgent, langchainRuntimeAgent],
+  agents: [customCodeAgent, aiSdkAgent, langchainAgent],
 });

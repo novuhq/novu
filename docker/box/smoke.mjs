@@ -13,7 +13,7 @@
 // (@novu/framework): sync, preview, every channel, skip, delay with a custom
 // step, digest, throttle, Local mode discovery and the bridge URL guard, and
 // chats with its agents over web chat (cards, actions, metadata, tool
-// approval, workflow trigger, resolve; custom code, AI SDK and LangChain).
+// approval, HITL approval, workflow trigger, resolve; custom code, AI SDK and LangChain).
 // Writes smoke.json with every check and its timing into the artifact dir.
 
 import fs from 'node:fs';
@@ -306,7 +306,11 @@ try {
       headers: { ...auth(), 'Novu-Environment-Id': env.id },
     });
     const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
-    const put = await fetch(body.data.signedUrl, { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: bytes });
+    const put = await fetch(body.data.signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'image/png' },
+      body: bytes,
+    });
     if (!put.ok) throw new Error(`PUT -> ${put.status}: ${(await put.text()).slice(0, 200)}`);
     const get = await fetch(body.data.path);
     if (!get.ok) throw new Error(`GET ${body.data.path} -> ${get.status}`);
@@ -328,14 +332,23 @@ try {
   const mailpit = async (query) =>
     (await (await fetch(`${MAIL}/api/v1/search?query=${encodeURIComponent(query)}`)).json()).messages ?? [];
   const inbox = async () =>
-    (await call('/v1/inbox/notifications?limit=50', { headers: { Authorization: `Bearer ${subscriberToken}` } })).body.data;
+    (await call('/v1/inbox/notifications?limit=50', { headers: { Authorization: `Bearer ${subscriberToken}` } })).body
+      .data;
 
   await check('bridge app is synced (framework)', async () => {
     const { body: status } = await call('/v1/bridge/status', { headers: bridgeAuth });
     if (status.data.status !== 'ok') throw new Error(`bridge status ${status.data.status}`);
     const { body } = await call('/v2/workflows?limit=50', { headers: keyAuth });
-    const external = body.data.workflows.filter((workflow) => workflow.origin === 'external').map((workflow) => workflow.workflowId);
-    const expected = ['welcome-workflow', 'all-channels-workflow', 'delay-custom-workflow', 'digest-workflow', 'throttle-workflow'];
+    const external = body.data.workflows
+      .filter((workflow) => workflow.origin === 'external')
+      .map((workflow) => workflow.workflowId);
+    const expected = [
+      'welcome-workflow',
+      'all-channels-workflow',
+      'delay-custom-workflow',
+      'digest-workflow',
+      'throttle-workflow',
+    ];
     if (!expected.every((id) => external.includes(id))) throw new Error(`external workflows: ${external.join(', ')}`);
 
     return { sdkVersion: status.data.sdkVersion, discovered: status.data.discovered, workflows: external };
@@ -361,7 +374,8 @@ try {
       for (const channel of ['sms', 'chat']) {
         if (!(await mailpit(`tag:${channel} "${run}"`)).length) throw new Error(`no ${channel} yet`);
       }
-      if (!(await inbox()).some((message) => message.body === `Bridge in-app for ${run}`)) throw new Error('no in-app yet');
+      if (!(await inbox()).some((message) => message.body === `Bridge in-app for ${run}`))
+        throw new Error('no in-app yet');
       const { body } = await call(`/v1/notifications?page=0&transactionId=${transaction}`, { headers: keyAuth });
       const jobs = body.data.find((entry) => entry.transactionId === transaction)?.jobs ?? [];
       // A step skipped by the bridge ends as a canceled job, and nothing reaches the provider.
@@ -421,9 +435,9 @@ try {
   // Self-hosted agents from the bridge app (playground/nextjs), chatting over web chat as the subscriber above.
   const subscriberAuth = { Authorization: `Bearer ${subscriberToken}` };
   const agentEvents = async (conversation) =>
-    (await call(`/v1/web-chat/conversations/${conversation}/events?limit=100`, { headers: subscriberAuth })).body.data.events.map(
-      (envelope) => envelope.event
-    );
+    (
+      await call(`/v1/web-chat/conversations/${conversation}/events?limit=100`, { headers: subscriberAuth })
+    ).body.data.events.map((envelope) => envelope.event);
   const waitForEvent = (conversation, what, predicate) =>
     until(what, async () => {
       const event = (await agentEvents(conversation)).findLast(predicate);
@@ -438,8 +452,13 @@ try {
       headers: subscriberAuth,
       body: JSON.stringify({ agentId, ...(conversation ? { conversationIdentifier: conversation } : {}), ...body }),
     });
-    const event = await waitForEvent(sent.data.identifier, `reply "${reply}"`, (item) =>
-      item.type === 'message' && item.role === 'assistant' && (typeof reply === 'string' ? item.content?.markdown === reply : reply(item))
+    const event = await waitForEvent(
+      sent.data.identifier,
+      `reply "${reply}"`,
+      (item) =>
+        item.type === 'message' &&
+        item.role === 'assistant' &&
+        (typeof reply === 'string' ? item.content?.markdown === reply : reply(item))
     );
 
     return { conversation: sent.data.identifier, event };
@@ -449,7 +468,8 @@ try {
     const urls = {};
     for (const agentId of ['custom-code-agent', 'ai-sdk-agent', 'langchain-agent']) {
       const { body } = await call(`/v1/agents/${agentId}`, { headers: keyAuth });
-      if (body.data.bridgeUrl !== 'http://bridge.box.internal:4000/api/novu') throw new Error(`${agentId} bridgeUrl ${body.data.bridgeUrl}`);
+      if (body.data.bridgeUrl !== 'http://bridge.box.internal:4000/api/novu')
+        throw new Error(`${agentId} bridgeUrl ${body.data.bridgeUrl}`);
       urls[agentId] = body.data.bridgeUrl;
     }
 
@@ -458,11 +478,22 @@ try {
 
   let customCode;
   await check('custom-code agent replies with a card (table, chart, buttons)', async () => {
-    const { conversation, event } = await chat('custom-code-agent', null, { text: 'card' }, (item) => item.content?.card);
+    const { conversation, event } = await chat(
+      'custom-code-agent',
+      null,
+      { text: 'card' },
+      (item) => item.content?.card
+    );
     customCode = conversation;
     const types = event.content.card.children.map((child) => child.type);
-    for (const type of ['table', 'chart', 'link', 'actions']) if (!types.includes(type)) throw new Error(`card has ${types.join(', ')}`);
-    await chat('custom-code-agent', customCode, { actionId: 'pick', sourceMessageId: event.messageId, value: 'blue' }, 'Clicked pick = blue');
+    for (const type of ['table', 'chart', 'link', 'actions'])
+      if (!types.includes(type)) throw new Error(`card has ${types.join(', ')}`);
+    await chat(
+      'custom-code-agent',
+      customCode,
+      { actionId: 'pick', sourceMessageId: event.messageId, value: 'blue' },
+      'Clicked pick = blue'
+    );
 
     return { conversation, children: types, clicked: 'pick = blue' };
   });
@@ -483,8 +514,14 @@ try {
       body: JSON.stringify({ agentId, text }),
     });
     const conversation = body.data.identifier;
-    const request = await waitForEvent(conversation, 'tool approval request', (item) => item.type === 'tool-approval-request');
-    const { event } = await chat(agentId, conversation, { actionId: request.approveActionId }, (item) => item.content?.markdown?.includes('21'));
+    const request = await waitForEvent(
+      conversation,
+      'tool approval request',
+      (item) => item.type === 'tool-approval-request'
+    );
+    const { event } = await chat(agentId, conversation, { actionId: request.approveActionId }, (item) =>
+      item.content?.markdown?.includes('21')
+    );
 
     return { conversation, tool: request.toolName, input: request.input, reply: event.content.markdown };
   };
@@ -513,14 +550,85 @@ try {
     });
   });
 
-  await check('AI SDK agent runs a tool after approval', () => approveTool('ai-sdk-agent', 'What is the weather in Lima?'));
-  await check('LangChain agent runs a tool after approval', () => approveTool('langchain-agent', 'What is the weather in Oslo?'));
+  await check('AI SDK agent runs a tool after approval', () =>
+    approveTool('ai-sdk-agent', 'What is the weather in Lima?')
+  );
+  await check('LangChain agent runs a tool after approval', () =>
+    approveTool('langchain-agent', 'What is the weather in Oslo?')
+  );
 
-  // The managed agent exists only on a box started with NOVU_MANAGED_CLAUDE_API_KEY. It calls Anthropic for real.
-  if (await call('/v1/agents/box-managed', { headers: keyAuth }).then(() => true, () => false)) {
+  // ctx.approve posts a card whose buttons carry `human:<id>:approve|deny`; the answer comes back on onAction.
+  const approveHuman = async (agentId, text, reply) => {
+    const { body } = await call('/v1/web-chat/conversations', {
+      method: 'POST',
+      headers: subscriberAuth,
+      body: JSON.stringify({ agentId, text }),
+    });
+    const conversation = body.data.identifier;
+    const card = await waitForEvent(conversation, 'approval card', (item) =>
+      JSON.stringify(item.content?.card ?? {}).includes(':approve"')
+    );
+    await waitForEvent(conversation, 'end of the turn', (item) => item.type === 'run-finish');
+    const before = new Set((await agentEvents(conversation)).map((item) => item.messageId));
+    const approveId = card.content.card.children
+      .flatMap((child) => child.children ?? [])
+      .find((button) => button.id?.endsWith(':approve')).id;
+    const { event } = await chat(
+      agentId,
+      conversation,
+      { actionId: approveId, sourceMessageId: card.messageId },
+      (item) => !before.has(item.messageId) && reply(item)
+    );
+
+    return { conversation, card: card.content.card.title, reply: event.content.markdown };
+  };
+
+  await check('custom-code agent continues after a HITL approval', () =>
+    approveHuman(
+      'custom-code-agent',
+      'approve',
+      (item) => item.content?.markdown === 'Got it — approve is **approved** (approve).'
+    )
+  );
+
+  // The managed agent exists only on a box started with NOVU_MANAGED_CLAUDE_API_KEY, which also puts the AI SDK
+  // and LangChain agents on Claude. Without it they run on scripted models that only know the weather tool.
+  const withClaude = await call('/v1/agents/box-managed', { headers: keyAuth }).then(
+    () => true,
+    () => false
+  );
+  if (withClaude) {
+    for (const [agentId, name] of [
+      ['ai-sdk-agent', 'AI SDK'],
+      ['langchain-agent', 'LangChain'],
+    ]) {
+      await check(`${name} agent shows a card through a tool (Claude)`, async () => {
+        const { conversation } = await chat(
+          agentId,
+          null,
+          { text: 'Show me the demo card' },
+          (item) => item.content?.card?.title === 'Demo card'
+        );
+
+        return { conversation };
+      });
+      await check(`${name} agent continues after a HITL approval (Claude)`, () =>
+        approveHuman(agentId, 'Please get my approval before deploying v2 to production', (item) =>
+          Boolean(item.content?.markdown)
+        )
+      );
+    }
+  }
+
+  if (withClaude) {
     const managedReply = (text) => (item) => item.content?.markdown?.includes(text);
     await check('managed agent replies (Claude Haiku through thalamus)', async () => {
-      const { conversation, event } = await chat('box-managed', null, { text: 'Reply with exactly: BOX-OK' }, managedReply('BOX-OK'));
+      const { conversation, event } = await chat(
+        'box-managed',
+        null,
+        { text: 'Reply with exactly: BOX-OK' },
+        managedReply('BOX-OK')
+      );
 
       return { conversation, reply: event.content.markdown };
     });
@@ -529,10 +637,17 @@ try {
       const { body } = await call('/v1/web-chat/conversations', {
         method: 'POST',
         headers: subscriberAuth,
-        body: JSON.stringify({ agentId: 'box-managed', text: 'Use the bash tool to run: echo BOX-$((6*7)) Then reply with only its output.' }),
+        body: JSON.stringify({
+          agentId: 'box-managed',
+          text: 'Use the bash tool to run: echo BOX-$((6*7)) Then reply with only its output.',
+        }),
       });
       const conversation = body.data.identifier;
-      const request = await waitForEvent(conversation, 'tool approval request', (item) => item.type === 'tool-approval-request');
+      const request = await waitForEvent(
+        conversation,
+        'tool approval request',
+        (item) => item.type === 'tool-approval-request'
+      );
       await chat('box-managed', conversation, { actionId: request.approveActionId }, managedReply('BOX-42'));
 
       return { conversation, tool: request.toolName, input: request.input };
@@ -552,7 +667,8 @@ try {
   // throttle key lands on a node without it (FIDELITY.md, "Bugs found").
   await check('bridge throttle lets 1 of 2 triggers through', async () => {
     for (const n of [1, 2]) await triggerBridge('throttle-workflow', { run, n });
-    const throttled = async () => (await inbox()).filter((message) => message.body.startsWith(`Bridge throttle ${run}`));
+    const throttled = async () =>
+      (await inbox()).filter((message) => message.body.startsWith(`Bridge throttle ${run}`));
     await until('first throttle message', async () => {
       const messages = await throttled();
       if (!messages.length) throw new Error('no in-app yet');

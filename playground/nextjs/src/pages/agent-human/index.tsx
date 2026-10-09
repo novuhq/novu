@@ -2,7 +2,7 @@ import { type FormEvent, useId, useState } from 'react';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 
-const AGENT_IDENTIFIER = 'human-hitl';
+const AGENT_IDENTIFIER = 'custom-code-agent';
 
 const KINDS = ['approve', 'ask', 'choose', 'tell'] as const;
 

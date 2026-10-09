@@ -4,11 +4,12 @@ import type { ChatResult } from '@langchain/core/outputs';
 import { MockLanguageModelV4 } from 'ai/test';
 
 /**
- * Stand-ins for Claude when `ANTHROPIC_API_KEY` is not set, so the runtime agents still
- * exercise the tool approval flow: "weather <city>" asks for a gated `get_weather` call,
- * a tool result becomes the final answer, anything else is echoed.
+ * Stand-ins for Claude when `ANTHROPIC_API_KEY` is not set, so the AI SDK and LangChain agents
+ * still exercise the tool approval flow: "weather <city>" asks for a gated `get_weather` call and
+ * a tool result becomes the final answer. Anything else gets `NO_KEY`.
  */
-export const cityOf = (text: string) => text.match(/weather(?: in)? ([\p{L}-]+)/iu)?.[1] ?? 'Berlin';
+const NO_KEY = 'No ANTHROPIC_API_KEY, so I can only check the weather. custom-code-agent has every feature without a model.';
+const cityOf = (text: string) => text.match(/weather(?: in)? ([\p{L}-]+)/iu)?.[1] ?? 'Berlin';
 
 const usage = {
   inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
@@ -40,7 +41,7 @@ export const scriptedAiSdkModel = new MockLanguageModelV4({
     }
 
     return {
-      content: [{ type: 'text', text: `ai-sdk echo: ${text}` }],
+      content: [{ type: 'text', text: NO_KEY }],
       finishReason: { unified: 'stop', raw: 'stop' },
       usage,
       warnings: [],
@@ -69,7 +70,7 @@ export class ScriptedChatModel extends BaseChatModel {
         tool_calls: [{ id: `call-${Date.now()}`, name: 'get_weather', args: { city: cityOf(text) }, type: 'tool_call' }],
       });
     } else {
-      message = new AIMessage(`langchain echo: ${text}`);
+      message = new AIMessage(NO_KEY);
     }
 
     return { generations: [{ text: message.text, message }] };
