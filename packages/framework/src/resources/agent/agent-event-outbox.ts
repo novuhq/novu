@@ -67,7 +67,7 @@ export class AgentEventOutbox {
 
     const batch = this.buffer;
     this.buffer = [];
-    this.chain = this.chain.then(() => this.postBatchWithRetry(batch));
+    this.chain = this.chain.catch(() => undefined).then(() => this.postBatchWithRetry(batch));
 
     return this.chain;
   }
