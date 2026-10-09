@@ -232,6 +232,81 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  /** Inbound human messages newer than `since` (all of them when absent) — the Human inbox unread count. */
+  async countInboundMessagesSince(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    since?: string;
+  }): Promise<number> {
+    return this.count({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+      type: ConversationActivityTypeEnum.MESSAGE,
+      senderType: {
+        $in: [ConversationActivitySenderTypeEnum.SUBSCRIBER, ConversationActivitySenderTypeEnum.PLATFORM_USER],
+      },
+      ...(params.since ? { createdAt: { $gt: new Date(params.since) } } : {}),
+    });
+  }
+
+  /**
+   * Messages and human-interaction rows of a thread for the Human inbox, newest first. `before` is
+   * the identifier of the oldest row of the previous page.
+   */
+  async findInboxMessages(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    limit: number;
+    before?: string;
+  }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
+    const scope = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+    };
+    const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
+      ...scope,
+      $or: [
+        {
+          type: ConversationActivityTypeEnum.MESSAGE,
+          senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
+        },
+        {
+          type: {
+            $in: [
+              ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+              ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+            ],
+          },
+        },
+      ],
+    };
+
+    if (params.before) {
+      const cursor = await this.findOne({ ...scope, identifier: params.before }, ['_id', 'createdAt']);
+
+      if (!cursor) {
+        return { data: [], hasMore: false };
+      }
+
+      query.$and = [
+        {
+          $or: [
+            { createdAt: { $lt: new Date(cursor.createdAt) } },
+            { createdAt: new Date(cursor.createdAt), _id: { $lt: new Types.ObjectId(cursor._id) } },
+          ],
+        },
+      ];
+    }
+
+    const rows = await this.find(query, '*', { sort: { createdAt: -1, _id: -1 }, limit: params.limit + 1 });
+
+    return { data: rows.slice(0, params.limit), hasMore: rows.length > params.limit };
+  }
+
   async countActivities(environmentId: string, organizationId: string, conversationId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,

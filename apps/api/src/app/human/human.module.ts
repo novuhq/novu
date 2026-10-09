@@ -24,11 +24,13 @@ import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/r
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
+import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController } from './human-invites-public.controller';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
+import { HumanInboxService } from './services/human-inbox.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
@@ -36,6 +38,7 @@ import { CancelInteraction } from './usecases/cancel-interaction/cancel-interact
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
+import { CreateInboxInteraction } from './usecases/create-inbox-interaction/create-inbox-interaction.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
 import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human-account.usecase';
@@ -44,12 +47,17 @@ import { EnsureBackingOrganization } from './usecases/ensure-backing-organizatio
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
 import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
+import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
+import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
+import { ReplyInboxThread } from './usecases/reply-inbox-thread/reply-inbox-thread.usecase';
+import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
@@ -68,7 +76,12 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     TelegramLinkingModule,
     forwardRef(() => IntegrationModule),
   ],
-  controllers: [HumanInteractionsController, HumanInvitesPublicController, HumanAccountsController],
+  controllers: [
+    HumanInteractionsController,
+    HumanInboxController,
+    HumanInvitesPublicController,
+    HumanAccountsController,
+  ],
   providers: [
     HumanInteractionRepository,
     HumanContactRepository,
@@ -111,6 +124,13 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     GetHumanCliLogin,
     DenyHumanCliLogin,
     GetKeylessClaimToken,
+    HumanInboxService,
+    ListInboxThreads,
+    GetInboxThread,
+    MarkInboxRead,
+    ResolveInboxThread,
+    ReplyInboxThread,
+    CreateInboxInteraction,
   ],
 })
 export class HumanModule {}

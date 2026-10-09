@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, FeatureFlagsService, PinoLogger, shortId } from '@novu/application-generic';
-import { ChannelEndpointRepository, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import {
+  ChannelEndpointRepository,
+  ConversationRepository,
+  HumanInteractionEntity,
+  HumanInteractionRepository,
+} from '@novu/dal';
 import { parseApprovalActionId } from '@novu/framework/internal';
 import {
   buildToolApprovalRequestId,
@@ -46,7 +51,8 @@ export class HumanInteractionInboundService {
     private readonly cacheService: CacheService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly logger: PinoLogger,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly conversationRepository: ConversationRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -265,7 +271,26 @@ export class HumanInteractionInboundService {
     return { approvalId: managed.toolUseId, approved: managed.approved, optionId };
   }
 
+  /**
+   * A message this service handled (a card answer, a disambiguation, a rejected responder) is already
+   * delivered, so it moves the Human inbox read cursor past itself instead of showing up as unread.
+   */
   async tryHandleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
+    const result = await this.handleMessage(turn, mode);
+
+    if (result.outcome !== 'ignored' && turn.conversation?._id) {
+      await this.conversationRepository.markRead(
+        turn.config.environmentId,
+        turn.config.organizationId,
+        turn.conversation._id,
+        new Date().toISOString()
+      );
+    }
+
+    return result;
+  }
+
+  private async handleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
     const text = turn.message?.text?.trim();
     if (!text) {
       return { outcome: 'ignored' };
@@ -291,13 +316,8 @@ export class HumanInteractionInboundService {
     const askAddressing = await Promise.all(pendingAsks.map((ask) => this.isAddressedHuman(turn, ask)));
     const addressedAsks = pendingAsks.filter((_ask, index) => askAddressing[index]);
 
+    // Free text that answers nothing stays unread in the Human inbox for the agent to pick up.
     if (addressedAsks.length === 0) {
-      if (mode === 'relay') {
-        await this.replyOnThread(turn, 'Nothing is waiting for your reply right now.');
-
-        return { outcome: 'consumed' };
-      }
-
       return { outcome: 'ignored' };
     }
 

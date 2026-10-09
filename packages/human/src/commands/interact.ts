@@ -211,7 +211,7 @@ export function parseIdLabelOption(raw: string): HumanOptionInput {
   return raw;
 }
 
-function buildInteractionCard(params: {
+export function buildInteractionCard(params: {
   title: string;
   icon?: string;
   subtitle?: string;

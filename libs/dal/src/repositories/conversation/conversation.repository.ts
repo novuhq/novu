@@ -207,7 +207,8 @@ export class ConversationRepository extends BaseRepositoryV2<
     organizationId: string,
     id: string,
     messagePreview: string,
-    session?: ClientSession | null
+    session?: ClientSession | null,
+    options?: { humanMessageAt?: string }
   ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
@@ -216,10 +217,89 @@ export class ConversationRepository extends BaseRepositoryV2<
           lastActivityAt: new Date().toISOString(),
           lastMessagePreview: messagePreview.slice(0, 200),
         },
+        ...(options?.humanMessageAt ? { $max: { lastHumanMessageAt: options.humanMessageAt } } : {}),
         $inc: { messageCount: 1 },
       },
       session ? { session } : {}
     );
+  }
+
+  /**
+   * Advances the Human inbox read cursor. `$max` keeps concurrent readers from moving it backwards.
+   */
+  async markRead(environmentId: string, organizationId: string, id: string, readUpTo: string): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $max: { lastReadAt: readUpTo } }
+    );
+  }
+
+  async findByAgentAndIdentifier(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    identifier: string
+  ): Promise<ConversationEntity | null> {
+    return this.findOne(
+      { _environmentId: environmentId, _organizationId: organizationId, _agentId: agentId, identifier },
+      '*'
+    );
+  }
+
+  /**
+   * Threads of one agent for the Human inbox, newest activity first. A thread is unread while its
+   * newest human message is newer than its read cursor. `after` is the identifier of the last
+   * thread of the previous page.
+   */
+  async findInboxThreads(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    unreadOnly?: boolean;
+    includeResolved?: boolean;
+    limit: number;
+    after?: string;
+  }): Promise<{ data: ConversationEntity[]; next: string | null }> {
+    const scope = { _environmentId: params.environmentId, _organizationId: params.organizationId };
+    const query: FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds = { ...scope, _agentId: params.agentId };
+    const and: FilterQuery<ConversationDBModel>[] = [];
+
+    if (!params.includeResolved) {
+      query.status = ConversationStatusEnum.ACTIVE;
+    }
+
+    if (params.unreadOnly) {
+      query.lastHumanMessageAt = { $exists: true };
+      and.push({ $expr: { $lt: ['$lastReadAt', '$lastHumanMessageAt'] } });
+    }
+
+    if (params.after) {
+      const cursor = await this.findOne({ ...scope, _agentId: params.agentId, identifier: params.after }, [
+        '_id',
+        'lastActivityAt',
+      ]);
+
+      if (!cursor) {
+        return { data: [], next: null };
+      }
+
+      and.push({
+        $or: [
+          { lastActivityAt: { $lt: cursor.lastActivityAt } },
+          { lastActivityAt: cursor.lastActivityAt, _id: { $lt: new Types.ObjectId(cursor._id) } },
+        ],
+      });
+    }
+
+    if (and.length) {
+      query.$and = and;
+    }
+
+    const rows = await this.find(query, '*', { sort: { lastActivityAt: -1, _id: -1 }, limit: params.limit + 1 });
+    const data = rows.slice(0, params.limit);
+    const next = rows.length > params.limit ? (data[data.length - 1]?.identifier ?? null) : null;
+
+    return { data, next };
   }
 
   async incrementMessageCount(

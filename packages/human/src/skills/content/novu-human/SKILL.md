@@ -37,3 +37,12 @@ Call `ctx.ask`, `ctx.approve`, `ctx.choose`, or `ctx.tell`. The verdict arrives 
 ### Unattended (CLI / cron / no live thread)
 
 Use the `human-cli` skill and the `human` CLI (`human ask|approve|choose|tell`).
+
+To handle messages humans send first (on any connected channel), pull them from the inbox and answer in the same thread. Free text that doesn't settle a pending card stays unread there, and they get no automatic reply.
+
+```bash
+human inbox unread --wait 25 --json        # exit 11 when nothing arrived
+human inbox show <id> --json               # marks it read
+human inbox reply <id> "<text>"            # or: human inbox approve <id> "<action>"
+human inbox resolve <id>
+```

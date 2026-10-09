@@ -233,6 +233,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ConversationActivityLedger,
     HumanInteractionSettlementService,
     HumanInteractionActivityRecorder,
+    AgentConversationService,
+    CreateConversationInteraction,
   ],
 })
 export class AgentsModule {}

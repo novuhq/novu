@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 import { type Interaction, interactionOptions } from './api/human';
+import type { InboxMessage, InboxThread, InboxThreadView } from './api/inbox';
 
 /**
  * Exit-code contract (stable — agents branch on these):
@@ -77,6 +78,74 @@ export function emitResult(interaction: Interaction, asJson: boolean): number {
   }
 
   return exitCodeFor(interaction);
+}
+
+const PREVIEW_LENGTH = 60;
+
+function truncate(text: string, length: number): string {
+  const singleLine = text.replace(/\s+/g, ' ').trim();
+
+  return singleLine.length > length ? `${singleLine.slice(0, length - 1)}…` : singleLine;
+}
+
+export function formatRelativeTime(iso: string, now: number = Date.now()): string {
+  const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
+
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h ago`;
+
+  return `${Math.floor(seconds / 86_400)}d ago`;
+}
+
+function threadSender(thread: InboxThread): string {
+  return thread.from?.name ?? thread.from?.subscriberId ?? 'unknown';
+}
+
+/** `● conv_x  telegram  Ada  2 unread  "preview"  3m ago` — one line per thread. */
+export function formatInboxThreadLine(thread: InboxThread, now: number = Date.now()): string {
+  const marker = thread.unreadCount > 0 ? pc.cyan('●') : ' ';
+  const unread = thread.unreadCount > 0 ? pc.cyan(`${thread.unreadCount} unread`) : pc.dim('read');
+  const resolved = thread.status === 'resolved' ? pc.dim(' (resolved)') : '';
+  const lastMessage = thread.lastMessage;
+  const preview = lastMessage
+    ? `${lastMessage.from === 'agent' ? pc.dim('you: ') : ''}"${truncate(lastMessage.text, PREVIEW_LENGTH)}"`
+    : pc.dim('(no messages)');
+  const at = pc.dim(formatRelativeTime(lastMessage?.at ?? thread.lastActivityAt, now));
+
+  return `${marker} ${thread.id}  ${thread.channel.padEnd(8)}  ${threadSender(thread)}  ${unread}${resolved}  ${preview}  ${at}`;
+}
+
+function formatInboxMessage(message: InboxMessage): string {
+  const at = pc.dim(new Date(message.at).toLocaleString());
+  const who = message.from === 'human' ? pc.bold(message.senderName ?? 'human') : pc.dim(message.from);
+  const lines = [`${at}  ${who}`];
+
+  if (message.interaction) {
+    const status = message.interaction.status ? ` → ${message.interaction.status}` : '';
+    lines.push(pc.yellow(`  [${message.interaction.kind} ${message.interaction.id}${status}]`));
+  }
+
+  if (message.text) {
+    lines.push(...message.text.split('\n').map((line) => `  ${line}`));
+  }
+
+  for (const attachment of message.attachments ?? []) {
+    lines.push(pc.dim(`  📎 ${attachment.name ?? attachment.type ?? 'attachment'}`));
+  }
+
+  return lines.join('\n');
+}
+
+export function formatInboxThreadView(view: InboxThreadView): string {
+  const { thread } = view;
+  const header = `${pc.bold(thread.id)}  ${thread.channel}  ${threadSender(thread)}  ${pc.dim(thread.status)}`;
+  const older = view.hasMore
+    ? [pc.dim(`(older messages: human inbox show ${thread.id} --before ${view.messages[0]?.id})`)]
+    : [];
+  const body = view.messages.length ? view.messages.map(formatInboxMessage) : [pc.dim('(no messages)')];
+
+  return [header, ...older, ...body].join('\n\n');
 }
 
 export function fail(message: string): never {
