@@ -193,6 +193,33 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     return result.data;
   }
 
+  /**
+   * Processing workflow runs of one organization within exactly `[startDate, endDate)`.
+   */
+  async getOrganizationWorkflowRunsCount(organizationId: string, startDate: Date, endDate: Date): Promise<number> {
+    const query = `
+      SELECT count() as count
+      FROM ${TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND entity_type = 'workflow_run'
+        AND event_type = 'workflow_run_status_processing'
+        AND created_at >= {startDate:DateTime64(3, 'UTC')}
+        AND created_at < {endDate:DateTime64(3, 'UTC')}
+    `;
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params: {
+        organizationId,
+        startDate: LogRepository.formatDateTime64(startDate),
+        endDate: LogRepository.formatDateTime64(endDate),
+      },
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
+  }
+
   async getMessagesSentCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
     if (environmentIds.length === 0) {
       this.logger.info(

@@ -94,6 +94,29 @@ function getWorkflowRunsUsageState({ events }: SubscriptionUsage, onDemandFrom: 
   return 'within_included';
 }
 
+export const OVERAGE_WARNING_RATIO = 0.9;
+
+/**
+ * Plans with configurable limits that pause at the limit, once `OVERAGE_WARNING_RATIO` of the on-demand allowance
+ * is used and usage is not paused yet. The pause point stays `included + onDemandLimit`; the usage-alert allowance
+ * override does not move it.
+ */
+export function isNearingOverageLimit(view: Pick<UsageLimitsView, 'usage' | 'settings' | 'isConfigurable'>): boolean {
+  const { usage, settings, isConfigurable } = view;
+
+  if (!isConfigurable || usage.state === 'paused' || !settings.pauseAtLimit) {
+    return false;
+  }
+
+  const { onDemandLimit } = usage;
+
+  if (onDemandLimit === null || onDemandLimit <= 0) {
+    return false;
+  }
+
+  return usage.current - usage.included >= onDemandLimit * OVERAGE_WARNING_RATIO;
+}
+
 function getPausedUsagePlan({ apiServiceLevel, events }: SubscriptionUsage): PausedUsagePlan | null {
   if (!events.isPaused) {
     return null;

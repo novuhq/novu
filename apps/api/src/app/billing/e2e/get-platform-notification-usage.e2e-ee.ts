@@ -17,7 +17,7 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   const communityOrganizationRepo = new CommunityOrganizationRepository();
 
   const mockWorkflowRunCountRepository = {
-    getPlatformUsageByDateRange: sinon.stub().resolves([]),
+    getPlatformUsageByWholeUtcDays: sinon.stub().resolves([]),
   };
 
   const mockFeatureFlagsService = {
@@ -37,8 +37,8 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    mockWorkflowRunCountRepository.getPlatformUsageByDateRange.reset();
-    mockWorkflowRunCountRepository.getPlatformUsageByDateRange.resolves([]);
+    mockWorkflowRunCountRepository.getPlatformUsageByWholeUtcDays.reset();
+    mockWorkflowRunCountRepository.getPlatformUsageByWholeUtcDays.resolves([]);
     mockFeatureFlagsService.getFlag.reset();
     mockFeatureFlagsService.getFlag.resolves(false);
   });
@@ -125,8 +125,8 @@ describe('GetOrganizationPeriodUsage #novu-v2', () => {
   const environmentRepo = new EnvironmentRepository();
   const notificationRepo = new NotificationRepository();
 
-  const mockWorkflowRunCountRepository = {
-    getPlatformUsageByDateRange: sinon.stub().resolves([]),
+  const mockTraceLogRepository = {
+    getOrganizationWorkflowRunsCount: sinon.stub().resolves(0),
   };
 
   const mockFeatureFlagsService = {
@@ -140,7 +140,7 @@ describe('GetOrganizationPeriodUsage #novu-v2', () => {
 
   const createUseCase = () => {
     return new GetOrganizationPeriodUsage(
-      mockWorkflowRunCountRepository,
+      mockTraceLogRepository,
       environmentRepo,
       notificationRepo,
       mockFeatureFlagsService,
