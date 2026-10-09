@@ -2641,11 +2641,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
     });
 
     await handler.createHandler()();
-    await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
 
-    const logged = errorSpy.mock.calls[0].join(' ');
-    expect(logged).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway');
-    expect(logged).not.toContain('<p>error</p>');
+    const logged = () => errorSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+    await vi.waitFor(() =>
+      expect(logged()).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway')
+    );
+    expect(logged()).not.toContain('<p>error</p>');
 
     errorSpy.mockRestore();
   });
