@@ -39,18 +39,21 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 | Novu demo providers | Absent (`NOVU_EMAIL_INTEGRATION_API_KEY`, `NOVU_SMS_INTEGRATION_*`) | - | The "Novu" email/SMS demo integrations |
 | Inbox | Real (socket worker, `VITE_WEBSOCKET_TYPE=cloud`) | Realtime, feed, preferences | - |
 
-## Code-first workflows (bridge app)
+## Code-first workflows and agents (bridge app)
 
-The `bridge` process serves workflows with the checkout's `@novu/framework`, signed with the Development secret key,
-through the same SSRF guard as a customer's bridge (allow-listed as `bridge.box.internal`).
+The `bridge` process serves workflows and three self-hosted agents with the checkout's `@novu/framework`, signed
+with the Development secret key, through the same SSRF guard as a customer's bridge (allow-listed as
+`bridge.box.internal`). Agents reply through the public API URL, which Caddy also serves inside the box.
 
 | Area | Difference |
 |---|---|
 | Environments | Only Development is synced; Production would need its own secret key and a second sync |
-| Bridge app dependencies | `express` and `zod` come from `packages/framework`'s own dev dependencies, so they follow the PR |
+| Bridge app dependencies | `express`, `zod`, `ai`, `langchain` and `@langchain/core` come from `packages/framework`'s own dependencies, so they follow the PR |
 | Content renderers | No react-email, Vue or Svelte templates; they render inside the customer's app, outside Novu |
 | `novu dev` tunnel (novu.sh) | Not used; Local mode is tested by pointing it at the bridge directly |
-| Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same `POST /v1/bridge/sync` they make |
+| Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same requests they make (`POST /v1/bridge/sync`, then `PUT /v1/agents/:id/bridge`), but signs the agent discovery (see "Bugs found") |
+| Agent models | Scripted fakes (`MockLanguageModelV4` from `ai/test`, a `BaseChatModel` subclass); no provider calls, streaming or real tool choice |
+| Agent channels | Web chat only; Slack, Teams, WhatsApp and the rest need partner apps |
 
 ## Auth, billing and flags
 
@@ -65,10 +68,10 @@ through the same SSRF guard as a customer's bridge (allow-listed as `bridge.box.
 | Feature | Effect in the box | Why |
 |---|---|---|
 | Novu's own account (`NOVU_API_KEY`, `NOVU_SECRET_API_KEY`, `VITE_NOVU_APP_ID`) | Invite, invite-accepted and password-reset emails are skipped; the header Inbox bell (outside the workflow editor) gets 422; `/v1/novu/context` returns 500 | These are production keys; the box uses none |
-| Keyless trial (`KEYLESS_ORGANIZATION_ID`, `KEYLESS_USER_EMAIL`) | Try-before-signup Inbox and keyless Connect don't work | Creating a keyless environment also needs `NOVU_MANAGED_CLAUDE_API_KEY` and the flags `IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED` and `IS_DEMO_MANAGED_CLAUDE_ENABLED`; that key also turns on Novu-managed Claude in every new environment |
+| Keyless trial (`KEYLESS_ORGANIZATION_ID`, `KEYLESS_USER_EMAIL`) | Try-before-signup Inbox and keyless Connect don't work | Creating a keyless environment also needs `NOVU_MANAGED_CLAUDE_API_KEY` and the flags `IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED` and `IS_DEMO_MANAGED_CLAUDE_ENABLED`; that key also adds a Novu-managed Claude integration to every new Development environment while that flag is on |
 | Blueprints (`BLUEPRINT_CREATOR`) | Template gallery of the old `/blueprints` API is empty | The current dashboard doesn't use it |
 | Sanity CMS | Changelog cards and agent-template deep links fail (CORS) | `http://localhost:14200` isn't in the project's CORS origins |
-| AI (`AI_LLM_*`, `NOVU_MANAGED_CLAUDE_API_KEY`, `OPENAI_API_KEY`, `CONTEXT_DEV_API_KEY`) | AI features fail | Needs keys with spend limits |
+| AI (`AI_LLM_*`, `NOVU_MANAGED_CLAUDE_API_KEY`, `CONTEXT_DEV_API_KEY`) | AI features and managed agents fail; self-hosted agents work (scripted models in the bridge app) | Needs keys with spend limits. `OPENAI_API_KEY` isn't read by the API or worker, only by the CLI |
 | Partner apps (Slack, WhatsApp, Azure, GitHub MCP, Vercel) | Connecting them fails | Needs each app's credentials |
 | Custom domains (`DOMAIN_CONNECT_PRIVATE_KEY`) | Domain Connect fails | No key; could generate a box-only one |
 | Monitoring and marketing (New Relic, Sentry, Segment, Mixpanel, HubSpot, Intercom, Plain) | Off; `/v1/telemetry/measure` returns 404 | Box traffic must not reach real dashboards |
@@ -84,3 +87,12 @@ through the same SSRF guard as a customer's bridge (allow-listed as `bridge.box.
   Seen in the box: the key's slot (15376) was on node 7002, which was the only node without the script. It stays
   broken until the script happens to reach every node, and again after every Redis restart or failover.
   `smoke.mjs` runs the throttle check last for this reason. Not fixed; to report.
+- `npx novu sync` never sets agent bridge URLs on a production bridge. `syncAgentBridgeUrls`
+  (`packages/novu/src/commands/sync.ts`) calls `?action=discover` unsigned, and a bridge with
+  `strictAuthentication` (the default outside development) answers 401, which the CLI swallows with a warning.
+  `box.mjs` signs the request instead. Not fixed; to report.
+- An approved tool on a plain `agent()` is recorded as denied on the next user message. After `onToolApproval`
+  runs the tool, no tool result is recorded (`emitToolResult` is internal; only the AI SDK and LangChain
+  adapters call it), so `findOrphanedApprovedToolApprovalRequests`
+  (`apps/api/src/app/agents/shared/tool-approval/unresolved-approvals.ts`) takes the approval for a crashed
+  resume and appends a `denied` decision. Seen in the box's `box-vanilla` history. Not fixed; to report.
