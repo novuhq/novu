@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import pc from 'picocolors';
+import { type AgentPictureFile, loadPicture } from '../agent-picture';
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
-import { createInteraction, setupHumanRelay } from '../api/human';
+import { createInteraction, setHumanAgentPicture, setupHumanRelay } from '../api/human';
 import {
   addAgentEmailIntegration,
   bootstrapKeylessSession,
@@ -48,6 +49,9 @@ import {
 
 const BOTFATHER_URL = 'https://t.me/botfather';
 
+/** What the API calls a relay agent until you name it. */
+const DEFAULT_AGENT_NAME = 'Human';
+
 /**
  * `--name` always wins. Otherwise ask once — only on the very first setup
  * (no subscriberId in config yet) and only on a TTY; an empty answer or a
@@ -72,6 +76,36 @@ export async function resolveOperatorName(
   return splitName(await io.prompt('Your name (shown to agents, optional): '));
 }
 
+/** The agent's name and description, when `--agent-name` or `--agent-description` was passed. */
+function agentIdentityOf(options: Pick<SetupOptions, 'agentName' | 'agentDescription'>): {
+  agentName?: string;
+  agentDescription?: string;
+} {
+  return {
+    ...(options.agentName !== undefined ? { agentName: options.agentName } : {}),
+    ...(options.agentDescription !== undefined ? { agentDescription: options.agentDescription } : {}),
+  };
+}
+
+async function readPictureOption(options: Pick<SetupOptions, 'agentPicture'>): Promise<AgentPictureFile | undefined> {
+  return options.agentPicture === undefined ? undefined : loadPicture(options.agentPicture);
+}
+
+/** Before a channel is linked, so a bot made in this run starts out with the picture. */
+async function uploadPicture(client: HumanApiClient, picture: AgentPictureFile | undefined): Promise<void> {
+  if (!picture) {
+    return;
+  }
+
+  await setHumanAgentPicture(client, picture);
+  info('Saved your agent’s picture.');
+}
+
+/** The bot or app made for a channel is called what the agent is called. Older APIs don't say, so it's the default. */
+function channelNameFor(relay: { agentName?: string }): string {
+  return relay.agentName || DEFAULT_AGENT_NAME;
+}
+
 interface SetupOptions {
   apiUrl?: string;
   secretKey?: string;
@@ -81,6 +115,12 @@ interface SetupOptions {
   /** Your display name; skips the first-run prompt. */
   name?: string;
   agentIdentifier?: string;
+  /** What your agent is called, as people see it. */
+  agentName?: string;
+  /** A line about what your agent does, shown with its name. */
+  agentDescription?: string;
+  /** A JPEG or PNG for your agent: a file on this computer or a web address. */
+  agentPicture?: string;
   /** Tri-state: undefined = ask (TTY) / skip (non-TTY); true/false = explicit `--skill`/`--no-skill`. */
   skill?: boolean;
 }
@@ -111,6 +151,8 @@ export function reusableAuth(
 export async function setupCommand(channelArg: string | undefined, options: SetupOptions): Promise<never> {
   try {
     const channel = await resolveChannelChoice(channelArg);
+    // Read first, so a wrong file stops the setup before anything is made.
+    const picture = await readPictureOption(options);
     const existing = loadConfig();
     const apiUrl = resolveTargetApiUrl(options.apiUrl, existing);
 
@@ -141,8 +183,11 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
       subscriberId: localSubscriberId,
       operator: true,
       agentIdentifier: relayIdentifier,
+      ...agentIdentityOf(options),
       ...name,
     });
+    const agentName = channelNameFor(relay);
+    await uploadPicture(client, picture);
     // The account may already know you from the dashboard or another computer; that contact wins,
     // so you stay one person everywhere. Older APIs just echo the id sent.
     const subscriberId = relay.subscriberId || localSubscriberId;
@@ -156,9 +201,14 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     // 3. Channel linking — linked channels live on the server; locally we only
     // remember a default preference for when the caller does not pass `--via`.
     await (channel === 'telegram'
-      ? connectTelegram(client, relay.agentIdentifier, subscriberId, options)
+      ? connectTelegram(client, relay.agentIdentifier, agentName, subscriberId, options)
       : channel === 'slack'
-        ? connectSlack(client, relay.agentId, relay.agentIdentifier, subscriberId, options)
+        ? connectSlack(
+            client,
+            { id: relay.agentId, identifier: relay.agentIdentifier, name: agentName },
+            subscriberId,
+            options
+          )
         : connectEmail(client, relay.agentIdentifier, subscriberId, options));
 
     // 4. Persist config — first setup becomes the default preference.
@@ -290,11 +340,12 @@ async function resolveChannelChoice(channelArg: string | undefined): Promise<Hum
 async function connectTelegram(
   client: HumanApiClient,
   agentIdentifier: string,
+  agentName: string,
   subscriberId: string,
   options: SetupOptions
 ): Promise<string> {
   const integrationIdentifier = await resolveLinkedIntegration(client, agentIdentifier, 'telegram', () =>
-    createTelegramIntegration(client, 'Human')
+    createTelegramIntegration(client, agentName)
   );
 
   if (await hasChannelEndpoint(client, integrationIdentifier, subscriberId)) {
@@ -373,12 +424,12 @@ async function promptForEmail(): Promise<string> {
 
 async function connectSlack(
   client: HumanApiClient,
-  agentId: string,
-  agentIdentifier: string,
+  agent: { id: string; identifier: string; name: string },
   subscriberId: string,
   options: SetupOptions
 ): Promise<string> {
-  const integration = await resolveLinkedSlackIntegration(client, agentIdentifier);
+  const { id: agentId, identifier: agentIdentifier } = agent;
+  const integration = await resolveLinkedSlackIntegration(client, agentIdentifier, agent.name);
 
   if (await hasChannelEndpoint(client, integration.identifier, subscriberId)) {
     info('Slack already connected.');
@@ -568,10 +619,11 @@ async function resolveLinkedIntegration(
 /** Slack needs the full integration record (`_id` for quick-setup), not just the identifier. */
 async function resolveLinkedSlackIntegration(
   client: HumanApiClient,
-  agentIdentifier: string
+  agentIdentifier: string,
+  agentName: string
 ): Promise<IntegrationRecord> {
   const identifier = await resolveLinkedIntegration(client, agentIdentifier, 'slack', () =>
-    createSlackIntegration(client, 'Human')
+    createSlackIntegration(client, agentName)
   );
   const all = await listIntegrations(client);
   const integration = all.find((i) => i.identifier === identifier);

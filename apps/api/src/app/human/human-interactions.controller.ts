@@ -1,17 +1,23 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Put,
   Query,
+  UploadedFile,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
@@ -20,7 +26,9 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
+import { isResolvedKeylessAuthScheme } from '../shared/utils/auth.utils';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
+import { HumanAgentResponseDto, UpdateHumanAgentRequestDto } from './dtos/human-agent.dto';
 import { CreateHumanInviteRequestDto, CreateHumanInviteResponseDto } from './dtos/human-invite.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
@@ -31,6 +39,11 @@ import {
   SetupHumanRelayRequestDto,
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
+import {
+  AGENT_PICTURE_FIELD,
+  AGENT_PICTURE_MAX_BYTES,
+  HumanAgentPictureService,
+} from './services/human-agent-picture.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -53,6 +66,8 @@ import {
   DEFAULT_HUMAN_RELAY_IDENTIFIER,
   SetupHumanRelay,
 } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { UpdateHumanAgentCommand } from './usecases/update-human-agent/update-human-agent.command';
+import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @Controller('/human')
@@ -70,7 +85,9 @@ export class HumanInteractionsController {
     private readonly removeContactUsecase: RemoveContact,
     private readonly createHumanInviteUsecase: CreateHumanInvite,
     private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken,
-    private readonly humanOperator: HumanOperatorService
+    private readonly humanOperator: HumanOperatorService,
+    private readonly updateHumanAgentUsecase: UpdateHumanAgent,
+    private readonly humanAgentPicture: HumanAgentPictureService
   ) {}
 
   @Post('/interactions')
@@ -225,12 +242,77 @@ export class HumanInteractionsController {
         subscriberId: body.subscriberId,
         operator: body.operator,
         agentIdentifier: body.agentIdentifier,
+        agentName: body.agentName,
+        agentDescription: body.agentDescription,
         email: body.email,
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,
       })
     );
+  }
+
+  /**
+   * Renames or describes the relay agent `human setup` made. People see the change on the invite page,
+   * in emails and on the agent's Telegram bot.
+   */
+  @Patch('/agent')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: UpdateHumanAgentRequestDto
+  ): Promise<HumanAgentResponseDto> {
+    return this.updateHumanAgentUsecase.execute(
+      UpdateHumanAgentCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: body.agentIdentifier,
+        name: body.name,
+        description: body.description,
+      })
+    );
+  }
+
+  /** The relay agent with its name, description and picture. A 404 before `human setup` has made it. */
+  @Get('/agent')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getAgent(@UserSession() user: UserSessionData): Promise<HumanAgentResponseDto> {
+    return this.humanAgentPicture.get(relayOf(user));
+  }
+
+  /**
+   * Gives the relay agent a picture: one JPEG or PNG of up to 2 MB, sent as a form upload. It needs an
+   * account, because the picture is then served to anyone who opens an invite.
+   */
+  @Put('/agent/picture')
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseInterceptors(FileInterceptor(AGENT_PICTURE_FIELD, { limits: { files: 1, fileSize: AGENT_PICTURE_MAX_BYTES } }))
+  async setAgentPicture(
+    @UserSession() user: UserSessionData,
+    @UploadedFile() picture?: { buffer: Buffer }
+  ): Promise<HumanAgentResponseDto> {
+    assertHasAccount(user);
+
+    if (!picture?.buffer?.length) {
+      throw new BadRequestException(`Send the picture as the "${AGENT_PICTURE_FIELD}" file of a form upload.`);
+    }
+
+    return this.humanAgentPicture.describe(await this.humanAgentPicture.save(relayOf(user), picture.buffer));
+  }
+
+  @Delete('/agent/picture')
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async removeAgentPicture(@UserSession() user: UserSessionData): Promise<HumanAgentResponseDto> {
+    assertHasAccount(user);
+
+    return this.humanAgentPicture.describe(await this.humanAgentPicture.remove(relayOf(user)));
   }
 
   /**
@@ -301,4 +383,19 @@ function mayCreateInvites(user: UserSessionData): boolean {
   }
 
   return user.permissions?.includes(PermissionsEnum.AGENT_WRITE) === true;
+}
+
+function relayOf(user: UserSessionData) {
+  return {
+    environmentId: user.environmentId,
+    organizationId: user.organizationId,
+    agentIdentifier: DEFAULT_HUMAN_RELAY_IDENTIFIER,
+  };
+}
+
+/** A setup without an account is a free demo anyone can start, so it can't publish files. */
+function assertHasAccount(user: UserSessionData): void {
+  if (isResolvedKeylessAuthScheme(user.scheme)) {
+    throw new ForbiddenException('A picture needs a Human account. Run `human login` first.');
+  }
 }

@@ -162,6 +162,14 @@ export async function cancelInteraction(client: HumanApiClient, id: string): Pro
   return unwrap(res.data);
 }
 
+export interface SetupHumanRelayResult {
+  agentId: string;
+  agentIdentifier: string;
+  /** What the relay agent is called. Missing from APIs older than agent names. */
+  agentName?: string;
+  subscriberId: string;
+}
+
 export async function setupHumanRelay(
   client: HumanApiClient,
   input: {
@@ -172,21 +180,65 @@ export async function setupHumanRelay(
      */
     operator?: boolean;
     agentIdentifier?: string;
+    /** What the relay agent is called from now on. Missing leaves the name it has. */
+    agentName?: string;
+    /** A line about what the relay agent does. An empty one clears it. */
+    agentDescription?: string;
     email?: string;
     firstName?: string;
     lastName?: string;
     /** The inviter's `--via` pick; becomes the human's default channel unless they chose one themselves. */
     defaultVia?: 'telegram' | 'slack' | 'email';
   }
-): Promise<{ agentId: string; agentIdentifier: string; subscriberId: string }> {
-  const res = await client.axios.post<
-    | { data?: { agentId: string; agentIdentifier: string; subscriberId: string } }
-    | {
-        agentId: string;
-        agentIdentifier: string;
-        subscriberId: string;
-      }
-  >('/v1/human/setup', input);
+): Promise<SetupHumanRelayResult> {
+  const res = await client.axios.post<{ data?: SetupHumanRelayResult } | SetupHumanRelayResult>(
+    '/v1/human/setup',
+    input
+  );
+
+  return unwrap(res.data);
+}
+
+export interface HumanAgent {
+  agentId: string;
+  agentIdentifier: string;
+  name: string;
+  description?: string;
+  /** Where anyone can load the agent's picture. Missing when it has none. */
+  pictureUrl?: string;
+}
+
+/** Renames or describes the relay agent. People see it on the invite page, in emails and on its Telegram bot. */
+export async function updateHumanAgent(
+  client: HumanApiClient,
+  input: { agentIdentifier?: string; name?: string; description?: string }
+): Promise<HumanAgent> {
+  const res = await client.axios.patch<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent', input);
+
+  return unwrap(res.data);
+}
+
+/** The relay agent with its name, description and picture. */
+export async function getHumanAgent(client: HumanApiClient): Promise<HumanAgent> {
+  const res = await client.axios.get<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent');
+
+  return unwrap(res.data);
+}
+
+/** Uploads the relay agent's picture: a JPEG or PNG of up to 2 MB. Needs an account (`human login`). */
+export async function setHumanAgentPicture(
+  client: HumanApiClient,
+  picture: { file: Buffer; contentType: string }
+): Promise<HumanAgent> {
+  const form = new FormData();
+  form.append('picture', new Blob([new Uint8Array(picture.file)], { type: picture.contentType }), 'picture');
+  const res = await client.axios.put<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent/picture', form);
+
+  return unwrap(res.data);
+}
+
+export async function removeHumanAgentPicture(client: HumanApiClient): Promise<HumanAgent> {
+  const res = await client.axios.delete<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent/picture');
 
   return unwrap(res.data);
 }

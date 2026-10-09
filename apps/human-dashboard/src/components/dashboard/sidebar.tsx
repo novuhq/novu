@@ -16,6 +16,8 @@ export type SidebarAgent = {
   status: string;
   /** Whether `human setup` has made the agent yet. Its picture sleeps until then. */
   setUp: boolean;
+  /** The picture the operator gave the agent, when there is one. */
+  pictureUrl?: string;
 };
 
 export function Sidebar({ agent }: { agent: SidebarAgent }) {
@@ -29,7 +31,7 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
       </div>
 
       <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-2.5 py-[10.5px]">
-        <AgentAvatar mood={agent.setUp ? 'idle' : 'asleep'} className="size-8 rounded-[9px]" />
+        <AgentAvatar mood={agent.setUp ? 'idle' : 'asleep'} src={agent.pictureUrl} className="size-8 rounded-[9px]" />
         {/* A new key when the agent is set up, so its name fades in instead of jumping. */}
         <div key={agent.name} className="flex min-w-0 animate-overlay-in flex-col motion-reduce:animate-none">
           <span className="truncate font-mono text-xs tracking-tight text-foreground">{agent.name}</span>
