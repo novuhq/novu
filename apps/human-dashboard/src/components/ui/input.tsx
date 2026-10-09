@@ -11,9 +11,9 @@ export function Input({ invalid = false, className, ...rest }: InputProps) {
     <input
       aria-invalid={invalid || undefined}
       className={cn(
-        'h-9 w-full rounded bg-background px-3 text-sm tracking-tight text-foreground ring-1 ring-border-strong placeholder:text-placeholder',
-        'focus-visible:outline-none focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60',
-        invalid && 'ring-danger focus-visible:ring-danger',
+        'h-8 w-full rounded bg-background px-2.5 text-[13px] leading-5 text-foreground ring-1 ring-border-strong ring-inset placeholder:text-placeholder',
+        'focus-visible:shadow-[0_0_0_3px] focus-visible:shadow-accent/20 focus-visible:outline-none focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60',
+        invalid && 'ring-danger focus-visible:shadow-danger/20 focus-visible:ring-danger',
         className
       )}
       {...rest}
@@ -39,7 +39,7 @@ export function Field({ label, required = false, hint, error, children }: FieldP
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium tracking-tight text-foreground">
+      <label htmlFor={id} className="text-[13px] leading-4.5 font-medium text-foreground">
         {label}
         {required && (
           <span aria-hidden="true" className="text-accent">
@@ -53,7 +53,7 @@ export function Field({ label, required = false, hint, error, children }: FieldP
         <p
           id={messageId}
           role={error ? 'alert' : undefined}
-          className={cn('text-xs tracking-tight', error ? 'text-danger' : 'text-muted')}
+          className={cn('text-xs leading-4', error ? 'text-danger' : 'text-muted')}
         >
           {message}
         </p>

@@ -571,6 +571,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
               ),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
+            streamMessage: this.webChatPlatformDelivery.createStreamMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
             startTyping: this.webChatPlatformDelivery.createStartTyping(deliveryContext),
           }),

@@ -18,7 +18,7 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 // There is no docs site yet, so Docs points at the package page like the landing page does.
-const DOCS_URL = 'https://www.npmjs.com/package/@novu/human';
+export const DOCS_URL = 'https://www.npmjs.com/package/@novu/human';
 
 /** Pinned to the bottom of the sidebar. */
 export const FOOTER_NAV: NavItem[] = [

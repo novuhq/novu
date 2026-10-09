@@ -1,13 +1,17 @@
-import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { DASHBOARD_HOME } from '@/components/dashboard/nav';
-import { Sidebar } from '@/components/dashboard/sidebar';
+import { Sidebar, type SidebarAgent } from '@/components/dashboard/sidebar';
 import { TopBar } from '@/components/dashboard/top-bar';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { findCurrentUser } from '@/lib/auth-page';
+import { requireHumanAccount } from '@/lib/human-account';
+import { agentDisplayName, getRelayAgent } from '@/lib/human-agent-api';
+
+const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up', setUp: false };
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -19,25 +23,54 @@ export const metadata: Metadata = {
  * they asked for; the check here is the backstop if a request ever gets past it.
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const user = await currentUser();
+  const user = await findCurrentUser();
   if (!user) {
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: DASHBOARD_HOME })}`);
   }
 
+  const agent = await loadSidebarAgent();
   const email = user.primaryEmailAddress?.emailAddress ?? null;
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email || 'Your account';
 
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex min-h-dvh flex-col md:flex-row">
-        {/* The agent's own name and picture arrive with the Agent page (NV-8966). */}
-        <Sidebar agent={{ name: 'Your agent', status: 'Not set up' }} />
+        <Sidebar agent={agent} />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar user={{ name, email, imageUrl: user.hasImage ? user.imageUrl : null }} />
-          <main className="mx-auto flex w-full max-w-230 flex-1 flex-col gap-6 px-6 py-6">{children}</main>
+          <main className="mx-auto flex w-full max-w-300 flex-1 flex-col gap-5 px-6 pt-7 pb-20 md:px-10">
+            {children}
+          </main>
         </div>
       </div>
       <Toaster />
     </TooltipProvider>
   );
+}
+
+/**
+ * Who the sidebar says the agent is: "Not set up" until the operator has run `human setup`. The account
+ * comes from the sign-up webhook, but the first page after signing up usually loads before that webhook
+ * has run. So the shell asks for the account the same way the pages do, which creates it on the spot
+ * when it isn't there yet.
+ *
+ * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
+ * layout has no error page of its own.
+ */
+async function loadSidebarAgent(): Promise<SidebarAgent> {
+  try {
+    const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
+    const agent = await getRelayAgent(account);
+    if (!agent) {
+      return AGENT_NOT_SET_UP;
+    }
+
+    return { name: agentDisplayName(agent), status: 'Your agent', setUp: true };
+  } catch (error) {
+    // A redirect to sign-in travels as an error and has to keep going.
+    unstable_rethrow(error);
+    console.error('Failed to load the agent for the sidebar', error);
+
+    return AGENT_NOT_SET_UP;
+  }
 }

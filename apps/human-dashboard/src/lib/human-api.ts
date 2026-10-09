@@ -6,7 +6,7 @@ import { HumanApiError, toHumanApiError } from './human-api-error';
 import { resolveNovuApiUrl } from './novu-api';
 
 export type HumanApiRequest = {
-  method?: 'GET' | 'POST' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   query?: Record<string, string | number | undefined>;
   body?: Record<string, unknown>;
 };

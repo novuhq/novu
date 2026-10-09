@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNovuInboxContext } from '@/api/novu-context';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
-import { APP_ID, IS_SELF_HOSTED } from '@/config';
+import { APP_ID, IS_SELF_HOSTED, SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -175,6 +175,7 @@ export const InboxButton = ({
       applicationIdentifier={appId}
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
+      socketOptions={shouldUseProductionApi ? undefined : SOCKET_OPTIONS}
       subscriberHash={isTestPage ? undefined : connectContext?.subscriberHash}
       context={isTestPage ? undefined : connectContext?.context}
       contextHash={isTestPage ? undefined : connectContext?.contextHash}
