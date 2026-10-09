@@ -21,6 +21,9 @@ minimumReleaseAge: 4320
 # (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
 # matches the pre-v11.0.4 behavior.
 minimumReleaseAgeStrict: false
+# First-party packages are published by us and consumed right away, so they skip the age gate.
+minimumReleaseAgeExclude:
+  - '@novu/*'
 
 # Settings migrated from .npmrc (pnpm v11 reads only auth/registry settings from .npmrc).
 autoInstallPeers: true
@@ -74,11 +77,11 @@ overrides:
   '@types/mocha': ^10.0.8
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
-  '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  '@grpc/grpc-js@>=1.14.0 <1.14.5': ^1.14.5
   # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
   # via `__proto__` in custom message language and `object().rename()` with a
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
-  joi@<18.2.5: ^18.2.5
+  joi@<18.2.9: ^18.2.9
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
@@ -101,11 +104,12 @@ overrides:
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
-  nextjs>next: 15.5.24
+  nextjs>next: 15.5.27
   # GHSA-vcvr-r3jv-pc5j (critical): Next.js remote code execution in
   # next/og ImageResponse. Patched in 16.3.6; widen the override so transitive
   # 16.3.4 resolutions (via better-auth, @better-auth/sso) also pick up the fix.
-  next@<16.3.6: ^16.3.6
+  # Raised to 16.3.8 for the follow-up moderate advisories.
+  next@<16.3.8: ^16.3.8
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
@@ -144,7 +148,7 @@ overrides:
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.3.0: ^2.3.0
+  multer@<2.4.0: ^2.4.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
@@ -163,7 +167,7 @@ overrides:
   qs@<6.16.0: ^6.16.0
   js-yaml@<3.15.2: ^3.15.2
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
-  smol-toml@<1.7.1: ^1.7.1
+  smol-toml@<1.8.1: ^1.8.1
   '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
@@ -211,7 +215,7 @@ overrides:
   cookie@<0.7.0: ^0.7.0
   tmp@<0.2.7: ^0.2.7
   socket.io-parser@>=4.0.0 <4.2.7: ^4.2.7
-  engine.io@>=6.0.0 <6.6.7: ^6.6.7
+  engine.io@>=6.0.0 <6.6.10: ^6.6.10
   cross-spawn@<6.0.6: ^6.0.6
   path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
   path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
@@ -222,7 +226,7 @@ overrides:
   # via the Accept header. Patched in 2.70.2 (patch bump within the 2.x line).
   '@sveltejs/kit@<2.70.2': ^2.70.2
   langsmith@<0.6.0: ^0.6.3
-  devalue@<5.8.1: ^5.8.1
+  devalue@<5.9.3: ^5.9.3
   picomatch@<2.3.2: ^2.3.2
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
   yaml@>=1.0.0 <1.10.3: ^1.10.3
@@ -279,7 +283,7 @@ overrides:
   # Patched in 3.2.1 (patch bump within the 3.x line). Transitive via
   # firebase-admin in `packages/providers`.
   '@fastify/busboy@<3.2.1': ^3.2.1
-  sharp@<0.35.4: ^0.35.4
+  sharp@<0.35.5: ^0.35.5
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
   uuid@>=13.0.0 <13.0.1: ^13.0.1
@@ -354,6 +358,10 @@ overrides:
   # uncontrolled AST recursion in nested pseudo-selectors. Patched in 6.1.3.
   # Pulled transitively via tailwindcss, postcss-preset-env, and cssnano.
   postcss-selector-parser@>=6.1.0 <6.1.3: ^6.1.3
+  postcss-selector-parser@>=7.0.0 <7.1.6: ^7.1.6
+  compression@<1.8.2: ^1.8.2
+  fast-copy@>=3.0.0 <3.1.0: ^3.1.0
+  '@modelcontextprotocol/sdk@<1.31.0': ^1.31.0
   # GHSA-2wm5-q62r-hmrv: colord slow rejection of oversized malformed color
   # strings (DoS via CPU). Patched in 2.9.4. Only pulled transitively via
   # cssnano (postcss-colormin / postcss-minify-gradients) in packages/js.

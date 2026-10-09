@@ -97,5 +97,6 @@
   "defaultBase": "next",
   "generatorOptions": {
     "preserveLocalDependencyProtocols": true
-  }
+  },
+  "analytics": false
 }
