@@ -34,6 +34,7 @@ const BRIDGE_URL = 'http://bridge.box.internal:4000/api/novu';
 const BRIDGE_SECRET = `${DATA}/bridge/secret-key`;
 // The bridge app's imports, resolved from packages/framework so they follow the checkout.
 const BRIDGE_MODULES = ['express', 'zod', 'ai', 'langchain', '@langchain/core'];
+const BRIDGE_LLM_MODULES = ['@ai-sdk/anthropic', '@langchain/anthropic'];
 const MANAGED_AGENT = 'box-managed';
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
 const APPS = ['api', 'worker', 'socket', 'dashboard', 'bridge'];
@@ -263,12 +264,17 @@ function prepareRuntime() {
 }
 
 // The bridge app lives in the image, outside the workspace, so its node_modules point into the checkout:
-// @novu/framework itself, and the packages it has installed for its own adapters.
+// @novu/framework itself, the packages it has installed for its own adapters, and the Anthropic adapters
+// from enterprise/packages/ai (built against the same @langchain/core).
 function linkBridgeModules() {
   const modules = `${BOX}/bridge/node_modules`;
   const framework = `${REPO}/packages/framework`;
   fs.rmSync(modules, { recursive: true, force: true });
-  for (const [name, source] of [['@novu/framework', framework], ...BRIDGE_MODULES.map((name) => [name, `${framework}/node_modules/${name}`])]) {
+  for (const [name, source] of [
+    ['@novu/framework', framework],
+    ...BRIDGE_MODULES.map((name) => [name, `${framework}/node_modules/${name}`]),
+    ...BRIDGE_LLM_MODULES.map((name) => [name, `${REPO}/enterprise/packages/ai/node_modules/${name}`]),
+  ]) {
     fs.mkdirSync(dirname(`${modules}/${name}`), { recursive: true });
     fs.symlinkSync(fs.realpathSync(source), `${modules}/${name}`);
   }

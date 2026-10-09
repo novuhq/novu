@@ -474,20 +474,21 @@ try {
   });
 
   // Approve over web chat, the way the Inbox's approval card does: echo the server-minted action id.
-  const approveTool = async (agentId, city) => {
-    const { conversation } = await chat(agentId, null, { text: 'hello' }, (item) => item.content?.markdown?.includes('echo: hello'));
-    await call('/v1/web-chat/conversations', {
+  // The AI SDK and LangChain agents may run on Claude, so their prompt reads like a person's and the reply check is loose.
+  const approveTool = async (agentId, text) => {
+    const { body } = await call('/v1/web-chat/conversations', {
       method: 'POST',
       headers: subscriberAuth,
-      body: JSON.stringify({ agentId, conversationIdentifier: conversation, text: `weather ${city}` }),
+      body: JSON.stringify({ agentId, text }),
     });
+    const conversation = body.data.identifier;
     const request = await waitForEvent(conversation, 'tool approval request', (item) => item.type === 'tool-approval-request');
-    await chat(agentId, conversation, { actionId: request.approveActionId }, `Sunny, 21°C in ${city}`);
+    const { event } = await chat(agentId, conversation, { actionId: request.approveActionId }, (item) => item.content?.markdown?.includes('21'));
 
-    return { conversation, tool: request.toolName, input: request.input };
+    return { conversation, tool: request.toolName, input: request.input, reply: event.content.markdown };
   };
 
-  await check('vanilla agent runs a tool after approval', () => approveTool('box-vanilla', 'Paris'));
+  await check('vanilla agent runs a tool after approval', () => approveTool('box-vanilla', 'weather Paris'));
 
   await check('vanilla agent triggers a workflow for the subscriber', async () => {
     await chat('box-vanilla', vanilla, { text: `notify ${run}-agent` }, 'Triggered box-bridge-all-channels');
@@ -511,8 +512,8 @@ try {
     });
   });
 
-  await check('AI SDK agent runs a tool after approval (scripted model)', () => approveTool('box-ai-sdk', 'Lima'));
-  await check('LangChain agent runs a tool after approval (scripted model)', () => approveTool('box-langchain', 'Oslo'));
+  await check('AI SDK agent runs a tool after approval', () => approveTool('box-ai-sdk', 'What is the weather in Lima?'));
+  await check('LangChain agent runs a tool after approval', () => approveTool('box-langchain', 'What is the weather in Oslo?'));
 
   // The managed agent exists only on a box started with NOVU_MANAGED_CLAUDE_API_KEY. It calls Anthropic for real.
   if (await call('/v1/agents/box-managed', { headers: keyAuth }).then(() => true, () => false)) {
