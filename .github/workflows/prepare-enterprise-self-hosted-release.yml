@@ -273,9 +273,6 @@ jobs:
         if: github.event.inputs.dual_arch == 'true'
         name: Extend space in Action Container
 
-      - name: Prepare Variables
-        run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
