@@ -102,7 +102,7 @@ reinstalls if the lockfile changed, builds the projects `nx affected` reports, r
 runs migrations and restarts what changed. A PR that changes `@novu/framework` or `playground/nextjs` also
 restarts the bridge app and syncs it again, so the PR's workflows and agents run on the PR's framework.
 
-Run the smoke test from the host (35 checks, 38 with the Anthropic key, about 60 seconds; writes `smoke.json` to
+Run the smoke test from the host (36 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):
 
 ```sh
@@ -115,17 +115,20 @@ steps, triggers it, and checks the activity feed (Mongo), the Inbox and its real
 Then it runs the bridge app's workflows: sync status, a preview with controls, every channel with a skipped step,
 a delay feeding a custom step's output into an email, a digest, Local mode discovery, the `localhost` guard,
 and a throttle. And it chats with the bridge app's agents over web chat: a card with a table, a chart and a
-button click, conversation metadata, a tool run after approval, a workflow triggered by the agent, and
-resolving the conversation, then a tool approval on the AI SDK and the LangChain agents.
+button click, conversation metadata, a tool run after approval, a HITL approval, a workflow triggered by the
+agent, and resolving the conversation, then a tool approval on the AI SDK and the LangChain agents.
 
-The smoke test chats with `custom-code-agent` (`agent()` from `@novu/framework`), `ai-sdk-agent` and
-`langchain-agent`. The playground's other agents, `human-hitl` and `langchain-vision`, are synced and on web chat
-too, but not checked. The custom-code agent has no model: `weather <city>` asks to run a gated `get_weather`
-tool, and it also answers `card`,
-`remember <text>`, `recall`, `notify <name>` and `done`. With `NOVU_MANAGED_CLAUDE_API_KEY`, the AI SDK and
-LangChain agents run on Claude Haiku with the same gated `get_weather` tool (this spends from the key's workspace,
-not Novu's managed-Claude quota). Without it they run on scripted fakes: a message about the weather asks for the
-tool, and anything else is echoed.
+The playground has one agent per `novu connect` runtime, all built on the same features
+(`playground/nextjs/src/app/novu/agents/features.ts`):
+
+- `custom-code-agent` (`agent()` from `@novu/framework`) has no model. Each feature is a typed command (`card`,
+  `remember <text>`, `recall`, `notify <name>`, `done`, `approve`, `multi-approve`, `ask`, `choose`, `tell`,
+  `weather <city>`); anything else lists them. It works the same with or without the key.
+- `ai-sdk-agent` and `langchain-agent` get every feature as a tool and, with `NOVU_MANAGED_CLAUDE_API_KEY`, run
+  on Claude Haiku, which picks the tools from plain sentences and also reads attached images and PDFs (this
+  spends from the key's workspace, not Novu's managed-Claude quota). The smoke test then adds 4 checks: a card
+  and a HITL approval on each. Without the key they run on scripted fakes that only know the gated
+  `get_weather` tool.
 
 With `NOVU_MANAGED_CLAUDE_API_KEY`, `start` also runs the thalamus observer and seeds `box-managed`, a managed
 agent on the Novu-managed Claude integration (Claude Haiku, only the `bash` tool, which asks before it runs).

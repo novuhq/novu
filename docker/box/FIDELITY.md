@@ -41,7 +41,7 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 
 ## Code-first workflows and agents (bridge app)
 
-The `bridge` process runs `playground/nextjs`, which serves workflows and five self-hosted agents with the
+The `bridge` process runs `playground/nextjs`, which serves workflows and three self-hosted agents with the
 checkout's `@novu/framework`, signed
 with the Development secret key, through the same SSRF guard as a customer's bridge (allow-listed as
 `bridge.box.internal`). Agents reply through the public API URL, which Caddy also serves inside the box.
@@ -99,3 +99,8 @@ with the Development secret key, through the same SSRF guard as a customer's bri
   adapters call it), so `findOrphanedApprovedToolApprovalRequests`
   (`apps/api/src/app/agents/shared/tool-approval/unresolved-approvals.ts`) takes the approval for a crashed
   resume and appends a `denied` decision. Seen in the box's `custom-code-agent` history. Not fixed; to report.
+- The AI SDK and LangChain adapters don't continue after a HITL answer. After a tool approval they re-run
+  `onMessage`, but after an approve or choose answer they only pass `onAction` through, and the answer
+  (`ctx.humanResponse`) isn't part of `toModelMessages` or `toLangChainMessages`, so the model never learns it.
+  The playground's `ai-sdk-agent` and `langchain-agent` call the model again in `onAction` with the answer
+  added. Not fixed; to report.
