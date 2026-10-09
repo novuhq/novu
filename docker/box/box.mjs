@@ -13,7 +13,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createHmac, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname } from 'node:path';
+import { dirname, relative } from 'node:path';
 import { clerk, findSeedUser, SEED, seedUserToken } from './clerk.mjs';
 
 const BOX = process.env.BOX_HOME ?? '/opt/box';
@@ -149,13 +149,46 @@ function pnpmInstall() {
 // The dashboard builds on its own so `--sourcemap false` reaches only vite: sourcemaps take its peak from ~2.5 GB to ~4 GB.
 // Its dependency chain runs serially: parallel tsup DTS builds next to the running services get OOM-killed in 8 GB.
 function build(projects) {
-  const others = projects.filter((project) => project !== '@novu/dashboard');
-  const buildEnv = { env: { ...env, NODE_OPTIONS: '' } };
-  if (others.length)
-    run('pnpm', ['nx', 'run-many', '-t', 'build', `--projects=${others.join(',')}`, '--parallel=2'], buildEnv);
-  if (others.length < projects.length) {
-    run('pnpm', ['nx', 'run', '@novu/dashboard:build', '--parallel=1', '--', '--sourcemap', 'false'], buildEnv);
-  }
+  const nx = (args) => run('pnpm', ['nx', ...args], { env: { ...env, NODE_OPTIONS: '' } });
+  const others = projects.filter((project) => !['@novu/api-service', '@novu/dashboard'].includes(project));
+  if (others.length) nx(['run-many', '-t', 'build', `--projects=${others.join(',')}`, '--parallel=2']);
+  if (projects.includes('@novu/api-service')) nx(['run', '@novu/api-service:build', '--', '-c', apiNestConfig()]);
+  if (projects.includes('@novu/dashboard'))
+    nx(['run', '@novu/dashboard:build', '--parallel=1', '--', '--sourcemap', 'false']);
+}
+
+// The API's nest-cli.json without `typeCheck`: the same output, but ~6 s instead of ~57 s. CI's build type-checks every PR.
+function apiNestConfig() {
+  const config = readJson(`${REPO}/apps/api/nest-cli.json`);
+  config.compilerOptions.typeCheck = false;
+  fs.mkdirSync(RUN, { recursive: true });
+  fs.writeFileSync(`${RUN}/nest-cli.json`, JSON.stringify(config));
+
+  return relative(`${REPO}/apps/api`, `${RUN}/nest-cli.json`);
+}
+
+function workspacePackages() {
+  return new Map(
+    JSON.parse(output('pnpm', ['-s', 'ls', '-r', '--depth', '-1', '--json'])).map((pkg) => [pkg.name, pkg.path])
+  );
+}
+
+// nx counts devDependencies as build inputs, so the dashboard's test-only helpers (@novu/dal, @novu/ee-auth) make
+// every backend change rebuild it. Its bundle reads apps/dashboard, its runtime dependencies, and everything those
+// depend on, devDependencies included (libraries bundle some of theirs).
+function dashboardBundleChanged(files) {
+  const workspace = workspacePackages();
+  const dirs = new Set();
+  const visit = (name, isDashboard = false) => {
+    const dir = workspace.get(name);
+    if (!dir || dirs.has(dir)) return;
+    dirs.add(dir);
+    const pkg = readJson(`${dir}/package.json`);
+    Object.keys({ ...pkg.dependencies, ...(isDashboard ? {} : pkg.devDependencies) }).forEach((dep) => visit(dep));
+  };
+  visit('@novu/dashboard', true);
+
+  return files.some((file) => [...dirs].some((dir) => `${REPO}/${file}`.startsWith(`${dir}/`)));
 }
 
 // Same layout as the production images: `pnpm deploy --prod` output, dist with its .env files,
@@ -209,9 +242,7 @@ function deployApp(name, { dependenciesChanged = true } = {}) {
 // With the same dependencies, a new `pnpm deploy` (~60 s: it re-resolves the whole workspace) differs from the
 // previous one only in the workspace packages it copied in, so re-copy just those (`file+<path>` entries).
 function refreshWorkspacePackages(target) {
-  const workspace = new Map(
-    JSON.parse(output('pnpm', ['-s', 'ls', '-r', '--depth', '-1', '--json'])).map((pkg) => [pkg.name, pkg.path])
-  );
+  const workspace = workspacePackages();
   const store = `${target}/node_modules/.pnpm`;
   for (const entry of fs.readdirSync(store).filter((name) => name.includes('@file+'))) {
     const name = entry.slice(0, entry.indexOf('@file+', 1)).replace('+', '/');
@@ -902,9 +933,14 @@ async function applyPr(ref) {
 
   let affected;
   await step('nx affected', () => {
-    affected = JSON.parse(
-      output('pnpm', ['-s', 'nx', 'show', 'projects', '--affected', `--base=${base}`, `--head=${head}`, '--json'])
-    ).filter((project) => PROJECT_PROCESSES[project]);
+    // Not --base/--head: nx diffs from their merge base, which for two box merge commits is an older bake.
+    affected = files.length
+      ? JSON.parse(
+          output('pnpm', ['-s', 'nx', 'show', 'projects', '--affected', `--files=${files.join(',')}`, '--json'])
+        ).filter((project) => PROJECT_PROCESSES[project])
+      : [];
+    if (!dependenciesChanged && !dashboardBundleChanged(files))
+      affected = affected.filter((project) => project !== '@novu/dashboard');
   });
   affected.forEach((project) => restart.add(PROJECT_PROCESSES[project]));
   if (files.some((file) => file.startsWith('enterprise/workers/socket/'))) restart.add('socket');
