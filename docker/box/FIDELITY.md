@@ -49,7 +49,7 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Area | Difference |
 |---|---|
 | Environments | Only Development is synced; Production would need its own secret key and a second sync |
-| Bridge app server | `next dev`, not a production build: `next build` of the playground fails its type check and needs more memory than the box has. Each route compiles on its first request (a few seconds), and the HMAC signature check stays on (`NOVU_STRICT_AUTHENTICATION_ENABLED`) |
+| Bridge app server | `next dev --turbopack` (ready in ~6 s warm, ~12 s cold; webpack takes ~10 s and ~18 s), not a production build: `next build` of the playground fails its type check and needs more memory than the box has. Each route compiles on its first request (a few seconds), and the HMAC signature check stays on (`NOVU_STRICT_AUTHENTICATION_ENABLED`) |
 | Content renderers | No react-email, Vue or Svelte templates; they render inside the customer's app, outside Novu |
 | `novu dev` tunnel (novu.sh) | Not used; Local mode is tested by pointing it at the bridge directly |
 | Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same requests they make (`POST /v1/bridge/sync`, then `PUT /v1/agents/:id/bridge`), but signs the agent discovery (see "Bugs found") |
