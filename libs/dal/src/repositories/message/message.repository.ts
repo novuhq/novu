@@ -1102,6 +1102,18 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       filterQuery.transactionId = { $in: query.transactionId };
     }
 
+    /*
+     * Pins every field between `channel` and `createdAt` in the
+     * { _subscriberId, _environmentId, channel, seen, read, archived, deleted, createdAt: -1, _id: -1 } index to
+     * point intervals, so the planner can merge-sort it by createdAt instead of walking the whole { createdAt: 1 }
+     * index. The `$in` lists must cover every stored value (null also matches a missing field) or messages are dropped.
+     */
+    if (query._subscriberId && query.channel) {
+      filterQuery.seen ??= { $in: [true, false, null] };
+      filterQuery.read ??= { $in: [true, false, null] };
+      filterQuery.archived ??= { $in: [true, false, null] };
+    }
+
     if (query.contextKeys !== undefined) {
       const contextQuery = this.buildContextExactMatchQuery(query.contextKeys);
       filterQuery.$and = [...(filterQuery.$and ?? []), contextQuery];
