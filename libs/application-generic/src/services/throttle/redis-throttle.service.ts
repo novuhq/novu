@@ -184,16 +184,8 @@ export class RedisThrottleService implements OnModuleDestroy {
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes('NOSCRIPT')) {
-        Logger.warn('Script not found, reloading and retrying', LOG_CONTEXT);
-        this.reserveScriptSha = null;
-        await this.ensureScriptsLoaded();
-        const reloadedScriptSha = this.reserveScriptSha;
-
-        if (!reloadedScriptSha) {
-          throw new Error('Throttle reserve script failed to load');
-        }
-
-        const result = await client.evalsha(reloadedScriptSha, 1, setKey, limit.toString(), ttlSec.toString(), jobId);
+        // On a cluster, SCRIPT LOAD reaches one node; EVAL runs on (and caches the script in) the node owning setKey.
+        const result = await client.eval(this.reserveScript, 1, setKey, limit.toString(), ttlSec.toString(), jobId);
         return result as [number, number, number];
       }
       throw error;
