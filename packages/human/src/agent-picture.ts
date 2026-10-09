@@ -64,5 +64,28 @@ async function download(url: string): Promise<Buffer> {
     throw new Error('The picture must be 2 MB or smaller.');
   }
 
-  return Buffer.from(await response.arrayBuffer());
+  return readUpToLimit(response);
+}
+
+/** Reads the picture piece by piece and stops at the limit: a server can say nothing about the size, or lie. */
+async function readUpToLimit(response: Response): Promise<Buffer> {
+  if (!response.body) {
+    return Buffer.alloc(0);
+  }
+
+  const pieces: Uint8Array[] = [];
+  let size = 0;
+  const reader = response.body.getReader();
+
+  for (let piece = await reader.read(); !piece.done; piece = await reader.read()) {
+    size += piece.value.byteLength;
+    if (size > AGENT_PICTURE_MAX_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      throw new Error('The picture must be 2 MB or smaller.');
+    }
+
+    pieces.push(piece.value);
+  }
+
+  return Buffer.concat(pieces);
 }

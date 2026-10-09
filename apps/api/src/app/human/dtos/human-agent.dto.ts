@@ -4,14 +4,17 @@ import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { AGENT_DESCRIPTION_MAX_LENGTH, trimmed } from './setup-human-relay.dto';
 
-export class UpdateHumanAgentRequestDto {
+/** Which relay agent a call is about, for a setup made with its own `--agent-identifier`. */
+export class HumanAgentQueryDto {
   @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
   @IsOptional()
   @IsString()
   @Matches(/^[a-z0-9-_]+$/i)
   @MaxLength(64)
   agentIdentifier?: string;
+}
 
+export class UpdateHumanAgentRequestDto extends HumanAgentQueryDto {
   @ApiPropertyOptional({
     description: 'What the relay agent is called from now on. Missing leaves the name it has.',
     maxLength: AGENT_NAME_MAX_LENGTH,

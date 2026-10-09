@@ -92,12 +92,16 @@ async function readPictureOption(options: Pick<SetupOptions, 'agentPicture'>): P
 }
 
 /** Before a channel is linked, so a bot made in this run starts out with the picture. */
-async function uploadPicture(client: HumanApiClient, picture: AgentPictureFile | undefined): Promise<void> {
+async function uploadPicture(
+  client: HumanApiClient,
+  picture: AgentPictureFile | undefined,
+  agentIdentifier: string
+): Promise<void> {
   if (!picture) {
     return;
   }
 
-  await setHumanAgentPicture(client, picture);
+  await setHumanAgentPicture(client, picture, agentIdentifier);
   info('Saved your agent’s picture.');
 }
 
@@ -187,7 +191,7 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
       ...name,
     });
     const agentName = channelNameFor(relay);
-    await uploadPicture(client, picture);
+    await uploadPicture(client, picture, relay.agentIdentifier);
     // The account may already know you from the dashboard or another computer; that contact wins,
     // so you stay one person everywhere. Older APIs just echo the id sent.
     const subscriberId = relay.subscriberId || localSubscriberId;

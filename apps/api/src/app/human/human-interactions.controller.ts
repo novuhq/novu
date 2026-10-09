@@ -28,7 +28,7 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { UserSession } from '../shared/framework/user.decorator';
 import { isResolvedKeylessAuthScheme } from '../shared/utils/auth.utils';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
-import { HumanAgentResponseDto, UpdateHumanAgentRequestDto } from './dtos/human-agent.dto';
+import { HumanAgentQueryDto, HumanAgentResponseDto, UpdateHumanAgentRequestDto } from './dtos/human-agent.dto';
 import { CreateHumanInviteRequestDto, CreateHumanInviteResponseDto } from './dtos/human-invite.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
@@ -281,8 +281,8 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  getAgent(@UserSession() user: UserSessionData): Promise<HumanAgentResponseDto> {
-    return this.humanAgentPicture.get(relayOf(user));
+  getAgent(@UserSession() user: UserSessionData, @Query() query: HumanAgentQueryDto): Promise<HumanAgentResponseDto> {
+    return this.humanAgentPicture.get(relayOf(user, query.agentIdentifier));
   }
 
   /**
@@ -295,6 +295,7 @@ export class HumanInteractionsController {
   @UseInterceptors(FileInterceptor(AGENT_PICTURE_FIELD, { limits: { files: 1, fileSize: AGENT_PICTURE_MAX_BYTES } }))
   async setAgentPicture(
     @UserSession() user: UserSessionData,
+    @Query() query: HumanAgentQueryDto,
     @UploadedFile() picture?: { buffer: Buffer }
   ): Promise<HumanAgentResponseDto> {
     assertHasAccount(user);
@@ -303,16 +304,21 @@ export class HumanInteractionsController {
       throw new BadRequestException(`Send the picture as the "${AGENT_PICTURE_FIELD}" file of a form upload.`);
     }
 
-    return this.humanAgentPicture.describe(await this.humanAgentPicture.save(relayOf(user), picture.buffer));
+    return this.humanAgentPicture.describe(
+      await this.humanAgentPicture.save(relayOf(user, query.agentIdentifier), picture.buffer)
+    );
   }
 
   @Delete('/agent/picture')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  async removeAgentPicture(@UserSession() user: UserSessionData): Promise<HumanAgentResponseDto> {
+  async removeAgentPicture(
+    @UserSession() user: UserSessionData,
+    @Query() query: HumanAgentQueryDto
+  ): Promise<HumanAgentResponseDto> {
     assertHasAccount(user);
 
-    return this.humanAgentPicture.describe(await this.humanAgentPicture.remove(relayOf(user)));
+    return this.humanAgentPicture.describe(await this.humanAgentPicture.remove(relayOf(user, query.agentIdentifier)));
   }
 
   /**
@@ -385,11 +391,12 @@ function mayCreateInvites(user: UserSessionData): boolean {
   return user.permissions?.includes(PermissionsEnum.AGENT_WRITE) === true;
 }
 
-function relayOf(user: UserSessionData) {
+/** The relay agent a call is about: the one it names, or the one `human setup` makes when asked for no other. */
+function relayOf(user: UserSessionData, agentIdentifier?: string) {
   return {
     environmentId: user.environmentId,
     organizationId: user.organizationId,
-    agentIdentifier: DEFAULT_HUMAN_RELAY_IDENTIFIER,
+    agentIdentifier: agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER,
   };
 }
 

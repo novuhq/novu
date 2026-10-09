@@ -41,6 +41,26 @@ describe('HumanAgentIdentityService', () => {
     expect(telegramBotProfile.apply.firstCall.args[1]).to.deep.equal({ name: 'Deploy bot' });
   });
 
+  it('leaves the name unsaved when the emails could not be updated, so the same change can be sent again', async () => {
+    const { service, agentRepository, syncAgentEmailSenderName } = setup();
+    syncAgentEmailSenderName.execute.onFirstCall().rejects(new Error('database is away'));
+
+    let failed = false;
+    try {
+      await service.apply(agent as never, { name: 'Deploy bot' });
+    } catch {
+      failed = true;
+    }
+
+    expect(failed).to.equal(true);
+    expect(agentRepository.updateOne.called).to.equal(false);
+
+    await service.apply(agent as never, { name: 'Deploy bot' });
+
+    expect(syncAgentEmailSenderName.execute.callCount).to.equal(2);
+    expect(agentRepository.updateOne.calledOnce).to.equal(true);
+  });
+
   it('changes nothing when the name and description are the ones it has', async () => {
     const { service, agentRepository, telegramBotProfile } = setup();
 

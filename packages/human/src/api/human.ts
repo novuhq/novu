@@ -218,9 +218,17 @@ export async function updateHumanAgent(
   return unwrap(res.data);
 }
 
+/** Names the relay agent a call is about. Left out, the API takes the default one. */
+function agentParams(agentIdentifier: string | undefined): { params?: { agentIdentifier: string } } {
+  return agentIdentifier ? { params: { agentIdentifier } } : {};
+}
+
 /** The relay agent with its name, description and picture. */
-export async function getHumanAgent(client: HumanApiClient): Promise<HumanAgent> {
-  const res = await client.axios.get<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent');
+export async function getHumanAgent(client: HumanApiClient, agentIdentifier?: string): Promise<HumanAgent> {
+  const res = await client.axios.get<{ data?: HumanAgent } | HumanAgent>(
+    '/v1/human/agent',
+    agentParams(agentIdentifier)
+  );
 
   return unwrap(res.data);
 }
@@ -228,17 +236,25 @@ export async function getHumanAgent(client: HumanApiClient): Promise<HumanAgent>
 /** Uploads the relay agent's picture: a JPEG or PNG of up to 2 MB. Needs an account (`human login`). */
 export async function setHumanAgentPicture(
   client: HumanApiClient,
-  picture: { file: Buffer; contentType: string }
+  picture: { file: Buffer; contentType: string },
+  agentIdentifier?: string
 ): Promise<HumanAgent> {
   const form = new FormData();
   form.append('picture', new Blob([new Uint8Array(picture.file)], { type: picture.contentType }), 'picture');
-  const res = await client.axios.put<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent/picture', form);
+  const res = await client.axios.put<{ data?: HumanAgent } | HumanAgent>(
+    '/v1/human/agent/picture',
+    form,
+    agentParams(agentIdentifier)
+  );
 
   return unwrap(res.data);
 }
 
-export async function removeHumanAgentPicture(client: HumanApiClient): Promise<HumanAgent> {
-  const res = await client.axios.delete<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent/picture');
+export async function removeHumanAgentPicture(client: HumanApiClient, agentIdentifier?: string): Promise<HumanAgent> {
+  const res = await client.axios.delete<{ data?: HumanAgent } | HumanAgent>(
+    '/v1/human/agent/picture',
+    agentParams(agentIdentifier)
+  );
 
   return unwrap(res.data);
 }

@@ -29,15 +29,17 @@ export class HumanAgentIdentityService {
     private readonly telegramBotProfile: TelegramBotProfile
   ) {}
 
-  /** Saves what differs from the agent as it is, and returns the agent as it is now. */
+  /**
+   * Saves what differs from the agent as it is, and returns the agent as it is now.
+   *
+   * The agent's own record is saved last. A change counts as made only once it is there, so when carrying
+   * it to the emails or the bots fails, sending the same change again does the whole thing over.
+   */
   async apply(agent: AgentEntity, identity: HumanAgentIdentity): Promise<AgentEntity> {
     const changes = this.changesFor(agent, identity);
     if (Object.keys(changes).length === 0) {
       return agent;
     }
-
-    const scope = { _environmentId: agent._environmentId, _organizationId: agent._organizationId };
-    await this.agentRepository.updateOne({ _id: agent._id, ...scope }, { $set: changes });
 
     if (changes.name) {
       await this.syncAgentEmailSenderName.execute(
@@ -47,6 +49,9 @@ export class HumanAgentIdentityService {
     }
 
     await this.updateTelegramBots(agent, changes);
+
+    const scope = { _environmentId: agent._environmentId, _organizationId: agent._organizationId };
+    await this.agentRepository.updateOne({ _id: agent._id, ...scope }, { $set: changes });
 
     return { ...agent, ...changes };
   }

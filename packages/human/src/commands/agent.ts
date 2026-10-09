@@ -86,12 +86,12 @@ async function runAgent(options: AgentOptions): Promise<string> {
     : undefined;
 
   if (picture) {
-    agent = await setHumanAgentPicture(client, picture);
+    agent = await setHumanAgentPicture(client, picture, config.relayAgentIdentifier);
   } else if (options.removePicture) {
-    agent = await removeHumanAgentPicture(client);
+    agent = await removeHumanAgentPicture(client, config.relayAgentIdentifier);
   }
 
-  agent ??= await getHumanAgent(client);
+  agent ??= await getHumanAgent(client, config.relayAgentIdentifier);
 
   if (options.json) {
     return `${JSON.stringify(agent, null, 2)}\n`;
