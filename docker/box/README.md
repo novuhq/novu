@@ -102,7 +102,7 @@ reinstalls if the lockfile changed, builds the projects `nx affected` reports, r
 runs migrations and restarts what changed. A PR that changes `@novu/framework` or `playground/nextjs` also
 restarts the bridge app and syncs it again, so the PR's workflows and agents run on the PR's framework.
 
-Run the smoke test from the host (36 checks, 41 with the Anthropic key, about 2 minutes; writes `smoke.json` to
+Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):
 
 ```sh
@@ -116,15 +116,20 @@ Then it runs the bridge app's workflows: sync status, a preview with controls, e
 a delay feeding a custom step's output into an email, a digest, Local mode discovery, the `localhost` guard,
 and a throttle. And it chats with the bridge app's agents over web chat: a card with a table, a chart and a
 button click, conversation metadata, a tool run after approval, a HITL approval, a workflow triggered by the
-agent, and resolving the conversation, then a tool approval on the AI SDK and the LangChain agents.
+agent, an edited and a deleted reply, a custom event, and resolving the conversation with its `onResolve`
+workflow, then a tool approval on the AI SDK and the LangChain agents.
 
-The playground has one agent per `novu connect` runtime, all built on the same features
-(`playground/nextjs/src/app/novu/agents/features.ts`):
+The playground (`playground/nextjs`) is the catalog of agent features: every new feature gets a demo there. It has
+one agent per `novu connect` runtime, all built on the same features
+(`playground/nextjs/src/app/novu/agents/features.ts`), and all three share the reaction, edit, delete, resolve and
+card-click handlers:
 
 - `custom-code-agent` (`agent()` from `@novu/framework`) has no model. Each feature is a typed command (`card`,
-  `remember <text>`, `recall`, `notify <name>`, `done`, `approve`, `multi-approve`, `ask`, `choose`, `tell`,
+  `remember <text>`, `recall`, `notify <name>`, `done`, `progress`, `delete`, `file`, `quote`, `react`, `emit`,
+  `approve`, `multi-approve`, `custom-approve`, `custom-chrome-approve`, `ask`, `choose`, `tell`,
   `weather <city>`); anything else lists them. It works the same with or without the key. It's the only agent
-  with HITL (`approve`, `ask`, `choose`, `tell`), because only plain `agent()` handles the answer.
+  with HITL (`approve`, `ask`, `choose`, `tell`), because only plain `agent()` handles the answer. `file`,
+  `quote`, `react` and `multi-approve` need Slack (see `FIDELITY.md`, "Web chat limits").
 - `ai-sdk-agent` and `langchain-agent` get every other feature as a tool and, with
   `NOVU_MANAGED_CLAUDE_API_KEY`, run on Claude Haiku, which picks the tools from plain sentences and also reads
   attached images and PDFs (this spends from the key's workspace, not Novu's managed-Claude quota). The smoke

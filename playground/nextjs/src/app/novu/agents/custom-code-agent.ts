@@ -6,7 +6,13 @@ const HELP = [
   '- `card` — a card with a table, a chart, a button and a select',
   '- `remember <note>` / `recall` — conversation metadata',
   '- `notify <name>` — triggers `all-channels-workflow` for you',
-  '- `done` — resolves the conversation',
+  '- `done` — resolves the conversation (`onResolve` then triggers a follow-up notification)',
+  '- `progress` — a typing indicator, then a reply that gets edited',
+  '- `delete` — a reply that deletes itself',
+  '- `file` — a reply with a CSV file',
+  '- `quote <text>` — a reply quoting your message',
+  '- `react` — a 👍 on your message',
+  '- `emit` — a custom `progress` event for the client app',
   '- `approve` / `multi-approve` — `ctx.approve(...)`, the second one to `alice` and `bob`',
   '- `custom-approve` / `custom-chrome-approve` — `ctx.approve({ render })` / `ctx.approve({ card })`',
   '- `ask` / `choose` / `tell` — `ctx.ask(...)` / `ctx.choose(...)` / `ctx.tell(...)`',
@@ -65,6 +71,7 @@ function formatHumanResponse(response: AgentHumanResponse) {
 
 /** Every feature behind a typed command, so it behaves the same on every run. */
 export const customCodeAgent = agent('custom-code-agent', {
+  ...features.channelHandlers,
   onMessage: async (message, ctx) => {
     if (ctx.humanResponse) return formatHumanResponse(ctx.humanResponse);
 
@@ -83,6 +90,26 @@ export const customCodeAgent = agent('custom-code-agent', {
         return features.notify(ctx, arg);
       case 'done':
         return features.resolve(ctx);
+      case 'progress':
+        await features.showProgress(ctx);
+
+        return;
+      case 'delete':
+        await features.replyThenDelete(ctx);
+
+        return;
+      case 'file':
+        await features.sendFile(ctx);
+
+        return;
+      case 'quote':
+        await features.quote(ctx, message);
+
+        return;
+      case 'react':
+        return features.react(ctx, message);
+      case 'emit':
+        return features.emitProgress(ctx);
       case 'approve':
         return approve(ctx);
       case 'multi-approve':

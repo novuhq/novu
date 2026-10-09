@@ -55,6 +55,7 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same requests they make (`POST /v1/bridge/sync`, then `PUT /v1/agents/:id/bridge`), but signs the agent discovery (see "Bugs found") |
 | Agent models | With the Anthropic key, the AI SDK and LangChain agents run on Claude Haiku only (no OpenAI or other providers). Without it they run on scripted fakes (`MockLanguageModelV4` from `ai/test`, a `BaseChatModel` subclass): no provider calls, streaming or real tool choice |
 | Agent channels | Web chat only; Slack, Teams, WhatsApp and the rest need partner apps |
+| Web chat limits | Shows typing, edits, deletes and custom events (`ctx.emit`). Rejects file replies (`attachment_failed`) and agent reactions (including the resolve reaction, logged as "Failed to add resolve reaction"), and drops `quoteReply`. Users can't react, edit, delete or attach, so `onReaction`, `onMessageUpdated`, `onMessageDeleted` and image or PDF input are untested. HITL `to` (`multi-approve`) needs other subscribers in the thread. All of these wait for Slack |
 
 ## Auth, billing and flags
 
@@ -104,3 +105,8 @@ with the Development secret key, through the same SSRF guard as a customer's bri
   approval), and the answer (`ctx.humanResponse`) isn't part of `toModelMessages` or `toLangChainMessages`.
   Nothing documents HITL for these runtimes, so the playground keeps HITL on `custom-code-agent` only. To ask
   the framework owners whether it's meant to work.
+- One failed delivery silences the rest of an agent run. `AgentEventOutbox.flush()`
+  (`packages/framework/src/resources/agent/agent-event-outbox.ts`) chains every batch onto `this.chain`; when
+  a batch fails, the chain stays rejected, so every later batch (replies, `run-error`, `run-finish`) is skipped.
+  Seen in the box: `file` in web chat gets `attachment_failed`, the bridge logs "Failed to report turn error",
+  and the chat shows `run-start` with nothing after it. Not fixed; to report.
