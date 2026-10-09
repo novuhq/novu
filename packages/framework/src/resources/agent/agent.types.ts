@@ -844,7 +844,10 @@ export interface AgentHandlers {
    * Return a string or JSX card to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  onMessage: (
+    message: AgentMessage,
+    ctx: AgentMessageContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | PendingApproval | void>;
   /**
    * Fires when the user edits a previously sent message. Does not re-run `onMessage`.
    *
