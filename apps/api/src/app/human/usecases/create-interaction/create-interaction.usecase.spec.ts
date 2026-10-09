@@ -2,6 +2,7 @@ import { BadGatewayException, BadRequestException, HttpException, NotFoundExcept
 import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { CreateInteraction } from './create-interaction.usecase';
 
 describe('CreateInteraction', () => {
@@ -51,7 +52,13 @@ describe('CreateInteraction', () => {
       deliveryService as any,
       connectClaimTokenService as any,
       logger as any,
-      activityRecorder as any
+      activityRecorder as any,
+      new HumanKeylessCapService(
+        humanInteractionRepository as any,
+        deliveryService as any,
+        connectClaimTokenService as any,
+        logger as any
+      )
     );
     const command = {
       userId: 'user1',

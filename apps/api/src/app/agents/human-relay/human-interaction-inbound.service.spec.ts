@@ -67,6 +67,11 @@ describe('HumanInteractionInboundService', () => {
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const featureFlagsService = { getFlag: sinon.stub().resolves(false) };
+    const conversationRepository = {
+      markRead: sinon.stub().resolves(undefined),
+      findOne: sinon.stub().resolves({ lastHumanMessageAt: '2026-10-09T10:00:00.000Z' }),
+    };
+    const conversationService = { countInboundMessagesSince: sinon.stub().resolves(1) };
     const service = new HumanInteractionInboundService(
       humanInteractionRepository as any,
       settlement as any,
@@ -74,11 +79,15 @@ describe('HumanInteractionInboundService', () => {
       cacheService as any,
       channelEndpointRepository as any,
       logger as any,
-      featureFlagsService as any
+      featureFlagsService as any,
+      conversationRepository as any,
+      conversationService as any
     );
 
     return {
       service,
+      conversationRepository,
+      conversationService,
       humanInteractionRepository,
       settlement,
       outboundGateway,
@@ -392,13 +401,48 @@ describe('HumanInteractionInboundService', () => {
     expect(outboundGateway.replyOnThread.called).to.equal(false);
   });
 
-  it('replies "nothing waiting" on the relay path when no ask is pending', async () => {
-    const { service, outboundGateway } = setup();
+  it('leaves a relay message unread and silent when no ask is pending', async () => {
+    const { service, outboundGateway, conversationRepository } = setup();
     const result = await service.tryHandleMessage(makeTurn() as any, 'relay');
 
-    expect(result).to.deep.equal({ outcome: 'consumed' });
-    expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
-    expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Nothing is waiting');
+    expect(result).to.deep.equal({ outcome: 'ignored' });
+    expect(outboundGateway.replyOnThread.called).to.equal(false);
+    expect(conversationRepository.markRead.called).to.equal(false);
+  });
+
+  it('marks the thread read when a message settles an ask', async () => {
+    const { service, humanInteractionRepository, settlement, conversationRepository, pendingAsk } = setup();
+    humanInteractionRepository.findPendingAsks.resolves([pendingAsk]);
+    settlement.settle.resolves({ ...pendingAsk, status: HumanInteractionStatusEnum.ANSWERED });
+
+    const result = await service.tryHandleMessage(makeTurn() as any, 'relay');
+
+    expect(result.outcome).to.equal('settled');
+    expect(conversationRepository.markRead.calledOnce).to.equal(true);
+    expect(conversationRepository.markRead.firstCall.args).to.deep.equal([
+      'env1',
+      'org1',
+      'conv1',
+      '2026-10-09T10:00:00.000Z',
+    ]);
+  });
+
+  it('keeps the thread unread when an earlier message is still unread', async () => {
+    const { service, humanInteractionRepository, settlement, conversationRepository, conversationService, pendingAsk } =
+      setup();
+    humanInteractionRepository.findPendingAsks.resolves([pendingAsk]);
+    settlement.settle.resolves({ ...pendingAsk, status: HumanInteractionStatusEnum.ANSWERED });
+    conversationRepository.findOne.resolves({
+      lastReadAt: '2026-10-09T09:00:00.000Z',
+      lastHumanMessageAt: '2026-10-09T10:00:00.000Z',
+    });
+    conversationService.countInboundMessagesSince.resolves(2);
+
+    const result = await service.tryHandleMessage(makeTurn() as any, 'relay');
+
+    expect(result.outcome).to.equal('settled');
+    expect(conversationService.countInboundMessagesSince.firstCall.args[0].since).to.equal('2026-10-09T09:00:00.000Z');
+    expect(conversationRepository.markRead.called).to.equal(false);
   });
 
   it('settles a conversation ask with the inbound text and does not send Got it', async () => {

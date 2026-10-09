@@ -93,6 +93,15 @@ export class ConversationActivityLedger {
     });
   }
 
+  async countInboundMessagesSince(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    since?: string;
+  }): Promise<number> {
+    return this.activityRepository.countInboundMessagesSince(params);
+  }
+
   async mint(params: { environmentId: string; organizationId: string; conversationId: string }): Promise<number> {
     return this.eventSequenceService.mint(params);
   }
@@ -153,30 +162,34 @@ export class ConversationActivityLedger {
     );
 
     try {
-      const [activity] = await Promise.all([
-        this.activityRepository.createUserActivity({
-          identifier,
-          conversationId: params.conversationId,
-          platform: params.platform,
-          integrationId: params.integrationId,
-          platformThreadId: params.platformThreadId,
-          senderType: params.senderType,
-          senderId: params.senderId,
-          senderName: params.senderName,
-          content,
-          richContent: params.richContent,
-          platformMessageId: params.platformMessageId,
-          sequence,
-          environmentId: params.environmentId,
-          organizationId: params.organizationId,
-        }),
-        this.conversationRepository.touchActivity(
-          params.environmentId,
-          params.organizationId,
-          params.conversationId,
-          preview
-        ),
-      ]);
+      const activity = await this.activityRepository.createUserActivity({
+        identifier,
+        conversationId: params.conversationId,
+        platform: params.platform,
+        integrationId: params.integrationId,
+        platformThreadId: params.platformThreadId,
+        senderType: params.senderType,
+        senderId: params.senderId,
+        senderName: params.senderName,
+        content,
+        richContent: params.richContent,
+        platformMessageId: params.platformMessageId,
+        sequence,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+
+      // The Human inbox counts unread messages by `createdAt`, so the cursor must come from the stored row.
+      await this.conversationRepository.touchActivity(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        preview,
+        null,
+        params.senderType === ConversationActivitySenderTypeEnum.SYSTEM
+          ? undefined
+          : { humanMessageAt: new Date(activity.createdAt).toISOString() }
+      );
 
       return activity;
     } catch (err) {
