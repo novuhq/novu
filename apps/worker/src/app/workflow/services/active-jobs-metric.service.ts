@@ -97,9 +97,7 @@ export class ActiveJobsMetricService {
 
       for (const queueService of this.tokenList) {
         try {
-          const waitCount = queueService.getGroupsJobsCount
-            ? await queueService.getGroupsJobsCount()
-            : await queueService.getWaitingCount();
+          const waitCount = await queueService.getWaitingCount();
           const delayedCount = await queueService.getDelayedCount();
           const activeCount = await queueService.getActiveCount();
 

@@ -136,12 +136,6 @@ function resolveTenantId(job: IJobParams | IBulkJobParams): string {
   return tenantId;
 }
 
-/**
- * Group counters ship with BullMQ Pro only, so the OSS `Queue` type has no
- * declaration for them and the method has to be probed at runtime.
- */
-type QueueWithGroups = Queue & { getGroupsJobsCount?: () => Promise<number> };
-
 export class QueueBaseService implements OnModuleDestroy {
   private bullMqService: BullMqService;
 
@@ -199,21 +193,6 @@ export class QueueBaseService implements OnModuleDestroy {
 
   public async getStatus() {
     return await this.bullMqService.getStatus();
-  }
-
-  public async getGroupsJobsCount() {
-    const queue: QueueWithGroups | undefined = this.bullMqService.queue;
-
-    if (!queue) return 0;
-
-    /*
-     * getGroupsJobsCount is only available in BullMQ Pro Edition, so we fallback to getWaitingCount if it's not available.
-     */
-    if (typeof queue.getGroupsJobsCount !== 'function') {
-      return await this.bullMqService.queue.getWaitingCount();
-    }
-
-    return await queue.getGroupsJobsCount();
   }
 
   public async getWaitingCount() {
@@ -535,7 +514,7 @@ export class QueueBaseService implements OnModuleDestroy {
       ...params.options,
     };
 
-    await this.bullMqService.add(params.name, params.data, jobOptions, params.groupId);
+    await this.bullMqService.add(params.name, params.data, jobOptions);
   }
 
   private separateByDelay<T extends IJobParams | IBulkJobParams>(

@@ -159,8 +159,6 @@ overrides:
   sharp@<0.35.4: ^0.35.4
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
-  '@taskforcesh/bullmq-pro@6.11.0>uuid': 11.1.1
-  bullmq@4.17.0>uuid: 11.1.1
   uuid@>=13.0.0 <13.0.1: ^13.0.1
   '@opentelemetry/exporter-prometheus@<0.217.0': ^0.217.0
   '@opentelemetry/sdk-node@<0.217.0': ^0.217.0
@@ -2989,9 +2987,6 @@ importers:
       '@novu/ee-shared-services':
         specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
-      '@taskforcesh/bullmq-pro':
-        specifier: 6.11.0
-        version: 6.11.0
 
   libs/automation:
     dependencies:
@@ -8861,9 +8856,6 @@ packages:
 
   '@ioredis/commands@1.10.0':
     resolution: {integrity: sha512-UmeW7z4LfctwoQ5wkhVzgq8tXkreED2xZGpX+Bg+zA+WJFZCT6c062AfCK/Dfk81xZnnwdhJCUMkitihRaoC2Q==}
-
-  '@ioredis/commands@1.2.0':
-    resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -15745,9 +15737,6 @@ packages:
     peerDependencies:
       react: ^18 || ^19
 
-  '@taskforcesh/bullmq-pro@6.11.0':
-    resolution: {integrity: sha512-S00SeOlo6VMc3YGsAFKX7w/jDAt6b7mNn2Ks7bF4Ilmh5xd/RBPv/vd3ouvhQ5slxAuZxoFLKRnysdPCWHKORA==, tarball: https://npm.taskforce.sh/@taskforcesh/bullmq-pro/-/@taskforcesh/bullmq-pro-6.11.0.tgz}
-
   '@team-plain/typescript-sdk@5.8.0':
     resolution: {integrity: sha512-qgDGX96yDsdTo5+Yh8R+rhtInmAm90w17607B2Ugik8Ij0H1wocjjp8xtMxHruSmms5ani43Y5xRxVFPSxYVeg==}
     deprecated: This package is now deprecated. Please use @team-plain/graphql, @team-plain/webhooks and @team-plain/ui-components (https://github.com/team-plain/sdk)
@@ -18397,9 +18386,6 @@ packages:
   bullmq@3.10.4:
     resolution: {integrity: sha512-KHYopaoAJpf9Fe9qMjY2xxbMTqgrEIgfrQr81wU0V/wLf4eijNpjVjGVhfQ/bWuHMmwKY1xgOzSIF3+lmdkiOg==}
 
-  bullmq@4.17.0:
-    resolution: {integrity: sha512-URnHgB01rlCP8RTpmW3kFnvv3vdd2aI1OcBMYQwnqODxGiJUlz9MibDVXE83mq7ee1eS1IvD9lMQqGszX6E5Pw==}
-
   bundle-name@4.1.0:
     resolution: {integrity: sha512-tjwM5exMg6BGRI+kNmTntNsvdZS1X8BFYS6tnJ2hdH0kVxM6/eVZ2xy+FqStSWvYmtfFMDLIxurorHwDKfDz5Q==}
     engines: {node: '>=18'}
@@ -18811,10 +18797,6 @@ packages:
 
   cluster-key-slot@1.1.1:
     resolution: {integrity: sha512-rwHwUfXL40Chm1r08yrhU3qpUvdVlgkKNeyeGPOxnW8/SyVDvgRaed/Uz54AqWNaTCAThlj6QAs3TZcKI0xDEw==}
-    engines: {node: '>=0.10.0'}
-
-  cluster-key-slot@1.1.2:
-    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
     engines: {node: '>=0.10.0'}
 
   cmdk@1.0.0:
@@ -21947,10 +21929,6 @@ packages:
     resolution: {integrity: sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A==}
     engines: {node: '>=12.22.0'}
 
-  ioredis@5.3.2:
-    resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
-    engines: {node: '>=12.22.0'}
-
   ip-address@10.7.2:
     resolution: {integrity: sha512-7H/2gFSIitxc0hG3nOI1glS8QLo/EHBFFLk8vEUjXY/xu0AdL8jZ9U1IzO2PUm0d2D/ofQcAifb0g6OBkt8U7w==}
     engines: {node: '>= 12'}
@@ -23585,9 +23563,6 @@ packages:
   lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
 
-  lodash.defaults@4.2.0:
-    resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
-
   lodash.flatmap@4.5.0:
     resolution: {integrity: sha512-/OcpcAGWlrZyoHGeHh3cAoa6nGdX6QYtmzNP84Jqol6UEQQ2gIaU3H+0eICcjcKGl0/XF8LWOujNn9lffsnaOg==}
 
@@ -23600,9 +23575,6 @@ packages:
 
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
-
-  lodash.isarguments@3.1.0:
-    resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
 
   lodash.isboolean@3.0.3:
     resolution: {integrity: sha512-Bz5mupy2SVbPHURB98VAcw+aHh4vRV5IPNhILUCsOzRmsTmSQ17jIuqopAentWoehktxGd9e/hbIXq980/1QJg==}
@@ -36649,9 +36621,6 @@ snapshots:
 
   '@ioredis/commands@1.10.0': {}
 
-  '@ioredis/commands@1.2.0':
-    optional: true
-
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -47273,18 +47242,6 @@ snapshots:
       '@tanstack/query-core': 5.65.0
       react: 19.2.3
 
-  '@taskforcesh/bullmq-pro@6.11.0':
-    dependencies:
-      bullmq: 4.17.0
-      lodash: 4.18.1
-      msgpackr: 1.11.9
-      rxjs: 6.6.7
-      tslib: 2.8.1
-      uuid: 11.1.1
-    transitivePeerDependencies:
-      - supports-color
-    optional: true
-
   '@team-plain/typescript-sdk@5.8.0':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.9.0)
@@ -50530,21 +50487,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  bullmq@4.17.0:
-    dependencies:
-      cron-parser: 4.9.0
-      glob: 8.1.0
-      ioredis: 5.3.2
-      lodash: 4.18.1
-      msgpackr: 1.11.9
-      node-abort-controller: 3.1.1
-      semver: 7.7.2
-      tslib: 2.8.1
-      uuid: 11.1.1
-    transitivePeerDependencies:
-      - supports-color
-    optional: true
-
   bundle-name@4.1.0:
     dependencies:
       run-applescript: 7.1.0
@@ -51048,9 +50990,6 @@ snapshots:
   clsx@2.1.1: {}
 
   cluster-key-slot@1.1.1: {}
-
-  cluster-key-slot@1.1.2:
-    optional: true
 
   cmdk@1.0.0(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
@@ -54936,21 +54875,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ioredis@5.3.2:
-    dependencies:
-      '@ioredis/commands': 1.2.0
-      cluster-key-slot: 1.1.2
-      debug: 4.3.4(supports-color@8.1.1)
-      denque: 2.1.0
-      lodash.defaults: 4.2.0
-      lodash.isarguments: 3.1.0
-      redis-errors: 1.2.0
-      redis-parser: 3.0.0
-      standard-as-callback: 2.1.0
-    transitivePeerDependencies:
-      - supports-color
-    optional: true
-
   ip-address@10.7.2: {}
 
   ipaddr.js@1.9.1: {}
@@ -57196,9 +57120,6 @@ snapshots:
 
   lodash.debounce@4.0.8: {}
 
-  lodash.defaults@4.2.0:
-    optional: true
-
   lodash.flatmap@4.5.0: {}
 
   lodash.flattendeep@4.4.0: {}
@@ -57206,9 +57127,6 @@ snapshots:
   lodash.get@4.4.2: {}
 
   lodash.includes@4.3.0: {}
-
-  lodash.isarguments@3.1.0:
-    optional: true
 
   lodash.isboolean@3.0.3: {}
 
