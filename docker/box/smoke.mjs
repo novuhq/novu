@@ -13,7 +13,7 @@
 // (@novu/framework): sync, preview, every channel, skip, delay with a custom
 // step, digest, throttle, Local mode discovery and the bridge URL guard, and
 // chats with its agents over web chat (cards, actions, metadata, tool
-// approval, workflow trigger, resolve; vanilla, AI SDK and LangChain).
+// approval, workflow trigger, resolve; custom code, AI SDK and LangChain).
 // Writes smoke.json with every check and its timing into the artifact dir.
 
 import fs from 'node:fs';
@@ -314,7 +314,7 @@ try {
     return { path: body.data.path, bytes: (await get.arrayBuffer()).byteLength };
   });
 
-  // Code-first workflows from the box's bridge app (bridge/workflows.mjs), served by @novu/framework.
+  // Code-first workflows from the bridge app (playground/nextjs), served by @novu/framework.
   const bridgeAuth = { ...auth(), 'Novu-Environment-Id': env.id };
   const run = `r${Date.now()}`;
   const triggerBridge = async (name, payload) =>
@@ -333,15 +333,16 @@ try {
   await check('bridge app is synced (framework)', async () => {
     const { body: status } = await call('/v1/bridge/status', { headers: bridgeAuth });
     if (status.data.status !== 'ok') throw new Error(`bridge status ${status.data.status}`);
-    const { body } = await call('/v2/workflows?query=box-bridge&limit=10', { headers: keyAuth });
+    const { body } = await call('/v2/workflows?limit=50', { headers: keyAuth });
     const external = body.data.workflows.filter((workflow) => workflow.origin === 'external').map((workflow) => workflow.workflowId);
-    if (external.length !== 4) throw new Error(`external workflows: ${external.join(', ')}`);
+    const expected = ['welcome-workflow', 'all-channels-workflow', 'delay-custom-workflow', 'digest-workflow', 'throttle-workflow'];
+    if (!expected.every((id) => external.includes(id))) throw new Error(`external workflows: ${external.join(', ')}`);
 
     return { sdkVersion: status.data.sdkVersion, discovered: status.data.discovered, workflows: external };
   });
 
   await check('bridge preview renders a code step with controls', async () => {
-    const { body } = await call('/v1/bridge/preview/box-bridge-all-channels/email', {
+    const { body } = await call('/v1/bridge/preview/all-channels-workflow/email', {
       method: 'POST',
       headers: bridgeAuth,
       body: JSON.stringify({ controls: { subject: 'Preview' }, payload: { name: 'P' } }),
@@ -352,7 +353,7 @@ try {
   });
 
   await check('bridge workflow reaches every channel and skips push (signed)', async () => {
-    const transaction = await triggerBridge('box-bridge-all-channels', { name: run, skipPush: true });
+    const transaction = await triggerBridge('all-channels-workflow', { name: run, skipPush: true });
 
     return until('bridge deliveries', async () => {
       const [emailMessage] = await mailpit(`subject:"Bridge email ${run}"`);
@@ -373,8 +374,8 @@ try {
   });
 
   await check('bridge custom step output reaches an email after a delay', async () => {
-    await triggerBridge('box-bridge-delay-custom', { name: run });
-    const subject = `Bridge code BOX-${run.toUpperCase()}`;
+    await triggerBridge('delay-custom-workflow', { name: run });
+    const subject = `Bridge code CODE-${run.toUpperCase()}`;
 
     return until('custom output email', async () => {
       if (!(await mailpit(`subject:"${subject}"`)).length) throw new Error('no email yet');
@@ -384,7 +385,7 @@ try {
   });
 
   await check('bridge digest batches 3 triggers into 1 email', async () => {
-    for (const n of [1, 2, 3]) await triggerBridge('box-bridge-digest', { run, n });
+    for (const n of [1, 2, 3]) await triggerBridge('digest-workflow', { run, n });
 
     return until('digest email', async () => {
       const messages = await mailpit(`subject:"Bridge digest ${run}"`);
@@ -417,7 +418,7 @@ try {
     return body.data.error;
   });
 
-  // Self-hosted agents from the bridge app (bridge/agents.mjs), chatting over web chat as the subscriber above.
+  // Self-hosted agents from the bridge app (playground/nextjs), chatting over web chat as the subscriber above.
   const subscriberAuth = { Authorization: `Bearer ${subscriberToken}` };
   const agentEvents = async (conversation) =>
     (await call(`/v1/web-chat/conversations/${conversation}/events?limit=100`, { headers: subscriberAuth })).body.data.events.map(
@@ -446,7 +447,7 @@ try {
 
   await check('agents are synced with the bridge URL (framework)', async () => {
     const urls = {};
-    for (const agentId of ['box-vanilla', 'box-ai-sdk', 'box-langchain']) {
+    for (const agentId of ['custom-code-agent', 'ai-sdk-agent', 'langchain-agent']) {
       const { body } = await call(`/v1/agents/${agentId}`, { headers: keyAuth });
       if (body.data.bridgeUrl !== 'http://bridge.box.internal:4000/api/novu') throw new Error(`${agentId} bridgeUrl ${body.data.bridgeUrl}`);
       urls[agentId] = body.data.bridgeUrl;
@@ -455,20 +456,20 @@ try {
     return urls;
   });
 
-  let vanilla;
-  await check('vanilla agent replies with a card (table, chart, buttons)', async () => {
-    const { conversation, event } = await chat('box-vanilla', null, { text: 'card' }, (item) => item.content?.card);
-    vanilla = conversation;
+  let customCode;
+  await check('custom-code agent replies with a card (table, chart, buttons)', async () => {
+    const { conversation, event } = await chat('custom-code-agent', null, { text: 'card' }, (item) => item.content?.card);
+    customCode = conversation;
     const types = event.content.card.children.map((child) => child.type);
     for (const type of ['table', 'chart', 'link', 'actions']) if (!types.includes(type)) throw new Error(`card has ${types.join(', ')}`);
-    await chat('box-vanilla', vanilla, { actionId: 'pick', sourceMessageId: event.messageId, value: 'blue' }, 'Clicked pick = blue');
+    await chat('custom-code-agent', customCode, { actionId: 'pick', sourceMessageId: event.messageId, value: 'blue' }, 'Clicked pick = blue');
 
     return { conversation, children: types, clicked: 'pick = blue' };
   });
 
-  await check('vanilla agent keeps conversation metadata', async () => {
-    await chat('box-vanilla', vanilla, { text: `remember ${run}` }, `Noted: ${run}`);
-    await chat('box-vanilla', vanilla, { text: 'recall' }, `You asked me to remember: ${run}`);
+  await check('custom-code agent keeps conversation metadata', async () => {
+    await chat('custom-code-agent', customCode, { text: `remember ${run}` }, `Noted: ${run}`);
+    await chat('custom-code-agent', customCode, { text: 'recall' }, `You asked me to remember: ${run}`);
 
     return run;
   });
@@ -488,10 +489,10 @@ try {
     return { conversation, tool: request.toolName, input: request.input, reply: event.content.markdown };
   };
 
-  await check('vanilla agent runs a tool after approval', () => approveTool('box-vanilla', 'weather Paris'));
+  await check('custom-code agent runs a tool after approval', () => approveTool('custom-code-agent', 'weather Paris'));
 
-  await check('vanilla agent triggers a workflow for the subscriber', async () => {
-    await chat('box-vanilla', vanilla, { text: `notify ${run}-agent` }, 'Triggered box-bridge-all-channels');
+  await check('custom-code agent triggers a workflow for the subscriber', async () => {
+    await chat('custom-code-agent', customCode, { text: `notify ${run}-agent` }, 'Triggered all-channels-workflow');
 
     return until('agent-triggered in-app', async () => {
       const message = (await inbox()).find((item) => item.body === `Bridge in-app for ${run}-agent`);
@@ -501,19 +502,19 @@ try {
     });
   });
 
-  await check('vanilla agent resolves the conversation', async () => {
-    await chat('box-vanilla', vanilla, { text: 'done' }, 'Resolving');
+  await check('custom-code agent resolves the conversation', async () => {
+    await chat('custom-code-agent', customCode, { text: 'done' }, 'Resolving');
 
     return until('resolved conversation', async () => {
-      const { body } = await call(`/v1/web-chat/conversations/${vanilla}`, { headers: subscriberAuth });
+      const { body } = await call(`/v1/web-chat/conversations/${customCode}`, { headers: subscriberAuth });
       if (body.data.status !== 'resolved') throw new Error(`status ${body.data.status}`);
 
       return body.data.status;
     });
   });
 
-  await check('AI SDK agent runs a tool after approval', () => approveTool('box-ai-sdk', 'What is the weather in Lima?'));
-  await check('LangChain agent runs a tool after approval', () => approveTool('box-langchain', 'What is the weather in Oslo?'));
+  await check('AI SDK agent runs a tool after approval', () => approveTool('ai-sdk-agent', 'What is the weather in Lima?'));
+  await check('LangChain agent runs a tool after approval', () => approveTool('langchain-agent', 'What is the weather in Oslo?'));
 
   // The managed agent exists only on a box started with NOVU_MANAGED_CLAUDE_API_KEY. It calls Anthropic for real.
   if (await call('/v1/agents/box-managed', { headers: keyAuth }).then(() => true, () => false)) {
@@ -550,7 +551,7 @@ try {
   // Last: RedisThrottleService loads its Lua script on one Redis Cluster node only, so this fails whenever the
   // throttle key lands on a node without it (FIDELITY.md, "Bugs found").
   await check('bridge throttle lets 1 of 2 triggers through', async () => {
-    for (const n of [1, 2]) await triggerBridge('box-bridge-throttle', { run, n });
+    for (const n of [1, 2]) await triggerBridge('throttle-workflow', { run, n });
     const throttled = async () => (await inbox()).filter((message) => message.body.startsWith(`Bridge throttle ${run}`));
     await until('first throttle message', async () => {
       const messages = await throttled();

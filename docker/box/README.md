@@ -29,7 +29,7 @@ process-compose supervises everything under tini (`process-compose.yaml`):
 | `socket` | The socket worker (Cloudflare Worker) under `wrangler dev`, for realtime Inbox |
 | `dashboard` | The built dashboard served by Caddy, with runtime env injected into `index.html` |
 | `stripe` | `stripe listen`, forwarding sandbox webhooks to the API |
-| `bridge` | `bridge/server.mjs`: a self-hosted Novu app with code-first workflows (`bridge/workflows.mjs`) and agents (`bridge/agents.mjs`) on the checkout's `@novu/framework`, at `http://bridge.box.internal:4000/api/novu` |
+| `bridge` | `next dev` of `playground/nextjs`: a self-hosted Novu app with code-first workflows and agents (`src/app/novu/`) on the checkout's `@novu/framework`, at `http://bridge.box.internal:4000/api/novu` |
 
 Settings shared by every box are in `config/box.env`. Secrets come only from the `docker run` environment.
 
@@ -99,10 +99,11 @@ GITHUB_TOKEN=$(gh auth token) docker exec -e GITHUB_TOKEN novu-box node /opt/box
 
 `apply-pr` merges the PR onto the baked commit (like CI's merge ref) and stops if the two conflict. It then
 reinstalls if the lockfile changed, builds the projects `nx affected` reports, redeploys the API and worker,
-runs migrations and restarts what changed. A PR that changes `@novu/framework` also restarts the bridge app and
-syncs it again, so its workflows and agents run on the PR's framework.
+runs migrations and restarts what changed. A PR that changes `@novu/framework` or `playground/nextjs` also
+restarts the bridge app and syncs it again, so the PR's workflows and agents run on the PR's framework.
 
-Run the smoke test from the host (35 checks, about 50 seconds; writes `smoke.json` to the directory given):
+Run the smoke test from the host (35 checks, 38 with the Anthropic key, about 60 seconds; writes `smoke.json` to
+the directory given):
 
 ```sh
 node --env-file=docker/box/.env docker/box/smoke.mjs /tmp/box-smoke
@@ -117,8 +118,10 @@ and a throttle. And it chats with the bridge app's agents over web chat: a card 
 button click, conversation metadata, a tool run after approval, a workflow triggered by the agent, and
 resolving the conversation, then a tool approval on the AI SDK and the LangChain agents.
 
-The agents are `box-vanilla` (`agent()` from `@novu/framework`), `box-ai-sdk` and `box-langchain`. The vanilla
-agent has no model: `weather <city>` asks to run a gated `get_weather` tool, and it also answers `card`,
+The smoke test chats with `custom-code-agent` (`agent()` from `@novu/framework`), `ai-sdk-agent` and
+`langchain-agent`. The playground's other agents, `human-hitl` and `langchain-vision`, are synced and on web chat
+too, but not checked. The custom-code agent has no model: `weather <city>` asks to run a gated `get_weather`
+tool, and it also answers `card`,
 `remember <text>`, `recall`, `notify <name>` and `done`. With `NOVU_MANAGED_CLAUDE_API_KEY`, the AI SDK and
 LangChain agents run on Claude Haiku with the same gated `get_weather` tool (this spends from the key's workspace,
 not Novu's managed-Claude quota). Without it they run on scripted fakes: a message about the weather asks for the

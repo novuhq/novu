@@ -32,9 +32,6 @@ const MAIL_HOST = 'mail.box.internal';
 const SINK_URL = 'http://sink.box.internal:8026';
 const BRIDGE_URL = 'http://bridge.box.internal:4000/api/novu';
 const BRIDGE_SECRET = `${DATA}/bridge/secret-key`;
-// The bridge app's imports, resolved from packages/framework so they follow the checkout.
-const BRIDGE_MODULES = ['express', 'zod', 'ai', 'langchain', '@langchain/core'];
-const BRIDGE_LLM_MODULES = ['@ai-sdk/anthropic', '@langchain/anthropic'];
 const MANAGED_AGENT = 'box-managed';
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
 const APPS = ['api', 'worker', 'socket', 'dashboard', 'bridge'];
@@ -253,7 +250,6 @@ function prepareRuntime() {
     if (!hosts.includes(` ${host}`)) fs.appendFileSync('/etc/hosts', `127.0.0.1 ${host}\n`);
   }
 
-  linkBridgeModules();
   prepareDashboard();
 
   fs.writeFileSync(
@@ -261,23 +257,6 @@ function prepareRuntime() {
     `JWT_SECRET=${env.JWT_SECRET}\nINTERNAL_API_KEY=${env.INTERNAL_SERVICES_API_KEY}\n`
   );
   fs.writeFileSync(`${REPO}/enterprise/workers/thalamus-observer/.dev.vars`, `API_KEY=${env.THALAMUS_CF_API_KEY}\n`);
-}
-
-// The bridge app lives in the image, outside the workspace, so its node_modules point into the checkout:
-// @novu/framework itself, the packages it has installed for its own adapters, and the Anthropic adapters
-// from enterprise/packages/ai (built against the same @langchain/core).
-function linkBridgeModules() {
-  const modules = `${BOX}/bridge/node_modules`;
-  const framework = `${REPO}/packages/framework`;
-  fs.rmSync(modules, { recursive: true, force: true });
-  for (const [name, source] of [
-    ['@novu/framework', framework],
-    ...BRIDGE_MODULES.map((name) => [name, `${framework}/node_modules/${name}`]),
-    ...BRIDGE_LLM_MODULES.map((name) => [name, `${REPO}/enterprise/packages/ai/node_modules/${name}`]),
-  ]) {
-    fs.mkdirSync(dirname(`${modules}/${name}`), { recursive: true });
-    fs.symlinkSync(fs.realpathSync(source), `${modules}/${name}`);
-  }
 }
 
 // Same job as apps/dashboard/docker-entrypoint.sh: expose VITE_* runtime env as window._env_.
@@ -479,30 +458,28 @@ async function seedChannels(token) {
 }
 
 // The bridge app serves the Development environment, so it signs with that environment's secret key. The key
-// belongs to this box's own Mongo data, like every other seeded record. Each of its agents is created and
-// published to web chat, as a customer does in the dashboard before running `npx novu sync`.
+// belongs to this box's own Mongo data, like every other seeded record.
 async function seedBridge(token) {
   const { body: environments } = await api('/v1/environments', { headers: { Authorization: `Bearer ${token}` } });
   const development = environments.data.find((environment) => environment.name === 'Development');
   fs.mkdirSync(dirname(BRIDGE_SECRET), { recursive: true });
   fs.writeFileSync(BRIDGE_SECRET, development.apiKeys[0].key, { mode: 0o600 });
-  const headers = { Authorization: `ApiKey ${development.apiKeys[0].key}` };
-  for (const { agentId } of (await discoverBridge()).agents ?? []) {
-    if (await api(`/v1/agents/${agentId}`, { headers }).then(() => true, () => false)) continue;
-    await api('/v1/agents', { method: 'POST', headers, body: JSON.stringify({ name: agentId, identifier: agentId }) });
-    await api(`/v1/agents/${agentId}/integrations`, { method: 'POST', headers, body: JSON.stringify({ providerId: 'novu-web-chat' }) });
-    log(`agent ${agentId} is on web chat`);
-  }
   await syncBridge();
 }
 
 // Same requests as `npx novu sync`: the API discovers the workflows from the bridge and stores them, then
-// every agent the bridge serves gets the bridge URL.
+// every agent the bridge serves gets the bridge URL. An agent the bridge serves for the first time (a PR can
+// add one) is created and published to web chat, as a customer does in the dashboard before syncing.
 async function syncBridge() {
   const headers = { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` };
   const { agents = [] } = await discoverBridge();
   const { body } = await api('/v1/bridge/sync?source=box', { method: 'POST', headers, body: JSON.stringify({ bridgeUrl: BRIDGE_URL }) });
   for (const { agentId } of agents) {
+    if (!(await api(`/v1/agents/${agentId}`, { headers }).then(() => true, () => false))) {
+      await api('/v1/agents', { method: 'POST', headers, body: JSON.stringify({ name: agentId, identifier: agentId }) });
+      await api(`/v1/agents/${agentId}/integrations`, { method: 'POST', headers, body: JSON.stringify({ providerId: 'novu-web-chat' }) });
+      log(`agent ${agentId} is on web chat`);
+    }
     await api(`/v1/agents/${agentId}/bridge`, { method: 'PUT', headers, body: JSON.stringify({ bridgeUrl: BRIDGE_URL }) });
   }
   log(`bridge synced: ${body.data.length} workflows and ${agents.length} agents from ${BRIDGE_URL}`);
@@ -727,6 +704,8 @@ async function applyPr(ref) {
   if (affected.length) await step(`build ${affected.join(' ')}`, () => build(affected));
   affected.forEach((project) => restart.add(PROJECT_PROCESSES[project]));
   if (files.some((file) => file.startsWith('enterprise/workers/socket/'))) restart.add('socket');
+  // playground/ is in .nxignore, so nx never lists the bridge app itself.
+  if (files.some((file) => file.startsWith('playground/nextjs/'))) restart.add('bridge');
   const redeploy = Object.keys(DEPLOYED_APPS).filter((name) => restart.has(name));
   if (redeploy.length) await step(`deploy ${redeploy.join(' ')}`, () => redeploy.forEach(deployApp));
   await step('migrate', migrate);
