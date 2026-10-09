@@ -576,6 +576,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
         if (streamLive) this._transport.writeLive({ type: 'message-delta', messageId, delta });
       }
       completed = true;
+      // Novu saves the reply on `message-end`, so the tool results it used must be saved first.
+      if (streamLive && text.trim()) await this.flush();
     } finally {
       if (streamLive && text) {
         // Without final text, Novu removes the preview instead of keeping a partial reply.

@@ -1,5 +1,5 @@
 import type { Readable } from 'node:stream';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { type AgentEventEnvelope, isAgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
 import type { ConversationEntity } from '@novu/dal';
@@ -10,17 +10,26 @@ import { streamsLiveReplies } from '../../managed-runtime/live-reply-streamer.se
 import { type AgentEventContext, AgentEventSink } from '../../shared/agent-event-sink.service';
 import { resolveLifecycleChannel } from '../conversation/run-lifecycle-activity';
 
-/** A bridge controls this stream, so one unterminated frame must not grow without bound. */
+/** A bridge controls this stream, so neither a frame nor the replies it opens may grow without bound. */
 const MAX_FRAME_CHARS = 1024 * 1024;
+const MAX_OPEN_REPLIES = 8;
+const MAX_QUEUED_CHARS = 1024 * 1024;
 
 /** Streams the replies a bridge writes to its SSE response into the conversation's channel. */
 @Injectable()
-export class BridgeLiveReplies {
+export class BridgeLiveReplies implements OnApplicationShutdown {
+  private readonly bodies = new Set<Readable>();
+
   constructor(
     private readonly agentEventSink: AgentEventSink,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  /** Closing a body ends its open replies, so their streams finish before the process exits. */
+  onApplicationShutdown(): void {
+    for (const body of this.bodies) body.destroy();
   }
 
   /** Set only when the channel streams; the bridge is then asked for SSE and its body handed to the reader. */
@@ -34,6 +43,8 @@ export class BridgeLiveReplies {
     }
 
     return (body) => {
+      this.bodies.add(body);
+      body.once('close', () => this.bodies.delete(body));
       this.read(body, config, conversation, platformThreadId).catch((err) => {
         body.destroy();
         this.logger.warn(err, `[agent:${config.agentIdentifier}] Bridge live reply stream ended early`);
@@ -65,15 +76,7 @@ export class BridgeLiveReplies {
     await readBridgeLiveReplies(
       body,
       (envelope) => envelope.conversationId === context.conversationId && envelope.agentId === config.agentIdentifier,
-      (runId, messageId, reply) =>
-        this.agentEventSink.startLiveReply(context, runId, messageId, (signal) => {
-          const stop = () => body.destroy();
-          signal.addEventListener('abort', stop, { once: true });
-          body.once('close', () => signal.removeEventListener('abort', stop));
-          if (signal.aborted) stop();
-
-          return reply;
-        })
+      (runId, messageId, reply) => this.agentEventSink.startLiveReply(context, runId, messageId, () => reply)
     );
   }
 }
@@ -83,6 +86,7 @@ class BridgeLiveReply implements LiveReply {
   readonly final: Promise<string | undefined>;
   private settleFinal: (text: string | undefined) => void = () => {};
   private readonly pending: string[] = [];
+  private queuedChars = 0;
   private ended = false;
   private wake?: () => void;
 
@@ -93,6 +97,8 @@ class BridgeLiveReply implements LiveReply {
   }
 
   push(delta: string): void {
+    this.queuedChars += delta.length;
+    if (this.queuedChars > MAX_QUEUED_CHARS) throw new Error('Bridge live reply is not being read');
     this.pending.push(delta);
     this.wakeReader();
   }
@@ -108,6 +114,7 @@ class BridgeLiveReply implements LiveReply {
     while (true) {
       const delta = this.pending.shift();
       if (delta !== undefined) {
+        this.queuedChars -= delta.length;
         yield delta;
         continue;
       }
@@ -140,25 +147,29 @@ async function readBridgeLiveReplies(
   try {
     for await (const data of sseData(body)) {
       const envelope = parseEnvelope(data);
-      if (!envelope || !accepts(envelope)) continue;
-
-      const { event } = envelope;
-      if (event.type === 'message-start') {
-        if (open.has(event.messageId)) continue;
-        const reply = new BridgeLiveReply();
-        open.set(event.messageId, reply);
-        onReply(envelope.runId, event.messageId, reply);
-      } else if (event.type === 'message-delta') {
-        open.get(event.messageId)?.push(event.delta);
-      } else if (event.type === 'message-end') {
-        open
-          .get(event.messageId)
-          ?.end(event.content && 'markdown' in event.content ? event.content.markdown : undefined);
-        open.delete(event.messageId);
-      }
+      if (envelope && accepts(envelope)) applyEnvelope(open, envelope, onReply);
     }
   } finally {
     for (const reply of open.values()) reply.end();
+  }
+}
+
+function applyEnvelope(
+  open: Map<string, BridgeLiveReply>,
+  { runId, event }: AgentEventEnvelope,
+  onReply: (runId: string, messageId: string, reply: LiveReply) => void
+): void {
+  if (event.type === 'message-start') {
+    if (open.has(event.messageId)) return;
+    if (open.size >= MAX_OPEN_REPLIES) throw new Error('Bridge opened too many live replies');
+    const reply = new BridgeLiveReply();
+    open.set(event.messageId, reply);
+    onReply(runId, event.messageId, reply);
+  } else if (event.type === 'message-delta') {
+    open.get(event.messageId)?.push(event.delta);
+  } else if (event.type === 'message-end') {
+    open.get(event.messageId)?.end(event.content && 'markdown' in event.content ? event.content.markdown : undefined);
+    open.delete(event.messageId);
   }
 }
 

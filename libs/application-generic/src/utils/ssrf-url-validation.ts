@@ -534,7 +534,7 @@ export async function safeOutboundStreamRequest(
         return response;
       }
 
-      res.resume();
+      res.destroy();
       const nextUrl = new URL(location, parsed.toString());
       assertNoCrossOriginMethodPreservingRedirect(status, parsed, nextUrl, initialOriginHost);
 
