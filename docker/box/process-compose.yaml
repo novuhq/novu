@@ -232,7 +232,7 @@ processes:
     command: >-
       while [ ! -s /data/bridge/secret-key ]; do sleep 1; done;
       NOVU_SECRET_KEY=$(cat /data/bridge/secret-key) ANTHROPIC_API_KEY=$NOVU_MANAGED_CLAUDE_API_KEY
-      exec node_modules/.bin/next dev -p 4000 -H 127.0.0.1
+      exec node_modules/.bin/next dev --turbopack -p 4000 -H 127.0.0.1
     working_dir: /data/novu/playground/nextjs
     environment:
       - NODE_OPTIONS=
