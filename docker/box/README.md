@@ -60,7 +60,7 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | `STRIPE_API_KEY` | Stripe sandbox `Novu Box` | Bake (puts the org on Team), `stripe listen`, API |
 | `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply-pr` only; pass it with `-e`, it's never written to disk |
 | `BULL_MQ_PRO_NPM_TOKEN` (optional) | Taskforce.sh registry | Bake; without it the box runs open-source BullMQ |
-| `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API |
+| `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API, bridge app (real models for its agents) |
 
 The dashboard signs in as `agent@novu.co` / `Agent123!@#` (a Clerk test user, `*@novu.co` only). All boxes share
 the Clerk development instance and its one seed org, and every bake re-links that org to the new box. Older
@@ -117,9 +117,12 @@ and a throttle. And it chats with the bridge app's agents over web chat: a card 
 button click, conversation metadata, a tool run after approval, a workflow triggered by the agent, and
 resolving the conversation, then a tool approval on the AI SDK and the LangChain agents.
 
-The agents are `box-vanilla` (`agent()` from `@novu/framework`), `box-ai-sdk` and `box-langchain`. Their models
-are scripted fakes, so they need no LLM key: `weather <city>` asks to run a gated `get_weather` tool, and anything
-else is echoed. The vanilla agent also answers `card`, `remember <text>`, `recall`, `notify <name>` and `done`.
+The agents are `box-vanilla` (`agent()` from `@novu/framework`), `box-ai-sdk` and `box-langchain`. The vanilla
+agent has no model: `weather <city>` asks to run a gated `get_weather` tool, and it also answers `card`,
+`remember <text>`, `recall`, `notify <name>` and `done`. With `NOVU_MANAGED_CLAUDE_API_KEY`, the AI SDK and
+LangChain agents run on Claude Haiku with the same gated `get_weather` tool (this spends from the key's workspace,
+not Novu's managed-Claude quota). Without it they run on scripted fakes: a message about the weather asks for the
+tool, and anything else is echoed.
 
 With `NOVU_MANAGED_CLAUDE_API_KEY`, `start` also runs the thalamus observer and seeds `box-managed`, a managed
 agent on the Novu-managed Claude integration (Claude Haiku, only the `bash` tool, which asks before it runs).

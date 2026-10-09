@@ -1,5 +1,8 @@
-// Self-hosted agents, one per framework flavour. The models are scripted fakes (no LLM key, deterministic output):
-// "weather <city>" asks for a gated get_weather call, a tool result turns into the final answer, anything else echoes.
+// Self-hosted agents, one per framework flavour. With ANTHROPIC_API_KEY the AI SDK and LangChain agents run on Claude
+// Haiku. Without it they run on scripted fakes: "weather <city>" asks for a gated get_weather call, a tool result turns
+// into the final answer, anything else echoes.
+import { anthropic } from '@ai-sdk/anthropic';
+import { ChatAnthropic } from '@langchain/anthropic';
 import { AIMessage } from '@langchain/core/messages';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { tool as langchainTool } from '@langchain/core/tools';
@@ -22,6 +25,9 @@ import { generateText, stepCountIs, tool as aiTool } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
 import { z } from 'zod';
 
+const realModel = Boolean(process.env.ANTHROPIC_API_KEY);
+const MODEL = 'claude-haiku-4-5';
+const SYSTEM = 'You are the Novu Box test agent. Use get_weather for weather questions. Keep answers to one short sentence.';
 const weather = (city) => `Sunny, 21°C in ${city}`;
 const cityOf = (text) => text.match(/weather(?: in)? ([\p{L}-]+)/iu)?.[1] ?? 'Berlin';
 
@@ -95,7 +101,8 @@ const scriptedAiModel = new MockLanguageModelV4({
 
 const aiSdk = aiSdkAgent('box-ai-sdk', async (_message, ctx) =>
   generateText({
-    model: scriptedAiModel,
+    model: realModel ? anthropic(MODEL) : scriptedAiModel,
+    system: SYSTEM,
     messages: await toModelMessages(ctx),
     stopWhen: stepCountIs(3),
     tools: {
@@ -138,9 +145,9 @@ const getWeather = langchainTool(async ({ city }) => weather(city), {
 });
 
 const langchain = langchainAgent('box-langchain', () => ({
-  model: new ScriptedChatModel({}),
+  model: realModel ? new ChatAnthropic({ model: MODEL }) : new ScriptedChatModel({}),
   tools: [getWeather],
-  system: 'You are the box test agent.',
+  system: SYSTEM,
   needsApproval: (toolCall) => toolCall.name === 'get_weather',
 }));
 

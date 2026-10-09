@@ -48,11 +48,11 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Area | Difference |
 |---|---|
 | Environments | Only Development is synced; Production would need its own secret key and a second sync |
-| Bridge app dependencies | `express`, `zod`, `ai`, `langchain` and `@langchain/core` come from `packages/framework`'s own dependencies, so they follow the PR |
+| Bridge app dependencies | `express`, `zod`, `ai`, `langchain` and `@langchain/core` come from `packages/framework`'s own dependencies, so they follow the PR. `@ai-sdk/anthropic` and `@langchain/anthropic` come from `enterprise/packages/ai`; that `@ai-sdk/anthropic` (3.x) implements the `v3` model spec, which `ai` 7 accepts |
 | Content renderers | No react-email, Vue or Svelte templates; they render inside the customer's app, outside Novu |
 | `novu dev` tunnel (novu.sh) | Not used; Local mode is tested by pointing it at the bridge directly |
 | Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same requests they make (`POST /v1/bridge/sync`, then `PUT /v1/agents/:id/bridge`), but signs the agent discovery (see "Bugs found") |
-| Agent models | Scripted fakes (`MockLanguageModelV4` from `ai/test`, a `BaseChatModel` subclass); no provider calls, streaming or real tool choice |
+| Agent models | With the Anthropic key, the AI SDK and LangChain agents run on Claude Haiku only (no OpenAI or other providers). Without it they run on scripted fakes (`MockLanguageModelV4` from `ai/test`, a `BaseChatModel` subclass): no provider calls, streaming or real tool choice |
 | Agent channels | Web chat only; Slack, Teams, WhatsApp and the rest need partner apps |
 
 ## Auth, billing and flags
@@ -71,7 +71,7 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Keyless trial (`KEYLESS_ORGANIZATION_ID`, `KEYLESS_USER_EMAIL`) | Try-before-signup Inbox and keyless Connect don't work | Creating a keyless environment also needs `NOVU_MANAGED_CLAUDE_API_KEY` and the flags `IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED` and `IS_DEMO_MANAGED_CLAUDE_ENABLED`; that key also adds a Novu-managed Claude integration to every new Development environment while that flag is on |
 | Blueprints (`BLUEPRINT_CREATOR`) | Template gallery of the old `/blueprints` API is empty | The current dashboard doesn't use it |
 | Sanity CMS | Changelog cards and agent-template deep links fail (CORS) | `http://localhost:14200` isn't in the project's CORS origins |
-| AI (`AI_LLM_*`, `CONTEXT_DEV_API_KEY`) | AI features fail; self-hosted agents work (scripted models in the bridge app) | Needs keys with spend limits. `OPENAI_API_KEY` isn't read by the API or worker, only by the CLI |
+| AI (`AI_LLM_*`, `CONTEXT_DEV_API_KEY`) | AI features fail; self-hosted agents work (Claude with the Anthropic key, scripted models without it) | Needs keys with spend limits. `OPENAI_API_KEY` isn't read by the API or worker, only by the CLI |
 | Managed agents (`NOVU_MANAGED_CLAUDE_API_KEY`) | Without the key they fail. With it, only the Novu-managed Claude integration is seeded (not bring-your-own-key `anthropic` or `anthropic-aws`) | Bring-your-own keys would be stored in Mongo, and the box keeps no secrets under `/data` |
 | Managed-agent MCP servers | Not seeded | Every catalog server needs OAuth with a real account (DCR or the provider's vault), and the Novu-managed integration drops provider-vault ones; connecting a DCR server by hand from the dashboard isn't tried yet |
 | Partner apps (Slack, WhatsApp, Azure, GitHub MCP, Vercel) | Connecting them fails | Needs each app's credentials |

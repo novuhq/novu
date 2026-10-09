@@ -227,8 +227,9 @@ processes:
 
   # Self-hosted Novu app (bridge/server.mjs): code-first workflows on the checkout's @novu/framework, synced to
   # the Development environment by box.mjs. NODE_ENV=production keeps the HMAC signature check on.
+  # With the Anthropic key, its AI SDK and LangChain agents run on Claude instead of scripted fakes.
   bridge:
-    command: node /opt/box/bridge/server.mjs
+    command: ANTHROPIC_API_KEY=$NOVU_MANAGED_CLAUDE_API_KEY exec node /opt/box/bridge/server.mjs
     environment:
       - NODE_ENV=production
       - NODE_OPTIONS=
