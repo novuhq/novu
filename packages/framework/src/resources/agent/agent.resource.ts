@@ -1,3 +1,4 @@
+import { requireRuntimeContext } from './agent.runtime';
 import type { Agent, AgentHandlers } from './agent.types';
 
 /**
@@ -15,5 +16,28 @@ export function agent(agentId: string, handlers: AgentHandlers): Agent {
     throw new Error(`agent('${agentId}') requires an onMessage handler`);
   }
 
-  return { id: agentId, handlers, userOnToolApproval: typeof handlers.onToolApproval === 'function' };
+  const { onToolApproval } = handlers;
+  if (!onToolApproval) {
+    return { id: agentId, handlers, userOnToolApproval: false };
+  }
+
+  // The handler runs the approved tool itself; without a recorded result Novu treats the approval as orphaned.
+  const recordingHandlers: AgentHandlers = {
+    ...handlers,
+    onToolApproval: async (decision, ctx) => {
+      const result = await onToolApproval(decision, ctx);
+      if (decision.approved) {
+        requireRuntimeContext(ctx).emitToolResult({
+          toolCallId: decision.toolCall.id,
+          toolName: decision.toolCall.name,
+          output: typeof result === 'string' ? result : null,
+          preview: `Tool "${decision.toolCall.name}" ran`,
+        });
+      }
+
+      return result;
+    },
+  };
+
+  return { id: agentId, handlers: recordingHandlers, userOnToolApproval: true };
 }
