@@ -63,19 +63,41 @@ export async function sendInteraction(
   return created;
 }
 
-/** Checks for the answer until there is one or `seconds` have passed, and returns the interaction as it is then. */
+/** A check never gets less time than this, however little of the wait is left. */
+const SHORTEST_CHECK_MS = 1_000;
+
+/**
+ * Checks for the answer until there is one or `seconds` have passed, and returns the interaction as it
+ * is then. Given the interaction that was just sent, it always returns one: a check that fails or takes
+ * too long leaves the request open, and the tool still gets its id to wait on. Given only an id, the
+ * first check has to succeed, because nothing is known about the request yet.
+ */
 export async function waitForAnswer(
   api: HumanApi,
-  id: string,
+  sent: Interaction | string,
   seconds: number,
   sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 ): Promise<Interaction> {
   const deadline = Date.now() + Math.min(Math.max(seconds, 0), MAX_WAIT_SECONDS) * 1000;
-  let interaction = await api.get<Interaction>(`/v1/human/interactions/${encodeURIComponent(id)}`);
+  const id = typeof sent === 'string' ? sent : sent.id;
+  // No check takes longer than what is left of the wait.
+  const check = () =>
+    api.get<Interaction>(
+      `/v1/human/interactions/${encodeURIComponent(id)}`,
+      undefined,
+      Math.max(SHORTEST_CHECK_MS, deadline - Date.now())
+    );
+
+  let interaction = typeof sent === 'string' ? await check() : sent;
 
   while (interaction.status === 'pending' && Date.now() + POLL_EVERY_MS <= deadline) {
     await sleep(POLL_EVERY_MS);
-    interaction = await api.get<Interaction>(`/v1/human/interactions/${encodeURIComponent(id)}`);
+
+    try {
+      interaction = await check();
+    } catch {
+      // One missed check is not an answer: keep what is known and try again while there is time.
+    }
   }
 
   return interaction;

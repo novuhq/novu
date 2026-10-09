@@ -20,8 +20,12 @@ export class AuthError extends Error {
 }
 
 const USERINFO_TIMEOUT_MS = 8_000;
+const API_TIMEOUT_MS = 8_000;
 
-/** How long a token's owner is remembered, so not every call asks Clerk again. */
+/**
+ * How long a token's owner is remembered, so not every call asks Clerk again. It counts from when Clerk
+ * was last asked, so a token Clerk no longer accepts stops working within this long.
+ */
 const IDENTITY_TTL_SECONDS = 300;
 
 type Identity = { humanUserId: string; region?: Region };
@@ -40,9 +44,14 @@ export async function authenticate(request: Request, env: Env): Promise<Account>
   }
 
   const cacheKey = `token:${await sha256(token)}`;
-  const identity = (await readJson<Identity>(env, cacheKey)) ?? (await identify(token, env));
-  const account = await loadAccount(identity, env);
+  const remembered = await readJson<Identity>(env, cacheKey);
+  if (remembered) {
+    return loadAccount(remembered, env);
+  }
 
+  const account = await loadAccount(await identify(token, env), env);
+
+  // Only an answer from Clerk is remembered. Renewing this on every call would keep a token alive forever.
   await env.CONNECTIONS?.put(cacheKey, JSON.stringify({ humanUserId: account.humanUserId, region: account.region }), {
     expirationTtl: IDENTITY_TTL_SECONDS,
   });
@@ -115,6 +124,7 @@ async function readSecretKey(apiUrl: string, humanUserId: string, secret: string
   try {
     response = await fetch(`${apiUrl}/v1/human/accounts/${encodeURIComponent(humanUserId)}/secret-key`, {
       headers: { 'x-human-dashboard-secret': secret },
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
   } catch {
     throw new AuthError(503, 'Could not reach the Human API. Try again in a moment.');

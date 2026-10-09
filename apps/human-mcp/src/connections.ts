@@ -18,25 +18,37 @@ export function toolOf(clientName: unknown): ToolId | null {
   return name.includes('chatgpt') || name.includes('openai') ? 'chatgpt' : null;
 }
 
+const TOOLS: ToolId[] = ['cursor', 'claude', 'chatgpt'];
+
 type Connections = Partial<Record<ToolId, string>>;
 
-function keyOf(humanUserId: string): string {
-  return `tools:${humanUserId}`;
+/** Each tool of an account has its own entry, so two tools signing in at once can't undo each other. */
+function keyOf(humanUserId: string, tool: ToolId): string {
+  return `tool:${humanUserId}:${tool}`;
 }
 
 /** Remembers that a tool signed in to the account, so its tile in the dashboard can say "Connected". */
 export async function recordConnection(env: Env, humanUserId: string, tool: ToolId): Promise<void> {
-  if (!env.CONNECTIONS) {
-    return;
-  }
-
-  const known = (await env.CONNECTIONS.get<Connections>(keyOf(humanUserId), 'json')) ?? {};
-  await env.CONNECTIONS.put(keyOf(humanUserId), JSON.stringify({ ...known, [tool]: new Date().toISOString() }));
+  await env.CONNECTIONS?.put(keyOf(humanUserId, tool), new Date().toISOString());
 }
 
 /** The tools that have signed in to the account, each with when it last connected. */
 export async function listConnections(env: Env, humanUserId: string): Promise<Connections> {
-  return (await env.CONNECTIONS?.get<Connections>(keyOf(humanUserId), 'json')) ?? {};
+  const connections: Connections = {};
+  if (!env.CONNECTIONS) {
+    return connections;
+  }
+
+  const store = env.CONNECTIONS;
+  const connectedAt = await Promise.all(TOOLS.map((tool) => store.get(keyOf(humanUserId, tool))));
+  for (const [index, tool] of TOOLS.entries()) {
+    const at = connectedAt[index];
+    if (at) {
+      connections[tool] = at;
+    }
+  }
+
+  return connections;
 }
 
 /** The name a client gives in its `initialize` request, when this request is one. */

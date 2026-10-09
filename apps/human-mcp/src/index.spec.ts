@@ -14,8 +14,16 @@ function fakeKv() {
 
   return {
     values,
-    get: async (key: string) => (values.has(key) ? JSON.parse(values.get(key) as string) : null),
-    put: async (key: string, value: string) => void values.set(key, value),
+    puts: [] as Array<{ key: string; expirationTtl?: number }>,
+    async get(key: string, type?: 'json') {
+      const value = values.get(key) ?? null;
+
+      return value !== null && type === 'json' ? JSON.parse(value) : value;
+    },
+    async put(key: string, value: string, options?: { expirationTtl?: number }) {
+      this.puts.push({ key, expirationTtl: options?.expirationTtl });
+      values.set(key, value);
+    },
   };
 }
 
@@ -146,7 +154,7 @@ describe('the Human MCP server', () => {
     expect(((await response.json()) as { result: { serverInfo: { name: string } } }).result.serverInfo.name).toBe(
       'human'
     );
-    expect(Object.keys(JSON.parse(kv.values.get('tools:user_1') as string))).toEqual(['claude']);
+    expect(kv.values.has('tool:user_1:claude')).toBe(true);
   });
 
   it('offers the tools to reach a person', async () => {
@@ -195,9 +203,38 @@ describe('the Human MCP server', () => {
     expect(calls.filter((call) => call.url.startsWith(`${API}/`))).toHaveLength(1);
   });
 
+  it('does not renew a remembered token, so one Clerk no longer accepts stops working', async () => {
+    const { env, ctx, kv } = setup();
+
+    await worker.fetch(rpc('tools/list', {}), env, ctx);
+    await worker.fetch(rpc('tools/list', {}), env, ctx);
+
+    expect(kv.puts.filter((put) => put.key.startsWith('token:'))).toEqual([
+      { key: expect.any(String), expirationTtl: 300 },
+    ]);
+  });
+
+  it('keeps each connected tool on its own, so two signing in at once both count', async () => {
+    const { env, ctx, settle } = setup();
+    const connect = (name: string) =>
+      worker.fetch(rpc('initialize', { ...INITIALIZE, clientInfo: { name, version: '1' } }), env, ctx);
+
+    await Promise.all([connect('claude-ai'), connect('Cursor')]);
+    await settle();
+
+    const response = await worker.fetch(
+      new Request(`${ORIGIN}/connections/user_1`, { headers: { 'x-human-dashboard-secret': 'shared-secret' } }),
+      env,
+      ctx
+    );
+    const { data } = (await response.json()) as { data: Record<string, string> };
+
+    expect(Object.keys(data).sort()).toEqual(['claude', 'cursor']);
+  });
+
   it('tells the dashboard which tools are connected, and nobody else', async () => {
     const { env, ctx, kv } = setup();
-    kv.values.set('tools:user_1', JSON.stringify({ cursor: '2026-10-09T00:00:00.000Z' }));
+    kv.values.set('tool:user_1:cursor', '2026-10-09T00:00:00.000Z');
     const ask = (secret?: string) =>
       worker.fetch(
         new Request(`${ORIGIN}/connections/user_1`, { headers: secret ? { 'x-human-dashboard-secret': secret } : {} }),
@@ -228,6 +265,29 @@ describe('waiting for an answer', () => {
 
     expect(api.get).toHaveBeenCalledTimes(1);
     expect(describeOutcome(interaction as Interaction)).toContain('call the wait tool with id "hi_1"');
+  });
+
+  it('hands back the id of a request it just sent when the checks for an answer fail', async () => {
+    const api = { get: vi.fn().mockRejectedValue(new Error('stalled')), post: vi.fn() };
+    const sent: Interaction = { id: 'hi_1', kind: 'approve', status: 'pending' };
+
+    vi.useFakeTimers();
+
+    const interaction = await waitForAnswer(api as never, sent, 4, async (ms) => void vi.advanceTimersByTime(ms));
+    vi.useRealTimers();
+
+    expect(api.get).toHaveBeenCalled();
+    expect(describeOutcome(interaction)).toContain('call the wait tool with id "hi_1"');
+  });
+
+  it('gives a check no longer than what is left of the wait', async () => {
+    const api = { get: vi.fn(async () => ({ id: 'hi_1', kind: 'ask', status: 'pending' })), post: vi.fn() };
+
+    await waitForAnswer(api as never, 'hi_1', 3);
+
+    const [, , timeoutMs] = api.get.mock.calls[0] as unknown as [string, undefined, number];
+    expect(timeoutMs).toBeGreaterThan(0);
+    expect(timeoutMs).toBeLessThanOrEqual(3000);
   });
 
   it('says which option was chosen by its label', () => {

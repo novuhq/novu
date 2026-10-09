@@ -37,7 +37,7 @@ export function registerTools(server: McpServer, api: HumanApi): void {
   ): Promise<string> {
     const created = await sendInteraction(api, { kind, card: input.card, to: input.to });
 
-    return describeOutcome(await waitForAnswer(api, created.id, input.wait_seconds ?? DEFAULT_WAIT_SECONDS));
+    return describeOutcome(await waitForAnswer(api, created, input.wait_seconds ?? DEFAULT_WAIT_SECONDS));
   }
 
   server.registerTool(

@@ -60,6 +60,6 @@ Before the first deploy of an environment:
 
 ## Known limits
 
-- A token is accepted when Clerk says it is valid. The server does not check that the token was issued for this server in particular.
+- A token is accepted when Clerk says it is valid. The server does not check that the token was issued for this server in particular: Clerk puts the client's id in a token's audience, not this server's address, and any client may register. So keep OAuth in the Human Clerk app for this server alone. If another service ever accepts tokens from that app, this server needs an audience check first.
 - Which tool connected is read from the name the tool reports, so another client that calls itself "cursor" reads as Cursor.
 - A removed connector still reads as Connected: nothing tells the server that a tool was disconnected.

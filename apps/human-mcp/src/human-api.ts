@@ -10,20 +10,27 @@ export class HumanApiError extends Error {
   }
 }
 
+/** How long a call may take when the caller sets no limit of its own. */
+const REQUEST_TIMEOUT_MS = 15_000;
+
+type Query = Record<string, string | number | undefined>;
+
 export type HumanApi = {
-  get<T>(path: string, query?: Record<string, string | number | undefined>): Promise<T>;
+  /** `timeoutMs` gives up on the call sooner than the usual limit. */
+  get<T>(path: string, query?: Query, timeoutMs?: number): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;
 };
 
 /** The Human endpoints of the Novu API, called as the account. The same calls the `human` CLI makes. */
 export function createHumanApi(account: Account): HumanApi {
-  async function send<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
+  async function send<T>(method: 'GET' | 'POST', path: string, body?: unknown, timeoutMs?: number): Promise<T> {
     let response: Response;
     try {
       response = await fetch(`${account.apiUrl}${path}`, {
         method,
         headers: { Authorization: `ApiKey ${account.secretKey}`, 'Content-Type': 'application/json' },
         body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.timeout(Math.max(1, Math.min(timeoutMs ?? REQUEST_TIMEOUT_MS, REQUEST_TIMEOUT_MS))),
       });
     } catch {
       throw new HumanApiError(0, 'Could not reach the Human API. Try again in a moment.');
@@ -42,7 +49,7 @@ export function createHumanApi(account: Account): HumanApi {
   }
 
   return {
-    get: (path, query) => send('GET', `${path}${toQueryString(query)}`),
+    get: (path, query, timeoutMs) => send('GET', `${path}${toQueryString(query)}`, undefined, timeoutMs),
     post: (path, body) => send('POST', path, body),
   };
 }
@@ -55,7 +62,7 @@ function readMessage(message: unknown): string | undefined {
   return Array.isArray(message) ? message.filter((part) => typeof part === 'string').join(' ') || undefined : undefined;
 }
 
-function toQueryString(query: Record<string, string | number | undefined> = {}): string {
+function toQueryString(query: Query = {}): string {
   const params = new URLSearchParams();
   for (const [name, value] of Object.entries(query)) {
     if (value !== undefined) {
