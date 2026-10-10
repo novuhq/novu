@@ -109,7 +109,10 @@ describe('channelListCommand', () => {
 
     await expect(channelListCommand({ json: true })).rejects.toThrow('exit:0');
 
-    expect(listContacts).toHaveBeenCalledWith({}, { subscriberId: 'human_me', limit: 1 });
+    expect(listContacts).toHaveBeenCalledWith(
+      {},
+      { subscriberId: 'human_me', limit: 1, agentIdentifier: 'human-relay' }
+    );
     expect(JSON.parse(stdout)).toEqual({
       data: [
         { channel: 'telegram', connectedAt: '2026-09-02T00:00:00.000Z', isDefault: false },

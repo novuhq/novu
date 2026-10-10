@@ -324,7 +324,7 @@ export interface ContactsPage {
 
 export async function listContacts(
   client: HumanApiClient,
-  params: { limit?: number; after?: string; subscriberId?: string } = {}
+  params: { limit?: number; after?: string; subscriberId?: string; agentIdentifier?: string } = {}
 ): Promise<ContactsPage> {
   const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', { params });
   const body = res.data;

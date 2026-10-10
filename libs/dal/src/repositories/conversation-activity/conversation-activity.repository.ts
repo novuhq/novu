@@ -285,26 +285,82 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       ],
     };
 
+    let cursor: Pick<ConversationActivityEntity, '_id' | 'createdAt'> | null = null;
+
     if (params.before) {
-      const cursor = await this.findOne({ ...scope, identifier: params.before }, ['_id', 'createdAt']);
+      cursor = await this.findOne({ ...scope, identifier: params.before }, ['_id', 'createdAt']);
 
       if (!cursor) {
         return { data: [], hasMore: false };
       }
-
-      query.$and = [
-        {
-          $or: [
-            { createdAt: { $lt: new Date(cursor.createdAt) } },
-            { createdAt: new Date(cursor.createdAt), _id: { $lt: new Types.ObjectId(cursor._id) } },
-          ],
-        },
-      ];
     }
 
-    const rows = await this.find(query, '*', { sort: { createdAt: -1, _id: -1 }, limit: params.limit + 1 });
+    // Card copies and deleted messages are dropped, which can leave a batch short, so batches are
+    // read until the page and the one row that proves there is more are filled.
+    const batchSize = params.limit + 1;
+    const rows: ConversationActivityEntity[] = [];
+
+    while (rows.length < batchSize) {
+      const batch = await this.find(
+        cursor
+          ? {
+              ...query,
+              $and: [
+                {
+                  $or: [
+                    { createdAt: { $lt: new Date(cursor.createdAt) } },
+                    { createdAt: new Date(cursor.createdAt), _id: { $lt: new Types.ObjectId(cursor._id) } },
+                  ],
+                },
+              ],
+            }
+          : query,
+        '*',
+        { sort: { createdAt: -1, _id: -1 }, limit: batchSize }
+      );
+
+      rows.push(...(await this.foldViewPage(params, await this.withoutInteractionCardCopies(scope, batch))));
+
+      if (batch.length < batchSize) {
+        break;
+      }
+
+      cursor = batch[batch.length - 1];
+    }
 
     return { data: rows.slice(0, params.limit), hasMore: rows.length > params.limit };
+  }
+
+  /**
+   * A card sent into a thread is stored as the agent's message and as the interaction request. The
+   * request row carries the interaction, so the message copy is dropped, also when the two rows fall
+   * on different pages.
+   */
+  private async withoutInteractionCardCopies(
+    scope: { _environmentId: string; _organizationId: string; _conversationId: string },
+    rows: ConversationActivityEntity[]
+  ): Promise<ConversationActivityEntity[]> {
+    const isAgentMessage = (row: ConversationActivityEntity) =>
+      row.type === ConversationActivityTypeEnum.MESSAGE &&
+      row.senderType === ConversationActivitySenderTypeEnum.AGENT &&
+      Boolean(row.platformMessageId);
+    const candidateIds = rows.filter(isAgentMessage).flatMap((row) => row.platformMessageId ?? []);
+
+    if (candidateIds.length === 0) {
+      return rows;
+    }
+
+    const requests = await this.find(
+      {
+        ...scope,
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+        platformMessageId: { $in: candidateIds },
+      },
+      ['platformMessageId']
+    );
+    const requestMessageIds = new Set(requests.map((request) => request.platformMessageId));
+
+    return rows.filter((row) => !isAgentMessage(row) || !requestMessageIds.has(row.platformMessageId));
   }
 
   async countActivities(environmentId: string, organizationId: string, conversationId: string): Promise<number> {

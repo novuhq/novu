@@ -287,6 +287,33 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     expect(messages.some((message) => message.interaction?.id === interactionId)).to.equal(true);
   });
 
+  it('shows a question once when the thread is read one message per page', async () => {
+    await sendMessageToRelay('need a decision');
+    const threadId = await soleThreadId();
+    const askRes = await session.testAgent
+      .post('/v1/human/interactions')
+      .send({ kind: 'ask', card: { title: 'Which environment?' }, thread: threadId });
+    expect(askRes.status).to.equal(201, JSON.stringify(askRes.body));
+
+    const texts: string[] = [];
+    let before: string | undefined;
+
+    for (let page = 0; page < 10; page += 1) {
+      const res = await session.testAgent.get(`/v1/human/inbox/${threadId}`).query({ limit: 1, before });
+      const messages = res.body.data.messages as Array<{ id: string; text: string }>;
+      texts.push(...messages.map((message) => message.text));
+
+      if (!res.body.data.hasMore || messages.length === 0) {
+        break;
+      }
+
+      before = messages[0].id;
+    }
+
+    expect(texts.filter((text) => text.includes('Which environment?'))).to.have.length(1);
+    expect(texts).to.include('need a decision');
+  });
+
   it('resolves a thread, hides it by default, and reopens it on a new message', async () => {
     await sendMessageToRelay('done soon');
     const threadId = await soleThreadId();
@@ -378,6 +405,25 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     expect(getRes.body.data.status).to.equal(HumanInteractionStatusEnum.ANSWERED);
     expect(getRes.body.data.response.text).to.equal('the billing one');
     expect((await listInbox({ senders: 'all', filter: 'unread' })).data).to.have.length(0);
+  });
+
+  it('asks a stranger which question they answered when two are open to anyone', async () => {
+    await sendMessageToRelay('can I get access?', STRANGER_CHAT_ID);
+    const { data } = await listInbox({ senders: 'all' });
+
+    for (const title of ['Which project?', 'Which region?']) {
+      const res = await session.testAgent
+        .post('/v1/human/interactions')
+        .send({ kind: 'ask', card: { title }, thread: data[0].id, anyoneMayAnswer: true });
+      expect(res.status).to.equal(201, JSON.stringify(res.body));
+    }
+
+    const thread = await sendMessageToRelay('the billing one', STRANGER_CHAT_ID);
+
+    expect(thread.post.calledOnce).to.equal(true, 'expected the picker to be posted in the thread');
+    const picker = JSON.stringify(thread.post.firstCall.args[0]);
+    expect(picker).to.include('Which project?');
+    expect(picker).to.include('Which region?');
   });
 
   it('404s on a thread that is not the relay agent’s', async () => {

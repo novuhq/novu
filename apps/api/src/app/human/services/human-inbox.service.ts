@@ -202,13 +202,14 @@ export class HumanInboxService {
       }
 
       if (!page.next) {
-        break;
+        return { data: threads, next: null };
       }
 
       after = page.next;
     }
 
-    return { data: threads, next: null };
+    // The scan stopped before the page filled. Hand back where it stopped, so the next call goes on from there.
+    return { data: threads, next: after ?? null };
   }
 
   async toThreads(scope: InboxScope, conversations: ConversationEntity[]): Promise<InboxThreadDto[]> {
@@ -234,19 +235,24 @@ export class HumanInboxService {
 
   /** The thread's messages, oldest first, each human message labelled contact or stranger. */
   async toMessages(scope: InboxScope, activities: ConversationActivityEntity[]): Promise<InboxMessageDto[]> {
-    const rows = withoutDuplicateInteractionCards(activities);
-    const senderIds = rows.filter(isFromSubscriber).map((activity) => activity.senderId);
+    const senderIds = activities.filter(isFromSubscriber).map((activity) => activity.senderId);
     const people = await this.loadPeople(scope, [...new Set(senderIds)]);
 
-    return rows.map((activity) => toInboxMessage(activity, people)).reverse();
+    return activities.map((activity) => toInboxMessage(activity, people)).reverse();
+  }
+
+  /**
+   * The contact a question in the thread goes to when the host names nobody. A subscriber the agent
+   * runtime made up for an unknown sender is a stranger, so it is skipped.
+   */
+  async firstContactId(scope: InboxScope, conversation: ConversationEntity): Promise<string | undefined> {
+    const subscriberIds = subscriberIdsOf(conversation);
+    const people = await this.loadPeople(scope, subscriberIds);
+
+    return subscriberIds.find((subscriberId) => people.get(subscriberId)?.kind === 'contact');
   }
 
   /** Everyone in the thread: who a message sent into it without `to` is for. */
-  /** The contact a question in the thread goes to when the host names nobody. */
-  firstContactId(conversation: ConversationEntity): string | undefined {
-    return subscriberIdsOf(conversation)[0];
-  }
-
   peopleIds(conversation: ConversationEntity): string[] {
     return [...subscriberIdsOf(conversation), ...platformUserIdsOf(conversation)];
   }
@@ -369,26 +375,6 @@ function personKindOf(activity: ConversationActivityEntity, people: InboxPeople)
   }
 
   return people.get(activity.senderId)?.kind ?? 'stranger';
-}
-
-/**
- * A card sent into a thread is stored twice: as the agent's message and as the interaction request.
- * The request row carries the interaction, so the plain message copy is dropped.
- */
-function withoutDuplicateInteractionCards(activities: ConversationActivityEntity[]): ConversationActivityEntity[] {
-  const requestMessageIds = new Set(
-    activities
-      .filter((activity) => activity.type === ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST)
-      .flatMap((activity) => activity.platformMessageId ?? [])
-  );
-
-  return activities.filter(
-    (activity) =>
-      activity.type !== ConversationActivityTypeEnum.MESSAGE ||
-      activity.senderType !== ConversationActivitySenderTypeEnum.AGENT ||
-      !activity.platformMessageId ||
-      !requestMessageIds.has(activity.platformMessageId)
-  );
 }
 
 function senderOf(activity: ConversationActivityEntity): InboxSender {

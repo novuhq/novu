@@ -72,12 +72,16 @@ export function renderChannels(rows: ChannelRow[], savedDefault: string | undefi
 }
 
 export async function channelListCommand(options: { json?: boolean; apiUrl?: string }): Promise<never> {
-  const { subscriberId, defaultChannel } = requireSetup();
+  const { subscriberId, defaultChannel, relayAgentIdentifier } = requireSetup();
   let rows: ChannelRow[];
 
   try {
     const { client } = clientFromConfig(options.apiUrl);
-    const page = await listContacts(client, { subscriberId, limit: 1 });
+    const page = await listContacts(client, {
+      subscriberId,
+      limit: 1,
+      ...(relayAgentIdentifier ? { agentIdentifier: relayAgentIdentifier } : {}),
+    });
     rows = toChannelRows(page.data[0], defaultChannel);
   } catch (err) {
     return handleError(err);

@@ -236,6 +236,21 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
     });
 
+    it('refuses to name a stranger as the one who may answer in a thread', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.findStrangers.resolves(['sub-2']);
+
+      try {
+        await usecase.execute({ ...command, to: 'sub-2', thread: 'conv_abc' } as any);
+        expect.fail('expected BadRequestException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as Error).message).to.contain('--anyone');
+      }
+      expect(createConversationInteraction.execute.called).to.equal(false);
+    });
+
     it('rejects `anyoneMayAnswer` with `to`, and without `thread`', async () => {
       const { usecase, command, agentRepository, createConversationInteraction, deliveryService } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });

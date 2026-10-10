@@ -357,15 +357,15 @@ export class HumanInteractionInboundService {
       return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };
     }
 
-    const subscriberId = turn.subscriber?.subscriberId;
-    if (!subscriberId) {
+    const responderId = this.responderIdOf(turn);
+    if (!responderId) {
       return { outcome: 'ignored' };
     }
 
     const answerId = this.resolveDisambiguationAnswerId(turn);
     await this.cacheService.set(
       this.disambiguationCacheKey(turn.conversation._id, answerId),
-      JSON.stringify({ text, subscriberId }),
+      JSON.stringify({ text, subscriberId: responderId }),
       { ttl: DISAMBIGUATION_CACHE_TTL_SECONDS }
     );
 
@@ -444,7 +444,7 @@ export class HumanInteractionInboundService {
     }
 
     const payload = JSON.parse(cached) as { text?: string; subscriberId?: string };
-    if (!payload.text || payload.subscriberId !== turn.subscriber?.subscriberId) {
+    if (!payload.text || payload.subscriberId !== this.responderIdOf(turn)) {
       await this.rejectForeignResponder(turn, interaction);
 
       return null;
@@ -504,6 +504,18 @@ export class HumanInteractionInboundService {
 
   private buildResponse(partial: Omit<HumanInteractionResponse, 'respondedAt'>): HumanInteractionResponse {
     return { ...partial, respondedAt: new Date().toISOString() };
+  }
+
+  /**
+   * Who wrote the message, for telling a later "which question?" pick apart from someone else's.
+   * A stranger is not a subscriber, so theirs is the channel's own id, as on the thread's participants.
+   */
+  private responderIdOf(turn: ConversationTurn): string | undefined {
+    if (turn.subscriber?.subscriberId) {
+      return turn.subscriber.subscriberId;
+    }
+
+    return turn.platformUserId ? `${turn.config.platform}:${turn.platformUserId}` : undefined;
   }
 
   private resolveResponder(turn: ConversationTurn): string | undefined {

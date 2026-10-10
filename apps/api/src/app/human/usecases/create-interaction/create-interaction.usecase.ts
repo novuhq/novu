@@ -237,7 +237,11 @@ export class CreateInteraction {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const relay = await this.inbox.resolveRelayAgent(scope, agent.identifier);
     const conversation = await this.inbox.findThread(scope, relay, command.thread as string);
-    const recipients = to.length > 0 ? to : this.threadRecipients(command, conversation);
+    const recipients = to.length > 0 ? to : await this.threadRecipients(command, scope, conversation);
+
+    if (to.length > 0) {
+      await this.assertThreadContacts(scope, to);
+    }
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
@@ -272,12 +276,16 @@ export class CreateInteraction {
    * thread belongs to, the same as on any other agent; everyone in the thread only when the host says so.
    * A `tell` waits for no answer, so it is for everyone there.
    */
-  private threadRecipients(command: CreateInteractionCommand, conversation: ConversationEntity): string[] {
+  private async threadRecipients(
+    command: CreateInteractionCommand,
+    scope: InboxScope,
+    conversation: ConversationEntity
+  ): Promise<string[]> {
     if (command.anyoneMayAnswer || command.kind === HumanInteractionKindEnum.TELL) {
       return this.inbox.peopleIds(conversation);
     }
 
-    const contact = this.inbox.firstContactId(conversation);
+    const contact = await this.inbox.firstContactId(scope, conversation);
 
     if (!contact) {
       throw new BadRequestException(
@@ -286,6 +294,17 @@ export class CreateInteraction {
     }
 
     return [contact];
+  }
+
+  /** `to` with `thread` names who may answer there, and only a contact can be named. */
+  private async assertThreadContacts(scope: InboxScope, subscriberIds: string[]): Promise<void> {
+    const [stranger] = await this.inbox.findStrangers(scope, subscriberIds);
+
+    if (stranger) {
+      throw new BadRequestException(
+        `"${stranger}" is not one of your contacts, so \`to\` cannot name them. Pass \`anyoneMayAnswer\` (\`--anyone\`) to let anyone in the thread answer.`
+      );
+    }
   }
 
   private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, subscriberIds: string[]) {
