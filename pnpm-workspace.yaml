@@ -31,6 +31,14 @@ strictPeerDependencies: false
 fetchRetryMaxtimeout: 10000
 enablePrePostScripts: true
 
+# pnpm >= 11.28 resolves debug's optional supports-color peer per project, and that suffix
+# spreads up to @nestjs/common/core, so apps and libs load different Nest copies and DI
+# breaks. Giving debug its own supports-color removes the peer variant. 8.x is the last CJS major.
+packageExtensions:
+  debug:
+    dependencies:
+      supports-color: ^8.1.1
+
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
   body-parser@<1.20.6: ^1.20.6
