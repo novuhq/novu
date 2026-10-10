@@ -314,6 +314,21 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     expect(texts).to.include('need a decision');
   });
 
+  it('refuses a question in a direct-message thread addressed to a contact who is not in it', async () => {
+    await sendMessageToRelay('need a decision');
+    const threadId = await soleThreadId();
+    const other = `other-${Date.now()}`;
+    const setupRes = await session.testAgent.post('/v1/human/setup').send({ subscriberId: other });
+    expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
+
+    const res = await session.testAgent
+      .post('/v1/human/interactions')
+      .send({ kind: 'ask', card: { title: 'Which environment?' }, thread: threadId, to: other });
+
+    expect(res.status).to.equal(400, JSON.stringify(res.body));
+    expect(res.body.message).to.contain('not in this thread');
+  });
+
   it('resolves a thread, hides it by default, and reopens it on a new message', async () => {
     await sendMessageToRelay('done soon');
     const threadId = await soleThreadId();

@@ -66,6 +66,7 @@ describe('CreateInteraction', () => {
       findThread: sinon.stub().resolves(conversation),
       peopleIds: sinon.stub().returns(['sub-1', 'sub-2']),
       firstContactId: sinon.stub().returns('sub-1'),
+      outsiders: sinon.stub().returns([]),
       primaryChannel: sinon.stub().returns(conversation.channels[0]),
       resolveIntegrationIdentifier: sinon.stub().resolves('telegram-main'),
     };
@@ -234,6 +235,21 @@ describe('CreateInteraction', () => {
 
       expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-2']);
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
+    });
+
+    it('refuses to name someone who is not in a direct-message thread', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.outsiders.returns(['sub-9']);
+
+      try {
+        await usecase.execute({ ...command, to: 'sub-9', thread: 'conv_abc' } as any);
+        expect.fail('expected BadRequestException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as Error).message).to.contain('not in this thread');
+      }
+      expect(createConversationInteraction.execute.called).to.equal(false);
     });
 
     it('refuses to name a stranger as the one who may answer in a thread', async () => {

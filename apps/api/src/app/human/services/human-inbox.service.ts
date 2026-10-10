@@ -252,6 +252,20 @@ export class HumanInboxService {
     return subscriberIds.find((subscriberId) => people.get(subscriberId)?.kind === 'contact');
   }
 
+  /**
+   * The ids of `subscriberIds` who cannot be in the thread. Only a direct message has a known,
+   * closed set of people; in a group, a contact who has not written yet is not on the thread.
+   */
+  outsiders(conversation: ConversationEntity, subscriberIds: string[]): string[] {
+    if (conversation.isDirectMessage === false) {
+      return [];
+    }
+
+    const inThread = new Set(subscriberIdsOf(conversation));
+
+    return subscriberIds.filter((subscriberId) => !inThread.has(subscriberId));
+  }
+
   /** Everyone in the thread: who a message sent into it without `to` is for. */
   peopleIds(conversation: ConversationEntity): string[] {
     return [...subscriberIdsOf(conversation), ...platformUserIdsOf(conversation)];

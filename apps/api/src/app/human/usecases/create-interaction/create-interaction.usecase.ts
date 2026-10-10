@@ -240,7 +240,7 @@ export class CreateInteraction {
     const recipients = to.length > 0 ? to : await this.threadRecipients(command, scope, conversation);
 
     if (to.length > 0) {
-      await this.assertThreadContacts(scope, to);
+      await this.assertThreadContacts(scope, conversation, to);
     }
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
@@ -296,8 +296,24 @@ export class CreateInteraction {
     return [contact];
   }
 
-  /** `to` with `thread` names who may answer there, and only a contact can be named. */
-  private async assertThreadContacts(scope: InboxScope, subscriberIds: string[]): Promise<void> {
+  /**
+   * `to` with `thread` names who may answer there: only a contact, and in a direct message only
+   * someone who is in it. Otherwise that person never sees the question, yet their next message
+   * anywhere would count as its answer.
+   */
+  private async assertThreadContacts(
+    scope: InboxScope,
+    conversation: ConversationEntity,
+    subscriberIds: string[]
+  ): Promise<void> {
+    const [outsider] = this.inbox.outsiders(conversation, subscriberIds);
+
+    if (outsider) {
+      throw new BadRequestException(
+        `"${outsider}" is not in this thread, so they would never see the message. Leave \`to\` out, or start a thread with them by passing \`to\` without \`thread\`.`
+      );
+    }
+
     const [stranger] = await this.inbox.findStrangers(scope, subscriberIds);
 
     if (stranger) {
