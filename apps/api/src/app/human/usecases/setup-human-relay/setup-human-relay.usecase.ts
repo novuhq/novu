@@ -8,7 +8,8 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { AGENT_PROVISION_DATA_KEYS, AgentSubscriberAccessEnum } from '@novu/shared';
+import { isAgentProvisionedSubscriber } from '../../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { HUMAN_RELAY_DEFAULT_NAME } from '../../../agents/human-relay/human-relay-identity';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
 import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
@@ -171,10 +172,17 @@ export class SetupHumanRelay {
     if (firstName && existing.firstName !== firstName) updates.firstName = firstName;
     if (lastName && existing.lastName !== lastName) updates.lastName = lastName;
 
-    if (Object.keys(updates).length > 0) {
+    // A row an agent made up for an unknown sender counts as a stranger. Setup means the operator
+    // added this person, so the row stops being one.
+    const becomesContact = isAgentProvisionedSubscriber(existing);
+
+    if (Object.keys(updates).length > 0 || becomesContact) {
       await this.subscriberRepository.update(
         { subscriberId, _environmentId: command.environmentId },
-        { $set: updates }
+        {
+          ...(Object.keys(updates).length > 0 ? { $set: updates } : {}),
+          ...(becomesContact ? { $unset: { [`data.${AGENT_PROVISION_DATA_KEYS.source}`]: '' } } : {}),
+        }
       );
     }
 

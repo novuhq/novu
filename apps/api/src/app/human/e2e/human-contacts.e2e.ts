@@ -144,6 +144,22 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(subscriber?.lastName).to.equal('Chen');
     });
 
+    it('turns a subscriber an agent made up for an unknown sender into a contact', async () => {
+      const subscriberId = `phantom-${Date.now()}`;
+      await subscriberRepository.create({
+        subscriberId,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        data: { __novu_source: 'agent-platform-provision', __novu_platform: 'telegram' },
+      });
+
+      await setup({ subscriberId, firstName: 'Alice' });
+
+      const subscriber = await findSubscriber(subscriberId);
+      expect(subscriber?.firstName).to.equal('Alice');
+      expect(subscriber?.data).to.deep.equal({ __novu_platform: 'telegram' });
+    });
+
     it('replaces the name on re-setup and keeps it when omitted', async () => {
       const subscriberId = `contact-${Date.now()}`;
       await setup({ subscriberId, firstName: 'Alice' });
