@@ -279,7 +279,7 @@ overrides:
   # Patched in 3.2.1 (patch bump within the 3.x line). Transitive via
   # firebase-admin in `packages/providers`.
   '@fastify/busboy@<3.2.1': ^3.2.1
-  sharp@<0.35.4: ^0.35.4
+  sharp@<0.35.5: ^0.35.5
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
   '@taskforcesh/bullmq-pro@6.11.0>uuid': 11.1.1
