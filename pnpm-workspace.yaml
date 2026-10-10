@@ -41,6 +41,11 @@ overrides:
   # All three are patched in 4.7.10 (patch bump within the 4.7.x line).
   handlebars@<4.7.10: ^4.7.10
   braces@<3.0.3: ^3.0.3
+  # GHSA-vc2v-76pw-4v95 (high): compression DoS via memory leak when the HTTP
+  # response is closed before compression finishes flushing. Patched in 1.8.2
+  # (patch bump within the 1.8.x line). Direct dep via apps/api and transitive
+  # via @nx/js > verdaccio across build tooling.
+  compression@<1.8.2: ^1.8.2
   file-type@>=13.0.0 <16.5.4: ^16.5.4
   file-type@>=17.0.0 <21.3.4: ^21.3.4
   get-func-name@<2.0.1: ^2.0.1
