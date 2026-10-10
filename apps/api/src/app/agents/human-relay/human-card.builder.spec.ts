@@ -44,6 +44,29 @@ function bodyContent(card: CardElement): string {
 }
 
 describe('human-card.builder prompt layout', () => {
+  it('sends a tell as plain text, with the attribution on its own line', () => {
+    const plain = buildPendingContent(interaction({ kind: HumanInteractionKindEnum.TELL, card: { title: 'Done.' } }));
+    const attributed = buildPendingContent(
+      interaction({ kind: HumanInteractionKindEnum.TELL, card: { title: 'Done.' }, fromLabel: 'deploy-bot' })
+    );
+
+    expect(plain.card).to.equal(undefined);
+    expect(plain.markdown).to.equal('Done.');
+    expect(attributed.markdown).to.equal('Done.\n\n_— deploy-bot_');
+  });
+
+  it('turns a tell into a card once it has card content', () => {
+    const content = buildPendingContent(
+      interaction({
+        kind: HumanInteractionKindEnum.TELL,
+        content: { cardChrome: { title: 'Deployed', body: 'v2 is live.' } },
+      })
+    );
+
+    expect(content.markdown).to.equal(undefined);
+    expect(requireCard(content.card).title).to.equal('Deployed');
+  });
+
   it('uses a short first line as the title', () => {
     const card = requireCard(buildPendingContent(interaction({ card: { title: 'Deploy v2?' } })).card);
 

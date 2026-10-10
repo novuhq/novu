@@ -191,13 +191,31 @@ export function buildPendingContent(
       return { card } as ReplyContentDto;
     }
 
-    // TELL — a plain FYI card, no actions and no reply expected.
-    default: {
-      const card = layoutCard(title, attributionSubtitle, resolved.body ? [bodyText(resolved.body)] : []);
-
-      return { card } as ReplyContentDto;
-    }
+    default:
+      return buildTellContent(interaction, attributionSubtitle);
   }
+}
+
+/**
+ * TELL — plain text, no actions and no reply expected. It becomes a card only when the caller
+ * gave it card content (a subtitle, a body or an icon).
+ */
+function buildTellContent(
+  interaction: HumanInteractionEntity,
+  attributionSubtitle: string | undefined
+): ReplyContentDto {
+  const resolved = resolveHumanInteractionCard(interaction);
+  const hasCardContent = Boolean(resolved.subtitle || resolved.body || ('icon' in resolved && resolved.icon));
+
+  if (!hasCardContent) {
+    return {
+      markdown: interaction.fromLabel ? `${resolved.title}\n\n_— ${interaction.fromLabel}_` : resolved.title,
+    } as ReplyContentDto;
+  }
+
+  const card = layoutCard(resolved.title, attributionSubtitle, resolved.body ? [bodyText(resolved.body)] : []);
+
+  return { card } as ReplyContentDto;
 }
 
 /**

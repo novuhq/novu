@@ -63,11 +63,11 @@ export interface InviteResult {
 export function parseInviteHumanId(raw: string): string {
   const id = raw.trim();
   if (!id) {
-    throw new Error('Pass the subscriberId to invite, e.g. `human invite alice`.');
+    throw new Error('Pass the subscriberId to invite, e.g. `human contact invite alice`.');
   }
 
   if (id.includes(',')) {
-    throw new Error('Invite one human at a time. Repeat `human invite` for each person.');
+    throw new Error('Invite one human at a time. Repeat `human contact invite` for each person.');
   }
 
   return id;
@@ -139,7 +139,9 @@ export async function inviteCommand(humanIdArg: string, options: InviteOptions):
         ? 'Link issued. After they connect, address them with:'
         : `${who} is ${result.alreadyLinked ? 'already ' : ''}linked on ${formatChannels(result.linkedOn, 'and')}. Address them with:`;
 
-    process.stdout.write(`\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`human ask "…" --to ${result.humanId}`)}\n`);
+    process.stdout.write(
+      `\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`human inbox ask "…" --to ${result.humanId}`)}\n`
+    );
 
     process.exit(0);
   } catch (err) {
@@ -236,7 +238,7 @@ async function inviteViaPage(
       pending.map((channel) => channel.integrationIdentifier),
       humanId,
       `${humanId} connect ${formatChannels(pendingVias, 'or')}`,
-      `The link keeps working until ${expiry}; re-run \`human invite ${humanId}\` to check on them.`
+      `The link keeps working until ${expiry}; re-run \`human contact invite ${humanId}\` to check on them.`
     );
   } finally {
     stopIndicator();
@@ -368,7 +370,7 @@ async function waitForInvitee(
       : `${humanId} to finish Slack authorize`;
   const stopIndicator = startWaitIndicator(
     `Waiting for ${humanId} to connect ${via}`,
-    `Ctrl-C detaches; resume with: human invite ${humanId} --via ${via}`
+    `Ctrl-C detaches; resume with: human contact invite ${humanId} --via ${via}`
   );
 
   try {
@@ -377,7 +379,7 @@ async function waitForInvitee(
       integrationIdentifier,
       humanId,
       waitingFor,
-      `Re-run \`human invite ${humanId} --via ${via}\` to continue.`
+      `Re-run \`human contact invite ${humanId} --via ${via}\` to continue.`
     );
   } finally {
     stopIndicator();
@@ -426,7 +428,7 @@ function requireEmail(value: string): string {
 
 async function promptInviteEmail(): Promise<string> {
   if (!process.stdin.isTTY) {
-    throw new Error('Pass --email <address> when running `human invite --via email` non-interactively.');
+    throw new Error('Pass --email <address> when running `human contact invite --via email` non-interactively.');
   }
 
   for (let attempt = 0; attempt < 5; attempt++) {

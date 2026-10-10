@@ -1,5 +1,6 @@
 import pc from 'picocolors';
-import { type InteractionStatus, interactionTitle, listInteractions } from '../api/human';
+import { getInteraction, type InteractionStatus, interactionTitle, listInteractions } from '../api/human';
+import { describeInteraction } from '../output';
 import { clientFromConfig, handleError } from './interact';
 
 export async function listCommand(options: {
@@ -49,6 +50,27 @@ export async function cancelCommand(id: string, options: { json?: boolean; apiUr
       process.stdout.write(`${JSON.stringify(interaction, null, 2)}\n`);
     } else {
       process.stdout.write(`Interaction ${interaction.id} is now ${interaction.status}.\n`);
+    }
+
+    process.exit(0);
+  } catch (err) {
+    handleError(err);
+  }
+}
+
+/** One interaction as it stands now, without waiting for an answer. */
+export async function showInteractionCommand(id: string, options: { json?: boolean; apiUrl?: string }): Promise<never> {
+  try {
+    const { client } = clientFromConfig(options.apiUrl);
+    const interaction = await getInteraction(client, id);
+
+    if (options.json) {
+      process.stdout.write(`${JSON.stringify(interaction, null, 2)}\n`);
+    } else {
+      const from = interaction.from ? pc.dim(` [${interaction.from}]`) : '';
+      process.stdout.write(
+        `${interaction.id}  ${interaction.kind}  ${interactionTitle(interaction)}${from}\n${describeInteraction(interaction)}\n`
+      );
     }
 
     process.exit(0);

@@ -35,7 +35,7 @@ export function parseInviteFields(input: {
     return { errors };
   }
 
-  // Same split as `human invite --name`: the first word is the first name, the rest the last name.
+  // Same split as `human contact invite --name`: the first word is the first name, the rest the last name.
   const spaceAt = name.indexOf(' ');
 
   return {

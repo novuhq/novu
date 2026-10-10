@@ -11,7 +11,7 @@ import { ConnectHumanInviteChannelCommand } from './connect-human-invite-channel
 
 /**
  * Mints a fresh connect link for the app the human picked on the invite page —
- * the same links `human invite --via` prints (Telegram start code, Slack OAuth
+ * the same links `human contact invite --via` prints (Telegram start code, Slack OAuth
  * with the Slack user auto-linked), created at click time so they never go stale.
  */
 @Injectable()

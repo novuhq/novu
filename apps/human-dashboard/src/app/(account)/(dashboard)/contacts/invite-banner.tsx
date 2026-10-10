@@ -12,7 +12,7 @@ import { createInviteAction } from './actions';
 import { DialogMark } from './dialog-mark';
 import { type InviteFieldErrors, parseInviteFields } from './invite-fields';
 
-const INVITE_COMMAND = 'human invite john --name "John Doe"';
+const INVITE_COMMAND = 'human contact invite john --name "John Doe"';
 
 type CreatedInvite = { url: string; name: string };
 
@@ -132,7 +132,7 @@ function InviteDialogContent() {
         <Field
           label="ID"
           required
-          hint="Lowercase, no spaces. Your agent uses it, like human ask --to john."
+          hint="Lowercase, no spaces. Your agent uses it, like human inbox ask --to john."
           error={fieldErrors.contactId}
         >
           {(field) => (

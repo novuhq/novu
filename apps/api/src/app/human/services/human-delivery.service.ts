@@ -138,14 +138,14 @@ export class HumanDeliveryService {
     if (deliverable.length === 0) {
       if (params.via === HumanChannelViaEnum.EMAIL) {
         throw new NotFoundException(
-          `Human "${params.subscriberId}" has no email address on file. Run \`human invite ${params.subscriberId} --via email\`.`
+          `Human "${params.subscriberId}" has no email address on file. Run \`human contact invite ${params.subscriberId} --via email\`.`
         );
       }
 
       throw new NotFoundException(
         params.via
-          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human invite ${params.subscriberId} --via ${params.via}\`.`
-          : `Human "${params.subscriberId}" has no linked channel. Run \`human invite ${params.subscriberId}\`.`
+          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human contact invite ${params.subscriberId} --via ${params.via}\`.`
+          : `Human "${params.subscriberId}" has no linked channel. Run \`human contact invite ${params.subscriberId}\`.`
       );
     }
 

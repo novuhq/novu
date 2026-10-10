@@ -232,6 +232,137 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  /** Inbound human messages newer than `since` (all of them when absent) — the Human inbox unread count. */
+  async countInboundMessagesSince(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    since?: string;
+  }): Promise<number> {
+    return this.count({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+      type: ConversationActivityTypeEnum.MESSAGE,
+      senderType: {
+        $in: [ConversationActivitySenderTypeEnum.SUBSCRIBER, ConversationActivitySenderTypeEnum.PLATFORM_USER],
+      },
+      ...(params.since ? { createdAt: { $gt: new Date(params.since) } } : {}),
+    });
+  }
+
+  /**
+   * Messages and human-interaction rows of a thread for the Human inbox, newest first. `before` is
+   * the identifier of the oldest row of the previous page.
+   */
+  async findInboxMessages(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    limit: number;
+    before?: string;
+  }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
+    const scope = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+    };
+    const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
+      ...scope,
+      $or: [
+        {
+          type: ConversationActivityTypeEnum.MESSAGE,
+          senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
+        },
+        {
+          type: {
+            $in: [
+              ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+              ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+            ],
+          },
+        },
+      ],
+    };
+
+    let cursor: Pick<ConversationActivityEntity, '_id' | 'createdAt'> | null = null;
+
+    if (params.before) {
+      cursor = await this.findOne({ ...scope, identifier: params.before }, ['_id', 'createdAt']);
+
+      if (!cursor) {
+        return { data: [], hasMore: false };
+      }
+    }
+
+    // Card copies and deleted messages are dropped, which can leave a batch short, so batches are
+    // read until the page and the one row that proves there is more are filled.
+    const batchSize = params.limit + 1;
+    const rows: ConversationActivityEntity[] = [];
+
+    while (rows.length < batchSize) {
+      const batch = await this.find(
+        cursor
+          ? {
+              ...query,
+              $and: [
+                {
+                  $or: [
+                    { createdAt: { $lt: new Date(cursor.createdAt) } },
+                    { createdAt: new Date(cursor.createdAt), _id: { $lt: new Types.ObjectId(cursor._id) } },
+                  ],
+                },
+              ],
+            }
+          : query,
+        '*',
+        { sort: { createdAt: -1, _id: -1 }, limit: batchSize }
+      );
+
+      rows.push(...(await this.foldViewPage(params, await this.withoutInteractionCardCopies(scope, batch))));
+
+      if (batch.length < batchSize) {
+        break;
+      }
+
+      cursor = batch[batch.length - 1];
+    }
+
+    return { data: rows.slice(0, params.limit), hasMore: rows.length > params.limit };
+  }
+
+  /**
+   * A card sent into a thread is stored as the agent's message and as the interaction request. The
+   * request row carries the interaction, so the message copy is dropped, also when the two rows fall
+   * on different pages.
+   */
+  private async withoutInteractionCardCopies(
+    scope: { _environmentId: string; _organizationId: string; _conversationId: string },
+    rows: ConversationActivityEntity[]
+  ): Promise<ConversationActivityEntity[]> {
+    const isAgentMessage = (row: ConversationActivityEntity) =>
+      row.type === ConversationActivityTypeEnum.MESSAGE &&
+      row.senderType === ConversationActivitySenderTypeEnum.AGENT &&
+      Boolean(row.platformMessageId);
+    const candidateIds = rows.filter(isAgentMessage).flatMap((row) => row.platformMessageId ?? []);
+
+    if (candidateIds.length === 0) {
+      return rows;
+    }
+
+    const requests = await this.find(
+      {
+        ...scope,
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+        platformMessageId: { $in: candidateIds },
+      },
+      ['platformMessageId']
+    );
+    const requestMessageIds = new Set(requests.map((request) => request.platformMessageId));
+
+    return rows.filter((row) => !isAgentMessage(row) || !requestMessageIds.has(row.platformMessageId));
+  }
+
   async countActivities(environmentId: string, organizationId: string, conversationId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,

@@ -15,6 +15,10 @@ import { startWaitIndicator } from '../spinner';
 
 export interface InteractOptions {
   to?: string;
+  /** Inbox thread to send into, instead of starting a new one with `to`. */
+  thread?: string;
+  /** With `thread`: anyone in it may answer, not only the contact it belongs to. */
+  anyone?: boolean;
   via?: string;
   from?: string;
   option?: string[];
@@ -106,15 +110,7 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
   try {
     const { client, config } = clientFromConfig(options.apiUrl);
 
-    const to = resolveTo(config, options.to);
-
-    if (!to) {
-      fail(NOT_SET_UP_MESSAGE);
-    }
-
-    // `--via` always wins. Otherwise only the defaults that fit the recipients
-    // apply; omit via and the API uses each human's own default channel.
-    const via = resolveVia(config, options.via, channelDefaultsFor(config, options.to, to));
+    const address = resolveAddress(config, options);
 
     const parsedOptions = options.option?.map(parseIdLabelOption);
     const extraActions = options.extraAction?.map(parseIdLabelOption);
@@ -132,8 +128,7 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     const input: CreateInteractionInput = {
       kind,
       card,
-      to,
-      ...(via ? { via } : {}),
+      ...address,
       agentIdentifier: config.relayAgentIdentifier,
       ...(options.from ? { from: options.from } : {}),
       ...(options.ttl ? { ttlSeconds: parseDuration(options.ttl) } : {}),
@@ -145,6 +140,10 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
       process.stderr.write(`warning: delivered to some recipients but failed for: ${created.failedTo.join(', ')}\n`);
     }
 
+    if (!options.json) {
+      reportThreads(created, Boolean(options.thread));
+    }
+
     if (kind === 'tell' || options.async) {
       process.exit(emitResult(created, Boolean(options.json)));
     }
@@ -152,6 +151,78 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     process.exit(await waitForResolution(client, created, options));
   } catch (err) {
     handleError(err);
+  }
+}
+
+/**
+ * Where a send goes. `--thread` continues a thread; its contact may answer, unless `--to` names
+ * someone else or `--anyone` opens it to everyone there. Without `--thread`, the message starts a
+ * new thread with `--to`, or with you when nobody is named.
+ */
+export function resolveAddress(
+  config: HumanCliConfig,
+  options: Pick<InteractOptions, 'to' | 'thread' | 'via' | 'anyone'>
+): Pick<CreateInteractionInput, 'to' | 'thread' | 'via' | 'anyoneMayAnswer'> {
+  if (options.anyone && options.thread === undefined) {
+    fail('`--anyone` needs `--thread`: it is about who may answer in a thread.');
+  }
+
+  if (options.thread !== undefined) {
+    const thread = options.thread.trim();
+
+    if (!thread) {
+      fail('`--thread` needs a thread id. List threads with: human inbox list');
+    }
+
+    if (options.via) {
+      fail('`--via` cannot be combined with `--thread`: a thread already lives on one channel.');
+    }
+
+    if (options.anyone && options.to) {
+      fail('`--anyone` cannot be combined with `--to`: name who may answer, or let anyone.');
+    }
+
+    return {
+      thread,
+      ...(options.to ? { to: parseHumanToOption(options.to) } : {}),
+      ...(options.anyone ? { anyoneMayAnswer: true } : {}),
+    };
+  }
+
+  const to = resolveTo(config, options.to);
+
+  if (!to) {
+    fail(NOT_SET_UP_MESSAGE);
+  }
+
+  // `--via` always wins. Otherwise only the defaults that fit the recipients
+  // apply; omit via and the API uses each human's own default channel.
+  const via = resolveVia(config, options.via, channelDefaultsFor(config, options.to, to));
+
+  return { to, ...(via ? { via } : {}) };
+}
+
+/** One line per thread a send landed in; on stderr so stdout stays the outcome alone. */
+export function formatThreadReport(interaction: Pick<Interaction, 'threads'>, sentIntoThread: boolean): string[] {
+  return (interaction.threads ?? []).flatMap((thread) => {
+    const lines = [`thread: ${thread.id}`];
+
+    // A host that answers in a thread has read it. One that writes to a contact may not know they wrote first.
+    if (!sentIntoThread && thread.unreadBefore > 0) {
+      lines.push(
+        `warning: thread ${thread.id} had ${thread.unreadBefore} unread ${
+          thread.unreadBefore === 1 ? 'message' : 'messages'
+        }, now marked read. See ${thread.unreadBefore === 1 ? 'it' : 'them'} with: human inbox show ${thread.id}`
+      );
+    }
+
+    return lines;
+  });
+}
+
+function reportThreads(interaction: Interaction, sentIntoThread: boolean): void {
+  for (const line of formatThreadReport(interaction, sentIntoThread)) {
+    process.stderr.write(`${line}\n`);
   }
 }
 
@@ -165,7 +236,7 @@ export async function waitForResolution(
 
   const stopIndicator = startWaitIndicator(
     `Waiting for a human on ${interaction.platform} (${interaction.id})`,
-    `Ctrl-C detaches; resume with: human wait ${interaction.id}`
+    `Ctrl-C detaches; resume with: human interaction wait ${interaction.id}`
   );
 
   let current = interaction;
@@ -178,7 +249,7 @@ export async function waitForResolution(
           process.stdout.write(`${JSON.stringify(current, null, 2)}\n`);
         } else {
           process.stdout.write(
-            `Timed out waiting. Interaction ${current.id} is still pending — resume with: human wait ${current.id}\n`
+            `Timed out waiting. Interaction ${current.id} is still pending — resume with: human interaction wait ${current.id}\n`
           );
         }
 
@@ -211,7 +282,7 @@ export function parseIdLabelOption(raw: string): HumanOptionInput {
   return raw;
 }
 
-function buildInteractionCard(params: {
+export function buildInteractionCard(params: {
   title: string;
   icon?: string;
   subtitle?: string;

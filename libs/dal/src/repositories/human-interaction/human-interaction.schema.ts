@@ -45,6 +45,9 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
       type: [Schema.Types.String],
       required: true,
     },
+    anyoneMayAnswer: {
+      type: Schema.Types.Boolean,
+    },
     _agentId: {
       type: Schema.Types.ObjectId,
       required: true,

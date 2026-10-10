@@ -25,6 +25,7 @@ import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.modu
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
 import { HumanAgentPicturesPublicController } from './human-agent-pictures-public.controller';
+import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController } from './human-invites-public.controller';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
@@ -32,7 +33,9 @@ import { HumanAgentIdentityService } from './services/human-agent-identity.servi
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
+import { HumanInboxService } from './services/human-inbox.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
+import { HumanKeylessCapService } from './services/human-keyless-cap.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -47,12 +50,16 @@ import { EnsureBackingOrganization } from './usecases/ensure-backing-organizatio
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
 import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
+import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
+import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
+import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
@@ -74,6 +81,7 @@ import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-age
   ],
   controllers: [
     HumanInteractionsController,
+    HumanInboxController,
     HumanInvitesPublicController,
     HumanAgentPicturesPublicController,
     HumanAccountsController,
@@ -91,6 +99,7 @@ import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-age
     AgentMcpServerRepository,
     McpConnectionRepository,
     HumanDeliveryService,
+    HumanKeylessCapService,
     CreateInteraction,
     GetInteraction,
     ListInteractions,
@@ -123,6 +132,11 @@ import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-age
     GetHumanCliLogin,
     DenyHumanCliLogin,
     GetKeylessClaimToken,
+    HumanInboxService,
+    ListInboxThreads,
+    GetInboxThread,
+    MarkInboxRead,
+    ResolveInboxThread,
   ],
 })
 export class HumanModule {}

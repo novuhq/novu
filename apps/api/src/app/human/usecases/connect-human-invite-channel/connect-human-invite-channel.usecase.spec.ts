@@ -51,7 +51,7 @@ describe('ConnectHumanInviteChannel', () => {
     });
   });
 
-  it('mints the same Slack install link as `human invite --via slack`', async () => {
+  it('mints the same Slack install link as `human contact invite --via slack`', async () => {
     const { usecase, generateConnectOauthUrl } = setup(both);
 
     const result = await usecase.execute(

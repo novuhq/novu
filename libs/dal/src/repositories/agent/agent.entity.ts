@@ -54,7 +54,7 @@ export class AgentEntity {
 
   description?: string;
 
-  /** Set for Human relay agents only (`human agent --picture`). */
+  /** Set for Human relay agents only (`human agent update --picture`). */
   picture?: AgentPicture;
 
   active: boolean;

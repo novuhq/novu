@@ -144,6 +144,22 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(subscriber?.lastName).to.equal('Chen');
     });
 
+    it('turns a subscriber an agent made up for an unknown sender into a contact', async () => {
+      const subscriberId = `phantom-${Date.now()}`;
+      await subscriberRepository.create({
+        subscriberId,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        data: { __novu_source: 'agent-platform-provision', __novu_platform: 'telegram' },
+      });
+
+      await setup({ subscriberId, firstName: 'Alice' });
+
+      const subscriber = await findSubscriber(subscriberId);
+      expect(subscriber?.firstName).to.equal('Alice');
+      expect(subscriber?.data).to.deep.equal({ __novu_platform: 'telegram' });
+    });
+
     it('replaces the name on re-setup and keeps it when omitted', async () => {
       const subscriberId = `contact-${Date.now()}`;
       await setup({ subscriberId, firstName: 'Alice' });
@@ -379,6 +395,17 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(email?.status).to.equal('joined');
       expect(email?.defaultVia).to.equal('email');
       expect(email?.channels).to.deep.equal([{ via: 'email', isDefault: true }]);
+    });
+
+    it('returns only the contact asked for by subscriberId', async () => {
+      await setup({ subscriberId: 'only-alice' });
+      await setup({ subscriberId: 'only-alice-2' });
+
+      const res = await session.testAgent.get('/v1/human/contacts?subscriberId=only-alice');
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.map((contact: { id: string }) => contact.id)).to.deep.equal(['only-alice']);
+      expect(res.body.next).to.equal(null);
     });
 
     it('shows the newest invite link that still works', async () => {
