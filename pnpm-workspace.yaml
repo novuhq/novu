@@ -170,6 +170,12 @@ overrides:
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   smol-toml@<1.7.1: ^1.7.1
   '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
+  # GHSA-6qxp-vccf-f47h (high): MCP TypeScript SDK OAuth client could send
+  # credentials to an authorization server chosen by the MCP server, enabling
+  # token exfiltration via a malicious server. Patched in 1.31.0. Pulled
+  # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
+  # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
+  '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
