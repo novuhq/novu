@@ -15,6 +15,18 @@ export const EXIT_DENIED = 10;
 export const EXIT_TIMEOUT = 11;
 export const EXIT_GONE = 12;
 
+/**
+ * Thrown when `human setup` handed the human a link but they did not finish in
+ * time. Nothing is broken — re-running `human setup <channel>` resumes at the
+ * right step — so this maps onto {@link EXIT_TIMEOUT} rather than a hard error.
+ */
+export class SetupStillPendingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SetupStillPendingError';
+  }
+}
+
 export function exitCodeFor(interaction: Interaction): number {
   switch (interaction.status) {
     case 'approved':

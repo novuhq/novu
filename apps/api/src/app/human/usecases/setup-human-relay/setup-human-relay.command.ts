@@ -17,6 +17,15 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsString()
   agentIdentifier?: string;
 
+  /** What the relay agent is called. Missing leaves the name it has, or the default for a new one. */
+  @IsOptional()
+  @IsString()
+  agentName?: string;
+
+  @IsOptional()
+  @IsString()
+  agentDescription?: string;
+
   @IsOptional()
   @IsString()
   email?: string;

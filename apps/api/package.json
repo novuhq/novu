@@ -113,7 +113,7 @@
     "envalid": "^8.2.0",
     "es-toolkit": "^1.47.0",
     "express": "^5.2.1",
-    "handlebars": "4.7.9",
+    "handlebars": "^4.7.10",
     "helmet": "^8.2.0",
     "i18next": "^23.7.6",
     "ioredis": "5.11.1",

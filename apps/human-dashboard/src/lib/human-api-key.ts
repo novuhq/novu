@@ -5,21 +5,24 @@ import { cache } from 'react';
 import { type JsonBody, unwrapData } from './api-response';
 import type { HumanAccount } from './human-account';
 import type { HumanRegion } from './human-accounts-api';
-import { type HumanApiRequest, notAvailableYet, requestWithDashboardSecret, requestWithSecretKey } from './human-api';
+import { type HumanApiRequest, requestWithDashboardSecret, requestWithSecretKey } from './human-api';
+
+type SecretKeyResponse = { environmentId: string; secretKey: string };
 
 /**
  * The backing organization's Development secret key, the one `human login` hands to the CLI. It's read
- * once per request and stays in this file: the helpers below call the API with it and return only the
- * answer, so no page or client component ever holds the key.
+ * once per request. The helpers below call the API with it and return only the answer, so the key stays
+ * in this file for every page but Settings, which shows it to the operator (`readApiKey`).
  */
 const loadBackingSecretKey = cache(async (region: HumanRegion, humanUserId: string): Promise<string> => {
-  const body = await requestWithDashboardSecret(
-    region,
-    `/v1/human/accounts/${encodeURIComponent(humanUserId)}/secret-key`
-  );
+  const body = await requestWithDashboardSecret(region, secretKeyPath(humanUserId));
 
-  return unwrapData<{ environmentId: string; secretKey: string }>(body).secretKey;
+  return unwrapData<SecretKeyResponse>(body).secretKey;
 });
+
+function secretKeyPath(humanUserId: string): string {
+  return `/v1/human/accounts/${encodeURIComponent(humanUserId)}/secret-key`;
+}
 
 /** Calls the regular Novu API as the operator's backing organization and unwraps `{ data }`. */
 export async function requestForAccount<T>(account: HumanAccount, path: string, init?: HumanApiRequest): Promise<T> {
@@ -41,7 +44,19 @@ async function send(account: HumanAccount, path: string, init?: HumanApiRequest)
   return requestWithSecretKey(account.region, secretKey, path, init);
 }
 
-/** Not in the API yet: a new key has to reach the operator's CLI too, or `human` stops working there. */
-export async function regenerateApiKey(_account: HumanAccount): Promise<void> {
-  notAvailableYet('Making a new API key');
+/** The key itself, for the Settings page: the operator copies it into CI, cloud VMs and automations. */
+export function readApiKey(account: HumanAccount): Promise<string> {
+  return loadBackingSecretKey(account.region, account.humanUserId);
+}
+
+/**
+ * Replaces the key and returns the new one. The old key stops working at once, everywhere it was pasted
+ * and in the copy `human login` saved on the operator's computer.
+ */
+export async function regenerateApiKey(account: HumanAccount): Promise<string> {
+  const body = await requestWithDashboardSecret(account.region, `${secretKeyPath(account.humanUserId)}/regenerate`, {
+    method: 'POST',
+  });
+
+  return unwrapData<SecretKeyResponse>(body).secretKey;
 }

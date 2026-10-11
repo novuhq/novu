@@ -162,6 +162,14 @@ export async function cancelInteraction(client: HumanApiClient, id: string): Pro
   return unwrap(res.data);
 }
 
+export interface SetupHumanRelayResult {
+  agentId: string;
+  agentIdentifier: string;
+  /** What the relay agent is called. Missing from APIs older than agent names. */
+  agentName?: string;
+  subscriberId: string;
+}
+
 export async function setupHumanRelay(
   client: HumanApiClient,
   input: {
@@ -172,27 +180,87 @@ export async function setupHumanRelay(
      */
     operator?: boolean;
     agentIdentifier?: string;
+    /** What the relay agent is called from now on. Missing leaves the name it has. */
+    agentName?: string;
+    /** A line about what the relay agent does. An empty one clears it. */
+    agentDescription?: string;
     email?: string;
     firstName?: string;
     lastName?: string;
     /** The inviter's `--via` pick; becomes the human's default channel unless they chose one themselves. */
     defaultVia?: 'telegram' | 'slack' | 'email';
   }
-): Promise<{ agentId: string; agentIdentifier: string; subscriberId: string }> {
-  const res = await client.axios.post<
-    | { data?: { agentId: string; agentIdentifier: string; subscriberId: string } }
-    | {
-        agentId: string;
-        agentIdentifier: string;
-        subscriberId: string;
-      }
-  >('/v1/human/setup', input);
+): Promise<SetupHumanRelayResult> {
+  const res = await client.axios.post<{ data?: SetupHumanRelayResult } | SetupHumanRelayResult>(
+    '/v1/human/setup',
+    input
+  );
+
+  return unwrap(res.data);
+}
+
+export interface HumanAgent {
+  agentId: string;
+  agentIdentifier: string;
+  name: string;
+  description?: string;
+  /** Where anyone can load the agent's picture. Missing when it has none. */
+  pictureUrl?: string;
+}
+
+/** Renames or describes the relay agent. People see it on the invite page, in emails and on its Telegram bot. */
+export async function updateHumanAgent(
+  client: HumanApiClient,
+  input: { agentIdentifier?: string; name?: string; description?: string }
+): Promise<HumanAgent> {
+  const res = await client.axios.patch<{ data?: HumanAgent } | HumanAgent>('/v1/human/agent', input);
+
+  return unwrap(res.data);
+}
+
+/** Names the relay agent a call is about. Left out, the API takes the default one. */
+function agentParams(agentIdentifier: string | undefined): { params?: { agentIdentifier: string } } {
+  return agentIdentifier ? { params: { agentIdentifier } } : {};
+}
+
+/** The relay agent with its name, description and picture. */
+export async function getHumanAgent(client: HumanApiClient, agentIdentifier?: string): Promise<HumanAgent> {
+  const res = await client.axios.get<{ data?: HumanAgent } | HumanAgent>(
+    '/v1/human/agent',
+    agentParams(agentIdentifier)
+  );
+
+  return unwrap(res.data);
+}
+
+/** Uploads the relay agent's picture: a JPEG or PNG of up to 2 MB. Needs an account (`human login`). */
+export async function setHumanAgentPicture(
+  client: HumanApiClient,
+  picture: { file: Buffer; contentType: string },
+  agentIdentifier?: string
+): Promise<HumanAgent> {
+  const form = new FormData();
+  form.append('picture', new Blob([new Uint8Array(picture.file)], { type: picture.contentType }), 'picture');
+  const res = await client.axios.put<{ data?: HumanAgent } | HumanAgent>(
+    '/v1/human/agent/picture',
+    form,
+    agentParams(agentIdentifier)
+  );
+
+  return unwrap(res.data);
+}
+
+export async function removeHumanAgentPicture(client: HumanApiClient, agentIdentifier?: string): Promise<HumanAgent> {
+  const res = await client.axios.delete<{ data?: HumanAgent } | HumanAgent>(
+    '/v1/human/agent/picture',
+    agentParams(agentIdentifier)
+  );
 
   return unwrap(res.data);
 }
 
 export interface HumanInviteChannel {
-  via: 'telegram' | 'slack';
+  via: 'telegram' | 'slack' | 'email';
   integrationIdentifier: string;
   connected: boolean;
 }
@@ -214,6 +282,19 @@ export async function createHumanInvite(
   return unwrap(res.data);
 }
 
+export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
+
+export type ContactChannel = {
+  via: 'telegram' | 'slack' | 'email';
+  status: ContactChannelStatus;
+  address?: string;
+  verifiedAt?: string;
+  /** `requestedAt` of the request whose link verified the current address. */
+  verifiedRequestedAt?: string;
+  /** Set while a newer request is still pending. */
+  requestedAt?: string;
+};
+
 /** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */
 export interface Contact {
   id: string;
@@ -224,6 +305,7 @@ export interface Contact {
   data?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  channels?: ContactChannel[];
 }
 
 export interface ContactsPage {
@@ -239,4 +321,47 @@ export async function listContacts(
   const body = res.data;
 
   return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
+}
+
+export async function getContact(
+  client: HumanApiClient,
+  subscriberId: string,
+  agentIdentifier?: string
+): Promise<Contact> {
+  const res = await client.axios.get<{ data?: Contact } | Contact>(
+    `/v1/human/contacts/${encodeURIComponent(subscriberId)}`,
+    { params: agentIdentifier ? { agentIdentifier } : undefined }
+  );
+
+  // Explicit type arg: `Contact.data` would otherwise make `unwrap` infer the wrong envelope.
+  return unwrap<Contact>(res.data);
+}
+
+export type AddressVerificationResult = {
+  address: string;
+  /** Identifies this request; the contact's email channel reports it as `verifiedRequestedAt` once used. */
+  requestedAt: string;
+  expiresAt: string;
+  retryAfterSeconds: number;
+  /** A different address is already verified and stays deliverable until this one is confirmed. */
+  replacesVerifiedAddress: boolean;
+};
+
+export async function requestAddressVerification(
+  client: HumanApiClient,
+  input: {
+    subscriberId: string;
+    via: 'email';
+    address: string;
+    agentIdentifier?: string;
+    firstName?: string;
+    lastName?: string;
+  }
+): Promise<AddressVerificationResult> {
+  const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
+    '/v1/human/verifications',
+    input
+  );
+
+  return unwrap(res.data);
 }

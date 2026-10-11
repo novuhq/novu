@@ -3,6 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
+import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
@@ -50,7 +51,7 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
     return { error: describeClaimError(error) };
   }
 
-  redirect('/account?claimed=1');
+  redirect(DASHBOARD_HOME);
 }
 
 const ACCOUNT_HAS_AGENT_MESSAGE = 'Your Human account’s agent is already in use, so this setup can’t be moved into it.';

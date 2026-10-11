@@ -1,4 +1,3 @@
-import { currentUser, type User } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -8,13 +7,11 @@ import { Sidebar, type SidebarAgent } from '@/components/dashboard/sidebar';
 import { TopBar } from '@/components/dashboard/top-bar';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { findCurrentUser } from '@/lib/auth-page';
 import { requireHumanAccount } from '@/lib/human-account';
-import { getRelayAgent } from '@/lib/human-agent-api';
+import { agentDisplayName, getRelayAgent } from '@/lib/human-agent-api';
 
-const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up' };
-
-/** The name `human setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
-const DEFAULT_AGENT_NAME = 'Human';
+const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up', setUp: false };
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -26,12 +23,12 @@ export const metadata: Metadata = {
  * they asked for; the check here is the backstop if a request ever gets past it.
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const user = await currentUser();
+  const user = await findCurrentUser();
   if (!user) {
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: DASHBOARD_HOME })}`);
   }
 
-  const agent = await loadSidebarAgent(user);
+  const agent = await loadSidebarAgent();
   const email = user.primaryEmailAddress?.emailAddress ?? null;
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email || 'Your account';
 
@@ -52,15 +49,15 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 }
 
 /**
- * Who the sidebar says the agent is. The account and its agent come from the sign-up webhook, but the
- * first page after signing up usually loads before that webhook has run. So the shell asks for the
- * account the same way the pages do, which sets it up on the spot when it isn't there yet, instead of
- * showing "Not set up" until the next reload.
+ * Who the sidebar says the agent is: "Not set up" until the operator has run `human setup`. The account
+ * comes from the sign-up webhook, but the first page after signing up usually loads before that webhook
+ * has run. So the shell asks for the account the same way the pages do, which creates it on the spot
+ * when it isn't there yet.
  *
  * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
  * layout has no error page of its own.
  */
-async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
+async function loadSidebarAgent(): Promise<SidebarAgent> {
   try {
     const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
     const agent = await getRelayAgent(account);
@@ -68,10 +65,7 @@ async function loadSidebarAgent(user: User): Promise<SidebarAgent> {
       return AGENT_NOT_SET_UP;
     }
 
-    const ownName = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : undefined;
-    const name = ownName ?? (user.firstName ? `${user.firstName}’s assistant` : undefined);
-
-    return { name: name ?? AGENT_NOT_SET_UP.name, status: `${agent.name || DEFAULT_AGENT_NAME} agent` };
+    return { name: agentDisplayName(agent), status: 'Your agent', setUp: true, pictureUrl: agent.pictureUrl };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);

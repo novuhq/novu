@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
+import { AgentSetupBanner } from '@/components/dashboard/agent-setup-banner';
 import { PageHeader } from '@/components/dashboard/page-header';
-import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
-import { getRelayAgent } from '@/lib/human-agent-api';
+import { requireHumanAccount } from '@/lib/human-account';
+import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from '@/lib/human-agent-api';
 import { type Contact, listContactsPage } from '@/lib/human-contacts-api';
 import { findOperatorContactId } from '@/lib/human-operator';
 
@@ -20,13 +21,13 @@ const PAGE_SIZE = 50;
 /** The API's cursor is the id of the last contact on a page: 24 hex characters. */
 const CURSOR_PATTERN = /^[a-f0-9]{24}$/i;
 
-/** What the relay agent is called until the operator names it (the Agent page, NV-8966). */
-const UNNAMED_AGENT_NAME = 'Human';
-
 /**
  * The people the operator's agent can ask. The API pages with a cursor that only goes forward, so
  * `?after=` holds the cursor of every page opened so far: the last one is the page shown, and
  * "Previous" drops it.
+ *
+ * Until `human setup` has made the agent, nobody can be asked or invited: the list stays empty and a
+ * banner sends the operator to the Agent page.
  */
 export default async function ContactsPage(props: PageProps<'/contacts'>) {
   const account = await requireHumanAccount({ returnTo: CONTACTS_PATH });
@@ -35,10 +36,31 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
     (cursor): cursor is string => typeof cursor === 'string' && CURSOR_PATTERN.test(cursor)
   );
 
-  const [page, operatorContactId, agentName] = await Promise.all([
+  const agent = await getRelayAgent(account);
+  if (!agent) {
+    return (
+      <>
+        <PageHeader title="Contacts" description="People your agent can ask." />
+        <AgentSetupBanner>
+          Contacts are the people your agent can ask. Once it&apos;s set up, you&apos;re the first one and you invite
+          the others here.
+        </AgentSetupBanner>
+        <ContactsTable
+          contacts={[]}
+          operatorContactId={null}
+          agentName="your agent"
+          rangeLabel={describeRange(0, 0, false)}
+          previousHref={null}
+          nextHref={null}
+        />
+      </>
+    );
+  }
+
+  const agentName = sentenceName(agent);
+  const [page, operatorContactId] = await Promise.all([
     listContactsPage(account, { after: cursors.at(-1), limit: PAGE_SIZE }),
     findOperatorContactId(account),
-    loadAgentName(account),
   ]);
 
   // The API answers a cursor it no longer knows (that contact was removed since) with an empty page.
@@ -63,17 +85,11 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
   );
 }
 
-/** The agent's name is only wording here, so the page still loads when it can't be read. */
-async function loadAgentName(account: HumanAccount): Promise<string> {
-  try {
-    const name = (await getRelayAgent(account))?.name?.trim();
+/** The agent's name inside a sentence: its own, or "your agent" until the operator names it. */
+function sentenceName(agent: RelayAgent): string {
+  const name = agent.name?.trim();
 
-    return name && name !== UNNAMED_AGENT_NAME ? name : 'your agent';
-  } catch (error) {
-    console.error('Failed to load the relay agent for the Contacts page', error);
-
-    return 'your agent';
-  }
+  return name && name !== DEFAULT_AGENT_NAME ? name : 'your agent';
 }
 
 /** The API lists the newest contact first, which puts the operator last; their row leads the page it's on. */

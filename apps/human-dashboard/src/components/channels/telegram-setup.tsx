@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, Check, TriangleAlert } from 'lucide-react';
+import { ArrowUpRight, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, useTransition } from 'react';
 import QRCode from 'react-qr-code';
@@ -12,8 +12,15 @@ import {
   saveTelegramTokenAction,
 } from '@/app/(account)/(dashboard)/channels/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
+import {
+  ConnectedCard,
+  FieldError,
+  SetupCheck,
+  SWAP_LAYER,
+  useConnectionPoll,
+  WaitingLine,
+} from '@/components/channels/setup-parts';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { Field, Input } from '@/components/ui/input';
@@ -22,12 +29,6 @@ import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 
 const BOTFATHER_URL = 'https://t.me/botfather';
-/** Two lines in one grid cell: the one that's out fades and slides a little while the other comes in. */
-const SWAP_LAYER =
-  'col-start-1 row-start-1 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none';
-const POLL_INTERVAL_MS = 2500;
-/** After this long the drawer stops asking on its own, so a forgotten tab doesn't poll forever. */
-const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 
 /** `checking` and `unavailable` only happen when the page couldn't read the setup and the drawer has to. */
 type SetupStep = 'checking' | 'unavailable' | 'create' | 'token' | 'start' | 'connected';
@@ -46,7 +47,6 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
   const [bot, setBot] = useState(botOf(setup));
   const [pasted, setPasted] = useState('');
   const [error, setError] = useState<string>();
-  const [waitedTooLong, setWaitedTooLong] = useState(false);
   const [saving, startSaving] = useTransition();
 
   const found = findBotToken(pasted);
@@ -87,7 +87,6 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
 
     setError(undefined);
     setPasted('');
-    setWaitedTooLong(false);
 
     if (setup.step === 'unknown') {
       void check();
@@ -97,33 +96,14 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
   }, [open, setup, show, check]);
 
   // Telegram tells the API when the operator presses Start; the drawer asks until that shows up.
-  useEffect(() => {
-    if (!open || step !== 'start' || waitedTooLong) {
-      return;
-    }
-
-    let stale = false;
-    const startedAt = Date.now();
-
-    const timer = setInterval(async () => {
-      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
-        setWaitedTooLong(true);
-
-        return;
-      }
-
-      const connected = await checkTelegramConnectedAction().catch(() => false);
-      if (connected && !stale) {
-        setStep('connected');
-        router.refresh();
-      }
-    }, POLL_INTERVAL_MS);
-
-    return () => {
-      stale = true;
-      clearInterval(timer);
-    };
-  }, [open, step, waitedTooLong, router]);
+  const { waitedTooLong, keepWaiting } = useConnectionPoll({
+    waiting: open && step === 'start',
+    check: async () => (await checkTelegramConnectedAction()) || null,
+    onConnected: () => {
+      setStep('connected');
+      router.refresh();
+    },
+  });
 
   function saveToken() {
     if (!found) {
@@ -142,7 +122,6 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
       }
 
       setBot({ username: result.botUsername, startUrl: result.startUrl });
-      setWaitedTooLong(false);
       setStep('start');
 
       if (!result.startUrl) {
@@ -169,18 +148,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
         }
       >
         {(step === 'checking' || step === 'unavailable') && (
-          <div aria-live="polite" className="flex flex-col items-start gap-3 text-[13px] leading-4.5 text-secondary">
-            {step === 'checking' ? (
-              <p>Checking your setup…</p>
-            ) : (
-              <>
-                <p>We couldn’t check your Telegram setup just now. Nothing was changed.</p>
-                <Button variant="secondary" className={SMALL_BUTTON} onClick={() => void check()}>
-                  Try again
-                </Button>
-              </>
-            )}
-          </div>
+          <SetupCheck state={step} channel="Telegram" onRetry={() => void check()} />
         )}
         <Stepper className={step === 'checking' || step === 'unavailable' ? 'hidden' : undefined}>
           <Step
@@ -249,18 +217,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
             }
           >
             <div className="flex flex-col gap-1.5">
-              <Field
-                label="Bot token"
-                required
-                error={
-                  error && (
-                    <span className="flex items-start gap-1.5">
-                      <TriangleAlert aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
-                      {error}
-                    </span>
-                  )
-                }
-              >
+              <Field label="Bot token" required error={error && <FieldError>{error}</FieldError>}>
                 {(field) => (
                   <Input
                     {...field}
@@ -343,7 +300,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
                   variant="secondary"
                   className={SMALL_BUTTON}
                   onClick={() => {
-                    setWaitedTooLong(false);
+                    keepWaiting();
                     void refreshLink();
                   }}
                 >
@@ -351,30 +308,14 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
                 </Button>
               </p>
             ) : (
-              <p aria-live="polite" className="flex items-center gap-2.5 pl-1 text-xs leading-4 text-secondary">
-                <span
-                  aria-hidden="true"
-                  className="size-2 animate-pulse rounded-full bg-accent ring-4 ring-warning/45 motion-reduce:animate-none"
-                />
-                Waiting for /start…
-              </p>
+              <WaitingLine>Waiting for /start…</WaitingLine>
             )}
           </Step>
 
           {step === 'connected' && (
-            <li>
-              <Card
-                glow
-                aria-live="polite"
-                className="flex animate-rise-in items-center gap-3 rounded-[10px] bg-background px-4.5 py-4 [--glow-color:var(--color-success)] motion-reduce:animate-none"
-              >
-                <ChannelIcon via="telegram" />
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <p className="text-sm leading-5.25 font-medium text-foreground">Telegram connected</p>
-                  <p className="text-xs leading-4 text-secondary">Your agent can now reach people as {botName}.</p>
-                </div>
-              </Card>
-            </li>
+            <ConnectedCard via="telegram" title="Telegram connected">
+              Your agent can now reach people as {botName}.
+            </ConnectedCard>
           )}
         </Stepper>
       </DrawerContent>

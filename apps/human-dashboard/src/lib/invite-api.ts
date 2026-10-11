@@ -6,18 +6,42 @@ import {
   unwrapData,
 } from './api-response';
 
-export type InviteChannelVia = 'telegram' | 'slack';
+export type InviteChannelVia = 'telegram' | 'slack' | 'email';
+
+export type InviteChannelStatus = 'unverified' | 'pending' | 'verified';
 
 export type InviteChannel = {
   via: InviteChannelVia;
   connected: boolean;
   isDefault: boolean;
+  status: InviteChannelStatus;
+  /** Masked address for email (e.g. `a***@b.com`). */
+  address?: string;
 };
+
+/** Who is asking to reach the invitee. Both fields are optional; use `describeSender` to render. */
+export type InviteSender = {
+  /** The agent's own name; absent while it still has its placeholder name. */
+  agentName?: string;
+  /** Person who owns the agent, when they set a name during setup. */
+  operatorName?: string;
+};
+
+/** "Nikita Grossman's Deploy bot", "Nikita Grossman's agent", "Deploy bot", or "An agent". */
+export function describeSender(sender: InviteSender): string {
+  if (sender.operatorName) {
+    return `${sender.operatorName}'s ${sender.agentName ?? 'agent'}`;
+  }
+
+  return sender.agentName ?? 'An agent';
+}
 
 export type InviteStatus =
   | {
       valid: true;
       agentName: string;
+      /** Where the agent's own picture can be loaded. Missing when it has none. */
+      agentPictureUrl?: string;
       /** Who invited them: the account owner's name. Missing when they haven't given one. */
       inviterName?: string;
       /** Display name of the invited person, falling back to their subscriberId. */
@@ -37,7 +61,23 @@ export type InviteErrorCode =
   | 'channel_unavailable'
   | 'channel_already_connected'
   | 'channel_not_connected'
+  | 'address_required'
+  | 'address_invalid'
+  | 'verification_cooldown'
+  | 'verification_cap'
+  | 'verification_superseded'
+  | 'verification_used'
   | 'unknown';
+
+export type VerifyAddressResult = InviteSender & {
+  verified: true;
+  via: InviteChannelVia;
+  address: string;
+};
+
+export type ConnectInviteResult =
+  | { url: string }
+  | { via: 'email'; address: string; expiresAt: string; retryAfterSeconds: number };
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<InviteErrorCode>([
   'token_invalid',
@@ -46,13 +86,20 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<InviteErrorCode>([
   'channel_unavailable',
   'channel_already_connected',
   'channel_not_connected',
+  'address_required',
+  'address_invalid',
+  'verification_cooldown',
+  'verification_cap',
+  'verification_superseded',
+  'verification_used',
 ]);
 
 export class InviteRequestError extends Error {
   constructor(
     public readonly code: InviteErrorCode,
     message: string,
-    public readonly status: number
+    public readonly status: number,
+    public readonly retryAfterSeconds?: number
   ) {
     super(message);
   }
@@ -70,13 +117,14 @@ export async function getInviteStatus(apiUrl: string, token: string, signal?: Ab
   );
 }
 
-/** Mints a fresh Telegram deep link or Slack authorize URL for the invited person. */
+/** Mints a fresh Telegram deep link / Slack authorize URL, or starts email verification. */
 export async function connectInviteChannel(
   apiUrl: string,
   token: string,
-  via: InviteChannelVia
-): Promise<{ url: string }> {
-  return postAction(apiUrl, 'connect', { token, via }, 'Failed to start connecting');
+  via: InviteChannelVia,
+  address?: string
+): Promise<ConnectInviteResult> {
+  return postAction(apiUrl, 'connect', { token, via, ...(address ? { address } : {}) }, 'Failed to start connecting');
 }
 
 export async function setInviteDefaultChannel(
@@ -89,6 +137,20 @@ export async function setInviteDefaultChannel(
 
 export async function declineInvite(apiUrl: string, token: string): Promise<{ declined: true }> {
   return postAction(apiUrl, 'decline', { token }, 'Failed to decline the invitation');
+}
+
+/** Claims a verification token from the email link. */
+export async function verifyAddress(apiUrl: string, token: string, signal?: AbortSignal): Promise<VerifyAddressResult> {
+  return request<VerifyAddressResult>(
+    `${apiUrl}/v1/human/verify`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+      signal,
+    },
+    'Failed to verify this email'
+  );
 }
 
 async function postAction<T>(
@@ -109,7 +171,12 @@ async function request<T>(url: string, init: RequestInit, fallbackMessage: strin
   const data = await safeJson(response);
 
   if (!response.ok) {
-    throw new InviteRequestError(readErrorCode(data), readErrorMessage(data) ?? fallbackMessage, response.status);
+    throw new InviteRequestError(
+      readErrorCode(data),
+      readErrorMessage(data) ?? fallbackMessage,
+      response.status,
+      readRetryAfter(data)
+    );
   }
 
   return unwrapData<T>(data);
@@ -119,4 +186,14 @@ function readErrorCode(data: JsonBody): InviteErrorCode {
   const candidate = readRawErrorCode(data);
 
   return candidate && KNOWN_ERROR_CODES.has(candidate) ? (candidate as InviteErrorCode) : 'unknown';
+}
+
+function readRetryAfter(data: JsonBody): number | undefined {
+  const message = data?.message;
+  const candidate =
+    typeof message === 'object' && message !== null && 'retryAfterSeconds' in message
+      ? (message as { retryAfterSeconds?: unknown }).retryAfterSeconds
+      : data?.retryAfterSeconds;
+
+  return typeof candidate === 'number' && Number.isFinite(candidate) ? candidate : undefined;
 }

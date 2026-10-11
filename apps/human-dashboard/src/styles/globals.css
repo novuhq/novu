@@ -153,6 +153,7 @@
 /*
  * The ordered dither behind a callout: 2px pixels that get denser towards the right edge, 640px wide.
  * The mask is a 640x8 strip of that pattern (a 4x4 Bayer matrix), repeated down the element.
+ * Set `--dither-width` and `--dither-opacity` for a narrower or fainter one.
  */
 @utility dither-side {
   position: relative;
@@ -164,9 +165,9 @@
     position: absolute;
     inset-block: 0;
     right: 0;
-    width: min(640px, 100%);
+    width: min(var(--dither-width, 640px), 100%);
     z-index: -1;
-    opacity: 0.55;
+    opacity: var(--dither-opacity, 0.55);
     pointer-events: none;
   }
   /* A soft glow under the pixels, strongest at the right edge. */
@@ -186,7 +187,8 @@
       transparent
     );
     mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAAICAQAAADDuIY0AAAAT0lEQVR42u3XwQ0AIAjFUPZfWr24gRL9eeXQsEAJVchirEnY+V3v6d5vDARQAFkAAfx1VPiMAQigAAJprzZ7nb3AEEAWQAEEHA32AgMCyBPfwZOleFaLtQAAAABJRU5ErkJggg==");
-    mask-size: 640px 8px;
+    /* The strip scales with the width, as the design's `Dither` does when it is resized. */
+    mask-size: var(--dither-width, 640px) calc(var(--dither-width, 640px) / 80);
     mask-position: right top;
     mask-repeat: repeat-y;
     image-rendering: pixelated;
@@ -194,23 +196,35 @@
   }
 }
 
-/* The same dither across a whole screen, rising from the bottom right corner behind a centered card. */
-@utility stage-glow {
-  position: relative;
-  isolation: isolate;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-image: radial-gradient(
-      circle,
-      color-mix(in srgb, var(--color-accent) 35%, transparent) 1px,
-      transparent 1.5px
-    );
-    background-size: 6px 6px;
-    mask-image: radial-gradient(ellipse 60% 70% at 100% 100%, black, transparent 75%);
-    pointer-events: none;
+/*
+ * The same slow swell as `animate-breathe`, for the dither of `dither-side` and the glow of `dot-glow`:
+ * both are drawn by pseudo-elements, which an animation on the element itself wouldn't reach.
+ */
+@utility dither-breathe {
+  &::before,
+  &::after {
+    animation: dither-breathe 4s ease-in-out infinite alternate;
+  }
+}
+
+@utility glow-breathe {
+  &::after {
+    animation: breathe 4s ease-in-out infinite alternate;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dither-breathe::before,
+  .dither-breathe::after,
+  .glow-breathe::after {
+    animation: none;
+  }
+}
+
+/* Swells up to the dither's own opacity, whatever `--dither-opacity` sets it to, from half of it. */
+@keyframes dither-breathe {
+  from {
+    opacity: calc(var(--dither-opacity, 0.55) * 0.5);
   }
 }
 

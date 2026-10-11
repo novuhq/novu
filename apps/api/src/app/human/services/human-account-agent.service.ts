@@ -18,9 +18,12 @@ type OperatorName = { firstName?: string; lastName?: string };
 type UntouchedAgent = { agentId: string; operator: string | null };
 
 /**
- * The relay agent every Human account gets at sign-up (the Human dashboard asks for it right after the
- * account), and what happens to it when the operator brings a setup made without an account: an agent nobody has used yet steps aside for the one being claimed,
- * an agent in use stays and the claim is refused as before.
+ * The relay agent of a Human account, and what happens to it when the operator brings a setup made
+ * without an account: an agent nobody has used yet steps aside for the one being claimed, an agent in
+ * use stays and the claim is refused as before.
+ *
+ * An account starts without an agent; `human setup` makes it. Accounts from before that got one at
+ * sign-up, which is where most untouched agents come from.
  */
 @Injectable()
 export class HumanAccountAgentService {

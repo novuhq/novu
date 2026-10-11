@@ -9,7 +9,11 @@ import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
 
 /** Teams buffers posts made outside an inbound turn, so it would show no preview. */
-const STREAMING_PLATFORMS = new Set<AgentPlatformEnum>([AgentPlatformEnum.SLACK, AgentPlatformEnum.TELEGRAM]);
+const STREAMING_PLATFORMS = new Set<AgentPlatformEnum>([
+  AgentPlatformEnum.SLACK,
+  AgentPlatformEnum.TELEGRAM,
+  AgentPlatformEnum.WEB_CHAT,
+]);
 
 /** How long a streamed `message` webhook waits for its live reader to deliver the reply. */
 const READER_DELIVERY_TIMEOUT_MS = 10_000;

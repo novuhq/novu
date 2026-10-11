@@ -60,4 +60,61 @@ describe('agent email adapter', () => {
     expect(threadId).to.match(/^email:person%40example\.com:/);
     expect(message.threadId).to.equal(threadId);
   });
+
+  describe('agent-opened threads (openDM → postMessage)', () => {
+    function createOutboundAdapter(options: { defaultAgentAddress?: string }) {
+      const sendEmail = sinon.stub().resolves({ messageId: 'sent@example.com' });
+      const stored = new Map<string, unknown>();
+      const state = {
+        get: sinon.stub().callsFake(async (key: string) => stored.get(key) ?? null),
+        set: sinon.stub().callsFake(async (key: string, value: unknown) => {
+          stored.set(key, value);
+        }),
+        getList: sinon.stub().resolves([]),
+        appendToList: sinon.stub().resolves(),
+        setIfNotExists: sinon.stub().resolves(),
+      };
+      const adapter = createNovuEmailAdapter({
+        signingSecret: SIGNING_SECRET,
+        sendEmail,
+        stripAgentReplyToken: (address) => address,
+        ...options,
+      });
+
+      return { adapter, sendEmail, state };
+    }
+
+    it('sends from defaultAgentAddress when no inbound email opened the thread', async () => {
+      const { adapter, sendEmail, state } = createOutboundAdapter({
+        defaultAgentAddress: 'human-relay-abc@agentconnect.sh',
+      });
+      await adapter.initialize({ getState: () => state, processMessage: sinon.stub() } as never);
+
+      const threadId = await adapter.openDM!('person@example.com');
+      const sent = await adapter.postMessage(threadId, { markdown: 'Deploy to production?' });
+
+      expect(sendEmail.calledOnce).to.equal(true);
+      expect(sendEmail.firstCall.args[0].from).to.equal('human-relay-abc@agentconnect.sh');
+      expect(sendEmail.firstCall.args[0].to).to.equal('person@example.com');
+      expect(sent.raw.from).to.equal('human-relay-abc@agentconnect.sh');
+    });
+
+    it('still fails clearly when neither the thread nor the config has an agent address', async () => {
+      const { adapter, sendEmail, state } = createOutboundAdapter({});
+      await adapter.initialize({ getState: () => state, processMessage: sinon.stub() } as never);
+
+      const threadId = await adapter.openDM!('person@example.com');
+
+      let error: unknown;
+      try {
+        await adapter.postMessage(threadId, { markdown: 'Deploy to production?' });
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).to.be.instanceOf(Error);
+      expect((error as Error).message).to.match(/No agent address found for thread/);
+      expect(sendEmail.called).to.equal(false);
+    });
+  });
 });

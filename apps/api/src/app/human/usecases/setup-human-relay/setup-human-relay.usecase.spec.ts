@@ -5,9 +5,18 @@ import { SetupHumanRelayCommand } from './setup-human-relay.command';
 import { SetupHumanRelay } from './setup-human-relay.usecase';
 
 describe('SetupHumanRelay', () => {
-  function setup() {
+  function setup(
+    existingAgent: Record<string, unknown> | null = {
+      _id: 'relay1',
+      identifier: 'human-relay',
+      runtime: 'human_relay',
+      name: 'Human',
+    }
+  ) {
     const agentRepository = {
-      findOne: sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' }),
+      findOne: sinon.stub().resolves(existingAgent),
+      update: sinon.stub().resolves(),
+      create: sinon.stub().callsFake(async (data: Record<string, unknown>) => ({ _id: 'relay-new', ...data })),
     };
     const subscriberRepository: Record<string, sinon.SinonStub> = {
       findOne: sinon.stub().resolves({ subscriberId: 'alice' }),
@@ -15,14 +24,23 @@ describe('SetupHumanRelay', () => {
     };
     const humanContactRepository = { setDefaultVia: sinon.stub().resolves() };
     const humanOperator = { resolve: sinon.stub().resolves('dima') };
+    const humanAgentIdentity = { apply: sinon.stub().callsFake(async (agent: unknown) => agent) };
     const usecase = new SetupHumanRelay(
       agentRepository as never,
       subscriberRepository as never,
       humanContactRepository as never,
-      humanOperator as never
+      humanOperator as never,
+      humanAgentIdentity as never
     );
 
-    return { usecase, humanContactRepository, humanOperator, subscriberRepository };
+    return {
+      usecase,
+      agentRepository,
+      humanContactRepository,
+      humanOperator,
+      humanAgentIdentity,
+      subscriberRepository,
+    };
   }
 
   const base = { environmentId: 'env1', organizationId: 'org1', userId: 'user1', subscriberId: 'alice' };
@@ -63,16 +81,15 @@ describe('SetupHumanRelay', () => {
     expect(subscriberRepository.findOne.firstCall.args[0].subscriberId).to.equal('dima');
   });
 
-  it('still saves the email when another setup creates the subscriber first', async () => {
+  it('does not write email during setup — verification owns Subscriber.email', async () => {
     const { usecase, subscriberRepository } = setup();
     subscriberRepository.findOne.onFirstCall().resolves(null);
-    subscriberRepository.create = sinon
-      .stub()
-      .rejects(Object.assign(new Error('E11000 duplicate key'), { code: 11000 }));
+    subscriberRepository.create = sinon.stub().resolves({ subscriberId: 'alice' });
 
     await usecase.execute(SetupHumanRelayCommand.create({ ...base, email: 'Alice@Example.com' }));
 
-    expect(subscriberRepository.update.firstCall.args[1]).to.deep.equal({ $set: { email: 'alice@example.com' } });
+    expect(subscriberRepository.create.firstCall.args[0]).to.not.have.property('email');
+    expect(subscriberRepository.update.called).to.equal(false);
   });
 
   it('never asks who the operator is for anyone else', async () => {
@@ -82,5 +99,38 @@ describe('SetupHumanRelay', () => {
 
     expect(humanOperator.resolve.called).to.equal(false);
     expect(result.subscriberId).to.equal('alice');
+  });
+
+  it('names a new relay agent as asked', async () => {
+    const { usecase, agentRepository } = setup();
+    agentRepository.findOne.resolves(null);
+    const create = sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' });
+    Object.assign(agentRepository, { create });
+
+    await usecase.execute(
+      SetupHumanRelayCommand.create({ ...base, agentName: ' Deploy bot ', agentDescription: 'Ships the app.' })
+    );
+
+    expect(create.firstCall.args[0]).to.include({ name: 'Deploy bot', description: 'Ships the app.' });
+  });
+
+  it('calls a new relay agent "Human" until it is named', async () => {
+    const { usecase, agentRepository } = setup();
+    agentRepository.findOne.resolves(null);
+    const create = sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' });
+    Object.assign(agentRepository, { create });
+
+    await usecase.execute(SetupHumanRelayCommand.create(base));
+
+    expect(create.firstCall.args[0].name).to.equal('Human');
+    expect(create.firstCall.args[0]).to.not.have.property('description');
+  });
+
+  it('renames the relay agent it already has when setup runs again', async () => {
+    const { usecase, humanAgentIdentity } = setup();
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...base, agentName: 'Deploy bot' }));
+
+    expect(humanAgentIdentity.apply.firstCall.args[1]).to.deep.equal({ name: 'Deploy bot', description: undefined });
   });
 });

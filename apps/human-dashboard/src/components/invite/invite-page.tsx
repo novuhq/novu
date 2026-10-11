@@ -1,16 +1,19 @@
 'use client';
 
 import { ArrowUpRight, User } from 'lucide-react';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
-import { Mascot } from '@/components/ui/mascot';
+import { Field, Input } from '@/components/ui/input';
+import { MascotFace } from '@/components/ui/mascot-face';
 import { useInviteStatus } from '@/hooks/use-invite-status';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import {
   type ActiveInviteStatus,
+  type ConnectInviteResult,
   connectInviteChannel,
   declineInvite,
   type InviteChannel,
@@ -23,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { AppIcon } from './app-icon';
 
 const APP_LABELS: Record<InviteChannelVia, string> = {
+  email: 'Email',
   telegram: 'Telegram',
   slack: 'Slack',
 };
@@ -34,7 +38,7 @@ type InviteView = 'channels' | InviteChannelVia | 'done';
 
 /**
  * Public page opened by someone invited with `human invite`. The token in the link is the
- * only credential. The person picks which of the inviter's apps (Telegram, Slack) the agent
+ * only credential. The person picks which of the inviter's channels (Email, Telegram, Slack) the agent
  * may reach them on and which one is their default. The status refreshes while the page is
  * open, so a card flips to "Connected" once they finish in Telegram or Slack.
  */
@@ -74,6 +78,44 @@ export function InvitePage({ apiUrl, token }: { apiUrl: string; token: string })
   return <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />;
 }
 
+function followConnectResult(
+  result: ConnectInviteResult,
+  via: InviteChannelVia,
+  actions: {
+    stillHere: () => boolean;
+    tab: Window | null;
+    onEmailSent: (retryAfterSeconds: number) => void;
+    onTelegram: (url: string) => void;
+  }
+): void {
+  if ('via' in result && result.via === 'email') {
+    actions.onEmailSent(result.retryAfterSeconds);
+
+    return;
+  }
+
+  if (!('url' in result)) {
+    return;
+  }
+
+  if (via === 'telegram') {
+    // Only when they are still where they asked for it: going back meanwhile is the newer choice.
+    if (actions.stillHere()) {
+      actions.onTelegram(result.url);
+    }
+
+    return;
+  }
+
+  if (actions.tab && !actions.tab.closed) {
+    actions.tab.location.href = result.url;
+
+    return;
+  }
+
+  window.location.assign(result.url);
+}
+
 type ActiveInviteProps = {
   apiUrl: string;
   token: string;
@@ -91,6 +133,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   const [declining, setDeclining] = useState(false);
   // Whether they pressed "Continue with Slack": before that there is nothing to wait for.
   const [slackStarted, setSlackStarted] = useState(false);
+  const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
   // Counts the times they chose to go back, so a request from before that can tell it's stale.
   const navigations = useRef(0);
 
@@ -122,13 +165,21 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           onChanged();
 
           return;
+        case 'verification_cooldown':
+        case 'verification_cap':
+          if (error.retryAfterSeconds) {
+            setEmailCooldownUntil(Date.now() + error.retryAfterSeconds * 1000);
+          }
+          setErrorMessage(error.message);
+
+          return;
       }
     }
 
     setErrorMessage(error instanceof Error ? error.message : 'Something went wrong. Try again.');
   };
 
-  const handleConnect = async (via: InviteChannelVia) => {
+  const handleConnect = async (via: InviteChannelVia, address?: string) => {
     setErrorMessage(null);
 
     // t.me hands off to the app through a `tg://` link, which fails on a computer without
@@ -148,19 +199,19 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
       setSlackStarted(true);
     }
     try {
-      const { url } = await connectInviteChannel(apiUrl, token, via);
-
-      if (via === 'telegram') {
-        setTelegramLink(url);
-        // Only when they are still where they asked for it: going back meanwhile is the newer choice.
-        if (navigation === navigations.current) {
+      const result = await connectInviteChannel(apiUrl, token, via, address);
+      followConnectResult(result, via, {
+        stillHere: () => navigation === navigations.current,
+        tab,
+        onEmailSent: (retryAfterSeconds) => {
+          setEmailCooldownUntil(Date.now() + retryAfterSeconds * 1000);
+          onChanged();
+        },
+        onTelegram: (url) => {
+          setTelegramLink(url);
           setView('telegram');
-        }
-      } else if (tab && !tab.closed) {
-        tab.location.href = url;
-      } else {
-        window.location.assign(url);
-      }
+        },
+      });
     } catch (error) {
       tab?.close();
       handleError(error);
@@ -228,82 +279,27 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   // The status refreshes in the background: once the app shows up as connected, its steps are
   // over and the list (now with "Connected") takes their place.
   const stepsFor = status.channels.find((channel) => channel.via === view && !channel.connected)?.via;
+  const connecting = connectingStep({
+    status,
+    stepsFor,
+    telegramLink,
+    telegramBot,
+    busy,
+    slackStarted,
+    emailCooldownUntil,
+    connectingVia,
+    error,
+    onConnect: (via, address) => void handleConnect(via, address),
+    onBack: showChannels,
+  });
 
-  if (stepsFor === 'telegram' && telegramLink) {
-    return (
-      <InviteCard step="telegram">
-        <InviterLine name={status.inviterName} />
-        <AppIcon via="telegram" size="large" />
-        <StepTitle>Open the bot and press Start</StepTitle>
-        <CardText>
-          That tells {telegramBot ? `@${telegramBot}` : 'the bot'} it can reach you. Nothing else to set up.
-        </CardText>
-
-        <div className="flex items-center gap-4">
-          {/* On a phone the code is no use: the button opens the Telegram app directly. */}
-          <TelegramQrCode url={telegramLink} bot={telegramBot} />
-          <div className="flex min-w-0 flex-col items-start gap-2">
-            <a href={telegramLink} target="_blank" rel="noopener noreferrer" className={buttonClassName('primary')}>
-              <ArrowUpRight aria-hidden="true" className="size-3.5" />
-              Open in Telegram
-            </a>
-            <p className="hidden text-xs leading-4 text-muted sm:block">Or scan with your phone</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <WaitingLine>Waiting for connection…</WaitingLine>
-          <p className="text-xs leading-4 text-muted">
-            The link works for 10 minutes.{' '}
-            <button
-              type="button"
-              className="cursor-pointer rounded-sm text-secondary underline underline-offset-4 transition-colors duration-150 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
-              disabled={busy}
-              onClick={() => void handleConnect('telegram')}
-            >
-              Get a new one
-            </button>
-          </p>
-        </div>
-
-        {error}
-        <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={showChannels}>
-          Choose another way
-        </Button>
-      </InviteCard>
-    );
-  }
-
-  if (stepsFor === 'slack') {
-    return (
-      <InviteCard step="slack">
-        <InviterLine name={status.inviterName} />
-        <AppIcon via="slack" size="large" />
-        <StepTitle>Confirm your Slack account</StepTitle>
-        <CardText>Sign in to Slack so {status.agentName} knows where to DM you. Nothing else to set up.</CardText>
-
-        <Button
-          className="self-start"
-          pending={connectingVia === 'slack'}
-          disabled={busy}
-          onClick={() => void handleConnect('slack')}
-        >
-          <ArrowUpRight aria-hidden="true" className="size-3.5" />
-          Continue with Slack
-        </Button>
-        {slackStarted && <WaitingLine>Waiting for Slack…</WaitingLine>}
-
-        {error}
-        <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={showChannels}>
-          Choose another way
-        </Button>
-      </InviteCard>
-    );
+  if (connecting) {
+    return connecting;
   }
 
   return (
     <InviteCard step="channels">
-      <InviterLine name={status.inviterName} />
+      <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         Get <Accent>asks</Accent> from {status.agentName}
       </h1>
@@ -319,7 +315,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
             <ChannelRow
               key={channel.via}
               channel={channel}
-              description={channelDescription(channel.via, telegramBot)}
+              description={channelDescription(channel, telegramBot)}
               connecting={connectingVia === channel.via}
               settingDefault={defaultingVia === channel.via}
               disabled={busy}
@@ -372,6 +368,131 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
       </div>
     </InviteCard>
   );
+}
+
+function connectingStep({
+  status,
+  stepsFor,
+  telegramLink,
+  telegramBot,
+  busy,
+  slackStarted,
+  emailCooldownUntil,
+  connectingVia,
+  error,
+  onConnect,
+  onBack,
+}: {
+  status: ActiveInviteStatus;
+  stepsFor: InviteChannelVia | undefined;
+  telegramLink: string | null;
+  telegramBot: string | undefined;
+  busy: boolean;
+  slackStarted: boolean;
+  emailCooldownUntil: number | null;
+  connectingVia: InviteChannelVia | null;
+  error: ReactNode;
+  onConnect: (via: InviteChannelVia, address?: string) => void;
+  onBack: () => void;
+}): ReactNode {
+  if (stepsFor === 'telegram' && telegramLink) {
+    return (
+      <InviteCard step="telegram">
+        <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
+        <AppIcon via="telegram" size="large" />
+        <StepTitle>Open the bot and press Start</StepTitle>
+        <CardText>
+          That tells {telegramBot ? `@${telegramBot}` : 'the bot'} it can reach you. Nothing else to set up.
+        </CardText>
+
+        <div className="flex items-center gap-4">
+          <TelegramQrCode url={telegramLink} bot={telegramBot} />
+          <div className="flex min-w-0 flex-col items-start gap-2">
+            <a href={telegramLink} target="_blank" rel="noopener noreferrer" className={buttonClassName('primary')}>
+              <ArrowUpRight aria-hidden="true" className="size-3.5" />
+              Open in Telegram
+            </a>
+            <p className="hidden text-xs leading-4 text-muted sm:block">Or scan with your phone</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <WaitingLine>Waiting for connection…</WaitingLine>
+          <p className="text-xs leading-4 text-muted">
+            The link works for 10 minutes.{' '}
+            <button
+              type="button"
+              className="cursor-pointer rounded-sm text-secondary underline underline-offset-4 transition-colors duration-150 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+              disabled={busy}
+              onClick={() => onConnect('telegram')}
+            >
+              Get a new one
+            </button>
+          </p>
+        </div>
+
+        {error}
+        <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={onBack}>
+          Choose another way
+        </Button>
+      </InviteCard>
+    );
+  }
+
+  if (stepsFor === 'slack') {
+    return (
+      <InviteCard step="slack">
+        <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
+        <AppIcon via="slack" size="large" />
+        <StepTitle>Confirm your Slack account</StepTitle>
+        <CardText>Sign in to Slack so {status.agentName} knows where to DM you. Nothing else to set up.</CardText>
+
+        <Button
+          className="self-start"
+          pending={connectingVia === 'slack'}
+          disabled={busy}
+          onClick={() => onConnect('slack')}
+        >
+          <ArrowUpRight aria-hidden="true" className="size-3.5" />
+          Continue with Slack
+        </Button>
+        {slackStarted && <WaitingLine>Waiting for Slack…</WaitingLine>}
+
+        {error}
+        <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={onBack}>
+          Choose another way
+        </Button>
+      </InviteCard>
+    );
+  }
+
+  const emailChannel = status.channels.find((channel) => channel.via === 'email');
+
+  if (stepsFor === 'email' && emailChannel) {
+    return (
+      <InviteCard step="email">
+        <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
+        <AppIcon via="email" size="large" />
+        <StepTitle>Confirm your email</StepTitle>
+        <CardText>
+          {status.agentName} emails you a link. It can message that address only after you open the link.
+        </CardText>
+        <EmailAddressForm
+          channel={emailChannel}
+          connecting={connectingVia === 'email'}
+          disabled={busy}
+          cooldownUntil={emailCooldownUntil}
+          onSend={(address) => onConnect('email', address)}
+        />
+        {error}
+        <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={onBack}>
+          Choose another way
+        </Button>
+      </InviteCard>
+    );
+  }
+
+  return null;
 }
 
 type ChannelRowProps = {
@@ -475,7 +596,7 @@ function DoneCard({ agentName, inviteeName, via, isDefault, telegramBot, onBack 
 
   return (
     <>
-      <img src="/illustrations/mascot-happy.svg" alt="" width={140} height={140} className="size-35" />
+      <MascotFace art="waiting" mood="happy" className="size-35" />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         You&apos;re in{firstName && ', '}
         {firstName && <Accent>{firstName}</Accent>}
@@ -598,14 +719,14 @@ function Accent({ children }: { children: ReactNode }) {
 }
 
 /** Who is asking: a person and their agent. An account owner who never gave a name isn't named. */
-function InviterLine({ name }: { name?: string }) {
+function InviterLine({ name, agentPictureUrl }: { name?: string; agentPictureUrl?: string }) {
   return (
     <div className="flex h-8 items-center gap-2.5">
       <span aria-hidden="true" className="flex shrink-0 items-center">
         <span className="flex size-8 items-center justify-center rounded-full border border-border bg-raised text-secondary">
           <User className="size-4" />
         </span>
-        <Mascot className="-ml-2.5 size-8 rounded-full ring-2 ring-background" />
+        <AgentAvatar src={agentPictureUrl} className="-ml-2.5 size-8 rounded-full ring-2 ring-background" />
       </span>
       <p className="text-[13px] leading-4.5 text-secondary">{name ? `${name} invited you` : "You've been invited"}</p>
     </div>
@@ -634,6 +755,101 @@ function ErrorNote({ children }: { children: ReactNode }) {
   );
 }
 
+function EmailAddressForm({
+  channel,
+  connecting,
+  disabled,
+  cooldownUntil,
+  onSend,
+}: {
+  channel: InviteChannel;
+  connecting: boolean;
+  disabled: boolean;
+  cooldownUntil: number | null;
+  onSend: (address: string) => void;
+}) {
+  const [address, setAddress] = useState('');
+  const cooldownSeconds = useCooldownSeconds(cooldownUntil);
+  const pending = channel.status === 'pending';
+  const value = address.trim();
+
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!value || cooldownSeconds > 0) {
+          return;
+        }
+
+        onSend(value);
+      }}
+    >
+      <Field
+        label="Email address"
+        hint={
+          pending
+            ? `Check your inbox${channel.address ? ` at ${channel.address}` : ''}.`
+            : 'We’ll email you a link to confirm this address.'
+        }
+      >
+        {(props) => (
+          <Input
+            {...props}
+            type="email"
+            name="email"
+            autoComplete="email"
+            inputMode="email"
+            value={address}
+            disabled={disabled}
+            onChange={(event) => setAddress(event.target.value)}
+          />
+        )}
+      </Field>
+      <Button
+        type="submit"
+        className="self-start"
+        pending={connecting}
+        disabled={disabled || cooldownSeconds > 0 || !value}
+      >
+        {verificationButtonLabel(pending, cooldownSeconds)}
+      </Button>
+    </form>
+  );
+}
+
+function verificationButtonLabel(pending: boolean, cooldownSeconds: number): string {
+  if (!pending) {
+    return 'Send verification';
+  }
+
+  if (cooldownSeconds > 0) {
+    return `Resend in ${cooldownSeconds}s`;
+  }
+
+  return 'Resend';
+}
+
+function useCooldownSeconds(until: number | null): number {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!until || until <= Date.now()) {
+      return;
+    }
+
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+
+    return () => window.clearInterval(interval);
+  }, [until]);
+
+  if (!until) {
+    return 0;
+  }
+
+  return Math.max(0, Math.ceil((until - now) / 1000));
+}
+
 function ExpiryNote({ expiresAt }: { expiresAt: string }) {
   const expiry = new Date(expiresAt);
 
@@ -650,12 +866,28 @@ function ExpiryNote({ expiresAt }: { expiresAt: string }) {
   );
 }
 
-function channelDescription(via: InviteChannelVia, telegramBot?: string): string {
-  if (via === 'telegram') {
-    return telegramBot ? `Reply in a chat with @${telegramBot}` : 'Reply in a Telegram chat';
-  }
+function channelDescription(channel: InviteChannel, telegramBot?: string): string {
+  switch (channel.via) {
+    case 'telegram':
+      return telegramBot ? `Reply in a chat with @${telegramBot}` : 'Reply in a Telegram chat';
+    case 'slack':
+      return 'Reply in a Slack DM';
+    case 'email':
+      if (channel.status === 'pending') {
+        return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a verification link';
+      }
 
-  return 'Reply in a Slack DM';
+      if (channel.connected && channel.address) {
+        return channel.address;
+      }
+
+      return 'We’ll email you a link to confirm the address';
+    default: {
+      const unreachable: never = channel.via;
+
+      return unreachable;
+    }
+  }
 }
 
 /** `https://t.me/novu_bot?start=…` → `novu_bot`. */

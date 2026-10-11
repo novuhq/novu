@@ -4,6 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 
 import { type HumanAccount, readHumanAccount } from '@/lib/human-account';
+import { AGENT_NOT_SET_UP_MESSAGE, getRelayAgent } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import { removeContact } from '@/lib/human-contacts-api';
 import { createInviteLink } from '@/lib/human-invites-api';
@@ -33,6 +34,11 @@ export async function createInviteAction(input: { contactId: string; name: strin
   }
 
   try {
+    // The API would make the agent for an invite. An account only gets its agent from `human setup`.
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
     const invite = await createInviteLink(account, parsed.fields);
 
     return { ok: true, url: invite.url, expiresAt: invite.expiresAt };

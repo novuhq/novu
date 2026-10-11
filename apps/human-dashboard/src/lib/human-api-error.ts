@@ -33,6 +33,11 @@ export function isHumanApiNotFound(error: unknown): boolean {
   return error instanceof HumanApiError && error.status === 404;
 }
 
+/** A request the API understood and turned down, as opposed to one it couldn't answer. */
+export function isHumanApiRefusal(error: unknown): boolean {
+  return error instanceof HumanApiError && error.status >= 400 && error.status < 500;
+}
+
 /** Messages of 4xx responses are written for people; a 5xx one can carry internals, so it's replaced. */
 export function toHumanApiError(
   status: number,

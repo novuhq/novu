@@ -4,12 +4,14 @@ import { Settings } from 'lucide-react';
 import { useState } from 'react';
 
 import { ChannelIcon } from '@/components/channels/channel-icon';
+import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@/components/ui/table';
 import type { ChannelVia } from '@/lib/human-channels-api';
+import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 
@@ -30,10 +32,20 @@ export type ChannelHandle = {
 };
 
 /** Channels whose setup drawer exists. The others are still set up with `human setup`. */
-const HAS_SETUP: Partial<Record<ChannelVia, true>> = { telegram: true };
+const HAS_SETUP: Partial<Record<ChannelVia, true>> = { telegram: true, slack: true };
+
+type ChannelsTableProps = {
+  rows: ChannelRow[];
+  telegramSetup: TelegramSetupState;
+  slackSetup: SlackSetupState;
+  /** What the agent is called: its own name, or "Human assistant". Missing when there is no agent yet. */
+  agentName?: string;
+  /** No agent yet: the rows are dimmed and nothing can be set up. */
+  disabled?: boolean;
+};
 
 /** The agent's channels, one row each. A row opens the channel's setup drawer. */
-export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; telegramSetup: TelegramSetupState }) {
+export function ChannelsTable({ rows, telegramSetup, slackSetup, agentName, disabled = false }: ChannelsTableProps) {
   const [openSetup, setOpenSetup] = useState<ChannelVia | null>(null);
 
   return (
@@ -50,17 +62,20 @@ export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; tel
         </TableHead>
         <TableBody>
           {rows.map((row) => {
-            const hasSetup = HAS_SETUP[row.via] === true;
+            const hasSetup = !disabled && HAS_SETUP[row.via] === true;
 
             return (
               <TableRow
                 key={row.via}
                 // The button in the row does the same for the keyboard; the row is the bigger target for a pointer.
                 onClick={hasSetup ? () => setOpenSetup(row.via) : undefined}
-                className={cn(hasSetup && 'cursor-pointer')}
+                className={cn(
+                  hasSetup && 'cursor-pointer',
+                  disabled && 'hover:bg-transparent hover:from-accent/0 hover:via-accent/0'
+                )}
               >
                 <TableCell className="h-18">
-                  <div className="flex items-center gap-3">
+                  <div className={cn('flex items-center gap-3', disabled && 'opacity-50')}>
                     <ChannelIcon via={row.via} />
                     <div className="flex min-w-0 flex-col gap-0.75">
                       <span className="text-[13px] leading-4.5 font-medium">{row.name}</span>
@@ -72,7 +87,7 @@ export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; tel
                   {row.connected ? <Badge variant="success">Connected</Badge> : <Badge>Not set up</Badge>}
                 </TableCell>
                 <TableCell className="w-88 text-right">
-                  <RowAction row={row} hasSetup={hasSetup} onOpen={() => setOpenSetup(row.via)} />
+                  <RowAction row={row} hasSetup={hasSetup} disabled={disabled} onOpen={() => setOpenSetup(row.via)} />
                 </TableCell>
               </TableRow>
             );
@@ -83,6 +98,12 @@ export function ChannelsTable({ rows, telegramSetup }: { rows: ChannelRow[]; tel
         setup={telegramSetup}
         open={openSetup === 'telegram'}
         onOpenChange={(open) => setOpenSetup(open ? 'telegram' : null)}
+      />
+      <SlackSetup
+        setup={slackSetup}
+        agentName={agentName}
+        open={openSetup === 'slack'}
+        onOpenChange={(open) => setOpenSetup(open ? 'slack' : null)}
       />
     </>
   );
@@ -120,7 +141,22 @@ function ChannelHandles({ row }: { row: ChannelRow }) {
   );
 }
 
-function RowAction({ row, hasSetup, onOpen }: { row: ChannelRow; hasSetup: boolean; onOpen: () => void }) {
+type RowActionProps = {
+  row: ChannelRow;
+  hasSetup: boolean;
+  disabled: boolean;
+  onOpen: () => void;
+};
+
+function RowAction({ row, hasSetup, disabled, onOpen }: RowActionProps) {
+  if (disabled) {
+    return (
+      <Button variant="secondary" className={SMALL_BUTTON} disabled title="Set up your agent first.">
+        Set up
+      </Button>
+    );
+  }
+
   if (row.connected) {
     return hasSetup ? (
       <button

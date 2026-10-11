@@ -23,6 +23,8 @@ type DialogContentProps = {
    */
   locked?: boolean;
   className?: string;
+  /** For the icon, title and description block, such as a tighter gap. */
+  headerClassName?: string;
   children?: ReactNode;
 };
 
@@ -40,6 +42,7 @@ export function DialogContent({
   footer,
   locked = false,
   className,
+  headerClassName,
   children,
 }: DialogContentProps) {
   const [openedWith] = useState(title);
@@ -78,7 +81,7 @@ export function DialogContent({
             key={title}
             className={cn('flex flex-col gap-5 p-6', stepped && 'animate-rise-in motion-reduce:animate-none')}
           >
-            <div className="flex flex-col gap-3">
+            <div className={cn('flex flex-col gap-3', headerClassName)}>
               {icon}
               <DialogPrimitive.Title className="text-base leading-6 font-medium text-foreground">
                 {title}
