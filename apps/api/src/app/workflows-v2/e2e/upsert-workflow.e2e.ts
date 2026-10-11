@@ -1157,7 +1157,6 @@ describe('Upsert Workflow #novu-v2', () => {
     });
   });
 
-
   describe('step identity when names collide', () => {
     const sharedStepName = 'HTTP Request Step';
 
