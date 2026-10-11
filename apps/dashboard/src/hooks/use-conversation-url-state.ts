@@ -1,8 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ConversationFilters } from '@/api/conversations';
-import { DEFAULT_DATE_RANGE } from '@/components/activity/constants';
+import { defaultConversationFilters } from '@/components/conversations/constants';
 import { ConversationFiltersData, ConversationUrlState } from '@/types/conversation';
+
+const DEFAULT_DATE_RANGE = defaultConversationFilters.dateRange;
 
 function parseFilters(searchParams: URLSearchParams): ConversationFilters {
   const result: ConversationFilters = {};

@@ -1,4 +1,15 @@
-import { getDateRangeInMs, type IActivity, type IEnvironment, SeverityLevelEnum } from '@novu/shared';
+import {
+  ChannelCTATypeEnum,
+  type IActivity,
+  type IActivityJob,
+  type IEnvironment,
+  type IExecutionDetail,
+  JobStatusEnum,
+  SeverityLevelEnum,
+  StepTypeEnum,
+  TriggerTypeEnum,
+} from '@novu/shared';
+import { type ActivityDateRange, parseActivityTransactionIds, resolveActivityDateRange } from '@/utils/activityFilters';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -7,7 +18,7 @@ export type ActivityFilters = {
   email?: string;
   subscriberId?: string;
   transactionId?: string;
-  dateRange?: string;
+  dateRange?: ActivityDateRange;
   topicKey?: string;
   subscriptionId?: string;
   severity?: SeverityLevelEnum[];
@@ -25,13 +36,13 @@ export interface ActivityResponse {
 export interface StepRunDto {
   stepRunId: string;
   stepId: string;
-  stepType: string;
+  stepType: StepTypeEnum;
   providerId?: string;
   status: StepRunStatus;
   createdAt: Date;
   updatedAt: Date;
-  executionDetails: any[];
-  digest?: any;
+  executionDetails: IExecutionDetail[];
+  digest?: IActivityJob['digest'];
   scheduleExtensionsCount?: number;
 }
 
@@ -97,7 +108,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       name: workflowRun.workflowName,
       triggers: [
         {
-          type: 'event' as any,
+          type: TriggerTypeEnum.EVENT,
           identifier: workflowRun.triggerIdentifier,
           variables: [],
         },
@@ -117,7 +128,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       identifier: step.stepRunId,
       subscriberId: workflowRun.subscriberId || workflowRun.internalSubscriberId,
       _subscriberId: workflowRun.internalSubscriberId,
-      type: step.stepType as any,
+      type: step.stepType,
       digest: step.digest,
       executionDetails: step.executionDetails || [],
       step: {
@@ -128,7 +139,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
           _environmentId: workflowRun.environmentId,
           _organizationId: workflowRun.organizationId,
           _creatorId: '',
-          type: step.stepType as any,
+          type: step.stepType,
           content: '',
           variables: [],
           name: step.stepType,
@@ -138,7 +149,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
           senderName: '',
           _feedId: '',
           cta: {
-            type: 'redirect' as any,
+            type: ChannelCTATypeEnum.REDIRECT,
             data: { url: '' },
           },
           _layoutId: null,
@@ -153,7 +164,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       _userId: '',
       // delay: step.delay,
       _notificationId: workflowRun.id,
-      status: step.status === 'queued' ? 'pending' : (step.status as any),
+      status: STEP_RUN_STATUS_TO_JOB_STATUS[step.status],
       _templateId: workflowRun.workflowId,
       payload: 'payload' in workflowRun ? workflowRun.payload : {},
       providerId: step.providerId,
@@ -178,6 +189,41 @@ function mapWorkflowRunsToActivity(workflowRun: GetWorkflowRunsDto): IActivity {
   return activity;
 }
 
+function appendEach(searchParams: URLSearchParams, key: string, values?: string[]) {
+  for (const value of values ?? []) {
+    searchParams.append(key, value);
+  }
+}
+
+function appendIfPresent(searchParams: URLSearchParams, key: string, value?: string) {
+  if (value) {
+    searchParams.append(key, value);
+  }
+}
+
+function appendTransactionIds(searchParams: URLSearchParams, key: string, transactionId?: string) {
+  if (!transactionId) {
+    return;
+  }
+
+  appendEach(searchParams, key, parseActivityTransactionIds(transactionId));
+}
+
+function appendDateRange(
+  searchParams: URLSearchParams,
+  filters: ActivityFilters | undefined,
+  keys: { after: string; before: string }
+) {
+  if (!filters?.dateRange) {
+    return;
+  }
+
+  const { after, before } = resolveActivityDateRange(filters.dateRange);
+
+  appendIfPresent(searchParams, keys.after, after);
+  appendIfPresent(searchParams, keys.before, before);
+}
+
 export function getActivityList({
   environment,
   page,
@@ -195,66 +241,16 @@ export function getActivityList({
   searchParams.append('page', page.toString());
   searchParams.append('limit', limit.toString());
 
-  if (filters?.channels?.length) {
-    for (const channel of filters.channels) {
-      searchParams.append('channels', channel);
-    }
-  }
-
-  if (filters?.severity?.length) {
-    for (const severity of filters.severity) {
-      searchParams.append('severity', severity);
-    }
-  }
-
-  if (filters?.workflows?.length) {
-    for (const workflow of filters.workflows) {
-      searchParams.append('templates', workflow);
-    }
-  }
-
-  if (filters?.email) {
-    searchParams.append('emails', filters.email);
-  }
-
-  if (filters?.subscriberId) {
-    searchParams.append('subscriberIds', filters.subscriberId);
-  }
-
-  if (filters?.transactionId) {
-    // Parse comma-delimited string into array for backend
-    const transactionIds = filters.transactionId
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean);
-
-    if (transactionIds.length > 1) {
-      for (const id of transactionIds) {
-        searchParams.append('transactionId', id);
-      }
-    } else {
-      searchParams.append('transactionId', filters.transactionId);
-    }
-  }
-
-  if (filters?.topicKey) {
-    searchParams.append('topicKey', filters.topicKey);
-  }
-
-  if (filters?.subscriptionId) {
-    searchParams.append('subscriptionId', filters.subscriptionId);
-  }
-
-  if (filters?.contextKeys?.length) {
-    for (const key of filters.contextKeys) {
-      searchParams.append('contextKeys', key);
-    }
-  }
-
-  if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
-    searchParams.append('after', after.toISOString());
-  }
+  appendEach(searchParams, 'channels', filters?.channels);
+  appendEach(searchParams, 'severity', filters?.severity);
+  appendEach(searchParams, 'templates', filters?.workflows);
+  appendIfPresent(searchParams, 'emails', filters?.email);
+  appendIfPresent(searchParams, 'subscriberIds', filters?.subscriberId);
+  appendTransactionIds(searchParams, 'transactionId', filters?.transactionId);
+  appendIfPresent(searchParams, 'topicKey', filters?.topicKey);
+  appendIfPresent(searchParams, 'subscriptionId', filters?.subscriptionId);
+  appendEach(searchParams, 'contextKeys', filters?.contextKeys);
+  appendDateRange(searchParams, filters, { after: 'after', before: 'before' });
 
   return get<ActivityResponse>(`/notifications?${searchParams.toString()}`, {
     environment,
@@ -273,6 +269,19 @@ export type StepRunStatus =
   | 'canceled'
   | 'merged'
   | 'skipped';
+
+/** The legacy activity feed has no queued state, so queued step runs surface as pending. */
+const STEP_RUN_STATUS_TO_JOB_STATUS: Record<StepRunStatus, JobStatusEnum> = {
+  pending: JobStatusEnum.PENDING,
+  queued: JobStatusEnum.PENDING,
+  running: JobStatusEnum.RUNNING,
+  completed: JobStatusEnum.COMPLETED,
+  failed: JobStatusEnum.FAILED,
+  delayed: JobStatusEnum.DELAYED,
+  canceled: JobStatusEnum.CANCELED,
+  merged: JobStatusEnum.MERGED,
+  skipped: JobStatusEnum.SKIPPED,
+};
 
 export type GetWorkflowRunResponseDto = {
   data: GetWorkflowRunResponse;
@@ -296,19 +305,9 @@ export async function getWorkflowRunsList({
   const searchParams = new URLSearchParams();
   searchParams.append('limit', limit.toString());
 
-  if (filters?.channels?.length) {
-    for (const channel of filters.channels) {
-      searchParams.append('channels', channel);
-    }
-  }
-
-  if (filters?.topicKey) {
-    searchParams.append('topicKey', filters.topicKey);
-  }
-
-  if (filters?.subscriptionId) {
-    searchParams.append('subscriptionId', filters.subscriptionId);
-  }
+  appendEach(searchParams, 'channels', filters?.channels);
+  appendIfPresent(searchParams, 'topicKey', filters?.topicKey);
+  appendIfPresent(searchParams, 'subscriptionId', filters?.subscriptionId);
 
   // Use cursor if provided, otherwise fall back to page-based
   if (cursor) {
@@ -318,48 +317,12 @@ export async function getWorkflowRunsList({
     searchParams.append('cursor', `page_${page}`);
   }
 
-  if (filters?.workflows?.length) {
-    for (const workflow of filters.workflows) {
-      searchParams.append('workflowIds', workflow);
-    }
-  }
-
-  if (filters?.subscriberId) {
-    searchParams.append('subscriberIds', filters.subscriberId);
-  }
-
-  if (filters?.transactionId) {
-    // Parse comma-delimited string into array for backend
-    const transactionIds = filters.transactionId
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean);
-
-    if (transactionIds.length > 1) {
-      for (const id of transactionIds) {
-        searchParams.append('transactionId', id);
-      }
-    } else {
-      searchParams.append('transactionIds', filters.transactionId);
-    }
-  }
-
-  if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
-    searchParams.append('createdGte', after.toISOString());
-  }
-
-  if (filters?.severity?.length) {
-    for (const severity of filters.severity) {
-      searchParams.append('severity', severity);
-    }
-  }
-
-  if (filters?.contextKeys?.length) {
-    for (const key of filters.contextKeys) {
-      searchParams.append('contextKeys', key);
-    }
-  }
+  appendEach(searchParams, 'workflowIds', filters?.workflows);
+  appendIfPresent(searchParams, 'subscriberIds', filters?.subscriberId);
+  appendTransactionIds(searchParams, 'transactionIds', filters?.transactionId);
+  appendDateRange(searchParams, filters, { after: 'createdGte', before: 'createdLte' });
+  appendEach(searchParams, 'severity', filters?.severity);
+  appendEach(searchParams, 'contextKeys', filters?.contextKeys);
 
   const response = await get<GetWorkflowRunsResponseDto>(`/activity/workflow-runs?${searchParams.toString()}`, {
     environment,
@@ -434,18 +397,16 @@ export async function getWorkflowRunsCount({
   }
 
   if (filters?.transactionId) {
-    transactionIds = filters.transactionId
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean);
+    transactionIds = parseActivityTransactionIds(filters.transactionId);
   }
 
   if (period) {
     createdAtGte = period.start;
     createdAtLte = period.end;
   } else if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
-    createdAtGte = after.toISOString();
+    const { after, before } = resolveActivityDateRange(filters.dateRange);
+    createdAtGte = after;
+    createdAtLte = before;
   }
 
   const response = await getCharts({

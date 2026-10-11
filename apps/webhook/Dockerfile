@@ -1,5 +1,5 @@
 # Use the base image for development
-FROM node:22.23.0-alpine3.23 AS dev_base
+FROM node:22.23.2-alpine3.23 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -40,7 +40,7 @@ RUN pnpm --filter @novu/webhook deploy --legacy --prod /usr/src/deploy
 
 # ------- PRODUCTION BUILD ----------
 # Use clean base for production (NO Python)
-FROM node:22.23.0-alpine3.23 AS prod
+FROM node:22.23.2-alpine3.23 AS prod
 
 ENV CI=true
 

@@ -65,6 +65,7 @@ import {
 } from '@novu/dal';
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
+import { ActivityRetentionService } from './services/activity-retention.service';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
@@ -147,6 +148,7 @@ const ANALYTICS_PROVIDERS = [
 ];
 
 const PROVIDERS = [
+  ActivityRetentionService,
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,

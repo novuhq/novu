@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentRepository, HumanContactRepository, SubscriberRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
+import { HumanOperatorService } from '../../services/human-operator.service';
 import {
   type HumanVerificationTokenPayload,
   HumanVerificationTokenService,
@@ -28,7 +29,8 @@ export class VerifyAddress {
     private readonly verificationTokens: HumanVerificationTokenService,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly agentRepository: AgentRepository,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly operatorService: HumanOperatorService
   ) {}
 
   @InstrumentUsecase()
@@ -123,15 +125,24 @@ export class VerifyAddress {
   }
 
   private async verifiedResult(payload: HumanVerificationTokenPayload, address: string): Promise<VerifyAddressResult> {
-    const agent = await this.agentRepository.findOne(
-      { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
-      ['name', 'operatorSubscriberId']
-    );
-    const sender = await resolveRelaySender({
-      agent,
-      environmentId: payload.env,
-      subscriberRepository: this.subscriberRepository,
-    });
+    const [agent, operatorId] = await Promise.all([
+      this.agentRepository.findOne(
+        { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
+        ['name']
+      ),
+      this.operatorService.findForAgent({
+        environmentId: payload.env,
+        organizationId: payload.org,
+        agentId: payload.agentId,
+      }),
+    ]);
+    const operator = operatorId
+      ? await this.subscriberRepository.findOne(
+          { _environmentId: payload.env, subscriberId: operatorId },
+          'firstName lastName'
+        )
+      : null;
+    const sender = resolveRelaySender({ agent, operator });
 
     return {
       verified: true,

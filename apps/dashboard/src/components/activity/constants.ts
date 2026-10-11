@@ -2,6 +2,7 @@ import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import { IconType } from 'react-icons/lib';
 import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 import { ActivityFiltersData } from '@/types/activity';
+import { DEFAULT_ACTIVITY_FEED_RANGE } from '@/utils/activityFilters';
 import { StatusBadgeProps } from '../primitives/status-badge';
 
 export const STATUS_STYLES = {
@@ -79,7 +80,7 @@ export const JOB_STATUS_CONFIG: Record<
   },
 };
 
-export const DEFAULT_DATE_RANGE = '24h';
+export const DEFAULT_DATE_RANGE = DEFAULT_ACTIVITY_FEED_RANGE;
 
 export const CHANNEL_OPTIONS = [
   { value: ChannelTypeEnum.SMS, label: 'SMS' },
@@ -91,7 +92,7 @@ export const CHANNEL_OPTIONS = [
 ];
 
 export const defaultActivityFilters: ActivityFiltersData = {
-  dateRange: DEFAULT_DATE_RANGE,
+  dateRange: { kind: 'preset', preset: DEFAULT_DATE_RANGE },
   channels: [],
   workflows: [],
   transactionId: '',

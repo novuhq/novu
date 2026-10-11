@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { version } from '../package.json';
+import { agentCommand } from './commands/agent';
 import { channelsCommand } from './commands/channels';
 import { contactsCommand } from './commands/contacts';
 import { runInteraction } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { cancelCommand, listCommand } from './commands/list';
+import { loginCommand } from './commands/login';
 import { setupCommand } from './commands/setup';
 import { installSkillCommand } from './commands/skill';
 import { waitCommand } from './commands/wait';
@@ -23,7 +25,7 @@ program
 program.addHelpText(
   'after',
   '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
-    '  NOVU_SECRET_KEY    Novu API secret key (replaces `human setup` auth)\n' +
+    '  NOVU_SECRET_KEY    Novu API secret key (takes priority over `human login` and `human setup`)\n' +
     '  HUMAN_TO           default recipient subscriberId(s), comma-separated (as --to)\n' +
     '  HUMAN_VIA          default channel for HUMAN_TO: telegram, slack, or email (as --via; ignored when --to names someone else)\n' +
     '  NOVU_API_URL       Novu API URL override\n' +
@@ -137,6 +139,14 @@ program
   .action(cancelCommand);
 
 program
+  .command('login')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description(
+    'Log in with your Human account in the browser, so you never copy a secret key (keeps a setup made without an account)'
+  )
+  .action(loginCommand);
+
+program
   .command('setup')
   .argument('[channel]', 'channel to link: telegram, slack, or email (interactive picker when omitted)')
   .option('--api-url <url>', 'Novu API URL override')
@@ -148,11 +158,25 @@ program
     '--name <name>',
     'your first and last name, e.g. "Nikita Grossman" — shown to people you invite (skips the first-run prompt)'
   )
+  .option('--agent-name <name>', 'what your agent is called, as people see it (default: Human)')
+  .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
+  .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `human login`)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .option('--skill', 'also install the human-cli skill for coding agents (default: prompt on a TTY)')
   .option('--no-skill', 'skip the coding-agent skill install')
   .description('Connect yourself as the human — links a channel (run again to add more)')
   .action(setupCommand);
+
+program
+  .command('agent')
+  .option('--name <name>', 'rename your agent')
+  .option('--description <text>', 'describe what your agent does (pass "" to clear it)')
+  .option('--picture <file-or-url>', 'give your agent a picture: a JPEG or PNG of up to 2 MB (needs `human login`)')
+  .option('--remove-picture', 'take the picture away')
+  .option('--json', 'print JSON')
+  .option('--api-url <url>', 'Novu API URL override')
+  .description('Show or change who your agent is to the people it talks to: its name and description')
+  .action(agentCommand);
 
 program
   .command('invite')

@@ -4,7 +4,8 @@ import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { IEmailOptions } from '@novu/shared';
 
 import type { ResolvedAgentOutboundEmail } from '../../agents/email/resolve-agent-outbound-email';
-import { resolveHumanWebsiteBaseUrl } from '../../shared/helpers/resolve-human-website-base-url';
+import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
+import { HumanOperatorService } from '../services/human-operator.service';
 import { buildRelayOwnerName, resolveRelaySender } from '../services/relay-owner-name';
 import { buildHumanVerificationEmail } from './human-verification-email.template';
 
@@ -18,6 +19,7 @@ export class HumanVerificationEmailSender {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    private readonly operatorService: HumanOperatorService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -46,17 +48,24 @@ export class HumanVerificationEmailSender {
       throw new NotFoundException('Relay agent not found.');
     }
 
-    const [subscriber, sender] = await Promise.all([
+    const operatorId = await this.operatorService.findForAgent({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentId: params.agentId,
+    });
+    const [subscriber, operator] = await Promise.all([
       this.subscriberRepository.findOne({
         subscriberId: params.subscriberId,
         _environmentId: params.environmentId,
       }),
-      resolveRelaySender({
-        agent,
-        environmentId: params.environmentId,
-        subscriberRepository: this.subscriberRepository,
-      }),
+      operatorId
+        ? this.subscriberRepository.findOne(
+            { subscriberId: operatorId, _environmentId: params.environmentId },
+            'firstName lastName'
+          )
+        : Promise.resolve(null),
     ]);
+    const sender = resolveRelaySender({ agent, operator });
     const inviteeName = buildRelayOwnerName(subscriber?.firstName, subscriber?.lastName);
 
     const { senderIntegration, from, senderName } = params.outbound;
@@ -95,7 +104,7 @@ export class HumanVerificationEmailSender {
 }
 
 function buildVerifyUrl(token: string): string {
-  const url = `${resolveHumanWebsiteBaseUrl()}/verify/${token}`;
+  const url = `${resolveHumanDashboardBaseUrl()}/verify/${token}`;
 
   return process.env.NOVU_REGION?.startsWith('eu-') ? `${url}?region=eu` : url;
 }

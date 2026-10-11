@@ -17,17 +17,19 @@ describe('VerifyAddress', () => {
       findVerifiedAddress: sinon.stub().resolves(null),
     };
     const agentRepository = {
-      findOne: sinon.stub().resolves({ name: 'Acme Ops', operatorSubscriberId: 'nikita' }),
+      findOne: sinon.stub().resolves({ name: 'Acme Ops' }),
     };
     const subscriberRepository = {
       findOne: sinon.stub().resolves({ firstName: 'Nikita', lastName: 'Grossman' }),
       update: sinon.stub().resolves(),
     };
+    const operatorService = { findForAgent: sinon.stub().resolves('nikita') };
     const usecase = new VerifyAddress(
       verificationTokens as never,
       humanContactRepository as never,
       agentRepository as never,
-      subscriberRepository as never
+      subscriberRepository as never,
+      operatorService as never
     );
 
     return { usecase, verificationTokens, humanContactRepository, subscriberRepository, agentRepository };

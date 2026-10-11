@@ -1,3 +1,5 @@
+import { BILLING_SETTINGS_PATH } from '@novu/shared';
+
 export const ROUTES = {
   SIGN_IN: '/auth/sign-in',
   SIGN_UP: '/auth/sign-up',
@@ -28,7 +30,7 @@ export const ROUTES = {
   SETTINGS_ACCOUNT: '/settings/account',
   SETTINGS_ORGANIZATION: '/settings/organization',
   SETTINGS_TEAM: '/settings/team',
-  SETTINGS_BILLING: '/settings/billing',
+  SETTINGS_BILLING: BILLING_SETTINGS_PATH,
   WORKFLOWS: '/env/:environmentSlug/workflows',
   TRANSLATION_SETTINGS: '/env/:environmentSlug/translations/settings',
   EDIT_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug',

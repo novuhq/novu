@@ -1,13 +1,15 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { Injectable } from '@nestjs/common';
-import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { AgentEvent, AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger, shortId, WebSocketsQueueService } from '@novu/application-generic';
 import {
+  conversationIdFromThreadId,
   type WebChatDeleteMessageParams,
   type WebChatDeliverMessageParams,
   type WebChatDeliverMessageResult,
   type WebChatEditMessageParams,
   type WebChatStartTypingParams,
-  conversationIdFromThreadId,
+  type WebChatStreamMessageParams,
 } from '@novu/chat-adapter-web-chat';
 import { type ConversationEntity, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
@@ -16,6 +18,9 @@ import { AgentConversationService } from '../conversation-runtime/conversation/a
 import { OutboundDeliveryInfo } from '../conversation-runtime/egress/outbound-delivery-info.service';
 import { messageContentFromStored } from './activity-to-events';
 import { WebChatEventFactory } from './web-chat-event.factory';
+
+/** Gap after each `message-delta`; text written meanwhile goes out as the next one. */
+const STREAM_DELTA_INTERVAL_MS = 100;
 
 export type WebChatPlatformDeliveryContext = {
   agentId: string;
@@ -85,16 +90,69 @@ export class WebChatPlatformDeliveryService {
       this.deliveryInfo.report({ sequence });
 
       if (conversation && sequence !== undefined) {
-        const envelope = this.eventFactory.createEditEnvelope({
+        // No saved message has this id yet, so this finalizes a live preview: send a full
+        // `message`, which also creates the reply for readers that missed the preview.
+        const isPreview = !(await this.conversationService.findByPlatformMessageId(
+          context.config.environmentId,
+          conversation._id,
+          messageId
+        ));
+        const envelopeParams = {
           conversationId: conversation._id,
           conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
           content: messageContentFromStored({ content, richContent }),
           sequence,
-        });
+        };
+        const envelope = isPreview
+          ? this.eventFactory.createMessageEnvelope(envelopeParams)
+          : this.eventFactory.createEditEnvelope(envelopeParams);
         await this.emitBestEffort(context, conversation, envelope);
       }
+
+      return { id: messageId, threadId };
+    };
+  }
+
+  /** Live-only: `message-start`, then `message-delta`s with one in flight at a time. Nothing is persisted. */
+  createStreamMessage(context: WebChatPlatformDeliveryContext) {
+    return async ({ threadId, textStream }: WebChatStreamMessageParams): Promise<WebChatDeliverMessageResult> => {
+      const conversation = await this.resolveConversation(context, threadId);
+      if (!conversation) {
+        throw new Error(`Web chat conversation not found for thread ${threadId}`);
+      }
+
+      const messageId = `act_${shortId(12)}`;
+      const emit = (event: AgentEvent) => this.emitEphemeral(context, conversation, event);
+
+      await emit({ type: 'message-start', messageId });
+
+      let pending = '';
+      let sending: Promise<void> | undefined;
+      const sendPending = async () => {
+        while (pending) {
+          const delta = pending;
+          pending = '';
+          await emit({ type: 'message-delta', messageId, delta });
+          await delay(STREAM_DELTA_INTERVAL_MS);
+        }
+        sending = undefined;
+      };
+
+      try {
+        for await (const text of textStream) {
+          pending += text;
+          sending ??= sendPending();
+        }
+      } catch (err) {
+        pending = '';
+        await sending;
+        await emit({ type: 'channel.delete', messageId });
+        throw err;
+      }
+
+      await sending;
 
       return { id: messageId, threadId };
     };
@@ -210,6 +268,31 @@ export class WebChatPlatformDeliveryService {
     });
   }
 
+  /** Like typing: consumes a sequence but never persists. Never rejects. */
+  private async emitEphemeral(
+    context: WebChatPlatformDeliveryContext,
+    conversation: ConversationEntity,
+    event: AgentEvent
+  ): Promise<void> {
+    try {
+      const sequence = await this.conversationService.mintEventSequence({
+        environmentId: context.config.environmentId,
+        organizationId: context.config.organizationId,
+        conversationId: conversation._id,
+      });
+      const envelope = this.eventFactory.createEphemeralEnvelope({
+        conversationId: conversation._id,
+        conversationIdentifier: conversation.identifier,
+        agentId: context.config.agentIdentifier,
+        sequence,
+        event,
+      });
+      await this.emitBestEffort(context, conversation, envelope);
+    } catch (err) {
+      this.logger.warn({ err, conversationId: conversation._id, eventType: event.type }, 'web chat live emit failed');
+    }
+  }
+
   private async emitBestEffort(
     context: WebChatPlatformDeliveryContext,
     conversation: ConversationEntity,
@@ -251,7 +334,7 @@ export class WebChatPlatformDeliveryService {
           _environmentId: context.config.environmentId,
           _organizationId: context.config.organizationId,
           subscriberId: subscriber.subscriberId,
-          payload: envelope as unknown as Record<string, unknown>,
+          payload: { ...envelope },
           contextKeys: conversation.contextKeys ?? [],
         },
         groupId: context.config.organizationId,

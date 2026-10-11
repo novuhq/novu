@@ -56,6 +56,9 @@ export class HumanContactEntity {
    */
   addresses?: Partial<Record<HumanChannelViaEnum, HumanContactChannelAddresses>>;
 
+  /** The account owner's own contact. A relay agent has at most one. */
+  isOperator?: boolean;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

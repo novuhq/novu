@@ -71,6 +71,7 @@ import { AgentEmailActionsController } from './email/agent-email-actions.control
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { SyncAgentEmailSenderName } from './email/sync-agent-email-sender-name.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
 import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
 import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
@@ -78,6 +79,7 @@ import { HumanInteractionSettlementService } from './human-relay/human-interacti
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
+import { LiveReplyStreamer } from './managed-runtime/live-reply-streamer.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
@@ -176,12 +178,14 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
     HumanInteractionSettlementService,
+    SyncAgentEmailSenderName,
     CreateConversationInteraction,
     HumanInteractionActivityRecorder,
     HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
+    LiveReplyStreamer,
     AgentEventSink,
     McpConnectionErrorHandler,
     ManagedAgentService,
@@ -230,6 +234,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ConfirmLinkedAuthCards,
     ConversationActivityLedger,
     HumanInteractionSettlementService,
+    SyncAgentEmailSenderName,
     HumanInteractionActivityRecorder,
   ],
 })

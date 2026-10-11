@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { UsagePausedBanner } from '@/components/billing/usage-limits/usage-paused-banner';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
@@ -24,6 +25,7 @@ export const DashboardLayout = ({
         </div>
       )}
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <UsagePausedBanner />
         <HeaderNavigation
           startItems={headerStartItems}
           hideBridgeUrl={!showBridgeUrl}

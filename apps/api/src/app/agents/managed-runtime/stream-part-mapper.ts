@@ -27,12 +27,18 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
         {
           type: 'message',
           role: 'assistant',
-          messageId: randomUUID(),
+          // Anthropic event id when known, so redelivered webhooks and its live reader match this message.
+          messageId: part.messageId ?? randomUUID(),
           content: { markdown: part.text },
+          ...(part.streamed ? { streamed: true } : {}),
         },
       ];
 
+    case 'text-start':
+      return [{ type: 'message-start', messageId: part.messageId }];
+
     case 'text-delta':
+      // Reply text reaches the API through the observer's live stream, not webhooks.
       return [];
 
     case 'thinking':

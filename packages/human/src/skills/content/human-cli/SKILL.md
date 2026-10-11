@@ -57,16 +57,17 @@ looping. Never attempt to configure it on the human's behalf — you don't have
 their Telegram/Slack/email credentials, and setup is interactive by design.
 
 The no-account (keyless) setup is a free demo with a small message allowance.
-When it runs out, commands exit 1 with a message containing a sign-up link:
+When it runs out, commands exit 1 with:
 
 ```
 You've used the 5 free messages of this keyless demo.
-Sign up to keep your channels and continue: https://dashboard.novu.co/connect/claim?token=...
+To keep your channels and continue, run: human login
+(Or sign up from this link, which we also sent to your linked channel, then run `human login`: https://gethuman.md/claim?token=...)
 ```
 
-The human already received that link on their channel. Stop retrying, surface
-the link where the human will see it, and wait — the human signs up and then
-re-points the CLI with `human setup --secret-key <key>` (or `NOVU_SECRET_KEY`).
+Stop retrying, surface the message where the human will see it, and wait. The
+human runs `human login` themselves: it signs them in (or up) on gethuman.md in
+the browser and keeps their channels. Don't run it for them.
 
 In sandboxes and containers with no config file, the CLI is fully operational
 when `NOVU_SECRET_KEY` and `HUMAN_TO` are set in the environment

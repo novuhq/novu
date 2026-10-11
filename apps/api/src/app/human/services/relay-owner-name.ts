@@ -1,4 +1,4 @@
-import type { AgentEntity, SubscriberRepository } from '@novu/dal';
+import type { AgentEntity } from '@novu/dal';
 
 /**
  * Name a relay agent is created with. Relay agents cannot be renamed through
@@ -30,23 +30,12 @@ export function resolveRelayAgentName(agent: Pick<AgentEntity, 'name'> | null | 
   return name;
 }
 
-export async function resolveRelaySender(params: {
-  agent: Pick<AgentEntity, 'name' | 'operatorSubscriberId'> | null | undefined;
-  environmentId: string;
-  subscriberRepository: SubscriberRepository;
-}): Promise<RelaySender> {
+export function resolveRelaySender(params: {
+  agent: Pick<AgentEntity, 'name'> | null | undefined;
+  operator?: { firstName?: string | null; lastName?: string | null } | null;
+}): RelaySender {
   const agentName = resolveRelayAgentName(params.agent);
-  const operatorSubscriberId = params.agent?.operatorSubscriberId;
-
-  if (!operatorSubscriberId) {
-    return agentName ? { agentName } : {};
-  }
-
-  const operator = await params.subscriberRepository.findOne(
-    { _environmentId: params.environmentId, subscriberId: operatorSubscriberId },
-    'firstName lastName'
-  );
-  const operatorName = buildRelayOwnerName(operator?.firstName, operator?.lastName);
+  const operatorName = buildRelayOwnerName(params.operator?.firstName, params.operator?.lastName);
 
   return {
     ...(agentName ? { agentName } : {}),

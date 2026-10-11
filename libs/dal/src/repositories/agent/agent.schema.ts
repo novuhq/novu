@@ -15,6 +15,11 @@ const agentSchema = new Schema<AgentDBModel>(
       required: true,
     },
     description: Schema.Types.String,
+    picture: {
+      storageKey: Schema.Types.String,
+      contentType: Schema.Types.String,
+      version: Schema.Types.String,
+    },
     active: {
       type: Schema.Types.Boolean,
       default: true,
@@ -73,7 +78,6 @@ const agentSchema = new Schema<AgentDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
-    operatorSubscriberId: Schema.Types.String,
   },
   schemaOptions
 );

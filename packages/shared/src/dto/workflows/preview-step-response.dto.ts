@@ -27,6 +27,7 @@ export class SmsRenderOutput extends RenderOutput {
 export class PushRenderOutput extends RenderOutput {
   subject: string;
   body: string;
+  providerOverrides?: StepProviderOverrides;
 }
 
 export class EmailRenderOutput extends RenderOutput {

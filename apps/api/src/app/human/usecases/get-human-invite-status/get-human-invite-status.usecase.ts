@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { HumanInviteStatusResult } from '../../dtos/human-invite.dto';
+import { agentPictureUrl } from '../../services/human-agent-picture.service';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
   type ActiveHumanInvite,
@@ -8,7 +9,7 @@ import {
   InactiveHumanInviteError,
   toHttpError,
 } from '../../services/human-invite-token.service';
-import { buildRelayOwnerName, resolveRelaySender } from '../../services/relay-owner-name';
+import { HumanOperatorService } from '../../services/human-operator.service';
 import { GetHumanInviteStatusCommand } from './get-human-invite-status.command';
 
 /** What the public invite page renders. Read-only, so link scanners can't change anything. */
@@ -18,7 +19,8 @@ export class GetHumanInviteStatus {
     private readonly inviteTokens: HumanInviteTokenService,
     private readonly deliveryService: HumanDeliveryService,
     private readonly agentRepository: AgentRepository,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly operatorService: HumanOperatorService
   ) {}
 
   async execute(command: GetHumanInviteStatusCommand): Promise<HumanInviteStatusResult> {
@@ -36,14 +38,14 @@ export class GetHumanInviteStatus {
     const { payload } = invite;
     const agent = await this.agentRepository.findOne(
       { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
-      ['name', 'operatorSubscriberId']
+      ['name', 'picture']
     );
 
     if (!agent) {
       return { valid: false, reason: 'invalid' };
     }
 
-    const [channels, subscriber, sender] = await Promise.all([
+    const [channels, subscriber, inviterName] = await Promise.all([
       this.deliveryService.describeInviteChannels({
         environmentId: payload.env,
         organizationId: payload.org,
@@ -54,14 +56,17 @@ export class GetHumanInviteStatus {
         { _environmentId: payload.env, subscriberId: payload.subscriberId },
         'firstName lastName'
       ),
-      resolveRelaySender({ agent, environmentId: payload.env, subscriberRepository: this.subscriberRepository }),
+      this.findInviterName(payload),
     ]);
-    const displayName = buildRelayOwnerName(subscriber?.firstName, subscriber?.lastName);
+    const displayName = fullName(subscriber);
+    const pictureUrl = agentPictureUrl({ _id: payload.agentId, _environmentId: payload.env, picture: agent.picture });
 
     return {
       valid: true,
-      ...sender,
-      inviteeName: displayName ?? payload.subscriberId,
+      agentName: agent.name,
+      ...(pictureUrl ? { agentPictureUrl: pictureUrl } : {}),
+      ...(inviterName ? { inviterName } : {}),
+      inviteeName: displayName || payload.subscriberId,
       expiresAt: invite.expiresAt,
       channels: channels.map(({ via, connected, isDefault, status, address }) => ({
         via,
@@ -72,4 +77,27 @@ export class GetHumanInviteStatus {
       })),
     };
   }
+
+  /** The account owner's name, when they have one: they are who the agent asks for, so the invite is theirs. */
+  private async findInviterName(payload: ActiveHumanInvite['payload']): Promise<string | undefined> {
+    const operatorId = await this.operatorService.findForAgent({
+      environmentId: payload.env,
+      organizationId: payload.org,
+      agentId: payload.agentId,
+    });
+    if (!operatorId) {
+      return undefined;
+    }
+
+    const operator = await this.subscriberRepository.findOne(
+      { _environmentId: payload.env, subscriberId: operatorId },
+      'firstName lastName'
+    );
+
+    return fullName(operator) || undefined;
+  }
+}
+
+function fullName(person: { firstName?: string; lastName?: string } | null | undefined): string {
+  return [person?.firstName, person?.lastName].filter(Boolean).join(' ');
 }

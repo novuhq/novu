@@ -183,10 +183,11 @@ export type HumanInviteStatusChannel = {
 export type HumanInviteStatusResult =
   | {
       valid: true;
-      /** The agent's own name; absent while it still has the placeholder name. */
-      agentName?: string;
-      /** Person who owns the relay, when they set a name during `human setup`. */
-      operatorName?: string;
+      agentName: string;
+      /** Where the agent's picture can be loaded. Missing when it has none. */
+      agentPictureUrl?: string;
+      /** The account owner's name. Missing when they haven't given one. */
+      inviterName?: string;
       /** Display name, falling back to the subscriberId. */
       inviteeName: string;
       expiresAt: string;

@@ -1,4 +1,8 @@
-import { assertQueueBackendConfig, requiresStandaloneRedis } from '@novu/application-generic';
+import {
+  assertQueueBackendConfig,
+  createThrowingEnvReporter,
+  requiresStandaloneRedis,
+} from '@novu/application-generic';
 import {
   DEFAULT_NOTIFICATION_RETENTION_DAYS,
   FeatureFlagsKeysEnum,
@@ -9,7 +13,7 @@ import {
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  const env = cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('api') });
 
   /*
    * The API only produces, and only to these three - inbound parse is enqueued
@@ -75,7 +79,8 @@ export const envValidators = {
   PORT: port(),
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
-  HUMAN_WEBSITE_URL: str({ default: '' }),
+  HUMAN_DASHBOARD_URL: str({ default: '' }),
+  HUMAN_DASHBOARD_API_SECRET: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   /*
    * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only

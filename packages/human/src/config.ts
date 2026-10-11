@@ -62,6 +62,14 @@ export function saveConfig(config: HumanCliConfig): void {
 }
 
 /**
+ * The API that `human setup` and `human login` save credentials for: `--api-url`, then NOVU_API_URL,
+ * then the API the saved config already belongs to, so a later run keeps using the same region.
+ */
+export function resolveTargetApiUrl(apiUrlFlag: string | undefined, saved: HumanCliConfig | null): string {
+  return (apiUrlFlag || process.env.NOVU_API_URL?.trim() || saved?.apiUrl || DEFAULT_API_URL).replace(/\/$/, '');
+}
+
+/**
  * Resolve the effective config for a command run. Environment variables win
  * over the config file so agents can run headless without `human setup`
  * having been executed on the same machine (e.g. CI with NOVU_SECRET_KEY).

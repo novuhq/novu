@@ -6,8 +6,9 @@ Companion to `@novu/thalamus`. The API points at this Worker via `THALAMUS_CF_UR
 
 ## Layout
 
-- `src/worker.ts` — HTTP routes (`/health`, `/enqueue`, `/observe`, …)
+- `src/worker.ts` — HTTP routes (`/health`, `/enqueue`, `/observe`, `/live/:sessionId`, …)
 - `src/session-observer.ts` — Durable Object `SessionObserver`
+- `src/live-replies.ts` — relays in-progress reply text to one `/live` SSE reader per reply (deltas are not sent as webhooks)
 - `wrangler.jsonc` — envs: `local`, `staging`, `production` (`workers.dev`)
 
 ## Local development

@@ -85,11 +85,19 @@ const humanContactSchema = new Schema<HumanContactDBModel>(
         { _id: false }
       ),
     },
+    isOperator: {
+      type: Schema.Types.Boolean,
+    },
   },
   schemaOptions
 );
 
 humanContactSchema.index({ _environmentId: 1, _agentId: 1, subscriberId: 1 }, { unique: true });
+// One operator per relay agent.
+humanContactSchema.index(
+  { _environmentId: 1, _agentId: 1 },
+  { unique: true, partialFilterExpression: { isOperator: true } }
+);
 
 export const HumanContact =
   (mongoose.models.HumanContact as mongoose.Model<HumanContactDBModel>) ||
