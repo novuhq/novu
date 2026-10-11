@@ -91,7 +91,7 @@ export function isMissingBotTokenError(err: unknown): boolean {
 /**
  * Where to send the human to paste credentials.
  *
- * Against Novu Cloud we use the human.md landing page with the token in the
+ * Against Novu Cloud we use the gethuman.md `/connect` page with the token in the
  * URL fragment (never sent to the server, so it stays out of access logs and
  * Referer headers). Any other API URL means self-hosted or local dev, where the
  * gethuman.md page could not reach the API anyway (CORS, mixed content), so we

@@ -6,9 +6,9 @@ import { resolveHumanDashboardBaseUrl } from '../app/shared/helpers/resolve-huma
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
 /**
- * Static site behind `@novu/human` (`packages/human/site`). Its `/connect`
- * landing page calls the public, token-authorized Telegram and Slack setup
- * endpoints from the browser, so it needs an explicit CORS grant — scoped to
+ * The gethuman.md app (`apps/human-dashboard`). Its `/connect` page calls the
+ * public, token-authorized Telegram and Slack setup endpoints from the
+ * browser, so it needs an explicit CORS grant — scoped to
  * those routes only (see `isHumanSetupRoute`), since `credentials` stays on.
  * Hardcoded like the `dashboard.novu.co` fallback in `resolveDashboardBaseUrl`
  * — it is a Novu-owned domain, and an env var here would fail silently when
