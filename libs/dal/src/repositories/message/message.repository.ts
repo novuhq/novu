@@ -17,8 +17,7 @@ import { EnforceEnvId } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
 import { FeedRepository } from '../feed';
 import { MessageDBModel, MessageEntity } from './message.entity';
-import { Message } from './message.schema';
-import { pinMissingSubscriberFeedBooleans } from './subscriber-feed-index';
+import { Message, SUBSCRIBER_FEED_INDEX_FILTER_FIELDS } from './message.schema';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
@@ -1103,14 +1102,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       filterQuery.transactionId = { $in: query.transactionId };
     }
 
-    /*
-     * Pins each unset boolean between `channel` and `createdAt` on the subscriber feed index
-     * to a point interval, so the planner can merge-sort by createdAt instead of walking the
-     * whole { createdAt: 1 } index. `$in: [true, false, null]` covers every stored value
-     * (null also matches a missing field).
-     */
+    // Point bounds on every field before createdAt let Mongo SORT_MERGE the subscriber feed index; null matches missing.
     if (query._subscriberId && query.channel) {
-      pinMissingSubscriberFeedBooleans(filterQuery);
+      for (const field of SUBSCRIBER_FEED_INDEX_FILTER_FIELDS) {
+        filterQuery[field] ??= { $in: [true, false, null] };
+      }
     }
 
     if (query.contextKeys !== undefined) {

@@ -380,17 +380,13 @@ messageSchema.index({
   _organizationId: 1,
 });
 
-/*
- * getMessages pins each schema boolean between `channel` and `createdAt` when the
- * query did not already filter it. See subscriber-feed-index.ts.
- */
+export const SUBSCRIBER_FEED_INDEX_FILTER_FIELDS = ['seen', 'read', 'archived'] as const;
+
 messageSchema.index({
   _subscriberId: 1,
   _environmentId: 1,
   channel: 1,
-  seen: 1,
-  read: 1,
-  archived: 1,
+  ...Object.fromEntries(SUBSCRIBER_FEED_INDEX_FILTER_FIELDS.map((field) => [field, 1])),
   deleted: 1,
   createdAt: -1,
   _id: -1,
