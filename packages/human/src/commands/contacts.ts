@@ -74,12 +74,12 @@ function formatEmailColumn(row: ContactRow): string {
   }
 
   if (emailChannel.status === 'pending') {
-    return `${emailChannel.address ?? row.email ?? '—'} ${pc.yellow('(pending verification)')}`;
+    return `${emailChannel.address ?? '—'} ${pc.yellow('(pending verification)')}`;
   }
 
-  // The contacts list includes an email channel only after that relay verified it, and omits status.
+  // A listed email channel is this relay's verified address. Subscriber.email can belong to another relay.
   if (emailChannel.status === 'verified' || !('status' in emailChannel)) {
-    return emailChannel.address ?? row.email ?? pc.dim('—');
+    return emailChannel.address ?? pc.dim('—');
   }
 
   const address = emailChannel.address ?? row.email ?? '—';

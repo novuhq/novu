@@ -86,15 +86,25 @@ describe('renderContactsTable', () => {
     expect(renderContactsTable(markSelf([contact({ id: 'alice' })], 'human_me'), null)).not.toContain('More contacts');
   });
 
-  it('treats a listed email channel as verified and a bare subscriber email as unverified', () => {
+  it('shows the address verified for this relay, not the shared subscriber email', () => {
     const verified = renderContactsTable(
-      [contact({ id: 'alice', email: 'a@x.co', channels: [{ via: 'email' }] as Contact['channels'] })],
+      [
+        contact({
+          id: 'alice',
+          email: 'shared@x.co',
+          channels: [{ via: 'email', address: 'relay@x.co' }] as Contact['channels'],
+        }),
+      ],
+      null
+    );
+    const missingAddress = renderContactsTable(
+      [contact({ id: 'bob', email: 'shared@x.co', channels: [{ via: 'email' }] as Contact['channels'] })],
       null
     );
     const pending = renderContactsTable(
       [
         contact({
-          id: 'bob',
+          id: 'cara',
           channels: [{ via: 'email', status: 'pending', address: 'b@x.co' }],
         }),
       ],
@@ -102,8 +112,10 @@ describe('renderContactsTable', () => {
     );
     const unverified = renderContactsTable([contact({ id: 'carol', email: 'c@x.co' })], null);
 
-    expect(verified).toContain('a@x.co');
+    expect(verified).toContain('relay@x.co');
+    expect(verified).not.toContain('shared@x.co');
     expect(verified).not.toContain('(unverified)');
+    expect(missingAddress).not.toContain('shared@x.co');
     expect(pending).toContain('(pending verification)');
     expect(unverified).toContain('(unverified)');
   });
