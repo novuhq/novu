@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum } from '@novu/shared';
+import { agentInboxRoutingKeyPartialFilter, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import {
   AGENT_INBOX_ROUTING_KEY_INDEX,
@@ -55,5 +55,71 @@ describe('recreate agent inbox routing key index', () => {
     await recreateAgentInboxRoutingKeyIndex(collection as unknown as AgentInboxRoutingKeyCollection);
 
     expect(created).to.equal(true);
+  });
+
+  it('leaves an index that already covers both inbox providers in place', async () => {
+    let dropped = false;
+    let created = false;
+    const collection = {
+      indexes: async () => [
+        {
+          name: AGENT_INBOX_ROUTING_KEY_INDEX,
+          key: { 'credentials.inboxRoutingKey': 1 },
+          unique: true,
+          partialFilterExpression: agentInboxRoutingKeyPartialFilter(),
+        },
+      ],
+      dropIndex: async () => {
+        dropped = true;
+      },
+      createIndex: async () => {
+        created = true;
+
+        return AGENT_INBOX_ROUTING_KEY_INDEX;
+      },
+    };
+
+    await recreateAgentInboxRoutingKeyIndex(collection as unknown as AgentInboxRoutingKeyCollection);
+
+    expect(dropped).to.equal(false);
+    expect(created).to.equal(false);
+  });
+
+  it('restores the previous index when the widened index cannot be created', async () => {
+    const previousFilter = {
+      providerId: EmailProviderIdEnum.NovuAgent,
+      'credentials.inboxRoutingKey': { $type: 'string' },
+    };
+    const created: Array<Record<string, unknown>> = [];
+    const collection = {
+      indexes: async () => [
+        {
+          name: 'credentials.inboxRoutingKey_1',
+          key: { 'credentials.inboxRoutingKey': 1 },
+          unique: true,
+          partialFilterExpression: previousFilter,
+        },
+      ],
+      dropIndex: async () => undefined,
+      createIndex: async (_keys: unknown, options: Record<string, unknown>) => {
+        created.push(options);
+        if (created.length === 1) {
+          throw new Error('create failed');
+        }
+
+        return options.name as string;
+      },
+    };
+
+    try {
+      await recreateAgentInboxRoutingKeyIndex(collection as unknown as AgentInboxRoutingKeyCollection);
+      throw new Error('expected the widened create to fail');
+    } catch (error) {
+      expect((error as Error).message).to.equal('create failed');
+    }
+
+    expect(created).to.have.length(2);
+    expect(created[1]?.partialFilterExpression).to.equal(previousFilter);
+    expect(created[1]?.name).to.equal('credentials.inboxRoutingKey_1');
   });
 });

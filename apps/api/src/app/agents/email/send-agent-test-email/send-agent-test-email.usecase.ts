@@ -1,7 +1,7 @@
 import { BadGatewayException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, InstrumentUsecase, MailFactory } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import type { IEmailOptions } from '@novu/shared';
+import { EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 
 import { trackAgentTestEmailSent } from '../../shared/analytics/agent-analytics';
 import { resolveAgentOutboundEmail } from '../resolve-agent-outbound-email';
@@ -40,6 +40,7 @@ export class SendAgentTestEmail {
       organizationId: command.organizationId,
       agentId: agent._id,
       agentName: agent.name,
+      providerId: EmailProviderIdEnum.NovuAgent,
       integrationRepository: this.integrationRepository,
       agentIntegrationRepository: this.agentIntegrationRepository,
     });

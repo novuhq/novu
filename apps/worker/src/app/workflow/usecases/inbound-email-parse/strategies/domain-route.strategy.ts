@@ -239,6 +239,17 @@ export class DomainRouteStrategy {
       throw new InboundParseDroppedError('Shared agent domain: no integration found for routing key');
     }
 
+    if (integration.credentials?.emailSlugPrefix !== parsed.slug) {
+      this.logger.info(
+        { toAddress, integrationId: integration._id, slug: parsed.slug },
+        'Shared agent domain: slug does not match the integration - dropping'
+      );
+      throw new InboundParseDroppedError('Shared agent domain: slug does not match the integration', {
+        organizationId: integration._organizationId,
+        environmentId: integration._environmentId,
+      });
+    }
+
     if (integration.active === false) {
       this.logger.info(
         { toAddress, integrationId: integration._id },
@@ -337,6 +348,7 @@ export class DomainRouteStrategy {
         mail: this.commandToMail(command, toAddress),
         toAddress,
         originToken: originToken ?? undefined,
+        integrationId: integration._id,
       });
       this.logger.info(
         { toAddress, agentId: agent._id, messageId: command.messageId, dkim: command.dkim, spf: command.spf },

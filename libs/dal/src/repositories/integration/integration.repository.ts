@@ -36,19 +36,28 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
    * Inbox) that owns a given inbox routing key. Used exclusively by the
    * inbound-email worker, which knows neither the env nor the org until it has
    * resolved the integration. Backed by the partial unique index
-   * `{ 'credentials.inboxRoutingKey': 1 }` scoped to both inbox providers, so
-   * at most one document is ever returned.
+   * `{ 'credentials.inboxRoutingKey': 1 }` scoped to both inbox providers.
+   *
+   * More than one match means the uniqueness gate is down (the index rebuild
+   * window, or a planted duplicate). Return null so the worker drops the
+   * message instead of picking an arbitrary tenant.
    *
    * Mirrors `AgentRepository.findByIdForWebhook` — both bypass the standard
    * EnforceEnvOrOrgIds constraint because the inbound bootstrap legitimately
    * has nothing else to query by.
    */
   async findAgentInboundByInboxRoutingKey(inboxRoutingKey: string): Promise<IntegrationEntity | null> {
-    const doc = await this.MongooseModel.findOne({
+    const docs = await this.MongooseModel.find({
       providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
       'credentials.inboxRoutingKey': inboxRoutingKey,
-    }).lean();
-    if (!doc) return null;
+    })
+      .limit(2)
+      .lean();
+
+    const doc = docs[0];
+    if (docs.length !== 1 || !doc) {
+      return null;
+    }
 
     return this.mapEntity(doc);
   }

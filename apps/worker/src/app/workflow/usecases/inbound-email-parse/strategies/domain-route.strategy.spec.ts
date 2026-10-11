@@ -425,6 +425,7 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
       const call = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
       expect(call.args[0].route.destination).to.equal(AGENT_ID);
+      expect(call.args[0].integrationId).to.equal(INTEGRATION_ID);
       expect(call.args[0].domain.name).to.equal(SHARED_DOMAIN);
       sinon.assert.calledOnceWithExactly(integrationRepository.findAgentInboundByInboxRoutingKey as any, ROUTING_KEY);
       sinon.assert.notCalled(domainRepository.findByName as any);
@@ -472,6 +473,20 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
       sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
       sinon.assert.notCalled(agentRepository.findByIdForWebhook as any);
+    });
+
+    it('drops mail when the address slug does not match the integration', async () => {
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(makeIntegration() as any);
+
+      try {
+        await strategy.execute(makeSharedCommand(`other-agent-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
     });
 
     it('drops mail when the integration is inactive', async () => {

@@ -3,6 +3,7 @@ import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, Integratio
 import {
   AGENT_INBOX_PROVIDER_IDS,
   ChannelTypeEnum,
+  EmailProviderIdEnum,
   EmailWebhookPayload,
   FeatureFlagsKeysEnum,
   InboundEmailAttachment,
@@ -189,6 +190,12 @@ export class InboundDomainRouteDelivery {
     toAddress: string;
     /** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token. */
     originToken?: string;
+    /**
+     * Shared-inbox path: the integration already matched by routing key.
+     * Without this, an agent linked to both inboxes would sign the webhook
+     * with whichever row Mongo returned first.
+     */
+    integrationId?: string;
   }): Promise<{ httpStatus: number; body: unknown; latencyMs: number }> {
     this.logger.info({ toAddress: params.toAddress }, 'Delivering inbound email to agent');
 
@@ -202,7 +209,8 @@ export class InboundDomainRouteDelivery {
     const { identifier: integrationIdentifier, secretKey } = await this.resolveIntegration(
       agentId,
       params.domain._environmentId,
-      params.domain._organizationId
+      params.domain._organizationId,
+      params.integrationId
     );
 
     const payload = this.buildAgentEmailWebhookPayload(params.mail, {
@@ -327,7 +335,8 @@ export class InboundDomainRouteDelivery {
   private async resolveIntegration(
     agentId: string,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    integrationId?: string
   ): Promise<{ identifier: string; secretKey: string }> {
     const links = await this.agentIntegrationRepository.findLinksForAgents({
       organizationId,
@@ -341,7 +350,7 @@ export class InboundDomainRouteDelivery {
       this.throwError(`No integration linked to agent ${agentId}`);
     }
 
-    const [integration] = await this.integrationRepository.find(
+    const integrations = await this.integrationRepository.find(
       {
         _id: { $in: integrationIds },
         _environmentId: environmentId,
@@ -350,9 +359,12 @@ export class InboundDomainRouteDelivery {
         channel: ChannelTypeEnum.EMAIL,
         active: true,
       },
-      'identifier credentials active',
-      { limit: 1 }
+      'identifier credentials active providerId'
     );
+
+    const integration = integrationId
+      ? integrations.find((item) => String(item._id) === String(integrationId))
+      : (integrations.find((item) => item.providerId === EmailProviderIdEnum.NovuAgent) ?? integrations[0]);
 
     if (!integration) {
       this.throwError(`No active NovuAgent email integration found for agent ${agentId}`);

@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { buildAgentSharedInbox, decryptCredentials, isAgentSharedInboxEnabled } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { AGENT_INBOX_PROVIDER_IDS, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 export type ResolvedAgentOutboundEmail = {
   /** Decrypted (or demo-hydrated) integration ready for MailFactory. */
@@ -13,15 +13,17 @@ export type ResolvedAgentOutboundEmail = {
 };
 
 /**
- * Resolves the outbound email sender for an agent that has a NovuAgent email
- * integration linked. Shared by the agent test-email path and human
- * verification emails so both go through the same from/senderName plumbing.
+ * Resolves the outbound email sender for one agent inbox provider.
+ * Dashboard test email asks for Novu Email. Human verification asks for
+ * Agent Email Inbox. The two must not share a first-match lookup: an agent
+ * can be linked to both during rollout.
  */
 export async function resolveAgentOutboundEmail(params: {
   environmentId: string;
   organizationId: string;
   agentId: string;
   agentName: string;
+  providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox;
   integrationRepository: IntegrationRepository;
   agentIntegrationRepository: AgentIntegrationRepository;
 }): Promise<ResolvedAgentOutboundEmail> {
@@ -40,7 +42,7 @@ export async function resolveAgentOutboundEmail(params: {
     _id: { $in: integrationIds },
     _environmentId: params.environmentId,
     _organizationId: params.organizationId,
-    providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
+    providerId: params.providerId,
     channel: ChannelTypeEnum.EMAIL,
   });
 

@@ -91,10 +91,10 @@ describe('AgentEmailInboxQuotaService', () => {
     const october = quotaKeys(organizationId, new Date('2026-10-31T23:00:00.000Z'));
     const november = quotaKeys(organizationId, new Date('2026-11-01T00:00:00.000Z'));
 
-    expect(october.daily).toBe('agent-email-inbox:org-1:day:2026-10-31');
-    expect(october.monthly).toBe('agent-email-inbox:org-1:month:2026-10');
-    expect(november.daily).toBe('agent-email-inbox:org-1:day:2026-11-01');
-    expect(november.monthly).toBe('agent-email-inbox:org-1:month:2026-11');
+    expect(october.daily).toBe('agent-email-inbox:{org-1}:day:2026-10-31');
+    expect(october.monthly).toBe('agent-email-inbox:{org-1}:month:2026-10');
+    expect(november.daily).toBe('agent-email-inbox:{org-1}:day:2026-11-01');
+    expect(november.monthly).toBe('agent-email-inbox:{org-1}:month:2026-11');
     expect(october.monthly).not.toBe(november.monthly);
   });
 

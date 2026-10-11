@@ -11,7 +11,7 @@ import {
   HumanContactRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { HumanChannelViaEnum } from '@novu/shared';
+import { EmailProviderIdEnum, HumanChannelViaEnum } from '@novu/shared';
 import { resolveAgentOutboundEmail } from '../../../agents/email/resolve-agent-outbound-email';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
 import { HumanVerificationEmailSender } from '../../email/human-verification-email.sender';
@@ -111,6 +111,7 @@ export class RequestAddressVerification {
         organizationId: params.organizationId,
         agentId: agent._id,
         agentName: agent.name,
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
         integrationRepository: this.integrationRepository,
         agentIntegrationRepository: this.agentIntegrationRepository,
       });

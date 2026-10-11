@@ -28,10 +28,13 @@ export function ensureNovuAgentManagedCredentials({
   providerId,
   nextCredentials,
   existingCredentials,
+  stripClientSecret = false,
 }: {
   providerId: string;
   nextCredentials: ICredentials;
   existingCredentials?: ICredentials;
+  /** Create path: a client must not choose the webhook HMAC secret. */
+  stripClientSecret?: boolean;
 }): ICredentials {
   if (!isAgentInboxProvider(providerId)) {
     return nextCredentials;
@@ -47,6 +50,8 @@ export function ensureNovuAgentManagedCredentials({
 
   if (existingCredentials?.secretKey) {
     merged.secretKey = existingCredentials.secretKey;
+  } else if (stripClientSecret) {
+    delete merged.secretKey;
   }
 
   if (existingCredentials?.sharedInboxDisabled !== undefined) {

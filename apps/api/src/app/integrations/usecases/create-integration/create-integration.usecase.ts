@@ -33,6 +33,7 @@ import { assertValidIntegrationRules } from '../../utils/assert-integration-rule
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ensureNovuAgentManagedCredentials } from '../novu-agent/novu-agent-credentials.utils';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { CreateIntegrationCommand } from './create-integration.command';
 
@@ -86,70 +87,92 @@ export class CreateIntegration {
   private async validate(command: CreateIntegrationCommand): Promise<void> {
     const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
 
-    if (command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic && !areNovuManagedClaudeCredentialsSet()) {
-      throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
-    }
+    this.assertNovuAnthropicCredentials(command);
 
     if (isAgentKind && command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
-      const count = await this.integrationRepository.count({
-        _environmentId: command.environmentId,
-        providerId: command.providerId,
-        kind: IntegrationKindEnum.AGENT,
-      });
-
-      if (count > 0) {
-        throw new ConflictException('Integration with novu provider for agent runtime already exists');
-      }
+      await this.assertSingleAgentRuntime(command);
     }
 
     if (!isAgentKind) {
-      const existingIntegration = await this.integrationRepository.findOne({
+      await this.assertDeliveryProvider(command);
+    }
+
+    await this.assertIdentifierAvailable(command);
+  }
+
+  private assertNovuAnthropicCredentials(command: CreateIntegrationCommand): void {
+    if (command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic && !areNovuManagedClaudeCredentialsSet()) {
+      throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
+    }
+  }
+
+  private async assertSingleAgentRuntime(command: CreateIntegrationCommand): Promise<void> {
+    const count = await this.integrationRepository.count({
+      _environmentId: command.environmentId,
+      providerId: command.providerId,
+      kind: IntegrationKindEnum.AGENT,
+    });
+
+    if (count > 0) {
+      throw new ConflictException('Integration with novu provider for agent runtime already exists');
+    }
+  }
+
+  private async assertDeliveryProvider(command: CreateIntegrationCommand): Promise<void> {
+    const existingIntegration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      providerId: command.providerId,
+      channel: command.channel,
+    });
+
+    if (
+      existingIntegration &&
+      command.providerId === InAppProviderIdEnum.Novu &&
+      command.channel === ChannelTypeEnum.IN_APP
+    ) {
+      throw new BadRequestException('One environment can only have one In app provider');
+    }
+
+    if (this.isUnconfiguredNovuDeliveryProvider(command.providerId)) {
+      throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
+    }
+
+    if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
+      const count = await this.integrationRepository.count({
         _environmentId: command.environmentId,
         providerId: command.providerId,
         channel: command.channel,
       });
 
-      if (
-        existingIntegration &&
-        command.providerId === InAppProviderIdEnum.Novu &&
-        command.channel === ChannelTypeEnum.IN_APP
-      ) {
-        throw new BadRequestException('One environment can only have one In app provider');
-      }
-
-      if (
-        (command.providerId === SmsProviderIdEnum.Novu && !areNovuSmsCredentialsSet()) ||
-        (command.providerId === EmailProviderIdEnum.Novu && !areNovuEmailCredentialsSet()) ||
-        (command.providerId === ChatProviderIdEnum.Novu && !areNovuSlackCredentialsSet())
-      ) {
-        throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
-      }
-
-      if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
-        const count = await this.integrationRepository.count({
-          _environmentId: command.environmentId,
-          providerId: command.providerId,
-          channel: command.channel,
-        });
-
-        if (count > 0) {
-          throw new ConflictException(
-            `Integration with novu provider for ${command.channel?.toLowerCase()} channel already exists`
-          );
-        }
+      if (count > 0) {
+        throw new ConflictException(
+          `Integration with novu provider for ${command.channel?.toLowerCase()} channel already exists`
+        );
       }
     }
+  }
 
-    if (command.identifier) {
-      const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        identifier: command.identifier,
-      });
+  private isUnconfiguredNovuDeliveryProvider(providerId: string): boolean {
+    return (
+      (providerId === SmsProviderIdEnum.Novu && !areNovuSmsCredentialsSet()) ||
+      (providerId === EmailProviderIdEnum.Novu && !areNovuEmailCredentialsSet()) ||
+      (providerId === ChatProviderIdEnum.Novu && !areNovuSlackCredentialsSet())
+    );
+  }
 
-      if (existingIntegrationWithIdentifier) {
-        throw new ConflictException('Integration with identifier already exists');
-      }
+  private async assertIdentifierAvailable(command: CreateIntegrationCommand): Promise<void> {
+    if (!command.identifier) {
+      return;
+    }
+
+    const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      identifier: command.identifier,
+    });
+
+    if (existingIntegrationWithIdentifier) {
+      throw new ConflictException('Integration with identifier already exists');
     }
   }
 
@@ -197,9 +220,13 @@ export class CreateIntegration {
       const name = command.name ?? defaultName;
       const identifier = command.identifier ?? `${slugify(name)}-${shortid.generate()}`;
 
-      const managedCredentials = ensureWhatsAppManagedCredentials({
+      const managedCredentials = ensureNovuAgentManagedCredentials({
         providerId: command.providerId,
-        nextCredentials: command.credentials ?? {},
+        nextCredentials: ensureWhatsAppManagedCredentials({
+          providerId: command.providerId,
+          nextCredentials: command.credentials ?? {},
+        }),
+        stripClientSecret: true,
       });
 
       const query: IntegrationQuery = {

@@ -250,9 +250,10 @@ export function quotaKeys(organizationId: string, now: Date): { daily: string; m
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   const day = String(now.getUTCDate()).padStart(2, '0');
 
+  // Both keys share `{organizationId}` so one Lua call stays in a single Redis Cluster slot.
   return {
-    daily: `agent-email-inbox:${organizationId}:day:${year}-${month}-${day}`,
-    monthly: `agent-email-inbox:${organizationId}:month:${year}-${month}`,
+    daily: `agent-email-inbox:{${organizationId}}:day:${year}-${month}-${day}`,
+    monthly: `agent-email-inbox:{${organizationId}}:month:${year}-${month}`,
   };
 }
 
