@@ -78,7 +78,12 @@ overrides:
   # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
   # via `__proto__` in custom message language and `object().rename()` with a
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
-  joi@<18.2.5: ^18.2.5
+  # GHSA-wr44-6hxh-3jwq (moderate): joi 18.x prototype replacement through
+  # `__proto__` error codes during messages compilation. Patched in 18.2.9
+  # (patch bump within the 18.2.x line). Widen the previous `<18.2.5` floor
+  # so transitive consumers (packages/providers > africastalking, etc.) pick
+  # up the fix.
+  joi@<18.2.9: ^18.2.9
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
@@ -163,7 +168,12 @@ overrides:
   qs@<6.16.0: ^6.16.0
   js-yaml@<3.15.2: ^3.15.2
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
-  smol-toml@<1.7.1: ^1.7.1
+  # GHSA-r4xh-jqrq-34v2 (moderate): smol-toml parseKey quadratic-time
+  # parse() rescanning that enables CPU exhaustion on large TOML inputs.
+  # Patched in 1.8.1, but the npm release stream published 1.9.0 directly
+  # after 1.8.0 (no 1.8.1 artifact). Widen the previous `<1.7.1` floor so
+  # transitive consumers (`nx > smol-toml` in dev tooling) land on 1.9.x.
+  smol-toml@<1.9.0: ^1.9.0
   '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
@@ -294,6 +304,11 @@ overrides:
   '@opentelemetry/context-async-hooks@<2.8.0': ^2.8.0
   '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
   mermaid@>=11.0.0-alpha.1 <11.16.1: ^11.16.1
+  # GHSA-jggr-w7fw-pc2j (moderate): fast-copy 3.0.x stack-exhaustion DoS
+  # when copying deeply-nested values. Patched in 3.1.0 (minor bump within
+  # the 3.x line). Only pulled transitively via `pino-pretty > fast-copy` in
+  # libs/application-generic (and other logger consumers).
+  fast-copy@>=3.0.0 <3.1.0: ^3.1.0
   tsup@<8.3.5: ^8.3.5
   # GHSA-g8qq-57p8-ggw5 / GHSA-jxwj-j7wr-gfrw: stored/mutation XSS via SVG SMIL
   # URI-list scheme-policy bypass and literal `</textarea/>` solidus close.
