@@ -41,6 +41,7 @@ const isValidKey = (key: string): boolean => {
   return true;
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: flattened payload values are arbitrary JSON
 const getEntries = (obj: object, prefix = '', currentDepth = 0, maxDepth: number): [string, any][] =>
   Object.entries(obj).flatMap(([key, value]) => {
     // Sanitize the key before using it.
@@ -120,7 +121,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     select?: ProjectionType<MessageEntity>,
     options: {
       readPreference?: 'secondaryPreferred' | 'primary';
+      // biome-ignore lint/suspicious/noExplicitAny: options bag is forwarded unchanged to BaseRepository
       query?: any;
+      // biome-ignore lint/suspicious/noExplicitAny: mongoose session is forwarded unchanged to BaseRepository
       session?: any;
     } = {}
   ): Promise<MessageEntity | null> {
@@ -134,7 +137,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     select?: ProjectionType<MessageEntity>,
     options: {
       readPreference?: 'secondaryPreferred' | 'primary';
+      // biome-ignore lint/suspicious/noExplicitAny: options bag is forwarded unchanged to BaseRepository
       query?: any;
+      // biome-ignore lint/suspicious/noExplicitAny: mongoose session is forwarded unchanged to BaseRepository
       session?: any;
     } = {}
   ): Promise<MessageEntity | null> {
@@ -153,6 +158,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     });
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing subscriber feed filter is outside this change
   private async getFilterQueryForMessage(
     environmentId: string,
     subscriberId: string,
@@ -280,6 +286,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
    * if aggregation is needed, make sure to filter with {deleted: { $ne: true }}.
    * todo: aggregate method should be implemented after all the soft deletes are removed task nv-5688
    */
+  // biome-ignore lint/suspicious/noExplicitAny: unimplemented stub matching BaseRepository.aggregate
   async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
     throw new Error('Not implemented');
   }
@@ -306,6 +313,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return this.mapEntities(messages);
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing pagination query builder is outside this change
   async paginate(
     {
       environmentId,
@@ -664,6 +672,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     id: string,
     status: 'error' | 'sent' | 'warning',
+    // biome-ignore lint/suspicious/noExplicitAny: provider response shape varies by channel
     providerPayload: any = {},
     errorId: string,
     errorText: string
@@ -871,6 +880,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
    * snoozed -> { seen: true, archived: false, snoozedUntil: snoozedUntil }
    * unsnoozed -> { seen: true, archived: false, snoozedUntil: null }
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing bulk status update is outside this change
   private async updateMessagesStatus({
     query,
     seen,
