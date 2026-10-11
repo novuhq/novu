@@ -1,8 +1,8 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { assertSafeOutboundUrl, PinoLogger, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { EmailProviderIdEnum, EnvironmentTypeEnum } from '@novu/shared';
-import type { ClientSession } from 'mongoose';
+import { AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentTypeEnum } from '@novu/shared';
+import { SyncAgentEmailSenderName } from '../../../email/sync-agent-email-sender-name.service';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
 import { toAgentResponse } from '../../../shared/mappers/agent-response.mapper';
 import { GetAgentRuntimeConfigCommand } from '../get-agent-runtime-config/get-agent-runtime-config.command';
@@ -14,8 +14,7 @@ export class UpdateAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly integrationRepository: IntegrationRepository,
+    private readonly syncAgentEmailSenderName: SyncAgentEmailSenderName,
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly logger: PinoLogger
   ) {
@@ -98,10 +97,8 @@ export class UpdateAgent {
           await this.agentRepository.update(agentQuery, { $set }, session ? { session } : {});
         }
 
-        await this.syncNovuAgentSenderName(
-          existing._id,
-          command.environmentId,
-          command.organizationId,
+        await this.syncAgentEmailSenderName.execute(
+          { agentId: existing._id, environmentId: command.environmentId, organizationId: command.organizationId },
           newName,
           session
         );
@@ -213,40 +210,6 @@ export class UpdateAgent {
     if (environment?.type === EnvironmentTypeEnum.PROD) {
       throw new ForbiddenException(message);
     }
-  }
-
-  private async syncNovuAgentSenderName(
-    agentId: string,
-    environmentId: string,
-    organizationId: string,
-    senderName: string,
-    session: ClientSession | null = null
-  ): Promise<void> {
-    const links = await this.agentIntegrationRepository.find(
-      {
-        _agentId: agentId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['_integrationId'],
-      { session }
-    );
-
-    const integrationIds = links.map((link) => link._integrationId).filter(Boolean);
-    if (integrationIds.length === 0) {
-      return;
-    }
-
-    await this.integrationRepository.update(
-      {
-        _id: { $in: integrationIds },
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
-      },
-      { $set: { 'credentials.senderName': senderName } },
-      session ? { session } : {}
-    );
   }
 
   private async assertSafeBridgeUrl(url: string | undefined | null, field: string): Promise<void> {

@@ -24,13 +24,13 @@ import { CreateInteractionCommand } from './create-interaction.command';
 /** Machine-readable code on the 429 body so `@novu/human` can branch without parsing prose. */
 export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
-/** `human login` is approved on the Human website, so it only works where one is configured (not self-hosted). */
+/** `human login` is approved on the Human dashboard, so it only works where one is configured (not self-hosted). */
 function isHumanBrowserLoginAvailable(): boolean {
-  return Boolean(process.env.HUMAN_WEBSITE_URL?.trim());
+  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
 }
 
 /**
- * Where the Human website runs, setups are claimed there and the CLI continues with `human login`.
+ * Where the Human dashboard runs, setups are claimed there and the CLI continues with `human login`.
  * Elsewhere (self-hosted) they're claimed on the dashboard, and the CLI needs the environment's key.
  */
 function keylessHumanClaimedMessage(): string {

@@ -8,7 +8,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
-import { toDeliveryError } from '../../shared/util/delivery-error.util';
+import { isUnchangedTelegramEditError, toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
@@ -82,6 +82,8 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
   quoteReply?: { messageId: string };
+  /** Deliver by editing this already posted message (a streamed preview) instead of posting. */
+  replacePlatformMessageId?: string;
 };
 
 /**
@@ -124,16 +126,7 @@ export class OutboundGateway {
     // post first, then persist with the delivered message id.
     if (!persist.activityIdentifier) {
       const { result: sent, info } = await this.deliveryInfo.collect(() =>
-        this.postToConversation(
-          target.agentId,
-          target.integrationIdentifier,
-          target.platform,
-          target.platformThreadId,
-          msg,
-          options,
-          target.workspaceId,
-          persist.activityIdentifier
-        )
+        this.sendToConversation(target, msg, options, persist.activityIdentifier)
       );
 
       // In-process deliveries (web) report the authoritative message id so the
@@ -173,16 +166,7 @@ export class OutboundGateway {
 
     try {
       const { result: sent, info } = await this.deliveryInfo.collect(() =>
-        this.postToConversation(
-          target.agentId,
-          target.integrationIdentifier,
-          target.platform,
-          target.platformThreadId,
-          msg,
-          options,
-          target.workspaceId,
-          persist.activityIdentifier
-        )
+        this.sendToConversation(target, msg, options, persist.activityIdentifier)
       );
       const platformMessageId = info.messageId ?? sent.messageId;
 
@@ -205,6 +189,81 @@ export class OutboundGateway {
       });
 
       throw err;
+    }
+  }
+
+  private sendToConversation(
+    target: ConversationTarget,
+    msg: OutboundMessage,
+    options: OutboundDeliveryOptions | undefined,
+    activityIdentifier: string | undefined
+  ): Promise<SentMessageInfo> {
+    if (options?.replacePlatformMessageId) {
+      return this.replaceMessage(target, msg, options.replacePlatformMessageId, options, activityIdentifier);
+    }
+
+    return this.postToConversation(
+      target.agentId,
+      target.integrationIdentifier,
+      target.platform,
+      target.platformThreadId,
+      msg,
+      options,
+      target.workspaceId,
+      activityIdentifier
+    );
+  }
+
+  /** Edits a streamed preview into the reply. If that edit fails, posts the reply anew so it is never lost. */
+  private async replaceMessage(
+    target: ConversationTarget,
+    msg: OutboundMessage,
+    previewMessageId: string,
+    options: OutboundDeliveryOptions,
+    activityIdentifier: string | undefined
+  ): Promise<SentMessageInfo> {
+    // The reply keeps the preview's id, so its reader can tell the preview became the reply.
+    const replaced = { messageId: previewMessageId, platformThreadId: target.platformThreadId };
+    try {
+      await this.editInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        previewMessageId,
+        msg,
+        options,
+        target.workspaceId
+      );
+
+      return replaced;
+    } catch (err) {
+      if (isUnchangedTelegramEditError(err)) {
+        return replaced;
+      }
+
+      this.logger.warn({ err, previewMessageId }, 'Editing a streamed preview failed; posting the reply anew');
+      const sent = await this.postToConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        msg,
+        options,
+        target.workspaceId,
+        activityIdentifier
+      );
+      await this.deleteInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platformThreadId,
+        previewMessageId,
+        target.workspaceId
+      ).catch((deleteErr) =>
+        this.logger.warn({ err: deleteErr, previewMessageId }, 'Failed to delete a stale preview')
+      );
+
+      return sent;
     }
   }
 
@@ -347,6 +406,29 @@ export class OutboundGateway {
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       this.deliverThreadMessage(thread, platform, postArg, options?.quoteReply?.messageId)
+    ).catch(toDeliveryError);
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /**
+   * Shows text while it is generated (chat SDK native streaming, or throttled post + edit).
+   * A preview is not a delivery: nothing is persisted or branded. Replace it through
+   * `deliver()` with `replacePlatformMessageId`, or delete it.
+   */
+  async streamPreview(target: ConversationTarget, chunks: AsyncIterable<string>): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(target.agentId, target.integrationIdentifier);
+    const instanceKey = `${target.agentId}:${target.integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, target.agentId, config.platform, config);
+    const thread = chat.thread(target.platformThreadId);
+
+    const sent = await this.runWithPlatformToken(
+      chat,
+      config,
+      target.agentId,
+      target.platformThreadId,
+      target.workspaceId,
+      () => thread.post(chunks)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
