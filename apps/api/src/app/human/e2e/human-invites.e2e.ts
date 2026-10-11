@@ -118,10 +118,9 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
     ]);
 
     const status = await getStatus(invite.token);
-    // The relay still carries its placeholder name, so no agentName is exposed.
-    expect(status).to.not.have.property('agentName');
     expect(status).to.deep.include({
       valid: true,
+      agentName: 'Human',
       inviteeName: 'Alice Chen',
       channels: [
         { via: 'telegram', connected: false, isDefault: false, status: 'unverified' },

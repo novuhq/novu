@@ -85,6 +85,28 @@ describe('renderContactsTable', () => {
   it('omits the hint on the last page', () => {
     expect(renderContactsTable(markSelf([contact({ id: 'alice' })], 'human_me'), null)).not.toContain('More contacts');
   });
+
+  it('treats a listed email channel as verified and a bare subscriber email as unverified', () => {
+    const verified = renderContactsTable(
+      [contact({ id: 'alice', email: 'a@x.co', channels: [{ via: 'email' }] as Contact['channels'] })],
+      null
+    );
+    const pending = renderContactsTable(
+      [
+        contact({
+          id: 'bob',
+          channels: [{ via: 'email', status: 'pending', address: 'b@x.co' }],
+        }),
+      ],
+      null
+    );
+    const unverified = renderContactsTable([contact({ id: 'carol', email: 'c@x.co' })], null);
+
+    expect(verified).toContain('a@x.co');
+    expect(verified).not.toContain('(unverified)');
+    expect(pending).toContain('(pending verification)');
+    expect(unverified).toContain('(unverified)');
+  });
 });
 
 describe('contactsCommand', () => {

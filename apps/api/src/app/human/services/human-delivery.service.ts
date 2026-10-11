@@ -318,8 +318,8 @@ export class HumanDeliveryService {
   }
 
   /**
-   * {@link describeReachability} for a page of contacts in a fixed number of queries. Takes the
-   * subscribers' emails from the caller, which has just loaded them.
+   * {@link describeReachability} for a page of contacts in a fixed number of queries.
+   * Email is reachable only from that relay's verified address, same as {@link tryResolveTarget}.
    */
   async describeReachabilityForMany(params: {
     environmentId: string;
@@ -353,13 +353,28 @@ export class HumanDeliveryService {
         : [],
       this.humanContactRepository.find(
         { _environmentId: params.environmentId, _agentId: params.agentId, subscriberId: { $in: subscriberIds } },
-        ['subscriberId', 'defaultVia']
+        ['subscriberId', 'defaultVia', 'addresses']
       ),
     ]);
     const savedDefaults = new Map(contacts.map((contact) => [contact.subscriberId, contact.defaultVia]));
+    const verifiedEmails = new Map(
+      contacts.flatMap((contact) => {
+        const verified = contact.addresses?.[HumanChannelViaEnum.EMAIL]?.verified;
+        if (!verified) {
+          return [];
+        }
+
+        return [[contact.subscriberId, verified] as const];
+      })
+    );
 
     for (const subscriber of params.subscribers) {
-      const targets = this.reachableTargetsOf(subscriber, integrations, endpoints);
+      const targets = this.reachableTargetsOf(
+        subscriber.subscriberId,
+        integrations,
+        endpoints,
+        verifiedEmails.get(subscriber.subscriberId)
+      );
 
       result.set(subscriber.subscriberId, {
         targets,
@@ -372,9 +387,10 @@ export class HumanDeliveryService {
 
   /** Same rules as {@link tryResolveTarget}, over rows that were loaded up front. */
   private reachableTargetsOf(
-    subscriber: { subscriberId: string; email?: string },
+    subscriberId: string,
     integrations: IntegrationEntity[],
-    endpoints: ChannelEndpointEntity[]
+    endpoints: ChannelEndpointEntity[],
+    verifiedEmail: { address: string; verifiedAt: string } | undefined
   ): ReachableHumanTarget[] {
     const targets: ReachableHumanTarget[] = [];
 
@@ -385,8 +401,8 @@ export class HumanDeliveryService {
       }
 
       if (integration.channel === ChannelTypeEnum.EMAIL) {
-        if (subscriber.email) {
-          targets.push(emailTarget(subscriber.email, via, integration.identifier));
+        if (verifiedEmail) {
+          targets.push(emailTarget(verifiedEmail.address, via, integration.identifier, verifiedEmail.verifiedAt));
         }
 
         continue;
@@ -394,8 +410,7 @@ export class HumanDeliveryService {
 
       const endpoint = endpoints.find(
         (candidate) =>
-          candidate.subscriberId === subscriber.subscriberId &&
-          candidate.integrationIdentifier === integration.identifier
+          candidate.subscriberId === subscriberId && candidate.integrationIdentifier === integration.identifier
       );
       const target = endpoint ? this.toTarget(endpoint, via, integration.identifier) : null;
 
@@ -600,8 +615,19 @@ function toContactChannelStatus(channel: InviteChannelDescription): HumanContact
   };
 }
 
-function emailTarget(email: string, via: HumanChannelViaEnum, integrationIdentifier: string): ReachableHumanTarget {
-  return { via, platform: HumanChannelViaEnum.EMAIL, platformUserId: email, integrationIdentifier };
+function emailTarget(
+  email: string,
+  via: HumanChannelViaEnum,
+  integrationIdentifier: string,
+  connectedAt?: string
+): ReachableHumanTarget {
+  return {
+    via,
+    platform: HumanChannelViaEnum.EMAIL,
+    platformUserId: email,
+    integrationIdentifier,
+    ...(connectedAt ? { connectedAt } : {}),
+  };
 }
 
 function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {

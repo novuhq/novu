@@ -17,6 +17,8 @@ export interface HumanVerificationTokenPayload {
   via: HumanChannelViaEnum;
   /** Normalized address the link confirms. */
   address: string;
+  /** `requestedAt` of the pending slot this link was issued for. */
+  requestedAt: string;
 }
 
 export interface ClaimedHumanVerification {
@@ -107,7 +109,15 @@ export class HumanVerificationTokenService {
   }
 
   private validatePayload(payload: HumanVerificationTokenPayload): HumanVerificationTokenPayload {
-    if (!payload.env || !payload.org || !payload.agentId || !payload.subscriberId || !payload.via || !payload.address) {
+    if (
+      !payload.env ||
+      !payload.org ||
+      !payload.agentId ||
+      !payload.subscriberId ||
+      !payload.via ||
+      !payload.address ||
+      !payload.requestedAt
+    ) {
       throw new InactiveHumanVerificationError('invalid');
     }
 

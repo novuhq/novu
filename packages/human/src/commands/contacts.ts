@@ -65,19 +65,26 @@ export function renderContactsTable(rows: ContactRow[], next: string | null): st
 
 function formatEmailColumn(row: ContactRow): string {
   const emailChannel = row.channels?.find((channel) => channel.via === 'email');
-  if (emailChannel?.status === 'pending') {
-    return `${emailChannel.address ?? row.email ?? '—'} ${pc.yellow('(pending verification)')}`;
-  }
+  if (!emailChannel) {
+    if (!row.email) {
+      return pc.dim('—');
+    }
 
-  if (emailChannel?.status === 'verified') {
-    return emailChannel.address ?? row.email ?? pc.dim('—');
-  }
-
-  if (row.email) {
     return `${row.email} ${pc.dim('(unverified)')}`;
   }
 
-  return pc.dim('—');
+  if (emailChannel.status === 'pending') {
+    return `${emailChannel.address ?? row.email ?? '—'} ${pc.yellow('(pending verification)')}`;
+  }
+
+  // The contacts list includes an email channel only after that relay verified it, and omits status.
+  if (emailChannel.status === 'verified' || !('status' in emailChannel)) {
+    return emailChannel.address ?? row.email ?? pc.dim('—');
+  }
+
+  const address = emailChannel.address ?? row.email ?? '—';
+
+  return `${address} ${pc.dim('(unverified)')}`;
 }
 
 export async function contactsCommand(options: ContactsOptions): Promise<never> {

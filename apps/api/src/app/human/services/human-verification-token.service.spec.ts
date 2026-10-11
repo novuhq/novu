@@ -54,6 +54,7 @@ describe('HumanVerificationTokenService', () => {
     subscriberId: 'alice',
     via: HumanChannelViaEnum.EMAIL,
     address: 'alice@example.com',
+    requestedAt: '2026-10-01T12:00:00.000Z',
   };
 
   it('issues a 32-char token that lives for 24 hours', async () => {
@@ -67,6 +68,19 @@ describe('HumanVerificationTokenService', () => {
     );
     expect(cacheService.set.firstCall.args[0]).to.equal(`human_verify:{${token}}`);
     expect(cacheService.set.firstCall.args[2]).to.deep.equal({ ttl: HUMAN_VERIFICATION_LINK_TTL_SECONDS });
+  });
+
+  it('rejects a link that is not bound to the request that sent it', async () => {
+    const { service } = makeService();
+    const { token } = await service.issue({ ...payload, requestedAt: '' });
+
+    try {
+      await service.claim(token);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(InactiveHumanVerificationError);
+      expect((err as InactiveHumanVerificationError).reason).to.equal('invalid');
+    }
   });
 
   it('claims once and then reads as used', async () => {

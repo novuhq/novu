@@ -45,6 +45,7 @@ describe('VerifyAddress', () => {
         subscriberId: 'alice',
         via: HumanChannelViaEnum.EMAIL,
         address: 'alice@example.com',
+        requestedAt: '2026-10-01T12:00:00.000Z',
       },
       expiresAt: '2026-10-02T12:00:00.000Z',
     });
@@ -66,6 +67,10 @@ describe('VerifyAddress', () => {
     expect(subscriberRepository.update.firstCall.args[1]).to.deep.equal({
       $set: { email: 'alice@example.com' },
     });
+    expect(humanContactRepository.promotePendingAddress.firstCall.args[0]).to.include({
+      address: 'alice@example.com',
+      requestedAt: '2026-10-01T12:00:00.000Z',
+    });
   });
 
   it('returns verification_superseded when no pending match remains', async () => {
@@ -78,6 +83,7 @@ describe('VerifyAddress', () => {
         subscriberId: 'alice',
         via: HumanChannelViaEnum.EMAIL,
         address: 'old@example.com',
+        requestedAt: '2026-10-01T11:00:00.000Z',
       },
       expiresAt: '2026-10-02T12:00:00.000Z',
     });
@@ -104,6 +110,7 @@ describe('VerifyAddress', () => {
         subscriberId: 'alice',
         via: HumanChannelViaEnum.EMAIL,
         address: 'alice@example.com',
+        requestedAt: '2026-10-01T12:00:00.000Z',
       },
       expiresAt: '2026-10-02T12:00:00.000Z',
     });
@@ -133,6 +140,7 @@ describe('VerifyAddress', () => {
         subscriberId: 'alice',
         via: HumanChannelViaEnum.EMAIL,
         address: 'old@example.com',
+        requestedAt: '2026-10-01T12:00:00.000Z',
       },
       expiresAt: '2026-10-02T12:00:00.000Z',
     });
@@ -165,6 +173,7 @@ describe('VerifyAddress', () => {
         subscriberId: 'alice',
         via: HumanChannelViaEnum.EMAIL,
         address: 'alice@example.com',
+        requestedAt: '2026-10-01T12:00:00.000Z',
       },
       expiresAt: '2026-10-02T12:00:00.000Z',
     };

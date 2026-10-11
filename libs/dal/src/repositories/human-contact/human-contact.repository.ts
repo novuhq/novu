@@ -220,8 +220,8 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Promotes a matching pending slot to verified and clears pending, in one
-   * write. Returns null when that pending address is gone (a superseded link).
+   * Promotes the pending slot this link was issued for and clears pending, in
+   * one write. Returns null when that request is gone (a superseded link).
    */
   async promotePendingAddress(params: {
     environmentId: string;
@@ -229,6 +229,7 @@ export class HumanContactRepository extends BaseRepositoryV2<
     subscriberId: string;
     via: HumanChannelViaEnum;
     address: string;
+    requestedAt: string;
   }): Promise<HumanContactVerifiedAddress | null> {
     const pending = await this.findPendingAddress(
       params.environmentId,
@@ -236,7 +237,7 @@ export class HumanContactRepository extends BaseRepositoryV2<
       params.subscriberId,
       params.via
     );
-    if (pending?.address !== params.address) {
+    if (pending?.address !== params.address || pending.requestedAt !== params.requestedAt) {
       return null;
     }
 

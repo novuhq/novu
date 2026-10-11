@@ -1,5 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
-import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanChannelViaEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  ENDPOINT_TYPES,
+  HumanChannelViaEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
@@ -13,6 +19,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       findContact: sinon.stub().resolves(null),
       findVerifiedAddress: sinon.stub().resolves(null),
       findPendingAddress: sinon.stub().resolves(null),
+      find: sinon.stub().resolves([]),
     };
     const outboundGateway = { sendDirectMessage: sinon.stub() };
     const service = new HumanDeliveryService(
@@ -198,6 +205,58 @@ describe('HumanDeliveryService.resolveChannel', () => {
     const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.EMAIL });
 
     expect(target.platformUserId).to.equal('old@example.com');
+  });
+
+  it('lists a contact as reachable on email only after that relay verified the address', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'int-email' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'int-email',
+        identifier: 'email-main',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+      },
+    ]);
+    humanContactRepository.find.resolves([
+      {
+        subscriberId: 'alice',
+        addresses: {
+          [HumanChannelViaEnum.EMAIL]: {
+            verified: { address: 'alice@example.com', requestedAt: 't1', verifiedAt: 't2' },
+          },
+        },
+      },
+      {
+        subscriberId: 'bob',
+        addresses: {
+          [HumanChannelViaEnum.EMAIL]: {
+            pending: { address: 'bob@example.com', requestedAt: 't1' },
+          },
+        },
+      },
+    ]);
+
+    const reach = await service.describeReachabilityForMany({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agentId: 'agent1',
+      subscribers: [
+        { subscriberId: 'alice', email: 'other@example.com' },
+        { subscriberId: 'bob', email: 'bob@example.com' },
+      ],
+    });
+
+    expect(reach.get('alice')?.targets).to.deep.equal([
+      {
+        via: HumanChannelViaEnum.EMAIL,
+        platform: HumanChannelViaEnum.EMAIL,
+        platformUserId: 'alice@example.com',
+        integrationIdentifier: 'email-main',
+        connectedAt: 't2',
+      },
+    ]);
+    expect(reach.get('bob')?.targets).to.deep.equal([]);
   });
 
   describe('when the human is reachable on several channels', () => {

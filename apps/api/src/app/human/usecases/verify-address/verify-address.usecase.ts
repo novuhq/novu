@@ -75,6 +75,7 @@ export class VerifyAddress {
       subscriberId: payload.subscriberId,
       via: payload.via,
       address: payload.address,
+      requestedAt: payload.requestedAt,
     });
     if (promoted) {
       return promoted.address;
@@ -86,7 +87,7 @@ export class VerifyAddress {
       payload.subscriberId,
       payload.via
     );
-    if (verified?.address === payload.address) {
+    if (verified?.address === payload.address && verified.requestedAt === payload.requestedAt) {
       return verified.address;
     }
 

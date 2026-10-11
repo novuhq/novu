@@ -62,7 +62,7 @@ describe('RequestAddressVerification', () => {
       emailSender as never
     );
 
-    return { usecase, humanContactRepository, rateLimit, emailSender };
+    return { usecase, humanContactRepository, rateLimit, emailSender, verificationTokens };
   }
 
   function command() {
@@ -103,11 +103,15 @@ describe('RequestAddressVerification', () => {
   });
 
   it('returns the requestedAt of the pending slot it wrote', async () => {
-    const { usecase } = setup();
+    const { usecase, verificationTokens } = setup();
 
     const result = await usecase.execute(command());
 
     expect(result.requestedAt).to.equal(writtenPending.requestedAt);
     expect(result.address).to.equal('n***@example.com');
+    expect(verificationTokens.issue.firstCall.args[0]).to.include({
+      address: writtenPending.address,
+      requestedAt: writtenPending.requestedAt,
+    });
   });
 });

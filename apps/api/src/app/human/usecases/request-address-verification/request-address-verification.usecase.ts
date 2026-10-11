@@ -157,6 +157,7 @@ export class RequestAddressVerification {
           subscriberId: params.subscriberId,
           via: params.via,
           address: params.address,
+          requestedAt: written.requestedAt,
         });
       } catch (err) {
         throw toVerificationHttpError(err);
