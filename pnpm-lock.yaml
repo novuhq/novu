@@ -171,6 +171,7 @@ overrides:
   '@opentelemetry/context-async-hooks@<2.8.0': ^2.8.0
   '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
   mermaid@>=11.0.0-alpha.1 <11.16.1: ^11.16.1
+  fast-copy@>=3.0.0 <3.1.0: ^3.1.0
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.7: ^2.17.7
   samlify@<2.13.0: ^2.13.0
@@ -20626,8 +20627,8 @@ packages:
     resolution: {integrity: sha512-6ypT4XfgqJk/F3Yuv4SX26I3doUjt0GTG4a+JgWxXQpxXzTBq8fPUeGHfcYMMDPHJHm3yPOSjaeBwBGAHWXCdA==}
     engines: {node: '>=18.0.0'}
 
-  fast-copy@3.0.1:
-    resolution: {integrity: sha512-Knr7NOtK3HWRYGtHoJrjkaWepqT8thIVGAwt0p0aUs1zqkAzXZV4vo9fFNwyb5fcqK1GKYFYxldQdIDVKhUAfA==}
+  fast-copy@3.1.0:
+    resolution: {integrity: sha512-IuCOCDFM1F/s4LtG7Bjr3yUUwPHybyhqN74xk2cMYoP51vVeErMy8+6HGFchi/+45lW8uzhs6lBeEqks2GWt6A==}
 
   fast-deep-equal@2.0.1:
     resolution: {integrity: sha512-bCK/2Z4zLidyB4ReuIsvALH6w31YfAQDmXMqMx6FyfHqvBxtjC0eRumeSu4Bs3XtXwpyIywtSTrVT99BxY1f9w==}
@@ -53160,7 +53161,7 @@ snapshots:
 
   farmhash-modern@1.1.0: {}
 
-  fast-copy@3.0.1: {}
+  fast-copy@3.1.0: {}
 
   fast-deep-equal@2.0.1: {}
 
@@ -59744,7 +59745,7 @@ snapshots:
     dependencies:
       colorette: 2.0.20
       dateformat: 4.6.3
-      fast-copy: 3.0.1
+      fast-copy: 3.1.0
       fast-safe-stringify: 2.1.1
       help-me: 4.2.0
       joycon: 3.1.1
