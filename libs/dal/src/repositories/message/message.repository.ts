@@ -17,13 +17,15 @@ import { EnforceEnvId } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
 import { FeedRepository } from '../feed';
 import { MessageDBModel, MessageEntity } from './message.entity';
-import { Message, SUBSCRIBER_FEED_INDEX_FILTER_FIELDS } from './message.schema';
+import { Message } from './message.schema';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
 const MAX_PAYLOAD_QUERY_DEPTH = 3;
 
 const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'];
+
+export const SUBSCRIBER_FEED_STATUS_FIELDS = ['seen', 'read', 'archived'] as const;
 
 const isValidKey = (key: string): boolean => {
   // Reject keys starting with '$' or '.' to prevent MongoDB operator injection.
@@ -1104,7 +1106,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     // Point bounds on every field before createdAt let Mongo SORT_MERGE the subscriber feed index; null matches missing.
     if (query._subscriberId && query.channel) {
-      for (const field of SUBSCRIBER_FEED_INDEX_FILTER_FIELDS) {
+      for (const field of SUBSCRIBER_FEED_STATUS_FIELDS) {
         filterQuery[field] ??= { $in: [true, false, null] };
       }
     }

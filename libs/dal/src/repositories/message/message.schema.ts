@@ -380,13 +380,13 @@ messageSchema.index({
   _organizationId: 1,
 });
 
-export const SUBSCRIBER_FEED_INDEX_FILTER_FIELDS = ['seen', 'read', 'archived'] as const;
-
 messageSchema.index({
   _subscriberId: 1,
   _environmentId: 1,
   channel: 1,
-  ...Object.fromEntries(SUBSCRIBER_FEED_INDEX_FILTER_FIELDS.map((field) => [field, 1])),
+  seen: 1,
+  read: 1,
+  archived: 1,
   deleted: 1,
   createdAt: -1,
   _id: -1,
