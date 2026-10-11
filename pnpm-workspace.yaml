@@ -75,6 +75,14 @@ overrides:
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
   '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  # GHSA-7mx3-vvmw-hjmv (high): @graphql-tools/utils prototype pollution in
+  # `mergeDeep`. Patched in 12.0.1 (patch bump within the 12.0.x line).
+  # Transitive via `@nestjs/graphql` in apps/api and apps/webhook.
+  '@graphql-tools/utils@<12.0.1': ^12.0.1
+  # GHSA-c8x8-7fp4-3x9w (high): prosemirror-view XSS in paste handling.
+  # Patched in 1.42.3 (minor bump within the 1.x line). Transitive via
+  # `@tiptap/react > @tiptap/core > @tiptap/pm` in apps/dashboard.
+  prosemirror-view@<1.42.3: ^1.42.3
   # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
   # via `__proto__` in custom message language and `object().rename()` with a
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
