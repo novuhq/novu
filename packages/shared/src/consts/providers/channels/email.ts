@@ -205,4 +205,12 @@ export const emailProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/agents/get-started/agents-and-providers${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
+  {
+    id: EmailProviderIdEnum.AgentEmailInbox,
+    displayName: 'Agent Email Inbox',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: [],
+    docReference: `https://docs.novu.co/agents/get-started/agents-and-providers${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
 ];

@@ -113,7 +113,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       {
         _id: 'int1',
         identifier: 'email-main',
-        providerId: 'novu-email-agent',
+        providerId: 'agent-email-inbox',
         channel: ChannelTypeEnum.EMAIL,
       },
     ]);
@@ -136,7 +136,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       {
         _id: 'int1',
         identifier: 'email-main',
-        providerId: 'novu-email-agent',
+        providerId: 'agent-email-inbox',
         channel: ChannelTypeEnum.EMAIL,
       },
     ]);
@@ -162,7 +162,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       {
         _id: 'int1',
         identifier: 'email-main',
-        providerId: 'novu-email-agent',
+        providerId: 'agent-email-inbox',
         channel: ChannelTypeEnum.EMAIL,
       },
     ]);
@@ -188,7 +188,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       {
         _id: 'int1',
         identifier: 'email-main',
-        providerId: 'novu-email-agent',
+        providerId: 'agent-email-inbox',
         channel: ChannelTypeEnum.EMAIL,
       },
     ]);
@@ -214,7 +214,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       {
         _id: 'int-email',
         identifier: 'email-main',
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
         channel: ChannelTypeEnum.EMAIL,
       },
     ]);
@@ -357,7 +357,7 @@ describe('HumanDeliveryService.listInviteChannels', () => {
     };
     const integrationRepository = {
       find: sinon.stub().resolves([
-        { identifier: 'email-main', providerId: 'novu-email-agent', channel: ChannelTypeEnum.EMAIL, active: true },
+        { identifier: 'email-main', providerId: 'agent-email-inbox', channel: ChannelTypeEnum.EMAIL, active: true },
         { identifier: 'slack-old', providerId: ChatProviderIdEnum.Slack, channel: ChannelTypeEnum.CHAT, active: false },
         { identifier: 'slack-main', providerId: ChatProviderIdEnum.Slack, channel: ChannelTypeEnum.CHAT, active: true },
         {

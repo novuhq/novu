@@ -1,5 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import {
+  AgentEmailInboxQuotaService,
+  type AgentEmailInboxReservation,
+  InstrumentUsecase,
+} from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -46,7 +50,8 @@ export class RequestAddressVerification {
     private readonly humanContactRepository: HumanContactRepository,
     private readonly rateLimit: HumanVerificationRateLimitService,
     private readonly verificationTokens: HumanVerificationTokenService,
-    private readonly emailSender: HumanVerificationEmailSender
+    private readonly emailSender: HumanVerificationEmailSender,
+    private readonly inboxQuota: AgentEmailInboxQuotaService
   ) {}
 
   @InstrumentUsecase()
@@ -138,7 +143,9 @@ export class RequestAddressVerification {
     });
 
     let written: HumanContactPendingAddress | undefined;
+    let inboxReservation: AgentEmailInboxReservation | undefined;
     try {
+      inboxReservation = await this.inboxQuota.reserve(params.organizationId, 1);
       written = await this.humanContactRepository.upsertPendingAddress({
         environmentId: params.environmentId,
         organizationId: params.organizationId,
@@ -173,6 +180,7 @@ export class RequestAddressVerification {
         expiresAt: issued.expiresAt,
         outbound,
       });
+      inboxReservation.remaining = 0;
 
       return {
         address: maskEmail(params.address),
@@ -182,6 +190,9 @@ export class RequestAddressVerification {
         replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
       };
     } catch (err) {
+      if (inboxReservation) {
+        await this.inboxQuota.releaseRemaining(inboxReservation);
+      }
       await this.compensateFailedSend({ ...params, reservation }, written, previousPending);
 
       throw err;

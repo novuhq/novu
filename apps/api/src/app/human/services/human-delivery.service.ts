@@ -32,7 +32,7 @@ export interface ResolvedHumanTarget {
 const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = {
   [HumanChannelViaEnum.TELEGRAM]: [ChatProviderIdEnum.Telegram],
   [HumanChannelViaEnum.SLACK]: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu],
-  [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu],
+  [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.AgentEmailInbox],
 };
 
 function viaForProviderId(providerId: string): HumanChannelViaEnum | null {

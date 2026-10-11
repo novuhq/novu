@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
 import {
+  AGENT_INBOX_PROVIDER_IDS,
   ChannelTypeEnum,
-  EmailProviderIdEnum,
   EmailWebhookPayload,
   FeatureFlagsKeysEnum,
   InboundEmailAttachment,
@@ -346,7 +346,7 @@ export class InboundDomainRouteDelivery {
         _id: { $in: integrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
         channel: ChannelTypeEnum.EMAIL,
         active: true,
       },

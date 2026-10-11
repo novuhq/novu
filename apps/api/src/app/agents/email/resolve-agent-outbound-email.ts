@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { buildAgentSharedInbox, decryptCredentials, isAgentSharedInboxEnabled } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 export type ResolvedAgentOutboundEmail = {
   /** Decrypted (or demo-hydrated) integration ready for MailFactory. */
@@ -40,12 +40,12 @@ export async function resolveAgentOutboundEmail(params: {
     _id: { $in: integrationIds },
     _environmentId: params.environmentId,
     _organizationId: params.organizationId,
-    providerId: EmailProviderIdEnum.NovuAgent,
+    providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
     channel: ChannelTypeEnum.EMAIL,
   });
 
   if (!emailIntegration) {
-    throw new BadRequestException('No Novu Email integration found for this agent.');
+    throw new BadRequestException('No agent inbox integration found for this agent.');
   }
 
   const outboundIntegrationId = emailIntegration.credentials?.outboundIntegrationId as string | undefined;

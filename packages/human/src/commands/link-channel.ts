@@ -38,8 +38,7 @@ export function viaForProviderId(providerId: string): HumanChannel | null {
     case 'slack':
     case 'novu-slack':
       return 'slack';
-    case 'novu-email-agent':
-    case 'novu-email':
+    case 'agent-email-inbox':
       return 'email';
     default:
       return null;
@@ -53,7 +52,7 @@ export function providerIdsForVia(via: HumanChannel): readonly string[] {
     case 'slack':
       return ['slack', 'novu-slack'];
     case 'email':
-      return ['novu-email-agent', 'novu-email'];
+      return ['agent-email-inbox'];
     default: {
       const exhaustive: never = via;
 

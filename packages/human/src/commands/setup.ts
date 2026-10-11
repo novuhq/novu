@@ -587,8 +587,8 @@ async function handOffToTelegramSetupPage(
 // --- Email ------------------------------------------------------------------
 
 /**
- * Email needs no linking dance: the relay gets a per-agent Novu Email
- * integration with a shared inbound address, and the human's identity is
+ * Email needs no linking dance: the relay gets a per-agent Agent Email Inbox
+ * with a shared inbound address, and the human's identity is
  * their email on the subscriber (delivery target + inbound reply resolution —
  * no ChannelEndpoint involved).
  */

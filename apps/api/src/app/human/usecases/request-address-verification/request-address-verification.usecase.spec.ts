@@ -31,6 +31,10 @@ describe('RequestAddressVerification', () => {
     const emailSender = {
       send: sinon.stub().resolves(),
     };
+    const inboxQuota = {
+      reserve: sinon.stub().resolves({ organizationId: 'org-1', remaining: 1, unlimited: false }),
+      releaseRemaining: sinon.stub().resolves(),
+    };
     const usecase = new RequestAddressVerification(
       { execute: sinon.stub() } as never,
       {
@@ -43,7 +47,7 @@ describe('RequestAddressVerification', () => {
         find: sinon.stub().resolves([
           {
             _id: 'email-int',
-            providerId: EmailProviderIdEnum.NovuAgent,
+            providerId: EmailProviderIdEnum.AgentEmailInbox,
             channel: ChannelTypeEnum.EMAIL,
             credentials: { outboundIntegrationId: 'out-1' },
           },
@@ -59,10 +63,11 @@ describe('RequestAddressVerification', () => {
       humanContactRepository as never,
       rateLimit as never,
       verificationTokens as never,
-      emailSender as never
+      emailSender as never,
+      inboxQuota as never
     );
 
-    return { usecase, humanContactRepository, rateLimit, emailSender, verificationTokens };
+    return { usecase, humanContactRepository, rateLimit, emailSender, verificationTokens, inboxQuota };
   }
 
   function command() {
@@ -77,7 +82,7 @@ describe('RequestAddressVerification', () => {
   }
 
   it('restores the previous pending address and releases the rate limit when send fails', async () => {
-    const { usecase, humanContactRepository, rateLimit, emailSender } = setup();
+    const { usecase, humanContactRepository, rateLimit, emailSender, inboxQuota } = setup();
     emailSender.send.rejects(
       new BadGatewayException({ error: 'delivery_failed', message: 'Unauthorized: bad sender' })
     );
@@ -97,16 +102,20 @@ describe('RequestAddressVerification', () => {
       replaced: writtenPending,
       pending: previousPending,
     });
+    expect(inboxQuota.reserve.calledOnce).to.equal(true);
+    expect(inboxQuota.releaseRemaining.calledOnce).to.equal(true);
     expect(rateLimit.release.calledOnce).to.equal(true);
     expect(rateLimit.release.firstCall.args[0]).to.deep.include({ reservation: 'res-1' });
     expect(rateLimit.release.calledAfter(humanContactRepository.restorePendingAddress)).to.equal(true);
   });
 
   it('returns the requestedAt of the pending slot it wrote', async () => {
-    const { usecase, verificationTokens } = setup();
+    const { usecase, verificationTokens, inboxQuota } = setup();
 
     const result = await usecase.execute(command());
 
+    expect(inboxQuota.reserve.calledOnce).to.equal(true);
+    expect(inboxQuota.releaseRemaining.called).to.equal(false);
     expect(result.requestedAt).to.equal(writtenPending.requestedAt);
     expect(result.address).to.equal('n***@example.com');
     expect(verificationTokens.issue.firstCall.args[0]).to.include({

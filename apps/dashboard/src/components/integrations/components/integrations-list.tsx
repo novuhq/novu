@@ -88,7 +88,9 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
 
   const groupedIntegrations = useMemo(() => {
     return integrations
-      ?.filter((i) => i.providerId !== EmailProviderIdEnum.NovuAgent)
+      ?.filter(
+        (i) => i.providerId !== EmailProviderIdEnum.NovuAgent && i.providerId !== EmailProviderIdEnum.AgentEmailInbox
+      )
       .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
       .reduce(
         (acc, integration) => {

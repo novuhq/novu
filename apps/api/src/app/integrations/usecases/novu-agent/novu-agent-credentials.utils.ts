@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum, type ICredentials } from '@novu/shared';
+import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
 
 /**
  * The NovuAgent integration owns a handful of routing-control fields that the
@@ -33,7 +33,7 @@ export function ensureNovuAgentManagedCredentials({
   nextCredentials: ICredentials;
   existingCredentials?: ICredentials;
 }): ICredentials {
-  if (providerId !== EmailProviderIdEnum.NovuAgent) {
+  if (!isAgentInboxProvider(providerId)) {
     return nextCredentials;
   }
 

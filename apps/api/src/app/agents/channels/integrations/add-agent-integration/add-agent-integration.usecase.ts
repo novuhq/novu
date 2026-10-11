@@ -65,11 +65,39 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'identifier', 'name']
+      ['_id', 'identifier', 'name', 'runtime']
     );
 
     if (!agent) {
       throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
+    }
+
+    if (command.providerId === EmailProviderIdEnum.AgentEmailInbox) {
+      this.assertHumanRelay(agent);
+
+      const { response, provisionedNewLink } = await this.findOrCreateNovuEmail.execute(
+        agent._id,
+        command.environmentId,
+        command.organizationId,
+        EmailProviderIdEnum.AgentEmailInbox
+      );
+
+      if (provisionedNewLink) {
+        trackAgentIntegrationConnected(this.analyticsService, {
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          agentId: agent._id,
+          agentIdentifier: command.agentIdentifier,
+          integrationId: response.integration._id,
+          integrationIdentifier: response.integration.identifier,
+          providerId: response.integration.providerId,
+          channel: response.integration.channel,
+          connectionSource: 'agent_email_inbox_provisioned',
+        });
+      }
+
+      return response;
     }
 
     if (command.providerId === EmailProviderIdEnum.NovuAgent) {
@@ -132,7 +160,7 @@ export class AddAgentIntegration {
   }
 
   private async linkExistingIntegration(
-    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name' | 'runtime'>,
     command: AddAgentIntegrationCommand
   ): Promise<AgentIntegrationResponseDto> {
     const integration = await this.integrationRepository.findOne(
@@ -148,9 +176,16 @@ export class AddAgentIntegration {
       throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
     }
 
+    if (integration.providerId === EmailProviderIdEnum.AgentEmailInbox) {
+      this.assertHumanRelay(agent);
+      await this.enforceEmailTier(command.organizationId);
+      await this.enforceSingletonEmail(agent._id, command, EmailProviderIdEnum.AgentEmailInbox);
+      await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
+    }
+
     if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
       await this.enforceEmailTier(command.organizationId);
-      await this.enforceSingletonEmail(agent._id, command);
+      await this.enforceSingletonEmail(agent._id, command, EmailProviderIdEnum.NovuAgent);
       await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
     }
 
@@ -158,7 +193,7 @@ export class AddAgentIntegration {
   }
 
   private async createLink(
-    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name' | 'runtime'>,
     integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>,
     command: AddAgentIntegrationCommand
   ): Promise<AgentIntegrationResponseDto> {
@@ -234,7 +269,17 @@ export class AddAgentIntegration {
     }
   }
 
-  private async enforceSingletonEmail(agentId: string, command: AddAgentIntegrationCommand): Promise<void> {
+  private assertHumanRelay(agent: Pick<AgentEntity, 'runtime'>): void {
+    if (agent.runtime !== 'human_relay') {
+      throw new ForbiddenException('Agent Email Inbox is only available for the Human project.');
+    }
+  }
+
+  private async enforceSingletonEmail(
+    agentId: string,
+    command: AddAgentIntegrationCommand,
+    providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox
+  ): Promise<void> {
     const links = await this.agentIntegrationRepository.find(
       {
         _agentId: agentId,
@@ -252,7 +297,7 @@ export class AddAgentIntegration {
         _id: { $in: linkedIntegrationIds },
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId,
       },
       '_id'
     );

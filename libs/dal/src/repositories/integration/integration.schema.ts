@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum } from '@novu/shared';
+import { agentInboxRoutingKeyPartialFilter } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -169,20 +169,20 @@ integrationSchema.index({
 });
 
 /**
- * Globally-unique routing key for the agent default shared inbox feature
+ * Globally-unique routing key for agent shared inboxes
  * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). The partial filter
- * scopes the index to NovuAgent rows so every other provider stays unconstrained
- * — and lets a string-typed `inboxRoutingKey` exist on legacy NovuAgent docs
- * provisioned before this field was added without forcing a backfill.
+ * covers Novu Email and Agent Email Inbox so the two cannot claim the same
+ * key on the shared domain. Other providers stay unconstrained.
+ *
+ * Changing this filter on an existing database requires the drop-and-recreate
+ * migration `agent-email-inbox-routing-key-index` — MongoDB rejects an
+ * in-place partial-filter change with IndexOptionsConflict.
  */
 integrationSchema.index(
   { 'credentials.inboxRoutingKey': 1 },
   {
     unique: true,
-    partialFilterExpression: {
-      providerId: EmailProviderIdEnum.NovuAgent,
-      'credentials.inboxRoutingKey': { $type: 'string' },
-    },
+    partialFilterExpression: agentInboxRoutingKeyPartialFilter(),
   }
 );
 

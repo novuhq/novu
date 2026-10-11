@@ -1,7 +1,13 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  AgentEmailInboxQuotaService,
+  type AgentEmailInboxReservation,
+  InstrumentUsecase,
+  isAgentEmailInboxQuotaExceeded,
+  PinoLogger,
+} from '@novu/application-generic';
 import { AgentEntity, AgentRepository, HumanInteractionRepository } from '@novu/dal';
-import { HumanInteractionStatusEnum, normalizeHumanTo } from '@novu/shared';
+import { HumanChannelViaEnum, HumanInteractionStatusEnum, normalizeHumanTo } from '@novu/shared';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
 import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-payload.dto';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
@@ -49,7 +55,8 @@ export class CreateInteraction {
     private readonly deliveryService: HumanDeliveryService,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly logger: PinoLogger,
-    private readonly activityRecorder: HumanInteractionActivityRecorder
+    private readonly activityRecorder: HumanInteractionActivityRecorder,
+    private readonly inboxQuota: AgentEmailInboxQuotaService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -90,38 +97,68 @@ export class CreateInteraction {
     });
 
     const resolved = await this.resolveTargets(command, agent, subscriberIds);
+    const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
+    let reservation: AgentEmailInboxReservation | undefined;
+    let emailBlockedError: unknown;
 
-    const interaction = await this.humanInteractionRepository.create(
-      buildPendingHumanInteraction({
-        kind: command.kind,
-        content: toStoredContent(command.kind, { ...command.card, title }),
-        from: command.from,
-        subscriberIds,
-        agentId: agent._id,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        ttlSeconds: command.ttlSeconds,
-      })
-    );
+    if (emailCount > 0) {
+      try {
+        reservation = await this.inboxQuota.reserve(command.organizationId, emailCount);
+      } catch (err) {
+        if (!isAgentEmailInboxQuotaExceeded(err) || emailCount === resolved.length) {
+          throw err;
+        }
 
-    const targets: HumanDeliveryTarget[] = resolved.map(({ subscriberId, target }) => ({
-      subscriberId,
-      integrationIdentifier: target.integrationIdentifier,
-      platform: target.platform,
-      deliver: () => this.deliveryService.deliver(interaction, target),
-    }));
-
-    const delivered = await deliverToTargets(this.humanInteractionRepository, this.logger, interaction, targets, {
-      logMessage: 'Human interaction delivery failed for one recipient',
-    });
-
-    await this.activityRecorder.recordRequest(delivered.interaction);
-
-    if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
-      await this.activityRecorder.recordResponse(delivered.interaction);
+        emailBlockedError = err;
+      }
     }
 
-    return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds);
+    let interaction: Awaited<ReturnType<HumanInteractionRepository['create']>>;
+    try {
+      interaction = await this.humanInteractionRepository.create(
+        buildPendingHumanInteraction({
+          kind: command.kind,
+          content: toStoredContent(command.kind, { ...command.card, title }),
+          from: command.from,
+          subscriberIds,
+          agentId: agent._id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          ttlSeconds: command.ttlSeconds,
+        })
+      );
+
+      const targets: HumanDeliveryTarget[] = resolved.map(({ subscriberId, target }) => ({
+        subscriberId,
+        integrationIdentifier: target.integrationIdentifier,
+        platform: target.platform,
+        deliver: () => {
+          if (emailBlockedError && target.platform === HumanChannelViaEnum.EMAIL) {
+            throw emailBlockedError;
+          }
+
+          return this.deliveryService.deliver(interaction, target);
+        },
+      }));
+
+      const deliver = () =>
+        deliverToTargets(this.humanInteractionRepository, this.logger, interaction, targets, {
+          logMessage: 'Human interaction delivery failed for one recipient',
+        });
+      const delivered = reservation ? await this.inboxQuota.runReserved(reservation, deliver) : await deliver();
+
+      await this.activityRecorder.recordRequest(delivered.interaction);
+
+      if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
+        await this.activityRecorder.recordResponse(delivered.interaction);
+      }
+
+      return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds);
+    } finally {
+      if (reservation) {
+        await this.inboxQuota.releaseRemaining(reservation);
+      }
+    }
   }
 
   private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, subscriberIds: string[]) {

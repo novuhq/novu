@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, DomainRouteRepository, IntegrationRepository } from '@novu/dal';
-import { EmailProviderIdEnum } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS } from '@novu/shared';
 import { ClientSession } from 'mongoose';
 
 const LOG_CONTEXT = 'NovuEmailCleanupService';
@@ -57,7 +57,7 @@ export class NovuEmailCleanupService {
         _id: integrationId,
         _environmentId: environmentId,
         _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
       },
       '_id',
       { session }
@@ -99,7 +99,7 @@ export class NovuEmailCleanupService {
         _id: { $in: integrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
       },
       '_id',
       { session }

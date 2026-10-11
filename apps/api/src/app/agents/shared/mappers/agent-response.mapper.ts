@@ -8,7 +8,7 @@ import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@no
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformAgentConsoleUrl,
-  EmailProviderIdEnum,
+  isAgentInboxProvider,
   isClaudePlatformConsoleProvider,
   slugify,
 } from '@novu/shared';
@@ -116,7 +116,7 @@ function resolveSharedInboxAddress(
   agent: SharedInboxAgentContext,
   integration: AgentIntegrationEmbeddedSource
 ): string | undefined {
-  if (integration.providerId !== EmailProviderIdEnum.NovuAgent) {
+  if (!isAgentInboxProvider(integration.providerId)) {
     return undefined;
   }
 
@@ -177,10 +177,9 @@ export function toAgentIntegrationResponse(
   agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
   const sharedInboundAddress = resolveSharedInboxAddress(agent, integration);
-  const defaultSenderName =
-    integration.providerId === EmailProviderIdEnum.NovuAgent
-      ? integration.credentials?.senderName || agent.name
-      : undefined;
+  const defaultSenderName = isAgentInboxProvider(integration.providerId)
+    ? integration.credentials?.senderName || agent.name
+    : undefined;
 
   return {
     _id: link._id,
@@ -194,10 +193,9 @@ export function toAgentIntegrationResponse(
       active: integration.active,
       sharedInboundAddress,
       defaultSenderName,
-      sharedInboxDisabled:
-        integration.providerId === EmailProviderIdEnum.NovuAgent
-          ? Boolean(integration.credentials?.sharedInboxDisabled)
-          : undefined,
+      sharedInboxDisabled: isAgentInboxProvider(integration.providerId)
+        ? Boolean(integration.credentials?.sharedInboxDisabled)
+        : undefined,
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,

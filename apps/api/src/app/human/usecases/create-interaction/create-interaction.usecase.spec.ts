@@ -1,5 +1,6 @@
-import { BadGatewayException, BadRequestException, HttpException, NotFoundException } from '@nestjs/common';
-import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import { BadGatewayException, BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { AgentEmailInboxQuotaExceededException } from '@novu/application-generic';
+import { HumanChannelViaEnum, HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CreateInteraction } from './create-interaction.usecase';
@@ -45,13 +46,19 @@ describe('CreateInteraction', () => {
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const activityRecorder = { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() };
+    const inboxQuota = {
+      reserve: sinon.stub().resolves({ organizationId: 'org1', remaining: 1, unlimited: false }),
+      runReserved: sinon.stub().callsFake((_reservation: unknown, fn: () => Promise<unknown>) => fn()),
+      releaseRemaining: sinon.stub().resolves(),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
       deliveryService as any,
       connectClaimTokenService as any,
       logger as any,
-      activityRecorder as any
+      activityRecorder as any,
+      inboxQuota as any
     );
     const command = {
       userId: 'user1',
@@ -71,6 +78,7 @@ describe('CreateInteraction', () => {
       deliveryService,
       humanInteractionRepository,
       connectClaimTokenService,
+      inboxQuota,
     };
   }
 
@@ -489,5 +497,51 @@ describe('CreateInteraction', () => {
       expect(humanInteractionRepository.create.calledOnce).to.equal(true);
       expect(connectClaimTokenService.isEnvironmentClaimed.called).to.equal(false);
     });
+  });
+
+  it('rejects an email-only interaction with 429 and does not create it when the inbox cap is exhausted', async () => {
+    const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.resolves({
+      integrationIdentifier: 'inbox',
+      platform: HumanChannelViaEnum.EMAIL,
+      platformUserId: 'ada@example.com',
+    });
+    inboxQuota.reserve.rejects(
+      new AgentEmailInboxQuotaExceededException('daily', 50, 3600, '2026-10-12T00:00:00.000Z')
+    );
+
+    const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+    expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+    expect(humanInteractionRepository.create.called).to.equal(false);
+    expect(deliveryService.deliver.called).to.equal(false);
+  });
+
+  it('still delivers Telegram when the email slice of a fan-out is over the cap', async () => {
+    const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } =
+      setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.onFirstCall().resolves({
+      integrationIdentifier: 'inbox',
+      platform: HumanChannelViaEnum.EMAIL,
+      platformUserId: 'ada@example.com',
+    });
+    deliveryService.resolveChannel.onSecondCall().resolves({
+      integrationIdentifier: 'telegram-main',
+      platform: 'telegram',
+      platformUserId: '777',
+    });
+    humanInteractionRepository.create.resolves({ ...created, subscriberIds: ['sub-1', 'sub-2'] });
+    inboxQuota.reserve.rejects(
+      new AgentEmailInboxQuotaExceededException('monthly', 300, 86400, '2026-11-01T00:00:00.000Z')
+    );
+
+    const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
+
+    expect(deliveryService.deliver.calledOnce).to.equal(true);
+    expect(deliveryService.deliver.firstCall.args[1].platform).to.equal('telegram');
+    expect(result.failedTo).to.deep.equal(['sub-1']);
+    expect(result.to).to.deep.equal(['sub-2']);
   });
 });

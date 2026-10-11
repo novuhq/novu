@@ -72,6 +72,8 @@ export enum FeatureNameEnum {
 
   // Agent Features
   AGENT_EMAIL_INTEGRATION = 'agentEmailIntegration',
+  AGENT_EMAIL_INBOX_DAILY_LIMIT = 'agentEmailInboxDailyLimit',
+  AGENT_EMAIL_INBOX_MONTHLY_LIMIT = 'agentEmailInboxMonthlyLimit',
   AGENT_MAX_AGENTS = 'agentMaxAgents',
   AGENT_MAX_ACTIVE_CHANNELS = 'agentMaxActiveChannels',
   AGENT_MAX_CUSTOM_EMAIL_DOMAINS = 'agentMaxCustomEmailDomains',
@@ -516,6 +518,20 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Agent email integration', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Agent email integration', value: true },
   },
+  [FeatureNameEnum.AGENT_EMAIL_INBOX_DAILY_LIMIT]: {
+    [ApiServiceLevelEnum.FREE]: { label: '50 emails per day', value: 50 },
+    [ApiServiceLevelEnum.PRO]: { label: '50 emails per day', value: 50 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '50 emails per day', value: 50 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: '50 emails per day', value: 50 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: '50 emails per day', value: 50 },
+  },
+  [FeatureNameEnum.AGENT_EMAIL_INBOX_MONTHLY_LIMIT]: {
+    [ApiServiceLevelEnum.FREE]: { label: '300 emails per month', value: 300 },
+    [ApiServiceLevelEnum.PRO]: { label: '300 emails per month', value: 300 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '300 emails per month', value: 300 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: '300 emails per month', value: 300 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: '300 emails per month', value: 300 },
+  },
   [FeatureNameEnum.AGENT_MAX_AGENTS]: {
     [ApiServiceLevelEnum.FREE]: { label: '2 agents', value: 2 },
     [ApiServiceLevelEnum.PRO]: { label: '5 agents', value: 5 },
@@ -637,45 +653,36 @@ function getConvertToMs(conversionToMs: boolean | undefined) {
   };
 }
 
+function scalarToBoolean(
+  value: boolean | number | string,
+  featureName: FeatureNameEnum,
+  tier: ApiServiceLevelEnum
+): boolean {
+  if (typeof value === 'boolean') return value;
+
+  if (typeof value === 'number') {
+    if (value === 0) return false;
+    if (value === 1) return true;
+    throw new Error(`Cannot convert number ${value} to boolean for ${featureName} at tier ${tier}`);
+  }
+
+  const lowercased = value.toLowerCase();
+  if (lowercased === 'true') return true;
+  if (lowercased === 'false') return false;
+
+  throw new Error(`Cannot convert string "${value}" to boolean for ${featureName} at tier ${tier}`);
+}
+
 export function getFeatureForTierAsBoolean(featureName: FeatureNameEnum, tier: ApiServiceLevelEnum): boolean {
   const featureTiers = novuServiceTiers[featureName];
 
   if (!featureTiers) return false;
 
   const feature: FeatureValue = featureTiers[tier];
+  const scalar = isDetailedPriceListItem(feature) ? feature.value : feature;
 
-  // Handle DetailedPriceListItem
-  if (isDetailedPriceListItem(feature)) {
-    if (typeof feature.value === 'boolean') return feature.value;
-    if (typeof feature.value === 'number') {
-      if (feature.value === 0) return false;
-      if (feature.value === 1) return true;
-      throw new Error(`Cannot convert number ${feature.value} to boolean for ${featureName} at tier ${tier}`);
-    }
-    if (typeof feature.value === 'string') {
-      const lowercased = feature.value.toLowerCase();
-      if (lowercased === 'true') return true;
-      if (lowercased === 'false') return false;
-      throw new Error(`Cannot convert string "${feature.value}" to boolean for ${featureName} at tier ${tier}`);
-    }
-  }
-
-  // Direct boolean
-  if (typeof feature === 'boolean') return feature;
-
-  // Number conversion
-  if (typeof feature === 'number') {
-    if (feature === 0) return false;
-    if (feature === 1) return true;
-    throw new Error(`Cannot convert number ${feature} to boolean for ${featureName} at tier ${tier}`);
-  }
-
-  // String conversion
-  if (typeof feature === 'string') {
-    const lowercased = feature.toLowerCase();
-    if (lowercased === 'true') return true;
-    if (lowercased === 'false') return false;
-    throw new Error(`Cannot convert string "${feature}" to boolean for ${featureName} at tier ${tier}`);
+  if (typeof scalar === 'boolean' || typeof scalar === 'number' || typeof scalar === 'string') {
+    return scalarToBoolean(scalar, featureName, tier);
   }
 
   throw new Error(`Cannot convert feature ${featureName} at tier ${tier} to boolean`);
