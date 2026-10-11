@@ -170,22 +170,25 @@ export function resolveHumanInteractionCard(source: HumanInteractionCardSource):
   }
 
   if (source.kind === HumanInteractionKindEnum.APPROVE) {
-    const extraActions =
-      chrome && 'extraActions' in chrome && chrome.extraActions?.length
-        ? mintHumanOptions(chrome.extraActions)
-        : undefined;
-    const approveLabel = chrome && 'approveLabel' in chrome ? chrome.approveLabel : undefined;
-    const denyLabel = chrome && 'denyLabel' in chrome ? chrome.denyLabel : undefined;
-
-    return {
-      ...presentation,
-      ...(approveLabel ? { approveLabel } : {}),
-      ...(denyLabel ? { denyLabel } : {}),
-      ...(extraActions?.length ? { extraActions } : {}),
-    };
+    return { ...presentation, ...approveChrome(chrome) };
   }
 
   return presentation;
+}
+
+function approveChrome(chrome: ReturnType<typeof chromeFromContent>) {
+  const extraActions =
+    chrome && 'extraActions' in chrome && chrome.extraActions?.length
+      ? mintHumanOptions(chrome.extraActions)
+      : undefined;
+  const approveLabel = chrome && 'approveLabel' in chrome ? chrome.approveLabel : undefined;
+  const denyLabel = chrome && 'denyLabel' in chrome ? chrome.denyLabel : undefined;
+
+  return {
+    ...(approveLabel ? { approveLabel } : {}),
+    ...(denyLabel ? { denyLabel } : {}),
+    ...(extraActions?.length ? { extraActions } : {}),
+  };
 }
 
 export function humanInteractionCardTitle(source: HumanInteractionCardSource): string {
@@ -233,6 +236,30 @@ export enum HumanChannelViaEnum {
   SLACK = 'slack',
   EMAIL = 'email',
 }
+
+/**
+ * Address-channel verification lifecycle surfaced on human contact / invite
+ * status DTOs. Chat channels (telegram/slack) only ever report `verified`
+ * once a ChannelEndpoint exists — they have no pending state.
+ */
+export enum HumanAddressVerificationStateEnum {
+  UNVERIFIED = 'unverified',
+  PENDING = 'pending',
+  VERIFIED = 'verified',
+}
+
+/** Per-channel reachability for a human contact (CLI + invite page). */
+export type HumanContactChannelStatus = {
+  via: HumanChannelViaEnum;
+  status: HumanAddressVerificationStateEnum;
+  /** Masked address for address-based channels (e.g. `a***@b.com`). */
+  address?: string;
+  verifiedAt?: string;
+  /** `requestedAt` of the request that produced the verified slot. Lets a caller match its own request. */
+  verifiedRequestedAt?: string;
+  /** Set while a newer request is pending (the pending slot's `requestedAt`). */
+  requestedAt?: string;
+};
 
 /** Default lifetime of a pending interaction. */
 export const HUMAN_INTERACTION_DEFAULT_TTL_SECONDS = 24 * 60 * 60;

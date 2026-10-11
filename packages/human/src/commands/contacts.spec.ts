@@ -85,6 +85,40 @@ describe('renderContactsTable', () => {
   it('omits the hint on the last page', () => {
     expect(renderContactsTable(markSelf([contact({ id: 'alice' })], 'human_me'), null)).not.toContain('More contacts');
   });
+
+  it('shows the address verified for this relay, not the shared subscriber email', () => {
+    const verified = renderContactsTable(
+      [
+        contact({
+          id: 'alice',
+          email: 'shared@x.co',
+          channels: [{ via: 'email', address: 'relay@x.co' }] as Contact['channels'],
+        }),
+      ],
+      null
+    );
+    const missingAddress = renderContactsTable(
+      [contact({ id: 'bob', email: 'shared@x.co', channels: [{ via: 'email' }] as Contact['channels'] })],
+      null
+    );
+    const pending = renderContactsTable(
+      [
+        contact({
+          id: 'cara',
+          channels: [{ via: 'email', status: 'pending', address: 'b@x.co' }],
+        }),
+      ],
+      null
+    );
+    const unverified = renderContactsTable([contact({ id: 'carol', email: 'c@x.co' })], null);
+
+    expect(verified).toContain('relay@x.co');
+    expect(verified).not.toContain('shared@x.co');
+    expect(verified).not.toContain('(unverified)');
+    expect(missingAddress).not.toContain('shared@x.co');
+    expect(pending).toContain('(pending verification)');
+    expect(unverified).toContain('(unverified)');
+  });
 });
 
 describe('contactsCommand', () => {

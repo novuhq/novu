@@ -41,6 +41,11 @@ overrides:
   # All three are patched in 4.7.10 (patch bump within the 4.7.x line).
   handlebars@<4.7.10: ^4.7.10
   braces@<3.0.3: ^3.0.3
+  # GHSA-vc2v-76pw-4v95 (high): compression DoS via memory leak when the HTTP
+  # response is closed before compression finishes flushing. Patched in 1.8.2
+  # (patch bump within the 1.8.x line). Direct dep via apps/api and transitive
+  # via @nx/js > verdaccio across build tooling.
+  compression@<1.8.2: ^1.8.2
   file-type@>=13.0.0 <16.5.4: ^16.5.4
   file-type@>=17.0.0 <21.3.4: ^21.3.4
   get-func-name@<2.0.1: ^2.0.1
@@ -75,6 +80,14 @@ overrides:
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
   '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  # GHSA-7mx3-vvmw-hjmv (high): @graphql-tools/utils prototype pollution in
+  # `mergeDeep`. Patched in 12.0.1 (patch bump within the 12.0.x line).
+  # Transitive via `@nestjs/graphql` in apps/api and apps/webhook.
+  '@graphql-tools/utils@<12.0.1': ^12.0.1
+  # GHSA-c8x8-7fp4-3x9w (high): prosemirror-view XSS in paste handling.
+  # Patched in 1.42.3 (minor bump within the 1.x line). Transitive via
+  # `@tiptap/react > @tiptap/core > @tiptap/pm` in apps/dashboard.
+  prosemirror-view@<1.42.3: ^1.42.3
   # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
   # via `__proto__` in custom message language and `object().rename()` with a
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
@@ -175,6 +188,12 @@ overrides:
   # transitive consumers (`nx > smol-toml` in dev tooling) land on 1.9.x.
   smol-toml@<1.9.0: ^1.9.0
   '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
+  # GHSA-6qxp-vccf-f47h (high): MCP TypeScript SDK OAuth client could send
+  # credentials to an authorization server chosen by the MCP server, enabling
+  # token exfiltration via a malicious server. Patched in 1.31.0. Pulled
+  # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
+  # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
+  '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
@@ -289,7 +308,7 @@ overrides:
   # Patched in 3.2.1 (patch bump within the 3.x line). Transitive via
   # firebase-admin in `packages/providers`.
   '@fastify/busboy@<3.2.1': ^3.2.1
-  sharp@<0.35.4: ^0.35.4
+  sharp@<0.35.5: ^0.35.5
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
   '@taskforcesh/bullmq-pro@6.11.0>uuid': 11.1.1
