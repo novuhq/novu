@@ -9,7 +9,9 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { HUMAN_RELAY_DEFAULT_NAME } from '../../../agents/human-relay/human-relay-identity';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
+import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
@@ -29,7 +31,8 @@ export class SetupHumanRelay {
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly humanContactRepository: HumanContactRepository,
-    private readonly humanOperator: HumanOperatorService
+    private readonly humanOperator: HumanOperatorService,
+    private readonly humanAgentIdentity: HumanAgentIdentityService
   ) {}
 
   @InstrumentUsecase()
@@ -54,6 +57,7 @@ export class SetupHumanRelay {
     return {
       agentId: agent._id,
       agentIdentifier: agent.identifier,
+      agentName: agent.name,
       subscriberId,
     };
   }
@@ -87,11 +91,18 @@ export class SetupHumanRelay {
         );
       }
 
-      return existing;
+      // Running setup again with another name or description is how they are changed.
+      return this.humanAgentIdentity.apply(existing, {
+        name: command.agentName,
+        description: command.agentDescription,
+      });
     }
 
+    const description = command.agentDescription?.trim();
+
     return this.agentRepository.create({
-      name: 'Human',
+      name: command.agentName?.trim() || HUMAN_RELAY_DEFAULT_NAME,
+      ...(description ? { description } : {}),
       identifier,
       active: true,
       runtime: 'human_relay',

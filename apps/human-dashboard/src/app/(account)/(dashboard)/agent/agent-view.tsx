@@ -34,6 +34,8 @@ export type AgentSummary = {
   /** Its own name, or "Human assistant" until the operator names it. */
   name: string;
   active: boolean;
+  /** The picture the operator gave it, when there is one. */
+  pictureUrl?: string;
   /** ISO timestamp of the `human setup` that made it. */
   createdAt?: string;
 };
@@ -193,7 +195,7 @@ function AgentCard({ agent, channels, finishPrompt }: AgentCardProps) {
       {/* The glow sits behind the name once the setup is done, and behind the banner until then. */}
       <Dither shown={!incomplete} />
       <div className="relative flex items-center gap-5 px-6 py-5.5">
-        <AgentAvatar className="size-14 rounded-full" />
+        <AgentAvatar src={agent.pictureUrl} className="size-14 rounded-full" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.25">
           <h2 className="truncate text-2xl leading-7.5 tracking-tight text-foreground">{agent.name}</h2>
           <p className="flex items-center gap-1.5 text-xs leading-4 text-muted">

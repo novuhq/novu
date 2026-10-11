@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { ToolId } from './ai-tools';
+import { isToolId, type ToolId } from './ai-tools';
 import type { HumanAccount } from './human-account';
 
 /**
@@ -12,12 +12,37 @@ export function readMcpUrl(): string | null {
   return process.env.HUMAN_MCP_URL?.trim().replace(/\/$/, '') || null;
 }
 
+/** A slow MCP server must not hold up the Agent page: the tiles then read as not connected yet. */
+const CONNECTIONS_TIMEOUT_MS = 4_000;
+
 /**
- * The AI tools that have signed in to the account through the MCP server.
+ * The AI tools that have signed in to the account through the MCP server, which remembers each
+ * sign-in. It answers only to the secret this server shares with the Novu API.
  *
- * The API can't tell yet: the MCP server (NV-8973) is what will record a tool's sign-in. Until it does,
- * no tool reads as connected, and the pages are built against this function so only it has to change.
+ * Nothing reads as connected when the server isn't configured or can't be asked: a tile that says
+ * "Connect" for a connected tool is a smaller mistake than one that says "Connected" for none.
  */
-export async function listConnectedTools(_account: HumanAccount): Promise<ToolId[]> {
-  return [];
+export async function listConnectedTools(account: HumanAccount): Promise<ToolId[]> {
+  const mcpUrl = readMcpUrl();
+  const secret = process.env.HUMAN_DASHBOARD_API_SECRET;
+  if (!mcpUrl || !secret) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${mcpUrl}/connections/${encodeURIComponent(account.humanUserId)}`, {
+      headers: { 'x-human-dashboard-secret': secret },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(CONNECTIONS_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      return [];
+    }
+
+    const body = (await response.json()) as { data?: Record<string, unknown> } | null;
+
+    return Object.keys(body?.data ?? {}).filter(isToolId);
+  } catch {
+    return [];
+  }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { HumanInviteStatusResult } from '../../dtos/human-invite.dto';
+import { agentPictureUrl } from '../../services/human-agent-picture.service';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
   type ActiveHumanInvite,
@@ -37,7 +38,7 @@ export class GetHumanInviteStatus {
     const { payload } = invite;
     const agent = await this.agentRepository.findOne(
       { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
-      ['name']
+      ['name', 'picture']
     );
 
     if (!agent) {
@@ -58,10 +59,12 @@ export class GetHumanInviteStatus {
       this.findInviterName(payload),
     ]);
     const displayName = fullName(subscriber);
+    const pictureUrl = agentPictureUrl({ _id: payload.agentId, _environmentId: payload.env, picture: agent.picture });
 
     return {
       valid: true,
       agentName: agent.name,
+      ...(pictureUrl ? { agentPictureUrl: pictureUrl } : {}),
       ...(inviterName ? { inviterName } : {}),
       inviteeName: displayName || payload.subscriberId,
       expiresAt: invite.expiresAt,

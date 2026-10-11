@@ -65,7 +65,7 @@ async function loadSidebarAgent(): Promise<SidebarAgent> {
       return AGENT_NOT_SET_UP;
     }
 
-    return { name: agentDisplayName(agent), status: 'Your agent', setUp: true };
+    return { name: agentDisplayName(agent), status: 'Your agent', setUp: true, pictureUrl: agent.pictureUrl };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);

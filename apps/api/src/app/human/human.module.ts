@@ -24,9 +24,12 @@ import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/r
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
+import { HumanAgentPicturesPublicController } from './human-agent-pictures-public.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController } from './human-invites-public.controller';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
+import { HumanAgentIdentityService } from './services/human-agent-identity.service';
+import { HumanAgentPictureService } from './services/human-agent-picture.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
@@ -52,6 +55,7 @@ import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 
 /**
  * The human-in-the-loop interaction API. State lives here.
@@ -68,7 +72,12 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     TelegramLinkingModule,
     forwardRef(() => IntegrationModule),
   ],
-  controllers: [HumanInteractionsController, HumanInvitesPublicController, HumanAccountsController],
+  controllers: [
+    HumanInteractionsController,
+    HumanInvitesPublicController,
+    HumanAgentPicturesPublicController,
+    HumanAccountsController,
+  ],
   providers: [
     HumanInteractionRepository,
     HumanContactRepository,
@@ -87,11 +96,14 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
     ListInteractions,
     CancelInteraction,
     SetupHumanRelay,
+    UpdateHumanAgent,
     ListContacts,
     RemoveContact,
     RemoveSubscriber,
     HumanInviteTokenService,
     HumanOperatorService,
+    HumanAgentIdentityService,
+    HumanAgentPictureService,
     HumanAccountAgentService,
     CreateHumanInvite,
     GetHumanInviteStatus,

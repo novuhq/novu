@@ -57,7 +57,13 @@ export default async function AgentPage() {
       {settingUp && <AgentStatusPoll status={status} everyMs={agent ? CHANNELS_POLL_MS : SETUP_POLL_MS} />}
       <AgentView
         agent={
-          agent && { id: agent.id, name: agentDisplayName(agent), active: agent.active, createdAt: agent.createdAt }
+          agent && {
+            id: agent.id,
+            name: agentDisplayName(agent),
+            active: agent.active,
+            pictureUrl: agent.pictureUrl,
+            createdAt: agent.createdAt,
+          }
         }
         channels={rows}
         telegramSetup={telegramSetup}
