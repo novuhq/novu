@@ -78,7 +78,12 @@ overrides:
   # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
   # via `__proto__` in custom message language and `object().rename()` with a
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
-  joi@<18.2.5: ^18.2.5
+  # GHSA-wr44-6hxh-3jwq (moderate): joi 18.x prototype replacement through
+  # `__proto__` error codes during messages compilation. Patched in 18.2.9
+  # (patch bump within the 18.2.x line). Widen the previous `<18.2.5` floor
+  # so transitive consumers (packages/providers > africastalking, etc.) pick
+  # up the fix.
+  joi@<18.2.9: ^18.2.9
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
