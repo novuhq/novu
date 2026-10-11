@@ -167,9 +167,9 @@ export class UpsertWorkflowUseCase {
         eventType: WebhookEventEnum.WORKFLOW_UPDATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
-          // biome-ignore lint/plugin: webhook payloads carry the workflow entity as a loose JSON object
+          // biome-ignore lint/plugin: workflow webhook payload is a loose record
           object: updatedWorkflow as unknown as Record<string, unknown>,
-          // biome-ignore lint/plugin: webhook payloads carry the workflow entity as a loose JSON object
+          // biome-ignore lint/plugin: workflow webhook payload is a loose record
           previousObject: existingWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
@@ -180,7 +180,7 @@ export class UpsertWorkflowUseCase {
         eventType: WebhookEventEnum.WORKFLOW_CREATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
-          // biome-ignore lint/plugin: webhook payloads carry the workflow entity as a loose JSON object
+          // biome-ignore lint/plugin: workflow webhook payload is a loose record
           object: updatedWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
@@ -260,7 +260,7 @@ export class UpsertWorkflowUseCase {
       userId: user._id,
       name: workflowDto.name,
       steps,
-      // biome-ignore lint/plugin: rawData stores the submitted workflow DTO as a loose JSON object
+      // biome-ignore lint/plugin: update command rawData is the request DTO stored as a loose record
       rawData: workflowDto as unknown as Record<string, unknown>,
       type: ResourceTypeEnum.BRIDGE,
       description: workflowDto.description,
@@ -506,7 +506,7 @@ export class UpsertWorkflowUseCase {
   }
 
   @Instrument()
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing control-value persistence flow is outside this change.
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing control-value write path is outside this change
   private async executeControlValuesUpdate(
     {
       shouldDelete,
@@ -689,19 +689,28 @@ export class UpsertWorkflowUseCase {
     updatedStep: NotificationStepEntity,
     commandSteps: UpsertStepDataCommand[]
   ): UpsertStepDataCommand | undefined {
-    return commandSteps.find((commandStepX) => {
-      const isStepUpdateDashboardDto = '_id' in commandStepX;
-      if (isStepUpdateDashboardDto) {
-        return commandStepX._id === updatedStep._templateId;
-      }
+    // Strongest identity wins, and a step that owns a stronger key is not a candidate for a weaker one.
+    // Otherwise a newly inserted step with the same name, placed earlier in the request, hijacks an
+    // existing step's control values. `in` checks stay so omitted keys still fall through.
+    const matchedById = commandSteps.find(
+      (commandStep) => '_id' in commandStep && commandStep._id === updatedStep._templateId
+    );
 
-      const isCreateBySyncToEnvironment = 'stepId' in commandStepX;
-      if (isCreateBySyncToEnvironment) {
-        return commandStepX.stepId === updatedStep.stepId;
-      }
+    if (matchedById) {
+      return matchedById;
+    }
 
-      return commandStepX.name === updatedStep.name;
-    });
+    const matchedByStepId = commandSteps.find(
+      (commandStep) => !('_id' in commandStep) && 'stepId' in commandStep && commandStep.stepId === updatedStep.stepId
+    );
+
+    if (matchedByStepId) {
+      return matchedByStepId;
+    }
+
+    return commandSteps.find(
+      (commandStep) => !('_id' in commandStep) && !('stepId' in commandStep) && commandStep.name === updatedStep.name
+    );
   }
 
   @Instrument()

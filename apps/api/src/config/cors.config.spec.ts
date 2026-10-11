@@ -80,6 +80,37 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(previewOrigin);
     });
 
+    it('should allow the human.md landing page origins on the public setup routes only', () => {
+      const setupRoutes = [
+        '/v1/integrations/mobile-configure/status',
+        '/v1/integrations/mobile-configure',
+        '/v1/agents/public/slack/setup/status',
+        '/v1/agents/public/slack/setup',
+      ];
+
+      for (const humanOrigin of ['https://www.gethuman.md', 'https://gethuman.md']) {
+        for (const url of setupRoutes) {
+          const callbackSpy = spy();
+
+          // @ts-expect-error - corsOptionsDelegate is not typed correctly
+          corsOptionsDelegate({ url, headers: { origin: humanOrigin } }, callbackSpy);
+
+          expect(callbackSpy.calledOnce).to.be.ok;
+          expect(callbackSpy.firstCall.firstArg).to.be.null;
+          expect(callbackSpy.firstCall.lastArg.origin).to.deep.equal([humanOrigin]);
+        }
+
+        for (const url of ['/v1/test', '/v1/better-auth/session', '/v1/agents']) {
+          const callbackSpy = spy();
+
+          // @ts-expect-error - corsOptionsDelegate is not typed correctly
+          corsOptionsDelegate({ url, headers: { origin: humanOrigin } }, callbackSpy);
+
+          expect(callbackSpy.firstCall.lastArg.origin).to.deep.equal([]);
+        }
+      }
+    });
+
     it('widget routes should be wildcarded', () => {
       const callbackSpy = spy();
 
@@ -113,14 +144,14 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
     });
 
-    describe('Human website invite page', () => {
-      const humanWebsiteOrigin = 'https://gethuman.md';
+    describe('Human dashboard invite page', () => {
+      const humanDashboardOrigin = 'https://gethuman.md';
 
       afterEach(() => {
-        delete process.env.HUMAN_WEBSITE_URL;
+        delete process.env.HUMAN_DASHBOARD_URL;
       });
 
-      // Requests come from the dashboard, so any Human website origin in the result was added for the route.
+      // Requests come from the dashboard, so any Human dashboard origin in the result was added for the route.
       function originsFor(url: string) {
         const callbackSpy = spy();
 
@@ -129,20 +160,20 @@ describe('CORS Configuration', () => {
         return callbackSpy.firstCall.lastArg.origin as string[];
       }
 
-      it('allows the Human website on the public invite routes', () => {
-        process.env.HUMAN_WEBSITE_URL = 'https://gethuman.md/';
+      it('allows the Human dashboard on the public invite routes', () => {
+        process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md/';
 
-        expect(originsFor('/v1/human/invites/status?token=abc')).to.include(humanWebsiteOrigin);
-        expect(originsFor('/v1/human/invites/connect')).to.include(humanWebsiteOrigin);
+        expect(originsFor('/v1/human/invites/status?token=abc')).to.include(humanDashboardOrigin);
+        expect(originsFor('/v1/human/invites/connect')).to.include(humanDashboardOrigin);
       });
 
-      it('falls back to gethuman.md when HUMAN_WEBSITE_URL is not set', () => {
-        expect(originsFor('/v1/human/invites/decline')).to.include(humanWebsiteOrigin);
+      it('falls back to gethuman.md when HUMAN_DASHBOARD_URL is not set', () => {
+        expect(originsFor('/v1/human/invites/decline')).to.include(humanDashboardOrigin);
       });
 
-      it('does not allow the Human website anywhere else', () => {
-        expect(originsFor('/v1/human/invites')).to.not.include(humanWebsiteOrigin);
-        expect(originsFor('/v1/human/interactions')).to.not.include(humanWebsiteOrigin);
+      it('does not allow the Human dashboard anywhere else', () => {
+        expect(originsFor('/v1/human/invites')).to.not.include(humanDashboardOrigin);
+        expect(originsFor('/v1/human/interactions')).to.not.include(humanDashboardOrigin);
       });
     });
   });

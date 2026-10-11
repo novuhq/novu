@@ -1,6 +1,6 @@
 import { CLI_USER_CODE_PATTERN } from '@novu/shared';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
-import type { HumanRegion } from '../../shared/helpers/resolve-human-website-base-url';
+import type { HumanRegion } from '../../shared/helpers/resolve-human-dashboard-base-url';
 
 /** Clerk user IDs of the Human Clerk app, e.g. `user_2abc…`. Also used as the local part of the made-up email. */
 export const HUMAN_USER_ID_PATTERN = /^[A-Za-z0-9_]{1,64}$/;
@@ -26,6 +26,13 @@ export class ClaimHumanAccountRequestDto extends EnsureHumanAccountRequestDto {
   @IsNotEmpty()
   @MaxLength(64)
   token: string;
+}
+
+/** Names a `human login` by the code its terminal shows, e.g. `BCDF-GHJK`. */
+export class HumanCliLoginRequestDto {
+  @IsString()
+  @Matches(CLI_USER_CODE_PATTERN)
+  userCode: string;
 }
 
 export class ApproveHumanCliLoginRequestDto extends EnsureHumanAccountRequestDto {
@@ -62,6 +69,18 @@ export interface HumanAccountClaimResponseDto {
 export interface HumanAccountCliLoginResponseDto extends HumanAccountResponseDto {
   /** The keyless setup moved into the account on the way. */
   keptSetup: boolean;
+}
+
+/** A `human login` still waiting to be approved or denied. */
+export interface HumanCliLoginResponseDto {
+  userCode: string;
+  /** Name of the computer the CLI runs on, as the CLI reported it. Not verified: render it as plain text. */
+  machineName?: string;
+}
+
+export interface HumanCliLoginDeniedResponseDto {
+  /** False when no login was waiting for the code anymore: it ran out, was denied before, or was approved. */
+  denied: boolean;
 }
 
 export interface HumanAccountSecretKeyResponseDto {

@@ -46,13 +46,13 @@ class BootstrapOptions {
 
 export async function bootstrap(
   bootstrapOptions?: BootstrapOptions
-): Promise<{ app: INestApplication; document: any }> {
+): Promise<{ app: INestApplication; document: Awaited<ReturnType<typeof setupSwagger>> }> {
   BullMqService.haveProInstalled();
 
   const agentRawBodyBuffer = (_req, _res, buffer, _encoding): void => {
     if (buffer?.length) {
       // eslint-disable-next-line no-param-reassign
-      (_req as any).rawBody = Buffer.from(buffer);
+      (_req as { rawBody?: Buffer }).rawBody = Buffer.from(buffer);
     }
   };
 
@@ -66,7 +66,8 @@ export async function bootstrap(
    * The internal parser would consume the request stream first; the manual parser then
    * failed inside raw-body with `InternalServerError: stream is not readable`.
    */
-  const nestOptions: Record<string, boolean> = { bodyParser: false };
+  // abortOnError: false so init errors reach runWithHydratedSecrets instead of process.abort(), which drops New Relic data.
+  const nestOptions: Record<string, boolean> = { bodyParser: false, abortOnError: false };
 
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     rawBodyBuffer = agentRawBodyBuffer;

@@ -3,6 +3,50 @@ import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { HumanContactDBModel } from './human-contact.entity';
 
+const humanContactPendingAddressSchema = new Schema(
+  {
+    address: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    requestedAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const humanContactVerifiedAddressSchema = new Schema(
+  {
+    address: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    requestedAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    verifiedAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const humanContactChannelAddressesSchema = new Schema(
+  {
+    pending: {
+      type: humanContactPendingAddressSchema,
+    },
+    verified: {
+      type: humanContactVerifiedAddressSchema,
+    },
+  },
+  { _id: false }
+);
+
 const humanContactSchema = new Schema<HumanContactDBModel>(
   {
     _environmentId: {
@@ -31,11 +75,29 @@ const humanContactSchema = new Schema<HumanContactDBModel>(
       type: Schema.Types.String,
       enum: ['inviter', 'contact'],
     },
+    addresses: {
+      type: new Schema(
+        {
+          email: {
+            type: humanContactChannelAddressesSchema,
+          },
+        },
+        { _id: false }
+      ),
+    },
+    isOperator: {
+      type: Schema.Types.Boolean,
+    },
   },
   schemaOptions
 );
 
 humanContactSchema.index({ _environmentId: 1, _agentId: 1, subscriberId: 1 }, { unique: true });
+// One operator per relay agent.
+humanContactSchema.index(
+  { _environmentId: 1, _agentId: 1 },
+  { unique: true, partialFilterExpression: { isOperator: true } }
+);
 
 export const HumanContact =
   (mongoose.models.HumanContact as mongoose.Model<HumanContactDBModel>) ||

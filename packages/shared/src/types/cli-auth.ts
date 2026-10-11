@@ -10,7 +10,7 @@ export const CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS = 60 * 60;
 /** CLI surface identifier for `novu connect` device-auth sessions. */
 export const CLI_DEVICE_SESSION_NAME_NOVU_CONNECT = 'novu-connect';
 
-/** CLI surface identifier for `human login` device-auth sessions, approved on the Human website. */
+/** CLI surface identifier for `human login` device-auth sessions, approved on the Human dashboard. */
 export const CLI_DEVICE_SESSION_NAME_HUMAN_CLI = 'human-cli';
 
 /**

@@ -515,6 +515,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           email: createNovuEmailAdapter({
             senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
+            defaultAgentAddress: this.agentEmailSender.resolveSharedInboxAddress(config),
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
             stripAgentReplyToken,
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
@@ -571,6 +572,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
               ),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
+            streamMessage: this.webChatPlatformDelivery.createStreamMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
             startTyping: this.webChatPlatformDelivery.createStartTyping(deliveryContext),
           }),

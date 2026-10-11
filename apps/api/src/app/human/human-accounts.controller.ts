@@ -11,21 +11,29 @@ import {
   type HumanAccountCliLoginResponseDto,
   type HumanAccountResponseDto,
   type HumanAccountSecretKeyResponseDto,
+  type HumanCliLoginDeniedResponseDto,
+  HumanCliLoginRequestDto,
+  type HumanCliLoginResponseDto,
 } from './dtos/human-account.dto';
-import { HumanWebsiteSecretGuard } from './guards/human-website-secret.guard';
+import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { ApproveHumanCliLoginCommand } from './usecases/approve-human-cli-login/approve-human-cli-login.command';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { ClaimForHumanAccountCommand } from './usecases/claim-for-human-account/claim-for-human-account.command';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { DeleteHumanAccountCommand } from './usecases/delete-human-account/delete-human-account.command';
 import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human-account.usecase';
+import { DenyHumanCliLogin } from './usecases/deny-human-cli-login/deny-human-cli-login.usecase';
 import { EnsureBackingOrganizationCommand } from './usecases/ensure-backing-organization/ensure-backing-organization.command';
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKeyCommand } from './usecases/get-backing-secret-key/get-backing-secret-key.command';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
+import { HumanCliLoginCommand } from './usecases/get-human-cli-login/human-cli-login.command';
+import { RegenerateBackingSecretKeyCommand } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.command';
+import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 
 /**
- * Private endpoints for the Human website's server (gethuman.md), which signs operators in with its
+ * Private endpoints for the Human dashboard's server (gethuman.md), which signs operators in with its
  * own Clerk app. Each Human account is backed by a hidden Novu organization; see
  * packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md.
  */
@@ -33,14 +41,17 @@ import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backi
 @ApiCommonResponses()
 @Controller('/human/accounts')
 @ApiExcludeController()
-@UseGuards(HumanWebsiteSecretGuard)
+@UseGuards(HumanDashboardSecretGuard)
 export class HumanAccountsController {
   constructor(
     private readonly ensureBackingOrganizationUsecase: EnsureBackingOrganization,
     private readonly claimForHumanAccountUsecase: ClaimForHumanAccount,
     private readonly getBackingSecretKeyUsecase: GetBackingSecretKey,
+    private readonly regenerateBackingSecretKeyUsecase: RegenerateBackingSecretKey,
     private readonly deleteHumanAccountUsecase: DeleteHumanAccount,
-    private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin
+    private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin,
+    private readonly getHumanCliLoginUsecase: GetHumanCliLogin,
+    private readonly denyHumanCliLoginUsecase: DenyHumanCliLogin
   ) {}
 
   @Post('/')
@@ -88,10 +99,31 @@ export class HumanAccountsController {
     );
   }
 
+  @Post('/cli-login/lookup')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Read the `human login` waiting for a code: the computer it was started on' })
+  getCliLogin(@Body() body: HumanCliLoginRequestDto): Promise<HumanCliLoginResponseDto> {
+    return this.getHumanCliLoginUsecase.execute(HumanCliLoginCommand.create({ userCode: body.userCode }));
+  }
+
+  @Post('/cli-login/deny')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deny a `human login`, so its code stops working and the waiting CLI is told' })
+  denyCliLogin(@Body() body: HumanCliLoginRequestDto): Promise<HumanCliLoginDeniedResponseDto> {
+    return this.denyHumanCliLoginUsecase.execute(HumanCliLoginCommand.create({ userCode: body.userCode }));
+  }
+
   @Get('/:humanUserId/secret-key')
   @ApiOperation({ summary: 'Get the Development environment secret key of a Human account' })
   getSecretKey(@Param('humanUserId') humanUserId: string): Promise<HumanAccountSecretKeyResponseDto> {
     return this.getBackingSecretKeyUsecase.execute(GetBackingSecretKeyCommand.create({ humanUserId }));
+  }
+
+  @Post('/:humanUserId/secret-key/regenerate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Replace the Development environment secret key of a Human account' })
+  regenerateSecretKey(@Param('humanUserId') humanUserId: string): Promise<HumanAccountSecretKeyResponseDto> {
+    return this.regenerateBackingSecretKeyUsecase.execute(RegenerateBackingSecretKeyCommand.create({ humanUserId }));
   }
 
   @Delete('/:humanUserId')

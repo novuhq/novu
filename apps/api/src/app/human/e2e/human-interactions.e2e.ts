@@ -515,24 +515,20 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   });
 
   describe('email channel', () => {
-    it('setup stamps the subscriber email and updates it on re-run', async () => {
+    it('setup ignores email — verification owns Subscriber.email', async () => {
       const withEmail = await session.testAgent
         .post('/v1/human/setup')
         .send({ subscriberId, email: 'Human@Example.com' });
       expect(withEmail.status).to.equal(200);
 
-      let subscriber = await subscriberRepository.findOne({
+      const subscriber = await subscriberRepository.findOne({
         _environmentId: session.environment._id,
         subscriberId,
       });
-      expect(subscriber?.email).to.equal('human@example.com');
-
-      await session.testAgent.post('/v1/human/setup').send({ subscriberId, email: 'other@example.com' });
-      subscriber = await subscriberRepository.findOne({ _environmentId: session.environment._id, subscriberId });
-      expect(subscriber?.email).to.equal('other@example.com');
+      expect(subscriber?.email).to.equal(undefined);
     });
 
-    it('rejects email-channel interactions when the human has no email on file', async () => {
+    it('rejects email-channel interactions when the human has no verified email', async () => {
       const emailIntegration = await integrationRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
@@ -561,7 +557,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       });
 
       expect(res.status).to.equal(404);
-      expect(res.body.message).to.match(/no email address on file/i);
+      expect(res.body.message).to.match(/no verified email address/i);
     });
   });
 

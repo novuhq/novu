@@ -3,7 +3,7 @@ import { NovuProvider } from '@novu/react';
 import { useQuery } from '@tanstack/react-query';
 import { type ComponentProps, type ReactNode, useMemo } from 'react';
 import { getNovuInboxContext } from '@/api/novu-context';
-import { APP_ID, IS_SELF_HOSTED } from '@/config';
+import { APP_ID, IS_SELF_HOSTED, SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -91,6 +91,7 @@ export function CopilotConnectProvider({ children, fallback = null }: CopilotCon
       applicationIdentifier={APP_ID}
       apiUrl={resolveNovuProdApiUrl()}
       socketUrl={resolveNovuProdSocketUrl()}
+      socketOptions={isNovuProductionTarget() ? undefined : SOCKET_OPTIONS}
       subscriberHash={connectContext?.subscriberHash}
       context={connectContext?.context}
       contextHash={connectContext?.contextHash}

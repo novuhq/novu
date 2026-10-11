@@ -1,0 +1,51 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "human-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  // Secrets, set per environment with `wrangler secret put <NAME> --env <env>` (local: `.dev.vars`):
+  //   HUMAN_DASHBOARD_API_SECRET  the secret the Human dashboard shares with the Novu API
+  "env": {
+    // Local development against a local API. Sign-in needs the Human Clerk app's address in
+    // CLERK_OAUTH_ISSUER; put it in `.dev.vars` next to the secret.
+    "local": {
+      "name": "human-mcp-local",
+      "workers_dev": true,
+      "vars": {
+        "NOVU_API_URL": "http://localhost:3000",
+        "NOVU_API_URL_EU": "",
+        "DOCS_URL": "https://www.npmjs.com/package/@novu/human"
+      }
+    },
+    "staging": {
+      "name": "human-mcp-staging",
+      "workers_dev": true,
+      // Fill in before the first deploy: the staging API, the Clerk app of staging.gethuman.md and a KV namespace
+      // (`wrangler kv namespace create CONNECTIONS --env staging`).
+      "vars": {
+        "CLERK_OAUTH_ISSUER": "",
+        "NOVU_API_URL": "",
+        "NOVU_API_URL_EU": "",
+        "DOCS_URL": "https://www.npmjs.com/package/@novu/human"
+      }
+    },
+    "production": {
+      "name": "human-mcp",
+      "workers_dev": false,
+      "routes": [{ "pattern": "mcp.human.md", "custom_domain": true }],
+      // Fill in before the first deploy: the Human Clerk app's address and a KV namespace
+      // (`wrangler kv namespace create CONNECTIONS --env production`).
+      "vars": {
+        "CLERK_OAUTH_ISSUER": "",
+        "NOVU_API_URL": "https://api.novu.co",
+        "NOVU_API_URL_EU": "https://eu.api.novu.co",
+        "DOCS_URL": "https://www.npmjs.com/package/@novu/human"
+      }
+    }
+  }
+}

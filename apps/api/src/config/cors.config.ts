@@ -1,9 +1,20 @@
 import { INestApplication } from '@nestjs/common';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import type { Request } from 'express';
-import { resolveHumanWebsiteBaseUrl } from '../app/shared/helpers/resolve-human-website-base-url';
+import { resolveHumanDashboardBaseUrl } from '../app/shared/helpers/resolve-human-dashboard-base-url';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
+
+/**
+ * The gethuman.md app (`apps/human-dashboard`). Its `/connect` page calls the
+ * public, token-authorized Telegram and Slack setup endpoints from the
+ * browser, so it needs an explicit CORS grant — scoped to
+ * those routes only (see `isHumanSetupRoute`), since `credentials` stays on.
+ * Hardcoded like the `dashboard.novu.co` fallback in `resolveDashboardBaseUrl`
+ * — it is a Novu-owned domain, and an env var here would fail silently when
+ * unset.
+ */
+const HUMAN_SITE_ORIGINS = ['https://www.gethuman.md', 'https://gethuman.md'];
 
 type CorsDelegateOptions = {
   origin: boolean | string | string[];
@@ -14,7 +25,10 @@ type CorsDelegateOptions = {
   methods: string[];
 };
 
-export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = (req: Request, callback) => {
+export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = (
+  req: Request,
+  callback: (error: Error | null, options: CorsDelegateOptions) => void
+) => {
   const corsOptions: CorsDelegateOptions = {
     origin: false as boolean | string | string[],
     preflightContinue: false,
@@ -34,6 +48,13 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     if (ALLOWED_ORIGINS_REGEX.test(requestOrigin)) {
       corsOptions.origin.push(requestOrigin);
     }
+    if (
+      isHumanSetupRoute(req.url) &&
+      HUMAN_SITE_ORIGINS.includes(requestOrigin) &&
+      !corsOptions.origin.includes(requestOrigin)
+    ) {
+      corsOptions.origin.push(requestOrigin);
+    }
     if (process.env.WIDGET_BASE_URL) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
@@ -41,10 +62,10 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     if (process.env.DOCS_BASE_URL) {
       corsOptions.origin.push(process.env.DOCS_BASE_URL);
     }
-    // The invite page on the Human website calls the public invite endpoints (token-only, no cookies).
-    const humanWebsite = isHumanInviteRoute(req.url) ? humanWebsiteOrigin() : undefined;
-    if (humanWebsite) {
-      corsOptions.origin.push(humanWebsite);
+    // The invite page on the Human dashboard calls the public invite endpoints (token-only, no cookies).
+    const humanDashboard = isHumanInviteRoute(req.url) ? humanDashboardOrigin() : undefined;
+    if (humanDashboard) {
+      corsOptions.origin.push(humanDashboard);
     }
   }
 
@@ -67,6 +88,11 @@ function isBetterAuthRoute(url: string): boolean {
   return url.startsWith('/v1/better-auth');
 }
 
+// The only routes the gethuman.md `/connect` page calls: token-authorized, public setup endpoints
+function isHumanSetupRoute(url: string): boolean {
+  return url.startsWith('/v1/integrations/mobile-configure') || url.startsWith('/v1/agents/public/slack/setup');
+}
+
 function isWidgetRoute(url: string): boolean {
   return url.startsWith('/v1/widgets');
 }
@@ -79,14 +105,14 @@ function isBlueprintRoute(url: string): boolean {
   return url.startsWith('/v1/blueprints');
 }
 
-/** The public invite page endpoints; `POST /v1/human/invites` (create, authenticated) is excluded. */
+/** The public invite / verify page endpoints; authenticated create routes are excluded. */
 function isHumanInviteRoute(url: string): boolean {
-  return url.startsWith('/v1/human/invites/');
+  return url.startsWith('/v1/human/invites/') || url.startsWith('/v1/human/verify');
 }
 
-function humanWebsiteOrigin(): string | undefined {
+function humanDashboardOrigin(): string | undefined {
   try {
-    return new URL(resolveHumanWebsiteBaseUrl()).origin;
+    return new URL(resolveHumanDashboardBaseUrl()).origin;
   } catch {
     return undefined;
   }
@@ -101,5 +127,11 @@ function isDevelopmentEnvironment(): boolean {
 }
 
 function origin(req: Request): string {
-  return req.headers?.origin || '';
+  const headerOrigin = req.headers?.origin;
+
+  if (typeof headerOrigin !== 'string') {
+    return '';
+  }
+
+  return headerOrigin;
 }
