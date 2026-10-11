@@ -39,6 +39,8 @@ export enum FeatureFlagsKeysEnum {
   IS_USAGE_ALERTS_ENABLED = 'IS_USAGE_ALERTS_ENABLED',
   /** Stops the usage-alerts cron before it reads usage. Default off, so the cron runs. */
   IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
+  /** Global: the usage-alerts cron evaluates and logs every alert it would send, but sends none and writes no alert claims. */
+  IS_USAGE_ALERTS_DRY_RUN_ENABLED = 'IS_USAGE_ALERTS_DRY_RUN_ENABLED',
   /**
    * Organization-scoped: workflow-run usage limits (on-demand limit, pause at limit, alert settings) in the
    * dashboard and `/billing/usage-limits`, paid-tier enforcement at the limit, and the usage-alerts cron honoring
