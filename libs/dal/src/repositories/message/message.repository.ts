@@ -18,6 +18,7 @@ import { BaseRepository } from '../base-repository';
 import { FeedRepository } from '../feed';
 import { MessageDBModel, MessageEntity } from './message.entity';
 import { Message } from './message.schema';
+import { pinMissingSubscriberFeedBooleans } from './subscriber-feed-index';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
@@ -1103,15 +1104,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     /*
-     * Pins every field between `channel` and `createdAt` in the
-     * { _subscriberId, _environmentId, channel, seen, read, archived, deleted, createdAt: -1, _id: -1 } index to
-     * point intervals, so the planner can merge-sort it by createdAt instead of walking the whole { createdAt: 1 }
-     * index. The `$in` lists must cover every stored value (null also matches a missing field) or messages are dropped.
+     * Pins each unset boolean between `channel` and `createdAt` on the subscriber feed index
+     * to a point interval, so the planner can merge-sort by createdAt instead of walking the
+     * whole { createdAt: 1 } index. `$in: [true, false, null]` covers every stored value
+     * (null also matches a missing field).
      */
     if (query._subscriberId && query.channel) {
-      filterQuery.seen ??= { $in: [true, false, null] };
-      filterQuery.read ??= { $in: [true, false, null] };
-      filterQuery.archived ??= { $in: [true, false, null] };
+      pinMissingSubscriberFeedBooleans(filterQuery);
     }
 
     if (query.contextKeys !== undefined) {
