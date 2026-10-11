@@ -168,7 +168,12 @@ overrides:
   qs@<6.16.0: ^6.16.0
   js-yaml@<3.15.2: ^3.15.2
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
-  smol-toml@<1.7.1: ^1.7.1
+  # GHSA-r4xh-jqrq-34v2 (moderate): smol-toml parseKey quadratic-time
+  # parse() rescanning that enables CPU exhaustion on large TOML inputs.
+  # Patched in 1.8.1, but the npm release stream published 1.9.0 directly
+  # after 1.8.0 (no 1.8.1 artifact). Widen the previous `<1.7.1` floor so
+  # transitive consumers (`nx > smol-toml` in dev tooling) land on 1.9.x.
+  smol-toml@<1.9.0: ^1.9.0
   '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
