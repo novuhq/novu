@@ -29,8 +29,8 @@ import {
   resolveTargetApiUrl,
   saveConfig,
 } from '../config';
-import { SetupStillPendingError } from '../output';
 import { openInBrowser } from '../open-browser';
+import { SetupStillPendingError } from '../output';
 import { sleep } from '../poll';
 import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
