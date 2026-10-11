@@ -71,7 +71,7 @@ export class SetupHumanRelayRequestDto {
   agentDescription?: string;
 
   @ApiPropertyOptional({
-    description: 'The human’s email address — required for the email channel (identity lives on the subscriber).',
+    description: 'Accepted for older clients. Ignored — an email is stored only after it is verified.',
   })
   @IsOptional()
   @IsEmail()

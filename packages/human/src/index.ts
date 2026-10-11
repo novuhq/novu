@@ -154,7 +154,10 @@ program
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
   .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
   .option('--email <address>', 'your email address for the email channel (skips the interactive prompt)')
-  .option('--name <name>', 'your name, shown to agents (skips the first-run prompt)')
+  .option(
+    '--name <name>',
+    'your first and last name, e.g. "Nikita Grossman" — shown to people you invite (skips the first-run prompt)'
+  )
   .option('--agent-name <name>', 'what your agent is called, as people see it (default: Human)')
   .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `human login`)')
