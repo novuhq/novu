@@ -1,8 +1,8 @@
-import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import pc from 'picocolors';
+import { type AgentPictureFile, loadPicture } from '../agent-picture';
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
-import { createInteraction, setupHumanRelay } from '../api/human';
+import { createInteraction, setHumanAgentPicture, setupHumanRelay } from '../api/human';
 import {
   addAgentEmailIntegration,
   bootstrapKeylessSession,
@@ -23,13 +23,14 @@ import {
 import { info, promptLine, promptSecret } from '../cli-io';
 import {
   configPath,
-  DEFAULT_API_URL,
   DEFAULT_RELAY_AGENT_IDENTIFIER,
   type HumanCliConfig,
   loadConfig,
+  resolveTargetApiUrl,
   saveConfig,
 } from '../config';
 import { SetupStillPendingError } from '../output';
+import { openInBrowser } from '../open-browser';
 import { sleep } from '../poll';
 import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
@@ -50,6 +51,9 @@ import {
   waitForSlackSetupPage,
   waitForTelegramSetupPage,
 } from './link-channel';
+
+/** What the API calls a relay agent until you name it. */
+const DEFAULT_AGENT_NAME = 'Human';
 
 /**
  * `--name` always wins. Otherwise ask once — only on the very first setup
@@ -75,6 +79,40 @@ export async function resolveOperatorName(
   return splitName(await io.prompt('Your name (shown to agents, optional): '));
 }
 
+/** The agent's name and description, when `--agent-name` or `--agent-description` was passed. */
+function agentIdentityOf(options: Pick<SetupOptions, 'agentName' | 'agentDescription'>): {
+  agentName?: string;
+  agentDescription?: string;
+} {
+  return {
+    ...(options.agentName !== undefined ? { agentName: options.agentName } : {}),
+    ...(options.agentDescription !== undefined ? { agentDescription: options.agentDescription } : {}),
+  };
+}
+
+async function readPictureOption(options: Pick<SetupOptions, 'agentPicture'>): Promise<AgentPictureFile | undefined> {
+  return options.agentPicture === undefined ? undefined : loadPicture(options.agentPicture);
+}
+
+/** Before a channel is linked, so a bot made in this run starts out with the picture. */
+async function uploadPicture(
+  client: HumanApiClient,
+  picture: AgentPictureFile | undefined,
+  agentIdentifier: string
+): Promise<void> {
+  if (!picture) {
+    return;
+  }
+
+  await setHumanAgentPicture(client, picture, agentIdentifier);
+  info('Saved your agent’s picture.');
+}
+
+/** The bot or app made for a channel is called what the agent is called. Older APIs don't say, so it's the default. */
+function channelNameFor(relay: { agentName?: string }): string {
+  return relay.agentName || DEFAULT_AGENT_NAME;
+}
+
 interface SetupOptions {
   apiUrl?: string;
   secretKey?: string;
@@ -84,28 +122,56 @@ interface SetupOptions {
   /** Your display name; skips the first-run prompt. */
   name?: string;
   agentIdentifier?: string;
+  /** What your agent is called, as people see it. */
+  agentName?: string;
+  /** A line about what your agent does, shown with its name. */
+  agentDescription?: string;
+  /** A JPEG or PNG for your agent: a file on this computer or a web address. */
+  agentPicture?: string;
   /** Tri-state: undefined = ask (TTY) / skip (non-TTY); true/false = explicit `--skill`/`--no-skill`. */
   skill?: boolean;
+}
+
+/**
+ * `--secret-key` (or NOVU_SECRET_KEY) wins. Otherwise the credentials saved for this API are reused: a
+ * `human login` (or an earlier `--secret-key`), or a keyless setup. Null means a new keyless setup is needed.
+ */
+export function reusableAuth(
+  existing: HumanCliConfig | null,
+  apiUrl: string,
+  secretKey: string | undefined
+): HumanCliConfig['auth'] | null {
+  if (secretKey) {
+    return { mode: 'apiKey', secretKey };
+  }
+
+  if (!existing || existing.apiUrl !== apiUrl) {
+    return null;
+  }
+
+  const { auth } = existing;
+  const usable = auth.mode === 'apiKey' ? Boolean(auth.secretKey) : Boolean(auth.keylessIdentifier);
+
+  return usable ? auth : null;
 }
 
 export async function setupCommand(channelArg: string | undefined, options: SetupOptions): Promise<never> {
   try {
     const channel = await resolveChannelChoice(channelArg);
-    const apiUrl = (options.apiUrl ?? process.env.NOVU_API_URL ?? DEFAULT_API_URL).replace(/\/$/, '');
+    // Read first, so a wrong file stops the setup before anything is made.
+    const picture = await readPictureOption(options);
     const existing = loadConfig();
+    const apiUrl = resolveTargetApiUrl(options.apiUrl, existing);
 
-    // 1. Auth — reuse stored credentials, else secret key, else fresh keyless env.
-    let auth: HumanCliConfig['auth'];
+    // 1. Auth — secret key, else the saved login or keyless setup, else a fresh keyless env.
     const secretKey = options.secretKey ?? process.env.NOVU_SECRET_KEY?.trim();
+    let auth = reusableAuth(existing, apiUrl, secretKey);
 
-    if (secretKey) {
-      auth = { mode: 'apiKey', secretKey };
-    } else if (existing?.apiUrl === apiUrl && existing.auth.mode === 'keyless' && existing.auth.keylessIdentifier) {
-      auth = existing.auth;
-      info('Reusing your existing keyless session.');
-    } else {
+    if (!auth) {
       info('Creating a keyless Novu environment (no account needed)...');
       auth = { mode: 'keyless', keylessIdentifier: await bootstrapKeylessSession(apiUrl) };
+    } else if (!secretKey) {
+      info(auth.mode === 'keyless' ? 'Reusing your existing keyless session.' : 'Using your saved login.');
     }
 
     const client = createHumanApiClient({
@@ -115,23 +181,46 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     });
 
     // 2. Provision the relay agent + the human's subscriber row.
-    const subscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
+    const localSubscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
     const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
     const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
 
     info('Setting up your human relay...');
-    const relay = await setupHumanRelay(client, { subscriberId, agentIdentifier: relayIdentifier, ...name });
+    const relay = await setupHumanRelay(client, {
+      subscriberId: localSubscriberId,
+      operator: true,
+      agentIdentifier: relayIdentifier,
+      ...agentIdentityOf(options),
+      ...name,
+    });
+    const agentName = channelNameFor(relay);
+    await uploadPicture(client, picture, relay.agentIdentifier);
+    // The account may already know you from the dashboard or another computer; that contact wins,
+    // so you stay one person everywhere. Older APIs just echo the id sent.
+    const subscriberId = relay.subscriberId || localSubscriberId;
+
+    const switchedContact = Boolean(existing?.subscriberId) && subscriberId !== existing?.subscriberId;
+
+    if (switchedContact) {
+      info('Your account already has you as a contact, so this computer now uses that one.');
+    }
 
     // 3. Channel linking — linked channels live on the server; locally we only
     // remember a default preference for when the caller does not pass `--via`.
     await (channel === 'telegram'
-      ? connectTelegram(client, relay.agentIdentifier, subscriberId, options)
+      ? connectTelegram(client, relay.agentIdentifier, agentName, subscriberId, options)
       : channel === 'slack'
-        ? connectSlack(client, relay.agentId, relay.agentIdentifier, subscriberId, options)
+        ? connectSlack(
+            client,
+            { id: relay.agentId, identifier: relay.agentIdentifier, name: agentName },
+            subscriberId,
+            options
+          )
         : connectEmail(client, relay.agentIdentifier, subscriberId, options));
 
     // 4. Persist config — first setup becomes the default preference.
-    const defaultChannel = existing?.defaultChannel ?? channel;
+    // A default saved for another contact may be a channel this one never connected.
+    const defaultChannel = (switchedContact ? undefined : existing?.defaultChannel) ?? channel;
 
     const config: HumanCliConfig = {
       apiUrl,
@@ -166,6 +255,12 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
         `  ${pc.bold('human approve "Deploy to production?"')}\n` +
         `  ${pc.bold('human tell "Build finished."')}\n`
     );
+
+    if (auth.mode === 'keyless') {
+      info(
+        `This is a free demo without an account. Run ${pc.bold('human login')} anytime to keep it in a Human account.`
+      );
+    }
 
     await maybeInstallSkill(options);
     process.exit(0);
@@ -296,12 +391,13 @@ const defaultTelegramSetupIo: TelegramSetupIo = {
 export async function connectTelegram(
   client: HumanApiClient,
   agentIdentifier: string,
+  agentName: string,
   subscriberId: string,
   options: Pick<SetupOptions, 'telegramBotToken'>,
   io: TelegramSetupIo = defaultTelegramSetupIo
 ): Promise<string> {
   const integrationIdentifier = await resolveLinkedIntegration(client, agentIdentifier, 'telegram', () =>
-    createTelegramIntegration(client, 'Human')
+    createTelegramIntegration(client, agentName)
   );
 
   if (await hasChannelEndpoint(client, integrationIdentifier, subscriberId)) {
@@ -535,13 +631,13 @@ async function promptForEmail(): Promise<string> {
  */
 export async function connectSlack(
   client: HumanApiClient,
-  agentId: string,
-  agentIdentifier: string,
+  agent: { id: string; identifier: string; name: string },
   subscriberId: string,
   options: Pick<SetupOptions, 'slackConfigToken'>,
   io: TelegramSetupIo = defaultTelegramSetupIo
 ): Promise<string> {
-  const integration = await resolveLinkedSlackIntegration(client, agentIdentifier);
+  const { id: agentId, identifier: agentIdentifier } = agent;
+  const integration = await resolveLinkedSlackIntegration(client, agentIdentifier, agent.name);
 
   if (await hasChannelEndpoint(client, integration.identifier, subscriberId)) {
     info('Slack already connected.');
@@ -800,10 +896,11 @@ async function resolveLinkedIntegration(
 /** Slack needs the full integration record (`_id` for quick-setup), not just the identifier. */
 async function resolveLinkedSlackIntegration(
   client: HumanApiClient,
-  agentIdentifier: string
+  agentIdentifier: string,
+  agentName: string
 ): Promise<IntegrationRecord> {
   const identifier = await resolveLinkedIntegration(client, agentIdentifier, 'slack', () =>
-    createSlackIntegration(client, 'Human')
+    createSlackIntegration(client, agentName)
   );
   const all = await listIntegrations(client);
   const integration = all.find((i) => i.identifier === identifier);
@@ -813,17 +910,4 @@ async function resolveLinkedSlackIntegration(
   }
 
   return integration;
-}
-
-/** Best-effort platform browser open — the URL is always printed as fallback. */
-function openInBrowser(url: string): void {
-  const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-
-  try {
-    spawn(command, [url], { stdio: 'ignore', detached: true })
-      .on('error', () => undefined)
-      .unref();
-  } catch {
-    // URL is printed above — the human can click it.
-  }
 }

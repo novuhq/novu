@@ -27,7 +27,39 @@ vi.mock('../qr', () => ({ renderQR: vi.fn((text: string) => `<QR ${text}>`) }));
 vi.mock('../cli-io', () => ({ info: vi.fn(), promptLine: vi.fn(), promptSecret: vi.fn() }));
 
 const api = await import('../api/setup');
-const { connectSlack, connectTelegram, resolveOperatorName } = await import('./setup');
+const {
+  connectSlack: connectSlackImplementation,
+  connectTelegram: connectTelegramImplementation,
+  resolveOperatorName,
+  reusableAuth,
+} = await import('./setup');
+
+function connectTelegram(
+  client: Parameters<typeof connectTelegramImplementation>[0],
+  agentIdentifier: string,
+  subscriberId: string,
+  options: Parameters<typeof connectTelegramImplementation>[4],
+  io: Parameters<typeof connectTelegramImplementation>[5]
+) {
+  return connectTelegramImplementation(client, agentIdentifier, 'Human', subscriberId, options, io);
+}
+
+function connectSlack(
+  client: Parameters<typeof connectSlackImplementation>[0],
+  agentId: string,
+  agentIdentifier: string,
+  subscriberId: string,
+  options: Parameters<typeof connectSlackImplementation>[3],
+  io: Parameters<typeof connectSlackImplementation>[4]
+) {
+  return connectSlackImplementation(
+    client,
+    { id: agentId, identifier: agentIdentifier, name: 'Human' },
+    subscriberId,
+    options,
+    io
+  );
+}
 
 const mocked = {
   listAgentIntegrations: vi.mocked(api.listAgentIntegrations),
@@ -406,7 +438,6 @@ describe('connectSlack', () => {
     );
   });
 });
-
 describe('resolveOperatorName', () => {
   it('uses --name without prompting', async () => {
     const prompt = vi.fn();
@@ -433,5 +464,30 @@ describe('resolveOperatorName', () => {
     await expect(resolveOperatorName({}, true, { isTTY: true, prompt })).resolves.toBeUndefined();
     await expect(resolveOperatorName({}, false, { isTTY: false, prompt })).resolves.toBeUndefined();
     expect(prompt).not.toHaveBeenCalled();
+  });
+});
+
+describe('reusableAuth', () => {
+  const API_URL = 'https://api.novu.co';
+  const login = {
+    apiUrl: API_URL,
+    auth: { mode: 'apiKey' as const, secretKey: 'sk_saved' },
+    relayAgentIdentifier: 'human-relay',
+  };
+  const keyless = { ...login, auth: { mode: 'keyless' as const, keylessIdentifier: 'pk_keyless_1' } };
+
+  it('prefers --secret-key or NOVU_SECRET_KEY', () => {
+    expect(reusableAuth(login, API_URL, 'sk_flag')).toEqual({ mode: 'apiKey', secretKey: 'sk_flag' });
+  });
+
+  it('reuses the saved login or keyless setup for the same API', () => {
+    expect(reusableAuth(login, API_URL, undefined)).toEqual(login.auth);
+    expect(reusableAuth(keyless, API_URL, undefined)).toEqual(keyless.auth);
+  });
+
+  it('starts a new keyless setup without saved credentials for this API', () => {
+    expect(reusableAuth(null, API_URL, undefined)).toBeNull();
+    expect(reusableAuth(login, 'http://localhost:3000', undefined)).toBeNull();
+    expect(reusableAuth({ ...login, auth: { mode: 'apiKey' } }, API_URL, undefined)).toBeNull();
   });
 });

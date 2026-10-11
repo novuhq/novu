@@ -46,6 +46,11 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()
   activityIdentifier?: string;
 
+  /** Platform message of a streamed preview that the reply replaces instead of posting. */
+  @IsOptional()
+  @IsString()
+  replacePlatformMessageId?: string;
+
   @IsOptional()
   @ValidateNested()
   @Type(() => ToolApprovalRequestPayloadDto)

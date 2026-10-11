@@ -1,9 +1,13 @@
-import { assertQueueBackendConfig, requiresStandaloneRedis } from '@novu/application-generic';
+import {
+  assertQueueBackendConfig,
+  createThrowingEnvReporter,
+  requiresStandaloneRedis,
+} from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend, StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  const env = cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('ws') });
 
   // Sockets are the only topic this service touches, and they never carry a
   // delay, so no scheduler config is required here.

@@ -12,7 +12,8 @@ validateEnv();
 
 export async function bootstrap() {
   BullMqService.haveProInstalled();
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  // abortOnError: false so init errors reach runWithHydratedSecrets instead of process.abort(), which drops New Relic data.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, abortOnError: false });
 
   const inMemoryAdapter = new InMemoryIoAdapter(app);
   await inMemoryAdapter.connectToInMemoryCluster();
@@ -41,11 +42,7 @@ export async function bootstrap() {
 
   await app.init();
 
-  try {
-    await startAppInfra(app);
-  } catch (e) {
-    process.exit(1);
-  }
+  await startAppInfra(app);
 
   await app.listen(process.env.PORT as string);
 }

@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
-import { resolveHumanWebsiteBaseUrl } from '../app/shared/helpers/resolve-human-website-base-url';
+import type { Request } from 'express';
+import { resolveHumanDashboardBaseUrl } from '../app/shared/helpers/resolve-human-dashboard-base-url';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
@@ -24,15 +25,8 @@ type CorsDelegateOptions = {
   methods: string[];
 };
 
-type CorsRequest = {
-  url: string;
-  headers?: {
-    origin?: string;
-  };
-};
-
 export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = (
-  req: CorsRequest,
+  req: Request,
   callback: (error: Error | null, options: CorsDelegateOptions) => void
 ) => {
   const corsOptions: CorsDelegateOptions = {
@@ -68,17 +62,17 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     if (process.env.DOCS_BASE_URL) {
       corsOptions.origin.push(process.env.DOCS_BASE_URL);
     }
-    // The invite page on the Human website calls the public invite endpoints (token-only, no cookies).
-    const humanWebsite = isHumanInviteRoute(req.url) ? humanWebsiteOrigin() : undefined;
-    if (humanWebsite) {
-      corsOptions.origin.push(humanWebsite);
+    // The invite page on the Human dashboard calls the public invite endpoints (token-only, no cookies).
+    const humanDashboard = isHumanInviteRoute(req.url) ? humanDashboardOrigin() : undefined;
+    if (humanDashboard) {
+      corsOptions.origin.push(humanDashboard);
     }
   }
 
   callback(null, corsOptions);
 };
 
-function enableWildcard(req: CorsRequest): boolean {
+function enableWildcard(req: Request): boolean {
   return (
     (isDevelopmentEnvironment() ||
       isWidgetRoute(req.url) ||
@@ -116,9 +110,9 @@ function isHumanInviteRoute(url: string): boolean {
   return url.startsWith('/v1/human/invites/');
 }
 
-function humanWebsiteOrigin(): string | undefined {
+function humanDashboardOrigin(): string | undefined {
   try {
-    return new URL(resolveHumanWebsiteBaseUrl()).origin;
+    return new URL(resolveHumanDashboardBaseUrl()).origin;
   } catch {
     return undefined;
   }
@@ -132,7 +126,7 @@ function isDevelopmentEnvironment(): boolean {
   return ['test', 'local'].includes(process.env.NODE_ENV || '');
 }
 
-function origin(req: CorsRequest): string {
+function origin(req: Request): string {
   const headerOrigin = req.headers?.origin;
 
   if (typeof headerOrigin !== 'string') {

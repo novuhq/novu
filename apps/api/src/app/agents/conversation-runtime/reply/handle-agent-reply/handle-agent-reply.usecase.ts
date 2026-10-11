@@ -463,7 +463,11 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
-      { slackNative: resolved.slackNative, quoteReply: command.quoteReply }
+      {
+        slackNative: resolved.slackNative,
+        quoteReply: command.quoteReply,
+        replacePlatformMessageId: command.replacePlatformMessageId,
+      }
     );
   }
 

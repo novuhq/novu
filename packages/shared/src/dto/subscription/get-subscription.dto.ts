@@ -1,3 +1,4 @@
+import { IOrganizationUsageLimits } from '../../entities/organization/organization.interface';
 import { ApiServiceLevelEnum } from '../../types';
 
 export type GetSubscriptionDto = {
@@ -41,7 +42,30 @@ export type GetSubscriptionDto = {
      * The number of included events for the subscription, or null if the subscription is not metered.
      */
     included: number | null;
+    /**
+     * The workflow-run usage limit: `included` plus the on-demand limit, or `included` when pausing without one.
+     * Null when no limit is set.
+     */
+    limit: number | null;
+    /**
+     * Whether new workflow runs are currently rejected because usage reached the limit.
+     */
+    isPaused: boolean;
   };
+  /**
+   * Workflow-run usage limit settings, or null while usage limits are not enabled for the organization.
+   */
+  usageLimits: {
+    /**
+     * Whether the organization's plan allows changing the settings.
+     */
+    isConfigurable: boolean;
+    /**
+     * The price of 1,000 on-demand workflow runs in USD, or null when it is not known (e.g. negotiated contracts).
+     */
+    onDemandPricePer1k: number | null;
+    settings: IOrganizationUsageLimits;
+  } | null;
   trial: {
     isActive: boolean;
     /**

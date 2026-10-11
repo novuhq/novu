@@ -1165,6 +1165,15 @@ export const MCP_SERVERS: McpServer[] = [
     oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
   },
   {
+    id: 'fxmacrodata',
+    name: 'FXMacroData',
+    description: 'Query FX rates, macroeconomic releases, and central bank data from official sources.',
+    url: 'https://mcp.fxmacrodata.com/mcp',
+    category: 'financial-services',
+    popular: false,
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+  },
+  {
     id: 'g2',
     name: 'G2',
     description: 'Connect G2 to your agent via the managed runtime provider.',

@@ -13,7 +13,7 @@ export class VerifyPayload {
     const verifyPayloadService = new VerifyPayloadService();
 
     const invalidKeys: string[] = [];
-    let defaultPayload;
+    let defaultPayload: Record<string, unknown> = {};
 
     for (const step of command.template.steps) {
       invalidKeys.push(...verifyPayloadService.checkRequired(step.template?.variables || [], command.payload));

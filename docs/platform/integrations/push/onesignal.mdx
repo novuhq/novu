@@ -315,6 +315,14 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 </Tabs>
 ## Using overrides to customize notifications
 
+To customize a single notification, send OneSignal fields under `overrides.providers['one-signal']` when you trigger the workflow. Novu deep-merges that object into the [Create notification](https://documentation.onesignal.com/reference/create-notification) request body it builds from the Push step's Subject and Body, so the fields you send win over the generated ones.
+
+The override is an unvalidated passthrough, so copy field names from OneSignal's API reference. Novu snake-cases the keys before sending, so `androidChannelId` also arrives as `android_channel_id`.
+
+<Note>
+  Novu only reads provider fields under `overrides.providers`. Keys at the root of `overrides` are ignored. `channelId`, `categoryId`, `icon`, and `sound` are not OneSignal fields, so they do nothing under `providers` either — use `android_channel_id`, `ios_category`, `large_icon`, and `ios_sound` / `android_sound` instead, and send `subtitle` as a language map such as `{ "en": "Order #12345" }`.
+</Note>
+
 <Tabs>
   <Tab title="Node.js">
 ```typescript
@@ -329,13 +337,18 @@ await novu.trigger({
     "abc": "def"
 },
   overrides: {
-    "subtitle": "This is subtitle value",
-    "mutableContent": "Mutable content value",
-    "channelId": "category_id",
-    "categoryId": "Category id",
-    "icon": "https://image.com/icon.png",
-    "sound": "sound file url"
-},
+    providers: {
+      "one-signal": {
+        subtitle: { en: "Order #12345" },
+        mutable_content: true,
+        android_channel_id: "orders",
+        ios_category: "ORDER_UPDATE",
+        large_icon: "https://example.com/icon.png",
+        ios_sound: "default",
+        android_sound: "default",
+      },
+    },
+  },
 });
 ```
   </Tab>
@@ -353,13 +366,18 @@ with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
         "abc": "def"
 },
         overrides={
-        "subtitle": "This is subtitle value",
-        "mutableContent": "Mutable content value",
-        "channelId": "category_id",
-        "categoryId": "Category id",
-        "icon": "https://image.com/icon.png",
-        "sound": "sound file url"
-},
+            "providers": {
+                "one-signal": {
+                    "subtitle": {"en": "Order #12345"},
+                    "mutable_content": True,
+                    "android_channel_id": "orders",
+                    "ios_category": "ORDER_UPDATE",
+                    "large_icon": "https://example.com/icon.png",
+                    "ios_sound": "default",
+                    "android_sound": "default",
+                },
+            },
+        },
     ))
 ```
   </Tab>
@@ -381,16 +399,21 @@ res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
         SubscriberID: "subscriberId",
     }),
     Payload: map[string]any{
-    "abc": "def"
-},
-    Overrides: map[string]any{
-    "subtitle": "This is subtitle value",
-    "mutableContent": "Mutable content value",
-    "channelId": "category_id",
-    "categoryId": "Category id",
-    "icon": "https://image.com/icon.png",
-    "sound": "sound file url"
-},
+        "abc": "def",
+    },
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "one-signal": map[string]any{
+                "subtitle":           map[string]any{"en": "Order #12345"},
+                "mutable_content":    true,
+                "android_channel_id": "orders",
+                "ios_category":       "ORDER_UPDATE",
+                "large_icon":         "https://example.com/icon.png",
+                "ios_sound":          "default",
+                "android_sound":      "default",
+            },
+        },
+    },
 }, nil)
 ```
   </Tab>
@@ -405,17 +428,20 @@ $sdk->trigger(
     triggerEventRequestDto: new Components\TriggerEventRequestDto(
         workflowId: 'workflowId',
         to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
-        payload: {
-        "abc": "def"
-},
-        overrides: {
-        "subtitle": "This is subtitle value",
-        "mutableContent": "Mutable content value",
-        "channelId": "category_id",
-        "categoryId": "Category id",
-        "icon": "https://image.com/icon.png",
-        "sound": "sound file url"
-},
+        payload: ['abc' => 'def'],
+        overrides: [
+            'providers' => [
+                'one-signal' => [
+                    'subtitle' => ['en' => 'Order #12345'],
+                    'mutable_content' => true,
+                    'android_channel_id' => 'orders',
+                    'ios_category' => 'ORDER_UPDATE',
+                    'large_icon' => 'https://example.com/icon.png',
+                    'ios_sound' => 'default',
+                    'android_sound' => 'default',
+                ],
+            ],
+        ],
     ),
 );
 ```
@@ -424,23 +450,29 @@ $sdk->trigger(
 ```csharp
 using Novu;
 using Novu.Models.Components;
+using System.Collections.Generic;
 
 var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
 
 await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
     WorkflowId = "workflowId",
     To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
-    Payload = {
-    "abc": "def"
-},
-    Overrides = {
-    "subtitle": "This is subtitle value",
-    "mutableContent": "Mutable content value",
-    "channelId": "category_id",
-    "categoryId": "Category id",
-    "icon": "https://image.com/icon.png",
-    "sound": "sound file url"
-},
+    Payload = new Dictionary<string, object>() {
+        { "abc", "def" },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "one-signal", new Dictionary<string, object>() {
+                { "subtitle", new Dictionary<string, object>() { { "en", "Order #12345" } } },
+                { "mutable_content", true },
+                { "android_channel_id", "orders" },
+                { "ios_category", "ORDER_UPDATE" },
+                { "large_icon", "https://example.com/icon.png" },
+                { "ios_sound", "default" },
+                { "android_sound", "default" },
+            } },
+        },
+    },
 });
 ```
   </Tab>
@@ -448,6 +480,7 @@ await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
 ```java
 import co.novu.Novu;
 import co.novu.models.components.*;
+import java.util.Map;
 
 Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
 
@@ -455,17 +488,17 @@ novu.trigger()
     .body(TriggerEventRequestDto.builder()
         .workflowId("workflowId")
         .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
-        .payload({
-        "abc": "def"
-})
-        .overrides({
-        "subtitle": "This is subtitle value",
-        "mutableContent": "Mutable content value",
-        "channelId": "category_id",
-        "categoryId": "Category id",
-        "icon": "https://image.com/icon.png",
-        "sound": "sound file url"
-})
+        .payload(Map.of("abc", "def"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("one-signal", Map.ofEntries(
+                Map.entry("subtitle", Map.of("en", "Order #12345")),
+                Map.entry("mutable_content", true),
+                Map.entry("android_channel_id", "orders"),
+                Map.entry("ios_category", "ORDER_UPDATE"),
+                Map.entry("large_icon", "https://example.com/icon.png"),
+                Map.entry("ios_sound", "default"),
+                Map.entry("android_sound", "default")))))
+            .build())
         .build())
     .call();
 ```
@@ -484,17 +517,25 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
         "abc": "def"
     },
     "overrides": {
-        "subtitle": "This is subtitle value",
-        "mutableContent": "Mutable content value",
-        "channelId": "category_id",
-        "categoryId": "Category id",
-        "icon": "https://image.com/icon.png",
-        "sound": "sound file url"
+        "providers": {
+            "one-signal": {
+                "subtitle": { "en": "Order #12345" },
+                "mutable_content": true,
+                "android_channel_id": "orders",
+                "ios_category": "ORDER_UPDATE",
+                "large_icon": "https://example.com/icon.png",
+                "ios_sound": "default",
+                "android_sound": "default"
+            }
+        }
     }
 }'
 ```
   </Tab>
 </Tabs>
+
+You can also save the same object on the Push step in the workflow editor as a [provider content override](/platform/integrations/push#provider-content-overrides), which keeps it versioned with the workflow instead of repeating it on every trigger. Both land on the same OneSignal blob. Trigger overrides take precedence over the saved object: objects merge key by key, and arrays replace.
+
 ## Using external user ID
 
 By default, Novu uses `player_id` to send notifications, but you can select the `External ID` option in the OneSignal integration settings in Novu. If `External ID` option is selected, then `deviceTokens` stored in subscriber credentials for the OneSignal provider, are used as external user IDs.

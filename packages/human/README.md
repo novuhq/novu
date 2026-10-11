@@ -9,6 +9,9 @@ npx @novu/human setup telegram
 npx @novu/human setup slack
 npx @novu/human setup email
 
+# Keep it in a Human account: sign in or up on gethuman.md, no secret key to copy:
+npx @novu/human login
+
 # Forever after, by any agent on the machine:
 human ask "Which environment should I deploy to?"
 human approve "Delete 342 stale records from prod?"
@@ -22,6 +25,11 @@ human invite alice --name "Alice Chen"
 human invite bob --via telegram --async
 human invite carol --via email --email carol@acme.com
 
+# Give your agent a name and a description, at setup or later:
+npx @novu/human setup telegram --agent-name "Deploy bot" --agent-description "Asks before it ships."
+human agent --name "Deploy bot"
+human agent --picture ./avatar.png      # a JPEG or PNG up to 2 MB, or a web address; needs `human login`
+
 # See who agents can reach (subscribers in the environment; `(you)` marks the operator):
 human contacts
 human contacts --json
@@ -32,7 +40,9 @@ human contacts --json
 - `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links **your** channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more. Linked channels live on the server; `human channels --default slack` sets a local preference for where **your** interactions land when you don't pass `--via` (other people get their own default).
 - Telegram is a private bot only you control. On a terminal, `setup telegram` asks whether to paste the BotFather token here or finish on a page at [gethuman.md](https://www.gethuman.md) (QR or browser). Without a terminal it prints that page and waits. The CLI finishes as soon as you tap **Start** (up to 15 minutes). Re-running `human setup telegram` resumes at whatever step is left. `--telegram-bot-token <token>` skips the choice.
 - Slack works the same way: paste an App Configuration Token (`xoxe.xoxp-…`) in the terminal, or open the setup page and then click **Add to Slack**. `--slack-config-token <token>` skips the choice.
+- `login` opens gethuman.md, where you sign in (or sign up), check that the page shows the same code as your terminal, and approve; the CLI then saves your Human account's key. Deny there stops the login. A keyless setup made on this computer moves into the account on the same page, so your channels keep working. After logging in, the CLI saves the contact your account has for you as who agents reach by default, so you are the same person here, on the dashboard and on any other computer, on the channels you already connected. When the account has no such contact yet, it asks who you are and makes one.
 - `invite` gives you a link to share with a **different** person — nothing is sent for you. Without `--via` it opens a Novu page (valid for 3 days) where they connect any channel you set up — Telegram, Slack, or both — and pick their default. With `--via telegram|slack|email` you get the direct connect link instead (a Slack authorize URL or Telegram deep link, valid for minutes; email needs no link), and that channel becomes their default. Your `~/.novu/human.json` subscriberId stays yours. Then `--to alice` reaches them on their default channel. Pass `--name "Alice Chen"` so they show up by name.
+- `agent` shows who your agent is to the people it talks to, and `--name` / `--description` change it. The name is what the invite page says ("Deploy bot would like to reach you"), who its emails come from, and what its Telegram bot and a new Slack app are called. `--picture` gives it a face on the invite page and on its Telegram bot; it needs an account, so run `human login` first. A Slack app that already exists keeps its name and icon; change those in its Slack settings.
 - `contacts` lists the environment's subscribers — every person `--to` can address — so an agent can check who exists before coordinating between people. It's a directory, not a reachability check: if delivery fails with "no linked endpoint", `invite` them on that channel.
 - Agents stay channel-blind: routing is the human's preference — the default they picked on the invite page, or the first channel they connected. `--via telegram|slack|email` on ask/approve is a rare per-call **delivery** override, not how you onboard someone.
 - Each command delivers a one-off message (with action buttons where relevant) and **blocks** until the human answers, the `--ttl` expires, or `--timeout` elapses.
@@ -64,9 +74,9 @@ human contacts --json
 
 ## Auth & headless use
 
-`setup` stores credentials in `~/.novu/human.json`. Alternatively set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment.
+`login` and `setup` store credentials in `~/.novu/human.json`; `setup` reuses a saved login. Alternatively pass `setup --secret-key <key>` or set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment. `NOVU_SECRET_KEY` takes priority over the saved login.
 
-The keyless environment `setup` creates is a free demo with a small message allowance. Once it's used up, the next command exits `1` with a sign-up link (the same link is sent to you on your linked channel) instead of delivering the message. Sign up, claim the demo — your channels and relay move into your own Development environment — then point the CLI at it: `human setup --secret-key <key>` or `NOVU_SECRET_KEY`.
+Without a login, `setup` creates a keyless environment: a free demo with a small message allowance. Run `human login` anytime to keep it; your channels and relay move into your Human account. Once the allowance is used up, the next command exits `1` and asks you to run `human login` instead of delivering the message (a sign-up link is also sent to you on your linked channel; if you use it, run `human login` afterwards).
 
 In containers, sandboxes, and CI — anywhere no config file exists — the CLI is fully operational from environment variables alone:
 
