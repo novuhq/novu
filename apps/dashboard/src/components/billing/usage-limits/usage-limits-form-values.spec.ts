@@ -4,8 +4,10 @@ import {
   formatWholeUsd,
   getOnDemandCost,
   getPauseAtLimitDescription,
+  getTeamsSavings,
   getTierSuggestion,
   getUsageAlertsDescription,
+  getUsageTierSuggestion,
   pausesOnSave,
   type WorkflowRunLimitSettings,
 } from './usage-limits-form-values';
@@ -41,16 +43,19 @@ describe('usage-limits-form-values', () => {
 
     it('suggests Teams once Pro plus on-demand reaches the $250 Teams price', () => {
       expect(suggest(ApiServiceLevelEnum.PRO, 109_999)).toBeNull();
-      expect(suggest(ApiServiceLevelEnum.PRO, 110_000)).toEqual({ kind: 'upgrade_to_teams', monthlyCostAtLimit: 250 });
+      expect(suggest(ApiServiceLevelEnum.PRO, 110_000)).toEqual({ kind: 'upgrade_to_teams', monthlyCost: 250 });
     });
 
     it('prices the Pro plan plus the whole on-demand limit', () => {
-      expect(suggest(ApiServiceLevelEnum.PRO, 200_000)).toEqual({ kind: 'upgrade_to_teams', monthlyCostAtLimit: 430 });
+      expect(suggest(ApiServiceLevelEnum.PRO, 200_000)).toEqual({ kind: 'upgrade_to_teams', monthlyCost: 430 });
     });
 
     it('suggests contacting sales once Teams plus on-demand reaches $600', () => {
       expect(suggest(ApiServiceLevelEnum.BUSINESS, 174_999)).toBeNull();
-      expect(suggest(ApiServiceLevelEnum.BUSINESS, 175_000)).toEqual({ kind: 'contact_sales' });
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, 175_000)).toEqual({
+        kind: 'contact_sales',
+        monthlyCost: 600,
+      });
     });
 
     it('suggests nothing on a trial, without a positive limit, or without a known price', () => {
@@ -78,6 +83,47 @@ describe('usage-limits-form-values', () => {
       expect(suggest(ApiServiceLevelEnum.FREE, 1_000_000)).toBeNull();
       expect(suggest(ApiServiceLevelEnum.ENTERPRISE, 1_000_000)).toBeNull();
       expect(suggest(ApiServiceLevelEnum.UNLIMITED, 1_000_000)).toBeNull();
+    });
+  });
+
+  describe('getUsageTierSuggestion', () => {
+    const suggest = (apiServiceLevel: ApiServiceLevelEnum, current: number, isOnTrial = false) =>
+      getUsageTierSuggestion({ apiServiceLevel, isOnTrial, current, included: INCLUDED, onDemandPricePer1k: 2 });
+
+    it('suggests Teams once Pro plus on-demand so far saves at least a dollar', () => {
+      expect(suggest(ApiServiceLevelEnum.PRO, INCLUDED + 110_000)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.PRO, INCLUDED + 123_500)).toEqual({
+        kind: 'upgrade_to_teams',
+        monthlyCost: 277,
+      });
+    });
+
+    it('suggests contacting sales once Teams plus on-demand so far reaches $600', () => {
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, INCLUDED + 174_999)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, INCLUDED + 195_000)).toEqual({
+        kind: 'contact_sales',
+        monthlyCost: 640,
+      });
+    });
+
+    it('suggests nothing within the included runs, on a trial, or without a known price', () => {
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, INCLUDED)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, INCLUDED + 1_000_000, true)).toBeNull();
+      expect(
+        getUsageTierSuggestion({
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          isOnTrial: false,
+          current: INCLUDED + 1_000_000,
+          included: INCLUDED,
+          onDemandPricePer1k: null,
+        })
+      ).toBeNull();
+    });
+  });
+
+  describe('getTeamsSavings', () => {
+    it('is the monthly cost above the Teams price', () => {
+      expect(getTeamsSavings(277)).toBe(27);
     });
   });
 

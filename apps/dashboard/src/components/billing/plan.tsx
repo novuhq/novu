@@ -1,5 +1,5 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsText, StripeBillingIntervalEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
 import { useAuth } from '@/context/auth/hooks';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -12,6 +12,7 @@ import { ActivePlanBanner } from './active-plan-banner';
 import { Features } from './features';
 import { PlanSwitcher } from './plan-switcher';
 import { type PlanConfig, PlansRow } from './plans-row';
+import { UsageTierSuggestionBanner } from './usage-limits/usage-tier-suggestion-banner';
 
 function createPlanConfig(plan: ApiServiceLevelEnum, interval: StripeBillingIntervalEnum): PlanConfig {
   const price = getFeatureForTierAsText(
@@ -60,6 +61,7 @@ export function Plan() {
     data?.billingInterval || 'month'
   );
   const plans = getPlansConfig(selectedBillingInterval as StripeBillingIntervalEnum);
+  const comparePlansRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkoutResult = new URLSearchParams(window.location.search).get('result');
@@ -115,10 +117,16 @@ export function Plan() {
   return (
     <div className={cn('flex w-full flex-col gap-6 p-6 pt-0')}>
       <ActivePlanBanner selectedBillingInterval={selectedBillingInterval} />
-      <PlanSwitcher
-        selectedBillingInterval={selectedBillingInterval}
-        setSelectedBillingInterval={handleBillingIntervalChange}
+      <UsageTierSuggestionBanner
+        source="billing_page_tier_suggestion"
+        onComparePlans={() => comparePlansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
       />
+      <div ref={comparePlansRef}>
+        <PlanSwitcher
+          selectedBillingInterval={selectedBillingInterval}
+          setSelectedBillingInterval={handleBillingIntervalChange}
+        />
+      </div>
       <PlansRow
         selectedBillingInterval={selectedBillingInterval as StripeBillingIntervalEnum}
         currentPlan={data?.apiServiceLevel as ApiServiceLevelEnum}

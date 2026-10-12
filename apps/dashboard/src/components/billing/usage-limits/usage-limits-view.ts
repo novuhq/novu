@@ -39,7 +39,13 @@ export type UsageLimitsView = {
   canEdit: boolean;
   /** Which paused-usage experience applies; null while new workflow runs are not paused. */
   pausedPlan: PausedUsagePlan | null;
-  plan: { apiServiceLevel: ApiServiceLevelEnum; isOnTrial: boolean; billingInterval: 'month' | 'year' };
+  plan: UsageLimitsPlan;
+};
+
+export type UsageLimitsPlan = {
+  apiServiceLevel: ApiServiceLevelEnum;
+  isOnTrial: boolean;
+  billingInterval: 'month' | 'year';
 };
 
 type SubscriptionUsage = Pick<GetSubscriptionDto, 'apiServiceLevel' | 'events'>;

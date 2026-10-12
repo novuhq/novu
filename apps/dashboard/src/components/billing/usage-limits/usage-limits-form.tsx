@@ -15,7 +15,7 @@ import { useUpdateUsageLimits } from '@/hooks/use-update-usage-limits';
 import { AlertRecipientsSelect } from './alert-recipients-select';
 import { OnDemandLimitStepper } from './on-demand-limit-stepper';
 import { SettingCard } from './setting-card';
-import { TierSuggestionToast } from './tier-suggestion-toast';
+import { TierSuggestionCard } from './tier-suggestion-card';
 import {
   getOnDemandCost,
   getPauseAtLimitDescription,
@@ -116,7 +116,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
               />
 
               {tierSuggestion && (
-                <TierSuggestionToast suggestion={tierSuggestion} billingInterval={plan.billingInterval} />
+                <TierSuggestionCard suggestion={tierSuggestion} billingInterval={plan.billingInterval} />
               )}
 
               <Separator variant="line-spacing" className="before:bg-stroke-weak" />
