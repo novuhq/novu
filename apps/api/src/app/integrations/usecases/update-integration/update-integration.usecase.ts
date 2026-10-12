@@ -7,10 +7,11 @@ import {
   hasLegacyIntegrationConditions,
   PinoLogger,
 } from '@novu/application-generic';
-import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
-import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
+import { ControlValuesRepository, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum } from '@novu/shared';
+import type { ClientSession } from 'mongoose';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
+import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -27,9 +28,91 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
     private environmentRepository: EnvironmentRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private controlValuesRepository: ControlValuesRepository
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  /**
+   * Step integration overrides are keyed by integration identifier, so a rename carries them along.
+   * Overrides already stored under the new identifier (left by a deleted integration, or synced from
+   * another environment whose integration uses that identifier) apply to whichever integration holds
+   * it, so they are kept; only on steps where both exist does the renamed integration's own win.
+   *
+   * Overrides are re-keyed in the integration's current environment, and in the destination when the
+   * same request moves it, so copies synced there under the old identifier follow it. Identifiers
+   * are unique per environment, so the destination may already have its own integration under that
+   * identifier; its overrides apply to it and are left in place.
+   */
+  private async renameStepIntegrationOverrides(
+    integration: IntegrationEntity,
+    newIdentifier: string,
+    environmentIds: string[],
+    session: ClientSession | null
+  ): Promise<void> {
+    for (const environmentId of environmentIds) {
+      if (await this.destinationOwnsIdentifier(integration, environmentId, session)) {
+        continue;
+      }
+
+      const scope = {
+        _environmentId: environmentId,
+        _organizationId: integration._organizationId,
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        providerId: integration.providerId,
+      };
+      const overrides = await this.controlValuesRepository.find(
+        { ...scope, integrationIdentifier: integration.identifier },
+        { _stepId: 1 },
+        { session }
+      );
+
+      if (overrides.length === 0) {
+        continue;
+      }
+
+      await this.controlValuesRepository.delete(
+        {
+          ...scope,
+          integrationIdentifier: newIdentifier,
+          _stepId: { $in: overrides.map((override) => override._stepId) },
+        },
+        { session }
+      );
+      await this.controlValuesRepository.update(
+        { ...scope, integrationIdentifier: integration.identifier },
+        { $set: { integrationIdentifier: newIdentifier } },
+        { session }
+      );
+    }
+  }
+
+  /**
+   * True when `environmentId` is a move destination whose own integration already holds this
+   * identifier for the same provider. Overrides there apply to that integration, not to the one
+   * being renamed.
+   */
+  private async destinationOwnsIdentifier(
+    integration: IntegrationEntity,
+    environmentId: string,
+    session: ClientSession | null
+  ): Promise<boolean> {
+    if (environmentId === integration._environmentId) {
+      return false;
+    }
+
+    const owner = await this.integrationRepository.findOne(
+      {
+        _organizationId: integration._organizationId,
+        _environmentId: environmentId,
+        identifier: integration.identifier,
+      },
+      'providerId',
+      { session }
+    );
+
+    return owner?.providerId === integration.providerId;
   }
 
   private async calculatePriorityAndPrimaryForActive({
@@ -103,6 +186,7 @@ export class UpdateIntegration {
     return result;
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: validates and applies every optional integration field in one pass
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     this.logger.trace('Executing Update Integration Command');
 
@@ -255,16 +339,26 @@ export class UpdateIntegration {
       updatePayload.primary = false;
     }
 
-    await this.integrationRepository.update(
-      {
-        _id: existingIntegration._id,
-        _organizationId: existingIntegration._organizationId,
-        _environmentId: existingIntegration._environmentId,
-      },
-      {
-        $set: updatePayload,
+    const newIdentifier = updatePayload.identifier;
+    const environmentIdsToRekey = [...new Set([existingIntegration._environmentId, environmentId])];
+
+    await this.integrationRepository.withTransaction(async (session) => {
+      await this.integrationRepository.update(
+        {
+          _id: existingIntegration._id,
+          _organizationId: existingIntegration._organizationId,
+          _environmentId: existingIntegration._environmentId,
+        },
+        {
+          $set: updatePayload,
+        },
+        { session }
+      );
+
+      if (newIdentifier) {
+        await this.renameStepIntegrationOverrides(existingIntegration, newIdentifier, environmentIdsToRekey, session);
       }
-    );
+    });
 
     if (shouldRemovePrimary) {
       await this.integrationRepository.recalculatePriorityForAllActive({

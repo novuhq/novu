@@ -13,22 +13,31 @@ type UseEditorPreviewProps = {
   workflowSlug: string;
   stepSlug: string;
   controlValues: Record<string, unknown>;
-  payloadSchema?: Record<string, any>;
+  payloadSchema?: object;
 };
 
 const LOCAL_PREVIEW_REFRESH_INTERVAL_MS = 5 * 1000;
 
+const PREVIEW_OVERRIDE_FIELDS: readonly string[] = ['providerOverrides', 'integrationOverrides'];
+
 /**
- * The form keeps `providerOverrides` as `null` after a reset (the save API's delete-all contract),
+ * The form keeps an override field as `null` after a reset (the save API's delete-all contract),
  * but the preview endpoint rejects a null value and falls back to an empty preview. Drop the key
  * when there are no overrides so the request mirrors a freshly loaded step (which omits it entirely).
  */
 function sanitizeControlValuesForPreview(controlValues: Record<string, unknown>): Record<string, unknown> {
-  const { providerOverrides, ...rest } = controlValues;
-  const hasOverrides =
-    !!providerOverrides && typeof providerOverrides === 'object' && Object.keys(providerOverrides).length > 0;
+  const isEmptyOverrideField = (key: string) => {
+    const value = controlValues[key];
+    const hasOverrides = !!value && typeof value === 'object' && Object.keys(value).length > 0;
 
-  return hasOverrides ? controlValues : rest;
+    return PREVIEW_OVERRIDE_FIELDS.includes(key) && !hasOverrides;
+  };
+
+  if (!Object.keys(controlValues).some(isEmptyOverrideField)) {
+    return controlValues;
+  }
+
+  return Object.fromEntries(Object.entries(controlValues).filter(([key]) => !isEmptyOverrideField(key)));
 }
 
 function useDebounced<T>(value: T, delay: number): T {

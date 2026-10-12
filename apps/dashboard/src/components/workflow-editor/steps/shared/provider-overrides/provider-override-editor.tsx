@@ -1,4 +1,4 @@
-import { type ContentOverrideProviderId, getProviderPrimaryContentKey, setAtPath } from '@novu/shared';
+import { getProviderPrimaryContentKey, setAtPath } from '@novu/shared';
 import { Braces } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -11,23 +11,29 @@ import { SectionHeader } from '@/components/workflow-editor/steps/http-request/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import {
-  getUnsupportedOverrideKeys,
-  isEscapeHatchProvider,
-  PROVIDER_OVERRIDES_FIELD,
-  type ProviderOverrides,
-  shouldKeepServerOverrideIssue,
-} from './content-source';
 import { EscapeHatchCallout } from './escape-hatch-callout';
 import { createOverrideCompletionSource } from './override-autocomplete';
+import { OverrideEmptyState } from './override-empty-state';
 import {
   type AnnotateOverrideField,
   type DescribeOverrideField,
   type OverrideFieldSchema,
 } from './override-field-schema';
+import type { OverrideInheritance } from './override-inheritance';
+import { getUnsupportedOverrideKeys, type OverrideServerIssue } from './override-issues';
 import { findDuplicateRootKey } from './override-json';
+import { overriddenKeyChips } from './override-key-chips';
+import { isEscapeHatchProvider } from './override-options';
+import {
+  getOverrideFormField,
+  getOverridePath,
+  getSourceOverride,
+  type OverrideContentSource,
+  updateSourceOverride,
+} from './override-source';
 import { OverrideSupportedFields } from './override-supported-fields';
 import { createSchemaResolver } from './schema-resolver';
+import { readOverrideValues } from './use-provider-override-options';
 import { useProviderOverrideSchema } from './use-provider-override-schema';
 
 function formatOverrideJson(value: Record<string, unknown> | undefined): string {
@@ -55,7 +61,7 @@ function formatOverrideJsonDraft(value: string): string {
 /**
  * Server issues carry the full control path (e.g. `providerOverrides.slack.blocks.0.status`) in
  * `variableName`, but their message only names the leaf field ("Status is required"). Derive the
- * path relative to this provider, with array indices in bracket notation (`blocks[0].status`), so
+ * path relative to this override, with array indices in bracket notation (`blocks[0].status`), so
  * nested errors point at a location. Top-level fields return undefined — the message already names
  * them.
  */
@@ -111,8 +117,11 @@ export type ProviderOverrideNoticeContext = {
 export type ProviderOverrideNotice = ReactNode | ((context: ProviderOverrideNoticeContext) => ReactNode);
 
 export type ProviderOverrideEditorProps = {
-  providerId: ContentOverrideProviderId;
+  source: OverrideContentSource;
   displayName: string;
+  inheritance?: OverrideInheritance;
+  /** The step's server control issues owned by this override (`buildOverrideIssueIndex`). */
+  serverIssues: OverrideServerIssue[];
   /**
    * Replaces both the schema-less callout and the default hint with channel-specific copy. Rendered
    * into a bare padded block, so it owns its own icon and row layout.
@@ -124,12 +133,14 @@ export type ProviderOverrideEditorProps = {
   rootSchemaOverride?: OverrideFieldSchema;
   describeField?: DescribeOverrideField;
   annotateField?: AnnotateOverrideField;
-  onDraftParseValidityChange?: (providerId: ContentOverrideProviderId, isParseValid: boolean) => void;
+  onDraftParseValidityChange?: (overridePath: string, isParseValid: boolean) => void;
 };
 
 export function ProviderOverrideEditor({
-  providerId,
+  source,
   displayName,
+  inheritance,
+  serverIssues,
   notice,
   headerTooltip,
   placeholder,
@@ -138,6 +149,7 @@ export function ProviderOverrideEditor({
   annotateField,
   onDraftParseValidityChange,
 }: ProviderOverrideEditorProps) {
+  const { providerId } = source;
   const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
@@ -158,13 +170,21 @@ export function ProviderOverrideEditor({
   const primaryKey = getProviderPrimaryContentKey(providerId) ?? undefined;
   const showEscapeHatchCallout = !notice && isEscapeHatchProvider(providerId);
 
+  // The panel remounts the editor per source, so the draft is only seeded from the form once.
   const [draft, setDraft] = useState(() =>
-    formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined)?.[providerId])
+    formatOverrideJson(getSourceOverride(source, readOverrideValues(getValues)))
+  );
+  // Only an override that opens empty gets the empty state; clearing keys while editing keeps the editor.
+  const [isEmptyStateVisible, setIsEmptyStateVisible] = useState(
+    () => Object.keys(getSourceOverride(source, readOverrideValues(getValues)) ?? {}).length === 0
   );
 
-  useEffect(() => {
-    setDraft(formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined)?.[providerId]));
-  }, [getValues, providerId]);
+  const overriddenKeyLabelsJson = JSON.stringify(inheritance?.overriddenKeyLabels ?? {});
+  const editorExtensions = useMemo(() => {
+    const labels = JSON.parse(overriddenKeyLabelsJson) as Record<string, string>;
+
+    return Object.keys(labels).length > 0 ? [overriddenKeyChips(labels)] : undefined;
+  }, [overriddenKeyLabelsJson]);
 
   const formatJson = useCallback(() => {
     setDraft((current) => formatOverrideJsonDraft(current));
@@ -179,38 +199,28 @@ export function ProviderOverrideEditor({
     return { parseError: undefined, parsedDraft: parsed };
   }, [draft]);
 
-  const issuePathPrefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
+  const issuePathPrefix = getOverridePath(source);
 
-  // Top-level unsupported keys are detected client-side from the shared override key
-  // list (keystroke-by-keystroke); skip only those server UNSUPPORTED_PROPERTY issues
-  // so the same key is never reported twice. Nested ones (e.g. document.link) are not
-  // covered by the local check and must still render under the editor.
+  // Server issues for keys the draft no longer has are stale until the next save round-trip.
   const activeServerIssues = useMemo(() => {
-    const controlIssues = step?.issues?.controls ?? {};
+    if (!parsedDraft) {
+      return serverIssues;
+    }
 
-    return Object.entries(controlIssues)
-      .filter(([key]) => key === issuePathPrefix || key.startsWith(`${issuePathPrefix}.`))
-      .flatMap(([path, issueList]) =>
-        issueList
-          .filter((issue) => shouldKeepServerOverrideIssue(issue, path, issuePathPrefix))
-          .map((issue) => ({ ...issue, path }))
-      )
-      .filter((issue) => {
-        if (!parsedDraft) {
-          return true;
-        }
+    return serverIssues.filter((issue) => {
+      const issuePath = issue.variableName ?? issue.path;
+      if (!issuePath.startsWith(`${issuePathPrefix}.`)) {
+        return true;
+      }
 
-        const issuePath = issue.variableName ?? issue.path;
-        if (!issuePath.startsWith(`${issuePathPrefix}.`)) {
-          return true;
-        }
+      const topKey = issuePath.slice(issuePathPrefix.length + 1).split('.')[0];
 
-        const topKey = issuePath.slice(issuePathPrefix.length + 1).split('.')[0];
+      return topKey in parsedDraft;
+    });
+  }, [serverIssues, issuePathPrefix, parsedDraft]);
 
-        return topKey in parsedDraft;
-      });
-  }, [step?.issues?.controls, issuePathPrefix, parsedDraft]);
-
+  // Top-level unsupported keys are checked against the draft keystroke by keystroke; the server's
+  // own UNSUPPORTED_PROPERTY issues for them are already left out of `serverIssues`.
   const localUnsupportedPropertyMessages = useMemo(() => {
     if (!parsedDraft) {
       return [] as string[];
@@ -227,12 +237,12 @@ export function ProviderOverrideEditor({
   );
 
   useEffect(() => {
-    onDraftParseValidityChange?.(providerId, !parseError);
+    onDraftParseValidityChange?.(issuePathPrefix, !parseError);
 
     return () => {
-      onDraftParseValidityChange?.(providerId, true);
+      onDraftParseValidityChange?.(issuePathPrefix, true);
     };
-  }, [onDraftParseValidityChange, parseError, providerId]);
+  }, [onDraftParseValidityChange, parseError, issuePathPrefix]);
 
   const resolvedTooltip =
     headerTooltip ??
@@ -250,15 +260,17 @@ export function ProviderOverrideEditor({
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
       <Controller
         control={control}
-        name={PROVIDER_OVERRIDES_FIELD}
+        name={getOverrideFormField(source)}
         render={({ field }) => {
-          const writeProviderOverride = (next: Record<string, unknown>) => {
-            const current = (field.value as ProviderOverrides | undefined) ?? {};
-            field.onChange({
-              ...current,
-              [providerId]: next,
-            });
+          const writeOverride = (next: Record<string, unknown>) => {
+            field.onChange(updateSourceOverride(source, readOverrideValues(getValues), next));
             saveForm();
+          };
+
+          const replaceOverride = (next: Record<string, unknown>) => {
+            setDraft(formatOverrideJson(next));
+            writeOverride(next);
+            setIsEmptyStateVisible(false);
           };
 
           const handleInsertField = (key: string) => {
@@ -266,13 +278,50 @@ export function ProviderOverrideEditor({
               return;
             }
 
-            const next = {
+            replaceOverride({
               ...parsedDraft,
               [key]: browsableResolver?.defaultValue(browsableSchema?.properties?.[key]) ?? '',
-            };
-            setDraft(formatOverrideJson(next));
-            writeProviderOverride(next);
+            });
           };
+
+          if (inheritance && isEmptyStateVisible) {
+            const inheritedOverride = inheritance.inheritedOverride;
+            const hasFieldPicker = Object.keys(browsableResolver?.rootSchema.properties ?? {}).length > 0;
+
+            return (
+              <>
+                <SectionHeader
+                  label="Override fields"
+                  tooltip={resolvedTooltip}
+                  rightSlot={<span className="text-paragraph-xs text-text-soft">0 keys</span>}
+                />
+                <OverrideEmptyState
+                  message={inheritance.emptyMessage}
+                  canEdit={!isReadOnly}
+                  renderFieldPicker={
+                    hasFieldPicker
+                      ? (trigger) => (
+                          <OverrideSupportedFields
+                            providerId={providerId}
+                            displayName={displayName}
+                            resolver={browsableResolver}
+                            usedKeys={usedDraftKeys}
+                            canInsert={!isReadOnly}
+                            annotateField={annotateField}
+                            trigger={trigger}
+                            onInsertField={handleInsertField}
+                          />
+                        )
+                      : undefined
+                  }
+                  onAddKey={(key) => replaceOverride({ [key]: '' })}
+                  onCopyInheritedKeys={
+                    inheritedOverride ? () => replaceOverride(structuredClone(inheritedOverride)) : undefined
+                  }
+                />
+              </>
+            );
+          }
 
           return (
             <>
@@ -323,6 +372,7 @@ export function ProviderOverrideEditor({
                   isAllowedVariable={isAllowedVariable}
                   variables={variables}
                   completionSources={completionSources}
+                  extensions={editorExtensions}
                   onChange={(val) => {
                     const newVal = typeof val === 'string' ? val : '';
                     setDraft(newVal);
@@ -332,7 +382,7 @@ export function ProviderOverrideEditor({
                       return;
                     }
 
-                    writeProviderOverride(parsed);
+                    writeOverride(parsed);
                   }}
                   onBlur={() => {
                     field.onBlur();

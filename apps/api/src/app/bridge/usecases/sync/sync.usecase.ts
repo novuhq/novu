@@ -13,6 +13,7 @@ import {
   JSONSchemaDto,
   NotificationStep,
   SsrfBlockedError,
+  STEP_CONTROL_LEVELS,
   StepIssuesDto,
   UpdateWorkflowCommandV0,
   UpdateWorkflowV0,
@@ -28,7 +29,6 @@ import {
 } from '@novu/dal';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
-  ControlValuesLevelEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
@@ -285,7 +285,7 @@ export class Sync {
         _organizationId: command.organizationId,
         _workflowId: { $in: workflowIds },
         level: {
-          $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+          $in: STEP_CONTROL_LEVELS,
         },
         controls: { $ne: null },
       },
@@ -295,6 +295,7 @@ export class Sync {
         _workflowId: 1,
         level: 1,
         providerId: 1,
+        integrationIdentifier: 1,
         _id: 0,
       }
     );
