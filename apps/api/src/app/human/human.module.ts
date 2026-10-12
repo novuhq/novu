@@ -22,11 +22,12 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
 import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/remove-subscriber.usecase';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
+import { HumanVerificationEmailSender } from './email/human-verification-email.sender';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
 import { HumanAgentPicturesPublicController } from './human-agent-pictures-public.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
-import { HumanInvitesPublicController } from './human-invites-public.controller';
+import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
@@ -34,6 +35,8 @@ import { HumanBackingAccounts } from './services/human-backing-accounts.service'
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { HumanOperatorService } from './services/human-operator.service';
+import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
+import { HumanVerificationTokenService } from './services/human-verification-token.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
@@ -45,6 +48,7 @@ import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human
 import { DenyHumanCliLogin } from './usecases/deny-human-cli-login/deny-human-cli-login.usecase';
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { GetContact } from './usecases/get-contact/get-contact.usecase';
 import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
@@ -53,9 +57,11 @@ import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
+import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
+import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
 
 /**
  * The human-in-the-loop interaction API. State lives here.
@@ -75,6 +81,7 @@ import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-age
   controllers: [
     HumanInteractionsController,
     HumanInvitesPublicController,
+    HumanVerifyPublicController,
     HumanAgentPicturesPublicController,
     HumanAccountsController,
   ],
@@ -98,9 +105,15 @@ import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-age
     SetupHumanRelay,
     UpdateHumanAgent,
     ListContacts,
+    GetContact,
     RemoveContact,
     RemoveSubscriber,
     HumanInviteTokenService,
+    HumanVerificationTokenService,
+    HumanVerificationRateLimitService,
+    HumanVerificationEmailSender,
+    RequestAddressVerification,
+    VerifyAddress,
     HumanOperatorService,
     HumanAgentIdentityService,
     HumanAgentPictureService,

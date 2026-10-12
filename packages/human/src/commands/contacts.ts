@@ -51,7 +51,7 @@ export function renderContactsTable(rows: ContactRow[], next: string | null): st
 
   for (const row of rows) {
     const name = displayName(row) || pc.dim('—');
-    const email = row.email ?? pc.dim('—');
+    const email = formatEmailColumn(row);
     const self = row.self ? pc.cyan(' (you)') : '';
     lines.push(`${row.id.padEnd(idWidth)}  ${name.padEnd(nameWidth)}  ${email}${self}`);
   }
@@ -61,6 +61,30 @@ export function renderContactsTable(rows: ContactRow[], next: string | null): st
   }
 
   return `${lines.join('\n')}\n`;
+}
+
+function formatEmailColumn(row: ContactRow): string {
+  const emailChannel = row.channels?.find((channel) => channel.via === 'email');
+  if (!emailChannel) {
+    if (!row.email) {
+      return pc.dim('—');
+    }
+
+    return `${row.email} ${pc.dim('(unverified)')}`;
+  }
+
+  if (emailChannel.status === 'pending') {
+    return `${emailChannel.address ?? '—'} ${pc.yellow('(pending verification)')}`;
+  }
+
+  // A listed email channel is this relay's verified address. Subscriber.email can belong to another relay.
+  if (emailChannel.status === 'verified' || !('status' in emailChannel)) {
+    return emailChannel.address ?? pc.dim('—');
+  }
+
+  const address = emailChannel.address ?? row.email ?? '—';
+
+  return `${address} ${pc.dim('(unverified)')}`;
 }
 
 export async function contactsCommand(options: ContactsOptions): Promise<never> {

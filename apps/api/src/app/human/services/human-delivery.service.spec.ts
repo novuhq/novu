@@ -1,5 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
-import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanChannelViaEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  ENDPOINT_TYPES,
+  HumanChannelViaEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
@@ -9,14 +15,17 @@ describe('HumanDeliveryService.resolveChannel', () => {
     const agentIntegrationRepository = { find: sinon.stub() };
     const channelEndpointRepository = { findOne: sinon.stub().resolves(null) };
     const integrationRepository = { find: sinon.stub() };
-    const subscriberRepository = { findOne: sinon.stub().resolves(null) };
-    const humanContactRepository = { findContact: sinon.stub().resolves(null) };
+    const humanContactRepository = {
+      findContact: sinon.stub().resolves(null),
+      findVerifiedAddress: sinon.stub().resolves(null),
+      findPendingAddress: sinon.stub().resolves(null),
+      find: sinon.stub().resolves([]),
+    };
     const outboundGateway = { sendDirectMessage: sinon.stub() };
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
       channelEndpointRepository as never,
       integrationRepository as never,
-      subscriberRepository as never,
       humanContactRepository as never,
       outboundGateway as never
     );
@@ -26,7 +35,6 @@ describe('HumanDeliveryService.resolveChannel', () => {
       agentIntegrationRepository,
       channelEndpointRepository,
       integrationRepository,
-      subscriberRepository,
       humanContactRepository,
     };
   }
@@ -98,7 +106,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     }
   });
 
-  it('tells the caller to invite on email when the subscriber has no address', async () => {
+  it('tells the caller to invite on email when there is no verified address', async () => {
     const { service, agentIntegrationRepository, integrationRepository } = setup();
     agentIntegrationRepository.find.resolves([{ _integrationId: 'int1' }]);
     integrationRepository.find.resolves([
@@ -116,9 +124,139 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no email address on file. Run `human invite alice --via email`.'
+        'Human "alice" has no verified email address. Run `human invite alice --via email`.'
       );
     }
+  });
+
+  it('tells the caller a pending email is awaiting verification', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'int1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'int1',
+        identifier: 'email-main',
+        providerId: 'novu-email-agent',
+        channel: ChannelTypeEnum.EMAIL,
+      },
+    ]);
+    humanContactRepository.findPendingAddress.resolves({
+      address: 'alice@example.com',
+      requestedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    });
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.EMAIL });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.include('awaiting verification');
+      expect((err as NotFoundException).message).to.include('a***@example.com');
+    }
+  });
+
+  it('delivers email only when HumanContact has a verified address', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'int1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'int1',
+        identifier: 'email-main',
+        providerId: 'novu-email-agent',
+        channel: ChannelTypeEnum.EMAIL,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: 'alice@example.com',
+      requestedAt: '2026-09-01T10:00:00.000Z',
+      verifiedAt: '2026-09-01T10:05:00.000Z',
+    });
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.EMAIL });
+
+    expect(target).to.deep.equal({
+      platform: 'email',
+      platformUserId: 'alice@example.com',
+      integrationIdentifier: 'email-main',
+    });
+  });
+
+  it('keeps a verified email deliverable while a newer pending address is outstanding', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'int1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'int1',
+        identifier: 'email-main',
+        providerId: 'novu-email-agent',
+        channel: ChannelTypeEnum.EMAIL,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: 'old@example.com',
+      requestedAt: '2026-09-01T10:00:00.000Z',
+      verifiedAt: '2026-09-01T10:05:00.000Z',
+    });
+    humanContactRepository.findPendingAddress.resolves({
+      address: 'new@example.com',
+      requestedAt: '2026-09-02T10:00:00.000Z',
+    });
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.EMAIL });
+
+    expect(target.platformUserId).to.equal('old@example.com');
+  });
+
+  it('lists a contact as reachable on email only after that relay verified the address', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'int-email' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'int-email',
+        identifier: 'email-main',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+      },
+    ]);
+    humanContactRepository.find.resolves([
+      {
+        subscriberId: 'alice',
+        addresses: {
+          [HumanChannelViaEnum.EMAIL]: {
+            verified: { address: 'alice@example.com', requestedAt: 't1', verifiedAt: 't2' },
+          },
+        },
+      },
+      {
+        subscriberId: 'bob',
+        addresses: {
+          [HumanChannelViaEnum.EMAIL]: {
+            pending: { address: 'bob@example.com', requestedAt: 't1' },
+          },
+        },
+      },
+    ]);
+
+    const reach = await service.describeReachabilityForMany({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agentId: 'agent1',
+      subscribers: [
+        { subscriberId: 'alice', email: 'other@example.com' },
+        { subscriberId: 'bob', email: 'bob@example.com' },
+      ],
+    });
+
+    expect(reach.get('alice')?.targets).to.deep.equal([
+      {
+        via: HumanChannelViaEnum.EMAIL,
+        platform: HumanChannelViaEnum.EMAIL,
+        platformUserId: 'alice@example.com',
+        integrationIdentifier: 'email-main',
+        connectedAt: 't2',
+      },
+    ]);
+    expect(reach.get('bob')?.targets).to.deep.equal([]);
   });
 
   describe('when the human is reachable on several channels', () => {
@@ -213,7 +351,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
 });
 
 describe('HumanDeliveryService.listInviteChannels', () => {
-  it('offers only active Telegram and Slack integrations, once per app', async () => {
+  it('offers active Telegram, Slack, and Email integrations, once per app', async () => {
     const agentIntegrationRepository = {
       find: sinon.stub().resolves([1, 2, 3, 4, 5].map((n) => ({ _integrationId: `int${n}` }))),
     };
@@ -236,13 +374,13 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       {} as never,
       integrationRepository as never,
       {} as never,
-      {} as never,
       {} as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });
 
     expect(channels).to.deep.equal([
+      { via: HumanChannelViaEnum.EMAIL, integrationIdentifier: 'email-main' },
       { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack-main' },
       { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg-main' },
     ]);

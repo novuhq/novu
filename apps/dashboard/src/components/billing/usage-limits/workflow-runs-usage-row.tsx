@@ -25,11 +25,12 @@ function UsageBar({ usage }: { usage: WorkflowRunsUsage }) {
       );
     case 'billed_on_demand':
       return (
-        <div className="flex h-[5px] w-full gap-px overflow-hidden rounded-[2px] bg-bg-muted">
-          <div className="h-full bg-neutral-700" style={{ width: `${toPercent(included, scale)}%` }} />
+        <div className="flex h-[5px] w-full overflow-hidden rounded-[2px] bg-bg-muted">
+          <div className="h-full shrink-0 bg-neutral-700" style={{ width: `${toPercent(included, scale)}%` }} />
+          <div className="h-full w-px shrink-0 bg-bg-white" />
           <div
-            className="h-full bg-[image:repeating-linear-gradient(-45deg,hsl(var(--neutral-700))_0_2px,hsl(var(--neutral-300))_2px_4px)]"
-            style={{ width: `${toPercent(current - included, scale)}%` }}
+            className="h-full shrink-0 bg-text-sub"
+            style={{ width: `${toPercent(Math.max(current - included, 0), scale)}%` }}
           />
         </div>
       );

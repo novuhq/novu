@@ -24,6 +24,14 @@ export interface HumanCliConfig {
 export const DEFAULT_API_URL = 'https://api.novu.co';
 export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';
 
+/**
+ * Static site that hosts the credential landing pages (e.g. `/connect#<token>`
+ * for Telegram). Only used against Novu Cloud: the page is hardcoded to call
+ * `api.novu.co`, so self-hosted / local APIs fall back to the URL the server
+ * itself returns (that deployment's own dashboard page).
+ */
+export const HUMAN_SETUP_PAGE_ORIGIN = 'https://www.gethuman.md';
+
 export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
 
 export const NOT_SET_UP_MESSAGE =

@@ -24,6 +24,7 @@ import { resolveCardContent } from './resources/agent/resolve-card-content';
 import { prettyPrintDiscovery } from './resources/workflow/pretty-print-discovery';
 import type {
   ActionStep,
+  Awaitable,
   ClientOptions,
   CodeResult,
   DiscoverOutput,
@@ -32,17 +33,21 @@ import type {
   DiscoverWorkflowOutput,
   Event,
   ExecuteOutput,
+  FromSchema,
   HealthCheck,
   Logger,
   Schema,
   Skip,
   State,
+  StepContext,
+  StepOptions,
   StepType,
   ValidationError,
   Workflow,
 } from './types';
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, resolveApiUrl, resolveSecretKey, sanitizeHtmlInObject } from './utils';
+import { renderLiquidJson } from './utils/compile-json-control-values';
 import { createLiquidEngine } from './utils/liquid.utils';
 import {
   expandJsonStringControlValues,
@@ -51,6 +56,43 @@ import {
 } from './utils/normalize-controls.utils';
 import { deepMerge } from './utils/object.utils';
 import { validateData } from './validators';
+
+type ProviderOverrideMap = Partial<Record<string, DiscoverProviderOutput['resolve']>>;
+
+function isProviderOverrideMap(value: object): value is ProviderOverrideMap {
+  return Object.values(value).every((entry) => entry === undefined || typeof entry === 'function');
+}
+
+function readProviderOverride<T_ControlSchema extends Schema, T_Controls extends Record<string, unknown>>(
+  options: StepOptions<T_ControlSchema, T_Controls> | undefined,
+  providerType: string
+): DiscoverProviderOutput['resolve'] | undefined {
+  if (!options || !('providers' in options)) {
+    return undefined;
+  }
+
+  const providers = options.providers;
+
+  if (typeof providers !== 'object' || providers === null) {
+    return undefined;
+  }
+
+  if (!isProviderOverrideMap(providers)) {
+    return undefined;
+  }
+
+  return providers[providerType];
+}
+
+function asActionStep<T_Outputs extends Record<string, unknown>, T_Result extends Record<string, unknown>>(
+  step: <T_ControlSchema extends Schema, T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>>(
+    stepId: string,
+    stepResolve: (controls: T_Controls) => Awaitable<T_Outputs>,
+    options?: StepOptions<T_ControlSchema, T_Controls>
+  ) => Promise<(T_Result & StepContext) | undefined>
+): ActionStep<T_Outputs, T_Result> {
+  return step as ActionStep<T_Outputs, T_Result>;
+}
 
 function isRuntimeInDevelopment() {
   return ['development', undefined, 'dev'].includes(process.env.NODE_ENV);
@@ -111,7 +153,7 @@ export class Client {
     return builtConfiguration;
   }
 
-  private log(...args: any[]): void {
+  private log(...args: Parameters<Logger['info']>): void {
     if (this.verbose) {
       this.logger.info(...args);
     }
@@ -333,7 +375,7 @@ export class Client {
     setResult: (result: Pick<ExecuteOutput, 'outputs' | 'providers' | 'options'>) => void,
     hasResult: () => boolean
   ): ActionStep<T_Outputs, T_Result> {
-    return async (stepId, stepResolve, options) => {
+    return asActionStep<T_Outputs, T_Result>(async (stepId, stepResolve, options) => {
       if (hasResult()) {
         /*
          * Exit the execution early if the result has already been set.
@@ -362,7 +404,7 @@ export class Client {
            * Return an empty object for results when a step is skipped.
            * TODO: fix typings when `skip` is specified to return `Partial<T_Result>`
            */
-          return {} as any;
+          return {} as T_Result & StepContext;
         }
       }
 
@@ -374,7 +416,7 @@ export class Client {
         ...step,
         providers: step.providers.map((provider) => {
           // TODO: Update return type to include ChannelStep and fix typings
-          const providerResolve = (options as any)?.providers?.[provider.type] as typeof provider.resolve;
+          const providerResolve = readProviderOverride(options, provider.type);
 
           if (!providerResolve) {
             throw new ProviderNotFoundError(provider.type);
@@ -405,8 +447,8 @@ export class Client {
         });
       }
 
-      return stepResult.outputs;
-    };
+      return stepResult.outputs as T_Result & StepContext;
+    });
   }
 
   private shouldSanitize({ stepType, options }: { stepType: StepType; options: ChannelStepOption | undefined }) {
@@ -780,7 +822,6 @@ export class Client {
 
       let templateString = this.preprocessTranslationPatterns(JSON.stringify(expandedControls));
       templateString = this.preprocessFilterTranslationArgs(templateString);
-      const parsedTemplate = this.templateEngine.parse(templateString);
       const discoveredWorkflow = this.getWorkflow(event.workflowId);
 
       const renderVariables = {
@@ -799,7 +840,7 @@ export class Client {
         env: event.env ?? {},
       };
 
-      const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);
+      const compiledString = await renderLiquidJson(this.templateEngine, templateString, renderVariables);
       // Post-process: convert [T:key] placeholders back to {{t.key}} markers
       const withMarkers = this.postprocessTranslationMarkers(compiledString);
       // repair the string to fix invalid JSON, it could happen in the case when the control value
