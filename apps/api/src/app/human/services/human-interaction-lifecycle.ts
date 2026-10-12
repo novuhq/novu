@@ -111,7 +111,7 @@ type CardTreeNode = {
 };
 
 function collectCardActionButtons(
-  node: CardTreeNode | readonly CardTreeNode[] | undefined,
+  node: CardTreeNode | CardTreeNode[] | undefined,
   into: CardActionButton[] = []
 ): CardActionButton[] {
   if (Array.isArray(node)) {
