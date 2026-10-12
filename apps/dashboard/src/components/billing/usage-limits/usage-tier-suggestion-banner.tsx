@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAuth } from '@/context/auth/hooks';
 import { TierSuggestionBanner, type TierSuggestionSource } from './tier-suggestion-card';
 import { getUsageTierSuggestion, type TierSuggestion } from './usage-limits-form-values';
@@ -8,12 +8,38 @@ function getDismissStorageKey(organizationId: string, kind: TierSuggestion['kind
   return `novu-usage-tier-suggestion-dismissed:${organizationId}:${kind}:${resetsAt ?? 'none'}`;
 }
 
+/** Storage access throws in some private browsing modes and when the quota is full. */
 function readDismissed(storageKey: string): boolean {
-  if (typeof window === 'undefined') {
+  try {
+    return window.localStorage.getItem(storageKey) === 'true';
+  } catch {
     return false;
   }
+}
 
-  return window.localStorage.getItem(storageKey) === 'true';
+function writeDismissed(storageKey: string) {
+  try {
+    window.localStorage.setItem(storageKey, 'true');
+  } catch {
+    // The dismissal still holds for this page view.
+  }
+}
+
+/** Without a key nothing is persisted, so the suggestion always shows. */
+function useDismissedFlag(storageKey: string | null): [boolean, () => void] {
+  const [dismissedKey, setDismissedKey] = useState<string | null>(null);
+  const isStored = useMemo(() => storageKey !== null && readDismissed(storageKey), [storageKey]);
+
+  const dismiss = () => {
+    if (storageKey === null) {
+      return;
+    }
+
+    writeDismissed(storageKey);
+    setDismissedKey(storageKey);
+  };
+
+  return [isStored || (storageKey !== null && dismissedKey === storageKey), dismiss];
 }
 
 type UsageTierSuggestionBannerProps = {
@@ -41,20 +67,11 @@ export function UsageTierSuggestionBanner({ source, onComparePlans }: UsageTierS
     suggestion && currentOrganization?._id
       ? getDismissStorageKey(currentOrganization._id, suggestion.kind, view.usage.resetsAt)
       : null;
-  const [dismissedKey, setDismissedKey] = useState<string | null>(null);
-  const isDismissed = storageKey !== null && (dismissedKey === storageKey || readDismissed(storageKey));
+  const [isDismissed, dismiss] = useDismissedFlag(storageKey);
 
   if (!view?.canEdit || !suggestion || isDismissed) {
     return null;
   }
-
-  const handleDismiss = () => {
-    if (storageKey && typeof window !== 'undefined') {
-      window.localStorage.setItem(storageKey, 'true');
-    }
-
-    setDismissedKey(storageKey);
-  };
 
   return (
     <TierSuggestionBanner
@@ -62,7 +79,7 @@ export function UsageTierSuggestionBanner({ source, onComparePlans }: UsageTierS
       billingInterval={view.plan.billingInterval}
       source={source}
       onComparePlans={onComparePlans}
-      onDismiss={handleDismiss}
+      onDismiss={dismiss}
     />
   );
 }

@@ -4,7 +4,6 @@ import {
   formatWholeUsd,
   getOnDemandCost,
   getPauseAtLimitDescription,
-  getTeamsSavings,
   getTierSuggestion,
   getUsageAlertsDescription,
   getUsageTierSuggestion,
@@ -41,9 +40,9 @@ describe('usage-limits-form-values', () => {
     const suggest = (apiServiceLevel: ApiServiceLevelEnum, onDemandLimit: number | null, onDemandPricePer1k = 2) =>
       getTierSuggestion({ apiServiceLevel, isOnTrial: false, onDemandLimit, onDemandPricePer1k });
 
-    it('suggests Teams once Pro plus on-demand reaches the $250 Teams price', () => {
-      expect(suggest(ApiServiceLevelEnum.PRO, 109_999)).toBeNull();
-      expect(suggest(ApiServiceLevelEnum.PRO, 110_000)).toEqual({ kind: 'upgrade_to_teams', monthlyCost: 250 });
+    it('suggests Teams once Pro plus on-demand beats the $250 Teams price by a whole dollar', () => {
+      expect(suggest(ApiServiceLevelEnum.PRO, 110_000)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.PRO, 110_500)).toEqual({ kind: 'upgrade_to_teams', monthlyCost: 251 });
     });
 
     it('prices the Pro plan plus the whole on-demand limit', () => {
@@ -90,7 +89,7 @@ describe('usage-limits-form-values', () => {
     const suggest = (apiServiceLevel: ApiServiceLevelEnum, current: number, isOnTrial = false) =>
       getUsageTierSuggestion({ apiServiceLevel, isOnTrial, current, included: INCLUDED, onDemandPricePer1k: 2 });
 
-    it('suggests Teams once Pro plus on-demand so far saves at least a dollar', () => {
+    it('suggests Teams once Pro plus on-demand so far beats the Teams price by a whole dollar', () => {
       expect(suggest(ApiServiceLevelEnum.PRO, INCLUDED + 110_000)).toBeNull();
       expect(suggest(ApiServiceLevelEnum.PRO, INCLUDED + 123_500)).toEqual({
         kind: 'upgrade_to_teams',
@@ -118,12 +117,6 @@ describe('usage-limits-form-values', () => {
           onDemandPricePer1k: null,
         })
       ).toBeNull();
-    });
-  });
-
-  describe('getTeamsSavings', () => {
-    it('is the monthly cost above the Teams price', () => {
-      expect(getTeamsSavings(277)).toBe(27);
     });
   });
 

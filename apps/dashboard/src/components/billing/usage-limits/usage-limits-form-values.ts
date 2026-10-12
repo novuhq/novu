@@ -94,10 +94,7 @@ export function getTierSuggestion({
   );
 }
 
-/**
- * Same thresholds as `getTierSuggestion`, priced on the runs used so far this cycle. Teams is only suggested once it
- * would have saved at least a whole dollar.
- */
+/** Same thresholds as `getTierSuggestion`, priced on the runs used so far this cycle. */
 export function getUsageTierSuggestion({
   apiServiceLevel,
   isOnTrial,
@@ -115,26 +112,21 @@ export function getUsageTierSuggestion({
     return null;
   }
 
-  const suggestion = suggestTierForMonthlyCost(
+  return suggestTierForMonthlyCost(
     apiServiceLevel,
     getMonthlyCost(apiServiceLevel, getOnDemandSpend(current - included, onDemandPricePer1k))
   );
-
-  if (suggestion?.kind === 'upgrade_to_teams' && Math.round(getTeamsSavings(suggestion.monthlyCost)) < 1) {
-    return null;
-  }
-
-  return suggestion;
 }
 
 export function getTeamsSavings(monthlyCost: number): number {
   return monthlyCost - TEAMS_MONTHLY_COST;
 }
 
+/** Teams needs to save at least a whole dollar, so the copy never claims a $0 saving. */
 function suggestTierForMonthlyCost(apiServiceLevel: ApiServiceLevelEnum, monthlyCost: number): TierSuggestion | null {
   switch (apiServiceLevel) {
     case ApiServiceLevelEnum.PRO:
-      return monthlyCost >= TEAMS_MONTHLY_COST ? { kind: 'upgrade_to_teams', monthlyCost } : null;
+      return Math.round(getTeamsSavings(monthlyCost)) >= 1 ? { kind: 'upgrade_to_teams', monthlyCost } : null;
     case ApiServiceLevelEnum.BUSINESS:
       return monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD ? { kind: 'contact_sales', monthlyCost } : null;
     case ApiServiceLevelEnum.FREE:

@@ -5,10 +5,12 @@ import { Button, type ButtonProps } from '@/components/primitives/button';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 
-interface ContactSalesButtonProps
-  extends Pick<ButtonProps, 'className' | 'variant' | 'mode' | 'size' | 'trailingIcon' | 'children'> {
+type ContactSalesButtonProps = Pick<
+  ButtonProps,
+  'className' | 'variant' | 'mode' | 'size' | 'trailingIcon' | 'children'
+> & {
   utmCampaign?: string;
-}
+};
 
 export function ContactSalesButton({
   className,
