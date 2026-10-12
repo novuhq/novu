@@ -180,6 +180,7 @@ describe('AgentInboundHandler', () => {
 
         return { messageId: result.id, platformThreadId: result.threadId };
       }),
+      replyOnThreadWithCard: sinon.stub().resolves({ messageId: 'card-1', platformThreadId: 'email:thread1:' }),
     };
     const inboundAck = {
       showWorkingSignal: sinon.stub().resolves(undefined),
@@ -276,6 +277,12 @@ describe('AgentInboundHandler', () => {
       hasPendingConversationAsk: sinon.stub().resolves(false),
     };
     const humanConversationInbound = new HumanConversationInboundInterceptor(humanInteractionInbound as any);
+    const keylessEmailGate = {
+      isBlocked: sinon.stub().returns(false),
+      assertAllowed: sinon.stub().resolves(),
+      buildClaimCard: sinon.stub().callsFake((url: string) => ({ title: 'Sign up free', url })),
+      findDeclaredOperatorAddress: sinon.stub().resolves(null),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -299,7 +306,8 @@ describe('AgentInboundHandler', () => {
       replyApprovalInterceptor as any,
       workflowOriginService as any,
       humanConversationInbound,
-      agentConfigResolver as any
+      agentConfigResolver as any,
+      keylessEmailGate as any
     );
 
     return {
@@ -324,6 +332,8 @@ describe('AgentInboundHandler', () => {
       outboundGateway,
       inboundAck,
       planLimitGate,
+      connectClaimTokenService,
+      keylessEmailGate,
     };
   }
 
@@ -1728,7 +1738,7 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
     });
 
-    it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
+    it('never dispatches a keyless email turn, even when the subscriber is unresolved', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
@@ -1748,7 +1758,8 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(outboundGateway.replyOnThread.called).to.equal(false);
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
     });
 
     it('should still gate keyless managed agents on non-email platforms when subscriber is unresolved', async () => {
@@ -1833,8 +1844,78 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(resolveOrProvision.called).to.equal(false);
-      // Keyless demo agents bypass the subscriber gate and still dispatch.
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+    });
+
+    it('sends one claim email when the sender matches the declared operator address', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const { handler, managedAgentService, outboundGateway, keylessEmailGate, connectClaimTokenService } = makeHandler(
+        {
+          subscriberResolve: sinon.stub().resolves(null),
+          agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        }
+      );
+      keylessEmailGate.findDeclaredOperatorAddress.resolves(address);
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+      const message = makeEmailDmMessage(address);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThreadWithCard.calledOnce).to.equal(true);
+      expect(connectClaimTokenService.tryMarkSignupCtaPosted.calledOnce).to.equal(true);
+      expect(connectClaimTokenService.tryMarkSignupCtaPosted.firstCall.args[0]).to.equal('human-email:env1');
+    });
+
+    it('stays silent on a second message, a mismatched sender, and when no address was declared', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+
+      const alreadySent = makeHandler({ subscriberResolve: sinon.stub().resolves(null) });
+      alreadySent.connectClaimTokenService.isSignupCtaPosted.resolves(true);
+      alreadySent.keylessEmailGate.findDeclaredOperatorAddress.resolves(address);
+      await alreadySent.handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+      expect(alreadySent.outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+
+      const mismatch = makeHandler({ subscriberResolve: sinon.stub().resolves(null) });
+      mismatch.keylessEmailGate.findDeclaredOperatorAddress.resolves('other@example.com');
+      await mismatch.handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+      expect(mismatch.outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+
+      const undeclared = makeHandler({ subscriberResolve: sinon.stub().resolves(null) });
+      await undeclared.handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+      expect(undeclared.outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+      expect(undeclared.managedAgentService.dispatch.called).to.equal(false);
     });
 
     it('should not resolve or provision an identity for a spoofed (unverified) open-access email sender', async () => {

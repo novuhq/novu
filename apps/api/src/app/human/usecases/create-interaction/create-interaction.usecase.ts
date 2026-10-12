@@ -12,6 +12,7 @@ import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/hu
 import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-payload.dto';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { resolveKeylessHumanInteractionCap } from '../../../keyless/keyless-abuse.constants';
+import { isHumanBrowserLoginAvailable } from '../../../keyless/keyless-email-gate.service';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
 import { buildHumanClaimUrl, buildKeylessHumanSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
@@ -29,11 +30,6 @@ import { CreateInteractionCommand } from './create-interaction.command';
 
 /** Machine-readable code on the 429 body so `@novu/human` can branch without parsing prose. */
 export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
-
-/** `human login` is approved on the Human dashboard, so it only works where one is configured (not self-hosted). */
-function isHumanBrowserLoginAvailable(): boolean {
-  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
-}
 
 /**
  * Where the Human dashboard runs, setups are claimed there and the CLI continues with `human login`.

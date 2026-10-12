@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -8,7 +8,22 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
+
+function emailGate(blocked = false) {
+  return {
+    isBlocked: sinon.stub().returns(blocked),
+    assertAllowed: blocked
+      ? sinon.stub().rejects(
+          new ForbiddenException({
+            code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
+            message: 'Outbound email needs a Human account.',
+          })
+        )
+      : sinon.stub().resolves(),
+  };
+}
 
 describe('HumanDeliveryService.resolveChannel', () => {
   function setup() {
@@ -22,12 +37,14 @@ describe('HumanDeliveryService.resolveChannel', () => {
       find: sinon.stub().resolves([]),
     };
     const outboundGateway = { sendDirectMessage: sinon.stub() };
+    const keylessEmailGate = emailGate();
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
       channelEndpointRepository as never,
       integrationRepository as never,
       humanContactRepository as never,
-      outboundGateway as never
+      outboundGateway as never,
+      keylessEmailGate as never
     );
 
     return {
@@ -36,6 +53,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       channelEndpointRepository,
       integrationRepository,
       humanContactRepository,
+      keylessEmailGate,
     };
   }
 
@@ -350,6 +368,127 @@ describe('HumanDeliveryService.resolveChannel', () => {
   });
 });
 
+describe('HumanDeliveryService keyless email', () => {
+  function keylessService() {
+    const agentIntegrationRepository = {
+      find: sinon.stub().resolves([{ _integrationId: 'email1' }, { _integrationId: 'tg1' }]),
+    };
+    const channelEndpointRepository = {
+      findOne: sinon.stub().resolves({
+        subscriberId: 'alice',
+        integrationIdentifier: 'telegram-main',
+        type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+        endpoint: { chatId: '111' },
+        createdAt: '2026-01-01T00:00:00.000Z',
+      }),
+    };
+    const integrationRepository = {
+      find: sinon.stub().resolves([
+        {
+          _id: 'email1',
+          identifier: 'email-main',
+          providerId: EmailProviderIdEnum.AgentEmailInbox,
+          channel: ChannelTypeEnum.EMAIL,
+          active: true,
+        },
+        {
+          _id: 'tg1',
+          identifier: 'telegram-main',
+          providerId: ChatProviderIdEnum.Telegram,
+          channel: ChannelTypeEnum.CHAT,
+          active: true,
+        },
+      ]),
+    };
+    const humanContactRepository = {
+      findContact: sinon.stub().resolves(null),
+      findVerifiedAddress: sinon
+        .stub()
+        .resolves({ address: 'ada@example.com', verifiedAt: '2026-01-02T00:00:00.000Z' }),
+      findPendingAddress: sinon.stub().resolves(null),
+      find: sinon.stub().resolves([]),
+    };
+    const keylessEmailGate = emailGate(true);
+    const service = new HumanDeliveryService(
+      agentIntegrationRepository as never,
+      channelEndpointRepository as never,
+      integrationRepository as never,
+      humanContactRepository as never,
+      { sendDirectMessage: sinon.stub() } as never,
+      keylessEmailGate as never
+    );
+
+    return { service, humanContactRepository, agentIntegrationRepository, integrationRepository, keylessEmailGate };
+  }
+
+  const params = {
+    environmentId: 'env1',
+    organizationId: 'keyless-org',
+    agentId: 'agent1',
+    subscriberId: 'alice',
+  };
+
+  it('does not treat a verified email as reachable and falls back to Telegram', async () => {
+    const { service } = keylessService();
+
+    const target = await service.resolveChannel(params);
+
+    expect(target.integrationIdentifier).to.equal('telegram-main');
+  });
+
+  it('raises the claim error when email is the only channel', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, keylessEmailGate } = keylessService();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'email1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'email1',
+        identifier: 'email-main',
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+      },
+    ]);
+
+    try {
+      await service.resolveChannel(params);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+    }
+
+    expect(keylessEmailGate.assertAllowed.calledOnce).to.equal(true);
+  });
+
+  it('raises the claim error when email is requested explicitly', async () => {
+    const { service } = keylessService();
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.EMAIL });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+      expect((err as ForbiddenException).getResponse()).to.include({ code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE });
+    }
+  });
+
+  it('marks email unavailable on the invite page', async () => {
+    const { service, humanContactRepository } = keylessService();
+    humanContactRepository.findContact.resolves({
+      addresses: {
+        [HumanChannelViaEnum.EMAIL]: {
+          verified: { address: 'ada@example.com', requestedAt: '', verifiedAt: '2026-01-02T00:00:00.000Z' },
+        },
+      },
+    });
+
+    const channels = await service.describeInviteChannels(params);
+    const email = channels.find((channel) => channel.via === HumanChannelViaEnum.EMAIL);
+
+    expect(email).to.include({ available: false, connected: false });
+    expect(channels.find((channel) => channel.via === HumanChannelViaEnum.TELEGRAM)?.connected).to.equal(true);
+  });
+});
+
 describe('HumanDeliveryService.listInviteChannels', () => {
   it('offers active Telegram, Slack, and Email integrations, once per app', async () => {
     const agentIntegrationRepository = {
@@ -374,7 +513,8 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       {} as never,
       integrationRepository as never,
       {} as never,
-      {} as never
+      {} as never,
+      emailGate() as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });

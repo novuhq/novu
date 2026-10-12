@@ -27,9 +27,12 @@ vi.mock('../qr', () => ({ renderQR: vi.fn((text: string) => `<QR ${text}>`) }));
 vi.mock('../cli-io', () => ({ info: vi.fn(), promptLine: vi.fn(), promptSecret: vi.fn() }));
 
 const api = await import('../api/setup');
+const { info } = await import('../cli-io');
 const {
+  connectEmail,
   connectSlack: connectSlackImplementation,
   connectTelegram: connectTelegramImplementation,
+  resolveOperatorEmail,
   resolveOperatorName,
   reusableAuth,
 } = await import('./setup');
@@ -438,6 +441,64 @@ describe('connectSlack', () => {
     );
   });
 });
+describe('resolveOperatorEmail', () => {
+  const io = (answers: string[]) => {
+    const prompt = vi.fn();
+    for (const answer of answers) {
+      prompt.mockResolvedValueOnce(answer);
+    }
+
+    return { isTTY: true, prompt };
+  };
+
+  it('uses --email without prompting', async () => {
+    const prompt = vi.fn();
+
+    await expect(resolveOperatorEmail({ email: 'Ada@Example.com' }, true, { isTTY: true, prompt })).resolves.toBe(
+      'ada@example.com'
+    );
+    expect(prompt).not.toHaveBeenCalled();
+  });
+
+  it('requires an address for a keyless setup', async () => {
+    await expect(resolveOperatorEmail({}, true, io(['', 'not-an-email', 'ada@example.com']))).resolves.toBe(
+      'ada@example.com'
+    );
+  });
+
+  it('lets an account skip the prompt', async () => {
+    await expect(resolveOperatorEmail({}, false, io(['']))).resolves.toBeUndefined();
+  });
+
+  it('refuses a non-interactive keyless setup that has no --email', async () => {
+    await expect(resolveOperatorEmail({}, true, { isTTY: false, prompt: vi.fn() })).rejects.toThrow('--email');
+  });
+});
+
+describe('connectEmail', () => {
+  it('prints the inbox and skips verification for a keyless setup', async () => {
+    vi.mocked(api.addAgentEmailIntegration).mockResolvedValue({
+      integration: { identifier: 'email-1', providerId: 'agent-email-inbox', sharedInboundAddress: 'box@agent.test' },
+    } as never);
+
+    const identifier = await connectEmail({ isKeyless: true } as never, 'human-relay', 'sub-1', {});
+
+    expect(identifier).toBe('email-1');
+    expect(
+      vi
+        .mocked(info)
+        .mock.calls.map((call) => String(call[0]))
+        .join('\n')
+    ).toContain('box@agent.test');
+    expect(
+      vi
+        .mocked(info)
+        .mock.calls.map((call) => String(call[0]))
+        .join('\n')
+    ).toContain('human login');
+  });
+});
+
 describe('resolveOperatorName', () => {
   it('uses --name without prompting', async () => {
     const prompt = vi.fn();

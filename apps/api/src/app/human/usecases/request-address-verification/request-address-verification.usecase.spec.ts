@@ -1,7 +1,8 @@
-import { BadGatewayException } from '@nestjs/common';
+import { BadGatewayException, ForbiddenException } from '@nestjs/common';
 import { ChannelTypeEnum, EmailProviderIdEnum, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../../keyless/keyless-email-gate.service';
 import { RequestAddressVerificationCommand } from './request-address-verification.command';
 import { RequestAddressVerification } from './request-address-verification.usecase';
 
@@ -35,6 +36,9 @@ describe('RequestAddressVerification', () => {
       reserve: sinon.stub().resolves({ organizationId: 'org-1', remaining: 1, unlimited: false }),
       releaseRemaining: sinon.stub().resolves(),
     };
+    const keylessEmailGate = {
+      assertAllowed: sinon.stub().resolves(),
+    };
     const usecase = new RequestAddressVerification(
       { execute: sinon.stub() } as never,
       {
@@ -64,10 +68,19 @@ describe('RequestAddressVerification', () => {
       rateLimit as never,
       verificationTokens as never,
       emailSender as never,
-      inboxQuota as never
+      inboxQuota as never,
+      keylessEmailGate as never
     );
 
-    return { usecase, humanContactRepository, rateLimit, emailSender, verificationTokens, inboxQuota };
+    return {
+      usecase,
+      humanContactRepository,
+      rateLimit,
+      emailSender,
+      verificationTokens,
+      inboxQuota,
+      keylessEmailGate,
+    };
   }
 
   function command() {
@@ -122,5 +135,27 @@ describe('RequestAddressVerification', () => {
       address: writtenPending.address,
       requestedAt: writtenPending.requestedAt,
     });
+  });
+
+  it('refuses a keyless org before any reservation or pending write', async () => {
+    const { usecase, keylessEmailGate, rateLimit, inboxQuota, humanContactRepository } = setup();
+    keylessEmailGate.assertAllowed.rejects(
+      new ForbiddenException({
+        code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
+        message: 'Outbound email needs a Human account.',
+      })
+    );
+
+    try {
+      await usecase.execute(command());
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+      expect((err as ForbiddenException).getResponse()).to.include({ code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE });
+    }
+
+    expect(rateLimit.assertAndRecord.called).to.equal(false);
+    expect(inboxQuota.reserve.called).to.equal(false);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
   });
 });

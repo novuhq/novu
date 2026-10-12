@@ -17,6 +17,8 @@ export type InviteChannel = {
   status: InviteChannelStatus;
   /** Masked address for email (e.g. `a***@b.com`). */
   address?: string;
+  /** False when this setup cannot offer the channel. Missing means it can. */
+  available?: boolean;
 };
 
 /** Who is asking to reach the invitee. Both fields are optional; use `describeSender` to render. */

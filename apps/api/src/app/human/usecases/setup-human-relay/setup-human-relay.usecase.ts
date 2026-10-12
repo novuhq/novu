@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, isAgentSharedInboxEnabled, PinoLogger } from '@novu/application-generic';
 import {
   AgentEntity,
   AgentRepository,
@@ -8,8 +8,10 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, EmailProviderIdEnum, HumanChannelViaEnum } from '@novu/shared';
+import { NovuEmailProvisioningService } from '../../../agents/email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { HUMAN_RELAY_DEFAULT_NAME } from '../../../agents/human-relay/human-relay-identity';
+import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
 import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
@@ -36,8 +38,12 @@ export class SetupHumanRelay {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly humanOperator: HumanOperatorService,
-    private readonly humanAgentIdentity: HumanAgentIdentityService
-  ) {}
+    private readonly humanAgentIdentity: HumanAgentIdentityService,
+    private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: SetupHumanRelayCommand): Promise<SetupHumanRelayResponseDto> {
@@ -46,6 +52,8 @@ export class SetupHumanRelay {
     const agent = await this.ensureRelayAgent(command, identifier);
     const subscriberId = await this.resolveSubscriberId(command, agent);
     await this.ensureSubscriber(command, subscriberId);
+    await this.ensureAgentEmailInbox(command, agent);
+    await this.rememberDeclaredEmail(command, agent._id, subscriberId);
 
     if (command.defaultVia) {
       await this.humanContactRepository.setDefaultVia({
@@ -178,5 +186,52 @@ export class SetupHumanRelay {
     }
 
     return true;
+  }
+
+  /**
+   * Every setup gets an agent email inbox. Self-hosted has no shared address to
+   * hand out, so it is skipped. A failure here must not fail `human setup`.
+   */
+  private async ensureAgentEmailInbox(command: SetupHumanRelayCommand, agent: AgentEntity): Promise<void> {
+    if (!isAgentSharedInboxEnabled()) {
+      return;
+    }
+
+    try {
+      await this.findOrCreateNovuEmail.execute(
+        agent._id,
+        command.environmentId,
+        command.organizationId,
+        EmailProviderIdEnum.AgentEmailInbox
+      );
+    } catch (err) {
+      this.logger.warn({ err, agentId: agent._id }, 'Failed to provision the agent email inbox');
+    }
+  }
+
+  /** Stored unverified. Delivery still requires the verified slot. */
+  private async rememberDeclaredEmail(
+    command: SetupHumanRelayCommand,
+    agentId: string,
+    subscriberId: string
+  ): Promise<void> {
+    const raw = command.email?.trim();
+    if (!raw) {
+      return;
+    }
+
+    const address = normalizeEmailForLookup(raw);
+    if (!isValidEmailForLookup(address)) {
+      return;
+    }
+
+    await this.humanContactRepository.setDeclaredAddress({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId,
+      subscriberId,
+      via: HumanChannelViaEnum.EMAIL,
+      address,
+    });
   }
 }

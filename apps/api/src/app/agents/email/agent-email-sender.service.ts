@@ -12,6 +12,7 @@ import {
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions, isAgentInboxProvider } from '@novu/shared';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 import { toDeliveryError } from '../shared/util/delivery-error.util';
@@ -358,9 +359,11 @@ export class AgentEmailSender {
   /**
    * Agent Email Inbox credits are counted only when the outbound provider
    * accepts the message. Dashboard Novu Email sends do not enter this path.
+   * Keyless orgs share one organization id, so the org-wide counters would
+   * pool every demo together — the claim reply is metered on its own.
    */
   private async accountInboxSend<T>(config: ResolvedAgentConfig, send: () => Promise<T>): Promise<T> {
-    if (config.providerId !== EmailProviderIdEnum.AgentEmailInbox) {
+    if (config.providerId !== EmailProviderIdEnum.AgentEmailInbox || isKeylessOrganization(config.organizationId)) {
       return send();
     }
 

@@ -21,6 +21,7 @@ import {
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
+import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { maskEmail } from './mask-email';
 
 export interface ResolvedHumanTarget {
@@ -69,6 +70,8 @@ export type InviteChannelDescription = {
   connected: boolean;
   isDefault: boolean;
   status: HumanAddressVerificationStateEnum;
+  /** False when a keyless setup cannot offer this channel. Missing means it can. */
+  available?: boolean;
   /** Masked address for address-based channels. */
   address?: string;
   verifiedAt?: string;
@@ -145,7 +148,8 @@ export class HumanDeliveryService {
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanContactRepository: HumanContactRepository,
-    private readonly outboundGateway: OutboundGateway
+    private readonly outboundGateway: OutboundGateway,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {}
 
   async resolveChannel(params: {
@@ -174,7 +178,21 @@ export class HumanDeliveryService {
       );
     }
 
+    if (params.via === HumanChannelViaEnum.EMAIL && this.keylessEmailGate.isBlocked(params.organizationId)) {
+      await this.keylessEmailGate.assertAllowed(params);
+    }
+
     const deliverable = await this.findReachableTargets(params, candidates);
+
+    if (
+      deliverable.length === 0 &&
+      !params.via &&
+      this.keylessEmailGate.isBlocked(params.organizationId) &&
+      candidates.some((integration) => integration.channel === ChannelTypeEnum.EMAIL) &&
+      candidates.every((integration) => integration.channel === ChannelTypeEnum.EMAIL)
+    ) {
+      await this.keylessEmailGate.assertAllowed(params);
+    }
 
     if (deliverable.length === 0) {
       if (params.via === HumanChannelViaEnum.EMAIL) {
@@ -235,18 +253,21 @@ export class HumanDeliveryService {
 
     return channels.map((channel) => {
       if (channel.via === HumanChannelViaEnum.EMAIL) {
-        const email = describeStoredEmail(contact?.addresses?.[HumanChannelViaEnum.EMAIL]);
+        if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+          return {
+            ...channel,
+            connected: false,
+            isDefault: false,
+            status: HumanAddressVerificationStateEnum.UNVERIFIED,
+            available: false,
+          };
+        }
 
-        return {
-          ...channel,
-          connected: email.connected,
-          isDefault: email.connected && defaultVia === channel.via,
-          status: email.status,
-          ...(email.address ? { address: email.address } : {}),
-          ...(email.verifiedAt ? { verifiedAt: email.verifiedAt } : {}),
-          ...(email.verifiedRequestedAt ? { verifiedRequestedAt: email.verifiedRequestedAt } : {}),
-          ...(email.requestedAt ? { requestedAt: email.requestedAt } : {}),
-        };
+        return describeEmailInviteChannel(
+          channel,
+          describeStoredEmail(contact?.addresses?.[HumanChannelViaEnum.EMAIL]),
+          defaultVia
+        );
       }
 
       const connected = targets.some((target) => target.integrationIdentifier === channel.integrationIdentifier);
@@ -373,7 +394,8 @@ export class HumanDeliveryService {
         subscriber.subscriberId,
         integrations,
         endpoints,
-        verifiedEmails.get(subscriber.subscriberId)
+        verifiedEmails.get(subscriber.subscriberId),
+        params.organizationId
       );
 
       result.set(subscriber.subscriberId, {
@@ -390,7 +412,8 @@ export class HumanDeliveryService {
     subscriberId: string,
     integrations: IntegrationEntity[],
     endpoints: ChannelEndpointEntity[],
-    verifiedEmail: { address: string; verifiedAt: string } | undefined
+    verifiedEmail: { address: string; verifiedAt: string } | undefined,
+    organizationId: string
   ): ReachableHumanTarget[] {
     const targets: ReachableHumanTarget[] = [];
 
@@ -401,7 +424,7 @@ export class HumanDeliveryService {
       }
 
       if (integration.channel === ChannelTypeEnum.EMAIL) {
-        if (verifiedEmail) {
+        if (verifiedEmail && !this.keylessEmailGate.isBlocked(organizationId)) {
           targets.push(emailTarget(verifiedEmail.address, via, integration.identifier, verifiedEmail.verifiedAt));
         }
 
@@ -520,6 +543,10 @@ export class HumanDeliveryService {
     }
 
     if (integration.channel === ChannelTypeEnum.EMAIL) {
+      if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+        return null;
+      }
+
       const verified = await this.humanContactRepository.findVerifiedAddress(
         params.environmentId,
         params.agentId,
@@ -573,6 +600,24 @@ export class HumanDeliveryService {
       connectedAt: endpoint.createdAt,
     };
   }
+}
+
+function describeEmailInviteChannel(
+  channel: InviteChannelDescription,
+  email: ReturnType<typeof describeStoredEmail>,
+  defaultVia: HumanChannelViaEnum | undefined
+): InviteChannelDescription {
+  return {
+    ...channel,
+    connected: email.connected,
+    isDefault: email.connected && defaultVia === channel.via,
+    status: email.status,
+    available: true,
+    ...(email.address ? { address: email.address } : {}),
+    ...(email.verifiedAt ? { verifiedAt: email.verifiedAt } : {}),
+    ...(email.verifiedRequestedAt ? { verifiedRequestedAt: email.verifiedRequestedAt } : {}),
+    ...(email.requestedAt ? { requestedAt: email.requestedAt } : {}),
+  };
 }
 
 function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {

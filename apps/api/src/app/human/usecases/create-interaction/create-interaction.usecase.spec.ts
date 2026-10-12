@@ -1,4 +1,11 @@
-import { BadGatewayException, BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 import { AgentEmailInboxQuotaExceededException } from '@novu/application-generic';
 import { HumanChannelViaEnum, HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -273,6 +280,28 @@ describe('CreateInteraction', () => {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.include('human invite');
     }
+    expect(humanInteractionRepository.create.called).to.equal(false);
+  });
+
+  it('surfaces a keyless email refusal before reserving a send', async () => {
+    const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.rejects(
+      new ForbiddenException({
+        code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT',
+        message: 'Outbound email needs a Human account.',
+      })
+    );
+
+    try {
+      await usecase.execute(command);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+      expect((err as ForbiddenException).getResponse()).to.include({ code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT' });
+    }
+
+    expect(inboxQuota.reserve.called).to.equal(false);
     expect(humanInteractionRepository.create.called).to.equal(false);
   });
 

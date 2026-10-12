@@ -14,6 +14,7 @@ import {
 import { EmailProviderIdEnum, HumanChannelViaEnum } from '@novu/shared';
 import { resolveAgentOutboundEmail } from '../../../agents/email/resolve-agent-outbound-email';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
+import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import { HumanVerificationEmailSender } from '../../email/human-verification-email.sender';
 import { HumanVerificationRateLimitService } from '../../services/human-verification-rate-limit.service';
 import {
@@ -51,7 +52,8 @@ export class RequestAddressVerification {
     private readonly rateLimit: HumanVerificationRateLimitService,
     private readonly verificationTokens: HumanVerificationTokenService,
     private readonly emailSender: HumanVerificationEmailSender,
-    private readonly inboxQuota: AgentEmailInboxQuotaService
+    private readonly inboxQuota: AgentEmailInboxQuotaService,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {}
 
   @InstrumentUsecase()
@@ -92,6 +94,11 @@ export class RequestAddressVerification {
     via: HumanChannelViaEnum;
     address: string;
   }): Promise<RequestAddressVerificationResult> {
+    await this.keylessEmailGate.assertAllowed({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+
     const agent = await this.agentRepository.findOne(
       {
         _id: params.agentId,

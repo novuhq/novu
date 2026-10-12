@@ -251,11 +251,16 @@ export function parseDuration(value: string): number {
 /** Matches the API's `KEYLESS_HUMAN_CAP_REACHED_CODE`. The CLI cannot import `apps/api`. */
 const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
+/** Matches the API's `KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE`. */
+const KEYLESS_EMAIL_CODE = 'KEYLESS_EMAIL_REQUIRES_ACCOUNT';
+
 export interface KeylessCapDetails {
   claimUrl?: string;
   cap?: number;
   /** The API has `human login` (the Human dashboard); self-hosted and older APIs need a secret key instead. */
   browserLogin?: boolean;
+  /** `email` is the outbound-email block. Missing means the demo message cap. */
+  reason?: 'cap' | 'email';
 }
 
 /**
@@ -264,7 +269,7 @@ export interface KeylessCapDetails {
  * the same claim link on their channel; the agent just needs to stop retrying.
  */
 export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
-  if (!(err instanceof HumanApiError) || err.status !== 429) {
+  if (!(err instanceof HumanApiError)) {
     return null;
   }
 
@@ -274,19 +279,34 @@ export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
     cap?: unknown;
     browserLogin?: unknown;
   };
+  const claimUrl = typeof body.claimUrl === 'string' ? body.claimUrl : undefined;
+  const browserLogin = body.browserLogin === true;
+
+  if (err.status === 403 && body.code === KEYLESS_EMAIL_CODE) {
+    return { claimUrl, browserLogin, reason: 'email' };
+  }
+
+  if (err.status !== 429) {
+    return null;
+  }
 
   if (body.code !== KEYLESS_CAP_CODE && !/keyless demo/i.test(err.message)) {
     return null;
   }
 
   return {
-    claimUrl: typeof body.claimUrl === 'string' ? body.claimUrl : undefined,
+    claimUrl,
     cap: typeof body.cap === 'number' ? body.cap : undefined,
-    browserLogin: body.browserLogin === true,
+    browserLogin,
+    reason: 'cap',
   };
 }
 
 export function formatKeylessCapMessage(details: KeylessCapDetails): string {
+  if (details.reason === 'email') {
+    return formatKeylessEmailMessage(details);
+  }
+
   const count = details.cap ? `${details.cap} free messages` : 'free messages';
   const lines = [`You've used the ${count} of this keyless demo.`];
 
@@ -310,6 +330,28 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
     '(We also sent this link to you on your linked channel.)',
     'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
   );
+
+  return lines.join('\n');
+}
+
+function formatKeylessEmailMessage(details: KeylessCapDetails): string {
+  if (details.browserLogin) {
+    const lines = ['Outbound email needs a Human account.', 'To claim this setup and send email, run: human login'];
+
+    if (details.claimUrl) {
+      lines.push(`(Or sign up from this link, then run \`human login\`: ${details.claimUrl})`);
+    }
+
+    return lines.join('\n');
+  }
+
+  const lines = [
+    'Outbound email needs a Novu account.',
+    details.claimUrl
+      ? `Sign up to claim this setup: ${details.claimUrl}`
+      : 'Sign up for a free Novu account to claim this setup.',
+    'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY',
+  ];
 
   return lines.join('\n');
 }

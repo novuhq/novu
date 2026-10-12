@@ -94,6 +94,66 @@ export async function resolveOperatorName(
   return lastName ? { firstName, lastName } : { firstName };
 }
 
+/**
+ * Asked of everyone, right after the name. Required for a keyless setup — that
+ * address is how the inbox recognizes the owner. Optional for an account, where
+ * it only prefills the verification step.
+ */
+export async function resolveOperatorEmail(
+  options: Pick<SetupOptions, 'email'>,
+  keyless: boolean,
+  io: { isTTY: boolean; prompt: (question: string) => Promise<string> } = {
+    isTTY: Boolean(process.stdin.isTTY),
+    prompt: promptLine,
+  }
+): Promise<string | undefined> {
+  if (options.email !== undefined) {
+    const parsed = parseEmailAddress(options.email);
+    if (!parsed) {
+      throw new Error('Pass a valid address with --email.');
+    }
+
+    return parsed;
+  }
+
+  if (!io.isTTY) {
+    if (keyless) {
+      throw new Error('Pass --email <address> when running `human setup` without an account and without a prompt.');
+    }
+
+    return undefined;
+  }
+
+  const question = keyless
+    ? 'Your email address (we only reply to mail from this address): '
+    : 'Your email address (optional, prefills verification): ';
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const raw = (await io.prompt(question)).trim();
+    if (!raw) {
+      if (!keyless) {
+        return undefined;
+      }
+
+      process.stdout.write(`${pc.yellow('An email address is required for a setup without an account.')}\n`);
+      continue;
+    }
+
+    const parsed = parseEmailAddress(raw);
+    if (parsed) {
+      return parsed;
+    }
+
+    process.stdout.write(`${pc.yellow('That does not look like an email address.')}\n`);
+  }
+
+  throw new Error(
+    keyless
+      ? 'No valid email address provided. Re-run `human setup` or pass --email.'
+      : 'No valid email address provided. Re-run or pass --email.'
+  );
+}
+
 /** The agent's name and description, when `--agent-name` or `--agent-description` was passed. */
 function agentIdentityOf(options: Pick<SetupOptions, 'agentName' | 'agentDescription'>): {
   agentName?: string;
@@ -199,6 +259,7 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     const localSubscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
     const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
     const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
+    const operatorEmail = await resolveOperatorEmail(options, client.isKeyless);
 
     info('Setting up your human relay...');
     const relay = await setupHumanRelay(client, {
@@ -207,6 +268,7 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
       agentIdentifier: relayIdentifier,
       ...agentIdentityOf(options),
       ...name,
+      ...(operatorEmail ? { email: operatorEmail } : {}),
     });
     const agentName = channelNameFor(relay);
     await uploadPicture(client, picture, relay.agentIdentifier);
@@ -222,16 +284,10 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
 
     // 3. Channel linking — linked channels live on the server; locally we only
     // remember a default preference for when the caller does not pass `--via`.
-    await (channel === 'telegram'
-      ? connectTelegram(client, relay.agentIdentifier, agentName, subscriberId, options)
-      : channel === 'slack'
-        ? connectSlack(
-            client,
-            { id: relay.agentId, identifier: relay.agentIdentifier, name: agentName },
-            subscriberId,
-            options
-          )
-        : connectEmail(client, relay.agentIdentifier, subscriberId, options));
+    await connectChannel(client, channel, relay, agentName, subscriberId, {
+      ...options,
+      ...(operatorEmail ? { email: operatorEmail } : {}),
+    });
 
     // 4. Persist config — first setup becomes the default preference.
     // A default saved for another contact may be a channel this one never connected.
@@ -318,6 +374,33 @@ async function maybeInstallSkill(options: SetupOptions): Promise<void> {
     process.stdout.write(
       `${pc.yellow('•')} Could not install the coding-agent skill (${err instanceof Error ? err.message : String(err)}). Run \`human skill install\` later.\n`
     );
+  }
+}
+
+async function connectChannel(
+  client: HumanApiClient,
+  channel: HumanChannel,
+  relay: { agentId: string; agentIdentifier: string },
+  agentName: string,
+  subscriberId: string,
+  options: SetupOptions
+): Promise<string> {
+  switch (channel) {
+    case 'telegram':
+      return connectTelegram(client, relay.agentIdentifier, agentName, subscriberId, options);
+    case 'slack':
+      return connectSlack(
+        client,
+        { id: relay.agentId, identifier: relay.agentIdentifier, name: agentName },
+        subscriberId,
+        options
+      );
+    case 'email':
+      return connectEmail(client, relay.agentIdentifier, subscriberId, options);
+    default: {
+      const unhandled: never = channel;
+      throw new Error(`Unsupported channel: ${String(unhandled)}`);
+    }
   }
 }
 
@@ -592,16 +675,25 @@ async function handOffToTelegramSetupPage(
  * their email on the subscriber (delivery target + inbound reply resolution —
  * no ChannelEndpoint involved).
  */
-async function connectEmail(
+export async function connectEmail(
   client: HumanApiClient,
   agentIdentifier: string,
   subscriberId: string,
   options: SetupOptions
 ): Promise<string> {
-  info('Creating an email integration...');
+  info(client.isKeyless ? 'Your agent inbox is ready.' : 'Creating an email integration...');
   const link = await addAgentEmailIntegration(client, agentIdentifier);
   const integrationIdentifier = link.integration.identifier;
   const inboundAddress = link.integration.sharedInboundAddress;
+
+  if (client.isKeyless) {
+    if (inboundAddress) {
+      info(`Mail ${pc.bold(inboundAddress)} from the address you gave to see it work.`);
+    }
+    info('Outbound email starts after you claim this setup. Run `human login`.');
+
+    return integrationIdentifier;
+  }
 
   if (!options.email && !process.stdin.isTTY) {
     throw new Error('Pass --email <address> when running `human setup email` non-interactively.');

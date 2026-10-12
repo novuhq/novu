@@ -24,7 +24,12 @@ import type { CardElement, EmojiValue, Message, MessageContext, MessageDeletedEv
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
-import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
+import { KeylessEmailGateService, keylessEmailClaimCtaKey } from '../../../keyless/keyless-email-gate.service';
+import {
+  buildConnectClaimUrl,
+  buildHumanClaimUrl,
+  buildKeylessSignupCard,
+} from '../../../keyless/keyless-signup.helpers';
 import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
@@ -45,6 +50,7 @@ import { parseApprovalReplyVerdict } from '../../shared/tool-approval/reply-base
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { buildMentionRequiredNoticeReply } from '../../shared/util/agent-inbound-replies';
+import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
 import { asRecord } from '../../shared/util/raw-record';
@@ -259,6 +265,27 @@ function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknow
   });
 }
 
+/** `email:<address>:<hash>` — the address is whoever mailed the agent. */
+function senderAddressFromEmailThread(threadId: string): string | undefined {
+  const [platform, encoded] = threadId.split(':');
+  if (platform !== 'email' || !encoded) {
+    return undefined;
+  }
+
+  let address: string;
+  try {
+    address = normalizeEmailForLookup(decodeURIComponent(encoded));
+  } catch {
+    return undefined;
+  }
+
+  if (!isValidEmailForLookup(address)) {
+    return undefined;
+  }
+
+  return address;
+}
+
 function extractStoredAttachments(sourceActivity: ConversationActivityEntity | null): StoredAttachment[] | undefined {
   if (!sourceActivity) {
     return undefined;
@@ -309,7 +336,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
     private readonly workflowOriginService: WorkflowOriginService,
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
-    private readonly agentConfigResolver: AgentConfigResolver
+    private readonly agentConfigResolver: AgentConfigResolver,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -969,6 +997,14 @@ export class AgentInboundHandler implements OnModuleInit {
       return false;
     }
 
+    if (config.platform === AgentPlatformEnum.EMAIL) {
+      if (postCard) {
+        await this.postKeylessEmailClaim(agentId, config, thread);
+      }
+
+      return true;
+    }
+
     const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
 
     if (!aiEnabled) {
@@ -1528,6 +1564,44 @@ export class AgentInboundHandler implements OnModuleInit {
     const agentReplies = await this.conversationService.countAgentMessages(config.environmentId, conversationId);
 
     return agentReplies >= KEYLESS_DEMO_REPLY_CAP;
+  }
+
+  /**
+   * The only email a keyless inbox sends. Anyone but the declared operator, and
+   * every message after the first, gets silence. The turn is not dispatched.
+   */
+  private async postKeylessEmailClaim(agentId: string, config: ResolvedAgentConfig, thread: Thread): Promise<void> {
+    const sender = senderAddressFromEmailThread(thread.id);
+    if (!sender) {
+      return;
+    }
+
+    try {
+      const declared = await this.keylessEmailGate.findDeclaredOperatorAddress(config.environmentId, agentId);
+      if (!declared || normalizeEmailForLookup(declared) !== sender) {
+        return;
+      }
+
+      const ctaKey = keylessEmailClaimCtaKey(config.environmentId);
+      if (await this.connectClaimTokenService.isSignupCtaPosted(ctaKey)) {
+        return;
+      }
+
+      const { token } = await this.connectClaimTokenService.issueOrGetForEnvironment({
+        env: config.environmentId,
+        org: config.organizationId,
+      });
+      const card = this.keylessEmailGate.buildClaimCard(buildHumanClaimUrl(token));
+      await this.outboundGateway.replyOnThreadWithCard(thread, card);
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(ctaKey);
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to send the keyless email claim`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-keyless-email-claim',
+        agentId,
+      });
+    }
   }
 
   private async postKeylessSignupCta(

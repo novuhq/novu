@@ -178,6 +178,8 @@ export type HumanInviteStatusChannel = {
   isDefault: boolean;
   status: HumanAddressVerificationStateEnum;
   address?: string;
+  /** False when the setup cannot offer this channel. Missing means it can. */
+  available?: boolean;
 };
 
 export type HumanInviteStatusResult =

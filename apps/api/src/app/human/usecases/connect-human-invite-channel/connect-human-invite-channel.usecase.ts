@@ -46,7 +46,7 @@ export class ConnectHumanInviteChannel {
     });
     const channel = channels.find(({ via }) => via === command.via);
 
-    if (!channel) {
+    if (!channel || channel.available === false) {
       throw new BadRequestException({
         code: 'channel_unavailable',
         message: `${appName} isn't offered on this invite.`,

@@ -1,7 +1,9 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { buildAgentSharedInbox, decryptCredentials, isAgentSharedInboxEnabled } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 
 export type ResolvedAgentOutboundEmail = {
   /** Decrypted (or demo-hydrated) integration ready for MailFactory. */
@@ -27,6 +29,13 @@ export async function resolveAgentOutboundEmail(params: {
   integrationRepository: IntegrationRepository;
   agentIntegrationRepository: AgentIntegrationRepository;
 }): Promise<ResolvedAgentOutboundEmail> {
+  if (isKeylessOrganization(params.organizationId)) {
+    throw new ForbiddenException({
+      code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
+      message: 'Outbound email needs an account.',
+    });
+  }
+
   const links = await params.agentIntegrationRepository.findLinksForAgents({
     organizationId: params.organizationId,
     environmentId: params.environmentId,
