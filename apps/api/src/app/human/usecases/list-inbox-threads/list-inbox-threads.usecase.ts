@@ -2,11 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ConversationStatusEnum } from '@novu/dal';
 import type { InboxStatusFilter, ListInboxResponseDto } from '../../dtos/human-inbox.dto';
-import { HumanInboxService, type InboxListFilters } from '../../services/human-inbox.service';
+import {
+  HumanInboxService,
+  type InboxListFilters,
+  type InboxRelayAgent,
+  type InboxScope,
+} from '../../services/human-inbox.service';
 import { ListInboxThreadsCommand } from './list-inbox-threads.command';
 
 const DEFAULT_LIMIT = 20;
 export const INBOX_WAIT_POLL_INTERVAL_MS = 1500;
+/** How many empty pages one request follows before it hands the cursor back to the caller. */
+const MAX_EMPTY_PAGE_FOLLOWS = 4;
 
 const STATUS_BY_FILTER: Record<InboxStatusFilter, ConversationStatusEnum | undefined> = {
   open: ConversationStatusEnum.ACTIVE,
@@ -36,10 +43,29 @@ export class ListInboxThreads {
       after: command.after,
     };
 
-    let page = await this.inbox.listThreads(scope, agent, filters);
+    let page = await this.firstPageWithThreads(scope, agent, filters);
     while (page.data.length === 0 && Date.now() + INBOX_WAIT_POLL_INTERVAL_MS <= deadline) {
       await sleep(INBOX_WAIT_POLL_INTERVAL_MS);
-      page = await this.inbox.listThreads(scope, agent, filters);
+      page = await this.firstPageWithThreads(scope, agent, filters);
+    }
+
+    return page;
+  }
+
+  /**
+   * Some filters are applied after the query, so a page can come back empty while older threads
+   * still match. Such a page carries `next`; it is followed a few times before an empty page is
+   * handed to the caller, who can go on from its `next`.
+   */
+  private async firstPageWithThreads(
+    scope: InboxScope,
+    agent: InboxRelayAgent,
+    filters: InboxListFilters
+  ): Promise<ListInboxResponseDto> {
+    let page = await this.inbox.listThreads(scope, agent, filters);
+
+    for (let follow = 0; follow < MAX_EMPTY_PAGE_FOLLOWS && page.data.length === 0 && page.next; follow += 1) {
+      page = await this.inbox.listThreads(scope, agent, { ...filters, after: page.next });
     }
 
     return page;

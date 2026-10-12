@@ -123,7 +123,12 @@ export async function waitForThreads(
   while (true) {
     const remainingSeconds = Math.ceil((deadline - Date.now()) / 1000);
     const wait = Math.max(0, Math.min(INBOX_MAX_SERVER_WAIT_SECONDS, remainingSeconds));
-    const page = await listInbox(client, { ...query, wait });
+    let page = await listInbox(client, { ...query, wait });
+
+    // An empty page with `next` means older threads may still match, so look there before waiting again.
+    while (page.data.length === 0 && page.next && Date.now() < deadline) {
+      page = await listInbox(client, { ...query, after: page.next, wait: 0 });
+    }
 
     if (page.data.length > 0 || Date.now() >= deadline) {
       return page;
@@ -202,6 +207,15 @@ function filterFlags(options: InboxListOptions): string {
 
 function printThreads(page: InboxPage, options: InboxListOptions): void {
   if (page.data.length === 0) {
+    if (page.next) {
+      // Filters are applied after the scan, so older threads may still match.
+      process.stdout.write(
+        `No threads match so far. Keep looking: human inbox list${filterFlags(options)} --after ${page.next}\n`
+      );
+
+      return;
+    }
+
     const hint = options.senders === 'all' ? '' : ' Threads from strangers are hidden: add --senders all.';
     process.stdout.write(`No threads match.${hint}\n`);
 

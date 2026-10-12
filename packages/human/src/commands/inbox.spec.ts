@@ -157,6 +157,15 @@ describe('waitForThreads', () => {
     expect(listInbox).toHaveBeenNthCalledWith(1, {}, { filter: 'unread', wait: 25 });
   });
 
+  it('follows the cursor of an empty page before waiting again', async () => {
+    listInbox.mockResolvedValueOnce(page([], 'conv_9')).mockResolvedValueOnce(page([thread()]));
+
+    const result = await waitForThreads({} as never, { filter: 'read' }, Infinity);
+
+    expect(result.data).toHaveLength(1);
+    expect(listInbox).toHaveBeenNthCalledWith(2, {}, { filter: 'read', after: 'conv_9', wait: 0 });
+  });
+
   it('stops at the deadline and asks only for the remaining time', async () => {
     let now = NOW;
     vi.spyOn(Date, 'now').mockImplementation(() => now);
