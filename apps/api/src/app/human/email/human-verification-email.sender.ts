@@ -34,6 +34,8 @@ export class HumanVerificationEmailSender {
     token: string;
     expiresAt: string;
     outbound: ResolvedAgentOutboundEmail;
+    /** Keyless setups only: the operator can claim the setup from the same email. */
+    claimUrl?: string;
   }): Promise<void> {
     const agent = await this.agentRepository.findOne(
       {
@@ -76,6 +78,7 @@ export class HumanVerificationEmailSender {
       inviteeName,
       verifyUrl,
       expiresAt: params.expiresAt,
+      claimUrl: params.claimUrl,
     });
 
     const mailFactory = new MailFactory();

@@ -30,6 +30,7 @@ describe('KeylessEmailGateService', () => {
         overrides && 'operator' in overrides
           ? overrides.operator
           : {
+              subscriberId: 'sub-1',
               addresses: {
                 [HumanChannelViaEnum.EMAIL]: { declared: { address: 'ada@example.com', declaredAt: 't' } },
               },
@@ -84,6 +85,55 @@ describe('KeylessEmailGateService', () => {
       expect(body.code).to.equal(KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE);
       expect(body).to.not.have.property('claimUrl');
     }
+  });
+
+  describe('assertOperatorVerificationAllowed', () => {
+    const verification = {
+      environmentId: 'env1',
+      organizationId: keylessOrgId,
+      agentId: 'agent1',
+      subscriberId: 'sub-1',
+      address: 'Ada@Example.com',
+    };
+
+    it('returns nothing for an organization that is not keyless', async () => {
+      const { gate, humanContactRepository } = service();
+
+      expect(
+        await gate.assertOperatorVerificationAllowed({ ...verification, organizationId: 'real-org' })
+      ).to.deep.equal({});
+      expect(humanContactRepository.findOperator.called).to.equal(false);
+    });
+
+    it('lets a keyless operator verify their declared address and returns the claim link', async () => {
+      const { gate } = service();
+
+      const result = await gate.assertOperatorVerificationAllowed(verification);
+
+      expect(result.claimUrl).to.include('token=claim-token');
+    });
+
+    it('allows the verification without a claim link when no token can be issued', async () => {
+      const { gate } = service({ issue: sinon.stub().rejects(new Error('redis down')) });
+
+      expect(await gate.assertOperatorVerificationAllowed(verification)).to.deep.equal({});
+    });
+
+    it('refuses another address or another contact', async () => {
+      for (const params of [
+        { ...verification, address: 'someone@example.com' },
+        { ...verification, subscriberId: 'sub-2' },
+      ]) {
+        const { gate } = service();
+
+        try {
+          await gate.assertOperatorVerificationAllowed(params);
+          expect.fail('should have thrown');
+        } catch (err) {
+          expect(err).to.be.instanceOf(ForbiddenException);
+        }
+      }
+    });
   });
 
   it('reads the operator declared address and builds the claim card', async () => {

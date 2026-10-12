@@ -94,9 +94,12 @@ export class RequestAddressVerification {
     via: HumanChannelViaEnum;
     address: string;
   }): Promise<RequestAddressVerificationResult> {
-    await this.keylessEmailGate.assertAllowed({
+    const { claimUrl } = await this.keylessEmailGate.assertOperatorVerificationAllowed({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
+      agentId: params.agentId,
+      subscriberId: params.subscriberId,
+      address: params.address,
     });
 
     const agent = await this.agentRepository.findOne(
@@ -121,6 +124,7 @@ export class RequestAddressVerification {
         providerId: EmailProviderIdEnum.AgentEmailInbox,
         integrationRepository: this.integrationRepository,
         agentIntegrationRepository: this.agentIntegrationRepository,
+        allowKeyless: true,
       });
     } catch (err) {
       if (err instanceof BadRequestException) {
@@ -187,6 +191,7 @@ export class RequestAddressVerification {
         token: issued.token,
         expiresAt: issued.expiresAt,
         outbound,
+        claimUrl,
       });
       inboxReservation.remaining = 0;
 

@@ -28,8 +28,10 @@ export async function resolveAgentOutboundEmail(params: {
   providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox;
   integrationRepository: IntegrationRepository;
   agentIntegrationRepository: AgentIntegrationRepository;
+  /** Only for the keyless operator's own verification email, already checked by `KeylessEmailGateService`. */
+  allowKeyless?: boolean;
 }): Promise<ResolvedAgentOutboundEmail> {
-  if (isKeylessOrganization(params.organizationId)) {
+  if (!params.allowKeyless && isKeylessOrganization(params.organizationId)) {
     throw new ForbiddenException({
       code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
       message: 'Outbound email needs an account.',

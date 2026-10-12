@@ -257,7 +257,8 @@ async function runSetup(channel: HumanChannel | undefined, options: SetupOptions
   });
   const provisioned = await provisionOperator(client, existing, options, picture);
 
-  await linkInbox(client, channel === 'email', provisioned, options);
+  const verifyEmail = channel === 'email' || (client.isKeyless && !channel);
+  await linkInbox(client, verifyEmail, provisioned, options);
   const chat = await resolveChatChannel(channel);
   if (chat) {
     await connectChannel(client, chat, provisioned.relay, channelNameFor(provisioned.relay), provisioned.subscriberId, {
@@ -762,13 +763,14 @@ async function handOffToTelegramSetupPage(
  */
 async function announceAgentInbox(
   client: HumanApiClient,
-  agentIdentifier: string
+  agentIdentifier: string,
+  verifying = false
 ): Promise<{ identifier: string; inboundAddress?: string }> {
   const link = await addAgentEmailIntegration(client, agentIdentifier);
   const { identifier } = link.integration;
   const inboundAddress = link.integration.sharedInboundAddress;
 
-  if (client.isKeyless) {
+  if (client.isKeyless && !verifying) {
     info('Your agent inbox is ready.');
     if (inboundAddress) {
       info(`Mail ${pc.bold(inboundAddress)} from the address you gave to see it work.`);
@@ -789,10 +791,7 @@ export async function connectEmail(
   subscriberId: string,
   options: SetupOptions
 ): Promise<string> {
-  const { identifier, inboundAddress } = await announceAgentInbox(client, agentIdentifier);
-  if (client.isKeyless) {
-    return identifier;
-  }
+  const { identifier, inboundAddress } = await announceAgentInbox(client, agentIdentifier, true);
 
   if (!options.email && !process.stdin.isTTY) {
     throw new Error('Pass --email <address> when running `human setup email` non-interactively.');
@@ -831,6 +830,9 @@ export async function connectEmail(
 
   if (inboundAddress) {
     info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);
+  }
+  if (client.isKeyless) {
+    info('Outbound email starts after you claim this setup — use the link in that email, or run `human login`.');
   }
 
   return identifier;

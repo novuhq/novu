@@ -23,10 +23,24 @@ vi.mock('../api/setup', () => ({
   getSubscriberEmail: vi.fn(),
 }));
 
+vi.mock('../api/human', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  requestAddressVerification: vi.fn(),
+}));
+
+vi.mock('./link-channel', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  waitForVerifiedEmail: vi.fn(),
+}));
+
+vi.mock('../spinner', () => ({ startWaitIndicator: vi.fn(() => () => undefined) }));
+
 vi.mock('../qr', () => ({ renderQR: vi.fn((text: string) => `<QR ${text}>`) }));
 vi.mock('../cli-io', () => ({ info: vi.fn(), promptLine: vi.fn(), promptSecret: vi.fn() }));
 
 const api = await import('../api/setup');
+const humanApi = await import('../api/human');
+const linkChannel = await import('./link-channel');
 const { info } = await import('../cli-io');
 const {
   connectEmail,
@@ -476,26 +490,33 @@ describe('resolveOperatorEmail', () => {
 });
 
 describe('connectEmail', () => {
-  it('prints the inbox and skips verification for a keyless setup', async () => {
+  it('verifies the operator address for a keyless setup and points at the claim link', async () => {
     vi.mocked(api.addAgentEmailIntegration).mockResolvedValue({
       integration: { identifier: 'email-1', providerId: 'agent-email-inbox', sharedInboundAddress: 'box@agent.test' },
     } as never);
+    vi.mocked(humanApi.requestAddressVerification).mockResolvedValue({
+      address: 'a***@example.com',
+      requestedAt: 'req-1',
+    } as never);
+    vi.mocked(linkChannel.waitForVerifiedEmail).mockResolvedValue(undefined as never);
 
-    const identifier = await connectEmail({ isKeyless: true } as never, 'human-relay', 'sub-1', {});
+    const identifier = await connectEmail({ isKeyless: true } as never, 'human-relay', 'sub-1', {
+      email: 'ada@example.com',
+    });
 
     expect(identifier).toBe('email-1');
-    expect(
-      vi
-        .mocked(info)
-        .mock.calls.map((call) => String(call[0]))
-        .join('\n')
-    ).toContain('box@agent.test');
-    expect(
-      vi
-        .mocked(info)
-        .mock.calls.map((call) => String(call[0]))
-        .join('\n')
-    ).toContain('human login');
+    expect(humanApi.requestAddressVerification).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'sub-1',
+      agentIdentifier: 'human-relay',
+      via: 'email',
+      address: 'ada@example.com',
+    });
+    const printed = vi
+      .mocked(info)
+      .mock.calls.map((call) => String(call[0]))
+      .join('\n');
+    expect(printed).toContain('box@agent.test');
+    expect(printed).toContain('claim this setup');
   });
 });
 

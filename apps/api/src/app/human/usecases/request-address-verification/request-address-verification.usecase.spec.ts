@@ -37,7 +37,7 @@ describe('RequestAddressVerification', () => {
       releaseRemaining: sinon.stub().resolves(),
     };
     const keylessEmailGate = {
-      assertAllowed: sinon.stub().resolves(),
+      assertOperatorVerificationAllowed: sinon.stub().resolves({}),
     };
     const usecase = new RequestAddressVerification(
       { execute: sinon.stub() } as never,
@@ -137,9 +137,18 @@ describe('RequestAddressVerification', () => {
     });
   });
 
+  it('passes the keyless claim link to the verification email', async () => {
+    const { usecase, keylessEmailGate, emailSender } = setup();
+    keylessEmailGate.assertOperatorVerificationAllowed.resolves({ claimUrl: 'https://gethuman.md/claim?token=t' });
+
+    await usecase.execute(command());
+
+    expect(emailSender.send.firstCall.args[0]).to.include({ claimUrl: 'https://gethuman.md/claim?token=t' });
+  });
+
   it('refuses a keyless org before any reservation or pending write', async () => {
     const { usecase, keylessEmailGate, rateLimit, inboxQuota, humanContactRepository } = setup();
-    keylessEmailGate.assertAllowed.rejects(
+    keylessEmailGate.assertOperatorVerificationAllowed.rejects(
       new ForbiddenException({
         code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
         message: 'Outbound email needs a Human account.',

@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { HumanContactRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
 import type { CardElement } from 'chat';
+import { normalizeEmailForLookup } from '../agents/shared/util/email-normalization';
 import { ConnectClaimTokenService } from '../connect/services/connect-claim-token.service';
 import { isKeylessOrganization } from './keyless-organization.helpers';
 import { buildHumanClaimUrl, buildKeylessEmailClaimCard } from './keyless-signup.helpers';
@@ -20,8 +21,8 @@ export function isHumanBrowserLoginAvailable(): boolean {
 }
 
 /**
- * Keyless setups may receive email but may not start any. The one exception is
- * the claim reply, which this service describes and which the inbound handler sends.
+ * Keyless setups may receive email but may not start any. The exceptions are the
+ * operator's own verification email and the claim reply the inbound handler sends.
  */
 @Injectable()
 export class KeylessEmailGateService {
@@ -54,6 +55,38 @@ export class KeylessEmailGateService {
       browserLogin,
       ...(claimUrl ? { claimUrl } : {}),
     });
+  }
+
+  /**
+   * A keyless setup may verify only the operator's own declared address. Returns the
+   * claim link to put in that verification email (undefined for a real organization,
+   * or when no token could be issued).
+   */
+  async assertOperatorVerificationAllowed(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+    address: string;
+  }): Promise<{ claimUrl?: string }> {
+    if (!this.isBlocked(params.organizationId)) {
+      return {};
+    }
+
+    const operator = await this.humanContactRepository.findOperator(params.environmentId, params.agentId);
+    const declared = operator?.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.address;
+    const isOperatorAddress =
+      operator?.subscriberId === params.subscriberId &&
+      Boolean(declared) &&
+      normalizeEmailForLookup(declared as string) === normalizeEmailForLookup(params.address);
+
+    if (!isOperatorAddress) {
+      await this.assertAllowed(params);
+    }
+
+    const claimUrl = await this.resolveClaimUrl(params);
+
+    return claimUrl ? { claimUrl } : {};
   }
 
   buildClaimCard(claimUrl: string): CardElement {
