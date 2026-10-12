@@ -4,10 +4,12 @@ type CloudflareEnv = { env: Record<string, string> };
  * https://remix.run/blog/remix-vite-stable#cloudflare-pages-support
  */
 
+// biome-ignore lint/suspicious/noExplicitAny: Cloudflare context is an untyped runtime bag checked by the predicate
 const hasCloudflareProxyContext = (context: any): context is { cloudflare: CloudflareEnv } => {
   return !!context?.cloudflare?.env;
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Cloudflare context is an untyped runtime bag checked by the predicate
 const hasCloudflareContext = (context: any): context is CloudflareEnv => {
   return !!context?.env;
 };
@@ -74,12 +76,13 @@ export const isClerkEnabled = () => isEEAuthEnabled() && getEEAuthProvider() ===
 export const isBetterAuthEnabled = () => isEEAuthEnabled() && getEEAuthProvider() === 'better-auth';
 
 /**
- * Outbound SSRF DNS-pinning for non-bridge paths (HTTP request steps, provider
- * webhooks, etc.) applies on Novu Cloud Enterprise builds.
+ * Outbound SSRF DNS-pinning for configurable provider webhooks applies on
+ * Novu Cloud Enterprise builds. Self-hosted and community builds skip that
+ * provider gate so operators can target internal delivery endpoints.
  *
- * Bridge user-supplied URLs always enforce DNS pinning regardless of
- * deployment mode — see ExecuteFrameworkRequest. Self-hosted operators who
- * need private/internal bridge targets must allow-list them via
+ * Workflow HTTP request steps, the HTTP step test endpoint, and user-supplied
+ * bridge URLs always enforce DNS pinning regardless of deployment mode.
+ * Operators who need private targets on those paths allow-list them via
  * NOVU_SAFE_OUTBOUND_ALLOW (link-local / cloud-metadata ranges are never
  * allow-listed).
  */

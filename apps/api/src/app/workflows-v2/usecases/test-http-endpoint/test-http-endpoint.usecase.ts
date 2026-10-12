@@ -17,7 +17,6 @@ import {
   shouldIncludeBody,
 } from '@novu/application-generic';
 import { compileJsonControlValues, createLiquidEngine, repairJsonString } from '@novu/framework/internal';
-import { isOutboundSsrfProtectionEnabled } from '@novu/shared';
 import { Liquid } from 'liquidjs';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
@@ -49,6 +48,7 @@ export class TestHttpEndpointUsecase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential HTTP test pipeline; each stage returns its own response before the request
   async execute(command: TestHttpEndpointCommand): Promise<TestHttpEndpointResponseDto> {
     const { controlValues = {}, previewPayload } = command;
 
@@ -118,8 +118,10 @@ export class TestHttpEndpointUsecase {
     }
 
     // HMAC is computed only after the URL passes the synchronous SSRF policy.
-    // The connect-time DNS guard and redirect re-validation happen inside
-    // HttpClientService when enforceSsrfProtection is enabled.
+    // Connect-time DNS pinning and redirect re-validation always run, including
+    // on self-hosted deployments. Operators who need a private target
+    // allow-list it with NOVU_SAFE_OUTBOUND_ALLOW. Link-local and cloud
+    // metadata ranges cannot be allow-listed.
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
     );
@@ -133,7 +135,7 @@ export class TestHttpEndpointUsecase {
         ...(hasBody ? { body: resolvedBody } : {}),
         timeout: 30_000,
         responseType: 'text',
-        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+        enforceSsrfProtection: true,
       });
       const durationMs = Math.round(performance.now() - startTime);
 
@@ -199,9 +201,11 @@ export class TestHttpEndpointUsecase {
   }
 }
 
-function tryParseJson(text: string): unknown {
+type ParsedHttpBody = string | number | boolean | null | ParsedHttpBody[] | { [key: string]: ParsedHttpBody };
+
+function tryParseJson(text: string): ParsedHttpBody {
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as ParsedHttpBody;
   } catch {
     return text;
   }

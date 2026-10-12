@@ -367,4 +367,58 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     const requestArgs = httpClientService.request.firstCall.args[0];
     expect(requestArgs.body).to.deep.equal({ workflowName: 'Workflow Actual Name' });
   });
+
+  async function withSelfHostedEnv(run: () => Promise<void>) {
+    const previous = {
+      NOVU_ENTERPRISE: process.env.NOVU_ENTERPRISE,
+      IS_SELF_HOSTED: process.env.IS_SELF_HOSTED,
+      CI_EE_TEST: process.env.CI_EE_TEST,
+    };
+    delete process.env.NOVU_ENTERPRISE;
+    delete process.env.CI_EE_TEST;
+    process.env.IS_SELF_HOSTED = 'true';
+
+    try {
+      await run();
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      }
+    }
+  }
+
+  it('pins DNS for internal hostnames on self-hosted deployments', async () => {
+    await withSelfHostedEnv(async () => {
+      const { usecase, httpClientService } = buildUsecase({
+        url: 'http://mongodb:27017',
+        method: 'GET',
+      });
+
+      const result = await usecase.execute(buildCommand());
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      expect(httpClientService.request.calledOnce).to.equal(true);
+      expect(httpClientService.request.firstCall.args[0].enforceSsrfProtection).to.equal(true);
+    });
+  });
+
+  it('rejects cloud metadata IP literals before connecting on self-hosted deployments', async () => {
+    await withSelfHostedEnv(async () => {
+      const { usecase, httpClientService, createExecutionDetails } = buildUsecase({
+        url: 'http://169.254.169.254/latest/meta-data/',
+        method: 'GET',
+      });
+
+      const result = await usecase.execute(buildCommand());
+
+      expect(result.status).to.equal(SendMessageStatus.FAILED);
+      expect(httpClientService.request.called).to.equal(false);
+      const raw = createExecutionDetails.execute.firstCall.args[0].raw as string;
+      expect(raw).to.include('private or reserved IP addresses are not allowed');
+    });
+  });
 });

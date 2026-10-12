@@ -37,7 +37,6 @@ import {
   EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
 } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
@@ -231,8 +230,10 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     const hasBody = shouldIncludeBody(bodyObject, method);
     // HMAC is attached only after the URL has passed the synchronous SSRF
-    // check. The connect-time DNS guard and redirect re-validation happen
-    // inside HttpClientService when enforceSsrfProtection is enabled.
+    // check. Connect-time DNS pinning and redirect re-validation always run,
+    // including on self-hosted deployments. Operators who need a private
+    // target allow-list it with NOVU_SAFE_OUTBOUND_ALLOW. Link-local and
+    // cloud metadata ranges cannot be allow-listed.
     const signatureHeaders = {
       'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),
     };
@@ -247,7 +248,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         headers: mergedHeaders,
         timeout,
         responseType: 'text',
-        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+        enforceSsrfProtection: true,
         ...(hasBody ? { body: bodyObject } : {}),
       });
 
