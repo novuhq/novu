@@ -1,4 +1,7 @@
 import {
+  ApiServiceLevelEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
   getWorkflowRunLimit,
   type IOrganizationUsageLimits,
   MAX_ON_DEMAND_LIMIT,
@@ -25,6 +28,10 @@ export type WorkflowRunLimitSettings = Pick<IOrganizationUsageLimits, 'workflowR
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
+export function formatUsd(amount: number): string {
+  return usdFormatter.format(amount);
+}
+
 /** Usage at which new workflow runs pause; null when they never pause. */
 function getPauseThreshold(included: number, settings: WorkflowRunLimitSettings): number | null {
   return settings.pauseAtLimit ? getWorkflowRunLimit(included, settings) : null;
@@ -36,7 +43,71 @@ export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k
     return null;
   }
 
-  return usdFormatter.format((onDemandLimit / 1000) * onDemandPricePer1k);
+  return formatUsd((onDemandLimit / 1000) * onDemandPricePer1k);
+}
+
+/** Plan monthly list price, even on annual billing, plus the cost of the whole on-demand limit. */
+export function getMonthlyCostAtLimit(
+  apiServiceLevel: ApiServiceLevelEnum,
+  onDemandLimit: number | null,
+  onDemandPricePer1k: number | null
+): number | null {
+  if (onDemandLimit === null || onDemandPricePer1k === null) {
+    return null;
+  }
+
+  const planMonthlyCost = getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_COST, apiServiceLevel, false);
+
+  return planMonthlyCost + (onDemandLimit / 1000) * onDemandPricePer1k;
+}
+
+export type TierSuggestion = 'upgrade_to_teams' | 'contact_sales';
+
+export const CONTACT_SALES_MONTHLY_COST_THRESHOLD = 600;
+
+export const TEAMS_MONTHLY_COST = getFeatureForTierAsNumber(
+  FeatureNameEnum.PLATFORM_MONTHLY_COST,
+  ApiServiceLevelEnum.BUSINESS,
+  false
+);
+
+/** Next step up once the plan price plus on-demand at the limit reaches it; never on a trial or without a positive limit. */
+export function getTierSuggestion({
+  apiServiceLevel,
+  isOnTrial,
+  onDemandLimit,
+  onDemandPricePer1k,
+}: {
+  apiServiceLevel: ApiServiceLevelEnum;
+  isOnTrial: boolean;
+  onDemandLimit: number | null;
+  onDemandPricePer1k: number | null;
+}): TierSuggestion | null {
+  if (isOnTrial || !onDemandLimit) {
+    return null;
+  }
+
+  const monthlyCost = getMonthlyCostAtLimit(apiServiceLevel, onDemandLimit, onDemandPricePer1k);
+
+  if (monthlyCost === null) {
+    return null;
+  }
+
+  switch (apiServiceLevel) {
+    case ApiServiceLevelEnum.PRO:
+      return monthlyCost >= TEAMS_MONTHLY_COST ? 'upgrade_to_teams' : null;
+    case ApiServiceLevelEnum.BUSINESS:
+      return monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD ? 'contact_sales' : null;
+    case ApiServiceLevelEnum.FREE:
+    case ApiServiceLevelEnum.ENTERPRISE:
+    case ApiServiceLevelEnum.UNLIMITED:
+      return null;
+    default: {
+      const exhaustiveCheck: never = apiServiceLevel;
+
+      return exhaustiveCheck;
+    }
+  }
 }
 
 export function getPauseAtLimitDescription(included: number, settings: WorkflowRunLimitSettings) {

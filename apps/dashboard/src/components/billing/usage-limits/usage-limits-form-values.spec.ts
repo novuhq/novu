@@ -1,7 +1,11 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  formatUsd,
+  getMonthlyCostAtLimit,
   getOnDemandCost,
   getPauseAtLimitDescription,
+  getTierSuggestion,
   getUsageAlertsDescription,
   pausesOnSave,
   type WorkflowRunLimitSettings,
@@ -22,6 +26,67 @@ describe('usage-limits-form-values', () => {
     it('is null without a limit or a known price', () => {
       expect(getOnDemandCost(null, 1.2)).toBeNull();
       expect(getOnDemandCost(5000, null)).toBeNull();
+    });
+  });
+
+  describe('formatUsd', () => {
+    it('formats dollars with cents and thousands separators', () => {
+      expect(formatUsd(250)).toBe('$250.00');
+      expect(formatUsd(1234.5)).toBe('$1,234.50');
+    });
+  });
+
+  describe('getMonthlyCostAtLimit', () => {
+    it('adds the on-demand cost at the limit to the plan monthly price', () => {
+      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.PRO, 50_000, 2)).toBe(130);
+      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.BUSINESS, 50_000, 2)).toBe(350);
+    });
+
+    it('is null without a limit or a known price', () => {
+      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.PRO, null, 2)).toBeNull();
+      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.PRO, 50_000, null)).toBeNull();
+    });
+  });
+
+  describe('getTierSuggestion', () => {
+    const suggest = (apiServiceLevel: ApiServiceLevelEnum, onDemandLimit: number | null, onDemandPricePer1k = 2) =>
+      getTierSuggestion({ apiServiceLevel, isOnTrial: false, onDemandLimit, onDemandPricePer1k });
+
+    it('suggests Teams once Pro plus on-demand reaches the $250 Teams price', () => {
+      expect(suggest(ApiServiceLevelEnum.PRO, 109_999)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.PRO, 110_000)).toBe('upgrade_to_teams');
+    });
+
+    it('suggests contacting sales once Teams plus on-demand reaches $600', () => {
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, 174_999)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, 175_000)).toBe('contact_sales');
+    });
+
+    it('suggests nothing on a trial, without a positive limit, or without a known price', () => {
+      expect(
+        getTierSuggestion({
+          apiServiceLevel: ApiServiceLevelEnum.PRO,
+          isOnTrial: true,
+          onDemandLimit: 1_000_000,
+          onDemandPricePer1k: 2,
+        })
+      ).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, null)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, 0)).toBeNull();
+      expect(
+        getTierSuggestion({
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          isOnTrial: false,
+          onDemandLimit: 1_000_000,
+          onDemandPricePer1k: null,
+        })
+      ).toBeNull();
+    });
+
+    it('suggests nothing on Free, Enterprise or Unlimited plans', () => {
+      expect(suggest(ApiServiceLevelEnum.FREE, 1_000_000)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.ENTERPRISE, 1_000_000)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.UNLIMITED, 1_000_000)).toBeNull();
     });
   });
 
