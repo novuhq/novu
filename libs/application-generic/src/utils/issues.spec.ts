@@ -137,6 +137,16 @@ describe('processControlValuesByLiquid', () => {
     );
   });
 
+  it('keeps a missing-namespace message for a variable named unknown', () => {
+    expect(issuesFor('{{ unknown }}')).toEqual([
+      {
+        message: 'Variable "unknown" invalid or missing namespace',
+        issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
+        variableName: 'unknown',
+      },
+    ]);
+  });
+
   it('reports syntax errors as compilation errors without position noise', () => {
     expect(issuesFor('{% foo %}')).toEqual([
       {

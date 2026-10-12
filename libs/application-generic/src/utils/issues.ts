@@ -285,7 +285,7 @@ export const processControlValuesByLiquid = ({
 
       issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
         const message = invalidVariable.message ? stripLiquidPosition(invalidVariable.message) : '';
-        const isSyntaxError = invalidVariable.name === 'unknown';
+        const isSyntaxError = invalidVariable.isParseFailure === true;
         const variableName = isSyntaxError ? '{{}}' : invalidVariable.name;
 
         if ('filterMessage' in invalidVariable) {
