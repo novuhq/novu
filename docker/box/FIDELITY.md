@@ -64,6 +64,7 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Clerk | Dev instance of the `novu-box` app, shared by all boxes | Separate app with copied settings; test mode on; allowlist `*@novu.co`; passkeys count as 2FA; `force_organization_selection`; one shared seed user and org, re-linked on every bake (org ID changes) |
 | Stripe | `Novu Box` sandbox with the 12 staging prices copied | One shared customer per bake; `stripe listen` can drop events; demo tax head office |
 | LaunchDarkly | Staging's project and environment, read-only SDK key | Box orgs get staging's default rules like any new customer (rate limiting on, Agents tab visible) |
+| Managed-Claude quota | `MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS=200` | The default is 10 conversations per org per month, which repeated smoke runs use up. To test the cap, start a box with `-e MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS=2`; the 100,000-token cap per conversation is unchanged |
 
 ## Novu-internal and third-party features
 

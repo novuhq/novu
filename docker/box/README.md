@@ -25,7 +25,7 @@ process-compose supervises everything under tini (`process-compose.yaml`):
 | `mail` | Mailpit: catches all email, plus SMS, push and chat through `sink` |
 | `sink` | `sink.mjs`: receives what the `generic-sms`, `push-webhook` and `chat-webhook` providers send and shows it in Mailpit |
 | `migrate` | `box migrate`: replica set, Redis cluster, Mongo indexes, ClickHouse migrations, S3 bucket |
-| `api`, `worker` | `pnpm deploy` output under `pm2-runtime -i 2`, as in the production images |
+| `api`, `worker` | `pnpm deploy` output under `pm2-runtime` in cluster mode, as in the production images (`PM2_INSTANCES=1`) |
 | `socket` | The socket worker (Cloudflare Worker) under `wrangler dev`, for realtime Inbox |
 | `dashboard` | The built dashboard served by Caddy, with runtime env injected into `index.html` |
 | `stripe` | `stripe listen`, forwarding sandbox webhooks to the API |
@@ -139,9 +139,8 @@ card-click handlers:
 With `NOVU_MANAGED_CLAUDE_API_KEY`, `start` also runs the thalamus observer and seeds `box-managed`, a managed
 agent on the Novu-managed Claude integration (Claude Haiku, only the `bash` tool, which asks before it runs).
 The smoke test then adds 3 checks: a reply, a `bash` run after approval, and the demo quota. They call Anthropic
-for real; Novu's own caps still apply (10 managed-Claude conversations per org per month, 100,000 tokens per
-conversation). Each run uses 2 conversations, so a box passes these checks 5 times, then hits the cap like a real
-org would.
+for real; Novu's own caps still apply (100,000 tokens per conversation, and 200 managed-Claude conversations per
+org per month instead of the default 10, see FIDELITY.md). Each run uses 2 conversations.
 
 Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 
