@@ -4,7 +4,7 @@ import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it } from 'vitest';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { chatControlSchema } from '../schemas/control';
-import { processControlValuesBySchema } from './issues';
+import { createSchemaValidationAjv, processControlValuesBySchema } from './issues';
 import { dashboardSanitizeControlValues } from './sanitize-control-values';
 
 const logger = { error: () => {} } as unknown as PinoLogger;
@@ -93,5 +93,24 @@ describe('processControlValuesBySchema', () => {
     expect(sanitized).not.toHaveProperty('editorType');
     expect(issues.controls?.editorType).toBeUndefined();
     expect(issues.controls?.body).toBeDefined();
+  });
+});
+
+describe('createSchemaValidationAjv', () => {
+  it('compiles draft 2020-12 schemas and applies defaults when useDefaults is enabled', () => {
+    const schema = {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {
+        name: { type: JsonSchemaTypeEnum.STRING, default: 'Default Name' },
+      },
+    } as JSONSchemaDto;
+
+    const validate = createSchemaValidationAjv({ schema, useDefaults: true }).compile(schema);
+    const payload: Record<string, unknown> = {};
+    const isValid = validate(payload);
+
+    expect(isValid).toBe(true);
+    expect(payload.name).toBe('Default Name');
   });
 });
