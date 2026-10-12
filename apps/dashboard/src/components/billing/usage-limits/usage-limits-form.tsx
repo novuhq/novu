@@ -42,7 +42,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const { mutateAsync: updateUsageLimits, isPending: isSaving } = useUpdateUsageLimits();
   const { mutateAsync: resetUsageLimits, isPending: isResetting } = useResetUsageLimits();
-  const { usage } = view;
+  const { usage, plan } = view;
 
   const form = useForm<UsageLimitsFormValues>({
     resolver: standardSchemaResolver(usageLimitsFormSchema),
@@ -53,13 +53,13 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
   const limitSettings = { workflowRuns, pauseAtLimit };
   const onDemandCost = getOnDemandCost(workflowRuns.onDemandLimit, usage.onDemandPricePer1k);
   const tierSuggestion = getTierSuggestion({
-    apiServiceLevel: view.plan.apiServiceLevel,
-    isOnTrial: view.plan.isOnTrial,
+    apiServiceLevel: plan.apiServiceLevel,
+    isOnTrial: plan.isOnTrial,
     onDemandLimit: workflowRuns.onDemandLimit,
     onDemandPricePer1k: usage.onDemandPricePer1k,
   });
   const monthlyCostAtLimit = getMonthlyCostAtLimit(
-    view.plan.apiServiceLevel,
+    plan.apiServiceLevel,
     workflowRuns.onDemandLimit,
     usage.onDemandPricePer1k
   );
@@ -125,7 +125,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
                 <TierSuggestionToast
                   suggestion={tierSuggestion}
                   monthlyCostAtLimit={monthlyCostAtLimit}
-                  billingInterval={view.plan.billingInterval}
+                  billingInterval={plan.billingInterval}
                 />
               )}
 
