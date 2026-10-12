@@ -6,7 +6,7 @@ import { resolveHumanDashboardBaseUrl } from '../app/shared/helpers/resolve-huma
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
 /**
- * The gethuman.md app (`apps/human-dashboard`). Its `/connect` page calls the
+ * The agentinbox.md app (`apps/human-dashboard`). Its `/connect` page calls the
  * public, token-authorized Telegram and Slack setup endpoints from the
  * browser, so it needs an explicit CORS grant — scoped to
  * those routes only (see `isHumanSetupRoute`), since `credentials` stays on.
@@ -14,7 +14,7 @@ const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
  * — it is a Novu-owned domain, and an env var here would fail silently when
  * unset.
  */
-const HUMAN_SITE_ORIGINS = ['https://www.gethuman.md', 'https://gethuman.md'];
+const HUMAN_SITE_ORIGINS = ['https://www.agentinbox.md', 'https://agentinbox.md'];
 
 type CorsDelegateOptions = {
   origin: boolean | string | string[];
@@ -88,7 +88,7 @@ function isBetterAuthRoute(url: string): boolean {
   return url.startsWith('/v1/better-auth');
 }
 
-// The only routes the gethuman.md `/connect` page calls: token-authorized, public setup endpoints
+// The only routes the agentinbox.md `/connect` page calls: token-authorized, public setup endpoints
 function isHumanSetupRoute(url: string): boolean {
   return url.startsWith('/v1/integrations/mobile-configure') || url.startsWith('/v1/agents/public/slack/setup');
 }

@@ -115,7 +115,7 @@ async function loadAccount(identity: Identity, env: Env): Promise<Account> {
     }
   }
 
-  throw new AuthError(403, 'There is no Human account for this sign-in yet. Open gethuman.md and sign up first.');
+  throw new AuthError(403, 'There is no Human account for this sign-in yet. Open agentinbox.md and sign up first.');
 }
 
 /** The account's key in one region, or `null` when the account doesn't live there. */

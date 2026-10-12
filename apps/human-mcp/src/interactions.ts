@@ -42,7 +42,10 @@ export async function resolveRecipient(api: HumanApi, to: string | undefined): P
 
   const operator = await api.get<{ subscriberId?: string }>('/v1/human/operator');
   if (!operator?.subscriberId) {
-    throw new HumanApiError(409, 'Human is not set up yet. Open gethuman.md, go to Agent and follow the setup steps.');
+    throw new HumanApiError(
+      409,
+      'Human is not set up yet. Open agentinbox.md, go to Agent and follow the setup steps.'
+    );
   }
 
   return operator.subscriberId;

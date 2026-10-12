@@ -24,7 +24,7 @@ export type HumanVerificationEmailContent = {
 };
 
 /**
- * Builds the double-opt-in verification email. Styled with gethuman.md tokens
+ * Builds the double-opt-in verification email. Styled with agentinbox.md tokens
  * (black / cream / orange) and no Novu watermark — this is Human branding only.
  *
  * `sender` carries the agent's own name (absent while it still has the
