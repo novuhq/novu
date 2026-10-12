@@ -300,13 +300,11 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   return (
     <InviteCard step="channels">
       <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
-      <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
-        Get <Accent>asks</Accent> from {status.agentName}
-      </h1>
+      <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">Talk to {status.agentName}</h1>
       <CardText>
         {anyConnected
-          ? `You're connected. Asks go to your default channel, unless ${status.agentName} picks another.`
-          : 'When it needs a yes, a no or an answer, it messages you. Choose where.'}
+          ? `You're connected. ${status.agentName} messages you on your default channel.`
+          : `Pick where you and ${status.agentName} talk.`}
       </CardText>
 
       {status.channels.length > 0 ? (
@@ -401,9 +399,7 @@ function connectingStep({
         <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
         <AppIcon via="telegram" size="large" />
         <StepTitle>Open the bot and press Start</StepTitle>
-        <CardText>
-          That tells {telegramBot ? `@${telegramBot}` : 'the bot'} it can reach you. Nothing else to set up.
-        </CardText>
+        <CardText>This lets {telegramBot ? `@${telegramBot}` : 'the bot'} message you.</CardText>
 
         <div className="flex items-center gap-4">
           <TelegramQrCode url={telegramLink} bot={telegramBot} />
@@ -445,7 +441,7 @@ function connectingStep({
         <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
         <AppIcon via="slack" size="large" />
         <StepTitle>Confirm your Slack account</StepTitle>
-        <CardText>Sign in to Slack so {status.agentName} knows where to DM you. Nothing else to set up.</CardText>
+        <CardText>Sign in to Slack so {status.agentName} can DM you.</CardText>
 
         <Button
           className="self-start"
@@ -602,7 +598,7 @@ function DoneCard({ agentName, inviteeName, via, isDefault, telegramBot, onBack 
         {firstName && <Accent>{firstName}</Accent>}
       </h1>
       <CardText>
-        {agentName} will message you{isDefault && ` on ${APP_LABELS[via]}`} when it needs you. It looks like this:
+        When {agentName} needs you{isDefault && ` on ${APP_LABELS[via]}`}, it looks like this:
       </CardText>
 
       <figure
@@ -613,7 +609,7 @@ function DoneCard({ agentName, inviteeName, via, isDefault, telegramBot, onBack 
           <AppIcon via={via} size="small" />
           {sender}
         </figcaption>
-        <p className="text-[13px] leading-4.5">{agentName} wants to deploy api to production. OK?</p>
+        <p className="text-[13px] leading-4.5">Your September invoice is ready. Want it as a PDF?</p>
         {/* A picture of the buttons in the chat app, not something to press here. */}
         <div aria-hidden="true" className="flex gap-2 text-[13px] leading-4.5 font-medium select-none">
           <span className="flex h-7 items-center rounded bg-accent px-2.5 text-background">Approve</span>
@@ -869,9 +865,9 @@ function ExpiryNote({ expiresAt }: { expiresAt: string }) {
 function channelDescription(channel: InviteChannel, telegramBot?: string): string {
   switch (channel.via) {
     case 'telegram':
-      return telegramBot ? `Reply in a chat with @${telegramBot}` : 'Reply in a Telegram chat';
+      return telegramBot ? `Chat with @${telegramBot}` : 'Chat in Telegram';
     case 'slack':
-      return 'Reply in a Slack DM';
+      return 'Message it in Slack';
     case 'email':
       if (channel.status === 'pending') {
         return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a verification link';
@@ -881,7 +877,7 @@ function channelDescription(channel: InviteChannel, telegramBot?: string): strin
         return channel.address;
       }
 
-      return 'We’ll email you a link to confirm the address';
+      return 'Email it';
     default: {
       const unreachable: never = channel.via;
 

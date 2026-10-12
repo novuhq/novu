@@ -77,10 +77,10 @@ async function loadPictureUrl(account: HumanAccount): Promise<string | undefined
 export const AGENT_NOT_SET_UP_MESSAGE = 'Set up your agent first. The Agent page shows you how.';
 
 /** How the dashboard calls an agent that has no name of its own yet (NV-8914). */
-export const UNNAMED_AGENT_LABEL = 'Human assistant';
+export const UNNAMED_AGENT_LABEL = 'Inbox agent';
 
 /**
- * What the dashboard calls the agent: the name the operator gave it, or "Human assistant" while it
+ * What the dashboard calls the agent: the name the operator gave it, or "Inbox agent" while it
  * still has the default one.
  */
 export function agentDisplayName(agent: RelayAgent): string {

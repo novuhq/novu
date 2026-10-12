@@ -76,7 +76,7 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
   if (stored && stored.region !== region) {
     return {
       status: 'error',
-      message: `Your human CLI uses the ${REGION_NAMES[region]} region, but your Human account is in the ${REGION_NAMES[stored.region]} region. Point the CLI at the ${REGION_NAMES[stored.region]} API and run human login again.`,
+      message: `Your human CLI uses the ${REGION_NAMES[region]} region, but your Agent Inbox account is in the ${REGION_NAMES[stored.region]} region. Point the CLI at the ${REGION_NAMES[stored.region]} API and run human login again.`,
     };
   }
 
@@ -173,7 +173,7 @@ function describeApproveError(error: unknown): ApproveCliLoginResult {
       return {
         status: 'error',
         message:
-          'Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can still approve; that setup stays behind.',
+          'Your Agent Inbox account’s agent is already in use, so the setup on your computer can’t be moved into it. You can still approve; that setup stays behind.',
         canSkipClaim: true,
       };
     }

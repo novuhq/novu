@@ -3,7 +3,6 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
-import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
@@ -18,7 +17,7 @@ const CLAIM_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
 export async function claimSetupAction(_previous: ClaimFormState, formData: FormData): Promise<ClaimFormState> {
   const user = await currentUser();
   if (!user) {
-    return { error: 'Your session has ended. Sign in again to keep this setup.' };
+    return { error: 'Your session has ended. Sign in again to claim your agent.' };
   }
 
   const token = String(formData.get('token') ?? '');
@@ -31,7 +30,7 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
   const stored = readStoredBackingAccount(user);
   if (stored && stored.region !== region) {
     return {
-      error: `This setup was made in the ${REGION_NAMES[region]} region, but your Human account is in the ${REGION_NAMES[stored.region]} region, so it can’t be moved there.`,
+      error: `This setup was made in the ${REGION_NAMES[region]} region, but your Agent Inbox account is in the ${REGION_NAMES[stored.region]} region, so it can’t be moved there.`,
     };
   }
 
@@ -51,10 +50,12 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
     return { error: describeClaimError(error) };
   }
 
-  redirect(DASHBOARD_HOME);
+  // Back to the claim page, which now says the agent is claimed and where to go next.
+  redirect('/claim?claimed=1');
 }
 
-const ACCOUNT_HAS_AGENT_MESSAGE = 'Your Human account’s agent is already in use, so this setup can’t be moved into it.';
+const ACCOUNT_HAS_AGENT_MESSAGE =
+  'Your Agent Inbox account’s agent is already in use, so this setup can’t be moved into it.';
 
 function describeClaimError(error: unknown): string {
   if (error instanceof HumanApiError) {
@@ -68,5 +69,5 @@ function describeClaimError(error: unknown): string {
     }
   }
 
-  return 'Something went wrong while keeping your setup. Please try again.';
+  return 'Something went wrong while claiming your agent. Please try again.';
 }

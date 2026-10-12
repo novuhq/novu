@@ -326,7 +326,7 @@ export function SignInForm({ redirectPath, initialError }: SignInFormProps) {
   }
 
   return (
-    <AuthCard step={step} title="Sign in" description="Sign in to your Human account.">
+    <AuthCard step={step} title="Sign in" description="Sign in to your Agent Inbox account.">
       <OAuthButtons
         pending={busy === 'oauth_github' || busy === 'oauth_google' ? busy : null}
         disabled={disabled}

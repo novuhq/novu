@@ -10,6 +10,8 @@ export type AgentAvatarMood = 'idle' | 'asleep';
 
 type AgentAvatarProps = {
   mood?: AgentAvatarMood;
+  /** Stands still: no turning towards the pointer and no blinking. For a mascot that is part of a picture. */
+  still?: boolean;
   /** The picture the operator gave the agent. It covers the mascot once it has loaded. */
   src?: string;
   /** Size and corners, such as `size-8 rounded-[9px]` in the sidebar or `size-14 rounded-full` on the Agent page. */
@@ -21,7 +23,7 @@ type AgentAvatarProps = {
  * Awake, it turns towards the pointer and blinks. Both faces are always there, so one fades into the
  * other when the agent wakes up. An agent with a picture of its own shows that instead.
  */
-export function AgentAvatar({ mood = 'idle', src, className }: AgentAvatarProps) {
+export function AgentAvatar({ mood = 'idle', still = false, src, className }: AgentAvatarProps) {
   // The address the picture loaded from: a new picture fades in again, and one that fails leaves the mascot.
   const [loaded, setLoaded] = useState<string>();
   const face = 'absolute inset-0 size-full transition-opacity duration-300 ease-out motion-reduce:transition-none';
@@ -36,7 +38,7 @@ export function AgentAvatar({ mood = 'idle', src, className }: AgentAvatarProps)
         className
       )}
     >
-      <MascotFace art="idle" still={mood !== 'idle'} className={cn(face, mood !== 'idle' && 'opacity-0')} />
+      <MascotFace art="idle" still={still || mood !== 'idle'} className={cn(face, mood !== 'idle' && 'opacity-0')} />
       <MascotFace art="idle" mood="asleep" className={cn(face, mood !== 'asleep' && 'opacity-0')} />
       {src && (
         <img
