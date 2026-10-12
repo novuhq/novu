@@ -83,26 +83,6 @@ export const TEAMS_MONTHLY_COST = getFeatureForTierAsNumber(
   false
 );
 
-type NextTierThreshold = { kind: TierSuggestion['kind']; monthlyCost: number };
-
-function getNextTierThreshold(apiServiceLevel: ApiServiceLevelEnum): NextTierThreshold | null {
-  switch (apiServiceLevel) {
-    case ApiServiceLevelEnum.PRO:
-      return { kind: 'upgrade_to_teams', monthlyCost: TEAMS_MONTHLY_COST };
-    case ApiServiceLevelEnum.BUSINESS:
-      return { kind: 'contact_sales', monthlyCost: CONTACT_SALES_MONTHLY_COST_THRESHOLD };
-    case ApiServiceLevelEnum.FREE:
-    case ApiServiceLevelEnum.ENTERPRISE:
-    case ApiServiceLevelEnum.UNLIMITED:
-      return null;
-    default: {
-      const exhaustiveCheck: never = apiServiceLevel;
-
-      return exhaustiveCheck;
-    }
-  }
-}
-
 /** Next step up once the plan price plus on-demand at the limit reaches it; never on a trial or without a positive limit. */
 export function getTierSuggestion({
   apiServiceLevel,
@@ -119,25 +99,23 @@ export function getTierSuggestion({
     return null;
   }
 
-  const next = getNextTierThreshold(apiServiceLevel);
-
-  if (!next) {
-    return null;
-  }
-
   const monthlyCost = getMonthlyCostAtLimit(apiServiceLevel, onDemandLimit, onDemandPricePer1k);
 
-  if (monthlyCost === null || monthlyCost < next.monthlyCost) {
+  if (monthlyCost === null) {
     return null;
   }
 
-  switch (next.kind) {
-    case 'upgrade_to_teams':
-      return { kind: 'upgrade_to_teams', monthlyCostAtLimit: monthlyCost };
-    case 'contact_sales':
-      return { kind: 'contact_sales' };
+  switch (apiServiceLevel) {
+    case ApiServiceLevelEnum.PRO:
+      return monthlyCost >= TEAMS_MONTHLY_COST ? { kind: 'upgrade_to_teams', monthlyCostAtLimit: monthlyCost } : null;
+    case ApiServiceLevelEnum.BUSINESS:
+      return monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD ? { kind: 'contact_sales' } : null;
+    case ApiServiceLevelEnum.FREE:
+    case ApiServiceLevelEnum.ENTERPRISE:
+    case ApiServiceLevelEnum.UNLIMITED:
+      return null;
     default: {
-      const exhaustiveCheck: never = next.kind;
+      const exhaustiveCheck: never = apiServiceLevel;
 
       return exhaustiveCheck;
     }
