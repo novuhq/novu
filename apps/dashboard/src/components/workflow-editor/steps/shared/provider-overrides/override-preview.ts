@@ -1,6 +1,6 @@
 import { type AnnotatedPreviewLine, buildAnnotatedPreviewLines, isRecord, mergeProviderPreview } from '@novu/shared';
 import { useMemo } from 'react';
-import { hasOwn, type OverrideContentSource, type OverrideValues } from './content-source';
+import { hasOwn, type OverrideContentSource, type OverrideValues } from './override-source';
 
 export const PREVIEW_PANEL_CLASS =
   'bg-neutral-alpha-50 text-foreground-950 min-h-16 overflow-auto rounded-md border border-neutral-100 p-2 font-mono text-[11px] leading-4 [scrollbar-gutter:stable]';
@@ -175,7 +175,7 @@ export function resolveSourceOverrideForPreview({
     previewOverrides: previewOverrides?.providerOverrides,
   });
 
-  if (source.integrationIdentifier === undefined) {
+  if (source.kind === 'provider') {
     return { ...providerLayer, inheritedPaths: [] };
   }
 
@@ -209,7 +209,7 @@ export function usePreviewOverrideValues(preview: OverrideValues | undefined): O
 
 /**
  * Merges the compiled step body into the source's override the same way the send path does, so the
- * preview marks which layer each root key comes from.
+ * preview marks which layer each root key comes from. `source` must keep its identity across renders.
  */
 export function useAnnotatedOverridePreview({
   body,
@@ -222,28 +222,25 @@ export function useAnnotatedOverridePreview({
   formOverrides: OverrideValues;
   previewOverrides: OverrideValues | undefined;
 }): AnnotatedOverridePreview | undefined {
-  const providerId = source?.providerId;
-  const integrationIdentifier = source?.integrationIdentifier;
-
   return useMemo(() => {
-    if (!providerId) {
+    if (!source) {
       return undefined;
     }
 
     const { hasOverride, override, inheritedPaths } = resolveSourceOverrideForPreview({
-      source: { providerId, integrationIdentifier },
+      source,
       formOverrides,
       previewOverrides,
     });
-    const { merged, defaultContentKey } = mergeProviderPreview({ body, providerId, override });
+    const { merged, defaultContentKey } = mergeProviderPreview({ body, providerId: source.providerId, override });
 
     return {
       annotatedLines: tagPreviewLineOrigins(buildAnnotatedPreviewLines(merged, defaultContentKey), {
         override,
         inheritedPaths,
-        isIntegrationSource: integrationIdentifier !== undefined,
+        isIntegrationSource: source.kind === 'integration',
       }),
       hasOverride,
     };
-  }, [body, providerId, integrationIdentifier, formOverrides, previewOverrides]);
+  }, [body, source, formOverrides, previewOverrides]);
 }

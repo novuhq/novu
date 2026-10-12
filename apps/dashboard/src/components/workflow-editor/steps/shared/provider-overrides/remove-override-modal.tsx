@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/primitives/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@/components/primitives/dialog';
+import type { ProviderOverrideOption } from './override-options';
 import {
-  ALL_INTEGRATIONS_LABEL,
-  getIntegrationName,
-  getOverrideProviderDisplayName,
-  hasOwn,
+  getSourceOverride,
+  integrationSource,
   type OverrideContentSource,
   type OverrideValues,
-  type ProviderOverrideOption,
-} from './content-source';
+  providerSource,
+} from './override-source';
+import { DEFAULT_CONTENT_LABEL, describeOverrideSource } from './override-source-description';
 
 const MODAL_BUTTON_CLASS = 'text-label-2xs h-5 rounded-[5px] px-2';
 
@@ -31,47 +31,53 @@ function getRemoveOverrideCopy(
   providerOptions: ProviderOverrideOption[],
   overrides: OverrideValues
 ): RemoveOverrideCopy {
-  const { providerId, integrationIdentifier } = source;
-  const providerOption = providerOptions.find((option) => option.providerId === providerId);
-  const providerName = providerOption?.displayName ?? getOverrideProviderDisplayName(providerId);
+  const { providerName, ownerLabel, isGrouped } = describeOverrideSource(source, providerOptions);
 
-  if (integrationIdentifier !== undefined) {
-    const integrationName = getIntegrationName(providerId, integrationIdentifier, providerOptions);
-    const fallback = hasOwn(overrides.providerOverrides, providerId)
-      ? `${providerName} · ${ALL_INTEGRATIONS_LABEL}, then Default content`
-      : 'Default content';
+  switch (source.kind) {
+    case 'integration': {
+      const parent = providerSource(source.providerId);
+      const fallback =
+        getSourceOverride(parent, overrides) === undefined
+          ? DEFAULT_CONTENT_LABEL
+          : `${describeOverrideSource(parent, providerOptions).qualifiedLabel}, then ${DEFAULT_CONTENT_LABEL}`;
 
-    return {
-      title: `Remove ${integrationName} override?`,
-      description: `${integrationName} will fall back to ${fallback}.`,
-    };
+      return {
+        title: `Remove ${ownerLabel} override?`,
+        description: `${ownerLabel} will fall back to ${fallback}.`,
+      };
+    }
+    case 'provider': {
+      if (!isGrouped) {
+        return {
+          title: `Remove the ${providerName} override?`,
+          description: `${providerName} will fall back to ${DEFAULT_CONTENT_LABEL}.`,
+        };
+      }
+
+      const keptNames = Object.keys(overrides.integrationOverrides?.[source.providerId] ?? {}).map(
+        (identifier) =>
+          describeOverrideSource(integrationSource(source.providerId, identifier), providerOptions).ownerLabel
+      );
+      const title = `Remove the override for all ${providerName} integrations?`;
+      const fallback = `All ${providerName} integrations fall back to ${DEFAULT_CONTENT_LABEL}.`;
+
+      if (keptNames.length === 0) {
+        return { title, description: fallback };
+      }
+
+      const kept =
+        keptNames.length === 1
+          ? `${keptNames[0]} keeps its own override and now merges directly over ${DEFAULT_CONTENT_LABEL}.`
+          : `${joinNames(keptNames)} keep their own overrides and now merge directly over ${DEFAULT_CONTENT_LABEL}.`;
+
+      return { title, description: `${fallback} ${kept}` };
+    }
+    default: {
+      const unhandled: never = source;
+
+      return unhandled;
+    }
   }
-
-  if (!providerOption || providerOption.integrations.length === 0) {
-    return {
-      title: `Remove the ${providerName} override?`,
-      description: `${providerName} will fall back to Default content.`,
-    };
-  }
-
-  const keptNames = Object.keys(overrides.integrationOverrides?.[providerId] ?? {}).map((identifier) =>
-    getIntegrationName(providerId, identifier, providerOptions)
-  );
-  const fallback = `All ${providerName} integrations fall back to Default content.`;
-
-  if (keptNames.length === 0) {
-    return { title: `Remove the override for all ${providerName} integrations?`, description: fallback };
-  }
-
-  const kept =
-    keptNames.length === 1
-      ? `${keptNames[0]} keeps its own override and now merges directly over Default content.`
-      : `${joinNames(keptNames)} keep their own overrides and now merge directly over Default content.`;
-
-  return {
-    title: `Remove the override for all ${providerName} integrations?`,
-    description: `${fallback} ${kept}`,
-  };
 }
 
 type RemoveOverrideModalProps = {

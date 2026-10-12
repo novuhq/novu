@@ -11,16 +11,6 @@ import { SectionHeader } from '@/components/workflow-editor/steps/http-request/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import {
-  getOverrideFormField,
-  getOverridePath,
-  getSourceOverride,
-  getUnsupportedOverrideKeys,
-  isEscapeHatchProvider,
-  type OverrideContentSource,
-  shouldKeepServerOverrideIssue,
-  updateSourceOverride,
-} from './content-source';
 import { EscapeHatchCallout } from './escape-hatch-callout';
 import { createOverrideCompletionSource } from './override-autocomplete';
 import { OverrideEmptyState } from './override-empty-state';
@@ -30,8 +20,17 @@ import {
   type OverrideFieldSchema,
 } from './override-field-schema';
 import type { OverrideInheritance } from './override-inheritance';
+import { getUnsupportedOverrideKeys, type OverrideServerIssue } from './override-issues';
 import { findDuplicateRootKey } from './override-json';
 import { overriddenKeyChips } from './override-key-chips';
+import { isEscapeHatchProvider } from './override-options';
+import {
+  getOverrideFormField,
+  getOverridePath,
+  getSourceOverride,
+  type OverrideContentSource,
+  updateSourceOverride,
+} from './override-source';
 import { OverrideSupportedFields } from './override-supported-fields';
 import { createSchemaResolver } from './schema-resolver';
 import { readOverrideValues } from './use-provider-override-options';
@@ -121,6 +120,8 @@ export type ProviderOverrideEditorProps = {
   source: OverrideContentSource;
   displayName: string;
   inheritance?: OverrideInheritance;
+  /** The step's server control issues owned by this override (`buildOverrideIssueIndex`). */
+  serverIssues: OverrideServerIssue[];
   /**
    * Replaces both the schema-less callout and the default hint with channel-specific copy. Rendered
    * into a bare padded block, so it owns its own icon and row layout.
@@ -139,6 +140,7 @@ export function ProviderOverrideEditor({
   source,
   displayName,
   inheritance,
+  serverIssues,
   notice,
   headerTooltip,
   placeholder,
@@ -147,7 +149,7 @@ export function ProviderOverrideEditor({
   annotateField,
   onDraftParseValidityChange,
 }: ProviderOverrideEditorProps) {
-  const { providerId, integrationIdentifier } = source;
+  const { providerId } = source;
   const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
@@ -168,14 +170,13 @@ export function ProviderOverrideEditor({
   const primaryKey = getProviderPrimaryContentKey(providerId) ?? undefined;
   const showEscapeHatchCallout = !notice && isEscapeHatchProvider(providerId);
 
+  // The panel remounts the editor per source, so the draft is only seeded from the form once.
   const [draft, setDraft] = useState(() =>
-    formatOverrideJson(getSourceOverride({ providerId, integrationIdentifier }, readOverrideValues(getValues)))
+    formatOverrideJson(getSourceOverride(source, readOverrideValues(getValues)))
   );
   // Only an override that opens empty gets the empty state; clearing keys while editing keeps the editor.
   const [isEmptyStateVisible, setIsEmptyStateVisible] = useState(
-    () =>
-      Object.keys(getSourceOverride({ providerId, integrationIdentifier }, readOverrideValues(getValues)) ?? {})
-        .length === 0
+    () => Object.keys(getSourceOverride(source, readOverrideValues(getValues)) ?? {}).length === 0
   );
 
   const overriddenKeyLabelsJson = JSON.stringify(inheritance?.overriddenKeyLabels ?? {});
@@ -184,12 +185,6 @@ export function ProviderOverrideEditor({
 
     return Object.keys(labels).length > 0 ? [overriddenKeyChips(labels)] : undefined;
   }, [overriddenKeyLabelsJson]);
-
-  useEffect(() => {
-    setDraft(
-      formatOverrideJson(getSourceOverride({ providerId, integrationIdentifier }, readOverrideValues(getValues)))
-    );
-  }, [getValues, providerId, integrationIdentifier]);
 
   const formatJson = useCallback(() => {
     setDraft((current) => formatOverrideJsonDraft(current));
@@ -204,38 +199,28 @@ export function ProviderOverrideEditor({
     return { parseError: undefined, parsedDraft: parsed };
   }, [draft]);
 
-  const issuePathPrefix = getOverridePath({ providerId, integrationIdentifier });
+  const issuePathPrefix = getOverridePath(source);
 
-  // Top-level unsupported keys are detected client-side from the shared override key
-  // list (keystroke-by-keystroke); skip only those server UNSUPPORTED_PROPERTY issues
-  // so the same key is never reported twice. Nested ones (e.g. document.link) are not
-  // covered by the local check and must still render under the editor.
+  // Server issues for keys the draft no longer has are stale until the next save round-trip.
   const activeServerIssues = useMemo(() => {
-    const controlIssues = step?.issues?.controls ?? {};
+    if (!parsedDraft) {
+      return serverIssues;
+    }
 
-    return Object.entries(controlIssues)
-      .filter(([key]) => key === issuePathPrefix || key.startsWith(`${issuePathPrefix}.`))
-      .flatMap(([path, issueList]) =>
-        issueList
-          .filter((issue) => shouldKeepServerOverrideIssue(issue, path, issuePathPrefix))
-          .map((issue) => ({ ...issue, path }))
-      )
-      .filter((issue) => {
-        if (!parsedDraft) {
-          return true;
-        }
+    return serverIssues.filter((issue) => {
+      const issuePath = issue.variableName ?? issue.path;
+      if (!issuePath.startsWith(`${issuePathPrefix}.`)) {
+        return true;
+      }
 
-        const issuePath = issue.variableName ?? issue.path;
-        if (!issuePath.startsWith(`${issuePathPrefix}.`)) {
-          return true;
-        }
+      const topKey = issuePath.slice(issuePathPrefix.length + 1).split('.')[0];
 
-        const topKey = issuePath.slice(issuePathPrefix.length + 1).split('.')[0];
+      return topKey in parsedDraft;
+    });
+  }, [serverIssues, issuePathPrefix, parsedDraft]);
 
-        return topKey in parsedDraft;
-      });
-  }, [step?.issues?.controls, issuePathPrefix, parsedDraft]);
-
+  // Top-level unsupported keys are checked against the draft keystroke by keystroke; the server's
+  // own UNSUPPORTED_PROPERTY issues for them are already left out of `serverIssues`.
   const localUnsupportedPropertyMessages = useMemo(() => {
     if (!parsedDraft) {
       return [] as string[];

@@ -7,17 +7,17 @@ import {
 } from '@novu/shared';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
-import {
-  DEFAULT_CONTENT_SOURCE,
-  type OverrideContentSource,
-  type ProviderOverrideOption,
-} from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
+import type { ProviderOverrideOption } from '@/components/workflow-editor/steps/shared/provider-overrides/override-options';
 import {
   PREVIEW_PANEL_CLASS,
   useAnnotatedOverridePreview,
   usePreviewOverrideValues,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import {
+  DEFAULT_CONTENT_SOURCE,
+  type OverrideContentSource,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
 import { PreviewSourceBar } from '@/components/workflow-editor/steps/shared/provider-overrides/preview-source-bar';
 import { ResolvedPayloadPreview } from '@/components/workflow-editor/steps/shared/provider-overrides/resolved-payload-preview';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
@@ -48,7 +48,7 @@ function getToolPreviewMode(source: OverrideContentSource | undefined): ToolPrev
     return { kind: 'override', source };
   }
 
-  return { kind: source.integrationIdentifier === undefined ? 'webhook-provider' : 'webhook-integration', source };
+  return { kind: source.kind === 'provider' ? 'webhook-provider' : 'webhook-integration', source };
 }
 
 function formatConnectedPrimaryContentHints(providerOptions: ProviderOverrideOption[]): string {

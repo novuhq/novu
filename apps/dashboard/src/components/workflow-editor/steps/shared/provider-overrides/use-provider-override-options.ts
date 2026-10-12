@@ -4,9 +4,8 @@ import { type FieldValues, type UseFormGetValues, useFormContext } from 'react-h
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { type ActiveOverrideIntegration, buildProviderOverrideOptions } from './override-options';
 import {
-  type ActiveOverrideIntegration,
-  buildProviderOverrideOptions,
   INTEGRATION_OVERRIDES_FIELD,
   type IntegrationOverrides,
   isContentOverrideProviderId,
@@ -14,7 +13,7 @@ import {
   type OverrideValues,
   PROVIDER_OVERRIDES_FIELD,
   type ProviderOverrides,
-} from './content-source';
+} from './override-source';
 
 /** Chat steps only offer overrides at all behind the chat provider-overrides flag. */
 function useAreIntegrationOverridesEnabled(channel: OverrideChannel): boolean {

@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { RiArrowRightSLine, RiStackLine } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
-import type { ContentSource } from './content-source';
 import type { OverrideInheritance } from './override-inheritance';
+import type { ContentSource } from './override-source';
 
 type MergesOverRowProps = {
   inheritance: OverrideInheritance;

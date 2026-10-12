@@ -1,6 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { type OverrideFieldSchema } from '@/components/workflow-editor/steps/shared/provider-overrides/override-field-schema';
+import { type OverrideContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -47,12 +48,18 @@ export function useToolOverrideProviderOptions() {
 
   /** Every active webhook's merged schema, or one integration's own (empty once it is disconnected). */
   const getWebhookOverrideSchema = useCallback(
-    (integrationIdentifier?: string): WebhookOverrideSchema => {
-      if (integrationIdentifier === undefined) {
-        return webhookSchemas.allIntegrations;
-      }
+    (source: OverrideContentSource): WebhookOverrideSchema => {
+      switch (source.kind) {
+        case 'provider':
+          return webhookSchemas.allIntegrations;
+        case 'integration':
+          return webhookSchemas.byIdentifier.get(source.integrationIdentifier) ?? webhookSchemas.disconnected;
+        default: {
+          const unhandled: never = source;
 
-      return webhookSchemas.byIdentifier.get(integrationIdentifier) ?? webhookSchemas.disconnected;
+          return unhandled;
+        }
+      }
     },
     [webhookSchemas]
   );

@@ -6,7 +6,7 @@ import {
   ContentOverridePanel,
   type ProviderOverrideEditorExtras,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
-import { type OverrideContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
+import { type OverrideContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 import { annotateWebhookField, describeWebhookField } from './webhook-override-annotations';
 import { formatWebhookSchemaSourceLabel, type WebhookSchemaSourceRef } from './webhook-payload-schema';
@@ -46,12 +46,12 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { providerOptions, overrides, getWebhookOverrideSchema } = useToolOverrideProviderOptions();
 
   const getEditorExtras = useCallback(
-    ({ providerId, integrationIdentifier }: OverrideContentSource): ProviderOverrideEditorExtras => {
-      if (providerId !== ToolProviderIdEnum.Webhook) {
+    (source: OverrideContentSource): ProviderOverrideEditorExtras => {
+      if (source.providerId !== ToolProviderIdEnum.Webhook) {
         return {};
       }
 
-      const { payloadSchema, rootSchema } = getWebhookOverrideSchema(integrationIdentifier);
+      const { payloadSchema, rootSchema } = getWebhookOverrideSchema(source);
 
       return {
         rootSchemaOverride: rootSchema,
@@ -61,7 +61,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
         placeholder: '{\n  "event": "{{payload.title}}"\n}',
         notice: (
           <WebhookOverrideNotice
-            isIntegrationOverride={integrationIdentifier !== undefined}
+            isIntegrationOverride={source.kind === 'integration'}
             ignoredSources={payloadSchema.ignoredSources}
           />
         ),

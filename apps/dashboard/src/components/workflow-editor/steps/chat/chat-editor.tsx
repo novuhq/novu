@@ -11,7 +11,7 @@ import {
   ContentOverridePanel,
   type ProviderOverrideEditorExtras,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
-import { type OverrideContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
+import { type OverrideContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
 import { SlackBlockKitBuilderHint } from '@/components/workflow-editor/steps/shared/provider-overrides/slack-block-kit-builder-hint';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';

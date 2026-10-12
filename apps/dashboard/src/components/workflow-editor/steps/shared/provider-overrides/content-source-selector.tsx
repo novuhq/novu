@@ -15,20 +15,20 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import type { IntegrationOverrideOption, ProviderOverrideOption } from './override-options';
 import {
-  ALL_INTEGRATIONS_LABEL,
   type ContentSource,
   DEFAULT_CONTENT_SOURCE,
-  getContentSourceLabel,
   getOverridePath,
-  getOverrideProviderDisplayName,
-  getSourceOwnerLabel,
-  type IntegrationOverrideOption,
   isSameContentSource,
   type OverrideContentSource,
-  type ProviderOverrideOption,
-  toOverrideSource,
-} from './content-source';
+} from './override-source';
+import {
+  ALL_INTEGRATIONS_LABEL,
+  DEFAULT_CONTENT_LABEL,
+  describeOverrideSource,
+  getContentSourceLabel,
+} from './override-source-description';
 
 /** Below this many provider and integration rows the whole list fits without searching. */
 const SEARCH_ROW_THRESHOLD = 8;
@@ -98,7 +98,7 @@ function OverrideSourceItem({
   canAddOverrides,
   onPick,
 }: OverrideSourceItemProps) {
-  const source = toOverrideSource(option);
+  const { source } = option;
   const isSelected = isSameContentSource(selectedSource, source);
   const isInvalid = !!invalidSourcePaths?.has(getOverridePath(source));
   const canSelectDirectly = !supportsOverrides || option.hasOverride;
@@ -163,7 +163,7 @@ function filterProviders(providers: ProviderOverrideOption[], rawQuery: string):
     }
 
     const integrations = provider.integrations.filter((integration) =>
-      matchesQuery(query, integration.name, integration.integrationIdentifier)
+      matchesQuery(query, integration.name, integration.source.integrationIdentifier)
     );
 
     return integrations.length > 0 ? [{ provider: { ...provider, integrations }, showAllIntegrationsRow: false }] : [];
@@ -186,7 +186,7 @@ function ContentSourceTriggerLabel({
   if (selectedSource === DEFAULT_CONTENT_SOURCE) {
     return (
       <>
-        <span className="text-label-xs text-text-sub truncate">Default content</span>
+        <span className="text-label-xs text-text-sub truncate">{DEFAULT_CONTENT_LABEL}</span>
         {overrideCount > 0 && (
           <span className="border-stroke-soft bg-bg-white text-label-2xs text-text-sub shrink-0 rounded border px-1.5 py-0.5">
             {overrideCount === 1 ? '1 override' : `${overrideCount} overrides`}
@@ -196,24 +196,19 @@ function ContentSourceTriggerLabel({
     );
   }
 
-  const providerOption = providers.find((option) => option.providerId === selectedSource.providerId);
-  const displayName = providerOption?.displayName ?? getOverrideProviderDisplayName(selectedSource.providerId);
-  const isGrouped =
-    selectedSource.integrationIdentifier !== undefined || (providerOption?.integrations.length ?? 0) > 0;
+  const { providerName, ownerLabel, isGrouped } = describeOverrideSource(selectedSource, providers);
 
   return (
     <>
-      <ProviderIcon providerId={selectedSource.providerId} providerDisplayName={displayName} className="size-3.5" />
+      <ProviderIcon providerId={selectedSource.providerId} providerDisplayName={providerName} className="size-3.5" />
       {isGrouped ? (
         <>
-          <span className="text-label-xs text-text-soft truncate">{displayName}</span>
+          <span className="text-label-xs text-text-soft truncate">{providerName}</span>
           <RiArrowRightSLine className="text-text-soft size-3 shrink-0" />
-          <span className="text-label-xs text-text-strong truncate">
-            {getSourceOwnerLabel(selectedSource, providers)}
-          </span>
+          <span className="text-label-xs text-text-strong truncate">{ownerLabel}</span>
         </>
       ) : (
-        <span className="text-label-xs text-text-strong truncate">{displayName}</span>
+        <span className="text-label-xs text-text-strong truncate">{providerName}</span>
       )}
       {hasError && <RiErrorWarningFill className="text-error-base size-3 shrink-0" />}
     </>
@@ -316,7 +311,7 @@ export function ContentSourceSelector({
               className={cn(MENU_ROW_CLASS, 'pl-1')}
               onSelect={() => select(DEFAULT_CONTENT_SOURCE)}
             >
-              <span className="text-label-xs text-text-strong flex-1">Default content</span>
+              <span className="text-label-xs text-text-strong flex-1">{DEFAULT_CONTENT_LABEL}</span>
               {selectedSource === DEFAULT_CONTENT_SOURCE && <RiCheckLine className="text-text-sub size-3.5 shrink-0" />}
             </CommandItem>
 
@@ -383,13 +378,13 @@ export function ContentSourceSelector({
                           {provider.integrations.map((integration) => (
                             <OverrideSourceItem
                               {...itemProps}
-                              key={integration.integrationIdentifier}
+                              key={integration.source.integrationIdentifier}
                               option={integration}
                               label={integration.name}
                               detail={
-                                integration.name === integration.integrationIdentifier
+                                integration.name === integration.source.integrationIdentifier
                                   ? undefined
-                                  : integration.integrationIdentifier
+                                  : integration.source.integrationIdentifier
                               }
                               dimmedLabelClassName="text-text-soft"
                             />

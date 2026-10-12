@@ -5,21 +5,22 @@ import {
   FeatureFlagsKeysEnum,
   type GeneratePreviewResponseDto,
 } from '@novu/shared';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Skeleton } from '@/components/primitives/skeleton';
-import {
-  type ContentSource,
-  DEFAULT_CONTENT_SOURCE,
-  isContentOverrideProviderId,
-  type OverrideContentSource,
-} from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useOptionalContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import {
   useAnnotatedOverridePreview,
   usePreviewOverrideValues,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import {
+  type ContentSource,
+  DEFAULT_CONTENT_SOURCE,
+  isContentOverrideProviderId,
+  type OverrideContentSource,
+  providerSource,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
 import { ResolvedPayloadPreview } from '@/components/workflow-editor/steps/shared/provider-overrides/resolved-payload-preview';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -42,7 +43,7 @@ function contentSourceToPreviewProviderId(source: ContentSource): string {
 function previewProviderIdToContentSource(providerId: string): ContentSource {
   return providerId === DEFAULT_PREVIEW_PROVIDER_ID
     ? DEFAULT_CONTENT_SOURCE
-    : { providerId: providerId as ContentOverrideProviderId };
+    : providerSource(providerId as ContentOverrideProviderId);
 }
 
 /**
@@ -58,7 +59,7 @@ function getPreviewOverrideSource(
   }
 
   return isContentOverrideProviderId(ChannelTypeEnum.CHAT, activeProviderId)
-    ? { providerId: activeProviderId }
+    ? providerSource(activeProviderId)
     : undefined;
 }
 
@@ -250,7 +251,11 @@ function ChatBlockEditorPreviewWithOverrides({ isPreviewPending, previewData }: 
   );
 
   const previewOverrides = usePreviewOverrideValues(preview);
-  const previewOverrideSource = getPreviewOverrideSource(contentSource?.previewSource, activeProviderId);
+  const previewSource = contentSource?.previewSource;
+  const previewOverrideSource = useMemo(
+    () => getPreviewOverrideSource(previewSource, activeProviderId),
+    [previewSource, activeProviderId]
+  );
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
     source: previewOverrideSource,

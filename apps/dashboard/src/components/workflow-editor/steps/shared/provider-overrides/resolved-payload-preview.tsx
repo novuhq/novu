@@ -2,17 +2,14 @@ import type { ReactNode } from 'react';
 import { RiExternalLinkLine } from 'react-icons/ri';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
-import {
-  getOverrideProviderDisplayName,
-  getSourceOwnerLabel,
-  type OverrideContentSource,
-  type ProviderOverrideOption,
-} from './content-source';
+import type { ProviderOverrideOption } from './override-options';
 import {
   type OverridePreviewLine,
   type OverridePreviewLineOrigin,
   PROVIDER_OVERRIDES_DOCS_URL,
 } from './override-preview';
+import { getParentSource, type OverrideContentSource } from './override-source';
+import { describeOverrideSource } from './override-source-description';
 
 const ORIGIN_CHIP_CLASS: Record<OverridePreviewLineOrigin, string> = {
   default: 'bg-bg-white text-text-soft',
@@ -32,9 +29,9 @@ function getOriginLabel(
     case 'default':
       return 'Default';
     case 'provider':
-      return getSourceOwnerLabel({ providerId: source.providerId }, providerOptions);
+      return describeOverrideSource(getParentSource(source) ?? source, providerOptions).ownerLabel;
     case 'integration':
-      return source.integrationIdentifier ?? getSourceOwnerLabel(source, providerOptions);
+      return describeOverrideSource(source, providerOptions).ownerLabel;
     default: {
       const unhandled: never = origin;
 
@@ -69,10 +66,7 @@ type ResolvedPayloadPreviewProps = {
 
 /** The payload a content source sends, one row per JSON line, with each key's source layer marked. */
 export function ResolvedPayloadPreview({ lines, source, providerOptions, hint }: ResolvedPayloadPreviewProps) {
-  const sourceName =
-    source.integrationIdentifier ??
-    providerOptions.find((option) => option.providerId === source.providerId)?.displayName ??
-    getOverrideProviderDisplayName(source.providerId);
+  const sourceName = describeOverrideSource(source, providerOptions).qualifiedLabel;
 
   return (
     <div className="flex min-h-0 flex-col gap-1.5">

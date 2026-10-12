@@ -7,6 +7,7 @@ import {
   resolveSourceOverrideForPreview,
   tagPreviewLineOrigins,
 } from './override-preview';
+import { integrationSource, providerSource } from './override-source';
 
 describe('resolveOverrideForPreview', () => {
   it('ignores preview-only keys so a late preview echo cannot invent an override', () => {
@@ -134,12 +135,12 @@ describe('getInheritedOverridePaths', () => {
 
 describe('resolveSourceOverrideForPreview', () => {
   const WEBHOOK = ToolProviderIdEnum.Webhook;
-  const prod = { providerId: WEBHOOK, integrationIdentifier: 'prod' };
+  const prod = integrationSource(WEBHOOK, 'prod');
 
   it('resolves a provider source to its own override', () => {
     expect(
       resolveSourceOverrideForPreview({
-        source: { providerId: WEBHOOK },
+        source: providerSource(WEBHOOK),
         formOverrides: {
           providerOverrides: { [WEBHOOK]: { env: 'all' } },
           integrationOverrides: { [WEBHOOK]: { prod: { env: 'prod' } } },

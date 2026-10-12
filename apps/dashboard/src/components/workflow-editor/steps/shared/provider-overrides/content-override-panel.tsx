@@ -7,28 +7,24 @@ import { useStepEditor } from '@/components/workflow-editor/steps/context/step-e
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useContentSource } from './content-source-context';
+import { ContentSourceSelector } from './content-source-selector';
+import { MergesOverBar } from './merges-over-bar';
+import { buildOverrideInheritance } from './override-inheritance';
+import { buildOverrideIssueIndex, countOverrideIssues, type OverrideServerIssue } from './override-issues';
+import { getOverrideProviderDisplayName, type ProviderOverrideOption } from './override-options';
 import {
   DEFAULT_CONTENT_SOURCE,
   getOverrideFormField,
-  getOverrideIssueOwnerPath,
   getOverridePath,
-  getOverrideProviderDisplayName,
   getSourceOverride,
-  getUnsupportedOverrideKeys,
   isSameContentSource,
   listSourceOverrides,
   type OverrideChannel,
   type OverrideContentSource,
   type OverrideValues,
-  type ProviderOverrideOption,
-  shouldKeepServerOverrideIssue,
-  toOverrideSource,
   updateSourceOverride,
-} from './content-source';
-import { useContentSource } from './content-source-context';
-import { ContentSourceSelector } from './content-source-selector';
-import { MergesOverBar } from './merges-over-bar';
-import { buildOverrideInheritance } from './override-inheritance';
+} from './override-source';
 import { ProviderOverrideEditor, type ProviderOverrideEditorProps } from './provider-override-editor';
 import { RemoveOverrideModal } from './remove-override-modal';
 import { readOverrideValues } from './use-provider-override-options';
@@ -38,6 +34,8 @@ export type ProviderOverrideEditorExtras = Pick<
   ProviderOverrideEditorProps,
   'notice' | 'headerTooltip' | 'placeholder' | 'rootSchemaOverride' | 'describeField' | 'annotateField'
 >;
+
+const NO_SERVER_ISSUES: OverrideServerIssue[] = [];
 
 type ContentOverridePanelProps = {
   channel: OverrideChannel;
@@ -89,66 +87,30 @@ export function ContentOverridePanel({
     [overrideSource, providerOptions, overrides]
   );
 
-  const unsupportedKeyCountByPath = useMemo(() => {
-    const counts = new Map<string, number>();
-
-    for (const { source, override } of sourceOverrides) {
-      const unsupportedCount = getUnsupportedOverrideKeys(source.providerId, override).length;
-      if (unsupportedCount > 0) {
-        counts.set(getOverridePath(source), unsupportedCount);
-      }
-    }
-
-    return counts;
-  }, [sourceOverrides]);
-
-  const otherServerIssueCountByPath = useMemo(() => {
-    const counts = new Map<string, number>();
-    const controlIssues = step?.issues?.controls ?? {};
-    const integrationOverridePaths = sourceOverrides
-      .filter(({ source }) => source.integrationIdentifier !== undefined)
-      .map(({ source }) => getOverridePath(source));
-
-    for (const [key, issueList] of Object.entries(controlIssues)) {
-      const ownerPath = getOverrideIssueOwnerPath(key, integrationOverridePaths);
-      if (!ownerPath) {
-        continue;
-      }
-
-      // Mirror the editor: top-level UNSUPPORTED_PROPERTY is counted via
-      // getUnsupportedOverrideKeys; nested ones only exist on the server issues.
-      const otherCount = issueList.filter((issue) => shouldKeepServerOverrideIssue(issue, key, ownerPath)).length;
-      if (otherCount > 0) {
-        counts.set(ownerPath, (counts.get(ownerPath) ?? 0) + otherCount);
-      }
-    }
-
-    return counts;
-  }, [sourceOverrides, step?.issues?.controls]);
+  const issueIndex = useMemo(
+    () => buildOverrideIssueIndex(step?.issues?.controls, sourceOverrides),
+    [sourceOverrides, step?.issues?.controls]
+  );
 
   const sourcePathsWithErrors = useMemo(() => {
-    const merged = new Set([...unsupportedKeyCountByPath.keys(), ...otherServerIssueCountByPath.keys()]);
+    const paths = new Set(issueIndex.keys());
 
     if (draftParseErrorPath) {
-      merged.add(draftParseErrorPath);
+      paths.add(draftParseErrorPath);
     }
 
-    return merged;
-  }, [draftParseErrorPath, unsupportedKeyCountByPath, otherServerIssueCountByPath]);
+    return paths;
+  }, [draftParseErrorPath, issueIndex]);
 
   const totalErrorCount = useMemo(() => {
     let total = draftParseErrorPath ? 1 : 0;
 
-    for (const unsupportedCount of unsupportedKeyCountByPath.values()) {
-      total += unsupportedCount;
-    }
-
-    for (const otherCount of otherServerIssueCountByPath.values()) {
-      total += otherCount;
+    for (const issues of issueIndex.values()) {
+      total += countOverrideIssues(issues);
     }
 
     return total;
-  }, [otherServerIssueCountByPath, unsupportedKeyCountByPath, draftParseErrorPath]);
+  }, [draftParseErrorPath, issueIndex]);
 
   const handleDraftParseValidityChange = useCallback((overridePath: string, isParseValid: boolean) => {
     setDraftParseErrorPath(isParseValid ? null : overridePath);
@@ -189,10 +151,10 @@ export function ContentOverridePanel({
   const handleJumpToFirstError = useCallback(() => {
     const firstOptionWithError = providerOptions
       .flatMap((option) => [option, ...option.integrations])
-      .find((option) => option.hasOverride && sourcePathsWithErrors.has(getOverridePath(option)));
+      .find((option) => option.hasOverride && sourcePathsWithErrors.has(getOverridePath(option.source)));
 
     if (firstOptionWithError) {
-      setSelectedSource(toOverrideSource(firstOptionWithError));
+      setSelectedSource(firstOptionWithError.source);
     }
   }, [providerOptions, sourcePathsWithErrors, setSelectedSource]);
 
@@ -258,6 +220,7 @@ export function ContentOverridePanel({
             source={overrideSource}
             displayName={getOverrideProviderDisplayName(overrideSource.providerId)}
             inheritance={overrideInheritance}
+            serverIssues={issueIndex.get(getOverridePath(overrideSource))?.serverIssues ?? NO_SERVER_ISSUES}
             onDraftParseValidityChange={handleDraftParseValidityChange}
             {...getEditorExtras?.(overrideSource)}
           />
