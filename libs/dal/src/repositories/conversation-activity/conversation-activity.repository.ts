@@ -36,6 +36,17 @@ function resolveListActivitiesSortBy(sortBy?: string): ListActivitiesSortField {
 /** Up to this many inbound messages are counted exactly, with deleted ones left out. */
 const INBOUND_COUNT_EXACT_LIMIT = 200;
 
+/** `human:<interaction>:response` → `human:<interaction>:request`, the two rows one card is stored as. */
+function humanInteractionRequestIdentifierOf(responseIdentifier: string): string | undefined {
+  const match = /^(human:.+):response$/.exec(responseIdentifier);
+
+  return match ? `${match[1]}:request` : undefined;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 @Injectable()
 export class ConversationActivityRepository extends BaseRepositoryV2<
   ConversationActivityDBModel,
@@ -298,7 +309,8 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
 
   /**
    * Messages and human-interaction rows of a thread for the Human inbox, newest first. `before` is
-   * the identifier of the oldest row of the previous page.
+   * the identifier of the oldest row of the previous page. `includeSystem` adds the system lines:
+   * messages from the system and timeline signals such as "resolved".
    */
   async findInboxMessages(params: {
     environmentId: string;
@@ -306,6 +318,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     conversationId: string;
     limit: number;
     before?: string;
+    includeSystem?: boolean;
   }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
     const scope = {
       _environmentId: params.environmentId,
@@ -317,7 +330,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       $or: [
         {
           type: ConversationActivityTypeEnum.MESSAGE,
-          senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
+          ...(params.includeSystem ? {} : { senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM } }),
         },
         {
           type: {
@@ -327,6 +340,9 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
             ],
           },
         },
+        ...(params.includeSystem
+          ? [{ type: ConversationActivityTypeEnum.SIGNAL, $nor: [{ 'signalData.type': 'tool-use' }] }]
+          : []),
       ],
     };
 
@@ -377,9 +393,9 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
   }
 
   /**
-   * A card sent into a thread is stored as the agent's message and as the interaction request. The
-   * request row carries the interaction, so the message copy is dropped, also when the two rows fall
-   * on different pages.
+   * A card sent into a thread is stored up to three times: as the agent's message, as the interaction
+   * request, and as the interaction response once it settles. The request row carries the
+   * interaction, so the other two are dropped, also when the rows fall on different pages.
    */
   private async withoutInteractionCardCopies(
     scope: { _environmentId: string; _organizationId: string; _conversationId: string },
@@ -389,9 +405,14 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       row.type === ConversationActivityTypeEnum.MESSAGE &&
       row.senderType === ConversationActivitySenderTypeEnum.AGENT &&
       Boolean(row.platformMessageId);
+    const isResponse = (row: ConversationActivityEntity) =>
+      row.type === ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE;
     const candidateIds = rows.filter(isAgentMessage).flatMap((row) => row.platformMessageId ?? []);
+    const requestIdentifiers = rows
+      .filter(isResponse)
+      .flatMap((row) => humanInteractionRequestIdentifierOf(row.identifier) ?? []);
 
-    if (candidateIds.length === 0) {
+    if (candidateIds.length === 0 && requestIdentifiers.length === 0) {
       return rows;
     }
 
@@ -399,13 +420,129 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       {
         ...scope,
         type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
-        platformMessageId: { $in: candidateIds },
+        $or: [{ platformMessageId: { $in: candidateIds } }, { identifier: { $in: requestIdentifiers } }],
       },
-      ['platformMessageId']
+      ['platformMessageId', 'identifier']
     );
-    const requestMessageIds = new Set(requests.map((request) => request.platformMessageId));
+    const requestMessageIds = new Set(requests.flatMap((request) => request.platformMessageId ?? []));
+    const foundRequestIdentifiers = new Set(requests.map((request) => request.identifier));
 
-    return rows.filter((row) => !isAgentMessage(row) || !requestMessageIds.has(row.platformMessageId));
+    return rows.filter((row) => {
+      if (isAgentMessage(row)) {
+        return !requestMessageIds.has(row.platformMessageId as string);
+      }
+
+      if (isResponse(row)) {
+        // A response whose request row was never stored is the only trace of the card, so it stays.
+        const requestIdentifier = humanInteractionRequestIdentifierOf(row.identifier);
+
+        return !requestIdentifier || !foundRequestIdentifiers.has(requestIdentifier);
+      }
+
+      return true;
+    });
+  }
+
+  /**
+   * How many rows a full read of the thread returns, system lines left out: messages that were not
+   * deleted, and each card once.
+   */
+  async countInboxMessages(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+  }): Promise<number> {
+    const scope = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+    };
+    const message = {
+      ...scope,
+      type: ConversationActivityTypeEnum.MESSAGE,
+      senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
+    };
+    const [messages, requests, deletes] = await Promise.all([
+      this.count(message),
+      this.find({ ...scope, type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST }, ['platformMessageId']),
+      this.find({ ...scope, type: ConversationActivityTypeEnum.DELETE }, ['platformMessageId']),
+    ]);
+    // A deleted message and the message copy of a card are both stored, and neither is shown.
+    const hiddenIds = [...requests, ...deletes].flatMap((row) => row.platformMessageId ?? []);
+    const hidden = hiddenIds.length
+      ? await this.count({ ...message, platformMessageId: { $in: [...new Set(hiddenIds)] } })
+      : 0;
+
+    return messages - hidden + requests.length;
+  }
+
+  /**
+   * Who did the newest thing in each conversation: wrote a message, sent a card, or answered one.
+   * System rows are skipped. Conversations with nothing in them are absent from the result.
+   */
+  async findLatestInboxSenderTypes(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationIds: string[];
+  }): Promise<Map<string, ConversationActivitySenderTypeEnum>> {
+    if (params.conversationIds.length === 0) {
+      return new Map();
+    }
+
+    const rows: Array<{ _id: Types.ObjectId; senderType: ConversationActivitySenderTypeEnum }> = await this.aggregate([
+      {
+        $match: {
+          _conversationId: { $in: params.conversationIds.map((id) => new Types.ObjectId(id)) },
+          _environmentId: new Types.ObjectId(params.environmentId),
+          _organizationId: new Types.ObjectId(params.organizationId),
+          type: {
+            $in: [
+              ConversationActivityTypeEnum.MESSAGE,
+              ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+              ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+            ],
+          },
+          senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
+        },
+      },
+      // Both descending, so the `{ _conversationId, createdAt }` index serves the sort.
+      { $sort: { _conversationId: -1, createdAt: -1 } },
+      { $group: { _id: '$_conversationId', senderType: { $first: '$senderType' } } },
+    ]);
+
+    return new Map(rows.map((row) => [String(row._id), row.senderType]));
+  }
+
+  /**
+   * The conversations, out of the given ones, where a message or a card contains `text`, any case.
+   * There is no text index, so this reads the messages of the given conversations: keep that set bounded.
+   */
+  async findConversationIdsWithText(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationIds: string[];
+    text: string;
+  }): Promise<string[]> {
+    if (params.conversationIds.length === 0) {
+      return [];
+    }
+
+    const contains = { $regex: escapeRegExp(params.text), $options: 'i' };
+    const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: { $in: params.conversationIds },
+      type: { $in: [ConversationActivityTypeEnum.MESSAGE, ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST] },
+      senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
+      $or: [
+        { content: contains },
+        { 'richContent.humanInteraction.title': contains },
+        { 'richContent.humanInteraction.body': contains },
+      ],
+    };
+    const ids = await this.MongooseModel.distinct('_conversationId', query);
+
+    return ids.map(String);
   }
 
   async countActivities(environmentId: string, organizationId: string, conversationId: string): Promise<number> {

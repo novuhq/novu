@@ -1,5 +1,15 @@
 import { encryptCredentials } from '@novu/application-generic';
-import { AgentIntegrationRepository, ChannelEndpointRepository, IntegrationRepository } from '@novu/dal';
+import {
+  AgentIntegrationRepository,
+  ChannelEndpointRepository,
+  ConversationActivityRepository,
+  ConversationActivitySenderTypeEnum,
+  ConversationParticipantTypeEnum,
+  ConversationRepository,
+  ConversationStatusEnum,
+  HumanInteractionRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanInteractionStatusEnum } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -13,6 +23,9 @@ import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
+const conversationRepository = new ConversationRepository();
+const conversationActivityRepository = new ConversationActivityRepository();
+const humanInteractionRepository = new HumanInteractionRepository();
 
 const TELEGRAM_CHAT_ID = '777101';
 const STRANGER_CHAT_ID = '888202';
@@ -22,6 +35,7 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
   let telegramApiStub: TelegramApiStub;
   let subscriberId: string;
   let integrationIdentifier: string;
+  let integrationId: string;
   let relayAgentId: string;
 
   before(async () => {
@@ -56,6 +70,7 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
       deleted: false,
     });
     integrationIdentifier = integration.identifier;
+    integrationId = integration._id;
 
     await agentIntegrationRepository.create({
       _agentId: relayAgentId,
@@ -444,6 +459,447 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     const picker = JSON.stringify(thread.post.firstCall.args[0]);
     expect(picker).to.include('Which project?');
     expect(picker).to.include('Which region?');
+  });
+
+  describe('the inbox page: search, filters, counts, states and cards', () => {
+    async function addContact(firstName: string, chatId: string): Promise<string> {
+      const contactId = `inbox-e2e-${firstName.toLowerCase()}-${Date.now()}`;
+      const setupRes = await session.testAgent.post('/v1/human/setup').send({ subscriberId: contactId, firstName });
+      expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
+
+      await channelEndpointRepository.create({
+        identifier: `ce-inbox-e2e-${firstName.toLowerCase()}-${Date.now()}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        integrationIdentifier,
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        subscriberId: contactId,
+        contextKeys: [],
+        type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+        endpoint: { chatId },
+      });
+
+      return contactId;
+    }
+
+    /** A thread on Slack with the operator, stored directly: the suite only has a Telegram channel to write through. */
+    async function seedSlackThread(title: string) {
+      return conversationRepository.create({
+        identifier: `conv_slack_${Math.random().toString(36).slice(2)}`,
+        _agentId: relayAgentId,
+        participants: [
+          { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: subscriberId },
+          { type: ConversationParticipantTypeEnum.AGENT, id: relayAgentId },
+        ],
+        channels: [{ platform: 'slack', _integrationId: integrationId, platformThreadId: `slack:C1:${Date.now()}` }],
+        status: ConversationStatusEnum.ACTIVE,
+        title,
+        metadata: {},
+        isDirectMessage: true,
+        lastActivityAt: new Date().toISOString(),
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+    }
+
+    async function threadOf(contactId: string): Promise<Record<string, any>> {
+      const { data } = await listInbox({ tab: 'all', limit: 100 });
+      const thread = data.find((candidate) =>
+        candidate.people.some((person: { id: string }) => person.id === contactId)
+      );
+      expect(thread, `no thread with ${contactId}`).to.not.equal(undefined);
+
+      return thread as Record<string, any>;
+    }
+
+    async function sendIntoThread(threadId: string, kind: string, card: Record<string, unknown>) {
+      const res = await session.testAgent.post('/v1/human/interactions').send({ kind, card, thread: threadId });
+      expect(res.status).to.equal(201, JSON.stringify(res.body));
+
+      return res.body.data as { id: string; content: { cardChrome: { options?: Array<{ id: string }> } } };
+    }
+
+    async function clickAction(actionId: string, chatId = TELEGRAM_CHAT_ID) {
+      const config = await testServer
+        .getService(AgentConfigResolver)
+        .resolve(relayAgentId, integrationIdentifier, { source: 'webhook_message' });
+
+      await testServer
+        .getService(AgentInboundHandler)
+        .handleAction(relayAgentId, config, makeTelegramThread(chatId) as any, { id: actionId }, chatId);
+    }
+
+    async function showThread(threadId: string, query: Record<string, unknown> = {}) {
+      const res = await session.testAgent.get(`/v1/human/inbox/${threadId}`).query({ limit: 100, ...query });
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      return res.body.data as {
+        thread: Record<string, any>;
+        messages: Array<Record<string, any>>;
+        details: Record<string, any>;
+      };
+    }
+
+    async function getCounts(query: Record<string, unknown> = {}) {
+      const res = await session.testAgent.get('/v1/human/inbox/counts').query(query);
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      return res.body.data as {
+        tabs: Record<string, number>;
+        channels: Record<string, number>;
+        capped: boolean;
+      };
+    }
+
+    function cardOf(messages: Array<Record<string, any>>, interactionId: string): Record<string, any> {
+      const rows = messages.filter((message) => message.card?.id === interactionId);
+      expect(rows, `card ${interactionId} should be in the thread once`).to.have.length(1);
+
+      return rows[0].card;
+    }
+
+    it('searches threads by message text, subject and person name', async () => {
+      await sendMessageToRelay('The deploy failed on staging');
+      const adaThreadId = await soleThreadId();
+      const slackThread = await seedSlackThread('Invoice question');
+      const mayaId = await addContact('Maya', '777102');
+      await sendMessageToRelay('lunch?', '777102');
+      const mayaThreadId = (await threadOf(mayaId)).id;
+
+      const byMessage = await listInbox({ search: 'STAGING' });
+      expect(byMessage.data.map((thread) => thread.id)).to.deep.equal([adaThreadId]);
+
+      const bySubject = await listInbox({ search: 'invoice' });
+      expect(bySubject.data.map((thread) => thread.id)).to.deep.equal([slackThread.identifier]);
+
+      const byName = await listInbox({ search: 'maya' });
+      expect(byName.data.map((thread) => thread.id)).to.deep.equal([mayaThreadId]);
+
+      expect((await listInbox({ search: 'nothing-says-this' })).data).to.deep.equal([]);
+      // A search is text, never a pattern.
+      expect((await listInbox({ search: '.*' })).data).to.deep.equal([]);
+
+      const counts = await getCounts({ search: 'staging' });
+      expect(counts.tabs.all).to.equal(1);
+      expect(counts.channels).to.include({ all: 1, telegram: 1, slack: 0 });
+    });
+
+    it('filters by channel and counts the threads on each channel', async () => {
+      await sendMessageToRelay('on telegram');
+      const slackThread = await seedSlackThread('On slack');
+      const telegramThreadId = (await listInbox({ channel: 'telegram' })).data[0].id;
+
+      const onTelegram = await listInbox({ channel: 'telegram' });
+      expect(onTelegram.data.map((thread) => thread.id)).to.deep.equal([telegramThreadId]);
+      expect(onTelegram.data[0].channel).to.equal('telegram');
+
+      const onSlack = await listInbox({ channel: 'slack' });
+      expect(onSlack.data.map((thread) => thread.id)).to.deep.equal([slackThread.identifier]);
+      expect(onSlack.data[0].channel).to.equal('slack');
+
+      expect((await listInbox({ channel: 'email' })).data).to.deep.equal([]);
+
+      const counts = await getCounts();
+      expect(counts.channels).to.deep.equal({ all: 2, telegram: 1, slack: 1, email: 0 });
+      expect(counts.capped).to.equal(false);
+
+      // A channel is counted within the chosen tab, and a tab within the chosen channel.
+      expect((await getCounts({ tab: 'unread' })).channels).to.deep.equal({ all: 1, telegram: 1, slack: 0, email: 0 });
+      expect((await getCounts({ channel: 'slack' })).tabs).to.deep.equal({
+        all: 1,
+        unread: 0,
+        waiting: 0,
+        resolved: 0,
+      });
+    });
+
+    it('gives every thread one state, and the tabs list and count by it', async () => {
+      const mayaId = await addContact('Maya', '777102');
+      const omerId = await addContact('Omer', '777103');
+      const linId = await addContact('Lin', '777104');
+      const noaId = await addContact('Noa', '777105');
+
+      // Unread: Ada wrote and the agent has not attended to it.
+      await sendMessageToRelay('Can you check the deploy?');
+
+      // Waiting on a person: the agent asked Maya and she has not answered.
+      await sendMessageToRelay('ready when you are', '777102');
+      await sendIntoThread((await threadOf(mayaId)).id, 'ask', { title: 'Which environment?' });
+
+      // Waiting on you: the agent read what Omer wrote and has not sent anything since.
+      await sendMessageToRelay('rollback please', '777103');
+      await session.testAgent.post(`/v1/human/inbox/${(await threadOf(omerId)).id}/read`);
+
+      // Open: the agent had the last word and asked nothing.
+      await sendMessageToRelay('status?', '777104');
+      await sendIntoThread((await threadOf(linId)).id, 'tell', { title: 'All green' });
+
+      // Resolved.
+      await sendMessageToRelay('thanks, done', '777105');
+      await session.testAgent.post(`/v1/human/inbox/${(await threadOf(noaId)).id}/resolve`);
+
+      const states = Object.fromEntries(
+        await Promise.all(
+          [subscriberId, mayaId, omerId, linId, noaId].map(async (contactId) => {
+            const thread = await threadOf(contactId);
+
+            return [contactId, thread.state];
+          })
+        )
+      );
+      expect(states).to.deep.equal({
+        [subscriberId]: 'unread',
+        [mayaId]: 'waiting_on_person',
+        [omerId]: 'waiting_on_you',
+        [linId]: 'open',
+        [noaId]: 'resolved',
+      });
+
+      const mayaThread = await threadOf(mayaId);
+      expect(mayaThread.waitingOn).to.deep.equal([{ id: mayaId, name: 'Maya', kind: 'contact' }]);
+      expect(mayaThread).to.include({ from: 'Maya', status: 'open', channel: 'telegram' });
+      expect(mayaThread.subject).to.equal('ready when you are');
+      expect(mayaThread.preview).to.equal('Which environment?');
+      expect(mayaThread.openedAt).to.be.a('string');
+      expect((await threadOf(noaId)).status).to.equal('resolved');
+
+      expect((await getCounts()).tabs).to.deep.equal({ all: 5, unread: 1, waiting: 2, resolved: 1 });
+
+      const idsIn = async (tab: string) =>
+        (await listInbox({ tab, limit: 100 })).data.map((thread) => thread.id).sort();
+      const idOf = async (contactId: string) => (await threadOf(contactId)).id as string;
+
+      expect(await idsIn('all')).to.have.length(5);
+      expect(await idsIn('unread')).to.deep.equal([await idOf(subscriberId)]);
+      expect(await idsIn('waiting')).to.deep.equal([await idOf(mayaId), await idOf(omerId)].sort());
+      expect(await idsIn('resolved')).to.deep.equal([await idOf(noaId)]);
+
+      // Maya answers: nobody is waited on any more, and she did the last thing in the thread.
+      await sendMessageToRelay('staging', '777102');
+      const answered = await threadOf(mayaId);
+      expect(answered.state).to.equal('waiting_on_you');
+      expect(answered.waitingOn).to.equal(undefined);
+    });
+
+    it('rejects a tab together with the filters it stands for', async () => {
+      const res = await session.testAgent.get('/v1/human/inbox').query({ tab: 'unread', filter: 'read' });
+
+      expect(res.status).to.equal(400, JSON.stringify(res.body));
+    });
+
+    it('shows a tell, an ask, an approve and a choose in full, each once, with its state', async () => {
+      await sendMessageToRelay('need a few decisions');
+      const threadId = await soleThreadId();
+
+      const tell = await sendIntoThread(threadId, 'tell', { title: 'Deploy started' });
+      const richTell = await sendIntoThread(threadId, 'tell', { title: 'Deploy report', body: '3 services updated' });
+      const ask = await sendIntoThread(threadId, 'ask', { title: 'Which environment?', body: 'Reply with a name.' });
+      const approve = await sendIntoThread(threadId, 'approve', {
+        title: 'Ship it?',
+        body: 'Rolls out v2 to everyone.',
+        approveLabel: 'Ship',
+      });
+      const choose = await sendIntoThread(threadId, 'choose', {
+        title: 'Release strategy?',
+        options: ['Canary', 'Blue-green'],
+      });
+      const pickedOption = (choose.content.cardChrome.options ?? [])[1];
+
+      const pending = await showThread(threadId);
+
+      expect(cardOf(pending.messages, tell.id)).to.deep.include({
+        kind: 'tell',
+        title: 'Deploy started',
+        presentation: { channel: 'telegram', style: 'text', label: 'Telegram message' },
+      });
+      expect(cardOf(pending.messages, tell.id).state).to.deep.equal({ status: 'delivered', label: 'no reply needed' });
+      expect(cardOf(pending.messages, richTell.id)).to.deep.include({
+        body: '3 services updated',
+        presentation: { channel: 'telegram', style: 'card', label: 'Telegram card' },
+      });
+
+      const pendingAsk = cardOf(pending.messages, ask.id);
+      expect(pendingAsk).to.deep.include({
+        kind: 'ask',
+        title: 'Which environment?',
+        body: 'Reply with a name.',
+        presentation: { channel: 'telegram', style: 'reply', label: 'Telegram reply' },
+      });
+      expect(pendingAsk.state).to.deep.equal({
+        status: 'pending',
+        label: 'waiting for Ada',
+        waitingOn: [{ id: subscriberId, name: 'Ada', kind: 'contact' }],
+      });
+
+      const pendingApprove = cardOf(pending.messages, approve.id);
+      expect(pendingApprove).to.deep.include({
+        kind: 'approve',
+        title: 'Ship it?',
+        body: 'Rolls out v2 to everyone.',
+        presentation: { channel: 'telegram', style: 'buttons', label: 'Telegram buttons' },
+      });
+      expect(pendingApprove.buttons).to.deep.equal([
+        { id: 'deny', label: 'Deny' },
+        { id: 'approve', label: 'Ship' },
+      ]);
+      expect(pendingApprove.state.label).to.equal('waiting for Ada');
+
+      const pendingChoose = cardOf(pending.messages, choose.id);
+      expect(pendingChoose.options.map((option: { label: string }) => option.label)).to.deep.equal([
+        'Canary',
+        'Blue-green',
+      ]);
+      expect(pendingChoose.presentation.label).to.equal('Telegram buttons');
+      expect(pendingChoose.state.status).to.equal('pending');
+
+      await clickAction(`human:${approve.id}:approve`);
+      await clickAction(`human:${choose.id}:opt:${pickedOption.id}`);
+      await sendMessageToRelay('staging');
+
+      const settled = await showThread(threadId);
+
+      const approved = cardOf(settled.messages, approve.id).state;
+      expect(approved.status).to.equal('approved');
+      expect(approved.respondedBy.id).to.equal(subscriberId);
+      expect(approved.label).to.equal(`Approved by ${approved.respondedBy.name} in Telegram`);
+      expect(approved.respondedAt).to.be.a('string');
+
+      const chosen = cardOf(settled.messages, choose.id).state;
+      expect(chosen).to.include({ status: 'answered', optionId: pickedOption.id, optionLabel: 'Blue-green' });
+      expect(chosen.label).to.equal(`${chosen.respondedBy.name} picked Blue-green`);
+
+      const answeredAsk = cardOf(settled.messages, ask.id).state;
+      expect(answeredAsk).to.include({ status: 'answered', text: 'staging' });
+      expect(answeredAsk.label).to.equal(`Answered by ${answeredAsk.respondedBy.name} in Telegram`);
+
+      // Every message says which way it went, who sent it and on which channel.
+      const first = settled.messages[0];
+      expect(first).to.include({ direction: 'in', channel: 'telegram', text: 'need a few decisions' });
+      expect(first.sender).to.deep.equal({ id: subscriberId, name: 'Ada', kind: 'contact' });
+      const cardRow = settled.messages.find((message) => message.card?.id === approve.id) as Record<string, any>;
+      expect(cardRow).to.include({ direction: 'out', from: 'agent', channel: 'telegram' });
+      expect(cardRow.sender.kind).to.equal('agent');
+      expect(cardRow.sender.name).to.equal(settled.details.agent.name);
+      // Five cards and the two things Ada wrote; nothing is listed twice.
+      expect(settled.messages).to.have.length(7);
+
+      expect(settled.details).to.deep.include({
+        threadId,
+        channel: 'telegram',
+        contact: { id: subscriberId, name: 'Ada', kind: 'contact', verified: true },
+        status: 'waiting_on_you',
+        messageCount: 7,
+      });
+      expect(settled.details.openedAt).to.equal(settled.thread.openedAt);
+      expect(settled.details.lastReadAt).to.equal(settled.thread.lastReadAt);
+      expect(settled.details.lastReadAt).to.be.a('string');
+      expect(settled.details.agent.identifier).to.be.a('string');
+    });
+
+    it('shows a canceled and an overdue card as such, and stops waiting on them', async () => {
+      await sendMessageToRelay('two more');
+      const threadId = await soleThreadId();
+      const canceled = await sendIntoThread(threadId, 'approve', { title: 'Cancel me?' });
+      const cancelRes = await session.testAgent.post(`/v1/human/interactions/${canceled.id}/cancel`);
+      expect(cancelRes.status).to.equal(200, JSON.stringify(cancelRes.body));
+      const overdue = await sendIntoThread(threadId, 'ask', { title: 'Too late?' });
+      expect((await showThread(threadId)).thread.state).to.equal('waiting_on_person');
+
+      // Expiry is lazy: the row still says pending after its time has passed.
+      await humanInteractionRepository.update(
+        { _environmentId: session.environment._id, identifier: overdue.id },
+        { $set: { expiresAt: new Date(Date.now() - 60_000).toISOString() } }
+      );
+
+      const { messages, thread } = await showThread(threadId);
+
+      expect(cardOf(messages, canceled.id).state).to.deep.equal({ status: 'canceled', label: 'canceled by the agent' });
+      expect(cardOf(messages, overdue.id).state).to.deep.equal({
+        status: 'expired',
+        label: 'expired, nobody answered',
+      });
+      // Nothing is open any more, and the agent had the last word.
+      expect(thread.state).to.equal('open');
+    });
+
+    it('marks a stranger as not verified in the details', async () => {
+      await sendMessageToRelay('hi, who is this?', STRANGER_CHAT_ID);
+      const { data } = await listInbox({ senders: 'all' });
+
+      const { details } = await showThread(data[0].id);
+
+      expect(details.contact).to.include({ kind: 'stranger', verified: false });
+    });
+
+    it('returns attachments with their name and size', async () => {
+      await sendMessageToRelay('see the file');
+      const thread = await threadOf(subscriberId);
+      const conversation = await conversationRepository.findOne(
+        { _environmentId: session.environment._id, identifier: thread.id },
+        '*'
+      );
+      await conversationActivityRepository.createUserActivity({
+        identifier: `act_${Math.random().toString(36).slice(2)}`,
+        conversationId: conversation?._id as string,
+        platform: 'telegram',
+        integrationId,
+        platformThreadId: `telegram:${TELEGRAM_CHAT_ID}`,
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        senderId: subscriberId,
+        content: 'report attached',
+        richContent: {
+          attachments: [
+            { type: 'file', name: 'report.pdf', mimeType: 'application/pdf', size: 48_213, storageKey: 'secret/key' },
+          ],
+        },
+        environmentId: session.environment._id,
+        organizationId: session.organization._id,
+      });
+
+      const { messages } = await showThread(thread.id);
+      const withFile = messages.find((message) => message.text === 'report attached') as Record<string, any>;
+
+      expect(withFile.attachments).to.deep.equal([
+        { type: 'file', name: 'report.pdf', mimeType: 'application/pdf', size: 48_213 },
+      ]);
+    });
+
+    it('adds the system lines of a thread only when asked', async () => {
+      await sendMessageToRelay('all done');
+      const threadId = await soleThreadId();
+      await session.testAgent.post(`/v1/human/inbox/${threadId}/resolve`);
+
+      const plain = await showThread(threadId);
+      expect(plain.messages.filter((message) => message.from === 'system')).to.have.length(0);
+
+      const withSystem = await showThread(threadId, { include: 'system' });
+      const systemLines = withSystem.messages.filter((message) => message.from === 'system');
+      expect(systemLines.length).to.be.greaterThan(0);
+      expect(systemLines[0].direction).to.equal(undefined);
+      expect(systemLines[0].text).to.be.a('string').and.not.equal('');
+      // System lines are not messages.
+      expect(withSystem.details.messageCount).to.equal(1);
+    });
+
+    it('never marks a thread read when the page lists, counts, searches or opens it', async () => {
+      await sendMessageToRelay('first');
+      await sendMessageToRelay('second');
+      const threadId = await soleThreadId();
+
+      await listInbox({ tab: 'all' });
+      await listInbox({ tab: 'unread', channel: 'telegram', search: 'second' });
+      await getCounts({ search: 'first' });
+      const shown = await showThread(threadId, { include: 'system' });
+
+      expect(shown.thread).to.include({ unreadCount: 2, state: 'unread', lastReadAt: null });
+      expect(shown.details.lastReadAt).to.equal(null);
+
+      const { data } = await listInbox({ filter: 'unread' });
+      expect(data).to.have.length(1);
+      expect(data[0]).to.include({ id: threadId, unreadCount: 2, lastReadAt: null });
+      expect((await getCounts()).tabs).to.deep.equal({ all: 1, unread: 1, waiting: 0, resolved: 0 });
+    });
   });
 
   it('404s on a thread that is not the relay agent’s', async () => {

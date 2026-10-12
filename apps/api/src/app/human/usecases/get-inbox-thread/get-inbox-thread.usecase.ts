@@ -26,12 +26,15 @@ export class GetInboxThread {
       conversationId: conversation._id,
       limit: command.limit ?? DEFAULT_LIMIT,
       before: command.before,
+      includeSystem: command.include === 'system',
     });
+    const thread = await this.inbox.toThread(scope, conversation);
 
     return {
-      thread: await this.inbox.toThread(scope, conversation),
-      messages: await this.inbox.toMessages(scope, page.data),
+      thread,
+      messages: await this.inbox.toMessages(scope, agent, page.data),
       hasMore: page.hasMore,
+      details: await this.inbox.toDetails(scope, agent, conversation, thread),
     };
   }
 }
