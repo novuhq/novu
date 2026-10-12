@@ -4,6 +4,7 @@ import {
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationRepository,
   ConversationStatusEnum,
@@ -583,6 +584,142 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
       const counts = await getCounts({ search: 'staging' });
       expect(counts.tabs.all).to.equal(1);
       expect(counts.channels).to.include({ all: 1, telegram: 1, slack: 0 });
+    });
+
+    it('goes by what a thread shows now: edits, deletes, card subtitles and posted cards', async () => {
+      // The first message names the thread, so the one that gets edited comes second.
+      await sendMessageToRelay('Morning');
+      const threadId = await soleThreadId();
+      await sendMessageToRelay('The deploy failed on staging');
+      const conversation = await conversationRepository.findOne(
+        { _environmentId: session.environment._id, identifier: threadId },
+        '*'
+      );
+      const conversationId = conversation?._id as string;
+
+      async function addRevision(type: ConversationActivityTypeEnum, text: string, content: string) {
+        const [message] = await conversationActivityRepository.find(
+          { _environmentId: session.environment._id, _conversationId: conversationId, content: text },
+          '*'
+        );
+        expect(message?.platformMessageId, `no stored message "${text}"`).to.be.a('string');
+
+        await conversationActivityRepository.createUserActivity({
+          identifier: `act_${Math.random().toString(36).slice(2)}`,
+          conversationId,
+          platform: 'telegram',
+          integrationId,
+          platformThreadId: `telegram:${TELEGRAM_CHAT_ID}`,
+          senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+          senderId: subscriberId,
+          content,
+          platformMessageId: message.platformMessageId,
+          type,
+          environmentId: session.environment._id,
+          organizationId: session.organization._id,
+        });
+      }
+
+      // An edited message is found by its new text only.
+      await addRevision(
+        ConversationActivityTypeEnum.EDIT,
+        'The deploy failed on staging',
+        'The deploy failed on production'
+      );
+      expect((await listInbox({ search: 'production' })).data.map((thread) => thread.id)).to.deep.equal([threadId]);
+      expect((await listInbox({ search: 'staging' })).data).to.deep.equal([]);
+
+      // A card is found by its subtitle too.
+      await sendIntoThread(threadId, 'tell', { title: 'Heads up', subtitle: 'Canary rollout' });
+      expect((await listInbox({ search: 'canary' })).data.map((thread) => thread.id)).to.deep.equal([threadId]);
+      expect((await listInbox({ search: 'canary' })).data.map((thread) => thread.id)).to.deep.equal([threadId]);
+
+      // The agent spoke last. A message that came after and was deleted does not make the thread wait on the agent.
+      await sendMessageToRelay('oops wrong chat');
+      expect((await listInbox({ search: 'wrong chat' })).data).to.have.length(1);
+      await addRevision(ConversationActivityTypeEnum.DELETE, 'oops wrong chat', '');
+      expect((await listInbox({ search: 'wrong chat' })).data).to.deep.equal([]);
+      expect((await listInbox({ tab: 'all' })).data[0].state).to.equal('open');
+      expect((await getCounts()).tabs.waiting).to.equal(0);
+
+      // A card posted as an element keeps its options in its buttons. The endpoint here only takes
+      // card fields, so the stored card is swapped for the element form an agent runtime posts.
+      const posted = await sendIntoThread(threadId, 'choose', { title: 'Which region?', options: ['One', 'Two'] });
+      await humanInteractionRepository.update(
+        { _environmentId: session.environment._id, identifier: posted.id },
+        {
+          $set: {
+            content: {
+              card: {
+                type: 'card',
+                title: 'Which region?',
+                children: [
+                  {
+                    type: 'actions',
+                    children: [
+                      { type: 'button', id: 'eu', label: 'Europe' },
+                      { type: 'button', id: 'us', label: 'United States' },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        }
+      );
+      const approval = await sendIntoThread(threadId, 'approve', { title: 'Ship it?' });
+      await humanInteractionRepository.update(
+        { _environmentId: session.environment._id, identifier: approval.id },
+        {
+          $set: {
+            content: {
+              card: {
+                type: 'card',
+                title: 'Ship it?',
+                children: [
+                  {
+                    type: 'actions',
+                    children: [
+                      { type: 'button', id: 'approve', label: 'Ship' },
+                      { type: 'button', id: 'deny', label: 'Hold' },
+                      { type: 'button', id: 'escalate', label: 'Escalate' },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        }
+      );
+      const { messages, details } = await showThread(threadId);
+      expect(cardOf(messages, approval.id).buttons).to.deep.equal([
+        { id: 'deny', label: 'Hold' },
+        { id: 'approve', label: 'Ship' },
+        { id: 'escalate', label: 'Escalate' },
+      ]);
+      expect(cardOf(messages, posted.id).options).to.deep.equal([
+        { id: 'eu', label: 'Europe' },
+        { id: 'us', label: 'United States' },
+      ]);
+
+      // A response whose request row was never stored is shown, so it is counted.
+      await conversationActivityRepository.createUserActivity({
+        identifier: 'human:hi_without_request:response',
+        conversationId,
+        platform: 'telegram',
+        integrationId,
+        platformThreadId: `telegram:${TELEGRAM_CHAT_ID}`,
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        senderId: subscriberId,
+        content: 'Approved',
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+        environmentId: session.environment._id,
+        organizationId: session.organization._id,
+      });
+      const after = await showThread(threadId);
+      expect(after.messages).to.have.length(messages.length + 1);
+      expect(after.details.messageCount).to.equal(details.messageCount + 1);
+      expect(after.details.messageCount).to.equal(after.messages.length);
     });
 
     it('filters by channel and counts the threads on each channel', async () => {

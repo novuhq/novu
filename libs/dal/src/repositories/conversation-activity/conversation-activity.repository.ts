@@ -20,7 +20,7 @@ import {
   type RunLifecycleActivityType,
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
-import { foldMessageRevisions } from './message-revisions';
+import { foldMessageRevisions, indexRevisions } from './message-revisions';
 
 const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
 type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
@@ -462,9 +462,13 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       type: ConversationActivityTypeEnum.MESSAGE,
       senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
     };
-    const [messages, requests, deletes] = await Promise.all([
+    const [messages, requests, responses, deletes] = await Promise.all([
       this.count(message),
-      this.find({ ...scope, type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST }, ['platformMessageId']),
+      this.find({ ...scope, type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST }, [
+        'platformMessageId',
+        'identifier',
+      ]),
+      this.find({ ...scope, type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE }, ['identifier']),
       this.find({ ...scope, type: ConversationActivityTypeEnum.DELETE }, ['platformMessageId']),
     ]);
     // A deleted message and the message copy of a card are both stored, and neither is shown.
@@ -473,7 +477,15 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       ? await this.count({ ...message, platformMessageId: { $in: [...new Set(hiddenIds)] } })
       : 0;
 
-    return messages - hidden + requests.length;
+    // A response whose request row was never stored is shown as the card, so it counts as one.
+    const requestIdentifiers = new Set(requests.map((request) => request.identifier));
+    const responsesAlone = responses.filter((response) => {
+      const requestIdentifier = humanInteractionRequestIdentifierOf(response.identifier);
+
+      return !requestIdentifier || !requestIdentifiers.has(requestIdentifier);
+    }).length;
+
+    return messages - hidden + requests.length + responsesAlone;
   }
 
   /**
@@ -489,32 +501,123 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       return new Map();
     }
 
-    const rows: Array<{ _id: Types.ObjectId; senderType: ConversationActivitySenderTypeEnum }> = await this.aggregate([
+    const types = [
+      ConversationActivityTypeEnum.MESSAGE,
+      ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+      ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+    ];
+    const rows: Array<{
+      _id: Types.ObjectId;
+      senderType: ConversationActivitySenderTypeEnum;
+      type: ConversationActivityTypeEnum;
+      platformMessageId?: string;
+    }> = await this.aggregate([
       {
         $match: {
           _conversationId: { $in: params.conversationIds.map((id) => new Types.ObjectId(id)) },
           _environmentId: new Types.ObjectId(params.environmentId),
           _organizationId: new Types.ObjectId(params.organizationId),
-          type: {
-            $in: [
-              ConversationActivityTypeEnum.MESSAGE,
-              ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
-              ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
-            ],
-          },
+          type: { $in: types },
           senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
         },
       },
       // Both descending, so the `{ _conversationId, createdAt }` index serves the sort.
       { $sort: { _conversationId: -1, createdAt: -1 } },
-      { $group: { _id: '$_conversationId', senderType: { $first: '$senderType' } } },
+      {
+        $group: {
+          _id: '$_conversationId',
+          senderType: { $first: '$senderType' },
+          type: { $first: '$type' },
+          platformMessageId: { $first: '$platformMessageId' },
+        },
+      },
     ]);
+    const latest = new Map(rows.map((row) => [String(row._id), row.senderType]));
 
-    return new Map(rows.map((row) => [String(row._id), row.senderType]));
+    // A deleted message stays stored, so the newest row can be one nobody sees any more. Those few
+    // conversations are read again, newest first, until a message that is still there turns up.
+    const newestMessages = rows.filter(
+      (row) => row.type === ConversationActivityTypeEnum.MESSAGE && row.platformMessageId
+    );
+    const deletes = newestMessages.length
+      ? await this.find(
+          {
+            _environmentId: params.environmentId,
+            _organizationId: params.organizationId,
+            _conversationId: { $in: newestMessages.map((row) => String(row._id)) },
+            type: ConversationActivityTypeEnum.DELETE,
+            platformMessageId: { $in: newestMessages.map((row) => row.platformMessageId as string) },
+          },
+          ['_conversationId', 'platformMessageId']
+        )
+      : [];
+    const deleted = new Set(deletes.map((row) => `${row._conversationId}:${row.platformMessageId}`));
+
+    await Promise.all(
+      newestMessages
+        .filter((row) => deleted.has(`${row._id}:${row.platformMessageId}`))
+        .map(async (row) => {
+          const conversationId = String(row._id);
+          const senderType = await this.findLatestVisibleSenderType({ ...params, conversationId, types });
+
+          if (senderType) {
+            latest.set(conversationId, senderType);
+          } else {
+            latest.delete(conversationId);
+          }
+        })
+    );
+
+    return latest;
+  }
+
+  /** Who did the newest thing still shown in one conversation, deleted messages skipped. */
+  private async findLatestVisibleSenderType(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    types: ConversationActivityTypeEnum[];
+  }): Promise<ConversationActivitySenderTypeEnum | undefined> {
+    const batchSize = 20;
+    let cursor: Pick<ConversationActivityEntity, '_id' | 'createdAt'> | undefined;
+
+    for (;;) {
+      const batch = await this.find(
+        {
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+          _conversationId: params.conversationId,
+          type: { $in: params.types },
+          senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
+          ...(cursor
+            ? {
+                $or: [
+                  { createdAt: { $lt: new Date(cursor.createdAt) } },
+                  { createdAt: new Date(cursor.createdAt), _id: { $lt: new Types.ObjectId(cursor._id) } },
+                ],
+              }
+            : {}),
+        },
+        '*',
+        { sort: { createdAt: -1, _id: -1 }, limit: batchSize }
+      );
+      const [visible] = await this.foldViewPage(params, batch);
+
+      if (visible) {
+        return visible.senderType;
+      }
+
+      if (batch.length < batchSize) {
+        return undefined;
+      }
+
+      cursor = batch[batch.length - 1];
+    }
   }
 
   /**
    * The conversations, out of the given ones, where a message or a card contains `text`, any case.
+   * A message is matched on the text it shows now: its newest edit, and not at all once deleted.
    * There is no text index, so this reads the messages of the given conversations: keep that set bounded.
    */
   async findConversationIdsWithText(params: {
@@ -527,22 +630,93 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       return [];
     }
 
-    const contains = { $regex: escapeRegExp(params.text), $options: 'i' };
-    const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-      _conversationId: { $in: params.conversationIds },
-      type: { $in: [ConversationActivityTypeEnum.MESSAGE, ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST] },
+    const scope = { _environmentId: params.environmentId, _organizationId: params.organizationId };
+    const pattern = escapeRegExp(params.text);
+    const contains = { $regex: pattern, $options: 'i' };
+    const matching = (conversationIds: string[]): FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds => ({
+      ...scope,
+      _conversationId: { $in: conversationIds },
       senderType: { $ne: ConversationActivitySenderTypeEnum.SYSTEM },
       $or: [
-        { content: contains },
-        { 'richContent.humanInteraction.title': contains },
-        { 'richContent.humanInteraction.body': contains },
+        {
+          type: { $in: [ConversationActivityTypeEnum.MESSAGE, ConversationActivityTypeEnum.EDIT] },
+          content: contains,
+        },
+        {
+          type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+          $or: [
+            { content: contains },
+            { 'richContent.humanInteraction.title': contains },
+            { 'richContent.humanInteraction.subtitle': contains },
+            { 'richContent.humanInteraction.body': contains },
+          ],
+        },
       ],
-    };
-    const ids = await this.MongooseModel.distinct('_conversationId', query);
+    });
+    const candidates = (await this.MongooseModel.distinct('_conversationId', matching(params.conversationIds))).map(
+      String
+    );
 
-    return ids.map(String);
+    if (candidates.length === 0) {
+      return [];
+    }
+
+    // Only conversations with an edit or a delete can show something else than what is stored.
+    const revised = (
+      await this.MongooseModel.distinct('_conversationId', {
+        ...scope,
+        _conversationId: { $in: candidates },
+        type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
+      })
+    ).map(String);
+
+    if (revised.length === 0) {
+      return candidates;
+    }
+
+    const [hits, revisions] = await Promise.all([
+      this.find(matching(revised), ['_id', '_conversationId', 'type', 'platformMessageId']),
+      this.find(
+        {
+          ...scope,
+          _conversationId: { $in: revised },
+          type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
+        },
+        ['_id', '_conversationId', 'type', 'platformMessageId', 'content', 'sequence', 'createdAt']
+      ),
+    ]);
+    const shown = new RegExp(pattern, 'i');
+    const stillMatching = new Set<string>();
+
+    for (const conversationId of revised) {
+      const { latestEdit, deletedIds } = indexRevisions(
+        revisions.filter((row) => String(row._conversationId) === conversationId)
+      );
+      const matches = hits
+        .filter((row) => String(row._conversationId) === conversationId)
+        .some((row) => {
+          if (row.type === ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST || !row.platformMessageId) {
+            return row.type !== ConversationActivityTypeEnum.EDIT;
+          }
+
+          if (deletedIds.has(row.platformMessageId)) {
+            return false;
+          }
+
+          const edit = latestEdit.get(row.platformMessageId);
+
+          // An edit matches only while it is the newest one; the original only while its newest edit still does.
+          return row.type === ConversationActivityTypeEnum.EDIT
+            ? String(edit?._id) === String(row._id)
+            : !edit || shown.test(edit.content ?? '');
+        });
+
+      if (matches) {
+        stillMatching.add(conversationId);
+      }
+    }
+
+    return candidates.filter((id) => !revised.includes(id) || stillMatching.has(id));
   }
 
   async countActivities(environmentId: string, organizationId: string, conversationId: string): Promise<number> {

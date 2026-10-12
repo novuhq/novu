@@ -21,9 +21,11 @@ import {
   HumanInteractionKindEnum,
   HumanInteractionStatusEnum,
   isHumanCardElementContent,
+  mintHumanOptions,
   resolveHumanInteractionCard,
 } from '@novu/shared';
 import { isAgentProvisionedSubscriber } from '../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
 import type {
   InboxAttachmentDto,
   InboxCardDto,
@@ -42,6 +44,7 @@ import type {
 } from '../dtos/human-inbox.dto';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../usecases/setup-human-relay/setup-human-relay.usecase';
 import { HumanDeliveryService } from './human-delivery.service';
+import { readHumanContentActions } from './human-interaction-lifecycle';
 
 export type InboxScope = { environmentId: string; organizationId: string };
 
@@ -266,7 +269,7 @@ export class HumanInboxService {
   ): Promise<{ data: InboxThreadDto[]; next: string | null }> {
     const threads: InboxThreadDto[] = [];
     let after = filters.after;
-    const conversationIds = filters.search ? await this.searchThreadIds(scope, agent, filters.search) : undefined;
+    const conversationIds = filters.search ? (await this.searchThreadIds(scope, agent, filters.search)).ids : undefined;
 
     if (conversationIds?.length === 0) {
       return { data: [], next: null };
@@ -330,10 +333,12 @@ export class HumanInboxService {
       channels[channel] = 0;
     }
 
-    const conversationIds = filters.search ? await this.searchThreadIds(scope, agent, filters.search) : undefined;
+    // A search only looks at the newest threads, so its counts are a lower bound once there are more.
+    const search = filters.search ? await this.searchThreadIds(scope, agent, filters.search) : undefined;
+    const conversationIds = search?.ids;
 
     if (conversationIds?.length === 0) {
-      return { tabs, channels, capped: false };
+      return { tabs, channels, capped: search?.capped ?? false };
     }
 
     const page = await this.conversationRepository.findInboxThreads({
@@ -367,7 +372,7 @@ export class HumanInboxService {
       }
     }
 
-    return { tabs, channels, capped: page.next !== null };
+    return { tabs, channels, capped: page.next !== null || (search?.capped ?? false) };
   }
 
   async toThreads(scope: InboxScope, conversations: ConversationEntity[]): Promise<InboxThreadDto[]> {
@@ -527,10 +532,15 @@ export class HumanInboxService {
 
   /**
    * The threads, out of the newest `INBOX_SCAN_LIMIT`, whose subject, people or messages contain
-   * `text`. Returned as conversation `_id`s for the list query.
+   * `text`. Returned as conversation `_id`s for the list query. `capped` tells that older threads
+   * were not looked at.
    */
-  private async searchThreadIds(scope: InboxScope, agent: InboxRelayAgent, text: string): Promise<string[]> {
-    const { data: conversations } = await this.conversationRepository.findInboxThreads({
+  private async searchThreadIds(
+    scope: InboxScope,
+    agent: InboxRelayAgent,
+    text: string
+  ): Promise<{ ids: string[]; capped: boolean }> {
+    const { data: conversations, next } = await this.conversationRepository.findInboxThreads({
       ...scope,
       agentId: agent._id,
       limit: INBOX_SCAN_LIMIT,
@@ -552,7 +562,7 @@ export class HumanInboxService {
       )
       .map((conversation) => conversation._id);
 
-    return [...new Set([...byHeader, ...withText])];
+    return { ids: [...new Set([...byHeader, ...withText])], capped: next !== null };
   }
 
   /**
@@ -772,7 +782,7 @@ function statusOf(interaction: HumanInteractionEntity, now: Date): HumanInteract
 }
 
 function toCard(interaction: HumanInteractionEntity, channel: string, people: InboxPeople): InboxCardDto {
-  const chrome = resolveHumanInteractionCard(interaction);
+  const chrome = cardChromeOf(interaction);
   const body = chrome.body ?? postedCardText(interaction);
 
   return {
@@ -789,6 +799,61 @@ function toCard(interaction: HumanInteractionEntity, channel: string, people: In
     state: cardStateOf(interaction, channel, people),
     expiresAt: interaction.expiresAt,
   };
+}
+
+/**
+ * The card as the lifecycle resolves it. A card posted as an element keeps its controls in its
+ * buttons, where the resolver does not look, so they are read from there.
+ */
+function cardChromeOf(interaction: HumanInteractionEntity): ReturnType<typeof resolveHumanInteractionCard> {
+  const chrome = resolveHumanInteractionCard(interaction);
+
+  if (!isHumanCardElementContent(interaction.content)) {
+    return chrome;
+  }
+
+  const actions = readHumanContentActions(interaction.content);
+
+  if (interaction.kind === HumanInteractionKindEnum.CHOOSE) {
+    return { ...chrome, options: mintHumanOptions(actions.options) };
+  }
+
+  if (interaction.kind === HumanInteractionKindEnum.APPROVE) {
+    const extraActions = mintHumanOptions(actions.extraActions);
+
+    return {
+      ...chrome,
+      ...postedApproveLabels(interaction.content.card.children),
+      ...(extraActions.length ? { extraActions } : {}),
+    };
+  }
+
+  return chrome;
+}
+
+/** A node of a posted card, as far as its buttons go. */
+type PostedCardNode = { type?: string; id?: string; label?: string; children?: PostedCardNode[] };
+
+/** The Approve and Deny labels of a posted card, read from its two buttons wherever they sit. */
+function postedApproveLabels(nodes: PostedCardNode[]): { approveLabel?: string; denyLabel?: string } {
+  const labels: { approveLabel?: string; denyLabel?: string } = {};
+
+  for (const node of nodes) {
+    const label = node.label?.trim();
+    const action = node.id ? (parseHumanActionId(node.id)?.type ?? node.id) : undefined;
+
+    if ((node.type === 'button' || node.type === 'link-button') && label) {
+      if (action === 'approve') {
+        labels.approveLabel = label;
+      } else if (action === 'deny') {
+        labels.denyLabel = label;
+      }
+    }
+
+    Object.assign(labels, postedApproveLabels(node.children ?? []));
+  }
+
+  return labels;
 }
 
 /** A card posted as an element keeps its text in its children rather than in a `body`. */
@@ -901,7 +966,7 @@ function settledLabel(
 
 /** The label of a picked option or a pressed extra button. Plain Approve and Deny have none of their own. */
 function optionLabelOf(interaction: HumanInteractionEntity, optionId: string): string | undefined {
-  const chrome = resolveHumanInteractionCard(interaction);
+  const chrome = cardChromeOf(interaction);
   const choices = [
     ...('options' in chrome ? chrome.options : []),
     ...('extraActions' in chrome && chrome.extraActions ? chrome.extraActions : []),
