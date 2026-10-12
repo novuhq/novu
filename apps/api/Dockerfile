@@ -17,16 +17,12 @@ COPY --chown=1000:1000 ./meta .
 COPY --chown=1000:1000 ./deps .
 COPY --chown=1000:1000 ./pkg .
 
-RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi
-
-RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
-    --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store \
  pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
  --unsafe-perm
 
-RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && NODE_ENV=production NX_DAEMON=false pnpm build:api
+RUN NODE_ENV=production NX_DAEMON=false pnpm build:api
 
 WORKDIR /usr/src/app/apps/api
 
@@ -41,18 +37,7 @@ WORKDIR /usr/src/app
 FROM dev AS deploy
 
 WORKDIR /usr/src/app
-RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    pnpm --filter @novu/api-service deploy --legacy --prod /usr/src/deploy && \
-    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
-      cd $(mktemp -d) && \
-      echo "@taskforcesh:registry=https://npm.taskforce.sh/" > .npmrc && \
-      echo "//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" >> .npmrc && \
-      npm init -y > /dev/null 2>&1 && \
-      npm install @taskforcesh/bullmq-pro@6.11.0 2>/dev/null && \
-      cp -r node_modules/@taskforcesh /usr/src/deploy/node_modules/@taskforcesh && \
-      rm -rf node_modules/@taskforcesh && \
-      mv node_modules /usr/src/deploy/node_modules/@taskforcesh/bullmq-pro/node_modules; \
-    fi
+RUN pnpm --filter @novu/api-service deploy --legacy --prod /usr/src/deploy
 
 # ------- PRODUCTION BUILD ----------
 FROM node:22.23-alpine3.23 AS prod

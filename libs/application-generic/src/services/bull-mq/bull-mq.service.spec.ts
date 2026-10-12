@@ -21,7 +21,6 @@ describe('BullMQ Service', () => {
       it('should be able to instantiate it correctly', async () => {
         expect(bullMqService.queue).toBeUndefined();
         expect(bullMqService.worker).toBeUndefined();
-        expect(BullMqService.haveProInstalled()).toBeFalsy();
         expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: undefined,
           queueName: undefined,
