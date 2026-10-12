@@ -118,6 +118,8 @@ export class HumanInteractionsController {
         kind: body.kind,
         card: body.card,
         to: body.to,
+        thread: body.thread,
+        anyoneMayAnswer: body.anyoneMayAnswer,
         via: body.via,
         agentIdentifier: body.agentIdentifier,
         from: body.from,
@@ -205,6 +207,7 @@ export class HumanInteractionsController {
         userId: user._id,
         limit: query.limit,
         after: query.after,
+        subscriberId: query.subscriberId,
         agentIdentifier: query.agentIdentifier,
         includeInviteLinks: mayCreateInvites(user),
       })

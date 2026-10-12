@@ -94,7 +94,7 @@ export class SetupHumanRelayRequestDto {
   @ApiPropertyOptional({
     enum: HumanChannelViaEnum,
     description:
-      'Channel the inviter picked (`human invite --via`). Becomes the human’s default unless they already chose one themselves.',
+      'Channel the inviter picked (`human contact invite --via`). Becomes the human’s default unless they already chose one themselves.',
   })
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)

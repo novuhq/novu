@@ -56,7 +56,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.include('human setup');
-      expect((err as NotFoundException).message).to.not.include('human invite');
+      expect((err as NotFoundException).message).to.not.include('human contact invite');
     }
   });
 
@@ -78,7 +78,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no linked channel. Run `human invite alice`.'
+        'Human "alice" has no linked channel. Run `human contact invite alice`.'
       );
     }
   });
@@ -101,7 +101,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no linked telegram endpoint. Run `human invite alice --via telegram`.'
+        'Human "alice" has no linked telegram endpoint. Run `human contact invite alice --via telegram`.'
       );
     }
   });
@@ -124,7 +124,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no verified email address. Run `human invite alice --via email`.'
+        'Human "alice" has no verified email address. Run `human contact invite alice --via email`.'
       );
     }
   });

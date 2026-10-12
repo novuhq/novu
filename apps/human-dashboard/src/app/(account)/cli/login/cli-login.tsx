@@ -272,7 +272,7 @@ function SignedIn({ email, view }: { email?: string; view: Extract<View, { name:
           mark={<ArrowRight aria-hidden="true" className="h-5 w-[1ch]" strokeWidth={1.5} />}
           markClassName="text-muted"
         >
-          Try: human approve &quot;Ship it?&quot;
+          Try: human inbox approve &quot;Ship it?&quot;
         </TerminalLine>
       </div>
       <div className="flex flex-wrap gap-2">

@@ -38,7 +38,7 @@ export function installSkillCommand(options: { host?: string[]; cwd?: string; js
       process.stdout.write(`  ${pc.dim(entry.destination)}\n`);
     }
     process.stdout.write(
-      `\nYour coding agent now knows when to use ${pc.bold('ctx.ask/approve/choose/tell')}, ${pc.bold('novu_human')}, or ${pc.bold('human ask/approve/choose/tell')}.\n`
+      `\nYour coding agent now knows when to use ${pc.bold('ctx.ask/approve/choose/tell')}, ${pc.bold('novu_human')}, or ${pc.bold('human inbox ask/approve/choose/tell')}.\n`
     );
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));

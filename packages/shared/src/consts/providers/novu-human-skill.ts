@@ -46,5 +46,5 @@ Call \`ctx.ask\`, \`ctx.approve\`, \`ctx.choose\`, or \`ctx.tell\`. The verdict 
 
 ### Unattended (CLI / cron / no live thread)
 
-Use the \`human-cli\` skill and the \`human\` CLI (\`human ask|approve|choose|tell\`).
+Use the \`human-cli\` skill and the \`human\` CLI (\`human inbox ask|approve|choose|tell\`).
 `;

@@ -1,5 +1,5 @@
 import { HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
-import { IsEnum, IsInt, IsObject, IsOptional, IsString, Validate } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsObject, IsOptional, IsString, Validate } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { IsValidHumanTo } from '../../validators/is-valid-human-to';
 import type { HumanInteractionCardInput } from '../create-conversation-interaction/create-conversation-interaction.command';
@@ -11,8 +11,19 @@ export class CreateInteractionCommand extends EnvironmentWithUserCommand {
   @IsObject()
   card: HumanInteractionCardInput;
 
+  @IsOptional()
   @Validate(IsValidHumanTo)
-  to: string | string[];
+  to?: string | string[];
+
+  /** Inbox thread to send into, instead of starting a new one with each `to`. */
+  @IsOptional()
+  @IsString()
+  thread?: string;
+
+  /** With `thread` and no `to`: anyone in the thread may settle, not only its contact. */
+  @IsOptional()
+  @IsBoolean()
+  anyoneMayAnswer?: boolean;
 
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)

@@ -15,6 +15,10 @@ export class ListContactsCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsString()
+  subscriberId?: string;
+
+  @IsOptional()
+  @IsString()
   agentIdentifier?: string;
 
   /** Invite links work on their own, so they are left out for callers who may only read. */
