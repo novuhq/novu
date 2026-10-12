@@ -6,6 +6,7 @@ import {
   mergeOverrideLayers,
   resolveOverrideForPreview,
   resolveSourceOverrideForPreview,
+  tagPreviewLineOrigins,
 } from './override-preview';
 
 describe('resolveOverrideForPreview', () => {
@@ -218,6 +219,48 @@ describe('buildOverridePreviewLines', () => {
       { json: '    }' },
       { json: '  ]' },
       { json: '}' },
+    ]);
+  });
+});
+
+describe('tagPreviewLineOrigins', () => {
+  const lines = buildOverridePreviewLines(
+    { summary: 'down', source: 'novu', dedup_key: 'DB-1', details: { region: 'eu' } },
+    'dedup_key',
+    ['summary', 'details.region']
+  );
+
+  it('tags each root key with the layer it comes from on an integration source', () => {
+    const tagged = tagPreviewLineOrigins(lines, {
+      override: { summary: 'down', source: 'novu', details: { region: 'eu' } },
+      inheritedPaths: ['summary', 'details.region'],
+      isIntegrationSource: true,
+    });
+
+    expect(tagged.map((line) => [line.json.trim(), line.origin])).toEqual([
+      ['{', undefined],
+      ['"summary": "down",', 'provider'],
+      ['"source": "novu",', 'integration'],
+      ['"dedup_key": "DB-1",', 'default'],
+      ['"details": {', 'integration'],
+      ['"region": "eu"', undefined],
+      ['}', undefined],
+      ['}', undefined],
+    ]);
+  });
+
+  it('attributes every override key to the provider on a provider source', () => {
+    const tagged = tagPreviewLineOrigins(lines, {
+      override: { summary: 'down', source: 'novu', details: { region: 'eu' } },
+      inheritedPaths: [],
+      isIntegrationSource: false,
+    });
+
+    expect(tagged.filter((line) => line.origin).map((line) => line.origin)).toEqual([
+      'provider',
+      'provider',
+      'default',
+      'provider',
     ]);
   });
 });

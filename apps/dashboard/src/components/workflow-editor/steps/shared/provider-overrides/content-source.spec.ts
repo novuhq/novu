@@ -10,6 +10,7 @@ import {
   getOverridePath,
   getProviderOptionLabel,
   getSourceOverride,
+  getSourceOwnerLabel,
   getUnsupportedOverrideKeys,
   INTEGRATION_OVERRIDES_FIELD,
   isEscapeHatchProvider,
@@ -131,7 +132,12 @@ describe('buildProviderOverrideOptions', () => {
   it('keeps a provider with a single active integration as one plainly labeled row', () => {
     const [webhookOption] = buildToolOptions({ activeIntegrations: [webhookIntegration('prod', 'Prod')] });
 
-    expect(webhookOption).toMatchObject({ providerId: WEBHOOK, isConnected: true, integrations: [] });
+    expect(webhookOption).toMatchObject({
+      providerId: WEBHOOK,
+      isConnected: true,
+      integrations: [],
+      soleIntegrationIdentifier: 'prod',
+    });
     expect(getProviderOptionLabel(webhookOption)).toBe('Tool webhook');
   });
 
@@ -141,6 +147,7 @@ describe('buildProviderOverrideOptions', () => {
     });
 
     expect(getProviderOptionLabel(webhookOption)).toBe('Tool webhook (all)');
+    expect(webhookOption.soleIntegrationIdentifier).toBeUndefined();
     expect(webhookOption.integrations).toEqual([
       {
         providerId: WEBHOOK,
@@ -236,6 +243,26 @@ describe('getContentSourceLabel', () => {
     expect(getContentSourceLabel({ providerId: WEBHOOK, integrationIdentifier: 'gone' }, groupedOptions)).toBe(
       'Tool webhook · gone'
     );
+  });
+});
+
+describe('getSourceOwnerLabel', () => {
+  it('names the provider-wide layer "All integrations" only when integrations are listed beneath it', () => {
+    const groupedOptions = buildToolOptions({
+      activeIntegrations: [webhookIntegration('staging', 'Staging'), webhookIntegration('prod', 'Prod')],
+    });
+
+    expect(getSourceOwnerLabel({ providerId: WEBHOOK }, groupedOptions)).toBe('All integrations');
+    expect(getSourceOwnerLabel({ providerId: WEBHOOK }, buildToolOptions())).toBe('Tool webhook');
+  });
+
+  it('names an integration source after its integration, falling back to the identifier', () => {
+    const groupedOptions = buildToolOptions({
+      activeIntegrations: [webhookIntegration('staging', 'Staging'), webhookIntegration('prod', 'Prod')],
+    });
+
+    expect(getSourceOwnerLabel({ providerId: WEBHOOK, integrationIdentifier: 'prod' }, groupedOptions)).toBe('Prod');
+    expect(getSourceOwnerLabel({ providerId: WEBHOOK, integrationIdentifier: 'gone' }, groupedOptions)).toBe('gone');
   });
 });
 

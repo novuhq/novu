@@ -2,15 +2,15 @@ import { Undo2 } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiErrorWarningFill } from 'react-icons/ri';
-import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import {
+  ALL_INTEGRATIONS_LABEL,
   DEFAULT_CONTENT_SOURCE,
-  getContentSourceLabel,
+  getIntegrationName,
   getOverrideFormField,
   getOverrideIssueOwnerPath,
   getOverridePath,
@@ -29,8 +29,71 @@ import {
 } from './content-source';
 import { useContentSource } from './content-source-context';
 import { ContentSourceSelector } from './content-source-selector';
-import { ProviderOverrideEditor, type ProviderOverrideEditorProps } from './provider-override-editor';
+import {
+  MergesOverBar,
+  type OverrideInheritance,
+  ProviderOverrideEditor,
+  type ProviderOverrideEditorProps,
+} from './provider-override-editor';
+import { RemoveOverrideModal } from './remove-override-modal';
 import { readOverrideValues } from './use-provider-override-options';
+
+/** What an override starts from before its own keys apply, and which integrations replace its keys. */
+function buildOverrideInheritance(
+  source: OverrideContentSource,
+  providerOptions: ProviderOverrideOption[],
+  overrides: OverrideValues
+): OverrideInheritance {
+  const { providerId, integrationIdentifier } = source;
+  const providerOption = providerOptions.find((option) => option.providerId === providerId);
+  const providerName = providerOption?.displayName ?? getOverrideProviderDisplayName(providerId);
+  const hasIntegrations = !!providerOption && providerOption.integrations.length > 0;
+  const allIntegrationsLabel = `${providerName} · ${ALL_INTEGRATIONS_LABEL}`;
+  const defaultContentLayer = { label: 'Default content', source: DEFAULT_CONTENT_SOURCE };
+
+  if (integrationIdentifier !== undefined) {
+    const providerOverride = getSourceOverride({ providerId }, overrides);
+    const hasInheritedKeys = Object.keys(providerOverride ?? {}).length > 0;
+    const inheritsFrom = providerOverride === undefined ? 'Default content' : ALL_INTEGRATIONS_LABEL;
+
+    return {
+      emptyMessage: `${getIntegrationName(providerId, integrationIdentifier, providerOptions)} inherits everything from ${inheritsFrom}. Add only the keys that should differ.`,
+      inheritedOverride: hasInheritedKeys ? providerOverride : undefined,
+      overriddenKeyLabels: {},
+      mergesOver:
+        providerOverride === undefined
+          ? [defaultContentLayer]
+          : [defaultContentLayer, { label: allIntegrationsLabel, source: { providerId } }],
+      ownerLabel: getIntegrationName(providerId, integrationIdentifier, providerOptions),
+      ownerIdentifier: integrationIdentifier,
+    };
+  }
+
+  const integrationNamesByKey = new Map<string, string[]>();
+
+  for (const [identifier, integrationOverride] of Object.entries(overrides.integrationOverrides?.[providerId] ?? {})) {
+    const integrationName = getIntegrationName(providerId, identifier, providerOptions);
+
+    for (const key of Object.keys(integrationOverride ?? {})) {
+      integrationNamesByKey.set(key, [...(integrationNamesByKey.get(key) ?? []), integrationName]);
+    }
+  }
+
+  const owner = hasIntegrations ? `All ${providerName} integrations inherit` : `${providerName} inherits`;
+
+  return {
+    emptyMessage: `${owner} everything from Default content. Add only the keys that should differ.`,
+    overriddenKeyLabels: Object.fromEntries(
+      [...integrationNamesByKey].map(([key, names]) => [
+        key,
+        names.length === 1 ? `Overridden in ${names[0]}` : `Overridden in ${names.length} integrations`,
+      ])
+    ),
+    mergesOver: [defaultContentLayer],
+    ownerLabel: hasIntegrations ? allIntegrationsLabel : providerName,
+    ownerIdentifier: providerOption?.soleIntegrationIdentifier,
+  };
+}
 
 /** Per-provider customizations a channel can layer onto the generic override editor. */
 export type ProviderOverrideEditorExtras = Pick<
@@ -82,6 +145,11 @@ export function ContentOverridePanel({
   }, [selectedSource, overrideSource, setSelectedSource]);
 
   const sourceOverrides = useMemo(() => listSourceOverrides(channel, overrides), [channel, overrides]);
+
+  const overrideInheritance = useMemo(
+    () => (overrideSource ? buildOverrideInheritance(overrideSource, providerOptions, overrides) : undefined),
+    [overrideSource, providerOptions, overrides]
+  );
 
   const unsupportedKeyCountByPath = useMemo(() => {
     const counts = new Map<string, number>();
@@ -206,6 +274,7 @@ export function ContentOverridePanel({
           providers={providerOptions}
           invalidSourcePaths={sourcePathsWithErrors}
           showEscapeHatchBadge={showEscapeHatchBadge}
+          overrideCount={sourceOverrides.length}
           onSelectSource={setSelectedSource}
           onAddOverride={handleAddOverride}
         />
@@ -235,13 +304,14 @@ export function ContentOverridePanel({
             disabled={isReadOnly}
           >
             <Undo2 className="size-3.5" />
-            <span>Reset to default</span>
+            <span>Remove override</span>
           </button>
         )}
         <div className="h-full flex-1" />
       </div>
 
-      <TabsSection className="flex min-h-0 flex-1 flex-col p-3">
+      <TabsSection className="flex min-h-0 flex-1 flex-col gap-0 p-3">
+        <MergesOverBar inheritance={overrideInheritance} onSelectSource={setSelectedSource} />
         {overrideSource ? (
           // Keyed per source: the editor's Controller binds `providerOverrides` or `integrationOverrides`,
           // and react-hook-form unregisters (drops the value of) a Controller's previous field on rename.
@@ -249,6 +319,7 @@ export function ContentOverridePanel({
             key={getOverridePath(overrideSource)}
             source={overrideSource}
             displayName={getOverrideProviderDisplayName(overrideSource.providerId)}
+            inheritance={overrideInheritance}
             onDraftParseValidityChange={handleDraftParseValidityChange}
             {...getEditorExtras?.(overrideSource)}
           />
@@ -266,50 +337,13 @@ export function ContentOverridePanel({
         )}
       </TabsSection>
 
-      <ResetOverrideModal
+      <RemoveOverrideModal
         source={pendingResetSource}
         providerOptions={providerOptions}
+        overrides={overrides}
         onConfirm={handleConfirmReset}
         onCancel={() => setPendingResetSource(null)}
       />
     </div>
-  );
-}
-
-function ResetOverrideModal({
-  source,
-  providerOptions,
-  onConfirm,
-  onCancel,
-}: {
-  source: OverrideContentSource | null;
-  providerOptions: ProviderOverrideOption[];
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const label = source ? getContentSourceLabel(source, providerOptions) : 'provider';
-  const fallback =
-    source?.integrationIdentifier === undefined
-      ? 'restore the default content for this step'
-      : `fall back to the ${getOverrideProviderDisplayName(source.providerId)} (all) override and the default content`;
-
-  return (
-    <ConfirmationModal
-      open={source !== null}
-      onOpenChange={(open) => {
-        if (!open) {
-          onCancel();
-        }
-      }}
-      onConfirm={onConfirm}
-      title="Reset to default content?"
-      description={
-        <>
-          This will remove the {label} override and {fallback}. This action cannot be undone.
-        </>
-      }
-      confirmButtonText="Reset to default"
-      confirmButtonVariant="error"
-    />
   );
 }

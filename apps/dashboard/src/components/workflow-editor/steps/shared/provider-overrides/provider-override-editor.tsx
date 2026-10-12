@@ -1,8 +1,9 @@
 import { getProviderPrimaryContentKey, setAtPath } from '@novu/shared';
 import { Braces } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { RiErrorWarningLine, RiGitMergeLine, RiLightbulbLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiErrorWarningLine, RiLightbulbLine, RiStackLine } from 'react-icons/ri';
 import { InputRoot } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ControlInput } from '@/components/workflow-editor/control-input';
@@ -11,7 +12,9 @@ import { SectionHeader } from '@/components/workflow-editor/steps/http-request/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { cn } from '@/utils/ui';
 import {
+  type ContentSource,
   getOverrideFormField,
   getOverridePath,
   getSourceOverride,
@@ -23,12 +26,14 @@ import {
 } from './content-source';
 import { EscapeHatchCallout } from './escape-hatch-callout';
 import { createOverrideCompletionSource } from './override-autocomplete';
+import { OverrideEmptyState } from './override-empty-state';
 import {
   type AnnotateOverrideField,
   type DescribeOverrideField,
   type OverrideFieldSchema,
 } from './override-field-schema';
 import { findDuplicateRootKey } from './override-json';
+import { overriddenKeyChips } from './override-key-chips';
 import { OverrideSupportedFields } from './override-supported-fields';
 import { createSchemaResolver } from './schema-resolver';
 import { readOverrideValues } from './use-provider-override-options';
@@ -114,9 +119,121 @@ export type ProviderOverrideNoticeContext = {
 
 export type ProviderOverrideNotice = ReactNode | ((context: ProviderOverrideNoticeContext) => ReactNode);
 
+export type OverrideInheritance = {
+  /** Shown while the override has no keys yet, e.g. "PagerDuty EU inherits everything from All integrations." */
+  emptyMessage: string;
+  /** The provider-wide keys an integration override starts from; offered as a starting point. */
+  inheritedOverride?: Record<string, unknown>;
+  /** Chip labels for root keys that an integration override replaces, keyed by root key. */
+  overriddenKeyLabels: Record<string, string>;
+  /** The layers this override is merged over, from the base content up to its direct parent. */
+  mergesOver: Array<{ label: string; source: ContentSource }>;
+  /** The layer being edited, shown last in the "Merges over" chain. */
+  ownerLabel: string;
+  ownerIdentifier?: string;
+};
+
+type MergesOverRowProps = {
+  inheritance: OverrideInheritance;
+  onSelectSource?: (source: ContentSource) => void;
+};
+
+const MERGES_OVER_TRANSITION = { duration: 0.2, ease: 'easeInOut' } as const;
+
+function MergesOverRow({ inheritance, onSelectSource }: MergesOverRowProps) {
+  // Keyed by label so a layer keeps its chip when it moves between "parent" and "owner", e.g.
+  // "Grafana · All integrations" morphs into the owner chip while the integration chip fades out.
+  const segments = [
+    ...inheritance.mergesOver.map((layer) => ({ ...layer, isOwner: false })),
+    { label: inheritance.ownerLabel, source: undefined, isOwner: true },
+  ];
+
+  return (
+    <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+      <RiStackLine className="text-text-soft size-[13px] shrink-0" />
+      <span className="text-label-xs text-text-soft shrink-0">Merges over</span>
+      <AnimatePresence initial={false} mode="popLayout">
+        {segments.map(({ label, source, isOwner }, index) => (
+          <motion.div
+            key={label}
+            layout="position"
+            initial={{ opacity: 0, x: -4 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -4 }}
+            transition={MERGES_OVER_TRANSITION}
+            className={cn('flex items-center gap-1.5', isOwner ? 'min-w-0' : 'shrink-0')}
+          >
+            {index > 0 && <RiArrowRightSLine className="text-text-soft size-[11px] shrink-0" />}
+            <button
+              type="button"
+              className={cn(
+                'text-label-2xs min-w-0 truncate rounded border px-1.5 py-0.5 transition-colors disabled:pointer-events-none',
+                isOwner
+                  ? 'border-stroke-soft bg-bg-white text-text-strong'
+                  : 'bg-bg-muted text-text-sub hover:bg-bg-soft hover:text-text-strong border-transparent'
+              )}
+              disabled={isOwner || !onSelectSource}
+              aria-current={isOwner ? 'page' : undefined}
+              onClick={() => source && onSelectSource?.(source)}
+            >
+              {label}
+            </button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      <div className="h-px min-w-0 flex-1" />
+      <AnimatePresence initial={false} mode="popLayout">
+        {inheritance.ownerIdentifier && (
+          <motion.span
+            key={inheritance.ownerIdentifier}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={MERGES_OVER_TRANSITION}
+            className="text-code-2xs text-text-soft min-w-0 shrink truncate"
+          >
+            {inheritance.ownerIdentifier}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+type MergesOverBarProps = {
+  inheritance?: OverrideInheritance;
+  onSelectSource?: (source: ContentSource) => void;
+};
+
+/**
+ * Collapses the "Merges over" chain so switching between default content and an override
+ * doesn't hard-cut the row in or out. Same height/opacity transition as the preview source bar.
+ */
+export function MergesOverBar({ inheritance, onSelectSource }: MergesOverBarProps) {
+  return (
+    <AnimatePresence initial={false}>
+      {inheritance ? (
+        <motion.div
+          key="merges-over"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={MERGES_OVER_TRANSITION}
+          className="shrink-0 overflow-hidden"
+        >
+          <div className="pb-2.5">
+            <MergesOverRow inheritance={inheritance} onSelectSource={onSelectSource} />
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
 export type ProviderOverrideEditorProps = {
   source: OverrideContentSource;
   displayName: string;
+  inheritance?: OverrideInheritance;
   /**
    * Replaces both the schema-less callout and the default hint with channel-specific copy. Rendered
    * into a bare padded block, so it owns its own icon and row layout.
@@ -134,6 +251,7 @@ export type ProviderOverrideEditorProps = {
 export function ProviderOverrideEditor({
   source,
   displayName,
+  inheritance,
   notice,
   headerTooltip,
   placeholder,
@@ -166,6 +284,19 @@ export function ProviderOverrideEditor({
   const [draft, setDraft] = useState(() =>
     formatOverrideJson(getSourceOverride({ providerId, integrationIdentifier }, readOverrideValues(getValues)))
   );
+  // Only an override that opens empty gets the empty state; clearing keys while editing keeps the editor.
+  const [isEmptyStateVisible, setIsEmptyStateVisible] = useState(
+    () =>
+      Object.keys(getSourceOverride({ providerId, integrationIdentifier }, readOverrideValues(getValues)) ?? {})
+        .length === 0
+  );
+
+  const overriddenKeyLabelsJson = JSON.stringify(inheritance?.overriddenKeyLabels ?? {});
+  const editorExtensions = useMemo(() => {
+    const labels = JSON.parse(overriddenKeyLabelsJson) as Record<string, string>;
+
+    return Object.keys(labels).length > 0 ? [overriddenKeyChips(labels)] : undefined;
+  }, [overriddenKeyLabelsJson]);
 
   useEffect(() => {
     setDraft(
@@ -264,18 +395,61 @@ export function ProviderOverrideEditor({
             saveForm();
           };
 
+          const replaceOverride = (next: Record<string, unknown>) => {
+            setDraft(formatOverrideJson(next));
+            writeOverride(next);
+            setIsEmptyStateVisible(false);
+          };
+
           const handleInsertField = (key: string) => {
             if (!parsedDraft || usedDraftKeys.has(key)) {
               return;
             }
 
-            const next = {
+            replaceOverride({
               ...parsedDraft,
               [key]: browsableResolver?.defaultValue(browsableSchema?.properties?.[key]) ?? '',
-            };
-            setDraft(formatOverrideJson(next));
-            writeOverride(next);
+            });
           };
+
+          if (inheritance && isEmptyStateVisible) {
+            const inheritedOverride = inheritance.inheritedOverride;
+            const hasFieldPicker = Object.keys(browsableResolver?.rootSchema.properties ?? {}).length > 0;
+
+            return (
+              <>
+                <SectionHeader
+                  label="Override fields"
+                  tooltip={resolvedTooltip}
+                  rightSlot={<span className="text-paragraph-xs text-text-soft">0 keys</span>}
+                />
+                <OverrideEmptyState
+                  message={inheritance.emptyMessage}
+                  canEdit={!isReadOnly}
+                  renderFieldPicker={
+                    hasFieldPicker
+                      ? (trigger) => (
+                          <OverrideSupportedFields
+                            providerId={providerId}
+                            displayName={displayName}
+                            resolver={browsableResolver}
+                            usedKeys={usedDraftKeys}
+                            canInsert={!isReadOnly}
+                            annotateField={annotateField}
+                            trigger={trigger}
+                            onInsertField={handleInsertField}
+                          />
+                        )
+                      : undefined
+                  }
+                  onAddKey={(key) => replaceOverride({ [key]: '' })}
+                  onCopyInheritedKeys={
+                    inheritedOverride ? () => replaceOverride(structuredClone(inheritedOverride)) : undefined
+                  }
+                />
+              </>
+            );
+          }
 
           return (
             <>
@@ -316,15 +490,6 @@ export function ProviderOverrideEditor({
                   <EscapeHatchCallout providerId={providerId} displayName={displayName} />
                 </div>
               )}
-              {integrationIdentifier !== undefined && (
-                <div className="text-text-soft flex items-start gap-1 px-1 pb-1">
-                  <RiGitMergeLine className="mt-0.5 size-3 shrink-0" />
-                  <span className="min-w-0 flex-1 text-xs">
-                    Merged over the {displayName} (all) override, only for this integration. Keys you leave out are
-                    inherited from it.
-                  </span>
-                </div>
-              )}
               <InputRoot className="min-h-[180px]" hasError={!!parseError}>
                 <ControlInput
                   size="2xs"
@@ -335,6 +500,7 @@ export function ProviderOverrideEditor({
                   isAllowedVariable={isAllowedVariable}
                   variables={variables}
                   completionSources={completionSources}
+                  extensions={editorExtensions}
                   onChange={(val) => {
                     const newVal = typeof val === 'string' ? val : '';
                     setDraft(newVal);

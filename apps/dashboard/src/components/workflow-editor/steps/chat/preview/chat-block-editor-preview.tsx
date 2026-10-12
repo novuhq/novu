@@ -9,7 +9,6 @@ import { type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Skeleton } from '@/components/primitives/skeleton';
-import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
 import {
   type ContentSource,
   DEFAULT_CONTENT_SOURCE,
@@ -18,11 +17,11 @@ import {
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useOptionalContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import {
-  getMergedOverrideHint,
   useAnnotatedOverridePreview,
   usePreviewOverrideValues,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
-import { useOverrideValues } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
+import { ResolvedPayloadPreview } from '@/components/workflow-editor/steps/shared/provider-overrides/resolved-payload-preview';
+import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { ChatShellContent } from './chat-shell-content';
@@ -233,7 +232,7 @@ function ChatBlockEditorPreviewBase({ isPreviewPending, previewData }: ChatBlock
 function ChatBlockEditorPreviewWithOverrides({ isPreviewPending, previewData }: ChatBlockEditorPreviewProps) {
   const { options, defaultProviderId, isLoading } = useConfiguredChatProviders();
   const contentSource = useOptionalContentSource();
-  const { overrides } = useOverrideValues(ChannelTypeEnum.CHAT);
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
 
   const resolvedProviderId = contentSource
     ? contentSourceToPreviewProviderId(contentSource.previewSource)
@@ -251,9 +250,10 @@ function ChatBlockEditorPreviewWithOverrides({ isPreviewPending, previewData }: 
   );
 
   const previewOverrides = usePreviewOverrideValues(preview);
+  const previewOverrideSource = getPreviewOverrideSource(contentSource?.previewSource, activeProviderId);
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
-    source: getPreviewOverrideSource(contentSource?.previewSource, activeProviderId),
+    source: previewOverrideSource,
     formOverrides: overrides,
     previewOverrides,
   });
@@ -276,26 +276,13 @@ function ChatBlockEditorPreviewWithOverrides({ isPreviewPending, previewData }: 
         return <Skeleton className="h-24 w-full shrink-0 rounded-md" />;
       }
 
-      const displayName = activeOption?.displayName ?? activeProviderId;
-
-      return (
-        <div className="flex min-h-0 flex-col gap-1.5">
-          <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-            Merged override fields
-          </span>
-          <AnnotatedOverrideJson {...annotatedPreview} />
-          <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
-            {getMergedOverrideHint({
-              hasOverride: annotatedPreview.hasOverride,
-              defaultContentKey: annotatedPreview.defaultContentKey,
-              body,
-              providerId: activeProviderId,
-              displayName,
-              hasInheritedKeys: annotatedPreview.hasInheritedKeys,
-            })}
-          </div>
-        </div>
-      );
+      return previewOverrideSource ? (
+        <ResolvedPayloadPreview
+          lines={annotatedPreview.annotatedLines}
+          source={previewOverrideSource}
+          providerOptions={providerOptions}
+        />
+      ) : null;
     }
 
     return (

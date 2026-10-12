@@ -63,7 +63,11 @@ export type ProviderOverrideOption = {
   isEscapeHatch: boolean;
   /** Empty unless the provider's integrations are listed individually. */
   integrations: IntegrationOverrideOption[];
+  /** The identifier of the provider's only active integration, when its integrations are not listed. */
+  soleIntegrationIdentifier?: string;
 };
+
+export const ALL_INTEGRATIONS_LABEL = 'All integrations';
 
 /** Integration identifiers are free-form, so `in` would also match prototype keys like `constructor`. */
 export function hasOwn(target: object | null | undefined, key: string): boolean {
@@ -192,20 +196,28 @@ export function buildProviderOverrideOptions({
           overrideKeys.has(providerId) ||
           integrationOverrideKeys.has(providerId)
       )
-      .map((providerId) => ({
-        providerId,
-        displayName: getOverrideProviderDisplayName(providerId),
-        hasOverride: hasOwn(providerOverrides, providerId),
-        isConnected: activeIntegrationsByProvider.has(providerId),
-        isEscapeHatch: isEscapeHatchProvider(providerId),
-        integrations: includeIntegrationOptions
+      .map((providerId) => {
+        const providerIntegrations = activeIntegrationsByProvider.get(providerId) ?? [];
+        const integrations = includeIntegrationOptions
           ? buildIntegrationOptions({
               providerId,
-              activeIntegrations: activeIntegrationsByProvider.get(providerId) ?? [],
+              activeIntegrations: providerIntegrations,
               overrides: integrationOverrides?.[providerId],
             })
-          : [],
-      }))
+          : [];
+
+        return {
+          providerId,
+          displayName: getOverrideProviderDisplayName(providerId),
+          hasOverride: hasOwn(providerOverrides, providerId),
+          isConnected: providerIntegrations.length > 0,
+          isEscapeHatch: isEscapeHatchProvider(providerId),
+          integrations,
+          ...(integrations.length === 0 && providerIntegrations.length === 1
+            ? { soleIntegrationIdentifier: providerIntegrations[0].identifier }
+            : {}),
+        };
+      })
       // Configured overrides first (selectable / hold data), then schema-backed providers before
       // escape-hatch ("no schema") ones; alphabetical within each group for stable ordering.
       .sort((left, right) => {
@@ -244,6 +256,32 @@ export function getContentSourceLabel(source: ContentSource, providerOptions: Pr
   );
 
   return `${displayName} · ${integrationOption?.name ?? source.integrationIdentifier}`;
+}
+
+/** An integration's display name, falling back to its identifier once the integration is gone. */
+export function getIntegrationName(
+  providerId: string,
+  integrationIdentifier: string,
+  providerOptions: ProviderOverrideOption[]
+): string {
+  const integrationOption = providerOptions
+    .find((option) => option.providerId === providerId)
+    ?.integrations.find((option) => option.integrationIdentifier === integrationIdentifier);
+
+  return integrationOption?.name ?? integrationIdentifier;
+}
+
+/** The name a source's override is shown under: its integration, or the provider as a whole. */
+export function getSourceOwnerLabel(source: OverrideContentSource, providerOptions: ProviderOverrideOption[]): string {
+  if (source.integrationIdentifier !== undefined) {
+    return getIntegrationName(source.providerId, source.integrationIdentifier, providerOptions);
+  }
+
+  const providerOption = providerOptions.find((option) => option.providerId === source.providerId);
+
+  return providerOption && providerOption.integrations.length > 0
+    ? ALL_INTEGRATIONS_LABEL
+    : getOverrideProviderDisplayName(source.providerId);
 }
 
 export function isSameContentSource(left: ContentSource, right: ContentSource): boolean {

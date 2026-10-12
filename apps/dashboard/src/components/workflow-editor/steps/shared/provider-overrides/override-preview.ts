@@ -1,20 +1,59 @@
-import {
-  type AnnotatedPreviewLine,
-  buildAnnotatedPreviewLines,
-  getProviderPrimaryContentKey,
-  isRecord,
-  mergeProviderPreview,
-} from '@novu/shared';
+import { type AnnotatedPreviewLine, buildAnnotatedPreviewLines, isRecord, mergeProviderPreview } from '@novu/shared';
 import { useMemo } from 'react';
 import { hasOwn, type OverrideContentSource, type OverrideValues } from './content-source';
 
 export const PREVIEW_PANEL_CLASS =
   'bg-neutral-alpha-50 text-foreground-950 min-h-16 overflow-auto rounded-md border border-neutral-100 p-2 font-mono text-[11px] leading-4 [scrollbar-gutter:stable]';
 
+export const PROVIDER_OVERRIDES_DOCS_URL =
+  'https://docs.novu.co/platform/integrations/trigger-overrides#provider-overrides';
+
+/** Where a resolved payload value comes from: the step's default content, or one of the override layers. */
+export type OverridePreviewLineOrigin = 'default' | 'provider' | 'integration';
+
 export type OverridePreviewLine = AnnotatedPreviewLine & {
   /** Set on lines an integration override takes unchanged from its provider override. */
   isInherited?: boolean;
+  /** Set on root key lines and on the default content line. */
+  origin?: OverridePreviewLineOrigin;
 };
+
+/** `buildAnnotatedPreviewLines` indents two spaces per level, so a root key line starts with exactly two. */
+const ROOT_KEY_LINE_PATTERN = /^ {2}("(?:[^"\\]|\\.)*"):/;
+
+/**
+ * Tags each root key line with the layer its value comes from. Keys the override does not set were
+ * filled from the default content; an integration source's keys come from it unless wholly inherited.
+ */
+export function tagPreviewLineOrigins(
+  lines: OverridePreviewLine[],
+  {
+    override,
+    inheritedPaths,
+    isIntegrationSource,
+  }: { override: Record<string, unknown> | undefined; inheritedPaths: string[]; isIntegrationSource: boolean }
+): OverridePreviewLine[] {
+  const inheritedRootKeys = new Set(inheritedPaths.filter((path) => !path.includes('.')));
+
+  return lines.map((line): OverridePreviewLine => {
+    if (line.isDefaultContentKey) {
+      return { ...line, origin: 'default' };
+    }
+
+    const match = ROOT_KEY_LINE_PATTERN.exec(line.json);
+    if (!match) {
+      return line;
+    }
+
+    const key = JSON.parse(match[1]) as string;
+
+    if (!hasOwn(override, key)) {
+      return { ...line, origin: 'default' };
+    }
+
+    return { ...line, origin: isIntegrationSource && !inheritedRootKeys.has(key) ? 'integration' : 'provider' };
+  });
+}
 
 export type AnnotatedOverridePreview = {
   annotatedLines: OverridePreviewLine[];
@@ -226,64 +265,14 @@ export function useAnnotatedOverridePreview({
     const { merged, defaultContentKey } = mergeProviderPreview({ body, providerId, override });
 
     return {
-      annotatedLines: buildOverridePreviewLines(merged, defaultContentKey, inheritedPaths),
+      annotatedLines: tagPreviewLineOrigins(buildOverridePreviewLines(merged, defaultContentKey, inheritedPaths), {
+        override,
+        inheritedPaths,
+        isIntegrationSource: integrationIdentifier !== undefined,
+      }),
       defaultContentKey,
       hasOverride,
       hasInheritedKeys: inheritedPaths.length > 0,
     };
   }, [body, providerId, integrationIdentifier, formOverrides, previewOverrides]);
-}
-
-export function getInheritedKeysHint(displayName: string): string {
-  return `Keys marked INHERITED come from the ${displayName} (all) override.`;
-}
-
-function getDefaultContentMergeHint({
-  hasOverride,
-  defaultContentKey,
-  body,
-  providerId,
-  displayName,
-}: {
-  hasOverride: boolean;
-  defaultContentKey: string | undefined;
-  body: string;
-  providerId: string;
-  displayName: string;
-}): string {
-  if (hasOverride) {
-    if (!defaultContentKey) {
-      return `This override is deep-merged over the payload ${displayName} builds from the step's default content.`;
-    }
-
-    if (!body) {
-      return `Override merged over the default content. "${defaultContentKey}" is taken from your default message (currently empty).`;
-    }
-
-    return `Override merged over the default content. "${defaultContentKey}" is taken from your default message.`;
-  }
-
-  const primaryKey = getProviderPrimaryContentKey(providerId);
-  if (!primaryKey) {
-    return `No override for this provider. When you add one, it is deep-merged over the payload ${displayName} builds from the step's default content.`;
-  }
-
-  return `No override for this provider. Default message maps to "${primaryKey}".`;
-}
-
-/** Explains, under the merged JSON, where each part of the payload came from. */
-export function getMergedOverrideHint({
-  hasInheritedKeys = false,
-  ...hintContext
-}: {
-  hasOverride: boolean;
-  defaultContentKey: string | undefined;
-  body: string;
-  providerId: string;
-  displayName: string;
-  hasInheritedKeys?: boolean;
-}): string {
-  const hint = getDefaultContentMergeHint(hintContext);
-
-  return hasInheritedKeys ? `${hint} ${getInheritedKeysHint(hintContext.displayName)}` : hint;
 }
