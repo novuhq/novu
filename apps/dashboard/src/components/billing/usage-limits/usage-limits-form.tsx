@@ -15,9 +15,12 @@ import { useUpdateUsageLimits } from '@/hooks/use-update-usage-limits';
 import { AlertRecipientsSelect } from './alert-recipients-select';
 import { OnDemandLimitStepper } from './on-demand-limit-stepper';
 import { SettingCard } from './setting-card';
+import { TierSuggestionToast } from './tier-suggestion-toast';
 import {
+  getMonthlyCostAtLimit,
   getOnDemandCost,
   getPauseAtLimitDescription,
+  getTierSuggestion,
   getUsageAlertsDescription,
   pausesOnSave,
   type UsageLimitsFormValues,
@@ -39,7 +42,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const { mutateAsync: updateUsageLimits, isPending: isSaving } = useUpdateUsageLimits();
   const { mutateAsync: resetUsageLimits, isPending: isResetting } = useResetUsageLimits();
-  const { usage } = view;
+  const { usage, plan } = view;
 
   const form = useForm<UsageLimitsFormValues>({
     resolver: standardSchemaResolver(usageLimitsFormSchema),
@@ -49,6 +52,17 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
   const [workflowRuns, pauseAtLimit] = form.watch(['workflowRuns', 'pauseAtLimit']);
   const limitSettings = { workflowRuns, pauseAtLimit };
   const onDemandCost = getOnDemandCost(workflowRuns.onDemandLimit, usage.onDemandPricePer1k);
+  const tierSuggestion = getTierSuggestion({
+    apiServiceLevel: plan.apiServiceLevel,
+    isOnTrial: plan.isOnTrial,
+    onDemandLimit: workflowRuns.onDemandLimit,
+    onDemandPricePer1k: usage.onDemandPricePer1k,
+  });
+  const monthlyCostAtLimit = getMonthlyCostAtLimit(
+    plan.apiServiceLevel,
+    workflowRuns.onDemandLimit,
+    usage.onDemandPricePer1k
+  );
 
   const onSubmit = async (values: UsageLimitsFormValues) => {
     try {
@@ -106,6 +120,14 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
                   </FormItem>
                 )}
               />
+
+              {tierSuggestion && monthlyCostAtLimit !== null && (
+                <TierSuggestionToast
+                  suggestion={tierSuggestion}
+                  monthlyCostAtLimit={monthlyCostAtLimit}
+                  billingInterval={plan.billingInterval}
+                />
+              )}
 
               <Separator variant="line-spacing" className="before:bg-stroke-weak" />
 
