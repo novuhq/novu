@@ -201,9 +201,9 @@ export class HumanInboxService {
   }
 
   /**
-   * One page of threads. Whether a thread has a contact in it lives on the subscribers, not on the
-   * conversation, so the `contacts` filter is applied after the query and the scan continues until
-   * the page is full.
+   * One page of threads. Whether a thread has a contact in it lives on the subscribers, and whether
+   * it has anything unread depends on deleted messages, so both filters are applied after the query
+   * and the scan continues until the page is full.
    */
   async listThreads(
     scope: InboxScope,
@@ -217,7 +217,10 @@ export class HumanInboxService {
       const page = await this.conversationRepository.findInboxThreads({
         ...scope,
         agentId: agent._id,
-        read: filters.read,
+        // The query tells read from unread by time alone, so a thread whose only new message was
+        // deleted looks unread to it. It narrows `unread` to candidates; the count below decides, and
+        // decides alone for `read`, so every thread is in exactly one of the two.
+        read: filters.read === 'unread' ? 'unread' : undefined,
         status: filters.status,
         limit: filters.limit,
         after,
@@ -226,8 +229,8 @@ export class HumanInboxService {
       const matching = pageThreads.filter(
         (thread) =>
           (filters.senders !== 'contacts' || thread.kind === 'contact') &&
-          // The query finds unread threads by time alone; one whose only new message was deleted has nothing unread.
-          (filters.read !== 'unread' || thread.unreadCount > 0)
+          (filters.read !== 'unread' || thread.unreadCount > 0) &&
+          (filters.read !== 'read' || thread.unreadCount === 0)
       );
 
       threads.push(...matching);

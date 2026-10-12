@@ -33,6 +33,9 @@ function resolveListActivitiesSortBy(sortBy?: string): ListActivitiesSortField {
   return 'createdAt';
 }
 
+/** Up to this many inbound messages are counted exactly, with deleted ones left out. */
+const INBOUND_COUNT_EXACT_LIMIT = 200;
+
 @Injectable()
 export class ConversationActivityRepository extends BaseRepositoryV2<
   ConversationActivityDBModel,
@@ -262,23 +265,35 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
           }
         : {}),
     };
-    const total = await this.count(messages);
+    // One fixed set of messages is read and the deleted ones are taken out of it, so a message that
+    // arrives or is deleted meanwhile cannot skew the result. Past the cap the exact number stops
+    // mattering, and the plain count is cheaper than reading every row.
+    const counted = await this.find(messages, ['platformMessageId'], { limit: INBOUND_COUNT_EXACT_LIMIT + 1 });
 
-    if (total === 0) {
+    if (counted.length === 0) {
       return 0;
     }
 
-    // A deleted message keeps its row; the delete is a row of its own with the same platform message id.
-    const deletes = await this.find({ ...scope, type: ConversationActivityTypeEnum.DELETE, senderType: fromHuman }, [
-      'platformMessageId',
-    ]);
-    const deletedIds = deletes.flatMap((row) => row.platformMessageId ?? []);
-
-    if (deletedIds.length === 0) {
-      return total;
+    if (counted.length > INBOUND_COUNT_EXACT_LIMIT) {
+      return this.count(messages);
     }
 
-    return total - (await this.count({ ...messages, platformMessageId: { $in: deletedIds } }));
+    // A deleted message keeps its row; the delete is a row of its own with the same platform message id.
+    const countedIds = counted.flatMap((row) => row.platformMessageId ?? []);
+    const deletes = countedIds.length
+      ? await this.find(
+          {
+            ...scope,
+            type: ConversationActivityTypeEnum.DELETE,
+            senderType: fromHuman,
+            platformMessageId: { $in: countedIds },
+          },
+          ['platformMessageId']
+        )
+      : [];
+    const deletedIds = new Set(deletes.map((row) => row.platformMessageId));
+
+    return counted.filter((row) => !row.platformMessageId || !deletedIds.has(row.platformMessageId)).length;
   }
 
   /**
