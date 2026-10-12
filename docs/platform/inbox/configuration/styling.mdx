@@ -100,7 +100,25 @@ export default Novu;
 | `colorRing` | `string` | The color used for focus rings on interactive elements. |
 | `fontSize` | `string` | The base font size for text in the inbox. |
 | `borderRadius` | `string` | The border radius applied to various elements. |
-| `colorStripes` | `string` | The accent color used for striped loading indicators. |
+| `colorStripes` | `string` | The accent color of the striped footer and the **Development mode** label that the Inbox shows in development and keyless environments. Maps to the `--nv-color-stripes` CSS variable. |
+
+### Development mode footer
+
+When the Inbox connects to a Development environment or runs in keyless mode, Novu renders an animated striped gradient in the Inbox footer with a **Development mode** (or **Keyless mode**) label. Novu doesn't render this footer for Production environments. In Production, the footer only shows the Novu branding, which you can [remove on paid plans](/platform/inbox/prepare-for-production#remove-novu-branding).
+
+To change the color of the striped footer, set `colorStripes` in `appearance.variables`:
+
+```tsx
+<Inbox
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriberId="YOUR_SUBSCRIBER_ID"
+  appearance={{
+    variables: {
+      colorStripes: '#6366F1',
+    },
+  }}
+/>
+```
 
 ## Style the Inbox UI elements
 
