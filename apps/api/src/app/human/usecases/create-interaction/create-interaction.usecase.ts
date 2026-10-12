@@ -25,6 +25,7 @@ import {
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
+import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
 import {
   type InteractionResponseDto,
@@ -72,7 +73,8 @@ export class CreateInteraction {
     private readonly keylessCap: HumanKeylessCapService,
     private readonly inbox: HumanInboxService,
     private readonly conversationService: AgentConversationService,
-    private readonly createConversationInteraction: CreateConversationInteraction
+    private readonly createConversationInteraction: CreateConversationInteraction,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -293,6 +295,16 @@ export class CreateInteraction {
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
     const channel = this.inbox.primaryChannel(conversation);
+
+    // A new thread is refused in resolveChannel. An existing email thread skips that, so check here.
+    // The claim reply does not come through this path.
+    if (channel.platform === HumanChannelViaEnum.EMAIL) {
+      await this.keylessEmailGate.assertAllowed({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+    }
+
     const integrationIdentifier = await this.inbox.resolveIntegrationIdentifier(scope, channel);
     const interaction = await this.createConversationInteraction.execute(
       CreateConversationInteractionCommand.create({

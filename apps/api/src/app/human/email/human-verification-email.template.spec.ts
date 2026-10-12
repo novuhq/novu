@@ -56,6 +56,8 @@ describe('buildHumanVerificationEmail', () => {
     const withClaim = buildHumanVerificationEmail({ ...base, sender: {}, claimUrl });
     const without = buildHumanVerificationEmail({ ...base, sender: {} });
 
+    expect(withClaim.html).to.include('Verify this email first');
+    expect(withClaim.text).to.include('Verify this email first');
     expect(withClaim.html).to.include('Claim this setup');
     expect(withClaim.html).to.include('https://gethuman.md/claim?token=a&amp;region=eu');
     expect(withClaim.text).to.include(`Claim this setup: ${claimUrl}`);

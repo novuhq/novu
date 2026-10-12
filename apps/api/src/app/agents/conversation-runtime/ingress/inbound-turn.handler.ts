@@ -471,6 +471,15 @@ export class AgentInboundHandler implements OnModuleInit {
     });
 
     if (await this.maybeStopKeylessInbound(agentId, config, thread, conversation)) {
+      // Email has no other copy of the message. Save it, and skip the agent.
+      if (config.platform === AgentPlatformEnum.EMAIL) {
+        await this.recordKeylessInboundEmail(agentId, config, conversation, message, {
+          subscriberId,
+          platformThreadId,
+          event,
+        });
+      }
+
       return;
     }
 
@@ -1016,6 +1025,24 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     return false;
+  }
+
+  /** Persist a keyless inbound email without dispatching a turn. */
+  private async recordKeylessInboundEmail(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    message: Message,
+    context: { subscriberId: string | null; platformThreadId: string; event: AgentEventEnum }
+  ): Promise<void> {
+    const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
+    const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
+
+    await this.recordInboundMessage(agentId, config, conversation, message, {
+      ...context,
+      storedAttachments,
+      isFirstMessage,
+    });
   }
 
   /** Telegram `/start <code>` is control input; when present it is always consumed here. */

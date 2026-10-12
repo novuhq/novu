@@ -65,7 +65,15 @@ export class NovuEmailCleanupService {
 
     if (!integration) return;
 
-    await this.domainRouteRepository.removeByDestination(environmentId, organizationId, agentId, { session });
+    // Custom routes are addressed to the agent, and either inbox can serve them.
+    // Drop them only when this unlink removes the last one.
+    const stillLinked = (
+      await this.findNovuEmailIntegrationIds(agentId, environmentId, organizationId, session)
+    ).filter((id) => String(id) !== String(integration._id));
+
+    if (stillLinked.length === 0) {
+      await this.domainRouteRepository.removeByDestination(environmentId, organizationId, agentId, { session });
+    }
 
     await this.integrationRepository.delete(
       { _id: integration._id, _environmentId: environmentId, _organizationId: organizationId },
@@ -73,8 +81,8 @@ export class NovuEmailCleanupService {
     );
 
     this.logger.info(
-      { agentId, integrationId: integration._id },
-      'Cleaned up NovuAgent integration and domain routes',
+      { agentId, integrationId: integration._id, removedRoutes: stillLinked.length === 0 },
+      'Cleaned up agent inbox integration',
       LOG_CONTEXT
     );
   }

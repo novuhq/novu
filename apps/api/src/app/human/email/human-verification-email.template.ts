@@ -119,7 +119,7 @@ function claimSectionHtml(claimUrl: string): string {
     'Make this setup <span style="color:#ff5c30;font-style:italic;">yours</span>',
     '</td></tr>',
     `<tr><td style="padding:0 24px 16px;font-family:${SANS};font-size:14px;line-height:1.5;color:rgba(238,229,216,0.6);">`,
-    'It runs in a temporary workspace. Claim it for free to:',
+    'Verify this email first. It runs in a temporary workspace — then claim it for free to:',
     '</td></tr>',
     '<tr><td style="padding:0 24px 20px;">',
     `<table role="presentation" cellspacing="0" cellpadding="0">${perks}</table>`,
@@ -134,7 +134,7 @@ function claimSectionHtml(claimUrl: string): string {
 
 function claimSectionText(claimUrl: string): string[] {
   return [
-    'Make this setup yours. It runs in a temporary workspace. Claim it for free to:',
+    'Verify this email first. It runs in a temporary workspace. Then claim it for free to:',
     ...CLAIM_PERKS.map((perk) => `+ ${perk}`),
     '',
     `Claim this setup: ${claimUrl}`,

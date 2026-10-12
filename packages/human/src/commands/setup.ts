@@ -65,7 +65,7 @@ async function runSetup(channel: HumanChannel | undefined, options: SetupOptions
     });
   }
 
-  const linked: HumanChannel | undefined = chat ?? (verifyEmail ? 'email' : undefined);
+  const linked = channelLinkedBySetup(chat, verifyEmail, client.isKeyless);
   saveSetupConfig(apiUrl, auth, existing, provisioned, linked);
   await confirmLinkedChannel(client, linked, provisioned);
 
@@ -142,6 +142,26 @@ async function offerChatChannel(io: SetupIo = defaultSetupIo): Promise<ChatChann
     ],
     { skippable: true }
   );
+}
+
+/**
+ * The channel this run made usable. A verified keyless address still cannot
+ * send, so it is not saved as the default — a later chat setup would keep it.
+ */
+export function channelLinkedBySetup(
+  chat: ChatChannel | undefined,
+  verifyEmail: boolean,
+  keyless: boolean
+): HumanChannel | undefined {
+  if (chat) {
+    return chat;
+  }
+
+  if (verifyEmail && !keyless) {
+    return 'email';
+  }
+
+  return undefined;
 }
 
 function saveSetupConfig(

@@ -91,6 +91,7 @@ describe('CreateInteraction', () => {
     const createConversationInteraction = {
       execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
     };
+    const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -107,7 +108,8 @@ describe('CreateInteraction', () => {
       ),
       inbox as any,
       conversationService as any,
-      createConversationInteraction as any
+      createConversationInteraction as any,
+      keylessEmailGate as any
     );
     const command = {
       userId: 'user1',
@@ -131,6 +133,7 @@ describe('CreateInteraction', () => {
       inbox,
       conversationService,
       createConversationInteraction,
+      keylessEmailGate,
     };
   }
 
@@ -204,6 +207,26 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
       expect(inbox.findStrangers.called).to.equal(false);
       expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 1 }]);
+    });
+
+    it('refuses a keyless reply into an email thread before it is sent', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction, keylessEmailGate, inboxQuota } =
+        setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.primaryChannel.returns({ platform: 'email', platformThreadId: 'email:ada@example.com' });
+      keylessEmailGate.assertAllowed.rejects(
+        new ForbiddenException({ code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT', message: 'Outbound email needs an account.' })
+      );
+
+      try {
+        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+        expect.fail('expected ForbiddenException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ForbiddenException);
+      }
+
+      expect(createConversationInteraction.execute.called).to.equal(false);
+      expect(inboxQuota.reserveCredits.called).to.equal(false);
     });
 
     it('lets anyone in the thread answer when asked to', async () => {

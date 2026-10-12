@@ -1,5 +1,5 @@
 import { BadGatewayException, BadRequestException, HttpException } from '@nestjs/common';
-import { type PinoLogger, shortId } from '@novu/application-generic';
+import { isAgentEmailInboxQuotaExceeded, type PinoLogger, shortId } from '@novu/application-generic';
 import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import {
   type CardChrome,
@@ -101,7 +101,19 @@ export function assertHumanApproveExtraActions(
   }
 }
 
-function collectCardActionButtons(node: unknown, into: Array<{ id: string; label: string }> = []) {
+type CardActionButton = { id: string; label: string };
+
+type CardTreeNode = {
+  type?: unknown;
+  id?: unknown;
+  label?: unknown;
+  children?: CardTreeNode[];
+};
+
+function collectCardActionButtons(
+  node: CardTreeNode | readonly CardTreeNode[] | undefined,
+  into: CardActionButton[] = []
+): CardActionButton[] {
   if (Array.isArray(node)) {
     for (const item of node) {
       collectCardActionButtons(item, into);
@@ -114,21 +126,20 @@ function collectCardActionButtons(node: unknown, into: Array<{ id: string; label
     return into;
   }
 
-  const record = node as Record<string, unknown>;
-  const type = record.type;
-  const id = record.id;
+  const type = node.type;
+  const id = node.id;
   if ((type === 'button' || type === 'link-button') && typeof id === 'string' && id.trim()) {
-    into.push({ id, label: typeof record.label === 'string' ? record.label : '' });
+    into.push({ id, label: typeof node.label === 'string' ? node.label : '' });
   }
 
-  if ('children' in record) {
-    collectCardActionButtons(record.children, into);
+  if (node.children) {
+    collectCardActionButtons(node.children, into);
   }
 
   return into;
 }
 
-function optionFromCardButton(button: { id: string; label: string }): HumanOptionInput | null {
+function optionFromCardButton(button: CardActionButton): HumanOptionInput | null {
   const parsed = parseHumanActionId(button.id);
   if (parsed?.type === 'approve' || parsed?.type === 'deny' || parsed?.type === 'disambiguation-pick') {
     return null;
@@ -161,14 +172,14 @@ type HumanPostedCardInput = {
   children?: unknown[];
 };
 
-function actionsFromCardElement(card: { children?: unknown[] }): {
+function actionsFromCardElement(card: { children?: unknown[] | CardTreeNode[] }): {
   options: HumanOptionInput[];
   extraActions: HumanOptionInput[];
 } {
   const options: HumanOptionInput[] = [];
   const extraActions: HumanOptionInput[] = [];
 
-  for (const button of collectCardActionButtons(card.children)) {
+  for (const button of collectCardActionButtons(card.children as CardTreeNode[] | undefined)) {
     const option = optionFromCardButton(button);
     if (!option) {
       continue;
@@ -397,6 +408,11 @@ export async function deliverToTargets(
     await repository
       .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
       .catch(() => undefined);
+
+    // The inbox cap is a 429 with a reset time. Wrapping it as a gateway error drops that.
+    if (isAgentEmailInboxQuotaExceeded(lastError)) {
+      throw lastError;
+    }
 
     throw new BadGatewayException(
       `Failed to deliver to ${failedSubscriberIds.join(', ') || 'any recipient'}: ${

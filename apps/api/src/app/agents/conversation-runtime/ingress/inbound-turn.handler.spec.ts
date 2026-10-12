@@ -1747,7 +1747,7 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
       };
       const senderEmail = 'tester@example.com';
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
+      const { handler, managedAgentService, outboundGateway, conversationService } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -1760,6 +1760,7 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.called).to.equal(false);
       expect(outboundGateway.replyOnThreadWithCard.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
     });
 
     it('should still gate keyless managed agents on non-email platforms when subscriber is unresolved', async () => {
@@ -1855,12 +1856,17 @@ describe('AgentInboundHandler', () => {
         isKeyless: true,
       };
       const address = 'owner@example.com';
-      const { handler, managedAgentService, outboundGateway, keylessEmailGate, connectClaimTokenService } = makeHandler(
-        {
-          subscriberResolve: sinon.stub().resolves(null),
-          agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
-        }
-      );
+      const {
+        handler,
+        managedAgentService,
+        outboundGateway,
+        keylessEmailGate,
+        connectClaimTokenService,
+        conversationService,
+      } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
       keylessEmailGate.resolveOperatorClaimCard.resolves({ title: 'Sign up free', url: 'https://claim.test' });
       const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
       const message = makeEmailDmMessage(address);
@@ -1868,6 +1874,7 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThreadWithCard.calledOnce).to.equal(true);
       // The gate takes the flag before it returns a card. A sent card keeps it.
       expect(connectClaimTokenService.tryMarkSignupCtaPosted.called).to.equal(false);

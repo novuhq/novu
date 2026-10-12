@@ -46,6 +46,7 @@ const { AgentInboxProvisioningError, connectEmail } = await import('./setup/emai
 const { connectSlack: connectSlackImplementation } = await import('./setup/slack');
 const { connectTelegram: connectTelegramImplementation } = await import('./setup/telegram');
 const { resolveOperatorEmail, resolveOperatorName, reusableAuth } = await import('./setup/operator');
+const { channelLinkedBySetup } = await import('./setup');
 
 function connectTelegram(
   client: Parameters<typeof connectTelegramImplementation>[0],
@@ -568,6 +569,17 @@ describe('resolveOperatorName', () => {
     await expect(resolveOperatorName({}, true, { isTTY: true, prompt })).resolves.toBeUndefined();
     await expect(resolveOperatorName({}, false, { isTTY: false, prompt })).resolves.toBeUndefined();
     expect(prompt).not.toHaveBeenCalled();
+  });
+});
+
+describe('channelLinkedBySetup', () => {
+  it('does not save keyless email as the default', () => {
+    expect(channelLinkedBySetup(undefined, true, true)).toBeUndefined();
+  });
+
+  it('saves a verified account email, and prefers chat when both were linked', () => {
+    expect(channelLinkedBySetup(undefined, true, false)).toBe('email');
+    expect(channelLinkedBySetup('telegram', true, true)).toBe('telegram');
   });
 });
 
