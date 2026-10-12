@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentRepository, HumanContactRepository, HumanInteractionRepository, SubscriberRepository } from '@novu/dal';
 import { HumanInteractionStatusEnum } from '@novu/shared';
@@ -7,6 +7,7 @@ import { RemoveSubscriberCommand } from '../../../subscribers-v2/usecases/remove
 import { RemoveSubscriber } from '../../../subscribers-v2/usecases/remove-subscriber/remove-subscriber.usecase';
 import type { RemoveContactResponseDto } from '../../dtos/list-contacts.dto';
 import { HumanInviteTokenService } from '../../services/human-invite-token.service';
+import { HumanOperatorService } from '../../services/human-operator.service';
 import { RemoveContactCommand } from './remove-contact.command';
 
 const PENDING_BATCH_SIZE = 100;
@@ -15,6 +16,7 @@ const PENDING_BATCH_SIZE = 100;
  * Removes a contact for good: retires their invite links, cancels the open interactions addressed
  * to them, forgets their default channel and deletes the subscriber behind them (with its chat
  * connections, messages, preferences and topic subscriptions), so agents can no longer reach them.
+ * The operator's own contact stays for as long as the account does.
  */
 @Injectable()
 export class RemoveContact {
@@ -25,6 +27,7 @@ export class RemoveContact {
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly settlement: HumanInteractionSettlementService,
     private readonly inviteTokens: HumanInviteTokenService,
+    private readonly humanOperator: HumanOperatorService,
     private readonly removeSubscriber: RemoveSubscriber
   ) {}
 
@@ -43,6 +46,21 @@ export class RemoveContact {
       { _environmentId: command.environmentId, _organizationId: command.organizationId, runtime: 'human_relay' },
       ['_id']
     );
+
+    for (const agent of relayAgents) {
+      const operator = await this.humanOperator.findForAgent({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentId: agent._id,
+      });
+
+      if (operator === command.subscriberId) {
+        throw new ConflictException({
+          code: 'contact_is_operator',
+          message: 'This contact is the account owner and can’t be removed. Delete the account instead.',
+        });
+      }
+    }
 
     // Links first, so the person can't connect again while the rest is being taken away.
     for (const agent of relayAgents) {

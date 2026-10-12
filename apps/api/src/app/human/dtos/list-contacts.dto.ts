@@ -42,6 +42,11 @@ export class HumanContactChannelDto {
   @ApiPropertyOptional({ description: 'ISO timestamp when the contact connected the channel. Absent for email.' })
   connectedAt?: string;
 
+  @ApiPropertyOptional({
+    description: 'Address verified for this relay. Set for email. Absent for chat channels.',
+  })
+  address?: string;
+
   @ApiProperty({ description: 'Whether this is the channel used when an interaction doesn’t pass `via`.' })
   isDefault: boolean;
 }

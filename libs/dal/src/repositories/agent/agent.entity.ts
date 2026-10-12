@@ -37,6 +37,14 @@ export interface ManagedRuntimeConfig {
   managedDefinitionVersion?: number;
 }
 
+/** The agent's own picture, uploaded by its operator and kept in file storage. */
+export interface AgentPicture {
+  storageKey: string;
+  contentType: string;
+  /** Changes with the file, so a new picture gets a new address and an old one can be cached for good. */
+  version: string;
+}
+
 export class AgentEntity {
   _id: string;
 
@@ -45,6 +53,9 @@ export class AgentEntity {
   identifier: string;
 
   description?: string;
+
+  /** Set for Human relay agents only (`human agent --picture`). */
+  picture?: AgentPicture;
 
   active: boolean;
 

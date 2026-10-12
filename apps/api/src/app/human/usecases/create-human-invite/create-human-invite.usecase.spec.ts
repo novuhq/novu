@@ -79,13 +79,13 @@ describe('CreateHumanInvite', () => {
     expect(url).to.equal(`https://gethuman.md/invite/${'T'.repeat(32)}?region=eu`);
   });
 
-  it('refuses when the relay has no Telegram or Slack set up', async () => {
+  it('refuses when the relay has no invite channels set up', async () => {
     const { usecase, inviteTokens } = setup([]);
 
     const err = await usecase.execute(command).catch((error) => error);
 
     expect(err).to.be.instanceOf(NotFoundException);
-    expect((err as NotFoundException).message).to.include('human setup telegram');
+    expect((err as NotFoundException).message).to.include('human setup');
     expect(inviteTokens.issue.called).to.equal(false);
   });
 });

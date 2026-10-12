@@ -6,31 +6,40 @@ export const HUMAN_CLI_SESSION_NAME = 'human-cli';
 /** Matches the API's `KEYLESS_SETUP_CLAIMED_CODE`. */
 const KEYLESS_SETUP_CLAIMED_CODE = 'keyless_setup_claimed';
 
-/** A `human login` request, approved by the operator on the Human dashboard. */
+/** A `human login` request, approved or denied by the operator on the Human dashboard. */
 export interface LoginRequest {
   deviceCode: string;
   expiresIn: number;
   interval: number;
   /** Missing on APIs without the Human dashboard (self-hosted), where there's no browser login. */
   verificationUrl?: string;
-  /** What the operator types on that page; the device code the CLI polls with never leaves this computer. */
+  /**
+   * Shown in the terminal and on that page, so the operator can check both belong to the same login before
+   * approving. The device code the CLI polls with never leaves this computer.
+   */
   userCode?: string;
 }
 
 export type LoginRequestStatus =
   | { status: 'pending'; expiresIn: number; interval: number }
   | { status: 'expired' }
+  /** The operator pressed Deny on the page. Only newer APIs answer this; older ones let the request expire. */
+  | { status: 'denied' }
   | {
       status: 'approved';
       apiKey: string;
       environmentId: string;
-      user?: { email?: string | null; firstName?: string | null } | null;
+      user?: { email?: string | null; firstName?: string | null; lastName?: string | null } | null;
     };
 
-export async function startLoginRequest(apiUrl: string): Promise<LoginRequest> {
+/**
+ * `machineName` is this computer's name, which the page shows next to the code ("A terminal on ada-laptop…").
+ * APIs that don't know it yet ignore it.
+ */
+export async function startLoginRequest(apiUrl: string, machineName?: string): Promise<LoginRequest> {
   const res = await createPublicApiClient(apiUrl).post<{ data?: LoginRequest } | LoginRequest>(
     '/v1/cli/device-sessions',
-    { name: HUMAN_CLI_SESSION_NAME }
+    { name: HUMAN_CLI_SESSION_NAME, ...(machineName ? { machineName } : {}) }
   );
   const request = unwrap(res.data);
 
@@ -77,6 +86,26 @@ export async function hasSubscriber(client: HumanApiClient, subscriberId: string
   } catch (err) {
     if (err instanceof HumanApiError && err.status === 404) {
       return false;
+    }
+
+    throw err;
+  }
+}
+
+/**
+ * The contact the account behind `client` has for its owner: made by `human setup` on any computer, or on
+ * the Human dashboard. Undefined when the account has none yet. APIs from before it was recorded answer 404.
+ */
+export async function findOperator(client: HumanApiClient): Promise<string | undefined> {
+  try {
+    const res = await client.axios.get<{ data?: { subscriberId?: string } } | { subscriberId?: string }>(
+      '/v1/human/operator'
+    );
+
+    return unwrap(res.data)?.subscriberId || undefined;
+  } catch (err) {
+    if (err instanceof HumanApiError && err.status === 404) {
+      return undefined;
     }
 
     throw err;

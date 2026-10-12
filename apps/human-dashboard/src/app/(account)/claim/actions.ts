@@ -3,9 +3,11 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
+import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
 import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
+import { claimPastSignUp, isAccountAgentInUse } from '@/lib/human-claim';
 
 export type ClaimFormState = { error?: string };
 
@@ -33,12 +35,15 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
     };
   }
 
+  // The page doesn't offer the move once the agent is in use; this is the same answer for a stale tab.
+  if (await isAccountAgentInUse(user)) {
+    return { error: ACCOUNT_HAS_AGENT_MESSAGE };
+  }
+
   try {
     await ensureStoredBackingAccount(user, region);
-    await claimKeylessSetup(
-      region,
-      { humanUserId: user.id, firstName: user.firstName, lastName: user.lastName },
-      token
+    await claimPastSignUp(user, () =>
+      claimKeylessSetup(region, { humanUserId: user.id, firstName: user.firstName, lastName: user.lastName }, token)
     );
   } catch (error) {
     console.error('Failed to claim the keyless setup', error);
@@ -46,13 +51,15 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
     return { error: describeClaimError(error) };
   }
 
-  redirect('/account?claimed=1');
+  redirect(DASHBOARD_HOME);
 }
+
+const ACCOUNT_HAS_AGENT_MESSAGE = 'Your Human account’s agent is already in use, so this setup can’t be moved into it.';
 
 function describeClaimError(error: unknown): string {
   if (error instanceof HumanApiError) {
     if (error.code === 'claim_agent_exists') {
-      return 'Your Human account already has a setup, so this one can’t be added to it.';
+      return ACCOUNT_HAS_AGENT_MESSAGE;
     }
 
     // The claim's own messages ("already been used", "expired", …) are written for people.

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { Brand } from '@/components/site/brand';
 import { cn } from '@/lib/utils';
 
 /**
@@ -11,7 +12,7 @@ export function SiteFrame({ children, className }: { children: ReactNode; classN
     <div className="overflow-x-clip">
       <div className="mx-auto flex min-h-dvh w-[calc(100%-2rem)] max-w-224 flex-col">
         <header className="section-rails flex min-h-12.5 items-center p-2">
-          <SiteBrand />
+          <Brand />
           <SectionDivider />
         </header>
         <main className={cn('section-rails flex flex-1 flex-col', className)}>
@@ -19,7 +20,7 @@ export function SiteFrame({ children, className }: { children: ReactNode; classN
           <SectionDivider />
         </main>
         <footer className="section-rails flex min-h-12.5 flex-wrap items-center gap-4 p-2">
-          <SiteBrand />
+          <Brand />
           <p className="flex gap-4 font-mono text-sm tracking-tight text-foreground/50">
             <span>© 2026</span>
             <span aria-hidden="true">|</span>
@@ -30,22 +31,6 @@ export function SiteFrame({ children, className }: { children: ReactNode; classN
         </footer>
       </div>
     </div>
-  );
-}
-
-function SiteBrand() {
-  return (
-    <a href="/" aria-label="gethuman.md" className="flex shrink-0 items-center gap-0.5 rounded-sm">
-      <span
-        aria-hidden="true"
-        className="flex size-8.5 items-center justify-center rounded border border-border bg-black"
-      >
-        <span className="size-2.5 rounded-[2px] bg-accent" />
-      </span>
-      <span className="flex h-8.5 items-center rounded bg-border px-3.5 pb-0.5 font-mono text-sm leading-none tracking-tight">
-        gethuman.<span className="text-accent">md</span>
-      </span>
-    </a>
   );
 }
 

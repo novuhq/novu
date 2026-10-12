@@ -7,10 +7,12 @@ landing page moves in here later.
 | Route             | What it is                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `/invite/[token]` | Page opened from a `human invite` link. The person connects Telegram or Slack and picks their default app. |
+| `/connect`        | Page opened from `human setup telegram` or `human setup slack` when credentials are pasted in the browser. The setup token stays in the URL fragment. |
 | `/sign-up`, `/sign-in` | Human accounts, signed in with the Human Clerk app (not the Novu dashboard's).         |
 | `/claim`          | Opened from the link an agent gets when its keyless setup runs out of free messages. Moves that setup into the operator's Human account. |
 | `/cli/login`      | Opened by `human login`. The operator types the code their terminal shows, and that CLI gets the account's key; a keyless setup on that computer moves into the account on the way. |
-| `/account`        | The operator's Human account: the agent's channels and contacts, sign-out and delete.        |
+| `/agent`, `/channels`, `/contacts` | The dashboard: the operator's agent, its channels and the people it can ask.  |
+| `/settings`       | The operator, their API key (show, copy, regenerate), the plan, log out and delete account. |
 | `/`               | Placeholder until the landing page moves in.                                               |
 
 Each Human account is backed by a hidden Novu organization that the Novu API creates through private

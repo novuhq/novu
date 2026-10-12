@@ -153,10 +153,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     const normalized = this.normalizeMessage(message);
     const decoded = this.threadResolver.decodeThreadId(threadId);
 
-    const agentAddress = await this.threadResolver.getAgentAddress(threadId);
-    if (!agentAddress) {
-      throw new Error(`No agent address found for thread ${threadId} — cannot determine From address for reply`);
-    }
+    const agentAddress = await this.resolveAgentAddress(threadId, 'reply');
 
     const fromHeader = this.config.senderName ? `${this.config.senderName} <${agentAddress}>` : agentAddress;
 
@@ -220,10 +217,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       return;
     }
 
-    const agentAddress = await this.threadResolver.getAgentAddress(threadId);
-    if (!agentAddress) {
-      throw new Error(`No agent address found for thread ${threadId} — cannot determine From address for reaction`);
-    }
+    const agentAddress = await this.resolveAgentAddress(threadId, 'reaction');
 
     let reactionEmoji: string;
     try {
@@ -319,6 +313,28 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       recipientAddress: email,
       rootMessageIdHash: hash,
     });
+  }
+
+  /**
+   * The agent's From address for a thread: the address recorded from the
+   * inbound email that opened it, else `defaultAgentAddress` for threads the
+   * agent opened itself. The fallback is recorded so later replies and
+   * reactions on the thread keep the same From.
+   */
+  private async resolveAgentAddress(threadId: string, purpose: 'reply' | 'reaction'): Promise<string> {
+    const tracked = await this.threadResolver.getAgentAddress(threadId);
+    if (tracked) {
+      return tracked;
+    }
+
+    const fallback = this.config.defaultAgentAddress?.trim();
+    if (!fallback) {
+      throw new Error(`No agent address found for thread ${threadId} — cannot determine From address for ${purpose}`);
+    }
+
+    await this.threadResolver.trackAgentAddress(threadId, fallback);
+
+    return fallback;
   }
 
   // -- Unsupported operations --

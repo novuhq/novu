@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
-import { GetEventResourceUsage, GetSubscription } from '@novu/ee-billing';
+import { GetEventResourceUsage, GetEventResourceUsageCommand, GetSubscription } from '@novu/ee-billing';
 import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -14,27 +14,6 @@ describe('GetEventResourceUsage #novu-v2', async () => {
   let getSubscription: GetSubscription;
 
   let getSubscriptionStub: sinon.SinonStub;
-
-  const getSubscriptionResponse: GetSubscriptionDto = {
-    apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-    isActive: true,
-    status: 'trialing',
-    hasPaymentMethod: false,
-    currentPeriodStart: new Date('2021-01-01').toISOString(),
-    currentPeriodEnd: new Date('2021-02-01').toISOString(),
-    billingInterval: 'month',
-    events: {
-      current: 50,
-      included: 100,
-    },
-    trial: {
-      start: null,
-      end: null,
-      isActive: true,
-      daysTotal: 0,
-    },
-    cancelAt: null,
-  };
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -49,7 +28,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
 
     useCase = moduleRef.get(GetEventResourceUsage);
     getSubscription = moduleRef.get<GetSubscription>(GetSubscription);
-    getSubscriptionStub = sinon.stub(getSubscription, 'execute').resolves(getSubscriptionResponse);
+    getSubscriptionStub = sinon.stub(getSubscription, 'execute').resolves(buildSubscriptionDto());
   });
 
   afterEach(() => {
@@ -58,11 +37,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
 
   describe('within the maximum evaluation duration', () => {
     it('should return a successful evaluation when events are within the limit', async () => {
-      const result = await useCase.execute({
-        organizationId: 'organization_id',
-        environmentId: 'environment_id',
-        userId: 'user_id',
-      });
+      const result = await useCase.execute(buildUsageCommand('organization_id'));
 
       expect(result).to.deep.equal({
         remaining: 50,
@@ -75,19 +50,9 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     });
 
     it('should return a failed evaluation when events are above the limit', async () => {
-      getSubscriptionStub.resolves({
-        ...getSubscriptionResponse,
-        events: {
-          current: 100,
-          included: 100,
-        },
-      });
+      getSubscriptionStub.resolves(buildSubscriptionDto({ current: 100, isPaused: true }));
 
-      const result = await useCase.execute({
-        organizationId: 'organization_id',
-        environmentId: 'environment_id',
-        userId: 'user_id',
-      });
+      const result = await useCase.execute(buildUsageCommand('organization_id'));
 
       expect(result).to.deep.equal({
         remaining: 0,
@@ -105,16 +70,12 @@ describe('GetEventResourceUsage #novu-v2', async () => {
       getSubscriptionStub.resolves(
         new Promise((resolve) => {
           setTimeout(async () => {
-            resolve(getSubscriptionResponse);
+            resolve(buildSubscriptionDto());
           }, 1000);
         })
       );
 
-      const result = await useCase.execute({
-        organizationId: randomUUID(),
-        environmentId: 'environment_id',
-        userId: 'user_id',
-      });
+      const result = await useCase.execute(buildUsageCommand(randomUUID()));
 
       expect(result).to.deep.equal({
         remaining: 0,
@@ -128,19 +89,9 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     });
 
     it('should return the fallback evaluation when the subscription has no included events', async () => {
-      getSubscriptionStub.resolves({
-        ...getSubscriptionResponse,
-        events: {
-          current: 100,
-          included: null,
-        },
-      });
+      getSubscriptionStub.resolves(buildSubscriptionDto({ current: 100, included: null }));
 
-      const result = await useCase.execute({
-        organizationId: randomUUID(),
-        environmentId: 'environment_id',
-        userId: 'user_id',
-      });
+      const result = await useCase.execute(buildUsageCommand(randomUUID()));
 
       expect(result).to.deep.equal({
         remaining: 0,
@@ -154,3 +105,33 @@ describe('GetEventResourceUsage #novu-v2', async () => {
     });
   });
 });
+
+function buildUsageCommand(organizationId: string): GetEventResourceUsageCommand {
+  return {
+    organizationId,
+    environmentId: 'environment_id',
+    userId: 'user_id',
+    organization: { _id: organizationId, apiServiceLevel: ApiServiceLevelEnum.BUSINESS },
+  };
+}
+
+function buildSubscriptionDto(events: Partial<GetSubscriptionDto['events']> = {}): GetSubscriptionDto {
+  return {
+    apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+    isActive: true,
+    status: 'trialing',
+    hasPaymentMethod: false,
+    currentPeriodStart: new Date('2021-01-01').toISOString(),
+    currentPeriodEnd: new Date('2021-02-01').toISOString(),
+    billingInterval: 'month',
+    events: { current: 50, included: 100, limit: null, isPaused: false, ...events },
+    usageLimits: null,
+    trial: {
+      start: null,
+      end: null,
+      isActive: true,
+      daysTotal: 0,
+    },
+    cancelAt: null,
+  };
+}

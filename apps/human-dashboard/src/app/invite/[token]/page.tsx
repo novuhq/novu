@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
+import { InviteFrame } from '@/components/invite/invite-frame';
 import { InvitePage } from '@/components/invite/invite-page';
-import { SiteFrame } from '@/components/site/site-frame';
 import { resolveNovuApiUrl } from '@/lib/novu-api';
 
 export const metadata: Metadata = {
@@ -16,8 +16,8 @@ export default async function Page(props: PageProps<'/invite/[token]'>) {
   const { region } = await props.searchParams;
 
   return (
-    <SiteFrame className="px-4 py-14 md:px-8 md:py-20">
+    <InviteFrame>
       <InvitePage apiUrl={resolveNovuApiUrl(region)} token={token} />
-    </SiteFrame>
+    </InviteFrame>
   );
 }
