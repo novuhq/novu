@@ -148,7 +148,7 @@ program
 
 program
   .command('setup')
-  .argument('[channel]', 'channel to link: telegram, slack, or email (interactive picker when omitted)')
+  .argument('[channel]', 'also link telegram or slack, or verify email on an account')
   .option('--api-url <url>', 'Novu API URL override')
   .option('--secret-key <key>', 'use an existing Novu environment instead of keyless')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the paste-or-page prompt)')
@@ -164,7 +164,7 @@ program
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .option('--skill', 'also install the human-cli skill for coding agents (default: prompt on a TTY)')
   .option('--no-skill', 'skip the coding-agent skill install')
-  .description('Connect yourself as the human — links a channel (run again to add more)')
+  .description('Create your agent inbox, then optionally connect Telegram or Slack')
   .action(setupCommand);
 
 program

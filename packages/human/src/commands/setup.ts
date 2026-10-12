@@ -2,7 +2,13 @@ import { randomBytes } from 'node:crypto';
 import pc from 'picocolors';
 import { type AgentPictureFile, loadPicture } from '../agent-picture';
 import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
-import { createInteraction, requestAddressVerification, setHumanAgentPicture, setupHumanRelay } from '../api/human';
+import {
+  createInteraction,
+  requestAddressVerification,
+  type SetupHumanRelayResult,
+  setHumanAgentPicture,
+  setupHumanRelay,
+} from '../api/human';
 import {
   addAgentEmailIntegration,
   bootstrapKeylessSession,
@@ -232,112 +238,209 @@ export function reusableAuth(
 
 export async function setupCommand(channelArg: string | undefined, options: SetupOptions): Promise<never> {
   try {
-    const channel = await resolveChannelChoice(channelArg);
-    // Read first, so a wrong file stops the setup before anything is made.
-    const picture = await readPictureOption(options);
-    const existing = loadConfig();
-    const apiUrl = resolveTargetApiUrl(options.apiUrl, existing);
-
-    // 1. Auth — secret key, else the saved login or keyless setup, else a fresh keyless env.
-    const secretKey = options.secretKey ?? process.env.NOVU_SECRET_KEY?.trim();
-    let auth = reusableAuth(existing, apiUrl, secretKey);
-
-    if (!auth) {
-      info('Creating a keyless Novu environment (no account needed)...');
-      auth = { mode: 'keyless', keylessIdentifier: await bootstrapKeylessSession(apiUrl) };
-    } else if (!secretKey) {
-      info(auth.mode === 'keyless' ? 'Reusing your existing keyless session.' : 'Using your saved login.');
-    }
-
-    const client = createHumanApiClient({
-      apiUrl,
-      secretKey: auth.secretKey,
-      keylessIdentifier: auth.mode === 'keyless' ? auth.keylessIdentifier : undefined,
-    });
-
-    // 2. Provision the relay agent + the human's subscriber row.
-    const localSubscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
-    const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
-    const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
-    const operatorEmail = await resolveOperatorEmail(options, client.isKeyless);
-
-    info('Setting up your human relay...');
-    const relay = await setupHumanRelay(client, {
-      subscriberId: localSubscriberId,
-      operator: true,
-      agentIdentifier: relayIdentifier,
-      ...agentIdentityOf(options),
-      ...name,
-      ...(operatorEmail ? { email: operatorEmail } : {}),
-    });
-    const agentName = channelNameFor(relay);
-    await uploadPicture(client, picture, relay.agentIdentifier);
-    // The account may already know you from the dashboard or another computer; that contact wins,
-    // so you stay one person everywhere. Older APIs just echo the id sent.
-    const subscriberId = relay.subscriberId || localSubscriberId;
-
-    const switchedContact = Boolean(existing?.subscriberId) && subscriberId !== existing?.subscriberId;
-
-    if (switchedContact) {
-      info('Your account already has you as a contact, so this computer now uses that one.');
-    }
-
-    // 3. Channel linking — linked channels live on the server; locally we only
-    // remember a default preference for when the caller does not pass `--via`.
-    await connectChannel(client, channel, relay, agentName, subscriberId, {
-      ...options,
-      ...(operatorEmail ? { email: operatorEmail } : {}),
-    });
-
-    // 4. Persist config — first setup becomes the default preference.
-    // A default saved for another contact may be a channel this one never connected.
-    const defaultChannel = (switchedContact ? undefined : existing?.defaultChannel) ?? channel;
-
-    const config: HumanCliConfig = {
-      apiUrl,
-      auth,
-      relayAgentIdentifier: relay.agentIdentifier,
-      subscriberId,
-      defaultChannel,
-    };
-    saveConfig(config);
-    info(`Saved config to ${configPath()}.`);
-
-    if (defaultChannel !== channel) {
-      info(
-        `Your default channel is still ${pc.bold(defaultChannel)} — switch with: human channels --default ${channel}`
-      );
-    }
-
-    // 5. Smoke test on the channel that was just linked.
-    await createInteraction(client, {
-      kind: 'tell',
-      card: {
-        title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`human approve "Deploy to production?"\`.`,
-      },
-      to: subscriberId,
-      via: channel,
-      agentIdentifier: relay.agentIdentifier,
-    });
-
-    process.stdout.write(
-      `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
-        `  ${pc.bold('human ask "Which environment should I target?"')}\n` +
-        `  ${pc.bold('human approve "Deploy to production?"')}\n` +
-        `  ${pc.bold('human tell "Build finished."')}\n`
-    );
-
-    if (auth.mode === 'keyless') {
-      info(
-        `This is a free demo without an account. Run ${pc.bold('human login')} anytime to keep it in a Human account.`
-      );
-    }
-
-    await maybeInstallSkill(options);
+    await runSetup(parseSetupChannel(channelArg), options);
     process.exit(0);
   } catch (err) {
     handleError(err);
   }
+}
+
+async function runSetup(channel: HumanChannel | undefined, options: SetupOptions): Promise<void> {
+  const picture = await readPictureOption(options);
+  const existing = loadConfig();
+  const apiUrl = resolveTargetApiUrl(options.apiUrl, existing);
+  const auth = await resolveSetupAuth(existing, apiUrl, options.secretKey ?? process.env.NOVU_SECRET_KEY?.trim());
+  const client = createHumanApiClient({
+    apiUrl,
+    secretKey: auth.secretKey,
+    keylessIdentifier: auth.mode === 'keyless' ? auth.keylessIdentifier : undefined,
+  });
+  const provisioned = await provisionOperator(client, existing, options, picture);
+
+  await linkInbox(client, channel === 'email', provisioned, options);
+  const chat = await resolveChatChannel(channel);
+  if (chat) {
+    await connectChannel(client, chat, provisioned.relay, channelNameFor(provisioned.relay), provisioned.subscriberId, {
+      ...options,
+      ...(provisioned.operatorEmail ? { email: provisioned.operatorEmail } : {}),
+    });
+  }
+  let linked: HumanChannel | undefined = chat;
+  if (!linked && channel === 'email') {
+    linked = 'email';
+  }
+  saveSetupConfig(apiUrl, auth, existing, provisioned, linked);
+  await confirmLinkedChannel(client, linked, provisioned);
+
+  if (auth.mode === 'keyless') {
+    info(
+      `This is a free demo without an account. Run ${pc.bold('human login')} anytime to keep it in a Human account.`
+    );
+  }
+
+  await maybeInstallSkill(options);
+}
+
+async function resolveSetupAuth(
+  existing: HumanCliConfig | null,
+  apiUrl: string,
+  secretKey: string | undefined
+): Promise<HumanCliConfig['auth']> {
+  const auth = reusableAuth(existing, apiUrl, secretKey);
+  if (!auth) {
+    info('Creating a keyless Novu environment (no account needed)...');
+
+    return { mode: 'keyless', keylessIdentifier: await bootstrapKeylessSession(apiUrl) };
+  }
+
+  if (!secretKey) {
+    info(auth.mode === 'keyless' ? 'Reusing your existing keyless session.' : 'Using your saved login.');
+  }
+
+  return auth;
+}
+
+async function provisionOperator(
+  client: HumanApiClient,
+  existing: HumanCliConfig | null,
+  options: SetupOptions,
+  picture: AgentPictureFile | undefined
+): Promise<{
+  relay: SetupHumanRelayResult;
+  subscriberId: string;
+  name: { firstName: string; lastName?: string } | undefined;
+  operatorEmail: string | undefined;
+  switchedContact: boolean;
+}> {
+  const localSubscriberId = existing?.subscriberId ?? `human_${randomBytes(6).toString('hex')}`;
+  const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
+  const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
+  const operatorEmail = await resolveOperatorEmail(options, client.isKeyless);
+
+  info('Setting up your human relay...');
+  const relay = await setupHumanRelay(client, {
+    subscriberId: localSubscriberId,
+    operator: true,
+    agentIdentifier: relayIdentifier,
+    ...agentIdentityOf(options),
+    ...name,
+    ...(operatorEmail ? { email: operatorEmail } : {}),
+  });
+  await uploadPicture(client, picture, relay.agentIdentifier);
+  const subscriberId = relay.subscriberId || localSubscriberId;
+  const switchedContact = Boolean(existing?.subscriberId) && subscriberId !== existing?.subscriberId;
+  if (switchedContact) {
+    info('Your account already has you as a contact, so this computer now uses that one.');
+  }
+
+  return { relay, subscriberId, name, operatorEmail, switchedContact };
+}
+
+async function linkInbox(
+  client: HumanApiClient,
+  verifyEmail: boolean,
+  provisioned: Awaited<ReturnType<typeof provisionOperator>>,
+  options: SetupOptions
+): Promise<void> {
+  if (verifyEmail) {
+    await connectEmail(client, provisioned.relay.agentIdentifier, provisioned.subscriberId, {
+      ...options,
+      ...(provisioned.operatorEmail ? { email: provisioned.operatorEmail } : {}),
+    });
+
+    return;
+  }
+
+  await announceAgentInbox(client, provisioned.relay.agentIdentifier);
+}
+
+/** Telegram or Slack from the command, or a prompt after the inbox exists. Enter skips. */
+async function resolveChatChannel(channel: HumanChannel | undefined): Promise<'telegram' | 'slack' | undefined> {
+  if (channel === 'telegram' || channel === 'slack') {
+    return channel;
+  }
+
+  return offerChatChannel();
+}
+
+async function offerChatChannel(): Promise<'telegram' | 'slack' | undefined> {
+  if (!process.stdin.isTTY) {
+    return undefined;
+  }
+
+  process.stdout.write(
+    `\nAlso connect a chat channel? Press Enter to skip.\n` +
+      `  ${pc.bold('1')}. Telegram\n` +
+      `  ${pc.bold('2')}. Slack\n\n`
+  );
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const answer = (await promptLine('Channel [1, 2, or Enter]: ')).trim().toLowerCase();
+    if (answer === '') {
+      return undefined;
+    }
+    if (answer === '1' || answer === 'telegram') {
+      return 'telegram';
+    }
+    if (answer === '2' || answer === 'slack') {
+      return 'slack';
+    }
+
+    process.stdout.write(`${pc.yellow('Pick 1 for Telegram, 2 for Slack, or press Enter to skip.')}\n`);
+  }
+
+  throw new Error('Pick 1 for Telegram, 2 for Slack, or press Enter to skip.');
+}
+
+function saveSetupConfig(
+  apiUrl: string,
+  auth: HumanCliConfig['auth'],
+  existing: HumanCliConfig | null,
+  provisioned: Awaited<ReturnType<typeof provisionOperator>>,
+  channel: HumanChannel | undefined
+): void {
+  const keptDefault = provisioned.switchedContact ? undefined : existing?.defaultChannel;
+  const defaultChannel = keptDefault ?? channel ?? 'email';
+  saveConfig({
+    apiUrl,
+    auth,
+    relayAgentIdentifier: provisioned.relay.agentIdentifier,
+    subscriberId: provisioned.subscriberId,
+    defaultChannel,
+  });
+  info(`Saved config to ${configPath()}.`);
+
+  if (channel && defaultChannel !== channel) {
+    info(`Your default channel is still ${pc.bold(defaultChannel)} — switch with: human channels --default ${channel}`);
+  }
+}
+
+async function confirmLinkedChannel(
+  client: HumanApiClient,
+  channel: HumanChannel | undefined,
+  provisioned: Awaited<ReturnType<typeof provisionOperator>>
+): Promise<void> {
+  if (!channel || (client.isKeyless && channel === 'email')) {
+    return;
+  }
+
+  const { name } = provisioned;
+  await createInteraction(client, {
+    kind: 'tell',
+    card: {
+      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`human approve "Deploy to production?"\`.`,
+    },
+    to: provisioned.subscriberId,
+    via: channel,
+    agentIdentifier: provisioned.relay.agentIdentifier,
+  });
+
+  process.stdout.write(
+    `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
+      `  ${pc.bold('human ask "Which environment should I target?"')}\n` +
+      `  ${pc.bold('human approve "Deploy to production?"')}\n` +
+      `  ${pc.bold('human tell "Build finished."')}\n`
+  );
 }
 
 /**
@@ -404,40 +507,22 @@ async function connectChannel(
   }
 }
 
-async function resolveChannelChoice(channelArg: string | undefined): Promise<HumanChannel> {
-  if (channelArg) {
-    const normalized = channelArg.toLowerCase();
-    if ((HUMAN_CHANNELS as readonly string[]).includes(normalized)) {
-      return normalized as HumanChannel;
-    }
-
-    if (normalized === 'whatsapp') {
-      throw new Error('whatsapp is not supported by `human setup` yet — use telegram, slack, or email for now.');
-    }
-
-    throw new Error(`Unknown channel "${channelArg}". Supported: ${HUMAN_CHANNELS.join(', ')}.`);
+/** A channel argument adds Telegram, Slack, or account email verification. Omitted, setup is the inbox. */
+function parseSetupChannel(channelArg: string | undefined): HumanChannel | undefined {
+  if (!channelArg) {
+    return undefined;
   }
 
-  if (!process.stdin.isTTY) {
-    throw new Error(`Pass a channel when running non-interactively: human setup <${HUMAN_CHANNELS.join('|')}>`);
+  const normalized = channelArg.toLowerCase();
+  if ((HUMAN_CHANNELS as readonly string[]).includes(normalized)) {
+    return normalized as HumanChannel;
   }
 
-  process.stdout.write(
-    `\nWhere should agents reach you?\n` +
-      `  ${pc.bold('1')}. Telegram ${pc.dim('(fastest — a private bot, QR link)')}\n` +
-      `  ${pc.bold('2')}. Slack    ${pc.dim('(your workspace — app install)')}\n` +
-      `  ${pc.bold('3')}. Email    ${pc.dim('(buttons in your inbox, reply to answer)')}\n\n`
-  );
+  if (normalized === 'whatsapp') {
+    throw new Error('whatsapp is not supported by `human setup` yet — use telegram, slack, or email for now.');
+  }
 
-  const answer = await promptLine(`Channel [1-${HUMAN_CHANNELS.length}]: `);
-  const index = Number(answer.trim()) - 1;
-  const byNumber = HUMAN_CHANNELS[index];
-  if (byNumber) return byNumber;
-
-  const byName = HUMAN_CHANNELS.find((name) => name === answer.trim().toLowerCase());
-  if (byName) return byName;
-
-  throw new Error(`Pick 1-${HUMAN_CHANNELS.length} (or run: human setup <${HUMAN_CHANNELS.join('|')}>).`);
+  throw new Error(`Unknown channel "${channelArg}". Supported: ${HUMAN_CHANNELS.join(', ')}.`);
 }
 
 // --- Telegram -------------------------------------------------------------
@@ -675,24 +760,38 @@ async function handOffToTelegramSetupPage(
  * their email on the subscriber (delivery target + inbound reply resolution —
  * no ChannelEndpoint involved).
  */
+async function announceAgentInbox(
+  client: HumanApiClient,
+  agentIdentifier: string
+): Promise<{ identifier: string; inboundAddress?: string }> {
+  const link = await addAgentEmailIntegration(client, agentIdentifier);
+  const { identifier } = link.integration;
+  const inboundAddress = link.integration.sharedInboundAddress;
+
+  if (client.isKeyless) {
+    info('Your agent inbox is ready.');
+    if (inboundAddress) {
+      info(`Mail ${pc.bold(inboundAddress)} from the address you gave to see it work.`);
+    }
+    info('Outbound email starts after you claim this setup. Run `human login`.');
+
+    return { identifier, inboundAddress };
+  }
+
+  info(inboundAddress ? `Your agent inbox is ${pc.bold(inboundAddress)}.` : 'Your agent inbox is ready.');
+
+  return { identifier, inboundAddress };
+}
+
 export async function connectEmail(
   client: HumanApiClient,
   agentIdentifier: string,
   subscriberId: string,
   options: SetupOptions
 ): Promise<string> {
-  info(client.isKeyless ? 'Your agent inbox is ready.' : 'Creating an email integration...');
-  const link = await addAgentEmailIntegration(client, agentIdentifier);
-  const integrationIdentifier = link.integration.identifier;
-  const inboundAddress = link.integration.sharedInboundAddress;
-
+  const { identifier, inboundAddress } = await announceAgentInbox(client, agentIdentifier);
   if (client.isKeyless) {
-    if (inboundAddress) {
-      info(`Mail ${pc.bold(inboundAddress)} from the address you gave to see it work.`);
-    }
-    info('Outbound email starts after you claim this setup. Run `human login`.');
-
-    return integrationIdentifier;
+    return identifier;
   }
 
   if (!options.email && !process.stdin.isTTY) {
@@ -734,7 +833,7 @@ export async function connectEmail(
     info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);
   }
 
-  return integrationIdentifier;
+  return identifier;
 }
 
 async function promptForEmail(): Promise<string> {

@@ -71,6 +71,8 @@ token or a Slack token, and never paste one yourself. Exit code 11 means they
 didn't finish in time — nothing is broken, re-running the same command resumes
 at the missing step.
 
+`human setup` asks for a name and an email address, creates the agent inbox, and prints its address. It then asks whether to also connect Telegram or Slack; Enter skips. `human setup telegram` or `human setup slack` links that channel without asking.
+
 A no-account (keyless) setup gets an email inbox automatically, but that inbox
 can only receive. The agent does not email anyone until the operator claims the
 setup. Mailing the inbox from the address given at `human setup` gets one reply
