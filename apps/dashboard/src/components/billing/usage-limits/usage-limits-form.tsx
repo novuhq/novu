@@ -15,9 +15,12 @@ import { useUpdateUsageLimits } from '@/hooks/use-update-usage-limits';
 import { AlertRecipientsSelect } from './alert-recipients-select';
 import { OnDemandLimitStepper } from './on-demand-limit-stepper';
 import { SettingCard } from './setting-card';
+import { TierSuggestionToast } from './tier-suggestion-toast';
 import {
+  getMonthlyCostAtLimit,
   getOnDemandCost,
   getPauseAtLimitDescription,
+  getTierSuggestion,
   getUsageAlertsDescription,
   pausesOnSave,
   type UsageLimitsFormValues,
@@ -49,6 +52,17 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
   const [workflowRuns, pauseAtLimit] = form.watch(['workflowRuns', 'pauseAtLimit']);
   const limitSettings = { workflowRuns, pauseAtLimit };
   const onDemandCost = getOnDemandCost(workflowRuns.onDemandLimit, usage.onDemandPricePer1k);
+  const tierSuggestion = getTierSuggestion({
+    apiServiceLevel: view.plan.apiServiceLevel,
+    isOnTrial: view.plan.isOnTrial,
+    onDemandLimit: workflowRuns.onDemandLimit,
+    onDemandPricePer1k: usage.onDemandPricePer1k,
+  });
+  const monthlyCostAtLimit = getMonthlyCostAtLimit(
+    view.plan.apiServiceLevel,
+    workflowRuns.onDemandLimit,
+    usage.onDemandPricePer1k
+  );
 
   const onSubmit = async (values: UsageLimitsFormValues) => {
     try {
@@ -106,6 +120,14 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
                   </FormItem>
                 )}
               />
+
+              {tierSuggestion && monthlyCostAtLimit !== null && (
+                <TierSuggestionToast
+                  suggestion={tierSuggestion}
+                  monthlyCostAtLimit={monthlyCostAtLimit}
+                  billingInterval={view.plan.billingInterval}
+                />
+              )}
 
               <Separator variant="line-spacing" className="before:bg-stroke-weak" />
 

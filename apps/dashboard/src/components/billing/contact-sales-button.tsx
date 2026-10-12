@@ -7,9 +7,10 @@ import { TelemetryEvent } from '../../utils/telemetry';
 
 interface ContactSalesButtonProps {
   className?: string;
+  utmCampaign?: string;
 }
 
-export function ContactSalesButton({ className }: ContactSalesButtonProps) {
+export function ContactSalesButton({ className, utmCampaign = 'billing_page' }: ContactSalesButtonProps) {
   const track = useTelemetry();
 
   useEffect(() => {
@@ -22,19 +23,25 @@ export function ContactSalesButton({ className }: ContactSalesButtonProps) {
   const handleContactSales = () => {
     track(TelemetryEvent.BILLING_CONTACT_SALES_CLICKED, {
       intendedPlan: ApiServiceLevelEnum.ENTERPRISE,
-      source: 'billing_page',
+      source: utmCampaign,
     });
   };
 
   return (
     <Button
+      type="button"
       mode="lighter"
       variant="secondary"
       size="xs"
       className={className}
       data-cal-namespace="novu-meeting"
       data-cal-link="team/novu/novu-meeting"
-      data-cal-config='{"layout":"month_view"}'
+      data-cal-config={JSON.stringify({
+        layout: 'month_view',
+        utm_source: 'dashboard',
+        utm_medium: 'billing',
+        utm_campaign: utmCampaign,
+      })}
       onClick={handleContactSales}
     >
       Contact sales
