@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 import { Brand } from '@/components/site/brand';
 
-// The public site still lives on the old domain until it moves to agentinbox.md (NV-8998).
 const SITE_URL = 'https://agentinbox.md';
 
 /**
