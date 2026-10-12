@@ -7,14 +7,14 @@ import {
 import { type ReactNode } from 'react';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
-import { DEFAULT_CONTENT_SOURCE } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import { ContentSourceSelector } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-selector';
 import {
-  getMergedOverrideHint,
   useAnnotatedOverridePreview,
+  usePreviewOverrideValues,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import { DEFAULT_CONTENT_SOURCE } from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
+import { ResolvedPayloadPreview } from '@/components/workflow-editor/steps/shared/provider-overrides/resolved-payload-preview';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { PushPreview } from './push-preview';
@@ -49,22 +49,23 @@ function extractPushPreview(previewData?: GeneratePreviewResponseDto): PushRende
  * Split out so the flag-off preview never subscribes to the `providerOverrides` form field.
  */
 function PushOverridePreview({ isPreviewPending, previewData }: PushPreviewPanelProps) {
-  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.PUSH);
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.PUSH);
   const { previewSource, setPreviewSource } = useContentSource();
 
   const preview = extractPushPreview(previewData);
   const body = preview?.body ?? '';
-  const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
+  const overrideSource = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
 
+  const previewOverrides = usePreviewOverrideValues(preview);
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
-    providerId: activeProviderId,
-    formOverrides: providerOverrides,
-    previewOverrides: preview?.providerOverrides,
+    source: overrideSource,
+    formOverrides: overrides,
+    previewOverrides,
   });
 
   const renderBody = () => {
-    if (!activeProviderId || !annotatedPreview) {
+    if (!overrideSource || !annotatedPreview) {
       return (
         <MobilePushPreview>
           <PushPreview isPreviewPending={isPreviewPending} previewData={previewData} />
@@ -76,25 +77,12 @@ function PushOverridePreview({ isPreviewPending, previewData }: PushPreviewPanel
       return <Skeleton className="h-24 w-full shrink-0 rounded-md" />;
     }
 
-    const displayName =
-      providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? activeProviderId;
-
     return (
-      <div className="flex min-h-0 flex-col gap-1.5">
-        <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-          Merged override fields
-        </span>
-        <AnnotatedOverrideJson {...annotatedPreview} />
-        <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
-          {getMergedOverrideHint({
-            hasOverride: annotatedPreview.hasOverride,
-            defaultContentKey: annotatedPreview.defaultContentKey,
-            body,
-            providerId: activeProviderId,
-            displayName,
-          })}
-        </div>
-      </div>
+      <ResolvedPayloadPreview
+        lines={annotatedPreview.annotatedLines}
+        source={overrideSource}
+        providerOptions={providerOptions}
+      />
     );
   };
 

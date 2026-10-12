@@ -237,6 +237,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     SyncAgentEmailSenderName,
     HumanInteractionActivityRecorder,
     NovuEmailProvisioningService,
+    AgentConversationService,
+    CreateConversationInteraction,
   ],
 })
 export class AgentsModule {}

@@ -193,8 +193,8 @@ export class HumanDeliveryService {
 
       throw new NotFoundException(
         params.via
-          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human invite ${params.subscriberId} --via ${params.via}\`.`
-          : `Human "${params.subscriberId}" has no linked channel. Run \`human invite ${params.subscriberId}\`.`
+          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human contact invite ${params.subscriberId} --via ${params.via}\`.`
+          : `Human "${params.subscriberId}" has no linked channel. Run \`human contact invite ${params.subscriberId}\`.`
       );
     }
 
@@ -275,7 +275,7 @@ export class HumanDeliveryService {
   }
 
   /**
-   * Channel status for `human contacts`. Includes a stored email address even
+   * Channel status for `human contact list`. Includes a stored email address even
    * when the relay no longer has an email integration linked.
    */
   async describeContactChannels(params: {
@@ -477,11 +477,11 @@ export class HumanDeliveryService {
     if (pending) {
       return (
         `Human "${params.subscriberId}"'s email ${maskEmail(pending.address)} is awaiting verification ` +
-        `(sent ${relativeAge(pending.requestedAt)}). Re-run \`human invite ${params.subscriberId} --via email\` to resend.`
+        `(sent ${relativeAge(pending.requestedAt)}). Re-run \`human contact invite ${params.subscriberId} --via email\` to resend.`
       );
     }
 
-    return `Human "${params.subscriberId}" has no verified email address. Run \`human invite ${params.subscriberId} --via email\`.`;
+    return `Human "${params.subscriberId}" has no verified email address. Run \`human contact invite ${params.subscriberId} --via email\`.`;
   }
 
   private async findLinkedIntegrations(params: {

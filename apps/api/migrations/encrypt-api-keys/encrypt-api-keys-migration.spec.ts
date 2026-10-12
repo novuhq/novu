@@ -31,7 +31,7 @@ describe('Encrypt Old api keys', () => {
     for (let i = 0; i < 2; i += 1) {
       await environmentRepository.create({
         identifier: 'identifier' + i,
-        name: faker.name.jobTitle(),
+        name: faker.person.jobTitle(),
         _organizationId: session.organization._id,
         apiKeys: [
           {
@@ -84,7 +84,7 @@ describe('Encrypt Old api keys', () => {
     for (let i = 0; i < 2; i += 1) {
       await environmentRepository.create({
         identifier: 'identifier' + i,
-        name: faker.name.jobTitle(),
+        name: faker.person.jobTitle(),
         _organizationId: session.organization._id,
         apiKeys: [
           {

@@ -21,12 +21,23 @@ minimumReleaseAge: 4320
 # (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
 # matches the pre-v11.0.4 behavior.
 minimumReleaseAgeStrict: false
+# First-party packages are published by us and consumed right away, so they skip the age gate.
+minimumReleaseAgeExclude:
+  - '@novu/*'
 
 # Settings migrated from .npmrc (pnpm v11 reads only auth/registry settings from .npmrc).
 autoInstallPeers: true
 strictPeerDependencies: false
 fetchRetryMaxtimeout: 10000
 enablePrePostScripts: true
+
+# pnpm >= 11.28 resolves debug's optional supports-color peer per project, and that suffix
+# spreads up to @nestjs/common/core, so apps and libs load different Nest copies and DI
+# breaks. Giving debug its own supports-color removes the peer variant. 8.x is the last CJS major.
+packageExtensions:
+  debug:
+    dependencies:
+      supports-color: ^8.1.1
 
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
@@ -79,7 +90,11 @@ overrides:
   '@types/mocha': ^10.0.8
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
-  '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  # GHSA-m9gg-hp2v-232j (high) / GHSA-f596-whhp-79r4 (low): @grpc/grpc-js
+  # getAuthContext may return unauthorized certificates as authorized, and
+  # server leaks handler error messages to clients. Patched in 1.14.5.
+  # Transitive via @nestjs/terminus and newrelic.
+  '@grpc/grpc-js@>=1.14.0 <1.14.5': ^1.14.5
   # GHSA-7mx3-vvmw-hjmv (high): @graphql-tools/utils prototype pollution in
   # `mergeDeep`. Patched in 12.0.1 (patch bump within the 12.0.x line).
   # Transitive via `@nestjs/graphql` in apps/api and apps/webhook.
@@ -119,11 +134,20 @@ overrides:
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
-  nextjs>next: 15.5.24
+  # Pin playground `nextjs` package's `next` to the patched 15.5.x release
+  # (GHSA-4jqv-mc3x-m676, GHSA-mcj8-r9mp-w47p and friends in >=15.0.0 <15.5.27
+  # are patched in 15.5.27).
+  nextjs>next: ^15.5.27
   # GHSA-vcvr-r3jv-pc5j (critical): Next.js remote code execution in
   # next/og ImageResponse. Patched in 16.3.6; widen the override so transitive
   # 16.3.4 resolutions (via better-auth, @better-auth/sso) also pick up the fix.
-  next@<16.3.6: ^16.3.6
+  # GHSA-cjq9-62q9-8jv4 (high): Next.js SSRF in middleware/image optimization,
+  # plus related moderate advisories GHSA-3w37-wq28-93x7, GHSA-4jqv-mc3x-m676,
+  # GHSA-f87g-xv8r-7p7x, GHSA-mcj8-r9mp-w47p, and low GHSA-39w2-rjm5-chcv.
+  # Patched in 16.3.8; widen the override from <16.3.6 so transitive consumers
+  # (better-auth, @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land
+  # on 16.3.8.
+  next@<16.3.8: ^16.3.8
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
@@ -162,7 +186,7 @@ overrides:
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.3.0: ^2.3.0
+  multer@<2.4.0: ^2.4.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
@@ -194,6 +218,13 @@ overrides:
   # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
   # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
   '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
+  # GHSA-6qxp-vccf-f47h (high): the v2 OAuth client can send stored
+  # credentials to an authorization server chosen by the MCP server. Patched
+  # in 2.2.0. agents@0.21.0 peers @modelcontextprotocol/client at exactly
+  # 2.0.0 for enterprise/workers/thalamus-observer. Pin 2.2.0 rather than
+  # floating ^2.2.0: 2.3.0 changes cross-origin redirect handling, and 2.2.0
+  # (published 2026-09-28) already satisfies minimumReleaseAge.
+  '@modelcontextprotocol/client@>=2.0.0 <2.2.0': 2.2.0
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
@@ -240,7 +271,9 @@ overrides:
   cookie@<0.7.0: ^0.7.0
   tmp@<0.2.7: ^0.2.7
   socket.io-parser@>=4.0.0 <4.2.7: ^4.2.7
-  engine.io@>=6.0.0 <6.6.7: ^6.6.7
+  # GHSA-2gc4-cqfq-p2gv (high): engine.io protocol revision mismatch DoS.
+  # Patched in 6.6.10. Transitive via @nestjs/platform-socket.io > socket.io.
+  engine.io@>=6.0.0 <6.6.10: ^6.6.10
   cross-spawn@<6.0.6: ^6.0.6
   path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
   path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
@@ -251,7 +284,7 @@ overrides:
   # via the Accept header. Patched in 2.70.2 (patch bump within the 2.x line).
   '@sveltejs/kit@<2.70.2': ^2.70.2
   langsmith@<0.6.0: ^0.6.3
-  devalue@<5.8.1: ^5.8.1
+  devalue@<5.9.3: ^5.9.3
   picomatch@<2.3.2: ^2.3.2
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
   yaml@>=1.0.0 <1.10.3: ^1.10.3
@@ -311,8 +344,6 @@ overrides:
   sharp@<0.35.5: ^0.35.5
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
-  '@taskforcesh/bullmq-pro@6.11.0>uuid': 11.1.1
-  bullmq@4.17.0>uuid: 11.1.1
   uuid@>=13.0.0 <13.0.1: ^13.0.1
   '@opentelemetry/exporter-prometheus@<0.217.0': ^0.217.0
   '@opentelemetry/sdk-node@<0.217.0': ^0.217.0
@@ -390,6 +421,7 @@ overrides:
   # uncontrolled AST recursion in nested pseudo-selectors. Patched in 6.1.3.
   # Pulled transitively via tailwindcss, postcss-preset-env, and cssnano.
   postcss-selector-parser@>=6.1.0 <6.1.3: ^6.1.3
+  postcss-selector-parser@>=7.0.0 <7.1.6: ^7.1.6
   # GHSA-2wm5-q62r-hmrv: colord slow rejection of oversized malformed color
   # strings (DoS via CPU). Patched in 2.9.4. Only pulled transitively via
   # cssnano (postcss-colormin / postcss-minify-gradients) in packages/js.

@@ -25,6 +25,11 @@ export {
   FCM_ROUTING_KEYS,
 } from './fcm/keys';
 export { grafanaOverrideJsonSchema } from './grafana-override.schema';
+export {
+  packProviderOverrideOutput,
+  type UnpackedProviderOverrideOutput,
+  unpackProviderOverrideOutput,
+} from './integration-overrides-output';
 export { LIQUID_TEMPLATE_PATTERN, toLiquidTolerantSchema } from './liquid-tolerant';
 export {
   type MergedProviderPreview,
@@ -48,6 +53,8 @@ export {
   getProviderOverrideKeysOnlySchema,
   getProviderOverrideSchema,
   getProviderPrimaryContentKey,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  INTEGRATION_OVERRIDES_RUNTIME_SCHEMA,
   type OverrideChannelType,
   PROVIDER_OVERRIDE_CONFIGS,
   PROVIDER_OVERRIDE_KEYS,

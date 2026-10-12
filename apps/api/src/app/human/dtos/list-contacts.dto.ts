@@ -20,6 +20,12 @@ export class ListContactsQueryDto {
   @IsString()
   after?: string;
 
+  @ApiPropertyOptional({ description: 'Return only the contact with this subscriberId.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  subscriberId?: string;
+
   @ApiPropertyOptional({
     description: 'Relay agent whose channels, defaults and invites are reported. Defaults to `human-relay`.',
   })

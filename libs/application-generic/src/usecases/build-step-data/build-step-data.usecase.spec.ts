@@ -16,6 +16,25 @@ jest.mock('../../utils/provider-overrides', () => ({
 
     return stitched;
   },
+  stitchIntegrationOverridesFromDocs: (
+    docs: Array<{ providerId?: string; integrationIdentifier?: string; controls?: Record<string, unknown> }>
+  ) => {
+    const stitched: Record<string, Record<string, Record<string, unknown>>> = {};
+
+    for (const doc of docs) {
+      if (!doc.providerId || !doc.integrationIdentifier) {
+        continue;
+      }
+
+      stitched[doc.providerId] = { ...stitched[doc.providerId], [doc.integrationIdentifier]: doc.controls ?? {} };
+    }
+
+    if (Object.keys(stitched).length === 0) {
+      return undefined;
+    }
+
+    return stitched;
+  },
 }));
 
 import { ControlValuesRepository, NotificationTemplateEntity } from '@novu/dal';
@@ -25,6 +44,7 @@ import {
   EnvironmentTypeEnum,
   ResourceOriginEnum,
   StepTypeEnum,
+  ToolProviderIdEnum,
   UserSessionData,
 } from '@novu/shared';
 import { expect } from 'chai';
@@ -169,5 +189,121 @@ describe('BuildStepDataUsecase', () => {
     expect(controlValuesRepository.find.calledOnce).to.equal(true);
     expect(buildVariableSchemaUsecase.loadEnvironmentContext.called).to.equal(false);
     expect(step.controlValues).to.deep.equal({ subject: 'Hello' });
+  });
+
+  describe('integration overrides', () => {
+    const toolWorkflow = {
+      _id: 'workflow-id',
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+      triggers: [{ identifier: 'alerts' }],
+      steps: [
+        {
+          _id: 'step-1',
+          _templateId: 'template-1',
+          stepId: 'tool-step',
+          name: 'Tool',
+          template: { type: StepTypeEnum.TOOL },
+        },
+        {
+          _id: 'step-2',
+          _templateId: 'template-2',
+          stepId: 'chat-step',
+          name: 'Chat',
+          template: { type: StepTypeEnum.CHAT },
+        },
+      ],
+    } as unknown as NotificationTemplateEntity;
+
+    const overrideDocs = [
+      {
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+        _stepId: 'template-1',
+        providerId: ToolProviderIdEnum.Webhook,
+        controls: { env: 'all' },
+      },
+      {
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        _stepId: 'template-1',
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier: 'prod-alerts',
+        controls: { alert_type: 'incident' },
+      },
+      {
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        _stepId: 'template-1',
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier: 'staging-alerts',
+        controls: {},
+      },
+    ];
+
+    it('returns stitched integration overrides from the shared context without mixing them into provider overrides', async () => {
+      controlValuesRepository.find.resolves(overrideDocs as never);
+      buildVariableSchemaUsecase.loadEnvironmentContext.resolves({ rawEnvVars: [], environment: null });
+
+      const sharedContext = await usecase.loadWorkflowBuildContext(toolWorkflow, user);
+      const toolStep = await usecase.execute(
+        BuildStepDataCommand.create(
+          { user, workflowIdOrInternalId: toolWorkflow._id, stepIdOrInternalId: 'step-1' },
+          { sharedContext }
+        )
+      );
+      const chatStep = await usecase.execute(
+        BuildStepDataCommand.create(
+          { user, workflowIdOrInternalId: toolWorkflow._id, stepIdOrInternalId: 'step-2' },
+          { sharedContext }
+        )
+      );
+
+      const [query, projection] = controlValuesRepository.find.firstCall.args;
+      expect(query.level).to.deep.equal({
+        $in: [
+          ControlValuesLevelEnum.STEP_CONTROLS,
+          ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+          ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        ],
+      });
+      expect(projection).to.include({ providerId: 1, integrationIdentifier: 1 });
+      expect(toolStep.providerOverrides).to.deep.equal({ [ToolProviderIdEnum.Webhook]: { env: 'all' } });
+      expect(toolStep.integrationOverrides).to.deep.equal({
+        [ToolProviderIdEnum.Webhook]: {
+          'prod-alerts': { alert_type: 'incident' },
+          'staging-alerts': {},
+        },
+      });
+      expect(chatStep).not.to.have.property('integrationOverrides');
+    });
+
+    it('loads provider and integration override docs in one query when no shared context is provided', async () => {
+      getWorkflowByIdsUseCase.execute.resolves(toolWorkflow);
+      controlValuesRepository.findOne.resolves({ controls: { body: 'hello' } } as never);
+      controlValuesRepository.find.resolves(overrideDocs as never);
+
+      const step = await usecase.execute(
+        BuildStepDataCommand.create({
+          user,
+          workflowIdOrInternalId: toolWorkflow._id,
+          stepIdOrInternalId: 'step-1',
+        })
+      );
+
+      expect(controlValuesRepository.find.calledOnce).to.equal(true);
+      expect(controlValuesRepository.find.firstCall.args[0]).to.deep.include({
+        _environmentId: user.environmentId,
+        _organizationId: user.organizationId,
+        _workflowId: toolWorkflow._id,
+        _stepId: 'template-1',
+        level: {
+          $in: [ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS, ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS],
+        },
+      });
+      expect(step.providerOverrides).to.deep.equal({ [ToolProviderIdEnum.Webhook]: { env: 'all' } });
+      expect(step.integrationOverrides).to.deep.equal({
+        [ToolProviderIdEnum.Webhook]: {
+          'prod-alerts': { alert_type: 'incident' },
+          'staging-alerts': {},
+        },
+      });
+    });
   });
 });

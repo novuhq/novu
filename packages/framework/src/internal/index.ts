@@ -27,5 +27,5 @@ export {
 } from '../resources/agent/workflow-origin-injection';
 export { actionStepSchemas, channelStepSchemas } from '../schemas';
 export * from '../types';
-export { compileJsonControlValues, repairJsonString } from '../utils/compile-json-control-values';
+export { compileJsonControlValues, renderLiquidJson, repairJsonString } from '../utils/compile-json-control-values';
 export { createLiquidEngine } from '../utils/liquid.utils';
