@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { BullMqService, buildEnvelopeRequestSource } from '@novu/application-generic';
+import { buildEnvelopeRequestSource } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import Promise from 'bluebird';
 import dns from 'dns';
@@ -29,7 +29,6 @@ const LanguageDetect = require('languagedetect');
 const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 
 const inboundMailService = new InboundMailService();
-BullMqService.haveProInstalled();
 
 /**
  * Exposed for tests so they can inject mock `requestLogger` / `tenantResolver`
@@ -288,6 +287,7 @@ class Mailin extends events.EventEmitter {
                 return finalizedMessage;
               })
               .then((finalizedMessage) =>
+                // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing attachment upload flow is outside this change.
                 nr.startSegment('inbound-mail/upload-attachments', true, async () => {
                   if (Array.isArray(finalizedMessage.attachments) && finalizedMessage.attachments.length > 0) {
                     const { mode, uploaded, failedCount, retriableFailedCount } = await uploadAttachmentsToS3(
