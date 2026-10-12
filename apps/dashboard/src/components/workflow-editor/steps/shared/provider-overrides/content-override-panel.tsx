@@ -8,9 +8,7 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import {
-  ALL_INTEGRATIONS_LABEL,
   DEFAULT_CONTENT_SOURCE,
-  getIntegrationName,
   getOverrideFormField,
   getOverrideIssueOwnerPath,
   getOverridePath,
@@ -29,71 +27,11 @@ import {
 } from './content-source';
 import { useContentSource } from './content-source-context';
 import { ContentSourceSelector } from './content-source-selector';
-import {
-  MergesOverBar,
-  type OverrideInheritance,
-  ProviderOverrideEditor,
-  type ProviderOverrideEditorProps,
-} from './provider-override-editor';
+import { MergesOverBar } from './merges-over-bar';
+import { buildOverrideInheritance } from './override-inheritance';
+import { ProviderOverrideEditor, type ProviderOverrideEditorProps } from './provider-override-editor';
 import { RemoveOverrideModal } from './remove-override-modal';
 import { readOverrideValues } from './use-provider-override-options';
-
-/** What an override starts from before its own keys apply, and which integrations replace its keys. */
-function buildOverrideInheritance(
-  source: OverrideContentSource,
-  providerOptions: ProviderOverrideOption[],
-  overrides: OverrideValues
-): OverrideInheritance {
-  const { providerId, integrationIdentifier } = source;
-  const providerOption = providerOptions.find((option) => option.providerId === providerId);
-  const providerName = providerOption?.displayName ?? getOverrideProviderDisplayName(providerId);
-  const hasIntegrations = !!providerOption && providerOption.integrations.length > 0;
-  const allIntegrationsLabel = `${providerName} · ${ALL_INTEGRATIONS_LABEL}`;
-  const defaultContentLayer = { label: 'Default content', source: DEFAULT_CONTENT_SOURCE };
-
-  if (integrationIdentifier !== undefined) {
-    const providerOverride = getSourceOverride({ providerId }, overrides);
-    const hasInheritedKeys = Object.keys(providerOverride ?? {}).length > 0;
-    const inheritsFrom = providerOverride === undefined ? 'Default content' : ALL_INTEGRATIONS_LABEL;
-
-    return {
-      emptyMessage: `${getIntegrationName(providerId, integrationIdentifier, providerOptions)} inherits everything from ${inheritsFrom}. Add only the keys that should differ.`,
-      inheritedOverride: hasInheritedKeys ? providerOverride : undefined,
-      overriddenKeyLabels: {},
-      mergesOver:
-        providerOverride === undefined
-          ? [defaultContentLayer]
-          : [defaultContentLayer, { label: allIntegrationsLabel, source: { providerId } }],
-      ownerLabel: getIntegrationName(providerId, integrationIdentifier, providerOptions),
-      ownerIdentifier: integrationIdentifier,
-    };
-  }
-
-  const integrationNamesByKey = new Map<string, string[]>();
-
-  for (const [identifier, integrationOverride] of Object.entries(overrides.integrationOverrides?.[providerId] ?? {})) {
-    const integrationName = getIntegrationName(providerId, identifier, providerOptions);
-
-    for (const key of Object.keys(integrationOverride ?? {})) {
-      integrationNamesByKey.set(key, [...(integrationNamesByKey.get(key) ?? []), integrationName]);
-    }
-  }
-
-  const owner = hasIntegrations ? `All ${providerName} integrations inherit` : `${providerName} inherits`;
-
-  return {
-    emptyMessage: `${owner} everything from Default content. Add only the keys that should differ.`,
-    overriddenKeyLabels: Object.fromEntries(
-      [...integrationNamesByKey].map(([key, names]) => [
-        key,
-        names.length === 1 ? `Overridden in ${names[0]}` : `Overridden in ${names.length} integrations`,
-      ])
-    ),
-    mergesOver: [defaultContentLayer],
-    ownerLabel: hasIntegrations ? allIntegrationsLabel : providerName,
-    ownerIdentifier: providerOption?.soleIntegrationIdentifier,
-  };
-}
 
 /** Per-provider customizations a channel can layer onto the generic override editor. */
 export type ProviderOverrideEditorExtras = Pick<

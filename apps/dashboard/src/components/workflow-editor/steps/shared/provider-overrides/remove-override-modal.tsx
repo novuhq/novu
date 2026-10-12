@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Button } from '@/components/primitives/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@/components/primitives/dialog';
 import {
+  ALL_INTEGRATIONS_LABEL,
   getIntegrationName,
   getOverrideProviderDisplayName,
   hasOwn,
@@ -30,14 +32,13 @@ function getRemoveOverrideCopy(
   overrides: OverrideValues
 ): RemoveOverrideCopy {
   const { providerId, integrationIdentifier } = source;
-  const providerName =
-    providerOptions.find((option) => option.providerId === providerId)?.displayName ??
-    getOverrideProviderDisplayName(providerId);
+  const providerOption = providerOptions.find((option) => option.providerId === providerId);
+  const providerName = providerOption?.displayName ?? getOverrideProviderDisplayName(providerId);
 
   if (integrationIdentifier !== undefined) {
     const integrationName = getIntegrationName(providerId, integrationIdentifier, providerOptions);
     const fallback = hasOwn(overrides.providerOverrides, providerId)
-      ? `${providerName} · All integrations, then Default content`
+      ? `${providerName} · ${ALL_INTEGRATIONS_LABEL}, then Default content`
       : 'Default content';
 
     return {
@@ -46,7 +47,6 @@ function getRemoveOverrideCopy(
     };
   }
 
-  const providerOption = providerOptions.find((option) => option.providerId === providerId);
   if (!providerOption || providerOption.integrations.length === 0) {
     return {
       title: `Remove the ${providerName} override?`,
@@ -89,7 +89,13 @@ export function RemoveOverrideModal({
   onConfirm,
   onCancel,
 }: RemoveOverrideModalProps) {
-  const copy = source ? getRemoveOverrideCopy(source, providerOptions, overrides) : undefined;
+  // Keeps the last source's copy on screen while the dialog animates closed after `source` is cleared.
+  const [displayedSource, setDisplayedSource] = useState(source);
+  if (source && source !== displayedSource) {
+    setDisplayedSource(source);
+  }
+
+  const copy = displayedSource ? getRemoveOverrideCopy(displayedSource, providerOptions, overrides) : undefined;
 
   return (
     <Dialog

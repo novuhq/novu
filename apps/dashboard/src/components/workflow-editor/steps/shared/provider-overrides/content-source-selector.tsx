@@ -142,26 +142,31 @@ function matchesQuery(query: string, ...values: Array<string | undefined>): bool
   return values.some((value) => value?.toLowerCase().includes(query));
 }
 
+type VisibleProvider = {
+  provider: ProviderOverrideOption;
+  showAllIntegrationsRow: boolean;
+};
+
 /**
  * Narrows the picker to the query: a provider whose name matches keeps all its rows, otherwise only
  * the integrations that match are kept and the provider-wide row is dropped.
  */
-function filterProviders(providers: ProviderOverrideOption[], rawQuery: string): ProviderOverrideOption[] {
+function filterProviders(providers: ProviderOverrideOption[], rawQuery: string): VisibleProvider[] {
   const query = rawQuery.trim().toLowerCase();
   if (!query) {
-    return providers;
+    return providers.map((provider) => ({ provider, showAllIntegrationsRow: true }));
   }
 
-  return providers.flatMap((provider) => {
+  return providers.flatMap<VisibleProvider>((provider) => {
     if (matchesQuery(query, provider.displayName, provider.soleIntegrationIdentifier)) {
-      return [provider];
+      return [{ provider, showAllIntegrationsRow: true }];
     }
 
     const integrations = provider.integrations.filter((integration) =>
       matchesQuery(query, integration.name, integration.integrationIdentifier)
     );
 
-    return integrations.length > 0 ? [{ ...provider, integrations }] : [];
+    return integrations.length > 0 ? [{ provider: { ...provider, integrations }, showAllIntegrationsRow: false }] : [];
   });
 }
 
@@ -234,7 +239,7 @@ export function ContentSourceSelector({
   const rowCount = providers.reduce((count, provider) => count + 1 + provider.integrations.length, 0);
   const isSearchable = rowCount >= SEARCH_ROW_THRESHOLD;
   const visibleProviders = useMemo(
-    () => (isSearchable ? filterProviders(providers, query) : providers),
+    () => filterProviders(providers, isSearchable ? query : ''),
     [isSearchable, providers, query]
   );
   const hasSelectedSourceError =
@@ -324,7 +329,7 @@ export function ContentSourceSelector({
                 {visibleProviders.length === 0 && (
                   <div className="text-paragraph-xs text-text-soft px-1.5 py-2">No integrations match "{query}"</div>
                 )}
-                {visibleProviders.map((provider) => {
+                {visibleProviders.map(({ provider, showAllIntegrationsRow }) => {
                   const icon = (
                     <ProviderIcon
                       providerId={provider.providerId}
@@ -349,10 +354,6 @@ export function ContentSourceSelector({
                       />
                     );
                   }
-
-                  const normalizedQuery = query.trim().toLowerCase();
-                  const showAllIntegrationsRow =
-                    !normalizedQuery || matchesQuery(normalizedQuery, provider.displayName);
 
                   return (
                     <Fragment key={provider.providerId}>

@@ -12,8 +12,6 @@ export const PROVIDER_OVERRIDES_DOCS_URL =
 export type OverridePreviewLineOrigin = 'default' | 'provider' | 'integration';
 
 export type OverridePreviewLine = AnnotatedPreviewLine & {
-  /** Set on lines an integration override takes unchanged from its provider override. */
-  isInherited?: boolean;
   /** Set on root key lines and on the default content line. */
   origin?: OverridePreviewLineOrigin;
 };
@@ -57,9 +55,7 @@ export function tagPreviewLineOrigins(
 
 export type AnnotatedOverridePreview = {
   annotatedLines: OverridePreviewLine[];
-  defaultContentKey?: string;
   hasOverride: boolean;
-  hasInheritedKeys: boolean;
 };
 
 type OverrideMap = Partial<Record<string, Record<string, unknown>>> | null | undefined;
@@ -203,29 +199,6 @@ export function resolveSourceOverrideForPreview({
   };
 }
 
-/**
- * `buildAnnotatedPreviewLines` with inherited paths marked too. The shared builder marks a single
- * path per call, so each inherited path is located with its own pass over the same object.
- */
-export function buildOverridePreviewLines(
-  merged: Record<string, unknown>,
-  defaultContentKey: string | undefined,
-  inheritedPaths: string[]
-): OverridePreviewLine[] {
-  const lines = buildAnnotatedPreviewLines(merged, defaultContentKey);
-  if (inheritedPaths.length === 0) {
-    return lines;
-  }
-
-  const inheritedLineIndexes = new Set(
-    inheritedPaths.flatMap((path) =>
-      buildAnnotatedPreviewLines(merged, path).flatMap((line, index) => (line.isDefaultContentKey ? [index] : []))
-    )
-  );
-
-  return lines.map((line, index) => (inheritedLineIndexes.has(index) ? { ...line, isInherited: true } : line));
-}
-
 /** The preview response's override maps under a stable identity, so the preview memo only reruns on new data. */
 export function usePreviewOverrideValues(preview: OverrideValues | undefined): OverrideValues {
   const providerOverrides = preview?.providerOverrides;
@@ -236,7 +209,7 @@ export function usePreviewOverrideValues(preview: OverrideValues | undefined): O
 
 /**
  * Merges the compiled step body into the source's override the same way the send path does, so the
- * preview marks which line the default content filled in and which ones an integration inherits.
+ * preview marks which layer each root key comes from.
  */
 export function useAnnotatedOverridePreview({
   body,
@@ -265,14 +238,12 @@ export function useAnnotatedOverridePreview({
     const { merged, defaultContentKey } = mergeProviderPreview({ body, providerId, override });
 
     return {
-      annotatedLines: tagPreviewLineOrigins(buildOverridePreviewLines(merged, defaultContentKey, inheritedPaths), {
+      annotatedLines: tagPreviewLineOrigins(buildAnnotatedPreviewLines(merged, defaultContentKey), {
         override,
         inheritedPaths,
         isIntegrationSource: integrationIdentifier !== undefined,
       }),
-      defaultContentKey,
       hasOverride,
-      hasInheritedKeys: inheritedPaths.length > 0,
     };
   }, [body, providerId, integrationIdentifier, formOverrides, previewOverrides]);
 }

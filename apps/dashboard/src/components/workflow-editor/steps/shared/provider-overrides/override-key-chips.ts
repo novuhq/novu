@@ -8,14 +8,28 @@ import {
   type ViewUpdate,
   WidgetType,
 } from '@uiw/react-codemirror';
-import { createElement } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
-import { RiCornerDownRightLine } from 'react-icons/ri';
 import { findRootKeyOffsets } from './override-json';
 
-class OverriddenKeyChipWidget extends WidgetType {
-  private iconRoot: Root | null = null;
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
+/** `RiCornerDownRightLine`'s path. */
+const CORNER_DOWN_RIGHT_PATH =
+  'M4.99989 13.9999L4.99976 5L6.99976 4.99997L6.99986 11.9999L17.1717 12L13.222 8.05024L14.6362 6.63603L21.0001 13L14.6362 19.364L13.222 17.9497L17.1717 14L4.99989 13.9999Z';
+
+function createCornerDownRightIcon(): SVGSVGElement {
+  const icon = document.createElementNS(SVG_NAMESPACE, 'svg');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('fill', 'currentColor');
+  icon.setAttribute('class', 'size-[11px] shrink-0');
+
+  const path = document.createElementNS(SVG_NAMESPACE, 'path');
+  path.setAttribute('d', CORNER_DOWN_RIGHT_PATH);
+  icon.append(path);
+
+  return icon;
+}
+
+class OverriddenKeyChipWidget extends WidgetType {
   constructor(private readonly label: string) {
     super();
   }
@@ -30,24 +44,12 @@ class OverriddenKeyChipWidget extends WidgetType {
       'cm-overridden-key-chip bg-feature-lighter text-feature text-label-2xs pointer-events-none absolute right-0 top-1/2 inline-flex -translate-y-1/2 select-none items-center gap-1 rounded px-1.5 py-0.5 font-sans';
     chip.setAttribute('aria-label', this.label);
 
-    const icon = document.createElement('span');
-    icon.className = 'inline-flex';
-    this.iconRoot = createRoot(icon);
-    this.iconRoot.render(createElement(RiCornerDownRightLine, { className: 'size-[11px]' }));
-
     const text = document.createElement('span');
     text.textContent = this.label;
 
-    chip.append(icon, text);
+    chip.append(createCornerDownRightIcon(), text);
 
     return chip;
-  }
-
-  destroy() {
-    const root = this.iconRoot;
-    this.iconRoot = null;
-    // CodeMirror can destroy widgets while React is committing, where a synchronous unmount is rejected.
-    queueMicrotask(() => root?.unmount());
   }
 
   ignoreEvent() {

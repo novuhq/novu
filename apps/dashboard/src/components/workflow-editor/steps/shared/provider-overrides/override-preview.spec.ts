@@ -1,7 +1,6 @@
 import { buildAnnotatedPreviewLines, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import {
-  buildOverridePreviewLines,
   getInheritedOverridePaths,
   mergeOverrideLayers,
   resolveOverrideForPreview,
@@ -198,36 +197,10 @@ describe('resolveSourceOverrideForPreview', () => {
   });
 });
 
-describe('buildOverridePreviewLines', () => {
-  const merged = { username: 'bot', text: { body: 'hello', preview_url: true }, blocks: [{ type: 'divider' }] };
-
-  it('matches the shared annotated preview when nothing is inherited', () => {
-    expect(buildOverridePreviewLines(merged, 'text.body', [])).toEqual(buildAnnotatedPreviewLines(merged, 'text.body'));
-  });
-
-  it('marks inherited lines beside the default content line', () => {
-    expect(buildOverridePreviewLines(merged, 'text.body', ['username', 'text.preview_url'])).toEqual([
-      { json: '{' },
-      { json: '  "username": "bot",', isInherited: true },
-      { json: '  "text": {' },
-      { json: '    "body": "hello",', isDefaultContentKey: true },
-      { json: '    "preview_url": true', isInherited: true },
-      { json: '  },' },
-      { json: '  "blocks": [' },
-      { json: '    {' },
-      { json: '      "type": "divider"' },
-      { json: '    }' },
-      { json: '  ]' },
-      { json: '}' },
-    ]);
-  });
-});
-
 describe('tagPreviewLineOrigins', () => {
-  const lines = buildOverridePreviewLines(
+  const lines = buildAnnotatedPreviewLines(
     { summary: 'down', source: 'novu', dedup_key: 'DB-1', details: { region: 'eu' } },
-    'dedup_key',
-    ['summary', 'details.region']
+    'dedup_key'
   );
 
   it('tags each root key with the layer it comes from on an integration source', () => {
