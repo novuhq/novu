@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import { DASHBOARD_HOME, FOOTER_NAV, findNavItem, MAIN_NAV, type NavItem } from '@/components/dashboard/nav';
 import { Brand } from '@/components/site/brand';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export type SidebarAgent = {
@@ -25,9 +24,8 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-3 border-b border-border bg-subtle p-3 md:sticky md:top-0 md:h-dvh md:w-62 md:border-r md:border-b-0">
-      <div className="flex h-8 items-center justify-between gap-2 px-1.5">
+      <div className="flex h-8 items-center px-1.5">
         <Brand href={DASHBOARD_HOME} />
-        <Badge variant="accent">Beta</Badge>
       </div>
 
       <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-2.5 py-[10.5px]">
@@ -74,6 +72,15 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       <span className="flex-1">{item.label}</span>
     </>
   );
+
+  // Share feedback opens the operator's mail app, so it has no tab to open and no arrow.
+  if (item.quiet) {
+    return (
+      <a href={item.href} className={className}>
+        {content}
+      </a>
+    );
+  }
 
   if (item.external) {
     return (

@@ -10,7 +10,7 @@ import { listConnectedTools } from '@/lib/human-tools-api';
  * `human setup` in their terminal, and reloads itself once the answer differs from what it shows.
  */
 export async function readAgentStatusAction(): Promise<string> {
-  const account = await requireHumanAccount({ returnTo: '/agent' });
+  const account = await requireHumanAccount({ returnTo: '/configure' });
 
   return readAgentStatus(account);
 }
@@ -21,7 +21,7 @@ export async function checkToolConnectedAction(tool: string): Promise<boolean> {
     return false;
   }
 
-  const account = await requireHumanAccount({ returnTo: '/agent' });
+  const account = await requireHumanAccount({ returnTo: '/configure' });
 
   return (await listConnectedTools(account)).includes(tool);
 }

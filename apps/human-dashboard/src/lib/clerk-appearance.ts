@@ -1,7 +1,7 @@
 import type { ClerkProvider } from '@clerk/nextjs';
 import type { ComponentProps } from 'react';
 
-/** Clerk's sign-in and sign-up forms in the gethuman.md colors (see `src/styles/globals.css`). */
+/** Clerk's sign-in and sign-up forms in the agentinbox.md colors (see `src/styles/globals.css`). */
 export const humanClerkAppearance: ComponentProps<typeof ClerkProvider>['appearance'] = {
   variables: {
     colorPrimary: '#ff5c30',

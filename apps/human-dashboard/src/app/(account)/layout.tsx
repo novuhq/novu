@@ -1,6 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import type { ReactNode } from 'react';
 
+import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { humanClerkAppearance } from '@/lib/clerk-appearance';
 
 /**
@@ -12,8 +13,8 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <ClerkProvider
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      signInFallbackRedirectUrl="/agent"
-      signUpFallbackRedirectUrl="/agent"
+      signInFallbackRedirectUrl={DASHBOARD_HOME}
+      signUpFallbackRedirectUrl={DASHBOARD_HOME}
       afterSignOutUrl="/"
       appearance={humanClerkAppearance}
     >

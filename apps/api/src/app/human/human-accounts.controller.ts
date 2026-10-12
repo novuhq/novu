@@ -33,7 +33,7 @@ import { RegenerateBackingSecretKeyCommand } from './usecases/regenerate-backing
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 
 /**
- * Private endpoints for the Human dashboard's server (gethuman.md), which signs operators in with its
+ * Private endpoints for the Human dashboard's server (agentinbox.md), which signs operators in with its
  * own Clerk app. Each Human account is backed by a hidden Novu organization; see
  * packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md.
  */

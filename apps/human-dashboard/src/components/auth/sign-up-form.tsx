@@ -34,6 +34,8 @@ type SignUpFormProps = {
   redirectPath: string;
   /** Something to say before the visitor has done anything, such as a failed return from GitHub or Google. */
   initialError?: string;
+  /** Signing up from a claim link, to take over the agent that's waiting there. */
+  claiming?: boolean;
 };
 
 /**
@@ -41,7 +43,7 @@ type SignUpFormProps = {
  * Clerk's `useSignUp` instead of its stock component. Clerk creates the user once the email is verified
  * and tells `/api/webhooks/clerk`, which sets the Human account up; nothing here does that.
  */
-export function SignUpForm({ redirectPath, initialError }: SignUpFormProps) {
+export function SignUpForm({ redirectPath, initialError, claiming = false }: SignUpFormProps) {
   const { signUp, errors } = useSignUp();
   const enterApp = useEnterApp(redirectPath);
 
@@ -237,8 +239,8 @@ export function SignUpForm({ redirectPath, initialError }: SignUpFormProps) {
   return (
     <AuthCard
       step={step}
-      title="Create your account"
-      description="One Human account for your agent, channels and contacts."
+      title={claiming ? 'Sign up to claim your agent' : 'Create your account'}
+      description={claiming ? 'Its threads and contacts come with it.' : 'Free. No card. Takes a few seconds.'}
     >
       <OAuthButtons
         pending={busy === 'oauth_github' || busy === 'oauth_google' ? busy : null}
@@ -313,12 +315,12 @@ export function SignUpForm({ redirectPath, initialError }: SignUpFormProps) {
           {/* biome-ignore lint/correctness/useUniqueElementIds: Clerk looks the element up by this id */}
           <div id="clerk-captcha" />
           <Button type="submit" className={AUTH_BUTTON} pending={busy === 'submit'} disabled={disabled}>
-            Create account
+            {claiming ? 'Create account and claim' : 'Create account'}
           </Button>
         </div>
       </form>
       <SwitchForm question="Have an account?" href={authHref('/sign-in', redirectPath)}>
-        Sign in
+        {claiming ? 'Sign in to claim' : 'Sign in'}
       </SwitchForm>
     </AuthCard>
   );

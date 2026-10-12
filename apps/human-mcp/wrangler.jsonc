@@ -25,7 +25,7 @@
     "staging": {
       "name": "human-mcp-staging",
       "workers_dev": true,
-      // Fill in before the first deploy: the staging API, the Clerk app of staging.gethuman.md and a KV namespace
+      // Fill in before the first deploy: the staging API, the Clerk app of staging.agentinbox.md and a KV namespace
       // (`wrangler kv namespace create CONNECTIONS --env staging`).
       "vars": {
         "CLERK_OAUTH_ISSUER": "",

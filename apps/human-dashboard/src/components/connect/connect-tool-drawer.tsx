@@ -4,7 +4,7 @@ import { ArrowUpRight, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
 
-import { checkToolConnectedAction } from '@/app/(account)/(dashboard)/agent/actions';
+import { checkToolConnectedAction } from '@/app/(account)/(dashboard)/configure/actions';
 import { useConnectionPoll, WaitingLine } from '@/components/channels/setup-parts';
 import { Button, buttonClassName } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
