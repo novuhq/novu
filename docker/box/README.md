@@ -18,7 +18,7 @@ process-compose supervises everything under tini (`process-compose.yaml`):
 | Process | What it is |
 |---|---|
 | `mongo` | MongoDB 8, single-node replica set `rs0` |
-| `redis-7000..7002` | Redis 7.2 cluster, TLS with a CA made per box |
+| `redis-7000..7002` | Redis 7.2 cluster, TLS with a self-signed certificate made per box |
 | `clickhouse` | ClickHouse 24.3 |
 | `s3` | versitygw (S3 API), random keys per start, bucket `novu-box` |
 | `sqs` | ElasticMQ (SQS API), the 5 Novu queues and their DLQs (`config/elasticmq.conf`) |
@@ -146,9 +146,6 @@ Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 
 - `status` lists processes. Logs are in `/data/logs/process-compose.log`.
 - `quiesce` stops the apps, then the databases, leaving the supervisor up for a snapshot.
-- `seed-channels` adds the SMS, push and chat integrations to a box baked before the sink existed.
-- `seed-bridge` does the same for the bridge app. Every `start` syncs the bridge again, so new workflows in a new
-  image show up.
 
 ## What the bake seeds
 

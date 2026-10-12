@@ -287,56 +287,15 @@ function installBullMqPro() {
   env.NOVU_MANAGED_SERVICE = 'true';
 }
 
-// Self-signed CA and server cert for the Redis Cluster; the apps trust it through NODE_EXTRA_CA_CERTS.
+// One self-signed cert for every Redis node, which is also the CA the nodes and the apps (NODE_EXTRA_CA_CERTS) trust.
 function ensureRedisTls() {
-  if (fs.existsSync(`${REDIS_TLS}/redis.crt`)) return;
+  if (fs.existsSync(`${REDIS_TLS}/box.crt`)) return;
   fs.mkdirSync(REDIS_TLS, { recursive: true });
-  const openssl = (args) => run('openssl', args, { cwd: REDIS_TLS, stdio: 'ignore' });
-  openssl([
-    'req',
-    '-x509',
-    '-newkey',
-    'rsa:2048',
-    '-nodes',
-    '-days',
-    '3650',
-    '-subj',
-    '/CN=novu-box-ca',
-    '-keyout',
-    'ca.key',
-    '-out',
-    'ca.crt',
-  ]);
-  openssl([
-    'req',
-    '-newkey',
-    'rsa:2048',
-    '-nodes',
-    '-subj',
-    '/CN=localhost',
-    '-keyout',
-    'redis.key',
-    '-out',
-    'redis.csr',
-  ]);
-  fs.writeFileSync(`${REDIS_TLS}/san.ext`, 'subjectAltName=IP:127.0.0.1,DNS:localhost\n');
-  openssl([
-    'x509',
-    '-req',
-    '-in',
-    'redis.csr',
-    '-CA',
-    'ca.crt',
-    '-CAkey',
-    'ca.key',
-    '-CAcreateserial',
-    '-days',
-    '3650',
-    '-extfile',
-    'san.ext',
-    '-out',
-    'redis.crt',
-  ]);
+  const subject = '-subj /CN=localhost -addext subjectAltName=IP:127.0.0.1,DNS:localhost';
+  run('openssl', `req -x509 -newkey rsa:2048 -nodes -days 3650 ${subject} -keyout box.key -out box.crt`.split(' '), {
+    cwd: REDIS_TLS,
+    stdio: 'ignore',
+  });
 }
 
 function prepareRuntime() {
@@ -369,7 +328,7 @@ function prepareRuntime() {
   fs.writeFileSync(
     bundle,
     [
-      fs.readFileSync(`${REDIS_TLS}/ca.crt`, 'utf8'),
+      fs.readFileSync(`${REDIS_TLS}/box.crt`, 'utf8'),
       platformCa && fs.existsSync(platformCa) ? fs.readFileSync(platformCa, 'utf8') : '',
     ].join('\n')
   );
@@ -481,13 +440,13 @@ async function bake(ref = 'next') {
 
 async function start() {
   if (!fs.existsSync(BAKED)) throw new Error('No golden data in /data. Run `box bake` first.');
-  fs.writeFileSync(`${DATA}/logs/boot.started`, new Date().toISOString());
+  const started = Date.now();
   prepareRuntime();
   const supervisor = startSupervisor();
   supervisor.on('exit', (code) => process.exit(code ?? 1));
   await waitForHttp('http://127.0.0.1:3000/v1/health-check', 600);
   await waitForHttp('http://127.0.0.1:3004/v1/health-check', 600);
-  const seconds = (Date.now() - Date.parse(fs.readFileSync(`${DATA}/logs/boot.started`, 'utf8'))) / 1000;
+  const seconds = (Date.now() - started) / 1000;
   fs.appendFileSync(
     `${DATA}/logs/timings.jsonl`,
     `${JSON.stringify({ at: new Date().toISOString(), command: 'start', step: 'api+worker healthy', seconds })}\n`
@@ -610,14 +569,7 @@ async function seedChannels(token) {
 
   for (const environment of environments.data) {
     const headers = { Authorization: `ApiKey ${environment.apiKeys[0].key}` };
-    const { body: existing } = await api('/v1/integrations', { headers });
     for (const integration of integrations) {
-      if (
-        existing.data.some(
-          (item) => item.identifier === integration.identifier && item._environmentId === environment._id
-        )
-      )
-        continue;
       const { body } = await api('/v1/integrations', {
         method: 'POST',
         headers,
@@ -847,7 +799,7 @@ async function initReplicaSet(MongoClient) {
 
 async function createRedisCluster() {
   const cli = (port, args) =>
-    output('redis-cli', ['--tls', '--cacert', `${REDIS_TLS}/ca.crt`, '-p', String(port), ...args], { cwd: RUN });
+    output('redis-cli', ['--tls', '--cacert', `${REDIS_TLS}/box.crt`, '-p', String(port), ...args], { cwd: RUN });
   if (/cluster_slots_assigned:0\b/.test(cli(REDIS_PORTS[0], ['cluster', 'info']))) {
     log('creating Redis Cluster');
     cli(REDIS_PORTS[0], [
@@ -1006,16 +958,6 @@ const commands = {
   start,
   migrate,
   'apply-pr': () => applyPr(process.argv[3]),
-  // For boxes baked before the sink existed; a new bake runs it already.
-  'seed-channels': async () => {
-    const { user, org } = await findSeedUser();
-    await seedChannels(await seedUserToken({ userId: user.id, orgId: org.id }));
-  },
-  // For boxes baked before the bridge app existed.
-  'seed-bridge': async () => {
-    const { user, org } = await findSeedUser();
-    await seedBridge(await seedUserToken({ userId: user.id, orgId: org.id }));
-  },
   quiesce,
   status: () => pc(['process', 'list']),
 };

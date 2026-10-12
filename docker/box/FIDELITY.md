@@ -12,7 +12,7 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 | Large queue messages (> 256 KB) | Offloaded to S3 | Fail: the offload client reuses `SQS_ENDPOINT` for S3 | Payload offload | Code change: a separate S3 endpoint for offload |
 | BullMQ | Pro (`@taskforcesh/bullmq-pro`, org groups) where BullMQ is used | Open-source BullMQ, `NOVU_MANAGED_SERVICE` unset | Little: staging jobs run on SQS | `BULL_MQ_PRO_NPM_TOKEN` at bake |
 | `NOVU_MANAGED_SERVICE` | `false` (API), `true` (worker) | Unset | Mongo TTL indexes stay on in the box (Cloud archives instead); New Relic metrics | Set per process if it ever matters |
-| Redis | MemoryDB / ElastiCache cluster | 3-node Redis 7.2 cluster, TLS with a self-signed CA, one host | Network partitions, failover | - |
+| Redis | MemoryDB / ElastiCache cluster | 3-node Redis 7.2 cluster, TLS with a self-signed certificate, one host | Network partitions, failover | - |
 | Mongo | Atlas cluster, online archive | Single-node replica set `rs0` | Failover, archive | - |
 | ClickHouse, S3 | Managed ClickHouse, AWS S3 | Single-node ClickHouse, versitygw (S3 API), random keys per start | Managed-service behaviour | - |
 | Processes | Autoscaled API, separate internal API, one worker service per queue | API and worker, 1 pm2 instance each (cluster mode) | Scaling, per-queue worker isolation, races between processes | `PM2_INSTANCES=2`: boot takes ~49 s instead of ~29 s and 1.7 GB more |
