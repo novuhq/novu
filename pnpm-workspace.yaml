@@ -123,7 +123,10 @@ overrides:
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
-  nextjs>next: 15.5.24
+  # Pin playground `nextjs` package's `next` to the patched 15.5.x release
+  # (GHSA-4jqv-mc3x-m676, GHSA-mcj8-r9mp-w47p and friends in >=15.0.0 <15.5.27
+  # are patched in 15.5.27).
+  nextjs>next: ^15.5.27
   # GHSA-vcvr-r3jv-pc5j (critical): Next.js remote code execution in
   # next/og ImageResponse. Patched in 16.3.6; widen the override so transitive
   # 16.3.4 resolutions (via better-auth, @better-auth/sso) also pick up the fix.
