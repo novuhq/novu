@@ -356,6 +356,7 @@ export class AgentConversationService {
     organizationId: string;
     conversationId: string;
     since?: string;
+    until?: string;
   }): Promise<number> {
     return this.ledger.countInboundMessagesSince(params);
   }

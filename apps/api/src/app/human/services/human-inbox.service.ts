@@ -13,6 +13,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { HUMAN_INTERACTION_MAX_RECIPIENTS } from '@novu/shared';
 import { isAgentProvisionedSubscriber } from '../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
 import type {
   InboxMessageDto,
@@ -144,6 +145,37 @@ export class HumanInboxService {
     }
   }
 
+  /** Marks the thread as just used, so it sorts first in the list and previews what was sent. */
+  async touch(scope: InboxScope, conversation: ConversationEntity, preview: string): Promise<void> {
+    await this.conversationRepository.touchPreview(
+      scope.environmentId,
+      scope.organizationId,
+      conversation._id,
+      preview
+    );
+  }
+
+  /**
+   * Opens a thread again when someone wrote in it after it was loaded and before it was resolved, so
+   * resolving cannot bury a message the host has not seen. Says whether it reopened.
+   */
+  async reopenIfWrittenSince(scope: InboxScope, conversation: ConversationEntity): Promise<boolean> {
+    const { modified } = await this.conversationRepository.update(
+      {
+        _id: conversation._id,
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        status: ConversationStatusEnum.RESOLVED,
+        lastHumanMessageAt: conversation.lastHumanMessageAt
+          ? { $gt: conversation.lastHumanMessageAt }
+          : { $exists: true },
+      },
+      { $set: { status: ConversationStatusEnum.ACTIVE } }
+    );
+
+    return modified > 0;
+  }
+
   /**
    * What every send does to the thread it lands in: the thread is read, and open again if it was
    * resolved. Returns how many messages were unread, so the caller can tell the host what it skipped.
@@ -151,15 +183,17 @@ export class HumanInboxService {
   async markSentInto(scope: InboxScope, conversation: ConversationEntity): Promise<number> {
     const unreadBefore = await this.countUnread(scope, conversation);
 
-    if (conversation.status === ConversationStatusEnum.RESOLVED) {
-      await this.conversationRepository.updateStatus(
-        scope.environmentId,
-        scope.organizationId,
-        conversation._id,
-        ConversationStatusEnum.ACTIVE
-      );
-      conversation.status = ConversationStatusEnum.ACTIVE;
-    }
+    // Not only when the loaded copy says resolved: another request may have resolved it since.
+    await this.conversationRepository.update(
+      {
+        _id: conversation._id,
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        status: ConversationStatusEnum.RESOLVED,
+      },
+      { $set: { status: ConversationStatusEnum.ACTIVE } }
+    );
+    conversation.status = ConversationStatusEnum.ACTIVE;
 
     await this.markRead(scope, conversation);
 
@@ -189,8 +223,12 @@ export class HumanInboxService {
         after,
       });
       const pageThreads = await this.toThreads(scope, page.data);
-      const matching =
-        filters.senders === 'contacts' ? pageThreads.filter((thread) => thread.kind === 'contact') : pageThreads;
+      const matching = pageThreads.filter(
+        (thread) =>
+          (filters.senders !== 'contacts' || thread.kind === 'contact') &&
+          // The query finds unread threads by time alone; one whose only new message was deleted has nothing unread.
+          (filters.read !== 'unread' || thread.unreadCount > 0)
+      );
 
       threads.push(...matching);
 
@@ -268,7 +306,12 @@ export class HumanInboxService {
 
   /** Everyone in the thread: who a message sent into it without `to` is for. */
   peopleIds(conversation: ConversationEntity): string[] {
-    return [...subscriberIdsOf(conversation), ...platformUserIdsOf(conversation)];
+    // An interaction lists at most this many people. The message is posted once in the thread either
+    // way, so in a busier group the list is cut rather than the send refused.
+    return [...subscriberIdsOf(conversation), ...platformUserIdsOf(conversation)].slice(
+      0,
+      HUMAN_INTERACTION_MAX_RECIPIENTS
+    );
   }
 
   /** `to` reaches contacts only; a stranger is answered in the thread they wrote in. */

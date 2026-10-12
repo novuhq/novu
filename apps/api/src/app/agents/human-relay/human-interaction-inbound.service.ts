@@ -277,7 +277,7 @@ export class HumanInteractionInboundService {
     const result = await this.handleMessage(turn, mode);
 
     if (result.outcome !== 'ignored' && turn.conversation?._id) {
-      await this.markHandledMessageRead(turn.config.environmentId, turn.config.organizationId, turn.conversation._id);
+      await this.markHandledMessageRead(turn);
     }
 
     return result;
@@ -285,39 +285,40 @@ export class HumanInteractionInboundService {
 
   /**
    * A message this service handled (a card answer, a disambiguation, a rejected responder) is already
-   * delivered, so it should not show up as unread in the Human inbox. The cursor only moves when that
-   * message is the sole unread one, and only up to it, so unrelated messages are never hidden.
+   * delivered, so it should not show up as unread in the Human inbox. The cursor moves only up to that
+   * message, and only when nothing else is unread before it, so unrelated messages are never hidden:
+   * not older ones, and not one that arrives while the answer is still being settled.
    */
-  private async markHandledMessageRead(
-    environmentId: string,
-    organizationId: string,
-    conversationId: string
-  ): Promise<void> {
-    const conversation = await this.conversationRepository.findOne(
-      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
-      ['lastReadAt', 'lastHumanMessageAt'],
-      { readPreference: 'primary' }
-    );
+  private async markHandledMessageRead(turn: ConversationTurn): Promise<void> {
+    const { environmentId, organizationId } = turn.config;
+    const conversationId = turn.conversation._id;
+    const [conversation, handled] = await Promise.all([
+      this.conversationRepository.findOne(
+        { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+        ['lastReadAt', 'lastHumanMessageAt'],
+        { readPreference: 'primary' }
+      ),
+      turn.message?.id
+        ? this.conversationService.findByPlatformMessageId(environmentId, conversationId, turn.message.id)
+        : null,
+    ]);
     if (!conversation?.lastHumanMessageAt) {
       return;
     }
 
+    const readUpTo = handled?.createdAt ? new Date(handled.createdAt).toISOString() : conversation.lastHumanMessageAt;
     const unread = await this.conversationService.countInboundMessagesSince({
       environmentId,
       organizationId,
       conversationId,
       since: conversation.lastReadAt,
+      until: readUpTo,
     });
     if (unread > 1) {
       return;
     }
 
-    await this.conversationRepository.markRead(
-      environmentId,
-      organizationId,
-      conversationId,
-      conversation.lastHumanMessageAt
-    );
+    await this.conversationRepository.markRead(environmentId, organizationId, conversationId, readUpTo);
   }
 
   private async handleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {

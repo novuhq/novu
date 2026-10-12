@@ -199,6 +199,7 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
   it('files a send to a contact under the thread they already have on Telegram', async () => {
     await sendMessageToRelay('are you there?');
     const threadId = await soleThreadId();
+    const activityBefore = (await listInbox()).data[0].lastActivityAt;
 
     const tellRes = await session.testAgent
       .post('/v1/human/interactions')
@@ -208,6 +209,10 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
 
     expect((await listInbox({ filter: 'unread' })).data).to.have.length(0);
     expect((await listInbox()).data.map((thread) => thread.id)).to.deep.equal([threadId]);
+    // The send counts as activity, so the thread moves to the top of the list.
+    expect(new Date((await listInbox()).data[0].lastActivityAt).getTime()).to.be.greaterThan(
+      new Date(activityBefore).getTime()
+    );
   });
 
   it('starts a thread when the agent writes to a contact first', async () => {

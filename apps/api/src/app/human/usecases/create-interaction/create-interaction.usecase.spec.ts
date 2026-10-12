@@ -67,6 +67,7 @@ describe('CreateInteraction', () => {
       peopleIds: sinon.stub().returns(['sub-1', 'sub-2']),
       firstContactId: sinon.stub().returns('sub-1'),
       outsiders: sinon.stub().returns([]),
+      touch: sinon.stub().resolves(undefined),
       primaryChannel: sinon.stub().returns(conversation.channels[0]),
       resolveIntegrationIdentifier: sinon.stub().resolves('telegram-main'),
     };

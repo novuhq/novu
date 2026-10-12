@@ -60,8 +60,8 @@ describe('toChannelRows', () => {
     ]);
   });
 
-  it("falls back to the account's default when the saved one is not connected", () => {
-    expect(toChannelRows(operator(), 'slack').find((row) => row.isDefault)?.channel).toBe('telegram');
+  it('marks no default when the saved one is not connected, because sends still use it', () => {
+    expect(toChannelRows(operator(), 'slack').some((row) => row.isDefault)).toBe(false);
   });
 
   it('lists nothing for an operator without channels', () => {

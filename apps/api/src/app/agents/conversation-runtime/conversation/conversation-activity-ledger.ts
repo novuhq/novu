@@ -98,6 +98,7 @@ export class ConversationActivityLedger {
     organizationId: string;
     conversationId: string;
     since?: string;
+    until?: string;
   }): Promise<number> {
     return this.activityRepository.countInboundMessagesSince(params);
   }

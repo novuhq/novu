@@ -238,17 +238,47 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     organizationId: string;
     conversationId: string;
     since?: string;
+    /** Count up to and including this moment, instead of up to now. */
+    until?: string;
   }): Promise<number> {
-    return this.count({
+    const scope = {
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
       _conversationId: params.conversationId,
+    };
+    const fromHuman = {
+      $in: [ConversationActivitySenderTypeEnum.SUBSCRIBER, ConversationActivitySenderTypeEnum.PLATFORM_USER],
+    };
+    const messages: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
+      ...scope,
       type: ConversationActivityTypeEnum.MESSAGE,
-      senderType: {
-        $in: [ConversationActivitySenderTypeEnum.SUBSCRIBER, ConversationActivitySenderTypeEnum.PLATFORM_USER],
-      },
-      ...(params.since ? { createdAt: { $gt: new Date(params.since) } } : {}),
-    });
+      senderType: fromHuman,
+      ...(params.since || params.until
+        ? {
+            createdAt: {
+              ...(params.since ? { $gt: new Date(params.since) } : {}),
+              ...(params.until ? { $lte: new Date(params.until) } : {}),
+            },
+          }
+        : {}),
+    };
+    const total = await this.count(messages);
+
+    if (total === 0) {
+      return 0;
+    }
+
+    // A deleted message keeps its row; the delete is a row of its own with the same platform message id.
+    const deletes = await this.find({ ...scope, type: ConversationActivityTypeEnum.DELETE, senderType: fromHuman }, [
+      'platformMessageId',
+    ]);
+    const deletedIds = deletes.flatMap((row) => row.platformMessageId ?? []);
+
+    if (deletedIds.length === 0) {
+      return total;
+    }
+
+    return total - (await this.count({ ...messages, platformMessageId: { $in: deletedIds } }));
   }
 
   /**

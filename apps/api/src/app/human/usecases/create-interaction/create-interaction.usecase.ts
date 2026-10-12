@@ -206,6 +206,12 @@ export class CreateInteraction {
         isDirectMessage: true,
       });
       const unreadBefore = await this.inbox.markSentInto(scope, conversation);
+      // A direct message is not saved as an agent message, so nothing else moves the thread up the list.
+      await this.inbox.touch(
+        scope,
+        conversation,
+        humanInteractionCardTitle({ kind: interaction.kind, content: interaction.content })
+      );
 
       return { id: conversation.identifier, conversationId: conversation._id, unreadBefore };
     } catch (err) {

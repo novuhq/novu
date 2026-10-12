@@ -27,7 +27,9 @@ export class ResolveInboxThread {
         channel: this.inbox.primaryChannel(conversation),
         agentIdentifier: agent.identifier,
       });
-      conversation.status = ConversationStatusEnum.RESOLVED;
+      conversation.status = (await this.inbox.reopenIfWrittenSince(scope, conversation))
+        ? ConversationStatusEnum.ACTIVE
+        : ConversationStatusEnum.RESOLVED;
     }
 
     await this.inbox.markRead(scope, conversation);

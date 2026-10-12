@@ -247,7 +247,7 @@ export async function waitForResolution(
       if (Date.now() >= deadline) {
         stopIndicator();
         if (options.json) {
-          process.stdout.write(`${JSON.stringify(current, null, 2)}\n`);
+          process.stdout.write(`${JSON.stringify(keepThreads(current, interaction), null, 2)}\n`);
         } else {
           process.stdout.write(
             `Timed out waiting. Interaction ${current.id} is still pending — resume with: human interaction wait ${current.id}\n`
@@ -266,7 +266,12 @@ export async function waitForResolution(
     stopIndicator();
   }
 
-  return emitResult(current, Boolean(options.json));
+  return emitResult(keepThreads(current, interaction), Boolean(options.json));
+}
+
+/** Only the create response says which threads a message landed in, so later reads keep them for a follow-up send. */
+export function keepThreads(current: Interaction, created: Pick<Interaction, 'threads'>): Interaction {
+  return created.threads ? { ...current, threads: created.threads } : current;
 }
 
 /** `id:label` keeps a stable id; a bare label is minted as `opt_N` server-side. */

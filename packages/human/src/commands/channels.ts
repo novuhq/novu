@@ -35,12 +35,12 @@ export interface ChannelRow {
 
 /**
  * The channels the agent can reach the operator on. The default saved on this computer wins over the
- * account's, because the CLI sends it with every message that goes to the operator.
+ * account's, because the CLI sends it with every message that goes to the operator, also when that
+ * channel is not connected. Then no row is the default: the sends fail until it is fixed.
  */
 export function toChannelRows(contact: Contact | undefined, savedDefault: string | undefined): ChannelRow[] {
   const channels = contact?.channels ?? [];
-  const isConnected = (via: string | undefined) => channels.some((channel) => channel.via === via);
-  const defaultChannel = isConnected(savedDefault) ? savedDefault : contact?.defaultVia;
+  const defaultChannel = savedDefault ?? contact?.defaultVia;
 
   return channels.map(({ via, connectedAt }) => ({
     channel: via,
@@ -61,7 +61,7 @@ export function renderChannels(rows: ChannelRow[], savedDefault: string | undefi
     lines.push(
       '',
       pc.yellow(
-        `Your saved default, ${savedDefault}, is not connected. Connect it with: human channel add ${savedDefault}`
+        `Your saved default, ${savedDefault}, is not connected, so messages to you fail. Connect it with: human channel add ${savedDefault}, or pick another with: human channel default <channel>`
       )
     );
   }

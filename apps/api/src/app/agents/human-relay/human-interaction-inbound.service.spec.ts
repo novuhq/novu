@@ -71,7 +71,10 @@ describe('HumanInteractionInboundService', () => {
       markRead: sinon.stub().resolves(undefined),
       findOne: sinon.stub().resolves({ lastHumanMessageAt: '2026-10-09T10:00:00.000Z' }),
     };
-    const conversationService = { countInboundMessagesSince: sinon.stub().resolves(1) };
+    const conversationService = {
+      countInboundMessagesSince: sinon.stub().resolves(1),
+      findByPlatformMessageId: sinon.stub().resolves(null),
+    };
     const service = new HumanInteractionInboundService(
       humanInteractionRepository as any,
       settlement as any,

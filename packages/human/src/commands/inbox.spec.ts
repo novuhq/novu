@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Interaction } from '../api/human';
 import type { InboxPage, InboxThread } from '../api/inbox';
 import type { HumanCliConfig } from '../config';
 
@@ -26,7 +27,7 @@ vi.mock('./interact', async (importOriginal) => {
 });
 
 const { inboxListCommand, inboxShowCommand, parseListFilters, parseWait, waitForThreads } = await import('./inbox');
-const { formatThreadReport, resolveAddress } = await import('./interact');
+const { formatThreadReport, keepThreads, resolveAddress } = await import('./interact');
 const { formatInboxThreadLine, formatInboxThreadView, formatRelativeTime, stripTerminalControls } = await import(
   '../output'
 );
@@ -121,6 +122,16 @@ describe('formatThreadReport', () => {
 
     expect(lines[1]).toContain('had 2 unread messages');
     expect(lines[1]).toContain('human inbox show conv_1');
+  });
+
+  it('keeps the threads of the create response on a later read of the interaction', () => {
+    const read = { id: 'hi_1', status: 'answered' } as Interaction;
+
+    expect(keepThreads(read, { threads: [{ id: 'conv_1', unreadBefore: 0 }] })).toEqual({
+      ...read,
+      threads: [{ id: 'conv_1', unreadBefore: 0 }],
+    });
+    expect(keepThreads(read, {})).toBe(read);
   });
 
   it('does not warn when the host chose the thread itself', () => {
