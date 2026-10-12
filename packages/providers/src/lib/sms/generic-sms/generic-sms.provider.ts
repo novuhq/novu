@@ -75,10 +75,11 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
     const client = this.axiosInstance ?? createProviderHttpClient({ baseURL: this.config.baseUrl });
 
     if (this.config?.authenticateByToken) {
+      // Passthrough headers are meant for the SMS request, not the token endpoint.
       const tokenAxiosInstance = await createProviderHttpClient().request({
         method: 'POST',
         baseURL: this.config.domain,
-        headers: requestHeaders,
+        headers: this.headers,
       });
 
       const token = tokenAxiosInstance.data.data[this.config.authenticationTokenKey!];
@@ -123,9 +124,10 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
 
       const domainUrl = this.assertSafeSmsUrl(this.config.domain, 'Generic SMS auth URL blocked');
 
+      // Passthrough headers are meant for the SMS request, not the token endpoint.
       const tokenResponse = await this.safeJsonRequest(domainUrl, {
         method: 'POST',
-        headers: requestHeaders,
+        headers: this.headers,
         blockedPrefix: 'Generic SMS auth URL blocked',
       });
 

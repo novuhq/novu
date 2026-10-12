@@ -211,5 +211,18 @@ describe('CmTelecomSmsProvider', () => {
         })
       ).rejects.toThrow('CM.com rejected the message: Invalid recipient');
     });
+
+    it('should throw when CM.com rejects the request without message results', async () => {
+      vi.mocked(axios.post).mockResolvedValue({
+        data: { details: 'Unknown error', errorCode: 999, messages: [] },
+      });
+
+      await expect(
+        provider.sendMessage({
+          to: '+32470123456',
+          content: 'Test',
+        })
+      ).rejects.toThrow('CM.com rejected the message: Unknown error');
+    });
   });
 });

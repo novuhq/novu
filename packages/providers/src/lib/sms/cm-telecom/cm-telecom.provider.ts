@@ -15,7 +15,7 @@ interface ICmMessageResult {
 
 interface ICmResponse {
   details: string;
-  errorCode: number;
+  errorCode?: number;
   messages?: ICmMessageResult[];
 }
 
@@ -64,9 +64,11 @@ export class CmTelecomSmsProvider extends BaseProvider implements ISmsProvider {
     });
 
     const message = data.messages?.[0];
+    const requestRejected = (data.errorCode ?? 0) !== 0;
+    const messageRejected = message && (message.status !== 'Accepted' || message.messageErrorCode !== 0);
 
-    if (message && (message.status !== 'Accepted' || message.messageErrorCode !== 0)) {
-      throw new Error(`CM.com rejected the message: ${message.messageDetails || data.details}`);
+    if (requestRejected || messageRejected) {
+      throw new Error(`CM.com rejected the message: ${message?.messageDetails || data.details}`);
     }
 
     return {
