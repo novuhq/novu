@@ -268,6 +268,7 @@ export function ContentSourceSelector({
     canAddOverrides,
     onPick: handlePick,
   };
+  const isFiltering = query.trim().length > 0;
 
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -306,18 +307,22 @@ export function ContentSourceSelector({
             </div>
           )}
           <CommandList className="max-h-[360px] p-1">
-            <CommandItem
-              value="default"
-              className={cn(MENU_ROW_CLASS, 'pl-1')}
-              onSelect={() => select(DEFAULT_CONTENT_SOURCE)}
-            >
-              <span className="text-label-xs text-text-strong flex-1">{DEFAULT_CONTENT_LABEL}</span>
-              {selectedSource === DEFAULT_CONTENT_SOURCE && <RiCheckLine className="text-text-sub size-3.5 shrink-0" />}
-            </CommandItem>
+            {!isFiltering && (
+              <CommandItem
+                value="default"
+                className={cn(MENU_ROW_CLASS, 'pl-1')}
+                onSelect={() => select(DEFAULT_CONTENT_SOURCE)}
+              >
+                <span className="text-label-xs text-text-strong flex-1">{DEFAULT_CONTENT_LABEL}</span>
+                {selectedSource === DEFAULT_CONTENT_SOURCE && (
+                  <RiCheckLine className="text-text-sub size-3.5 shrink-0" />
+                )}
+              </CommandItem>
+            )}
 
             {providers.length > 0 && (
               <>
-                {SEPARATOR}
+                {!isFiltering && SEPARATOR}
                 <div className="text-subheading-2xs text-text-soft pb-0.5 pl-1.5 pt-1 uppercase">
                   {supportsOverrides ? 'Overrides' : 'Providers'}
                 </div>

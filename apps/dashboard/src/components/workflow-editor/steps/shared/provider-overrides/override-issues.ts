@@ -2,6 +2,7 @@ import {
   ContentIssueEnum,
   type ContentOverrideProviderId,
   getProviderOverrideKeys,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
   type RuntimeIssue,
 } from '@novu/shared';
 import { getOverridePath, PROVIDER_OVERRIDES_FIELD, type SourceOverride } from './override-source';
@@ -20,14 +21,17 @@ export function getUnsupportedOverrideKeys(
   providerId: ContentOverrideProviderId,
   override: Record<string, unknown> | undefined
 ): string[] {
+  const overrideKeys = Object.keys(override ?? {});
   const allowedKeys = getProviderOverrideKeys(providerId);
+
+  // Free-form providers accept any key, except the one the bridge uses to carry integration overrides.
   if (!allowedKeys) {
-    return [];
+    return overrideKeys.filter((key) => key === INTEGRATION_OVERRIDES_OUTPUT_KEY);
   }
 
   const allowedKeySet = new Set(allowedKeys);
 
-  return Object.keys(override ?? {}).filter((key) => !allowedKeySet.has(key));
+  return overrideKeys.filter((key) => !allowedKeySet.has(key));
 }
 
 /**

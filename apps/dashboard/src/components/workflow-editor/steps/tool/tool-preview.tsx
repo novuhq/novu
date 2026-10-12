@@ -171,6 +171,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
 
         return (
           <ResolvedPayloadPreview
+            title="Provider-wide override"
             lines={webhookPreviewLines}
             source={previewMode.source}
             providerOptions={providerOptions}

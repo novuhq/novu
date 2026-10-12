@@ -62,17 +62,25 @@ type ResolvedPayloadPreviewProps = {
   providerOptions: ProviderOverrideOption[];
   /** Channel-specific explanation shown above the docs link. */
   hint?: ReactNode;
+  /** Header label. Defaults to the merged payload a source sends. */
+  title?: string;
 };
 
 /** The payload a content source sends, one row per JSON line, with each key's source layer marked. */
-export function ResolvedPayloadPreview({ lines, source, providerOptions, hint }: ResolvedPayloadPreviewProps) {
+export function ResolvedPayloadPreview({
+  lines,
+  source,
+  providerOptions,
+  hint,
+  title = 'Resolved payload',
+}: ResolvedPayloadPreviewProps) {
   const sourceName = describeOverrideSource(source, providerOptions).qualifiedLabel;
 
   return (
     <div className="flex min-h-0 flex-col gap-1.5">
       <div className="border-stroke-soft flex min-h-0 flex-col overflow-hidden rounded-lg border">
         <div className="bg-bg-weak border-stroke-soft flex h-8 shrink-0 items-center justify-between gap-2 border-b pl-3 pr-2">
-          <span className="text-label-xs text-text-sub">Resolved payload</span>
+          <span className="text-label-xs text-text-sub">{title}</span>
           <span className="text-label-xs text-text-sub truncate">{sourceName}</span>
         </div>
         <div className="bg-bg-white min-h-0 overflow-auto p-3">

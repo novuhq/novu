@@ -1,4 +1,9 @@
-import { ChatProviderIdEnum, ContentIssueEnum, ToolProviderIdEnum } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  ContentIssueEnum,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  ToolProviderIdEnum,
+} from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import {
   buildOverrideIssueIndex,
@@ -19,6 +24,9 @@ const WEBHOOK = ToolProviderIdEnum.Webhook;
 describe('getUnsupportedOverrideKeys', () => {
   it('allows arbitrary webhook keys while preserving strict provider schemas', () => {
     expect(getUnsupportedOverrideKeys(ToolProviderIdEnum.Webhook, { custom: true })).toEqual([]);
+    expect(getUnsupportedOverrideKeys(ToolProviderIdEnum.Webhook, { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {} })).toEqual([
+      INTEGRATION_OVERRIDES_OUTPUT_KEY,
+    ]);
     expect(getUnsupportedOverrideKeys(ToolProviderIdEnum.PagerDuty, { custom: true })).toEqual(['custom']);
     expect(getUnsupportedOverrideKeys(ToolProviderIdEnum.Opsgenie, { custom: true })).toEqual(['custom']);
   });
@@ -110,6 +118,28 @@ describe('buildOverrideIssueIndex', () => {
 
     expect(index.get(prodPath)?.serverIssues.map((issue) => issue.message)).toEqual(['prod title']);
     expect(index.get(prodEuPath)?.serverIssues.map((issue) => issue.message)).toEqual(['prod.eu title']);
+  });
+
+  it('flags the reserved key on a free-form webhook and drops the mirrored server issue', () => {
+    const webhookPath = `${PROVIDER_OVERRIDES_FIELD}.${WEBHOOK}`;
+    const reservedPath = `${webhookPath}.${INTEGRATION_OVERRIDES_OUTPUT_KEY}`;
+    const index = buildOverrideIssueIndex(
+      {
+        [reservedPath]: [
+          {
+            issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+            variableName: reservedPath,
+            message: 'reserved',
+          },
+        ],
+      },
+      [{ source: providerSource(WEBHOOK), override: { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {} } }]
+    );
+
+    expect(index.get(webhookPath)).toEqual({
+      serverIssues: [],
+      unsupportedKeys: [INTEGRATION_OVERRIDES_OUTPUT_KEY],
+    });
   });
 
   it('reports unsupported keys from the form and leaves out the server issues that mirror them', () => {
