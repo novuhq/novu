@@ -46,6 +46,7 @@ export interface InlineToastProps
   onCtaClick?: React.MouseEventHandler<HTMLButtonElement>;
   isCtaLoading?: boolean;
   ctaClassName?: string;
+  /** Custom CTA; when set, `ctaLabel`, `onCtaClick`, `isCtaLoading` and `ctaClassName` are ignored. */
   cta?: React.ReactNode;
 }
 

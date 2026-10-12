@@ -1,8 +1,7 @@
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import {
-  formatUsd,
-  getMonthlyCostAtLimit,
+  formatWholeUsd,
   getOnDemandCost,
   getPauseAtLimitDescription,
   getTierSuggestion,
@@ -29,22 +28,10 @@ describe('usage-limits-form-values', () => {
     });
   });
 
-  describe('formatUsd', () => {
-    it('formats dollars with cents and thousands separators', () => {
-      expect(formatUsd(250)).toBe('$250.00');
-      expect(formatUsd(1234.5)).toBe('$1,234.50');
-    });
-  });
-
-  describe('getMonthlyCostAtLimit', () => {
-    it('adds the on-demand cost at the limit to the plan monthly price', () => {
-      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.PRO, 50_000, 2)).toBe(130);
-      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.BUSINESS, 50_000, 2)).toBe(350);
-    });
-
-    it('is null without a limit or a known price', () => {
-      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.PRO, null, 2)).toBeNull();
-      expect(getMonthlyCostAtLimit(ApiServiceLevelEnum.PRO, 50_000, null)).toBeNull();
+  describe('formatWholeUsd', () => {
+    it('rounds to whole dollars with thousands separators', () => {
+      expect(formatWholeUsd(250)).toBe('$250');
+      expect(formatWholeUsd(1234.5)).toBe('$1,235');
     });
   });
 
@@ -54,12 +41,16 @@ describe('usage-limits-form-values', () => {
 
     it('suggests Teams once Pro plus on-demand reaches the $250 Teams price', () => {
       expect(suggest(ApiServiceLevelEnum.PRO, 109_999)).toBeNull();
-      expect(suggest(ApiServiceLevelEnum.PRO, 110_000)).toBe('upgrade_to_teams');
+      expect(suggest(ApiServiceLevelEnum.PRO, 110_000)).toEqual({ kind: 'upgrade_to_teams', monthlyCostAtLimit: 250 });
+    });
+
+    it('prices the Pro plan plus the whole on-demand limit', () => {
+      expect(suggest(ApiServiceLevelEnum.PRO, 200_000)).toEqual({ kind: 'upgrade_to_teams', monthlyCostAtLimit: 430 });
     });
 
     it('suggests contacting sales once Teams plus on-demand reaches $600', () => {
       expect(suggest(ApiServiceLevelEnum.BUSINESS, 174_999)).toBeNull();
-      expect(suggest(ApiServiceLevelEnum.BUSINESS, 175_000)).toBe('contact_sales');
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, 175_000)).toEqual({ kind: 'contact_sales' });
     });
 
     it('suggests nothing on a trial, without a positive limit, or without a known price', () => {

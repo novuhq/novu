@@ -17,7 +17,6 @@ import { OnDemandLimitStepper } from './on-demand-limit-stepper';
 import { SettingCard } from './setting-card';
 import { TierSuggestionToast } from './tier-suggestion-toast';
 import {
-  getMonthlyCostAtLimit,
   getOnDemandCost,
   getPauseAtLimitDescription,
   getTierSuggestion,
@@ -58,11 +57,6 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
     onDemandLimit: workflowRuns.onDemandLimit,
     onDemandPricePer1k: usage.onDemandPricePer1k,
   });
-  const monthlyCostAtLimit = getMonthlyCostAtLimit(
-    plan.apiServiceLevel,
-    workflowRuns.onDemandLimit,
-    usage.onDemandPricePer1k
-  );
 
   const onSubmit = async (values: UsageLimitsFormValues) => {
     try {
@@ -121,12 +115,8 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
                 )}
               />
 
-              {tierSuggestion && monthlyCostAtLimit !== null && (
-                <TierSuggestionToast
-                  suggestion={tierSuggestion}
-                  monthlyCostAtLimit={monthlyCostAtLimit}
-                  billingInterval={plan.billingInterval}
-                />
+              {tierSuggestion && (
+                <TierSuggestionToast suggestion={tierSuggestion} billingInterval={plan.billingInterval} />
               )}
 
               <Separator variant="line-spacing" className="before:bg-stroke-weak" />

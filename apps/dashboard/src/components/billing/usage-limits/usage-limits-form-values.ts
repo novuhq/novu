@@ -27,9 +27,15 @@ export type UsageLimitsFormValues = z.infer<typeof usageLimitsFormSchema>;
 export type WorkflowRunLimitSettings = Pick<IOrganizationUsageLimits, 'workflowRuns' | 'pauseAtLimit'>;
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+const wholeUsdFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
 
-export function formatUsd(amount: number): string {
-  return usdFormatter.format(amount);
+export function formatWholeUsd(amount: number): string {
+  return wholeUsdFormatter.format(amount);
 }
 
 /** Usage at which new workflow runs pause; null when they never pause. */
@@ -49,14 +55,11 @@ function getOnDemandSpend(onDemandLimit: number | null, onDemandPricePer1k: numb
 export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k: number | null): string | null {
   const spend = getOnDemandSpend(onDemandLimit, onDemandPricePer1k);
 
-  return spend === null ? null : formatUsd(spend);
+  return spend === null ? null : usdFormatter.format(spend);
 }
 
-/**
- * Plan monthly list price, even on annual billing, plus the cost of the whole on-demand limit.
- * Only meaningful for tiers with a numeric list price; custom-priced tiers count as $0.
- */
-export function getMonthlyCostAtLimit(
+/** Plan monthly list price, even on annual billing, plus the cost of the whole on-demand limit. */
+function getMonthlyCostAtLimit(
   apiServiceLevel: ApiServiceLevelEnum,
   onDemandLimit: number | null,
   onDemandPricePer1k: number | null
@@ -70,7 +73,7 @@ export function getMonthlyCostAtLimit(
   return getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_COST, apiServiceLevel, false) + spend;
 }
 
-export type TierSuggestion = 'upgrade_to_teams' | 'contact_sales';
+export type TierSuggestion = { kind: 'upgrade_to_teams'; monthlyCostAtLimit: number } | { kind: 'contact_sales' };
 
 export const CONTACT_SALES_MONTHLY_COST_THRESHOLD = 600;
 
@@ -80,14 +83,14 @@ export const TEAMS_MONTHLY_COST = getFeatureForTierAsNumber(
   false
 );
 
-type NextTierThreshold = { suggestion: TierSuggestion; monthlyCost: number };
+type NextTierThreshold = { kind: TierSuggestion['kind']; monthlyCost: number };
 
 function getNextTierThreshold(apiServiceLevel: ApiServiceLevelEnum): NextTierThreshold | null {
   switch (apiServiceLevel) {
     case ApiServiceLevelEnum.PRO:
-      return { suggestion: 'upgrade_to_teams', monthlyCost: TEAMS_MONTHLY_COST };
+      return { kind: 'upgrade_to_teams', monthlyCost: TEAMS_MONTHLY_COST };
     case ApiServiceLevelEnum.BUSINESS:
-      return { suggestion: 'contact_sales', monthlyCost: CONTACT_SALES_MONTHLY_COST_THRESHOLD };
+      return { kind: 'contact_sales', monthlyCost: CONTACT_SALES_MONTHLY_COST_THRESHOLD };
     case ApiServiceLevelEnum.FREE:
     case ApiServiceLevelEnum.ENTERPRISE:
     case ApiServiceLevelEnum.UNLIMITED:
@@ -128,7 +131,17 @@ export function getTierSuggestion({
     return null;
   }
 
-  return next.suggestion;
+  switch (next.kind) {
+    case 'upgrade_to_teams':
+      return { kind: 'upgrade_to_teams', monthlyCostAtLimit: monthlyCost };
+    case 'contact_sales':
+      return { kind: 'contact_sales' };
+    default: {
+      const exhaustiveCheck: never = next.kind;
+
+      return exhaustiveCheck;
+    }
+  }
 }
 
 export function getPauseAtLimitDescription(included: number, settings: WorkflowRunLimitSettings) {
