@@ -74,7 +74,7 @@ async function loadPictureUrl(account: HumanAccount): Promise<string | undefined
  * What a server action answers when it needs the agent and there is none. The pages already keep the
  * operator from getting that far; this is for a request that arrives anyway.
  */
-export const AGENT_NOT_SET_UP_MESSAGE = 'Set up your agent first. The Agent page shows you how.';
+export const AGENT_NOT_SET_UP_MESSAGE = 'Set up your agent first. The Configure page shows you how.';
 
 /** How the dashboard calls an agent that has no name of its own yet (NV-8914). */
 export const UNNAMED_AGENT_LABEL = 'Inbox agent';

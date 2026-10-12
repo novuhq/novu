@@ -44,7 +44,7 @@ export async function resolveRecipient(api: HumanApi, to: string | undefined): P
   if (!operator?.subscriberId) {
     throw new HumanApiError(
       409,
-      'Human is not set up yet. Open agentinbox.md, go to Agent and follow the setup steps.'
+      'Human is not set up yet. Open agentinbox.md, go to Configure and follow the setup steps.'
     );
   }
 

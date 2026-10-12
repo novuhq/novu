@@ -1,7 +1,7 @@
 # @novu/human-dashboard
 
-Next.js app for [gethuman.md](https://gethuman.md). It serves the invite page for
-[`@novu/human`](../../packages/human) and Human accounts (proof of concept, NV-8909); the gethuman.md
+Next.js app for [agentinbox.md](https://agentinbox.md). It serves the invite page for
+[`@novu/human`](../../packages/human) and Human accounts (proof of concept, NV-8909); the agentinbox.md
 landing page moves in here later.
 
 | Route             | What it is                                                                                  |
@@ -36,7 +36,7 @@ Human accounts also need:
 - a Clerk application for Human (development instance is fine), with its keys in `.env.local`;
 - the same `HUMAN_DASHBOARD_API_SECRET` here and in the API's `.env`;
 - an API running with the Clerk-backed enterprise auth and keyless enabled;
-- if Novu's Clerk instance has an allowlist (the development one does), `*@users.gethuman.md` on it. The
+- if Novu's Clerk instance has an allowlist (the development one does), `*@users.agentinbox.md` on it. The
   hidden Novu users get made-up addresses there, and otherwise Clerk refuses them with `not_allowed_access`.
 
 To try a claim, set `KEYLESS_HUMAN_INTERACTION_CAP=1` on the API, run `human setup` without a key against
