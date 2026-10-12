@@ -54,6 +54,11 @@ processes:
 
   clickhouse:
     command: clickhouse server --config-file=/opt/box/config/clickhouse.xml
+    # Two jemalloc arenas instead of one per CPU, no transparent huge pages, freed pages back to the OS after 1 s.
+    # No watchdog: process-compose restarts ClickHouse, and the watchdog is a second ~30 MB process.
+    environment:
+      - MALLOC_CONF=thp:never,percpu_arena:disabled,narenas:2,dirty_decay_ms:1000
+      - CLICKHOUSE_WATCHDOG_ENABLE=0
     readiness_probe:
       http_get:
         host: 127.0.0.1
@@ -226,13 +231,13 @@ processes:
       restart: on_failure
 
   # Self-hosted Novu app: the playground's code-first workflows and agents on the checkout's @novu/framework,
-  # synced to the Development environment by box.mjs. `next dev` because the playground doesn't pass
-  # `next build`; the signature check stays on. With the Anthropic key, its agents run on Claude.
+  # synced to the Development environment by box.mjs, which builds it. The signature check stays on.
+  # With the Anthropic key, its agents run on Claude.
   bridge:
     command: >-
       while [ ! -s /data/bridge/secret-key ]; do sleep 1; done;
       NOVU_SECRET_KEY=$(cat /data/bridge/secret-key) ANTHROPIC_API_KEY=$NOVU_MANAGED_CLAUDE_API_KEY
-      exec node_modules/.bin/next dev --turbopack -p 4000 -H 127.0.0.1
+      exec node_modules/.bin/next start -p 4000 -H 127.0.0.1
     working_dir: /data/novu/playground/nextjs
     environment:
       - NODE_OPTIONS=

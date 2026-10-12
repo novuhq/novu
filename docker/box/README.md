@@ -29,7 +29,7 @@ process-compose supervises everything under tini (`process-compose.yaml`):
 | `socket` | The socket worker (Cloudflare Worker) under `wrangler dev`, for realtime Inbox |
 | `dashboard` | The built dashboard served by Caddy, with runtime env injected into `index.html` |
 | `stripe` | `stripe listen`, forwarding sandbox webhooks to the API |
-| `bridge` | `next dev` of `playground/nextjs`: a self-hosted Novu app with code-first workflows and agents (`src/app/novu/`) on the checkout's `@novu/framework`, at `http://bridge.box.internal:4000/api/novu` |
+| `bridge` | `next start` of `playground/nextjs`: a self-hosted Novu app with code-first workflows and agents (`src/app/novu/`) on the checkout's `@novu/framework`, at `http://bridge.box.internal:4000/api/novu` |
 
 Settings shared by every box are in `config/box.env`. Secrets come only from the `docker run` environment.
 
@@ -99,8 +99,9 @@ GITHUB_TOKEN=$(gh auth token) docker exec -e GITHUB_TOKEN novu-box node /opt/box
 
 `apply-pr` merges the PR onto the baked commit (like CI's merge ref) and stops if the two conflict. It then
 reinstalls if the lockfile changed, builds the projects `nx affected` reports, redeploys the API and worker,
-runs migrations and restarts what changed. A PR that changes `@novu/framework` or `playground/nextjs` also
-restarts the bridge app and syncs it again, so the PR's workflows and agents run on the PR's framework.
+runs migrations and restarts what changed. A PR that changes `@novu/framework`, `@novu/agent-toolkit` or
+`playground/nextjs` also rebuilds the bridge app (about 45 s), restarts it and syncs it again, so the PR's
+workflows and agents run on the PR's framework.
 
 Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):

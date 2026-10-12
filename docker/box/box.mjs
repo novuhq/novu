@@ -41,6 +41,7 @@ const PROJECT_PROCESSES = {
   '@novu/worker': 'worker',
   '@novu/dashboard': 'dashboard',
   '@novu/framework': 'bridge',
+  '@novu/agent-toolkit': 'bridge',
 };
 const DEPLOYED_APPS = { api: '@novu/api-service', worker: '@novu/worker' };
 
@@ -146,37 +147,62 @@ function pnpmInstall() {
   run('pnpm', ['symlink:submodules']);
 }
 
-// The API and the dashboard build in their own runs to get their own arguments (`--sourcemap false` takes vite's peak
-// from ~4 GB to ~2.5 GB). Their dependencies build once, in the first run: the enterprise packages never hit the nx cache.
-function build(projects) {
+// The API, the worker and the dashboard build in their own runs to get their own arguments (`--sourcemap false` takes
+// vite's peak from ~4 GB to ~2.5 GB). Their dependencies build once, in the first run. nx can't hash the enterprise
+// packages (their src links into the nxignored submodule), so it rebuilds them every time (~25 s); without
+// `enterprise` they are left out and their last dist is reused.
+function build(projects, { enterprise = true } = {}) {
   const nx = (args) => run('pnpm', ['nx', ...args], { env: { ...env, NODE_OPTIONS: '' } });
-  const own = ['@novu/api-service', '@novu/dashboard'].filter((project) => projects.includes(project));
+  const graph = projectGraph();
+  const own = ['@novu/api-service', '@novu/worker', '@novu/dashboard'].filter((project) => projects.includes(project));
   const first = new Set(projects.filter((project) => !own.includes(project)));
-  if (own.length) {
-    const graph = projectGraph();
-    for (const project of own) {
-      const { devDependencies = {} } = readJson(`${REPO}/${graph.nodes[project].data.root}/package.json`);
-      for (const { target } of graph.dependencies[project])
-        if (graph.nodes[target] && !(target in devDependencies)) first.add(target);
-    }
+  for (const project of own) {
+    const { devDependencies = {} } = readJson(`${REPO}/${graph.nodes[project].data.root}/package.json`);
+    for (const { target } of graph.dependencies[project])
+      if (graph.nodes[target] && !(target in devDependencies)) first.add(target);
   }
-  if (first.size) nx(['run-many', '-t', 'build', `--projects=${[...first].join(',')}`, '--parallel=2']);
+  const closure = new Set();
+  const visit = (project) => {
+    if (closure.has(project) || !graph.nodes[project]) return;
+    closure.add(project);
+    graph.dependencies[project].forEach(({ target }) => visit(target));
+  };
+  first.forEach(visit);
+  const libs = [...closure].filter(
+    (project) =>
+      graph.nodes[project].data.targets?.build &&
+      (enterprise || !graph.nodes[project].data.root.startsWith('enterprise/packages/'))
+  );
+  if (libs.length)
+    nx(['run-many', '-t', 'build', `--projects=${libs.join(',')}`, '--excludeTaskDependencies', '--parallel=2']);
+  if (own.includes('@novu/worker'))
+    nx(['run', '@novu/worker:build', '--excludeTaskDependencies', '--', '-c', nestConfigWithoutTypeCheck('worker')]);
   if (own.includes('@novu/api-service')) {
     nx(['run', '@novu/api-service:build-metadata', '--excludeTaskDependencies']);
-    nx(['run', '@novu/api-service:build', '--excludeTaskDependencies', '--', '-c', apiNestConfig()]);
+    nx(['run', '@novu/api-service:build', '--excludeTaskDependencies', '--', '-c', nestConfigWithoutTypeCheck('api')]);
   }
   if (own.includes('@novu/dashboard'))
     nx(['run', '@novu/dashboard:build', '--excludeTaskDependencies', '--', '--sourcemap', 'false']);
 }
 
-// The API's nest-cli.json without `typeCheck`: the same output, but ~6 s instead of ~57 s. CI's build type-checks every PR.
-function apiNestConfig() {
-  const config = readJson(`${REPO}/apps/api/nest-cli.json`);
+// An app's nest-cli.json without `typeCheck`: the same swc output without a full type-check (API ~6 s instead of
+// ~57 s, worker ~4 s instead of ~14 s). CI's build type-checks every PR.
+function nestConfigWithoutTypeCheck(app) {
+  const config = readJson(`${REPO}/apps/${app}/nest-cli.json`);
   config.compilerOptions.typeCheck = false;
   fs.mkdirSync(RUN, { recursive: true });
-  fs.writeFileSync(`${RUN}/nest-cli.json`, JSON.stringify(config));
+  fs.writeFileSync(`${RUN}/${app}-nest-cli.json`, JSON.stringify(config));
 
-  return relative(`${REPO}/apps/api`, `${RUN}/nest-cli.json`);
+  return relative(`${REPO}/apps/${app}`, `${RUN}/${app}-nest-cli.json`);
+}
+
+// `compile` mode skips the type check and the static prerender, which the playground doesn't pass; every page
+// renders on request, as under `next dev`. Turbopack takes ~45 s and ~2.4 GB, webpack ~110 s.
+function buildBridge() {
+  run('node_modules/.bin/next', ['build', '--turbopack', '--experimental-build-mode', 'compile'], {
+    cwd: `${REPO}/playground/nextjs`,
+    env: { ...env, NODE_OPTIONS: '', NEXT_TELEMETRY_DISABLED: '1' },
+  });
 }
 
 function projectGraph() {
@@ -419,6 +445,7 @@ async function bake(ref = 'next') {
   if (env.BULL_MQ_PRO_NPM_TOKEN) await step('bullmq pro', installBullMqPro);
   else log('WARN: no BULL_MQ_PRO_NPM_TOKEN; the box runs open-source BullMQ without NOVU_MANAGED_SERVICE');
   await step('build', () => build(Object.keys(PROJECT_PROCESSES)));
+  await step('build bridge', buildBridge);
   await step('deploy api worker', () => Object.keys(DEPLOYED_APPS).forEach((name) => deployApp(name)));
   prepareRuntime();
 
@@ -913,6 +940,9 @@ async function applyPr(ref) {
       : [];
     if (!dependenciesChanged && !dashboardBundleChanged(files))
       affected = affected.filter((project) => project !== '@novu/dashboard');
+    // nx can't see inside the submodule, so a `.source` bump affects nothing; the enterprise code runs in the API and worker.
+    if (files.includes('.source'))
+      for (const project of ['@novu/api-service', '@novu/worker']) if (!affected.includes(project)) affected.push(project);
   });
   affected.forEach((project) => restart.add(PROJECT_PROCESSES[project]));
   if (files.some((file) => file.startsWith('enterprise/workers/socket/'))) restart.add('socket');
@@ -921,7 +951,9 @@ async function applyPr(ref) {
   // Building next to the running apps gets OOM-killed in 8 GB. The dashboard is static files, so it keeps serving.
   const stop = [...restart].filter((name) => name !== 'dashboard');
   if (stop.length) await step(`stop ${stop.join(' ')}`, () => pc(['process', 'stop', ...stop]));
-  if (affected.length) await step(`build ${affected.join(' ')}`, () => build(affected));
+  const enterprise = dependenciesChanged || files.some((file) => file.startsWith('enterprise/packages/'));
+  if (affected.length) await step(`build ${affected.join(' ')}`, () => build(affected, { enterprise }));
+  if (restart.has('bridge')) await step('build bridge', buildBridge);
   const redeploy = Object.keys(DEPLOYED_APPS).filter((name) => restart.has(name));
   if (redeploy.length)
     await step(`deploy ${redeploy.join(' ')}`, () =>

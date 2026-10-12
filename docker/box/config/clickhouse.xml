@@ -40,6 +40,8 @@
     <background_distributed_schedule_pool_size>1</background_distributed_schedule_pool_size>
     <tables_loader_foreground_pool_size>2</tables_loader_foreground_pool_size>
     <tables_loader_background_pool_size>1</tables_loader_background_pool_size>
+    <!-- The default keeps up to 1000 idle pool threads, each with a stack and an allocator cache. -->
+    <max_thread_pool_free_size>8</max_thread_pool_free_size>
     <!-- Must fit the small merge pool above (background_pool_size x concurrency ratio 2). -->
     <merge_tree>
         <number_of_free_entries_in_pool_to_execute_mutation>2</number_of_free_entries_in_pool_to_execute_mutation>
@@ -47,19 +49,6 @@
         <number_of_free_entries_in_pool_to_execute_optimize_entire_partition>2</number_of_free_entries_in_pool_to_execute_optimize_entire_partition>
     </merge_tree>
 
-    <!-- System log tables only cost RAM and disk in a preview box. -->
-    <query_log remove="1" />
-    <query_thread_log remove="1" />
-    <query_views_log remove="1" />
-    <part_log remove="1" />
-    <trace_log remove="1" />
-    <metric_log remove="1" />
-    <asynchronous_metric_log remove="1" />
-    <session_log remove="1" />
-    <text_log remove="1" />
-    <opentelemetry_span_log remove="1" />
-    <processors_profile_log remove="1" />
-    <asynchronous_insert_log remove="1" />
-    <backup_log remove="1" />
-    <error_log remove="1" />
+    <!-- No system log tables: they only cost RAM and disk in a preview box. ClickHouse creates one for every
+         *_log section in this file, even an empty or remove="1" one (remove only works in a merged config.d file). -->
 </clickhouse>

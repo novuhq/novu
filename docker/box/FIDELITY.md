@@ -14,7 +14,7 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 | `NOVU_MANAGED_SERVICE` | `false` (API), `true` (worker) | Unset | Mongo TTL indexes stay on in the box (Cloud archives instead); New Relic metrics | Set per process if it ever matters |
 | Redis | MemoryDB / ElastiCache cluster | 3-node Redis 7.2 cluster, TLS with a self-signed certificate, one host | Network partitions, failover | - |
 | Mongo | Atlas cluster, online archive | Single-node replica set `rs0` | Failover, archive | - |
-| ClickHouse, S3 | Managed ClickHouse, AWS S3 | Single-node ClickHouse, versitygw (S3 API), random keys per start | Managed-service behaviour | - |
+| ClickHouse, S3 | Managed ClickHouse, AWS S3 | Single-node ClickHouse without the `system.*_log` tables (saves ~250 MB), versitygw (S3 API), random keys per start | Managed-service behaviour | - |
 | Processes | Autoscaled API, separate internal API, one worker service per queue | API and worker, 1 pm2 instance each (cluster mode) | Scaling, per-queue worker isolation, races between processes | `PM2_INSTANCES=2`: boot takes ~49 s instead of ~29 s and 1.7 GB more |
 | Legacy `ws` service | Running | Off; the socket worker (PartySocket) serves realtime | Jobs pile up unread in the `novu-web-sockets` queue | - |
 | `NODE_ENV` | `dev` on staging, `production` in production | `production` (matches production) | Staging-only `dev` behaviour (Swagger explorer, http profile URLs, popular-template IDs) | - |
@@ -49,7 +49,7 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Area | Difference |
 |---|---|
 | Environments | Only Development is synced; Production would need its own secret key and a second sync |
-| Bridge app server | `next dev --turbopack` (ready in ~6 s warm, ~12 s cold; webpack takes ~10 s and ~18 s), not a production build: `next build` of the playground fails its type check and needs more memory than the box has. Each route compiles on its first request (a few seconds), and the HMAC signature check stays on (`NOVU_STRICT_AUTHENTICATION_ENABLED`) |
+| Bridge app server | A production build (`next start`), built with `next build --turbopack --experimental-build-mode compile`: no type check and no static prerender, which the playground doesn't pass, so every page renders on request. The discovered workflow and step `code` is minified, as from a customer's production build. The HMAC signature check stays on (`NOVU_STRICT_AUTHENTICATION_ENABLED`) |
 | Content renderers | No react-email, Vue or Svelte templates; they render inside the customer's app, outside Novu |
 | `novu dev` tunnel (novu.sh) | Not used; Local mode is tested by pointing it at the bridge directly |
 | Deploy paths | `novu sync` and the GitHub Action aren't run; the box makes the same requests they make (`POST /v1/bridge/sync`, then `PUT /v1/agents/:id/bridge`), but signs the agent discovery (see "Bugs found") |
