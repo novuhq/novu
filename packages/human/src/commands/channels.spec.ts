@@ -37,8 +37,8 @@ function operator(overrides: Partial<Contact> = {}): Contact {
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',
     channels: [
-      { via: 'telegram', connectedAt: '2026-09-02T00:00:00.000Z', isDefault: true },
-      { via: 'email', isDefault: false },
+      { via: 'telegram', status: 'verified', connectedAt: '2026-09-02T00:00:00.000Z', isDefault: true },
+      { via: 'email', status: 'verified', isDefault: false },
     ],
     defaultVia: 'telegram',
     ...overrides,

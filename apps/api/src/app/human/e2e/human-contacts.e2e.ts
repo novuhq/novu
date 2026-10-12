@@ -281,7 +281,13 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
     it('lists every subscriber in the environment with only contact fields', async () => {
       const stamp = Date.now();
       await setup({ subscriberId: `alice-${stamp}`, firstName: 'Alice', lastName: 'Chen' });
-      await setup({ subscriberId: `bob-${stamp}`, email: 'bob@example.com' });
+      // Setup no longer writes Subscriber.email (it lands after double opt-in), so seed it directly.
+      await subscriberRepository.create({
+        subscriberId: `bob-${stamp}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        email: 'bob@example.com',
+      });
       await subscriberRepository.create({
         subscriberId: `carol-${stamp}`,
         _environmentId: session.environment._id,
@@ -391,10 +397,11 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(invited).to.not.have.property('defaultVia');
       expect(invited?.invite).to.deep.equal({ url: invite.url, expiresAt: invite.expiresAt });
 
-      const email = contacts.get(emailId);
-      expect(email?.status).to.equal('joined');
-      expect(email?.defaultVia).to.equal('email');
-      expect(email?.channels).to.deep.equal([{ via: 'email', isDefault: true }]);
+      const emailContact = contacts.get(emailId);
+      expect(emailContact?.status).to.equal('invite_sent');
+      expect(emailContact?.channels).to.deep.equal([]);
+      expect(emailContact).to.not.have.property('defaultVia');
+      expect(emailContact).to.not.have.property('email');
     });
 
     it('returns only the contact asked for by subscriberId', async () => {

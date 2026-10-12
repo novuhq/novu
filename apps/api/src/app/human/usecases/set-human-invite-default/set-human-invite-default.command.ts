@@ -8,6 +8,6 @@ export class SetHumanInviteDefaultCommand extends BaseCommand {
   @IsNotEmpty()
   token: string;
 
-  @IsIn([HumanChannelViaEnum.TELEGRAM, HumanChannelViaEnum.SLACK])
+  @IsIn([HumanChannelViaEnum.TELEGRAM, HumanChannelViaEnum.SLACK, HumanChannelViaEnum.EMAIL])
   via: HumanInviteVia;
 }

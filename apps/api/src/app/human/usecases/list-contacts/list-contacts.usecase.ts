@@ -156,6 +156,7 @@ function toChannels(targets: ReachableHumanTarget[], defaultVia?: HumanChannelVi
     channels.push({
       via: target.via,
       ...(target.connectedAt ? { connectedAt: target.connectedAt } : {}),
+      ...(target.via === HumanChannelViaEnum.EMAIL ? { address: target.platformUserId } : {}),
       isDefault: target.via === defaultVia,
     });
   }

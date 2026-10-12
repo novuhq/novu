@@ -27,7 +27,7 @@ export default async function ChannelsPage() {
       <PageHeader
         title="Channels"
         description="How your agent shows up on each channel. People reply right where the message lands."
-        action={<CopyCliCommand command="npx @novu/human channels" />}
+        action={<CopyCliCommand command="npx @novu/human channel list" />}
       />
       {!agent && (
         <AgentSetupBanner>

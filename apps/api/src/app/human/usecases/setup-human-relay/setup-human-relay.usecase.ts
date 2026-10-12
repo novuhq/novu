@@ -18,13 +18,17 @@ import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
 export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
 
-type ContactDetails = Partial<Pick<SubscriberEntity, 'email' | 'firstName' | 'lastName'>>;
+type ContactDetails = Partial<Pick<SubscriberEntity, 'firstName' | 'lastName'>>;
 
 /**
  * Idempotent bootstrap behind `human setup`: ensures the environment has its
  * hidden `human_relay` system agent (the delivery/webhook anchor for all human
  * interactions) and that the human's subscriber row exists. Channel linking
  * itself reuses the standard agent-integration + channel-endpoint flows.
+ *
+ * When the caller is the relay's owner (`operator: true`), the relay records
+ * their subscriberId. Their name stays on that subscriber and is shown next to
+ * the agent's own name, which is never overwritten.
  */
 @Injectable()
 export class SetupHumanRelay {
@@ -118,8 +122,8 @@ export class SetupHumanRelay {
   }
 
   private async ensureSubscriber(command: SetupHumanRelayCommand, subscriberId: string): Promise<void> {
+    // Subscriber.email is written when verification is promoted (`VerifyAddress`).
     const details: ContactDetails = {
-      email: command.email?.trim().toLowerCase() || undefined,
       firstName: command.firstName?.trim() || undefined,
       lastName: command.lastName?.trim() || undefined,
     };
@@ -133,7 +137,6 @@ export class SetupHumanRelay {
         subscriberId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        ...(details.email ? { email: details.email } : {}),
         ...(details.firstName ? { firstName: details.firstName } : {}),
         ...(details.lastName ? { lastName: details.lastName } : {}),
       });
@@ -142,8 +145,7 @@ export class SetupHumanRelay {
         throw err;
       }
 
-      // A setup running at the same moment created the subscriber first. This request's email and
-      // name still have to land on it.
+      // A setup running at the same moment created the subscriber first. This request's name still has to land on it.
       await this.updateExistingSubscriber(command, subscriberId, details);
     }
   }
@@ -152,7 +154,7 @@ export class SetupHumanRelay {
   private async updateExistingSubscriber(
     command: SetupHumanRelayCommand,
     subscriberId: string,
-    { email, firstName, lastName }: ContactDetails
+    { firstName, lastName }: ContactDetails
   ): Promise<boolean> {
     const existing = await this.subscriberRepository.findOne({
       subscriberId,
@@ -163,12 +165,9 @@ export class SetupHumanRelay {
       return false;
     }
 
-    // Email identity powers the email channel (delivery target + inbound
-    // reply resolution live on Subscriber.email — no ChannelEndpoint).
     // Names are only ever set or replaced, never cleared: an invite that
     // omits `--name` must not wipe a name captured earlier.
     const updates: ContactDetails = {};
-    if (email && existing.email !== email) updates.email = email;
     if (firstName && existing.firstName !== firstName) updates.firstName = firstName;
     if (lastName && existing.lastName !== lastName) updates.lastName = lastName;
 

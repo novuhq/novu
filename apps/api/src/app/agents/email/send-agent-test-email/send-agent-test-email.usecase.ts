@@ -1,44 +1,14 @@
-import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AnalyticsService,
-  buildAgentSharedInbox,
-  decryptCredentials,
-  InstrumentUsecase,
-  isAgentSharedInboxEnabled,
-  MailFactory,
-} from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
+import { BadGatewayException, Injectable, NotFoundException } from '@nestjs/common';
+import { AnalyticsService, InstrumentUsecase, MailFactory } from '@novu/application-generic';
+import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import type { IEmailOptions } from '@novu/shared';
 
 import { trackAgentTestEmailSent } from '../../shared/analytics/agent-analytics';
+import { resolveAgentOutboundEmail } from '../resolve-agent-outbound-email';
 import { SendAgentTestEmailCommand } from './send-agent-test-email.command';
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function resolveAgentInboundFrom(emailIntegration: IntegrationEntity): string | undefined {
-  const slug = emailIntegration.credentials?.emailSlugPrefix;
-  const inboxRoutingKey = emailIntegration.credentials?.inboxRoutingKey;
-  const sharedInboxDisabled = Boolean(emailIntegration.credentials?.sharedInboxDisabled);
-  if (!isAgentSharedInboxEnabled() || !slug || !inboxRoutingKey || sharedInboxDisabled) {
-    return undefined;
-  }
-
-  try {
-    return buildAgentSharedInbox(slug, inboxRoutingKey);
-  } catch {
-    return undefined;
-  }
-}
-
-function resolveAgentSenderName(emailIntegration: IntegrationEntity, agentName: string): string {
-  const stored = emailIntegration.credentials?.senderName;
-  if (typeof stored === 'string' && stored.trim()) {
-    return stored.trim();
-  }
-
-  return agentName;
 }
 
 @Injectable()
@@ -65,41 +35,15 @@ export class SendAgentTestEmail {
       throw new NotFoundException(`Agent "${command.agentIdentifier}" not found.`);
     }
 
-    const links = await this.agentIntegrationRepository.findLinksForAgents({
-      organizationId: command.organizationId,
+    const { senderIntegration, from, senderName } = await resolveAgentOutboundEmail({
       environmentId: command.environmentId,
-      agentIds: [agent._id],
+      organizationId: command.organizationId,
+      agentId: agent._id,
+      agentName: agent.name,
+      integrationRepository: this.integrationRepository,
+      agentIntegrationRepository: this.agentIntegrationRepository,
     });
 
-    const integrationIds = links.map((l) => l._integrationId).filter(Boolean);
-    if (integrationIds.length === 0) {
-      throw new BadRequestException('No email integration linked to this agent.');
-    }
-
-    const emailIntegration = await this.integrationRepository.findOne({
-      _id: { $in: integrationIds } as unknown as string,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      providerId: EmailProviderIdEnum.NovuAgent,
-      channel: ChannelTypeEnum.EMAIL,
-    });
-
-    if (!emailIntegration) {
-      throw new BadRequestException('No Novu Email integration found for this agent.');
-    }
-
-    const outboundIntegrationId = emailIntegration.credentials?.outboundIntegrationId as string | undefined;
-    const agentInboundFrom = resolveAgentInboundFrom(emailIntegration);
-    const senderName = resolveAgentSenderName(emailIntegration, agent.name);
-
-    const senderIntegration = await this.findSenderIntegration(
-      command.environmentId,
-      command.organizationId,
-      outboundIntegrationId,
-      { agentInboundFrom, senderName }
-    );
-    const outboundFrom = senderIntegration.credentials?.from as string | undefined;
-    const from = agentInboundFrom || outboundFrom;
     const mailFactory = new MailFactory();
     const handler = mailFactory.getHandler(senderIntegration, from);
 
@@ -125,7 +69,8 @@ export class SendAgentTestEmail {
 
     await handler.send(mailOptions).catch((err) => {
       const base = err instanceof Error ? err.message : String(err);
-      const body = (err as any)?.response?.body;
+      const body = (err as { response?: { body?: { errors?: Array<{ message?: string }>; message?: string } } })
+        ?.response?.body;
       const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
       throw new BadGatewayException({
         error: 'delivery_failed',
@@ -141,47 +86,5 @@ export class SendAgentTestEmail {
     });
 
     return { success: true };
-  }
-
-  private async findSenderIntegration(
-    environmentId: string,
-    organizationId: string,
-    outboundIntegrationId: string | undefined,
-    delivery: { agentInboundFrom?: string; senderName: string }
-  ) {
-    if (!outboundIntegrationId) {
-      throw new BadRequestException('Agent has no outbound email integration configured.');
-    }
-
-    const configured = await this.integrationRepository.findOne({
-      _id: outboundIntegrationId,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-    });
-
-    if (!configured) {
-      throw new BadRequestException('Configured outbound integration not found or inactive.');
-    }
-
-    // The Novu demo email integration is provisioned alongside each org but
-    // ships with empty stored credentials — the real SendGrid API key lives in
-    // the deployment's `NOVU_EMAIL_INTEGRATION_API_KEY` env var. Mirror the
-    // runtime resolution in chat-instance.registry.ts so test emails go through the
-    // same demo plumbing as actual agent replies.
-    if (configured.providerId === EmailProviderIdEnum.Novu) {
-      return {
-        ...configured,
-        credentials: {
-          apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
-          from: delivery.agentInboundFrom ?? 'no-reply@novu.co',
-          senderName: delivery.senderName,
-          ipPoolName: 'Demo',
-        },
-      };
-    }
-
-    return { ...configured, credentials: decryptCredentials(configured.credentials ?? {}) };
   }
 }
