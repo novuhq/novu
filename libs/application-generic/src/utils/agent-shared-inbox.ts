@@ -1,3 +1,4 @@
+import { slugify } from '@novu/shared';
 import { customAlphabet } from 'nanoid';
 
 /**
@@ -187,6 +188,32 @@ const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
  */
 export function isValidAgentEmailSlugPrefix(slug: string): boolean {
   return typeof slug === 'string' && SLUG_REGEX.test(slug);
+}
+
+/**
+ * Slug the shared inbox actually publishes. A valid stored prefix wins; otherwise
+ * the address is `{slugify(identifier or name)}-{inboxRoutingKey}@<shared-domain>`.
+ * Inbound routing must accept this same slug, including when a credential save
+ * omitted `emailSlugPrefix`.
+ */
+export function resolvePublishedAgentEmailSlug(
+  storedPrefix: string | null | undefined,
+  agent: { identifier?: string | null; name?: string | null }
+): string | undefined {
+  if (storedPrefix && isValidAgentEmailSlugPrefix(storedPrefix)) {
+    return storedPrefix;
+  }
+
+  const candidate = slugify(agent.identifier || agent.name || '')
+    .slice(0, 32)
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+
+  if (!isValidAgentEmailSlugPrefix(candidate)) {
+    return undefined;
+  }
+
+  return candidate;
 }
 
 function sanitizeSlugForAddress(slug: string): string {

@@ -1,8 +1,9 @@
+import { isValidAgentEmailSlugPrefix } from '@novu/application-generic';
 import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
 
 /**
- * The NovuAgent integration owns a handful of routing-control fields that the
- * API update path must never let a client overwrite:
+ * The NovuAgent integration owns a handful of routing-control fields that a
+ * partial credential save must not drop:
  *
  * - `inboxRoutingKey`     — opaque routing segment of the shared-inbox
  *                           address. Backed by a partial unique index;
@@ -17,12 +18,18 @@ import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
  *                           only via `PATCH /agents/:identifier/inbox/shared`
  *                           so the server can refuse to leave the agent with
  *                           zero inbound addresses.
+ * - `emailSlugPrefix`     — user-editable half of the shared-inbox address.
+ *                           A partial credential save that omits it must not
+ *                           drop the stored prefix: the published address
+ *                           would fall back to the agent slug while inbound
+ *                           routing still expects the prefix that was sent.
  *
  * If the incoming credentials drop any of these fields (e.g. the dashboard
  * sends the subset that the user actually edited), we re-apply the server-
- * stored value. If the client tries to *change* a value, we ignore the change
- * and keep the existing one — saves us from a malformed input nuking the
- * integration.
+ * stored value. For `emailSlugPrefix`, an explicit valid prefix replaces the
+ * stored one. If the client tries to *change* the other values, we ignore
+ * the change and keep the existing one — saves us from a malformed input
+ * nuking the integration.
  */
 export function ensureNovuAgentManagedCredentials({
   providerId,
@@ -58,6 +65,15 @@ export function ensureNovuAgentManagedCredentials({
     merged.sharedInboxDisabled = existingCredentials.sharedInboxDisabled;
   } else {
     delete merged.sharedInboxDisabled;
+  }
+
+  const incomingSlug = merged.emailSlugPrefix;
+  if (!(typeof incomingSlug === 'string' && isValidAgentEmailSlugPrefix(incomingSlug))) {
+    if (existingCredentials?.emailSlugPrefix) {
+      merged.emailSlugPrefix = existingCredentials.emailSlugPrefix;
+    } else {
+      delete merged.emailSlugPrefix;
+    }
   }
 
   return merged;

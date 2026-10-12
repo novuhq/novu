@@ -2,7 +2,7 @@ import {
   buildAgentSharedInbox,
   getSharedAgentDomain,
   isAgentSharedInboxEnabled,
-  isValidAgentEmailSlugPrefix,
+  resolvePublishedAgentEmailSlug,
 } from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
 import {
@@ -10,7 +10,6 @@ import {
   buildClaudePlatformAgentConsoleUrl,
   isAgentInboxProvider,
   isClaudePlatformConsoleProvider,
-  slugify,
 } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
@@ -130,8 +129,7 @@ function resolveSharedInboxAddress(
     return undefined;
   }
 
-  const rawSlug = integration.credentials?.emailSlugPrefix;
-  const slug = rawSlug && isValidAgentEmailSlugPrefix(rawSlug) ? rawSlug : deriveFallbackSlug(agent);
+  const slug = resolvePublishedAgentEmailSlug(integration.credentials?.emailSlugPrefix, agent);
 
   if (!slug) {
     return undefined;
@@ -147,15 +145,6 @@ function resolveSharedInboxAddress(
   } catch {
     return undefined;
   }
-}
-
-function deriveFallbackSlug(agent: SharedInboxAgentContext): string | undefined {
-  const candidate = slugify(agent.identifier ?? agent.name ?? '')
-    .slice(0, 32)
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-
-  return isValidAgentEmailSlugPrefix(candidate) ? candidate : undefined;
 }
 
 export function toAgentIntegrationSummary(

@@ -38,6 +38,32 @@ describe('ensureNovuAgentManagedCredentials', () => {
     expect(result.senderName).to.equal('Ops');
   });
 
+  it('keeps the stored slug when an update omits it', () => {
+    const result = ensureNovuAgentManagedCredentials({
+      providerId: EmailProviderIdEnum.AgentEmailInbox,
+      nextCredentials: { senderName: 'Ops' },
+      existingCredentials: {
+        inboxRoutingKey: 'stored01',
+        emailSlugPrefix: 'human-relay',
+        secretKey: 'stored-secret',
+      },
+    });
+
+    expect(result.emailSlugPrefix).to.equal('human-relay');
+    expect(result.inboxRoutingKey).to.equal('stored01');
+    expect(result.senderName).to.equal('Ops');
+  });
+
+  it('replaces the slug when the update sends a valid prefix', () => {
+    const result = ensureNovuAgentManagedCredentials({
+      providerId: EmailProviderIdEnum.NovuAgent,
+      nextCredentials: { emailSlugPrefix: 'renamed-bot', senderName: 'Ops' },
+      existingCredentials: { emailSlugPrefix: 'human-relay' },
+    });
+
+    expect(result.emailSlugPrefix).to.equal('renamed-bot');
+  });
+
   it('leaves other providers unchanged', () => {
     const next = { inboxRoutingKey: 'kept', secretKey: 'kept-secret' };
 

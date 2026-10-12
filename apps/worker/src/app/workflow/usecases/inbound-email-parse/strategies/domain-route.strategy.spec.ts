@@ -475,6 +475,35 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.notCalled(agentRepository.findByIdForWebhook as any);
     });
 
+    it('accepts the published fallback slug when the stored prefix is missing', async () => {
+      const integration = makeIntegration();
+      delete (integration.credentials as { emailSlugPrefix?: string }).emailSlugPrefix;
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+    });
+
+    it('drops a non-published slug when the stored prefix is missing', async () => {
+      const integration = makeIntegration();
+      delete (integration.credentials as { emailSlugPrefix?: string }).emailSlugPrefix;
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      try {
+        await strategy.execute(makeSharedCommand(`other-agent-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+    });
+
     it('drops mail when the address slug does not match the integration', async () => {
       integrationRepository.findAgentInboundByInboxRoutingKey.resolves(makeIntegration() as any);
 

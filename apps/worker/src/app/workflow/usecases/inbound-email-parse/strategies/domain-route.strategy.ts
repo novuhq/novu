@@ -3,8 +3,10 @@ import {
   getSharedAgentDomain,
   InboundDomainRouteDelivery,
   isAgentSharedInboxEnabled,
+  isValidAgentEmailSlugPrefix,
   PinoLogger,
   parseAgentSharedInboxLocalPart,
+  resolvePublishedAgentEmailSlug,
 } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -239,7 +241,9 @@ export class DomainRouteStrategy {
       throw new InboundParseDroppedError('Shared agent domain: no integration found for routing key');
     }
 
-    if (integration.credentials?.emailSlugPrefix !== parsed.slug) {
+    const storedSlug = integration.credentials?.emailSlugPrefix;
+    const hasAuthoritativeSlug = typeof storedSlug === 'string' && isValidAgentEmailSlugPrefix(storedSlug);
+    if (hasAuthoritativeSlug && storedSlug !== parsed.slug) {
       this.logger.info(
         { toAddress, integrationId: integration._id, slug: parsed.slug },
         'Shared agent domain: slug does not match the integration - dropping'
@@ -309,6 +313,20 @@ export class DomainRouteStrategy {
         organizationId: agent._organizationId,
         environmentId: agent._environmentId,
       });
+    }
+
+    if (!hasAuthoritativeSlug) {
+      const publishedSlug = resolvePublishedAgentEmailSlug(storedSlug, agent);
+      if (publishedSlug !== parsed.slug) {
+        this.logger.info(
+          { toAddress, integrationId: integration._id, slug: parsed.slug, publishedSlug },
+          'Shared agent domain: slug does not match the published inbox address - dropping'
+        );
+        throw new InboundParseDroppedError('Shared agent domain: slug does not match the published inbox address', {
+          organizationId: agent._organizationId,
+          environmentId: agent._environmentId,
+        });
+      }
     }
 
     const resolved: ResolvedDomainRouteContext = {
