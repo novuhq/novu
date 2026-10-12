@@ -17,8 +17,8 @@ export type InviteChannel = {
   status: InviteChannelStatus;
   /** Masked address for email (e.g. `a***@b.com`). */
   address?: string;
-  /** False when this setup cannot offer the channel. Missing means it can. */
-  available?: boolean;
+  /** False when this setup cannot offer the channel at all (e.g. email on a keyless demo). */
+  available: boolean;
 };
 
 /** Who is asking to reach the invitee. Both fields are optional; use `describeSender` to render. */
@@ -112,11 +112,21 @@ export class InviteRequestError extends Error {
  * credential, so nothing here sends cookies or API keys.
  */
 export async function getInviteStatus(apiUrl: string, token: string, signal?: AbortSignal): Promise<InviteStatus> {
-  return request<InviteStatus>(
+  const status = await request<InviteStatus>(
     `${apiUrl}/v1/human/invites/status?token=${encodeURIComponent(token)}`,
     { method: 'GET', signal },
     'Failed to load the invitation'
   );
+
+  if (!status.valid) {
+    return status;
+  }
+
+  // An API older than the send caps release omits `available`; it offered every channel.
+  return {
+    ...status,
+    channels: status.channels.map((channel) => ({ ...channel, available: channel.available !== false })),
+  };
 }
 
 /** Mints a fresh Telegram deep link / Slack authorize URL, or starts email verification. */

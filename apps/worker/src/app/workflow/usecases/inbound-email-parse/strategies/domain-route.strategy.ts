@@ -241,6 +241,9 @@ export class DomainRouteStrategy {
       throw new InboundParseDroppedError('Shared agent domain: no integration found for routing key');
     }
 
+    // The slug has to be the agent's own, checked in two phases: a stored prefix
+    // settles it here, before any further lookups, while the published fallback
+    // is derived from the agent and so has to wait until the agent is loaded.
     const storedSlug = integration.credentials?.emailSlugPrefix;
     const hasAuthoritativeSlug = typeof storedSlug === 'string' && isValidAgentEmailSlugPrefix(storedSlug);
     if (hasAuthoritativeSlug && storedSlug !== parsed.slug) {
@@ -315,6 +318,7 @@ export class DomainRouteStrategy {
       });
     }
 
+    // Phase two of the slug check: no stored prefix, so the agent decides.
     if (!hasAuthoritativeSlug) {
       const publishedSlug = resolvePublishedAgentEmailSlug(storedSlug, agent);
       if (publishedSlug !== parsed.slug) {

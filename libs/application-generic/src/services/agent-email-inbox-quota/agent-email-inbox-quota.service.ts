@@ -75,8 +75,11 @@ export function isAgentEmailInboxQuotaExceeded(err: unknown): err is AgentEmailI
 /**
  * Credits held for one Human action. `remaining` is decremented as the sender
  * accepts each email. Unused credits are released back to Redis.
+ *
+ * Internal: call sites get an {@link AgentEmailInboxCredits} scope instead, so
+ * "I consumed a credit" can only be expressed by actually sending.
  */
-export interface AgentEmailInboxReservation {
+interface AgentEmailInboxReservation {
   organizationId: string;
   remaining: number;
   /** Self-hosted, or Redis unavailable. Nothing was incremented. */
@@ -84,6 +87,17 @@ export interface AgentEmailInboxReservation {
   /** Set when credits were incremented, so a release hits the same windows. */
   dailyKey?: string;
   monthlyKey?: string;
+}
+
+/**
+ * A held block of credits. The only way to spend one is to send inside `run`:
+ * the sender consumes from the active scope via {@link AgentEmailInboxQuotaService.beginSend}.
+ */
+export interface AgentEmailInboxCredits {
+  /** Makes these credits the active reservation for the duration of `fn`. */
+  run<T>(fn: () => Promise<T>): Promise<T>;
+  /** Gives back whatever the sender did not consume. Idempotent. */
+  release(): Promise<void>;
 }
 
 export interface AgentEmailInboxSendAttempt {
@@ -110,11 +124,39 @@ export class AgentEmailInboxQuotaService {
   }
 
   /**
+   * Holds `count` credits for the duration of `fn` and gives back whatever the
+   * sender did not consume. Throws 429 when either window cannot cover `count`.
+   */
+  async withCredits<T>(organizationId: string, count: number, fn: () => Promise<T>): Promise<T> {
+    const credits = await this.reserveCredits(organizationId, count);
+
+    try {
+      return await credits.run(fn);
+    } finally {
+      await credits.release();
+    }
+  }
+
+  /**
+   * Holds `count` credits without scoping them to a single call. Prefer
+   * {@link withCredits}; this exists for callers that must react to the 429
+   * before deciding what to run, and they still own the `release()`.
+   */
+  async reserveCredits(organizationId: string, count: number): Promise<AgentEmailInboxCredits> {
+    const reservation = await this.reserve(organizationId, count);
+
+    return {
+      run: <T>(fn: () => Promise<T>) => this.reservationContext.run(reservation, fn),
+      release: () => this.releaseRemaining(reservation),
+    };
+  }
+
+  /**
    * Holds `count` credits on both the UTC day and UTC month counters.
    * Throws 429 when either window cannot cover the whole count.
    * Self-hosted and a disabled cache fail open.
    */
-  async reserve(organizationId: string, count: number): Promise<AgentEmailInboxReservation> {
+  private async reserve(organizationId: string, count: number): Promise<AgentEmailInboxReservation> {
     if (count <= 0 || process.env.IS_SELF_HOSTED === 'true') {
       return { organizationId, remaining: 0, unlimited: true };
     }
@@ -173,7 +215,7 @@ export class AgentEmailInboxQuotaService {
   }
 
   /** Gives unused credits back. Safe to call when the reservation was unlimited. */
-  async releaseRemaining(reservation: AgentEmailInboxReservation): Promise<void> {
+  private async releaseRemaining(reservation: AgentEmailInboxReservation): Promise<void> {
     if (reservation.unlimited || reservation.remaining <= 0) {
       return;
     }
@@ -195,14 +237,11 @@ export class AgentEmailInboxQuotaService {
     }
   }
 
-  runReserved<T>(reservation: AgentEmailInboxReservation, fn: () => Promise<T>): Promise<T> {
-    return this.reservationContext.run(reservation, fn);
-  }
-
   /**
-   * Sender choke point. A send inside an active reservation consumes one held
-   * credit. A send with no reservation is counted here and logged, so a missed
-   * reserve site still cannot skip the cap.
+   * Sender choke point. Every outbound Agent Email Inbox message goes through
+   * here. A send inside an active reservation consumes one held credit; a send
+   * with no reservation (agent replies, which hold none) is counted here, so no
+   * send can skip the cap.
    */
   async beginSend(organizationId: string): Promise<AgentEmailInboxSendAttempt> {
     const active = this.reservationContext.getStore();
@@ -217,7 +256,7 @@ export class AgentEmailInboxQuotaService {
       };
     }
 
-    this.logger.warn({ organizationId }, 'Agent Email Inbox send had no reservation; counting it at the sender');
+    this.logger.debug({ organizationId }, 'Agent Email Inbox send had no reservation; counting it at the sender');
     const reservation = await this.reserve(organizationId, 1);
     let accepted = false;
 

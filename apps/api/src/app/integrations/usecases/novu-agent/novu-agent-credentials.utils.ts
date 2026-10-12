@@ -24,57 +24,73 @@ import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
  *                           would fall back to the agent slug while inbound
  *                           routing still expects the prefix that was sent.
  *
- * If the incoming credentials drop any of these fields (e.g. the dashboard
- * sends the subset that the user actually edited), we re-apply the server-
- * stored value. For `emailSlugPrefix`, an explicit valid prefix replaces the
- * stored one. If the client tries to *change* the other values, we ignore
- * the change and keep the existing one — saves us from a malformed input
- * nuking the integration.
+ * On create there is nothing provisioned yet, so every managed field the
+ * client sent is dropped. On update, a partial credential save (e.g. the
+ * dashboard sends only the subset the user edited) gets the server-stored
+ * value re-applied, and an attempt to *change* one is ignored rather than
+ * allowed to nuke the integration. `emailSlugPrefix` is the exception: an
+ * explicit, valid prefix replaces the stored one.
  */
-export function ensureNovuAgentManagedCredentials({
-  providerId,
-  nextCredentials,
-  existingCredentials,
-  stripClientSecret = false,
-}: {
-  providerId: string;
-  nextCredentials: ICredentials;
-  existingCredentials?: ICredentials;
-  /** Create path: a client must not choose the webhook HMAC secret. */
-  stripClientSecret?: boolean;
-}): ICredentials {
+export function sanitizeAgentInboxCredentialsForCreate(providerId: string, next: ICredentials): ICredentials {
   if (!isAgentInboxProvider(providerId)) {
-    return nextCredentials;
+    return next;
   }
 
-  const merged: ICredentials = { ...nextCredentials };
+  // Nothing is provisioned yet, so every managed field is the server's to mint.
+  const created: ICredentials = { ...next };
+  delete created.inboxRoutingKey;
+  delete created.secretKey;
+  delete created.sharedInboxDisabled;
 
-  if (existingCredentials?.inboxRoutingKey) {
-    merged.inboxRoutingKey = existingCredentials.inboxRoutingKey;
+  if (!hasValidSlugPrefix(created)) {
+    delete created.emailSlugPrefix;
+  }
+
+  return created;
+}
+
+export function mergeAgentInboxCredentialsForUpdate(
+  providerId: string,
+  next: ICredentials,
+  existing: ICredentials | undefined
+): ICredentials {
+  if (!isAgentInboxProvider(providerId)) {
+    return next;
+  }
+
+  const merged: ICredentials = { ...next };
+
+  if (existing?.inboxRoutingKey) {
+    merged.inboxRoutingKey = existing.inboxRoutingKey;
   } else {
     delete merged.inboxRoutingKey;
   }
 
-  if (existingCredentials?.secretKey) {
-    merged.secretKey = existingCredentials.secretKey;
-  } else if (stripClientSecret) {
-    delete merged.secretKey;
+  if (existing?.secretKey) {
+    merged.secretKey = existing.secretKey;
   }
 
-  if (existingCredentials?.sharedInboxDisabled !== undefined) {
-    merged.sharedInboxDisabled = existingCredentials.sharedInboxDisabled;
+  // `false` is a real stored value here, so only an absent one is dropped.
+  if (existing?.sharedInboxDisabled !== undefined) {
+    merged.sharedInboxDisabled = existing.sharedInboxDisabled;
   } else {
     delete merged.sharedInboxDisabled;
   }
 
-  const incomingSlug = merged.emailSlugPrefix;
-  if (!(typeof incomingSlug === 'string' && isValidAgentEmailSlugPrefix(incomingSlug))) {
-    if (existingCredentials?.emailSlugPrefix) {
-      merged.emailSlugPrefix = existingCredentials.emailSlugPrefix;
+  // An explicit, valid prefix is the one managed field the client may change.
+  if (!hasValidSlugPrefix(merged)) {
+    if (existing?.emailSlugPrefix) {
+      merged.emailSlugPrefix = existing.emailSlugPrefix;
     } else {
       delete merged.emailSlugPrefix;
     }
   }
 
   return merged;
+}
+
+function hasValidSlugPrefix(credentials: ICredentials): boolean {
+  const slug = credentials.emailSlugPrefix;
+
+  return typeof slug === 'string' && isValidAgentEmailSlugPrefix(slug);
 }

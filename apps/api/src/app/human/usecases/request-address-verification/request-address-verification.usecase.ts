@@ -1,9 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AgentEmailInboxQuotaService,
-  type AgentEmailInboxReservation,
-  InstrumentUsecase,
-} from '@novu/application-generic';
+import { AgentEmailInboxQuotaService, InstrumentUsecase } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -124,7 +120,6 @@ export class RequestAddressVerification {
         providerId: EmailProviderIdEnum.AgentEmailInbox,
         integrationRepository: this.integrationRepository,
         agentIntegrationRepository: this.agentIntegrationRepository,
-        allowKeyless: true,
       });
     } catch (err) {
       if (err instanceof BadRequestException) {
@@ -134,18 +129,20 @@ export class RequestAddressVerification {
       throw err;
     }
 
-    const verified = await this.humanContactRepository.findVerifiedAddress(
-      params.environmentId,
-      params.agentId,
-      params.subscriberId,
-      params.via
-    );
-    const previousPending = await this.humanContactRepository.findPendingAddress(
-      params.environmentId,
-      params.agentId,
-      params.subscriberId,
-      params.via
-    );
+    const [verified, previousPending] = await Promise.all([
+      this.humanContactRepository.findVerifiedAddress(
+        params.environmentId,
+        params.agentId,
+        params.subscriberId,
+        params.via
+      ),
+      this.humanContactRepository.findPendingAddress(
+        params.environmentId,
+        params.agentId,
+        params.subscriberId,
+        params.via
+      ),
+    ]);
 
     const { retryAfterSeconds, reservation } = await this.rateLimit.assertAndRecord({
       environmentId: params.environmentId,
@@ -155,57 +152,54 @@ export class RequestAddressVerification {
     });
 
     let written: HumanContactPendingAddress | undefined;
-    let inboxReservation: AgentEmailInboxReservation | undefined;
     try {
-      inboxReservation = await this.inboxQuota.reserve(params.organizationId, 1);
-      written = await this.humanContactRepository.upsertPendingAddress({
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: params.agentId,
-        subscriberId: params.subscriberId,
-        via: params.via,
-        address: params.address,
-      });
-
-      let issued: { token: string; expiresAt: string };
-      try {
-        issued = await this.verificationTokens.issue({
-          env: params.environmentId,
-          org: params.organizationId,
+      // The credit is spent by the sender, not here: an unsent mail releases it.
+      return await this.inboxQuota.withCredits(params.organizationId, 1, async () => {
+        written = await this.humanContactRepository.upsertPendingAddress({
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
           agentId: params.agentId,
           subscriberId: params.subscriberId,
           via: params.via,
           address: params.address,
-          requestedAt: written.requestedAt,
         });
-      } catch (err) {
-        throw toVerificationHttpError(err);
-      }
 
-      await this.emailSender.send({
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: params.agentId,
-        subscriberId: params.subscriberId,
-        address: params.address,
-        token: issued.token,
-        expiresAt: issued.expiresAt,
-        outbound,
-        claimUrl,
+        let issued: { token: string; expiresAt: string };
+        try {
+          issued = await this.verificationTokens.issue({
+            env: params.environmentId,
+            org: params.organizationId,
+            agentId: params.agentId,
+            subscriberId: params.subscriberId,
+            via: params.via,
+            address: params.address,
+            requestedAt: written.requestedAt,
+          });
+        } catch (err) {
+          throw toVerificationHttpError(err);
+        }
+
+        await this.emailSender.send({
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+          agentId: params.agentId,
+          subscriberId: params.subscriberId,
+          address: params.address,
+          token: issued.token,
+          expiresAt: issued.expiresAt,
+          outbound,
+          claimUrl,
+        });
+
+        return {
+          address: maskEmail(params.address),
+          requestedAt: written.requestedAt,
+          expiresAt: issued.expiresAt,
+          retryAfterSeconds,
+          replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
+        };
       });
-      inboxReservation.remaining = 0;
-
-      return {
-        address: maskEmail(params.address),
-        requestedAt: written.requestedAt,
-        expiresAt: issued.expiresAt,
-        retryAfterSeconds,
-        replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
-      };
     } catch (err) {
-      if (inboxReservation) {
-        await this.inboxQuota.releaseRemaining(inboxReservation);
-      }
       await this.compensateFailedSend({ ...params, reservation }, written, previousPending);
 
       throw err;

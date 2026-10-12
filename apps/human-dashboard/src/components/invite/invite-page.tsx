@@ -316,15 +316,13 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
               key={channel.via}
               channel={channel}
               description={
-                channel.available === false
-                  ? 'Not available on this setup yet'
-                  : channelDescription(channel, telegramBot)
+                !channel.available ? 'Not available on this setup yet' : channelDescription(channel, telegramBot)
               }
               connecting={connectingVia === channel.via}
               settingDefault={defaultingVia === channel.via}
-              disabled={busy || channel.available === false}
+              disabled={busy || !channel.available}
               onConnect={() => {
-                if (channel.available === false) {
+                if (!channel.available) {
                   return;
                 }
 

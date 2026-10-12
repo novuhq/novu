@@ -21,9 +21,14 @@ describe('KeylessEmailGateService', () => {
     restoreEnv('HUMAN_DASHBOARD_URL', previousDashboardUrl);
   });
 
-  function service(overrides?: { issue?: sinon.SinonStub; operator?: Record<string, unknown> | null }) {
+  function service(overrides?: {
+    issue?: sinon.SinonStub;
+    operator?: Record<string, unknown> | null;
+    ctaPosted?: boolean;
+  }) {
     const connectClaimTokenService = {
       issueOrGetForEnvironment: overrides?.issue ?? sinon.stub().resolves({ token: 'claim-token' }),
+      isSignupCtaPosted: sinon.stub().resolves(overrides?.ctaPosted ?? false),
     };
     const humanContactRepository = {
       findOperator: sinon.stub().resolves(
@@ -38,8 +43,14 @@ describe('KeylessEmailGateService', () => {
       ),
     };
 
+    const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+
     return {
-      gate: new KeylessEmailGateService(connectClaimTokenService as never, humanContactRepository as never),
+      gate: new KeylessEmailGateService(
+        connectClaimTokenService as never,
+        humanContactRepository as never,
+        logger as never
+      ),
       connectClaimTokenService,
       humanContactRepository,
     };
@@ -136,14 +147,46 @@ describe('KeylessEmailGateService', () => {
     });
   });
 
-  it('reads the operator declared address and builds the claim card', async () => {
-    const { gate } = service();
+  describe('resolveOperatorClaimCard', () => {
+    const inbound = {
+      environmentId: 'env1',
+      organizationId: keylessOrgId,
+      agentId: 'agent1',
+      sender: 'Ada@Example.com',
+    };
 
-    expect(await gate.findDeclaredOperatorAddress('env1', 'agent1')).to.equal('ada@example.com');
+    it('builds the claim card for the declared operator', async () => {
+      const { gate } = service();
 
-    const card = gate.buildClaimCard('https://gethuman.md/claim?token=claim-token');
-    expect(JSON.stringify(card)).to.include('Sign up free');
-    expect(JSON.stringify(card)).to.include('https://gethuman.md/claim?token=claim-token');
+      const card = await gate.resolveOperatorClaimCard(inbound);
+
+      expect(JSON.stringify(card)).to.include('Sign up free');
+      expect(JSON.stringify(card)).to.include('token=claim-token');
+    });
+
+    it('stays silent for any other sender', async () => {
+      const { gate } = service();
+
+      expect(await gate.resolveOperatorClaimCard({ ...inbound, sender: 'someone@example.com' })).to.equal(undefined);
+    });
+
+    it('stays silent once a claim was already sent for this environment', async () => {
+      const { gate } = service({ ctaPosted: true });
+
+      expect(await gate.resolveOperatorClaimCard(inbound)).to.equal(undefined);
+    });
+
+    it('stays silent when no claim token can be issued', async () => {
+      const { gate } = service({ issue: sinon.stub().rejects(new Error('redis down')) });
+
+      expect(await gate.resolveOperatorClaimCard(inbound)).to.equal(undefined);
+    });
+
+    it('stays silent when the operator never declared an address', async () => {
+      const { gate } = service({ operator: null });
+
+      expect(await gate.resolveOperatorClaimCard(inbound)).to.equal(undefined);
+    });
   });
 });
 

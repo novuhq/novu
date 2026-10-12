@@ -24,6 +24,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  type AgentInboxProviderId,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -76,7 +77,7 @@ export class NovuEmailProvisioningService {
     agentId: string,
     environmentId: string,
     organizationId: string,
-    providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox = EmailProviderIdEnum.NovuAgent
+    providerId: AgentInboxProviderId = EmailProviderIdEnum.NovuAgent
   ): Promise<FindOrCreateNovuEmailResult> {
     await this.enforceEmailTier(organizationId);
 
@@ -149,7 +150,7 @@ export class NovuEmailProvisioningService {
     organizationId,
     session,
   }: {
-    providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox;
+    providerId: AgentInboxProviderId;
     displayName: string;
     identifier: string;
     emailSlugPrefix: string;
@@ -293,7 +294,7 @@ export class NovuEmailProvisioningService {
     agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     environmentId: string,
     organizationId: string,
-    providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox
+    providerId: AgentInboxProviderId
   ): Promise<AgentIntegrationResponseDto | null> {
     const agentId = agent._id;
     const links = await this.agentIntegrationRepository.find(

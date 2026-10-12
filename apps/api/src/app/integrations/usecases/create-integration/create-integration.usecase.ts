@@ -33,8 +33,7 @@ import { assertValidIntegrationRules } from '../../utils/assert-integration-rule
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
-import { ensureNovuAgentManagedCredentials } from '../novu-agent/novu-agent-credentials.utils';
-import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
+import { applyManagedCredentialsOnCreate } from '../managed-credentials';
 import { CreateIntegrationCommand } from './create-integration.command';
 
 @Injectable()
@@ -220,14 +219,7 @@ export class CreateIntegration {
       const name = command.name ?? defaultName;
       const identifier = command.identifier ?? `${slugify(name)}-${shortid.generate()}`;
 
-      const managedCredentials = ensureNovuAgentManagedCredentials({
-        providerId: command.providerId,
-        nextCredentials: ensureWhatsAppManagedCredentials({
-          providerId: command.providerId,
-          nextCredentials: command.credentials ?? {},
-        }),
-        stripClientSecret: true,
-      });
+      const managedCredentials = applyManagedCredentialsOnCreate(command.providerId, command.credentials ?? {});
 
       const query: IntegrationQuery = {
         name,

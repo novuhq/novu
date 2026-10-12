@@ -3,6 +3,7 @@ import { AnalyticsService, InstrumentUsecase, MailFactory } from '@novu/applicat
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 
+import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import { trackAgentTestEmailSent } from '../../shared/analytics/agent-analytics';
 import { resolveAgentOutboundEmail } from '../resolve-agent-outbound-email';
 import { SendAgentTestEmailCommand } from './send-agent-test-email.command';
@@ -17,11 +18,14 @@ export class SendAgentTestEmail {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: SendAgentTestEmailCommand): Promise<{ success: boolean }> {
+    await this.keylessEmailGate.assertAllowed(command);
+
     const agent = await this.agentRepository.findOne(
       {
         identifier: command.agentIdentifier,

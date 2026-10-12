@@ -1,9 +1,7 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { buildAgentSharedInbox, decryptCredentials, isAgentSharedInboxEnabled } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
-import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
+import { type AgentInboxProviderId, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 export type ResolvedAgentOutboundEmail = {
   /** Decrypted (or demo-hydrated) integration ready for MailFactory. */
@@ -19,25 +17,19 @@ export type ResolvedAgentOutboundEmail = {
  * Dashboard test email asks for Novu Email. Human verification asks for
  * Agent Email Inbox. The two must not share a first-match lookup: an agent
  * can be linked to both during rollout.
+ *
+ * Whether this organization may send at all is `KeylessEmailGateService`'s
+ * call, made by the caller before it gets here.
  */
 export async function resolveAgentOutboundEmail(params: {
   environmentId: string;
   organizationId: string;
   agentId: string;
   agentName: string;
-  providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox;
+  providerId: AgentInboxProviderId;
   integrationRepository: IntegrationRepository;
   agentIntegrationRepository: AgentIntegrationRepository;
-  /** Only for the keyless operator's own verification email, already checked by `KeylessEmailGateService`. */
-  allowKeyless?: boolean;
 }): Promise<ResolvedAgentOutboundEmail> {
-  if (!params.allowKeyless && isKeylessOrganization(params.organizationId)) {
-    throw new ForbiddenException({
-      code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
-      message: 'Outbound email needs an account.',
-    });
-  }
-
   const links = await params.agentIntegrationRepository.findLinksForAgents({
     organizationId: params.organizationId,
     environmentId: params.environmentId,

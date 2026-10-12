@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import { InstrumentUsecase, isAgentSharedInboxEnabled, pickAgentInboxIntegration } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, DomainRouteRepository, IntegrationRepository } from '@novu/dal';
-import { AGENT_INBOX_PROVIDER_IDS, ChannelTypeEnum, DomainRouteTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS, ChannelTypeEnum, DomainRouteTypeEnum } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
@@ -109,11 +109,9 @@ export class UpdateAgentInboxShared {
         providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
         channel: ChannelTypeEnum.EMAIL,
       },
-      ''
+      '_id identifier credentials providerId'
     );
-    // Dashboard toggle is for Novu Email. Prefer it when a Human inbox is also linked.
-    const integration =
-      integrations.find((item) => item.providerId === EmailProviderIdEnum.NovuAgent) ?? integrations[0];
+    const integration = pickAgentInboxIntegration(integrations);
     if (!integration) {
       throw new NotFoundException('No Novu Email integration found for this agent.');
     }

@@ -1,7 +1,6 @@
 import '../../src/config';
 
-import { DalService, IntegrationRepository } from '@novu/dal';
-import { agentInboxRoutingKeyPartialFilter } from '@novu/shared';
+import { AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER, DalService, IntegrationRepository } from '@novu/dal';
 
 export const AGENT_INBOX_ROUTING_KEY_INDEX = 'credentials.inboxRoutingKey_1';
 
@@ -48,7 +47,7 @@ function isTargetRoutingKeyIndex(index: AgentInboxRoutingKeyIndex): boolean {
     return false;
   }
 
-  const expected = [...agentInboxRoutingKeyPartialFilter().providerId.$in].sort();
+  const expected = [...AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER.providerId.$in].sort();
   const providers = [...actual].sort();
 
   return providers.length === expected.length && providers.every((providerId, i) => providerId === expected[i]);
@@ -77,7 +76,7 @@ export async function recreateAgentInboxRoutingKeyIndex(collection: AgentInboxRo
       {
         unique: true,
         name: AGENT_INBOX_ROUTING_KEY_INDEX,
-        partialFilterExpression: agentInboxRoutingKeyPartialFilter(),
+        partialFilterExpression: AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER,
       }
     );
   } catch (error) {

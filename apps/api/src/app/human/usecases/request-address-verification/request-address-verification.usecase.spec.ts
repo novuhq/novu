@@ -33,8 +33,7 @@ describe('RequestAddressVerification', () => {
       send: sinon.stub().resolves(),
     };
     const inboxQuota = {
-      reserve: sinon.stub().resolves({ organizationId: 'org-1', remaining: 1, unlimited: false }),
-      releaseRemaining: sinon.stub().resolves(),
+      withCredits: sinon.stub().callsFake((_org: string, _count: number, fn: () => Promise<unknown>) => fn()),
     };
     const keylessEmailGate = {
       assertOperatorVerificationAllowed: sinon.stub().resolves({}),
@@ -115,8 +114,7 @@ describe('RequestAddressVerification', () => {
       replaced: writtenPending,
       pending: previousPending,
     });
-    expect(inboxQuota.reserve.calledOnce).to.equal(true);
-    expect(inboxQuota.releaseRemaining.calledOnce).to.equal(true);
+    expect(inboxQuota.withCredits.calledOnce).to.equal(true);
     expect(rateLimit.release.calledOnce).to.equal(true);
     expect(rateLimit.release.firstCall.args[0]).to.deep.include({ reservation: 'res-1' });
     expect(rateLimit.release.calledAfter(humanContactRepository.restorePendingAddress)).to.equal(true);
@@ -127,8 +125,7 @@ describe('RequestAddressVerification', () => {
 
     const result = await usecase.execute(command());
 
-    expect(inboxQuota.reserve.calledOnce).to.equal(true);
-    expect(inboxQuota.releaseRemaining.called).to.equal(false);
+    expect(inboxQuota.withCredits.calledOnce).to.equal(true);
     expect(result.requestedAt).to.equal(writtenPending.requestedAt);
     expect(result.address).to.equal('n***@example.com');
     expect(verificationTokens.issue.firstCall.args[0]).to.include({
@@ -164,7 +161,7 @@ describe('RequestAddressVerification', () => {
     }
 
     expect(rateLimit.assertAndRecord.called).to.equal(false);
-    expect(inboxQuota.reserve.called).to.equal(false);
+    expect(inboxQuota.withCredits.called).to.equal(false);
     expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
   });
 });

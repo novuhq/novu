@@ -25,11 +25,7 @@ import { ConnectClaimTokenService } from '../../../connect/services/connect-clai
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { KeylessEmailGateService, keylessEmailClaimCtaKey } from '../../../keyless/keyless-email-gate.service';
-import {
-  buildConnectClaimUrl,
-  buildHumanClaimUrl,
-  buildKeylessSignupCard,
-} from '../../../keyless/keyless-signup.helpers';
+import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
@@ -68,6 +64,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
+import { parseEmailThreadAddress } from './email-thread-id';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
@@ -265,25 +262,16 @@ function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknow
   });
 }
 
-/** `email:<address>:<hash>` — the address is whoever mailed the agent. */
+/** The address that mailed the agent, or undefined when the thread id is not a usable one. */
 function senderAddressFromEmailThread(threadId: string): string | undefined {
-  const [platform, encoded] = threadId.split(':');
-  if (platform !== 'email' || !encoded) {
+  const raw = parseEmailThreadAddress(threadId);
+  if (!raw) {
     return undefined;
   }
 
-  let address: string;
-  try {
-    address = normalizeEmailForLookup(decodeURIComponent(encoded));
-  } catch {
-    return undefined;
-  }
+  const address = normalizeEmailForLookup(raw);
 
-  if (!isValidEmailForLookup(address)) {
-    return undefined;
-  }
-
-  return address;
+  return isValidEmailForLookup(address) ? address : undefined;
 }
 
 function extractStoredAttachments(sourceActivity: ConversationActivityEntity | null): StoredAttachment[] | undefined {
@@ -1577,23 +1565,19 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     try {
-      const declared = await this.keylessEmailGate.findDeclaredOperatorAddress(config.environmentId, agentId);
-      if (!declared || normalizeEmailForLookup(declared) !== sender) {
-        return;
-      }
-
-      const ctaKey = keylessEmailClaimCtaKey(config.environmentId);
-      if (await this.connectClaimTokenService.isSignupCtaPosted(ctaKey)) {
-        return;
-      }
-
-      const { token } = await this.connectClaimTokenService.issueOrGetForEnvironment({
-        env: config.environmentId,
-        org: config.organizationId,
+      const card = await this.keylessEmailGate.resolveOperatorClaimCard({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        agentId,
+        sender,
       });
-      const card = this.keylessEmailGate.buildClaimCard(buildHumanClaimUrl(token));
+
+      if (!card) {
+        return;
+      }
+
       await this.outboundGateway.replyOnThreadWithCard(thread, card);
-      await this.connectClaimTokenService.tryMarkSignupCtaPosted(ctaKey);
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(keylessEmailClaimCtaKey(config.environmentId));
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to send the keyless email claim`);
       captureAgentWarning(err, {

@@ -12,7 +12,7 @@ async function expectQuotaRejection(
   code: string
 ): Promise<void> {
   try {
-    await service.reserve('org-1', 1);
+    await service.reserveCredits('org-1', 1);
     throw new Error('expected the inbox cap to reject');
   } catch (err) {
     expect(err).toBeInstanceOf(AgentEmailInboxQuotaExceededException);
@@ -67,7 +67,10 @@ describe('AgentEmailInboxQuotaService', () => {
   let cacheEnabled: boolean;
   let evalImpl: jest.Mock;
   let service: AgentEmailInboxQuotaService;
-  const logger = { setContext: jest.fn(), warn: jest.fn() };
+  const logger = { setContext: jest.fn(), warn: jest.fn(), debug: jest.fn() };
+
+  const dailyCount = () => store.get(quotaKeys(organizationId, new Date()).daily);
+  const monthlyCount = () => store.get(quotaKeys(organizationId, new Date()).monthly);
 
   beforeEach(() => {
     store = new Map();
@@ -99,15 +102,14 @@ describe('AgentEmailInboxQuotaService', () => {
   });
 
   it('reserves under the cap and rejects the exact daily and monthly boundaries', async () => {
-    const first = await service.reserve(organizationId, 50);
-    expect(first.remaining).toBe(50);
-    expect(store.get(first.dailyKey!)).toBe(50);
-    expect(store.get(first.monthlyKey!)).toBe(50);
+    await service.reserveCredits(organizationId, 50);
+    expect(dailyCount()).toBe(50);
+    expect(monthlyCount()).toBe(50);
 
     await expectQuotaRejection(service, 'daily', 'agent_email_inbox_daily_cap');
 
-    store.set(first.dailyKey!, 0);
-    store.set(first.monthlyKey!, 300);
+    store.set(quotaKeys(organizationId, new Date()).daily, 0);
+    store.set(quotaKeys(organizationId, new Date()).monthly, 300);
     await expectQuotaRejection(service, 'monthly', 'agent_email_inbox_monthly_cap');
   });
 
@@ -115,67 +117,76 @@ describe('AgentEmailInboxQuotaService', () => {
     store.set(quotaKeys(organizationId, new Date()).daily, 49);
     store.set(quotaKeys(organizationId, new Date()).monthly, 49);
 
-    const results = await Promise.allSettled([service.reserve(organizationId, 1), service.reserve(organizationId, 1)]);
-    const fulfilled = results.filter((result) => result.status === 'fulfilled');
-    const rejected = results.filter((result) => result.status === 'rejected');
+    const results = await Promise.allSettled([
+      service.reserveCredits(organizationId, 1),
+      service.reserveCredits(organizationId, 1),
+    ]);
 
-    expect(fulfilled).toHaveLength(1);
-    expect(rejected).toHaveLength(1);
-    expect(store.get(quotaKeys(organizationId, new Date()).daily)).toBe(50);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    expect(dailyCount()).toBe(50);
   });
 
-  it('releases a failed send so it does not consume the cap', async () => {
-    const reservation = await service.reserve(organizationId, 2);
-    reservation.remaining = 1;
-    await service.releaseRemaining(reservation);
-
-    expect(store.get(reservation.dailyKey!)).toBe(1);
-    expect(reservation.remaining).toBe(0);
-  });
-
-  it('counts an unreserved sender call and warns', async () => {
-    const attempt = await service.beginSend(organizationId);
-    attempt.accept();
-
-    expect(logger.warn).toHaveBeenCalled();
-    expect(store.get(quotaKeys(organizationId, new Date()).daily)).toBe(1);
-  });
-
-  it('consumes a held reservation without counting twice', async () => {
-    const reservation = await service.reserve(organizationId, 1);
-    evalImpl.mockClear();
-
-    await service.runReserved(reservation, async () => {
+  it('gives back the credits the sender did not spend', async () => {
+    await service.withCredits(organizationId, 2, async () => {
       const attempt = await service.beginSend(organizationId);
       attempt.accept();
     });
 
+    expect(dailyCount()).toBe(1);
+  });
+
+  it('gives back every credit when the scope throws before sending', async () => {
+    await expect(
+      service.withCredits(organizationId, 2, async () => {
+        throw new Error('send never happened');
+      })
+    ).rejects.toThrow('send never happened');
+
+    expect(dailyCount()).toBeUndefined();
+  });
+
+  it('counts an unreserved sender call', async () => {
+    const attempt = await service.beginSend(organizationId);
+    attempt.accept();
+
+    expect(dailyCount()).toBe(1);
+  });
+
+  it('consumes a held reservation without counting twice', async () => {
+    const credits = await service.reserveCredits(organizationId, 1);
+    evalImpl.mockClear();
+
+    await credits.run(async () => {
+      const attempt = await service.beginSend(organizationId);
+      attempt.accept();
+    });
+    await credits.release();
+
     expect(evalImpl).not.toHaveBeenCalled();
-    expect(reservation.remaining).toBe(0);
-    expect(store.get(reservation.dailyKey!)).toBe(1);
+    expect(dailyCount()).toBe(1);
   });
 
   it('fails open when Redis is unavailable', async () => {
     cacheEnabled = false;
-    const disabled = await service.reserve(organizationId, 1);
-    expect(disabled.unlimited).toBe(true);
+    await service.reserveCredits(organizationId, 1);
     expect(evalImpl).not.toHaveBeenCalled();
 
     cacheEnabled = true;
     evalImpl.mockRejectedValueOnce(new Error('redis down'));
-    const thrown = await service.reserve(organizationId, 1);
-    expect(thrown.unlimited).toBe(true);
+    await service.reserveCredits(organizationId, 1);
+    expect(dailyCount()).toBeUndefined();
   });
 
   it('does not cap self-hosted deployments', async () => {
     process.env.IS_SELF_HOSTED = 'true';
-    const reservation = await service.reserve(organizationId, 50);
-    expect(reservation.unlimited).toBe(true);
+    await service.reserveCredits(organizationId, 50);
+
     expect(evalImpl).not.toHaveBeenCalled();
   });
 
   it('passes a TTL past the window on the first increment', async () => {
-    await service.reserve(organizationId, 1);
+    await service.reserveCredits(organizationId, 1);
     const args = evalImpl.mock.calls[0][2] as number[];
     const dailyTtl = args[3];
     const monthlyTtl = args[4];

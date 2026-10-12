@@ -19,6 +19,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  type AgentInboxProviderId,
   ApiServiceLevelEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
@@ -278,7 +279,7 @@ export class AddAgentIntegration {
   private async enforceSingletonEmail(
     agentId: string,
     command: AddAgentIntegrationCommand,
-    providerId: EmailProviderIdEnum.NovuAgent | EmailProviderIdEnum.AgentEmailInbox
+    providerId: AgentInboxProviderId
   ): Promise<void> {
     const links = await this.agentIntegrationRepository.find(
       {

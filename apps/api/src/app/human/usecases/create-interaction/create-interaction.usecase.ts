@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  type AgentEmailInboxCredits,
   AgentEmailInboxQuotaService,
-  type AgentEmailInboxReservation,
   InstrumentUsecase,
   isAgentEmailInboxQuotaExceeded,
   PinoLogger,
@@ -12,9 +12,9 @@ import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/hu
 import type { ReplyContentDto } from '../../../agents/shared/dtos/agent-reply-payload.dto';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { resolveKeylessHumanInteractionCap } from '../../../keyless/keyless-abuse.constants';
-import { isHumanBrowserLoginAvailable } from '../../../keyless/keyless-email-gate.service';
+import { resolveKeylessClaimUrl } from '../../../keyless/keyless-claim-url';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
-import { buildHumanClaimUrl, buildKeylessHumanSignupCard } from '../../../keyless/keyless-signup.helpers';
+import { buildKeylessHumanSignupCard, isHumanBrowserLoginAvailable } from '../../../keyless/keyless-signup.helpers';
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
@@ -94,24 +94,25 @@ export class CreateInteraction {
 
     const resolved = await this.resolveTargets(command, agent, subscriberIds);
     const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
-    let reservation: AgentEmailInboxReservation | undefined;
-    let emailBlockedError: unknown;
+    let credits: AgentEmailInboxCredits | undefined;
+    let emailCapError: HttpException | undefined;
 
     if (emailCount > 0) {
       try {
-        reservation = await this.inboxQuota.reserve(command.organizationId, emailCount);
+        credits = await this.inboxQuota.reserveCredits(command.organizationId, emailCount);
       } catch (err) {
+        // Email-only interactions fail outright on the cap. When other channels
+        // can still be reached, they go out and the email recipients fail alone.
         if (!isAgentEmailInboxQuotaExceeded(err) || emailCount === resolved.length) {
           throw err;
         }
 
-        emailBlockedError = err;
+        emailCapError = err;
       }
     }
 
-    let interaction: Awaited<ReturnType<HumanInteractionRepository['create']>>;
     try {
-      interaction = await this.humanInteractionRepository.create(
+      const interaction = await this.humanInteractionRepository.create(
         buildPendingHumanInteraction({
           kind: command.kind,
           content: toStoredContent(command.kind, { ...command.card, title }),
@@ -124,24 +125,22 @@ export class CreateInteraction {
         })
       );
 
-      const targets: HumanDeliveryTarget[] = resolved.map(({ subscriberId, target }) => ({
-        subscriberId,
-        integrationIdentifier: target.integrationIdentifier,
-        platform: target.platform,
-        deliver: () => {
-          if (emailBlockedError && target.platform === HumanChannelViaEnum.EMAIL) {
-            throw emailBlockedError;
-          }
+      const targets: HumanDeliveryTarget[] = resolved.map(({ subscriberId, target }) => {
+        const capped = emailCapError && target.platform === HumanChannelViaEnum.EMAIL ? emailCapError : undefined;
 
-          return this.deliveryService.deliver(interaction, target);
-        },
-      }));
+        return {
+          subscriberId,
+          integrationIdentifier: target.integrationIdentifier,
+          platform: target.platform,
+          deliver: capped ? () => Promise.reject(capped) : () => this.deliveryService.deliver(interaction, target),
+        };
+      });
 
       const deliver = () =>
         deliverToTargets(this.humanInteractionRepository, this.logger, interaction, targets, {
           logMessage: 'Human interaction delivery failed for one recipient',
         });
-      const delivered = reservation ? await this.inboxQuota.runReserved(reservation, deliver) : await deliver();
+      const delivered = credits ? await credits.run(deliver) : await deliver();
 
       await this.activityRecorder.recordRequest(delivered.interaction);
 
@@ -151,9 +150,7 @@ export class CreateInteraction {
 
       return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds);
     } finally {
-      if (reservation) {
-        await this.inboxQuota.releaseRemaining(reservation);
-      }
+      await credits?.release();
     }
   }
 
@@ -191,7 +188,7 @@ export class CreateInteraction {
       return;
     }
 
-    const claimUrl = await this.resolveClaimUrl(command);
+    const claimUrl = await resolveKeylessClaimUrl(this.connectClaimTokenService, command, this.logger);
     await this.postKeylessSignupCta(command, agent, subscriberIds, claimUrl);
 
     const message = claimUrl
@@ -210,21 +207,6 @@ export class CreateInteraction {
       },
       429
     );
-  }
-
-  private async resolveClaimUrl(command: CreateInteractionCommand): Promise<string | undefined> {
-    try {
-      const { token } = await this.connectClaimTokenService.issueOrGetForEnvironment({
-        env: command.environmentId,
-        org: command.organizationId,
-      });
-
-      return buildHumanClaimUrl(token);
-    } catch (err) {
-      this.logger.warn({ err, environmentId: command.environmentId }, 'Failed to issue keyless claim token');
-
-      return undefined;
-    }
   }
 
   private async postKeylessSignupCta(

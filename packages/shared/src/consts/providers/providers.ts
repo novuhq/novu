@@ -47,19 +47,10 @@ export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.No
  */
 export const AGENT_INBOX_PROVIDER_IDS = [EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.AgentEmailInbox] as const;
 
+export type AgentInboxProviderId = (typeof AGENT_INBOX_PROVIDER_IDS)[number];
+
 export function isAgentInboxProvider(providerId: string): boolean {
   return (AGENT_INBOX_PROVIDER_IDS as readonly string[]).includes(providerId);
-}
-
-/** Partial unique index so routing keys cannot collide across both inbox providers. */
-export function agentInboxRoutingKeyPartialFilter(): {
-  providerId: { $in: Array<(typeof AGENT_INBOX_PROVIDER_IDS)[number]> };
-  'credentials.inboxRoutingKey': { $type: 'string' };
-} {
-  return {
-    providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
-    'credentials.inboxRoutingKey': { $type: 'string' },
-  };
 }
 
 export const PROVIDER_ID_TO_CHANNEL_MAP: Record<string, ChannelTypeEnum> = Object.fromEntries(

@@ -70,8 +70,8 @@ export type InviteChannelDescription = {
   connected: boolean;
   isDefault: boolean;
   status: HumanAddressVerificationStateEnum;
-  /** False when a keyless setup cannot offer this channel. Missing means it can. */
-  available?: boolean;
+  /** False when a keyless setup cannot offer this channel. */
+  available: boolean;
   /** Masked address for address-based channels. */
   address?: string;
   verifiedAt?: string;
@@ -178,23 +178,15 @@ export class HumanDeliveryService {
       );
     }
 
-    if (params.via === HumanChannelViaEnum.EMAIL && this.keylessEmailGate.isBlocked(params.organizationId)) {
-      await this.keylessEmailGate.assertAllowed(params);
-    }
-
     const deliverable = await this.findReachableTargets(params, candidates);
 
-    if (
-      deliverable.length === 0 &&
-      !params.via &&
-      this.keylessEmailGate.isBlocked(params.organizationId) &&
-      candidates.some((integration) => integration.channel === ChannelTypeEnum.EMAIL) &&
-      candidates.every((integration) => integration.channel === ChannelTypeEnum.EMAIL)
-    ) {
-      await this.keylessEmailGate.assertAllowed(params);
-    }
-
     if (deliverable.length === 0) {
+      // A keyless org can never reach email, so an email-only agent is a gate
+      // problem (403 with a claim link), not a missing endpoint (404).
+      if (candidates.every((integration) => integration.channel === ChannelTypeEnum.EMAIL)) {
+        await this.keylessEmailGate.assertAllowed(params);
+      }
+
       if (params.via === HumanChannelViaEnum.EMAIL) {
         throw new NotFoundException(await this.emailUnreachableMessage(params));
       }
@@ -275,6 +267,7 @@ export class HumanDeliveryService {
       return {
         ...channel,
         connected,
+        available: true,
         isDefault: connected && defaultVia === channel.via,
         status: connected ? HumanAddressVerificationStateEnum.VERIFIED : HumanAddressVerificationStateEnum.UNVERIFIED,
       };
@@ -378,9 +371,11 @@ export class HumanDeliveryService {
       ),
     ]);
     const savedDefaults = new Map(contacts.map((contact) => [contact.subscriberId, contact.defaultVia]));
+    // Keyless orgs cannot send email, so no address counts as reachable here.
+    const emailBlocked = this.keylessEmailGate.isBlocked(params.organizationId);
     const verifiedEmails = new Map(
       contacts.flatMap((contact) => {
-        const verified = contact.addresses?.[HumanChannelViaEnum.EMAIL]?.verified;
+        const verified = emailBlocked ? undefined : contact.addresses?.[HumanChannelViaEnum.EMAIL]?.verified;
         if (!verified) {
           return [];
         }
@@ -394,8 +389,7 @@ export class HumanDeliveryService {
         subscriber.subscriberId,
         integrations,
         endpoints,
-        verifiedEmails.get(subscriber.subscriberId),
-        params.organizationId
+        verifiedEmails.get(subscriber.subscriberId)
       );
 
       result.set(subscriber.subscriberId, {
@@ -412,8 +406,7 @@ export class HumanDeliveryService {
     subscriberId: string,
     integrations: IntegrationEntity[],
     endpoints: ChannelEndpointEntity[],
-    verifiedEmail: { address: string; verifiedAt: string } | undefined,
-    organizationId: string
+    verifiedEmail: { address: string; verifiedAt: string } | undefined
   ): ReachableHumanTarget[] {
     const targets: ReachableHumanTarget[] = [];
 
@@ -424,7 +417,7 @@ export class HumanDeliveryService {
       }
 
       if (integration.channel === ChannelTypeEnum.EMAIL) {
-        if (verifiedEmail && !this.keylessEmailGate.isBlocked(organizationId)) {
+        if (verifiedEmail) {
           targets.push(emailTarget(verifiedEmail.address, via, integration.identifier, verifiedEmail.verifiedAt));
         }
 
@@ -603,7 +596,7 @@ export class HumanDeliveryService {
 }
 
 function describeEmailInviteChannel(
-  channel: InviteChannelDescription,
+  channel: { via: HumanInviteVia; integrationIdentifier: string },
   email: ReturnType<typeof describeStoredEmail>,
   defaultVia: HumanChannelViaEnum | undefined
 ): InviteChannelDescription {

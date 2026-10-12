@@ -1,6 +1,6 @@
 export type {
   AgentEmailInboxCap,
-  AgentEmailInboxReservation,
+  AgentEmailInboxCredits,
   AgentEmailInboxSendAttempt,
 } from './agent-email-inbox-quota.service';
 export {

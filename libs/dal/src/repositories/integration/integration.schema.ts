@@ -1,4 +1,4 @@
-import { agentInboxRoutingKeyPartialFilter } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -178,11 +178,16 @@ integrationSchema.index({
  * migration `agent-email-inbox-routing-key-index` — MongoDB rejects an
  * in-place partial-filter change with IndexOptionsConflict.
  */
+export const AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER = {
+  providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
+  'credentials.inboxRoutingKey': { $type: 'string' },
+} as const;
+
 integrationSchema.index(
   { 'credentials.inboxRoutingKey': 1 },
   {
     unique: true,
-    partialFilterExpression: agentInboxRoutingKeyPartialFilter(),
+    partialFilterExpression: AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER,
   }
 );
 

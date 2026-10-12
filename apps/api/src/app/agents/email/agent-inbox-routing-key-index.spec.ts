@@ -1,5 +1,7 @@
-import { agentInboxRoutingKeyPartialFilter, EmailProviderIdEnum } from '@novu/shared';
+import { AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER } from '@novu/dal';
+import { EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
+// Lives under `src/` rather than beside the migration because mocha only globs `src/**`.
 import {
   AGENT_INBOX_ROUTING_KEY_INDEX,
   type AgentInboxRoutingKeyCollection,
@@ -66,7 +68,7 @@ describe('recreate agent inbox routing key index', () => {
           name: AGENT_INBOX_ROUTING_KEY_INDEX,
           key: { 'credentials.inboxRoutingKey': 1 },
           unique: true,
-          partialFilterExpression: agentInboxRoutingKeyPartialFilter(),
+          partialFilterExpression: AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER,
         },
       ],
       dropIndex: async () => {

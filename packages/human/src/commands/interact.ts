@@ -254,14 +254,14 @@ const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 /** Matches the API's `KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE`. */
 const KEYLESS_EMAIL_CODE = 'KEYLESS_EMAIL_REQUIRES_ACCOUNT';
 
-export interface KeylessCapDetails {
+interface KeylessBlock {
   claimUrl?: string;
-  cap?: number;
   /** The API has `human login` (the Human dashboard); self-hosted and older APIs need a secret key instead. */
-  browserLogin?: boolean;
-  /** `email` is the outbound-email block. Missing means the demo message cap. */
-  reason?: 'cap' | 'email';
+  browserLogin: boolean;
 }
+
+/** The two ways a keyless demo stops an interaction: out of messages, or email is not included. */
+export type KeylessCapDetails = (KeylessBlock & { reason: 'cap'; cap?: number }) | (KeylessBlock & { reason: 'email' });
 
 /**
  * The keyless demo cap: a 429 whose body carries `code: KEYLESS_HUMAN_CAP_REACHED`

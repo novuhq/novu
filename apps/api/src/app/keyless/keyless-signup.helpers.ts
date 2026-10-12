@@ -20,6 +20,11 @@ export function buildConnectClaimUrl(token: string): string {
   return `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
 }
 
+/** `human login` is approved on the Human dashboard, so it only works where one is configured. */
+export function isHumanBrowserLoginAvailable(): boolean {
+  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
+}
+
 /**
  * Human keyless setups are claimed on the Human dashboard when one is configured,
  * and on the dashboard otherwise (self-hosted, or before the website is live).

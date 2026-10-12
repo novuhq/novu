@@ -42,14 +42,10 @@ const api = await import('../api/setup');
 const humanApi = await import('../api/human');
 const linkChannel = await import('./link-channel');
 const { info } = await import('../cli-io');
-const {
-  connectEmail,
-  connectSlack: connectSlackImplementation,
-  connectTelegram: connectTelegramImplementation,
-  resolveOperatorEmail,
-  resolveOperatorName,
-  reusableAuth,
-} = await import('./setup');
+const { connectEmail } = await import('./setup/email');
+const { connectSlack: connectSlackImplementation } = await import('./setup/slack');
+const { connectTelegram: connectTelegramImplementation } = await import('./setup/telegram');
+const { resolveOperatorEmail, resolveOperatorName, reusableAuth } = await import('./setup/operator');
 
 function connectTelegram(
   client: Parameters<typeof connectTelegramImplementation>[0],

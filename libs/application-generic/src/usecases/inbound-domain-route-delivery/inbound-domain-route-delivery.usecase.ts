@@ -15,6 +15,7 @@ import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
+import { pickAgentInboxIntegration } from '../../utils/agent-shared-inbox';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
 import type { InboundEmailWebhookObject } from '../../webhooks/dtos/inbound-email-webhook.dto';
@@ -364,7 +365,7 @@ export class InboundDomainRouteDelivery {
 
     const integration = integrationId
       ? integrations.find((item) => String(item._id) === String(integrationId))
-      : (integrations.find((item) => item.providerId === EmailProviderIdEnum.NovuAgent) ?? integrations[0]);
+      : pickAgentInboxIntegration(integrations);
 
     if (!integration) {
       this.throwError(`No active NovuAgent email integration found for agent ${agentId}`);

@@ -53,10 +53,13 @@ describe('CreateInteraction', () => {
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const activityRecorder = { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() };
+    const credits = {
+      run: sinon.stub().callsFake((fn: () => Promise<unknown>) => fn()),
+      release: sinon.stub().resolves(),
+    };
     const inboxQuota = {
-      reserve: sinon.stub().resolves({ organizationId: 'org1', remaining: 1, unlimited: false }),
-      runReserved: sinon.stub().callsFake((_reservation: unknown, fn: () => Promise<unknown>) => fn()),
-      releaseRemaining: sinon.stub().resolves(),
+      reserveCredits: sinon.stub().resolves(credits),
+      credits,
     };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
@@ -301,7 +304,7 @@ describe('CreateInteraction', () => {
       expect((err as ForbiddenException).getResponse()).to.include({ code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT' });
     }
 
-    expect(inboxQuota.reserve.called).to.equal(false);
+    expect(inboxQuota.reserveCredits.called).to.equal(false);
     expect(humanInteractionRepository.create.called).to.equal(false);
   });
 
@@ -536,7 +539,7 @@ describe('CreateInteraction', () => {
       platform: HumanChannelViaEnum.EMAIL,
       platformUserId: 'ada@example.com',
     });
-    inboxQuota.reserve.rejects(
+    inboxQuota.reserveCredits.rejects(
       new AgentEmailInboxQuotaExceededException('daily', 50, 3600, '2026-10-12T00:00:00.000Z')
     );
 
@@ -562,7 +565,7 @@ describe('CreateInteraction', () => {
       platformUserId: '777',
     });
     humanInteractionRepository.create.resolves({ ...created, subscriberIds: ['sub-1', 'sub-2'] });
-    inboxQuota.reserve.rejects(
+    inboxQuota.reserveCredits.rejects(
       new AgentEmailInboxQuotaExceededException('monthly', 300, 86400, '2026-11-01T00:00:00.000Z')
     );
 

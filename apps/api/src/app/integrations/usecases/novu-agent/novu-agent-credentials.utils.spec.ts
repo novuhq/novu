@@ -1,37 +1,51 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { ensureNovuAgentManagedCredentials } from './novu-agent-credentials.utils';
+import {
+  mergeAgentInboxCredentialsForUpdate,
+  sanitizeAgentInboxCredentialsForCreate,
+} from './novu-agent-credentials.utils';
 
-describe('ensureNovuAgentManagedCredentials', () => {
+describe('sanitizeAgentInboxCredentialsForCreate', () => {
   it('strips a client routing key and secret when creating an agent inbox', () => {
-    const result = ensureNovuAgentManagedCredentials({
-      providerId: EmailProviderIdEnum.AgentEmailInbox,
-      nextCredentials: {
-        inboxRoutingKey: 'stolen01',
-        secretKey: 'client-secret',
-        senderName: 'Ops',
-      },
-      stripClientSecret: true,
+    const result = sanitizeAgentInboxCredentialsForCreate(EmailProviderIdEnum.AgentEmailInbox, {
+      inboxRoutingKey: 'stolen01',
+      secretKey: 'client-secret',
+      sharedInboxDisabled: true,
+      senderName: 'Ops',
     });
 
     expect(result.inboxRoutingKey).to.equal(undefined);
     expect(result.secretKey).to.equal(undefined);
+    expect(result.sharedInboxDisabled).to.equal(undefined);
     expect(result.senderName).to.equal('Ops');
   });
 
+  it('keeps a valid slug prefix and drops an invalid one', () => {
+    expect(
+      sanitizeAgentInboxCredentialsForCreate(EmailProviderIdEnum.NovuAgent, { emailSlugPrefix: 'human-relay' })
+        .emailSlugPrefix
+    ).to.equal('human-relay');
+
+    expect(
+      sanitizeAgentInboxCredentialsForCreate(EmailProviderIdEnum.NovuAgent, { emailSlugPrefix: 'Not A Slug!' })
+        .emailSlugPrefix
+    ).to.equal(undefined);
+  });
+
+  it('leaves other providers unchanged', () => {
+    const next = { inboxRoutingKey: 'kept', secretKey: 'kept-secret' };
+
+    expect(sanitizeAgentInboxCredentialsForCreate(EmailProviderIdEnum.SendGrid, next)).to.equal(next);
+  });
+});
+
+describe('mergeAgentInboxCredentialsForUpdate', () => {
   it('keeps the stored routing key and secret on update', () => {
-    const result = ensureNovuAgentManagedCredentials({
-      providerId: EmailProviderIdEnum.NovuAgent,
-      nextCredentials: {
-        inboxRoutingKey: 'stolen01',
-        secretKey: 'client-secret',
-        senderName: 'Ops',
-      },
-      existingCredentials: {
-        inboxRoutingKey: 'stored01',
-        secretKey: 'stored-secret',
-      },
-    });
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.NovuAgent,
+      { inboxRoutingKey: 'stolen01', secretKey: 'client-secret', senderName: 'Ops' },
+      { inboxRoutingKey: 'stored01', secretKey: 'stored-secret' }
+    );
 
     expect(result.inboxRoutingKey).to.equal('stored01');
     expect(result.secretKey).to.equal('stored-secret');
@@ -39,15 +53,11 @@ describe('ensureNovuAgentManagedCredentials', () => {
   });
 
   it('keeps the stored slug when an update omits it', () => {
-    const result = ensureNovuAgentManagedCredentials({
-      providerId: EmailProviderIdEnum.AgentEmailInbox,
-      nextCredentials: { senderName: 'Ops' },
-      existingCredentials: {
-        inboxRoutingKey: 'stored01',
-        emailSlugPrefix: 'human-relay',
-        secretKey: 'stored-secret',
-      },
-    });
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.AgentEmailInbox,
+      { senderName: 'Ops' },
+      { inboxRoutingKey: 'stored01', emailSlugPrefix: 'human-relay', secretKey: 'stored-secret' }
+    );
 
     expect(result.emailSlugPrefix).to.equal('human-relay');
     expect(result.inboxRoutingKey).to.equal('stored01');
@@ -55,24 +65,28 @@ describe('ensureNovuAgentManagedCredentials', () => {
   });
 
   it('replaces the slug when the update sends a valid prefix', () => {
-    const result = ensureNovuAgentManagedCredentials({
-      providerId: EmailProviderIdEnum.NovuAgent,
-      nextCredentials: { emailSlugPrefix: 'renamed-bot', senderName: 'Ops' },
-      existingCredentials: { emailSlugPrefix: 'human-relay' },
-    });
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.NovuAgent,
+      { emailSlugPrefix: 'renamed-bot', senderName: 'Ops' },
+      { emailSlugPrefix: 'human-relay' }
+    );
 
     expect(result.emailSlugPrefix).to.equal('renamed-bot');
+  });
+
+  it('keeps a stored `sharedInboxDisabled: false` rather than dropping it', () => {
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.NovuAgent,
+      { sharedInboxDisabled: true },
+      { sharedInboxDisabled: false }
+    );
+
+    expect(result.sharedInboxDisabled).to.equal(false);
   });
 
   it('leaves other providers unchanged', () => {
     const next = { inboxRoutingKey: 'kept', secretKey: 'kept-secret' };
 
-    expect(
-      ensureNovuAgentManagedCredentials({
-        providerId: EmailProviderIdEnum.SendGrid,
-        nextCredentials: next,
-        stripClientSecret: true,
-      })
-    ).to.equal(next);
+    expect(mergeAgentInboxCredentialsForUpdate(EmailProviderIdEnum.SendGrid, next, undefined)).to.equal(next);
   });
 });

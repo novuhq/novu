@@ -9,13 +9,12 @@ import {
 } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
-import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
+import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
-import { ensureNovuAgentManagedCredentials } from '../novu-agent/novu-agent-credentials.utils';
-import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
+import { applyManagedCredentialsOnUpdate } from '../managed-credentials';
 import { maybeStampWhatsNextCompletedAt } from '../whatsapp/whatsapp-whats-next-stamp.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
@@ -103,9 +102,10 @@ export class UpdateIntegration {
     return result;
   }
 
-  async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
-    this.logger.trace('Executing Update Integration Command');
-
+  private async loadIntegrationForUpdate(command: UpdateIntegrationCommand): Promise<{
+    existingIntegration: IntegrationEntity;
+    identifierHasChanged: boolean;
+  }> {
     const existingIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _organizationId: command.organizationId,
@@ -131,7 +131,7 @@ export class UpdateIntegration {
       }
     }
 
-    const identifierHasChanged = command.identifier && command.identifier !== existingIntegration.identifier;
+    const identifierHasChanged = Boolean(command.identifier && command.identifier !== existingIntegration.identifier);
     if (identifierHasChanged) {
       const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
         _organizationId: command.organizationId,
@@ -143,35 +143,18 @@ export class UpdateIntegration {
       }
     }
 
-    this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
-      providerId: existingIntegration.providerId,
-      channel: existingIntegration.channel,
-      _organization: command.organizationId,
-      active: command.active,
-    });
+    return { existingIntegration, identifierHasChanged };
+  }
 
-    const environmentId = command.environmentId ?? existingIntegration._environmentId;
-    const credentialsForValidation = command.credentials ?? existingIntegration.credentials ?? {};
-
-    if (command.check || command.credentials) {
-      await validateOutboundIntegrationCredentials(existingIntegration.providerId, credentialsForValidation);
-    }
-
-    if (command.check) {
-      await this.checkIntegration.execute(
-        CheckIntegrationCommand.create({
-          environmentId,
-          organizationId: command.organizationId,
-          credentials: credentialsForValidation,
-          providerId: existingIntegration.providerId,
-          channel: existingIntegration.channel,
-        })
-      );
-    }
-
+  private buildUpdatePayload(params: {
+    command: UpdateIntegrationCommand;
+    existingIntegration: IntegrationEntity;
+    identifierHasChanged: boolean;
+    environmentId: string;
+  }): Partial<IntegrationEntity> {
+    const { command, existingIntegration, identifierHasChanged, environmentId } = params;
     const updatePayload: Partial<IntegrationEntity> = {};
     const isActiveDefined = typeof command.active !== 'undefined';
-    const isActiveChanged = isActiveDefined && existingIntegration.active !== command.active;
 
     if (command.name) {
       updatePayload.name = command.name;
@@ -193,16 +176,11 @@ export class UpdateIntegration {
       const existingCredentials = existingIntegration.credentials
         ? decryptCredentials(existingIntegration.credentials)
         : undefined;
-      const whatsAppMerged = ensureWhatsAppManagedCredentials({
+      const managedCredentials = applyManagedCredentialsOnUpdate({
         providerId: existingIntegration.providerId,
-        nextCredentials: command.credentials,
+        credentials: command.credentials,
         existingCredentials,
-        allowManagedFlagChange: command.allowNovuManagedWhatsAppCredentials === true,
-      });
-      const managedCredentials = ensureNovuAgentManagedCredentials({
-        providerId: existingIntegration.providerId,
-        nextCredentials: whatsAppMerged,
-        existingCredentials,
+        allowNovuManagedWhatsApp: command.allowNovuManagedWhatsAppCredentials === true,
       });
       const stampedCredentials = maybeStampWhatsNextCompletedAt({
         providerId: existingIntegration.providerId,
@@ -234,6 +212,48 @@ export class UpdateIntegration {
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
+
+    return updatePayload;
+  }
+
+  async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
+    this.logger.trace('Executing Update Integration Command');
+
+    const { existingIntegration, identifierHasChanged } = await this.loadIntegrationForUpdate(command);
+
+    this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
+      providerId: existingIntegration.providerId,
+      channel: existingIntegration.channel,
+      _organization: command.organizationId,
+      active: command.active,
+    });
+
+    const environmentId = command.environmentId ?? existingIntegration._environmentId;
+    const credentialsForValidation = command.credentials ?? existingIntegration.credentials ?? {};
+
+    if (command.check || command.credentials) {
+      await validateOutboundIntegrationCredentials(existingIntegration.providerId, credentialsForValidation);
+    }
+
+    if (command.check) {
+      await this.checkIntegration.execute(
+        CheckIntegrationCommand.create({
+          environmentId,
+          organizationId: command.organizationId,
+          credentials: credentialsForValidation,
+          providerId: existingIntegration.providerId,
+          channel: existingIntegration.channel,
+        })
+      );
+    }
+
+    const isActiveChanged = typeof command.active !== 'undefined' && existingIntegration.active !== command.active;
+    const updatePayload = this.buildUpdatePayload({
+      command,
+      existingIntegration,
+      identifierHasChanged,
+      environmentId,
+    });
 
     const haveConditions =
       hasIntegrationRules(updatePayload.rules) || hasLegacyIntegrationConditions(updatePayload.conditions);

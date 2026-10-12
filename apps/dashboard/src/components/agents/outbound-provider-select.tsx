@@ -3,6 +3,7 @@ import {
   EmailProviderIdEnum,
   emailProviders as emailProviderConfigs,
   type IIntegration,
+  isAgentInboxProvider,
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -46,12 +47,10 @@ type OutboundInstanceItem = {
 const DEMO_PROVIDER_CONFIG = emailProviderConfigs.find((p) => p.id === EmailProviderIdEnum.Novu);
 const DEMO_PROVIDER_DISPLAY_NAME = DEMO_PROVIDER_CONFIG?.displayName ?? 'Novu Email';
 
-const EXCLUDED_OUTBOUND_PROVIDERS = new Set<string>([
-  EmailProviderIdEnum.NovuAgent,
-  EmailProviderIdEnum.AgentEmailInbox,
-  EmailProviderIdEnum.Novu,
-]);
-const OUTBOUND_EMAIL_PROVIDERS = emailProviderConfigs.filter((p) => !EXCLUDED_OUTBOUND_PROVIDERS.has(p.id));
+// Agent inboxes are inbound-only, and the Novu demo provider is not selectable as a sender.
+const OUTBOUND_EMAIL_PROVIDERS = emailProviderConfigs.filter(
+  (p) => !isAgentInboxProvider(p.id) && p.id !== EmailProviderIdEnum.Novu
+);
 
 function DemoBadge() {
   return (

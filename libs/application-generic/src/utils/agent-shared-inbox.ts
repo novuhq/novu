@@ -1,4 +1,4 @@
-import { slugify } from '@novu/shared';
+import { EmailProviderIdEnum, slugify } from '@novu/shared';
 import { customAlphabet } from 'nanoid';
 
 /**
@@ -214,6 +214,15 @@ export function resolvePublishedAgentEmailSlug(
   }
 
   return candidate;
+}
+
+/**
+ * An agent can be linked to both inbox providers during the Human rollout.
+ * Novu Email is the one the dashboard owns, so it wins; otherwise take
+ * whichever row came back first.
+ */
+export function pickAgentInboxIntegration<T extends { providerId: string }>(integrations: T[]): T | undefined {
+  return integrations.find((item) => item.providerId === EmailProviderIdEnum.NovuAgent) ?? integrations[0];
 }
 
 function sanitizeSlugForAddress(slug: string): string {

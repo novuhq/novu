@@ -518,6 +518,8 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Agent email integration', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Agent email integration', value: true },
   },
+  // Anti-abuse ceilings on the shared inbox, not a plan perk: every tier gets
+  // the same allowance until the inbox has its own per-plan pricing.
   [FeatureNameEnum.AGENT_EMAIL_INBOX_DAILY_LIMIT]: {
     [ApiServiceLevelEnum.FREE]: { label: '50 emails per day', value: 50 },
     [ApiServiceLevelEnum.PRO]: { label: '50 emails per day', value: 50 },
