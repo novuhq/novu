@@ -144,4 +144,9 @@ export interface ICredentials {
    * when the verification side (e.g. AWS KMS) holds the key as binary material.
    */
   hmacSecretKeyEncoding?: 'text' | 'base64' | 'hex';
+  /**
+   * Aliyun SMS: default registered `TemplateCode`. Optional — a workflow may instead supply the
+   * template per-message via `_passthrough.body.TemplateCode`, which overrides this value.
+   */
+  templateId?: string;
 }
