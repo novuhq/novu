@@ -36,6 +36,7 @@ export const smsProviderSchemas = {
   sns: genericProviderSchemas,
   telnyx: genericProviderSchemas,
   termii: genericProviderSchemas,
+  textlk: genericProviderSchemas,
   twilio: twilioProviderSchemas,
   'afro-message': genericProviderSchemas,
   unifonic: genericProviderSchemas,

@@ -34,5 +34,6 @@ export * from './sms77.handler';
 export * from './sns.handler';
 export * from './telnyx.handler';
 export * from './termii.handler';
+export * from './textlk.handler';
 export * from './twilio.handler';
 export * from './unifonic.handler';
