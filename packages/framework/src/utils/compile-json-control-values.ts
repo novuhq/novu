@@ -1,7 +1,8 @@
 import { jsonrepair } from 'jsonrepair';
-import { Liquid } from 'liquidjs';
+import { Liquid, Template } from 'liquidjs';
 
 import { createLiquidEngine } from './liquid.utils';
+import { expandJsonStringControlValues } from './normalize-controls.utils';
 
 export function repairJsonString(value: string): string {
   return jsonrepair(value);
@@ -19,6 +20,16 @@ export async function renderLiquidJson(liquidEngine: Liquid, json: string, conte
   const compiled = await liquidEngine.parseAndRender(unescapeJsonWhitespace(json), context);
 
   return escapeJsonWhitespace(compiled);
+}
+
+/**
+ * Parses a control value as the string `renderLiquidJson` receives.
+ * Translation markers are rewritten earlier in `Client.compileControls` and do not affect this parse.
+ */
+export function parseLiquidControlValue(liquidEngine: Liquid, value: unknown): Template[] {
+  const json = JSON.stringify(expandJsonStringControlValues(value)) ?? '';
+
+  return liquidEngine.parse(unescapeJsonWhitespace(json));
 }
 
 export async function compileJsonControlValues(

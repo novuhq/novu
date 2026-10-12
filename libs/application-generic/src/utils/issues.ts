@@ -1,3 +1,4 @@
+import { parseLiquidControlValue } from '@novu/framework/internal';
 import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
 import Ajv, { type AnySchema, ErrorObject } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020';
@@ -5,7 +6,15 @@ import addFormats from 'ajv-formats';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { capitalize } from '../services/helper-service';
 import { buildVariables } from './build-variables';
-import { buildLiquidParser } from './template-parser/liquid-engine';
+import { buildLiquidValidator } from './template-parser/liquid-engine';
+import { isLiquidErrors } from './template-parser/parser-utils';
+
+const liquidValidator = buildLiquidValidator();
+
+const UNSUPPORTED_QUOTES_MESSAGE =
+  'Use single quotes for text inside {{ }} and {% %}. Double quotes (") and backslashes (\\) are not supported';
+
+const stripLiquidPosition = (message: string): string => message.split(/,? line:/)[0];
 
 const getErrorPath = (error: ErrorObject): string => {
   const path = error.instancePath.substring(1);
@@ -216,18 +225,34 @@ export const processControlValuesBySchema = ({
   return mapSchemaErrorsToControlIssues(errors, { stepType });
 };
 
-const validateContentCompilation = (controlKey: string, currentValue: unknown): RuntimeIssue | null => {
+/**
+ * Explains a compile failure in terms of what the user typed. When the typed text parses, the
+ * failure comes from the JSON escaping compile adds, which only affects quotes and backslashes.
+ */
+const describeCompilationError = (value: string): string => {
   try {
-    const parserEngine = buildLiquidParser();
-    parserEngine.parse(typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue));
+    liquidValidator.parse(value);
+  } catch (error) {
+    const cause = isLiquidErrors(error) ? error.errors[0] : error;
+
+    return cause instanceof Error ? stripLiquidPosition(cause.message) : String(cause);
+  }
+
+  return UNSUPPORTED_QUOTES_MESSAGE;
+};
+
+const validateContentCompilation = (controlKey: string, currentValue: unknown): RuntimeIssue | null => {
+  if (typeof currentValue !== 'string') {
+    return null;
+  }
+
+  try {
+    parseLiquidControlValue(liquidValidator, currentValue);
 
     return null;
-  } catch (error) {
-    // @ts-expect-error - error is unknown
-    const message = error.message ? error.message.split(', line:1')[0] || error.message.split(' line:1')[0] : '';
-
+  } catch {
     return {
-      message: `Content compilation error: ${message}`.trim(),
+      message: `Content compilation error: ${describeCompilationError(currentValue)}`,
       issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
       variableName: controlKey,
     };
@@ -259,8 +284,9 @@ export const processControlValuesByLiquid = ({
       issues.controls = issues.controls || {};
 
       issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
-        const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
-        const variableName = invalidVariable.name === 'unknown' ? '{{}}' : invalidVariable.name;
+        const message = invalidVariable.message ? stripLiquidPosition(invalidVariable.message) : '';
+        const isSyntaxError = invalidVariable.name === 'unknown';
+        const variableName = isSyntaxError ? '{{}}' : invalidVariable.name;
 
         if ('filterMessage' in invalidVariable) {
           return {
@@ -271,7 +297,9 @@ export const processControlValuesByLiquid = ({
         }
 
         return {
-          message: `Variable "${variableName}" ${message}`.trim(),
+          message: isSyntaxError
+            ? `Content compilation error: ${message}`
+            : `Variable "${variableName}" ${message}`.trim(),
           issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
           variableName: variableName,
         };

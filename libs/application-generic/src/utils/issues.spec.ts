@@ -4,7 +4,7 @@ import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it } from 'vitest';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { chatControlSchema } from '../schemas/control';
-import { processControlValuesBySchema } from './issues';
+import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from './issues';
 import { dashboardSanitizeControlValues } from './sanitize-control-values';
 
 const logger = { error: () => {} } as unknown as PinoLogger;
@@ -93,5 +93,60 @@ describe('processControlValuesBySchema', () => {
     expect(sanitized).not.toHaveProperty('editorType');
     expect(issues.controls?.editorType).toBeUndefined();
     expect(issues.controls?.body).toBeDefined();
+  });
+});
+
+describe('processControlValuesByLiquid', () => {
+  const issuesFor = (body: string) => {
+    const issues: ControlIssues = {};
+    processControlValuesByLiquid({
+      currentValue: { body },
+      currentPath: [],
+      issues,
+      variableSchema: undefined,
+    });
+
+    return issues.controls?.body;
+  };
+
+  it('accepts single-quoted Liquid and tags that span lines', () => {
+    expect(issuesFor("{{ payload.name | append: '!' }}")).toBeUndefined();
+    expect(issuesFor("{% if payload.name contains 'A' %}yes{% endif %}")).toBeUndefined();
+    expect(issuesFor('{% if payload.a\n  and payload.b %}x{% endif %}')).toBeUndefined();
+  });
+
+  it('flags double quotes inside Liquid, which preview and delivery cannot render', () => {
+    for (const body of ['{{ payload.name | append: "!" }}', '{% if payload.name contains "A" %}yes{% endif %}']) {
+      expect(issuesFor(body)).toEqual([
+        {
+          message:
+            'Content compilation error: Use single quotes for text inside {{ }} and {% %}. Double quotes (") and backslashes (\\) are not supported',
+          issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
+          variableName: 'body',
+        },
+      ]);
+    }
+  });
+
+  it('flags tags that load template files', () => {
+    expect(issuesFor("{% include 'header' %}")?.[0].message).toBe(
+      'Content compilation error: tag "include" is not supported'
+    );
+    expect(issuesFor("{% render 'footer' %}")?.[0].message).toBe(
+      'Content compilation error: tag "render" is not supported'
+    );
+  });
+
+  it('reports syntax errors as compilation errors without position noise', () => {
+    expect(issuesFor('{% foo %}')).toEqual([
+      {
+        message: 'Content compilation error: tag "foo" not found',
+        issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
+        variableName: '{{}}',
+      },
+    ]);
+    expect(issuesFor('{% if payload.a %}x')?.[0].message).toBe(
+      'Content compilation error: tag {% if payload.a %} not closed'
+    );
   });
 });
