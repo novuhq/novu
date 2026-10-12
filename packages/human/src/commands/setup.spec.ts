@@ -42,7 +42,7 @@ const api = await import('../api/setup');
 const humanApi = await import('../api/human');
 const linkChannel = await import('./link-channel');
 const { info } = await import('../cli-io');
-const { connectEmail } = await import('./setup/email');
+const { AgentInboxProvisioningError, connectEmail } = await import('./setup/email');
 const { connectSlack: connectSlackImplementation } = await import('./setup/slack');
 const { connectTelegram: connectTelegramImplementation } = await import('./setup/telegram');
 const { resolveOperatorEmail, resolveOperatorName, reusableAuth } = await import('./setup/operator');
@@ -513,6 +513,16 @@ describe('connectEmail', () => {
       .join('\n');
     expect(printed).toContain('box@agent.test');
     expect(printed).toContain('claim this setup');
+  });
+
+  it('reports inbox provisioning failures before verification starts', async () => {
+    vi.mocked(humanApi.requestAddressVerification).mockClear();
+    vi.mocked(api.addAgentEmailIntegration).mockRejectedValue(new Error('email is disabled'));
+
+    await expect(
+      connectEmail({ isKeyless: true } as never, 'human-relay', 'sub-1', { email: 'ada@example.com' })
+    ).rejects.toBeInstanceOf(AgentInboxProvisioningError);
+    expect(humanApi.requestAddressVerification).not.toHaveBeenCalled();
   });
 });
 

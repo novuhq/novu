@@ -13,13 +13,27 @@ import type { SetupOptions } from './operator';
  * their email on the subscriber (delivery target + inbound reply resolution —
  * no ChannelEndpoint involved).
  */
+export class AgentInboxProvisioningError extends Error {
+  readonly original: unknown;
+
+  constructor(original: unknown) {
+    super(original instanceof Error && original.message ? original.message : 'Could not provision the agent inbox.');
+    this.name = 'AgentInboxProvisioningError';
+    this.original = original;
+  }
+}
+
 export async function ensureAgentInbox(
   client: HumanApiClient,
   agentIdentifier: string
 ): Promise<{ identifier: string; inboundAddress?: string }> {
-  const link = await addAgentEmailIntegration(client, agentIdentifier);
+  try {
+    const link = await addAgentEmailIntegration(client, agentIdentifier);
 
-  return { identifier: link.integration.identifier, inboundAddress: link.integration.sharedInboundAddress };
+    return { identifier: link.integration.identifier, inboundAddress: link.integration.sharedInboundAddress };
+  } catch (err) {
+    throw new AgentInboxProvisioningError(err);
+  }
 }
 
 /** `human setup` with no channel: the inbox is the whole result, so it has to be spelled out. */

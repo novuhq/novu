@@ -29,6 +29,8 @@ describe('KeylessEmailGateService', () => {
     const connectClaimTokenService = {
       issueOrGetForEnvironment: overrides?.issue ?? sinon.stub().resolves({ token: 'claim-token' }),
       isSignupCtaPosted: sinon.stub().resolves(overrides?.ctaPosted ?? false),
+      tryMarkSignupCtaPosted: sinon.stub().resolves(!(overrides?.ctaPosted ?? false)),
+      releaseSignupCtaPosted: sinon.stub().resolves(),
     };
     const humanContactRepository = {
       findOperator: sinon.stub().resolves(
@@ -156,12 +158,14 @@ describe('KeylessEmailGateService', () => {
     };
 
     it('builds the claim card for the declared operator', async () => {
-      const { gate } = service();
+      const { gate, connectClaimTokenService } = service();
 
       const card = await gate.resolveOperatorClaimCard(inbound);
 
       expect(JSON.stringify(card)).to.include('Sign up free');
       expect(JSON.stringify(card)).to.include('token=claim-token');
+      expect(connectClaimTokenService.tryMarkSignupCtaPosted.calledOnceWith('human-email:env1')).to.equal(true);
+      expect(connectClaimTokenService.releaseSignupCtaPosted.called).to.equal(false);
     });
 
     it('stays silent for any other sender', async () => {
@@ -177,9 +181,10 @@ describe('KeylessEmailGateService', () => {
     });
 
     it('stays silent when no claim token can be issued', async () => {
-      const { gate } = service({ issue: sinon.stub().rejects(new Error('redis down')) });
+      const { gate, connectClaimTokenService } = service({ issue: sinon.stub().rejects(new Error('redis down')) });
 
       expect(await gate.resolveOperatorClaimCard(inbound)).to.equal(undefined);
+      expect(connectClaimTokenService.releaseSignupCtaPosted.calledOnceWith('human-email:env1')).to.equal(true);
     });
 
     it('stays silent when the operator never declared an address', async () => {

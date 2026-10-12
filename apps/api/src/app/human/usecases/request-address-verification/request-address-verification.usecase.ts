@@ -154,7 +154,9 @@ export class RequestAddressVerification {
     let written: HumanContactPendingAddress | undefined;
     try {
       // The credit is spent by the sender, not here: an unsent mail releases it.
-      return await this.inboxQuota.withCredits(params.organizationId, 1, async () => {
+      // Keyless environments share one organization id, so this org-wide counter
+      // would pool every demo. Their own per-address cooldown and daily cap remain.
+      const send = async (): Promise<RequestAddressVerificationResult> => {
         written = await this.humanContactRepository.upsertPendingAddress({
           environmentId: params.environmentId,
           organizationId: params.organizationId,
@@ -198,7 +200,13 @@ export class RequestAddressVerification {
           retryAfterSeconds,
           replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
         };
-      });
+      };
+
+      if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+        return await send();
+      }
+
+      return await this.inboxQuota.withCredits(params.organizationId, 1, send);
     } catch (err) {
       await this.compensateFailedSend({ ...params, reservation }, written, previousPending);
 

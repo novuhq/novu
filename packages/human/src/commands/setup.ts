@@ -7,7 +7,7 @@ import { configPath, type HumanCliConfig, loadConfig, resolveTargetApiUrl, saveC
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
 import { handleError } from './interact';
 import { type ChatChannel, HUMAN_CHANNELS, type HumanChannel } from './link-channel';
-import { announceAgentInbox, connectEmail } from './setup/email';
+import { AgentInboxProvisioningError, announceAgentInbox, connectEmail } from './setup/email';
 import {
   channelNameFor,
   type ProvisionedOperator,
@@ -45,9 +45,18 @@ async function runSetup(channel: HumanChannel | undefined, options: SetupOptions
   const provisioned = await provisionOperator(client, existing, options, picture);
 
   // The inbox always exists after setup, but only a verified address makes it
-  // a channel the human can be reached on.
+  // a channel the human can be reached on. A deployment with email disabled
+  // must still be able to connect Telegram or Slack.
   const verifyEmail = channel === 'email' || (client.isKeyless && !channel);
-  await linkInbox(client, verifyEmail, provisioned, options);
+  try {
+    await linkInbox(client, verifyEmail, provisioned, options);
+  } catch (err) {
+    if (channel === 'email' || !(err instanceof AgentInboxProvisioningError)) {
+      throw err instanceof AgentInboxProvisioningError ? err.original : err;
+    }
+
+    info(pc.yellow(`Could not set up the email inbox (${err.message}). Chat setup can continue.`));
+  }
   const chat = await resolveChatChannel(channel);
   if (chat) {
     await connectChannel(client, chat, provisioned.relay, channelNameFor(provisioned.relay), provisioned.subscriberId, {

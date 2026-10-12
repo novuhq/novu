@@ -103,13 +103,29 @@ export class KeylessEmailGateService {
       return undefined;
     }
 
-    if (await this.connectClaimTokenService.isSignupCtaPosted(keylessEmailClaimCtaKey(params.environmentId))) {
+    // Take the once-flag before the card exists, so two inboxes cannot both send.
+    const ctaKey = keylessEmailClaimCtaKey(params.environmentId);
+    let acquired = false;
+    try {
+      acquired = await this.connectClaimTokenService.tryMarkSignupCtaPosted(ctaKey);
+    } catch (err) {
+      this.logger.warn({ err, environmentId: params.environmentId }, 'Failed to reserve the keyless email claim');
+
+      return undefined;
+    }
+
+    if (!acquired) {
       return undefined;
     }
 
     const claimUrl = await this.resolveClaimUrl(params);
+    if (!claimUrl) {
+      await this.connectClaimTokenService.releaseSignupCtaPosted(ctaKey).catch(() => undefined);
 
-    return claimUrl ? buildKeylessEmailClaimCard(claimUrl) : undefined;
+      return undefined;
+    }
+
+    return buildKeylessEmailClaimCard(claimUrl);
   }
 
   /** The address the operator typed at setup, normalized, or null when they have not. */

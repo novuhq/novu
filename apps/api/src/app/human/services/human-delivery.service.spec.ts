@@ -4,6 +4,7 @@ import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   ENDPOINT_TYPES,
+  HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
@@ -476,7 +477,11 @@ describe('HumanDeliveryService keyless email', () => {
     humanContactRepository.findContact.resolves({
       addresses: {
         [HumanChannelViaEnum.EMAIL]: {
-          verified: { address: 'ada@example.com', requestedAt: '', verifiedAt: '2026-01-02T00:00:00.000Z' },
+          verified: {
+            address: 'ada@example.com',
+            requestedAt: '2026-01-01T00:00:00.000Z',
+            verifiedAt: '2026-01-02T00:00:00.000Z',
+          },
         },
       },
     });
@@ -484,7 +489,12 @@ describe('HumanDeliveryService keyless email', () => {
     const channels = await service.describeInviteChannels(params);
     const email = channels.find((channel) => channel.via === HumanChannelViaEnum.EMAIL);
 
-    expect(email).to.include({ available: false, connected: false });
+    expect(email).to.include({
+      available: false,
+      connected: false,
+      status: HumanAddressVerificationStateEnum.VERIFIED,
+      verifiedRequestedAt: '2026-01-01T00:00:00.000Z',
+    });
     expect(channels.find((channel) => channel.via === HumanChannelViaEnum.TELEGRAM)?.connected).to.equal(true);
   });
 });

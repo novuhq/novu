@@ -37,6 +37,7 @@ describe('RequestAddressVerification', () => {
     };
     const keylessEmailGate = {
       assertOperatorVerificationAllowed: sinon.stub().resolves({}),
+      isBlocked: sinon.stub().returns(false),
     };
     const usecase = new RequestAddressVerification(
       { execute: sinon.stub() } as never,
@@ -134,13 +135,15 @@ describe('RequestAddressVerification', () => {
     });
   });
 
-  it('passes the keyless claim link to the verification email', async () => {
-    const { usecase, keylessEmailGate, emailSender } = setup();
+  it('passes the keyless claim link to the verification email without the shared inbox budget', async () => {
+    const { usecase, keylessEmailGate, emailSender, inboxQuota } = setup();
+    keylessEmailGate.isBlocked.returns(true);
     keylessEmailGate.assertOperatorVerificationAllowed.resolves({ claimUrl: 'https://gethuman.md/claim?token=t' });
 
     await usecase.execute(command());
 
     expect(emailSender.send.firstCall.args[0]).to.include({ claimUrl: 'https://gethuman.md/claim?token=t' });
+    expect(inboxQuota.withCredits.called).to.equal(false);
   });
 
   it('refuses a keyless org before any reservation or pending write', async () => {

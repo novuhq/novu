@@ -245,21 +245,24 @@ export class HumanDeliveryService {
 
     return channels.map((channel) => {
       if (channel.via === HumanChannelViaEnum.EMAIL) {
-        if (this.keylessEmailGate.isBlocked(params.organizationId)) {
-          return {
-            ...channel,
-            connected: false,
-            isDefault: false,
-            status: HumanAddressVerificationStateEnum.UNVERIFIED,
-            available: false,
-          };
-        }
-
-        return describeEmailInviteChannel(
+        const described = describeEmailInviteChannel(
           channel,
           describeStoredEmail(contact?.addresses?.[HumanChannelViaEnum.EMAIL]),
           defaultVia
         );
+
+        // Keyless can prove the address, but still cannot send. Keep the stored
+        // verification state so setup can see the link was used.
+        if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+          return {
+            ...described,
+            connected: false,
+            isDefault: false,
+            available: false,
+          };
+        }
+
+        return described;
       }
 
       const connected = targets.some((target) => target.integrationIdentifier === channel.integrationIdentifier);

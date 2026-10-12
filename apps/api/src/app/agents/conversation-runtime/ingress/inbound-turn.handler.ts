@@ -1564,6 +1564,9 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    const ctaKey = keylessEmailClaimCtaKey(config.environmentId);
+    let claimed = false;
+
     try {
       const card = await this.keylessEmailGate.resolveOperatorClaimCard({
         environmentId: config.environmentId,
@@ -1576,9 +1579,14 @@ export class AgentInboundHandler implements OnModuleInit {
         return;
       }
 
+      // The gate already holds the once-flag. Give it back if this send does not land.
+      claimed = true;
       await this.outboundGateway.replyOnThreadWithCard(thread, card);
-      await this.connectClaimTokenService.tryMarkSignupCtaPosted(keylessEmailClaimCtaKey(config.environmentId));
     } catch (err) {
+      if (claimed) {
+        await this.connectClaimTokenService.releaseSignupCtaPosted(ctaKey).catch(() => undefined);
+      }
+
       this.logger.warn(err, `[agent:${agentId}] Failed to send the keyless email claim`);
       captureAgentWarning(err, {
         component: 'agent-inbound-handler',

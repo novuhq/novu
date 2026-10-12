@@ -247,6 +247,7 @@ describe('AgentInboundHandler', () => {
       issueOrGetForEnvironment: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
       isSignupCtaPosted: sinon.stub().resolves(false),
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
+      releaseSignupCtaPosted: sinon.stub().resolves(),
     };
     const keylessAbuseGuard = {
       isKeylessAgentAiEnabled: sinon.stub().resolves(true),
@@ -1846,7 +1847,7 @@ describe('AgentInboundHandler', () => {
       expect(managedAgentService.dispatch.called).to.equal(false);
     });
 
-    it('replies with the claim card the gate hands back, and marks it posted', async () => {
+    it('replies with the claim card the gate hands back, and keeps the once-flag', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
@@ -1868,15 +1869,42 @@ describe('AgentInboundHandler', () => {
 
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThreadWithCard.calledOnce).to.equal(true);
-      expect(connectClaimTokenService.tryMarkSignupCtaPosted.calledOnce).to.equal(true);
-      expect(connectClaimTokenService.tryMarkSignupCtaPosted.firstCall.args[0]).to.equal('human-email:env1');
-      // Whether this sender deserves a card is the gate's call; the handler only asks.
+      // The gate takes the flag before it returns a card. A sent card keeps it.
+      expect(connectClaimTokenService.tryMarkSignupCtaPosted.called).to.equal(false);
+      expect(connectClaimTokenService.releaseSignupCtaPosted.called).to.equal(false);
       expect(keylessEmailGate.resolveOperatorClaimCard.firstCall.args[0]).to.deep.equal({
         environmentId: 'env1',
         organizationId: 'org1',
         agentId: 'agent1',
         sender: address,
       });
+    });
+
+    it('releases the once-flag when the claim email fails to send', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const { handler, outboundGateway, keylessEmailGate, connectClaimTokenService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      keylessEmailGate.resolveOperatorClaimCard.resolves({ title: 'Sign up free', url: 'https://claim.test' });
+      outboundGateway.replyOnThreadWithCard.rejects(new Error('smtp down'));
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+
+      await handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(connectClaimTokenService.releaseSignupCtaPosted.calledOnceWith('human-email:env1')).to.equal(true);
     });
 
     it('stays silent, and marks nothing, when the gate withholds a card', async () => {

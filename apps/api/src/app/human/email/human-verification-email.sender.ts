@@ -4,6 +4,7 @@ import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { IEmailOptions } from '@novu/shared';
 
 import type { ResolvedAgentOutboundEmail } from '../../agents/email/resolve-agent-outbound-email';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import { HumanOperatorService } from '../services/human-operator.service';
 import { buildRelayOwnerName, resolveRelaySender } from '../services/relay-owner-name';
@@ -94,14 +95,17 @@ export class HumanVerificationEmailSender {
     };
 
     // Same choke point as every other Agent Email Inbox send: the credit is
-    // consumed only once the provider accepts the message.
-    const attempt = await this.inboxQuota.beginSend(params.organizationId);
+    // consumed only once the provider accepts the message. Keyless orgs share
+    // one organization id, so they stay on the per-address verification cap.
+    const attempt = isKeylessOrganization(params.organizationId)
+      ? undefined
+      : await this.inboxQuota.beginSend(params.organizationId);
 
     try {
       await handler.send(mailOptions);
-      attempt.accept();
+      attempt?.accept();
     } catch (err) {
-      await attempt.release();
+      await attempt?.release();
 
       const base = err instanceof Error ? err.message : String(err);
       const body = (err as { response?: { body?: { errors?: Array<{ message?: string }>; message?: string } } })
