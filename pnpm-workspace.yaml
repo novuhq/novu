@@ -218,6 +218,13 @@ overrides:
   # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
   # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
   '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
+  # GHSA-6qxp-vccf-f47h (high): the v2 OAuth client can send stored
+  # credentials to an authorization server chosen by the MCP server. Patched
+  # in 2.2.0. agents@0.21.0 peers @modelcontextprotocol/client at exactly
+  # 2.0.0 for enterprise/workers/thalamus-observer. Pin 2.2.0 rather than
+  # floating ^2.2.0: 2.3.0 changes cross-origin redirect handling, and 2.2.0
+  # (published 2026-09-28) already satisfies minimumReleaseAge.
+  '@modelcontextprotocol/client@>=2.0.0 <2.2.0': 2.2.0
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
