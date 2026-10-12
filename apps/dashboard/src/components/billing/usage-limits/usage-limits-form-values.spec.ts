@@ -46,6 +46,11 @@ describe('usage-limits-form-values', () => {
       expect(formatCompactUsd(250)).toBe('$250');
       expect(formatCompactUsd(147_777.75)).toBe('$147.8k');
     });
+
+    it('rounds before choosing the compact form', () => {
+      expect(formatCompactUsd(999.4)).toBe('$999');
+      expect(formatCompactUsd(999.5)).toBe('$1k');
+    });
   });
 
   describe('getTierSuggestion', () => {
@@ -88,6 +93,14 @@ describe('usage-limits-form-values', () => {
       });
     });
 
+    it('suggests Enterprise when Team rounds up to $600', () => {
+      expect(suggest(ApiServiceLevelEnum.PRO, 394_750)).toEqual({
+        kind: 'contact_sales',
+        monthlyCost: 820,
+        fromPlan: 'PRO',
+      });
+    });
+
     it('suggests Enterprise when a huge Pro limit would barely save on Team', () => {
       const suggestion = suggest(ApiServiceLevelEnum.PRO, 123_123_123, 1.2);
 
@@ -96,7 +109,7 @@ describe('usage-limits-form-values', () => {
     });
 
     it('suggests contacting sales once Teams plus on-demand reaches $600', () => {
-      expect(suggest(ApiServiceLevelEnum.BUSINESS, 174_999)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, 174_749)).toBeNull();
       expect(suggest(ApiServiceLevelEnum.BUSINESS, 175_000)).toEqual({
         kind: 'contact_sales',
         monthlyCost: 600,
@@ -156,7 +169,7 @@ describe('usage-limits-form-values', () => {
     });
 
     it('suggests contacting sales once Teams plus on-demand so far reaches $600', () => {
-      expect(suggest(ApiServiceLevelEnum.BUSINESS, INCLUDED + 174_999)).toBeNull();
+      expect(suggest(ApiServiceLevelEnum.BUSINESS, INCLUDED + 174_749)).toBeNull();
       expect(suggest(ApiServiceLevelEnum.BUSINESS, INCLUDED + 195_000)).toEqual({
         kind: 'contact_sales',
         monthlyCost: 640,

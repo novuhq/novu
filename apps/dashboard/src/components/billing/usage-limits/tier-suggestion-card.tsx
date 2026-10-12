@@ -10,7 +10,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ContactSalesButton } from '../contact-sales-button';
-import { formatCompactUsd, getTeamsSavings, type TierSuggestion } from './usage-limits-form-values';
+import { formatCompactUsd, type TierSuggestion } from './usage-limits-form-values';
 import type { UsageLimitsPlan } from './usage-limits-view';
 
 type BillingInterval = UsageLimitsPlan['billingInterval'];
@@ -56,7 +56,7 @@ type SuggestionCopy = {
 function getSuggestionCopy(suggestion: TierSuggestion): SuggestionCopy {
   switch (suggestion.kind) {
     case 'upgrade_to_teams': {
-      const savings = formatCompactUsd(getTeamsSavings(suggestion.monthlyCost, suggestion.teamsCost));
+      const savings = formatCompactUsd(suggestion.monthlyCost - suggestion.teamsCost);
 
       return {
         from: 'PRO',

@@ -45,13 +45,21 @@ export function formatWholeUsd(amount: number): string {
   return wholeUsdFormatter.format(amount);
 }
 
+const COMPACT_USD_FROM = 1_000;
+
+function isCompactUsd(amount: number): boolean {
+  return Math.abs(Math.round(amount)) >= COMPACT_USD_FROM;
+}
+
 /** `$250` stays whole; `$147,778` becomes `$147.8k`. */
 export function formatCompactUsd(amount: number): string {
-  if (Math.abs(amount) < 1_000) {
-    return formatWholeUsd(amount);
+  const whole = Math.round(amount);
+
+  if (!isCompactUsd(whole)) {
+    return formatWholeUsd(whole);
   }
 
-  return compactUsdFormatter.format(amount).toLowerCase();
+  return compactUsdFormatter.format(whole).toLowerCase();
 }
 
 /** Usage at which new workflow runs pause; null when they never pause. */
@@ -71,7 +79,7 @@ export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k
 
   const spend = getOnDemandSpend(onDemandLimit, onDemandPricePer1k);
 
-  if (spend >= 1_000) {
+  if (isCompactUsd(spend)) {
     return formatCompactUsd(spend);
   }
 
@@ -157,10 +165,6 @@ export function getUsageTierSuggestion({
   });
 }
 
-export function getTeamsSavings(monthlyCost: number, teamsCost: number): number {
-  return monthlyCost - teamsCost;
-}
-
 /** Team list price plus on-demand above Team's included runs, at the same per-1k rate. */
 function getTeamsMonthlyCost(totalRuns: number, onDemandPricePer1k: number): number {
   const onDemandRuns = Math.max(0, totalRuns - TEAMS_INCLUDED_RUNS);
@@ -168,9 +172,10 @@ function getTeamsMonthlyCost(totalRuns: number, onDemandPricePer1k: number): num
   return TEAMS_MONTHLY_COST + getOnDemandSpend(onDemandRuns, onDemandPricePer1k);
 }
 
+/** Costs are compared in whole dollars, the same unit the suggestion copy shows. */
 function suggestTierForMonthlyCost({
   apiServiceLevel,
-  monthlyCost,
+  monthlyCost: exactMonthlyCost,
   totalRuns,
   onDemandPricePer1k,
 }: {
@@ -179,12 +184,13 @@ function suggestTierForMonthlyCost({
   totalRuns: number;
   onDemandPricePer1k: number;
 }): TierSuggestion | null {
+  const monthlyCost = Math.round(exactMonthlyCost);
+
   switch (apiServiceLevel) {
     case ApiServiceLevelEnum.PRO: {
-      const teamsCost = getTeamsMonthlyCost(totalRuns, onDemandPricePer1k);
-      const teamsSavesADollar = Math.round(getTeamsSavings(monthlyCost, teamsCost)) >= 1;
+      const teamsCost = Math.round(getTeamsMonthlyCost(totalRuns, onDemandPricePer1k));
 
-      if (teamsSavesADollar && teamsCost < CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
+      if (monthlyCost - teamsCost >= 1 && teamsCost < CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
         return { kind: 'upgrade_to_teams', monthlyCost, teamsCost };
       }
 
